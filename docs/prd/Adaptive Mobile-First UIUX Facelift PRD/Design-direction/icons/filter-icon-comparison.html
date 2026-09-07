@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<!--
+  FILTER ICON COMPARISON — visual selection artifact, not production code.
+  Purpose: let the user pick ONE filter icon for BIGDROPS list pages.
+  Candidates: supplied Phosphor funnel, Lucide funnel/filter/list-filter,
+  current production SlidersHorizontal (baseline), Hugeicons funnel.
+  Open directly in a browser. No build step. Edit freely.
+  Production filter buttons are intentionally unchanged pending selection.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Filter Icon Comparison — BIGDROPS List Pages</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Designer controls */
+    --page-max-width: 560px;
+    --card-gap: 12px;
+    --card-padding: 16px;
+    --card-radius: 20px;
+    --row-gap: 14px;
+    --size-row-gap: 18px;
+    --btn-height: 40px;
+    --btn-radius: 12px;
+    --chip-height: 32px;
+    --chip-radius: 10px;
+
+    --font-ui: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+    --font-title: 20px;
+    --font-card-title: 15px;
+    --font-meta: 12px;
+
+    --bd-surface: #ffffff;
+    --bd-card-bg: #ffffff;
+    --bd-surface-muted: #f1f5f9;
+    --bd-text: #0f172a;
+    --bd-text-muted: #64748b;
+    --bd-border: #e2e8f0;
+    --bd-primary: #1e3a5f;
+    --bd-primary-text: #ffffff;
+    --page-bg: #0f172a;
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--page-bg);
+    color: var(--bd-text);
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 48px;
+  }
+
+  .page { width: min(var(--page-max-width), 100%); }
+
+  .page-head { color: #fff; margin-bottom: 16px; }
+  .page-head h1 { font-size: var(--font-title); font-weight: 800; letter-spacing: -0.02em; }
+  .page-head p { margin-top: 6px; font-size: 13px; color: #94a3b8; line-height: 1.5; }
+  .page-head code {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.08);
+    padding: 1px 6px;
+    border-radius: 6px;
+  }
+
+  .candidate {
+    background: var(--bd-surface);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    margin-bottom: var(--card-gap);
+  }
+
+  .candidate-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .candidate-head h2 { font-size: var(--font-card-title); font-weight: 800; }
+  .tag {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bd-surface-muted);
+    color: var(--bd-text-muted);
+  }
+  .tag--current { background: #dcfce7; color: #16a34a; }
+  .tag--supplied { background: #dbeafe; color: #1d4ed8; }
+  .tag--unavailable { background: #fee2e2; color: #b91c1c; }
+
+  .candidate-source {
+    margin-top: 4px;
+    font-size: var(--font-meta);
+    color: var(--bd-text-muted);
+    line-height: 1.5;
+  }
+  .candidate-source code {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    background: var(--bd-surface-muted);
+    padding: 1px 6px;
+    border-radius: 6px;
+  }
+
+  .size-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--size-row-gap);
+    margin-top: var(--row-gap);
+    padding: 12px;
+    background: var(--bd-surface-muted);
+    border-radius: 12px;
+  }
+  .size-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .size-cell span { font-size: 10px; font-weight: 700; color: var(--bd-text-muted); }
+  .size-cell svg { display: block; color: var(--bd-text); }
+
+  .context-row { display: flex; gap: 10px; margin-top: var(--row-gap); align-items: center; flex-wrap: wrap; }
+  .context-label { width: 100%; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--bd-text-muted); }
+
+  /* Realistic button contexts (mirror production sizes) */
+  .btn-shell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: var(--btn-height);
+    min-width: var(--btn-height);
+    padding: 0 12px;
+    border-radius: var(--btn-radius);
+    border: 1px solid var(--bd-border);
+    background: var(--bd-surface);
+    color: var(--bd-text);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .btn-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--chip-height);
+    padding: 0 12px;
+    border-radius: var(--chip-radius);
+    border: 1px solid var(--bd-border);
+    background: var(--bd-surface);
+    color: var(--bd-text);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .btn-primary {
+    background: var(--bd-primary);
+    border-color: var(--bd-primary);
+    color: var(--bd-primary-text);
+  }
+
+  .note-unavailable {
+    margin-top: var(--row-gap);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--bd-text-muted);
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .note-unavailable code {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    background: rgba(0,0,0,0.06);
+    padding: 1px 6px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1>Filter icon — pick one</h1>
+    <p>Each card shows the icon at 16 / 20 / 24 / 32 px plus realistic list-page button contexts.
+    Nothing here changes production. Reply with the letter (A–G) of your choice.</p>
+  </div>
+
+  <!-- A: supplied Phosphor funnel -->
+  <div class="candidate">
+    <div class="candidate-head"><h2>A. Phosphor funnel (supplied)</h2><span class="tag tag--supplied">Supplied</span></div>
+    <div class="candidate-source">Prompt SVG, <code>viewBox 0 0 256 256</code>, fill. Not in any installed package — would ship as an inline SVG asset.</div>
+    <div class="size-row">
+      <div class="size-cell"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM40,56h0Zm106.18,74.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></svg><span>16</span></div>
+      <div class="size-cell"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM40,56h0Zm106.18,74.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></svg><span>20</span></div>
+      <div class="size-cell"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM40,56h0Zm106.18,74.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></svg><span>24</span></div>
+      <div class="size-cell"><svg width="32" height="32" viewBox="0 0 256 256" fill="currentColor"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM40,56h0Zm106.18,74.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></svg><span>32</span></div>
+    </div>
+    <div class="context-row"><span class="context-label">In list-page buttons</span>
+      <button class="btn-shell" type="button"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM40,56h0Zm106.18,74.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></svg>Filter</button>
+      <button class="btn-chip" type="button"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM40,56h0Zm106.18,74.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></svg>Filters</button>
+      <button class="btn-shell btn-primary" type="button"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM40,56h0Zm106.18,74.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></svg>Filter</button>
+    </div>
+  </div>
+
+  <!-- B: Lucide Funnel (= classic Filter alias, installed) -->
+  <div class="candidate">
+    <div class="candidate-head"><h2>B. Lucide funnel</h2><span class="tag tag--supplied">Supplied path</span></div>
+    <div class="candidate-source"><code>lucide-react</code> (installed 0.577): <code>Funnel</code> — classic <code>Filter</code> is an alias of this exact shape. Stroke, <code>viewBox 0 0 24 24</code>. Zero new dependencies.</div>
+    <div class="size-row">
+      <div class="size-cell"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg><span>16</span></div>
+      <div class="size-cell"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg><span>20</span></div>
+      <div class="size-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg><span>24</span></div>
+      <div class="size-cell"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg><span>32</span></div>
+    </div>
+    <div class="context-row"><span class="context-label">In list-page buttons</span>
+      <button class="btn-shell" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg>Filter</button>
+      <button class="btn-chip" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg>Filters</button>
+      <button class="btn-shell btn-primary" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg>Filter</button>
+    </div>
+  </div>
+
+  <!-- C: Lucide ListFilter -->
+  <div class="candidate">
+    <div class="candidate-head"><h2>C. Lucide list-filter</h2><span class="tag">Discovered</span></div>
+    <div class="candidate-source"><code>lucide-react</code> (installed): <code>ListFilter</code> — lines-plus-funnel hybrid, matches list-row context. Stroke, <code>viewBox 0 0 24 24</code>. Zero new dependencies.</div>
+    <div class="size-row">
+      <div class="size-cell"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg><span>16</span></div>
+      <div class="size-cell"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg><span>20</span></div>
+      <div class="size-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg><span>24</span></div>
+      <div class="size-cell"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg><span>32</span></div>
+    </div>
+    <div class="context-row"><span class="context-label">In list-page buttons</span>
+      <button class="btn-shell" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg>Filter</button>
+      <button class="btn-chip" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg>Filters</button>
+      <button class="btn-shell btn-primary" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg>Filter</button>
+    </div>
+  </div>
+
+  <!-- D: current production baseline -->
+  <div class="candidate">
+    <div class="candidate-head"><h2>D. Sliders-horizontal (current)</h2><span class="tag tag--current">Production now</span></div>
+    <div class="candidate-source">Used today in <code>ModuleShell</code> (h-4/h-3.5) and <code>QueryFilterTrack</code> (h-3). Shown here so the current look can be compared. No change ships until you pick.</div>
+    <div class="size-row">
+      <div class="size-cell"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg><span>16</span></div>
+      <div class="size-cell"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg><span>20</span></div>
+      <div class="size-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg><span>24</span></div>
+      <div class="size-cell"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg><span>32</span></div>
+    </div>
+    <div class="context-row"><span class="context-label">In list-page buttons</span>
+      <button class="btn-shell" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>Filter</button>
+      <button class="btn-chip" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>Filters</button>
+      <button class="btn-shell btn-primary" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>Filter</button>
+    </div>
+  </div>
+
+  <!-- E: Hugeicons funnel -->
+  <div class="candidate">
+    <div class="candidate-head"><h2>E. Hugeicons filter</h2><span class="tag">Discovered</span></div>
+    <div class="candidate-source"><code>@hugeicons/core-free-icons</code> (installed): <code>FilterIcon</code> — rounded funnel, stroke 1.5. Already a project dependency; matches the existing Hugeicons usage in sheets.</div>
+    <div class="size-row">
+      <div class="size-cell"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.85746 12.5061C6.36901 10.6456 4.59564 8.59915 3.62734 7.44867C3.3276 7.09253 3.22938 6.8319 3.17033 6.3728C2.96811 4.8008 2.86701 4.0148 3.32795 3.5074C3.7889 3 4.60404 3 6.23433 3H17.7657C19.396 3 20.2111 3 20.672 3.5074C21.133 4.0148 21.0319 4.8008 20.8297 6.37281C20.7706 6.83191 20.6724 7.09254 20.3726 7.44867C19.403 8.60062 17.6261 10.6507 15.1326 12.5135C14.907 12.6821 14.7583 12.9567 14.7307 13.2614C14.4837 15.992 14.2559 17.4876 14.1141 18.2442C13.8853 19.4657 12.1532 20.2006 11.226 20.8563C10.6741 21.2466 10.0043 20.782 9.93278 20.1778C9.79643 19.0261 9.53961 16.6864 9.25927 13.2614C9.23409 12.9539 9.08486 12.6761 8.85746 12.5061Z"/></svg><span>16</span></div>
+      <div class="size-cell"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.85746 12.5061C6.36901 10.6456 4.59564 8.59915 3.62734 7.44867C3.3276 7.09253 3.22938 6.8319 3.17033 6.3728C2.96811 4.8008 2.86701 4.0148 3.32795 3.5074C3.7889 3 4.60404 3 6.23433 3H17.7657C19.396 3 20.2111 3 20.672 3.5074C21.133 4.0148 21.0319 4.8008 20.8297 6.37281C20.7706 6.83191 20.6724 7.09254 20.3726 7.44867C19.403 8.60062 17.6261 10.6507 15.1326 12.5135C14.907 12.6821 14.7583 12.9567 14.7307 13.2614C14.4837 15.992 14.2559 17.4876 14.1141 18.2442C13.8853 19.4657 12.1532 20.2006 11.226 20.8563C10.6741 21.2466 10.0043 20.782 9.93278 20.1778C9.79643 19.0261 9.53961 16.6864 9.25927 13.2614C9.23409 12.9539 9.08486 12.6761 8.85746 12.5061Z"/></svg><span>20</span></div>
+      <div class="size-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.85746 12.5061C6.36901 10.6456 4.59564 8.59915 3.62734 7.44867C3.3276 7.09253 3.22938 6.8319 3.17033 6.3728C2.96811 4.8008 2.86701 4.0148 3.32795 3.5074C3.7889 3 4.60404 3 6.23433 3H17.7657C19.396 3 20.2111 3 20.672 3.5074C21.133 4.0148 21.0319 4.8008 20.8297 6.37281C20.7706 6.83191 20.6724 7.09254 20.3726 7.44867C19.403 8.60062 17.6261 10.6507 15.1326 12.5135C14.907 12.6821 14.7583 12.9567 14.7307 13.2614C14.4837 15.992 14.2559 17.4876 14.1141 18.2442C13.8853 19.4657 12.1532 20.2006 11.226 20.8563C10.6741 21.2466 10.0043 20.782 9.93278 20.1778C9.79643 19.0261 9.53961 16.6864 9.25927 13.2614C9.23409 12.9539 9.08486 12.6761 8.85746 12.5061Z"/></svg><span>24</span></div>
+      <div class="size-cell"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.85746 12.5061C6.36901 10.6456 4.59564 8.59915 3.62734 7.44867C3.3276 7.09253 3.22938 6.8319 3.17033 6.3728C2.96811 4.8008 2.86701 4.0148 3.32795 3.5074C3.7889 3 4.60404 3 6.23433 3H17.7657C19.396 3 20.2111 3 20.672 3.5074C21.133 4.0148 21.0319 4.8008 20.8297 6.37281C20.7706 6.83191 20.6724 7.09254 20.3726 7.44867C19.403 8.60062 17.6261 10.6507 15.1326 12.5135C14.907 12.6821 14.7583 12.9567 14.7307 13.2614C14.4837 15.992 14.2559 17.4876 14.1141 18.2442C13.8853 19.4657 12.1532 20.2006 11.226 20.8563C10.6741 21.2466 10.0043 20.782 9.93278 20.1778C9.79643 19.0261 9.53961 16.6864 9.25927 13.2614C9.23409 12.9539 9.08486 12.6761 8.85746 12.5061Z"/></svg><span>32</span></div>
+    </div>
+    <div class="context-row"><span class="context-label">In list-page buttons</span>
+      <button class="btn-shell" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.85746 12.5061C6.36901 10.6456 4.59564 8.59915 3.62734 7.44867C3.3276 7.09253 3.22938 6.8319 3.17033 6.3728C2.96811 4.8008 2.86701 4.0148 3.32795 3.5074C3.7889 3 4.60404 3 6.23433 3H17.7657C19.396 3 20.2111 3 20.672 3.5074C21.133 4.0148 21.0319 4.8008 20.8297 6.37281C20.7706 6.83191 20.6724 7.09254 20.3726 7.44867C19.403 8.60062 17.6261 10.6507 15.1326 12.5135C14.907 12.6821 14.7583 12.9567 14.7307 13.2614C14.4837 15.992 14.2559 17.4876 14.1141 18.2442C13.8853 19.4657 12.1532 20.2006 11.226 20.8563C10.6741 21.2466 10.0043 20.782 9.93278 20.1778C9.79643 19.0261 9.53961 16.6864 9.25927 13.2614C9.23409 12.9539 9.08486 12.6761 8.85746 12.5061Z"/></svg>Filter</button>
+      <button class="btn-chip" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.85746 12.5061C6.36901 10.6456 4.59564 8.59915 3.62734 7.44867C3.3276 7.09253 3.22938 6.8319 3.17033 6.3728C2.96811 4.8008 2.86701 4.0148 3.32795 3.5074C3.7889 3 4.60404 3 6.23433 3H17.7657C19.396 3 20.2111 3 20.672 3.5074C21.133 4.0148 21.0319 4.8008 20.8297 6.37281C20.7706 6.83191 20.6724 7.09254 20.3726 7.44867C19.403 8.60062 17.6261 10.6507 15.1326 12.5135C14.907 12.6821 14.7583 12.9567 14.7307 13.2614C14.4837 15.992 14.2559 17.4876 14.1141 18.2442C13.8853 19.4657 12.1532 20.2006 11.226 20.8563C10.6741 21.2466 10.0043 20.782 9.93278 20.1778C9.79643 19.0261 9.53961 16.6864 9.25927 13.2614C9.23409 12.9539 9.08486 12.6761 8.85746 12.5061Z"/></svg>Filters</button>
+      <button class="btn-shell btn-primary" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.85746 12.5061C6.36901 10.6456 4.59564 8.59915 3.32795 3.5074C3.7889 3 4.60404 3 6.23433 3H17.7657C19.396 3 20.2111 3 20.672 3.5074C21.133 4.0148 21.0319 4.8008 20.8297 6.37281C20.7706 6.83191 20.6724 7.09254 20.3726 7.44867C19.403 8.60062 17.6261 10.6507 15.1326 12.5135C14.907 12.6821 14.7583 12.9567 14.7307 13.2614C14.4837 15.992 14.2559 17.4876 14.1141 18.2442C13.8853 19.4657 12.1532 20.2006 11.226 20.8563C10.6741 21.2466 10.0043 20.782 9.93278 20.1778C9.79643 19.0261 9.53961 16.6864 9.25927 13.2614C9.23409 12.9539 9.08486 12.6761 8.85746 12.5061Z"/></svg>Filter</button>
+    </div>
+  </div>
+
+  <!-- F: reference FilterIcon — resolves to B via alias chain -->
+  <div class="candidate">
+    <div class="candidate-head"><h2>F. Reference FilterIcon = B</h2><span class="tag tag--supplied">Resolved</span></div>
+    <div class="candidate-source"><code>filter-button-reference.tsx</code> imports <code>FilterIcon</code>, which installed lucide 0.577 does not export. But installed <code>filter.mjs</code> is a re-export of <code>funnel.mjs</code>, so the reference's <code>FilterIcon</code> (new-convention alias of <code>Filter</code>) renders exactly the card <b>B</b> shape above. Same logic: <code>multi-filter.tsx</code>'s <code>ListFilterIcon</code> renders exactly the card <b>C</b> shape. No guesswork — pick B or C to honor those references.</div>
+  </div>
+
+  <!-- G: Lucide FunnelX (installed, multi-filter Clear icon) -->
+  <div class="candidate">
+    <div class="candidate-head"><h2>G. Lucide funnel-x (clear)</h2><span class="tag">Discovered</span></div>
+    <div class="candidate-source"><code>lucide-react</code> (installed): <code>FunnelX</code> — funnel with a clear mark. <code>multi-filter.tsx</code> uses it (as <code>FunnelXIcon</code>) for its Clear button. Suits a clear-filters affordance rather than the main trigger. Stroke, <code>viewBox 0 0 24 24</code>.</div>
+    <div class="size-row">
+      <div class="size-cell"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473"/><path d="m16.5 3.5 5 5"/><path d="m21.5 3.5-5 5"/></svg><span>16</span></div>
+      <div class="size-cell"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473"/><path d="m16.5 3.5 5 5"/><path d="m21.5 3.5-5 5"/></svg><span>20</span></div>
+      <div class="size-cell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473"/><path d="m16.5 3.5 5 5"/><path d="m21.5 3.5-5 5"/></svg><span>24</span></div>
+      <div class="size-cell"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473"/><path d="m16.5 3.5 5 5"/><path d="m21.5 3.5-5 5"/></svg><span>32</span></div>
+    </div>
+    <div class="context-row"><span class="context-label">In list-page buttons</span>
+      <button class="btn-shell" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473"/><path d="m16.5 3.5 5 5"/><path d="m21.5 3.5-5 5"/></svg>Clear</button>
+      <button class="btn-chip" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473"/><path d="m16.5 3.5 5 5"/><path d="m21.5 3.5-5 5"/></svg>Clear</button>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

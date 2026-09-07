@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState, type ReactNode } from 'react'
-import { Search, SlidersHorizontal, X, Loader2, ChevronRight, Check, ChevronsUpDown } from 'lucide-react'
+import { Search, Funnel, X, Loader2, ChevronRight, Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -312,7 +312,7 @@ export default function ModuleShell<T>({
                   )}
                   aria-label="Toggle filters"
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <Funnel className="h-4 w-4" />
                 </Button>
               )}
               {headerActions}
@@ -381,7 +381,7 @@ export default function ModuleShell<T>({
                     (filtersOpen || hasActiveFilters) && "bg-bd-surface-muted"
                   )}
                 >
-                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  <Funnel className="h-3.5 w-3.5" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Filters</span>
                 </Button>
              )}

@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { useMemo } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { Funnel, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDocumentQuery } from "@/context/DocumentQueryContext";
 import type { FilterChip } from "@/types/queryPlatform";
@@ -103,7 +103,7 @@ export default function QueryFilterTrack({
             : "border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface"
         )}
       >
-        <SlidersHorizontal className="h-3 w-3" />
+        <Funnel className="h-3 w-3" />
         <span>Filters</span>
         {chips.length > 0 && (
           <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-black text-primary-foreground">
