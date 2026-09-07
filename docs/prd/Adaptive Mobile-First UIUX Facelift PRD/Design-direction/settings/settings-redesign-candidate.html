@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<!--
+  SETTINGS REDESIGN CANDIDATE — design artifact, not production code.
+  Covers all 17 current Settings sections across 4 groups (see
+  settings-live-wireframe.md, the source of truth for what exists).
+  Open directly in a browser. No build step. Fully offline.
+  Decisions: grouped iOS-style home preserved; section search added;
+  sticky per-section save bars; sheets/dialogs replace scattered confirms.
+-->
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Settings Redesign Candidate — BIGDROPS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Designer controls */
+    --phone-width: 430px;
+    --nav-row-height: 56px;
+    --icon-tile: 36px;
+    --control-height: 48px;
+    --input-height: 48px;
+    --card-radius: 20px;
+    --row-radius: 14px;
+    --btn-radius: 14px;
+    --section-gap: 20px;
+    --card-gap: 12px;
+
+    --font-ui: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+    --font-title: 28px;
+    --font-section: 17px;
+    --font-row: 15px;
+    --font-desc: 13px;
+    --font-micro: 11px;
+  }
+
+  html[data-theme="light"] {
+    --bd-bg: #f0f4f8;
+    --bd-surface: #ffffff;
+    --bd-surface-muted: #eef2f7;
+    --bd-text: #0f172a;
+    --bd-text-muted: #64748b;
+    --bd-border: #e2e8f0;
+    --bd-primary: #1e3a5f;
+    --bd-primary-text: #ffffff;
+    --bd-danger: #dc2626;
+    --bd-success: #16a34a;
+    --bd-scrim: rgba(15,23,42,.38);
+  }
+
+  html[data-theme="dark"] {
+    --bd-bg: #0f172a;
+    --bd-surface: #1e293b;
+    --bd-surface-muted: #334155;
+    --bd-text: #f1f5f9;
+    --bd-text-muted: #94a3b8;
+    --bd-border: #334155;
+    --bd-primary: #60a5fa;
+    --bd-primary-text: #0f172a;
+    --bd-danger: #f87171;
+    --bd-success: #4ade80;
+    --bd-scrim: rgba(0,0,0,.55);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: #020617;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 12px 48px;
+  }
+
+  .phone {
+    width: min(var(--phone-width), 100%);
+    height: min(880px, calc(100dvh - 48px));
+    background: var(--bd-bg);
+    color: var(--bd-text);
+    border-radius: 36px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,255,255,.12);
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 8px;
+    flex-shrink: 0;
+  }
+  .topbar h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; flex: 1; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border: none; border-radius: 12px;
+    background: var(--bd-surface);
+    color: var(--bd-text);
+    border: 1px solid var(--bd-border);
+    cursor: pointer;
+  }
+  .icon-btn:active { transform: scale(.95); }
+
+  .stage { flex: 1; overflow-y: auto; padding: 4px 16px calc(20px + env(safe-area-inset-bottom)); }
+  .view[hidden] { display: none; }
+
+  /* Search */
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bd-surface);
+    border: 1px solid var(--bd-border);
+    border-radius: 14px;
+    padding: 0 12px;
+    height: var(--control-height);
+    margin-bottom: 16px;
+    color: var(--bd-text-muted);
+  }
+  .search input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-family: inherit; font-size: 15px; color: var(--bd-text); min-width: 0;
+  }
+
+  /* Groups + rows */
+  .group-label {
+    font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--bd-text-muted);
+    padding: 0 12px; margin: 18px 0 8px;
+  }
+  .group-card {
+    background: var(--bd-surface);
+    border: 1px solid var(--bd-border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+  }
+  .nav-row {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; min-height: var(--nav-row-height);
+    padding: 8px 12px;
+    background: none; border: none;
+    border-bottom: 1px solid var(--bd-border);
+    font-family: inherit; text-align: left;
+    cursor: pointer; color: var(--bd-text);
+  }
+  .nav-row:last-child { border-bottom: none; }
+  .nav-row:active { background: var(--bd-surface-muted); }
+  .nav-tile {
+    width: var(--icon-tile); height: var(--icon-tile); flex-shrink: 0;
+    display: grid; place-items: center;
+    border-radius: 11px;
+    background: var(--bd-surface-muted);
+    color: var(--bd-text-muted);
+  }
+  .nav-row[data-active="true"] .nav-tile { background: var(--bd-primary); color: var(--bd-primary-text); }
+  .nav-text { flex: 1; min-width: 0; }
+  .nav-text b { display: block; font-size: var(--font-row); font-weight: 700; }
+  .nav-text span { display: block; font-size: 12px; color: var(--bd-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-chev { color: var(--bd-text-muted); flex-shrink: 0; }
+
+  /* Section view */
+  .back-row { display: flex; align-items: center; gap: 4px; margin: 2px 0 6px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 2px;
+    background: none; border: none; cursor: pointer;
+    color: var(--bd-primary); font-family: inherit;
+    font-size: 15px; font-weight: 600; padding: 6px 8px 6px 0;
+  }
+  .section-title { font-size: var(--font-title); font-weight: 800; letter-spacing: -0.03em; }
+  .section-desc { margin-top: 4px; font-size: var(--font-desc); color: var(--bd-text-muted); line-height: 1.5; }
+
+  .block { margin-top: var(--section-gap); }
+  .block-label {
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--bd-text-muted);
+    padding: 0 12px; margin-bottom: 8px;
+  }
+  .card {
+    background: var(--bd-surface);
+    border: 1px solid var(--bd-border);
+    border-radius: var(--card-radius);
+    padding: 14px;
+  }
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .field input, .field select {
+    width: 100%; height: var(--input-height);
+    border: 1px solid var(--bd-border); border-radius: var(--row-radius);
+    background: var(--bd-bg); color: var(--bd-text);
+    font-family: inherit; font-size: 15px; padding: 0 12px; outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--bd-primary); }
+
+  .switch-row {
+    display: flex; align-items: center; gap: 12px;
+    min-height: 52px; padding: 8px 0;
+    border-bottom: 1px solid var(--bd-border);
+  }
+  .switch-row:last-child { border-bottom: none; }
+  .switch-row .t { flex: 1; min-width: 0; }
+  .switch-row .t b { display: block; font-size: 15px; font-weight: 600; }
+  .switch-row .t span { display: block; font-size: 12px; color: var(--bd-text-muted); }
+  .switch {
+    width: 51px; height: 31px; flex-shrink: 0;
+    border: none; border-radius: 999px;
+    background: var(--bd-surface-muted);
+    position: relative; cursor: pointer; padding: 0;
+  }
+  .switch .knob {
+    position: absolute; top: 2px; left: 2px;
+    width: 27px; height: 27px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    transition: transform .18s ease-out;
+  }
+  .switch[aria-checked="true"] { background: var(--bd-success); }
+  .switch[aria-checked="true"] .knob { transform: translateX(20px); }
+
+  /* Theme preset carousel */
+  .preset-strip { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
+  .preset-strip::-webkit-scrollbar { display: none; }
+  .preset {
+    flex-shrink: 0; width: 132px;
+    border: 2px solid var(--bd-border);
+    border-radius: 16px; overflow: hidden;
+    background: var(--bd-surface); cursor: pointer;
+    font-family: inherit; padding: 0;
+  }
+  .preset[data-active="true"] { border-color: var(--bd-primary); }
+  .preset-sw { height: 64px; display: flex; }
+  .preset-sw i { flex: 1; }
+  .preset-name { font-size: 12px; font-weight: 700; color: var(--bd-text); padding: 8px 10px; text-align: left; }
+
+  /* Lists */
+  .list-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--bd-border);
+  }
+  .list-row:last-child { border-bottom: none; }
+  .avatar {
+    width: 40px; height: 40px; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--bd-surface-muted);
+    display: grid; place-items: center;
+    font-size: 14px; font-weight: 800; color: var(--bd-text-muted);
+  }
+  .pill {
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+    padding: 3px 8px; border-radius: 999px; flex-shrink: 0;
+  }
+  .pill--ok { background: rgba(22,163,74,.12); color: var(--bd-success); }
+  .pill--warn { background: rgba(220,38,38,.1); color: var(--bd-danger); }
+  .pill--muted { background: var(--bd-surface-muted); color: var(--bd-text-muted); }
+
+  /* Sticky save */
+  .savebar {
+    position: sticky; bottom: 0;
+    margin: 20px -16px calc(-20px - env(safe-area-inset-bottom));
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--bd-bg);
+    border-top: 1px solid var(--bd-border);
+  }
+  .save-btn {
+    width: 100%; height: 50px; border: none; cursor: pointer;
+    border-radius: var(--btn-radius);
+    background: var(--bd-primary); color: var(--bd-primary-text);
+    font-family: inherit; font-size: 16px; font-weight: 800;
+  }
+  .save-btn:active { transform: scale(.98); }
+  .save-btn:disabled { opacity: .5; }
+
+  .error-block {
+    margin-top: 12px; font-size: 13px; font-weight: 600;
+    color: var(--bd-danger);
+    background: rgba(220,38,38,.08);
+    border: 1px solid rgba(220,38,38,.25);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .error-block[hidden] { display: none; }
+  .ok-block {
+    margin-top: 12px; font-size: 13px; font-weight: 600;
+    color: var(--bd-success);
+    background: rgba(22,163,74,.1);
+    border: 1px solid rgba(22,163,74,.25);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .ok-block[hidden] { display: none; }
+
+  /* Skeleton */
+  .skel { border-radius: 8px; background: var(--bd-surface-muted); position: relative; overflow: hidden; }
+  .skel::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+    animation: shimmer 1.2s infinite;
+  }
+  html[data-theme="dark"] .skel::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  /* Sheet + dialog + toast */
+  .scrim {
+    position: absolute; inset: 0; z-index: 40;
+    background: var(--bd-scrim);
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; z-index: 42; left: 0; right: 0; bottom: 0;
+    max-height: 78%;
+    background: var(--bd-surface);
+    border-radius: 24px 24px 0 0;
+    transform: translateY(105%);
+    transition: transform .28s cubic-bezier(.2,.9,.24,1);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sheet.show { transform: translateY(0); }
+  .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--bd-border); margin: 10px auto 2px; flex-shrink: 0; }
+  .sheet-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--bd-border); }
+  .sheet-head b { font-size: 16px; font-weight: 800; flex: 1; }
+  .sheet-body { overflow-y: auto; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .dialog {
+    position: absolute; z-index: 43;
+    left: 24px; right: 24px; top: 50%;
+    transform: translateY(-50%) scale(.95);
+    background: var(--bd-surface);
+    border: 1px solid var(--bd-border);
+    border-radius: 20px; padding: 18px;
+    opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s;
+  }
+  .dialog.show { opacity: 1; pointer-events: auto; transform: translateY(-50%) scale(1); }
+  .dialog h3 { font-size: 17px; font-weight: 800; }
+  .dialog p { margin-top: 6px; font-size: 13px; color: var(--bd-text-muted); line-height: 1.5; }
+  .dialog-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-ghost {
+    flex: 1; height: 46px; border-radius: 14px; cursor: pointer;
+    border: 1px solid var(--bd-border); background: none;
+    font-family: inherit; font-size: 15px; font-weight: 700; color: var(--bd-text);
+  }
+  .btn-danger {
+    flex: 1; height: 46px; border: none; border-radius: 14px; cursor: pointer;
+    background: var(--bd-danger); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+  }
+  .btn-primary-sm {
+    flex: 1; height: 46px; border: none; border-radius: 14px; cursor: pointer;
+    background: var(--bd-primary); color: var(--bd-primary-text);
+    font-family: inherit; font-size: 15px; font-weight: 700;
+  }
+  .toast {
+    position: absolute; z-index: 50;
+    left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: var(--bd-text); color: var(--bd-bg);
+    font-size: 13px; font-weight: 700;
+    padding: 10px 16px; border-radius: 12px;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .empty {
+    text-align: center; padding: 36px 24px;
+    border: 1px dashed var(--bd-border); border-radius: var(--card-radius);
+    margin-top: 12px;
+  }
+  .empty .glyph {
+    width: 56px; height: 56px; margin: 0 auto;
+    border-radius: 18px; background: var(--bd-surface-muted);
+    display: grid; place-items: center; color: var(--bd-text-muted);
+  }
+  .empty b { display: block; margin-top: 12px; font-size: 16px; }
+  .empty p { margin-top: 4px; font-size: 13px; color: var(--bd-text-muted); }
+
+  .seg { display: flex; background: var(--bd-surface-muted); border-radius: 12px; padding: 3px; gap: 2px; margin-top: 12px; }
+  .seg button {
+    flex: 1; border: none; background: none; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    color: var(--bd-text-muted); padding: 8px 0; border-radius: 9px;
+  }
+  .seg button[data-active="true"] { background: var(--bd-surface); color: var(--bd-text); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet, .dialog, .toast { transition: opacity .15s ease; transform: none !important; }
+    .skel::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="topbar">
+    <h1 id="topTitle">Settings</h1>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle light and dark preview">
+      <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+    </button>
+  </div>
+
+  <div class="stage" id="stage">
+    <!-- HOME VIEW -->
+    <div class="view" id="view-home">
+      <div class="search" role="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="homeSearch" type="search" placeholder="Search settings" aria-label="Search settings">
+      </div>
+      <div id="homeGroups"></div>
+    </div>
+
+    <!-- SECTION VIEW -->
+    <div class="view" id="view-section" hidden>
+      <div class="back-row">
+        <button class="back-btn" id="backBtn" type="button" aria-label="Back to settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg>
+          Settings
+        </button>
+      </div>
+      <h2 class="section-title" id="secTitle"></h2>
+      <p class="section-desc" id="secDesc"></p>
+      <div id="secBody"></div>
+      <div class="savebar" id="saveBar" hidden>
+        <button class="save-btn" id="saveBtn" type="button">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+
+  <!-- Banking add/edit sheet -->
+  <div class="sheet" id="bankSheet" role="dialog" aria-label="Bank account">
+    <div class="grab"></div>
+    <div class="sheet-head"><b id="bankSheetTitle">Add bank account</b></div>
+    <div class="sheet-body">
+      <div class="field"><label>Bank name</label><input type="text" value="First Bank" id="bankName"></div>
+      <div class="field"><label>Account name</label><input type="text" value="BigDrops Ltd"></div>
+      <div class="field"><label>Account number</label><input type="text" inputmode="numeric" value="3012345678"></div>
+      <div class="field"><label>Sort code</label><input type="text" inputmode="numeric" value="011152303"></div>
+      <div class="savebar" style="margin:16px -16px -16px"><button class="save-btn" type="button" data-close data-toast="Bank account saved">Save account</button></div>
+    </div>
+  </div>
+
+  <!-- Team invite dialog -->
+  <div class="dialog" id="inviteDialog" role="alertdialog" aria-label="Invite member">
+    <h3>Invite team member</h3>
+    <p>They join this workspace with the role you choose.</p>
+    <div class="field" style="margin-top:12px"><label>Email</label><input type="email" id="inviteEmail" placeholder="teammate@company.com"></div>
+    <div class="field"><label>Role</label><select id="inviteRole"><option>Member</option><option>Admin</option><option>Viewer</option></select></div>
+    <div class="error-block" id="inviteError" hidden>Email is required to send an invite.</div>
+    <div class="dialog-actions">
+      <button class="btn-ghost" type="button" data-close>Cancel</button>
+      <button class="btn-primary-sm" type="button" id="inviteSend">Send invite</button>
+    </div>
+  </div>
+
+  <!-- Archive confirm dialog -->
+  <div class="dialog" id="archiveDialog" role="alertdialog" aria-label="Confirm archive">
+    <h3 id="archiveTitle">Archive company?</h3>
+    <p>Archived items leave the active list but stay restorable.</p>
+    <div class="dialog-actions">
+      <button class="btn-ghost" type="button" data-close>Cancel</button>
+      <button class="btn-danger" type="button" data-close data-toast="Archived. Restore anytime.">Archive</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // Faithful capability map: 4 groups, 17 sections. Every row drills
+  // into a section that preserves the live controls listed in its body.
+  var GROUPS = [
+    { label: 'Account', items: [
+      { id: 'user', label: 'User Profile', sub: 'Password, device, session' },
+      { id: 'workspace', label: 'Switch Workspace', sub: 'Current workspace' },
+    ]},
+    { label: 'Workspace', items: [
+      { id: 'company-manage', label: 'Company Management', sub: 'Companies, archive, restore' },
+      { id: 'company', label: 'Company Info', sub: 'Name, tagline, address, contacts' },
+      { id: 'branding', label: 'Logo & Branding', sub: 'Logo upload' },
+      { id: 'banking', label: 'Banking', sub: '2 accounts' },
+      { id: 'signatories', label: 'Signatories', sub: 'People who sign' },
+    ]},
+    { label: 'Preferences', items: [
+      { id: 'theme', label: 'Theme & Appearance', sub: 'Light · 12 presets' },
+      { id: 'notifications', label: 'Notifications', sub: 'Alerts and reminders' },
+      { id: 'dashboard', label: 'Dashboard Layout', sub: 'KPI cards' },
+      { id: 'documents', label: 'Document Controls', sub: 'Fillable writing' },
+      { id: 'prefixes', label: 'Document Prefixes', sub: 'Numbering prefixes' },
+      { id: 'security', label: 'App Lock', sub: 'PIN and biometrics' },
+    ]},
+    { label: 'System', items: [
+      { id: 'team', label: 'Team', sub: '3 members' },
+      { id: 'devices', label: 'Devices', sub: 'Installations and codes' },
+      { id: 'archives', label: 'Archives', sub: 'Restore anything' },
+      { id: 'tenant-debug', label: 'Tenant Debug', sub: 'Read-only diagnostics' },
+    ]},
+  ];
+
+  var SECTIONS = {
+    'user': { title: 'User Profile', desc: 'Sign-in, password, and this device.', save: false, body:
+      '<div class="block"><div class="block-label">Password</div><div class="card">' +
+      '<div class="field"><label>Current password</label><input type="password" placeholder="••••••••"></div>' +
+      '<div class="field"><label>New password</label><input type="password" placeholder="Minimum 8 characters"></div>' +
+      '<div class="field"><label>Confirm new password</label><input type="password" placeholder="Repeat new password"></div>' +
+      '</div></div>' +
+      '<div class="block"><div class="block-label">This device</div><div class="card">' +
+      '<div class="switch-row"><div class="t"><b>Registered on this device</b><span>Push and offline access</span></div>' +
+      '<button class="switch" type="button" role="switch" aria-checked="true" data-switch><span class="knob"></span></button></div>' +
+      '</div></div>' },
+    'workspace': { title: 'Switch Workspace', desc: 'Workspaces you belong to.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="list-row"><div class="avatar">BD</div><div class="t" style="flex:1;min-width:0"><b style="font-size:15px">BigDrops Ltd</b><div style="font-size:12px;color:var(--bd-text-muted)">Current workspace</div></div><span class="pill pill--ok">Current</span></div>' +
+      '<div class="list-row"><div class="avatar">AD</div><div class="t" style="flex:1;min-width:0"><b style="font-size:15px">Adaba Ventures</b><div style="font-size:12px;color:var(--bd-text-muted)">Tap to switch</div></div></div>' +
+      '</div></div>' },
+    'company-manage': { title: 'Company Management', desc: 'Companies in this workspace. Archiving never deletes.', save: false, body:
+      '<div class="block"><div class="block-label">Active</div><div class="card">' +
+      '<div class="list-row"><div class="avatar">BD</div><div style="flex:1;min-width:0"><b style="font-size:15px">BigDrops Ltd</b><div style="font-size:12px;color:var(--bd-text-muted)">RC 1842204</div></div><span class="pill pill--ok">Active</span></div>' +
+      '<div class="list-row"><div class="avatar">AD</div><div style="flex:1;min-width:0"><b style="font-size:15px">Adaba Ventures</b><div style="font-size:12px;color:var(--bd-text-muted)">RC 2011557</div></div><button class="btn-ghost" style="flex:0 0 auto;height:38px;padding:0 14px" type="button" data-archive="Adaba Ventures">Archive</button></div>' +
+      '</div></div>' +
+      '<div class="block"><div class="block-label">Archived</div><div class="card">' +
+      '<div class="list-row"><div class="avatar">OK</div><div style="flex:1;min-width:0"><b style="font-size:15px">Okafor &amp; Co</b><div style="font-size:12px;color:var(--bd-text-muted)">Archived Mar 2026</div></div><button class="btn-ghost" style="flex:0 0 auto;height:38px;padding:0 14px" type="button" data-toast="Company restored">Restore</button></div>' +
+      '</div></div>' },
+    'company': { title: 'Company Info', desc: 'Used on document headers and communications.', save: true, body:
+      '<div class="block"><div class="card">' +
+      '<div class="field"><label>Legal business name</label><input type="text" value="BigDrops Ltd"></div>' +
+      '<div class="field"><label>Tagline / motto</label><input type="text" value="Power, delivered"></div>' +
+      '<div class="field"><label>Physical address</label><input type="text" value="14 Marina Road, Lagos"></div>' +
+      '<div class="field"><label>City / State</label><input type="text" value="Lagos"></div>' +
+      '<div class="field"><label>Phone number</label><input type="tel" value="+234 801 234 5678"></div>' +
+      '<div class="field"><label>Official email</label><input type="email" value="hello@bigdrops.com"></div>' +
+      '</div></div>' },
+    'branding': { title: 'Logo & Branding', desc: 'Logo appears on documents and PDFs.', save: true, body:
+      '<div class="block"><div class="card" style="text-align:center">' +
+      '<div class="avatar" style="width:72px;height:72px;margin:0 auto;font-size:22px">BD</div>' +
+      '<p style="margin-top:10px;font-size:13px;color:var(--bd-text-muted)">PNG or JPG under 5 MB</p>' +
+      '<button class="btn-ghost" style="margin-top:10px;padding:0 18px;height:44px" type="button" data-toast="Logo uploaded — save to apply">Upload logo</button>' +
+      '<div class="pill pill--ok" style="display:inline-block;margin-top:10px">Saved</div>' +
+      '</div></div>' },
+    'banking': { title: 'Banking', desc: 'Accounts printed on invoices and receipts.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="list-row"><div class="avatar">FB</div><div style="flex:1;min-width:0"><b style="font-size:15px">First Bank · 3012345678</b><div style="font-size:12px;color:var(--bd-text-muted)">BigDrops Ltd · 011152303</div></div><span class="pill pill--ok">Default</span></div>' +
+      '<div class="list-row"><div class="avatar">GT</div><div style="flex:1;min-width:0"><b style="font-size:15px">GTBank · 0123456789</b><div style="font-size:12px;color:var(--bd-text-muted)">Projects · 058152036</div></div></div>' +
+      '</div></div>' +
+      '<div class="block"><button class="btn-ghost" style="width:100%;height:48px" type="button" data-sheet="bankSheet">Add bank account</button></div>' },
+    'signatories': { title: 'Signatories', desc: 'People whose signatures appear on documents.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="list-row"><div class="avatar">JA</div><div style="flex:1;min-width:0"><b style="font-size:15px">J. Adeyemi</b><div style="font-size:12px;color:var(--bd-text-muted)">Managing Director · signature on file</div></div></div>' +
+      '<div class="list-row"><div class="avatar">NO</div><div style="flex:1;min-width:0"><b style="font-size:15px">N. Okafor</b><div style="font-size:12px;color:var(--bd-text-muted)">Accountant</div></div></div>' +
+      '</div></div>' +
+      '<div class="block"><button class="btn-ghost" style="width:100%;height:48px" type="button" data-toast="Signatory editor opens here">Add signatory</button></div>' },
+    'theme': { title: 'Theme & Appearance', desc: 'Applies instantly across the app.', save: false, body:
+      '<div class="block"><div class="block-label">Mode</div>' +
+      '<div class="seg" id="modeSeg"><button type="button" data-active="true">Light</button><button type="button">Dark</button><button type="button">System</button></div></div>' +
+      '<div class="block"><div class="block-label">Presets · <span id="presetCount">12 new + 6 built in</span></div><div class="preset-strip" id="presetStrip"></div></div>' },
+    'notifications': { title: 'Notifications', desc: 'What the app may tell you about.', save: false, body:
+      '<div class="block"><div class="card"><div id="notifRows"></div></div></div>' },
+    'dashboard': { title: 'Dashboard Layout', desc: 'Choose which KPI cards appear on Home.', save: false, body:
+      '<div class="block"><div class="card"><div id="kpiRows"></div></div></div>' },
+    'documents': { title: 'Document Controls', desc: 'Fillable-writing controls per document family.', save: false, body:
+      '<div class="block"><div class="card"><div id="docRows"></div></div></div>' },
+    'prefixes': { title: 'Document Prefixes', desc: 'Prefixes seed every new document number.', save: true, body:
+      '<div class="block"><div class="card"><div id="prefixRows"></div></div></div>' },
+    'security': { title: 'App Lock', desc: 'Lock BIGDROPS behind PIN or biometrics.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="switch-row"><div class="t"><b>Require unlock on open</b><span>Trigger: every app open</span></div><button class="switch" type="button" role="switch" aria-checked="true" data-switch><span class="knob"></span></button></div>' +
+      '<div class="switch-row"><div class="t"><b>Biometric unlock</b><span>Verification: fingerprint or face</span></div><button class="switch" type="button" role="switch" aria-checked="false" data-switch><span class="knob"></span></button></div>' +
+      '</div></div>' +
+      '<div class="block"><div class="block-label">How it works</div><div class="card"><p style="font-size:13px;color:var(--bd-text-muted);line-height:1.55">Lock engages on the trigger above. Unlock verifies with PIN first, biometrics when enabled. Three failed attempts keep the app locked for 60 seconds.</p></div></div>' },
+    'team': { title: 'Team', desc: 'Who can open this workspace, and as what.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="list-row"><div class="avatar">JA</div><div style="flex:1;min-width:0"><b style="font-size:15px">jaiyewisdom@gmail.com</b><div style="font-size:12px;color:var(--bd-text-muted)">Owner</div></div><span class="pill pill--muted">You</span></div>' +
+      '<div class="list-row"><div class="avatar">NO</div><div style="flex:1;min-width:0"><b style="font-size:15px">ngozi@bigdrops.com</b><div style="font-size:12px;color:var(--bd-text-muted)">Admin</div></div></div>' +
+      '<div class="list-row"><div class="avatar">TU</div><div style="flex:1;min-width:0"><b style="font-size:15px">tunde@bigdrops.com</b><div style="font-size:12px;color:var(--bd-text-muted)">Member</div></div></div>' +
+      '</div></div>' +
+      '<div class="block"><button class="btn-ghost" style="width:100%;height:48px" type="button" data-dialog="inviteDialog">Invite member</button></div>' },
+    'devices': { title: 'Devices', desc: 'Installations signed into this workspace.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="list-row"><div class="avatar">A1</div><div style="flex:1;min-width:0"><b style="font-size:15px">SM-A156B · Store phone</b><div style="font-size:12px;color:var(--bd-text-muted)">Seen today · code BD-4F2K</div></div><span class="pill pill--ok">Active</span></div>' +
+      '<div class="list-row"><div class="avatar">W2</div><div style="flex:1;min-width:0"><b style="font-size:15px">Chrome · Office</b><div style="font-size:12px;color:var(--bd-text-muted)">Seen yesterday · code BD-9Q1D</div></div><span class="pill pill--muted">Idle</span></div>' +
+      '</div></div>' },
+    'archives': { title: 'Archives', desc: 'Deleted documents rest here before they are gone for good.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="list-row"><div class="avatar">IN</div><div style="flex:1;min-width:0"><b style="font-size:15px">INV-2026-0041</b><div style="font-size:12px;color:var(--bd-text-muted)">Acme Ltd · archived Mar 2026</div></div><button class="btn-ghost" style="flex:0 0 auto;height:38px;padding:0 14px" type="button" data-toast="INV-2026-0041 restored">Restore</button></div>' +
+      '<div class="list-row"><div class="avatar">QT</div><div style="flex:1;min-width:0"><b style="font-size:15px">QTN-2026-0108</b><div style="font-size:12px;color:var(--bd-text-muted)">Acme Ltd · archived Feb 2026</div></div><button class="btn-ghost" style="flex:0 0 auto;height:38px;padding:0 14px" type="button" data-toast="QTN-2026-0108 restored">Restore</button></div>' +
+      '</div></div>' },
+    'tenant-debug': { title: 'Tenant Debug', desc: 'Read-only diagnostics. Nothing here edits data.', save: false, body:
+      '<div class="block"><div class="card">' +
+      '<div class="list-row"><div style="flex:1;min-width:0"><b style="font-size:15px">Schema</b><div style="font-size:12px;color:var(--bd-text-muted)">entity_bigrops_ltd</div></div><span class="pill pill--ok">Ready</span></div>' +
+      '<div class="list-row"><div style="flex:1;min-width:0"><b style="font-size:15px">RLS policies</b><div style="font-size:12px;color:var(--bd-text-muted)">142 active</div></div><span class="pill pill--ok">Ready</span></div>' +
+      '<div class="list-row"><div style="flex:1;min-width:0"><b style="font-size:15px">Migrations</b><div style="font-size:12px;color:var(--bd-text-muted)">Head at 2026090614</div></div><span class="pill pill--ok">Ready</span></div>' +
+      '</div></div>' },
+  };
+
+  var PRESETS = [
+    ['Slate Navy', '#f0f4f8', '#1e3a5f'], ['Citrus', '#fafafa', '#b8e954'],
+    ['Vercel', '#fcfcfc', '#000000'], ['Supabase', '#fcfcfc', '#3ddc97'],
+    ['Linear', '#fbfbfb', '#6e78d5'], ['Claude', '#faf8f1', '#cb6441'],
+    ['Ocean Teal', '#f0fafa', '#0d9488'], ['Amber Terracotta', '#faf7f2', '#b45309'],
+  ];
+
+  var NOTIFS = [
+    ['Overdue reminders', 'Nudge clients when invoices pass due', true],
+    ['Payment received', 'Confirm incoming payments instantly', true],
+    ['Low stock', 'Warn when library items run low', false],
+    ['Weekly summary', 'Monday totals by email', false],
+  ];
+
+  var KPIS = [
+    ['Total invoiced', 'Lifetime sales on invoices', true],
+    ['Collected', 'Cash received this period', true],
+    ['Outstanding', 'Unpaid balance across clients', true],
+    ['Overdue', 'Past-due balance', false],
+  ];
+
+  var DOCS = [
+    ['Invoices', 'Handwriting font and ink color', true],
+    ['Quotations', 'Handwriting font and ink color', true],
+    ['Waybills', 'Handwriting font and ink color', true],
+    ['CSR records', 'Handwriting font and ink color', true],
+  ];
+
+  var PREFIXES = [
+    ['Invoices', 'INV'], ['Quotations', 'QTN'], ['Waybills', 'WBL'],
+    ['CSR records', 'CSR'], ['Letters', 'LTR'], ['Receipts', 'RCT'],
+  ];
+
+  function switchRow(t, sub, on) {
+    return '<div class="switch-row"><div class="t"><b>' + t + '</b><span>' + sub + '</span></div>' +
+      '<button class="switch" type="button" role="switch" aria-checked="' + on + '" data-switch><span class="knob"></span></button></div>';
+  }
+
+  function renderHome(filter) {
+    var host = document.getElementById('homeGroups');
+    host.innerHTML = '';
+    var q = (filter || '').trim().toLowerCase();
+    GROUPS.forEach(function (g) {
+      var items = g.items.filter(function (it) {
+        return !q || it.label.toLowerCase().indexOf(q) > -1 || it.sub.toLowerCase().indexOf(q) > -1;
+      });
+      if (!items.length) return;
+      var html = '<div class="group-label">' + g.label + '</div><div class="group-card">';
+      items.forEach(function (it) {
+        html += '<button class="nav-row" type="button" data-section="' + it.id + '">' +
+          '<span class="nav-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg></span>' +
+          '<span class="nav-text"><b>' + it.label + '</b><span>' + it.sub + '</span></span>' +
+          '<svg class="nav-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6"/></svg>' +
+          '</button>';
+      });
+      html += '</div>';
+      host.innerHTML += html;
+    });
+    if (!host.innerHTML) host.innerHTML = '<div class="empty"><b>No matches</b><p>Try a different search term.</p></div>';
+  }
+
+  function skeletonThen(el, html, done) {
+    el.innerHTML = '<div class="block"><div class="card">' +
+      '<div class="skel" style="height:16px;width:45%"></div>' +
+      '<div class="skel" style="height:48px;margin-top:10px"></div>' +
+      '<div class="skel" style="height:48px;margin-top:10px"></div>' +
+      '</div></div>';
+    setTimeout(function () { el.innerHTML = html; bindDynamic(el); if (done) done(); }, 350);
+  }
+
+  function bindDynamic(scope) {
+    scope.querySelectorAll('[data-switch]').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        btn.setAttribute('aria-checked', String(btn.getAttribute('aria-checked') !== 'true'));
+      });
+    });
+    scope.querySelectorAll('[data-sheet]').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () { openSheet(btn.dataset.sheet); });
+    });
+    scope.querySelectorAll('[data-dialog]').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () { openDialog(btn.dataset.dialog); });
+    });
+    scope.querySelectorAll('[data-archive]').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        document.getElementById('archiveTitle').textContent = 'Archive ' + btn.dataset.archive + '?';
+        openDialog('archiveDialog');
+      });
+    });
+    scope.querySelectorAll('[data-toast]').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () { toast(btn.dataset.toast); });
+    });
+  }
+
+  function openSection(id) {
+    var s = SECTIONS[id];
+    if (!s) return;
+    document.getElementById('topTitle').textContent = s.title;
+    document.getElementById('secTitle').textContent = s.title;
+    document.getElementById('secDesc').textContent = s.desc;
+    document.getElementById('saveBar').hidden = !s.save;
+    showView('view-section');
+    var body = document.getElementById('secBody');
+    skeletonThen(body, s.body, function () {
+      if (id === 'theme') renderPresets();
+      if (id === 'notifications') renderSwitchList('notifRows', NOTIFS);
+      if (id === 'dashboard') renderSwitchList('kpiRows', KPIS);
+      if (id === 'documents') renderSwitchList('docRows', DOCS);
+      if (id === 'prefixes') renderPrefixes();
+    });
+    document.getElementById('stage').scrollTop = 0;
+  }
+
+  function renderSwitchList(hostId, rows) {
+    var host = document.getElementById(hostId);
+    if (!host) return;
+    host.innerHTML = rows.map(function (r) { return switchRow(r[0], r[1], r[2]); }).join('');
+    bindDynamic(host.parentNode);
+  }
+
+  function renderPrefixes() {
+    var host = document.getElementById('prefixRows');
+    if (!host) return;
+    var card = host.closest('.card');
+    card.innerHTML = PREFIXES.map(function (p) {
+      return '<div class="field"><label>' + p[0] + '</label><input type="text" value="' + p[1] + '"></div>';
+    }).join('');
+  }
+
+  function renderPresets() {
+    var host = document.getElementById('presetStrip');
+    if (!host) return;
+    host.innerHTML = '';
+    PRESETS.forEach(function (p, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'preset';
+      b.dataset.active = i === 0 ? 'true' : 'false';
+      b.innerHTML = '<span class="preset-sw"><i style="background:' + p[1] + '"></i><i style="background:' + p[1] + '"></i><i style="background:' + p[2] + '"></i></span>' +
+        '<span class="preset-name">' + p[0] + '</span>';
+      b.addEventListener('click', function () {
+        host.querySelectorAll('.preset').forEach(function (x) { x.dataset.active = 'false'; });
+        b.dataset.active = 'true';
+        toast(p[0] + ' applied');
+      });
+      host.appendChild(b);
+    });
+  }
+
+  function showView(id) {
+    document.getElementById('view-home').hidden = id !== 'view-home';
+    document.getElementById('view-section').hidden = id !== 'view-section';
+    document.getElementById('topTitle').textContent = id === 'view-home' ? 'Settings' : document.getElementById('secTitle').textContent;
+  }
+
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+
+  function openSheet(id) {
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function openDialog(id) {
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeOverlays() {
+    document.getElementById('scrim').classList.remove('show');
+    document.querySelectorAll('.sheet.show,.dialog.show').forEach(function (el) { el.classList.remove('show'); });
+  }
+
+  document.getElementById('scrim').addEventListener('click', closeOverlays);
+  document.getElementById('backBtn').addEventListener('click', function () { showView('view-home'); });
+  document.getElementById('saveBtn').addEventListener('click', function () { toast('Changes saved'); });
+  document.getElementById('homeSearch').addEventListener('input', function (e) { renderHome(e.target.value); });
+  document.getElementById('homeGroups').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-section]');
+    if (btn) openSection(btn.dataset.section);
+  });
+  // Mode segmented control renders inside the theme section, so its
+  // clicks are handled by delegation on the section body.
+  document.getElementById('secBody').addEventListener('click', function (e) {
+    var segBtn = e.target.closest('#modeSeg button');
+    if (!segBtn) return;
+    var seg = document.getElementById('modeSeg');
+    seg.querySelectorAll('button').forEach(function (x) { x.dataset.active = 'false'; });
+    segBtn.dataset.active = 'true';
+    toast('Mode: ' + segBtn.textContent);
+  });
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var html = document.documentElement;
+    var dark = html.dataset.theme !== 'dark';
+    html.dataset.theme = dark ? 'dark' : 'light';
+    document.getElementById('themeIconSun').style.display = dark ? 'none' : '';
+    document.getElementById('themeIconMoon').style.display = dark ? '' : 'none';
+    toast(dark ? 'Dark preview' : 'Light preview');
+  });
+  document.getElementById('inviteSend').addEventListener('click', function () {
+    var email = document.getElementById('inviteEmail').value.trim();
+    var err = document.getElementById('inviteError');
+    if (!email || email.indexOf('@') < 0) { err.hidden = false; return; }
+    err.hidden = true;
+    closeOverlays();
+    toast('Invite sent');
+  });
+
+  renderHome('');
+</script>
+</body>
+</html>

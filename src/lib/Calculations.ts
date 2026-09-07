@@ -767,3 +767,28 @@ function _legacyWhtValue(
 export function computeDocument(raw: RawDocumentInput): DocumentResult {
   return calculateDocument(normalizeDocumentInput(raw))
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REVERSE CALCULATION: gross → net + VAT
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ReverseVatResult {
+  net: number
+  vat: number
+}
+
+/**
+ * Given a gross amount (inclusive of VAT) and a VAT rate percentage,
+ * return the net amount and VAT portion.
+ *
+ *   net = gross / (1 + rate/100)
+ *   vat = gross - net
+ */
+export function reverseVat(gross: number, vatRate: number): ReverseVatResult {
+  const g = new Decimal(gross)
+  const r = new Decimal(vatRate)
+  const divisor = new Decimal(1).plus(r.dividedBy(100))
+  const net = g.dividedBy(divisor)
+  const vat = g.minus(net)
+  return { net: net.toNumber(), vat: vat.toNumber() }
+}

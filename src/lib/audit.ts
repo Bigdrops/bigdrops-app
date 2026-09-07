@@ -574,3 +574,20 @@ export async function recordLetterArchived(tenantClient: TenantClient, letterId:
     p_source: 'web',
   })
 }
+
+export async function recordExpenseRecorded(
+  tenantClient: TenantClient,
+  entryId: string,
+  amount: number,
+  category: string,
+) {
+  const actor = await getActor()
+  return tenantClient.rpc('record_expense_recorded', {
+    p_entry_id: entryId,
+    p_amount: amount,
+    p_category: category,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+  })
+}

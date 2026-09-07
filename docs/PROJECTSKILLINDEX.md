@@ -10,10 +10,10 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 107 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs) |
+| `.agents/skills/` | 109 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs) |
 | `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **108 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **110 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 > **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and in `.commandcode/skills/` (purged duplicate — not indexed because they already exist in `.agents`/`.claude`).
 
@@ -162,6 +162,8 @@ Installed on 2026-09-01. Animation construction, review, UI library selection, p
 | 106 | prototype | .agents/skills/prototype/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\prototype\SKILL.md | Build multiple UI variants behind a visual picker — divergence skill for design exploration, 3-5 genuinely different directions per run |
 | 107 | review-animations | .agents/skills/review-animations/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\review-animations\SKILL.md | Review animation code against high craft bar — 10 non-negotiable standards, aggressive escalation triggers, block/approve verdict |
 | 108 | write-swift | .agents/skills/write-swift/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\write-swift\SKILL.md | Modern Swift — value types, Swift 6 concurrency (@concurrent, actors), protocols/generics (some vs any), performance, ARC, Swift Testing |
+| 109 | material-3 | .agents/skills/material-3/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\material-3\SKILL.md | Google Material Design 3 / Material You — tokens, 30+ components, theming, M3 Expressive, Compose-first guidance, web CSS fallback |
+| 110 | mobile-android-design | .agents/skills/mobile-android-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mobile-android-design\SKILL.md | Native Android app design — MD3/Compose patterns, adaptive layouts, navigation, dynamic color, 48dp targets, accessibility |
 
 ---
 ## `.claude/skills/`
@@ -203,6 +205,8 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       ├── accessibility/
 │       ├── deploy-to-vercel/
 │       ├── mobile-app-ui-design/
+│       ├── material-3/
+│       ├── mobile-android-design/
 │       ├── pdf-rendering-correctness/
 │       ├── react-pdf/
 │       ├── redesign-existing-projects/
@@ -233,5 +237,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: September 1, 2026 — added 12 skills from animation/UI toolkit installs (animate, animate-expo, animation-vocabulary, apple-design, ask-sonner, emil-design-eng, find-animation-opportunities, improve-animations, pick-ui-library, prototype, review-animations, write-swift). Total .agents/skills: 108.*
+*Last updated: September 7, 2026 — added material-3 and mobile-android-design skills (user install). Total .agents/skills: 110.*
 ```

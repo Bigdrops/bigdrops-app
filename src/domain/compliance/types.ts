@@ -36,6 +36,12 @@ export interface WhtReceipt {
   updated_at: string
 }
 
+export interface EvidenceFile {
+  name: string
+  url: string
+  size?: number
+}
+
 export interface TaxInputEntry {
   id: string
   settings_id: number
@@ -47,6 +53,8 @@ export interface TaxInputEntry {
   vat_amount: number
   is_recoverable: boolean
   notes: string | null
+  payment_reference: string | null
+  evidence: EvidenceFile[]
   created_at: string
   updated_at: string
 }
