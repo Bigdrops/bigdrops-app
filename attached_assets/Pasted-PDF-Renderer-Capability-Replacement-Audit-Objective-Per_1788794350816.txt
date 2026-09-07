@@ -1,0 +1,348 @@
+PDF Renderer Capability Replacement Audit
+
+Objective
+
+Perform a strict, read-only capability replacement audit to determine whether the current "@react-pdf/renderer" PDF stack can realistically be retired and replaced by the new "pdfcn" stack and its underlying renderer(s).
+
+This is NOT a PRD rewrite, standards rewrite, implementation task, or migration task.
+
+Do not modify application code, standards, PRDs, dependencies, configuration, or templates.
+
+The central question is:
+
+«Does the new pdfcn-based stack provide enough of the PDF capabilities BIGDROPS currently requires, as demonstrated by its standards and strongest production Invoice and Quotation industry templates, to make continued use of "@react-pdf/renderer" unnecessary?»
+
+1. REQUIRED SOURCES
+
+Read and inspect:
+
+1. "AGENTS.md"
+2. "docs/PROJECTSKILLINDEX.md"
+3. Every relevant file under "docs/standard/"
+4. The current PDF rendering architecture
+5. All relevant Invoice PDF implementation
+6. All relevant Quotation PDF implementation
+7. The strongest existing Invoice industry template
+8. The strongest existing Quotation industry template
+9. Existing PDF customization, column, delivery, generation, asset, pagination, and prepared-data infrastructure
+10. Current pdfcn source/documentation and its underlying renderer options
+
+Do not assume the strongest Invoice or Quotation template in advance.
+
+Inspect the available implementations and identify which Invoice and Quotation industry templates exercise the largest and most important BIGDROPS capability surface. State why they were selected as the benchmark.
+
+2. STANDARDS-FIRST ANALYSIS
+
+For each relevant standard, determine:
+
+- What requirement does the standard establish?
+- Is that requirement business/domain behavior, PDF behavior, architectural behavior, or renderer-specific implementation?
+- Where is that requirement currently implemented?
+- Does the Invoice or Quotation benchmark depend on it?
+- Would the requirement still exist after React-PDF is removed?
+
+Do NOT assume a standard becomes obsolete merely because pdfcn provides a similar feature.
+
+Do NOT modify any standard.
+
+The purpose is to discover what capabilities the new renderer must satisfy.
+
+3. CAPABILITY INVENTORY
+
+Build a complete capability inventory from the standards and the two benchmark templates.
+
+At minimum investigate:
+
+- PDF generation
+- A4 physical output
+- portrait
+- landscape
+- page dimensions
+- margins
+- typography
+- font loading/embedding
+- branding
+- logos
+- images/assets
+- document header
+- document metadata
+- commercial-party presentation
+- seller/supplier/customer information
+- configurable columns
+- column visibility
+- column ordering
+- row numbering
+- table rendering
+- long tables
+- table pagination
+- repeated table headers
+- row keep-together behavior
+- section keep-together behavior
+- page breaks
+- automatic pagination
+- totals placement
+- VAT/tax presentation
+- discounts
+- payment information
+- notes/terms
+- signatures
+- QR codes
+- page numbers
+- headers/footers
+- fixed/repeating elements
+- customization
+- themes/design presets
+- compact output
+- one-page / fit-to-page behavior
+- preview
+- download
+- PDF blob generation
+- web delivery
+- native delivery
+- asset handling
+- error handling
+- prepared render models
+- separation of financial calculations from rendering
+- document identity/lineage
+- audit-related requirements
+- any other capability discovered from the standards or benchmark templates
+
+Do not limit the inventory to this list. Add capabilities discovered during inspection.
+
+4. PROVIDER COMPARISON
+
+For every capability, identify:
+
+Capability| BIGDROPS Requirement / Source| Current Implementation| Current Provider| pdfcn Provides?| Underlying Renderer Provides?| BIGDROPS Must Keep Custom Logic?| Migration Risk| React-PDF Still Required?| Evidence
+
+Use explicit values such as:
+
+- YES
+- NO
+- PARTIAL
+- UNKNOWN
+- NOT APPLICABLE
+
+Do not infer capability from marketing claims.
+
+If pdfcn documentation declares a capability but the underlying implementation does not prove physical behavior, mark it appropriately and explain the gap.
+
+5. INVOICE BENCHMARK
+
+Trace the strongest Invoice industry template from business/prepared data through final PDF output.
+
+Document:
+
+- its data model
+- preparation/adaptation layer
+- customization
+- column handling
+- template structure
+- pagination
+- orientation
+- assets/fonts
+- totals/tax/payment presentation
+- delivery
+- renderer-specific behavior
+- React-PDF dependencies
+- hidden supporting infrastructure
+
+Then determine which parts pdfcn can replace directly, which require an adapter, and which remain BIGDROPS-owned.
+
+6. QUOTATION BENCHMARK
+
+Perform the same analysis for the strongest Quotation industry template.
+
+Do not assume Invoice and Quotation have identical requirements.
+
+Explicitly identify differences.
+
+7. PDFCN / RENDERER ANALYSIS
+
+Inspect the actual current pdfcn implementation, not only its component catalog or marketing/documentation pages.
+
+Determine:
+
+- which renderer route is relevant
+- Takumi vs Forme capabilities
+- physical page sizing
+- physical portrait/landscape behavior
+- pagination behavior
+- table behavior
+- repeated table headers
+- keep-together behavior
+- fonts
+- images
+- QR
+- page headers/footers
+- page numbering
+- theming
+- customization
+- one-page/fit-to-page behavior
+- preview/generation
+- delivery boundary
+- version/dependency considerations
+
+Clearly separate:
+
+"pdfcn component capability"
+
+from:
+
+"underlying renderer capability"
+
+from:
+
+"BIGDROPS capability that pdfcn does not own".
+
+8. REACT-PDF RETIREMENT TEST
+
+Answer the following explicitly:
+
+A. What does React-PDF currently provide that BIGDROPS actually needs?
+
+B. Which of those capabilities does pdfcn provide natively?
+
+C. Which capabilities can be supplied by Takumi/Forme underneath pdfcn?
+
+D. Which capabilities must remain BIGDROPS-owned?
+
+E. Which React-PDF-specific workarounds become unnecessary?
+
+F. Which React-PDF capabilities have no proven replacement?
+
+G. What capabilities would require new BIGDROPS adapter code?
+
+H. Can the Invoice benchmark be reproduced without React-PDF?
+
+I. Can the Quotation benchmark be reproduced without React-PDF?
+
+J. Can all required standards still be satisfied without React-PDF?
+
+9. CRITICAL BUSINESS LOGIC BOUNDARY
+
+Treat financial and business logic as BIGDROPS-owned.
+
+Do NOT recommend moving calculations into pdfcn templates.
+
+In particular, inspect and preserve ownership of:
+
+- totals
+- discounts
+- VAT/tax calculations
+- WHT where applicable
+- payment state
+- document identity
+- numbering
+- commercial-party identity
+- saved document state
+- lineage
+- audit behavior
+- permissions
+- column configuration
+
+If an upstream pdfcn example performs calculations inside a render component, explicitly flag this as unsuitable for BIGDROPS where applicable.
+
+10. ONE-PAGE AND LANDSCAPE
+
+Because these are major reasons for considering the migration, give them dedicated analysis.
+
+Determine whether the new stack can actually produce:
+
+- physical A4 portrait
+- physical A4 landscape
+- controlled pagination
+- long-table pagination
+- repeated table headers
+- keep-together behavior
+- complete-document one-page output
+- content-preserving fit-to-page behavior
+
+Do not treat a TypeScript type, theme declaration, CSS preview, or documentation claim as proof of physical PDF behavior.
+
+Mark unproven behavior as UNPROVEN.
+
+11. FINAL VERDICT
+
+End with a clear verdict:
+
+REACT-PDF CAN BE RETIRED
+
+or
+
+REACT-PDF CAN BE RETIRED AFTER SPECIFIC GAPS ARE CLOSED
+
+or
+
+REACT-PDF CANNOT YET BE RETIRED
+
+Then provide:
+
+1. Capabilities fully replaced by pdfcn/underlying renderer
+2. Capabilities replaced by BIGDROPS-owned adapters
+3. Capabilities currently missing
+4. React-PDF-specific infrastructure that can eventually be deleted
+5. React-PDF capabilities that must temporarily remain
+6. Required proof-of-concept work before migration
+7. The minimum conditions required before removing "@react-pdf/renderer"
+
+12. OUTPUT
+
+Create exactly ONE markdown report under:
+
+"docs/reports/pdf/"
+
+Use a descriptive filename such as:
+
+"pdf-renderer-capability-replacement-audit.md"
+
+The report must include:
+
+1. Executive Summary
+2. Benchmark Template Selection
+3. Standards Capability Baseline
+4. Invoice Capability Audit
+5. Quotation Capability Audit
+6. Current React-PDF Capability Inventory
+7. pdfcn + Underlying Renderer Capability Inventory
+8. Capability Comparison Matrix
+9. Missing / Unproven Capabilities
+10. React-PDF Replacement Map
+11. Business Logic Ownership Boundary
+12. One-Page / Landscape / Pagination Assessment
+13. React-PDF Retirement Assessment
+14. Final Verdict
+15. Required Next Steps
+
+13. SAFETY / SCOPE
+
+READ-ONLY AUDIT.
+
+Do not:
+
+- modify source code
+- modify templates
+- modify standards
+- modify PRDs
+- modify package.json
+- install dependencies
+- remove dependencies
+- run migrations
+- change configuration
+- run the application
+- perform runtime validation
+- run "bun run build"
+- run "bun run typecheck"
+- run linting
+
+Use the relevant skills from "docs/PROJECTSKILLINDEX.md", especially PDF-rendering correctness and any applicable audit/research skills.
+
+Run "git status" immediately before the audit and immediately after the audit.
+
+The only permitted file modification is the single markdown report under "docs/reports/pdf/".
+
+The final report must explicitly confirm whether any other files changed.
+
+Do not make architectural changes based on assumptions. If evidence is insufficient, mark the capability UNKNOWN or UNPROVEN.
+
+Stop after producing the report.
