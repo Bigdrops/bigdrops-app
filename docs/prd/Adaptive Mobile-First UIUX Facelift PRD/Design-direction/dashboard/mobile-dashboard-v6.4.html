@@ -1,0 +1,1768 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1e3a5f" />
+    <title>BIGDROPS · Dashboard (v6.4 Material 3)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+
+        /* ════════════════════════════════════════════════════
+           COLOUR TOKENS — exact palette preserved verbatim
+        ════════════════════════════════════════════════════ */
+        :root {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface-raised: #f8fafc;
+            --surface-muted: #e2e8f0;
+            --surface-strong: #cbd5e1;
+            --ink: #0f172a;
+            --ink-2: #475569;
+            --ink-3: #94a3b8;
+            --primary: #1e3a5f;
+            --primary-bright: #3b82f6;
+            --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+            --secondary: #0f172a;
+            --secondary-bright: #64748b;
+            --secondary-soft: color-mix(in srgb, var(--secondary) 13%, transparent);
+            --attention: #ef4444;
+            --attention-soft: #fee2e2;
+            --sage: #64748b;
+            --sage-soft: #f1f5f9;
+            --line: rgba(15, 23, 42, .07);
+            --line-strong: rgba(15, 23, 42, .14);
+            --shadow: 0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15, 23, 42, .04);
+            --shadow-float: 0 18px 40px color-mix(in srgb, var(--primary) 18%, transparent), 0 3px 9px rgba(15, 23, 42, .07);
+            --nav: rgba(255, 255, 255, .88);
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+            --font: Manrope, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            --number: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+            /* ── MD3 Surface Container tonal levels (light) ── */
+            --sc-lowest:  var(--bg);
+            --sc-low:     color-mix(in srgb, var(--primary) 4%, var(--surface));
+            --sc-base:    color-mix(in srgb, var(--primary) 6%, var(--surface));
+            --sc-high:    color-mix(in srgb, var(--primary) 9%, var(--surface));
+            --sc-highest: color-mix(in srgb, var(--primary) 12%, var(--surface));
+
+            /* ── MD3 Typography Scale tokens ── */
+            --typescale-display-s-size:   36px;
+            --typescale-display-s-weight: 400;
+            --typescale-display-s-track:  -0.025em;
+
+            --typescale-headline-m-size:   28px;
+            --typescale-headline-m-weight: 400;
+            --typescale-headline-m-track:  0em;
+
+            --typescale-headline-s-size:   24px;
+            --typescale-headline-s-weight: 400;
+            --typescale-headline-s-track:  0em;
+
+            --typescale-title-l-size:   22px;
+            --typescale-title-l-weight: 600;
+            --typescale-title-l-track:  0em;
+
+            --typescale-title-m-size:   16px;
+            --typescale-title-m-weight: 600;
+            --typescale-title-m-track:  0.015em;
+
+            --typescale-title-s-size:   14px;
+            --typescale-title-s-weight: 600;
+            --typescale-title-s-track:  0.01em;
+
+            --typescale-body-l-size:   16px;
+            --typescale-body-l-weight: 400;
+            --typescale-body-l-track:  0.031em;
+
+            --typescale-body-m-size:   14px;
+            --typescale-body-m-weight: 400;
+            --typescale-body-m-track:  0.018em;
+
+            --typescale-body-s-size:   12px;
+            --typescale-body-s-weight: 400;
+            --typescale-body-s-track:  0.033em;
+
+            --typescale-label-l-size:   14px;
+            --typescale-label-l-weight: 500;
+            --typescale-label-l-track:  0.007em;
+
+            --typescale-label-m-size:   12px;
+            --typescale-label-m-weight: 500;
+            --typescale-label-m-track:  0.043em;
+
+            --typescale-label-s-size:   11px;
+            --typescale-label-s-weight: 500;
+            --typescale-label-s-track:  0.045em;
+
+            /* ── MD3 Shape Scale ── */
+            --shape-xs:   4px;
+            --shape-s:    8px;
+            --shape-m:   12px;
+            --shape-l:   16px;
+            --shape-xl:  28px;
+            --shape-2xl: 32px;
+            --shape-full: 9999px;
+
+            /* ── MD3 Motion tokens ── */
+            --motion-standard:   cubic-bezier(0.2, 0, 0, 1);
+            --motion-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+            --motion-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+            --motion-enter: 400ms var(--motion-decelerate);
+            --motion-exit:  200ms var(--motion-accelerate);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-raised: #253448;
+            --surface-muted: #334155;
+            --surface-strong: #475569;
+            --ink: #f1f5f9;
+            --ink-2: #cbd5e1;
+            --ink-3: #64748b;
+            --primary: #60a5fa;
+            --primary-bright: #93c5fd;
+            --primary-soft: color-mix(in srgb, var(--primary) 20%, transparent);
+            --secondary: #94a3b8;
+            --secondary-bright: #cbd5e1;
+            --secondary-soft: color-mix(in srgb, var(--secondary) 18%, transparent);
+            --attention: #f87171;
+            --attention-soft: #3b1518;
+            --sage: #94a3b8;
+            --sage-soft: #1e293b;
+            --line: rgba(241, 245, 249, .08);
+            --line-strong: rgba(241, 245, 249, .15);
+            --shadow: 0 12px 28px rgba(0, 0, 0, .38), 0 2px 6px rgba(0, 0, 0, .26);
+            --shadow-float: 0 18px 44px rgba(0, 0, 0, .52), 0 3px 10px rgba(0, 0, 0, .34);
+            --nav: rgba(15, 23, 42, .88);
+
+            /* MD3 Surface Container tonal levels (dark) */
+            --sc-lowest:  var(--bg);
+            --sc-low:     color-mix(in srgb, var(--primary) 5%, var(--surface));
+            --sc-base:    color-mix(in srgb, var(--primary) 8%, var(--surface));
+            --sc-high:    color-mix(in srgb, var(--primary) 11%, var(--surface));
+            --sc-highest: color-mix(in srgb, var(--primary) 14%, var(--surface));
+        }
+
+        /* ─── Reset & base ─── */
+        *, *::before, *::after { box-sizing: border-box }
+        html, body { height: 100% }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--font);
+            -webkit-font-smoothing: antialiased;
+            transition: background .36s ease, color .36s ease;
+        }
+        button {
+            font: inherit;
+            color: inherit;
+            border: 0;
+            background: none;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button:active { transform: scale(.97) }
+        button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px }
+
+        /* ─── App shell ─── */
+        .app {
+            width: 100%;
+            max-width: 430px;
+            height: 100dvh;
+            position: relative;
+            margin: 0 auto;
+            overflow: hidden;
+            background: var(--sc-lowest);
+            transition: background .34s ease, color .34s ease;
+        }
+        /* Subtle grain — lower opacity than v6.3 */
+        .grain {
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            opacity: .022;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+        }
+        .shell { height: 100%; position: relative; z-index: 1 }
+        .scroll {
+            height: 100%;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: none;
+            padding: 0 0 calc(116px + env(safe-area-inset-bottom));
+        }
+        .scroll::-webkit-scrollbar { display: none }
+
+        /* ════════════════════════════════════════════════════
+           MD3 LARGE TOP APP BAR — 2-row layout
+           Row 1: [menu]              [icons]
+           Row 2: Dashboard (28px weight-400)
+           Background: --sc-low (tonal elevation)
+        ════════════════════════════════════════════════════ */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding-top: env(safe-area-inset-top);
+            background: var(--sc-low);
+            /* NO border-bottom — tonal elevation communicates depth */
+            transition: background .34s ease;
+        }
+        .topbar-row1 {
+            height: 64px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+        }
+        .topbar-row2 {
+            padding: 0 16px 18px;
+        }
+        .topbar-large-title {
+            font-size: var(--typescale-headline-m-size);
+            font-weight: var(--typescale-headline-m-weight);
+            letter-spacing: var(--typescale-headline-m-track);
+            line-height: 1.15;
+            color: var(--ink);
+        }
+        .topbar-wordmark {
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+            margin-top: 2px;
+        }
+        .top-left {
+            display: flex;
+            align-items: center;
+        }
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        /* MD3 icon button — 40×40 */
+        .top-btn {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: var(--shape-full);
+            background: transparent;
+            color: var(--ink-2);
+            position: relative;
+            transition: background 150ms var(--motion-standard);
+        }
+        .top-btn:hover { background: var(--primary-soft) }
+        .top-btn svg { width: 20px; height: 20px }
+        .top-btn.active { background: var(--primary-soft); color: var(--primary) }
+        /* AI badge button */
+        .top-btn-ai {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: var(--shape-full);
+            background: var(--gradient);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .01em;
+        }
+        .notif-pip {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--attention);
+            border: 1.5px solid var(--sc-low);
+        }
+
+        /* ─── Page transitions ─── */
+        .page { display: none }
+        .page.active {
+            display: block;
+            animation: page-in .28s var(--motion-decelerate) both;
+        }
+        @keyframes page-in {
+            from { opacity: 0; transform: translateY(6px) }
+            to   { opacity: 1; transform: none }
+        }
+        .dashboard { padding: 16px 16px 0 }
+
+        /* ════════════════════════════════════════════════════
+           MD3 SECTION LABELS
+           Use --typescale-label-l — NOT uppercase, NOT eyebrow
+        ════════════════════════════════════════════════════ */
+        .section-label {
+            font-size: var(--typescale-label-l-size);
+            font-weight: var(--typescale-label-l-weight);
+            letter-spacing: var(--typescale-label-l-track);
+            color: var(--ink-2);
+            margin: 0 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .section-label-action {
+            font-size: var(--typescale-label-m-size);
+            font-weight: var(--typescale-label-m-weight);
+            letter-spacing: var(--typescale-label-m-track);
+            color: var(--primary);
+        }
+        .finance-eyebrow {
+            margin-bottom: 12px;
+        }
+        .finance-eyebrow .period {
+            font-size: var(--typescale-label-m-size);
+            font-weight: var(--typescale-label-m-weight);
+            letter-spacing: var(--typescale-label-m-track);
+            color: var(--ink-3);
+        }
+        .section { margin-top: 20px }
+
+        /* ════════════════════════════════════════════════════
+           MD3 OUTLINED METRIC CARDS
+           - border: 1px solid var(--line)   (Outlined Card)
+           - NO box-shadow (tonal elevation instead)
+           - bg: var(--sc-low)
+           - color-coded accent bar at top (3px)
+           - label: --typescale-label-m
+           - value: --typescale-headline-s
+           - trend: --typescale-body-s
+        ════════════════════════════════════════════════════ */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .metric {
+            min-height: 118px;
+            border-radius: var(--shape-m);      /* 12px — not 16px */
+            background: var(--sc-low);
+            border: 1px solid var(--line);
+            /* NO box-shadow for tonal elevation */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            padding: 0 14px 14px;
+            transition: background .24s ease;
+        }
+        /* Color-coded horizontal accent bar — full width, 3px */
+        .metric-accent {
+            width: calc(100% + 28px);
+            margin-left: -14px;
+            height: 3px;
+            background: var(--metric);
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        /* Collected card: gradient accent + inverted text on gradient bg */
+        .metric.collect {
+            --metric: var(--primary);
+            background: var(--gradient);
+            border-color: transparent;
+        }
+        .metric.collect .metric-accent { background: rgba(255,255,255,.55) }
+        .metric.collect .metric-label  { color: rgba(255,255,255,.78) }
+        .metric.collect .metric-value  { color: #fff }
+        .metric.collect .metric-trend  { color: rgba(255,255,255,.72) }
+        .metric.collect .metric-trend b { color: #fff }
+        .metric.collect .tickbar i     { background: rgba(255,255,255,.28) }
+        .metric.collect .tickbar i.on  { background: rgba(255,255,255,.9) }
+
+        .metric.overdue  { --metric: var(--attention) }
+        .metric.awaiting { --metric: var(--secondary) }
+        .metric.due      { --metric: var(--sage) }
+
+        .metric-label {
+            font-size: var(--typescale-label-m-size);
+            font-weight: var(--typescale-label-m-weight);
+            letter-spacing: var(--typescale-label-m-track);
+            color: var(--ink-2);
+            line-height: 1.3;
+        }
+        .metric-value {
+            font-family: var(--number);
+            font-size: var(--typescale-headline-s-size);   /* 24px */
+            font-weight: 500;
+            letter-spacing: -.06em;
+            color: var(--ink);
+            margin-top: 4px;
+            white-space: nowrap;
+        }
+        /* MD3 sparkline tickbar (secondary data element) */
+        .tickbar {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 8px;
+            margin: 6px 0 5px;
+        }
+        .tickbar i {
+            display: block;
+            flex: 0 0 3px;
+            width: 3px;
+            height: 8px;
+            border-radius: 1.5px;
+            background: var(--line-strong);
+        }
+        .tickbar i.on { background: var(--metric) }
+        .metric-trend {
+            margin-top: auto;
+            font-size: var(--typescale-body-s-size);
+            font-weight: var(--typescale-body-s-weight);
+            letter-spacing: var(--typescale-body-s-track);
+            color: var(--ink-3);
+            line-height: 1.4;
+        }
+        .metric-trend b { color: var(--metric); font-weight: 600 }
+        .metric-trend:not(.neutral) b::before {
+            content: "▲";
+            display: inline-block;
+            font-size: 6px;
+            color: #16a34a;
+            margin-right: 2px;
+            transform: translateY(-1px);
+        }
+        .metric.collect .metric-trend:not(.neutral) b::before { color: rgba(255,255,255,.9) }
+        .metric-trend.neutral b { color: var(--ink-2) }
+
+        /* ════════════════════════════════════════════════════
+           MD3 CARD BASE — shape-m, tonal surface, no shadow
+        ════════════════════════════════════════════════════ */
+        .card {
+            border-radius: var(--shape-m);
+            background: var(--sc-low);
+            border: 1px solid var(--line);
+            overflow: hidden;
+        }
+
+        /* ════════════════════════════════════════════════════
+           MD3 THREE-LINE LIST — activity rows
+           Row min-height: 88px
+           Icon: 40×40 square, border-radius: --shape-m (12px)
+           Three lines: primary / client+date / status chip
+           Divider: left-inset from icon right edge
+        ════════════════════════════════════════════════════ */
+        .activity-row {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            align-items: start;
+            gap: 14px;
+            padding: 14px 16px;
+            text-align: left;
+            min-height: 88px;
+            position: relative;
+        }
+        /* left-inset divider starting after icon */
+        .activity-row + .activity-row::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: calc(40px + 16px + 14px);
+            right: 0;
+            height: 1px;
+            background: var(--line);
+        }
+        .activity-row:active { background: var(--sc-base) }
+
+        /* Square icon — MD3 list supports square containers */
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--shape-m);    /* 12px, not circular */
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            background: var(--icon-bg);
+            color: var(--icon);
+            margin-top: 2px;
+        }
+        .activity-icon svg { height: 18px; width: 18px }
+        .invoice  { --icon: var(--primary);   --icon-bg: var(--primary-soft)   }
+        .quote    { --icon: var(--secondary);  --icon-bg: var(--secondary-soft) }
+        .waybill  { --icon: var(--sage);       --icon-bg: var(--sage-soft)      }
+
+        .act-lines { min-width: 0 }
+        .act-primary {
+            font-size: var(--typescale-body-m-size);
+            font-weight: 600;
+            letter-spacing: var(--typescale-body-m-track);
+            line-height: 1.4;
+            color: var(--ink);
+        }
+        /* Second line: client + date */
+        .act-secondary {
+            font-size: var(--typescale-body-s-size);
+            font-weight: var(--typescale-body-s-weight);
+            letter-spacing: var(--typescale-body-s-track);
+            color: var(--ink-2);
+            margin-top: 2px;
+            line-height: 1.4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* Third line: status chip */
+        .act-tertiary {
+            margin-top: 6px;
+        }
+        .act-trailing {
+            text-align: right;
+            flex-shrink: 0;
+            padding-top: 2px;
+        }
+        .act-value {
+            font-family: var(--number);
+            font-size: var(--typescale-label-m-size);
+            font-weight: 500;
+            letter-spacing: -.03em;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+        .act-date-trail {
+            font-family: var(--font);
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+            margin-top: 4px;
+        }
+
+        /* ════════════════════════════════════════════════════
+           MD3 SUGGESTION CHIP — shape-s (8px), NOT fully-rounded
+        ════════════════════════════════════════════════════ */
+        .status {
+            display: inline-block;
+            border-radius: var(--shape-s);     /* 8px — not 9999px */
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-m-track);
+            padding: 3px 8px;
+            border: 1px solid var(--line-strong);
+            background: var(--secondary-soft);
+            color: var(--secondary);
+            line-height: 1.2;
+        }
+        .status.draft     { background: var(--primary-soft);   color: var(--primary);  border-color: color-mix(in srgb, var(--primary) 20%, transparent) }
+        .status.delivered { background: var(--sage-soft);      color: var(--sage);     border-color: color-mix(in srgb, var(--sage) 20%, transparent)    }
+
+        /* ════════════════════════════════════════════════════
+           MD3 REMINDER — Surface Variant card (--sc-high)
+           - No circular icon; 40×40 square icon (shape-m)
+           - No dismiss X in upper-right; Filled Tonal + text action row
+        ════════════════════════════════════════════════════ */
+        .reminder {
+            padding: 16px;
+            background: var(--sc-high);
+            border-radius: var(--shape-m);
+            border: 1px solid var(--line);
+        }
+        .reminder-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        /* Square icon container — 40×40, shape-m, gradient fill */
+        .reminder-icon {
+            width: 40px;
+            height: 40px;
+            flex: 0 0 40px;
+            display: grid;
+            place-items: center;
+            border-radius: var(--shape-m);
+            background: var(--gradient);
+            color: #fff;
+        }
+        .reminder-icon svg { width: 20px; height: 20px }
+        .reminder-copy { flex: 1; min-width: 0 }
+        .reminder-kicker {
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+            line-height: 1;
+        }
+        .reminder h2 {
+            font-size: var(--typescale-title-s-size);
+            font-weight: var(--typescale-title-s-weight);
+            letter-spacing: var(--typescale-title-s-track);
+            margin: 5px 0 4px;
+            line-height: 1.3;
+            color: var(--ink);
+        }
+        .reminder p {
+            font-size: var(--typescale-body-s-size);
+            font-weight: var(--typescale-body-s-weight);
+            letter-spacing: var(--typescale-body-s-track);
+            line-height: 1.5;
+            color: var(--ink-2);
+            margin: 0;
+        }
+        /* Action row: Filled Tonal + text "Dismiss" */
+        .reminder-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 14px;
+        }
+        /* MD3 Filled Tonal Button */
+        .btn-filled-tonal {
+            flex: 1;
+            height: 40px;
+            border-radius: var(--shape-full);
+            padding: 0 20px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: var(--typescale-label-l-size);
+            font-weight: var(--typescale-label-l-weight);
+            letter-spacing: var(--typescale-label-l-track);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-filled-tonal svg { width: 16px; height: 16px }
+        /* MD3 Text Button for dismiss */
+        .btn-text {
+            height: 40px;
+            padding: 0 12px;
+            border-radius: var(--shape-full);
+            font-size: var(--typescale-label-l-size);
+            font-weight: var(--typescale-label-l-weight);
+            letter-spacing: var(--typescale-label-l-track);
+            color: var(--ink-2);
+            background: transparent;
+        }
+        .btn-text:hover { background: var(--sc-high) }
+
+        /* ════════════════════════════════════════════════════
+           MD3 ALERTS — Filled Card horizontal carousel
+           (v6.3 was vertical; v6.4 is horizontal scroll)
+           Card bg: --sc-high, shape-m (12px), no shadow
+        ════════════════════════════════════════════════════ */
+        .alerts-scroll-wrapper {
+            overflow-x: auto;
+            scrollbar-width: none;
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+        .alerts-scroll-wrapper::-webkit-scrollbar { display: none }
+        .alerts-track {
+            display: flex;
+            gap: 10px;
+            width: max-content;
+            padding-bottom: 4px;
+        }
+        .alert-card {
+            width: 220px;
+            flex-shrink: 0;
+            background: var(--sc-high);
+            border-radius: var(--shape-m);
+            border: none;
+            padding: 14px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            /* NO box-shadow — tonal elevation */
+        }
+        .alert-card:active { background: var(--sc-highest) }
+        /* Top row: icon + type label */
+        .alert-card-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        /* Icon container: shape-s (8px), 32×32 */
+        .alert-icon-sq {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--shape-s);
+            display: grid;
+            place-items: center;
+            background: var(--primary-soft);
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+        .alert-icon-sq.warn { background: var(--attention-soft); color: var(--attention) }
+        .alert-icon-sq svg { width: 16px; height: 16px }
+        .alert-card-type {
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+            text-transform: uppercase;
+        }
+        .alert-card-title {
+            font-size: var(--typescale-title-s-size);
+            font-weight: var(--typescale-title-s-weight);
+            letter-spacing: var(--typescale-title-s-track);
+            color: var(--ink);
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+        .alert-card-body {
+            font-size: var(--typescale-body-s-size);
+            font-weight: var(--typescale-body-s-weight);
+            letter-spacing: var(--typescale-body-s-track);
+            color: var(--ink-2);
+            line-height: 1.45;
+            flex: 1;
+        }
+        .alert-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+        }
+
+        /* ════════════════════════════════════════════════════
+           MD3 AUDIT TRAIL — List with leading avatar
+           Avatar: colored circle, initial letter
+           No connecting timeline line (v6.3 had one)
+           Full-width dividers between rows
+        ════════════════════════════════════════════════════ */
+        .audit-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--line);
+        }
+        .audit-row:first-child { border-top: 0 }
+        /* Avatar circle — 40×40 */
+        .audit-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--shape-full);
+            display: grid;
+            place-items: center;
+            font-size: var(--typescale-label-l-size);
+            font-weight: 700;
+            letter-spacing: 0;
+            flex-shrink: 0;
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+        .audit-avatar.sys {
+            background: var(--secondary-soft);
+            color: var(--secondary);
+        }
+        .audit-content { flex: 1; min-width: 0 }
+        .audit-main {
+            font-size: var(--typescale-body-m-size);
+            font-weight: 500;
+            letter-spacing: var(--typescale-body-m-track);
+            line-height: 1.35;
+            color: var(--ink);
+        }
+        .audit-meta {
+            font-size: var(--typescale-body-s-size);
+            font-weight: var(--typescale-body-s-weight);
+            letter-spacing: var(--typescale-body-s-track);
+            color: var(--ink-3);
+            margin-top: 3px;
+            line-height: 1.3;
+        }
+
+        /* ════════════════════════════════════════════════════
+           MD3 NAVIGATION BAR
+           Height: 80px, bg: --sc-highest (tonal elevation)
+           Active indicator: 72×32px pill, no scale animation
+           NO border-top (tonal surface conveys separation)
+        ════════════════════════════════════════════════════ */
+        .bottom {
+            position: absolute;
+            z-index: 30;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: calc(80px + env(safe-area-inset-bottom));
+            padding: 0 0 env(safe-area-inset-bottom);
+            display: flex;
+            align-items: stretch;
+            background: var(--sc-highest);
+            /* NO border-top */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .tab {
+            flex: 1;
+            color: var(--ink-3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            position: relative;
+        }
+        /* Full-size pill active indicator — no scaleX animation */
+        .tab::before {
+            content: "";
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 72px;
+            height: 32px;
+            border-radius: var(--shape-full);
+            background: transparent;
+            transition: background 200ms var(--motion-standard);
+        }
+        .tab.active::before { background: var(--primary-soft) }
+        .tab svg {
+            height: 20px;
+            width: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .tab span { position: relative; z-index: 1 }
+        .tab.active { color: var(--primary) }
+
+        /* ════════════════════════════════════════════════════
+           MD3 EXTENDED FAB — icon + text label, shape-l (16px)
+        ════════════════════════════════════════════════════ */
+        .fab {
+            position: absolute;
+            z-index: 31;
+            right: 16px;
+            bottom: calc(96px + env(safe-area-inset-bottom));
+            height: 56px;
+            padding: 0 20px;
+            border-radius: var(--shape-l);   /* 16px */
+            background: var(--gradient);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 40%, transparent);
+            transition: box-shadow 200ms var(--motion-standard),
+                        padding 200ms var(--motion-standard);
+            white-space: nowrap;
+        }
+        .fab.open { box-shadow: 0 10px 28px color-mix(in srgb, var(--primary) 50%, transparent) }
+        .fab-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            transition: transform 300ms var(--motion-standard);
+        }
+        .fab.open .fab-icon { transform: rotate(45deg) }
+        .fab-label {
+            font-size: var(--typescale-label-l-size);
+            font-weight: 700;
+            letter-spacing: var(--typescale-label-l-track);
+        }
+
+        /* ─── Scrim ─── */
+        .scrim {
+            position: absolute;
+            inset: 0;
+            z-index: 40;
+            background: rgba(14, 12, 10, .38);
+            opacity: 0;
+            pointer-events: none;
+            backdrop-filter: blur(2px);
+            transition: opacity var(--motion-exit);
+        }
+        .scrim.show {
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity var(--motion-enter);
+        }
+
+        /* ════════════════════════════════════════════════════
+           MD3 MODAL NAVIGATION DRAWER
+           Width: min(85%, 360px) — wider than v6.3's 320px
+           Section labels: --typescale-label-s — NOT uppercase
+           Drawer item: 56px, border-radius: shape-full (pill)
+        ════════════════════════════════════════════════════ */
+        .drawer {
+            position: absolute;
+            z-index: 42;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: min(85%, 360px);
+            display: flex;
+            flex-direction: column;
+            background: var(--sc-low);
+            box-shadow: var(--shadow-float);
+            border-radius: 0 var(--shape-l) var(--shape-l) 0;
+            transform: translateX(-105%);
+            transition: transform var(--motion-enter);
+            padding-top: env(safe-area-inset-top);
+        }
+        .drawer.show {
+            transform: translateX(0);
+            transition: transform var(--motion-enter);
+        }
+        .drawer-head {
+            padding: 20px 16px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--line);
+        }
+        .brand-mark {
+            height: 36px;
+            width: 36px;
+            border-radius: var(--shape-m);
+            display: grid;
+            place-items: center;
+            background: var(--gradient);
+            color: #fff;
+        }
+        .brand-mark svg { width: 18px; height: 18px }
+        .brand-name  {
+            font-size: var(--typescale-title-m-size);
+            font-weight: 800;
+            letter-spacing: -.04em;
+        }
+        .brand-sub   {
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+            margin-top: 1px;
+        }
+        .drawer-list { overflow-y: auto; flex: 1; padding: 8px 12px 14px; scrollbar-width: none }
+        .drawer-list::-webkit-scrollbar { display: none }
+        /* Section labels: --typescale-label-s, NOT uppercase */
+        .drawer-label {
+            padding: 10px 12px 6px;
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+        }
+        /* Drawer item: 56px, full pill (shape-full) */
+        .drawer-row {
+            width: 100%;
+            height: 56px;
+            padding: 0 16px;
+            border-radius: var(--shape-full);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            color: var(--ink-2);
+            font-size: var(--typescale-label-l-size);
+            font-weight: var(--typescale-label-l-weight);
+            letter-spacing: var(--typescale-label-l-track);
+            transition: background 150ms var(--motion-standard);
+        }
+        .drawer-row svg { width: 18px; height: 18px }
+        .drawer-row.active { color: var(--primary); background: var(--primary-soft) }
+        .drawer-row .chev { margin-left: auto; width: 15px; height: 15px }
+        .drawer-foot {
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--shape-full);
+            display: grid;
+            place-items: center;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: var(--typescale-label-s-size);
+            font-weight: 800;
+        }
+        .user-name  {
+            font-size: var(--typescale-label-l-size);
+            font-weight: var(--typescale-label-l-weight);
+            letter-spacing: var(--typescale-label-l-track);
+        }
+        .user-role  {
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+            margin-top: 1px;
+        }
+
+        /* ════════════════════════════════════════════════════
+           MD3 BOTTOM SHEET
+           Corner radius: --shape-2xl (32px) — larger than v6.3's 28px
+           MD3 motion: enter 400ms decelerate, exit 200ms accelerate
+        ════════════════════════════════════════════════════ */
+        .sheet {
+            position: absolute;
+            z-index: 43;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            max-height: 82%;
+            border-radius: var(--shape-2xl) var(--shape-2xl) 0 0;  /* 32px 32px 0 0 */
+            background: var(--sc-low);
+            box-shadow: 0 -12px 32px rgba(0,0,0,.18);
+            transform: translateY(106%);
+            transition: transform var(--motion-exit);
+            padding: 8px 16px calc(20px + env(safe-area-inset-bottom));
+            overflow-y: auto;
+        }
+        .sheet.show {
+            transform: translateY(0);
+            transition: transform var(--motion-enter);
+        }
+        .grab {
+            width: 36px;
+            height: 4px;
+            background: var(--surface-strong);
+            border-radius: 4px;
+            margin: 4px auto 16px;
+        }
+        .sheet-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 0 2px 14px;
+        }
+        .sheet-head h2 {
+            margin: 0;
+            font-size: var(--typescale-title-l-size);
+            font-weight: var(--typescale-title-l-weight);
+            letter-spacing: var(--typescale-title-l-track);
+            line-height: 1.2;
+        }
+        .sheet-head p {
+            margin: 4px 0 0;
+            color: var(--ink-2);
+            font-size: var(--typescale-body-s-size);
+            line-height: 1.4;
+        }
+        .sheet-close {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border-radius: var(--shape-full);
+            color: var(--ink-2);
+            background: var(--sc-high);
+            flex-shrink: 0;
+        }
+        .sheet-close svg { width: 15px; height: 15px }
+        .action-list { display: flex; flex-direction: column; gap: 4px }
+        .sheet-action {
+            padding: 10px 10px 10px 12px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            text-align: left;
+            border-radius: var(--shape-l);
+        }
+        .sheet-action:active { background: var(--sc-base) }
+        .sheet-action-icon {
+            width: 40px;
+            height: 40px;
+            flex: 0 0 40px;
+            border-radius: var(--shape-full);
+            display: grid;
+            place-items: center;
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+        .sheet-action-icon.copper { background: var(--secondary-soft); color: var(--secondary) }
+        .sheet-action-icon.muted  { background: var(--sc-high);         color: var(--ink-2)    }
+        .sheet-action-icon svg { width: 18px; height: 18px }
+        .sheet-action-title {
+            font-size: var(--typescale-body-m-size);
+            font-weight: 600;
+            letter-spacing: var(--typescale-body-m-track);
+            line-height: 1.3;
+        }
+        .sheet-action-copy {
+            font-size: var(--typescale-body-s-size);
+            font-weight: var(--typescale-body-s-weight);
+            letter-spacing: var(--typescale-body-s-track);
+            color: var(--ink-2);
+            margin-top: 2px;
+            line-height: 1.35;
+        }
+        .split { height: 1px; background: var(--line); margin: 10px 2px }
+        .sheet-group {
+            margin: 10px 2px 6px;
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+        }
+
+        /* ─── Search layer ─── */
+        .search-layer {
+            position: absolute;
+            z-index: 50;
+            inset: 0;
+            background: var(--sc-lowest);
+            padding: calc(10px + env(safe-area-inset-top)) 16px 16px;
+            transform: translateY(-104%);
+            transition: transform var(--motion-exit);
+        }
+        .search-layer.show {
+            transform: translateY(0);
+            transition: transform var(--motion-enter);
+        }
+        .search-row { display: flex; gap: 8px; align-items: center }
+        .search-box {
+            height: 44px;
+            display: flex;
+            flex: 1;
+            align-items: center;
+            gap: 8px;
+            padding: 0 14px;
+            border-radius: var(--shape-full);
+            background: var(--sc-high);
+            color: var(--ink-2);
+            border: 1px solid var(--line);
+        }
+        .search-box svg { width: 18px; height: 18px }
+        .search-box input {
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: var(--ink);
+            font-size: var(--typescale-body-m-size);
+            font-family: var(--font);
+        }
+        .cancel {
+            font-size: var(--typescale-label-l-size);
+            font-weight: var(--typescale-label-l-weight);
+            letter-spacing: var(--typescale-label-l-track);
+            color: var(--primary);
+            padding: 6px 2px;
+        }
+        .search-suggestions { padding-top: 22px }
+        .search-suggestions h3 {
+            font-size: var(--typescale-label-s-size);
+            font-weight: var(--typescale-label-s-weight);
+            letter-spacing: var(--typescale-label-s-track);
+            color: var(--ink-3);
+            margin: 0 2px 12px;
+        }
+        .suggestion {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+            font-size: var(--typescale-body-m-size);
+            font-weight: 600;
+            width: 100%;
+            text-align: left;
+        }
+        .suggestion span {
+            display: block;
+            font-size: var(--typescale-body-s-size);
+            font-weight: var(--typescale-body-s-weight);
+            color: var(--ink-2);
+            margin-top: 2px;
+        }
+
+        /* ─── Toast ─── */
+        .toast {
+            position: absolute;
+            z-index: 60;
+            top: calc(10px + env(safe-area-inset-top));
+            left: 50%;
+            transform: translate(-50%, -12px);
+            padding: 10px 18px;
+            border-radius: var(--shape-full);
+            background: var(--ink);
+            color: var(--bg);
+            box-shadow: var(--shadow-float);
+            font-size: var(--typescale-label-l-size);
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            white-space: nowrap;
+            transition: opacity .18s, transform .18s;
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0) }
+
+        /* ─── Empty tab pages ─── */
+        .empty-tab { padding-top: 64px; text-align: center }
+        .empty-symbol {
+            height: 64px;
+            width: 64px;
+            border-radius: var(--shape-xl);
+            margin: 0 auto 14px;
+            display: grid;
+            place-items: center;
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+        .empty-symbol svg { width: 28px; height: 28px }
+        .empty-tab h2 {
+            margin: 0;
+            font-size: var(--typescale-title-l-size);
+            font-weight: var(--typescale-title-l-weight);
+            letter-spacing: var(--typescale-title-l-track);
+        }
+        .empty-tab p {
+            max-width: 220px;
+            margin: 6px auto 0;
+            color: var(--ink-2);
+            font-size: var(--typescale-body-s-size);
+            line-height: 1.5;
+        }
+
+        /* ─── Desktop frame ─── */
+        @media (min-width: 560px) {
+            .app {
+                height: 900px;
+                margin-top: 22px;
+                border: 1px solid rgba(30,28,24,.13);
+                border-radius: 40px;
+                box-shadow: 0 28px 68px rgba(30,28,24,.26);
+            }
+            body { min-height: 100% }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .001ms !important;
+                transition-duration: .001ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app" id="app">
+    <div class="grain"></div>
+    <div class="shell">
+        <div class="scroll" id="scroll">
+
+            <!-- ── MD3 Large Top App Bar (2-row layout) ── -->
+            <header class="topbar">
+                <div class="topbar-row1">
+                    <div class="top-left">
+                        <button class="top-btn" id="menuBtn" aria-label="Open navigation"><i data-lucide="panel-left"></i></button>
+                    </div>
+                    <div class="top-right">
+                        <button class="top-btn" id="themeBtn" aria-label="Switch to dark mode"><i data-lucide="moon"></i></button>
+                        <button class="top-btn" id="notificationBtn" aria-label="Open notifications">
+                            <i data-lucide="bell"></i>
+                            <i class="notif-pip"></i>
+                        </button>
+                        <button class="top-btn" id="searchBtn" aria-label="Search"><i data-lucide="search"></i></button>
+                        <button class="top-btn-ai" id="aiBtn" aria-label="Ask AI assistant">AI</button>
+                    </div>
+                </div>
+                <div class="topbar-row2">
+                    <div class="topbar-large-title">Dashboard</div>
+                    <div class="topbar-wordmark">BIGDROPS WORKSPACE</div>
+                </div>
+            </header>
+
+            <!-- ── Main dashboard page ── -->
+            <main class="page active dashboard" id="home-page">
+
+                <!-- Finance pulse section label -->
+                <div class="section-label finance-eyebrow">
+                    <span>Finance pulse · August 2026</span>
+                    <button class="section-label-action" id="kpiSettings">Edit metrics</button>
+                </div>
+
+                <!-- MD3 Outlined Metric Cards grid -->
+                <section class="metric-grid" aria-label="Dashboard metrics">
+
+                    <button class="metric" data-action="totalInvoiced">
+                        <div class="metric-accent" style="--metric:var(--primary)"></div>
+                        <span class="metric-label">Total invoiced</span>
+                        <span class="metric-value">₦1,240,000</span>
+                        <div class="tickbar">
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                        </div>
+                        <span class="metric-trend"><b>+12%</b> vs last month</span>
+                    </button>
+
+                    <button class="metric collect" data-action="collections">
+                        <div class="metric-accent"></div>
+                        <span class="metric-label">Collected this month</span>
+                        <span class="metric-value">₦89,000</span>
+                        <div class="tickbar">
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i></i><i></i><i></i><i></i><i></i>
+                        </div>
+                        <span class="metric-trend"><b>+18%</b> vs last month</span>
+                    </button>
+
+                    <button class="metric awaiting" data-action="outstanding">
+                        <div class="metric-accent" style="--metric:var(--secondary)"></div>
+                        <span class="metric-label">Outstanding receivables</span>
+                        <span class="metric-value">₦340,000</span>
+                        <div class="tickbar">
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                        </div>
+                        <span class="metric-trend neutral"><b>28%</b> of total invoiced</span>
+                    </button>
+
+                    <button class="metric overdue" data-action="overdue">
+                        <div class="metric-accent" style="--metric:var(--attention)"></div>
+                        <span class="metric-label">Overdue balance</span>
+                        <span class="metric-value">₦86,000</span>
+                        <div class="tickbar">
+                            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i class="on"></i><i class="on"></i><i class="on"></i>
+                            <i></i><i></i><i></i><i></i><i></i><i></i>
+                            <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                        </div>
+                        <span class="metric-trend neutral"><b>25%</b> of outstanding</span>
+                    </button>
+
+                </section>
+
+                <!-- Recent activity — MD3 Three-line list -->
+                <section class="section">
+                    <div class="section-label">
+                        <span>Recent activity</span>
+                    </div>
+                    <div class="card" id="activityList">
+
+                        <button class="activity-row" data-action="doc">
+                            <span class="activity-icon invoice"><i data-lucide="receipt-text"></i></span>
+                            <span class="act-lines">
+                                <span class="act-primary">INV-0045</span>
+                                <span class="act-secondary">Lagos Steel Works · Aug 15</span>
+                                <span class="act-tertiary"><i class="status">Pending</i></span>
+                            </span>
+                            <span class="act-trailing">
+                                <span class="act-value">₦120,000</span>
+                                <span class="act-date-trail">Aug 15</span>
+                            </span>
+                        </button>
+
+                        <button class="activity-row" data-action="doc">
+                            <span class="activity-icon quote"><i data-lucide="file-signature"></i></span>
+                            <span class="act-lines">
+                                <span class="act-primary">QTN-0109</span>
+                                <span class="act-secondary">Westfield Corp · Aug 14</span>
+                                <span class="act-tertiary"><i class="status draft">Draft</i></span>
+                            </span>
+                            <span class="act-trailing">
+                                <span class="act-value">₦340,000</span>
+                                <span class="act-date-trail">Aug 14</span>
+                            </span>
+                        </button>
+
+                        <button class="activity-row" data-action="doc">
+                            <span class="activity-icon waybill"><i data-lucide="truck"></i></span>
+                            <span class="act-lines">
+                                <span class="act-primary">WB-0028</span>
+                                <span class="act-secondary">Site Alpha · Aug 13</span>
+                                <span class="act-tertiary"><i class="status delivered">Delivered</i></span>
+                            </span>
+                            <span class="act-trailing">
+                                <span class="act-value">Delivered</span>
+                                <span class="act-date-trail">Aug 13</span>
+                            </span>
+                        </button>
+
+                    </div>
+                </section>
+
+                <!-- Payment reminder — MD3 Surface Variant card -->
+                <section class="section" id="paymentReminder">
+                    <div class="section-label">
+                        <span>Payment reminder</span>
+                    </div>
+                    <div class="reminder">
+                        <div class="reminder-header">
+                            <div class="reminder-icon"><i data-lucide="bell-ring"></i></div>
+                            <div class="reminder-copy">
+                                <div class="reminder-kicker">Smart banner</div>
+                                <h2>Keep payments recorded as they land</h2>
+                                <p>Record each invoice payment promptly so your books stay accurate.</p>
+                            </div>
+                        </div>
+                        <div class="reminder-actions">
+                            <button class="btn-filled-tonal" id="recordPayments">
+                                <i data-lucide="arrow-right"></i>
+                                Record payments
+                            </button>
+                            <button class="btn-text" id="dismissReminder">Dismiss</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent alerts — MD3 Filled Card horizontal carousel -->
+                <section class="section">
+                    <div class="section-label">
+                        <span>Recent alerts</span>
+                    </div>
+                    <div class="alerts-scroll-wrapper">
+                        <div class="alerts-track" id="alertsScroll">
+
+                            <button class="alert-card" data-action="alert">
+                                <div class="alert-card-top">
+                                    <div class="alert-icon-sq warn"><i data-lucide="triangle-alert"></i></div>
+                                    <span class="alert-card-type">Alert</span>
+                                </div>
+                                <div class="alert-card-title">INV-0042 is overdue</div>
+                                <div class="alert-card-body">7 days past due. Open to record payment or follow-up.</div>
+                                <div class="alert-card-footer">
+                                    <span>2h ago</span>
+                                    <span>Unread</span>
+                                </div>
+                            </button>
+
+                            <button class="alert-card" data-action="alert">
+                                <div class="alert-card-top">
+                                    <div class="alert-icon-sq"><i data-lucide="circle-check"></i></div>
+                                    <span class="alert-card-type">Update</span>
+                                </div>
+                                <div class="alert-card-title">QTN-0108 accepted</div>
+                                <div class="alert-card-body">Acme Ltd accepted. Ready to convert to invoice.</div>
+                                <div class="alert-card-footer">
+                                    <span>5h ago</span>
+                                    <span>Unread</span>
+                                </div>
+                            </button>
+
+                            <button class="alert-card" data-action="alert">
+                                <div class="alert-card-top">
+                                    <div class="alert-icon-sq"><i data-lucide="receipt"></i></div>
+                                    <span class="alert-card-type">Payment</span>
+                                </div>
+                                <div class="alert-card-title">Payment for INV-0039</div>
+                                <div class="alert-card-body">₦45,000 received. Reconcile against invoice.</div>
+                                <div class="alert-card-footer">
+                                    <span>Yesterday</span>
+                                    <span>Read</span>
+                                </div>
+                            </button>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Audit trail — MD3 List with leading avatar (no timeline line) -->
+                <section class="section">
+                    <div class="section-label">
+                        <span>Audit trail</span>
+                    </div>
+                    <div class="card">
+
+                        <div class="audit-row">
+                            <div class="audit-avatar" aria-hidden="true">M</div>
+                            <div class="audit-content">
+                                <div class="audit-main">INV-0045 created by Milad</div>
+                                <div class="audit-meta">Today, 10:32 AM</div>
+                            </div>
+                        </div>
+
+                        <div class="audit-row">
+                            <div class="audit-avatar sys" aria-hidden="true">S</div>
+                            <div class="audit-content">
+                                <div class="audit-main">INV-0042 overdue reminder sent</div>
+                                <div class="audit-meta">Today, 09:15 AM</div>
+                            </div>
+                        </div>
+
+                        <div class="audit-row">
+                            <div class="audit-avatar" aria-hidden="true">M</div>
+                            <div class="audit-content">
+                                <div class="audit-main">QTN-0108 accepted by client</div>
+                                <div class="audit-meta">Yesterday, 4:20 PM</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <div style="height: 8px"></div>
+            </main><!-- /home-page -->
+
+            <!-- Empty tab pages -->
+            <section class="page empty-tab" id="projects-page">
+                <div class="empty-symbol"><i data-lucide="folders"></i></div>
+                <h2>Projects</h2>
+                <p>Your project workspaces and live updates open here.</p>
+            </section>
+            <section class="page empty-tab" id="sales-page">
+                <div class="empty-symbol"><i data-lucide="chart-no-axes-combined"></i></div>
+                <h2>Sales</h2>
+                <p>Select the sales tab again to choose invoices, quotations, CSR, or waybills.</p>
+            </section>
+            <section class="page empty-tab" id="clients-page">
+                <div class="empty-symbol"><i data-lucide="users-round"></i></div>
+                <h2>Clients</h2>
+                <p>Your client records, activity, and commercial history open here.</p>
+            </section>
+            <section class="page empty-tab" id="more-page">
+                <div class="empty-symbol"><i data-lucide="ellipsis"></i></div>
+                <h2>More</h2>
+                <p>Reports, compliance, receipts, and workspace tools are grouped here.</p>
+            </section>
+
+        </div><!-- /scroll -->
+
+        <!-- MD3 Extended FAB -->
+        <button class="fab" id="fab" aria-label="Create new">
+            <i data-lucide="plus" class="fab-icon"></i>
+            <span class="fab-label" id="fabLabel">Create</span>
+        </button>
+
+        <!-- MD3 NavigationBar -->
+        <nav class="bottom" aria-label="Main navigation">
+            <button class="tab active" data-tab="home"><i data-lucide="house"></i><span>Home</span></button>
+            <button class="tab" data-tab="projects"><i data-lucide="folder-kanban"></i><span>Projects</span></button>
+            <button class="tab" data-tab="sales"><i data-lucide="chart-no-axes-combined"></i><span>Sales</span></button>
+            <button class="tab" data-tab="clients"><i data-lucide="contact-round"></i><span>Clients</span></button>
+            <button class="tab" data-tab="more"><i data-lucide="ellipsis"></i><span>More</span></button>
+        </nav>
+
+        <!-- Scrim -->
+        <div class="scrim" id="scrim"></div>
+
+        <!-- MD3 Modal Navigation Drawer -->
+        <aside class="drawer" id="drawer" aria-label="Navigation drawer">
+            <div class="drawer-head">
+                <div class="brand-mark"><i data-lucide="sparkles"></i></div>
+                <div>
+                    <div class="brand-name">BIGDROPS</div>
+                    <div class="brand-sub">Project finance workspace</div>
+                </div>
+            </div>
+            <div class="drawer-list">
+                <div class="drawer-label">Workspace</div>
+                <button class="drawer-row active" data-destination="Dashboard"><i data-lucide="layout-dashboard"></i>Dashboard</button>
+                <button class="drawer-row" data-destination="Projects"><i data-lucide="folder-kanban"></i>Projects</button>
+                <button class="drawer-row" data-destination="Clients"><i data-lucide="contact-round"></i>Clients</button>
+                <div class="drawer-label">Sales</div>
+                <button class="drawer-row" data-destination="Invoices"><i data-lucide="receipt-text"></i>Invoices<i class="chev" data-lucide="chevron-right"></i></button>
+                <button class="drawer-row" data-destination="Quotations"><i data-lucide="file-signature"></i>Quotations<i class="chev" data-lucide="chevron-right"></i></button>
+                <button class="drawer-row" data-destination="CSR"><i data-lucide="clipboard-check"></i>CSR<i class="chev" data-lucide="chevron-right"></i></button>
+                <button class="drawer-row" data-destination="Waybills"><i data-lucide="truck"></i>Waybills<i class="chev" data-lucide="chevron-right"></i></button>
+                <div class="drawer-label">Workspace tools</div>
+                <button class="drawer-row" data-destination="Reports"><i data-lucide="file-chart-column"></i>Reports</button>
+                <button class="drawer-row" data-destination="Compliance Hub"><i data-lucide="shield-check"></i>Compliance Hub</button>
+                <button class="drawer-row" data-destination="Item Library"><i data-lucide="library"></i>Item Library</button>
+                <button class="drawer-row" data-destination="Settings"><i data-lucide="settings-2"></i>Settings</button>
+            </div>
+            <div class="drawer-foot">
+                <div class="user-avatar">MA</div>
+                <div>
+                    <div class="user-name">Milad A.</div>
+                    <div class="user-role">Operator</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Bottom sheets ── -->
+
+        <!-- AI Sheet -->
+        <section class="sheet" id="aiSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <span style="width:40px;height:40px;flex:0 0 40px;border-radius:9999px;display:grid;place-items:center;background:var(--gradient);color:#fff">
+                        <i data-lucide="sparkles" style="width:18px;height:18px"></i>
+                    </span>
+                    <div>
+                        <h2 style="font-size:15px">BIGDROPS Assistant</h2>
+                        <p>Ask about invoices, clients, or your numbers.</p>
+                    </div>
+                </div>
+                <button class="sheet-close" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="action-list">
+                <button class="sheet-action" data-ai-prompt="Which invoices are overdue right now?">
+                    <span class="sheet-action-icon"><i data-lucide="triangle-alert"></i></span>
+                    <span>
+                        <span class="sheet-action-title">What's overdue?</span>
+                        <span class="sheet-action-copy">Summarize overdue invoices and amounts</span>
+                    </span>
+                </button>
+                <button class="sheet-action" data-ai-prompt="Draft a payment reminder for Lagos Steel Works.">
+                    <span class="sheet-action-icon copper"><i data-lucide="mail-plus"></i></span>
+                    <span>
+                        <span class="sheet-action-title">Draft a reminder</span>
+                        <span class="sheet-action-copy">Write a follow-up for a slow-paying client</span>
+                    </span>
+                </button>
+                <button class="sheet-action" data-ai-prompt="How did collections trend this month?">
+                    <span class="sheet-action-icon muted"><i data-lucide="chart-no-axes-combined"></i></span>
+                    <span>
+                        <span class="sheet-action-title">Explain this month</span>
+                        <span class="sheet-action-copy">Plain-language read on your collections</span>
+                    </span>
+                </button>
+            </div>
+            <div class="split"></div>
+            <label class="search-box" style="margin-top:2px">
+                <i data-lucide="sparkles"></i>
+                <input id="aiInput" placeholder="Ask the assistant anything…" autocomplete="off" />
+            </label>
+        </section>
+
+        <!-- Action Sheet -->
+        <section class="sheet" id="actionSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head">
+                <div><h2>Create</h2><p>Start a record in the correct BIGDROPS workspace.</p></div>
+                <button class="sheet-close" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="action-list">
+                <button class="sheet-action" data-destination="New Invoice"><span class="sheet-action-icon"><i data-lucide="receipt-text"></i></span><span><span class="sheet-action-title">New Invoice</span><span class="sheet-action-copy">Create and send a sales invoice</span></span></button>
+                <button class="sheet-action" data-destination="New Project"><span class="sheet-action-icon muted"><i data-lucide="folder-plus"></i></span><span><span class="sheet-action-title">New Project</span><span class="sheet-action-copy">Start a new project workspace</span></span></button>
+                <button class="sheet-action" data-destination="New RFQ"><span class="sheet-action-icon copper"><i data-lucide="file-search"></i></span><span><span class="sheet-action-title">New RFQ</span><span class="sheet-action-copy">Create a request for quotation</span></span></button>
+                <button class="sheet-action" data-destination="New Quotation"><span class="sheet-action-icon copper"><i data-lucide="file-signature"></i></span><span><span class="sheet-action-title">New Quotation</span><span class="sheet-action-copy">Build a quotation for a client</span></span></button>
+                <button class="sheet-action" data-destination="New CSR"><span class="sheet-action-icon muted"><i data-lucide="clipboard-check"></i></span><span><span class="sheet-action-title">New CSR</span><span class="sheet-action-copy">Log a customer service report</span></span></button>
+                <button class="sheet-action" data-destination="New Waybill"><span class="sheet-action-icon muted"><i data-lucide="truck"></i></span><span><span class="sheet-action-title">New Waybill</span><span class="sheet-action-copy">Create a dispatch or delivery waybill</span></span></button>
+                <button class="sheet-action" data-destination="New Client"><span class="sheet-action-icon muted"><i data-lucide="user-plus"></i></span><span><span class="sheet-action-title">New Client</span><span class="sheet-action-copy">Register a new client record</span></span></button>
+            </div>
+        </section>
+
+        <!-- Sales Sheet -->
+        <section class="sheet" id="salesSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head">
+                <div><h2>Sales</h2><p>Create, send, collect, and reconcile commercial documents.</p></div>
+                <button class="sheet-close" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="action-list">
+                <button class="sheet-action" data-destination="Invoices"><span class="sheet-action-icon"><i data-lucide="receipt-text"></i></span><span><span class="sheet-action-title">Invoices</span><span class="sheet-action-copy">Create, send, collect, and reconcile.</span></span></button>
+                <button class="sheet-action" data-destination="Quotations"><span class="sheet-action-icon copper"><i data-lucide="file-signature"></i></span><span><span class="sheet-action-title">Quotations</span><span class="sheet-action-copy">Prepare pricing and convert when approved.</span></span></button>
+                <button class="sheet-action" data-destination="CSR"><span class="sheet-action-icon muted"><i data-lucide="clipboard-check"></i></span><span><span class="sheet-action-title">CSR</span><span class="sheet-action-copy">Track service reports and client sign-off.</span></span></button>
+                <button class="sheet-action" data-destination="Waybills"><span class="sheet-action-icon muted"><i data-lucide="truck"></i></span><span><span class="sheet-action-title">Waybills</span><span class="sheet-action-copy">Manage dispatch and proof of delivery.</span></span></button>
+            </div>
+        </section>
+
+        <!-- More Sheet -->
+        <section class="sheet" id="moreSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head">
+                <div><h2>More</h2><p>Admin, reporting, and workspace utilities.</p></div>
+                <button class="sheet-close" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="sheet-group">Correspondence</div>
+            <div class="action-list">
+                <button class="sheet-action" data-destination="Letters"><span class="sheet-action-icon muted"><i data-lucide="mail"></i></span><span><span class="sheet-action-title">Letters</span><span class="sheet-action-copy">Official correspondence and notices.</span></span></button>
+            </div>
+            <div class="split"></div>
+            <div class="sheet-group">Finance &amp; reporting</div>
+            <div class="action-list">
+                <button class="sheet-action" data-destination="Reports"><span class="sheet-action-icon muted"><i data-lucide="file-chart-column"></i></span><span><span class="sheet-action-title">Reports</span><span class="sheet-action-copy">Revenue, collections, workload, and trends.</span></span></button>
+                <button class="sheet-action" data-destination="Compliance Hub"><span class="sheet-action-icon muted"><i data-lucide="shield-check"></i></span><span><span class="sheet-action-title">Compliance Hub</span><span class="sheet-action-copy">Approvals, policy logs, and audit trail.</span></span></button>
+                <button class="sheet-action" data-destination="Receipts"><span class="sheet-action-icon muted"><i data-lucide="receipt"></i></span><span><span class="sheet-action-title">Receipts</span><span class="sheet-action-copy">View payment receipts and download PDFs.</span></span></button>
+                <button class="sheet-action" data-destination="Item Library"><span class="sheet-action-icon muted"><i data-lucide="library"></i></span><span><span class="sheet-action-title">Item Library</span><span class="sheet-action-copy">Review price history and master item usage.</span></span></button>
+            </div>
+            <div class="split"></div>
+            <div class="sheet-group">Workspace</div>
+            <div class="action-list">
+                <button class="sheet-action" id="openThemeSheet"><span class="sheet-action-icon" style="background:var(--gradient);color:#fff"><i data-lucide="palette"></i></span><span><span class="sheet-action-title">Theme colors</span><span class="sheet-action-copy">Set your own primary and secondary colors</span></span></button>
+                <button class="sheet-action" data-destination="Settings"><span class="sheet-action-icon muted"><i data-lucide="settings-2"></i></span><span><span class="sheet-action-title">Settings</span><span class="sheet-action-copy">Roles, preferences, notifications, and workspace controls.</span></span></button>
+                <button class="sheet-action" data-destination="Sign Out"><span class="sheet-action-icon copper"><i data-lucide="log-out"></i></span><span><span class="sheet-action-title">Sign out</span><span class="sheet-action-copy">Exit this workspace securely.</span></span></button>
+            </div>
+        </section>
+
+        <!-- Theme Sheet -->
+        <section class="sheet" id="themeSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head">
+                <div><h2>Theme colors</h2><p>Type any hex code — the whole app updates live.</p></div>
+                <button class="sheet-close" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            </div>
+            <div style="height:56px;border-radius:12px;background:var(--gradient);margin:2px 2px 14px;box-shadow:var(--shadow)"></div>
+            <div style="display:flex;flex-direction:column;gap:10px;padding:0 2px">
+                <label style="display:flex;align-items:center;gap:10px">
+                    <span id="primarySwatch" style="width:36px;height:36px;flex:0 0 36px;border-radius:8px;border:1px solid var(--line-strong);background:var(--primary)"></span>
+                    <span style="flex:1">
+                        <span style="display:block;font-size:11px;font-weight:500;letter-spacing:0.045em;color:var(--ink-3);margin-bottom:3px">Primary</span>
+                        <input id="primaryHex" type="text" maxlength="7" placeholder="#1e3a5f" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--line-strong);background:var(--sc-high);color:var(--ink);font-family:var(--number);font-size:12px;padding:0 10px;outline:0" />
+                    </span>
+                </label>
+                <label style="display:flex;align-items:center;gap:10px">
+                    <span id="secondarySwatch" style="width:36px;height:36px;flex:0 0 36px;border-radius:8px;border:1px solid var(--line-strong);background:var(--secondary)"></span>
+                    <span style="flex:1">
+                        <span style="display:block;font-size:11px;font-weight:500;letter-spacing:0.045em;color:var(--ink-3);margin-bottom:3px">Secondary</span>
+                        <input id="secondaryHex" type="text" maxlength="7" placeholder="#0f172a" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--line-strong);background:var(--sc-high);color:var(--ink);font-family:var(--number);font-size:12px;padding:0 10px;outline:0" />
+                    </span>
+                </label>
+                <p id="hexWarning" style="display:none;color:var(--attention);font-size:11px;margin:0 2px">Enter a valid hex code, e.g. #0d9488</p>
+            </div>
+            <div class="split"></div>
+            <button class="sheet-action" id="resetTheme">
+                <span class="sheet-action-icon muted"><i data-lucide="rotate-ccw"></i></span>
+                <span><span class="sheet-action-title">Reset to default</span><span class="sheet-action-copy">Back to the original slate navy</span></span>
+            </button>
+        </section>
+
+        <!-- Notification Sheet -->
+        <section class="sheet" id="notificationSheet" aria-hidden="true">
+            <div class="grab"></div>
+            <div class="sheet-head">
+                <div><h2>Notifications</h2><p>Live activity from your BIGDROPS workspace.</p></div>
+                <button class="sheet-close" data-close aria-label="Close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="action-list">
+                <button class="sheet-action" data-action="alert"><span class="sheet-action-icon copper"><i data-lucide="triangle-alert"></i></span><span><span class="sheet-action-title">INV-0042 is overdue</span><span class="sheet-action-copy">7 days past due. Follow up or record payment.</span></span></button>
+                <button class="sheet-action" data-action="alert"><span class="sheet-action-icon"><i data-lucide="circle-check"></i></span><span><span class="sheet-action-title">Quotation accepted</span><span class="sheet-action-copy">QTN-0108 is ready to become an invoice.</span></span></button>
+                <button class="sheet-action" data-action="alert"><span class="sheet-action-icon muted"><i data-lucide="receipt"></i></span><span><span class="sheet-action-title">Payment received</span><span class="sheet-action-copy">₦45,000 needs reconciliation against INV-0039.</span></span></button>
+            </div>
+        </section>
+
+        <!-- Search layer -->
+        <section class="search-layer" id="searchLayer">
+            <div class="search-row">
+                <label class="search-box">
+                    <i data-lucide="search"></i>
+                    <input id="searchInput" placeholder="Search documents, clients, projects" autocomplete="off" />
+                </label>
+                <button class="cancel" id="cancelSearch">Cancel</button>
+            </div>
+            <div class="search-suggestions">
+                <h3>Recent searches</h3>
+                <button class="suggestion" data-destination="INV-0045">INV-0045<span>Lagos Steel Works · Invoice</span></button>
+                <button class="suggestion" data-destination="QTN-0108">QTN-0108<span>Acme Ltd · Quotation</span></button>
+                <button class="suggestion" data-destination="Site Alpha">Site Alpha<span>Project · Waybill activity</span></button>
+            </div>
+        </section>
+
+        <!-- Toast -->
+        <div class="toast" id="toast"></div>
+
+    </div><!-- /shell -->
+</div><!-- /app -->
+
+<script>
+const root=document.documentElement,$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],toast=$('#toast'),scrim=$('#scrim'),drawer=$('#drawer');let toastTimer;const sheets=[$('#aiSheet'),$('#actionSheet'),$('#salesSheet'),$('#moreSheet'),$('#notificationSheet'),$('#themeSheet')];function icons(){lucide.createIcons({attrs:{'stroke-width':1.9}})}function say(m){toast.textContent=m;toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),1900)}function closeAll(){drawer.classList.remove('show');sheets.forEach(s=>{s.classList.remove('show');s.setAttribute('aria-hidden','true')});scrim.classList.remove('show');$('#fab').classList.remove('open');$('#menuBtn').classList.remove('active')}function openSheet(s){closeAll();s.classList.add('show');s.setAttribute('aria-hidden','false');scrim.classList.add('show')}function setTheme(){const d=root.dataset.theme==='dark';root.dataset.theme=d?'light':'dark';localStorage.setItem('bigdrops-real-theme',root.dataset.theme);$('#themeBtn').innerHTML=d?'<i data-lucide="moon"></i>':'<i data-lucide="sun"></i>';$('#themeBtn').setAttribute('aria-label',d?'Switch to dark mode':'Switch to light mode');icons();requestAnimationFrame(()=>{const m=$('meta[name="theme-color"]');if(m)m.content=getComputedStyle(root).getPropertyValue('--primary').trim()})}icons();const saved=localStorage.getItem('bigdrops-real-theme');if(saved)root.dataset.theme=saved;if(root.dataset.theme==='dark'){$('#themeBtn').innerHTML='<i data-lucide="sun"></i>';$('#themeBtn').setAttribute('aria-label','Switch to light mode')}icons();$('#menuBtn').addEventListener('click',()=>{const o=drawer.classList.toggle('show');scrim.classList.toggle('show',o);$('#menuBtn').classList.toggle('active',o)});$('#themeBtn').addEventListener('click',setTheme);$('#notificationBtn').addEventListener('click',()=>openSheet($('#notificationSheet')));$('#searchBtn').addEventListener('click',()=>{closeAll();$('#searchLayer').classList.add('show');setTimeout(()=>$('#searchInput').focus(),120)});$('#cancelSearch').addEventListener('click',()=>$('#searchLayer').classList.remove('show'));$('#aiBtn').addEventListener('click',()=>openSheet($('#aiSheet')));$('#fab').addEventListener('click',()=>{const o=$('#fab').classList.toggle('open');if(o){openSheet($('#actionSheet'));$('#fabLabel').textContent='Close';}else{closeAll();$('#fabLabel').textContent='Create';}});scrim.addEventListener('click',closeAll);$$('[data-close]').forEach(b=>b.addEventListener('click',closeAll));$$('[data-tab]').forEach(b=>b.addEventListener('click',()=>{const t=b.dataset.tab;if(t==='sales'){openSheet($('#salesSheet'));return}if(t==='more'){openSheet($('#moreSheet'));return}closeAll();$$('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');$$('.page').forEach(p=>p.classList.remove('active'));$('#'+t+'-page').classList.add('active')}));$$('[data-destination]').forEach(b=>b.addEventListener('click',()=>{say('Opening '+b.dataset.destination+'…');closeAll()}));$$('[data-action]').forEach(b=>b.addEventListener('click',()=>say('Opening document…')));$('#kpiSettings').addEventListener('click',()=>say('KPI settings opening…'));$('#dismissReminder').addEventListener('click',()=>{$('#paymentReminder').style.display='none'});$('#recordPayments').addEventListener('click',()=>say('Record payments opening…'));$('#openThemeSheet').addEventListener('click',()=>openSheet($('#themeSheet')));function applyHex(prop,val){const v=val.trim();if(/^#[0-9A-Fa-f]{6}$/.test(v)){root.style.setProperty(prop,v);return true}return false}$('#primaryHex').addEventListener('input',e=>{const ok=applyHex('--primary',e.target.value);$('#primarySwatch').style.background=ok?e.target.value:'var(--primary)';$('#hexWarning').style.display=ok?'none':'block'});$('#secondaryHex').addEventListener('input',e=>{const ok=applyHex('--secondary',e.target.value);$('#secondarySwatch').style.background=ok?e.target.value:'var(--secondary)';$('#hexWarning').style.display=ok?'none':'block'});$('#resetTheme').addEventListener('click',()=>{root.style.removeProperty('--primary');root.style.removeProperty('--secondary');$('#primaryHex').value='';$('#secondaryHex').value='';$('#primarySwatch').style.background='var(--primary)';$('#secondarySwatch').style.background='var(--secondary)';$('#hexWarning').style.display='none';say('Theme reset')});
+</script>
+</body>
+</html>
