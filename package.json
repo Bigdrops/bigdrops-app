@@ -50,6 +50,8 @@
     "@fontsource/roboto-condensed": "^5.2.8",
     "@fontsource/source-sans-pro": "^5.2.5",
     "@fontsource/sue-ellen-francisco": "^5.2.8",
+    "@formepdf/core": "^0.20.1",
+    "@formepdf/react": "^0.20.1",
     "@hugeicons/core-free-icons": "^4.0.0",
     "@hugeicons/react": "^1.1.5",
     "@lobehub/icons": "^5.10.0",

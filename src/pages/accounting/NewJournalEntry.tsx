@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Minus, Plus } from 'lucide-react'
+import { ChevronsUpDown, Minus, Plus } from 'lucide-react'
 import Layout from '@/components/Layout'
+import { Combobox } from '@/components/ui/combobox'
 import { useEntity } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 import {
@@ -41,6 +42,26 @@ export default function NewJournalEntry() {
   ])
   const [submitting, setSubmitting] = React.useState(false)
   const [balanceHint, setBalanceHint] = React.useState<string | null>(null)
+
+  const periodOptions = React.useMemo(
+    () =>
+      periods.map((period) => ({
+        value: period.code,
+        label: period.code,
+        description: `${period.start_date} → ${period.end_date}`,
+      })),
+    [periods],
+  )
+
+  const accountOptions = React.useMemo(
+    () =>
+      accounts.map((account) => ({
+        value: account.code,
+        label: `${account.code} · ${account.name}`,
+        description: account.type,
+      })),
+    [accounts],
+  )
 
   React.useEffect(() => {
     let cancelled = false
@@ -120,19 +141,36 @@ export default function NewJournalEntry() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="je-period">Open period</label>
-              <select
-                id="je-period"
+              <Combobox
+                options={periodOptions}
                 value={periodCode}
-                onChange={(e) => setPeriodCode(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Select period…</option>
-                {periods.map((period) => (
-                  <option key={period.id} value={period.code}>
-                    {period.code}
-                  </option>
-                ))}
-              </select>
+                onChange={setPeriodCode}
+                title="Open period"
+                placeholder="Select period…"
+                searchPlaceholder="Search period…"
+                emptyText="No open periods available."
+                mobileBehavior="drawer"
+                desktopBehavior="popover"
+                trigger={
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Open period"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click()
+                    }}
+                    className={`${inputClass} flex cursor-pointer items-center justify-between gap-2 text-left`}
+                  >
+                    <span
+                      className={`min-w-0 flex-1 truncate ${periodCode ? '' : 'text-bd-text-muted'}`}
+                    >
+                      {periodOptions.find((o) => o.value === periodCode)?.label ??
+                        'Select period…'}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 text-bd-text-muted" />
+                  </div>
+                }
+              />
             </div>
             <div>
               <label className={labelClass} htmlFor="je-date">Transaction date</label>
@@ -197,19 +235,36 @@ export default function NewJournalEntry() {
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <select
+                <Combobox
+                  options={accountOptions}
                   value={line.accountCode}
-                  onChange={(e) => updateLine(line.key, { accountCode: e.target.value })}
-                  aria-label={`Line ${index + 1} account`}
-                  className={inputClass}
-                >
-                  <option value="">Select account…</option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.code}>
-                      {account.code} · {account.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(next) => updateLine(line.key, { accountCode: next })}
+                  title={`Line ${index + 1} account`}
+                  placeholder="Select account…"
+                  searchPlaceholder="Search code or name…"
+                  emptyText="No accounts match this search."
+                  mobileBehavior="drawer"
+                  desktopBehavior="popover"
+                  trigger={
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Line ${index + 1} account`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click()
+                      }}
+                      className={`${inputClass} flex cursor-pointer items-center justify-between gap-2 text-left`}
+                    >
+                      <span
+                        className={`min-w-0 flex-1 truncate ${line.accountCode ? '' : 'text-bd-text-muted'}`}
+                      >
+                        {accountOptions.find((o) => o.value === line.accountCode)?.label ??
+                          'Select account…'}
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 shrink-0 text-bd-text-muted" />
+                    </div>
+                  }
+                />
                 <input
                   value={line.amount}
                   onChange={(e) => updateLine(line.key, { amount: e.target.value })}

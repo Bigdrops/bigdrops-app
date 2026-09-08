@@ -1,0 +1,143 @@
+{
+  "base": {
+    "file": "forme-invoice-a4.pdf",
+    "bytes": 69282,
+    "pages": 2,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "textMethod": "pdf-parse/PDFParse",
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 21,
+    "moneyStringsMissing": [],
+    "valuesMatch": true,
+    "headerOnPages": [
+      true,
+      false
+    ],
+    "snHeaderOnPages": [
+      false,
+      false
+    ],
+    "pageNumbersOk": true,
+    "groupLabelPages": [
+      false,
+      false
+    ]
+  },
+  "long": {
+    "file": "forme-invoice-long.pdf",
+    "bytes": 285417,
+    "pages": 9,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "textMethod": "pdf-parse/PDFParse",
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 133,
+    "moneyStringsMissing": [],
+    "valuesMatch": true,
+    "headerOnPages": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "snHeaderOnPages": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "pageNumbersOk": true,
+    "groupLabelPages": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "native": {
+    "file": "forme-invoice-native.pdf",
+    "bytes": 228137,
+    "pages": 5,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "textMethod": "pdf-parse/PDFParse",
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 133,
+    "moneyStringsMissing": [],
+    "valuesMatch": true,
+    "headerOnPages": [
+      true,
+      true,
+      true,
+      true,
+      false
+    ],
+    "snHeaderOnPages": [
+      true,
+      true,
+      true,
+      true,
+      false
+    ],
+    "pageNumbersOk": true,
+    "groupLabelPages": [
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "landscape": {
+    "file": "forme-invoice-landscape.pdf",
+    "bytes": 68040,
+    "pages": 3,
+    "firstPagePt": {
+      "width": 841.89,
+      "height": 595.28
+    },
+    "textMethod": "pdf-parse/PDFParse",
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 21,
+    "moneyStringsMissing": [],
+    "valuesMatch": true,
+    "headerOnPages": [
+      true,
+      false,
+      false
+    ],
+    "snHeaderOnPages": [
+      false,
+      false,
+      false
+    ],
+    "pageNumbersOk": true,
+    "groupLabelPages": [
+      false,
+      false,
+      false
+    ]
+  }
+}

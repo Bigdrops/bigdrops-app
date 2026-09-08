@@ -42,10 +42,10 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
           style={{
             margin: "0 18px 14px",
             padding: "16px",
-            background: "hsl(142 46% 93%)",
+            background: "color-mix(in oklab, hsl(var(--bd-button-primary-bg)) 12%, transparent)",
             borderRadius: "var(--bd-radius-lg)",
-            border: "2px solid hsl(142 71% 45%)",
-            boxShadow: "0 1px 3px hsl(142 71% 45% / 0.15)",
+            border: "2px solid hsl(var(--bd-button-primary-bg))",
+            boxShadow: "0 1px 3px hsl(var(--bd-button-primary-bg) / 0.15)",
             position: "relative",
             transition: "border-color 0.15s, background 0.15s, box-shadow 0.15s",
           }}
@@ -61,7 +61,7 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
               gap: 4,
               padding: "3px 10px",
               borderRadius: 999,
-              background: "hsl(142 71% 45%)",
+              background: "hsl(var(--bd-button-primary-bg))",
               color: "#fff",
               fontSize: 10,
               fontWeight: 700,
@@ -94,14 +94,14 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
                     margin: "0 18px 14px",
                     padding: "16px",
                     background: isSelected
-                      ? "hsl(142 46% 93%)"
+                      ? "color-mix(in oklab, hsl(var(--bd-button-primary-bg)) 12%, transparent)"
                       : "hsl(var(--bd-surface-muted))",
                     borderRadius: "var(--bd-radius-lg)",
                     border: isSelected
-                      ? "2px solid hsl(142 71% 45%)"
+                      ? "2px solid hsl(var(--bd-button-primary-bg))"
                       : "1px solid hsl(var(--bd-border))",
                     boxShadow: isSelected
-                      ? "0 1px 3px hsl(142 71% 45% / 0.15)"
+                      ? "0 1px 3px hsl(var(--bd-button-primary-bg) / 0.15)"
                       : "none",
                     cursor: onSelect ? "pointer" : "default",
                     position: "relative",
@@ -131,7 +131,7 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
                         gap: 4,
                         padding: "3px 10px",
                         borderRadius: 999,
-                        background: "hsl(142 71% 45%)",
+                        background: "hsl(var(--bd-button-primary-bg))",
                         color: "#fff",
                         fontSize: 10,
                         fontWeight: 700,
@@ -151,7 +151,7 @@ export const BankDetailsCard: React.FC<BankDetailsCardProps> = ({
                         size={16}
                         style={{
                           marginRight: 6,
-                          color: "hsl(142 71% 45%)",
+                          color: "hsl(var(--bd-button-primary-bg))",
                           verticalAlign: "text-bottom",
                         }}
                       />

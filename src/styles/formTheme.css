@@ -471,6 +471,20 @@ h1, .bd-h1 {
   display: none;
 }
 
+/* Dismissal: the library hides the close button until hover, which never
+   fires on touch screens. Keep it always visible with a 44px hit area. */
+.bd-goey-toast .gooey-closeButton {
+  opacity: 1;
+  pointer-events: auto;
+  color: inherit;
+}
+
+.bd-goey-toast .gooey-closeButton::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+
 .bd-goey-toast .gooey-progressWrapper {
   background: color-mix(in oklab, currentColor 12%, transparent);
 }
@@ -511,15 +525,15 @@ h1, .bd-h1 {
 }
 
 .bd-goey-toast--success {
-  --bd-goey-toast-fill: var(--bd-feedback-success-bg);
-  --bd-goey-toast-border: var(--bd-feedback-success-border);
-  color: hsl(var(--bd-feedback-success-text));
+  --bd-goey-toast-fill: var(--bd-status-success-text);
+  --bd-goey-toast-border: var(--bd-status-success-text);
+  color: #fff;
 }
 
 .bd-goey-toast--error {
-  --bd-goey-toast-fill: var(--bd-feedback-error-bg);
-  --bd-goey-toast-border: var(--bd-feedback-error-border);
-  color: hsl(var(--bd-feedback-error-text));
+  --bd-goey-toast-fill: var(--bd-status-danger-text);
+  --bd-goey-toast-border: var(--bd-status-danger-text);
+  color: #fff;
 }
 
 .bd-goey-toast--warning {
@@ -541,15 +555,15 @@ h1, .bd-h1 {
 }
 
 .bd-goey-toast--promise:has(.gooey-titleSuccess) {
-  --bd-goey-toast-fill: var(--bd-feedback-success-bg);
-  --bd-goey-toast-border: var(--bd-feedback-success-border);
-  color: hsl(var(--bd-feedback-success-text));
+  --bd-goey-toast-fill: var(--bd-status-success-text);
+  --bd-goey-toast-border: var(--bd-status-success-text);
+  color: #fff;
 }
 
 .bd-goey-toast--promise:has(.gooey-titleError) {
-  --bd-goey-toast-fill: var(--bd-feedback-error-bg);
-  --bd-goey-toast-border: var(--bd-feedback-error-border);
-  color: hsl(var(--bd-feedback-error-text));
+  --bd-goey-toast-fill: var(--bd-status-danger-text);
+  --bd-goey-toast-border: var(--bd-status-danger-text);
+  color: #fff;
 }
 
 .bd-goey-toast--promise:has(.gooey-titleWarning) {

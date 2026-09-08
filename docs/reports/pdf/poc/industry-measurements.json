@@ -1,0 +1,156 @@
+{
+  "base": {
+    "file": "industry-a4.pdf",
+    "bytes": 75917,
+    "pages": 2,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 24,
+    "moneyStringsMissing": [],
+    "valuesMatch": true,
+    "headerOnPages": [
+      true,
+      false
+    ],
+    "groupLabelsOnPages": [
+      true,
+      false
+    ],
+    "totalsOnPages": [
+      false,
+      true
+    ],
+    "wordsOnPages": [
+      false,
+      true
+    ],
+    "balanceOnPages": [
+      false,
+      true
+    ],
+    "bankOnPages": [
+      false,
+      true
+    ],
+    "signatureOnPages": [
+      false,
+      true
+    ],
+    "pageNumbersOk": true
+  },
+  "compact": {
+    "file": "industry-compact.pdf",
+    "bytes": 75926,
+    "pages": 2,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 24,
+    "moneyStringsMissing": [],
+    "valuesMatch": true,
+    "headerOnPages": [
+      true,
+      false
+    ],
+    "groupLabelsOnPages": [
+      true,
+      false
+    ],
+    "totalsOnPages": [
+      false,
+      true
+    ],
+    "wordsOnPages": [
+      false,
+      true
+    ],
+    "balanceOnPages": [
+      false,
+      true
+    ],
+    "bankOnPages": [
+      false,
+      true
+    ],
+    "signatureOnPages": [
+      false,
+      true
+    ],
+    "pageNumbersOk": true
+  },
+  "long": {
+    "file": "industry-long.pdf",
+    "bytes": 294180,
+    "pages": 6,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 142,
+    "moneyStringsMissing": [],
+    "valuesMatch": true,
+    "headerOnPages": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "groupLabelsOnPages": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+    ],
+    "totalsOnPages": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "wordsOnPages": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "balanceOnPages": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "bankOnPages": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "signatureOnPages": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "pageNumbersOk": true
+  }
+}
