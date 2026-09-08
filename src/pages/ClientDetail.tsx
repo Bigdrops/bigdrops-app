@@ -421,7 +421,7 @@ export default function ClientDetail() {
     return (
       <Layout title="Client Workspace" session={null}>
         <div className="px-6 py-10">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">
             {overviewError || 'Client not found.'}
           </div>
         </div>
@@ -443,7 +443,7 @@ export default function ClientDetail() {
       title={client.name || 'Client Workspace'}
       session={null}
       hidePageHeader
-      contentClassName="w-full max-w-none p-0 pb-24 md:px-4 md:pb-10"
+      contentClassName="w-full max-w-none bg-background p-0 pb-24 md:px-4 md:pb-10"
     >
       <ClientActionHeader client={client} onEdit={() => navigate(`/clients/edit/${id}`)} />
 
@@ -454,7 +454,7 @@ export default function ClientDetail() {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="rounded-none border-b-2 border-transparent px-1 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground data-[state=active]:border-black data-[state=active]:bg-transparent data-[state=active]:text-black transition-all"
+                className="rounded-none border-b-2 border-transparent px-1 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground transition-all data-[state=active]:border-[hsl(var(--bd-button-primary-bg))] data-[state=active]:bg-transparent data-[state=active]:text-foreground"
               >
                 {tab.label}
               </TabsTrigger>
@@ -473,7 +473,7 @@ export default function ClientDetail() {
                 <CenteredSpinner />
               </div>
             ) : error.projects ? (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error.projects}</div>
+              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.projects}</div>
             ) : (
               <ClientProjectsTab projects={projects} />
             )}
@@ -494,7 +494,7 @@ export default function ClientDetail() {
                 <CenteredSpinner />
               </div>
             ) : error.quotations ? (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error.quotations}</div>
+              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.quotations}</div>
             ) : (
               <ClientDocumentsTab
                 type="quotation"
@@ -511,7 +511,7 @@ export default function ClientDetail() {
                 <CenteredSpinner />
               </div>
             ) : error.csrs ? (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error.csrs}</div>
+              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.csrs}</div>
             ) : (
               <ClientDocumentsTab
                 type="csr"
@@ -528,7 +528,7 @@ export default function ClientDetail() {
                 <CenteredSpinner />
               </div>
             ) : error.waybills ? (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error.waybills}</div>
+              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.waybills}</div>
             ) : (
               <ClientDocumentsTab
                 type="waybill"

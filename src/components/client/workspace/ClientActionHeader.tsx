@@ -37,7 +37,7 @@ export const ClientActionHeader: React.FC<Props> = ({ client, onEdit }) => {
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="rounded-full"
+            className="min-h-[44px] min-w-[44px] rounded-full"
             onClick={() => navigate('/clients')}
           >
             <ArrowLeft className="size-4" />
@@ -50,8 +50,9 @@ export const ClientActionHeader: React.FC<Props> = ({ client, onEdit }) => {
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="rounded-full"
+          className="min-h-[44px] min-w-[44px] rounded-full"
           onClick={onEdit}
+          aria-label="Edit client"
         >
           <Pencil className="size-4" />
         </Button>
@@ -63,7 +64,7 @@ export const ClientActionHeader: React.FC<Props> = ({ client, onEdit }) => {
             key={action.label}
             size="sm"
             variant="outline"
-            className="shrink-0 gap-1.5 rounded-full border-border bg-muted/30 px-3 font-bold text-foreground hover:bg-muted/50"
+            className="min-h-[44px] shrink-0 gap-1.5 rounded-full border-border bg-muted/30 px-4 font-bold text-foreground hover:bg-muted/50"
             onClick={() => navigate(action.path, { state: prefillState })}
           >
             <action.icon className="size-3.5" />

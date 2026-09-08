@@ -27,15 +27,15 @@ const DOC_CONFIG = {
 }
 
 const STATUS_VARIANTS = {
-  paid: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-  unpaid: 'bg-blue-50 text-blue-700 ring-blue-100',
-  partially_paid: 'bg-amber-50 text-amber-700 ring-amber-100',
-  converted: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-  overdue: 'bg-red-50 text-red-700 ring-red-100',
-  cancelled: 'bg-muted text-muted-foreground ring-border/20',
-  open: 'bg-blue-50 text-blue-700 ring-blue-100',
-  confirmed: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-  archived: 'bg-zinc-50 text-zinc-600 ring-zinc-200',
+  paid: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] ring-[hsl(var(--bd-status-success-border))]',
+  unpaid: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] ring-[hsl(var(--bd-status-info-border))]',
+  partially_paid: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))] ring-[hsl(var(--bd-status-warning-border))]',
+  converted: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] ring-[hsl(var(--bd-status-success-border))]',
+  overdue: 'bg-[hsl(var(--bd-status-danger-bg))] text-[hsl(var(--bd-status-danger-text))] ring-[hsl(var(--bd-status-danger-border))]',
+  cancelled: 'bg-[hsl(var(--bd-status-neutral-bg))] text-[hsl(var(--bd-status-neutral-text))] ring-[hsl(var(--bd-status-neutral-border))]',
+  open: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))] ring-[hsl(var(--bd-status-info-border))]',
+  confirmed: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))] ring-[hsl(var(--bd-status-success-border))]',
+  archived: 'bg-[hsl(var(--bd-status-neutral-bg))] text-[hsl(var(--bd-status-neutral-text))] ring-[hsl(var(--bd-status-neutral-border))]',
 }
 
 export const ClientDocumentsTab: React.FC<Props> = ({ type, documents }) => {
@@ -49,14 +49,14 @@ export const ClientDocumentsTab: React.FC<Props> = ({ type, documents }) => {
         <div className="rounded-full bg-muted p-6 text-muted-foreground shadow-sm ring-1 ring-border/50">
            <Icon className="size-8" />
         </div>
-        <h3 className="mt-4 text-sm font-bold text-zinc-950">No {cfg.label.toLowerCase()} yet</h3>
+        <h3 className="mt-4 text-sm font-bold text-foreground">No {cfg.label.toLowerCase()} yet</h3>
         <p className="mt-1 text-xs text-muted-foreground">Any {cfg.label.toLowerCase()} linked to this client will appear here.</p>
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-border/50 overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-ring">
+    <div className="divide-y divide-bd-border/50 overflow-hidden rounded-2xl border border-bd-border bg-bd-surface shadow-sm">
       {documents.map((doc) => {
         const number = doc.number || doc.title || cfg.label.slice(0, -1)
         const date = doc.date || doc.created_at
@@ -68,35 +68,35 @@ export const ClientDocumentsTab: React.FC<Props> = ({ type, documents }) => {
             key={doc.id}
             type="button"
             onClick={() => navigate(`${cfg.path}/${doc.id}`)}
-            className="group flex w-full items-center gap-4 px-4 py-4 text-left hover:bg-muted/30 transition-colors"
+            className="group flex min-h-[68px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-bd-surface-muted/50 active:bg-bd-surface-muted"
           >
-            <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl shadow-sm ring-1 ring-white/10 ${cfg.className}`}>
+            <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${cfg.className}`}>
                <Icon className="size-5" />
             </div>
 
             <div className="min-w-0 flex-1">
                <div className="flex items-center justify-between gap-2">
-                  <div className="truncate text-[13px] font-black uppercase tracking-wider text-zinc-900 group-hover:text-blue-600 transition-colors">
+                  <div className="truncate text-[13px] font-black uppercase tracking-wider text-foreground">
                      {number}
                   </div>
-                  <span className="shrink-0 text-[10px] font-bold text-muted-foreground/60">{formatDateShort(date)}</span>
+                  <span className="shrink-0 text-[10px] font-bold text-muted-foreground">{formatDateShort(date)}</span>
                </div>
                <div className="mt-1.5 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                     <Badge variant="ghost" className={`h-4 p-0 px-2 text-[9px] font-black uppercase tracking-widest ring-1 ring-inset ${statusClass}`}>
+                  <div className="flex min-w-0 items-center gap-2">
+                     <Badge variant="ghost" className={`h-4 shrink-0 p-0 px-2 text-[9px] font-black uppercase tracking-widest ring-1 ring-inset ${statusClass}`}>
                         {status}
                      </Badge>
                      {doc.total && (
                         <>
                            <span className="text-[10px] text-muted-foreground/30">•</span>
-                           <span className="text-xs font-bold text-zinc-800">{formatCurrency(doc.total)}</span>
+                           <span className="truncate text-xs font-bold text-foreground">{formatCurrency(doc.total)}</span>
                         </>
                      )}
                   </div>
                </div>
             </div>
 
-            <div className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-blue-600">
+            <div className="grid min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-muted-foreground transition group-hover:text-foreground">
                <ChevronRight className="size-5" />
             </div>
           </button>

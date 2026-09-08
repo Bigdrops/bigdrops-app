@@ -30,11 +30,11 @@ interface Props {
 }
 
 const DOC_STYLES = {
-  invoice: { icon: FileText, className: 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' },
-  quotation: { icon: ClipboardList, className: 'bg-violet-50 text-violet-700 ring-1 ring-violet-100' },
-  csr: { icon: Wrench, className: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' },
-  waybill: { icon: Truck, className: 'bg-orange-50 text-orange-700 ring-1 ring-orange-100' },
-  project: { icon: FolderKanban, className: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200' },
+  invoice: { icon: FileText, className: 'bg-[hsl(var(--bd-status-info-bg))] text-[hsl(var(--bd-status-info-text))]' },
+  quotation: { icon: ClipboardList, className: 'bg-[hsl(var(--bd-button-primary-bg)/0.1)] text-[hsl(var(--bd-button-primary-bg))]' },
+  csr: { icon: Wrench, className: 'bg-[hsl(var(--bd-status-success-bg))] text-[hsl(var(--bd-status-success-text))]' },
+  waybill: { icon: Truck, className: 'bg-[hsl(var(--bd-status-warning-bg))] text-[hsl(var(--bd-status-warning-text))]' },
+  project: { icon: FolderKanban, className: 'bg-[hsl(var(--bd-status-neutral-bg))] text-[hsl(var(--bd-status-neutral-text))]' },
 }
 
 export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity }) => {
@@ -71,11 +71,11 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
       <section>
         <div className="mb-4">
            {client.category ? (
-            <Badge className="mb-2 rounded-full bg-muted px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 ring-1 ring-inset ring-border/30">
+            <Badge className="mb-2 rounded-full bg-muted px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground ring-1 ring-inset ring-border/30">
               {client.category}
             </Badge>
           ) : null}
-          <h1 className="text-2xl font-black tracking-tighter text-zinc-950">{client.name}</h1>
+          <h1 className="text-2xl font-black tracking-tighter text-foreground">{client.name}</h1>
           <p className="mt-1 text-xs font-semibold text-muted-foreground">{client.contact_person || 'No contact person'}</p>
         </div>
 
@@ -94,22 +94,22 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_280px]">
         <div className="space-y-6">
           {overdue.length > 0 && (
-            <section className="rounded-2xl border border-red-200 bg-red-50/50 p-4">
-              <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-red-600">
+            <section className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4">
+              <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--bd-status-danger-text))]">
                 <AlertCircle className="size-3.5" />
                 Needs Attention ({overdue.length})
               </div>
               <div className="space-y-2">
                 {overdue.slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between rounded-lg bg-bd-card-bg p-3 shadow-sm ring-1 ring-red-100">
-                    <div>
-                        <span className="font-mono text-xs font-bold text-red-700">{inv.invoice_number}</span>
-                        <div className="text-[10px] text-red-500 font-medium">Past Due {formatCurrency(inv.balance_due)}</div>
+                  <div key={inv.id} className="flex items-center justify-between gap-2 rounded-xl border border-[hsl(var(--bd-status-danger-border))] bg-bd-surface p-3 shadow-sm">
+                    <div className="min-w-0">
+                        <span className="font-mono text-xs font-bold text-[hsl(var(--bd-status-danger-text))]">{inv.invoice_number}</span>
+                        <div className="text-[10px] font-medium text-[hsl(var(--bd-status-danger-text))] opacity-80">Past Due {formatCurrency(inv.balance_due)}</div>
                     </div>
                     <Button
                         size="sm"
                         variant="ghost"
-                        className="rounded-full text-[10px] font-bold uppercase text-red-600"
+                        className="min-h-[44px] shrink-0 rounded-full px-4 text-[10px] font-bold uppercase text-[hsl(var(--bd-status-danger-text))]"
                         onClick={() => navigate(`/invoices/${inv.id}`)}
                     >
                         View
@@ -120,42 +120,42 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
             </section>
           )}
 
-          <section className="rounded-2xl border border-border bg-card shadow-sm ring-1 ring-ring overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
-               <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recent Streams</h3>
-               <span className="text-[9px] font-bold text-muted-foreground/50">All Records</span>
+          <section className="overflow-hidden rounded-2xl border border-bd-border bg-bd-surface shadow-sm">
+            <div className="flex items-center justify-between border-b border-bd-border bg-bd-surface-muted/40 px-4 py-3">
+               <h3 className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">Recent Streams</h3>
+               <span className="text-[9px] font-bold text-bd-text-muted opacity-70">All Records</span>
             </div>
-            <div className="divide-y divide-border/50 px-4 py-2">
+            <div className="divide-y divide-bd-border/50 px-4 py-2">
               {activity.slice(0, 10).map((event) => {
                 const cfg = DOC_STYLES[event.type]
                 const Icon = cfg.icon
                 const path = event.type === 'project' ? `/projects/${event.id}` : event.type === 'invoice' ? `/invoices/${event.id}` : event.type === 'quotation' ? `/quotations/${event.id}` : event.type === 'csr' ? `/csr/${event.id}` : `/waybills/${event.id}`
                 return (
-                  <div key={`${event.type}-${event.id}`} className="flex items-center gap-4 py-3">
-                    <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${cfg.className}`}>
-                      <Icon className="size-4" />
+                  <div key={`${event.type}-${event.id}`} className="flex items-center gap-3 py-3">
+                    <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${cfg.className}`}>
+                      <Icon className="size-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                        <div className="flex items-center justify-between gap-2">
-                          <div className="truncate text-sm font-semibold text-zinc-900 leading-none">
+                          <div className="truncate text-sm font-semibold leading-none text-foreground">
                              {event.number || event.title || event.type}
                           </div>
-                          <span className="shrink-0 text-[10px] text-muted-foreground/70">{formatDateShort(event.date)}</span>
+                          <span className="shrink-0 text-[10px] text-muted-foreground">{formatDateShort(event.date)}</span>
                        </div>
                        <div className="mt-1 flex items-center gap-1.5 overflow-hidden">
-                          <Badge variant="ghost" className="h-4 p-0 text-[9px] font-bold uppercase text-muted-foreground/60">
+                          <Badge variant="ghost" className="h-4 p-0 text-[9px] font-bold uppercase text-muted-foreground">
                              {event.type}
                           </Badge>
                           {event.status && (
                              <>
                                <span className="text-[10px] text-muted-foreground/30">•</span>
-                               <span className="text-[10px] font-medium text-muted-foreground/80 capitalize">{event.status}</span>
+                               <span className="text-[10px] font-medium capitalize text-muted-foreground">{event.status}</span>
                              </>
                           )}
                           {event.total && (
                              <>
                                <span className="text-[10px] text-muted-foreground/30">•</span>
-                               <span className="text-[10px] font-bold text-zinc-700">{formatCurrency(event.total)}</span>
+                               <span className="text-[10px] font-bold text-foreground">{formatCurrency(event.total)}</span>
                              </>
                           )}
                        </div>
@@ -163,9 +163,10 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
                     <button
                         type="button"
                         onClick={() => navigate(path)}
-                        className="rounded-full p-1 text-slate-300 transition hover:bg-slate-50 hover:text-slate-600"
+                        aria-label={`Open ${event.number || event.type}`}
+                        className="grid min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     >
-                        <ChevronRight className="size-4" />
+                        <ChevronRight className="size-5" />
                     </button>
                   </div>
                 )
@@ -176,8 +177,8 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-border bg-muted/20 p-5 shadow-sm">
-            <h3 className="mb-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Contact & Account</h3>
+          <section className="rounded-2xl border border-bd-border bg-bd-surface p-5 shadow-sm">
+            <h3 className="mb-4 text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">Contact & Account</h3>
             <div className="space-y-5">
                <ContactInfo icon={User} label="Contact Person" value={client.contact_person || 'None listed'} />
                <ContactInfo icon={Phone} label="Phone" value={client.phone || 'None listed'} />
@@ -192,20 +193,15 @@ export const ClientOverviewTab: React.FC<Props> = ({ client, invoices, activity 
 }
 
 function MetricCard({ label, value, tone = 'default' }: { label: string; value: string | number; tone?: 'default' | 'success' | 'danger' }) {
-    const toneStyles = {
-        default: 'bg-muted/50 text-foreground',
-        success: 'bg-emerald-50 text-emerald-700',
-        danger: 'bg-red-50 text-red-700',
-    }
-    const labelStyles = {
-        default: 'text-muted-foreground',
-        success: 'text-emerald-600/70',
-        danger: 'text-red-600/70',
+    const valueStyles = {
+        default: 'text-foreground',
+        success: 'text-[hsl(var(--bd-status-success-text))]',
+        danger: 'text-[hsl(var(--bd-status-danger-text))]',
     }
   return (
-    <div className={`rounded-xl p-4 shadow-sm ring-1 ring-inset ring-border/20 ${toneStyles[tone]}`}>
-      <div className={`text-[10px] font-bold uppercase tracking-wider ${labelStyles[tone]}`}>{label}</div>
-      <div className="mt-2 text-lg font-black tracking-tight">{value}</div>
+    <div className="rounded-2xl border border-bd-border bg-bd-surface p-4 shadow-sm">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">{label}</div>
+      <div className={`mt-2 text-lg font-black tabular-nums tracking-tight ${valueStyles[tone]}`}>{value}</div>
     </div>
   )
 }
@@ -213,12 +209,12 @@ function MetricCard({ label, value, tone = 'default' }: { label: string; value: 
 function ContactInfo({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-background p-2 text-muted-foreground shadow-sm ring-1 ring-border/50">
+            <div className="rounded-lg bg-bd-surface-muted p-2 text-bd-text-muted ring-1 ring-bd-border/50">
                 <Icon className="size-3.5" />
             </div>
             <div className="min-w-0">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">{label}</div>
-                <div className="mt-0.5 break-words text-[13px] font-bold leading-tight text-zinc-800">{value}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+                <div className="mt-0.5 break-words text-[13px] font-bold leading-tight text-foreground">{value}</div>
             </div>
         </div>
     )
