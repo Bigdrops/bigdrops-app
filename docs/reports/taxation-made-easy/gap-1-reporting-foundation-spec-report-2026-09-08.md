@@ -1,5 +1,20 @@
 # Gap 1 Reporting Foundation Specification Report
 
+Correction pass (v1.1, 2026-09-08, Buffy via Freebuff): the canonical
+specification was corrected, not redesigned. Reversal semantics are now
+explicit: a posted entry is active only if it has not been reversed by
+a posted reversal entry; a reversed original is excluded from the
+active derivation; the reversal entry remains active unless itself
+reversed; the pair nets to zero as equal-and-opposite journal facts; a
+later-period reversal keeps the original period's activity intact and
+preserves the audit-visible correction event; no partial-reversal
+support. Added the fixed implementation boundary (Journal →
+deterministic account/period aggregation → trial balance) and extended
+the non-scope list. Files touched: the Gap 1 specification, the PRD
+Readme index row and TL;DR, and this report. No code, migration,
+schema, test, or accounting behavior changed. No build, typecheck,
+test, or audit:load run. Gap 1 remains one implementation increment.
+
 This report was written by Buffy on 2026-09-08 via Freebuff.
 
 ## Objective
@@ -44,11 +59,11 @@ Documentation standard: ASD-STE100 Simplified Technical English
    accounting migration, and list-only accounting pages. Gap 1 is
    genuinely MISSING and is one small increment. Nothing is defective;
    nothing needs recreation.
-3. Fixed the derivation rules: posted and un-reversed lines only;
-   side + non-negative amount sign convention with net = debit −
-   credit; opening/closing chains by period order; trial-balance
-   equality asserted and never repaired; exact NUMERIC/text amounts;
-   deterministic output; zero mutation.
+3. Fixed the derivation rules: active posted lines only per the
+   explicit reversal rule; side + non-negative amount sign convention
+   with net = debit − credit; bounded opening/closing chains by period
+   order; trial-balance equality asserted and never repaired; exact
+   NUMERIC/text amounts; deterministic output; zero mutation.
 4. Deferred UI explicitly (section 16) and named the Adaptive
    Mobile-First UIUX Facelift PRD as first-class authority for any
    later reporting surface. Deferred caching until a proven need.

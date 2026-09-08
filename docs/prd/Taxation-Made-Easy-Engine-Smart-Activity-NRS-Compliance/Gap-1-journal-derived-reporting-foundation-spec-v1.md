@@ -2,7 +2,7 @@
 
 Status: Canonical Gap 1 specification. Read-only derivation layer.
 
-Version: 1.0
+Version: 1.1 (correction pass: explicit reversal rule, bounded boundary statement)
 
 Date: 2026-09-08
 
@@ -43,6 +43,14 @@ Consequences today:
 Gap 1 closes this. It turns the posted journal into derived, readable
 accounting facts. It is the smallest genuine remaining Block A
 foundation gap.
+
+The implementation boundary is fixed:
+
+Journal → deterministic account/period aggregation → trial balance
+
+Gap 1 is not a full financial-reporting system. P&L presentation,
+financial statements, report screens, and tax reporting remain
+downstream.
 
 ## 2. Architectural Position
 
@@ -105,8 +113,9 @@ needs recreation. The gap is one small increment.
 
 Missing, and a genuine prerequisite:
 
-1. account balances derived from posted, un-reversed journal lines;
-2. period totals derived from posted, un-reversed journal lines;
+1. account balances derived from posted journal lines restricted to
+   the active-entry rule (section 9.6);
+2. period totals derived from the same active posted lines;
 3. a trial balance derived from the same lines, with an equality
    assertion.
 
@@ -132,7 +141,8 @@ In scope:
      where required;
    - trial balance: all accounts with debit and credit totals and the
      equality assertion;
-2. posted-only and un-reversed-only selection rules;
+2. posted-only and active-entry selection rules, including the
+   reversal rule (sections 9.1 and 9.6);
 3. debit/credit sign convention and net computation;
 4. entity/book scoping and permission gating on the read path;
 5. source traceability on every derived figure;
@@ -151,12 +161,17 @@ Explicitly excluded:
 - purchase / supplier accounting
 - inventory accounting
 - fixed assets / depreciation
-- credit notes / refunds (Gap 2 is the separate reversal increment)
+- reversal implementation of any kind (Gap 2 is a separate increment)
+- credit notes / refunds
 - VAT treatment, WHT treatment, tax adjustments, CIT, capital
   allowances, any statutory calculation
 - full P&L or income-statement implementation (Block D)
-- report UI of any kind (see section 16 — UI is deferred)
+- P&L UI, financial-statement UI, or report screens of any kind (see
+  section 16 — UI is deferred)
 - dashboard or report redesign
+- a new accounting authority alongside the posted journal
+- a reporting cache or persisted aggregates unless repository evidence
+  proves them necessary
 - repair of reconciliation findings or historical gaps
 - migration of operational aggregates
 
@@ -193,9 +208,12 @@ entity id, permission gate, exact-text amounts across the boundary
 
 - Posted only: lines belong to entries with status `posted`. Draft
   entries contribute nothing. See 9.6 for the draft-status check.
-- Un-reversed only: an entry that is the target of a reversal
-  (`reversal_of_entry_id` points at it) is excluded. Its reversal
-  entry is excluded too. Both remain in the journal for audit.
+- Active entries only. A posted entry is active only if it has not
+  been reversed by a posted reversal entry. When an original entry is
+  reversed, the original is excluded from the active derivation. The
+  reversal entry itself remains active unless it is subsequently
+  reversed. Excluded originals and their reversals both remain in the
+  journal for audit. See 9.6 for the full reversal rule.
 - Entity scope: all rows come from the resolved entity schema. No
   cross-book read exists.
 
@@ -211,14 +229,14 @@ entity id, permission gate, exact-text amounts across the boundary
 
 ### 9.3 Account balances
 
-Per account over all posted, un-reversed lines of the book:
+Per account over all active posted lines of the book (section 9.1):
 debit total, credit total, net. Inactive accounts still report (they
 reject new postings; history stays visible).
 
 ### 9.4 Period totals, opening and closing
 
-- Period net per account = debit total − credit total of posted,
-  un-reversed lines whose entry belongs to that period.
+- Period net per account = debit total − credit total of active posted
+  lines (section 9.6) whose entry belongs to that period.
 - Opening net = cumulative net over all earlier periods in period
   order.
 - Closing net = opening net + period net.
@@ -226,34 +244,58 @@ reject new postings; history stays visible).
   totals and included in the cumulative chain by their own period.
   Period ordering key (code order versus start-date order):
   VERIFY DURING IMPLEMENTATION.
+- Opening and closing chains are a bounded aggregation rule inside
+  this gap. They are not financial statements and add no reporting
+  feature beyond the aggregate. Period ordering stays a bounded
+  implementation verification (section 18), not a new architectural
+  feature.
 
 ### 9.5 Trial balance
 
-- One row per account: debit total, credit total over posted,
-  un-reversed lines in scope.
+- One row per account: debit total, credit total over active posted
+  lines in scope (section 9.1).
 - Grand debit total must equal grand credit total. The boundary
   asserts the equality. A mismatch is reported loudly as data, never
   repaired, never silently absorbed. Repair belongs to reconciliation
   and remediation, not to reporting.
 
-### 9.6 Status and discrepancy checks
+### 9.6 Reversal rule and discrepancy checks
 
-Documented discrepancies between the blueprint language and the
-implementation, to resolve during implementation, not by invention:
+The reversal rule is explicit:
 
-1. The kernel inserts entries as `draft` and flips to `posted` in the
-   same transaction, and never transitions status afterward (Increment
-   5 finding). Supported paths therefore leave no draft rows. The
-   increment must confirm no supported path leaves a posted-eligible
-   entry in draft. VERIFY DURING IMPLEMENTATION. Until confirmed, the
-   posted-only rule stays literal: draft contributes nothing.
-2. The kernel's `reverseEntry` is equal-and-opposite to the whole
-   original, so exclusion (9.1) and inclusion-cancel produce identical
-   balances today. Exclusion is the rule because the blueprint says
-   "un-reversed" and because it keeps reversed facts economically
-   inactive even if a future policy allows partial reversal. If Gap 2
-   introduces partial reversal, this rule must become amount-aware.
-   VERIFY DURING IMPLEMENTATION when Gap 2 lands.
+1. A posted entry is active only if it has not been reversed by a
+   posted reversal entry.
+2. When an original entry is reversed, the original entry is excluded
+   from the active derivation.
+3. The reversal entry itself remains active unless it is subsequently
+   reversed.
+4. A valid reversal is equal-and-opposite, so the original and its
+   reversal net to zero across the full accounting history as journal
+   facts.
+5. If the reversal posts in a later period, the original period
+   retains its original entry and the later period contains the
+   reversal entry. The derivation attributes each entry's lines to the
+   entry's own posting period. It never re-dates, deletes, or absorbs
+   a correction. The audit-visible correction event is preserved.
+6. No partial-reversal support exists or is invented here. If partial
+   reversal is ever introduced, it requires a separate architectural
+   decision and this rule must be revisited (section 18).
+
+Boundary note for the Gap 2 increment: under this rule the active
+derivation of a reversed pair reflects the reversal entry alone, and
+the pair nets to zero as journal facts. Today no posted reversal can
+exist, because Gap 2 is not implemented. This rule is therefore
+forward-looking. When Gap 2 lands, VERIFY DURING IMPLEMENTATION that
+the active-set presentation is the intended economic display before
+any consumer relies on post-reversal figures.
+
+Discrepancy check (draft residue): the kernel inserts entries as
+`draft` and flips them to `posted` in the same transaction, and never
+transitions status afterward (Increment 5 finding). Supported paths
+therefore leave no draft rows. The increment must confirm no supported
+path leaves a posted-eligible entry in draft. VERIFY DURING
+IMPLEMENTATION. Until confirmed, the posted-only rule stays literal:
+draft contributes nothing.
 
 ### 9.7 Exactness
 
@@ -296,10 +338,16 @@ walk the chain. No derived fact may exist without journal provenance.
 
 1. Only posted entries affect derived balances.
 2. Draft entries affect nothing.
-3. Reversed entries and their reversals are economically inactive in
-   derived balances.
+3. A posted entry is active only if it has not been reversed by a
+   posted reversal entry. A reversed original is excluded from the
+   active derivation; its reversal entry remains active unless itself
+   reversed. The original and its reversal net to zero as
+   equal-and-opposite journal facts, and the correction event stays
+   audit-visible in the journal.
 4. Derived debit totals equal derived credit totals across the trial
-   balance. A mismatch is surfaced, never repaired.
+   balance. Whole balanced entries are included in or excluded from
+   the active set, never partially, so the equality holds under the
+   reversal rule. A mismatch is surfaced, never repaired.
 5. Derived figures are deterministic: the same posted data yields
    byte-identical results.
 6. Every derived figure traces to journal lines and source
@@ -383,6 +431,9 @@ It must not:
 - add columns or tables to the accounting schema;
 - touch source-transaction RPCs or lifecycle;
 - touch Record Capture or `tax_input_entries`;
+- implement or expose reversal flows of any kind (Gap 2);
+- establish a new accounting authority alongside the posted journal;
+- add a reporting cache or persisted aggregates without proven need;
 - embed tax, VAT, WHT, or CIT logic;
 - repair reconciliation findings;
 - change operational aggregates (that is the separate switch).
@@ -414,11 +465,11 @@ reporting interface. That work needs its own task.
 | 10 | Account-balance derivation | REQUIRED FOR GAP 1 |
 | 11 | Period totals with opening/closing | REQUIRED FOR GAP 1 |
 | 12 | Trial balance with equality assertion | REQUIRED FOR GAP 1 |
-| 13 | Posted-only / un-reversed selection rules | REQUIRED FOR GAP 1 |
+| 13 | Posted-only / active-entry selection rules with the explicit reversal rule | REQUIRED FOR GAP 1 |
 | 14 | Read-only boundary + permission gate for derivation | REQUIRED FOR GAP 1 |
 | 15 | Draft-status residue check | VERIFY DURING IMPLEMENTATION |
 | 16 | Period ordering key | VERIFY DURING IMPLEMENTATION |
-| 17 | Exclusion rule under future partial reversal | VERIFY DURING IMPLEMENTATION (with Gap 2) |
+| 17 | Partial-reversal support | DEFERRED / DOWNSTREAM (separate architectural decision; would reopen the reversal rule) |
 | 18 | Derivation surface names (RPC/view/service) | VERIFY DURING IMPLEMENTATION |
 | 19 | Balance-authority switch | DEFERRED / DOWNSTREAM (follow-up increment) |
 | 20 | Reporting UI | DEFERRED / DOWNSTREAM |
@@ -434,7 +485,7 @@ reporting interface. That work needs its own task.
 | 2 | Period ordering key for opening/closing chains: code order or start-date order | Repository verification, during implementation | Gap 1 increment |
 | 3 | Derivation surface: single RPC, view set, or service-side aggregation | Implementation decision within the established read-path pattern | Gap 1 increment |
 | 4 | Which consumer switches to journal-derived balances first, and when | Project decision | Project lead |
-| 5 | Exclusion rule must become amount-aware if Gap 2 ever allows partial reversal | Dependency note | Gap 2 increment |
+| 5 | Partial reversal, if ever introduced, requires a separate architectural decision and reopens the reversal rule (section 9.6) | Dependency note | Gap 2 / project lead |
 
 No manufactured uncertainty: items 1–3 are bounded verifications inside
 one increment, not design unknowns. Items 4–5 are recorded dependencies
@@ -467,4 +518,5 @@ Risks:
 
 | Date | Change |
 | :--- | :--- |
+| 2026-09-08 | v1.1 correction pass. Reversal semantics made explicit: a posted entry is active only if it has not been reversed by a posted reversal entry; a reversed original is excluded from the active derivation; the reversal entry remains active unless itself reversed; the pair nets to zero as equal-and-opposite journal facts; a later-period reversal never re-dates, deletes, or absorbs the original; the correction event stays audit-visible; no partial-reversal support. Added the fixed implementation boundary (Journal → deterministic account/period aggregation → trial balance). Extended non-scope. No redesign; no scope growth. |
 | 2026-09-08 | v1.0 created. Canonical Gap 1 specification. Determination: Gap 1 is genuinely missing and is one small read-only derivation increment (balances, period totals, trial balance). UI and caching deferred. |
