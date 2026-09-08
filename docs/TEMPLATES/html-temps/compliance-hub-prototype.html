@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compliance Hub — Faithful Prototype</title>
+<style>
+:root{--bg:#f0f4f8;--surface:#fff;--muted:#e8eef5;--ink:#0f172a;--ink2:#334155;--ink3:#64748b;
+--line:#e2e8f0;--primary:#1e3a5f;--accent:#60a5fa;--danger:#dc2626;--danger-bg:#fef2f2;
+--warn:#b45309;--warn-bg:#fffbeb;--ok:#15803d;--ok-bg:#f0fdf4;--info:#1d4ed8;--info-bg:#eff6ff;
+--nav:rgba(255,255,255,.96);--shadow:0 12px 28px rgba(30,58,95,.10),0 2px 6px rgba(15,23,42,.05);
+--shadow-float:0 18px 40px rgba(30,58,95,.18),0 3px 9px rgba(15,23,42,.08);--r:18px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:110px;-webkit-font-smoothing:antialiased}
+.mono{font-family:"DM Mono",ui-monospace,Menlo,monospace}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;background:linear-gradient(180deg,var(--bg) 78%,transparent)}
+.brand small{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--ink3);text-transform:uppercase}
+.brand strong{font-size:14px}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:17px;cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.pagehead{padding:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+.pagehead h1{font-size:20px;letter-spacing:-.02em}
+.pagehead p{font-size:13px;color:var(--ink2);margin-top:4px}
+.headbtns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.danger-b{background:var(--danger-bg);border-color:#fecaca;color:var(--danger)}
+.btn:active{transform:scale(.965)}
+.btn:disabled{opacity:.55}
+.seg{display:flex;gap:8px;overflow-x:auto;padding:10px 2px;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:0 0 auto;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);cursor:pointer}
+.seg button[aria-current="page"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.secthead{display:flex;align-items:center;gap:10px;margin:14px 0 10px}
+.secthead .ic{width:36px;height:36px;border-radius:50%;background:var(--muted);display:grid;place-items:center;font-size:16px;flex:0 0 auto}
+.secthead h2{font-size:16px}
+.kpis{display:grid;grid-auto-flow:column;grid-auto-columns:80%;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px}
+.kpi{scroll-snap-align:start;padding:14px}
+.kpi small{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.kpi .v{font-size:22px;font-weight:800;margin:6px 0 2px}
+.kpi .d{font-size:12px;color:var(--ink2)}
+.q{padding:0;margin-top:12px}
+.q>header{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--muted);border-radius:18px 18px 0 0}
+.q>header h3{font-size:14px}.q>header p{font-size:12px;color:var(--ink2);margin-top:2px}
+.q .body{padding:12px;display:grid;gap:10px}
+.arow{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface)}
+.arow .top{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pill{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:999px;padding:5px 10px;border:1px solid var(--line)}
+.pill.overdue{background:var(--danger-bg);color:var(--danger);border-color:#fecaca}
+.pill.warning{background:var(--warn-bg);color:var(--warn);border-color:#fde68a}
+.pill.info{background:var(--info-bg);color:var(--info);border-color:#bfdbfe}
+.pill.success{background:var(--ok-bg);color:var(--ok);border-color:#bbf7d0}
+.pill.src{background:var(--surface);color:var(--ink2)}
+.arow b.t{display:block;font-size:14px;margin-top:8px}
+.arow .ctx{font-size:12px;color:var(--ink2);margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--ink3)}
+.arow .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+.arow .amt{font-size:14px;font-weight:800}
+.act{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);display:flex;justify-content:space-between;gap:10px}
+.act b{font-size:13px;display:block}.act small{font-size:11px;color:var(--ink2)}
+.act .amt{font-size:13px;font-weight:800;white-space:nowrap}
+.note{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:12px;color:var(--ink2)}
+.strip{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.strip .kpi{padding:12px}.strip .kpi .v{font-size:18px}
+.row{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px;display:grid;gap:8px}
+.row .l1{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.row .t{font-size:14px;font-weight:800}
+.row .s{font-size:12px;color:var(--ink2)}
+.row .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px}
+.row .cols small{display:block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.row .amt{font-size:16px;font-weight:800}
+.row .ops{display:flex;gap:6px;justify-content:flex-end}
+.iconop{width:44px;height:44px;border-radius:10px;border:0;background:none;font-size:16px;cursor:pointer;color:var(--ink3)}
+.iconop.del{color:var(--danger)}
+.subhead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:14px}
+.subhead h3{font-size:14px}.subhead p{font-size:12px;color:var(--ink2)}
+.empty{border:1px dashed var(--line);border-radius:14px;background:var(--surface);padding:36px 16px;text-align:center}
+.empty b{font-size:14px}.empty p{font-size:12px;color:var(--ink2);margin-top:6px;max-width:38ch;margin-inline:auto}
+.matcher{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--muted);padding:12px;display:grid;gap:10px}
+.matcher label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.field{display:grid;gap:6px;margin-top:10px}
+.field label{font-size:11px;font-weight:800;color:var(--ink3)}
+.in,select.in,textarea.in{min-height:44px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;width:100%;background:#fff;color:var(--ink)}
+textarea.in{min-height:76px;resize:vertical}
+.switchrow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--muted);margin-top:10px}
+.bottomnav{position:fixed;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));z-index:30;display:grid;grid-template-columns:repeat(5,1fr);background:var(--nav);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-float);padding:4px}
+.bottomnav button{border:0;background:none;min-height:56px;border-radius:15px;font-size:10px;font-weight:800;color:var(--ink3);cursor:pointer}
+.bottomnav button[aria-current="page"]{background:var(--primary);color:#fff}
+.sidebar{display:none}
+.scrim{position:fixed;inset:0;background:rgba(14,12,10,.38);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-float);transform:translateY(106%);transition:transform .3s cubic-bezier(.2,.9,.24,1);max-height:82%;display:flex;flex-direction:column}
+.sheet.open{transform:translateY(0)}
+.sheet .grab{width:34px;height:3px;border-radius:99px;background:var(--line);margin:10px auto 0}
+.sheet header{padding:14px 18px 6px;border-bottom:1px solid var(--line)}
+.sheet header h2{font-size:16px}.sheet header p{font-size:12px;color:var(--ink2)}
+.sheet .body{padding:12px 18px calc(18px + env(safe-area-inset-bottom));overflow:auto}
+.sheet footer{display:flex;gap:8px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.sheet footer .btn{flex:1;justify-content:center}
+.statuspills{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.statuspills button{min-height:40px;border-radius:999px;border:1px solid var(--line);background:#fff;padding:0 14px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.statuspills button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.toast{position:fixed;left:16px;right:16px;bottom:90px;z-index:60;display:grid;gap:8px}
+.toast div{background:var(--ink);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:700;box-shadow:var(--shadow-float)}
+.err{display:flex;gap:10px;align-items:center;border:1px solid #fecaca;background:var(--danger-bg);color:var(--danger);border-radius:14px;padding:12px 14px;font-size:13px;font-weight:700;margin-top:12px}
+pre.json{background:var(--ink);color:#dbeafe;border-radius:12px;padding:12px;font-size:12px;overflow:auto;margin-top:10px}
+@media(min-width:840px){.kpis{grid-auto-flow:row;grid-auto-columns:unset;grid-template-columns:repeat(3,1fr);overflow:visible}.grid2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:12px}.strip{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1200px){body{padding-bottom:24px;padding-left:232px}.bottomnav{display:none}.sidebar{display:flex;flex-direction:column;gap:4px;position:fixed;left:0;top:0;bottom:0;width:232px;background:var(--surface);border-right:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 12px;z-index:30}.sidebar button{min-height:44px;border:0;background:none;border-radius:12px;text-align:left;font-size:13px;font-weight:700;color:var(--ink2);padding:10px 12px;cursor:pointer}.sidebar button[aria-current="page"]{background:var(--muted);color:var(--ink)}.kpis{grid-template-columns:repeat(5,1fr)}.sheet{left:auto;right:0;top:0;bottom:0;max-height:none;width:min(480px,94vw);border-radius:0;transform:translateX(106%)}.sheet.open{transform:translateX(0)}.sheet .grab{display:none}}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav class="sidebar" aria-label="Primary"><div class="brand" style="padding:4px 8px 12px"><small>Bigdrops</small><strong>Acme Ltd</strong></div><button>Dashboard</button><button>Projects</button><button>Clients</button><button>Reports</button><button aria-current="page">Compliance Hub</button><button>Settings</button></nav>
+<div class="topbar"><div class="brand"><small>Acme Ltd · Workspace</small><strong>Compliance Hub</strong></div><div style="display:flex;gap:8px"><button class="iconbtn" aria-label="Search">⌕</button><button class="iconbtn" aria-label="Notifications">🔔</button></div></div>
+<div class="wrap">
+  <section class="card pagehead"><div><h1>Compliance Hub</h1><p>Tax actions, filings, and evidence tracking.</p></div>
+    <div class="headbtns"><button class="btn" onclick="openSheet('recordSheet')">🧾 Record Expense</button><button class="btn primary" onclick="openSheet('taxProfileSheet')">⚙ Tax Profile</button></div></section>
+  <div class="seg" role="navigation" aria-label="Compliance workflows" id="seg"></div>
+  <div id="err"></div>
+  <main id="view"></main>
+  <p class="note">Faithful prototype — every section, row action, sheet and dialog from the real module, with sample data. No backend calls.</p>
+</div>
+<nav class="bottomnav" aria-label="Primary"><button>Home</button><button>Projects</button><button>Sales</button><button>Clients</button><button aria-current="page">More</button></nav>
+<div class="scrim" id="scrim" onclick="closeSheets()"></div>
+
+<!-- Record capture -->
+<section class="sheet" id="recordSheet" role="dialog" aria-modal="true" aria-label="Capture record"><div class="grab"></div>
+<header><h2>🧾 Capture Record</h2><p>Total amount is split into net + 7.5% VAT automatically.</p></header>
+<div class="body">
+<div class="field"><label>Date</label><input class="in" type="date" id="rc-date"></div>
+<div class="field"><label>Vendor / Supplier</label><input class="in" id="rc-vendor" placeholder="e.g. Globacom Nigeria"></div>
+<div class="field"><label>Category</label><select class="in" id="rc-cat"><option>Software</option><option>Office</option><option>Travel</option><option>Utilities</option><option>Professional Services</option><option>Equipment</option><option>Supplies</option><option>Marketing</option><option>Rent</option><option>Other</option></select></div>
+<div class="field"><label>Reference</label><input class="in" id="rc-ref" placeholder="Receipt or invoice number"></div>
+<div class="field"><label>Payment reference</label><input class="in" id="rc-payref" placeholder="Optional"></div>
+<div class="field"><label>Total amount (incl. VAT)</label><input class="in mono" type="number" id="rc-amt" value="107500"><small style="color:var(--ink3)">Net <b id="rc-net">₦100,000</b> · VAT <b id="rc-vat">₦7,500</b></small></div>
+<div class="field"><label>Evidence</label><input class="in" type="file" accept=".pdf,.jpg,.jpeg,.png"></div>
+<div class="field"><label>Notes</label><textarea class="in" placeholder="Optional context..."></textarea></div>
+</div><footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="saveRecord()">Save record</button></footer></section>
+
+<!-- Tax profile -->
+<section class="sheet" id="taxProfileSheet" role="dialog" aria-modal="true" aria-label="Tax profile"><div class="grab"></div>
+<header><h2>Tax Profile</h2><p>Tax identity, VAT registration, and profile-level metadata.</p></header>
+<div class="body">
+<div class="field"><label>TIN</label><input class="in" value="01234567-0001" placeholder="Enter tax identification number"></div>
+<div class="field"><label>Year-end month</label><select class="in"><option>December</option><option>March</option><option>June</option><option>September</option></select></div>
+<div class="switchrow"><div><b>VAT enabled</b><br><small style="color:var(--ink3)">Charge VAT on sales invoices.</small></div><button class="btn" id="vatToggle" aria-pressed="true" onclick="toggleVat()">ON</button></div>
+<div class="field"><label>VAT threshold</label><input class="in mono" type="number" value="25000000"></div>
+<div class="field"><label>CIT category</label><select class="in"><option>small</option><option>medium</option><option>large</option></select></div>
+</div><footer><button class="btn" onclick="closeSheets()">Close</button><button class="btn primary" onclick="toast('Tax settings updated successfully')">Save</button></footer></section>
+
+<!-- VAT edit -->
+<section class="sheet" id="vatEditSheet" role="dialog" aria-modal="true" aria-label="VAT input"><div class="grab"></div>
+<header><h2 id="vatEditTitle">New VAT Input</h2><p>Capture supplier, amounts, and recoverability for one VAT input entry.</p></header>
+<div class="body">
+<div class="field"><label>Date</label><input class="in" type="date" id="vat-date"></div>
+<div class="field"><label>Vendor / Supplier</label><input class="in" id="vat-vendor" placeholder="e.g. Globacom Nigeria"></div>
+<div class="field"><label>Category</label><input class="in" id="vat-cat" placeholder="e.g. Software, Office"></div>
+<div class="field"><label>Reference</label><input class="in" id="vat-ref" placeholder="Receipt or invoice number"></div>
+<div class="field"><label>Net Amount</label><input class="in mono" type="number" id="vat-net" value="0"></div>
+<div class="field"><label>VAT Amount</label><input class="in mono" type="number" id="vat-vat" value="0"></div>
+<div class="switchrow"><div><b>Recoverable VAT</b><br><small style="color:var(--ink3)">Deduct this amount from output VAT when applicable.</small></div><button class="btn" id="vatRec" aria-pressed="true" onclick="toggleRec()">YES</button></div>
+<div class="field"><label>Notes</label><textarea class="in" id="vat-notes" placeholder="Optional context..."></textarea></div>
+</div><footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="saveVat()">Save Entry</button></footer></section>
+
+<!-- VAT JSON -->
+<section class="sheet" id="vatJsonSheet" role="dialog" aria-modal="true" aria-label="Import VAT JSON"><div class="grab"></div>
+<header><h2>Import VAT Input — JSON</h2><p>Paste AI-extracted JSON, preview, then save.</p></header>
+<div class="body"><div class="field"><label>Paste JSON</label><textarea class="in mono" id="vatJsonIn" placeholder='{"date":"2026-09-01","vendor_name":"Globacom","net_amount":100000,"vat_amount":7500}'></textarea></div>
+<button class="btn" style="margin-top:10px" onclick="previewJson('vatJsonIn','vatJsonOut')">Preview</button><pre class="json" id="vatJsonOut" hidden></pre>
+<div id="vatJsonErr" style="color:var(--danger);font-size:12px;margin-top:8px"></div></div>
+<footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="toast('VAT input recorded')">Save record</button></footer></section>
+
+<!-- WHT detail -->
+<section class="sheet" id="whtSheet" role="dialog" aria-modal="true" aria-label="WHT receipt detail"><div class="grab"></div>
+<header><h2>WHT Receipt Detail</h2><p>Review payment context, update receipt status, and manage evidence notes.</p></header>
+<div class="body" id="whtBody"></div>
+<footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" id="whtSave" onclick="saveWht()">Save changes</button></footer></section>
+
+<!-- WHT JSON -->
+<section class="sheet" id="whtJsonSheet" role="dialog" aria-modal="true" aria-label="Import WHT JSON"><div class="grab"></div>
+<header><h2>Import WHT Receipt — JSON</h2><p>Pick the WHT payment first, then paste JSON.</p></header>
+<div class="body"><div class="field"><label>Link to WHT payment</label><select class="in" id="whtPay"></select></div>
+<div class="field"><label>Paste JSON</label><textarea class="in mono" placeholder='{"receipt_number":"FIRS-WHT-001","wht_amount":120000}'></textarea></div>
+<button class="btn" style="margin-top:10px" onclick="toast('JSON parsed successfully')">Preview</button></div>
+<footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="toast('WHT receipt imported')">Save record</button></footer></section>
+
+<!-- Filing edit -->
+<section class="sheet" id="filingSheet" role="dialog" aria-modal="true" aria-label="Filing"><div class="grab"></div>
+<header><h2 id="filingTitle">New Filing</h2><p>Track period dates, payment amounts, status, and references for one filing record.</p></header>
+<div class="body">
+<div class="field"><label>Tax Type</label><select class="in" id="f-type"><option value="vat">VAT</option><option value="wht">WHT</option><option value="cit">CIT</option></select></div>
+<div class="field"><label>Period Start</label><input class="in" type="date" id="f-start"></div>
+<div class="field"><label>Period End</label><input class="in" type="date" id="f-end"></div>
+<div class="field"><label>Amount Due</label><input class="in mono" type="number" id="f-due" value="0"></div>
+<div class="field"><label>Amount Paid</label><input class="in mono" type="number" id="f-paid" value="0"></div>
+<div class="field"><label>Status</label><select class="in" id="f-status"><option>draft</option><option>ready</option><option>filed</option><option>paid</option><option>overdue</option></select></div>
+<div class="field"><label>Submission Date</label><input class="in" type="date" id="f-sub"></div>
+<div class="field"><label>Receipt Reference</label><input class="in" id="f-ref" placeholder="e.g. RCT-0001"></div>
+<div class="field"><label>Portal Reference</label><input class="in" id="f-portal" placeholder="e.g. FIRS-2025-001"></div>
+<div class="field"><label>Notes</label><textarea class="in" placeholder="Optional context..."></textarea></div>
+</div><footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="saveFiling()">Save Filing</button></footer></section>
+
+<!-- Filing JSON -->
+<section class="sheet" id="filingJsonSheet" role="dialog" aria-modal="true" aria-label="Import filing JSON"><div class="grab"></div>
+<header><h2>Import Filing — JSON</h2><p>Paste AI-extracted JSON, preview, then save.</p></header>
+<div class="body"><div class="field"><label>Paste JSON</label><textarea class="in mono" placeholder='{"tax_type":"vat","period_start":"2026-08-01","period_end":"2026-08-31","amount_due":290000}'></textarea></div>
+<button class="btn" style="margin-top:10px" onclick="toast('JSON parsed successfully')">Preview</button></div>
+<footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="toast('Filing record created')">Save record</button></footer></section>
+
+<!-- Obligation edit -->
+<section class="sheet" id="obSheet" role="dialog" aria-modal="true" aria-label="Obligation"><div class="grab"></div>
+<header><h2 id="obTitle">New Obligation</h2><p>Maintain one tax deadline, linked filing, and status record from a single operational sheet.</p></header>
+<div class="body">
+<div class="field"><label>Obligation Type</label><select class="in" id="ob-type"><option value="vat">VAT Delivery</option><option value="wht">WHT Remittance</option><option value="cit">CIT Filing</option></select></div>
+<div class="field"><label>Due Date</label><input class="in" type="date" id="ob-due"></div>
+<div class="field"><label>Filing Start</label><input class="in" type="date"></div>
+<div class="field"><label>Filing End</label><input class="in" type="date"></div>
+<div class="field"><label>Status</label><select class="in" id="ob-status"><option>upcoming</option><option>due</option><option>overdue</option><option>resolved</option><option>cancelled</option></select></div>
+<div class="field"><label>Link to Filing Record</label><select class="in" id="ob-link"></select></div>
+<div class="field"><label>Notes</label><textarea class="in" placeholder="Optional notes..."></textarea></div>
+</div><footer><button class="btn" onclick="closeSheets()">Cancel</button><button class="btn primary" onclick="saveOb()">Save Reminder</button></footer></section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const N = n => '₦' + Number(n||0).toLocaleString('en-NG');
+let section = 'today';
+const SECTIONS = [['today','Today'],['vat','VAT'],['wht','WHT Receipts'],['filings','Filings'],['obligations','Obligations']];
+let vatInputs = [
+ {id:'v1',date:'Sep 3, 2026',vendor:'Globacom Nigeria',cat:'Software',ref:'RC-8811',net:250000,vat:18750,rec:true},
+ {id:'v2',date:'Aug 28, 2026',vendor:'Office Hub Ltd',cat:'Office',ref:'OH-2210',net:120000,vat:9000,rec:true},
+ {id:'v3',date:'Aug 15, 2026',vendor:'Eko Hotel',cat:'Travel',ref:'',net:80000,vat:6000,rec:false}];
+let wht = [
+ {id:'w1',client:'Lagos Steel Works',inv:'INV-0045',date:'Sep 2, 2026',amt:120000,st:'untracked',ref:''},
+ {id:'w2',client:'BUA Group',inv:'INV-0039',date:'Aug 29, 2026',amt:310000,st:'requested',ref:''},
+ {id:'w3',client:'Dangote Cement',inv:'INV-0031',date:'Aug 21, 2026',amt:415000,st:'received',ref:'FIRS-WHT-0091'},
+ {id:'w4',client:'Nestle Nigeria',inv:'INV-0027',date:'Aug 10, 2026',amt:95000,st:'verified',ref:'FIRS-WHT-0077'}];
+let filings = [
+ {id:'f1',type:'VAT',period:'Aug 1 — Aug 31, 2026',st:'overdue',due:290000,paid:0,ref:'',portal:''},
+ {id:'f2',type:'WHT',period:'Aug 1 — Aug 31, 2026',st:'ready',due:415000,paid:0,ref:'RCT-0102',portal:'FIRS-8821'},
+ {id:'f3',type:'CIT',period:'Jan 1 — Dec 31, 2025',st:'paid',due:1200000,paid:1200000,ref:'RCT-0098',portal:'FIRS-8700'}];
+let obs = [
+ {id:'o1',type:'WHT Remittance',due:'Aug 21, 2026',st:'overdue',period:'Aug 1 — Aug 31, 2026',notes:'Client deducted at source; receipt awaited.'},
+ {id:'o2',type:'VAT Delivery',due:'Sep 21, 2026',st:'due',period:'Aug 1 — Aug 31, 2026',notes:''},
+ {id:'o3',type:'CIT Filing',due:'Oct 31, 2026',st:'upcoming',period:'One-off Obligation',notes:''},
+ {id:'o4',type:'VAT Delivery',due:'Jul 21, 2026',st:'resolved',period:'Jul 1 — Jul 31, 2026',notes:''}];
+let whtDraft = 'pending', editingVat = null, editingFiling = null, expandedWht = null;
+
+const seg = document.getElementById('seg'), view = document.getElementById('view');
+function renderSeg(){seg.innerHTML = SECTIONS.map(([k,l])=>`<button onclick="go('${k}')" ${k===section?'aria-current="page"':''}>${l}</button>`).join('');}
+function go(k){section=k;renderSeg();render();}
+function pill(s){const m={overdue:'overdue',untracked:'overdue',due:'warning',requested:'warning',pending:'info',received:'info',ready:'info',upcoming:'info',verified:'success',paid:'success',filed:'success',resolved:'success',draft:'',cancelled:''};return `<span class="pill ${m[s]||''}">${s}</span>`;}
+function toast(m){const t=document.getElementById('toast'),d=document.createElement('div');d.textContent=m;t.appendChild(d);setTimeout(()=>d.remove(),2600);}
+function openSheet(id){document.getElementById('scrim').classList.add('open');document.getElementById(id).classList.add('open');}
+function closeSheets(){document.getElementById('scrim').classList.remove('open');document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheets();});
+
+function render(){
+ if(section==='today'){
+  view.innerHTML = `
+  <div class="secthead"><div class="ic">📊</div><h2>Today</h2></div>
+  <div class="kpis">
+   <div class="card kpi"><small>VAT Charged</small><div class="v mono">₦2.9M</div><div class="d">38 invoices in current view</div></div>
+   <div class="card kpi"><small>Expected WHT Exposure</small><div class="v mono">₦845K</div><div class="d">6 invoices with configured WHT</div></div>
+   <div class="card kpi"><small>Recoverable VAT</small><div class="v mono">${N(vatInputs.filter(v=>v.rec).reduce((s,v)=>s+v.vat,0))}</div><div class="d">${vatInputs.filter(v=>v.rec).length} recoverable inputs</div></div>
+   <div class="card kpi"><small>WHT Awaiting Receipt</small><div class="v mono">${N(wht.filter(w=>w.st!=='verified').reduce((s,w)=>s+w.amt,0))}</div><div class="d">${wht.filter(w=>w.st!=='verified').length} payments awaiting evidence</div></div>
+   <div class="card kpi"><small>Open / Overdue Filings</small><div class="v mono">2</div><div class="d">1 overdue, 1 open</div></div>
+  </div>
+  <div class="grid2" style="margin-top:12px">
+   <section class="card q"><header><h3>Action Queue</h3><p>Operational work from real compliance records only.</p></header><div class="body">
+    <div class="arow"><div class="top">${pill('overdue')}<span class="pill src">Obligation</span></div><b class="t">WHT obligation is overdue</b><div class="ctx">Resolve the overdue obligation and confirm its filing linkage if needed.</div><div class="chips"><span>WHT</span><span>Due Aug 21, 2026</span></div><div class="foot"><span></span><button class="btn" onclick="go('obligations')">Open obligations</button></div></div>
+    <div class="arow"><div class="top">${pill('warning')}<span class="pill src">WHT</span></div><b class="t">Initialize WHT receipt tracking</b><div class="ctx">INV-0045 · Lagos Steel Works</div><div class="chips"><span>₦120,000</span><span>Paid Sep 2, 2026</span></div><div class="foot"><span class="amt mono">₦120,000</span><button class="btn" onclick="go('wht')">Open WHT receipts</button></div></div>
+    <div class="arow"><div class="top">${pill('info')}<span class="pill src">Filing</span></div><b class="t">WHT filing is ready</b><div class="ctx">Finish preparation, confirm submission, or settle the remaining filing amount.</div><div class="chips"><span>WHT</span><span>Portal FIRS-8821</span></div><div class="foot"><span class="amt mono">₦415,000</span><button class="btn" onclick="go('filings')">Open filings</button></div></div>
+   </div></section>
+   <section class="card q"><header><h3>Recent Compliance Activity</h3><p>Latest recorded VAT, WHT, filing, and receipt changes.</p></header><div class="body">
+    <div class="act"><div><b>WHT receipt marked verified</b><small>Nestle Nigeria · Sep 4, 2026</small></div><span class="amt mono" style="color:var(--ok)">₦95,000</span></div>
+    <div class="act"><div><b>VAT charged on INV-0045</b><small>Lagos Steel Works · Sep 3, 2026</small></div><span class="amt mono" style="color:var(--warn)">₦90,000</span></div>
+    <div class="act"><div><b>WHT deducted from INV-0039</b><small>BUA Group · Aug 29, 2026</small></div><span class="amt mono" style="color:var(--danger)">₦310,000</span></div>
+   </div></section>
+  </div>
+  <p class="note">Expected WHT is configured on invoices. Receipt tracking starts only when WHT is actually deducted on a payment.</p>`;
+ }
+ if(section==='vat'){
+  view.innerHTML = `<div class="secthead"><div class="ic">👛</div><h2>VAT</h2></div>
+  <div class="subhead"><div><h3>VAT Input Entries</h3><p>Track recoverable VAT from business purchases.</p></div>
+  <div style="display:flex;gap:8px"><button class="btn" onclick="openSheet('vatJsonSheet')">⤓ Import JSON</button><button class="btn primary" onclick="newVat()">+ Add Entry</button></div></div>
+  <div style="display:grid;gap:10px;margin-top:12px">${vatInputs.map(v=>`
+   <div class="row"><div class="l1"><div><div class="s">${v.date}${v.rec?'':' · <b style="color:var(--warn)">NON-RECOVERABLE</b>'}</div><div class="t">${v.vendor}</div><div class="s">${v.cat}${v.ref?' · Ref: '+v.ref:''}</div></div>
+   <div style="text-align:right"><div class="s">VAT: <b>${N(v.vat)}</b></div><div class="s">Net: ${N(v.net)}</div></div></div>
+   <div class="ops"><button class="iconop" aria-label="Edit" onclick="editVat('${v.id}')">✏️</button><button class="iconop del" aria-label="Delete" onclick="delVat('${v.id}')">🗑</button></div></div>`).join('')||'<div class="empty"><b>No VAT Inputs Recorded</b><p>Track recoverable VAT from your business purchases and expenses.</p></div>'}</div>
+  <div class="note">ℹ️ <b>Understanding VAT Inputs</b><br>VAT inputs refer to the tax paid on business purchases. These can often be deducted from the VAT you collect on sales to determine your net tax liability.</div>`;
+ }
+ if(section==='wht'){
+  const c={untracked:wht.filter(w=>w.st==='untracked').length,requested:wht.filter(w=>w.st==='requested').length,received:wht.filter(w=>w.st==='received').length,verified:wht.filter(w=>w.st==='verified').length,pending:wht.filter(w=>w.st==='requested').length};
+  const attn=wht.filter(w=>w.st!=='verified'), ver=wht.filter(w=>w.st==='verified');
+  document.getElementById('whtPay').innerHTML = wht.map(w=>`<option>${w.inv} · ${w.client} · ${N(w.amt)}</option>`).join('');
+  view.innerHTML = `<div class="secthead"><div class="ic">🧾</div><h2>WHT Receipts</h2></div>
+  <div class="subhead"><div><h3>WHT Receipts</h3><p>Track missing, requested, received, and verified withholding tax evidence.</p></div>
+  <div><button class="btn" onclick="openSheet('whtJsonSheet')">⤓ Import JSON</button></div></div>
+  <div class="strip" style="margin-top:12px">
+   <div class="card kpi"><small>Untracked</small><div class="v">${c.untracked}</div><div class="d">No linked receipt record yet</div></div>
+   <div class="card kpi"><small>Requested</small><div class="v">${c.requested}</div><div class="d">${c.pending} pending follow-up</div></div>
+   <div class="card kpi"><small>Received</small><div class="v">${c.received}</div><div class="d">Needs review or verification</div></div>
+   <div class="card kpi"><small>Verified</small><div class="v">${c.verified}</div><div class="d">Evidence is fully cleared</div></div></div>
+  <div class="subhead"><div><h3>Attention Queue</h3><p>Untracked payments and follow-up receipts are ordered ahead of cleared evidence.</p></div></div>
+  <div style="display:grid;gap:10px;margin-top:10px">${attn.map(w=>`
+   <div class="row" role="button" tabindex="0" onclick="toggleWht('${w.id}')" onkeydown="if(event.key==='Enter')toggleWht('${w.id}')">
+    <div class="l1"><div><div>${pill(w.st)}${w.ref?` <span class="pill src">Receipt ${w.ref}</span>`:''}</div><div class="t" style="margin-top:6px">${w.client}</div><div class="s">${w.inv} · ${w.date}</div></div>
+    <div style="text-align:right"><small>WHT AMOUNT</small><div class="amt mono" style="color:var(--danger)">${N(w.amt)}</div><div class="s">${w.st==='untracked'?'Initialize tracking':w.st==='received'?'Verify / Review':'Update receipt'}</div></div></div>
+    ${expandedWht===w.id?matcherHtml(w):''}
+   </div>`).join('')}
+   ${ver.length?`<h3 style="font-size:10px;letter-spacing:.16em;color:var(--ink3);margin-top:6px">VERIFIED RECEIPTS · ${ver.length} CLEARED</h3>`+ver.map(w=>`<div class="row"><div class="l1"><div><div>${pill(w.st)} <span class="pill src">Receipt ${w.ref}</span></div><div class="t" style="margin-top:6px">${w.client}</div><div class="s">${w.inv} · ${w.date}</div></div><div style="text-align:right"><div class="amt mono">${N(w.amt)}</div><button class="btn" style="margin-top:6px" onclick="openWht('${w.id}')">View details</button></div></div></div>`).join(''):''}
+  </div>`;
+ }
+ if(section==='filings'){
+  document.getElementById('ob-link').innerHTML = `<option value="">No linked filing</option>`+filings.map(f=>`<option>${f.type} (${f.period}) — Due ${N(f.due)}</option>`).join('');
+  view.innerHTML = `<div class="secthead"><div class="ic">📋</div><h2>Filings</h2></div>
+  <div class="subhead"><div><h3>Tax Filing Records</h3><p>VAT, WHT and CIT submissions and payment status.</p></div>
+  <div style="display:flex;gap:8px"><button class="btn" onclick="openSheet('filingJsonSheet')">⤓ Import JSON</button><button class="btn primary" onclick="newFiling()">+ Add Filing</button></div></div>
+  <div style="display:grid;gap:10px;margin-top:12px">${filings.map(f=>`
+   <div class="row"><div class="l1"><div><span style="font-size:10px;font-weight:800;color:var(--ink3)">${f.type}</span> ${pill(f.st)}<div class="t" style="margin-top:4px">${f.period}</div><div class="s">${f.ref?'Ref: '+f.ref+' ':''}${f.portal?'Portal: '+f.portal:''}</div></div>
+   <div style="text-align:right"><div class="s">Due: <b>${N(f.due)}</b></div>${f.paid?`<div class="s" style="color:var(--ok)">Paid: ${N(f.paid)}</div>`:''}</div></div>
+   <div class="ops"><button class="iconop" aria-label="Edit" onclick="editFiling('${f.id}')">✏️</button><button class="iconop del" aria-label="Delete" onclick="delFiling('${f.id}')">🗑</button></div></div>`).join('')||'<div class="empty"><b>No Filing Records</b><p>Create records to track VAT, WHT, and CIT submissions and their payment status.</p></div>'}</div>`;
+ }
+ if(section==='obligations'){
+  view.innerHTML = `<div class="secthead"><div class="ic">🔔</div><h2>Obligations</h2></div>
+  <div class="subhead"><div><h3>Tax Obligations &amp; Deadlines</h3><p>Upcoming VAT deliveries, WHT remittances and filing dates.</p></div>
+  <div><button class="btn primary" onclick="newOb()">+ New Deadline</button></div></div>
+  <div style="display:grid;gap:10px;margin-top:12px">${obs.map(o=>`
+   <div class="row" style="${o.st==='resolved'?'opacity:.6':''}"><div class="l1"><div><span style="font-size:10px;font-weight:800;color:var(--ink3)">${o.type}</span> ${pill(o.st)}<div class="t" style="margin-top:4px">Due: ${o.due}</div><div class="s">${o.period}${o.notes?`<br><i>${o.notes}</i>`:''}</div></div></div>
+   <div class="ops">${o.st!=='resolved'?`<button class="btn" onclick="resolveOb('${o.id}')">✓ Resolve</button>`:''}<button class="iconop" aria-label="Edit" onclick="editOb('${o.id}')">✏️</button><button class="iconop del" aria-label="Delete" onclick="delOb('${o.id}')">🗑</button></div></div>`).join('')||'<div class="empty"><b>No Tracked Obligations</b><p>Keep track of upcoming VAT deliveries, WHT remittances and tax filing dates.</p></div>'}</div>`;
+ }
+}
+function matcherHtml(w){
+ if(w.st==='received') return `<div class="matcher"><b style="font-size:13px">Receipt received — ready for verification</b><span class="s">Ref: ${w.ref}</span><button class="btn primary" onclick="event.stopPropagation();verifyWht('${w.id}')">✓ Mark as Verified</button></div>`;
+ if(w.st==='verified') return '';
+ return `<div class="matcher" onclick="event.stopPropagation()"><b style="font-size:13px">Submit WHT Certificate</b>
+ <div class="field"><label>Receipt Number</label><input class="in" id="m-${w.id}" placeholder="e.g. FIRS-WHT-2025-001"></div>
+ <div class="field"><label>Attachment (optional)</label><input class="in" type="file" accept=".pdf,.jpg,.jpeg,.png"></div>
+ <button class="btn primary" onclick="submitCert('${w.id}')">⤴ Submit Certificate</button></div>`;
+}
+function toggleWht(id){expandedWht = expandedWht===id?null:id; if(wht.find(w=>w.id===id&&w.st==='verified')) openWht(id); else render();}
+function submitCert(id){const v=(document.getElementById('m-'+id)||{}).value||'';if(!v.trim()){toast('Receipt number is required');return;}const w=wht.find(x=>x.id===id);w.st='received';w.ref=v.trim();expandedWht=null;toast('Certificate submitted successfully');render();}
+function verifyWht(id){wht.find(w=>w.id===id).st='verified';toast('Receipt marked as verified');render();}
+function openWht(id){const w=wht.find(x=>x.id===id);whtDraft=w.st;
+ document.getElementById('whtBody').innerHTML=`
+ <div class="row"><div class="cols" style="grid-template-columns:1fr 1fr"><div><small>Client</small><b>${w.client}</b></div><div><small>Invoice</small><b>${w.inv}</b></div><div><small>Payment date</small><b>${w.date}</b></div><div><small>WHT amount</small><b class="mono" style="color:var(--danger)">${N(w.amt)}</b></div></div></div>
+ <div class="field"><label>Current receipt status</label><div class="statuspills">${['pending','requested','received','verified'].map(s=>`<button onclick="whtDraft='${s}';openWht('${id}')" aria-pressed="${whtDraft===s}">${s}</button>`).join('')}</div></div>
+ <div class="field"><label>Receipt reference / number</label><input class="in" id="whtRef" value="${w.ref||''}" placeholder="e.g. FIRS-12345"></div>
+ <div class="field"><label>Notes</label><textarea class="in" placeholder="Add follow-up notes..."></textarea></div>`;
+ document.getElementById('whtSave').onclick=()=>{w.st=whtDraft;w.ref=(document.getElementById('whtRef')||{}).value||w.ref;closeSheets();toast('Receipt updated');render();};
+ openSheet('whtSheet');}
+function saveWht(){}
+function newVat(){editingVat=null;document.getElementById('vatEditTitle').textContent='New VAT Input';['vat-date','vat-vendor','vat-cat','vat-ref','vat-notes'].forEach(i=>document.getElementById(i).value='');document.getElementById('vat-net').value=0;document.getElementById('vat-vat').value=0;openSheet('vatEditSheet');}
+function editVat(id){const v=vatInputs.find(x=>x.id===id);editingVat=id;document.getElementById('vatEditTitle').textContent='Edit VAT Input';document.getElementById('vat-date').value='';document.getElementById('vat-vendor').value=v.vendor;document.getElementById('vat-cat').value=v.cat;document.getElementById('vat-ref').value=v.ref;document.getElementById('vat-net').value=v.net;document.getElementById('vat-vat').value=v.vat;openSheet('vatEditSheet');}
+function saveVat(){if(!document.getElementById('vat-date').value&&!editingVat){toast('Date, net amount, and VAT amount are required');return;}if(editingVat){const v=vatInputs.find(x=>x.id===editingVat);v.vendor=document.getElementById('vat-vendor').value||v.vendor;v.net=+document.getElementById('vat-net').value;v.vat=+document.getElementById('vat-vat').value;toast('VAT input updated');}else{vatInputs.unshift({id:'v'+Date.now(),date:'Sep 8, 2026',vendor:document.getElementById('vat-vendor').value||'Unknown Vendor',cat:document.getElementById('vat-cat').value,ref:document.getElementById('vat-ref').value,net:+document.getElementById('vat-net').value||0,vat:+document.getElementById('vat-vat').value||0,rec:true});toast('VAT input recorded');}closeSheets();render();}
+function delVat(id){if(confirm('Delete entry?')){vatInputs=vatInputs.filter(v=>v.id!==id);toast('VAT input deleted');render();}}
+function toggleRec(){const b=document.getElementById('vatRec'),on=b.getAttribute('aria-pressed')==='true';b.setAttribute('aria-pressed',!on);b.textContent=!on?'YES':'NO';}
+function toggleVat(){const b=document.getElementById('vatToggle'),on=b.getAttribute('aria-pressed')==='true';b.setAttribute('aria-pressed',!on);b.textContent=!on?'ON':'OFF';}
+function newFiling(){editingFiling=null;document.getElementById('filingTitle').textContent='New Filing';openSheet('filingSheet');}
+function editFiling(id){const f=filings.find(x=>x.id===id);editingFiling=id;document.getElementById('filingTitle').textContent='Edit Filing';document.getElementById('f-type').value=f.type.toLowerCase();document.getElementById('f-status').value=f.st;document.getElementById('f-due').value=f.due;document.getElementById('f-paid').value=f.paid;document.getElementById('f-ref').value=f.ref;document.getElementById('f-portal').value=f.portal;openSheet('filingSheet');}
+function saveFiling(){const t=document.getElementById('f-type');const label=t.options[t.selectedIndex].text;if(editingFiling){const f=filings.find(x=>x.id===editingFiling);f.type=label;f.st=document.getElementById('f-status').value;f.due=+document.getElementById('f-due').value;f.paid=+document.getElementById('f-paid').value;toast('Filing record updated');}else{filings.unshift({id:'f'+Date.now(),type:label,period:'Sep 1 — Sep 30, 2026',st:document.getElementById('f-status').value,due:+document.getElementById('f-due').value||0,paid:+document.getElementById('f-paid').value||0,ref:document.getElementById('f-ref').value,portal:document.getElementById('f-portal').value});toast('Filing record created');}closeSheets();render();}
+function delFiling(id){if(confirm('Delete this filing record?')){filings=filings.filter(f=>f.id!==id);toast('Filing deleted');render();}}
+function newOb(){document.getElementById('obTitle').textContent='New Obligation';openSheet('obSheet');}
+function editOb(id){document.getElementById('obTitle').textContent='Edit Obligation';openSheet('obSheet');}
+function saveOb(){toast('Reminder saved');closeSheets();render();}
+function delOb(id){if(confirm('Remove this reminder?')){obs=obs.filter(o=>o.id!==id);toast('Reminder removed');render();}}
+function resolveOb(id){obs.find(o=>o.id===id).st='resolved';toast('Obligation resolved');render();}
+function saveRecord(){const amt=+document.getElementById('rc-amt').value||0;if(amt<=0){toast('Date and amount are required');return;}closeSheets();toast('Record captured');}
+function previewJson(inId,outId){const raw=document.getElementById(inId).value;try{const p=JSON.parse(raw);const o=document.getElementById(outId);o.hidden=false;o.textContent=JSON.stringify(p,null,2);toast('JSON parsed successfully');}catch(e){document.getElementById('vatJsonErr').textContent='Invalid JSON — check brackets and quotes.';}}
+const amt=document.getElementById('rc-amt');
+amt.addEventListener('input',()=>{const t=+amt.value||0,vat=Math.round(t*7.5/107.5);document.getElementById('rc-vat').textContent=N(vat);document.getElementById('rc-net').textContent=N(t-vat);});
+document.getElementById('rc-date').value='2026-09-08';
+renderSeg();render();
+</script>
+</body>
+</html>

@@ -38,7 +38,7 @@ export default function ComplianceKpiStrip({ items }: { items: ComplianceKpiItem
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-bd-text-muted">
                   {item.label}
                 </p>
-                <p className="text-lg font-black tracking-tight text-bd-text">{item.value}</p>
+                <p className="text-lg font-black tracking-tight tabular-nums text-bd-text">{item.value}</p>
                 {item.detail ? (
                   <p className="text-xs text-bd-text-muted">{item.detail}</p>
                 ) : null}

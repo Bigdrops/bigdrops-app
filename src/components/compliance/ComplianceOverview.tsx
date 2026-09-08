@@ -1,4 +1,5 @@
-import { AlertCircle, Bell, ClipboardList, Receipt, Wallet } from 'lucide-react'
+import { AlertCircle, ArrowRight, Bell, ClipboardList, Receipt, Wallet } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
@@ -403,6 +404,14 @@ export default function ComplianceOverview({
           Action items route into the existing VAT, WHT Receipts, Filings, and Obligations workflows without creating any fake in-place actions.
         </div>
       ) : null}
+
+      <Link
+        to="/reports"
+        className="flex min-h-[48px] items-center justify-between gap-3 rounded-[var(--bd-radius-lg)] border border-bd-status-info-border bg-bd-status-info-bg px-4 py-3 text-sm font-bold text-bd-status-info-text transition-colors hover:opacity-90"
+      >
+        <span>Tax position is read-only in Reports — review VAT charged vs WHT deducted there.</span>
+        <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+      </Link>
     </div>
   )
 }

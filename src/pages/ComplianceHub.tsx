@@ -1,7 +1,8 @@
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import {
   AlertCircle,
   Bell,
+  Ellipsis,
   History,
   LayoutDashboard,
   Receipt,
@@ -11,8 +12,15 @@ import {
 
 import Layout from '../components/Layout'
 import { useEntity } from '@/lib/tenant/contexts'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { fetchWhtReceipts, fetchTaxInputEntries, fetchTaxFilings, fetchTaxReminders } from '@/modules/compliance/services/complianceService'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import PageLoader from '@/components/app/PageLoader'
 import {
   Sheet,
@@ -63,6 +71,7 @@ const sectionMeta: Record<
 
 export default function ComplianceHub() {
   const { tenantClient } = useEntity()
+  const { isMobile } = useLayoutMode()
   const [section, setSection] = useState<ComplianceSection>('today')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [recordSheetOpen, setRecordSheetOpen] = useState(false)
@@ -146,6 +155,29 @@ export default function ComplianceHub() {
   const activeSection = sectionMeta[section]
   const ActiveSectionIcon = activeSection.icon
 
+  // v2: single adaptive switcher shows attention counts per section.
+  const sectionCounts = useMemo(() => {
+    const trackedPaymentIds = new Set(receipts.map((receipt: any) => receipt.payment_id))
+    const untrackedWht = payments.filter(
+      (payment: any) => Number(payment.wht_amount || 0) > 0 && !trackedPaymentIds.has(payment.id),
+    ).length
+    const unverifiedWht = receipts.filter((receipt: any) => receipt.receipt_status !== 'verified').length
+    const wht = untrackedWht + unverifiedWht
+    const filingsAttention = filings.filter((filing: any) =>
+      ['draft', 'ready', 'overdue'].includes(filing.status),
+    ).length
+    const obligations = reminders.filter((reminder: any) =>
+      reminder.status === 'overdue' || reminder.status === 'due',
+    ).length
+    return {
+      today: wht + filingsAttention + obligations,
+      vat: taxInputs.length,
+      wht,
+      filings: filingsAttention,
+      obligations,
+    }
+  }, [payments, receipts, taxInputs, filings, reminders])
+
   const renderActiveSection = () => {
     if (loading) {
       return (
@@ -223,33 +255,52 @@ export default function ComplianceHub() {
       contentClassName="bg-bd-surface"
     >
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <a
+          href="#compliance-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-bd-overlay-bg focus:px-4 focus:py-3 focus:text-sm focus:font-bold focus:text-bd-overlay-text"
+        >
+          Skip to compliance content
+        </a>
         <div className="w-full min-w-0 space-y-4 overflow-x-hidden px-4 pt-4 md:px-0 md:pt-0">
           <section className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg px-4 py-4 shadow-sm">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-row items-center justify-between gap-3">
               <div className="min-w-0 space-y-1">
                 <h1 className="text-xl font-black tracking-tight text-bd-text">Compliance Hub</h1>
                 <p className="text-sm text-bd-text-muted">Tax actions, filings, and evidence tracking.</p>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
-                onClick={() => setRecordSheetOpen(true)}
-              >
-                <Receipt className="h-4 w-4" />
-                Record Expense
-              </Button>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  type="button"
+                  className="h-11 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
+                  onClick={() => setRecordSheetOpen(true)}
+                >
+                  <Receipt className="h-4 w-4" />
+                  Record Expense
+                </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
-                onClick={() => setSettingsOpen(true)}
-              >
-                <Settings2 className="h-4 w-4" />
-                Tax Profile
-              </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      aria-label="More compliance actions"
+                      className="h-11 w-11 rounded-[var(--bd-radius-lg)] px-0"
+                    >
+                      <Ellipsis className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem
+                      className="min-h-[44px] cursor-pointer"
+                      onSelect={() => setSettingsOpen(true)}
+                    >
+                      <Settings2 className="h-4 w-4" />
+                      Tax Profile
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </section>
 
@@ -262,70 +313,58 @@ export default function ComplianceHub() {
 
           <section className="grid min-w-0 gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="min-w-0 xl:sticky xl:top-4 xl:self-start">
-              <div className="hidden xl:block">
-                <div className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-2 shadow-sm">
-                  <nav className="space-y-1" aria-label="Compliance workflows">
-                    {(
-                      Object.entries(sectionMeta) as Array<
-                        [ComplianceSection, (typeof sectionMeta)[ComplianceSection]]
+              <nav
+                aria-label="Compliance workflows"
+                className="flex min-w-0 gap-2 overflow-x-auto rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-2 shadow-sm xl:flex-col xl:overflow-visible"
+              >
+                {(
+                  Object.entries(sectionMeta) as Array<
+                    [ComplianceSection, (typeof sectionMeta)[ComplianceSection]]
+                  >
+                ).map(([key, item]) => {
+                  const Icon = item.icon
+                  const isActive = key === section
+                  const count = sectionCounts[key]
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSection(key)}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`flex min-h-[44px] shrink-0 items-center gap-3 rounded-[var(--bd-radius-lg)] px-3 py-2 text-left transition-colors xl:w-full ${
+                        isActive
+                          ? 'bg-bd-overlay-bg text-bd-overlay-text shadow-sm'
+                          : 'text-bd-text hover:bg-bd-surface-muted'
+                      }`}
+                    >
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        isActive
+                          ? 'bg-bd-overlay-text/12 text-bd-overlay-text'
+                          : 'bg-bd-surface-muted text-bd-text-muted'
+                      }`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-black uppercase tracking-[0.18em]">{item.label}</div>
+                      </div>
+                      <span
+                        aria-label={`${count} items in ${item.label}`}
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black tabular-nums ${
+                          isActive
+                            ? 'bg-bd-overlay-text/12 text-bd-overlay-text'
+                            : 'bg-bd-surface-muted text-bd-text-muted'
+                        }`}
                       >
-                    ).map(([key, item]) => {
-                      const Icon = item.icon
-                      const isActive = key === section
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setSection(key)}
-                          className={`flex w-full items-start gap-3 rounded-[var(--bd-radius-lg)] px-3 py-3 text-left transition-colors ${
-                            isActive
-                              ? 'bg-bd-overlay-bg text-bd-overlay-text shadow-sm'
-                              : 'text-bd-text hover:bg-bd-surface-muted'
-                          }`}
-                        >
-                          <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                            isActive
-                              ? 'bg-bd-overlay-text/12 text-bd-overlay-text'
-                              : 'bg-bd-surface-muted text-bd-text-muted'
-                          }`}>
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-black uppercase tracking-[0.18em]">{item.label}</div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </nav>
-                </div>
-              </div>
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </nav>
             </aside>
 
             <div className="min-w-0 space-y-3">
-              <div className="max-w-full overflow-x-auto xl:hidden">
-                <div className="flex w-max min-w-full gap-2 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-2 shadow-sm">
-                  {(
-                    Object.entries(sectionMeta) as Array<
-                      [ComplianceSection, (typeof sectionMeta)[ComplianceSection]]
-                    >
-                  ).map(([key, item]) => {
-                    const isActive = key === section
-                    return (
-                      <Button
-                        key={key}
-                        type="button"
-                        variant={isActive ? 'default' : 'outline'}
-                        className="h-9 shrink-0 rounded-[var(--bd-radius-lg)] px-4 text-[10px] font-black uppercase tracking-[0.18em]"
-                        onClick={() => setSection(key)}
-                      >
-                        {item.label}
-                      </Button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <section className="min-w-0">
+              <section id="compliance-content" aria-label={activeSection.label} className="min-w-0 scroll-mt-20">
                 <div className="mb-3 flex items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bd-surface-muted text-bd-text-muted">
                     <ActiveSectionIcon className="h-4 w-4" />
@@ -342,7 +381,7 @@ export default function ComplianceHub() {
         </div>
 
         <SheetContent
-          side="right"
+          side={isMobile ? 'bottom' : 'right'}
           className="flex h-full w-full max-w-full flex-col overflow-hidden bg-bd-card-bg p-0 sm:max-w-xl"
         >
           <SheetHeader>

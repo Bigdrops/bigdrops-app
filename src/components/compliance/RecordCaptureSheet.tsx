@@ -17,6 +17,7 @@ import {
 import { PaymentAttachmentUploader } from '@/components/ui/PaymentAttachmentUploader'
 import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import * as complianceService from '@/modules/compliance/services/complianceService'
 import { recordExpenseRecorded } from '@/lib/audit'
 import { reverseVat } from '@/lib/Calculations'
@@ -48,6 +49,7 @@ interface RecordCaptureSheetProps {
 
 export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved }: RecordCaptureSheetProps) {
   const { tenantClient } = useEntity()
+  const { isMobile } = useLayoutMode()
   const [saving, setSaving] = useState(false)
   const [date, setDate] = useState(entry?.date ?? new Date().toISOString().split('T')[0])
   const [vendorName, setVendorName] = useState(entry?.vendor_name ?? '')
@@ -113,7 +115,7 @@ export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex h-full w-full max-w-full flex-col overflow-hidden bg-bd-card-bg p-0 sm:max-w-xl">
+      <SheetContent side={isMobile ? 'bottom' : 'right'} className="flex h-full w-full max-w-full flex-col overflow-hidden bg-bd-card-bg p-0 sm:max-w-xl">
         <SheetHeader className="border-b border-bd-border">
           <SheetTitle className="flex items-center gap-2">
             <Receipt className="h-4 w-4" />
