@@ -77,7 +77,7 @@ export function SettingsShell({
                   className="size-5 text-bd-text"
                 />
               </Button>
-              <h1 className="text-lg font-bold tracking-tight text-bd-text">Settings</h1>
+              <h1 className="text-[16px] font-bold tracking-[-0.02em] text-bd-text">Settings</h1>
             </div>
             <Button
               variant="ghost"

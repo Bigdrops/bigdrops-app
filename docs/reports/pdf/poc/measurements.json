@@ -1,0 +1,85 @@
+{
+  "base": {
+    "file": "takumi-invoice-a4.pdf",
+    "bytes": 38105,
+    "pages": 2,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "textMethod": "pdf-parse/PDFParse",
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 21,
+    "moneyStringsMissing": [],
+    "valuesMatch": true
+  },
+  "long": {
+    "file": "takumi-invoice-long.pdf",
+    "bytes": 58542,
+    "pages": 7,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "textMethod": "pdf-parse/PDFParse",
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 133,
+    "moneyStringsMissing": [],
+    "valuesMatch": true
+  },
+  "native": {
+    "file": "takumi-thead-repeat.pdf",
+    "bytes": 40754,
+    "pages": 2,
+    "firstPagePt": {
+      "width": 595.28,
+      "height": 841.89
+    },
+    "textMethod": "pdf-parse/PDFParse",
+    "invoiceNumberFound": true,
+    "moneyStringsChecked": 133,
+    "moneyStringsMissing": [],
+    "valuesMatch": true
+  },
+  "computed": {
+    "base": {
+      "subtotal": 21284500,
+      "discount": 1229225,
+      "vat": 1375895.625,
+      "wht": 1002763.75,
+      "grandTotal": 21431170.625,
+      "totalPayable": 20428406.875
+    },
+    "long": {
+      "subtotal": 170276000,
+      "discount": 9833800,
+      "vat": 11007165,
+      "wht": 8022110,
+      "grandTotal": 171449365,
+      "totalPayable": 163427255
+    },
+    "baseMoney": [
+      "₦8,500",
+      "₦1,736,125",
+      "₦62,500",
+      "₦2,872,265.63",
+      "₦2,750",
+      "₦3,192,750",
+      "₦9,200",
+      "₦1,691,190",
+      "₦150,000",
+      "₦1,710,000",
+      "₦14,800",
+      "₦4,836,640",
+      "₦185,000",
+      "₦3,400,762.50",
+      "₦32,500",
+      "₦1,991,437.50",
+      "₦21,284,500",
+      "₦1,229,225",
+      "₦1,375,895.63",
+      "₦1,002,763.75",
+      "₦20,428,406.88"
+    ]
+  }
+}

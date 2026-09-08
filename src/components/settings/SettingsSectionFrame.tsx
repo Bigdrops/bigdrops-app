@@ -39,10 +39,7 @@ export function SettingsSectionFrame({
             )}>
               <Icon size={showBackButton ? 14 : 18} />
             </div>
-            <h2 className={cn(
-              "font-bold tracking-tight text-bd-text truncate",
-              showBackButton ? "text-lg" : "text-xl"
-            )}>
+            <h2 className="truncate text-[17px] font-extrabold tracking-[-0.05em] text-bd-text">
               {section.label}
             </h2>
           </div>
@@ -53,7 +50,7 @@ export function SettingsSectionFrame({
           showBackButton ? "ml-12" : "ml-11.5",
           "max-md:ml-0"
         )}>
-          <p className="text-[12px] font-medium text-bd-text-muted max-w-2xl leading-relaxed">
+          <p className="text-[10px] font-medium text-bd-text-muted max-w-2xl leading-relaxed">
             {section.desc}
           </p>
         </div>

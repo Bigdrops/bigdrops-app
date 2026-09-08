@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  SETTINGS REDESIGN v4 — BIGDROPS-native, not generic Android/Material, not iOS.
+  Same 17-section IA as v1-v3. Fixes vs v3: real BIGDROPS semantic tokens
+  (not M3 container-pair naming), the documented radius/type/spacing scale
+  (not uniform 28px + pill-everything), primary-tinted shadow depth (not
+  flat borderless cards), Manrope + DM Mono, the 135deg gradient used only
+  where the doc allows it, grain texture, real ripple feedback, and an
+  Android-style back-stack (hardware/gesture back unwinds one overlay at
+  a time instead of only responding to an explicit close button).
+  Offline-safe except the two Google Fonts requests below.
+-->
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Settings v4 — BIGDROPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --phone-width: 430px;
+
+    /* ---- Foundation: typography ---- */
+    --font: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+    --number: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+    /* ---- Foundation: spacing ---- */
+    --sp-xxs: 2px; --sp-xs: 4px; --sp-sm: 6px; --sp-md: 8px;
+    --sp-lg: 10px; --sp-xl: 12px; --sp-xxl: 14px;
+
+    /* ---- Foundation: radius ---- */
+    --r-shell: 40px; --r-sheet: 24px; --r-card: 18px; --r-alert: 16px;
+    --r-nav: 20px; --r-fab: 18px; --r-ctrl: 12px; --r-icon: 11px;
+    --r-tab: 15px; --r-search: 13px; --r-btnsm: 10px; --r-badge: 5px;
+
+    /* ---- Foundation: gradient (structure invariant) ---- */
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+  }
+
+  html[data-theme="light"] {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface-raised: #f8fafc;
+    --surface-muted: #e2e8f0;
+    --surface-strong: #cbd5e1;
+    --ink: #0f172a;
+    --ink-2: #475569;
+    --ink-3: #94a3b8;
+    --primary: #1e3a5f;
+    --primary-bright: #3b82f6;
+    --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+    --secondary: #0f172a;
+    --secondary-bright: #64748b;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 13%, transparent);
+    --attention: #dc2626;
+    --attention-soft: color-mix(in srgb, var(--attention) 12%, transparent);
+    --success: #16a34a;
+    --success-soft: color-mix(in srgb, var(--success) 14%, transparent);
+    --line: rgba(15,23,42,.07);
+    --line-strong: rgba(15,23,42,.14);
+    --scrim: rgba(15,23,42,.45);
+    --gradient-ink: #ffffff;
+    --shadow: 0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04);
+    --shadow-float: 0 18px 40px color-mix(in srgb, var(--primary) 18%, transparent), 0 3px 9px rgba(15,23,42,.07);
+    --body-void: radial-gradient(120% 100% at 20% 0%, color-mix(in srgb, var(--secondary) 10%, white), white 60%);
+  }
+
+  html[data-theme="dark"] {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-raised: #253448;
+    --surface-muted: #334155;
+    --surface-strong: #475569;
+    --ink: #f1f5f9;
+    --ink-2: #cbd5e1;
+    --ink-3: #64748b;
+    --primary: #60a5fa;
+    --primary-bright: #93c5fd;
+    --primary-soft: color-mix(in srgb, var(--primary) 20%, transparent);
+    --secondary: #94a3b8;
+    --secondary-bright: #cbd5e1;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 18%, transparent);
+    --attention: #f87171;
+    --attention-soft: color-mix(in srgb, var(--attention) 16%, transparent);
+    --success: #4ad890;
+    --success-soft: color-mix(in srgb, var(--success) 16%, transparent);
+    --line: rgba(241,245,249,.08);
+    --line-strong: rgba(241,245,249,.15);
+    --scrim: rgba(0,0,0,.6);
+    --gradient-ink: var(--ink);
+    --shadow: 0 12px 28px rgba(0,0,0,.38), 0 2px 6px rgba(0,0,0,.26);
+    --shadow-float: 0 18px 44px rgba(0,0,0,.52), 0 3px 10px rgba(0,0,0,.34);
+    --body-void: radial-gradient(120% 100% at 20% 0%, color-mix(in srgb, var(--secondary) 20%, black), #020204 65%);
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: #020204;
+    min-height: 100dvh;
+    display: flex; justify-content: center;
+    padding: 24px 12px 48px;
+  }
+  button, input, select { font-family: inherit; }
+
+  .phone {
+    width: min(var(--phone-width), 100%);
+    height: min(880px, calc(100dvh - 48px));
+    background: var(--body-void), var(--bg);
+    background-blend-mode: normal;
+    color: var(--ink);
+    border-radius: var(--r-shell);
+    overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+    border: 1px solid rgba(255,255,255,.12);
+    isolation: isolate;
+  }
+  /* Grain texture — signature BIGDROPS trait, opacity 0.035 */
+  .phone::after {
+    content: '';
+    position: absolute; inset: 0; z-index: 60; pointer-events: none;
+    opacity: 0.035; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---- Top app bar: fades into content, not a solid bar ---- */
+  .appbar {
+    display: flex; align-items: center; gap: var(--sp-md);
+    padding: calc(var(--sp-md) + env(safe-area-inset-top)) var(--sp-md) var(--sp-md);
+    background: linear-gradient(180deg, var(--bg) 72%, transparent);
+    flex-shrink: 0; position: relative; z-index: 2;
+  }
+  .appbar h1 {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.02em;
+    flex: 1; padding-left: var(--sp-xs); color: var(--ink);
+  }
+  .stage { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0 var(--sp-xxl) calc(20px + env(safe-area-inset-bottom)); scrollbar-width: none; }
+  .stage::-webkit-scrollbar { display: none; }
+  .view[hidden] { display: none; }
+
+  /* ---- Overlays: scrim shared by sheet / dialog ---- */
+  .scrim { position: absolute; inset: 0; z-index: 40; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity .22s; }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+
+  /* Search */
+  .searchbar {
+    display: flex; align-items: center; gap: var(--sp-md);
+    height: 44px; padding: 0 var(--sp-xl);
+    background: var(--surface-muted);
+    border-radius: var(--r-search);
+    color: var(--ink-3);
+    margin: var(--sp-xs) 0 var(--sp-lg);
+  }
+  .searchbar svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .searchbar input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-family: inherit; font-size: 12px; color: var(--ink); min-width: 0;
+  }
+  .searchbar input::placeholder { color: var(--ink-3); }
+
+  /* ---- Lists: cards with real depth, not borderless inset tables ---- */
+  .group-title { font-size: 9px; font-weight: 800; letter-spacing: 0.105em; text-transform: uppercase; color: var(--ink-3); padding: var(--sp-xl) var(--sp-xxs) var(--sp-sm); }
+  .rows {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    border-radius: var(--r-card);
+    overflow: hidden;
+  }
+  .row {
+    display: flex; align-items: center; gap: var(--sp-xl);
+    width: 100%; min-height: 52px;
+    padding: var(--sp-md) var(--sp-xl);
+    background: none; border: none;
+    border-top: 1px solid var(--line);
+    font-family: inherit; text-align: left;
+    cursor: pointer; color: var(--ink); position: relative; overflow: hidden;
+  }
+  .row:first-child { border-top: none; }
+  .row:active { background: var(--surface-muted); }
+  .row .t { flex: 1; min-width: 0; }
+  .row .t b { display: block; font-size: 13px; font-weight: 700; line-height: 1.3; }
+  .row .t span { display: block; margin-top: 1px; font-size: 8px; font-weight: 500; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .trail { color: var(--ink-3); flex-shrink: 0; }
+  .row .trail svg { width: 16px; height: 16px; }
+
+  .sec-title { font-size: 17px; font-weight: 800; letter-spacing: -0.05em; color: var(--ink); }
+  .sec-desc { margin-top: var(--sp-xs); font-size: 9px; font-weight: 500; line-height: 1.5; color: var(--ink-2); max-width: 320px; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: var(--r-card); padding: var(--sp-xl); margin-top: var(--sp-xxl); }
+  .card:first-of-type { margin-top: var(--sp-xxl); }
+  .card h4 { font-size: 9px; font-weight: 800; letter-spacing: 0.105em; text-transform: uppercase; color: var(--ink-3); margin-bottom: var(--sp-lg); }
+
+  .field { margin-bottom: var(--sp-xl); }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 8px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); margin-bottom: var(--sp-sm); }
+  .field input, .field select {
+    width: 100%; height: 40px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-ctrl);
+    background: var(--surface-muted); color: var(--ink);
+    font-family: inherit; font-size: 12px; padding: 0 var(--sp-xl); outline: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M3 5l3 3 3-3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px;
+  }
+  .field input:focus, .field select:focus { outline: 2px solid var(--primary); outline-offset: 2px; border-color: transparent; }
+
+  .switch-row { display: flex; align-items: center; gap: var(--sp-xl); padding: var(--sp-lg) 0; border-top: 1px solid var(--line); }
+  .switch-row:first-child { border-top: none; }
+  .switch-row .t { flex: 1; min-width: 0; }
+  .switch-row .t b { display: block; font-size: 13px; font-weight: 700; }
+  .switch-row .t span { display: block; font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; }
+  .switch {
+    width: 40px; height: 24px; flex-shrink: 0;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface-muted);
+    position: relative; cursor: pointer; padding: 0;
+  }
+  .switch .knob {
+    position: absolute; top: 50%; left: 3px; transform: translateY(-50%);
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--ink-3);
+    transition: transform .18s ease-out, background .18s, width .18s, height .18s;
+  }
+  .switch[aria-checked="true"] { background: var(--primary); border-color: var(--primary); }
+  .switch[aria-checked="true"] .knob { transform: translateY(-50%) translateX(16px); width: 17px; height: 17px; left: 2px; background: #fff; }
+
+  .item { display: flex; align-items: center; gap: var(--sp-xl); padding: var(--sp-lg) 0; border-top: 1px solid var(--line); }
+  .item:first-child { border-top: none; }
+  .item-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .item-sub { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; }
+  .num { font-family: var(--number); font-weight: 500; letter-spacing: -0.02em; }
+  .avatar {
+    width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%;
+    background: var(--primary-soft); color: var(--primary);
+    display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  }
+
+  /* Badges: 5px radius, 6px font, 800 weight, 0.07em uppercase — literal BIGDROPS spec */
+  .badge {
+    display: inline-flex; align-items: center; flex-shrink: 0;
+    font-size: 6px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 2px 5px; border-radius: var(--r-badge);
+    background: var(--secondary-soft); color: var(--ink-2);
+  }
+  .badge--select { background: var(--primary-soft); color: var(--primary); }
+  .badge--ok { background: var(--success-soft); color: var(--success); }
+  .badge--err { background: var(--attention-soft); color: var(--attention); }
+
+  /* Presets: vertical stack — no horizontal scrolling, no carousel, no snap */
+  .preset-strip { display: flex; flex-direction: column; gap: var(--sp-sm); padding: var(--sp-xs) 0 0; }
+  .preset {
+    display: flex; align-items: center; gap: var(--sp-xl);
+    width: 100%; min-height: 52px; cursor: pointer;
+    border: 1.5px solid var(--line);
+    border-radius: var(--r-ctrl);
+    background: var(--surface); font-family: inherit; padding: var(--sp-sm) var(--sp-md); text-align: left;
+  }
+  .preset[data-active="true"] { border-color: var(--primary); background: var(--primary-soft); }
+  .preset-sw { height: 28px; width: 64px; display: flex; border-radius: var(--sp-sm); overflow: hidden; border: 1px solid var(--line); flex-shrink: 0; }
+  .preset-sw i { flex: 1; }
+  .preset-name { display: block; flex: 1; font-size: 12px; font-weight: 700; color: var(--ink); min-width: 0; }
+  .preset-check { width: 16px; height: 16px; flex-shrink: 0; color: var(--primary); display: none; }
+  .preset[data-active="true"] .preset-check { display: block; }
+
+  .seg { display: flex; gap: 2px; margin-top: var(--sp-xl); background: var(--surface-muted); border-radius: var(--r-ctrl); padding: 3px; }
+  .seg button {
+    flex: 1; border: none; background: none; cursor: pointer; border-radius: 9px;
+    font-family: inherit; font-size: 11px; font-weight: 700;
+    color: var(--ink-2); padding: var(--sp-md) 0;
+  }
+  .seg button[data-active="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+  .actions { display: flex; gap: var(--sp-md); margin-top: 20px; }
+  .btn-fill, .btn-tonal, .btn-text, .btn-danger {
+    height: 44px; border: none; cursor: pointer;
+    border-radius: var(--r-ctrl);
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    position: relative; overflow: hidden;
+  }
+  .btn-fill:active, .btn-tonal:active, .btn-text:active, .btn-danger:active { transform: scale(0.965); }
+  .btn-fill { flex: 1.6; background: var(--gradient); color: var(--gradient-ink); }
+  .btn-text { flex: 1; background: none; color: var(--ink-2); }
+  .btn-text:active { background: var(--surface-muted); }
+  .btn-tonal {
+    width: 100%; min-height: 44px; padding: var(--sp-xl);
+    background: var(--secondary-soft); color: var(--ink);
+    margin-top: var(--sp-xl);
+  }
+  .btn-danger {
+    width: 100%; min-height: 44px; padding: var(--sp-xl);
+    background: var(--attention-soft); color: var(--attention);
+    margin-top: var(--sp-xl);
+  }
+  /* Primary-sm gradient CTA — the one gradient-eligible action per screen */
+  .btn-sm-gradient {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 34px; padding: 0 var(--sp-xxl);
+    border: none; border-radius: var(--r-btnsm);
+    background: var(--gradient); color: var(--gradient-ink);
+    font-family: inherit; font-size: 8px; font-weight: 800; letter-spacing: 0.065em; text-transform: uppercase;
+    cursor: pointer; margin-top: var(--sp-xl); width: 100%;
+    position: relative; overflow: hidden;
+  }
+  .btn-sm-gradient:active { transform: scale(0.965); }
+
+  .err-block { margin-top: var(--sp-xl); font-size: 8px; font-weight: 600; color: var(--attention); padding: var(--sp-xxs) 0; }
+  .err-block[hidden], .ok-block[hidden] { display: none; }
+  .ok-block { margin-top: var(--sp-xl); font-size: 8px; font-weight: 600; color: var(--success); padding: var(--sp-xxs) 0; }
+
+  .empty { text-align: center; padding: 32px 20px; }
+  .empty b { display: block; font-size: 16px; font-weight: 800; letter-spacing: -0.05em; margin-top: var(--sp-xl); }
+  .empty p { margin-top: var(--sp-xs); font-size: 10px; color: var(--ink-2); }
+
+  .skel { border-radius: var(--sp-sm); background: var(--surface-muted); position: relative; overflow: hidden; }
+  .skel::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    animation: shimmer 1.2s infinite;
+  }
+  html[data-theme="dark"] .skel::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  /* Sheet: 24px top radius, var(--surface), downward black shadow per spec */
+  .sheet {
+    position: absolute; z-index: 42; left: 0; right: 0; bottom: 0;
+    max-height: 78%;
+    background: var(--surface);
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+    box-shadow: 0 -16px 40px rgba(0,0,0,.24);
+    transform: translateY(105%);
+    transition: transform .28s cubic-bezier(.2,.9,.24,1);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sheet.show { transform: translateY(0); }
+  .grab { width: 34px; height: 3px; border-radius: 2px; background: var(--surface-strong); margin: var(--sp-xl) auto var(--sp-xs); flex-shrink: 0; }
+  .sheet-head { padding: var(--sp-md) var(--sp-xxl) var(--sp-xl); }
+  .sheet-head b { font-size: 17px; font-weight: 800; letter-spacing: -0.05em; }
+  .sheet-body { overflow-y: auto; padding: 0 var(--sp-xxl) calc(var(--sp-xxl) + env(safe-area-inset-bottom)); scrollbar-width: none; }
+  .sheet-body::-webkit-scrollbar { display: none; }
+
+  /* Dialog: 12px radius per component quick reference, var(--surface), var(--shadow) */
+  .dialog {
+    position: absolute; z-index: 43;
+    left: 28px; right: 28px; top: 50%;
+    transform: translateY(-50%) scale(.95);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    border-radius: var(--r-ctrl); padding: var(--sp-xxl);
+    opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s;
+  }
+  .dialog.show { opacity: 1; pointer-events: auto; transform: translateY(-50%) scale(1); }
+  .dialog h3 { font-size: 17px; font-weight: 800; letter-spacing: -0.05em; }
+  .dialog p { margin-top: var(--sp-lg); font-size: 10px; font-weight: 500; line-height: 1.5; color: var(--ink-2); }
+
+  .snackbar {
+    position: absolute; z-index: 50;
+    left: 16px; right: 16px; bottom: 20px;
+    background: var(--ink); color: var(--bg);
+    border-radius: var(--r-ctrl);
+    font-size: 12px; font-weight: 700;
+    padding: var(--sp-xl) var(--sp-xxl);
+    display: flex; align-items: center; gap: var(--sp-xl);
+    box-shadow: var(--shadow-float);
+    opacity: 0; transform: translateY(12px); pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  .snackbar.show { opacity: 1; transform: translateY(0); }
+  .snackbar button {
+    margin-left: auto; border: none; background: none; cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.065em;
+    color: var(--primary-bright);
+  }
+
+  .edge-note { margin: var(--sp-xl) var(--sp-md) 0; font-size: 8px; font-weight: 500; line-height: 1.5; color: var(--ink-3); text-align: center; }
+
+  /* Ripple */
+  .ripple-ink {
+    position: absolute; border-radius: 50%;
+    background: currentColor; opacity: 0.16;
+    transform: scale(0); pointer-events: none;
+    animation: ripple-out 480ms ease-out forwards;
+  }
+  @keyframes ripple-out { to { transform: scale(2.6); opacity: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet, .dialog, .snackbar { transition: opacity .15s ease; transform: none !important; }
+    .skel::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="appbar">
+    <h1 id="topTitle">Settings</h1>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="view" id="view-home">
+      <!-- Company Switcher context card — mirrors live Settings workspaceContext (display-only; switching lives in Switch Workspace / Company Management) -->
+      <div class="card" style="display:flex;align-items:center;gap:var(--sp-xl);margin-top:var(--sp-sm)" aria-label="Current workspace and company">
+        <div class="avatar" style="width:36px;height:36px;border-radius:var(--r-ctrl);font-size:12px">B</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:800;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">BigDrops Ltd</div>
+          <div style="font-size:10px;font-weight:600;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sun &amp; Shield Power Solutions</div>
+        </div>
+        <span class="badge badge--select">Current</span>
+      </div>
+      <div class="searchbar" role="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="homeSearch" type="search" placeholder="Search settings" aria-label="Search settings">
+      </div>
+      <div id="homeGroups"></div>
+      <p class="edge-note">Edge-to-edge — content clears the status bar, navigation bar, and keyboard insets.</p>
+    </div>
+    <div class="view" id="view-section" hidden>
+      <h2 class="sec-title" id="secTitle"></h2>
+      <p class="sec-desc" id="secDesc"></p>
+      <div id="secBody"></div>
+      <div class="actions" id="saveBar" hidden>
+        <button class="btn-text ripple" type="button" id="cancelBtn">Discard</button>
+        <button class="btn-fill ripple" style="flex:1.6" type="button" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+
+  <div class="sheet" id="bankSheet" role="dialog" aria-label="Bank account">
+    <div class="grab"></div>
+    <div class="sheet-head"><b id="bankSheetTitle">Add bank account</b></div>
+    <div class="sheet-body">
+      <div class="field"><label>Bank name</label><input type="text" value="First Bank"></div>
+      <div class="field"><label>Account name</label><input type="text" value="BigDrops Ltd"></div>
+      <div class="field"><label>Account number</label><input type="text" inputmode="numeric" value="3012345678"></div>
+      <div class="field"><label>Sort code</label><input type="text" inputmode="numeric" value="011152303"></div>
+      <div class="actions" style="margin-top:16px">
+        <button class="btn-text ripple" type="button" data-close>Cancel</button>
+        <button class="btn-fill ripple" style="flex:1.6" type="button" data-close data-toast="Bank account saved">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog" id="inviteDialog" role="alertdialog" aria-label="Invite member">
+    <h3>Invite member</h3>
+    <p>They join this workspace with the role you choose.</p>
+    <div class="field" style="margin-top:14px"><label>Email</label><input type="email" id="inviteEmail" placeholder="teammate@company.com"></div>
+    <div class="field"><label>Role</label><select id="inviteRole"><option>Member</option><option>Admin</option><option>Viewer</option></select></div>
+    <div class="err-block" id="inviteError" hidden>Email is required to send an invite.</div>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn-text ripple" type="button" data-close>Cancel</button>
+      <button class="btn-fill ripple" style="flex:1.6" type="button" id="inviteSend">Send</button>
+    </div>
+  </div>
+
+  <div class="dialog" id="archiveDialog" role="alertdialog" aria-label="Confirm archive">
+    <h3 id="archiveTitle">Archive company?</h3>
+    <p>Archived items leave the active list but stay restorable.</p>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn-text ripple" type="button" data-close>Cancel</button>
+      <button class="btn-danger ripple" type="button" data-close data-toast="Archived. Restore anytime.">Archive</button>
+    </div>
+  </div>
+
+  <div class="snackbar" id="snackbar"><span id="snackText"></span><button type="button" id="snackAction" hidden>Undo</button></div>
+</div>
+
+<script>
+  var GROUPS = [
+    { label: 'Account', items: [
+      { id: 'user', label: 'User Profile', sub: 'Password, device, session' },
+      { id: 'workspace', label: 'Switch Workspace', sub: 'Current workspace' },
+    ]},
+    { label: 'Workspace', items: [
+      { id: 'company-manage', label: 'Company Management', sub: 'Companies, archive, restore' },
+      { id: 'company', label: 'Company Info', sub: 'Name, tagline, address, contacts' },
+      { id: 'branding', label: 'Logo & Branding', sub: 'Logo upload' },
+      { id: 'banking', label: 'Banking', sub: '2 accounts' },
+      { id: 'signatories', label: 'Signatories', sub: 'People who sign' },
+    ]},
+    { label: 'Preferences', items: [
+      { id: 'theme', label: 'Theme & Appearance', sub: 'Light · presets' },
+      { id: 'notifications', label: 'Notifications', sub: 'Alerts and reminders' },
+      { id: 'dashboard', label: 'Dashboard Layout', sub: 'KPI cards' },
+      { id: 'documents', label: 'Document Controls', sub: 'Fillable writing' },
+      { id: 'prefixes', label: 'Document Prefixes', sub: 'Numbering prefixes' },
+      { id: 'security', label: 'App Lock', sub: 'PIN and biometrics' },
+    ]},
+    { label: 'System', items: [
+      { id: 'team', label: 'Team', sub: '3 members' },
+      { id: 'devices', label: 'Devices', sub: 'Installations and codes' },
+      { id: 'archives', label: 'Archives', sub: 'Restore anything' },
+      { id: 'tenant-debug', label: 'Tenant Debug', sub: 'Read-only diagnostics' },
+    ]},
+  ];
+
+  var SECTIONS = {
+    'user': { title: 'User Profile', desc: 'Sign-in, password, and this device.', save: false, body:
+      '<div class="card"><h4>Password</h4>' +
+      '<div class="field"><label>Current password</label><input type="password" placeholder="••••••••"></div>' +
+      '<div class="field"><label>New password</label><input type="password" placeholder="Minimum 8 characters"></div>' +
+      '<div class="field"><label>Confirm new password</label><input type="password" placeholder="Repeat new password"></div>' +
+      '</div>' +
+      '<div class="card"><h4>This device</h4>' +
+      '<div class="switch-row"><div class="t"><b>Registered on this device</b><span>Push and offline access</span></div>' +
+      '<button class="switch" type="button" role="switch" aria-checked="true" data-switch aria-label="Registered on this device"><span class="knob"></span></button></div>' +
+      '</div>' },
+    'workspace': { title: 'Switch Workspace', desc: 'Workspaces you belong to.', save: false, body:
+      '<div class="card">' +
+      '<div class="item"><div class="avatar">BD</div><div style="flex:1;min-width:0"><div class="item-title">BigDrops Ltd</div><div class="item-sub">Current workspace</div></div><span class="badge badge--select">Current</span></div>' +
+      '<div class="item"><div class="avatar">AD</div><div style="flex:1;min-width:0"><div class="item-title">Adaba Ventures</div><div class="item-sub">Tap to switch</div></div></div>' +
+      '</div>' },
+    'company-manage': { title: 'Company Management', desc: 'Companies in this workspace. Archiving never deletes.', save: false, body:
+      '<div class="card"><h4>Active</h4>' +
+      '<div class="item"><div class="avatar">BD</div><div style="flex:1;min-width:0"><div class="item-title">BigDrops Ltd</div><div class="item-sub num">RC 1842204</div></div><span class="badge badge--select">Active</span></div>' +
+      '<div class="item"><div class="avatar">AD</div><div style="flex:1;min-width:0"><div class="item-title">Adaba Ventures</div><div class="item-sub num">RC 2011557</div></div><button class="btn-text ripple" style="flex:0 0 auto;height:32px" type="button" data-archive="Adaba Ventures">Archive</button></div>' +
+      '</div>' +
+      '<div class="card"><h4>Archived</h4>' +
+      '<div class="item"><div class="avatar">OK</div><div style="flex:1;min-width:0"><div class="item-title">Okafor &amp; Co</div><div class="item-sub">Archived Mar 2026</div></div><button class="btn-text ripple" style="flex:0 0 auto;height:32px" type="button" data-toast="Company restored">Restore</button></div>' +
+      '</div>' },
+    'company': { title: 'Company Info', desc: 'Used on document headers and communications.', save: true, body:
+      '<div class="card">' +
+      '<div class="field"><label>Legal business name</label><input type="text" value="BigDrops Ltd"></div>' +
+      '<div class="field"><label>Tagline / motto</label><input type="text" value="Power, delivered"></div>' +
+      '<div class="field"><label>Physical address</label><input type="text" value="14 Marina Road, Lagos"></div>' +
+      '<div class="field"><label>City / State</label><input type="text" value="Lagos"></div>' +
+      '<div class="field"><label>Phone number</label><input type="tel" value="+234 801 234 5678"></div>' +
+      '<div class="field"><label>Official email</label><input type="email" value="hello@bigdrops.com"></div>' +
+      '</div>' },
+    'branding': { title: 'Logo & Branding', desc: 'Logo appears on documents and PDFs.', save: true, body:
+      '<div class="card" style="text-align:center">' +
+      '<div class="avatar" style="width:64px;height:64px;margin:0 auto;font-size:18px">BD</div>' +
+      '<p style="margin-top:10px;font-size:9px;font-weight:500;color:var(--ink-2)">PNG or JPG under 5 MB</p>' +
+      '<button class="btn-tonal ripple" type="button" data-toast="Logo uploaded — save to apply">Upload logo</button>' +
+      '<div style="margin-top:10px"><span class="badge badge--ok">Saved</span></div>' +
+      '</div>' },
+    'banking': { title: 'Banking', desc: 'Accounts printed on invoices and receipts.', save: false, body:
+      '<div class="card">' +
+      '<div class="item"><div class="avatar">FB</div><div style="flex:1;min-width:0"><div class="item-title">First Bank <span class="num">3012345678</span></div><div class="item-sub">BigDrops Ltd · <span class="num">011152303</span></div></div><span class="badge badge--select">Default</span></div>' +
+      '<div class="item"><div class="avatar">GT</div><div style="flex:1;min-width:0"><div class="item-title">GTBank <span class="num">0123456789</span></div><div class="item-sub">Projects · <span class="num">058152036</span></div></div></div>' +
+      '</div>' +
+      '<button class="btn-sm-gradient ripple" type="button" data-sheet="bankSheet">+ Add Bank Account</button>' },
+    'signatories': { title: 'Signatories', desc: 'People whose signatures appear on documents.', save: false, body:
+      '<div class="card">' +
+      '<div class="item"><div class="avatar">JA</div><div style="flex:1;min-width:0"><div class="item-title">J. Adeyemi</div><div class="item-sub">Managing Director · signature on file</div></div></div>' +
+      '<div class="item"><div class="avatar">NO</div><div style="flex:1;min-width:0"><div class="item-title">N. Okafor</div><div class="item-sub">Accountant</div></div></div>' +
+      '</div>' +
+      '<button class="btn-sm-gradient ripple" type="button" data-toast="Signatory editor opens here">+ Add Signatory</button>' },
+    'theme': { title: 'Theme & Appearance', desc: 'Applies instantly across the app.', save: false, body:
+      '<div class="card"><h4>Mode</h4><div class="seg" id="modeSeg"><button type="button" data-active="true">Light</button><button type="button">Dark</button><button type="button">System</button></div></div>' +
+      '<div class="card"><h4>Presets</h4><div class="preset-strip" id="presetStrip"></div></div>' },
+    'notifications': { title: 'Notifications', desc: 'What the app may tell you about.', save: false, body:
+      '<div class="card"><div id="notifRows"></div></div>' },
+    'dashboard': { title: 'Dashboard Layout', desc: 'Choose which KPI cards appear on Home.', save: false, body:
+      '<div class="card"><div id="kpiRows"></div></div>' },
+    'documents': { title: 'Document Controls', desc: 'Fillable-writing controls per document family.', save: false, body:
+      '<div class="card"><div id="docRows"></div></div>' },
+    'prefixes': { title: 'Document Prefixes', desc: 'Prefixes seed every new document number.', save: true, body:
+      '<div class="card"><div id="prefixRows"></div></div>' },
+    'security': { title: 'App Lock', desc: 'Lock BIGDROPS behind PIN or biometrics.', save: false, body:
+      '<div class="card">' +
+      '<div class="switch-row"><div class="t"><b>Require unlock on open</b><span>Trigger: every app open</span></div><button class="switch" type="button" role="switch" aria-checked="true" data-switch aria-label="Require unlock on open"><span class="knob"></span></button></div>' +
+      '<div class="switch-row"><div class="t"><b>Biometric unlock</b><span>Verification: fingerprint or face</span></div><button class="switch" type="button" role="switch" aria-checked="false" data-switch aria-label="Biometric unlock"><span class="knob"></span></button></div>' +
+      '</div>' +
+      '<div class="card"><h4>How it works</h4><p style="font-size:9px;font-weight:500;color:var(--ink-2);line-height:1.55">Lock engages on the trigger above. Unlock verifies with PIN first, biometrics when enabled.</p></div>' },
+    'team': { title: 'Team', desc: 'Who can open this workspace, and as what.', save: false, body:
+      '<div class="card">' +
+      '<div class="item"><div class="avatar">JA</div><div style="flex:1;min-width:0"><div class="item-title">jaiyewisdom@gmail.com</div><div class="item-sub">Owner</div></div><span class="badge badge--select">You</span></div>' +
+      '<div class="item"><div class="avatar">NO</div><div style="flex:1;min-width:0"><div class="item-title">ngozi@bigdrops.com</div><div class="item-sub">Admin</div></div></div>' +
+      '<div class="item"><div class="avatar">TU</div><div style="flex:1;min-width:0"><div class="item-title">tunde@bigdrops.com</div><div class="item-sub">Member</div></div></div>' +
+      '</div>' +
+      '<button class="btn-sm-gradient ripple" type="button" data-dialog="inviteDialog">+ Invite Member</button>' },
+    'devices': { title: 'Devices', desc: 'Installations signed into this workspace.', save: false, body:
+      '<div class="card">' +
+      '<div class="item"><div class="avatar">A1</div><div style="flex:1;min-width:0"><div class="item-title">SM-A156B · Store phone</div><div class="item-sub">Seen today · code <span class="num">BD-4F2K</span></div></div><span class="badge badge--ok">Active</span></div>' +
+      '<div class="item"><div class="avatar">W2</div><div style="flex:1;min-width:0"><div class="item-title">Chrome · Office</div><div class="item-sub">Seen yesterday · code <span class="num">BD-9Q1D</span></div></div><span class="badge">Idle</span></div>' +
+      '</div>' },
+    'archives': { title: 'Archives', desc: 'Deleted documents rest here before they are gone for good.', save: false, body:
+      '<div class="card">' +
+      '<div class="item"><div class="avatar">IN</div><div style="flex:1;min-width:0"><div class="item-title num">INV-2026-0041</div><div class="item-sub">Acme Ltd · archived Mar 2026</div></div><button class="btn-text ripple" style="flex:0 0 auto;height:32px" type="button" data-toast="INV-2026-0041 restored">Restore</button></div>' +
+      '<div class="item"><div class="avatar">QT</div><div style="flex:1;min-width:0"><div class="item-title num">QTN-2026-0108</div><div class="item-sub">Acme Ltd · archived Feb 2026</div></div><button class="btn-text ripple" style="flex:0 0 auto;height:32px" type="button" data-toast="QTN-2026-0108 restored">Restore</button></div>' +
+      '</div>' },
+    'tenant-debug': { title: 'Tenant Debug', desc: 'Read-only diagnostics. Nothing here edits data.', save: false, body:
+      '<div class="card">' +
+      '<div class="item"><div style="flex:1;min-width:0"><div class="item-title">Schema</div><div class="item-sub num">entity_bigrops_ltd</div></div><span class="badge badge--ok">Ready</span></div>' +
+      '<div class="item"><div style="flex:1;min-width:0"><div class="item-title">RLS policies</div><div class="item-sub">142 active</div></div><span class="badge badge--ok">Ready</span></div>' +
+      '<div class="item"><div style="flex:1;min-width:0"><div class="item-title">Migrations</div><div class="item-sub num">Head at 2026090614</div></div><span class="badge badge--ok">Ready</span></div>' +
+      '</div>' },
+  };
+
+  var PRESETS = [
+    ['Slate Navy', '#f0f4f8', '#1e3a5f'], ['Citrus', '#fafafa', '#b8e954'],
+    ['Vercel', '#fcfcfc', '#000000'], ['Supabase', '#fcfcfc', '#3ddc97'],
+    ['Linear', '#fbfbfb', '#6e78d5'], ['Claude', '#faf8f1', '#cb6441'],
+    ['Ocean Teal', '#f0fafa', '#0d9488'], ['Amber Terracotta', '#faf7f2', '#b45309'],
+  ];
+  var NOTIFS = [
+    ['Overdue reminders', 'Nudge clients when invoices pass due', true],
+    ['Payment received', 'Confirm incoming payments instantly', true],
+    ['Low stock', 'Warn when library items run low', false],
+    ['Weekly summary', 'Monday totals by email', false],
+  ];
+  var KPIS = [
+    ['Total invoiced', 'Lifetime sales on invoices', true],
+    ['Collected', 'Cash received this period', true],
+    ['Outstanding', 'Unpaid balance across clients', true],
+    ['Overdue', 'Past-due balance', false],
+  ];
+  var DOCS = [
+    ['Invoices', 'Handwriting font and ink color', true],
+    ['Quotations', 'Handwriting font and ink color', true],
+    ['Waybills', 'Handwriting font and ink color', true],
+    ['CSR records', 'Handwriting font and ink color', true],
+  ];
+  var PREFIXES = [
+    ['Invoices', 'INV'], ['Quotations', 'QTN'], ['Waybills', 'WBL'],
+    ['CSR records', 'CSR'], ['Letters', 'LTR'], ['Receipts', 'RCT'],
+  ];
+
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+
+  /* ---------------- Ripple (real Android tap feedback) ---------------- */
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('pointerdown', function (e) {
+    if (reduceMotion) return;
+    var el = e.target.closest('.ripple');
+    if (!el) return;
+    var rect = el.getBoundingClientRect();
+    var size = Math.max(rect.width, rect.height) * 1.2;
+    var ink = document.createElement('span');
+    ink.className = 'ripple-ink';
+    ink.style.width = ink.style.height = size + 'px';
+    ink.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    ink.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    el.style.position = el.style.position || 'relative';
+    el.appendChild(ink);
+    ink.addEventListener('animationend', function () { ink.remove(); });
+  });
+
+  function switchRow(t, sub, on, label) {
+    return '<div class="switch-row"><div class="t"><b>' + t + '</b><span>' + sub + '</span></div>' +
+      '<button class="switch" type="button" role="switch" aria-checked="' + on + '" aria-label="' + (label || t) + '" data-switch><span class="knob"></span></button></div>';
+  }
+  function rowHtml(it) {
+    return '<button class="row ripple" type="button" data-section="' + it.id + '" aria-label="' + it.label + '">' +
+      '<span class="t"><b>' + it.label + '</b><span>' + it.sub + '</span></span>' +
+      '<span class="trail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>' +
+      '</button>';
+  }
+  function renderHome(filter) {
+    var host = document.getElementById('homeGroups');
+    host.innerHTML = '';
+    var q = (filter || '').trim().toLowerCase();
+    GROUPS.forEach(function (g) {
+      var items = g.items.filter(function (it) {
+        return !q || it.label.toLowerCase().indexOf(q) > -1 || it.sub.toLowerCase().indexOf(q) > -1;
+      });
+      if (!items.length) return;
+      host.innerHTML += '<div class="group-title">' + g.label + '</div><div class="rows">' + items.map(rowHtml).join('') + '</div>';
+    });
+    if (!host.innerHTML) host.innerHTML = '<div class="empty"><b>No matches</b><p>Try a different search term.</p></div>';
+  }
+  function skeletonThen(el, html, done) {
+    el.innerHTML = '<div class="card">' +
+      '<div class="skel" style="height:12px;width:45%"></div>' +
+      '<div class="skel" style="height:40px;margin-top:10px"></div>' +
+      '<div class="skel" style="height:40px;margin-top:10px"></div>' +
+      '</div>';
+    setTimeout(function () { el.innerHTML = html; bindDynamic(el); if (done) done(); }, 350);
+  }
+  function bindDynamic(scope) {
+    scope.querySelectorAll('[data-switch]').forEach(function (btn) {
+      if (btn.dataset.bound) return; btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        var on = btn.getAttribute('aria-checked') !== 'true';
+        btn.setAttribute('aria-checked', String(on));
+        buzz(10);
+      });
+    });
+    scope.querySelectorAll('[data-sheet]').forEach(function (btn) {
+      if (btn.dataset.bound) return; btn.dataset.bound = '1';
+      btn.addEventListener('click', function () { openSheet(btn.dataset.sheet); });
+    });
+    scope.querySelectorAll('[data-dialog]').forEach(function (btn) {
+      if (btn.dataset.bound) return; btn.dataset.bound = '1';
+      btn.addEventListener('click', function () { openDialog(btn.dataset.dialog); });
+    });
+    scope.querySelectorAll('[data-archive]').forEach(function (btn) {
+      if (btn.dataset.bound) return; btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        document.getElementById('archiveTitle').textContent = 'Archive ' + btn.dataset.archive + '?';
+        openDialog('archiveDialog');
+      });
+    });
+    scope.querySelectorAll('[data-toast]').forEach(function (btn) {
+      if (btn.dataset.bound) return; btn.dataset.bound = '1';
+      btn.addEventListener('click', function () { snack(btn.dataset.toast); });
+    });
+  }
+  function openSection(id) {
+    var s = SECTIONS[id];
+    if (!s) return;
+    document.getElementById('topTitle').textContent = s.title;
+    document.getElementById('secTitle').textContent = s.title;
+    document.getElementById('secDesc').textContent = s.desc;
+    document.getElementById('saveBar').hidden = !s.save;
+    showView('view-section');
+    var body = document.getElementById('secBody');
+    skeletonThen(body, s.body, function () {
+      if (id === 'theme') renderPresets();
+      if (id === 'notifications') renderSwitchList('notifRows', NOTIFS);
+      if (id === 'dashboard') renderSwitchList('kpiRows', KPIS);
+      if (id === 'documents') renderSwitchList('docRows', DOCS);
+      if (id === 'prefixes') renderPrefixes();
+    });
+    document.getElementById('stage').scrollTop = 0;
+  }
+  function renderSwitchList(hostId, rows) {
+    var host = document.getElementById(hostId);
+    if (!host) return;
+    host.innerHTML = rows.map(function (r) { return switchRow(r[0], r[1], r[2]); }).join('');
+    bindDynamic(host.parentNode);
+  }
+  function renderPrefixes() {
+    var host = document.getElementById('prefixRows');
+    if (!host) return;
+    var card = host.closest('.card');
+    card.innerHTML = PREFIXES.map(function (p) {
+      return '<div class="field"><label>' + p[0] + '</label><input type="text" value="' + p[1] + '"></div>';
+    }).join('');
+  }
+  function renderPresets() {
+    var host = document.getElementById('presetStrip');
+    if (!host) return;
+    host.innerHTML = '';
+    PRESETS.forEach(function (p, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'preset ripple';
+      b.dataset.active = i === 0 ? 'true' : 'false';
+      b.setAttribute('aria-label', 'Theme preset ' + p[0]);
+      b.innerHTML = '<span class="preset-sw"><i style="background:' + p[1] + '"></i><i style="background:' + p[1] + '"></i><i style="background:' + p[2] + '"></i></span>' +
+        '<span class="preset-name">' + p[0] + '</span>' +
+        '<svg class="preset-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12 5 5L20 7"/></svg>';
+      b.addEventListener('click', function () {
+        host.querySelectorAll('.preset').forEach(function (x) { x.dataset.active = 'false'; });
+        b.dataset.active = 'true'; buzz(10); snack(p[0] + ' applied');
+      });
+      host.appendChild(b);
+    });
+  }
+  function showView(id) {
+    document.getElementById('view-home').hidden = id !== 'view-home';
+    document.getElementById('view-section').hidden = id !== 'view-section';
+    var home = id === 'view-home';
+    document.getElementById('topTitle').textContent = home ? 'Settings' : document.getElementById('secTitle').textContent;
+  }
+  function snack(msg, action) {
+    var s = document.getElementById('snackbar');
+    document.getElementById('snackText').textContent = msg;
+    var btn = document.getElementById('snackAction');
+    btn.hidden = !action;
+    if (action) btn.onclick = action;
+    s.classList.add('show');
+    clearTimeout(s._h);
+    s._h = setTimeout(function () { s.classList.remove('show'); }, 2600);
+  }
+
+  /* ---------------- Android-style back-stack ---------------- */
+  /* Hardware/gesture back (popstate) unwinds exactly one layer: */
+  /* dialog -> sheet -> section -> home. Explicit close */
+  /* controls route through history.back() so both input methods */
+  /* share one source of truth, matching real Android navigation. */
+  var navStack = [];
+  function pushLayer(layer) {
+    navStack.push(layer);
+    try { history.pushState({ d: navStack.length }, ''); } catch (e) {}
+  }
+  function goBack() {
+    if (!navStack.length) return;
+    try { history.back(); } catch (e) { popLayer(); }
+  }
+  function popLayer() {
+    var layer = navStack.pop();
+    if (!layer) return;
+    if (layer.indexOf('sheet:') === 0) { overlayCloseUI(layer.slice(6), 'sheet'); }
+    else if (layer.indexOf('dialog:') === 0) { overlayCloseUI(layer.slice(7), 'dialog'); }
+    else if (layer === 'section') { showView('view-home'); }
+  }
+  window.addEventListener('popstate', function () { popLayer(); });
+
+  function overlayCloseUI(id, kind) {
+    document.getElementById('scrim').classList.remove('show');
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  }
+  function anyOverlayOpen() {
+    return document.querySelector('.sheet.show,.dialog.show');
+  }
+
+  function openSheet(id) { document.getElementById('scrim').classList.add('show'); document.getElementById(id).classList.add('show'); pushLayer('sheet:' + id); }
+  function openDialog(id) { document.getElementById('scrim').classList.add('show'); document.getElementById(id).classList.add('show'); pushLayer('dialog:' + id); }
+  function closeTopOverlay() { if (anyOverlayOpen()) goBack(); }
+
+  document.getElementById('scrim').addEventListener('click', closeTopOverlay);
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-close]')) closeTopOverlay();
+  });
+  document.getElementById('saveBtn').addEventListener('click', function () { buzz(15); snack('Changes saved'); });
+  document.getElementById('cancelBtn').addEventListener('click', function () { goBack(); });
+  document.getElementById('homeSearch').addEventListener('input', function (e) { renderHome(e.target.value); });
+  document.getElementById('homeGroups').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-section]');
+    if (btn) { openSection(btn.dataset.section); pushLayer('section'); }
+  });
+  document.getElementById('secBody').addEventListener('click', function (e) {
+    var segBtn = e.target.closest('#modeSeg button');
+    if (!segBtn) return;
+    var seg = document.getElementById('modeSeg');
+    seg.querySelectorAll('button').forEach(function (x) { x.dataset.active = 'false'; });
+    segBtn.dataset.active = 'true';
+    snack('Mode: ' + segBtn.textContent);
+  });
+  document.getElementById('inviteSend').addEventListener('click', function () {
+    var email = document.getElementById('inviteEmail').value.trim();
+    var err = document.getElementById('inviteError');
+    if (!email || email.indexOf('@') < 0) { err.hidden = false; return; }
+    err.hidden = true;
+    closeTopOverlay();
+    snack('Invite sent');
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeTopOverlay();
+  });
+
+  renderHome('');
+</script>
+</body>
+</html>

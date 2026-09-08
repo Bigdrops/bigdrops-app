@@ -322,7 +322,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
         <div className="space-y-3 pt-2">
           <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
           <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Mode</h5>
-          <div className="flex gap-2">
+          <div className="flex gap-[2px] rounded-[var(--bd-radius-md)] bg-[hsl(var(--bd-surface-muted))] p-[3px]">
             {(['light', 'dark', 'system'] as const).map((mode) => {
               const isActive = mode === preference.themeMode
               return (
@@ -338,10 +338,10 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
                     }
                   }}
                   className={cn(
-                    "flex-1 h-10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all",
+                    "flex-1 rounded-[calc(var(--bd-radius-md)-4px)] py-2 text-[11px] font-bold uppercase tracking-wide transition-all",
                     isActive
-                      ? "bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm"
-                      : "border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg text-bd-text-muted hover:border-bd-border"
+                      ? "bg-bd-card-bg text-bd-text shadow-sm"
+                      : "text-bd-text-muted"
                   )}
                 >
                   {mode === 'light' ? '☀ Light' : mode === 'dark' ? '☽ Dark' : '↺ System'}

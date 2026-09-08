@@ -1,0 +1,109 @@
+{
+  "base": {
+    "file": "takumi-invoice-a4.pdf",
+    "pages": 2,
+    "INV-2026-0042": [
+      true,
+      false
+    ],
+    "Unit Price": [
+      true,
+      false
+    ],
+    "Total Payable": [
+      false,
+      true
+    ],
+    "₦20,428,406.88": [
+      false,
+      true
+    ],
+    "Page 1 of": [
+      true,
+      false
+    ],
+    "Page 2 of": [
+      false,
+      true
+    ],
+    "Authorised Signature": [
+      false,
+      true
+    ]
+  },
+  "long": {
+    "file": "takumi-invoice-long.pdf",
+    "pages": 7,
+    "INV-2026-0042": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "Unit Price": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "Total Payable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "₦163,427,255": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ],
+    "rowIntegrity": {
+      "rows": 64,
+      "onExactlyOnePage": 0,
+      "onZeroPages": 64,
+      "onMultiplePages": 0
+    },
+    "pageNumbers": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "native": {
+    "file": "takumi-thead-repeat.pdf",
+    "pages": 2,
+    "Description": [
+      true,
+      true
+    ],
+    "Unit Price": [
+      true,
+      true
+    ],
+    "Total Payable": [
+      false,
+      true
+    ]
+  },
+  "baseline": {
+    "file": "reactpdf-invoice-baseline.pdf",
+    "pages": 1
+  }
+}

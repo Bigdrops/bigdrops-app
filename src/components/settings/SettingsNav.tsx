@@ -19,15 +19,20 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
     )}>
       {groups.map((group) => (
         <div key={group.id} className={cn(isSidebar ? "space-y-2" : "mb-6")}>
-          <div className="px-3 mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-bd-text-muted opacity-50">
+          <div className={cn(
+            "px-3 mb-2",
+            isSidebar && "opacity-50"
+          )}>
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.105em] text-bd-text-muted">
               {group.label}
             </p>
           </div>
 
           <div className={cn(
             "grid",
-            isSidebar ? "gap-1" : "divide-y divide-[hsl(var(--bd-border)/0.4)]"
+            isSidebar
+              ? "gap-1"
+              : "divide-y divide-[hsl(var(--bd-border)/0.4)] overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.6)] bg-bd-surface shadow-sm"
           )}>
             {group.items.map((item) => {
               const isActive = activeSection === item.id
@@ -41,7 +46,7 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
                     "group relative flex items-center gap-3 transition-all text-left",
                     isSidebar 
                       ? "w-full rounded-[var(--bd-radius-md)] px-3 py-2" 
-                      : "w-full px-4 py-3 hover:bg-[hsl(var(--bd-surface-muted)/0.4)]",
+                      : "min-h-[52px] w-full px-4 py-2.5 transition-colors active:bg-[hsl(var(--bd-surface-muted)/0.6)]",
                     isSidebar && isActive 
                       ? "bg-bd-surface-muted text-bd-text" 
                       : isSidebar ? "text-bd-text-muted hover:bg-bd-surface-muted/50 hover:text-bd-text"
@@ -54,7 +59,7 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
                   )}
 
                   <div className={cn(
-                    "flex shrink-0 items-center justify-center rounded-[var(--bd-radius-sm)] transition-all",
+                    "flex shrink-0 items-center justify-center rounded-[var(--bd-radius-md)] transition-all",
                     isSidebar ? "h-8 w-8" : "h-9 w-9",
                     isActive 
                       ? "bg-bd-button-primary-bg text-bd-button-primary-text" 
@@ -65,13 +70,15 @@ export function SettingsNav({ groups, activeSection, onSelect, variant = 'list',
 
                   <div className="flex-1 min-w-0">
                     <p className={cn(
-                      "text-sm font-semibold truncate",
+                      "truncate",
+                      isSidebar ? "text-sm font-semibold" : "text-[13px] font-bold",
                       isActive || !isSidebar ? "text-bd-text" : "text-bd-text-muted"
                     )}>
                       {item.label}
                     </p>
                     <p className={cn(
-                      "text-[11px] leading-tight text-bd-text-muted truncate opacity-70",
+                      "leading-tight text-bd-text-muted truncate",
+                      isSidebar ? "text-[11px] opacity-70" : "text-[10px] font-medium",
                       isSidebar && isTablet && "hidden"
                     )}>
                       {item.desc}

@@ -23,6 +23,7 @@
   },
   "registries": {
     "@componentry": "https://componentry.fun/r/{name}.json",
-    "@unlumen-ui": "https://ui.unlumen.com/r/{name}.json"
+    "@unlumen-ui": "https://ui.unlumen.com/r/{name}.json",
+    "@pdfcn": "https://pdfcn.dev/r/{name}.json"
   }
 }
