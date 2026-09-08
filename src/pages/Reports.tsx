@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import { useEntity } from '@/lib/tenant/contexts'
+import { feedback } from '@/lib/feedback'
 import {
   loadEnrichedCollections,
   loadProjects,
@@ -385,6 +386,11 @@ export default function Reports() {
 
   const activeMetadata = TAB_METADATA[tab]
 
+  // v1: export has no specification yet — signal honestly instead of a silent no-op.
+  const handleExport = useCallback(() => {
+    feedback.info('Export is not available yet — report format specification is pending')
+  }, [])
+
   return (
     <Layout title="Reports" session={null} contentClassName="bg-bd-surface" hidePageHeader>
       <ReportsShell
@@ -392,7 +398,7 @@ export default function Reports() {
           <ReportsHeader 
             title={activeMetadata.title}
             description={activeMetadata.description}
-            onExport={() => {}}
+            onExport={handleExport}
           />
         }
         navigation={

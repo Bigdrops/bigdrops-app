@@ -47,7 +47,7 @@ function SimpleMetricItemCard({ label, value, description, icon, tone = 'blue' }
         </div>
         <div className="text-right">
           <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-1.5">{label}</p>
-          <p className="text-xl lg:text-2xl font-black tracking-tight leading-none text-bd-text">{value}</p>
+          <p className="text-xl lg:text-2xl font-black tracking-tight leading-none tabular-nums text-bd-text">{value}</p>
         </div>
       </div>
       {description && (
@@ -68,7 +68,7 @@ function CompactMetricCard({ label, value, description, tone = 'blue', trend, su
       <p className="text-[10px] font-black uppercase tracking-widest text-bd-text-muted opacity-50">{label}</p>
       <div className="flex items-baseline gap-2">
         <p className={cn(
-          "text-lg font-black tracking-tight leading-none",
+          "text-lg font-black tracking-tight leading-none tabular-nums",
           tone === 'green' && "text-bd-status-success-text",
           tone === 'red' && "text-bd-status-danger-text",
           tone === 'amber' && "text-bd-status-warning-text",

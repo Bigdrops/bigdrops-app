@@ -46,7 +46,7 @@ export function MetricStrip({ metrics }: { metrics: Metric[] }) {
               <div className={`mb-2.5 flex h-8 w-8 items-center justify-center rounded-full shadow-sm ${tone.icon}`}>
                 {metric.icon}
               </div>
-              <div className={`text-xl font-black tracking-tight ${tone.value}`}>{metric.value}</div>
+              <div className={`text-xl font-black tracking-tight tabular-nums ${tone.value}`}>{metric.value}</div>
               <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">{metric.label}</p>
             </div>
           )

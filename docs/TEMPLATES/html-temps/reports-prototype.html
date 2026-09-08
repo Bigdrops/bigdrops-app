@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reports — Faithful Prototype</title>
+<style>
+:root{--bg:#f0f4f8;--surface:#fff;--muted:#e8eef5;--ink:#0f172a;--ink2:#334155;--ink3:#64748b;
+--line:#e2e8f0;--primary:#1e3a5f;--accent:#60a5fa;--danger:#dc2626;--danger-bg:#fef2f2;
+--warn:#b45309;--warn-bg:#fffbeb;--ok:#15803d;--ok-bg:#f0fdf4;--info:#1d4ed8;--info-bg:#eff6ff;
+--nav:rgba(255,255,255,.96);--shadow:0 12px 28px rgba(30,58,95,.10),0 2px 6px rgba(15,23,42,.05);
+--shadow-float:0 18px 40px rgba(30,58,95,.18),0 3px 9px rgba(15,23,42,.08);--r:18px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:110px;-webkit-font-smoothing:antialiased}
+.mono{font-family:"DM Mono",ui-monospace,Menlo,monospace}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;background:linear-gradient(180deg,var(--bg) 78%,transparent)}
+.brand small{display:block;font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--ink3);text-transform:uppercase}
+.brand strong{font-size:14px}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:17px;cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px;display:grid;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.hero{padding:24px;position:relative;overflow:hidden}
+.hero h1{font-size:24px;letter-spacing:-.02em;margin-top:10px}
+.hero p{font-size:13px;color:var(--ink2);margin-top:6px;max-width:60ch}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;border:1px solid #bfdbfe;background:var(--info-bg);color:var(--info);border-radius:999px;padding:5px 12px}
+.hero .btnrow{margin-top:14px}
+.btn{min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn:active{transform:scale(.965)}
+.navscroll{padding:6px;overflow-x:auto}
+.navrow{display:flex;gap:6px;min-width:max-content}
+.navrow button{display:flex;gap:10px;align-items:center;min-height:56px;border:0;background:none;border-radius:12px;padding:8px 16px 8px 8px;cursor:pointer;text-align:left;white-space:nowrap}
+.navrow button[aria-current="page"]{background:rgba(30,58,95,.06)}
+.navrow .ic{width:32px;height:32px;border-radius:10px;background:var(--muted);display:grid;place-items:center;font-size:15px;flex:0 0 auto}
+.navrow b{font-size:12px;display:block}.navrow small{font-size:10px;color:var(--ink3)}
+.fbar{padding:14px;display:grid;gap:12px}
+.searchrow{display:flex;gap:8px;flex-wrap:wrap}
+.search{flex:1;min-width:180px;min-height:44px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font-size:14px;font-family:inherit}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chips button{flex:0 0 auto;min-height:40px;border-radius:999px;border:1px solid var(--line);background:var(--muted);padding:0 14px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--ink3)}
+.chips button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+select.in,input.in{min-height:44px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;font-family:inherit;background:#fff}
+.mstrip{display:grid;grid-auto-flow:column;grid-auto-columns:170px;gap:10px;overflow-x:auto;padding:2px}
+.metric{padding:14px}.metric .v{font-size:20px;font-weight:800}.metric small{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.panel{padding:0;overflow:hidden}
+.panel>header{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--muted)}
+.panel>header h3{font-size:14px}.panel>header p{font-size:12px;color:var(--ink2)}
+.prow{padding:14px 16px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+.prow:last-child{border-bottom:0}
+.prow .l1{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.prow .t{font-size:14px;font-weight:800}.prow .t a{color:inherit}
+.prow .s{font-size:12px;color:var(--ink2)}
+.badge{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:4px 10px;border:1px solid var(--line);white-space:nowrap}
+.badge.red{background:var(--danger-bg);color:var(--danger);border-color:#fecaca}
+.badge.green{background:var(--ok-bg);color:var(--ok);border-color:#bbf7d0}
+.badge.amber{background:var(--warn-bg);color:var(--warn);border-color:#fde68a}
+.badge.blue{background:var(--info-bg);color:var(--info);border-color:#bfdbfe}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;font-size:12px}
+.kv small{display:block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.kv .big{font-size:17px;font-weight:800}
+.empty{margin:14px;border:1px solid var(--line);border-radius:14px;padding:36px 16px;text-align:center;background:var(--surface)}
+.empty b{font-size:14px}.empty p{font-size:12px;color:var(--ink2);margin-top:6px}
+.err{margin:14px 14px 0;display:flex;gap:10px;align-items:center;border:1px solid #fecaca;background:var(--danger-bg);color:var(--danger);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700}
+.skel{padding:14px;display:grid;gap:10px}
+.skel div{height:64px;border-radius:12px;background:linear-gradient(90deg,var(--muted) 25%,#f4f7fb 50%,var(--muted) 75%);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+table.risk{width:100%;border-collapse:collapse;font-size:13px}
+table.risk th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);text-align:left;padding:10px 14px;background:var(--muted)}
+table.risk td{padding:12px 14px;border-top:1px solid var(--line)}
+.cards-mobile{display:grid;gap:10px;padding:14px}
+.cta{margin:0 14px 14px;border:1px solid #bfdbfe;background:var(--info-bg);border-radius:14px;padding:18px;display:grid;gap:10px}
+.cta b{font-size:16px}.cta p{font-size:13px;color:var(--ink2);max-width:52ch}
+.bar{height:8px;border-radius:99px;background:var(--muted);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--danger);border-radius:99px}
+.bottomnav{position:fixed;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));z-index:30;display:grid;grid-template-columns:repeat(5,1fr);background:var(--nav);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-float);padding:4px}
+.bottomnav button{border:0;background:none;min-height:56px;border-radius:15px;font-size:10px;font-weight:800;color:var(--ink3);cursor:pointer}
+.bottomnav button[aria-current="page"]{background:var(--primary);color:#fff}
+.sidebar{display:none}
+.toast{position:fixed;left:16px;right:16px;bottom:90px;z-index:60;display:grid;gap:8px}
+.toast div{background:var(--ink);color:#fff;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:700}
+@media(min-width:840px){.kv{grid-template-columns:repeat(5,1fr)}.mstrip{grid-auto-flow:row;grid-auto-columns:unset;grid-template-columns:repeat(4,1fr);overflow:visible}}
+@media(min-width:1200px){body{padding-bottom:24px;padding-left:232px}.bottomnav{display:none}.sidebar{display:flex;flex-direction:column;gap:4px;position:fixed;left:0;top:0;bottom:0;width:232px;background:var(--surface);border-right:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 12px;z-index:30}.sidebar button{min-height:44px;border:0;background:none;border-radius:12px;text-align:left;font-size:13px;font-weight:700;color:var(--ink2);padding:10px 12px;cursor:pointer}.sidebar button[aria-current="page"]{background:var(--muted);color:var(--ink)}}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<nav class="sidebar" aria-label="Primary"><div class="brand" style="padding:4px 8px 12px"><small>Bigdrops</small><strong>Acme Ltd</strong></div><button>Dashboard</button><button>Projects</button><button>Clients</button><button aria-current="page">Reports</button><button onclick="location.href='compliance-hub-prototype.html'">Compliance Hub</button><button>Settings</button></nav>
+<div class="topbar"><div class="brand"><small>Acme Ltd · Workspace</small><strong>Reports</strong></div><div style="display:flex;gap:8px"><button class="iconbtn" aria-label="Search">⌕</button><button class="iconbtn" aria-label="Notifications">🔔</button></div></div>
+<div class="wrap">
+<section class="card hero"><span class="eyebrow">✨ Reports Overview</span> <span style="font-size:10px;color:var(--ink3)">FINANCE REPORTS</span>
+<h1 id="heroTitle">Financial Overview</h1><p id="heroDesc">High-level perspective of your receivables, collections, and tax liability.</p>
+<div class="btnrow"><button class="btn" onclick="toast('Export spec pending — no export runs yet')">⤓ Export Report</button></div></section>
+<nav class="card navscroll" aria-label="Report tabs"><div class="navrow" id="tabs"></div></nav>
+<section class="card fbar" id="fbar" aria-label="Report filters">
+<div class="searchrow"><input class="search" id="q" placeholder="Search report data..." oninput="state.q=this.value;renderBody()"><select class="in" id="client" onchange="state.client=this.value;renderBody()"></select></div>
+<div class="chips" id="dates"></div>
+<div id="custom" hidden style="display:flex;gap:8px;flex-wrap:wrap"><label style="font-size:11px">Start <input class="in" type="date" value="2026-08-01"></label><label style="font-size:11px">End <input class="in" type="date" value="2026-09-08"></label></div>
+</section>
+<main id="body"></main>
+<p style="font-size:12px;color:var(--ink2)">Faithful prototype — all 5 tabs, per-tab filters, metric strips, rows, loading / empty / error states, and the Tax → Compliance Hub link. Sample data, no backend.</p>
+</div>
+<nav class="bottomnav" aria-label="Primary"><button>Home</button><button>Projects</button><button>Sales</button><button>Clients</button><button aria-current="page">More</button></nav>
+<div class="toast" id="toast"></div>
+<script>
+const N=n=>'₦'+Number(n||0).toLocaleString('en-NG');
+const TABS=[['overview','Overview','Finance Summary','📊'],['receivables','Receivables','Unpaid & Aging','🧾'],['collections','Collections','Payment History','👛'],['projects','Projects','P&L by Project','💼'],['tax','Tax Positions','VAT & WHT','📑']];
+const META={overview:['Financial Overview','High-level perspective of your receivables, collections, and tax liability.'],receivables:['Account Receivables','Detailed analysis of outstanding invoices, client debt, and aging buckets.'],collections:['Collections Registry','Comprehensive log of all payments received across all projects.'],projects:['Project Performance','Profitability analysis and financial health tracking per project.'],tax:['Tax Positions','Calculated VAT and Withholding Tax positions for compliance tracking.']};
+const DATES=[['this_month','This Month'],['last_month','Last Month'],['this_quarter','This Quarter'],['custom','Custom']];
+const state={tab:'overview',q:'',client:'all',date:'this_month',status:'all',loading:true};
+const REC=[
+ {inv:'INV-0045',client:'Lagos Steel Works',total:1290000,rec:90000,due:1200000,dd:'Aug 15',aging:'61+',st:'past_due',lbl:'Past Due'},
+ {inv:'INV-0041',client:'BUA Group',total:3200000,rec:2560000,due:640000,dd:'Sep 12',aging:'Current',st:'unpaid',lbl:'Unpaid'},
+ {inv:'INV-0039',client:'BUA Group',total:4100000,rec:4100000,due:0,dd:'Aug 30',aging:'Current',st:'paid',lbl:'Paid'}];
+const COL=[
+ {d:'Sep 5',inv:'INV-0039',client:'BUA Group',cash:3790000,wht:310000,acc:'GTBank ····4412',m:'Transfer',ref:'TRF-9912'},
+ {d:'Sep 2',inv:'INV-0045',client:'Lagos Steel Works',cash:1080000,wht:120000,acc:'Access ····7710',m:'Transfer',ref:'TRF-9870'}];
+const PROJ=[
+ {p:'Lekki Depot Build',client:'Lagos Steel Works',inv:12900000,coll:8100000,out:4800000,st:'active'},
+ {p:'Ikeja Fit-out',client:'BUA Group',inv:7300000,coll:7300000,out:0,st:'done'}];
+function toast(m){const t=document.getElementById('toast'),d=document.createElement('div');d.textContent=m;t.appendChild(d);setTimeout(()=>d.remove(),2600);}
+function clients(){const s=new Set([...REC.map(r=>r.client),...COL.map(r=>r.client),...PROJ.map(r=>r.client)]);return['all',...s];}
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(([k,l,d,ic])=>`<button onclick="go('${k}')" ${k===state.tab?'aria-current="page"':''}><span class="ic">${ic}</span><span><b>${l}</b><small>${d}</small></span></button>`).join('');
+ document.getElementById('heroTitle').textContent=META[state.tab][0];document.getElementById('heroDesc').textContent=META[state.tab][1];}
+function renderFilters(){document.getElementById('dates').innerHTML=DATES.map(([k,l])=>`<button onclick="setDate('${k}')" aria-pressed="${state.date===k}">${l}</button>`).join('');
+ document.getElementById('custom').hidden=state.date!=='custom';
+ const cs=document.getElementById('client'),keep=state.client;cs.innerHTML=clients().map(c=>`<option value="${c}">${c==='all'?'All Clients':c}</option>`).join('');cs.value=clients().includes(keep)?keep:'all';state.client=cs.value;
+ if(state.tab==='receivables'&&!document.getElementById('st')){const s=document.createElement('select');s.className='in';s.id='st';s.innerHTML='<option value="all">Status: All</option><option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="past_due">Past Due</option>';s.onchange=()=>{state.status=s.value;renderBody();};document.getElementById('fbar').appendChild(s);} 
+ if(state.tab!=='receivables'){const s=document.getElementById('st');if(s)s.remove();}
+ if(state.tab==='receivables'&&document.getElementById('st'))document.getElementById('st').value=state.status;}
+function setDate(k){state.date=k;renderFilters();renderBody();}
+function go(k){state.tab=k;state.loading=true;renderTabs();renderFilters();renderBody();setTimeout(()=>{state.loading=false;renderBody();},450);}
+function match(r){const q=state.q.trim().toLowerCase();if(state.client!=='all'&&r.client!==state.client)return false;if(q&&!(r.inv||'').toLowerCase().includes(q)&&!(r.client||'').toLowerCase().includes(q)&&!((r.p||'')+'').toLowerCase().includes(q))return false;return true;}
+function mstrip(items){return `<div class="mstrip">${items.map(m=>`<div class="card metric"><small>${m[0]}</small><div class="v mono">${m[1]}</div></div>`).join('')}</div>`;}
+function empty(t,d,tone){return `<div class="empty"><b>${t}</b><p>${d}</p></div>`;}
+function renderBody(){const b=document.getElementById('body');
+ if(state.loading){b.innerHTML=`<div class="card skel"><div></div><div></div><div></div><div></div></div>`;return;}
+ if(state.q.trim().toLowerCase()==='error'){b.innerHTML=`<div class="card panel"><div class="err">⚠ Failed to load report slice (demo error state).</div><div style="padding:14px"><button class="btn" onclick="state.q='';document.getElementById('q').value='';renderBody()">Clear search</button></div></div>`;return;}
+ if(state.tab==='overview'){const open=REC.filter(r=>r.due>0);
+  b.innerHTML=`
+  <section class="card panel"><header><h3>Total Exposure · <span class="mono">${N(open.reduce((s,r)=>s+r.due,0))}</span></h3><p>${open.length} open invoices · Past due ${N(1200000)} (65% of exposure) · Collected ${N(4870000)}</p></header>
+  <div class="cards-mobile">${mstrip([['Open Invoices','2'],['Past Due Invoices','1'],['Projects Carrying Balance','1'],['Payments Logged','2']])}</div>
+  <header style="border-top:1px solid var(--line)"><h3>High-Risk Receivables · 1 flagged</h3><p>Sorted by overdue severity and balance due.</p></header>
+  <div style="overflow-x:auto"><table class="risk"><thead><tr><th>Client</th><th>Invoice</th><th>Aging</th><th>Due</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+  <tr><td><b>Lagos Steel Works</b><br><small style="color:var(--ink3)">Past Due</small></td><td>INV-0045</td><td><span class="badge red">61+</span></td><td>Aug 15</td><td style="text-align:right"><b class="mono">${N(1200000)}</b></td></tr></tbody></table></div>
+  <header style="border-top:1px solid var(--line)"><h3>Aging Buckets</h3></header><div class="cards-mobile">
+  ${[['Current','₦640,000','1 invoice',12],['1-30 Days','₦0','0 invoices',0],['31-60 Days','₦0','0 invoices',0],['61+ Days','₦1,200,000','1 invoice',65]].map(x=>`<div><b>${x[0]}</b> <span class="mono" style="float:right">${x[1]}</span><br><small style="color:var(--ink3)">${x[2]} · ${x[3]}%</small><div class="bar"><i style="width:${Math.max(x[3],x[3]>0?6:0)}%"></i></div></div>`).join('')}</div></section>`;return;}
+ if(state.tab==='receivables'){let f=REC.filter(match);if(state.status==='unpaid')f=f.filter(r=>r.due>0&&r.st!=='past_due');if(state.status==='paid')f=f.filter(r=>r.st==='paid');if(state.status==='past_due')f=f.filter(r=>r.st==='past_due');
+  b.innerHTML=mstrip([['Outstanding',N(f.reduce((s,r)=>s+(r.due>0?r.due:0),0))],['Past Due',N(1200000)],['Collected',N(f.reduce((s,r)=>s+r.rec,0))],['Open Invoices',String(f.length)]])
+  +(f.length?`<section class="card panel" style="margin-top:12px"><header><h3>Outstanding Invoices</h3></header>${f.map(r=>`<div class="prow"><div class="l1"><div class="t"><a href="#" onclick="return false">${r.inv}</a><div class="s">${r.client}</div></div><span class="badge ${r.st==='past_due'?'red':r.st==='paid'?'green':'amber'}">${r.lbl}</span></div><div class="kv"><div><small>Total</small><b class="mono">${N(r.total)}</b></div><div><small>Received</small><b class="mono" style="color:var(--ok)">${N(r.rec)}</b></div><div><small>Balance Due</small><b class="mono" style="color:var(--danger)">${N(r.due)}</b></div><div><small>Due Date</small><b>${r.dd}</b></div><div><small>Aging</small><span class="badge ${r.aging==='Current'?'blue':'red'}">${r.aging}</span></div></div></div>`).join('')}</section>`:empty('No receivables found','Try another date range, status, client, or search term.'));return;}
+ if(state.tab==='collections'){const f=COL.filter(match);
+  b.innerHTML=mstrip([['Total Cash',N(f.reduce((s,r)=>s+r.cash,0))],['Settlements',N(f.reduce((s,r)=>s+r.cash+r.wht,0))],['Transactions',String(f.length)],['Pending',String(f.length)]])
+  +(f.length?`<section class="card panel" style="margin-top:12px"><header><h3>Payments Received</h3></header>${f.map(r=>`<div class="prow"><div class="kv" style="grid-template-columns:repeat(2,1fr)"><div><small>Date</small><b>${r.d}</b></div><div><small>Invoice #</small><b><a href="#" onclick="return false">${r.inv}</a></b></div><div><small>Client</small><b>${r.client}</b></div><div><small>Amount</small><b class="mono" style="color:var(--ok);font-size:17px">${N(r.cash)}</b></div><div><small>Settlement</small><b class="mono">${N(r.cash+r.wht)}</b></div><div><small>Account</small><b>🏛 ${r.acc}</b></div></div><div class="s">Method: <b>${r.m}</b> · Reference: <b>${r.ref}</b> <span class="badge green">PAID</span></div></div>`).join('')}</section>`:empty('No collections found','Try another date range, client, or search term.'));return;}
+ if(state.tab==='projects'){const f=PROJ.filter(r=>match({client:r.client,p:r.p,inv:''}));
+  b.innerHTML=mstrip([['Total Invoiced',N(f.reduce((s,r)=>s+r.inv,0))],['Collected',N(f.reduce((s,r)=>s+r.coll,0))],['Outstanding',N(f.reduce((s,r)=>s+r.out,0))],['Projects',String(f.length)]])
+  +(f.length?`<section class="card panel" style="margin-top:12px"><header><h3>Project Financial Summaries</h3></header>${f.map(r=>`<div class="prow"><div class="l1"><div class="t">${r.p}<div class="s">${r.client}</div></div><span class="badge ${r.out>0?'amber':'green'}">${r.out>0?'Active':'Done'}</span></div><div class="kv"><div><small>Invoiced</small><b class="mono">${N(r.inv)}</b></div><div><small>Collected</small><b class="mono" style="color:var(--ok)">${N(r.coll)}</b></div><div><small>Outstanding</small><b class="mono" style="color:var(--danger)">${N(r.out)}</b></div></div></div>`).join('')}</section>`:empty('No projects found','Try another client filter or search term.'));return;}
+ if(state.tab==='tax'){b.innerHTML=mstrip([['VAT Charged','₦2,940,000'],['Expected WHT Exposure','₦845,000'],['Actual WHT Deducted','₦405,000'],['VAT Less Actual WHT','₦2,535,000']])
+  +`<section class="card panel" style="margin-top:12px"><header><h3>VAT Summary · ${N(2940000)}</h3><p>Total VAT charged on active invoices for this period.</p></header>
+  <div class="cards-mobile"><div><b>Expected WHT Exposure</b> <span class="mono" style="float:right">₦845,000</span><br><small style="color:var(--ink3)">Invoice-level WHT expected in this period.</small></div>
+  <div><b>Actual WHT Deducted</b> <span class="mono" style="float:right">₦405,000</span><br><small style="color:var(--ink3)">Payment-level WHT actually deducted.</small></div></div>
+  <div class="cta"><span class="eyebrow">Compliance Operations</span><b>Operational Compliance Hub</b><p>Detailed VAT input tracking, WHT receipts workspace, and tax filing management live in the Compliance Hub module.</p><div><a class="btn primary" style="text-decoration:none" href="compliance-hub-prototype.html">Open Compliance Hub →</a></div></div>
+  <div class="err" style="border-color:var(--line);background:var(--surface);color:var(--ink2)">ℹ️ VAT less actual WHT for this period is <b class="mono">₦2,535,000</b></div><div style="height:14px"></div></section>`;return;}
+}
+renderTabs();renderFilters();renderBody();setTimeout(()=>{state.loading=false;renderBody();},450);
+</script>
+</body>
+</html>
