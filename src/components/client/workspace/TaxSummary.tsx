@@ -1,5 +1,7 @@
 import React from 'react'
+import { ChevronDown } from 'lucide-react'
 import { formatCurrency } from '@/domain/clientWorkspace'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 
 export interface ClientTaxSummary {
   vatPaid: number
@@ -14,29 +16,42 @@ interface Props {
 }
 
 export const TaxSummary: React.FC<Props> = ({ data }) => {
+  const [open, setOpen] = React.useState(false)
+
   return (
-    <section aria-label="Tax summary" className="rounded-2xl border border-bd-border bg-bd-surface p-5 shadow-sm">
-      <h2 className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">
-        Tax summary
-      </h2>
-      {data ? (
-        <dl className="mt-3 space-y-2.5">
-          <TaxRow label="VAT on paid invoices" value={formatCurrency(data.vatPaid)} />
-          <TaxRow label="VAT on unpaid invoices" value={formatCurrency(data.vatUnpaid)} />
-          <TaxRow
-            label="Total VAT"
-            value={formatCurrency(data.vatPaid + data.vatUnpaid)}
-            strong
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <section aria-label="Tax summary" className="rounded-2xl border border-bd-border bg-bd-surface shadow-sm">
+        <CollapsibleTrigger className="flex w-full items-center justify-between p-5 text-left">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">
+            Tax summary
+          </h2>
+          <ChevronDown
+            className={`size-4 shrink-0 text-bd-text-muted transition-transform ${open ? 'rotate-180' : ''}`}
           />
-          <TaxRow label="WHT" value={formatCurrency(data.whtOutstanding)} />
-        </dl>
-      ) : (
-        <p className="mt-3 text-xs font-semibold leading-relaxed text-muted-foreground">
-          Tax figures need invoice tax fields that are not part of the
-          current client data load.
-        </p>
-      )}
-    </section>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-5 pb-5">
+            {data ? (
+              <dl className="space-y-2.5">
+                <TaxRow label="VAT on paid invoices" value={formatCurrency(data.vatPaid)} />
+                <TaxRow label="VAT on unpaid invoices" value={formatCurrency(data.vatUnpaid)} />
+                <TaxRow
+                  label="Total VAT"
+                  value={formatCurrency(data.vatPaid + data.vatUnpaid)}
+                  strong
+                />
+                <TaxRow label="WHT" value={formatCurrency(data.whtOutstanding)} />
+              </dl>
+            ) : (
+              <p className="text-xs font-semibold leading-relaxed text-muted-foreground">
+                Tax figures need invoice tax fields that are not part of the
+                current client data load.
+              </p>
+            )}
+          </div>
+        </CollapsibleContent>
+      </section>
+    </Collapsible>
   )
 }
 

@@ -50,15 +50,15 @@ export const MoneyPositionStrip: React.FC<Props> = ({ total, collected, outstand
       {typeof quotationCount === 'number' && (
         <div className="mt-4 border-t border-bd-border/60 pt-3">
           <span className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">
-            Commercial performance
+            Quotations
           </span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xs font-black tabular-nums text-foreground">
-              {quotationCount} {quotationCount === 1 ? 'Shot' : 'Shots'}
+              {quotationCount}
             </span>
             {quotationCount > 0 && (
               <span className="text-[10px] font-bold text-bd-text-muted">
-                {convertedCount} On Target · {quotationCount - convertedCount} Off Target
+                {quotationCount - convertedCount} Open · {convertedCount} Converted
               </span>
             )}
           </div>
