@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Detail — Material 3 Top Bar &amp; KPI</title>
+<style>
+  :root{
+    --bg: #F3ECE4;
+    --surface: #FFFBF7;
+    --surface-container: #F7F0E8;
+    --surface-container-high: #EFE6DA;
+    --outline-variant: #E3D8CB;
+    --ink: #1F1B16;
+    --ink-soft: #52483C;
+
+    --primary: #6B3A1E;
+    --on-primary: #FFFFFF;
+    --primary-container: #F4E1CE;
+    --on-primary-container: #2B1608;
+
+    --secondary: #7A6A58;
+    --secondary-container: #ECE2D3;
+    --on-secondary-container: #291F10;
+
+    --tertiary: #8A6432;
+    --tertiary-container: #F6E8CE;
+    --on-tertiary-container: #2E2000;
+
+    --error: #BA1A1A;
+    --error-container: #FFDAD6;
+    --on-error-container: #410002;
+
+    --success: #1E6E3E;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background:#DCD3C6;
+    font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:32px 12px;
+  }
+  .phone{
+    width:412px;
+    max-width:100%;
+    background:var(--bg);
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,.25);
+  }
+  .status-bar{ height:26px; background:var(--surface); }
+
+  /* ---------- M3 LARGE TOP APP BAR ---------- */
+  /* Two rows: compact icon row, then an expanded title row that can wrap
+     to any number of lines. This is the standard M3 pattern for titles
+     that don't reliably fit one line — the title is never fighting the
+     action icons for horizontal space. */
+  .appbar{ background:var(--surface); }
+  .appbar-row1{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 8px 0 4px;
+  }
+  .icon-btn{
+    width:40px; height:40px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+  }
+  .icon-btn svg{ width:20px; height:20px; stroke:var(--ink); stroke-width:2; }
+  .row1-actions{ display:flex; gap:2px; }
+  .icon-btn.tonal{ background: var(--surface-container-high); }
+  .icon-btn.tonal svg{ stroke: var(--on-secondary-container); }
+
+  .appbar-row2{
+    padding:14px 20px 18px;
+  }
+  .client-name{
+    margin:0;
+    font-size:26px;
+    line-height:1.22;
+    font-weight:600;
+    color:var(--ink);
+    letter-spacing:0;
+    word-break: break-word;
+  }
+  .name-alias{
+    display:block;
+    font-size:14px;
+    line-height:1.4;
+    font-weight:400;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .status-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:12px;
+    padding:6px 12px 6px 10px;
+    border-radius:8px;
+    background: var(--error-container);
+    color: var(--on-error-container);
+    font-size:13px;
+    font-weight:500;
+  }
+  .status-chip .dot{ width:7px; height:7px; border-radius:50%; background:var(--error); }
+  .status-chip.clear{ background: #D9ECD9; color:#0E3B1E; }
+  .status-chip.clear .dot{ background: var(--success); }
+
+  /* ---------- CONTENT ---------- */
+  .content{ padding:14px 14px 28px; display:flex; flex-direction:column; gap:12px; }
+
+  .m3-card{
+    border-radius:20px;
+    padding:18px 18px 16px;
+  }
+  .card-title{
+    font-size:16px;
+    font-weight:600;
+    margin:0 0 14px;
+  }
+
+  /* Money position — primary-container */
+  .card-money{ background: var(--primary-container); color: var(--on-primary-container); }
+  .hero-figure{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .hero-amount{
+    font-size:34px;
+    font-weight:700;
+    color: var(--error);
+    font-variant-numeric: tabular-nums;
+    letter-spacing:-0.5px;
+  }
+  .hero-label{ font-size:15px; color: var(--on-primary-container); opacity:.75; }
+
+  .subrow{
+    display:flex;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid rgba(43,22,8,0.12);
+  }
+  .subrow > div{ flex:1; }
+  .sub-label{ font-size:13px; color: var(--on-primary-container); opacity:.7; margin-bottom:4px; }
+  .sub-amount{ font-size:19px; font-weight:700; font-variant-numeric: tabular-nums; }
+  .sub-amount.success{ color: var(--success); }
+
+  /* Quotations — tertiary-container */
+  .card-quotes{ background: var(--tertiary-container); color: var(--on-tertiary-container); }
+  .pipeline-stats{ display:flex; align-items:stretch; }
+  .pstat{ flex:1; }
+  .pdivider{ width:1px; background: rgba(46,32,0,0.15); margin:2px 16px; }
+  .plabel{ font-size:13px; opacity:.72; margin-bottom:4px; }
+  .pamount{ font-size:19px; font-weight:700; font-variant-numeric: tabular-nums; }
+  .pamount .punit{ font-size:12.5px; font-weight:400; opacity:.7; }
+  .pamount.success-tone{ color: var(--success); }
+  .psub{ font-size:13px; font-weight:600; margin-top:2px; font-variant-numeric: tabular-nums; opacity:.85; }
+  .pipeline-note{
+    font-size:12px; opacity:.68;
+    margin-top:14px; padding-top:12px;
+    border-top:1px solid rgba(46,32,0,0.15);
+  }
+
+  /* Tax summary — secondary-container, M3 list style */
+  .card-tax{ background: var(--secondary-container); color: var(--on-secondary-container); }
+  .tax-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 0;
+    border-top:1px solid rgba(41,31,16,0.12);
+    font-size:14.5px;
+  }
+  .tax-row:first-of-type{ border-top:none; }
+  .tax-row .val{ font-weight:600; font-variant-numeric: tabular-nums; }
+  .tax-row.total{ font-weight:700; }
+  .tax-row.total .val{ font-size:16px; }
+
+  /* Needs attention — error-container, unchanged role */
+  .card-attention{ background: var(--error-container); color: var(--on-error-container); }
+  .card-attention .card-title{ color: var(--error); }
+  .attention-item{
+    background: var(--surface);
+    border-radius:14px;
+    padding:14px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .attention-item .inv{ color:var(--error); font-weight:700; font-size:16px; }
+  .attention-item .meta{ font-size:13px; color:var(--ink-soft); margin-top:3px; }
+  .view-link{ color:var(--error); font-weight:700; font-size:13px; }
+
+  .annotate{
+    margin-top:6px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    padding:0 2px;
+  }
+  .annotate b{ color:var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="status-bar"></div>
+
+  <div class="appbar">
+    <div class="appbar-row1">
+      <div class="icon-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="row1-actions">
+        <div class="icon-btn tonal" title="Export statement">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v10a2 2 0 002 2h5"/><path d="M9 15l-3-3 3-3"/><path d="M14 4h6v6"/><path d="M20 4l-9 9"/></svg>
+        </div>
+        <div class="icon-btn tonal" title="Edit client">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-5"/><path d="M18 2l4 4-11 11H7v-4z"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="appbar-row2">
+      <p class="client-name">11 PLC<span class="name-alias">formerly Mobil Oil Nigeria Plc</span></p>
+      <div class="status-chip"><span class="dot"></span>1 overdue</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="m3-card card-money">
+      <p class="card-title">Money position</p>
+      <div class="hero-figure">
+        <span class="hero-amount">₦75,053,006</span>
+        <span class="hero-label">outstanding</span>
+      </div>
+      <div class="subrow">
+        <div>
+          <div class="sub-label">Invoiced</div>
+          <div class="sub-amount">₦94,454,626</div>
+        </div>
+        <div>
+          <div class="sub-label">Collected</div>
+          <div class="sub-amount success">₦19,401,621</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="m3-card card-quotes">
+      <p class="card-title">Quotations</p>
+      <div class="pipeline-stats">
+        <div class="pstat">
+          <div class="plabel">Total open</div>
+          <div class="pamount">124 <span class="punit">quotes</span></div>
+          <div class="psub">₦18,230,400</div>
+        </div>
+        <div class="pdivider"></div>
+        <div class="pstat">
+          <div class="plabel">Converted</div>
+          <div class="pamount success-tone">1 <span class="punit">quote</span></div>
+          <div class="psub">₦3,160,500 · 1% of open value</div>
+        </div>
+      </div>
+      <div class="pipeline-note">Open quotes are not yet invoiced — excluded from outstanding above</div>
+    </div>
+
+    <div class="m3-card card-tax">
+      <p class="card-title">Tax summary</p>
+      <div class="tax-row"><span>VAT on paid invoices</span><span class="val">₦708,651</span></div>
+      <div class="tax-row"><span>VAT on unpaid invoices</span><span class="val">₦1,528,978</span></div>
+      <div class="tax-row total"><span>Total VAT</span><span class="val">₦2,237,629</span></div>
+      <div class="tax-row"><span>WHT</span><span class="val">₦557,889</span></div>
+    </div>
+
+    <div class="m3-card card-attention">
+      <p class="card-title">Needs attention · 1</p>
+      <div class="attention-item">
+        <div>
+          <div class="inv">SASINV049</div>
+          <div class="meta">Past due · ₦935,250</div>
+        </div>
+        <div class="view-link">VIEW</div>
+      </div>
+    </div>
+
+    <div class="annotate">
+      <b>Why this structure:</b> a Material 3 Large Top App Bar puts the title in its own full-width row below the icon row, so it wraps freely instead of competing with action icons for space — the standard M3 fix for long titles, not a custom workaround. Each KPI group gets its own tonal-container card (primary for revenue, tertiary for quotations, secondary for tax, error for alerts) so they're distinguishable by color at a glance without needing extra icons or borders. Section titles are sentence case rather than tracked-out caps, per M3 type guidance. Tax summary is back as its own card.
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
