@@ -174,6 +174,41 @@ export const DOC_ICONS = {
   project: FolderKanban,
 }
 
+// ── Segmented filter control ──────────────────────────────────────────
+
+export function SegmentedControl({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: string[]
+  value: string
+  onChange: (value: string) => void
+  label: string
+}) {
+  return (
+    <div role="tablist" aria-label={label} className="flex gap-0.5 rounded-[var(--bd-radius-md)] bg-bd-surface-muted p-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          role="tab"
+          aria-selected={value === opt}
+          onClick={() => onChange(opt)}
+          className={`flex-1 rounded-[calc(var(--bd-radius-md)-2px)] px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] transition-colors ${
+            value === opt
+              ? 'bg-bd-card-bg text-foreground shadow-sm'
+              : 'text-bd-text-muted hover:text-foreground'
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function ShowAllButton({ label, onToggle }: { label: string; onToggle: () => void }) {
   return (
     <button
@@ -227,10 +262,16 @@ function ListFooter({
   return <ShowAllButton label="Show less" onToggle={onToggle} />
 }
 
-export function InvoiceList({ invoices }: { invoices: InvoiceRecord[] }) {
+export function InvoiceList({ invoices, filter = 'All' }: { invoices: InvoiceRecord[]; filter?: string }) {
   const [expanded, setExpanded] = React.useState(false)
-  const visible = usePreview(invoices, expanded)
-  if (invoices.length === 0) return <EmptyRow label="No invoices yet" />
+  const filtered = React.useMemo(() => {
+    if (filter === 'All') return invoices
+    if (filter === 'Paid') return invoices.filter((inv) => Number(inv.balance_due || 0) <= 0)
+    if (filter === 'Unpaid') return invoices.filter((inv) => Number(inv.balance_due || 0) > 0)
+    return invoices
+  }, [invoices, filter])
+  const visible = usePreview(filtered, expanded)
+  if (filtered.length === 0) return <EmptyRow label={filter === 'All' ? 'No invoices yet' : `No ${filter.toLowerCase()} invoices`} />
   return (
     <div>
       {visible.map((inv) => (
@@ -247,8 +288,8 @@ export function InvoiceList({ invoices }: { invoices: InvoiceRecord[] }) {
       ))}
       <ListFooter
         visibleCount={visible.length}
-        loadedCount={invoices.length}
-        totalCount={invoices.length}
+        loadedCount={filtered.length}
+        totalCount={filtered.length}
         expanded={expanded}
         allLoaded
         loadingAll={false}
@@ -272,11 +313,18 @@ export function QuotationList({
   allLoaded,
   loadingAll,
   onLoadAll,
+  filter = 'All',
 }: {
   quotations: QuotationRecord[]
-} & LazyListProps) {
-  const { expanded, setExpanded, visible, empty } = useLazyList(quotations, totalCount, allLoaded)
-  if (empty) return <EmptyRow label="No quotations yet" />
+} & LazyListProps & { filter?: string }) {
+  const filtered = React.useMemo(() => {
+    if (filter === 'All') return quotations
+    if (filter === 'Converted') return quotations.filter((q) => String(q.status || '').toLowerCase() === 'converted')
+    if (filter === 'Open') return quotations.filter((q) => String(q.status || '').toLowerCase() !== 'converted')
+    return quotations
+  }, [quotations, filter])
+  const { expanded, setExpanded, visible, empty } = useLazyList(filtered, totalCount, allLoaded)
+  if (empty) return <EmptyRow label={filter === 'All' ? 'No quotations yet' : `No ${filter.toLowerCase()} quotations`} />
   return (
     <div>
       {visible.map((q) => (
@@ -293,7 +341,7 @@ export function QuotationList({
       ))}
       <ListFooter
         visibleCount={visible.length}
-        loadedCount={quotations.length}
+        loadedCount={filtered.length}
         totalCount={totalCount}
         expanded={expanded}
         allLoaded={allLoaded}

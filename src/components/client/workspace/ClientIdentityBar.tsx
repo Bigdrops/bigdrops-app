@@ -26,11 +26,11 @@ export const ClientIdentityBar: React.FC<Props> = ({ clientName, statusLine, onE
           <ArrowLeft className="size-4" />
         </Button>
         <div className="min-w-0 flex-1 px-1">
-          <h1 className="truncate text-[13px] font-bold text-foreground">
+          <h1 className="truncate text-[12px] font-bold leading-tight text-foreground">
             {clientName}
           </h1>
           {statusLine && (
-            <p className="truncate text-[11px] font-semibold text-muted-foreground">
+            <p className="truncate text-[10px] font-semibold leading-tight text-muted-foreground">
               {statusLine}
             </p>
           )}

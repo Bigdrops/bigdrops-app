@@ -6,9 +6,10 @@ interface Props {
   collected: number
   outstanding: number
   quotationCount: number | null
+  convertedCount: number
 }
 
-export const MoneyPositionStrip: React.FC<Props> = ({ total, collected, outstanding, quotationCount }) => {
+export const MoneyPositionStrip: React.FC<Props> = ({ total, collected, outstanding, quotationCount, convertedCount }) => {
   const settled = outstanding <= 0
 
   return (
@@ -47,13 +48,20 @@ export const MoneyPositionStrip: React.FC<Props> = ({ total, collected, outstand
         </div>
       </dl>
       {typeof quotationCount === 'number' && (
-        <div className="mt-4 flex items-baseline justify-between gap-2 border-t border-bd-border/60 pt-3">
+        <div className="mt-4 border-t border-bd-border/60 pt-3">
           <span className="text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">
-            Commercial stats
+            Commercial performance
           </span>
-          <span className="text-xs font-black tabular-nums text-foreground">
-            {quotationCount} {quotationCount === 1 ? 'Quotation' : 'Quotations'}
-          </span>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-xs font-black tabular-nums text-foreground">
+              {quotationCount} {quotationCount === 1 ? 'Shot' : 'Shots'}
+            </span>
+            {quotationCount > 0 && (
+              <span className="text-[10px] font-bold text-bd-text-muted">
+                {convertedCount} On Target · {quotationCount - convertedCount} Off Target
+              </span>
+            )}
+          </div>
         </div>
       )}
     </section>

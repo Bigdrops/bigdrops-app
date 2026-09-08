@@ -28,6 +28,7 @@ import {
   InvoiceList,
   ProjectList,
   QuotationList,
+  SegmentedControl,
   WaybillList,
 } from '@/components/client/workspace/GroupedHistory'
 import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates'
@@ -76,6 +77,9 @@ export default function ClientDetail() {
     csrs: 0,
     waybills: 0,
   })
+
+  const [invoiceFilter, setInvoiceFilter] = useState('All')
+  const [quotationFilter, setQuotationFilter] = useState('All')
 
   useEffect(() => {
     setClient(null)
@@ -394,6 +398,14 @@ export default function ClientDetail() {
     })
   }, [invoices])
 
+  const shots = useMemo(() => {
+    const total = loaded.quotations ? quotations.length : counts.quotations
+    const converted = loaded.quotations
+      ? quotations.filter((q) => String(q.status || '').toLowerCase() === 'converted').length
+      : 0
+    return { total, converted }
+  }, [quotations, loaded.quotations, counts.quotations])
+
   const statusLine = useMemo(() => {
     if (overdue.length > 0) return `${overdue.length} overdue`
     if (summary.outstanding > 0) return 'Has outstanding balance'
@@ -447,6 +459,7 @@ export default function ClientDetail() {
               collected={summary.collected}
               outstanding={summary.outstanding}
               quotationCount={loaded.quotations ? quotations.length : counts.quotations}
+              convertedCount={shots.converted}
             />
           </div>
           <div className="min-w-0 md:col-span-2">
@@ -467,7 +480,15 @@ export default function ClientDetail() {
             error=""
             onRetry={() => {}}
           >
-            <InvoiceList invoices={invoices} />
+            <div className="px-4 pt-3">
+              <SegmentedControl
+                options={['All', 'Paid', 'Unpaid']}
+                value={invoiceFilter}
+                onChange={setInvoiceFilter}
+                label="Invoice filter"
+              />
+            </div>
+            <InvoiceList invoices={invoices} filter={invoiceFilter} />
           </HistoryGroup>
 
           <HistoryGroup
@@ -478,12 +499,21 @@ export default function ClientDetail() {
             error={error.quotations}
             onRetry={() => void loadQuotations()}
           >
+            <div className="px-4 pt-3">
+              <SegmentedControl
+                options={['All', 'Open', 'Converted']}
+                value={quotationFilter}
+                onChange={setQuotationFilter}
+                label="Quotation filter"
+              />
+            </div>
             <QuotationList
               quotations={quotations}
               totalCount={loaded.quotations ? quotations.length : counts.quotations}
               allLoaded={loaded.quotations}
               loadingAll={loading.quotations}
               onLoadAll={() => void loadQuotations()}
+              filter={quotationFilter}
             />
           </HistoryGroup>
 

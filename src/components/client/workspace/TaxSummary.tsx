@@ -21,8 +21,8 @@ export const TaxSummary: React.FC<Props> = ({ data }) => {
       </h2>
       {data ? (
         <dl className="mt-3 space-y-2.5">
-          <TaxRow label="VAT paid" value={formatCurrency(data.vatPaid)} />
-          <TaxRow label="VAT unpaid" value={formatCurrency(data.vatUnpaid)} />
+          <TaxRow label="VAT on paid invoices" value={formatCurrency(data.vatPaid)} />
+          <TaxRow label="VAT on unpaid invoices" value={formatCurrency(data.vatUnpaid)} />
           <TaxRow
             label="Total VAT"
             value={formatCurrency(data.vatPaid + data.vatUnpaid)}
