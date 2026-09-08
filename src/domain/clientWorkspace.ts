@@ -34,6 +34,9 @@ export interface InvoiceRecord {
   balance_due?: number | null
   computed_status?: string | null
   cash_received?: number | null
+  wht_received?: number | null
+  vat?: number | null
+  wht?: number | null
   document_type?: string | null
 }
 

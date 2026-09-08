@@ -20,6 +20,7 @@ import { MoneyPositionStrip } from '@/components/client/workspace/MoneyPositionS
 import { NeedsAttentionGroup } from '@/components/client/workspace/NeedsAttentionGroup'
 import { ClientCreateFab } from '@/components/client/workspace/ClientCreateFab'
 import { ClientContactSection } from '@/components/client/workspace/ClientContactSection'
+import { TaxSummary } from '@/components/client/workspace/TaxSummary'
 import {
   CsrList,
   DOC_ICONS,
@@ -139,7 +140,7 @@ export default function ClientDetail() {
         tenantClient.from('clients').select('*').eq('id', id).single(),
         tenantClient
           .from('invoices')
-          .select('id, invoice_number, invoice_title, status, total, issue_date, due_date, document_type, custom_fields')
+          .select('id, invoice_number, invoice_title, status, total, issue_date, due_date, vat, wht, document_type, custom_fields')
           .eq('client_id', id)
           .is('archived_at', null)
           .order('issue_date', { ascending: false }),
@@ -202,7 +203,7 @@ export default function ClientDetail() {
       if (invoiceIds.length > 0) {
         const { data: financials } = await tenantClient
           .from('invoice_financials_v')
-          .select('id, balance_due, computed_status, cash_received')
+          .select('id, balance_due, computed_status, cash_received, wht_received')
           .in('id', invoiceIds)
 
         if (requestIds.current.overview !== requestId) return
@@ -360,6 +361,24 @@ export default function ClientDetail() {
     )
   }, [invoices])
 
+  const taxSummary = useMemo(() => {
+    let vatPaid = 0
+    let vatUnpaid = 0
+    let whtOutstanding = 0
+    for (const inv of invoices) {
+      const invoiceVat = Number(inv.vat || 0)
+      const invoiceWht = Number(inv.wht || 0)
+      const isPaid = Number(inv.balance_due || 0) <= 0
+      if (isPaid) {
+        vatPaid += invoiceVat
+      } else {
+        vatUnpaid += invoiceVat
+      }
+      whtOutstanding += Math.max(0, invoiceWht - Number(inv.wht_received || 0))
+    }
+    return { vatPaid, vatUnpaid, whtOutstanding }
+  }, [invoices])
+
   const overdue = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -420,13 +439,23 @@ export default function ClientDetail() {
         onEdit={() => navigate(`/clients/edit/${id}`)}
       />
 
-      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 px-4 py-4 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:py-6">
+      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 px-4 py-4 md:py-6">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="min-w-0 md:col-span-3">
+            <MoneyPositionStrip
+              total={summary.total}
+              collected={summary.collected}
+              outstanding={summary.outstanding}
+              quotationCount={loaded.quotations ? quotations.length : counts.quotations}
+            />
+          </div>
+          <div className="min-w-0 md:col-span-2">
+            <TaxSummary data={taxSummary} />
+          </div>
+        </div>
+
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6">
         <div className="min-w-0 space-y-4">
-          <MoneyPositionStrip
-            total={summary.total}
-            collected={summary.collected}
-            outstanding={summary.outstanding}
-          />
 
           <NeedsAttentionGroup overdue={overdue} />
 
@@ -512,6 +541,7 @@ export default function ClientDetail() {
 
         <div className="min-w-0 space-y-4 md:pt-0">
           <ClientContactSection client={client} />
+        </div>
         </div>
       </div>
 

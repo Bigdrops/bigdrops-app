@@ -1,13 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, EllipsisVertical, Pencil } from 'lucide-react'
+import { ArrowLeft, FileOutput, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 
 interface Props {
   clientName: string
@@ -20,7 +14,7 @@ export const ClientIdentityBar: React.FC<Props> = ({ clientName, statusLine, onE
 
   return (
     <div className="sticky top-0 z-20 border-b border-bd-border bg-bd-surface">
-      <div className="mx-auto flex min-h-[60px] w-full max-w-5xl items-center gap-1 px-2 py-2 md:px-4">
+      <div className="mx-auto flex min-h-[56px] w-full max-w-5xl items-center gap-1 px-2 py-1.5 md:px-4">
         <Button
           type="button"
           variant="ghost"
@@ -32,7 +26,7 @@ export const ClientIdentityBar: React.FC<Props> = ({ clientName, statusLine, onE
           <ArrowLeft className="size-4" />
         </Button>
         <div className="min-w-0 flex-1 px-1">
-          <h1 className="truncate text-[15px] font-black tracking-tight text-foreground">
+          <h1 className="truncate text-[13px] font-bold text-foreground">
             {clientName}
           </h1>
           {statusLine && (
@@ -41,25 +35,30 @@ export const ClientIdentityBar: React.FC<Props> = ({ clientName, statusLine, onE
             </p>
           )}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="min-h-[44px] min-w-[44px] shrink-0 rounded-full"
-              aria-label="Client options"
-            >
-              <EllipsisVertical className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[200px]">
-            <DropdownMenuItem onSelect={onEdit} className="min-h-[44px] gap-2 text-sm font-semibold">
-              <Pencil className="size-4" />
-              Edit client
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* UI-only until the statement report architecture is ready. No
+            workflow, navigation, query, or state change is attached. */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="min-h-[44px] min-w-[44px] shrink-0 rounded-full opacity-60"
+          aria-label="Export statement"
+          aria-disabled="true"
+          title="Export statement (coming soon)"
+          onClick={() => {}}
+        >
+          <FileOutput className="size-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="min-h-[44px] min-w-[44px] shrink-0 rounded-full"
+          onClick={onEdit}
+          aria-label="Edit client"
+        >
+          <Pencil className="size-4" />
+        </Button>
       </div>
     </div>
   )
