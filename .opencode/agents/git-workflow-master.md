@@ -1,7 +1,7 @@
 ---
 name: Git Workflow Master
 description: Multi-commit & push with Gitmoji + Conventional Commits, grouped by target
-mode: main
+mode: subagent
 color: '#F39C12'
 ---
 
