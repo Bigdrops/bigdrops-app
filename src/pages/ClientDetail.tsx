@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useEntity } from '@/lib/tenant/contexts'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { feedback } from '@/lib/feedback'
 
 // Domain & Utils
@@ -13,48 +12,36 @@ import {
   CsrRecord,
   WaybillRecord,
   ProjectRecord,
-  UnifiedActivityEvent,
-  mergeActivity,
 } from '@/domain/clientWorkspace'
 
 // Components
-import { ClientActionHeader } from '@/components/client/workspace/ClientActionHeader'
-import { ClientOverviewTab } from '@/components/client/workspace/ClientOverviewTab'
-import { ClientProjectsTab } from '@/components/client/workspace/ClientProjectsTab'
-import { ClientDocumentsTab } from '@/components/client/workspace/ClientDocumentsTab'
+import { ClientIdentityBar } from '@/components/client/workspace/ClientIdentityBar'
+import { MoneyPositionStrip } from '@/components/client/workspace/MoneyPositionStrip'
+import { NeedsAttentionGroup } from '@/components/client/workspace/NeedsAttentionGroup'
+import { ClientCreateFab } from '@/components/client/workspace/ClientCreateFab'
+import { ClientContactSection } from '@/components/client/workspace/ClientContactSection'
+import {
+  CsrList,
+  DOC_ICONS,
+  HistoryGroup,
+  InvoiceList,
+  ProjectList,
+  QuotationList,
+  WaybillList,
+} from '@/components/client/workspace/GroupedHistory'
 import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates'
-
-type ClientWorkspaceTab = 'overview' | 'projects' | 'invoices' | 'quotations' | 'csrs' | 'waybills'
-
-function padActivityCount(activity: UnifiedActivityEvent[], totalCount: number) {
-  if (activity.length >= totalCount) return activity
-
-  const placeholders = Array.from({ length: totalCount - activity.length }, (_, index) => ({
-    id: `activity-placeholder-${index}`,
-    type: 'invoice' as const,
-    number: null,
-    title: null,
-    date: '1900-01-01T00:00:00.000Z',
-    status: null,
-    total: null,
-  }))
-
-  return [...activity, ...placeholders]
-}
 
 export default function ClientDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { tenantClient } = useEntity()
-  const [tab, setTab] = useState<ClientWorkspaceTab>('overview')
-
   const [client, setClient] = useState<ClientRecord | null>(null)
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([])
   const [quotations, setQuotations] = useState<QuotationRecord[]>([])
   const [csrs, setCsrs] = useState<CsrRecord[]>([])
   const [waybills, setWaybills] = useState<WaybillRecord[]>([])
   const [projects, setProjects] = useState<ProjectRecord[]>([])
-  const [overviewActivity, setOverviewActivity] = useState<UnifiedActivityEvent[]>([])
+  const [counts, setCounts] = useState({ quotations: 0, csrs: 0, waybills: 0, projects: 0 })
 
   const [loading, setLoading] = useState({
     overview: true,
@@ -90,14 +77,13 @@ export default function ClientDetail() {
   })
 
   useEffect(() => {
-    setTab('overview')
     setClient(null)
     setInvoices([])
     setQuotations([])
     setCsrs([])
     setWaybills([])
     setProjects([])
-    setOverviewActivity([])
+    setCounts({ quotations: 0, csrs: 0, waybills: 0, projects: 0 })
     setLoading({
       overview: true,
       projects: false,
@@ -242,25 +228,16 @@ export default function ClientDetail() {
         ...project,
         project_value: null,
       }))
-      const totalActivityCount =
-        enrichedInvoices.length +
-        Number(quotationCountRes.count || 0) +
-        Number(csrCountRes.count || 0) +
-        Number(waybillCountRes.count || 0) +
-        Number(projectCountRes.count || 0)
-
-      setOverviewActivity(
-        padActivityCount(
-          mergeActivity(
-            enrichedInvoices,
-            overviewQuotations,
-            overviewCsrs,
-            overviewWaybills,
-            overviewProjects,
-          ),
-          totalActivityCount,
-        ),
-      )
+      setQuotations(overviewQuotations)
+      setCsrs(overviewCsrs)
+      setWaybills(overviewWaybills)
+      setProjects(overviewProjects)
+      setCounts({
+        quotations: Number(quotationCountRes.count || 0),
+        csrs: Number(csrCountRes.count || 0),
+        waybills: Number(waybillCountRes.count || 0),
+        projects: Number(projectCountRes.count || 0),
+      })
       setLoaded((current) => ({ ...current, overview: true }))
       setLoading((current) => ({ ...current, overview: false }))
     } catch (err) {
@@ -369,40 +346,41 @@ export default function ClientDetail() {
     void loadOverview()
   }, [loadOverview])
 
-  useEffect(() => {
-    if (tab === 'projects' && !loaded.projects && !loading.projects) {
-      void loadProjects()
-    }
-    if (tab === 'quotations' && !loaded.quotations && !loading.quotations) {
-      void loadQuotations()
-    }
-    if (tab === 'csrs' && !loaded.csrs && !loading.csrs) {
-      void loadCsrs()
-    }
-    if (tab === 'waybills' && !loaded.waybills && !loading.waybills) {
-      void loadWaybills()
-    }
-  }, [
-    tab,
-    loaded.projects,
-    loaded.quotations,
-    loaded.csrs,
-    loaded.waybills,
-    loading.projects,
-    loading.quotations,
-    loading.csrs,
-    loading.waybills,
-    loadProjects,
-    loadQuotations,
-    loadCsrs,
-    loadWaybills,
-  ])
-
   const overviewError = error.overview
-  const isProjectsLoading = loading.projects || (tab === 'projects' && !loaded.projects)
-  const isQuotationsLoading = loading.quotations || (tab === 'quotations' && !loaded.quotations)
-  const isCsrsLoading = loading.csrs || (tab === 'csrs' && !loaded.csrs)
-  const isWaybillsLoading = loading.waybills || (tab === 'waybills' && !loaded.waybills)
+
+  const summary = useMemo(() => {
+    return invoices.reduce(
+      (acc, inv) => {
+        acc.total += Number(inv.total || 0)
+        acc.collected += Number(inv.cash_received || 0)
+        acc.outstanding += Number(inv.balance_due || 0)
+        return acc
+      },
+      { total: 0, collected: 0, outstanding: 0 },
+    )
+  }, [invoices])
+
+  const overdue = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return invoices.filter((inv) => {
+      const balance = Number(inv.balance_due || 0)
+      if (balance <= 0) return false
+      if (String(inv.computed_status || '').toLowerCase() === 'overdue') return true
+      if (!inv.due_date) return false
+      const dueDate = new Date(inv.due_date)
+      if (Number.isNaN(dueDate.getTime())) return false
+      dueDate.setHours(0, 0, 0, 0)
+      return dueDate < today
+    })
+  }, [invoices])
+
+  const statusLine = useMemo(() => {
+    if (overdue.length > 0) return `${overdue.length} overdue`
+    if (summary.outstanding > 0) return 'Has outstanding balance'
+    if (invoices.length > 0) return 'Settled'
+    return null
+  }, [overdue.length, summary.outstanding, invoices.length])
 
   if (loading.overview) {
     return (
@@ -429,15 +407,6 @@ export default function ClientDetail() {
     )
   }
 
-  const TABS = [
-    { label: 'Overview', value: 'overview' },
-    { label: 'Projects', value: 'projects' },
-    { label: 'Invoices', value: 'invoices' },
-    { label: 'Quotations', value: 'quotations' },
-    { label: 'CSRs', value: 'csrs' },
-    { label: 'Waybills', value: 'waybills' },
-  ]
-
   return (
     <Layout
       title={client.name || 'Client Workspace'}
@@ -445,99 +414,108 @@ export default function ClientDetail() {
       hidePageHeader
       contentClassName="w-full max-w-none bg-background p-0 pb-24 md:px-4 md:pb-10"
     >
-      <ClientActionHeader client={client} onEdit={() => navigate(`/clients/edit/${id}`)} />
+      <ClientIdentityBar
+        clientName={client.name || 'Client Workspace'}
+        statusLine={statusLine}
+        onEdit={() => navigate(`/clients/edit/${id}`)}
+      />
 
-      <div className="mx-auto max-w-5xl px-4 py-6">
-        <Tabs value={tab} onValueChange={(value) => setTab(value as ClientWorkspaceTab)} className="w-full">
-          <TabsList className="mb-6 h-auto w-full gap-5 overflow-x-auto rounded-none border-b border-border bg-transparent p-0 no-scrollbar">
-            {TABS.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="rounded-none border-b-2 border-transparent px-1 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground transition-all data-[state=active]:border-[hsl(var(--bd-button-primary-bg))] data-[state=active]:bg-transparent data-[state=active]:text-foreground"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-4 px-4 py-4 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:py-6">
+        <div className="min-w-0 space-y-4">
+          <MoneyPositionStrip
+            total={summary.total}
+            collected={summary.collected}
+            outstanding={summary.outstanding}
+          />
 
-          <TabsContent value="overview" className="mt-0 outline-none">
-             <ClientOverviewTab client={client} invoices={invoices} activity={overviewActivity} />
-          </TabsContent>
+          <NeedsAttentionGroup overdue={overdue} />
 
-          <TabsContent value="projects" className="mt-0 outline-none">
-             {isProjectsLoading ? (
-              <div className="space-y-3">
-                <SkeletonRow />
-                <SkeletonRow />
-                <CenteredSpinner />
-              </div>
-            ) : error.projects ? (
-              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.projects}</div>
-            ) : (
-              <ClientProjectsTab projects={projects} />
-            )}
-          </TabsContent>
+          <HistoryGroup
+            title="Invoices"
+            icon={DOC_ICONS.invoice}
+            count={invoices.length}
+            loading={false}
+            error=""
+            onRetry={() => {}}
+          >
+            <InvoiceList invoices={invoices} />
+          </HistoryGroup>
 
-          <TabsContent value="invoices" className="mt-0 outline-none">
-             <ClientDocumentsTab
-                type="invoice"
-                documents={invoices.map(inv => ({ ...inv, number: inv.invoice_number, title: inv.invoice_title }))}
-             />
-          </TabsContent>
+          <HistoryGroup
+            title="Quotations"
+            icon={DOC_ICONS.quotation}
+            count={loaded.quotations ? quotations.length : counts.quotations}
+            loading={false}
+            error={error.quotations}
+            onRetry={() => void loadQuotations()}
+          >
+            <QuotationList
+              quotations={quotations}
+              totalCount={loaded.quotations ? quotations.length : counts.quotations}
+              allLoaded={loaded.quotations}
+              loadingAll={loading.quotations}
+              onLoadAll={() => void loadQuotations()}
+            />
+          </HistoryGroup>
 
-          <TabsContent value="quotations" className="mt-0 outline-none">
-             {isQuotationsLoading ? (
-              <div className="space-y-3">
-                <SkeletonRow />
-                <SkeletonRow />
-                <CenteredSpinner />
-              </div>
-            ) : error.quotations ? (
-              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.quotations}</div>
-            ) : (
-              <ClientDocumentsTab
-                type="quotation"
-                documents={quotations.map(q => ({ ...q, number: q.quotation_number }))}
-             />
-            )}
-          </TabsContent>
+          <HistoryGroup
+            title="Service reports"
+            icon={DOC_ICONS.csr}
+            count={loaded.csrs ? csrs.length : counts.csrs}
+            loading={false}
+            error={error.csrs}
+            onRetry={() => void loadCsrs()}
+          >
+            <CsrList
+              csrs={csrs}
+              totalCount={loaded.csrs ? csrs.length : counts.csrs}
+              allLoaded={loaded.csrs}
+              loadingAll={loading.csrs}
+              onLoadAll={() => void loadCsrs()}
+            />
+          </HistoryGroup>
 
-          <TabsContent value="csrs" className="mt-0 outline-none">
-             {isCsrsLoading ? (
-              <div className="space-y-3">
-                <SkeletonRow />
-                <SkeletonRow />
-                <CenteredSpinner />
-              </div>
-            ) : error.csrs ? (
-              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.csrs}</div>
-            ) : (
-              <ClientDocumentsTab
-                type="csr"
-                documents={csrs.map(c => ({ ...c, number: c.csr_number }))}
-             />
-            )}
-          </TabsContent>
+          <HistoryGroup
+            title="Waybills"
+            icon={DOC_ICONS.waybill}
+            count={loaded.waybills ? waybills.length : counts.waybills}
+            loading={false}
+            error={error.waybills}
+            onRetry={() => void loadWaybills()}
+          >
+            <WaybillList
+              waybills={waybills}
+              totalCount={loaded.waybills ? waybills.length : counts.waybills}
+              allLoaded={loaded.waybills}
+              loadingAll={loading.waybills}
+              onLoadAll={() => void loadWaybills()}
+            />
+          </HistoryGroup>
 
-          <TabsContent value="waybills" className="mt-0 outline-none">
-             {isWaybillsLoading ? (
-              <div className="space-y-3">
-                <SkeletonRow />
-                <SkeletonRow />
-                <CenteredSpinner />
-              </div>
-            ) : error.waybills ? (
-              <div className="rounded-2xl border border-[hsl(var(--bd-status-danger-border))] bg-[hsl(var(--bd-status-danger-bg))] p-4 text-sm text-[hsl(var(--bd-status-danger-text))]">{error.waybills}</div>
-            ) : (
-              <ClientDocumentsTab
-                type="waybill"
-                documents={waybills.map(w => ({ ...w, number: w.waybill_number }))}
-             />
-            )}
-          </TabsContent>
-        </Tabs>
+          <HistoryGroup
+            title="Projects"
+            icon={DOC_ICONS.project}
+            count={loaded.projects ? projects.length : counts.projects}
+            loading={false}
+            error={error.projects}
+            onRetry={() => void loadProjects()}
+          >
+            <ProjectList
+              projects={projects}
+              totalCount={loaded.projects ? projects.length : counts.projects}
+              allLoaded={loaded.projects}
+              loadingAll={loading.projects}
+              onLoadAll={() => void loadProjects()}
+            />
+          </HistoryGroup>
+        </div>
+
+        <div className="min-w-0 space-y-4 md:pt-0">
+          <ClientContactSection client={client} />
+        </div>
       </div>
+
+      <ClientCreateFab clientId={client.id} clientName={client.name} />
     </Layout>
   )
 }

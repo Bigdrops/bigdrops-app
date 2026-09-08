@@ -73,7 +73,7 @@ export default function BatchActionFooter({
                 className={cn(
                   "flex h-11 items-center gap-1.5 rounded-lg px-4 text-[11px] font-bold uppercase tracking-wider transition-colors duration-200",
                   action.variant === "destructive"
-                    ? "bg-red-600 text-white hover:bg-red-500 disabled:bg-red-800"
+                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                     : "bg-bd-surface text-slate-900 hover:bg-slate-100 disabled:bg-slate-600 disabled:text-slate-300"
                 )}
               >

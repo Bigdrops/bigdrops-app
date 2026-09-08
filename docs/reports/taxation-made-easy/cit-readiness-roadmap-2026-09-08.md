@@ -33,28 +33,144 @@ or tax calculation logic was changed.
 
 ASD-STE100 Simplified Technical English
 
-## Statutory CIT Calculation Flow
+## Terminology
+
+This document uses the following authoritative names:
+
+- **NTA 2025**: Nigeria Tax Act 2025. Primary statute governing CIT, WHT,
+  and other taxes. Source in repository: `NRS-docs/NIGERIA-TAX-ACT-2025.md`.
+- **NTAA 2025**: Nigeria Tax Administration Act 2025. Governs filing
+  deadlines, payment deadlines, penalties, and procedural rules. Absent from
+  repository. External authoritative-source dependency.
+
+Do not use these terms interchangeably. The NTA defines what is taxed and at
+what rate. The NTAA defines when it must be filed and paid.
+
+---
+
+## Statutory CIT Calculation: Conceptual Model
 
 The NTA 2025 defines a multi-stage calculation. Each stage requires specific
-data. The stages are not interchangeable and have strict dependency order.
+data. The stages are sequential. The output of one stage is the input of the
+next.
 
-```
-Revenue (accounting period)
-  minus Expenses (accounting period)
-  equals Accounting Profit
-    plus Add-backs (disallowed items per section 21)
-    minus Allowable deductions (section 20 items not in expenses)
-    equals Assessable Profits (section 22(1))
-      minus Losses (section 27(5), same trade, carry-forward)
-      minus Capital Allowances (First Schedule, section 27(1))
-      equals Total Profits (section 27(1))
-        times CIT Rate (section 56)
-        equals CIT Liability
-          plus Development Levy (section 59, 4%, non-small companies)
-          equals Total Tax Liability
-```
+**This is a statutory concept model, not an implementation-ready formula.
+Each stage is defined by the NTA 2025. The ordering rules within each stage
+are verified from authoritative statutory material. Implementation must
+follow the same sequence.**
 
-### Verified statutory values (from NRS-docs/NIGERIA-TAX-ACT-2025.md)
+### Stage 1: Accounting Profit
+
+Accounting profit is the starting point. It is the result of
+accounting-period revenue minus accounting-period expenses, computed from
+posted journal entries. It is not the same as cash received minus cash paid.
+
+Accounting profit is defined in the accounting layer, not the tax layer.
+The tax layer reads it as an input.
+
+### Stage 2: Tax Adjustments (Accounting-to-Tax Bridge)
+
+Tax adjustments transform accounting profit into assessable profits. Two
+categories of adjustment:
+
+**Add-backs** (disallowed items per section 21). These are expenses that
+reduced accounting profit but are not deductible for tax purposes:
+
+- Accounting depreciation (disallowable per section 21; replaced by
+  capital allowances).
+- Capital expenditure (disallowable per section 21; subject to capital
+  allowances instead).
+- Private and domestic expenses (disallowable per section 21).
+- Penalties and fines (disallowable per section 21).
+- Taxes on profits of the company (disallowable per section 21).
+- Unapproved pensions and gratuities (disallowable per section 21).
+
+**Deductions** (allowable items per section 20). These are items that
+are deductible for tax but were not captured as accounting expenses:
+
+- Bad debts written off (allowable per section 20).
+- Pre-commencement expenses (allowable per section 20).
+- Stock and inventory losses (allowable per section 20).
+
+Not all section 20 items are deductions from accounting profit. Some are
+standalone allowances. The specific treatment depends on the item.
+
+### Stage 3: Assessable Profits
+
+Assessable profits are the output of Stage 2. They represent the profit
+subject to CIT after statutory adjustments.
+
+Section 22(1) ties assessable profits to the accounting period immediately
+preceding the year of assessment.
+
+### Stage 4: Loss Deduction
+
+Tax losses from prior periods may reduce assessable profits, subject to
+section 27(5):
+
+- Losses are ring-fenced to the same trade.
+- Losses are deductible in the first year of assessment following the
+  year in which the loss was incurred.
+- Losses continue to be deductible in subsequent years until fully
+  recouped.
+- Digital-asset losses are ring-fenced separately (section 27(6)).
+
+### Stage 5: Capital Allowances
+
+Capital allowances are statutory deductions from assessable profits, per
+the First Schedule of the NTA 2025 and section 27(1). They replace
+accounting depreciation as the tax deduction for asset cost recovery.
+
+Capital allowances are computed per asset, using statutory rates and
+categories. They are separate from accounting depreciation. The two must
+not be confused.
+
+Capital allowances are deducted after the loss deduction (Stage 4) to
+produce total profits.
+
+### Stage 6: Total Profits
+
+Total profits are the output of Stages 3, 4, and 5. They represent the
+profit subject to the CIT rate.
+
+### Stage 7: CIT Rate Application
+
+The CIT rate is applied to total profits per section 56:
+
+- Small company (section 202 criteria met): 0% (section 56(a)).
+- Other company: 30% from date of commencement (section 56(b)).
+- Presidential Order reduction to 25%: effective from the date specified
+  in the Order (section 56(b)). Status of any current Order: unresolved
+  (see Unresolved Items below).
+
+The CIT rate depends on company classification (Stage 7 prerequisite).
+
+### Stage 8: Development Levy
+
+Development Levy is 4% of assessable profits per section 59(1). It is
+added to the CIT liability to produce total tax liability.
+
+Small companies and non-resident companies are excluded from Development
+Levy (section 59(1)).
+
+### Stage 9: Total Tax Liability
+
+Total tax liability is CIT liability plus Development Levy.
+
+### Stage 10: Credits and Prior Payments
+
+WHT credits (from `wht_receipts`) reduce the amount payable. Prior
+payments (from `tax_filings.amount_paid`) reduce the amount payable.
+These do not reduce the CIT liability itself.
+
+### Stage 11: Amount Payable / (Refundable)
+
+The final figure: total tax liability minus WHT credits minus prior
+payments.
+
+---
+
+## Verified Statutory Values (from NTA 2025)
 
 | Parameter | Value | Citation |
 |-----------|-------|----------|
@@ -71,150 +187,183 @@ Revenue (accounting period)
 | Capital allowances | Per First Schedule categories, section 27(1) | First Schedule |
 | Proration of allowances | Partly-used assets prorated per §27(3); no proration below 10% non-taxable income per §27(4) | §27(3), §27(4) |
 
-### Unresolved statutory items (external authoritative-source dependencies)
+---
+
+## Unresolved Items (Authoritative-Source Dependencies)
+
+These items are genuinely unresolved. They are external dependencies, not
+implementation gaps. Do not invent values for them.
 
 | Item | Status | Impact |
 |------|--------|--------|
-| NTAA 2025 primary text | Absent from repository | CIT filing deadline, CIT payment deadline, general VAT return deadline, WHT remittance deadline, WHT rate table — all unresolved |
+| NTAA 2025 primary text | Absent from repository | CIT filing deadline, CIT payment deadline, general VAT return deadline, WHT remittance deadline — all unresolved |
 | Presidential Order / 25% CIT | Effective status not verified | Cannot use 25% rate in production; must use 30% |
-| First Schedule capital-allowance values | Partially verified | Plant and machinery rates, building rates, motor vehicle rates — need verification from primary source |
+| First Schedule capital-allowance rates | Partially verified from NTA 2025 text in repository | Plant and machinery rates, building rates, motor vehicle rates — verify from primary source |
 | WHT subsidiary regulation | Absent from repository | WHT rate table and remittance deadline unresolved |
 
 ---
 
-## Prerequisite 1: Expense / Running-Cost Capture and Accounting/Tax Consumption
+## Prerequisites for CIT Readiness
 
-### Current state: IMPLEMENTED (Increment 10) + PARTIAL (consumption)
+Six prerequisites must be satisfied before CIT can be computed. They are
+ordered by dependency, not by ease of implementation.
 
-Increment 10 (Record Capture Foundation) is independently verified and closed.
-The capture surface exists and is wired into ComplianceHub.
+### Prerequisite 1: Accounting Foundation
+
+**The accounting foundation is the base capability on which all other
+CIT prerequisites depend.** Without it, there is no accounting-period
+revenue, no accounting-period expenses, no accounting profit, and no
+starting point for tax adjustments.
+
+**Current state: NOT IMPLEMENTED**
+
+The Accounting Foundation Blueprint (v1) defines the required architecture:
+
+- Entity-scoped accounting: all accounting data scoped to the entity.
+- Chart of accounts: defines account categories (revenue, expense,
+  asset, liability, equity).
+- Journal/posting kernel: balanced double-entry postings. Source
+  transactions are posted to journals. Posted journals are immutable.
+- Source-transaction boundary: Record Capture produces source
+  transactions. A source transaction becomes an accounting fact only
+  when posted to a journal.
+- Period controls: accounting periods with open/closed/locked states.
+  Back-dated postings to closed periods are rejected.
 
 **What exists:**
 
-- `RecordCaptureSheet.tsx`: bottom-sheet form capturing date, vendor, category,
-  reference, amount (gross), notes, evidence files.
-- `reverseVat()` in `src/lib/Calculations.ts`: derives net/vat split from gross
-  amount using 7.5% rate.
-- `tax_input_entries` table: stores `net_amount`, `vat_amount`, `is_recoverable`,
-  `category`, `vendor_name`, `date`, `reference`, `evidence`.
+- `tax_input_entries` stores individual VAT-input records. These are
+  source transactions, not journal postings.
+- `tax_filings` stores filing records with period dates. These are
+  compliance records, not accounting periods.
+- `settings` has `year_end_month` and `year_end_day`. Defines the
+  company's financial year end.
+- Invoice data exists (amounts, dates, payments). These are source
+  transactions.
+- Record Capture (Increment 10) captures expense source transactions.
+
+**What is missing:**
+
+- No chart of accounts.
+- No journal/posting kernel.
+- No accounting-period model.
+- No posting boundary between source transactions and journal entries.
+- No period-lock mechanism.
+
+**Why this must come first:**
+
+Every subsequent prerequisite (expense aggregation, income statement,
+fixed-asset register, capital allowances) requires accounting-period
+data from posted journals. The journal kernel is the foundation. Without
+it, there is no accounting profit, and the tax-adjustment layer has
+nothing to transform.
+
+### Prerequisite 2: Expense Source Transactions and Accounting Consumption
+
+**Current state: Record Capture IMPLEMENTED (Increment 10). Accounting
+consumption NOT IMPLEMENTED.**
+
+Increment 10 (Record Capture Foundation) is independently verified and
+closed. The capture surface exists and is wired into ComplianceHub. It
+must not be modified or extended to satisfy accounting or tax
+requirements.
+
+**What exists (Record Capture — closed, do not modify):**
+
+- `RecordCaptureSheet.tsx`: bottom-sheet form capturing date, vendor,
+  category, reference, amount (gross), notes, evidence files.
+- `reverseVat()` in `src/lib/Calculations.ts`: derives net/vat split
+  from gross amount using 7.5% rate.
+- `tax_input_entries` table: stores `net_amount`, `vat_amount`,
+  `is_recoverable`, `category`, `vendor_name`, `date`, `reference`,
+  `evidence`.
 - Audit trail: `recordExpenseRecorded()` in `src/lib/audit.ts`.
 - ComplianceHub wiring: `RecordCaptureSheet` imported and rendered in
   `ComplianceHub.tsx`.
 - Entity scoping: `useEntity()` tenant context.
 
-**What is missing — the accounting/tax consumption gap:**
+**The accounting consumption layer (not yet implemented):**
 
-- `tax_input_entries` stores VAT inputs only. It has no field for:
-  - Expense classification for accounting (chart-of-accounts mapping).
-  - Expense classification for tax (allowable / disallowable per section 20/21).
-  - Whether the expense is capital expenditure (disallowable, section 21).
-  - Whether the expense is private or domestic (disallowable, section 21).
-  - Connection to a journal entry or accounting period.
-- No aggregation of expenses into an accounting-period expense total.
-- No integration with a future income statement.
-- The Record Capture surface captures individual entries. It does not produce
-  an accounting-period expense figure.
+Record Capture produces factual source transactions. A separate
+downstream layer must consume these source transactions and produce
+accounting-period expense figures. This layer:
+
+1. Reads source transactions from `tax_input_entries`.
+2. Maps each source transaction to a chart-of-accounts code (accounting
+   classification). This mapping is a downstream decision, not a field
+   on the source record.
+3. Posts balanced journal entries to the journal kernel.
+4. Assigns journal entries to an accounting period.
+5. Aggregates posted expenses by accounting period for income-statement
+   consumption.
+
+**Do not add accounting-classification or tax-classification fields to
+`tax_input_entries`.** The record remains factual at capture. The
+classification happens downstream, in the accounting layer, after the
+record is captured.
+
+**The tax treatment layer (not yet implemented):**
+
+After accounting consumption, a separate tax-adjustment layer classifies
+each posted expense as:
+
+- Allowable (deductible per section 20).
+- Disallowable (not deductible per section 21).
+- Partially allowable (subject to specific rules).
+
+This classification is a tax-layer decision. It reads accounting facts
+(from posted journals), not source transactions. It does not modify
+source records or journal entries. It produces statutory adjustment
+entries for the income-statement bridge.
 
 **The point at which an expense becomes accounting/tax relevant:**
 
-An expense record is a source transaction, not an accounting posting. It
-becomes accounting-relevant when:
-1. It is posted to a journal entry within an accounting period.
-2. The journal entry is balanced (debits equal credits).
-3. The accounting period is open.
+An expense source transaction is not an accounting posting. It becomes
+accounting-relevant when posted to a balanced journal entry within an
+open accounting period. It becomes tax-relevant when the tax-adjustment
+layer classifies it and produces a statutory adjustment entry.
 
-It becomes tax-relevant when:
-1. It has been posted to the journal (accounting fact exists).
-2. A tax-adjustment layer classifies it as allowable (§20) or disallowable
-   (§21).
-3. The classification produces a statutory adjustment entry.
+### Prerequisite 3: Accounting Periods and Revenue Recognition
 
-Record Capture alone does not reach either threshold. It produces source
-transactions that feed the accounting layer.
-
-### Dependency on other prerequisites
-
-- Requires Prerequisite 2 (accounting periods) to assign expenses to periods.
-- Requires Prerequisite 3 (income statement) to aggregate expenses into
-  accounting-period totals.
-- Requires a future chart of accounts for expense classification.
-- Requires a future tax-adjustment layer for allowable/disallowable
-  classification.
-
-### Implementation blocks
-
-| Block | Description | Depends on |
-|-------|-------------|------------|
-| B1.1 | Extend `tax_input_entries` with `expense_type` (enum: operating, capital, private, other) and `account_classification` (text, chart-of-accounts code). | Chart of accounts design (Phase 1) |
-| B1.2 | Extend `tax_input_entries` with `tax_classification` (enum: allowable, disallowable, pending). Default pending. | Tax-adjustment layer design (Phase 2) |
-| B1.3 | Create `expense_line_items` view or materialization that aggregates `tax_input_entries` by accounting period for income-statement consumption. | Prerequisite 2 (accounting periods) |
-| B1.4 | Wire expense aggregation into income-statement computation. | Prerequisite 3 (income statement) |
-
----
-
-## Prerequisite 2: Accounting Periods and Accrual-Based Revenue Recognition
-
-### Current state: PARTIAL (periods exist, no accrual model)
+**Current state: NOT IMPLEMENTED**
 
 **What exists:**
 
-- `tax_filings` has `period_start` and `period_end` fields. These define
+- `tax_filings` has `period_start` and `period_end`. These define
   filing periods, not accounting periods.
-- `tax_reminders` has `period_start` and `period_end` fields. Same pattern.
-- `settings` has `year_end_month` and `year_end_day`. Defines the company's
-  financial year end.
-- Invoice dates (`issue_date`) and payment dates exist. Revenue is tracked
-  as invoice-cash, not accrual.
+- `settings` has `year_end_month` and `year_end_day`.
+- Invoice dates (`issue_date`) and payment dates exist. Revenue is
+  tracked as invoice-cash, not accrual.
 
 **What is missing:**
 
 - No accounting-period model with open/closed/locked states.
-- No revenue recognition policy. Revenue today equals invoice issue date
-  amounts. The accounting foundation blueprint (section 12) requires invoice
-  as claim; recognition policy in the accounting layer.
-- No accrual-basis revenue: revenue for a period is not determined by when
-  the service was performed or the invoice was issued, but by the
+- No revenue recognition policy. Revenue today equals invoice issue
+  date amounts.
+- No accrual-basis revenue: revenue for a period is not determined by
+  when the service was performed or the invoice was issued, but by the
   accounting-period assignment.
 - No period-lock mechanism that prevents back-dated postings.
 
 **Why accrual matters for CIT:**
 
-Section 22(1) ties assessable profits to the accounting period immediately
-preceding the year of assessment. If revenue is invoice-cash (recognized
-when the invoice is issued or paid), it does not match the statutory basis.
-The accounting layer must assign revenue to the period in which it is
-earned, not when the invoice is created or paid.
+Section 22(1) ties assessable profits to the accounting period
+immediately preceding the year of assessment. If revenue is
+invoice-cash (recognized when the invoice is issued or paid), it does
+not match the statutory basis. The accounting layer must assign revenue
+to the period in which it is earned, not when the invoice is created
+or paid.
 
-### Dependency on other prerequisites
+### Prerequisite 4: Income Statement / P&L Computation
 
-- Requires Phase 0 decisions (GATE A: entity accounting boundary, GATE B:
-  money precision).
-- Requires Phase 1 accounting foundation (chart of accounts, journal kernel,
-  posting boundary).
-- Independent of Prerequisites 3-6 for design, but dependent for
-  implementation.
-
-### Implementation blocks
-
-| Block | Description | Depends on |
-|-------|-------------|------------|
-| B2.1 | Design accounting-period model: planned → open → closed → locked. Period scoping per GATE A decision. | GATE A, GATE B |
-| B2.2 | Define revenue-recognition policy: when does an invoice amount become recognized revenue? Options: invoice date, service delivery date, payment date, or explicit accrual posting. | B2.1 |
-| B2.3 | Implement period lifecycle: open period, post to period, close period, lock period. Reject back-dated postings to closed periods. | B2.1, Phase 1 posting kernel |
-| B2.4 | Map existing invoice revenue to accounting-period revenue. Revenue for CIT is accounting-period revenue, not invoice cash. | B2.2, B2.3 |
-
----
-
-## Prerequisite 3: Income Statement / P&L Computation
-
-### Current state: MISSING
+**Current state: NOT IMPLEMENTED**
 
 **What exists:**
 
-- `Reports.tsx` has a "Financial Overview" tab. It shows invoice aggregates,
-  not an income statement.
-- `Reports.tsx` has a "Tax Positions" tab. It shows VAT charged and WHT
-  exposure. No profit computation.
+- `Reports.tsx` has a "Financial Overview" tab. It shows invoice
+  aggregates, not an income statement.
+- `Reports.tsx` has a "Tax Positions" tab. It shows VAT charged and
+  WHT exposure. No profit computation.
 - `computeDocumentTotals()` computes invoice-level totals. It does not
   aggregate across documents or periods.
 
@@ -223,59 +372,67 @@ earned, not when the invoice is created or paid.
 - No income statement or profit-and-loss computation.
 - No revenue-minus-expenses calculation.
 - No accounting-profit figure.
-- No separation between operating revenue, other income, cost of goods sold,
-  operating expenses, and non-operating items.
+- No separation between operating revenue, other income, cost of goods
+  sold, operating expenses, and non-operating items.
 
 **Why it matters for CIT:**
 
-Accounting profit is the starting point for the statutory bridge (section
-22(1)). Without an income-statement computation, there is no accounting
-profit, and therefore no starting point for tax adjustments.
+Accounting profit is the starting point for the statutory bridge
+(Stage 2). Without an income-statement computation, there is no
+accounting profit, and therefore no starting point for tax adjustments.
 
-### Dependency on other prerequisites
+### Prerequisite 5: Fixed-Asset Register, Purchases, and Capital Allowances
 
-- Requires Prerequisite 1 (expense capture) for the expense side.
-- Requires Prerequisite 2 (accounting periods) for period-scoped aggregation.
-- Requires Phase 1 accounting foundation (chart of accounts, journal kernel,
-  posting boundary) for journal-derived reporting.
+**Current state: NOT IMPLEMENTED**
 
-### Implementation blocks
+This prerequisite connects purchases, fixed-asset acquisition, asset
+management, accounting depreciation, and tax capital allowances into a
+single acquisition-to-deduction path.
 
-| Block | Description | Depends on |
-|-------|-------------|------------|
-| B3.1 | Design income-statement structure: revenue, cost of goods sold, gross profit, operating expenses, operating profit, other income/expenses, profit before tax. | Phase 1 chart of accounts |
-| B3.2 | Implement income-statement computation from journal entries. Revenue from posted invoices; expenses from posted expense entries. Period-scoped. | B2.3, B3.1, Phase 1 posting kernel |
-| B3.3 | Produce accounting-profit figure for a given accounting period. This is the starting input for the tax-adjustment layer. | B3.2 |
+**The acquisition path (PO → tax deduction):**
 
----
+A supplier transaction can result in different accounting treatments
+depending on its economic nature. The economic-nature decision must
+occur before the accounting treatment is applied.
 
-## Prerequisite 4: Fixed-Asset Register, Accounting Depreciation, and Tax Capital Allowances
+```
+PO / Purchase Order
+  → Supplier Transaction (invoice received, goods/services delivered)
+    → Determine Economic Nature
+      → Operating Expense (consumed within the period)
+      → Inventory (held for resale)
+      → Fixed Asset (multi-period use, meets capitalization threshold)
+      → Prepaid / Deferred Item (payment before benefit period)
+      → Other Accounting Category
+```
 
-### Current state: MISSING
+The economic-nature determination is a business decision made at the
+point of supplier invoice receipt (or goods receipt, depending on the
+recognition policy). It is not made at the PO stage. A PO is a
+commitment, not an expense.
 
-**What exists:**
+**When the economic nature is "fixed asset":**
 
-- No fixed-asset register.
-- No depreciation computation.
-- No capital-allowance computation.
-- No asset categories or useful-life definitions.
+```
+Supplier Transaction (fixed asset)
+  → Register in Fixed-Asset Register
+    → Asset identity, acquisition cost, acquisition date, category,
+      useful life, business-use proportion
+  → Accounting Depreciation (periodic, accounting concept)
+    → Charge against book value per useful life
+    → Posts to journal
+  → Tax Capital Allowance (statutory, separate computation)
+    → Computed per First Schedule rates and categories
+    → Deducted from assessable profits
+    → Separate from accounting depreciation
+```
 
-**What is missing:**
-
-- Asset register: asset identity, acquisition cost, acquisition date, asset
-  category, useful life, business-use proportion, disposal date.
-- Accounting depreciation: periodic depreciation charge against asset book
-  value. This is an accounting concept only.
-- Tax capital allowances: statutory deduction from assessable profits per
-  the First Schedule. This is a separate computation from accounting
-  depreciation.
-- Balancing adjustments on disposal (First Schedule rules).
-
-**The critical distinction: accounting depreciation ≠ tax capital allowance.**
+**The critical distinction: accounting depreciation ≠ tax capital
+allowance.**
 
 Accounting depreciation is the systematic allocation of an asset's cost
-over its useful life. It is an accounting estimate. It reduces the asset's
-book value on the balance sheet.
+over its useful life. It is an accounting estimate. It reduces the
+asset's book value on the balance sheet.
 
 Tax capital allowances are statutory deductions from assessable profits
 allowed by the First Schedule of the NTA 2025. They are computed using
@@ -283,8 +440,8 @@ statutory rates and categories, not accounting estimates. An asset's
 capital allowance may differ from its accounting depreciation in:
 
 - Rate: statutory rate vs. estimated useful life.
-- Category: plant and machinery vs. building vs. motor vehicle — each has
-  a different statutory rate.
+- Category: plant and machinery vs. building vs. motor vehicle — each
+  has a different statutory rate.
 - Timing: capital allowances may begin in the year of acquisition;
   depreciation may follow a different convention.
 - Proration: capital allowances are prorated for partly-used assets
@@ -292,10 +449,10 @@ capital allowance may differ from its accounting depreciation in:
 
 **The tax adjustment:**
 
-In the accounting-to-tax bridge (Phase 2), accounting depreciation is
-added back to accounting profit (it is a disallowable deduction per section
-21). Capital allowances are then deducted from assessable profits (section
-27(1)). The net effect is:
+In the accounting-to-tax bridge (Stage 2), accounting depreciation is
+added back to accounting profit (disallowable per section 21). Capital
+allowances are then deducted from assessable profits (section 27(1)).
+The net effect is:
 
 ```
 Accounting Profit
@@ -304,135 +461,210 @@ Accounting Profit
   = Adjusted Profit (before losses)
 ```
 
-This two-step adjustment is mandatory. CIT must not simply use accounting
-depreciation as the tax deduction.
-
-### Dependency on other prerequisites
-
-- Requires Phase 1 accounting foundation (chart of accounts, journal kernel)
-  for asset register and depreciation postings.
-- Requires Phase 2 tax-adjustment layer for capital-allowance computation.
-- Requires Phase 3 statutory rules engine for First Schedule rates.
-- Independent of Prerequisites 1-3 for design, but dependent for
-  full integration.
-
-### Implementation blocks
-
-| Block | Description | Depends on |
-|-------|-------------|------------|
-| B4.1 | Design fixed-asset register: asset identity, acquisition cost, acquisition date, category (plant/machinery, building, motor vehicle, mast, mining, agriculture, intangible, heavy transport), useful life, business-use proportion, disposal date, disposal proceeds. | Phase 1 |
-| B4.2 | Implement accounting depreciation: periodic charge against book value. Straight-line v1 default per blueprint section 15. Posts to journal. | B4.1, Phase 1 posting kernel |
-| B4.3 | Design capital-allowance computation: per-asset statutory allowance using First Schedule rates. Separate from depreciation. Produces a period-scoped capital-allowance figure. | B4.1, Phase 3 statutory rules |
-| B4.4 | Implement tax-adjustment entry: add back accounting depreciation, deduct capital allowances. Produces a statutory adjustment figure for the income-statement bridge. | B4.2, B4.3, Phase 2 bridge |
-| B4.5 | Implement balancing adjustments on asset disposal. | B4.1, B4.3 |
-
----
-
-## Prerequisite 5: Company Classification Data
-
-### Current state: PARTIAL (type exists, data missing)
+This two-step adjustment is mandatory. CIT must not simply use
+accounting depreciation as the tax deduction.
 
 **What exists:**
 
-- `domain/compliance/types.ts` defines `CitCategory = 'small' | 'medium' |
-  'large' | 'exempt'`. The `'medium'` value is not in the NTA 2025 (no
-  medium band exists in §56). The `'exempt'` value is not a defined NTA
-  category.
-- `TaxSettings` interface has `tin`, `vat_enabled`, `vat_threshold`,
-  `cit_category`, `year_end_month`, `year_end_day`.
-- `tax_settings` table stores these fields. `cit_category` is a text field
-  that accepts the enum values.
+- No fixed-asset register.
+- No depreciation computation.
+- No capital-allowance computation.
+- No asset categories or useful-life definitions.
+- No connection between purchase orders and asset acquisition.
 
 **What is missing:**
 
-- No capture of gross turnover per annum (required for §202 classification).
-- No capture of total fixed assets (required for §202 classification).
+- Asset register: asset identity, acquisition cost, acquisition date,
+  asset category, useful life, business-use proportion, disposal date.
+- Economic-nature determination logic at the supplier-transaction
+  level.
+- Accounting depreciation: periodic depreciation charge against asset
+  book value.
+- Tax capital allowances: statutory deduction per First Schedule.
+- Balancing adjustments on disposal (First Schedule rules).
+
+### Prerequisite 6: Company Classification
+
+**Current state: PARTIAL (type exists, data missing)**
+
+**What exists:**
+
+- `domain/compliance/types.ts` defines `CitCategory = 'small' |
+  'medium' | 'large' | 'exempt'`. The `'medium'` value is not in the
+  NTA 2025 (no medium band exists in §56). The `'exempt'` value is not
+  a defined NTA category.
+- `TaxSettings` interface has `tin`, `vat_enabled`, `vat_threshold`,
+  `cit_category`, `year_end_month`, `year_end_day`.
+- `tax_settings` table stores these fields.
+
+**What is missing:**
+
+- No capture of gross turnover per annum (required for §202).
+- No capture of total fixed assets (required for §202).
 - No capture of whether the business provides professional services
   (required for §202 exclusion).
-- No capture of legal form (corporate or other — section 3 requires a
-  "company").
-- No automatic classification logic. The user must manually set
-  `cit_category`.
-- `cit_category` enum values (`medium`, `exempt`) conflict with the NTA 2025
-  categories. The canonical categories are: small company (0%), other
-  company (30%/25%).
+- No capture of legal form (section 3 requires a "company").
+- No automatic classification logic.
+- `cit_category` enum values (`medium`, `exempt`) conflict with the
+  NTA 2025 categories.
 
 **What CIT treatment requires:**
 
-- The company must be classified as "small company" or "other company" per
-  §202.
+- The company must be classified as "small company" or "other company"
+  per §202.
 - Classification determines: CIT rate (0% vs. 30%), development-levy
-  exclusion (small companies are excluded per §59(1)).
-- Classification depends on: gross turnover, total fixed assets, professional
-  services flag, and legal form.
-- Classification must be verified before CIT can be computed. Presenting a
-  CIT figure without verified classification would require invented values.
+  exclusion (small companies excluded per §59(1)).
+- Classification depends on: gross turnover, total fixed assets,
+  professional services flag, and legal form.
 
-### Dependency on other prerequisites
+### Prerequisite 7: NTAA 2025 Authoritative Text
 
-- Independent of Prerequisites 1-4 for data capture design.
-- Required before any CIT computation (Prerequisite 6).
-- Requires Phase 0 decisions (GATE A) for entity scoping.
+**Current state: EXTERNAL DEPENDENCY**
 
-### Implementation blocks
-
-| Block | Description | Depends on |
-|-------|-------------|------------|
-| B5.1 | Correct `cit_category` enum: remove `medium` and `exempt`. Replace with `small` and `other`. Align with §202. | — |
-| B5.2 | Add fields to `tax_settings` or a new `company_classification` table: `gross_turnover` (numeric), `total_fixed_assets` (numeric), `professional_services` (boolean), `legal_form` (enum: corporate, other). | GATE A |
-| B5.3 | Implement classification logic: given turnover, fixed assets, professional-services flag, and legal form → classify as small or other per §202. | B5.2 |
-| B5.4 | Wire classification into CIT computation: determine rate (0% or 30%) and development-levy exclusion. | B5.3, Prerequisite 6 |
+The NTAA 2025 is absent from the repository. It governs filing
+deadlines, payment deadlines, and procedural rules. It does not block
+CIT calculation. It blocks compliance/filing.
 
 ---
 
-## Prerequisite 6: NTAA 2025 Authoritative Text / Deadline Dependency
+## Dependency Graph
 
-### Current state: EXTERNAL DEPENDENCY
+```
+Prerequisite 1 (Accounting Foundation)
+  │
+  ├──→ Prerequisite 2 (Expense Source + Accounting Consumption)
+  │         │
+  │         ├──→ Prerequisite 3 (Accounting Periods + Revenue Recognition)
+  │         │         │
+  │         │         └──→ Prerequisite 4 (Income Statement / P&L)
+  │         │                    │
+  │         │                    └──→ Tax Adjustments (Stage 2)
+  │         │                               │
+  │         └──────────────────────────────→│
+  │                                         │
+  ├──→ Prerequisite 5 (Fixed Assets / Purchases / Capital Allowances)
+  │         │                               │
+  │         └──────────────────────────────→│
+  │                                         │
+  └──→ Prerequisite 6 (Company Classification) ──→ CIT Rate (Stage 7)
+                                                       │
+                                                       └──→ CIT Calculation
+                                                              │
+                                                              └──→ Prerequisite 7 (NTAA) → Compliance
+```
 
-**What exists:**
+### What must be sequential
 
-- The NTA 2025 is in the repository (`NRS-docs/NIGERIA-TAX-ACT-2025.md`).
-- The NTAA 2025 is absent from the repository.
-- The CIT-readiness audit (2026-09-05) identified this as a gap.
-- The Waterfall Roadmap (Phase 3, unresolved items) lists NTAA-dependent
-  values as explicit blockers.
+1. Prerequisite 1 (accounting foundation) must exist before anything
+   else. It provides the journal kernel, chart of accounts, and period
+   model that all subsequent layers consume.
+2. Prerequisite 2 (expense accounting consumption) depends on
+   Prerequisite 1 (posting kernel, chart of accounts).
+3. Prerequisite 3 (accounting periods) depends on Prerequisite 1
+   (period model).
+4. Prerequisite 4 (income statement) depends on Prerequisites 2 and 3
+   (posted revenue and expenses by period).
+5. Prerequisite 5 (fixed assets) depends on Prerequisite 1 (asset
+   register and depreciation postings) and Phase 3 statutory rules
+   (capital-allowance rates).
+6. Prerequisite 6 (classification) depends on Prerequisite 1 (GATE A:
+   entity scoping). It can be designed in parallel with Prerequisites
+   2–5 but must be implemented before CIT rate application.
+7. Prerequisite 7 (NTAA) is an external dependency. It does not block
+   calculation.
 
-**What is missing:**
+### What can proceed in parallel
 
-- NTAA 2025 primary text. This governs:
-  - CIT annual return deadline.
-  - CIT payment deadline.
-  - General VAT return deadline.
-  - WHT remittance deadline.
-  - WHT rate table (subsidiary regulation).
-- Without the NTAA, filing and payment deadlines cannot be stated as
-  verified values.
+- Prerequisites 2, 3, 5, and 6 can be designed in parallel after
+  Prerequisite 1 is established.
+- Prerequisite 7 is an external dependency (human action).
+- Statutory-source acquisition (First Schedule rates, Presidential
+  Order status) can proceed in parallel with all prerequisites.
 
-**Impact on CIT readiness:**
+---
 
-The NTAA absence does not block CIT calculation. It blocks:
-- CIT filing deadline display and reminders.
-- CIT payment deadline tracking.
-- Compliance status representation (filing on time vs. overdue).
-- WHT rate table (if used for CIT-related WHT).
+## Implementation Sequence
 
-The calculation itself (accounting profit → tax adjustments → CIT liability)
-does not require the NTAA. The compliance and filing layers do.
+### After Increment 10: First Practical Block
 
-### Dependency on other prerequisites
+**Block A: Accounting Foundation Core (Prerequisite 1)**
 
-- Independent of Prerequisites 1-5 for calculation.
-- Required for compliance/filing (Phase 4).
-- External dependency: the NTAA 2025 text must be sourced and added to
-  `NRS-docs/` by a human or external process.
+The first practical implementation block after Increment 10 is the
+accounting foundation core. This is the block that best establishes the
+next required architectural capability toward CIT readiness.
 
-### Implementation blocks
+**Why this block comes first:**
 
-| Block | Description | Depends on |
-|-------|-------------|------------|
-| B6.1 | Source NTAA 2025 primary text and add to `NRS-docs/`. | External — human action |
-| B6.2 | Extract CIT filing deadline, CIT payment deadline, WHT rate table, and WHT remittance deadline from NTAA. Add to `OBLIGATION-LOOKUP-INDEX.md`. | B6.1 |
-| B6.3 | Wire deadlines into compliance reminders and filing panels. | B6.2, Phase 4 |
+The accounting foundation is the base on which every other CIT
+prerequisite depends. Without a journal kernel, chart of accounts, and
+period model, there is no way to:
+
+- Post expense source transactions to journals (Prerequisite 2).
+- Assign revenue and expenses to accounting periods (Prerequisite 3).
+- Compute accounting profit (Prerequisite 4).
+- Post depreciation or capital allowances (Prerequisite 5).
+
+Company classification (Prerequisite 6) can be designed in parallel, but
+it produces only a rate determination. It cannot produce a CIT
+calculation without accounting-period profit data. The accounting
+foundation is the binding constraint.
+
+**What this block includes:**
+
+| Component | Description | Depends on |
+|-----------|-------------|------------|
+| GATE A | Entity accounting boundary decision (single-entity vs. multi-entity scoping). | — |
+| GATE B | Money-precision decision (integer kobo vs. decimal). | — |
+| Chart of accounts | Account categories: revenue, expense, asset, liability, equity. Entity-scoped. | GATE A |
+| Journal/posting kernel | Balanced double-entry postings. Source transactions → journal entries. Posted journals are immutable. | Chart of accounts, GATE B |
+| Accounting-period model | Periods with planned → open → closed → locked states. Period scoping per GATE A. Back-dated postings rejected for closed periods. | GATE A |
+
+**What this block does NOT include:**
+
+- Expense classification or tax treatment (Prerequisite 2 downstream).
+- Revenue recognition policy (Prerequisite 3).
+- Income-statement computation (Prerequisite 4).
+- Fixed-asset register or depreciation (Prerequisite 5).
+- Company classification fields (Prerequisite 6).
+
+### Full implementation sequence
+
+| Order | Block | Prerequisite | Depends on | Waterfall Phase |
+|-------|-------|-------------|------------|-----------------|
+| 1 | A | Accounting foundation core | GATE A, GATE B | Phase 0–1 |
+| 2 | B | Expense accounting consumption | A (posting kernel, chart of accounts) | Phase 1 |
+| 3 | C | Accounting periods + revenue recognition | A (period model) | Phase 1 |
+| 4 | D | Income statement / P&L | B, C | Phase 1 |
+| 5 | E | Fixed-asset register + purchase→asset path | A (posting kernel) | Phase 1 |
+| 6 | F | Accounting depreciation | E | Phase 1 |
+| 7 | G | Company classification | A (GATE A) | Phase 0–1 |
+| 8 | H | Tax-adjustment layer | D, F | Phase 2 |
+| 9 | I | Capital allowances (First Schedule) | E, statutory rules | Phase 2–3 |
+| 10 | J | Loss register | D | Phase 2 |
+| 11 | K | CIT calculation | H, I, J, G | Phase 3 |
+| 12 | L | NTAA deadlines | External | Phase 3–4 |
+| 13 | M | Compliance / filing | K, L | Phase 4 |
+
+---
+
+## Data Sufficiency for CIT
+
+For each CIT input, the current status and what is needed:
+
+| CIT input | Current status | What is needed |
+|-----------|---------------|----------------|
+| Revenue | Invoice amounts exist. Not accrual-basis. | Accounting-period revenue from posted journal entries (Block D). |
+| Expenses | `tax_input_entries` captures individual entries. Not aggregated. Not classified for accounting/tax. | Source transactions → accounting consumption → posted journal entries by period (Block B). Tax treatment is a separate downstream layer (Block H). |
+| Accounting profit | Missing. | Income-statement computation: revenue minus expenses per accounting period (Block D). |
+| Tax adjustments | Missing. | Add-backs (depreciation, capital expenditure, private expenses, penalties, taxes on profits, unapproved pensions) and deductions (bad debts, stock losses, pre-commencement expenses). Computed in the tax-adjustment layer (Block H). |
+| Capital allowances | Missing. | Per-asset statutory computation using First Schedule rates (Block I). Separate from accounting depreciation (Block F). |
+| Tax losses | Missing. | Loss register with carry-forward per §27(5): same trade, first year after loss, until recouped (Block J). |
+| Company classification | `cit_category` exists but has wrong enum values. No turnover or fixed-asset data. | Corrected enum, turnover capture, fixed-asset capture, professional-services flag (Block G). |
+| CIT rate | Not computable. | Classification (Block G) → 0% or 30%. |
+| Development levy | Not computable. | Classification (Block G) → 4% if not small. |
+| WHT credits | `wht_receipts` table exists. | Available for offset at filing. Not a blocker for calculation. |
+| Prior payments | `tax_filings` stores `amount_paid`. | Available. Not a blocker. |
+| Filing deadlines | Missing (NTAA absent). | External dependency. Does not block calculation. |
 
 ---
 
@@ -440,38 +672,42 @@ does not require the NTAA. The compliance and filing layers do.
 
 ### Purchases / Purchase Orders (PO)
 
-A PO is a business commitment, not an accounting transaction. It does not
-create an expense, a liability, or a tax consequence at the time of
+A PO is a business commitment, not an accounting transaction. It does
+not create an expense, a liability, or a tax consequence at the time of
 creation.
 
-The PO becomes accounting/tax relevant at specific points:
+The supplier transaction (invoice received, goods/services delivered)
+can result in different accounting treatments depending on its economic
+nature:
 
-| Event | Accounting effect | Tax effect |
-|-------|-------------------|------------|
-| PO created | None. Commitment only. | None. |
-| Goods/services received | Potential accrual: liability recognized if goods received but not yet invoiced. | None until expense is posted. |
-| Supplier invoice received | Expense recognized (accrual basis). Posts to journal: debit expense, credit accounts payable. | Expense becomes a candidate for allowable/disallowable classification per §20/§21. |
-| Payment made | Liability settled. Posts to journal: debit accounts payable, credit cash/bank. | None additional (expense already recognized at invoice). |
-| VAT charged on purchase | VAT input recorded in `tax_input_entries`. | Recoverable VAT per VAT rules. Separate from CIT. |
+| Economic Nature | Accounting Treatment | Tax Treatment |
+|-----------------|---------------------|---------------|
+| Operating expense | Expense in the period. Posts to expense account. | Candidate for allowable/disallowable per §20/§21. |
+| Inventory | Asset on balance sheet. Cost of goods sold when sold. | Stock-loss deduction if applicable (§20). |
+| Fixed asset | Capitalize. Depreciate over useful life. | Capital allowance per First Schedule. |
+| Prepaid / deferred item | Asset on balance sheet. Amortize over benefit period. | Deduction when amortized, subject to §20/§21. |
+
+The economic-nature determination is made at the point of supplier
+invoice receipt (or goods receipt, depending on the recognition
+policy). It is not made at the PO stage.
 
 **Do not treat a PO as automatically being an expense or accounting
-transaction.** The PO is an upstream business event. The expense is
-recognized when the supplier invoice is received (accrual basis) or when
-payment is made (cash basis, if that is the chosen recognition policy).
+transaction.** The PO is an upstream business event. The accounting
+treatment depends on the economic nature of what was acquired.
 
 ### Credit Notes / Refunds
 
-Credit notes reduce revenue. They are accounting transactions that reverse
-or reduce the original invoice's revenue posting.
+Credit notes reduce revenue. They are accounting transactions that
+reverse or reduce the original invoice's revenue posting.
 
 | Event | Accounting effect | Tax effect |
 |-------|-------------------|------------|
 | Credit note issued | Reduces revenue for the period. Posts a reversal or contra entry to the journal. | Reduces accounting profit for the period. Affects CIT. |
 | Refund paid | Cash outflow. Posts to journal: debit revenue/contrary, credit cash/bank. | None additional (revenue already reduced). |
 
-Credit notes must be posted to the same accounting period as the original
-invoice, or to the period in which they are issued (depending on the
-recognition policy). They reduce the revenue figure used for CIT.
+Credit notes must be posted to the same accounting period as the
+original invoice, or to the period in which they are issued (depending
+on the recognition policy). They reduce the revenue figure used for CIT.
 
 ### Other Income
 
@@ -515,7 +751,8 @@ the amount payable to the company but does not reduce CIT liability.
 | WHT and CIT | WHT credits reduce the amount payable when filing CIT, but do not reduce the CIT liability itself. |
 
 WHT does not block CIT. The required interface is:
-1. WHT credits must be available for offset against CIT liability at filing.
+1. WHT credits must be available for offset against CIT liability at
+   filing.
 2. WHT receipts provide evidence for the compliance layer.
 
 ### Accounting → Tax Bridge
@@ -539,122 +776,20 @@ and records statutory adjustments separately.
 ### CIT Calculation
 
 The CIT calculation consumes the bridge outputs and applies statutory
-rates:
-
-```
-Total Profits (from bridge)
-  times CIT Rate (§56: 0% small, 30% other)
-  equals CIT Liability
-    plus Development Levy (§59: 4%, non-small)
-    equals Total Tax Liability
-      minus WHT Credits
-      minus Prior Payments
-      equals Amount Payable / (Refundable)
-```
+rates. See the Conceptual Model section (Stages 1–11) for the full
+sequence.
 
 ### Compliance / Transmission
 
-The compliance layer manages filing, payment, evidence, and reconciliation.
-It consumes CIT calculation outputs and produces compliance positions.
+The compliance layer manages filing, payment, evidence, and
+reconciliation. It consumes CIT calculation outputs and produces
+compliance positions.
 
-The compliance layer is Phase 4 of the Waterfall Roadmap. It depends on:
+The compliance layer is Phase 4 of the Waterfall Roadmap. It depends
+on:
 - CIT calculation (this roadmap).
-- NTAA 2025 deadlines (Prerequisite 6).
+- NTAA 2025 deadlines (Prerequisite 7).
 - Evidence layer (reusable from VAT filing support).
-
----
-
-## Dependency Graph
-
-```
-Prerequisite 1 (Expenses) ─────┐
-                                ├──→ Prerequisite 3 (Income Statement) ──→ Tax Bridge → CIT
-Prerequisite 2 (Periods) ──────┘         │
-                                          │
-Prerequisite 4 (Fixed Assets) ────────────┤
-                                          │
-Prerequisite 5 (Classification) ──────────┤
-                                          │
-Prerequisite 6 (NTAA) ────────────────────┘ (blocks compliance, not calculation)
-```
-
-### What can proceed in parallel
-
-- Prerequisites 1, 2, 4, and 5 can be designed in parallel.
-- Prerequisite 6 is an external dependency (human action).
-- Statutory-source acquisition (First Schedule rates, Presidential Order
-  status) can proceed in parallel with all prerequisites.
-
-### What must be sequential
-
-1. Prerequisite 2 (periods) must exist before Prerequisite 3 (income
-   statement) can aggregate revenue and expenses by period.
-2. Prerequisites 1 and 2 must exist before Prerequisite 3 can compute
-   accounting profit.
-3. Prerequisite 4 (fixed assets) must exist before the tax bridge can
-   compute capital allowances.
-4. Prerequisite 5 (classification) must exist before CIT rates can be
-   applied.
-5. All prerequisites must exist before CIT can be computed.
-
----
-
-## Implementation Sequence
-
-### After Increment 10: First Practical Block
-
-The first practical implementation block after Increment 10 is:
-
-**Block A: Company Classification Capture (Prerequisite 5)**
-
-This is the smallest, most independent block. It requires:
-- Correct the `cit_category` enum (remove `medium`, `exempt`).
-- Add classification fields to `tax_settings`.
-- Implement classification logic.
-
-It has no dependencies on other prerequisites. It can be implemented
-immediately after Increment 10. It unblocks CIT rate determination.
-
-### Full implementation sequence
-
-| Order | Block | Prerequisite | Depends on | Waterfall Phase |
-|-------|-------|-------------|------------|-----------------|
-| 1 | B5.1–B5.4 | Company classification | GATE A | Phase 0 |
-| 2 | B2.1–B2.4 | Accounting periods | GATE A, GATE B | Phase 1 |
-| 3 | B1.1–B1.2 | Expense classification | Chart of accounts | Phase 1 |
-| 4 | B4.1 | Fixed-asset register | Phase 1 | Phase 1 |
-| 5 | B4.2 | Accounting depreciation | B4.1, posting kernel | Phase 1 |
-| 6 | B3.1–B3.2 | Income statement | B2.3, B1.3, posting kernel | Phase 1 |
-| 7 | B3.3 | Accounting-profit figure | B3.2 | Phase 1 |
-| 8 | B1.3–B1.4 | Expense aggregation | B2.3, B3.2 | Phase 1 |
-| 9 | B4.3 | Capital allowances | B4.1, statutory rules | Phase 2–3 |
-| 10 | B4.4 | Depreciation add-back + capital-allowance deduction | B4.2, B4.3 | Phase 2 |
-| 11 | B4.5 | Disposal balancing adjustments | B4.1, B4.3 | Phase 2 |
-| 12 | Tax bridge | Accounting-to-tax transformation | B3.3, B4.4, loss register | Phase 2 |
-| 13 | CIT calculation | Rate application + levy | Bridge output, B5.3 | Phase 3 |
-| 14 | B6.1–B6.2 | NTAA deadlines | External | Phase 3–4 |
-| 15 | Compliance | Filing, payment, evidence | CIT calculation, B6.2 | Phase 4 |
-
----
-
-## Data Sufficiency for CIT
-
-For each CIT input, the current status and what is needed:
-
-| CIT input | Current status | What is needed |
-|-----------|---------------|----------------|
-| Revenue | Invoice amounts exist. Not accrual-basis. | Accounting-period revenue from posted journal entries. |
-| Expenses | `tax_input_entries` captures individual entries. Not aggregated. Not classified for accounting/tax. | Period-scoped expense aggregation from posted journal entries with allowable/disallowable classification. |
-| Accounting profit | Missing. | Income-statement computation: revenue minus expenses per accounting period. |
-| Tax adjustments | Missing. | Add-backs (depreciation, capital expenditure, private expenses, penalties, taxes on profits, unapproved pensions) and deductions (bad debts, stock losses, pre-commencement expenses). |
-| Capital allowances | Missing. | Per-asset statutory computation using First Schedule rates. Separate from accounting depreciation. |
-| Tax losses | Missing. | Loss register with carry-forward per §27(5): same trade, first year after loss, until recouped. |
-| Company classification | `cit_category` exists but has wrong enum values. No turnover or fixed-asset data. | Corrected enum, turnover capture, fixed-asset capture, professional-services flag. |
-| CIT rate | Not computable. | Classification (Prerequisite 5) → 0% or 30%. |
-| Development levy | Not computable. | Classification (Prerequisite 5) → 4% if not small. |
-| WHT credits | `wht_receipts` table exists. | Available for offset at filing. Not a blocker for calculation. |
-| Prior payments | `tax_filings` stores `amount_paid`. | Available. Not a blocker. |
-| Filing deadlines | Missing (NTAA absent). | External dependency. Does not block calculation. |
 
 ---
 
@@ -675,17 +810,78 @@ The following capabilities can proceed independently of CIT readiness:
 
 ## Changes Made
 
-None. This report changed no file. This report is the only new file.
+This revision corrected the following architectural issues in the
+baseline document:
+
+1. **Preserved Record Capture boundary.** Removed proposals to add
+   accounting-classification or tax-classification fields to
+   `tax_input_entries`. Record Capture remains factual at capture.
+   Classification is a downstream layer.
+
+2. **Reworked expense roadmap.** Defined the accounting consumption
+   layer and tax treatment layer as separate downstream components.
+   The expense source transaction flows through: source → accounting
+   consumption → journal posting → period assignment → tax treatment.
+
+3. **Reworked purchase/PO architecture.** Defined the economic-nature
+   determination (operating expense, inventory, fixed asset, prepaid,
+   other) as a decision made at supplier-invoice level, not at PO
+   level. A PO is a commitment, not an expense.
+
+4. **Connected purchases to fixed assets.** Showed the single
+   acquisition path: PO → supplier transaction → economic-nature
+   determination → fixed asset (when applicable) → asset register →
+   accounting depreciation → tax capital allowance. No two independent
+   acquisition paths.
+
+5. **Revised the dependency graph.** The accounting foundation
+   (Prerequisite 1) is now the base node. All other prerequisites
+   depend on it. The graph reflects actual dependency ordering.
+
+6. **Revised the first implementation block.** Block A is now the
+   accounting foundation core (journal kernel, chart of accounts,
+   period model), not company classification. The accounting foundation
+   is the binding constraint: without it, no other prerequisite can be
+   implemented.
+
+7. **Preserved the accounting foundation architecture.** Respects
+   entity-scoped accounting, accounting periods, chart of accounts,
+   journal/posting kernel, source-transaction boundary, immutable
+   posted journals, and period controls as defined in the Accounting
+   Foundation Blueprint (v1).
+
+8. **Fixed the CIT formula language.** Rewrote the statutory
+   calculation flow as a 11-stage conceptual model with clear stage
+   names. Each stage is labeled with its statutory basis. The model is
+   marked as a concept model, not an implementation-ready formula.
+
+9. **Preserved statutory uncertainty.** NTAA 2025 deadlines, WHT rates,
+   Presidential Order status, and unverified capital-allowance rates
+   remain explicitly marked as unresolved authoritative-source
+   dependencies.
+
+10. **Fixed terminology.** Distinguished NTA 2025 from NTAA 2025
+    consistently throughout.
+
+11. **Kept Increment 10 closed.** No proposals to modify or extend
+    Record Capture.
+
+12. **Maintained adaptive UI/UX authority.** The
+    adaptive-uiux-alignment.md document remains first-class
+    implementation authority for all UI/workflow requirements.
 
 ## Verification
 
-- `git status` before producing this report: recorded above.
-- `git status` after producing this report: only this new file under
-  `docs/Reports/taxation-made-easy/`.
-- No application source file, database file, migration, PRD, technical plan,
-  or configuration file was modified.
-- `bun run build`, `bun run typecheck`, `bun run audit:load`, and lint were
-  not run, per the task's hardware gate.
+- `git status` before producing this report: only pre-existing
+  uncommitted changes from other agents plus the original untracked
+  roadmap file.
+- `git status` after producing this report: only the same pre-existing
+  changes plus this revised untracked roadmap file. No staged or
+  modified files were created or changed.
+- No application source file, database file, migration, PRD, technical
+  plan, or configuration file was modified.
+- `bun run build`, `bun run typecheck`, `bun run audit:load`, and lint
+  were not run, per the task's hardware gate.
 
 ## Risks or Limitations
 
@@ -696,17 +892,17 @@ None. This report changed no file. This report is the only new file.
   verification requires the primary NTA 2025 source text, which is in the
   repository.
 - The `cit_category` enum values (`medium`, `exempt`) conflict with the
-  NTA 2025. The correction (B5.1) is a prerequisite for accurate CIT
+  NTA 2025. The correction (Block G) is a prerequisite for accurate CIT
   treatment.
-- This roadmap does not implement anything. It defines what must be built
-  and in what order. Implementation begins with Block A (company
-  classification) after Increment 10.
+- The accounting foundation (Block A) is a substantial architectural
+  capability. It is the correct first block because all other blocks
+  depend on it, but it represents significant implementation effort.
 
 ## Deferred Work
 
-- Implement Block A (company classification capture) as the first practical
+- Implement Block A (accounting foundation core) as the first practical
   block after Increment 10.
 - Source NTAA 2025 primary text and add to `NRS-docs/`.
 - Verify First Schedule capital-allowance rates from primary source.
-- Proceed with Waterfall Roadmap Phase 0 (architecture gates) and Phase 1
-  (accounting foundation).
+- Proceed with Waterfall Roadmap Phase 0 (architecture gates) and
+  Phase 1 (accounting foundation).
