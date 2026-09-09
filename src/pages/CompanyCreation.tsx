@@ -15,11 +15,36 @@ import {
   InitialCompanyError,
   slugify,
 } from '@/domain/tenant/tenantCreation'
+import { isUniqueViolation, isPermissionError } from '@/domain/tenant/tenantGate'
 
 type Phase = 'form' | 'creating' | 'provisioning' | 'success' | 'error'
 
 const POLL_INTERVAL_MS = 2000
 const MAX_POLL_ATTEMPTS = 15
+
+/**
+ * Map backend failures to user-facing copy. Raw Supabase/Postgres
+ * details stay in the console for developers, never in the UI.
+ */
+function toFriendlyError(e: unknown): string {
+  if (isUniqueViolation(e)) {
+    return 'A company with a similar name already exists. Try a different name.'
+  }
+  if (isPermissionError(e)) {
+    return 'You do not have permission to create a company in this workspace.'
+  }
+  const message = String((e as Error)?.message ?? e).toLowerCase()
+  if (
+    message.includes('failed to fetch') ||
+    message.includes('networkerror') ||
+    message.includes('load failed') ||
+    message.includes('network request failed')
+  ) {
+    return "Couldn't reach BigDrops. Check your connection and try again."
+  }
+  console.error('[company-creation]', e)
+  return "Couldn't create the company. Try again."
+}
 
 export default function CompanyCreation() {
   const workspaceCtx = useWorkspace()
@@ -27,6 +52,9 @@ export default function CompanyCreation() {
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState('')
   const [phase, setPhase] = useState<Phase>('creating')
+  // True once provisioning finished but exposure could not be confirmed
+  // within the wait: still finalizing, not failed. Gate holds meanwhile.
+  const [extendedWait, setExtendedWait] = useState(false)
   const cancelledRef = useRef(false)
 
   const workspaceId = workspaceCtx.workspace?.id
@@ -77,6 +105,7 @@ export default function CompanyCreation() {
     if (cancelledRef.current) return false
     entityCtx.selectEntity(entityId)
     entityCtx.refresh()
+    if (!exposed) setExtendedWait(true)
     return exposed
   }
 
@@ -99,6 +128,7 @@ export default function CompanyCreation() {
 
     const runAutoBootstrap = async () => {
       setError('')
+      setExtendedWait(false)
       setPhase('creating')
       try {
         const result = await ensureInitialCompany({
@@ -155,6 +185,7 @@ export default function CompanyCreation() {
           // on its provisioning screen; never claim the company is active.
           entityCtx.selectEntity(result.entity.id)
           entityCtx.refresh()
+          setExtendedWait(true)
         }
       } catch (e) {
         if (!active || cancelledRef.current) return
@@ -177,6 +208,7 @@ export default function CompanyCreation() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
+    setExtendedWait(false)
 
     if (!workspaceId) {
       setError('No active workspace. Please try again.')
@@ -240,11 +272,12 @@ export default function CompanyCreation() {
         // Provisioning still running — select entity, tenant gate handles it
         entityCtx.selectEntity(entity.id)
         entityCtx.refresh()
+        setExtendedWait(true)
       }
     } catch (e) {
       if (cancelledRef.current) return
       setPhase('error')
-      setError(String((e as Error)?.message ?? e))
+      setError(toFriendlyError(e))
     }
   }
 
@@ -302,6 +335,7 @@ export default function CompanyCreation() {
                   value={displayName}
                   onChange={updateName}
                   placeholder="e.g. Tunde and Sons Limited"
+                  aria-describedby={error ? 'company-creation-error' : undefined}
                   className="h-12 rounded-xl border-black/10 bg-background pl-4 text-base shadow-none"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -310,7 +344,11 @@ export default function CompanyCreation() {
               </div>
 
               {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div
+                  role="alert"
+                  id="company-creation-error"
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                >
                   {error}
                 </div>
               )}
@@ -334,16 +372,23 @@ export default function CompanyCreation() {
 
           {/* Processing state */}
           {isProcessing && (
-            <div className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
+            <div
+              role="status"
+              className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+            >
+              <Loader2 className="h-5 w-5 animate-spin text-sky-600" aria-hidden="true" />
               <div>
                 <div className="text-sm font-semibold text-slate-800">
                   {phase === 'creating'
                     ? 'Creating company…'
-                    : 'Setting up schema…'}
+                    : extendedWait
+                      ? 'Taking longer than expected…'
+                      : 'Setting up schema…'}
                 </div>
                 <div className="text-xs text-slate-500">
-                  {displayName.trim()}
+                  {extendedWait
+                    ? 'Still finalizing access. You can wait — the app continues automatically.'
+                    : displayName.trim()}
                 </div>
               </div>
             </div>

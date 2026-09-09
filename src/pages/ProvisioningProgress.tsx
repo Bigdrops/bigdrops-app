@@ -62,7 +62,7 @@ export default function ProvisioningProgress() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div role="status" className="space-y-2">
               <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
                 Setting Up Your Company
               </CardTitle>

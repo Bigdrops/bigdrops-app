@@ -10,6 +10,7 @@ import {
   buildTenantSchemaName,
   slugify,
 } from '@/domain/tenant/tenantCreation'
+import { isUniqueViolation, isPermissionError } from '@/domain/tenant/tenantGate'
 import {
   Sheet,
   SheetContent,
@@ -37,7 +38,34 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
   const [error, setError] = React.useState('')
   const [phase, setPhase] = React.useState<CreationPhase>('form')
   const [createdName, setCreatedName] = React.useState('')
+  // True once provisioning finished but exposure could not be confirmed
+  // within the wait: still finalizing, not failed. Gate holds meanwhile.
+  const [extendedWait, setExtendedWait] = React.useState(false)
   const cancelledRef = React.useRef(false)
+
+  /**
+   * Map backend failures to user-facing copy. Raw Supabase/Postgres
+   * details stay in the console for developers, never in the UI.
+   */
+  const toFriendlyError = (e: unknown): string => {
+    if (isUniqueViolation(e)) {
+      return 'A company with a similar name already exists. Try a different name.'
+    }
+    if (isPermissionError(e)) {
+      return 'You do not have permission to create a company in this workspace.'
+    }
+    const message = String((e as Error)?.message ?? e).toLowerCase()
+    if (
+      message.includes('failed to fetch') ||
+      message.includes('networkerror') ||
+      message.includes('load failed') ||
+      message.includes('network request failed')
+    ) {
+      return "Couldn't reach BigDrops. Check your connection and try again."
+    }
+    console.error('[company-creation-sheet]', e)
+    return "Couldn't create the company. Try again."
+  }
 
   // Reset form when sheet opens
   React.useEffect(() => {
@@ -46,6 +74,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
       setError('')
       setPhase('form')
       setCreatedName('')
+      setExtendedWait(false)
       cancelledRef.current = false
     }
   }, [open])
@@ -104,6 +133,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
       if (cancelledRef.current) return false
       selectEntity(entityId)
       refreshEntity()
+      if (!exposed) setExtendedWait(true)
       return exposed
     },
     [workspace?.slug, selectEntity, refreshEntity],
@@ -124,6 +154,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
 
     const name = displayName.trim()
     setCreatedName(name)
+    setExtendedWait(false)
     setPhase('creating')
 
     try {
@@ -180,11 +211,12 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
         // Provisioning is still running — select entity and let the tenant gate hold it
         selectEntity(entity.id)
         refreshEntity()
+        setExtendedWait(true)
       }
     } catch (e) {
       if (cancelledRef.current) return
       setPhase('error')
-      setError(String((e as Error)?.message ?? e))
+      setError(toFriendlyError(e))
     }
   }
 
@@ -221,16 +253,16 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
                   : `Add a new company to ${workspaceName}.`}
             </SheetDescription>
           </div>
-          {!isProcessing && (
+          {!isProcessing || extendedWait ? (
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="grid h-7 w-7 place-items-center rounded-full bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]"
+              className="grid h-7 w-7 min-h-[44px] min-w-[44px] place-items-center rounded-full bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]"
               aria-label="Close"
             >
               <span className="text-[11px] font-[800]">×</span>
             </button>
-          )}
+          ) : null}
         </div>
 
         {/* Success state */}
@@ -256,7 +288,10 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
         {/* Processing state */}
         {isProcessing && (
           <div className="px-5 pb-6 pt-2">
-            <div className="flex items-center gap-3 rounded-xl border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-4 py-3">
+            <div
+              role="status"
+              className="flex items-center gap-3 rounded-xl border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-4 py-3"
+            >
               <Loader2
                 className="h-5 w-5 shrink-0 animate-spin text-[hsl(var(--primary))]"
                 aria-hidden="true"
@@ -265,10 +300,14 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
                 <div className="text-[12px] font-[700] text-[hsl(var(--ink))]">
                   {phase === 'creating'
                     ? 'Creating company…'
-                    : 'Setting up schema…'}
+                    : extendedWait
+                      ? 'Taking longer than expected…'
+                      : 'Setting up schema…'}
                 </div>
                 <div className="text-[10px] text-[hsl(var(--ink-3))]">
-                  {createdName}
+                  {extendedWait
+                    ? 'Still finalizing access. You can wait or close — the app continues automatically.'
+                    : createdName}
                 </div>
               </div>
             </div>
@@ -278,7 +317,10 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
         {/* Error state */}
         {phase === 'error' && (
           <div className="px-5 pb-6 pt-2 space-y-3">
-            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <div
+              role="alert"
+              className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3"
+            >
               <AlertCircle
                 className="h-5 w-5 shrink-0 text-red-600"
                 aria-hidden="true"
@@ -317,6 +359,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="e.g. Tunde and Sons Limited"
                 autoFocus
+                aria-describedby={error ? 'create-company-error' : undefined}
                 className="h-11 w-full rounded-xl border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-3.5 text-[13px] font-[600] text-[hsl(var(--ink))] placeholder:text-[hsl(var(--ink-3))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30 focus:border-[hsl(var(--primary))]"
               />
               <p className="mt-1.5 text-[10px] text-[hsl(var(--ink-3))]">
@@ -325,7 +368,11 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
             </div>
 
             {error ? (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12px] font-[600] text-red-700">
+              <div
+                role="alert"
+                id="create-company-error"
+                className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12px] font-[600] text-red-700"
+              >
                 {error}
               </div>
             ) : null}
