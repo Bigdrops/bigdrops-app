@@ -6,6 +6,8 @@ import {
   createEntity,
   provisionEntity,
   getEntityProvisioningStatus,
+  waitForTenantExposure,
+  buildTenantSchemaName,
   slugify,
 } from '@/domain/tenant/tenantCreation'
 import {
@@ -87,6 +89,26 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
     [],
   )
 
+  /**
+   * Confirm the tenant's PostgREST access path before presenting the
+   * company as usable. provisioning 'ready' only means the schema exists;
+   * exposure completes asynchronously. Returns true only when exposure is
+   * confirmed — callers must not show success otherwise. Always selects
+   * the entity so the TenantGate keeps holding on its provisioning screen
+   * while exposure completes in the background.
+   */
+  const confirmExposureAndSelect = React.useCallback(
+    async (entityId: string, entitySlug: string | null): Promise<boolean> => {
+      const schema = buildTenantSchemaName(workspace?.slug, entitySlug)
+      const exposed = await waitForTenantExposure(schema)
+      if (cancelledRef.current) return false
+      selectEntity(entityId)
+      refreshEntity()
+      return exposed
+    },
+    [workspace?.slug, selectEntity, refreshEntity],
+  )
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setError('')
@@ -127,12 +149,14 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
       }
 
       if (provisionResult.status === 'ready') {
-        // Provisioning completed synchronously — rare but possible
-        selectEntity(entity.id)
-        refreshEntity()
-        setPhase('success')
-        feedback.success('Company created', { description: `${name} is now active.` })
-        setTimeout(() => onOpenChange(false), 1200)
+        // Provisioning completed synchronously — still confirm exposure
+        // before claiming the company is active.
+        if (await confirmExposureAndSelect(entity.id, entity.slug)) {
+          if (cancelledRef.current) return
+          setPhase('success')
+          feedback.success('Company created', { description: `${name} is now active.` })
+          setTimeout(() => onOpenChange(false), 1200)
+        }
         return
       }
 
@@ -142,24 +166,20 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
       if (cancelledRef.current) return
 
       if (pollResult.status === 'ready') {
-        // Provisioning complete — select entity and refresh
-        selectEntity(entity.id)
-        refreshEntity()
-        setPhase('success')
-        feedback.success('Company created', { description: `${name} is now active.` })
-        setTimeout(() => onOpenChange(false), 1200)
+        // Provisioning complete — confirm exposure before claiming active.
+        if (await confirmExposureAndSelect(entity.id, entity.slug)) {
+          if (cancelledRef.current) return
+          setPhase('success')
+          feedback.success('Company created', { description: `${name} is now active.` })
+          setTimeout(() => onOpenChange(false), 1200)
+        }
       } else if (pollResult.status === 'failed') {
         setPhase('error')
         setError(pollResult.error || 'Provisioning failed. The company was created but is not ready to use.')
       } else if (pollResult.status === 'timeout') {
-        // Provisioning is still running — select entity and let the tenant gate handle it
+        // Provisioning is still running — select entity and let the tenant gate hold it
         selectEntity(entity.id)
         refreshEntity()
-        setPhase('success')
-        feedback.success('Company created', {
-          description: `${name} is still being set up. It will be ready shortly.`,
-        })
-        setTimeout(() => onOpenChange(false), 1200)
       }
     } catch (e) {
       if (cancelledRef.current) return

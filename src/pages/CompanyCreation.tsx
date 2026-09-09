@@ -10,6 +10,8 @@ import {
   provisionEntity,
   getEntityProvisioningStatus,
   ensureInitialCompany,
+  waitForTenantExposure,
+  buildTenantSchemaName,
   InitialCompanyError,
   slugify,
 } from '@/domain/tenant/tenantCreation'
@@ -58,6 +60,26 @@ export default function CompanyCreation() {
     return { status: 'timeout' }
   }
 
+  /**
+   * Confirm the tenant's PostgREST access path before presenting the
+   * company as usable. provisioning 'ready' only means the schema exists;
+   * exposure completes asynchronously. On success selects the entity and
+   * reports true. On timeout selects the entity (the TenantGate keeps
+   * holding on its provisioning screen via the exposure-aware gate) and
+   * reports false — the caller must NOT claim the company is active.
+   */
+  const confirmExposureAndSelect = async (
+    entityId: string,
+    entitySlug: string | null,
+  ): Promise<boolean> => {
+    const schema = buildTenantSchemaName(workspaceCtx.workspace?.slug, entitySlug)
+    const exposed = await waitForTenantExposure(schema)
+    if (cancelledRef.current) return false
+    entityCtx.selectEntity(entityId)
+    entityCtx.refresh()
+    return exposed
+  }
+
   useEffect(() => {
     return () => {
       cancelledRef.current = true
@@ -102,9 +124,10 @@ export default function CompanyCreation() {
         if (!active || cancelledRef.current) return
 
         if (status.status === 'ready') {
-          entityCtx.selectEntity(result.entity.id)
-          entityCtx.refresh()
-          setPhase('success')
+          if (await confirmExposureAndSelect(result.entity.id, result.entity.slug)) {
+            if (!active || cancelledRef.current) return
+            setPhase('success')
+          }
           return
         }
         if (status.status === 'failed') {
@@ -117,9 +140,10 @@ export default function CompanyCreation() {
         if (!active || cancelledRef.current) return
 
         if (pollResult.status === 'ready') {
-          entityCtx.selectEntity(result.entity.id)
-          entityCtx.refresh()
-          setPhase('success')
+          if (await confirmExposureAndSelect(result.entity.id, result.entity.slug)) {
+            if (!active || cancelledRef.current) return
+            setPhase('success')
+          }
         } else if (pollResult.status === 'failed') {
           setPhase('error')
           setError(
@@ -127,9 +151,10 @@ export default function CompanyCreation() {
               'Provisioning failed. The company was created but is not ready to use.',
           )
         } else if (pollResult.status === 'timeout') {
+          // Provisioning still running — select so the tenant gate holds
+          // on its provisioning screen; never claim the company is active.
           entityCtx.selectEntity(result.entity.id)
           entityCtx.refresh()
-          setPhase('success')
         }
       } catch (e) {
         if (!active || cancelledRef.current) return
@@ -188,9 +213,10 @@ export default function CompanyCreation() {
       }
 
       if (provisionResult.status === 'ready') {
-        entityCtx.selectEntity(entity.id)
-        entityCtx.refresh()
-        setPhase('success')
+        if (await confirmExposureAndSelect(entity.id, entity.slug)) {
+          if (cancelledRef.current) return
+          setPhase('success')
+        }
         return
       }
 
@@ -200,9 +226,10 @@ export default function CompanyCreation() {
       if (cancelledRef.current) return
 
       if (pollResult.status === 'ready') {
-        entityCtx.selectEntity(entity.id)
-        entityCtx.refresh()
-        setPhase('success')
+        if (await confirmExposureAndSelect(entity.id, entity.slug)) {
+          if (cancelledRef.current) return
+          setPhase('success')
+        }
       } else if (pollResult.status === 'failed') {
         setPhase('error')
         setError(
@@ -213,7 +240,6 @@ export default function CompanyCreation() {
         // Provisioning still running — select entity, tenant gate handles it
         entityCtx.selectEntity(entity.id)
         entityCtx.refresh()
-        setPhase('success')
       }
     } catch (e) {
       if (cancelledRef.current) return

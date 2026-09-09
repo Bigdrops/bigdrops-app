@@ -54,6 +54,7 @@ export default function TenantGate({ children }: { children: ReactNode }) {
       entityError: entityCtx.error,
       entityCount: entityCtx.entityCount,
       provisioningStatus: entityCtx.provisioningStatus,
+      schemaExposed: entityCtx.schemaExposed,
     }),
     [
       workspaceCtx.isLoading,
@@ -67,6 +68,7 @@ export default function TenantGate({ children }: { children: ReactNode }) {
       entityCtx.error,
       entityCtx.entityCount,
       entityCtx.provisioningStatus,
+      entityCtx.schemaExposed,
     ],
   )
 

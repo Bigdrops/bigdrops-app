@@ -59,6 +59,20 @@ export function buildInitialWorkspaceInput(
   return { name, slug: `ws-${userId.slice(0, 8).toLowerCase()}` }
 }
 
+/**
+ * Derive the tenant schema name exactly the way provisioning does
+ * (_prov_get_schema_name: 'entity_' || workspace_slug || '_' || entity_slug).
+ * Pure: lets creation flows poll the exposure probe for the new company
+ * before presenting it as usable.
+ */
+export function buildTenantSchemaName(
+  workspaceSlug: string | null | undefined,
+  entitySlug: string | null | undefined,
+): string | null {
+  if (!workspaceSlug || !entitySlug) return null
+  return `entity_${workspaceSlug}_${entitySlug}`
+}
+
 /** Extract a readable message from any thrown value. */
 export function errorMessage(error: unknown): string {
   return String((error as Error)?.message ?? error)
@@ -146,6 +160,14 @@ export interface TenantGateInput {
   entityError: string | null
   entityCount: number
   provisioningStatus: ProvisioningStatus | null
+  /**
+   * PostgREST exposure probe result for the active entity's schema.
+   * provisioning 'ready' alone does NOT mean usable: the tenant's
+   * PostgREST-backed access path is confirmed separately. false/null
+   * holds the gate on 'provisioning'. undefined preserves the legacy
+   * provisioning-only behavior for callers that do not probe yet.
+   */
+  schemaExposed?: boolean | null
 }
 
 const STALLED_PHASES: ReadonlySet<ProvisioningStatus> = new Set(['purging', 'purged'])
@@ -176,6 +198,10 @@ export function resolveGatePhase(input: TenantGateInput): TenantGatePhase {
 
   switch (input.provisioningStatus) {
     case 'ready':
+      // Ready means the schema exists, NOT that PostgREST serves it.
+      // Exposure completes asynchronously after provisioning, so hold
+      // on 'provisioning' until the exposure probe confirms usability.
+      if (input.schemaExposed === false || input.schemaExposed === null) return 'provisioning'
       return 'ready'
     case 'failed':
       return 'provisioning-failed'

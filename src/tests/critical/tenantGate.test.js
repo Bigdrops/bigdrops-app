@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { resolveGatePhase, isProvisioningStatus, slugify } from '../../domain/tenant/tenantGate.ts'
+import { resolveGatePhase, isProvisioningStatus, slugify, buildTenantSchemaName } from '../../domain/tenant/tenantGate.ts'
 
 const base = {
   workspaceLoading: false,
@@ -75,6 +75,27 @@ test('gate maps provisioning status onto provisioning phases', () => {
   assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'failed' }), 'provisioning-failed')
   assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'purging' }), 'blocked')
   assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'purged' }), 'unavailable')
+})
+
+test('gate holds provisioning-ready on provisioning until exposure is confirmed', () => {
+  // provisioning ready alone is NOT usable: PostgREST exposure completes
+  // asynchronously. Unconfirmed (false) or unchecked (null) holds the gate.
+  assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'ready', schemaExposed: true }), 'ready')
+  assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'ready', schemaExposed: false }), 'provisioning')
+  assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'ready', schemaExposed: null }), 'provisioning')
+  // Callers that do not probe yet keep the legacy provisioning-only behavior.
+  assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'ready', schemaExposed: undefined }), 'ready')
+  assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'ready' }), 'ready')
+  // Exposure never overrides a failed provisioning terminal state.
+  assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'failed', schemaExposed: true }), 'provisioning-failed')
+  assert.equal(resolveGatePhase({ ...base, provisioningStatus: 'failed', schemaExposed: false }), 'provisioning-failed')
+})
+
+test('buildTenantSchemaName derives the provisioning schema name', () => {
+  assert.equal(buildTenantSchemaName('bigdrops-main', 'adel'), 'entity_bigdrops-main_adel')
+  assert.equal(buildTenantSchemaName(null, 'adel'), null)
+  assert.equal(buildTenantSchemaName('bigdrops-main', null), null)
+  assert.equal(buildTenantSchemaName('', ''), null)
 })
 
 test('isProvisioningStatus rejects unknown values', () => {

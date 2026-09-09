@@ -253,6 +253,13 @@ type EntityContextValue = {
   expectedSchema: string | null
   schemaName: string | null
   schemaSource: SchemaResolutionSource | null
+  /**
+   * PostgREST exposure probe result for expectedSchema. true = served,
+   * false = not yet served, null = unchecked (probe pending or N/A).
+   * Consumed by TenantGate so provisioning-ready alone never renders
+   * the app as usable before exposure is confirmed.
+   */
+  schemaExposed: boolean | null
   provisioningStatus: ProvisioningStatus | null
   provisioningError: string | null
   tenantClient: TenantClient
@@ -447,6 +454,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       expectedSchema,
       schemaName,
       schemaSource,
+      schemaExposed: isExposed,
       provisioningStatus,
       provisioningError,
       tenantClient,
@@ -463,6 +471,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       expectedSchema,
       schemaName,
       schemaSource,
+      isExposed,
       provisioningStatus,
       provisioningError,
       tenantClient,

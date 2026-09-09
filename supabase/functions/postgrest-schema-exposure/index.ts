@@ -217,6 +217,57 @@ Deno.serve(async (req) => {
       }
 
       console.log(`PATCH successful. Total schemas: ${finalSchemaArray.length}`);
+
+      // 7b. Confirm the PATCH took effect before marking processed.
+      //     A 200 PATCH without the schema in the effective config must NOT
+      //     clear the queue row — release its lock so a later invocation
+      //     retries instead of stranding the tenant as "processed".
+      const verifyRes = await fetch(REST_API, {
+        method: "GET",
+        headers,
+      });
+
+      if (!verifyRes.ok) {
+        const errBody = await verifyRes.text();
+        console.error(`Management API verify GET failed (${verifyRes.status}):`, errBody);
+        await supabase.rpc("release_pgrst_locks", { p_ids: claimedRows.map((r) => r.id) });
+        return new Response(
+          JSON.stringify({ error: "Exposure verify GET failed", status: verifyRes.status, body: errBody }),
+          { status: 500, headers }
+        );
+      }
+
+      const verifyConfig = await verifyRes.json();
+      const verifySchemasStr: string = verifyConfig.db_schema || "";
+      const verifySchemas = new Set(
+        verifySchemasStr ? verifySchemasStr.split(",").map((s: string) => s.trim()).filter(Boolean) : []
+      );
+
+      const unconfirmed = validCandidates.filter((s) => !verifySchemas.has(s));
+      if (unconfirmed.length > 0) {
+        console.error(`Exposure unconfirmed for: ${unconfirmed.join(", ")} — releasing for retry`);
+        const unconfirmedIds = claimedRows
+          .filter((r) => unconfirmed.includes(r.schema_name))
+          .map((r) => r.id);
+        await supabase.rpc("release_pgrst_locks", { p_ids: unconfirmedIds });
+        for (const row of claimedRows) {
+          if (unconfirmed.includes(row.schema_name)) continue;
+          await supabase
+            .from("_pending_postgrest_schemas")
+            .update({ processed: true, locked_at: null })
+            .eq("id", row.id);
+        }
+        return new Response(
+          JSON.stringify({
+            processed: validCandidates.length - unconfirmed.length,
+            skipped: invalidEntries.length,
+            unconfirmed,
+            total_schemas: finalSchemaArray.length,
+            pending_remaining: unconfirmed.length,
+          }),
+          { headers }
+        );
+      }
     }
 
     // 8. Mark successfully processed rows.

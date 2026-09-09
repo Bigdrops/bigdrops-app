@@ -8,13 +8,14 @@ import {
   slugify,
   buildInitialCompanyInput,
   buildInitialWorkspaceInput,
+  buildTenantSchemaName,
   errorMessage as describeError,
   isPermissionError,
   isUniqueViolation,
   resolveWorkspaceBootstrapDecision,
   mapCreatedWorkspaceStatus,
 } from './tenantGate'
-export { slugify, buildInitialCompanyInput, buildInitialWorkspaceInput }
+export { slugify, buildInitialCompanyInput, buildInitialWorkspaceInput, buildTenantSchemaName }
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/postgrest-schema-exposure`
 
@@ -140,6 +141,37 @@ export async function isTenantSchemaExposed(schemaName: string): Promise<boolean
   } catch (error) {
     console.warn('[tenancy] Schema exposure check failed:', error)
     return false
+  }
+}
+
+/**
+ * Wait until the tenant's PostgREST-backed access path is confirmed usable.
+ *
+ * provisioning 'ready' only means the schema exists; exposure completes
+ * asynchronously via the durable queue + Edge Function. Call this after
+ * provisioning succeeds and BEFORE presenting the company as usable, so a
+ * new company is never routed into normal operations while its schema is
+ * still unexposed. Fail-closed: returns false on timeout instead of
+ * assuming exposure — the EntityProvider gate + retry path keeps holding.
+ * The durable queue (not this poll) remains the recovery mechanism.
+ */
+export async function waitForTenantExposure(
+  schemaName: string | null,
+  options?: { timeoutMs?: number; intervalMs?: number },
+): Promise<boolean> {
+  if (!schemaName) return false
+  const timeoutMs = options?.timeoutMs ?? 90000
+  const intervalMs = options?.intervalMs ?? 4000
+  const deadline = Date.now() + timeoutMs
+
+  // Kick exposure immediately; the queue + scheduled recovery still apply
+  // if this trigger is missed (browser closed, no session, network blip).
+  await triggerPostgrestExposure().catch(() => ({ ok: false }))
+
+  for (;;) {
+    if (await isTenantSchemaExposed(schemaName).catch(() => false)) return true
+    if (Date.now() >= deadline) return false
+    await new Promise((r) => setTimeout(r, intervalMs))
   }
 }
 
