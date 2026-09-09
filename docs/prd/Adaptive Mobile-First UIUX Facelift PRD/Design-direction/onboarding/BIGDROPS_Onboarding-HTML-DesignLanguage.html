@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BIGDROPS onboarding design direction B: existing HTML walkthrough translated into the BIGDROPS design language.">
+<title>BIGDROPS Onboarding · Direction B (HTML-derived walkthrough)</title>
+<style>
+:root{
+  --bg:#f0f4f8; --surface:#ffffff; --surface-muted:#e8eef5; --surface-strong:#dbe4ee;
+  --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
+  --line:#e2e8f0; --line-strong:#cbd5e1;
+  --primary:#1e3a5f; --primary-ink:#ffffff; --accent:#60a5fa;
+  --success:#15803d; --info:#1d4ed8; --warning:#b45309;
+  --shadow:0 12px 28px rgba(30,58,95,.10),0 2px 6px rgba(15,23,42,.05);
+  --shadow-float:0 28px 80px rgba(30,58,95,.16);
+}
+html[data-theme="dark"]{
+  --bg:#0f172a; --surface:#1e293b; --surface-muted:#334155; --surface-strong:#475569;
+  --ink:#f1f5f9; --ink-2:#cbd5e1; --ink-3:#64748b;
+  --line:#334155; --line-strong:#475569;
+  --primary:#60a5fa; --primary-ink:#0f172a;
+  --success:#4ade80; --info:#93c5fd; --warning:#fbbf24;
+  --shadow:0 12px 28px rgba(0,0,0,.30),0 2px 6px rgba(0,0,0,.24);
+  --shadow-float:0 28px 80px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100dvh;display:grid;place-items:center;padding:0;-webkit-font-smoothing:antialiased}
+.skiplink{position:absolute;left:-999px;top:0;background:var(--primary);color:var(--primary-ink);padding:12px 18px;border-radius:0 0 12px 0;z-index:99;font-weight:800;font-size:13px}
+.skiplink:focus{left:0}
+.corner{position:fixed;z-index:30;display:flex;gap:8px}
+.corner.tl{top:calc(10px + env(safe-area-inset-top));left:10px}
+.corner.tr{top:calc(10px + env(safe-area-inset-top));right:10px}
+.iconbtn{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-grid;place-items:center;font-size:13px;font-weight:800;cursor:pointer;padding:0 12px}
+button{transition:transform .2s,background .2s}
+button:active{transform:scale(.965)}
+.jump{position:fixed;z-index:30;right:10px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;box-shadow:var(--shadow)}
+.jump span{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--ink-3);text-transform:uppercase;text-align:center}
+.jump button{min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-weight:800;cursor:pointer}
+.jump button[aria-current="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.phone{width:100%;min-height:100dvh;background:var(--surface);position:relative;display:flex;flex-direction:column;overflow:hidden}
+.screen{min-height:100dvh;display:none;flex-direction:column;padding:calc(20px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom))}
+.screen.active{display:flex}
+.top{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+.logo{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--primary);color:var(--primary-ink);font-weight:900;font-size:19px}
+.skip{border:0;background:none;color:var(--ink-3);font-size:14px;cursor:pointer;min-height:44px;min-width:44px;font-family:inherit}
+.dots{display:flex;gap:7px;align-items:center;min-height:44px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--surface-strong)}
+.dots i.on{width:25px;border-radius:8px;background:var(--tone,var(--primary))}
+.hero{flex:1;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.illustration{height:300px;display:grid;place-items:center;position:relative;margin-bottom:10px}
+.glow{position:absolute;width:245px;height:245px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--tone,var(--primary)) 14%,transparent),transparent 68%)}
+.art{position:relative;width:260px;height:230px}
+.card{position:absolute;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+.doc{width:125px;height:158px;left:55px;top:28px;transform:rotate(-7deg)}
+.doc h4{margin:0 0 12px;color:var(--tone,var(--primary));font-size:13px;letter-spacing:.06em}
+.ln{height:7px;background:var(--surface-muted);border-radius:8px;margin:9px 0}
+.ln.short{width:62%}.ln.tone{background:color-mix(in srgb,var(--tone,var(--primary)) 45%,var(--surface))}
+.badge{position:absolute;border-radius:14px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);font-weight:800;color:var(--tone,var(--primary))}
+.b1{right:15px;top:60px}.b2{left:5px;bottom:16px}.b3{right:18px;bottom:6px}
+.truck{position:absolute;left:42px;bottom:22px;width:168px;height:82px;background:var(--tone,var(--primary));border-radius:18px 24px 12px 12px;box-shadow:var(--shadow)}
+.truck::before{content:"";position:absolute;right:-44px;bottom:0;width:54px;height:56px;background:color-mix(in srgb,var(--tone,var(--primary)) 68%,var(--surface));border-radius:9px 16px 12px 8px}
+.wheel{position:absolute;bottom:-12px;width:32px;height:32px;background:var(--ink);border:7px solid var(--surface);border-radius:50%}
+.w1{left:25px}.w2{right:18px}
+.pin{position:absolute;right:35px;top:28px;background:var(--tone,var(--primary));color:#fff;width:52px;height:52px;border-radius:50% 50% 50% 6px;transform:rotate(-45deg);display:grid;place-items:center;font-size:20px}
+.pin span{transform:rotate(45deg)}
+.panelbox{width:228px;height:152px;left:18px;top:44px;background:var(--surface);border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow);padding:20px}
+.panelbox .bar{height:10px;width:80%;background:var(--surface-muted);border-radius:8px;margin:12px 0}
+.panelbox .bar.p{width:55%;background:var(--tone,var(--primary))}
+.gchart{position:absolute;right:16px;bottom:24px;width:88px;height:65px;border-radius:15px;background:color-mix(in srgb,var(--tone,var(--primary)) 13%,var(--surface));border:1px solid var(--line);display:grid;place-items:center;color:var(--tone,var(--primary));font-size:26px;font-weight:800}
+.orbit{position:absolute;inset:18px;border:1px dashed var(--line-strong);border-radius:50%}
+.node{position:absolute;width:48px;height:48px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:grid;place-items:center;font-weight:900;font-size:17px}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;color:var(--tone,var(--primary))}
+h1{font-size:29px;line-height:1.14;letter-spacing:-.02em;margin:0 0 12px;text-wrap:balance}
+.copy{font-size:15px;line-height:1.6;color:var(--ink-2);margin:0;max-width:34ch}
+.actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:20px}
+.primary{border:0;cursor:pointer;color:var(--primary-ink);background:var(--primary);font-weight:800;font-size:15px;font-family:inherit;border-radius:12px;min-height:52px;padding:0 22px;box-shadow:var(--shadow);width:100%}
+.next{width:52px;height:52px;min-width:52px;padding:0;border-radius:50%;border:0;cursor:pointer;background:var(--tone,var(--primary));color:#fff;font-size:22px;box-shadow:var(--shadow);flex:0 0 auto}
+.back{border:0;background:none;color:var(--ink-3);font-size:14px;cursor:pointer;min-height:44px;min-width:44px;font-family:inherit}
+.footer{text-align:center;color:var(--ink-3);font-size:10px;margin-top:12px}
+.homebar{height:4px;width:120px;background:var(--ink-3);opacity:.5;border-radius:5px;margin:10px auto 0}
+.t-invoicing{--tone:var(--success)} .t-logistics{--tone:var(--info)} .t-projects{--tone:var(--primary)}
+@media(min-width:560px){
+  body{padding:24px}
+  .phone{width:430px;min-height:0;height:min(844px,calc(100dvh - 48px));border:1px solid var(--line-strong);border-radius:42px;box-shadow:var(--shadow-float)}
+  .screen{min-height:0;height:100%}
+  .jump{display:flex}
+}
+@media(min-width:900px){.phone{width:480px}}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skiplink" href="#obmain">Skip to onboarding</a>
+<div class="corner tl"><button class="iconbtn" id="themeBtn" aria-label="Switch color theme">◐ Theme</button></div>
+<div class="corner tr"><button class="iconbtn" id="ctlBtn" aria-label="Open prototype controls" aria-expanded="false">☰</button></div>
+<nav class="jump" id="jump" aria-label="Prototype controls">
+  <span>Screen</span>
+  <button data-go="0" aria-current="true">1</button>
+  <button data-go="1" aria-current="false">2</button>
+  <button data-go="2" aria-current="false">3</button>
+  <button data-go="3" aria-current="false">4</button>
+  <button data-go="4" aria-current="false">5</button>
+</nav>
+<main class="phone" id="obmain" aria-label="BIGDROPS onboarding walkthrough">
+  <section class="screen active" data-screen="0" aria-labelledby="b0h">
+    <div class="top"><div class="brand"><span class="logo" aria-hidden="true">b</span>BIGDROPS</div></div>
+    <div class="hero">
+      <div class="illustration" role="img" aria-label="Invoice document with approval, chart, and growth badges"><div class="glow"></div><div class="art">
+        <div class="card doc"><h4>INVOICE</h4><div class="ln"></div><div class="ln"></div><div class="ln short"></div><div class="ln tone"></div><div class="ln"></div></div>
+        <div class="badge b1">✓</div><div class="badge b2">▥</div><div class="badge b3">↗</div>
+      </div></div>
+      <h1 id="b0h">Your operations.<br>Simplified.</h1>
+      <p class="copy">Create, manage, and export documents across invoicing, logistics, and project tracking — all in one place.</p>
+    </div>
+    <button class="primary" data-go="1">Get started&nbsp; →</button>
+    <div class="footer">Built for your team. Powered by BIGDROPS.</div>
+    <div class="homebar" aria-hidden="true"></div>
+  </section>
+  <section class="screen t-invoicing" data-screen="1" aria-labelledby="b1h">
+    <div class="top"><div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div><button class="skip" data-go="4">Skip</button></div>
+    <div class="hero">
+      <div class="illustration" role="img" aria-label="Invoice with naira badge and add button"><div class="glow"></div><div class="art">
+        <div class="card doc"><h4>INVOICE</h4><div class="ln"></div><div class="ln"></div><div class="ln short"></div><div class="ln tone"></div><div class="ln"></div></div>
+        <div class="badge b1">＋</div><div class="badge b2">₦</div>
+      </div></div>
+      <div class="eyebrow">Invoicing</div><h1 id="b1h">Create and manage<br>invoices with ease</h1>
+      <p class="copy">Generate professional invoices, apply taxes and extra charges, and export as PDF in seconds.</p>
+    </div>
+    <div class="actions"><button class="back" data-go="0">Back</button><button class="next" data-go="2" aria-label="Next: logistics">→</button></div>
+    <div class="homebar" aria-hidden="true"></div>
+  </section>
+  <section class="screen t-logistics" data-screen="2" aria-labelledby="b2h">
+    <div class="top"><div class="dots" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i></div><button class="skip" data-go="4">Skip</button></div>
+    <div class="hero">
+      <div class="illustration" role="img" aria-label="Delivery truck with location pin and parcel note"><div class="glow"></div><div class="art">
+        <div class="pin"><span>●</span></div><div class="truck"><div class="wheel w1"></div><div class="wheel w2"></div></div>
+        <div class="card" style="right:20px;top:105px;width:110px;padding:12px"><div class="ln tone"></div><div class="ln"></div><div class="ln short"></div></div>
+      </div></div>
+      <div class="eyebrow">Logistics</div><h1 id="b2h">Track and manage<br>shipments</h1>
+      <p class="copy">Keep your logistics moving with waybills, delivery notes, and real-time tracking.</p>
+    </div>
+    <div class="actions"><button class="back" data-go="1">Back</button><button class="next" data-go="3" aria-label="Next: projects">→</button></div>
+    <div class="homebar" aria-hidden="true"></div>
+  </section>
+  <section class="screen t-projects" data-screen="3" aria-labelledby="b3h">
+    <div class="top"><div class="dots" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></div><button class="skip" data-go="4">Skip</button></div>
+    <div class="hero">
+      <div class="illustration" role="img" aria-label="Project panel with progress bars and growth chart"><div class="glow"></div><div class="art">
+        <div class="panelbox"><div class="bar"></div><div class="bar"></div><div class="bar p"></div></div><div class="gchart">↗</div>
+      </div></div>
+      <div class="eyebrow">Projects</div><h1 id="b3h">Keep your projects<br>on track</h1>
+      <p class="copy">Aggregate invoices, payments, quotations, and CSRs under one client engagement.</p>
+    </div>
+    <div class="actions"><button class="back" data-go="2">Back</button><button class="next" data-go="4" aria-label="Next: all in one place">→</button></div>
+    <div class="homebar" aria-hidden="true"></div>
+  </section>
+  <section class="screen" data-screen="4" aria-labelledby="b4h">
+    <div class="top"><div class="dots" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i></div></div>
+    <div class="hero">
+      <div class="illustration" role="img" aria-label="BIGDROPS mark orbited by invoicing, logistics, projects, and growth modules"><div class="glow"></div><div class="art">
+        <div class="orbit"></div>
+        <div class="node" style="left:0;top:70px;color:var(--success)">▤</div>
+        <div class="node" style="right:0;top:45px;color:var(--info)">▣</div>
+        <div class="node" style="left:45px;bottom:0;color:var(--primary)">▱</div>
+        <div class="node" style="right:50px;bottom:0;color:var(--warning)">↗</div>
+        <div style="position:absolute;left:91px;top:75px;width:80px;height:80px;border-radius:25px;background:var(--primary);color:var(--primary-ink);display:grid;place-items:center;font-size:42px;font-weight:900;box-shadow:var(--shadow-float)" aria-hidden="true">b</div>
+      </div></div>
+      <div class="eyebrow">All in one place</div><h1 id="b4h">Everything your<br>team needs</h1>
+      <p class="copy">Invoices, logistics, projects, and more — one platform built for your operations.</p>
+    </div>
+    <div class="actions"><button class="back" data-go="3">Back</button><button class="primary" style="width:auto" data-done="1">Get started&nbsp; →</button></div>
+    <div class="homebar" aria-hidden="true"></div>
+  </section>
+</main>
+<script>
+function go(n){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',+s.dataset.screen===n));
+document.querySelectorAll('#jump button').forEach(b=>b.setAttribute('aria-current',+b.dataset.go===n));}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.go)));
+document.querySelectorAll('[data-done]').forEach(b=>b.addEventListener('click',()=>{b.textContent='Ready to enter BIGDROPS';}));
+document.getElementById('themeBtn').addEventListener('click',()=>{const h=document.documentElement;h.dataset.theme=h.dataset.theme==='light'?'dark':'light';});
+const jump=document.getElementById('jump'),ctl=document.getElementById('ctlBtn');
+ctl.addEventListener('click',()=>{const open=jump.style.display==='flex';jump.style.display=open?'':'flex';ctl.setAttribute('aria-expanded',!open);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const cur=+document.querySelector('.screen.active').dataset.screen;if(cur>0)go(cur-1);}});
+</script>
+</body>
+</html>

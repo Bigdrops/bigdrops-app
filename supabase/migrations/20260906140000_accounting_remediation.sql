@@ -41,6 +41,7 @@ SET search_path TO 'public'
 AS $function$
 DECLARE
     v_schema        text;
+    v_source_id     text;
     v_op_id         uuid;   -- invoice or payment id
     v_amount        numeric;
     v_amount_text   text;
@@ -143,10 +144,10 @@ BEGIN
         v_amount_text := v_amount::text;
 
         -- Existing Source Transaction check.
-        SELECT id INTO v_existing_st
-        FROM %I.source_transactions
-        WHERE source_type = 'invoice' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.source_transactions WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'invoice', v_source_id
+        ) INTO v_existing_st;
 
         IF v_existing_st IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -160,10 +161,10 @@ BEGIN
         END IF;
 
         -- Existing journal check.
-        SELECT id INTO v_existing_je
-        FROM %I.journal_entries
-        WHERE source_type = 'invoice' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.journal_entries WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'invoice', v_source_id
+        ) INTO v_existing_je;
 
         IF v_existing_je IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -217,10 +218,10 @@ BEGIN
 
         v_amount_text := v_amount::text;
 
-        SELECT id INTO v_existing_st
-        FROM %I.source_transactions
-        WHERE source_type = 'payment' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.source_transactions WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'payment', v_source_id
+        ) INTO v_existing_st;
 
         IF v_existing_st IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -233,10 +234,10 @@ BEGIN
             );
         END IF;
 
-        SELECT id INTO v_existing_je
-        FROM %I.journal_entries
-        WHERE source_type = 'payment' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.journal_entries WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'payment', v_source_id
+        ) INTO v_existing_je;
 
         IF v_existing_je IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -311,10 +312,10 @@ BEGIN
         v_amount_text := v_amount::text;
 
         -- Re-check ST and journal under lock.
-        SELECT id INTO v_existing_st
-        FROM %I.source_transactions
-        WHERE source_type = 'invoice' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.source_transactions WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'invoice', v_source_id
+        ) INTO v_existing_st;
 
         IF v_existing_st IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -327,10 +328,10 @@ BEGIN
             );
         END IF;
 
-        SELECT id INTO v_existing_je
-        FROM %I.journal_entries
-        WHERE source_type = 'invoice' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.journal_entries WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'invoice', v_source_id
+        ) INTO v_existing_je;
 
         IF v_existing_je IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -371,10 +372,10 @@ BEGIN
 
         v_amount_text := v_amount::text;
 
-        SELECT id INTO v_existing_st
-        FROM %I.source_transactions
-        WHERE source_type = 'payment' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.source_transactions WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'payment', v_source_id
+        ) INTO v_existing_st;
 
         IF v_existing_st IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -387,10 +388,10 @@ BEGIN
             );
         END IF;
 
-        SELECT id INTO v_existing_je
-        FROM %I.journal_entries
-        WHERE source_type = 'payment' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.journal_entries WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'payment', v_source_id
+        ) INTO v_existing_je;
 
         IF v_existing_je IS NOT NULL THEN
             RETURN jsonb_build_object(
@@ -409,12 +410,10 @@ BEGIN
     -- ---------------------------------------------------------------
     v_period_exists := false;
     FOR v_period_exists IN
-        SELECT true
-        FROM %I.accounting_periods
-        WHERE state = 'open'
-          AND start_date <= v_txn_date
-          AND v_txn_date <= end_date
-        LIMIT 1
+        EXECUTE format(
+            'SELECT true FROM %I.accounting_periods WHERE state = %L AND start_date <= $1 AND $1 <= end_date LIMIT 1',
+            v_schema, 'open'
+        ) USING v_txn_date
     LOOP
         EXIT;
     END LOOP;
@@ -431,12 +430,11 @@ BEGIN
         );
     END IF;
 
-    SELECT code INTO v_period_code
-    FROM %I.accounting_periods
-    WHERE state = 'open'
-      AND start_date <= v_txn_date
-      AND v_txn_date <= end_date
-    LIMIT 1;
+    EXECUTE format(
+        'SELECT code FROM %I.accounting_periods WHERE state = %L AND start_date <= $1 AND $1 <= end_date LIMIT 1',
+        v_schema, 'open'
+    ) INTO v_period_code
+    USING v_txn_date;
 
     IF NOT FOUND THEN
         RETURN jsonb_build_object(
@@ -555,25 +553,25 @@ BEGIN
     -- 8. Final re-query under lock to guarantee consistency.
     -- ---------------------------------------------------------------
     IF p_source_type = 'invoice' THEN
-        SELECT id INTO v_final_st_id
-        FROM %I.source_transactions
-        WHERE source_type = 'invoice' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.source_transactions WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'invoice', v_source_id
+        ) INTO v_final_st_id;
 
-        SELECT id INTO v_final_je_id
-        FROM %I.journal_entries
-        WHERE source_type = 'invoice' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.journal_entries WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'invoice', v_source_id
+        ) INTO v_final_je_id;
     ELSE
-        SELECT id INTO v_final_st_id
-        FROM %I.source_transactions
-        WHERE source_type = 'payment' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.source_transactions WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'payment', v_source_id
+        ) INTO v_final_st_id;
 
-        SELECT id INTO v_final_je_id
-        FROM %I.journal_entries
-        WHERE source_type = 'payment' AND source_id = v_source_id
-        LIMIT 1;
+        EXECUTE format(
+            'SELECT id FROM %I.journal_entries WHERE source_type = %L AND source_id = %L LIMIT 1',
+            v_schema, 'payment', v_source_id
+        ) INTO v_final_je_id;
     END IF;
 
     IF v_final_je_id IS NULL THEN
