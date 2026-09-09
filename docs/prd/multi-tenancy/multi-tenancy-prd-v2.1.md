@@ -104,6 +104,14 @@ retains is_active for backward compatibility. This is a specification-only
 update: no table shape, RPC, or authorization model change; implementation
 is a separate future task.
 
+Amendment note (2026-09-09): Documentation update — added §9.4
+(Workspace Creation UX contract) to separate Workspace Creation from
+Company Creation provisioning. Workspace Creation is a synchronous row
+insert followed by intentional pending_approval; it uses Level 1 loading
+and a waiting surface, never Level 5. This is a documentation-only update:
+no table shape, RPC signature, or authorization model changes result from
+this note.
+
 Illustration: An interactive HTML reference illustrating this document's model
 alongside the other two PRDs in this set (workspace resolution, entity provisioning,
 action-based permissions, invite acceptance). Not a spec — if it and this document
@@ -1044,6 +1052,50 @@ zero permissioned users. The creator always has a baseline grant in the new
 tenant schema; further grants are managed through the normal permission
 model (§3, §4).
 
+9.4 Workspace Creation UX Contract (frontend behavior)
+
+Workspace Creation is a synchronous record-creation flow followed by an
+intentional pending_approval state. It is not tenant provisioning and it
+does not use the Level 5 loading model. Company Creation (§9.1–§9.3)
+performs asynchronous tenant infrastructure work and keeps Level 5.
+Do not transfer those semantics to Workspace Creation.
+
+9.4.1 Lifecycle
+Create workspace row → status pending_approval → no creator membership →
+external Platform Office approval → owner membership created → workspace
+active → user enters the create-first-company flow (§9). Creation alone
+never activates. Usability derives from active membership, never from the
+row itself.
+
+9.4.2 Frontend behavior
+Manual creation uses Level 1 loading: button spinner, disabled submit,
+no overlay, no tips. Auto-bootstrap may show a transitional wait state.
+Pending approval uses a dedicated waiting surface with ~5s auto-refresh.
+Sign-in rehydrates pending state from the database; approval flips
+automatically without user action. Pending workspaces never appear in the
+active workspace switcher. No success claim precedes approval.
+
+9.4.3 Loading semantics
+Waiting for external approval is a product-state wait, not a Level 5
+operation. No fake progress percentages. No artificial delay. No tips
+below Level 4. Status and error messaging remain authoritative; guidance
+content yields to status. This extends, not replaces, the loading model
+in the facelift PRD (10-loading-and-refresh.md) and the Engagement System.
+
+9.4.4 Error direction (future UX requirement)
+Map raw backend errors into user-friendly messages on creation failure.
+Do not expose raw database or service errors. Errors use assertive
+semantics (role="alert" or equivalent). Waiting states use
+role="status" or aria-live, and announce approval transitions.
+
+9.4.5 Backlog (not built; no behavior specified here)
+P2: approval notification UX and infrastructure, so users need not
+recheck manually. P3: display the pending workspace name on the waiting
+surface; 44×44 Create/Join controls; verify Android edge-to-edge
+safe-area handling during future mobile polish (absence of safe-area CSS
+is a verification item, not a confirmed defect). Rejected and suspended
+workspace UI is an explicit future product decision; see §12.
+
 10. Migration: Phase 0 (Grandfathering)
 Unchanged in spirit from v2.0 §8:
  * Create workspace slug = 'mrc', status = 'active'.
@@ -1121,13 +1173,20 @@ must never depend on it.
    detail not specified here), per-workspace or per-admin invite rate caps
    and enumeration protection must be implemented at the application/edge
    layer. Not built in v2.1.
- · Role edit semantics — whether editing a role affects users who already
-   hold it (live updates) or only future assignments (snapshot) is not
-   settled here. The template behavior in §3.6 remains: editing a
-   template's items never alters existing entity_permissions rows until
-   "reapply" is explicitly invoked for specific users (§13). The frontend
-   role editor must expose the same semantics as a deferred decision,
-   not invent a new one (§12.6–§12.8 in the ERP frontend PRD).
+  · Role edit semantics — whether editing a role affects users who already
+    hold it (live updates) or only future assignments (snapshot) is not
+    settled here. The template behavior in §3.6 remains: editing a
+    template's items never alters existing entity_permissions rows until
+    "reapply" is explicitly invoked for specific users (§13). The frontend
+    role editor must expose the same semantics as a deferred decision,
+    not invent a new one (§12.6–§12.8 in the ERP frontend PRD).
+  · Workspace approval notifications — no email or push path exists;
+    creators recheck manually or reopen the app. Notification UX and
+    infrastructure is a P2 product decision, not a correctness defect
+    in Workspace Creation (§9.4).
+  · Rejected/suspended workspace states — the workspaces status CHECK
+    constraint admits them, but no in-app surface is specified. Explicit
+    future product decision; no behavior is specified here (§9.4).
 
 13. Success Criteria (v2.1 additions)
  * Granting ('invoice','approve') to a user has no effect on their ability
@@ -1240,3 +1299,4 @@ must never depend on it.
 | Role assignment limited to existing company members; roles never cross companies; Company Admin is company-scoped | Product decision | §3.11, §13 |
 | Role edit semantics (live vs snapshot) deferred; template "reapply" behavior remains authoritative | Product decision | §12 |
 | Entity lifecycle (active → archived → purging → purged) with 30-day retention, archive/restore semantics, hard-delete policy, provisioning interaction, workspace cascade, permissions, audit, UI expectations, and open questions | Internal | §8A |
+| Workspace Creation UX contract documented (§9.4); approval notifications and rejected/suspended states added as open items | Internal | §9.4, §12 |

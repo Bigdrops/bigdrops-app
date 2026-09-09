@@ -11,6 +11,7 @@ import {
   ensureInitialWorkspace,
   slugify,
 } from '@/domain/tenant/tenantCreation'
+import { isUniqueViolation, isPermissionError } from '@/domain/tenant/tenantGate'
 
 export default function WorkspaceCreation() {
   const workspaceCtx = useWorkspace()
@@ -20,6 +21,30 @@ export default function WorkspaceCreation() {
   const [loading, setLoading] = useState(false)
   const [autoRunning, setAutoRunning] = useState(true)
   const autoAttemptedRef = useRef(false)
+
+  /**
+   * Map backend failures to user-facing copy. Raw Supabase/Postgres
+   * details stay in the console for developers, never in the UI.
+   */
+  const toFriendlyError = (e: unknown): string => {
+    if (isUniqueViolation(e)) {
+      return 'A workspace with a similar name already exists. Try a different name.'
+    }
+    if (isPermissionError(e)) {
+      return 'You do not have permission to create a workspace with this account.'
+    }
+    const message = String((e as Error)?.message ?? e).toLowerCase()
+    if (
+      message.includes('failed to fetch') ||
+      message.includes('networkerror') ||
+      message.includes('load failed') ||
+      message.includes('network request failed')
+    ) {
+      return "Couldn't reach BigDrops. Check your connection and try again."
+    }
+    console.error('[workspace-creation]', e)
+    return "Couldn't create the workspace. Try again."
+  }
 
   // First-workspace bootstrap: this screen only renders when the user has
   // no active workspace, so automatically ensure the initial workspace
@@ -45,7 +70,7 @@ export default function WorkspaceCreation() {
         workspaceCtx.refresh()
       } catch (e) {
         if (!active) return
-        setError(String((e as Error)?.message ?? e))
+        setError(toFriendlyError(e))
         setAutoRunning(false)
       }
     }
@@ -71,7 +96,7 @@ export default function WorkspaceCreation() {
       await createWorkspace({ name: name.trim(), slug: slugify(name) })
       workspaceCtx.refresh()
     } catch (e) {
-      setError(String((e as Error)?.message ?? e))
+      setError(toFriendlyError(e))
     } finally {
       setLoading(false)
     }
@@ -107,7 +132,7 @@ export default function WorkspaceCreation() {
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`flex-1 rounded-lg px-4 py-2 min-h-[44px] text-sm font-semibold transition-colors ${
                   mode === m ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground'
                 }`}
               >
@@ -131,7 +156,10 @@ export default function WorkspaceCreation() {
               </p>
             </div>
           ) : autoRunning && !error ? (
-            <div className="mt-6 flex items-center gap-3 rounded-xl border border-black/10 bg-background px-4 py-3">
+            <div
+              role="status"
+              className="mt-6 flex items-center gap-3 rounded-xl border border-black/10 bg-background px-4 py-3"
+            >
               <span
                 aria-hidden="true"
                 className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-black/10 border-t-black"
@@ -153,12 +181,17 @@ export default function WorkspaceCreation() {
                   value={name}
                   onChange={updateName}
                   placeholder="e.g. Tunde and Sons Limited"
+                  aria-describedby={error ? 'workspace-creation-error' : undefined}
                   className="h-12 rounded-xl border-black/10 bg-background pl-4 text-base shadow-none"
                 />
               </div>
 
               {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div
+                  role="alert"
+                  id="workspace-creation-error"
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                >
                   {error}
                 </div>
               )}

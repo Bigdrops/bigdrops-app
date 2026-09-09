@@ -20,6 +20,7 @@ const POLL_INTERVAL_MS = 5000
 export default function WorkspacePendingApproval() {
   const workspaceCtx = useWorkspace()
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false)
+  const pendingName = workspaceCtx.pendingWorkspace?.name?.trim() || null
 
   useEffect(() => {
     const id = setInterval(() => workspaceCtx.refresh(), POLL_INTERVAL_MS)
@@ -65,12 +66,17 @@ export default function WorkspacePendingApproval() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div role="status" className="space-y-2">
               <CardTitle className="text-xl font-semibold tracking-tight text-foreground">
                 Workspace Awaiting Approval
               </CardTitle>
 
               <CardContent className="p-0">
+                {pendingName ? (
+                  <p className="text-sm font-semibold leading-6 text-foreground">
+                    &ldquo;{pendingName}&rdquo; is waiting for approval.
+                  </p>
+                ) : null}
                 <p className="text-sm leading-6 text-muted-foreground">
                   Your workspace was created. An administrator must approve it before you can create
                   a company and start using BigDrops.
