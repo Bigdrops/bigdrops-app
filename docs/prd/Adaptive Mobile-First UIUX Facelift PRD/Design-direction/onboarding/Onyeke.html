@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BIGDROPS onboarding · Direct-response high-conversion blue and white edition.">
+<title>BIGDROPS Onboarding</title>
+<link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+<link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+<link href="[https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Mono:wght@500&display=swap](https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Mono:wght@500&display=swap)" rel="stylesheet">
+<style>
+/* ============ tokens (Clean Blue & White Theme) ============ /
+:root{
+--bg:#f8fafc; --surface:#ffffff; --surface-muted:#eff6ff; --surface-strong:#dbeafe;
+--ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
+--line:#e2e8f0; --line-strong:#cbd5e1;
+--primary:#0284c7; --primary-ink:#ffffff; --accent:#38bdf8;
+--panel:#f0f9ff; --panel-2:#e0f2fe; --glass:#bae6fd; --metal:#94a3b8;
+--success:#0284c7; --info:#0369a1; --warning:#d97706; --danger:#dc2626;
+--shadow:0 12px 28px rgba(2,132,199,.10),0 2px 6px rgba(15,23,42,.05);
+--shadow-float:0 18px 40px rgba(2,132,199,.18),0 3px 9px rgba(15,23,42,.07);
+--sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+--ez:cubic-bezier(.22,1,.36,1);
+}
+@media (prefers-color-scheme:dark){
+:root{
+--bg:#0b1329; --surface:#111e38; --surface-muted:#1e293b; --surface-strong:#334155;
+--ink:#f8fafc; --ink-2:#cbd5e1; --ink-3:#94a3b8;
+--line:#1e293b; --line-strong:#334155;
+--primary:#38bdf8; --primary-ink:#0b1329;
+--panel:#132247; --panel-2:#1e293b; --glass:#0284c7; --metal:#64748b;
+--success:#38bdf8; --info:#7dd3fc; --warning:#fbbf24; --danger:#f87171;
+--shadow:0 12px 28px rgba(0,0,0,.40),0 2px 6px rgba(0,0,0,.30);
+--shadow-float:0 18px 40px rgba(0,0,0,.50),0 3px 9px rgba(0,0,0,.40);
+}
+}
+/ ============ base ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;
+background:var(--bg);color:var(--ink);
+height:100dvh;overflow:hidden;
+-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+-webkit-tap-highlight-color:transparent;overscroll-behavior:none;
+}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:active{transform:scale(.97)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.skiplink{position:fixed;left:12px;top:calc(var(--sat) + 10px);z-index:60;transform:translateY(-260%);background:var(--primary);color:var(--primary-ink);padding:12px 18px;border-radius:12px;font-weight:800;font-size:13px;transition:transform .2s}
+.skiplink:focus{transform:none}
+/* ============ app frame ============ */
+.app{position:relative;height:100dvh;display:flex;flex-direction:column}
+.topbar{
+position:absolute;top:0;left:0;right:0;z-index:30;
+display:flex;align-items:center;justify-content:space-between;
+padding:calc(var(--sat) + 10px) 20px 10px;
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;letter-spacing:-.01em}
+.logo{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--primary);color:var(--primary-ink);font-weight:800;font-size:17px}
+.skipbtn{
+min-width:44px;min-height:44px;padding:0 10px;border-radius:12px;
+color:var(--ink-3);font-size:14px;font-weight:700;transition:opacity .25s,color .2s;
+}
+.skipbtn:hover{color:var(--ink)}
+.skipbtn[hidden]{display:none}
+.rail{
+position:absolute;top:calc(var(--sat) + 58px);left:20px;right:20px;z-index:30;
+display:flex;gap:6px;pointer-events:none;
+}
+.rail i{height:3px;flex:1;border-radius:2px;background:var(--line-strong);opacity:.55;overflow:hidden;position:relative}
+.rail i::after{content:"";position:absolute;inset:0;background:var(--primary);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ez)}
+.rail i.done::after{transform:scaleX(1)}
+.rail i.on::after{transform:scaleX(1)}
+.deck{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:pan-y}
+.track{display:flex;height:100%;will-change:transform}
+.slide{flex:0 0 100%;min-width:0;height:100%;display:flex;flex-direction:column;padding:calc(var(--sat) + 96px) 24px calc(var(--sab) + 176px)}
+/* hero stage */
+.stage{position:relative;flex:1 1 auto;min-height:150px;display:flex;align-items:center;justify-content:center;margin:0 -8px}
+.glow{position:absolute;width:min(78vw,340px);height:min(78vw,340px);border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--tone,var(--primary)) 18%,transparent),transparent 68%);animation:glowPulse 4.5s ease-in-out infinite}
+.copyart{width:100%;max-width:430px;height:100%;max-height:44dvh;position:relative;z-index:1}
+.copyart svg{width:100%;height:100%;overflow:visible}
+/* text block */
+.text{margin-top:18px;flex:0 0 auto}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--tone,var(--primary));margin-bottom:8px}
+h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;font-weight:800;text-wrap:balance}
+.copy{margin-top:10px;font-size:.98rem;line-height:1.6;color:var(--ink-2);max-width:36ch;text-wrap:pretty}
+/* ============ bottom zone ============ */
+.bottom{
+position:absolute;left:0;right:0;bottom:0;z-index:30;
+padding:14px 24px calc(var(--sab) + 18px);
+display:flex;flex-direction:column;gap:14px;
+background:linear-gradient(180deg,transparent,var(--bg) 42%);
+}
+.meta{display:flex;align-items:center;min-height:44px}
+.backbtn{
+width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+color:var(--ink-3);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);
+visibility:hidden;
+}
+.backbtn.show{visibility:visible}
+.dots{flex:1;display:flex;justify-content:center;gap:8px}
+.dots button{width:28px;height:28px;display:grid;place-items:center;border-radius:50%}
+.dots button i{width:7px;height:7px;border-radius:4px;background:var(--surface-strong);transition:width .35s var(--ez),background .35s;display:block}
+.dots button[aria-current="true"] i{width:24px;background:var(--tone,var(--primary))}
+.dots button:hover i{background:var(--ink-3)}
+.cta{
+width:100%;min-height:54px;border-radius:16px;
+background:var(--primary);color:var(--primary-ink);
+font-weight:800;font-size:16px;letter-spacing:-.01em;
+box-shadow:var(--shadow-float);
+display:flex;align-items:center;justify-content:center;gap:8px;
+transition:transform .15s ease-out,opacity .2s,filter .2s;
+}
+.cta:disabled{opacity:.55;box-shadow:none}
+.cta.busy{pointer-events:none;filter:saturate(.7)}
+.cta .spin{width:18px;height:18px;border-radius:50%;border:2.5px solid color-mix(in srgb,var(--primary-ink) 35%,transparent);border-top-color:var(--primary-ink);animation:spin .7s linear infinite;display:none}
+.cta.busy .spin{display:block}
+.fine{text-align:center;color:var(--ink-3);font-size:11px}
+/* ============ reveal system ============ */
+.rv,.rv-l,.rv-r{opacity:0}
+.slide.active .rv{animation:riseIn .6s var(--ez) var(--d,0s) both}
+.slide.active .rv-l{animation:riseL .6s var(--ez) var(--d,0s) both}
+.slide.active .rv-r{animation:riseR .6s var(--ez) var(--d,0s) both}
+.growbar{transform:scaleX(0);transform-origin:left center}
+.slide.active .growbar{animation:growW .65s var(--ez) var(--d,0s) both}
+.pop{opacity:0;transform:scale(.4)}
+.slide.active .pop{animation:popIn .6s cubic-bezier(.34,1.4,.64,1) var(--d,0s) both}
+.float{animation:none}
+.slide.active .float{animation:riseIn .6s var(--ez) var(--d,0s) both,floatY 3.6s ease-in-out var(--fd,0s) infinite}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes riseL{from{opacity:0;transform:translate(-22px,10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes riseR{from{opacity:0;transform:translate(22px,10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes growW{to{transform:scaleX(1)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes glowPulse{0%,100%{opacity:.65;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ============ LOGISTICS scene ============ */
+.roadstage{position:absolute;inset:0;overflow:hidden;border-radius:20px;background:linear-gradient(180deg,var(--panel) 0%,var(--surface-muted) 58%,var(--surface-strong) 74%,var(--panel-2) 74.5%,var(--line-strong) 100%)}
+.roadstage svg{position:absolute;left:-2%;width:104%;height:auto}
+.layer-far{bottom:26%;opacity:.5;--speed:44s}
+.layer-mid{bottom:25.4%;opacity:.85;--speed:26s}
+.loop{animation:marquee var(--speed) linear infinite}
+@keyframes marquee{to{transform:translateX(-700px)}}
+.roadbed{bottom:0;height:26%}
+.roadbed .dash{animation:dashMove .9s linear infinite}
+@keyframes dashMove{to{transform:translateX(-76px)}}
+.vanwrap{position:absolute;left:6%;right:6%;bottom:14%;z-index:2}
+.vanwrap svg{width:100%;height:auto;overflow:visible}
+.van{will-change:transform}
+.slide.active .vanwrap{animation:vanIn 1.15s var(--ez) .15s both}
+.slide.active .van{animation:vanBob 3.4s ease-in-out 1.3s infinite}
+.slide.active .van .wheel{animation:wheelSpin .85s linear infinite}
+.slide.active .van .shadow{animation:shadowBob 3.4s ease-in-out 1.3s infinite}
+.wheel{transform-box:fill-box;transform-origin:center}
+@keyframes vanIn{from{transform:translateX(-58%)}to{transform:translateX(0)}}
+@keyframes vanBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+@keyframes shadowBob{0%,100%{transform:scaleX(1);opacity:.9}50%{transform:scaleX(1.03);opacity:.75}}
+@keyframes wheelSpin{to{transform:rotate(360deg)}}
+/* ============ TAXES scene ============ */
+.t-taxes{--tone:var(--primary)}
+.taxstage{position:relative;width:min(86vw,340px);display:flex;justify-content:center}
+.taxdoc{width:100%;max-width:270px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-float);padding:20px 18px 16px;margin:26px 0}
+.taxdoc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.taxdoc-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px}
+.mini-logo{width:22px;height:22px;border-radius:7px;background:var(--primary);color:var(--primary-ink);display:grid;place-items:center;font-size:13px;font-weight:800}
+.pill-ok{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--primary);background:color-mix(in srgb,var(--primary) 12%,transparent);padding:5px 10px;border-radius:999px}
+.taxrow{display:flex;align-items:center;gap:9px;padding:10px 2px;border-top:1px solid var(--line);font-size:13px;font-weight:700;color:var(--ink-2)}
+.taxrow em{margin-left:auto;font-style:normal;font-size:11px;font-weight:800;color:var(--ink-3);background:var(--surface-muted);border-radius:999px;padding:3px 9px}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.dot.ok{background:var(--primary)}
+.dot.warn{background:var(--warning)}
+.taxflow{margin-top:12px;padding-top:13px;border-top:1px solid var(--line)}
+.trackline{position:relative;height:4px;border-radius:2px;background:var(--surface-muted)}
+.trackline::before{content:"";position:absolute;left:0;top:0;bottom:0;width:66%;border-radius:2px;background:color-mix(in srgb,var(--primary) 32%,transparent)}
+.flowdot{position:absolute;top:50%;left:0;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 16%,transparent)}
+.slide.active .flowdot{animation:flowmove 4.8s ease-in-out 1.1s infinite}
+@keyframes flowmove{0%{transform:translateX(0);opacity:1}30%{transform:translateX(78px);opacity:1}60%{transform:translateX(156px);opacity:1}66%{opacity:1;transform:translateX(156px)}70%{opacity:0;transform:translateX(156px)}72%{transform:translateX(0);opacity:0}78%,100%{opacity:1;transform:translateX(0)}}
+.steps{display:flex;justify-content:space-between;margin-top:9px}
+.steps span{font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.slide.active .steps span{animation:stepPulse 4.8s ease-in-out 1.1s infinite}
+.slide.active .steps span:nth-child(2){animation-delay:2.7s}
+.slide.active .steps span:nth-child(3){animation-delay:4.3s}
+@keyframes stepPulse{0%{color:var(--primary)}26%{color:var(--primary)}52%{color:var(--ink-3)}100%{color:var(--ink-3)}}
+.chip{position:absolute;z-index:2;display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:9px 12px;font-size:11.5px;font-weight:800;color:var(--ink-2);white-space:nowrap}
+.chip svg{flex:0 0 auto;color:var(--tone)}
+.c-record{top:2%;left:-3%}
+.c-calc{top:9%;right:-5%}
+.c-nrs{bottom:2%;left:-1%}
+/* ============ SIGN UP ============ */
+.signupwrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.forms{position:relative;flex:1;min-height:0}
+.formpane{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px;transition:opacity .3s var(--ez),transform .3s var(--ez)}
+.formpane[hidden]{display:none}
+.formpane.out{opacity:0;transform:translateX(-14px);pointer-events:none}
+.formpane.in{opacity:0;transform:translateX(14px)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:800;letter-spacing:.02em;color:var(--ink-2);margin-bottom:6px}
+.control{position:relative}
+.control input{
+width:100%;min-height:52px;border-radius:14px;border:1.5px solid var(--line-strong);
+background:var(--surface);color:var(--ink);
+font:inherit;font-size:15.5px;font-weight:600;padding:0 14px;
+transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.control input::placeholder{color:var(--ink-3);font-weight:500;opacity:.75}
+.control input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 15%,transparent)}
+.field.invalid input{border-color:var(--danger);box-shadow:0 0 0 4px color-mix(in srgb,var(--danger) 10%,transparent)}
+.field.valid input{border-color:color-mix(in srgb,var(--primary) 55%,var(--line-strong))}
+.err{display:none;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--danger)}
+.field.invalid .err{display:flex;align-items:center;gap:5px}
+.field .ok{position:absolute;right:14px;top:50%;transform:translateY(-50%) scale(0);color:var(--primary);transition:transform .25s var(--ez)}
+.field.valid .ok{transform:translateY(-50%) scale(1)}
+.pwtoggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--ink-3)}
+.field.haspw input{padding-right:52px}
+.meter{display:flex;gap:5px;margin-top:8px}
+.meter i{height:4px;flex:1;border-radius:2px;background:var(--surface-strong);transition:background .3s}
+.meter.s1 i:nth-child(1){background:var(--danger)}
+.meter.s2 i:nth-child(-n+2){background:var(--warning)}
+.meter.s3 i{background:var(--primary)}
+.meterlabel{font-size:11.5px;font-weight:700;color:var(--ink-3);margin-top:5px;min-height:15px}
+.alt{margin-top:6px;text-align:center;font-size:14px;color:var(--ink-2)}
+.alt button{color:var(--primary);font-weight:800;font-size:14px;min-height:44px;padding:0 6px}
+/* tone accents per slide */
+.t-intro{--tone:var(--primary)}
+.t-invoicing{--tone:var(--primary)}
+.t-logistics{--tone:var(--info)}
+.t-signup{--tone:var(--primary)}
+/* ============ reduced motion ============ /
+@media (prefers-reduced-motion:reduce){
+,::before,::after{animation:none!important;transition:none!important}
+.rv,.rv-l,.rv-r,.pop{opacity:1!important;transform:none!important}
+.growbar{transform:scaleX(1)!important}
+.vanwrap{transform:none!important}
+.formpane.out,.formpane.in{opacity:1;transform:none}
+.flowdot{opacity:1}
+.steps span{color:var(--ink-3)}
+.steps span:first-child{color:var(--primary)}
+}
+/* small phones */
+@media (max-height:640px){
+.slide{padding-top:calc(var(--sat) + 84px);padding-bottom:calc(var(--sab) + 164px)}
+.copyart{max-height:34dvh}
+h1{font-size:1.7rem}
+.copy{font-size:.92rem}
+.taxdoc{padding:16px 16px 12px;margin:18px 0}
+.taxrow{padding:8px 2px}
+}
+</style>
+</head>
+<body>
+<a class="skiplink" href="#signupFields">Skip to sign-up form</a>
+<p class="vh" role="status" id="liveStatus">Step 1 of 4: Intro</p>
+<div class="app">
+<header class="topbar">
+<div class="brand"><span class="logo" aria-hidden="true">b</span>BIGDROPS</div>
+<button class="skipbtn" id="skipBtn" hidden>Skip</button>
+</header>
+<nav class="rail" id="rail" aria-hidden="true">
+<i class="on"></i><i></i><i></i><i></i>
+</nav>
+<main class="deck" id="deck" aria-roledescription="carousel" aria-label="BIGDROPS onboarding">
+<div class="track" id="track">
+<!-- ═══════════ 1 · INTRO ═══════════ -->
+<section class="slide t-intro active" id="s0" aria-roledescription="slide" aria-label="1 of 4">
+<div class="stage" role="img" aria-label="An invoice document assembles with totals, checkmark, and currency symbols">
+<div class="glow"></div>
+<div class="copyart">
+<svg viewBox="0 0 360 300" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" aria-hidden="true">
+<defs>
+<filter id="s0sh" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0284c7" flood-opacity=".12"/></filter>
+<linearGradient id="s0doc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--surface)"/><stop offset="1" stop-color="var(--panel)"/></linearGradient>
+</defs>
+<g class="rv-l" style="--d:.05s" filter="url(#s0sh)">
+<rect x="96" y="40" width="168" height="204" rx="18" fill="url(#s0doc)" stroke="var(--line)"/>
+<rect x="116" y="66" width="64" height="10" rx="5" fill="var(--tone)"/>
+<rect x="116" y="90" width="112" height="7" rx="3.5" fill="var(--surface-muted)"/>
+<rect x="116" y="106" width="112" height="7" rx="3.5" fill="var(--surface-muted)"/>
+<rect x="116" y="122" width="78" height="7" rx="3.5" fill="var(--surface-muted)"/>
+<rect x="116" y="196" width="112" height="13" rx="6.5" fill="color-mix(in srgb,var(--tone) 35%,var(--surface))"/>
+<rect x="116" y="218" width="112" height="12" rx="6" fill="var(--tone)" class="growbar" style="--d:.5s"/>
+</g>
+<g class="rv-r" style="--d:.22s" filter="url(#s0sh)" transform="translate(246 30)">
+<rect width="58" height="58" rx="17" fill="var(--surface)" stroke="var(--line)"/>
+<path d="M15 30l9 9 19-21" fill="none" stroke="var(--tone)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g class="rv-l" style="--d:.36s" filter="url(#s0sh)" transform="translate(40 120)">
+<rect width="48" height="48" rx="15" fill="var(--tone)"/>
+<text x="24" y="33" font-size="24" font-weight="800" fill="#fff" text-anchor="middle" font-family="Manrope,sans-serif">₦</text>
+</g>
+<g class="rv-r" style="--d:.5s" filter="url(#s0sh)" transform="translate(238 148)">
+<rect width="64" height="64" rx="17" fill="var(--surface)" stroke="var(--line)"/>
+<rect x="14" y="40" width="8" height="12" rx="2" fill="var(--tone)"/>
+<rect x="27" y="30" width="8" height="22" rx="2" fill="var(--tone)"/>
+<rect x="40" y="18" width="8" height="34" rx="2" fill="var(--tone)"/>
+</g>
+<g class="pop" style="--d:.72s" transform="translate(64 60)">
+<rect width="34" height="34" rx="11" fill="color-mix(in srgb,var(--tone) 16%,var(--surface))" stroke="var(--line)"/>
+<path d="M10 17l5 5 9-11" fill="none" stroke="var(--tone)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
+</div>
+</div>
+<div class="text">
+<h1 class="rv" style="--d:.1s">Your operations.
+Simplified.</h1>
+<p class="copy rv" style="--d:.22s">Invoicing, logistics, projects and taxes — one platform that keeps every document NRS-ready.</p>
+</div>
+</section>
+<!-- ═══════════ 2 · INVOICING + TAXES ═══════════ -->
+<section class="slide t-invoicing" id="s1" aria-roledescription="slide" aria-label="2 of 4">
+<div class="stage">
+<div class="taxstage" role="img" aria-label="Invoice totals count up while Files.tax tracks VAT, WHT and readiness">
+<div class="chip c-record rv-l float" style="--d:.7s;--fd:.3s">
+<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3l2 2"/></svg>
+Record payment
+</div>
+<div class="chip c-calc rv-r float" style="--d:.85s;--fd:.8s">
+<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="1.5" width="11" height="13" rx="2.5"/><path d="M5.5 5h5M5.5 8.5h.01M8 8.5h.01M10.5 8.5h.01M5.5 11.5h.01M8 11.5h.01M10.5 11.5h.01"/></svg>
+VAT & WHT applied
+</div>
+<div class="chip c-nrs rv-l float" style="--d:1s;--fd:1.2s">
+<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5l5 2L14 3l-2.5 10-3.5-3-2.5 3z"/></svg>
+NRS-ready invoice
+</div>
+<div class="taxdoc rv" style="--d:.05s">
+<div class="taxdoc-head">
+<span class="taxdoc-brand"><span class="mini-logo" aria-hidden="true">b</span>Files.tax</span>
+<span class="pill-ok">Sorted</span>
+</div>
+<div class="taxrow rv" style="--d:.3s"><i class="dot ok"></i><span>VAT position</span><em>Tracked</em></div>
+<div class="taxrow rv" style="--d:.42s"><i class="dot ok"></i><span>WHT position</span><em>Tracked</em></div>
+<div class="taxrow rv" style="--d:.54s"><i class="dot warn"></i><span>Attention items</span><em>Review</em></div>
+<div class="taxflow rv" style="--d:.66s">
+<div class="trackline"><i class="flowdot"></i></div>
+<div class="steps"><span>Recorded</span><span>Calculated</span><span>Ready for NRS</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="text">
+<p class="eyebrow rv" style="--d:.1s">Invoicing & Taxes</p>
+<h1 class="rv" style="--d:.16s">Create invoices.
+Taxes handled quietly.</h1>
+<p class="copy rv" style="--d:.26s">Professional invoices with VAT and WHT applied automatically. Every document stays NRS-ready — no spreadsheets, no jargon.</p>
+</div>
+</section>
+<!-- ═══════════ 3 · LOGISTICS + PROJECTS ═══════════ -->
+<section class="slide t-logistics" id="s2" aria-roledescription="slide" aria-label="3 of 4">
+<div class="stage">
+<div class="roadstage" role="img" aria-label="A modern BIGDROPS cargo van drives along a blue-themed road layout">
+<!-- far skyline -->
+<svg class="layer-far" viewBox="0 0 1400 120" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+<g class="loop" fill="var(--surface-strong)">
+<g id="farA">
+<rect x="40" y="46" width="90" height="74" rx="4"/><rect x="150" y="66" width="56" height="54" rx="4"/>
+<rect x="240" y="30" width="72" height="90" rx="4"/><rect x="350" y="58" width="100" height="62" rx="4"/>
+<rect x="480" y="72" width="60" height="48" rx="4"/><rect x="580" y="40" width="86" height="80" rx="4"/>
+<rect x="700" y="62" width="64" height="58" rx="4"/><rect x="800" y="34" width="96" height="86" rx="4"/>
+<rect x="930" y="70" width="58" height="50" rx="4"/><rect x="1020" y="52" width="84" height="68" rx="4"/>
+<rect x="1140" y="68" width="70" height="52" rx="4"/><rect x="1250" y="42" width="90" height="78" rx="4"/>
+</g>
+<use href="#farA" x="700"/>
+</g>
+</svg>
+<!-- midground -->
+<svg class="layer-mid" viewBox="0 0 1400 90" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+<g class="loop">
+<g id="midA">
+<ellipse cx="90" cy="90" rx="60" ry="22" fill="color-mix(in srgb,var(--primary) 14%,var(--surface-muted))"/>
+<ellipse cx="330" cy="90" rx="80" ry="26" fill="color-mix(in srgb,var(--primary) 10%,var(--surface-muted))"/>
+<rect x="560" y="52" width="14" height="38" rx="4" fill="color-mix(in srgb,var(--primary) 22%,var(--surface-muted))"/>
+<ellipse cx="567" cy="50" rx="26" ry="16" fill="color-mix(in srgb,var(--primary) 16%,var(--surface-muted))"/>
+<ellipse cx="820" cy="90" rx="70" ry="24" fill="color-mix(in srgb,var(--primary) 12%,var(--surface-muted))"/>
+<rect x="1060" y="48" width="14" height="42" rx="4" fill="color-mix(in srgb,var(--primary) 22%,var(--surface-muted))"/>
+<ellipse cx="1067" cy="46" rx="28" ry="17" fill="color-mix(in srgb,var(--primary) 16%,var(--surface-muted))"/>
+<ellipse cx="1300" cy="90" rx="62" ry="22" fill="color-mix(in srgb,var(--primary) 13%,var(--surface-muted))"/>
+</g>
+<use href="#midA" x="700"/>
+</g>
+</svg>
+<!-- road -->
+<svg class="roadbed" viewBox="0 0 1400 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<rect x="0" y="0" width="1400" height="120" fill="var(--panel-2)"/>
+<rect x="0" y="0" width="1400" height="10" fill="var(--line-strong)" opacity=".7"/>
+<g class="dash"><line x1="0" y1="62" x2="1552" y2="62" stroke="var(--surface)" stroke-width="5" stroke-dasharray="40 36" opacity=".8"/></g>
+</svg>
+<!-- the van -->
+<div class="vanwrap">
+<svg viewBox="0 0 640 330" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" aria-hidden="true">
+<defs>
+<linearGradient id="vbody" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="var(--panel)"/><stop offset="1" stop-color="var(--panel-2)"/>
+</linearGradient>
+<linearGradient id="vnavy" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#0284c7"/><stop offset="1" stop-color="#0369a1"/>
+</linearGradient>
+<linearGradient id="vglass" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e0f2fe"/><stop offset=".5" stop-color="#7dd3fc"/><stop offset="1" stop-color="#0284c7"/>
+</linearGradient>
+<linearGradient id="vshine" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#ffffff" stop-opacity="0"/><stop offset=".5" stop-color="#ffffff" stop-opacity=".55"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="vshadow" cx=".5" cy=".5" r=".5">
+<stop offset="0" stop-color="#0284c7" stop-opacity=".32"/><stop offset=".75" stop-color="#0284c7" stop-opacity=".12"/><stop offset="1" stop-color="#0284c7" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="vrim" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#94a3b8"/>
+</linearGradient>
+</defs>
+<!-- ground shadow -->
+<ellipse class="shadow" cx="336" cy="308" rx="252" ry="16" fill="url(#vshadow)"/>
+<g class="van">
+<rect x="112" y="252" width="18" height="26" rx="5" fill="var(--metal)"/>
+<rect x="560" y="248" width="26" height="30" rx="6" fill="var(--metal)"/>
+<path d="M118 278 L118 116 Q118 96 138 96 L486 96 Q520 96 542 116 L584 158 Q592 166 592 178 L592 254 Q592 278 566 278 Z" fill="url(#vbody)" stroke="var(--line-strong)" stroke-width="1.5"/>
+<path d="M118 278 L118 236 L592 236 L592 254 Q592 278 566 278 Z" fill="url(#vnavy)"/>
+<rect x="118" y="232" width="474" height="5" rx="2.5" fill="#ffffff" opacity=".8"/>
+<text x="330" y="264" font-size="24" font-weight="800" letter-spacing="4" fill="#ffffff" text-anchor="middle" font-family="Manrope,sans-serif">BIGDROPS</text>
+<rect x="146" y="118" width="52" height="52" rx="14" fill="url(#vnavy)"/>
+<text x="172" y="155" font-size="32" font-weight="800" fill="#ffffff" text-anchor="middle" font-family="Manrope,sans-serif">b</text>
+<path d="M492 108 L536 122 L572 162 L492 162 Z" fill="url(#vglass)"/>
+<path d="M496 112 L532 124 L556 152 L496 152 Z" fill="#ffffff" opacity=".18"/>
+<path d="M446 112 L446 162 L478 162 Q482 162 480 158 L462 118 Q458 112 446 112 Z" fill="url(#vglass)" opacity=".9"/>
+<line x1="446" y1="112" x2="446" y2="232" stroke="var(--line-strong)" stroke-width="2"/>
+<line x1="352" y1="98" x2="352" y2="232" stroke="var(--line-strong)" stroke-width="2"/>
+<rect x="422" y="176" width="16" height="5" rx="2.5" fill="var(--metal)"/>
+<rect x="328" y="176" width="16" height="5" rx="2.5" fill="var(--metal)"/>
+<path d="M492 120 l-14 4 v14" fill="none" stroke="var(--metal)" stroke-width="4" stroke-linecap="round"/>
+<rect x="468" y="122" width="12" height="18" rx="5" fill="var(--metal)"/>
+<path d="M580 172 q10 2 10 12 l0 10 -18 0 z" fill="#fef3c7" stroke="var(--metal)" stroke-width="1"/>
+<rect x="118" y="176" width="8" height="26" rx="3" fill="#0284c7" opacity=".9"/>
+<rect x="140" y="106" width="330" height="10" rx="5" fill="url(#vshine)" opacity=".35"/>
+<path d="M168 278 a44 44 0 0 1 88 0 z" fill="#0b1524"/>
+<path d="M446 278 a44 44 0 0 1 88 0 z" fill="#0b1524"/>
+<g class="wheel" style="animation-delay:0s">
+<circle cx="212" cy="278" r="35" fill="#111a2b"/><circle cx="212" cy="278" r="33" fill="none" stroke="#1e293b" stroke-width="3"/>
+<circle cx="212" cy="278" r="20" fill="url(#vrim)"/>
+<g stroke="#475569" stroke-width="3.4" stroke-linecap="round">
+<line x1="212" y1="262" x2="212" y2="270"/><line x1="212" y1="286" x2="212" y2="294"/>
+<line x1="196" y1="278" x2="204" y2="278"/><line x1="220" y1="278" x2="228" y2="278"/>
+</g>
+<circle cx="212" cy="278" r="6" fill="#334155"/>
+</g>
+<g class="wheel" style="animation-delay:-.3s">
+<circle cx="490" cy="278" r="35" fill="#111a2b"/><circle cx="490" cy="278" r="33" fill="none" stroke="#1e293b" stroke-width="3"/>
+<circle cx="490" cy="278" r="20" fill="url(#vrim)"/>
+<g stroke="#475569" stroke-width="3.4" stroke-linecap="round">
+<line x1="490" y1="262" x2="490" y2="270"/><line x1="490" y1="286" x2="490" y2="294"/>
+<line x1="474" y1="278" x2="482" y2="278"/><line x1="498" y1="278" x2="506" y2="278"/>
+</g>
+<circle cx="490" cy="278" r="6" fill="#334155"/>
+</g>
+</g>
+</svg>
+</div>
+<!-- floating chips -->
+<div class="vanwrap" style="pointer-events:none">
+<svg viewBox="0 0 640 330" aria-hidden="true" style="overflow:visible">
+<g class="float" style="--d:.9s;--fd:.2s" transform="translate(40 34)" filter="drop-shadow(0 6px 12px rgba(2,132,199,.15))">
+<rect width="104" height="64" rx="14" fill="var(--surface)" stroke="var(--line)"/>
+<rect x="14" y="14" width="58" height="8" rx="4" fill="var(--tone)"/>
+<rect x="14" y="30" width="76" height="6" rx="3" fill="var(--surface-muted)"/>
+<rect x="14" y="43" width="48" height="6" rx="3" fill="var(--surface-muted)"/>
+</g>
+<g class="float" style="--d:1.05s;--fd:.6s" transform="translate(548 26)" filter="drop-shadow(0 6px 12px rgba(2,132,199,.15))">
+<path d="M22 0C10 0 0 10 0 22c0 16 22 36 22 36s22-20 22-36C44 10 34 0 22 0z" fill="var(--tone)"/>
+<circle cx="22" cy="22" r="9" fill="#fff"/>
+</g>
+</svg>
+</div>
+</div>
+</div>
+<div class="text">
+<p class="eyebrow rv" style="--d:.15s">Logistics & Projects</p>
+<h1 class="rv" style="--d:.22s">Shipments and projects,
+kept in one place</h1>
+<p class="copy rv" style="--d:.32s">Waybills, delivery notes and real-time tracking sit alongside project progress, invoices and payments under each client engagement.</p>
+</div>
+</section>
+<!-- ═══════════ 4 · SIGN UP ═══════════ -->
+<section class="slide t-signup" id="s3" aria-roledescription="slide" aria-label="4 of 4">
+<div class="signupwrap">
+<div class="text" style="margin-top:0">
+<p class="eyebrow rv" style="--d:.05s">Get started</p>
+<h1 class="rv" style="--d:.1s">Create your account</h1>
+<p class="copy rv" style="--d:.18s">Set up your workspace and start operating in minutes.</p>
+</div>
+<div class="forms" style="margin-top:16px">
+<!-- sign up pane -->
+<form class="formpane" id="signupPane" novalidate aria-label="Create account">
+<div id="signupFields">
+<div class="field" id="f-name">
+<label for="in-name">Full name</label>
+<div class="control">
+<input id="in-name" name="name" type="text" autocomplete="name" placeholder="Adaeze Okafor" autocapitalize="words">
+<span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<p class="err" id="e-name" role="alert">Please enter your full name.</p>
+</div>
+<div class="field" id="f-email">
+<label for="in-email">Work email</label>
+<div class="control">
+<input id="in-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com">
+<span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<p class="err" id="e-email" role="alert">Enter a valid email address.</p>
+</div>
+<div class="field haspw" id="f-pw">
+<label for="in-pw">Password</label>
+<div class="control">
+<input id="in-pw" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+<button type="button" class="pwtoggle" id="pwToggle" aria-label="Show password" aria-pressed="false">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+</button>
+</div>
+<div class="meter" id="pwMeter" aria-hidden="true"><i></i><i></i><i></i></div>
+<p class="meterlabel" id="pwLabel"></p>
+<p class="err" id="e-pw" role="alert">Password must be at least 8 characters.</p>
+</div>
+</div>
+<button class="cta" type="submit" id="signupCta"><span class="spin" aria-hidden="true"></span><span class="lbl">Create account</span></button>
+</form>
+<!-- sign in pane -->
+<form class="formpane" id="signinPane" hidden novalidate aria-label="Sign in">
+<div class="field" id="f-si-email">
+<label for="in-si-email">Email</label>
+<div class="control">
+<input id="in-si-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com">
+<span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+</div>
+<p class="err" id="e-si-email" role="alert">Enter a valid email address.</p>
+</div>
+<div class="field haspw" id="f-si-pw">
+<label for="in-si-pw">Password</label>
+<div class="control">
+<input id="in-si-pw" name="password" type="password" autocomplete="current-password" placeholder="Your password">
+</div>
+<p class="err" id="e-si-pw" role="alert">Enter your password.</p>
+</div>
+<button class="cta" type="submit" id="signinCta"><span class="spin" aria-hidden="true"></span><span class="lbl">Sign in</span></button>
+</form>
+</div>
+<p class="alt"><span id="altLabel">Already have an account?</span> <button type="button" id="altSwitch">Sign in</button></p>
+<p class="fine">Built for your team. Powered by BIGDROPS.</p>
+</div>
+</section>
+</div>
+</main>
+<!-- bottom zone -->
+<div class="bottom">
+<div class="meta">
+<button class="backbtn" id="backBtn" aria-label="Previous step">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+</button>
+<div class="dots" id="dots" role="tablist" aria-label="Onboarding steps"></div>
+<span style="width:44px" aria-hidden="true"></span>
+</div>
+<button class="cta" id="nextBtn"><span class="lbl">Get started</span></button>
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var track=document.getElementById('track');
+var deck=document.getElementById('deck');
+var dotsWrap=document.getElementById('dots');
+var nextBtn=document.getElementById('nextBtn');
+var backBtn=document.getElementById('backBtn');
+var skipBtn=document.getElementById('skipBtn');
+var rail=[].slice.call(document.querySelectorAll('#rail i'));
+var live=document.getElementById('liveStatus');
+var names=['Intro','Invoicing & Taxes','Logistics & Projects','Sign up'];
+var labels=['Get started','Continue','Create account','Create account'];
+var last=slides.length-1;
+var idx=0,w=0,reduced=false,reducedMQ;
+var x=0,vx=0,tx=0,raf=null;
+function isReduced(){return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
+reduced=isReduced();
+/* build dots */
+slides.forEach(function(_,i){
+var b=document.createElement('button');
+b.type='button';b.setAttribute('role','tab');
+b.setAttribute('aria-label','Go to step '+(i+1)+': '+names[i]);
+b.innerHTML='<i></i>';
+b.addEventListener('click',function(){goTo(i);});
+dotsWrap.appendChild(b);
+});
+var dots=[].slice.call(dotsWrap.children);
+function metrics(){w=deck.clientWidth;}
+function setX(nx){x=nx;track.style.transform='translate3d('+x+'px,0,0)';}
+function rubberband(over){var d=w,c=0.55;return (overdc)/(d+c*Math.abs(over));}
+function project(v){var d=0.998;return (v/1000)*d/(1-d);}
+/* spring toward tx /
+var K,C;
+function springConsts(){var resp=0.42,wn=2Math.PI/resp;K=wnwn;C=2wn;}
+springConsts();
+function springTo(target,vel){
+tx=target;
+if(reduced){vx=0;setX(tx);afterSettle();return;}
+cancelAnimationFrame(raf);
+var lastT=performance.now();
+function step(now){
+var dt=Math.min((now-lastT)/1000,1/30);lastT=now;
+var a=K*(tx-x)-Cvx;
+vx+=adt;x+=vx*dt;
+if(Math.abs(tx-x)<0.4&&Math.abs(vx)<6){setX(tx);vx=0;raf=null;afterSettle();return;}
+setX(x);
+raf=requestAnimationFrame(step);
+}
+vx=vel||vx;
+raf=requestAnimationFrame(step);
+}
+function stopSpring(){if(raf){cancelAnimationFrame(raf);raf=null;}}
+function afterSettle(){
+slides.forEach(function(s,i){s.classList.toggle('active',i=idx);});
+dots.forEach(function(d,i){d.setAttribute('aria-current',i=idx?'true':'false');});
+rail.forEach(function(r,i){r.classList.toggle('done',i<idx);r.classList.toggle('on',i===idx);});
+backBtn.classList.toggle('show',idx>0&&idx<last);
+skipBtn.hidden=!(idx>0&&idx<last);
+nextBtn.querySelector('.lbl').textContent=labels[idx];
+live.textContent='Step '+(idx+1)+' of '+slides.length+': '+names[idx];
+}
+function goTo(i,vel){
+i=Math.max(0,Math.min(last,i));
+idx=i;
+springTo(-i*w,vel||0);
+}
+nextBtn.addEventListener('click',function(){goTo(idx>=last?last:idx+1);});
+backBtn.addEventListener('click',function(){goTo(idx-1);});
+skipBtn.addEventListener('click',function(){goTo(last);});
+document.addEventListener('keydown',function(e){
+if(e.key==='ArrowRight'){goTo(idx+1);}
+else if(e.key==='ArrowLeft'){goTo(idx-1);}
+});
+/* pointer swipe /
+var dragging=false,startPX=0,startX=0,hist=[],moved=0;
+deck.addEventListener('pointerdown',function(e){
+if(e.target.closest('input,button,form'))return;
+dragging=true;moved=0;hist=[];
+startPX=e.clientX;startX=x;
+stopSpring();vx=0;
+deck.setPointerCapture(e.pointerId);
+hist.push({t:performance.now(),x:x});
+});
+deck.addEventListener('pointermove',function(e){
+if(!dragging)return;
+var dx=e.clientX-startPX;
+moved=Math.max(moved,Math.abs(dx));
+var nx=startX+dx;
+if(nx>0)nx=rubberband(nx);
+if(nx<-(lastw))nx=-(lastw)-rubberband(-(lastw)-nx);
+setX(nx);
+hist.push({t:performance.now(),x:x});
+if(hist.length>6)hist.shift();
+});
+function endDrag(e){
+if(!dragging)return;dragging=false;
+if(moved<10){springTo(-idxw,0);return;}
+var now=performance.now();
+var old=hist[0],cur=hist[hist.length-1];
+var dt=(cur.t-old.t)/1000||0.016;
+var v=(cur.x-old.x)/dt;
+var projected=cur.x+project(v);
+var target=Math.round(-projected/w);
+if(v<-350&&target=idx)target=idx+1;
+if(v>350&&target=idx)target=idx-1;
+target=Math.max(0,Math.min(last,target));
+idx=target;
+springTo(-targetw,v);
+}
+deck.addEventListener('pointerup',endDrag);
+deck.addEventListener('pointercancel',endDrag);
+deck.addEventListener('click',function(e){if(moved>10){e.stopPropagation();e.preventDefault();}},true);
+window.addEventListener('resize',function(){metrics();stopSpring();setX(-idx*w);});
+reducedMQ=window.matchMedia('(prefers-reduced-motion: reduce)');
+if(reducedMQ.addEventListener){reducedMQ.addEventListener('change',function(e){reduced=e.matches;});}
+/* password visibility + strength */
+var pwToggle=document.getElementById('pwToggle');
+var pwInput=document.getElementById('in-pw');
+pwToggle.addEventListener('click',function(){
+var show=pwInput.type==='password';
+pwInput.type=show?'text':'password';
+pwToggle.setAttribute('aria-pressed',show?'true':'false');
+pwToggle.setAttribute('aria-label',show?'Hide password':'Show password');
+});
+pwInput.addEventListener('input',function(){
+var v=pwInput.value,meter=document.getElementById('pwMeter'),lab=document.getElementById('pwLabel');
+var cls=' s0',txt='';
+if(v.length>=8&&/[a-zA-Z]/.test(v)&&/\d/.test(v)){cls=' s3';txt='Strong password';}
+else if(v.length>=8){cls=' s2';txt='Good — add a number for strength';}
+else if(v.length>=5){cls=' s1';txt='Keep going — use 8+ characters';}
+meter.className='meter'+cls;
+lab.textContent=v?txt:'';
+});
+/* validation */
+function setFieldState(fieldId,ok){
+var f=document.getElementById(fieldId);
+f.classList.toggle('invalid',!ok);
+f.classList.toggle('valid',ok);
+var input=f.querySelector('input');
+input.setAttribute('aria-invalid',ok?'false':'true');
+var err=f.querySelector('.err');
+if(err)input.setAttribute('aria-describedby',err.id);
+return ok;
+}
+var emailRe=/^[^\s@]+@[^\s@]+.[^\s@]{2,}$/;
+function validName(){return document.getElementById('in-name').value.trim().length>=2;}
+function validEmail(id){return emailRe.test(document.getElementById(id).value.trim());}
+function validPw(){return document.getElementById('in-pw').value.length>=8;}
+function bindLive(field,input,fn){
+input.addEventListener('blur',function(){if(input.value)setFieldState(field,fn());});
+input.addEventListener('input',function(){
+var f=document.getElementById(field);
+if(f.classList.contains('invalid')&&fn())setFieldState(field,true);
+});
+}
+bindLive('f-name',document.getElementById('in-name'),validName);
+bindLive('f-email',document.getElementById('in-email'),function(){return validEmail('in-email');});
+bindLive('f-pw',pwInput,validPw);
+bindLive('f-si-email',document.getElementById('in-si-email'),function(){return validEmail('in-si-email');});
+bindLive('f-si-pw',document.getElementById('in-si-pw'),function(){return document.getElementById('in-si-pw').value.length>0;});
+document.getElementById('signupPane').addEventListener('submit',function(e){
+e.preventDefault();
+var ok=true,first=null;
+if(!setFieldState('f-name',validName())){ok=false;first=first||document.getElementById('in-name');}
+if(!setFieldState('f-email',validEmail('in-email'))){ok=false;first=first||document.getElementById('in-email');}
+if(!setFieldState('f-pw',validPw())){ok=false;first=first||document.getElementById('in-pw');}
+if(!ok){if(first)first.focus();return;}
+var btn=document.getElementById('signupCta');
+btn.classList.add('busy');btn.disabled=true;
+btn.querySelector('.lbl').textContent='Creating your workspace\u2026';
+setTimeout(function(){
+btn.classList.remove('busy');btn.disabled=false;
+btn.querySelector('.lbl').textContent='Account ready \u2713';
+live.textContent='Prototype: account ready.';
+},1100);
+});
+document.getElementById('signinPane').addEventListener('submit',function(e){
+e.preventDefault();
+var ok=true;
+if(!setFieldState('f-si-email',validEmail('in-si-email')))ok=false;
+if(!setFieldState('f-si-pw',document.getElementById('in-si-pw').value.length>0))ok=false;
+if(!ok)return;
+var btn=document.getElementById('signinCta');
+btn.classList.add('busy');btn.disabled=true;
+btn.querySelector('.lbl').textContent='Signing in\u2026';
+setTimeout(function(){
+btn.classList.remove('busy');btn.disabled=false;
+btn.querySelector('.lbl').textContent='Sign in';
+live.textContent='Prototype: signed in.';
+},1100);
+});
+var signupPane=document.getElementById('signupPane');
+var signinPane=document.getElementById('signinPane');
+var altSwitch=document.getElementById('altSwitch');
+var altLabel=document.getElementById('altLabel');
+altSwitch.addEventListener('click',function(){
+var toSignin=signinPane.hidden;
+var showPane=toSignin?signinPane:signupPane;
+var hidePane=toSignin?signupPane:signinPane;
+hidePane.classList.add('out');
+setTimeout(function(){
+hidePane.hidden=true;hidePane.classList.remove('out');
+showPane.hidden=false;showPane.classList.add('in');
+requestAnimationFrame(function(){requestAnimationFrame(function(){showPane.classList.remove('in');});});
+},reduced?0:180);
+altSwitch.textContent=toSignin?'Create account':'Sign in';
+altLabel.textContent=toSignin?'New to BIGDROPS?':'Already have an account?';
+live.textContent=toSignin?'Sign in form':'Create account form';
+});
+metrics();
+var h=(location.hash||'').replace('#','');
+var hi=slides.findIndex(function(s){return s.id===h;});
+if(hi>0){idx=hi;reduced=true;}
+setX(-idx*w);
+afterSettle();
+if(hi>0)reduced=isReduced();
+})();
+</script>
+</body>
+</html>

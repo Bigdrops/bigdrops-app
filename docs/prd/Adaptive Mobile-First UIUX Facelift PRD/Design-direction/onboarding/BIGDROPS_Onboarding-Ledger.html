@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BIGDROPS onboarding · Ledger edition — Intro → Tax &amp; Ops → Get started → Create account / Sign in.">
+<title>BIGDROPS Onboarding · Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@500;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens (Ledger — ink &amp; brass) ============ */
+:root{
+  --paper:#F6F1E4; --surface:#FFFDF7; --surface-2:#EFE7D2;
+  --ink:#1C1712; --ink-2:#4A4238; --ink-3:#8A7F6C;
+  --line:#DCD2B8; --line-strong:#C7B98F;
+  --brass:#8C6526; --brass-light:#C89B4A; --cta-bg:#8C6526; --cta-ink:#FBF6E8;
+  --moss:#4B6B4E; --rust:#A23F2E;
+  --shadow:0 10px 26px rgba(28,23,18,.10),0 2px 6px rgba(28,23,18,.06);
+  --shadow-float:0 16px 36px rgba(28,23,18,.16),0 3px 8px rgba(28,23,18,.08);
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --ez:cubic-bezier(.22,1,.36,1);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#15130F; --surface:#1F1B14; --surface-2:#2A251C;
+    --ink:#F3EDDC; --ink-2:#C9BFA5; --ink-3:#8F8570;
+    --line:#3A3527; --line-strong:#4C4732;
+    --brass:#D9A94F; --brass-light:#E8C077; --cta-bg:#D9A94F; --cta-ink:#1C1712;
+    --moss:#7FAE84; --rust:#D97A63;
+    --shadow:0 10px 26px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.24);
+    --shadow-float:0 16px 36px rgba(0,0,0,.45),0 3px 8px rgba(0,0,0,.30);
+  }
+}
+/* ============ base ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);
+  height:100dvh;overflow:hidden;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  -webkit-tap-highlight-color:transparent;overscroll-behavior:none;
+}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:active{transform:scale(.97)}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px;border-radius:8px}
+.skiplink{position:fixed;left:12px;top:calc(var(--sat) + 10px);z-index:60;transform:translateY(-260%);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;font-weight:700;font-size:13px;transition:transform .2s}
+.skiplink:focus{transform:none}
+
+/* ============ app frame ============ */
+.app{position:relative;height:100dvh;display:flex;flex-direction:column}
+.topbar{
+  position:absolute;top:0;left:0;right:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(var(--sat) + 10px) 20px 10px;
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;letter-spacing:-.01em;font-family:Fraunces,serif}
+.logo{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--ink);color:var(--paper);font-weight:700;font-size:16px;font-family:Fraunces,serif}
+.skipbtn{min-width:44px;min-height:44px;padding:0 10px;border-radius:12px;color:var(--ink-3);font-size:14px;font-weight:700;transition:opacity .25s,color .2s}
+.skipbtn:hover{color:var(--ink)}
+.skipbtn[hidden]{display:none}
+.rail{position:absolute;top:calc(var(--sat) + 58px);left:20px;right:20px;z-index:30;display:flex;gap:6px;pointer-events:none}
+.rail[hidden]{display:none}
+.rail i{height:3px;flex:1;border-radius:2px;background:var(--line-strong);opacity:.6;overflow:hidden;position:relative}
+.rail i::after{content:"";position:absolute;inset:0;background:var(--brass);border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ez)}
+.rail i.done::after,.rail i.on::after{transform:scaleX(1)}
+.deck{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:pan-y}
+.track{display:flex;height:100%;will-change:transform}
+.slide{flex:0 0 100%;min-width:0;height:100%;display:flex;flex-direction:column;padding:calc(var(--sat) + 96px) 24px calc(var(--sab) + 116px)}
+
+/* hero stage */
+.stage{position:relative;flex:1 1 auto;min-height:150px;display:flex;align-items:center;justify-content:center;margin:0 -8px}
+.glow{position:absolute;width:min(78vw,340px);height:min(78vw,340px);border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--brass) 14%,transparent),transparent 66%);animation:glowPulse 4.5s ease-in-out infinite}
+.ledgerart{width:100%;max-width:400px;height:100%;max-height:42dvh;position:relative;z-index:1}
+.ledgerart svg{width:100%;height:100%;overflow:visible}
+
+/* text block */
+.text{margin-top:18px;flex:0 0 auto}
+h1{font-family:Fraunces,Georgia,serif;font-size:clamp(1.7rem,7vw,2.3rem);line-height:1.12;letter-spacing:-.01em;font-weight:600;text-wrap:balance}
+.copy{margin-top:12px;font-size:.98rem;line-height:1.6;color:var(--ink-2);max-width:38ch;text-wrap:pretty}
+.rule{width:44px;height:2px;background:var(--brass);margin-top:14px;border-radius:1px}
+
+/* ============ bottom zone ============ */
+.bottom{position:absolute;left:0;right:0;bottom:0;z-index:30;padding:14px 24px calc(var(--sab) + 18px);display:flex;flex-direction:column;gap:14px;background:linear-gradient(180deg,transparent,var(--paper) 42%)}
+.meta{display:flex;align-items:center;min-height:44px}
+.backbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);visibility:hidden}
+.backbtn.show{visibility:visible}
+.dots{flex:1;display:flex;justify-content:center;gap:8px}
+.dots[hidden]{visibility:hidden}
+.dots button{width:28px;height:28px;display:grid;place-items:center;border-radius:50%}
+.dots button i{width:7px;height:7px;border-radius:4px;background:var(--line-strong);transition:width .35s var(--ez),background .35s;display:block}
+.dots button[aria-current="true"] i{width:24px;background:var(--brass)}
+.cta{width:100%;min-height:54px;border-radius:14px;background:var(--cta-bg);color:var(--cta-ink);font-weight:700;font-size:16px;letter-spacing:-.01em;box-shadow:var(--shadow-float);display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s ease-out,opacity .2s,filter .2s}
+.cta[hidden]{display:none}
+.cta:disabled{opacity:.55;box-shadow:none}
+.cta.busy{pointer-events:none;filter:saturate(.7)}
+.cta .spin{width:18px;height:18px;border-radius:50%;border:2.5px solid color-mix(in srgb,var(--cta-ink) 35%,transparent);border-top-color:var(--cta-ink);animation:spin .7s linear infinite;display:none}
+.cta.busy .spin{display:block}
+.fine{text-align:center;color:var(--ink-3);font-size:11px;line-height:1.5}
+
+/* ============ ledger card artwork ============ */
+.ledgercard{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:20px}
+
+/* ============ reveal system ============ */
+.rv,.rv-l,.rv-r{opacity:0}
+.slide.active .rv{animation:riseIn .6s var(--ez) var(--d,0s) both}
+.slide.active .rv-l{animation:riseL .6s var(--ez) var(--d,0s) both}
+.slide.active .rv-r{animation:riseR .6s var(--ez) var(--d,0s) both}
+.growbar{transform:scaleX(0);transform-origin:left center}
+.slide.active .growbar{animation:growW .65s var(--ez) var(--d,0s) both}
+.pop{opacity:0;transform:scale(.4)}
+.slide.active .pop{animation:popIn .6s cubic-bezier(.34,1.4,.64,1) var(--d,0s) both}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes riseL{from{opacity:0;transform:translate(-22px,10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes riseR{from{opacity:0;transform:translate(22px,10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes growW{to{transform:scaleX(1)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+@keyframes glowPulse{0%,100%{opacity:.65;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ auth choice ============ */
+.pathcard{display:flex;align-items:center;gap:14px;width:100%;padding:18px;border-radius:16px;text-align:left;box-shadow:var(--shadow)}
+.pathcard.primary{background:var(--cta-bg);color:var(--cta-ink)}
+.pathcard.secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.pathcard .picon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;background:color-mix(in srgb, currentColor 14%, transparent)}
+.pathcard .ptext strong{display:block;font-size:15.5px;font-weight:700}
+.pathcard .ptext span{display:block;font-size:12.5px;opacity:.82;margin-top:2px}
+
+/* ============ forms ============ */
+.formwrap{margin-top:16px;flex:1;min-height:0;overflow:auto}
+.social{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.socialbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:50px;border-radius:12px;font-weight:700;font-size:14.5px}
+.socialbtn.google{background:#fff;color:#3C4043;border:1.5px solid #DADCE0}
+.socialbtn.apple{background:#000;color:#fff}
+.divider{display:flex;align-items:center;gap:10px;margin:4px 0 16px;color:var(--ink-3);font-size:12px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.control{position:relative;display:flex;align-items:center}
+.control input{width:100%;min-height:50px;padding:0 44px 0 14px;border-radius:12px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:15px;font-family:inherit}
+.control input:focus{border-color:var(--brass)}
+.field.invalid .control input{border-color:var(--rust)}
+.field.valid .control input{border-color:var(--moss)}
+.field .ok{position:absolute;right:14px;color:var(--moss);opacity:0;transition:opacity .2s;display:flex}
+.field.valid .ok{opacity:1}
+.pwtoggle{position:absolute;right:10px;width:32px;height:32px;display:grid;place-items:center;color:var(--ink-3)}
+.err{display:none;color:var(--rust);font-size:12px;margin-top:6px}
+.field.invalid .err{display:block}
+.meter{height:4px;border-radius:2px;background:var(--line);margin-top:8px;overflow:hidden;position:relative}
+.meter::after{content:"";position:absolute;inset:0;background:var(--rust);width:0;transition:width .25s,background .25s}
+.meter.s1::after{width:33%;background:var(--rust)}
+.meter.s2::after{width:66%;background:var(--brass)}
+.meter.s3::after{width:100%;background:var(--moss)}
+.pwlabel{font-size:11.5px;color:var(--ink-3);margin-top:4px;min-height:14px}
+.alt{text-align:center;font-size:13.5px;color:var(--ink-2);margin-top:6px}
+.alt button{color:var(--brass);font-weight:700}
+
+@media (max-height:640px){
+  .slide{padding-top:calc(var(--sat) + 84px);padding-bottom:calc(var(--sab) + 104px)}
+  .ledgerart{max-height:32dvh}
+  h1{font-size:1.6rem}
+  .copy{font-size:.92rem}
+}
+</style>
+</head>
+<body>
+<a class="skiplink" href="#s2">Skip to get started</a>
+<p class="vh" role="status" id="liveStatus">Step 1 of 5: Intro</p>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand"><span class="logo" aria-hidden="true">b</span>BIGDROPS</div>
+    <button class="skipbtn" id="skipBtn" hidden>Skip</button>
+  </header>
+
+  <nav class="rail" id="rail" aria-hidden="true">
+    <i class="on"></i><i></i>
+  </nav>
+
+  <main class="deck" id="deck" aria-roledescription="carousel" aria-label="BIGDROPS onboarding">
+    <div class="track" id="track">
+
+      <!-- ═══════════ 1 · INTRO ═══════════ -->
+      <section class="slide t-intro active" id="s0" aria-roledescription="slide" aria-label="1 of 5">
+        <div class="stage" role="img" aria-label="A ledger page with ruled entry lines, a brass verified stamp, and a naira badge">
+          <div class="glow"></div>
+          <div class="ledgerart">
+            <svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <filter id="lsh0" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1C1712" flood-opacity=".14"/></filter>
+              </defs>
+              <g class="rv-l" style="--d:.05s" filter="url(#lsh0)">
+                <rect x="92" y="36" width="176" height="216" rx="14" fill="var(--surface)" stroke="var(--line)"/>
+                <rect x="112" y="60" width="70" height="9" rx="4.5" fill="var(--ink)"/>
+                <rect x="112" y="86" width="120" height="1.6" fill="var(--line)"/>
+                <rect x="112" y="104" width="120" height="1.6" fill="var(--line)"/>
+                <rect x="112" y="122" width="90" height="1.6" fill="var(--line)"/>
+                <rect x="112" y="140" width="120" height="1.6" fill="var(--line)"/>
+                <rect x="112" y="206" width="120" height="14" rx="7" fill="color-mix(in srgb,var(--brass) 30%,var(--surface))"/>
+                <rect x="112" y="230" width="120" height="13" rx="6.5" fill="var(--brass)" class="growbar" style="--d:.5s"/>
+              </g>
+              <g class="rv-r pop" style="--d:.42s" filter="url(#lsh0)" transform="translate(238 42) rotate(-8)">
+                <circle cx="28" cy="28" r="28" fill="none" stroke="var(--brass)" stroke-width="3"/>
+                <circle cx="28" cy="28" r="20" fill="none" stroke="var(--brass)" stroke-width="1.3" stroke-dasharray="2 4"/>
+                <path d="M17 29l7.5 7.5 15.5-17" fill="none" stroke="var(--brass)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <g class="rv-l" style="--d:.3s" filter="url(#lsh0)" transform="translate(38 132)">
+                <rect width="46" height="46" rx="13" fill="var(--ink)"/>
+                <text x="23" y="31" font-size="21" font-weight="600" fill="var(--paper)" text-anchor="middle" font-family="Fraunces,serif">&#8358;</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="text">
+          <h1 class="rv" style="--d:.1s">Run compliant.<br>Get paid faster.</h1>
+          <div class="rule rv" style="--d:.18s"></div>
+          <p class="copy rv" style="--d:.24s">Invoicing, logistics and projects — kept audit-ready for NRS, without spreadsheets or guesswork.</p>
+        </div>
+      </section>
+
+      <!-- ═══════════ 2 · TAX &amp; OPS DETAIL ═══════════ -->
+      <section class="slide t-detail" id="s1" aria-roledescription="slide" aria-label="2 of 5">
+        <div class="stage" role="img" aria-label="A tax readiness card showing VAT and WHT tracked, with waybills and project progress noted alongside it">
+          <div class="ledgerart">
+            <div class="ledgercard rv" style="--d:.05s;width:100%;max-width:320px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <span style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px">
+                  <span style="width:22px;height:22px;border-radius:6px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-family:Fraunces,serif;font-size:12px">b</span>
+                  Files.tax
+                </span>
+                <span style="font-size:11px;font-weight:700;color:var(--moss);background:color-mix(in srgb,var(--moss) 16%,var(--surface));padding:4px 10px;border-radius:999px">Sorted</span>
+              </div>
+              <div class="rv" style="--d:.18s;display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--moss)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 8.2l1.8 1.8 3.4-4"/></svg>
+                <span style="flex:1;font-size:13px">VAT position</span><em style="font-style:normal;font-size:12px;color:var(--ink-3)">Tracked</em>
+              </div>
+              <div class="rv" style="--d:.28s;display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--moss)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 8.2l1.8 1.8 3.4-4"/></svg>
+                <span style="flex:1;font-size:13px">WHT position</span><em style="font-style:normal;font-size:12px;color:var(--ink-3)">Tracked</em>
+              </div>
+              <div class="rv" style="--d:.38s;display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--brass)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3.2M8 10.6h.01"/></svg>
+                <span style="flex:1;font-size:13px">Attention items</span><em style="font-style:normal;font-size:12px;color:var(--ink-3)">Review</em>
+              </div>
+              <p class="rv" style="--d:.46s;font-size:11.5px;color:var(--ink-3);margin-top:12px">Waybills, delivery notes and project progress live under the same client record.</p>
+            </div>
+          </div>
+        </div>
+        <div class="text">
+          <h1 class="rv" style="--d:.1s">VAT and WHT,<br>calculated automatically.</h1>
+          <div class="rule rv" style="--d:.18s"></div>
+          <p class="copy rv" style="--d:.26s">Every invoice stays NRS-ready. Shipments and project progress sit right alongside it, under one client engagement.</p>
+        </div>
+      </section>
+
+      <!-- ═══════════ 3 · GET STARTED (AUTH CHOICE) ═══════════ -->
+      <section class="slide t-choice" id="s2" aria-roledescription="slide" aria-label="3 of 5">
+        <div class="text" style="margin-top:0">
+          <h1 class="rv" style="--d:.05s">Open your ledger.</h1>
+          <div class="rule rv" style="--d:.1s"></div>
+          <p class="copy rv" style="--d:.16s">Create a new workspace, or sign back in to the one your team already runs on.</p>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;margin-top:8px">
+          <button class="pathcard primary rv" style="--d:.22s" id="goSignup" type="button">
+            <span class="picon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+            <span class="ptext"><strong>Create account</strong><span>Set up a new BIGDROPS workspace</span></span>
+          </button>
+          <button class="pathcard secondary rv" style="--d:.3s" id="goSignin" type="button">
+            <span class="picon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6"/></svg></span>
+            <span class="ptext"><strong>Sign in</strong><span>Already have a BIGDROPS account</span></span>
+          </button>
+        </div>
+        <p class="fine rv" style="--d:.38s;margin-top:18px">Built for your team. Powered by BIGDROPS.</p>
+      </section>
+
+      <!-- ═══════════ 4 · CREATE ACCOUNT ═══════════ -->
+      <section class="slide t-signup" id="s3" aria-roledescription="slide" aria-label="4 of 5">
+        <div class="text" style="margin-top:0">
+          <h1 class="rv" style="--d:.05s">Create your account</h1>
+          <p class="copy rv" style="--d:.1s">Set up your workspace and start operating in minutes.</p>
+        </div>
+        <div class="formwrap">
+          <div class="social rv" style="--d:.16s">
+            <button type="button" class="socialbtn google" id="googleSignup">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/></svg>
+              Continue with Google
+            </button>
+            <button type="button" class="socialbtn apple" id="appleSignup">
+              <svg width="15" height="18" viewBox="0 0 170 170" fill="currentColor" aria-hidden="true"><path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.34-3.69 0-8.14-1.05-13.32-3.18-5.197-2.12-9.973-3.17-14.34-3.17-4.58 0-9.492 1.05-14.746 3.17-5.262 2.13-9.501 3.24-12.742 3.35-4.929.21-9.842-1.96-14.746-6.52-3.13-2.73-7.045-7.41-11.735-14.04-5.032-7.08-9.169-15.29-12.41-24.65-3.471-10.11-5.211-19.9-5.211-29.378 0-10.857 2.346-20.221 7.045-28.068 3.693-6.303 8.606-11.275 14.755-14.925s12.793-5.51 19.948-5.629c3.915 0 9.049 1.211 15.429 3.591 6.362 2.388 10.447 3.599 12.238 3.599 1.339 0 5.877-1.416 13.57-4.239 7.275-2.618 13.415-3.702 18.445-3.275 13.63 1.1 23.87 6.473 30.68 16.153-12.19 7.386-18.22 17.731-18.1 31.002.11 10.336 3.86 18.939 11.23 25.769 3.34 3.17 7.07 5.62 11.22 7.36-.9 2.61-1.85 5.11-2.86 7.51zM119.11 7.24c0 8.1-2.96 15.67-8.86 22.69-7.12 8.35-15.732 13.17-25.071 12.41a25.11 25.11 0 0 1-.188-3.07c0-7.78 3.386-16.1 9.399-22.9 3.002-3.44 6.82-6.3 11.45-8.58 4.62-2.25 8.99-3.49 13.1-3.7.12 1.06.17 2.12.17 3.15z"/></svg>
+              Continue with Apple
+            </button>
+          </div>
+          <p class="divider rv" style="--d:.2s">or with email</p>
+          <form id="signupForm" novalidate>
+            <div class="field" id="f-name">
+              <label for="in-name">Full name</label>
+              <div class="control">
+                <input id="in-name" name="name" type="text" autocomplete="name" placeholder="Your full name">
+                <span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </div>
+              <p class="err" id="e-name" role="alert">Enter your full name.</p>
+            </div>
+            <div class="field" id="f-email">
+              <label for="in-email">Work email</label>
+              <div class="control">
+                <input id="in-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com">
+                <span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </div>
+              <p class="err" id="e-email" role="alert">Enter a valid email address.</p>
+            </div>
+            <div class="field haspw" id="f-pw">
+              <label for="in-pw">Password</label>
+              <div class="control">
+                <input id="in-pw" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+                <button type="button" class="pwtoggle" id="pwToggle" aria-pressed="false" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+              <div class="meter" id="pwMeter"></div>
+              <p class="pwlabel" id="pwLabel"></p>
+              <p class="err" id="e-pw" role="alert">Use at least 8 characters.</p>
+            </div>
+            <button class="cta" type="submit" id="signupCta" style="margin-top:4px"><span class="spin" aria-hidden="true"></span><span class="lbl">Create account</span></button>
+          </form>
+          <p class="fine" style="margin-top:16px">By creating an account you agree to BIGDROPS' Terms and Privacy Policy.</p>
+        </div>
+      </section>
+
+      <!-- ═══════════ 5 · SIGN IN ═══════════ -->
+      <section class="slide t-signin" id="s4" aria-roledescription="slide" aria-label="5 of 5">
+        <div class="text" style="margin-top:0">
+          <h1 class="rv" style="--d:.05s">Sign in</h1>
+          <p class="copy rv" style="--d:.1s">Pick up right where your team left off.</p>
+        </div>
+        <div class="formwrap">
+          <div class="social rv" style="--d:.16s">
+            <button type="button" class="socialbtn google" id="googleSignin">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/></svg>
+              Continue with Google
+            </button>
+            <button type="button" class="socialbtn apple" id="appleSignin">
+              <svg width="15" height="18" viewBox="0 0 170 170" fill="currentColor" aria-hidden="true"><path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.34-3.69 0-8.14-1.05-13.32-3.18-5.197-2.12-9.973-3.17-14.34-3.17-4.58 0-9.492 1.05-14.746 3.17-5.262 2.13-9.501 3.24-12.742 3.35-4.929.21-9.842-1.96-14.746-6.52-3.13-2.73-7.045-7.41-11.735-14.04-5.032-7.08-9.169-15.29-12.41-24.65-3.471-10.11-5.211-19.9-5.211-29.378 0-10.857 2.346-20.221 7.045-28.068 3.693-6.303 8.606-11.275 14.755-14.925s12.793-5.51 19.948-5.629c3.915 0 9.049 1.211 15.429 3.591 6.362 2.388 10.447 3.599 12.238 3.599 1.339 0 5.877-1.416 13.57-4.239 7.275-2.618 13.415-3.702 18.445-3.275 13.63 1.1 23.87 6.473 30.68 16.153-12.19 7.386-18.22 17.731-18.1 31.002.11 10.336 3.86 18.939 11.23 25.769 3.34 3.17 7.07 5.62 11.22 7.36-.9 2.61-1.85 5.11-2.86 7.51zM119.11 7.24c0 8.1-2.96 15.67-8.86 22.69-7.12 8.35-15.732 13.17-25.071 12.41a25.11 25.11 0 0 1-.188-3.07c0-7.78 3.386-16.1 9.399-22.9 3.002-3.44 6.82-6.3 11.45-8.58 4.62-2.25 8.99-3.49 13.1-3.7.12 1.06.17 2.12.17 3.15z"/></svg>
+              Continue with Apple
+            </button>
+          </div>
+          <p class="divider rv" style="--d:.2s">or with email</p>
+          <form id="signinForm" novalidate>
+            <div class="field" id="f-si-email">
+              <label for="in-si-email">Email</label>
+              <div class="control">
+                <input id="in-si-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com">
+                <span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </div>
+              <p class="err" id="e-si-email" role="alert">Enter a valid email address.</p>
+            </div>
+            <div class="field haspw" id="f-si-pw">
+              <label for="in-si-pw">Password</label>
+              <div class="control">
+                <input id="in-si-pw" name="password" type="password" autocomplete="current-password" placeholder="Your password">
+                <button type="button" class="pwtoggle" id="pwToggleSi" aria-pressed="false" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+              <p class="err" id="e-si-pw" role="alert">Enter your password.</p>
+            </div>
+            <button class="cta" type="submit" id="signinCta" style="margin-top:4px"><span class="spin" aria-hidden="true"></span><span class="lbl">Sign in</span></button>
+          </form>
+          <p class="alt"><button type="button" id="forgotPw">Forgot password?</button></p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- bottom zone -->
+  <div class="bottom">
+    <div class="meta">
+      <button class="backbtn" id="backBtn" aria-label="Previous step">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="dots" id="dots" role="tablist" aria-label="Onboarding steps"></div>
+      <span style="width:44px" aria-hidden="true"></span>
+    </div>
+    <button class="cta" id="nextBtn"><span class="lbl">Continue</span></button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var track=document.getElementById('track');
+var deck=document.getElementById('deck');
+var dotsWrap=document.getElementById('dots');
+var nextBtn=document.getElementById('nextBtn');
+var backBtn=document.getElementById('backBtn');
+var skipBtn=document.getElementById('skipBtn');
+var rail=[].slice.call(document.querySelectorAll('#rail i'));
+var live=document.getElementById('liveStatus');
+var names=['Intro','Tax & ops','Get started','Create account','Sign in'];
+var meta=[
+  {dots:true,cta:true,label:'Continue'},
+  {dots:true,cta:true,label:'Get started'},
+  {dots:false,cta:false},
+  {dots:false,cta:false},
+  {dots:false,cta:false,backTo:2}
+];
+var last=slides.length-1;
+var idx=0,w=0,reduced=false,reducedMQ;
+var x=0,vx=0,tx=0,raf=null;
+
+function isReduced(){return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
+reduced=isReduced();
+
+/* build dots only for step-slides (0,1) */
+var dotIdx=[];
+meta.forEach(function(m,i){if(m.dots)dotIdx.push(i);});
+dotIdx.forEach(function(i){
+  var b=document.createElement('button');
+  b.type='button';b.setAttribute('role','tab');
+  b.setAttribute('aria-label','Go to step '+(i+1)+': '+names[i]);
+  b.innerHTML='<i></i>';
+  b.addEventListener('click',function(){goTo(i);});
+  dotsWrap.appendChild(b);
+});
+var dots=[].slice.call(dotsWrap.children);
+
+function metrics(){w=deck.clientWidth;}
+function setX(nx){x=nx;track.style.transform='translate3d('+x+'px,0,0)';}
+function rubberband(over){var d=w,c=0.55;return (over*d*c)/(d+c*Math.abs(over));}
+function project(v){var d=0.998;return (v/1000)*d/(1-d);}
+
+var K,C;
+function springConsts(){var resp=0.42,wn=2*Math.PI/resp;K=wn*wn;C=2*wn;}
+springConsts();
+function springTo(target,vel){
+  tx=target;
+  if(reduced){vx=0;setX(tx);afterSettle();return;}
+  cancelAnimationFrame(raf);
+  var lastT=performance.now();
+  function step(now){
+    var dt=Math.min((now-lastT)/1000,1/30);lastT=now;
+    var a=K*(tx-x)-C*vx;
+    vx+=a*dt;x+=vx*dt;
+    if(Math.abs(tx-x)<0.4&&Math.abs(vx)<6){setX(tx);vx=0;raf=null;afterSettle();return;}
+    setX(x);
+    raf=requestAnimationFrame(step);
+  }
+  vx=vel||vx;
+  raf=requestAnimationFrame(step);
+}
+function stopSpring(){if(raf){cancelAnimationFrame(raf);raf=null;}}
+
+function backTarget(i){var m=meta[i];return (m&&m.backTo!==undefined)?m.backTo:i-1;}
+
+function afterSettle(){
+  slides.forEach(function(s,i){s.classList.toggle('active',i===idx);});
+  var m=meta[idx]||{};
+  dots.forEach(function(d,di){var i=dotIdx[di];d.setAttribute('aria-current',i===idx?'true':'false');});
+  dotsWrap.hidden=!m.dots;
+  document.getElementById('rail').hidden=!m.dots;
+  rail.forEach(function(r,i){r.classList.toggle('done',i<idx);r.classList.toggle('on',i===idx);});
+  backBtn.classList.toggle('show',idx>0);
+  skipBtn.hidden=!(m.dots&&idx>0);
+  nextBtn.hidden=!m.cta;
+  if(m.cta)nextBtn.querySelector('.lbl').textContent=m.label;
+  live.textContent='Step '+(idx+1)+' of '+slides.length+': '+names[idx];
+}
+
+function goTo(i,vel){
+  i=Math.max(0,Math.min(last,i));
+  idx=i;
+  springTo(-i*w,vel||0);
+}
+
+/* buttons */
+nextBtn.addEventListener('click',function(){if(meta[idx]&&meta[idx].cta)goTo(idx+1);});
+backBtn.addEventListener('click',function(){goTo(backTarget(idx));});
+skipBtn.addEventListener('click',function(){goTo(2);});
+document.getElementById('goSignup').addEventListener('click',function(){goTo(3);});
+document.getElementById('goSignin').addEventListener('click',function(){goTo(4);});
+
+/* keyboard: back always available, forward only through the step slides */
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowLeft'&&idx>0){goTo(backTarget(idx));}
+  else if(e.key==='ArrowRight'&&idx<2){goTo(idx+1);}
+});
+
+/* pointer swipe — only within the step slides (0-1); choice/forms are button-only */
+var dragging=false,startPX=0,startX=0,hist=[],moved=0;
+deck.addEventListener('pointerdown',function(e){
+  if(idx>=2)return;
+  if(e.target.closest('input,button,form'))return;
+  dragging=true;moved=0;hist=[];
+  startPX=e.clientX;startX=x;
+  stopSpring();vx=0;
+  deck.setPointerCapture(e.pointerId);
+  hist.push({t:performance.now(),x:x});
+});
+deck.addEventListener('pointermove',function(e){
+  if(!dragging)return;
+  var dx=e.clientX-startPX;
+  moved=Math.max(moved,Math.abs(dx));
+  var nx=startX+dx;
+  var floor=-1*w;
+  if(nx>0)nx=rubberband(nx);
+  if(nx<floor)nx=floor-rubberband(floor-nx);
+  setX(nx);
+  hist.push({t:performance.now(),x:x});
+  if(hist.length>6)hist.shift();
+});
+function endDrag(e){
+  if(!dragging)return;dragging=false;
+  if(moved<10){springTo(-idx*w,0);return;}
+  var old=hist[0],cur=hist[hist.length-1];
+  var dt=(cur.t-old.t)/1000||0.016;
+  var v=(cur.x-old.x)/dt;
+  var projected=cur.x+project(v);
+  var target=Math.round(-projected/w);
+  if(v<-350&&target===idx)target=idx+1;
+  if(v>350&&target===idx)target=idx-1;
+  target=Math.max(0,Math.min(1,target));
+  idx=target;
+  springTo(-target*w,v);
+}
+deck.addEventListener('pointerup',endDrag);
+deck.addEventListener('pointercancel',endDrag);
+deck.addEventListener('click',function(e){if(moved>10){e.stopPropagation();e.preventDefault();}},true);
+
+window.addEventListener('resize',function(){metrics();stopSpring();setX(-idx*w);});
+reducedMQ=window.matchMedia('(prefers-reduced-motion: reduce)');
+if(reducedMQ.addEventListener){reducedMQ.addEventListener('change',function(e){reduced=e.matches;});}
+
+/* ---- password visibility + strength (signup) ---- */
+function wirePw(toggleId,inputId,meterId,labelId){
+  var t=document.getElementById(toggleId),i=document.getElementById(inputId);
+  t.addEventListener('click',function(){
+    var show=i.type==='password';
+    i.type=show?'text':'password';
+    t.setAttribute('aria-pressed',show?'true':'false');
+    t.setAttribute('aria-label',show?'Hide password':'Show password');
+  });
+  if(meterId){
+    i.addEventListener('input',function(){
+      var v=i.value,meter=document.getElementById(meterId),lab=document.getElementById(labelId);
+      var cls=' s0',txt='';
+      if(v.length>=8&&/[a-zA-Z]/.test(v)&&/\d/.test(v)){cls=' s3';txt='Strong password';}
+      else if(v.length>=8){cls=' s2';txt='Good — add a number for strength';}
+      else if(v.length>=5){cls=' s1';txt='Keep going — use 8+ characters';}
+      meter.className='meter'+cls;
+      lab.textContent=v?txt:'';
+    });
+  }
+}
+wirePw('pwToggle','in-pw','pwMeter','pwLabel');
+wirePw('pwToggleSi','in-si-pw',null,null);
+
+/* ---- validation ---- */
+function setFieldState(fieldId,ok){
+  var f=document.getElementById(fieldId);
+  f.classList.toggle('invalid',!ok);
+  f.classList.toggle('valid',ok);
+  var input=f.querySelector('input');
+  input.setAttribute('aria-invalid',ok?'false':'true');
+  var err=f.querySelector('.err');
+  if(err)input.setAttribute('aria-describedby',err.id);
+  return ok;
+}
+var emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function validName(){return document.getElementById('in-name').value.trim().length>=2;}
+function validEmail(id){return emailRe.test(document.getElementById(id).value.trim());}
+function validPw(){return document.getElementById('in-pw').value.length>=8;}
+
+function bindLive(field,input,fn){
+  input.addEventListener('blur',function(){if(input.value)setFieldState(field,fn());});
+  input.addEventListener('input',function(){
+    var f=document.getElementById(field);
+    if(f.classList.contains('invalid')&&fn())setFieldState(field,true);
+  });
+}
+bindLive('f-name',document.getElementById('in-name'),validName);
+bindLive('f-email',document.getElementById('in-email'),function(){return validEmail('in-email');});
+bindLive('f-pw',document.getElementById('in-pw'),validPw);
+bindLive('f-si-email',document.getElementById('in-si-email'),function(){return validEmail('in-si-email');});
+bindLive('f-si-pw',document.getElementById('in-si-pw'),function(){return document.getElementById('in-si-pw').value.length>0;});
+
+document.getElementById('signupForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var ok=true,first=null;
+  if(!setFieldState('f-name',validName())){ok=false;first=first||document.getElementById('in-name');}
+  if(!setFieldState('f-email',validEmail('in-email'))){ok=false;first=first||document.getElementById('in-email');}
+  if(!setFieldState('f-pw',validPw())){ok=false;first=first||document.getElementById('in-pw');}
+  if(!ok){if(first)first.focus();return;}
+  var btn=document.getElementById('signupCta');
+  btn.classList.add('busy');btn.disabled=true;
+  btn.querySelector('.lbl').textContent='Creating your workspace\u2026';
+  setTimeout(function(){
+    btn.classList.remove('busy');btn.disabled=false;
+    btn.querySelector('.lbl').textContent='Account ready \u2713';
+    live.textContent='Prototype: account created. In the app this continues to workspace setup.';
+  },1100);
+});
+
+document.getElementById('signinForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var ok=true;
+  if(!setFieldState('f-si-email',validEmail('in-si-email')))ok=false;
+  if(!setFieldState('f-si-pw',document.getElementById('in-si-pw').value.length>0))ok=false;
+  if(!ok)return;
+  var btn=document.getElementById('signinCta');
+  btn.classList.add('busy');btn.disabled=true;
+  btn.querySelector('.lbl').textContent='Signing in\u2026';
+  setTimeout(function(){
+    btn.classList.remove('busy');btn.disabled=false;
+    btn.querySelector('.lbl').textContent='Sign in';
+    live.textContent='Prototype: signed in. In the app this continues to context restoration.';
+  },1100);
+});
+
+/* ---- social auth (prototype) ---- */
+function wireSocial(id,provider,dest){
+  document.getElementById(id).addEventListener('click',function(){
+    live.textContent='Prototype: continues to '+provider+' '+dest+'.';
+  });
+}
+wireSocial('googleSignup','Google','sign-up');
+wireSocial('appleSignup','Apple','sign-up');
+wireSocial('googleSignin','Google','sign-in');
+wireSocial('appleSignin','Apple','sign-in');
+document.getElementById('forgotPw').addEventListener('click',function(){
+  live.textContent='Prototype: continues to password reset.';
+});
+
+/* init */
+metrics();
+setX(-idx*w);
+afterSettle();
+})();
+</script>
+</body>
+</html>

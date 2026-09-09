@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Files.tax onboarding — tax filing made easy for teams, entities, and workspaces.">
+  <title>Files.tax · Onboarding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f3ef;
+      --surface: #fffefa;
+      --surface-muted: #e9e8e1;
+      --ink: #20231f;
+      --muted: #74786f;
+      --line: #d8d9d0;
+      --accent: #d9674e;
+      --accent-deep: #b94d38;
+      --accent-soft: #f7d6cc;
+      --sage: #b8c9ae;
+      --sage-deep: #5f765b;
+      --shadow: 0 20px 44px rgba(43, 48, 40, .12), 0 4px 12px rgba(43, 48, 40, .06);
+      --ease: cubic-bezier(.2,.8,.2,1);
+      --top: env(safe-area-inset-top, 0px);
+      --bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      min-height: 100dvh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button, input { font: inherit; }
+    button { border: 0; cursor: pointer; color: inherit; }
+    button:active { transform: scale(.98); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    .shell { position: relative; min-height: 100dvh; overflow: hidden; }
+    .shell::before, .shell::after { content: ""; position: fixed; pointer-events: none; border-radius: 50%; filter: blur(2px); }
+    .shell::before { width: 260px; height: 260px; top: -130px; right: -90px; background: var(--accent-soft); opacity: .65; }
+    .shell::after { width: 210px; height: 210px; bottom: -110px; left: -80px; background: #dbe5d5; opacity: .7; }
+
+    .header { position: absolute; z-index: 10; top: 0; left: 0; right: 0; padding: calc(var(--top) + 20px) 22px 0; display: flex; justify-content: space-between; align-items: center; }
+    .wordmark { display: flex; align-items: center; gap: 9px; font-family: "Space Grotesk", sans-serif; font-weight: 700; letter-spacing: -.04em; font-size: 17px; }
+    .mark { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 9px 9px 9px 3px; background: var(--accent); color: white; font-size: 16px; font-weight: 700; }
+    .step-label { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .03em; }
+
+    .viewport { height: 100dvh; overflow: hidden; }
+    .track { height: 100%; display: flex; transition: transform .65s var(--ease); will-change: transform; }
+    .slide { flex: 0 0 100%; min-width: 0; height: 100%; display: flex; flex-direction: column; padding: calc(var(--top) + 82px) 22px calc(var(--bottom) + 122px); }
+    .slide-inner { width: min(100%, 430px); margin: 0 auto; flex: 1; display: flex; flex-direction: column; }
+    .eyebrow { color: var(--accent-deep); font-size: 11px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; margin-bottom: 13px; }
+    h1 { max-width: 370px; font-family: "Space Grotesk", sans-serif; font-size: clamp(2.05rem, 10vw, 3.35rem); line-height: .98; letter-spacing: -.075em; font-weight: 600; text-wrap: balance; }
+    .lede { max-width: 34ch; margin-top: 17px; color: var(--muted); font-size: 15px; line-height: 1.55; text-wrap: pretty; }
+
+    .art { position: relative; flex: 1; min-height: 280px; margin: 30px -4px 22px; display: grid; place-items: center; }
+    .art::before { content: ""; position: absolute; width: min(78vw, 300px); aspect-ratio: 1; border-radius: 50%; background: #ece7dd; }
+    .art-card { position: relative; width: min(88%, 330px); border: 1px solid rgba(32,35,31,.1); border-radius: 24px; background: rgba(255,254,250,.88); box-shadow: var(--shadow); }
+
+    /* slide 1: filing made easy */
+    .filing-card { padding: 18px; transform: rotate(-3deg); }
+    .card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px; }
+    .mini-brand { display:flex; align-items:center; gap: 7px; font-family: "Space Grotesk", sans-serif; font-size: 12px; font-weight: 700; }
+    .mini-dot { width: 18px; height: 18px; border-radius: 6px 6px 6px 2px; background: var(--accent); }
+    .status { border-radius: 99px; padding: 5px 9px; color: var(--sage-deep); background: #e3eddc; font-size: 10px; font-weight: 700; }
+    .filing-title { font-family: "Space Grotesk", sans-serif; font-size: 24px; letter-spacing: -.06em; font-weight: 600; }
+    .progress { height: 9px; margin: 16px 0 18px; overflow: hidden; border-radius: 9px; background: var(--surface-muted); }
+    .progress span { display:block; width: 72%; height:100%; border-radius: inherit; background: var(--accent); }
+    .line-item { display:flex; align-items:center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); font-size: 12px; }
+    .check { width: 21px; height: 21px; display:grid; place-items:center; flex: 0 0 auto; border-radius: 50%; color: white; background: var(--sage-deep); font-size: 12px; font-weight: 700; }
+    .line-item small { margin-left:auto; color: var(--muted); font-size: 10px; }
+    .floating-note { position:absolute; right: -9px; bottom: 25px; padding: 12px 14px; border-radius: 14px; background: var(--ink); color: white; box-shadow: var(--shadow); font-size: 11px; line-height: 1.3; transform: rotate(5deg); }
+    .floating-note b { display:block; color: #ffc0af; font-size: 14px; margin-bottom: 2px; }
+
+    /* slide 2: review */
+    .review-card { padding: 18px; transform: rotate(2deg); }
+    .review-head { display:flex; justify-content:space-between; align-items:flex-start; }
+    .review-head strong { display:block; font-family: "Space Grotesk", sans-serif; font-size: 20px; letter-spacing: -.05em; }
+    .review-head span { display:block; margin-top: 4px; color:var(--muted); font-size:10px; }
+    .amount { color: var(--accent-deep); font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 600; letter-spacing: -.06em; }
+    .bars { display:flex; align-items:flex-end; gap: 7px; height: 100px; margin: 24px 4px 18px; padding-bottom: 1px; border-bottom:1px solid var(--line); }
+    .bars i { flex:1; display:block; min-height: 18px; border-radius: 6px 6px 2px 2px; background: var(--accent-soft); }
+    .bars i:nth-child(2), .bars i:nth-child(5) { background: var(--accent); }
+    .bars i:nth-child(1) { height: 48%; } .bars i:nth-child(2) { height: 78%; } .bars i:nth-child(3) { height: 62%; } .bars i:nth-child(4) { height: 88%; } .bars i:nth-child(5) { height: 70%; } .bars i:nth-child(6) { height: 96%; }
+    .review-foot { display:flex; align-items:center; justify-content:space-between; color:var(--muted); font-size:10px; }
+    .review-foot b { color:var(--sage-deep); font-size:11px; }
+    .stamp { position:absolute; left: -15px; bottom: 28px; width: 73px; height: 73px; display:grid; place-items:center; border: 2px solid var(--accent); border-radius: 50%; color: var(--accent-deep); background: #fff6f2; font-size: 10px; line-height: 1.1; text-align:center; font-weight:700; transform: rotate(-14deg); }
+
+    /* slide 3: multitenancy */
+    .tenant-board { padding: 17px; background: var(--ink); color: white; transform: rotate(-1deg); }
+    .tenant-board .card-top { margin-bottom: 14px; }
+    .tenant-board .mini-brand { color: white; }
+    .tenant-board .mini-dot { background: var(--accent); }
+    .board-label { color: #a7ada2; font-size: 10px; letter-spacing: .05em; }
+    .workspace { padding: 13px; border: 1px solid #444b42; border-radius: 15px; background: #2b302b; }
+    .workspace + .workspace { margin-top: 9px; }
+    .workspace-head { display:flex; align-items:center; gap: 9px; }
+    .workspace-icon { width: 28px; height: 28px; display:grid; place-items:center; border-radius: 9px; background: var(--accent); font-size: 12px; font-weight:700; }
+    .workspace-head strong { font-size: 12px; }
+    .workspace-head span { display:block; margin-top:2px; color:#a7ada2; font-size:9px; }
+    .entity-row { display:flex; gap: 5px; margin-top: 13px; }
+    .entity { flex:1; padding: 8px 5px; border-radius: 8px; background:#3b4239; color:#d8ddd3; text-align:center; font-size:9px; }
+    .isolation { position:absolute; right:-14px; bottom:22px; padding: 11px 13px; border: 1px solid #c4d6bd; border-radius: 13px; background: #eef5e9; color: var(--sage-deep); box-shadow: var(--shadow); font-size: 11px; font-weight:700; transform: rotate(5deg); }
+    .isolation::before { content:"✓"; display:inline-grid; place-items:center; width:17px; height:17px; margin-right:5px; border-radius:50%; color:#fff; background:var(--sage-deep); }
+
+    .footer { position:absolute; z-index: 10; right: 0; bottom: 0; left: 0; padding: 12px 22px calc(var(--bottom) + 20px); background: linear-gradient(transparent, var(--bg) 28%); }
+    .footer-inner { width:min(100%, 430px); margin:auto; }
+    .progress-nav { display:flex; align-items:center; gap:7px; margin-bottom: 15px; }
+    .progress-nav button { height: 28px; flex:1; padding: 0; background: transparent; }
+    .progress-nav i { display:block; height:4px; border-radius:5px; background: var(--line); transition: background .3s, transform .3s; }
+    .progress-nav button.active i { background: var(--accent); transform: scaleY(1.35); }
+    .primary { width:100%; min-height:56px; display:flex; align-items:center; justify-content:center; border-radius: 17px; background: var(--ink); color:white; font-size:15px; font-weight:700; box-shadow: 0 10px 20px rgba(32,35,31,.18); transition: transform .2s, background .2s; }
+    .primary:hover { background: var(--accent-deep); }
+    .footer-note { margin-top: 10px; color:var(--muted); font-size: 11px; text-align:center; }
+    .footer-note button { color: var(--accent-deep); background:transparent; font-weight:700; }
+
+    /* compact auth panel after onboarding */
+    .auth { display:none; position:absolute; inset:0; z-index:30; padding: calc(var(--top) + 28px) 22px calc(var(--bottom) + 24px); background:var(--bg); overflow:auto; }
+    .auth.show { display:block; animation:fadeIn .35s var(--ease); }
+    .auth-inner { width:min(100%,430px); margin:auto; }
+    .auth-back { min-height:44px; padding: 0 4px; color:var(--muted); background:none; font-size:13px; font-weight:700; }
+    .auth h2 { margin-top:42px; font-family:"Space Grotesk",sans-serif; font-size:34px; letter-spacing:-.07em; line-height:1; }
+    .auth p { margin-top:12px; color:var(--muted); line-height:1.5; font-size:14px; }
+    .auth-actions { display:grid; gap:12px; margin-top:34px; }
+    .auth-choice { display:flex; align-items:center; gap:14px; width:100%; padding:17px; border-radius:17px; text-align:left; background:var(--surface); border:1px solid var(--line); }
+    .auth-choice.primary-choice { color:white; background:var(--accent); border-color:var(--accent); }
+    .auth-icon { width:41px; height:41px; display:grid; place-items:center; border-radius:12px; background:rgba(255,255,255,.18); font-size:20px; }
+    .auth-choice:not(.primary-choice) .auth-icon { background:var(--surface-muted); }
+    .auth-choice strong { display:block; font-size:14px; }
+    .auth-choice span { display:block; margin-top:3px; color:inherit; opacity:.7; font-size:11px; }
+    .auth-small { margin-top:28px; font-size:11px; text-align:center; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    @media (max-height: 680px) { .art { min-height:220px; margin-top:18px; } h1 { font-size:2.1rem; } .slide { padding-bottom:calc(var(--bottom) + 116px); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="wordmark"><span class="mark">f</span> files.tax</div>
+      <div class="step-label" id="stepLabel">01 / 03</div>
+    </header>
+
+    <section class="viewport" aria-label="Files.tax product introduction" aria-roledescription="carousel">
+      <div class="track" id="track">
+        <article class="slide" aria-label="1 of 3">
+          <div class="slide-inner">
+            <div class="art" aria-label="A tax filing checklist showing progress" role="img">
+              <div class="art-card filing-card">
+                <div class="card-top"><div class="mini-brand"><span class="mini-dot"></span>files.tax</div><span class="status">On track</span></div>
+                <div class="filing-title">2025 filing</div>
+                <div class="progress"><span></span></div>
+                <div class="line-item"><span class="check">✓</span><span>Income and expenses</span><small>Done</small></div>
+                <div class="line-item"><span class="check">✓</span><span>Tax details</span><small>Done</small></div>
+                <div class="line-item"><span class="check" style="background:var(--accent)">→</span><span>Final review</span><small>Next</small></div>
+              </div>
+              <div class="floating-note"><b>72% ready</b>Less chasing.<br>More filing.</div>
+            </div>
+            <div class="eyebrow">Tax, without the tax headache</div>
+            <h1>Tax filing made easy.</h1>
+            <p class="lede">Collect what matters, spot what is missing, and file with a clear view of the work left to do.</p>
+          </div>
+        </article>
+
+        <article class="slide" aria-label="2 of 3">
+          <div class="slide-inner">
+            <div class="art" aria-label="A review summary with a tax-ready status" role="img">
+              <div class="art-card review-card">
+                <div class="review-head"><div><strong>Filing snapshot</strong><span>Northstar Studio · 2025</span></div><div class="amount">$48.2k</div></div>
+                <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="review-foot"><span>6 months reviewed</span><b>Ready to file</b></div>
+              </div>
+              <div class="stamp">READY<br>TO FILE</div>
+            </div>
+            <div class="eyebrow">A calmer way to review</div>
+            <h1>Know what is ready before you file.</h1>
+            <p class="lede">A simple snapshot turns a pile of receipts and questions into a confident next step.</p>
+          </div>
+        </article>
+
+        <article class="slide" aria-label="3 of 3">
+          <div class="slide-inner">
+            <div class="art" aria-label="A workspace board with separate entities and an isolation badge" role="img">
+              <div class="art-card tenant-board">
+                <div class="card-top"><div class="mini-brand"><span class="mini-dot"></span>your workspace</div><span class="board-label">3 entities</span></div>
+                <div class="workspace"><div class="workspace-head"><span class="workspace-icon">N</span><div><strong>Northstar Studio</strong><span>Creative services</span></div></div><div class="entity-row"><span class="entity">Books</span><span class="entity">VAT</span><span class="entity">Files</span></div></div>
+                <div class="workspace"><div class="workspace-head"><span class="workspace-icon" style="background:var(--sage-deep)">P</span><div><strong>Peakline Goods</strong><span>Retail operations</span></div></div><div class="entity-row"><span class="entity">Books</span><span class="entity">WHT</span><span class="entity">Files</span></div></div>
+              </div>
+              <div class="isolation">Foolproof isolation</div>
+            </div>
+            <div class="eyebrow">Built for more than one business</div>
+            <h1>One workspace. Every entity in its lane.</h1>
+            <p class="lede">Keep teams, companies, and tax records together without letting one entity spill into another.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <nav class="progress-nav" aria-label="Onboarding slides" id="progressNav">
+          <button type="button" aria-label="Go to slide 1" class="active"><i></i></button>
+          <button type="button" aria-label="Go to slide 2"><i></i></button>
+          <button type="button" aria-label="Go to slide 3"><i></i></button>
+        </nav>
+        <button class="primary" type="button" id="nextButton">See how it works</button>
+        <p class="footer-note"><span id="footerPrompt">Swipe or tap to continue</span></p>
+      </div>
+    </footer>
+
+    <section class="auth" id="authPanel" aria-labelledby="authTitle" aria-hidden="true">
+      <div class="auth-inner">
+        <button class="auth-back" type="button" id="authBack">← Back to overview</button>
+        <h2 id="authTitle">Make tax admin<br>the easy part.</h2>
+        <p>Start a workspace for your team, or return to the files.tax workspace you already use.</p>
+        <div class="auth-actions">
+          <button type="button" class="auth-choice primary-choice" id="createWorkspace"><span class="auth-icon">+</span><span><strong>Create a workspace</strong><span>Set up your first entity</span></span></button>
+          <button type="button" class="auth-choice" id="signIn"><span class="auth-icon">↗</span><span><strong>Sign in</strong><span>Pick up where you left off</span></span></button>
+        </div>
+        <p class="auth-small">By continuing, you agree to the files.tax Terms and Privacy Policy.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const track = document.getElementById('track');
+      const slides = [...document.querySelectorAll('.slide')];
+      const tabs = [...document.querySelectorAll('#progressNav button')];
+      const next = document.getElementById('nextButton');
+      const stepLabel = document.getElementById('stepLabel');
+      const footerPrompt = document.getElementById('footerPrompt');
+      const auth = document.getElementById('authPanel');
+      let index = 0;
+      let startX = 0;
+      let dragging = false;
+
+      function render() {
+        track.style.transform = `translateX(-${index * 100}%)`;
+        tabs.forEach((tab, i) => {
+          tab.classList.toggle('active', i === index);
+          tab.setAttribute('aria-current', i === index ? 'step' : 'false');
+        });
+        stepLabel.textContent = `0${index + 1} / 03`;
+        next.textContent = index === slides.length - 1 ? 'Create your workspace' : 'See how it works';
+        footerPrompt.textContent = index === slides.length - 1 ? 'Your workspace stays separated by design' : 'Swipe or tap to continue';
+      }
+      function goTo(nextIndex) { index = Math.max(0, Math.min(slides.length - 1, nextIndex)); render(); }
+      next.addEventListener('click', () => index === slides.length - 1 ? showAuth() : goTo(index + 1));
+      tabs.forEach((tab, i) => tab.addEventListener('click', () => goTo(i)));
+      document.addEventListener('keydown', (event) => {
+        if (auth.classList.contains('show')) return;
+        if (event.key === 'ArrowRight') goTo(index + 1);
+        if (event.key === 'ArrowLeft') goTo(index - 1);
+      });
+      const viewport = document.querySelector('.viewport');
+      viewport.addEventListener('pointerdown', (event) => { dragging = true; startX = event.clientX; viewport.setPointerCapture?.(event.pointerId); });
+      viewport.addEventListener('pointerup', (event) => { if (!dragging) return; dragging = false; const delta = event.clientX - startX; if (Math.abs(delta) > 45) goTo(index + (delta < 0 ? 1 : -1)); });
+      viewport.addEventListener('pointercancel', () => dragging = false);
+      function showAuth() { auth.classList.add('show'); auth.setAttribute('aria-hidden', 'false'); document.getElementById('createWorkspace').focus(); }
+      function hideAuth() { auth.classList.remove('show'); auth.setAttribute('aria-hidden', 'true'); next.focus(); }
+      document.getElementById('authBack').addEventListener('click', hideAuth);
+      document.getElementById('createWorkspace').addEventListener('click', () => { document.getElementById('authTitle').innerHTML = 'Create your<br>workspace.'; document.querySelector('.auth p').textContent = 'Prototype: this would open workspace setup for your first entity.'; });
+      document.getElementById('signIn').addEventListener('click', () => { document.getElementById('authTitle').innerHTML = 'Welcome<br>back.'; document.querySelector('.auth p').textContent = 'Prototype: this would open the secure sign-in flow.'; });
+      render();
+    })();
+  </script>
+</body>
+</html>
