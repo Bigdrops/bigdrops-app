@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BIGDROPS onboarding storyboard — animated, SVG-illustrated, per-page design.">
+<title>BIGDROPS Onboarding · Animated Storyboard</title>
+<style>
+:root{
+  --bg:#f0f4f8; --surface:#ffffff; --surface-muted:#e8eef5; --surface-strong:#dbe4ee;
+  --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
+  --line:#e2e8f0; --line-strong:#cbd5e1;
+  --primary:#1e3a5f; --primary-ink:#ffffff; --accent:#60a5fa;
+  --success:#15803d; --info:#1d4ed8; --warning:#b45309; --danger:#dc2626;
+  --shadow:0 12px 28px rgba(30,58,95,.10),0 2px 6px rgba(15,23,42,.05);
+  --shadow-float:0 18px 40px rgba(30,58,95,.18),0 3px 9px rgba(15,23,42,.07);
+}
+html[data-theme="dark"]{
+  --bg:#0f172a; --surface:#1e293b; --surface-muted:#334155; --surface-strong:#475569;
+  --ink:#f1f5f9; --ink-2:#cbd5e1; --ink-3:#64748b;
+  --line:#334155; --line-strong:#475569;
+  --primary:#60a5fa; --primary-ink:#0f172a;
+  --success:#4ade80; --info:#93c5fd; --warning:#fbbf24; --danger:#f87171;
+  --shadow:0 12px 28px rgba(0,0,0,.30),0 2px 6px rgba(0,0,0,.24);
+  --shadow-float:0 18px 40px rgba(0,0,0,.40),0 3px 9px rgba(0,0,0,.30);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100dvh;-webkit-font-smoothing:antialiased}
+.skiplink{position:absolute;left:-999px;top:0;background:var(--primary);color:var(--primary-ink);padding:12px 18px;border-radius:0 0 12px 0;z-index:99;font-weight:800;font-size:13px}
+.skiplink:focus{left:0}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:linear-gradient(180deg,var(--bg) 80%,transparent)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.02em}
+.logo{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--primary);color:var(--primary-ink);font-weight:900;font-size:19px}
+.dir{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.iconbtn{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-grid;place-items:center;font-size:15px;font-weight:800;cursor:pointer}
+button{transition:transform .2s,background .2s}
+button:active{transform:scale(.965)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;padding:2px 16px 12px;max-width:1400px;margin:0 auto}
+.controls button{min-height:44px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);padding:0 16px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.controls button[aria-current="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+main{max-width:1400px;margin:0 auto;padding:0 16px calc(24px + env(safe-area-inset-bottom))}
+.storyboard{display:grid;grid-auto-flow:column;grid-auto-columns:100%;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 12px;scrollbar-width:thin}
+.moment{scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.moment .frame{padding:20px 18px 16px;display:flex;flex-direction:column;gap:12px;min-height:100%}
+.pos{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.dots{display:flex;gap:7px;align-items:center}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--surface-strong)}
+.dots i.on{width:25px;border-radius:8px;background:var(--tone,var(--primary))}
+.skip{border:0;background:none;color:var(--ink-3);font-size:14px;cursor:pointer;min-height:44px;min-width:44px;font-family:inherit}
+
+/* ---- illustration stage ---- */
+.art{height:230px;display:grid;place-items:center;position:relative;overflow:hidden}
+.glow{position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--tone,var(--primary)) 16%,transparent),transparent 68%);animation:pulseGlow 4s ease-in-out infinite}
+.illus{width:100%;height:100%;position:relative;z-index:1;overflow:visible}
+
+/* entrance reveal — plays once per moment as it becomes the active panel */
+.reveal{opacity:0;transform-origin:center}
+.moment.active .reveal{animation:riseIn .55s cubic-bezier(.2,.8,.2,1) var(--d,0s) both}
+.growbar{transform:scaleX(0);transform-origin:left center}
+.moment.active .growbar{animation:growW .6s cubic-bezier(.2,.8,.2,1) var(--d,0s) both}
+.drawline{stroke-dasharray:var(--len,120);stroke-dashoffset:var(--len,120)}
+.moment.active .drawline{animation:draw .8s ease var(--d,.2s) both}
+.pop{opacity:0;transform:scale(.4)}
+.moment.active .pop{animation:popIn .6s cubic-bezier(.34,1.56,.64,1) var(--d,0s) both}
+
+/* continuous, subject-driven motion — a rolling truck, an orbiting system, a soft float */
+.wheel-g{animation:wheelSpin 1.1s linear infinite}
+.roadline{animation:roadMove .9s linear infinite}
+.orbit-ring{transform-origin:160px 115px;animation:orbitSpin 22s linear infinite}
+.moment.active .float{animation:riseIn .55s cubic-bezier(.2,.8,.2,1) var(--d,0s) both,floatY 3.2s ease-in-out var(--fd,0s) infinite}
+
+@keyframes riseIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes growW{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes popIn{0%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+@keyframes wheelSpin{to{transform:rotate(360deg)}}
+@keyframes roadMove{to{stroke-dashoffset:-72}}
+@keyframes orbitSpin{to{transform:rotate(360deg)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pulseGlow{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--tone,var(--primary))}
+.moment h2{font-size:24px;line-height:1.15;letter-spacing:-.02em;text-wrap:balance}
+.moment .copy{font-size:14px;line-height:1.6;color:var(--ink-2);max-width:34ch}
+.moment footer{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px}
+.back{border:0;background:none;color:var(--ink-3);font-size:14px;cursor:pointer;min-height:44px;min-width:44px;font-family:inherit}
+.next{width:52px;height:52px;border-radius:50%;border:0;cursor:pointer;background:var(--tone,var(--primary));color:#fff;font-size:20px;box-shadow:var(--shadow);flex:0 0 auto}
+.cta{width:100%;min-height:52px;border-radius:12px;border:0;cursor:pointer;background:var(--primary);color:var(--primary-ink);font-weight:800;font-size:15px;font-family:inherit;box-shadow:var(--shadow)}
+.fine{text-align:center;color:var(--ink-3);font-size:10px;margin-top:10px}
+.srcnote{max-width:1400px;margin:0 auto;padding:0 16px 24px;font-size:12px;color:var(--ink-2);line-height:1.6}
+.t-invoicing{--tone:var(--success)} .t-logistics{--tone:var(--info)} .t-projects{--tone:var(--primary)} .t-hero{--tone:var(--success)} .t-all{--tone:var(--primary)}
+@media(min-width:600px){.storyboard{grid-auto-columns:calc(50% - 8px)}}
+@media(min-width:840px){.storyboard{grid-auto-columns:calc(33.333% - 11px)}}
+@media(min-width:1200px){.storyboard{grid-auto-columns:calc(20% - 13px)}.moment h2{font-size:19px}.art{height:200px}}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1!important;transform:none!important}
+  .growbar{transform:scaleX(1)!important}
+  .drawline{stroke-dashoffset:0!important}
+  .pop{opacity:1!important;transform:scale(1)!important}
+}
+</style>
+</head>
+<body>
+<a class="skiplink" href="#board">Skip to storyboard</a>
+<header class="topbar">
+  <div class="brand"><span class="logo" aria-hidden="true">b</span>BIGDROPS</div>
+  <span class="dir">Onboarding · animated storyboard</span>
+  <button class="iconbtn" id="themeBtn" aria-label="Switch color theme">◐</button>
+</header>
+<nav class="controls" aria-label="Storyboard moments">
+  <button data-go="m0" aria-current="true">1 · Intro</button>
+  <button data-go="m1" aria-current="false">2 · Invoicing</button>
+  <button data-go="m2" aria-current="false">3 · Logistics</button>
+  <button data-go="m3" aria-current="false">4 · Projects</button>
+  <button data-go="m4" aria-current="false">5 · All in one</button>
+</nav>
+<main>
+<ol class="storyboard" id="board">
+
+  <!-- 1 · INTRO -->
+  <li style="list-style:none"><article class="moment t-hero" id="m0" aria-labelledby="m0h">
+    <div class="frame">
+      <div class="pos"><div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div></div>
+      <div class="art" role="img" aria-label="An invoice document with a checkmark and a small bar chart, stacked together">
+        <div class="glow"></div>
+        <svg class="illus" viewBox="0 0 320 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><filter id="s0" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity=".14"/></filter></defs>
+          <g class="reveal" style="--d:0s" filter="url(#s0)" transform="rotate(-6 160 118)">
+            <rect x="112" y="46" width="118" height="150" rx="14" fill="var(--surface)" stroke="var(--line)"/>
+            <rect x="128" y="66" width="50" height="8" rx="4" fill="var(--tone)"/>
+            <rect x="128" y="86" width="86" height="6" rx="3" fill="var(--surface-muted)"/>
+            <rect x="128" y="100" width="86" height="6" rx="3" fill="var(--surface-muted)"/>
+            <rect x="128" y="114" width="60" height="6" rx="3" fill="var(--surface-muted)"/>
+            <rect x="128" y="168" width="86" height="10" rx="5" fill="color-mix(in srgb, var(--tone) 45%, var(--surface))"/>
+          </g>
+          <g class="reveal" style="--d:.16s" filter="url(#s0)" transform="translate(212 40)">
+            <rect width="52" height="52" rx="16" fill="var(--surface)" stroke="var(--line)"/>
+            <path d="M14 27l8 8 16-18" fill="none" stroke="var(--tone)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <g class="reveal" style="--d:.3s" filter="url(#s0)" transform="translate(46 122)">
+            <rect width="58" height="58" rx="16" fill="var(--surface)" stroke="var(--line)"/>
+            <rect x="14" y="34" width="8" height="14" rx="2" fill="var(--tone)"/>
+            <rect x="26" y="24" width="8" height="24" rx="2" fill="var(--tone)"/>
+            <rect x="38" y="14" width="8" height="34" rx="2" fill="var(--tone)"/>
+          </g>
+        </svg>
+      </div>
+      <h2 id="m0h">Your operations.<br>Simplified.</h2>
+      <p class="copy">Create, manage, and export documents across invoicing, logistics, and project tracking — all in one place.</p>
+      <footer><span></span><button class="cta" data-next="m1">Get started →</button></footer>
+      <p class="fine">Built for your team. Powered by BIGDROPS.</p>
+    </div>
+  </article></li>
+
+  <!-- 2 · INVOICING -->
+  <li style="list-style:none"><article class="moment t-invoicing" id="m1" aria-labelledby="m1h">
+    <div class="frame">
+      <div class="pos"><div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div><button class="skip" data-next="m4">Skip</button></div>
+      <div class="art" role="img" aria-label="An invoice with line items totalling up, a naira badge, and an add button">
+        <div class="glow"></div>
+        <svg class="illus" viewBox="0 0 320 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><filter id="s1" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity=".14"/></filter></defs>
+          <g class="reveal" style="--d:0s" filter="url(#s1)">
+            <rect x="96" y="30" width="128" height="172" rx="16" fill="var(--surface)" stroke="var(--line)"/>
+            <rect x="114" y="50" width="60" height="9" rx="4" fill="var(--tone)"/>
+            <circle cx="204" cy="55" r="9" fill="var(--surface-muted)"/>
+          </g>
+          <g class="reveal" style="--d:.1s"><rect x="114" y="78" width="92" height="6" rx="3" fill="var(--surface-muted)"/></g>
+          <g class="reveal" style="--d:.18s"><rect x="114" y="92" width="92" height="6" rx="3" fill="var(--surface-muted)"/></g>
+          <g class="reveal" style="--d:.26s"><rect x="114" y="106" width="70" height="6" rx="3" fill="var(--surface-muted)"/></g>
+          <line x1="114" y1="128" x2="206" y2="128" stroke="var(--line)"/>
+          <g class="growbar" style="--d:.38s" transform="translate(114 140)"><rect width="92" height="12" rx="6" fill="color-mix(in srgb, var(--tone) 42%, var(--surface))"/></g>
+          <g class="growbar" style="--d:.5s" transform="translate(114 158)"><rect width="92" height="16" rx="8" fill="var(--tone)"/></g>
+          <g class="reveal" style="--d:.62s"><circle cx="196" cy="166" r="9" fill="var(--surface)"/><path d="M192 166l3 3 6-7" stroke="var(--tone)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g class="reveal" style="--d:.22s" filter="url(#s1)" transform="translate(214 96)">
+            <rect width="46" height="46" rx="14" fill="var(--tone)"/>
+            <text x="23" y="30" font-size="22" font-weight="900" fill="#fff" text-anchor="middle" font-family="Manrope,sans-serif">₦</text>
+          </g>
+          <g class="reveal" style="--d:.34s" filter="url(#s1)" transform="translate(58 60)">
+            <rect width="42" height="42" rx="13" fill="var(--surface)" stroke="var(--line)"/>
+            <path d="M21 13v16M13 21h16" stroke="var(--tone)" stroke-width="3.4" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <p class="eyebrow">Invoicing</p>
+      <h2 id="m1h">Create and manage invoices with ease</h2>
+      <p class="copy">Generate professional invoices, apply taxes and extra charges, and export as PDF in seconds.</p>
+      <footer><button class="back" data-next="m0">Back</button><button class="next" data-next="m2" aria-label="Next: logistics">→</button></footer>
+    </div>
+  </article></li>
+
+  <!-- 3 · LOGISTICS (a real trailer truck, not a shape) -->
+  <li style="list-style:none"><article class="moment t-logistics" id="m2" aria-labelledby="m2h">
+    <div class="frame">
+      <div class="pos"><div class="dots" aria-hidden="true"><i></i><i class="on"></i><i></i><i></i></div><button class="skip" data-next="m4">Skip</button></div>
+      <div class="art" role="img" aria-label="A branded delivery trailer truck rolling along a road, with a location pin and a waybill overhead">
+        <div class="glow"></div>
+        <svg class="illus" viewBox="0 0 320 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><filter id="s2" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#0f172a" flood-opacity=".16"/></filter></defs>
+          <line x1="16" y1="204" x2="304" y2="204" stroke="var(--line-strong)" stroke-width="3"/>
+          <line class="roadline" x1="16" y1="204" x2="304" y2="204" stroke="var(--tone)" stroke-width="3" stroke-dasharray="18 18" opacity=".5"/>
+          <g class="reveal" style="--d:0s" filter="url(#s2)">
+            <rect x="96" y="88" width="164" height="90" rx="10" fill="var(--tone)"/>
+            <rect x="112" y="104" width="132" height="4" rx="2" fill="color-mix(in srgb, var(--tone) 55%, #fff)"/>
+            <rect x="112" y="118" width="132" height="4" rx="2" fill="color-mix(in srgb, var(--tone) 55%, #fff)"/>
+            <rect x="150" y="132" width="56" height="30" rx="8" fill="var(--surface)"/>
+            <text x="178" y="153" font-size="17" font-weight="900" fill="var(--tone)" text-anchor="middle" font-family="Manrope,sans-serif">b</text>
+            <rect x="90" y="164" width="10" height="14" fill="var(--ink-3)"/>
+            <path d="M42 178V132c0-4 3-7 7-7h14l18-24h18c4 0 7 3 7 7v70z" fill="var(--tone)"/>
+            <path d="M62 105l-14 20h30v-20z" fill="color-mix(in srgb, var(--tone) 38%, #fff)"/>
+            <rect x="46" y="150" width="34" height="10" rx="3" fill="color-mix(in srgb, var(--tone) 55%, #fff)"/>
+          </g>
+          <g class="wheel-g" style="transform-origin:76px 190px"><circle cx="76" cy="190" r="15" fill="var(--ink)"/><circle cx="76" cy="190" r="6" fill="var(--surface)"/><line x1="76" y1="181" x2="76" y2="199" stroke="var(--surface)" stroke-width="2"/><line x1="67" y1="190" x2="85" y2="190" stroke="var(--surface)" stroke-width="2"/></g>
+          <g class="wheel-g" style="transform-origin:186px 190px"><circle cx="186" cy="190" r="15" fill="var(--ink)"/><circle cx="186" cy="190" r="6" fill="var(--surface)"/><line x1="186" y1="181" x2="186" y2="199" stroke="var(--surface)" stroke-width="2"/><line x1="177" y1="190" x2="195" y2="190" stroke="var(--surface)" stroke-width="2"/></g>
+          <g class="wheel-g" style="transform-origin:228px 190px"><circle cx="228" cy="190" r="15" fill="var(--ink)"/><circle cx="228" cy="190" r="6" fill="var(--surface)"/><line x1="228" y1="181" x2="228" y2="199" stroke="var(--surface)" stroke-width="2"/><line x1="219" y1="190" x2="237" y2="190" stroke="var(--surface)" stroke-width="2"/></g>
+          <g class="reveal" style="--d:.2s" filter="url(#s2)" transform="translate(246 28)">
+            <path d="M14 0C6 0 0 6 0 14c0 10 14 24 14 24s14-14 14-24C28 6 22 0 14 0z" fill="var(--tone)"/>
+            <circle cx="14" cy="14" r="6" fill="#fff"/>
+          </g>
+          <g class="reveal" style="--d:.34s" filter="url(#s2)" transform="translate(18 32)">
+            <rect width="66" height="46" rx="12" fill="var(--surface)" stroke="var(--line)"/>
+            <rect x="10" y="12" width="46" height="5" rx="2.5" fill="var(--tone)"/>
+            <rect x="10" y="23" width="34" height="5" rx="2.5" fill="var(--surface-muted)"/>
+            <rect x="10" y="33" width="24" height="5" rx="2.5" fill="var(--surface-muted)"/>
+          </g>
+        </svg>
+      </div>
+      <p class="eyebrow">Logistics</p>
+      <h2 id="m2h">Track and manage shipments</h2>
+      <p class="copy">Keep logistics moving with waybills, delivery notes, and real-time tracking.</p>
+      <footer><button class="back" data-next="m1">Back</button><button class="next" data-next="m3" aria-label="Next: projects">→</button></footer>
+    </div>
+  </article></li>
+
+  <!-- 4 · PROJECTS -->
+  <li style="list-style:none"><article class="moment t-projects" id="m3" aria-labelledby="m3h">
+    <div class="frame">
+      <div class="pos"><div class="dots" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i></div><button class="skip" data-next="m4">Skip</button></div>
+      <div class="art" role="img" aria-label="A project panel with three progress rows and a small chart trending upward">
+        <div class="glow"></div>
+        <svg class="illus" viewBox="0 0 320 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><filter id="s3" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity=".14"/></filter></defs>
+          <g class="reveal" style="--d:0s" filter="url(#s3)">
+            <rect x="60" y="40" width="170" height="150" rx="16" fill="var(--surface)" stroke="var(--line)"/>
+            <rect x="78" y="58" width="70" height="8" rx="4" fill="var(--tone)"/>
+          </g>
+          <g class="reveal" style="--d:.1s"><rect x="78" y="86" width="8" height="8" rx="2" fill="var(--surface-muted)"/></g>
+          <g class="growbar" style="--d:.16s" transform="translate(94 86)"><rect width="118" height="8" rx="4" fill="var(--surface-muted)"/></g>
+          <g class="reveal" style="--d:.22s"><rect x="78" y="108" width="8" height="8" rx="2" fill="var(--surface-muted)"/></g>
+          <g class="growbar" style="--d:.28s" transform="translate(94 108)"><rect width="90" height="8" rx="4" fill="var(--surface-muted)"/></g>
+          <g class="reveal" style="--d:.34s"><rect x="78" y="130" width="8" height="8" rx="2" fill="var(--tone)"/></g>
+          <g class="growbar" style="--d:.4s" transform="translate(94 130)"><rect width="60" height="8" rx="4" fill="var(--tone)"/></g>
+          <line x1="78" y1="156" x2="212" y2="156" stroke="var(--line)"/>
+          <g class="reveal" style="--d:.46s"><rect x="78" y="168" width="46" height="6" rx="3" fill="var(--surface-muted)"/><rect x="188" y="168" width="24" height="6" rx="3" fill="var(--tone)"/></g>
+          <g class="reveal" style="--d:.3s" filter="url(#s3)" transform="translate(198 122)">
+            <rect width="66" height="60" rx="16" fill="color-mix(in srgb, var(--tone) 14%, var(--surface))" stroke="var(--line)"/>
+            <path class="drawline" style="--len:70;--d:.66s" d="M10 42l14-16 12 8 22-26" fill="none" stroke="var(--tone)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+      <p class="eyebrow">Projects</p>
+      <h2 id="m3h">Keep your projects on track</h2>
+      <p class="copy">Aggregate invoices, payments, quotations, and CSRs under one client engagement.</p>
+      <footer><button class="back" data-next="m2">Back</button><button class="next" data-next="m4" aria-label="Next: all in one place">→</button></footer>
+    </div>
+  </article></li>
+
+  <!-- 5 · ALL IN ONE -->
+  <li style="list-style:none"><article class="moment t-all" id="m4" aria-labelledby="m4h">
+    <div class="frame">
+      <div class="pos"><div class="dots" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i></div></div>
+      <div class="art" role="img" aria-label="The BIGDROPS mark at the centre, orbited by invoicing, logistics, projects, and compliance modules">
+        <div class="glow"></div>
+        <svg class="illus" viewBox="0 0 320 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><filter id="s4" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#0f172a" flood-opacity=".14"/></filter></defs>
+          <circle class="orbit-ring" cx="160" cy="115" r="78" fill="none" stroke="var(--line-strong)" stroke-width="1.6" stroke-dasharray="3 9"/>
+          <g class="reveal float" style="--d:.05s;--fd:.1s" filter="url(#s4)" transform="translate(82 115)">
+            <rect x="-24" y="-24" width="48" height="48" rx="14" fill="var(--surface)" stroke="var(--line)"/>
+            <rect x="-13" y="-9" width="24" height="5" rx="2.5" fill="var(--success)"/>
+            <rect x="-13" y="0" width="17" height="5" rx="2.5" fill="var(--success)"/>
+            <rect x="-13" y="9" width="10" height="5" rx="2.5" fill="var(--success)"/>
+          </g>
+          <g class="reveal float" style="--d:.15s;--fd:.5s" filter="url(#s4)" transform="translate(160 37)">
+            <rect x="-24" y="-24" width="48" height="48" rx="14" fill="var(--surface)" stroke="var(--line)"/>
+            <path d="M0 -14c-6 0-11 5-11 11 0 8 11 20 11 20s11-12 11-20c0-6-5-11-11-11z" fill="var(--info)"/>
+            <circle cx="0" cy="-3" r="4" fill="#fff"/>
+          </g>
+          <g class="reveal float" style="--d:.25s;--fd:.9s" filter="url(#s4)" transform="translate(160 193)">
+            <rect x="-24" y="-24" width="48" height="48" rx="14" fill="var(--surface)" stroke="var(--line)"/>
+            <rect x="-13" y="-9" width="7" height="18" rx="2" fill="var(--primary)"/>
+            <rect x="-2" y="-14" width="7" height="23" rx="2" fill="var(--primary)"/>
+            <rect x="9" y="-4" width="7" height="13" rx="2" fill="var(--primary)"/>
+          </g>
+          <g class="reveal float" style="--d:.35s;--fd:1.3s" filter="url(#s4)" transform="translate(238 115)">
+            <rect x="-24" y="-24" width="48" height="48" rx="14" fill="var(--surface)" stroke="var(--line)"/>
+            <path d="M-10 2l7 7 13-15" fill="none" stroke="var(--warning)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+          <g class="pop" style="--d:.42s" filter="url(#s4)" transform="translate(160 115)">
+            <rect x="-36" y="-36" width="72" height="72" rx="24" fill="var(--tone)"/>
+            <text x="0" y="14" font-size="40" font-weight="900" fill="#fff" text-anchor="middle" font-family="Manrope,sans-serif">b</text>
+          </g>
+        </svg>
+      </div>
+      <p class="eyebrow">All in one place</p>
+      <h2 id="m4h">Everything your team needs</h2>
+      <p class="copy">Invoices, logistics, projects, and more — one platform built for your operations.</p>
+      <footer><button class="back" data-next="m3">Back</button><button class="cta" style="width:auto;padding:0 26px" data-next="m4">Get started →</button></footer>
+    </div>
+  </article></li>
+
+</ol>
+</main>
+<p class="srcnote">Each moment now carries its own hand-drawn SVG scene instead of a generic shape collage — an invoice that fills in and totals up, a real cab-and-trailer truck rolling down a road with spinning wheels, a project panel whose progress rows grow in, and an orbit of modules around the BIGDROPS mark. Illustrations reveal once as each panel becomes active, and the truck and orbit keep a slow, subject-appropriate motion the rest of the time. Motion is skipped entirely under reduced-motion settings.</p>
+<script>
+const order=['m0','m1','m2','m3','m4'];
+function updateNav(id){document.querySelectorAll('.controls button').forEach(b=>b.setAttribute('aria-current',b.dataset.go===id));}
+function show(id){document.getElementById(id).scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});updateNav(id);}
+document.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.next)));
+document.querySelectorAll('.controls button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const i=order.indexOf(document.querySelector('.controls button[aria-current="true"]').dataset.go);if(i>0)show(order[i-1]);}});
+document.getElementById('themeBtn').addEventListener('click',()=>{const h=document.documentElement;h.dataset.theme=h.dataset.theme==='light'?'dark':'light';});
+
+const board=document.getElementById('board');
+const moments=document.querySelectorAll('.moment');
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    entry.target.classList.toggle('active',entry.isIntersecting);
+    if(entry.isIntersecting) updateNav(entry.target.id);
+  });
+},{root:board,threshold:0.6});
+moments.forEach(m=>io.observe(m));
+</script>
+</body>
+</html>
