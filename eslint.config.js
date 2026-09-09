@@ -8,6 +8,12 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores([
     'dist',
+    'docs',
+    'tmp-purge',
+    'scratch',
+    'attached_assets',
+    'temp-build',
+    'dist-test',
     'android',
     '.kiro',
     '.claude',
