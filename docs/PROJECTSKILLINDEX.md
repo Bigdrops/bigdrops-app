@@ -15,7 +15,7 @@
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
 | **Total** | **148 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
-> **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and in `.commandcode/skills/` (purged duplicate — not indexed because they already exist in `.agents`/`.claude`).
+> **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and were purged from `.commandcode/skills/` (not indexed because they already exist in `.agents`/`.claude`).
 
 ---
 ## `.agents/skills/`
@@ -143,7 +143,7 @@ Installed from `dpearson2699/swift-ios-skills` on 2026-08-19. Swift 6.3 / iOS 26
 | 95 | swiftui-animation | .agents/skills/swiftui-animation/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\swiftui-animation\SKILL.md | SwiftUI motion — explicit/scoped implicit animations, springs, PhaseAnimator, KeyframeAnimator, matchedGeometry, SF Symbol effects |
 | 96 | swiftui-gestures | .agents/skills/swiftui-gestures/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\swiftui-gestures\SKILL.md | SwiftUI gestures — tap/longPress/drag/magnify/rotate, composition (simultaneous/sequenced), @GestureState, custom Gesture protocol |
 
-> **Note:** These 4 skills are mirrored in `.claude/skills/` and `.commandcode/skills/` by the installer. Index lists the canonical `.agents/skills/` copy; `.commandcode` duplicates are purged (not indexed) because the skills already exist in `.agents`/`.claude`.
+> **Note:** These 4 skills are mirrored in `.claude/skills/` and were purged from `.commandcode/skills/` by the installer. Index lists the canonical `.agents/skills/` copy; `.commandcode` duplicates are purged (not indexed) because the skills already exist in `.agents`/`.claude`.
 
 ### Added via animation and UI toolkit installs
 Installed on 2026-09-01. Animation construction, review, UI library selection, prototyping, Apple design, and Swift skills.
@@ -166,7 +166,7 @@ Installed on 2026-09-01. Animation construction, review, UI library selection, p
 | 110 | mobile-android-design | .agents/skills/mobile-android-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mobile-android-design\SKILL.md | Native Android app design — MD3/Compose patterns, adaptive layouts, navigation, dynamic color, 48dp targets, accessibility |
 
 ### Added via marketing skill pack
-Installed by the user on 2026-09-10. 38 marketing, growth, and conversion skills. Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, and `.commandcode/skills/`; this index lists the canonical `.agents/skills/` copy.
+Installed by the user on 2026-09-10. 38 marketing, growth, and conversion skills. Recorded in `skills-lock.json`. Mirrored across `.agents/skills/` and `.claude/skills/`; this index lists the canonical `.agents/skills/` copy.
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
@@ -281,5 +281,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: September 10, 2026 — added the 38-skill marketing pack (user install, mirrored in `.claude` and `.commandcode`). Total .agents/skills: 147.*
+*Last updated: September 10, 2026 — added the 38-skill marketing pack (user install, mirrored in `.claude`). Total .agents/skills: 147. Deleted `.commandcode/` (purged symlink duplicates).*
 ```
