@@ -109,6 +109,12 @@ export const THEME_COLOR_TOKENS = [
   "bd-overlay-disabled-text",
   "bd-icon-container-bg",
   "bd-icon-container-text",
+  // Design.md §3 coverage-note bridge tokens (UI text tone layer).
+  // They map onto the ink hierarchy so themes can override them per family
+  // and per mode; index.css keeps its default aliases as the fallback.
+  "bd-ink",
+  "bd-ink-muted",
+  "bd-ink-icon",
   "bd-brand",
   "bd-brand-foreground",
   "bd-accent",

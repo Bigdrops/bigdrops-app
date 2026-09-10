@@ -289,6 +289,11 @@ function buildBundle(c: CoreColors): ThemeTokenBundle {
     "bd-text": c.ink,
     "bd-text-muted": c.ink2,
     "bd-text-soft": c.ink3,
+    // Design.md coverage-note bridge tokens (UI text tone layer).
+    // Map onto the semantic ink hierarchy per PRD §3; overridden per family/mode.
+    "bd-ink": c.ink,
+    "bd-ink-muted": c.ink2,
+    "bd-ink-icon": c.primary,
     "bd-input-bg": c.surfaceMuted ?? c.surface,
     "bd-input-border": c.lineStrong,
     "bd-input-focus": c.primary,
