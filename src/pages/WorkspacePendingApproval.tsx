@@ -14,12 +14,17 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useWorkspace } from '@/lib/tenant/contexts'
+import { abandonPendingWorkspace } from '@/domain/tenant/tenantCreation'
+import { isPermissionError } from '@/domain/tenant/tenantGate'
 
 const POLL_INTERVAL_MS = 5000
 
 export default function WorkspacePendingApproval() {
   const workspaceCtx = useWorkspace()
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false)
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const [leaveError, setLeaveError] = useState<string | null>(null)
   const pendingName = workspaceCtx.pendingWorkspace?.name?.trim() || null
 
   useEffect(() => {
@@ -30,6 +35,39 @@ export default function WorkspacePendingApproval() {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/'
+  }
+
+  const handleLeave = async () => {
+    // No pending row (already gone/approved elsewhere): just re-resolve so
+    // the gate routes to the correct state. Never an error path by itself.
+    const pendingId = workspaceCtx.pendingWorkspace?.id ?? null
+    setLeaveError(null)
+    setLeaving(true)
+    try {
+      if (pendingId) await abandonPendingWorkspace(pendingId)
+      setLeaveDialogOpen(false)
+      workspaceCtx.refresh()
+    } catch (e) {
+      if (isPermissionError(e)) {
+        setLeaveError('You do not have permission to leave this workspace request.')
+      } else {
+        const message = String((e as Error)?.message ?? e)
+        const lower = message.toLowerCase()
+        if (
+          lower.includes('failed to fetch') ||
+          lower.includes('networkerror') ||
+          lower.includes('load failed') ||
+          lower.includes('network request failed')
+        ) {
+          setLeaveError("Couldn't reach BigDrops. Check your connection and try again.")
+        } else {
+          console.error('[workspace-pending-approval]', e)
+          setLeaveError("Couldn't leave the waiting room. Try again.")
+        }
+      }
+    } finally {
+      setLeaving(false)
+    }
   }
 
   return (
@@ -88,11 +126,22 @@ export default function WorkspacePendingApproval() {
             </div>
           </CardHeader>
 
-          <CardFooter className="flex justify-center pb-8 pt-2">
+          <CardFooter className="flex flex-col items-center gap-3 pb-8 pt-2">
             <Button
               type="button"
               variant="outline"
-              className="rounded-full px-6 font-semibold shadow-sm"
+              className="min-h-[44px] rounded-full px-6 font-semibold shadow-sm"
+              onClick={() => {
+                setLeaveError(null)
+                setLeaveDialogOpen(true)
+              }}
+            >
+              Leave waiting room
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[44px] rounded-full px-6 font-semibold shadow-sm"
               onClick={() => setSignOutDialogOpen(true)}
             >
               Sign Out
@@ -113,6 +162,43 @@ export default function WorkspacePendingApproval() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={handleSignOut}>
               Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={leaveDialogOpen}
+        onOpenChange={(next) => {
+          if (!leaving) {
+            setLeaveDialogOpen(next)
+            if (!next) setLeaveError(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave the waiting room?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This abandons your pending workspace request
+              {pendingName ? (
+                <>
+                  {' '}(<strong>{pendingName}</strong>)
+                </>
+              ) : null}
+              . You can then create a new workspace or join an existing one. Your
+              account is not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {leaveError ? (
+            <p role="alert" className="break-words text-sm leading-6 text-red-600">
+              {leaveError}
+            </p>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={leaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLeave} disabled={leaving}>
+              {leaving ? 'Leaving…' : 'Leave waiting room'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

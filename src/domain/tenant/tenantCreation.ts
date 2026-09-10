@@ -217,6 +217,19 @@ export async function revokeWorkspaceInvitation(inviteId: string): Promise<void>
 }
 
 /**
+ * Abandon the caller's own pending workspace request. The RPC is SECURITY
+ * DEFINER and only removes a row that is still in pending_approval status
+ * and created by the caller; anything else raises. Absent rows succeed
+ * silently so retries and double-clicks are safe. After success the caller
+ * must refresh workspace state so the gate re-routes (Create/Join flow,
+ * or invitation flow when a valid invitation exists).
+ */
+export async function abandonPendingWorkspace(workspaceId: string): Promise<void> {
+  const { error } = await supabase.rpc('abandon_pending_workspace', { p_workspace_id: workspaceId })
+  if (error) throw error
+}
+
+/**
  * Grant a role template to a member on ONE entity. The RPC is SECURITY
  * DEFINER and enforces the delegation ceiling (workspace owner, or caller
  * already holds every ability of the template on that entity). The client
