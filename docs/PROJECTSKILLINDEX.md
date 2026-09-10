@@ -10,10 +10,10 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 109 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs) |
+| `.agents/skills/` | 147 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs + 38 from the marketing pack) |
 | `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **110 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **148 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 > **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and in `.commandcode/skills/` (purged duplicate — not indexed because they already exist in `.agents`/`.claude`).
 
@@ -165,6 +165,50 @@ Installed on 2026-09-01. Animation construction, review, UI library selection, p
 | 109 | material-3 | .agents/skills/material-3/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\material-3\SKILL.md | Google Material Design 3 / Material You — tokens, 30+ components, theming, M3 Expressive, Compose-first guidance, web CSS fallback |
 | 110 | mobile-android-design | .agents/skills/mobile-android-design/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\mobile-android-design\SKILL.md | Native Android app design — MD3/Compose patterns, adaptive layouts, navigation, dynamic color, 48dp targets, accessibility |
 
+### Added via marketing skill pack
+Installed by the user on 2026-09-10. 38 marketing, growth, and conversion skills. Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, and `.commandcode/skills/`; this index lists the canonical `.agents/skills/` copy.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 111 | ab-testing | .agents/skills/ab-testing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ab-testing\SKILL.md | A/B testing — hypotheses, variants, sample size, significance |
+| 112 | ad-creative | .agents/skills/ad-creative/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ad-creative\SKILL.md | Ad creative — hooks, angles, formats |
+| 113 | ads | .agents/skills/ads/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ads\SKILL.md | Paid ads — campaign setup, targeting, budgets |
+| 114 | ai-seo | .agents/skills/ai-seo/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\ai-seo\SKILL.md | AI search optimization — LLM visibility, citations |
+| 115 | analytics | .agents/skills/analytics/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\analytics\SKILL.md | Analytics — metrics, funnels, tracking plans |
+| 116 | aso | .agents/skills/aso/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\aso\SKILL.md | App Store Optimization — keywords, listings, ratings |
+| 117 | attribution | .agents/skills/attribution/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\attribution\SKILL.md | Attribution — channels, models, tracking |
+| 118 | co-marketing | .agents/skills/co-marketing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\co-marketing\SKILL.md | Co-marketing partnerships |
+| 119 | community-marketing | .agents/skills/community-marketing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\community-marketing\SKILL.md | Community-led growth |
+| 120 | competitor-profiling | .agents/skills/competitor-profiling/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\competitor-profiling\SKILL.md | Competitor deep-dives |
+| 121 | competitors | .agents/skills/competitors/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\competitors\SKILL.md | Competitive analysis and positioning |
+| 122 | content-strategy | .agents/skills/content-strategy/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\content-strategy\SKILL.md | Content strategy — pillars, calendar, distribution |
+| 123 | copy-editing | .agents/skills/copy-editing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\copy-editing\SKILL.md | Copy editing — clarity, grammar, tightening |
+| 124 | copywriting | .agents/skills/copywriting/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\copywriting\SKILL.md | Copywriting — hooks, pages, emails |
+| 125 | cro | .agents/skills/cro/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\cro\SKILL.md | Conversion rate optimization — landing pages, forms, funnels, value prop clarity |
+| 126 | customer-research | .agents/skills/customer-research/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\customer-research\SKILL.md | Customer research — interviews, surveys, JTBD |
+| 127 | directory-submissions | .agents/skills/directory-submissions/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\directory-submissions\SKILL.md | Directory listings for distribution |
+| 128 | emails | .agents/skills/emails/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\emails\SKILL.md | Email marketing — sequences, deliverability |
+| 129 | influencer-marketing | .agents/skills/influencer-marketing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\influencer-marketing\SKILL.md | Influencer partnerships |
+| 130 | launch | .agents/skills/launch/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\launch\SKILL.md | Product launches — playbooks, checklists, announcements |
+| 131 | lead-magnets | .agents/skills/lead-magnets/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\lead-magnets\SKILL.md | Lead magnets — ebooks, tools, gated content |
+| 132 | marketing-council | .agents/skills/marketing-council/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\marketing-council\SKILL.md | Multi-persona marketing review council |
+| 133 | marketing-ideas | .agents/skills/marketing-ideas/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\marketing-ideas\SKILL.md | Marketing idea generation |
+| 134 | marketing-loops | .agents/skills/marketing-loops/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\marketing-loops\SKILL.md | Growth loops — viral, content, paid loops |
+| 135 | marketing-plan | .agents/skills/marketing-plan/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\marketing-plan\SKILL.md | Marketing plans — strategy, budgets, channels |
+| 136 | marketing-psychology | .agents/skills/marketing-psychology/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\marketing-psychology\SKILL.md | Persuasion psychology — biases, triggers |
+| 137 | offers | .agents/skills/offers/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\offers\SKILL.md | Offer design — pricing, bundles, guarantees |
+| 138 | onboarding | .agents/skills/onboarding/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\onboarding\SKILL.md | Post-signup onboarding — activation, aha moment, time-to-value, MPTV |
+| 139 | product-marketing | .agents/skills/product-marketing/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\product-marketing\SKILL.md | Product marketing — positioning, messaging |
+| 140 | programmatic-seo | .agents/skills/programmatic-seo/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\programmatic-seo\SKILL.md | Programmatic SEO — template pages at scale |
+| 141 | prospecting | .agents/skills/prospecting/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\prospecting\SKILL.md | Sales prospecting — outbound |
+| 142 | public-relations | .agents/skills/public-relations/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\public-relations\SKILL.md | PR — press, media, announcements |
+| 143 | referrals | .agents/skills/referrals/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\referrals\SKILL.md | Referral programs |
+| 144 | revops | .agents/skills/revops/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\revops\SKILL.md | Revenue operations — funnel, CRM, handoffs |
+| 145 | sales-enablement | .agents/skills/sales-enablement/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\sales-enablement\SKILL.md | Sales enablement — decks, battlecards |
+| 146 | signup | .agents/skills/signup/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\signup\SKILL.md | Signup flow CRO — registration friction, field optimization, SSO, mobile targets |
+| 147 | site-architecture | .agents/skills/site-architecture/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\site-architecture\SKILL.md | Site architecture — IA, internal linking |
+| 148 | social | .agents/skills/social/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\social\SKILL.md | Social media — content, channels, calendar |
+
 ---
 ## `.claude/skills/`
 Higher-order skills for design intelligence, testing, meta-skill creation, and coding discipline.
@@ -237,5 +281,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: September 7, 2026 — added material-3 and mobile-android-design skills (user install). Total .agents/skills: 110.*
+*Last updated: September 10, 2026 — added the 38-skill marketing pack (user install, mirrored in `.claude` and `.commandcode`). Total .agents/skills: 147.*
 ```

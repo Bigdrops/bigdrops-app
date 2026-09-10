@@ -90,12 +90,13 @@ test('remediation re-validates qualification under the lock', () => {
 // ---------------------------------------------------------------------------
 
 test('remediation checks for an existing source transaction before posting', () => {
-  const checks = migrationSql.match(/SELECT id INTO v_existing_st[^;]*LIMIT 1/g) ?? []
+  // ponytail: matches EXECUTE format('SELECT id FROM ... LIMIT 1', ...) INTO v_existing_st;
+  const checks = migrationSql.match(/SELECT id FROM[^;]*LIMIT 1[^;]*INTO v_existing_st/g) ?? []
   assert.ok(checks.length >= 2, 'expected at least two v_existing_st checks')
 })
 
 test('remediation checks for an existing journal entry before posting', () => {
-  const checks = migrationSql.match(/SELECT id INTO v_existing_je[^;]*LIMIT 1/g) ?? []
+  const checks = migrationSql.match(/SELECT id FROM[^;]*LIMIT 1[^;]*INTO v_existing_je/g) ?? []
   assert.ok(checks.length >= 2, 'expected at least two v_existing_je checks')
 })
 
@@ -265,9 +266,10 @@ test('permission gate is journal/create, the established accounting-fact create 
 // ---------------------------------------------------------------------------
 
 test('remediation re-queries the final ST and JE under lock and returns NOT_REPAIRABLE if no JE was created', () => {
+  // ponytail: migration uses EXECUTE format(...) ... INTO pattern, not SELECT id INTO directly
   const finalReRead = migrationSql.slice(migrationSql.indexOf('v_period_code'))
-  assert.ok(finalReRead.includes("SELECT id INTO v_final_st_id"))
-  assert.ok(finalReRead.includes("SELECT id INTO v_final_je_id"))
+  assert.ok(finalReRead.includes("INTO v_final_st_id"))
+  assert.ok(finalReRead.includes("INTO v_final_je_id"))
   assert.ok(finalReRead.includes("'result', 'NOT_REPAIRABLE'"))
   assert.ok(finalReRead.includes("'explanation', 'Remediation did not result in a journal entry for the requested fact.'"))
 })

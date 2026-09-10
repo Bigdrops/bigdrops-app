@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { THEME_PRESETS, SELECTABLE_THEME_PRESETS, getThemePreset, getDarkVariantSemanticTokens } from '../../lib/themePresets.ts'
+import { THEME_PRESETS, SELECTABLE_THEME_PRESETS, getThemePreset, getDarkVariantSemanticTokens, getDarkVariantBundle } from '../../lib/themePresets.ts'
 
 // ────────────────────────────────────────────────────────────────────
 // PRD token contract (04-theme-system.md) — every theme family must
@@ -21,7 +21,7 @@ const PRD_SEMANTIC_TOKENS = [
 ]
 
 const SELECTABLE_FAMILIES = [
-  'slate-navy', 'amber-terracotta', 'ocean-teal', 'rose-gold', 'forest-green', 'warm-cocoa',
+  'slate-navy', 'amber-terracotta', 'ocean-teal', 'rose-gold', 'forest-green', 'warm-cocoa', 'midnight-onyx',
 ]
 
 test('every PRD semantic token is present on every selectable theme family (light)', () => {
@@ -71,6 +71,25 @@ test('slate-navy light values match the locked PRD palette', () => {
   assert.equal(onyx['--primary'], toTriplet('#60a5fa'))
 })
 
+test('midnight-onyx dark keeps the gradient-black hero treatment', () => {
+  const dark = getDarkVariantSemanticTokens('midnight-onyx')
+  assert.match(dark['--gradient'], /^linear-gradient\(135deg/)
+  assert.ok(dark['--gradient'].includes('#0a0a0a'), 'dark gradient starts from gradient black')
+})
+
+test('midnight-onyx keeps readable text on filled surfaces in both modes', () => {
+  const light = getThemePreset('midnight-onyx')
+  // Dark mode primary is the ivory CTA fill: it must carry dark text, never white.
+  const dark = getDarkVariantBundle('midnight-onyx')
+  assert.equal(dark['primary-foreground'], toTriplet('#0f172a'))
+  assert.equal(dark['bd-button-primary-text'], toTriplet('#0f172a'))
+  // Light mode primary is the navy pill: white text.
+  assert.equal(light.bundle['primary-foreground'], toTriplet('#ffffff'))
+  // Serif-italic display voice is present in both modes.
+  assert.match(String(light.bundle['bd-font-display-family']), /Source Serif 4/)
+  assert.match(String(dark['bd-font-display-family']), /Source Serif 4/)
+})
+
 function toTriplet(hex) {
   const h = hex.replace('#', '')
   const r = parseInt(h.slice(0, 2), 16) / 255
@@ -80,7 +99,7 @@ function toTriplet(hex) {
   let h2 = 0
   const l = (max + min) / 2
   const d = max - min
-  const s = l > 0.5 ? d / (2 - max - min) : (max === min ? 0 : d / (max + min))
+  const s = max === min ? 0 : (l > 0.5 ? d / (2 - max - min) : d / (max + min))
   if (max !== min) {
     if (max === r) h2 = (g - b) / d + (g < b ? 6 : 0)
     else if (max === g) h2 = (b - r) / d + 2

@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="BIGDROPS onboarding v3 — Ocean Teal theme demonstration. Light and dark modes via PRD theme tokens.">
-<title>BIGDROPS · Onboarding v3 — Ocean Teal</title>
+<meta name="description" content="BIGDROPS onboarding v3. Ocean Teal theme demonstration. Light and dark modes via PRD theme tokens.">
+<title>BIGDROPS · Onboarding v3 · Ocean Teal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ============ tokens — Design.md contract ============ */
-/* Structural base only — colour tokens live in the theme layer below */
+/* ============ tokens · Design.md contract ============ */
+/* Structural base only. Colour tokens live in the theme layer below */
 :root{
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
   --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
   --ez:cubic-bezier(.23,1,.32,1); --drawer:cubic-bezier(.32,.72,0,1);
   --smt:0 .35s; --smt2:0 .55s;
 }
-/* ============ theme layer — Ocean Teal (live preset: ocean-teal) ============ */
+/* ============ theme layer · Ocean Teal (live preset: ocean-teal) ============ */
 /* Values are HSL triplets mirroring TEAL_LIGHT / TEAL_DARK in
    src/lib/themePresets.ts. Token names follow 04-theme-system.md.
    Mode switching uses html[data-theme] per the PRD light/dark contract. */
@@ -249,29 +249,58 @@ body:not(.single) .copy{max-width:44ch}
 .c-vat{top:10%;right:-5%}
 .c-nrs{bottom:-2%;left:-2%}
 
-/* ============ S5 · tenancy board ============ */
-/* The board is a deliberate dark preview card. It uses fixed dark values so it
-   stays legible in both modes — var(--secondary) flips pale in dark mode and
+/* ============ S5 · tenancy map ============ */
+/* The map is a deliberate dark preview card. It uses fixed dark values so it
+   stays legible in both modes. var(--secondary) flips pale in dark mode and
    would leave its light text invisible. */
-.board{position:relative;width:min(88%,330px);border-radius:20px;background:#0f172a;color:#f1f5f9;border:1px solid rgba(148,163,184,.22);padding:17px;box-shadow:var(--shadow-float)}
-.board .cardhead{margin-bottom:14px}
+.board{position:relative;width:min(88%,330px);border-radius:20px;background:#0f172a;color:#f1f5f9;border:1px solid rgba(148,163,184,.22);padding:15px 17px;box-shadow:var(--shadow-float)}
+.board .cardhead{margin-bottom:11px}
 .board .minibrand{color:#f1f5f9}
 .board .mini-logo{background:var(--grad)}
 .boardlabel{color:rgba(241,245,249,.55);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-.workspace{padding:13px;border:1px solid rgba(241,245,249,.12);border-radius:15px;background:rgba(241,245,249,.05)}
-.workspace + .workspace{margin-top:9px}
-.workspace-head{display:flex;align-items:center;gap:9px}
-.workspace-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--grad);color:#fff;font-size:12px;font-weight:800;flex:0 0 auto}
-.workspace-head strong{font-size:12.5px}
-.workspace-head span{display:block;margin-top:2px;color:rgba(241,245,249,.55);font-size:9.5px}
-.entity-row{display:flex;gap:5px;margin-top:13px}
-.entity{flex:1;padding:8px 4px;border-radius:8px;background:rgba(241,245,249,.08);color:rgba(241,245,249,.85);text-align:center;font-size:9.5px;font-weight:700}
+.maphub{display:flex;align-items:center;gap:8px;width:max-content;margin:0 auto;padding:6px 12px 6px 7px;border-radius:11px;background:rgba(241,245,249,.08);border:1px solid rgba(241,245,249,.16)}
+.hublogo{width:21px;height:21px;display:grid;place-items:center;border-radius:7px;background:var(--grad);color:#fff;font-size:11px;font-weight:800}
+.hubtext strong{display:block;font-size:10.5px;letter-spacing:.01em}
+.hubtext span{display:block;margin-top:1px;font-size:8.5px;color:rgba(241,245,249,.55)}
+.stem-v{width:1px;height:9px;margin:0 auto;border-left:1px dashed rgba(148,163,184,.5)}
+.stem-h{position:relative;height:1px;margin:0 15%;border-top:1px dashed rgba(148,163,184,.5)}
+.stem-h::before,.stem-h::after{content:"";position:absolute;top:0;width:1px;height:8px;border-left:1px dashed rgba(148,163,184,.5)}
+.stem-h::before{left:0}
+.stem-h::after{right:0}
+.silo{position:relative;padding:10px 11px 8px;border-radius:14px;background:rgba(241,245,249,.04);border:1px solid rgba(148,163,184,.30);border-left:3px solid var(--tn,#60a5fa)}
+.silo + .silo{margin-top:8px}
+.silo-top{display:flex;align-items:center;gap:8px}
+.silo-icon{width:25px;height:25px;flex:0 0 auto;display:grid;place-items:center;border-radius:8px;background:var(--tn);color:#fff;font-size:11px;font-weight:800}
+.silo-name{min-width:0}
+.silo-name strong{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.silo-name span{display:block;margin-top:1px;font-size:8.5px;color:rgba(241,245,249,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.silo-theme{margin-left:auto;display:flex;align-items:center;gap:3px;flex:0 0 auto;font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(241,245,249,.65)}
+.silo-theme i{width:8px;height:8px;border-radius:50%;display:block}
+.ladder{display:flex;align-items:center;gap:6px;margin-top:8px}
+.rung{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:7px;background:rgba(241,245,249,.09);font-size:8.5px;font-weight:800;letter-spacing:.02em;color:rgba(241,245,249,.92);white-space:nowrap}
+.rung i{width:7px;height:7px;border-radius:50%;background:var(--tn);flex:0 0 auto}
+.rung.r2 i{background:rgba(241,245,249,.6)}
+.rung.r3 i{background:rgba(241,245,249,.32)}
+.link{flex:1;min-width:5px;border-top:1px dashed rgba(148,163,184,.35)}
+.silo-wall{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:7px;border-top:1px dashed rgba(148,163,184,.3);font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(241,245,249,.55)}
+.silo-wall svg{flex:0 0 auto;opacity:.7}
 .isolation{
   position:absolute;right:-10px;bottom:-8px;display:flex;align-items:center;gap:6px;
   padding:10px 13px;border-radius:13px;background:var(--surface);border:1px solid var(--line);
   color:var(--success);font-size:11px;font-weight:800;box-shadow:var(--shadow-float);
 }
 .isolation::before{content:"✓";display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;color:#fff;background:var(--success);font-size:10px}
+@media (max-height:640px){
+  .board{padding:11px 13px}
+  .board .cardhead{margin-bottom:8px}
+  .maphub{padding:5px 10px 5px 6px}
+  .stem-v{height:7px}
+  .stem-h::before,.stem-h::after{height:6px}
+  .silo{padding:8px 9px 6px}
+  .silo + .silo{margin-top:6px}
+  .ladder{margin-top:6px}
+  .silo-wall{margin-top:6px;padding-top:5px}
+}
 
 /* ============ S6 · auth ============ */
 .signupwrap{flex:1;min-height:0;display:flex;flex-direction:column}
@@ -361,7 +390,7 @@ body:not(.single) .copy{max-width:44ch}
 @media (min-width:640px) and (max-width:1023px){
   .mc-fleet{left:2%}
 }
-/* fold (e.g. Surface Duo 540–639px): single column but wider gutters */
+/* fold (e.g. Surface Duo 540 to 639px): single column but wider gutters */
 @media (min-width:540px) and (max-width:639px){
   .slide{padding-left:calc(var(--sal) + 40px);padding-right:calc(var(--sar) + 40px)}
 }
@@ -424,7 +453,7 @@ body:not(.single) .copy{max-width:44ch}
           <div class="text-col text">
             <p class="eyebrow rv" style="--d:.1s">Welcome to BIGDROPS</p>
             <h1 class="rv" style="--d:.18s">Run the whole operation from one place.</h1>
-            <p class="copy rv" style="--d:.28s">Invoices, deliveries, projects and taxes — the everyday work of your business, kept in one system that talks to itself.</p>
+            <p class="copy rv" style="--d:.28s">Invoices, deliveries, projects and taxes. The everyday work of your business, kept in one system that talks to itself.</p>
           </div>
         </div>
       </section>
@@ -454,7 +483,7 @@ body:not(.single) .copy{max-width:44ch}
           <div class="text-col text">
             <p class="eyebrow rv" style="--d:.1s">Invoicing</p>
             <h1 class="rv" style="--d:.18s">From job done to money in.</h1>
-            <p class="copy rv" style="--d:.28s">Build a professional invoice in seconds. VAT and WHT are applied the moment you record the transaction — and every invoice lands ready for the tax authority.</p>
+            <p class="copy rv" style="--d:.28s">Build a professional invoice in seconds. VAT and WHT are applied the moment you record the transaction, and every invoice lands ready for the tax authority.</p>
           </div>
         </div>
       </section>
@@ -494,7 +523,7 @@ body:not(.single) .copy{max-width:44ch}
           <div class="text-col text">
             <p class="eyebrow rv" style="--d:.1s">Logistics</p>
             <h1 class="rv" style="--d:.18s">Every delivery, on record.</h1>
-            <p class="copy rv" style="--d:.28s">Assign a driver, send a waybill and watch it move — live tracking and signed proof of delivery attached to the job it belongs to.</p>
+            <p class="copy rv" style="--d:.28s">Assign a driver, send a waybill and watch it move. Live tracking and signed proof of delivery stay attached to the job it belongs to.</p>
           </div>
         </div>
       </section>
@@ -532,7 +561,7 @@ body:not(.single) .copy{max-width:44ch}
           <div class="text-col text">
             <p class="eyebrow rv" style="--d:.1s">Taxes</p>
             <h1 class="rv" style="--d:.18s">Taxes, without the headache.</h1>
-            <p class="copy rv" style="--d:.28s">Keep recording what the business spends and earns — the tax position builds itself from those records, in plain words. No jargon, no spreadsheets.</p>
+            <p class="copy rv" style="--d:.28s">Keep recording what the business spends and earns. The tax position builds itself from those records, in plain words. No jargon, no spreadsheets.</p>
           </div>
         </div>
       </section>
@@ -541,28 +570,39 @@ body:not(.single) .copy{max-width:44ch}
       <section class="slide" id="s4" aria-roledescription="slide" aria-label="5 of 6">
         <div class="stage-inner">
           <div class="stage-col stage">
-            <div class="board" role="img" aria-label="A workspace board with two businesses, each with its own books, tax files and its own theme, kept fully separated">
+            <div class="board" role="img" aria-label="One login opens two separate businesses. Each business keeps its own team of owner, admins and members, its own books, tax files and its own colours. Data never crosses between them.">
               <div class="cardhead">
-                <span class="minibrand"><span class="mini-logo" aria-hidden="true">b</span>your workspace</span>
+                <span class="minibrand"><span class="mini-logo" aria-hidden="true">b</span>your login</span>
                 <span class="boardlabel">Multitenancy &amp; theming</span>
               </div>
-              <div class="workspace">
-                <div class="workspace-head"><span class="workspace-icon">N</span><div><strong>Northstar Studio</strong><span>Creative services · Ocean Teal theme</span></div></div>
-                <div class="entity-row"><span class="entity">Books</span><span class="entity">VAT</span><span class="entity">Files</span></div>
-                <div class="themdots" aria-hidden="true"><i style="background:#0d9488"></i><i style="background:#14b8a6"></i><i style="background:#0891b2"></i><span class="themlabel">Teal</span></div>
+              <div class="maphub"><span class="hublogo" aria-hidden="true">b</span><span class="hubtext"><strong>One login</strong><span>every business sits under it</span></span></div>
+              <div class="stem-v" aria-hidden="true"></div>
+              <div class="stem-h" aria-hidden="true"></div>
+              <div class="silo" style="--tn:#0d9488">
+                <div class="silo-top">
+                  <span class="silo-icon" aria-hidden="true">N</span>
+                  <span class="silo-name"><strong>Northstar Studio</strong><span>Creative services</span></span>
+                  <span class="silo-theme" aria-hidden="true"><i style="background:#0d9488"></i><i style="background:#14b8a6"></i><i style="background:#0891b2"></i>Teal</span>
+                </div>
+                <div class="ladder" aria-hidden="true"><span class="rung r1"><i></i>Owner</span><span class="link"></span><span class="rung r2"><i></i>2 admins</span><span class="link"></span><span class="rung r3"><i></i>6 members</span></div>
+                <div class="silo-wall"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Books · VAT · Files stay inside</div>
               </div>
-              <div class="workspace">
-                <div class="workspace-head"><span class="workspace-icon" style="background:#b45309">P</span><div><strong>Peakline Goods</strong><span>Retail operations · Amber Terracotta theme</span></div></div>
-                <div class="entity-row"><span class="entity">Books</span><span class="entity">WHT</span><span class="entity">Files</span></div>
-                <div class="themdots" aria-hidden="true"><i style="background:#b45309"></i><i style="background:#d97706"></i><i style="background:#c2410c"></i><span class="themlabel">Amber</span></div>
+              <div class="silo" style="--tn:#b45309">
+                <div class="silo-top">
+                  <span class="silo-icon" aria-hidden="true">P</span>
+                  <span class="silo-name"><strong>Peakline Goods</strong><span>Retail operations</span></span>
+                  <span class="silo-theme" aria-hidden="true"><i style="background:#b45309"></i><i style="background:#d97706"></i><i style="background:#c2410c"></i>Amber</span>
+                </div>
+                <div class="ladder" aria-hidden="true"><span class="rung r1"><i></i>Owner</span><span class="link"></span><span class="rung r2"><i></i>1 admin</span><span class="link"></span><span class="rung r3"><i></i>4 members</span></div>
+                <div class="silo-wall"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Books · WHT · Files stay inside</div>
               </div>
               <div class="isolation rv pop" style="--d:1s">Foolproof isolation</div>
             </div>
           </div>
           <div class="text-col text">
             <p class="eyebrow rv" style="--d:.1s">Workspaces</p>
-            <h1 class="rv" style="--d:.18s">Every business in its lane. Every theme its own.</h1>
-            <p class="copy rv" style="--d:.28s">Run more than one company under one login. Books, tax files and records stay inside their own business — and each business can wear its own colours.</p>
+            <h1 class="rv" style="--d:.18s">Two businesses. One login. Nothing mixes.</h1>
+            <p class="copy rv" style="--d:.28s">Run more than one company under one login. Each business keeps its own people and roles, its own records and its own colours. Nothing crosses between them.</p>
           </div>
         </div>
       </section>
@@ -659,7 +699,7 @@ body:not(.single) .copy{max-width:44ch}
                 <p class="err" id="e-si-pw" role="alert">Enter your password.</p>
               </div>
               <button class="cta" type="submit" id="signinCta"><span class="spin" aria-hidden="true"></span><span class="lbl">Sign in</span></button>
-              <p class="fine" style="margin-top:10px">Approval status appears on sign-in — no need to recheck.</p>
+              <p class="fine" style="margin-top:10px">Approval status appears on sign-in. No need to recheck.</p>
             </form>
             <!-- waiting pane -->
             <div class="formpane" id="waitPane" hidden aria-label="Waiting for approval">
@@ -674,7 +714,7 @@ body:not(.single) .copy{max-width:44ch}
                   <div class="waitstep on" data-step="1"><i aria-hidden="true"></i><span>Awaiting review</span></div>
                   <div class="waitstep" data-step="2"><i aria-hidden="true">3</i><span>Workspace opened</span></div>
                 </div>
-                <p class="waitnote">This screen updates by itself when you're approved. You can close the app — signing back in lands here until approval lands.</p>
+                <p class="waitnote">This screen updates by itself when you're approved. You can close the app. Signing back in lands here until approval lands.</p>
               </div>
               <button type="button" class="alt" id="waitBack" style="width:100%;margin-top:14px;min-height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--line-strong);font-weight:800;color:var(--ink-2)">Back</button>
             </div>
@@ -704,7 +744,7 @@ body:not(.single) .copy{max-width:44ch}
 <script>
 (function(){
 "use strict";
-/* theme mode toggle — light/dark via html[data-theme] (PRD 04-theme-system.md);
+/* theme mode toggle · light/dark via html[data-theme] (PRD 04-theme-system.md);
    system preference seeds the initial mode */
 var mqDark=window.matchMedia('(prefers-color-scheme: dark)');
 var themebtn=document.getElementById('themeModeBtn');
@@ -860,8 +900,8 @@ pwInput.addEventListener('input',function(){
   var v=pwInput.value,meter=document.getElementById('pwMeter'),lab=document.getElementById('pwLabel');
   var cls=' s0',txt='';
   if(v.length>=8&&/[a-zA-Z]/.test(v)&&/\d/.test(v)){cls=' s3';txt='Strong password';}
-  else if(v.length>=8){cls=' s2';txt='Good — add a number for strength';}
-  else if(v.length>=5){cls=' s1';txt='Keep going — use 8+ characters';}
+  else if(v.length>=8){cls=' s2';txt='Good. Add a number for strength';}
+  else if(v.length>=5){cls=' s1';txt='Keep going. Use 8+ characters';}
   meter.className='meter'+cls;
   lab.textContent=v?txt:'';
 });
@@ -941,7 +981,7 @@ document.getElementById('joinPane').addEventListener('submit',function(e){
   setTimeout(function(){
     unbusy('Continue');
     var lead=document.getElementById('waitLead');
-    lead.textContent='Good news — your email is on the team. Approve-in happens with your workspace admin.';
+    lead.textContent='Good news. Your email is on the team. Approve-in happens with your workspace admin.';
     showWait();
   },800);
 });

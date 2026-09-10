@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="BIGDROPS onboarding · Tax Ease edition — Intro → Invoicing → Logistics → Projects → Taxes → All-in-one → Sign Up.">
+<meta name="description" content="BIGDROPS onboarding · Tax Ease edition. Intro → Invoicing → Logistics → Projects → Taxes → All-in-one → Sign Up.">
 <title>BIGDROPS Onboarding · Tax Ease</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -172,7 +172,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
 @keyframes shadowBob{0%,100%{transform:scaleX(1);opacity:.9}50%{transform:scaleX(1.03);opacity:.75}}
 @keyframes wheelSpin{to{transform:rotate(360deg)}}
 
-/* ============ TAXES scene (Files.tax — Taxation Made Easy) ============ */
+/* ============ TAXES scene (Files.tax · Taxation Made Easy) ============ */
 .t-taxes{--tone:var(--success)}
 .taxstage{position:relative;width:min(86vw,340px);display:flex;justify-content:center}
 .taxdoc{width:100%;max-width:270px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-float);padding:20px 18px 16px;margin:26px 0}
@@ -327,7 +327,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         </div>
         <div class="text">
           <h1 class="rv" style="--d:.1s">Your operations.<br>Simplified.</h1>
-          <p class="copy rv" style="--d:.22s">Create, manage, and export documents across invoicing, logistics, and project tracking — all in one place.</p>
+          <p class="copy rv" style="--d:.22s">Create, manage, and export documents across invoicing, logistics, and project tracking, all in one place.</p>
         </div>
       </section>
 
@@ -380,7 +380,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         </div>
       </section>
 
-      <!-- ═══════════ 3 · LOGISTICS — cargo van scene ═══════════ -->
+      <!-- ═══════════ 3 · LOGISTICS · cargo van scene ═══════════ -->
       <section class="slide t-logistics" id="s2" aria-roledescription="slide" aria-label="3 of 7">
         <div class="stage">
           <div class="roadstage" role="img" aria-label="A branded BIGDROPS commercial tricycle (keke) drives along a city road past a distant skyline, with a waybill card and a location pin overhead">
@@ -580,7 +580,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         </div>
       </section>
 
-      <!-- ═══════════ 5 · TAXES — Files.tax calm-compliance scene ═══════════ -->
+      <!-- ═══════════ 5 · TAXES · Files.tax calm-compliance scene ═══════════ -->
       <section class="slide t-taxes" id="s4" aria-roledescription="slide" aria-label="5 of 7">
         <div class="stage">
           <div class="taxstage" role="img" aria-label="A monthly Files.tax card tracks the VAT position, the WHT position, and attention items, while a status flow moves from Recorded to Calculated to Ready for NRS">
@@ -615,7 +615,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         <div class="text">
           <p class="eyebrow rv" style="--d:.1s">Taxes</p>
           <h1 class="rv" style="--d:.16s">Your taxes, handled quietly</h1>
-          <p class="copy rv" style="--d:.26s">Record what happened — BIGDROPS applies VAT and WHT, keeps your monthly Files.tax position, and keeps every invoice NRS-ready. No jargon. No spreadsheets.</p>
+          <p class="copy rv" style="--d:.26s">Record what happened. BIGDROPS applies VAT and WHT, keeps your monthly Files.tax position, and keeps every invoice NRS-ready. No jargon. No spreadsheets.</p>
         </div>
       </section>
 
@@ -670,7 +670,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         <div class="text">
           <p class="eyebrow rv" style="--d:.15s">All in one place</p>
           <h1 class="rv" style="--d:.22s">Everything your team needs</h1>
-          <p class="copy rv" style="--d:.32s">Invoicing, logistics, projects, taxes, and more — one platform built for your operations.</p>
+          <p class="copy rv" style="--d:.32s">Invoicing, logistics, projects, taxes, and more. One platform built for your operations.</p>
         </div>
       </section>
 
@@ -929,8 +929,8 @@ pwInput.addEventListener('input',function(){
   var v=pwInput.value,meter=document.getElementById('pwMeter'),lab=document.getElementById('pwLabel');
   var cls=' s0',txt='';
   if(v.length>=8&&/[a-zA-Z]/.test(v)&&/\d/.test(v)){cls=' s3';txt='Strong password';}
-  else if(v.length>=8){cls=' s2';txt='Good — add a number for strength';}
-  else if(v.length>=5){cls=' s1';txt='Keep going — use 8+ characters';}
+  else if(v.length>=8){cls=' s2';txt='Good. Add a number for strength';}
+  else if(v.length>=5){cls=' s1';txt='Keep going. Use 8+ characters';}
   meter.className='meter'+cls;
   lab.textContent=v?txt:'';
 });

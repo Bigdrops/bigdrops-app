@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="BIGDROPS onboarding — premium mobile-first flow: Intro → Invoicing → Logistics → Projects → All-in-one → Sign Up.">
+<meta name="description" content="BIGDROPS onboarding. Premium mobile-first flow: Intro → Invoicing → Logistics → Projects → All-in-one → Sign Up.">
 <title>BIGDROPS Onboarding</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,7 +54,7 @@ button:active{transform:scale(.97)}
 /* ============ app frame ============ */
 .app{position:relative;height:100dvh;display:flex;flex-direction:column}
 
-/* top bar — brand + skip */
+/* top bar · brand + skip */
 .topbar{
   position:absolute;top:0;left:0;right:0;z-index:30;
   display:flex;align-items:center;justify-content:space-between;
@@ -297,7 +297,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         </div>
         <div class="text">
           <h1 class="rv" style="--d:.1s">Your operations.<br>Simplified.</h1>
-          <p class="copy rv" style="--d:.22s">Create, manage, and export documents across invoicing, logistics, and project tracking — all in one place.</p>
+          <p class="copy rv" style="--d:.22s">Create, manage, and export documents across invoicing, logistics, and project tracking, all in one place.</p>
         </div>
       </section>
 
@@ -350,7 +350,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         </div>
       </section>
 
-      <!-- ═══════════ 3 · LOGISTICS — cargo van scene ═══════════ -->
+      <!-- ═══════════ 3 · LOGISTICS · cargo van scene ═══════════ -->
       <section class="slide t-logistics" id="s2" aria-roledescription="slide" aria-label="3 of 6">
         <div class="stage">
           <div class="roadstage" role="img" aria-label="A branded BIGDROPS commercial tricycle (keke) drives along a city road past a distant skyline, with a waybill card and a location pin overhead">
@@ -595,7 +595,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         <div class="text">
           <p class="eyebrow rv" style="--d:.15s">All in one place</p>
           <h1 class="rv" style="--d:.22s">Everything your team needs</h1>
-          <p class="copy rv" style="--d:.32s">Invoices, logistics, projects, and more — one platform built for your operations.</p>
+          <p class="copy rv" style="--d:.32s">Invoices, logistics, projects, and more. One platform built for your operations.</p>
         </div>
       </section>
 
@@ -854,8 +854,8 @@ pwInput.addEventListener('input',function(){
   var v=pwInput.value,meter=document.getElementById('pwMeter'),lab=document.getElementById('pwLabel');
   var cls=' s0',txt='';
   if(v.length>=8&&/[a-zA-Z]/.test(v)&&/\d/.test(v)){cls=' s3';txt='Strong password';}
-  else if(v.length>=8){cls=' s2';txt='Good — add a number for strength';}
-  else if(v.length>=5){cls=' s1';txt='Keep going — use 8+ characters';}
+  else if(v.length>=8){cls=' s2';txt='Good. Add a number for strength';}
+  else if(v.length>=5){cls=' s1';txt='Keep going. Use 8+ characters';}
   meter.className='meter'+cls;
   lab.textContent=v?txt:'';
 });

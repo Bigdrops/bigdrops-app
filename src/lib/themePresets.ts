@@ -79,6 +79,7 @@ export const ADDITIONAL_THEME_IDS = [
   "rose-gold",
   "forest-green",
   "warm-cocoa",
+  "midnight-onyx",
 ] as const
 
 /** Legacy presets — kept for backward compatibility */
@@ -255,6 +256,19 @@ type CoreColors = {
   nav: string
 }
 
+// ── Helper: readable text on a filled surface ──
+// Picks dark or white text by the fill's relative luminance so light
+// primary fills (ivory CTA, amber, light blue) never get white text.
+
+function readableOn(hex: string): string {
+  const h = hex.replace("#", "")
+  const r = parseInt(h.slice(0, 2), 16) / 255
+  const g = parseInt(h.slice(2, 4), 16) / 255
+  const b = parseInt(h.slice(4, 6), 16) / 255
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return lum > 0.55 ? "#0f172a" : "#ffffff"
+}
+
 function buildBundle(c: CoreColors): ThemeTokenBundle {
   return {
     // shadcn bridge tokens
@@ -265,7 +279,7 @@ function buildBundle(c: CoreColors): ThemeTokenBundle {
     popover: c.surface,
     "popover-foreground": c.ink,
     primary: c.primary,
-    "primary-foreground": c.ink,
+    "primary-foreground": readableOn(c.primary),
     secondary: c.secondary,
     "secondary-foreground": c.ink,
     muted: c.surfaceMuted ?? c.surface,
@@ -301,7 +315,7 @@ function buildBundle(c: CoreColors): ThemeTokenBundle {
     "bd-card-bg": c.surface,
     "bd-card-border": c.line,
     "bd-button-primary-bg": c.primary,
-    "bd-button-primary-text": "#ffffff",
+    "bd-button-primary-text": readableOn(c.primary),
     "bd-button-primary-hover-bg": c.primaryBright ?? c.primary,
     "bd-feedback-success-bg": "#dcfce7",
     "bd-feedback-success": "#16a34a",
@@ -333,8 +347,8 @@ function buildBundle(c: CoreColors): ThemeTokenBundle {
 
     // Nav tokens
     "bd-nav-active-bg": c.primary,
-    "bd-nav-active-text": "#ffffff",
-    "bd-nav-active-icon": "#ffffff",
+    "bd-nav-active-text": readableOn(c.primary),
+    "bd-nav-active-icon": readableOn(c.primary),
     "bd-nav-hover-bg": c.surfaceMuted ?? c.surface,
 
     // Action surface tokens
@@ -344,11 +358,11 @@ function buildBundle(c: CoreColors): ThemeTokenBundle {
     "bd-surface-action-text": c.ink,
     "bd-surface-action-muted": c.ink3,
     "bd-action-icon-bg": c.primary,
-    "bd-action-icon-text": "#ffffff",
+    "bd-action-icon-text": readableOn(c.primary),
 
     // FAB tokens
     "bd-fab-bg": c.primary,
-    "bd-fab-text": "#ffffff",
+    "bd-fab-text": readableOn(c.primary),
 
     // Overlay tokens
     "bd-overlay-bg": c.surface,
@@ -368,9 +382,9 @@ function buildBundle(c: CoreColors): ThemeTokenBundle {
     "bd-icon-container-bg": c.primary + "14",
     "bd-icon-container-text": c.primary,
     "bd-brand": c.primary,
-    "bd-brand-foreground": "#ffffff",
+    "bd-brand-foreground": readableOn(c.primary),
     "bd-accent": c.primary,
-    "bd-accent-foreground": "#ffffff",
+    "bd-accent-foreground": readableOn(c.primary),
 
     // Structural tokens (theme-invariant but included for completeness)
     radius: "0.75rem",
@@ -695,6 +709,59 @@ const COCOA_DARK: CoreColors = {
   line: "rgba(245,239,232,.08)",
   lineStrong: "rgba(245,239,232,.15)",
   nav: "rgba(26,20,16,.88)",
+}
+
+// ════════════════════════════════════════════════════════════════════
+// MIDNIGHT ONYX — AI Tools Discovery design system
+// Source: "Design System — AI Tools Discovery App" (user-supplied spec).
+// Near-black screens, charcoal cards, blue-teal capability pills, and a
+// warm ivory primary surface with dark text. Dark is the native mode;
+// the light variant inverts the same roles so both modes keep one
+// token contract. Registry mapping rules do not apply (not a registry theme).
+// ════════════════════════════════════════════════════════════════════
+
+const MIDNIGHT_LIGHT: CoreColors = {
+  bg: "#f5f2ec",
+  surface: "#ffffff",
+  surfaceRaised: "#fafafa",
+  surfaceMuted: "#f0f0f2",
+  surfaceStrong: "#e4e4e8",
+  ink: "#1a1a1a",
+  ink2: "#6b7280",
+  ink3: "#9ca3af",
+  primary: "#2c3e50",
+  primaryBright: "#3d566e",
+  secondary: "#1a2a3a",
+  secondaryBright: "#2c3e50",
+  attention: "#ef4444",
+  attentionSoft: "#fee2e2",
+  sage: "#7da2c6",
+  sageSoft: "#e8eef5",
+  line: "rgba(26,26,26,.07)",
+  lineStrong: "rgba(26,26,26,.14)",
+  nav: "rgba(255,255,255,.88)",
+}
+
+const MIDNIGHT_DARK: CoreColors = {
+  bg: "#0a0a0a",
+  surface: "#121212",
+  surfaceRaised: "#1a1a1c",
+  surfaceMuted: "#1f1f23",
+  surfaceStrong: "#2c3e50",
+  ink: "#ffffff",
+  ink2: "#9ca3af",
+  ink3: "#6b7280",
+  primary: "#ffffff",
+  primaryBright: "#ffffff",
+  secondary: "#24425c",
+  secondaryBright: "#2c3e50",
+  attention: "#f87171",
+  attentionSoft: "#3b1518",
+  sage: "#8fa9c4",
+  sageSoft: "#1a1a1c",
+  line: "rgba(255,255,255,.08)",
+  lineStrong: "rgba(255,255,255,.16)",
+  nav: "rgba(10,10,10,.88)",
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1203,9 +1270,10 @@ function makePreset(
   core: CoreColors,
   preview?: { background: string; card: string; primary: string; accent: string },
   overrides?: ThemeTokenBundle,
+  semanticOverrides?: Record<string, string>,
 ): ThemePresetDefinition {
   const bundle = normalizeThemeTokenBundle({ ...buildBundle(core), ...overrides }, { allowRadius: true })
-  const semantic = prdSemanticTokens(core)
+  const semantic = { ...prdSemanticTokens(core), ...(semanticOverrides ?? {}) }
   return {
     id,
     label,
@@ -1230,6 +1298,15 @@ export const THEME_PRESETS: ThemePresetDefinition[] = [
   makePreset("rose-gold", "Rose Gold", "Warm rose and pink palette with elegant depth.", false, ROSE_LIGHT),
   makePreset("forest-green", "Forest Green", "Natural green palette inspired by lush forests.", false, FOREST_LIGHT),
   makePreset("warm-cocoa", "Warm Cocoa", "Earthy brown palette with warm, inviting tones.", false, COCOA_LIGHT),
+  makePreset("midnight-onyx", "Midnight Onyx", "Near-black AI-discovery surfaces with a serif-italic display voice, soft blue accents, and cream light mode.", false, MIDNIGHT_LIGHT,
+    undefined,
+    {
+      // Serif-italic display voice from the reference art direction.
+      // Body stays Manrope; only the display layer changes.
+      "bd-font-display-family": "'Source Serif 4', 'Playfair Display', Georgia, serif",
+      "bd-font-display-weight": "400",
+      "bd-font-display-spacing": "-0.02em",
+    }),
 
   // ShadcnBlocks registry themes (chisled; official light tokens, PRD color-only).
   // Official *-foreground overrides preserve published contrast pairs.
@@ -1279,6 +1356,7 @@ const DARK_VARIANTS: Record<string, CoreColors> = {
   "rose-gold": ROSE_DARK,
   "forest-green": FOREST_DARK,
   "warm-cocoa": COCOA_DARK,
+  "midnight-onyx": MIDNIGHT_DARK,
   "citrus": CITRUS_DARK,
   "vercel": VERCEL_DARK,
   "supabase": SUPABASE_DARK,
@@ -1300,6 +1378,13 @@ const DARK_VARIANTS: Record<string, CoreColors> = {
  * Merged over the derived bundle so published contrast pairs survive.
  */
 const DARK_FOREGROUND_OVERRIDES: Record<string, ThemeTokenBundle> = {
+  // midnight-onyx: non-color overrides repeated for dark parity. The dark
+  // bundle rebuilds from core colors only, so font tokens must be restated.
+  "midnight-onyx": {
+    "bd-font-display-family": "'Source Serif 4', 'Playfair Display', Georgia, serif",
+    "bd-font-display-weight": "400",
+    "bd-font-display-spacing": "-0.02em",
+  },
   "citrus": { "primary-foreground": "#000000", "secondary-foreground": "#ffffff" },
   "vercel": { "primary-foreground": "#000000", "secondary-foreground": "#ffffff" },
   "supabase": { "primary-foreground": "#dfe7e3", "secondary-foreground": "#fcfcfc" },
@@ -1312,6 +1397,18 @@ const DARK_FOREGROUND_OVERRIDES: Record<string, ThemeTokenBundle> = {
   "modern-minimal": { "primary-foreground": "#ffffff", "secondary-foreground": "#e5e5e5" },
   "shadcnblocks": { "primary-foreground": "#171717", "secondary-foreground": "#fafafa" },
   "shadcn-default": { "primary-foreground": "#171717", "secondary-foreground": "#fafafa" },
+}
+
+/**
+ * Per-theme dark semantic token overrides.
+ * midnight-onyx: the AI-discovery spec keeps its signature gradient-black
+ * hero treatment (black to charcoal with blue undertones) instead of the
+ * primary-to-secondary formula, because its dark primary is a light pill CTA.
+ */
+const DARK_SEMANTIC_OVERRIDES: Record<string, Record<string, string>> = {
+  "midnight-onyx": {
+    "--gradient": "linear-gradient(135deg, #0a0a0a 0%, #14161d 55%, #1e2b40 100%)",
+  },
 }
 
 /**
@@ -1330,7 +1427,7 @@ export function getDarkVariantBundle(themeId: ThemePresetId): ThemeTokenBundle |
 export function getDarkVariantSemanticTokens(themeId: ThemePresetId): Record<string, string> | null {
   const core = DARK_VARIANTS[themeId]
   if (!core) return null
-  return prdSemanticTokens(core)
+  return { ...prdSemanticTokens(core), ...(DARK_SEMANTIC_OVERRIDES[themeId] ?? {}) }
 }
 
 // ────────────────────────────────────────────────────────────────────

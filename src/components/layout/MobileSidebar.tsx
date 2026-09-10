@@ -118,7 +118,7 @@ export function MobileSidebar({
       >
         {/* Brand area */}
         <div className="flex items-center gap-2.5 border-b border-[hsl(var(--line))] px-3.5 py-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[hsl(var(--gradient))] text-white">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[image:var(--gradient)] text-white">
             <Sparkles className="h-4 w-4" strokeWidth={1.9} />
           </span>
           <div className="min-w-0">

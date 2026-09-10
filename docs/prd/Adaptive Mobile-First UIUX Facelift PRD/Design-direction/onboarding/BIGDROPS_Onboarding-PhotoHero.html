@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="BIGDROPS onboarding · Photo-Hero candidate — cinematic gradient scenes, glass stat cards, auth tabs and SSO.">
+<meta name="description" content="BIGDROPS onboarding · Photo-Hero candidate. Cinematic gradient scenes, glass stat cards, auth tabs and SSO.">
 <title>BIGDROPS Onboarding · Photo Hero</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -291,7 +291,7 @@ h1{font-size:clamp(1.8rem,7.2vw,2.4rem);line-height:1.08;letter-spacing:-.025em;
         </div>
         <div class="text">
           <h1 class="rv" style="--d:.15s">Your operations.<br>Simplified.</h1>
-          <p class="copy rv" style="--d:.28s">Create, manage, and export documents across invoicing, logistics, and project tracking — all in one place.</p>
+          <p class="copy rv" style="--d:.28s">Create, manage, and export documents across invoicing, logistics, and project tracking, all in one place.</p>
         </div>
       </section>
 
@@ -695,8 +695,8 @@ pwInput.addEventListener('input',function(){
   var v=pwInput.value,meter=document.getElementById('pwMeter'),lab=document.getElementById('pwLabel');
   var cls=' s0',txt='';
   if(v.length>=8&&/[a-zA-Z]/.test(v)&&/\d/.test(v)){cls=' s3';txt='Strong password';}
-  else if(v.length>=8){cls=' s2';txt='Good — add a number for strength';}
-  else if(v.length>=5){cls=' s1';txt='Keep going — use 8+ characters';}
+  else if(v.length>=8){cls=' s2';txt='Good. Add a number for strength';}
+  else if(v.length>=5){cls=' s1';txt='Keep going. Use 8+ characters';}
   meter.className='meter'+cls;
   lab.textContent=v?txt:'';
 });
