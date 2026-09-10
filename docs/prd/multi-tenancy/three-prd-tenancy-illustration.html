@@ -87,6 +87,10 @@ h1{font-family:'Fraunces',serif;font-size:23px;font-weight:600;color:var(--ink)}
 }
 .card h2::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold)}
 
+/* tenancy map illustration */
+.tenancy-svg{display:block;width:100%;height:auto;min-width:0;overflow:visible}
+@media(max-width:600px){.tenancy-svg text{font-size:inherit}}
+
 /* identity / controls */
 .identity-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 14px 'IBM Plex Mono';color:#fff;flex-shrink:0}
@@ -220,6 +224,103 @@ footer{margin-top:28px;font-size:11px;color:var(--faint);text-align:center;font-
 
 <div class="layout">
   <div>
+    <div class="card">
+      <h2>Tenancy map — silos, teams, themes</h2>
+      <p class="ledger-heading">One platform, many workspaces. Each workspace is an isolated silo with its own team hierarchy and its own theme. Nothing crosses a silo wall except an explicit grant.</p>
+      <svg id="tenancyMap" class="tenancy-svg" viewBox="0 0 880 400" role="img" aria-label="Diagram of multi-tenancy: the platform hub connects to two isolated tenant silos. Each silo holds a workspace with a team hierarchy of owner, admins and members, entity schemas below, and a theme swatch strip showing per-tenant theming.">
+        <defs>
+          <linearGradient id="hubGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#a9762c"/><stop offset="1" stop-color="#7c561f"/>
+          </linearGradient>
+          <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="#a89d81"/>
+          </marker>
+        </defs>
+
+        <!-- platform hub -->
+        <g aria-hidden="true">
+          <rect x="330" y="18" width="220" height="64" rx="10" fill="url(#hubGrad)"/>
+          <text x="440" y="45" text-anchor="middle" font-family="IBM Plex Sans" font-size="14" font-weight="700" fill="#fff">Platform Office</text>
+          <text x="440" y="63" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="rgba(255,255,255,.75)">approves &amp; suspends workspaces</text>
+        </g>
+
+        <!-- connectors hub to silos -->
+        <path d="M370 82 C 300 120, 220 120, 185 150" fill="none" stroke="#a89d81" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+        <path d="M510 82 C 580 120, 660 120, 695 150" fill="none" stroke="#a89d81" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+
+        <!-- ── silo A : ocean teal tenant ── -->
+        <g>
+          <rect x="20" y="150" width="400" height="234" rx="14" fill="#eef6f4" stroke="#3f7d6e" stroke-width="1.6"/>
+          <rect x="20" y="150" width="400" height="30" rx="14" fill="#3f7d6e"/>
+          <rect x="20" y="168" width="400" height="12" fill="#3f7d6e"/>
+          <text x="36" y="170" font-family="IBM Plex Mono" font-size="10.5" font-weight="700" fill="#fff">SILO A · entity_northstar</text>
+          <text x="404" y="170" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="rgba(255,255,255,.8)">theme: Ocean Teal</text>
+          <!-- theme swatches -->
+          <g aria-hidden="true">
+            <circle cx="386" cy="196" r="7" fill="#0d9488"/><circle cx="366" cy="196" r="7" fill="#14b8a6"/><circle cx="346" cy="196" r="7" fill="#0891b2"/>
+          </g>
+          <!-- team hierarchy -->
+          <rect x="150" y="188" width="120" height="26" rx="6" fill="#2b5a4e"/>
+          <text x="210" y="205" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" font-weight="700" fill="#fff">Owner — Mr C</text>
+          <line x1="210" y1="214" x2="115" y2="240" stroke="#726b56" stroke-width="1.2"/>
+          <line x1="210" y1="214" x2="210" y2="240" stroke="#726b56" stroke-width="1.2"/>
+          <line x1="210" y1="214" x2="305" y2="240" stroke="#726b56" stroke-width="1.2"/>
+          <rect x="55" y="240" width="120" height="24" rx="6" fill="#ffffff" stroke="#3f7d6e"/>
+          <text x="115" y="256" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2b5a4e" font-weight="600">Workspace Admin</text>
+          <rect x="150" y="240" width="120" height="24" rx="6" fill="#ffffff" stroke="#3f7d6e"/>
+          <text x="210" y="256" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2b5a4e" font-weight="600">Company Admin</text>
+          <rect x="245" y="240" width="120" height="24" rx="6" fill="#ffffff" stroke="#3f7d6e"/>
+          <text x="305" y="256" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#2b5a4e" font-weight="600">Members · 6</text>
+          <!-- entities below team -->
+          <rect x="55" y="284" width="120" height="52" rx="7" fill="#ffffff" stroke="#3f7d6e" stroke-dasharray="3 3"/>
+          <text x="115" y="304" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#2b5a4e" font-weight="600">Entity A</text>
+          <text x="115" y="320" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">invoices · waybills</text>
+          <rect x="185" y="284" width="120" height="52" rx="7" fill="#ffffff" stroke="#3f7d6e" stroke-dasharray="3 3"/>
+          <text x="245" y="304" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#2b5a4e" font-weight="600">Entity B</text>
+          <text x="245" y="320" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">invoices · waybills</text>
+          <!-- isolation wall note -->
+          <text x="36" y="316" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">RLS wall:</text>
+          <text x="36" y="328" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">deny by</text>
+          <text x="36" y="340" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">default</text>
+        </g>
+
+        <!-- ── silo B : amber tenant ── -->
+        <g>
+          <rect x="460" y="150" width="400" height="234" rx="14" fill="#faf3e6" stroke="#a9762c" stroke-width="1.6"/>
+          <rect x="460" y="150" width="400" height="30" rx="14" fill="#a9762c"/>
+          <rect x="460" y="168" width="400" height="12" fill="#a9762c"/>
+          <text x="476" y="170" font-family="IBM Plex Mono" font-size="10.5" font-weight="700" fill="#fff">SILO B · entity_peakline</text>
+          <text x="844" y="170" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="rgba(255,255,255,.8)">theme: Amber Terracotta</text>
+          <!-- theme swatches -->
+          <g aria-hidden="true">
+            <circle cx="826" cy="196" r="7" fill="#b45309"/><circle cx="806" cy="196" r="7" fill="#d97706"/><circle cx="786" cy="196" r="7" fill="#c2410c"/>
+          </g>
+          <!-- team hierarchy -->
+          <rect x="590" y="188" width="140" height="26" rx="6" fill="#7c561f"/>
+          <text x="660" y="205" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" font-weight="700" fill="#fff">Owner — Ada O.</text>
+          <line x1="660" y1="214" x2="565" y2="240" stroke="#726b56" stroke-width="1.2"/>
+          <line x1="660" y1="214" x2="660" y2="240" stroke="#726b56" stroke-width="1.2"/>
+          <line x1="660" y1="214" x2="755" y2="240" stroke="#726b56" stroke-width="1.2"/>
+          <rect x="505" y="240" width="120" height="24" rx="6" fill="#ffffff" stroke="#a9762c"/>
+          <text x="565" y="256" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7c561f" font-weight="600">Workspace Admin</text>
+          <rect x="600" y="240" width="120" height="24" rx="6" fill="#ffffff" stroke="#a9762c"/>
+          <text x="660" y="256" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7c561f" font-weight="600">Company Admin</text>
+          <rect x="695" y="240" width="120" height="24" rx="6" fill="#ffffff" stroke="#a9762c"/>
+          <text x="755" y="256" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#7c561f" font-weight="600">Members · 11</text>
+          <!-- entities -->
+          <rect x="505" y="284" width="150" height="52" rx="7" fill="#ffffff" stroke="#a9762c" stroke-dasharray="3 3"/>
+          <text x="580" y="304" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#7c561f" font-weight="600">Entity A</text>
+          <text x="580" y="320" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">invoices · CSR · BOQ</text>
+          <rect x="665" y="284" width="150" height="52" rx="7" fill="#ffffff" stroke="#a9762c" stroke-dasharray="3 3"/>
+          <text x="740" y="304" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#7c561f" font-weight="600">Entity B</text>
+          <text x="740" y="320" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">invoices · RFQ</text>
+          <text x="476" y="316" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">RLS wall:</text>
+          <text x="476" y="328" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">deny by</text>
+          <text x="476" y="340" font-family="IBM Plex Mono" font-size="8.5" fill="#726b56">default</text>
+        </g>
+      </svg>
+    </div>
+
     <div class="card">
       <h2>Identity &amp; workspace resolution</h2>
       <div class="identity-row">
