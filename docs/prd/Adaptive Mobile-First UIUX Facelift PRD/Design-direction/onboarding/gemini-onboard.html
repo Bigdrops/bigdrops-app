@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="BIGDROPS onboarding · Direct-response high-conversion blue and white edition.">
 <title>BIGDROPS Onboarding</title>
-<link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-<link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-<link href="[https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Mono:wght@500&display=swap](https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Mono:wght@500&display=swap)" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
-/* ============ tokens (Clean Blue & White Theme) ============ /
+/* ============ tokens (Clean Blue & White Theme) ============ */
 :root{
 --bg:#f8fafc; --surface:#ffffff; --surface-muted:#eff6ff; --surface-strong:#dbeafe;
 --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
@@ -34,7 +34,7 @@
 --shadow-float:0 18px 40px rgba(0,0,0,.50),0 3px 9px rgba(0,0,0,.40);
 }
 }
-/ ============ base ============ */
+/* ============ base ============ */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
@@ -228,9 +228,9 @@ transition:border-color .2s,box-shadow .2s,background .2s;
 .t-invoicing{--tone:var(--primary)}
 .t-logistics{--tone:var(--info)}
 .t-signup{--tone:var(--primary)}
-/* ============ reduced motion ============ /
+/* ============ reduced motion ============ */
 @media (prefers-reduced-motion:reduce){
-,::before,::after{animation:none!important;transition:none!important}
+*,::before,::after{animation:none!important;transition:none!important}
 .rv,.rv-l,.rv-r,.pop{opacity:1!important;transform:none!important}
 .growbar{transform:scaleX(1)!important}
 .vanwrap{transform:none!important}
@@ -268,7 +268,7 @@ h1{font-size:1.7rem}
 <div class="stage" role="img" aria-label="An invoice document assembles with totals, checkmark, and currency symbols">
 <div class="glow"></div>
 <div class="copyart">
-<svg viewBox="0 0 360 300" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" aria-hidden="true">
+<svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 <defs>
 <filter id="s0sh" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0284c7" flood-opacity=".12"/></filter>
 <linearGradient id="s0doc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--surface)"/><stop offset="1" stop-color="var(--panel)"/></linearGradient>
@@ -389,7 +389,7 @@ Taxes handled quietly.</h1>
 </svg>
 <!-- the van -->
 <div class="vanwrap">
-<svg viewBox="0 0 640 330" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" aria-hidden="true">
+<svg viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 <defs>
 <linearGradient id="vbody" x1="0" y1="0" x2="0" y2="1">
 <stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="var(--panel)"/><stop offset="1" stop-color="var(--panel-2)"/>
@@ -592,11 +592,11 @@ dotsWrap.appendChild(b);
 var dots=[].slice.call(dotsWrap.children);
 function metrics(){w=deck.clientWidth;}
 function setX(nx){x=nx;track.style.transform='translate3d('+x+'px,0,0)';}
-function rubberband(over){var d=w,c=0.55;return (overdc)/(d+c*Math.abs(over));}
+function rubberband(over){var d=w,c=0.55;return (over*d)/(d+c*Math.abs(over));}
 function project(v){var d=0.998;return (v/1000)*d/(1-d);}
-/* spring toward tx /
+/* spring toward tx */
 var K,C;
-function springConsts(){var resp=0.42,wn=2Math.PI/resp;K=wnwn;C=2wn;}
+function springConsts(){var resp=0.42,wn=2*Math.PI/resp;K=wn*wn;C=2*wn;}
 springConsts();
 function springTo(target,vel){
 tx=target;
@@ -605,8 +605,8 @@ cancelAnimationFrame(raf);
 var lastT=performance.now();
 function step(now){
 var dt=Math.min((now-lastT)/1000,1/30);lastT=now;
-var a=K*(tx-x)-Cvx;
-vx+=adt;x+=vx*dt;
+var a=K*(tx-x)-C*vx;
+vx+=a*dt;x+=vx*dt;
 if(Math.abs(tx-x)<0.4&&Math.abs(vx)<6){setX(tx);vx=0;raf=null;afterSettle();return;}
 setX(x);
 raf=requestAnimationFrame(step);
@@ -616,8 +616,8 @@ raf=requestAnimationFrame(step);
 }
 function stopSpring(){if(raf){cancelAnimationFrame(raf);raf=null;}}
 function afterSettle(){
-slides.forEach(function(s,i){s.classList.toggle('active',i=idx);});
-dots.forEach(function(d,i){d.setAttribute('aria-current',i=idx?'true':'false');});
+slides.forEach(function(s,i){s.classList.toggle('active',i===idx);});
+dots.forEach(function(d,i){d.setAttribute('aria-current',i===idx?'true':'false');});
 rail.forEach(function(r,i){r.classList.toggle('done',i<idx);r.classList.toggle('on',i===idx);});
 backBtn.classList.toggle('show',idx>0&&idx<last);
 skipBtn.hidden=!(idx>0&&idx<last);
@@ -636,7 +636,7 @@ document.addEventListener('keydown',function(e){
 if(e.key==='ArrowRight'){goTo(idx+1);}
 else if(e.key==='ArrowLeft'){goTo(idx-1);}
 });
-/* pointer swipe /
+/* pointer swipe */
 var dragging=false,startPX=0,startX=0,hist=[],moved=0;
 deck.addEventListener('pointerdown',function(e){
 if(e.target.closest('input,button,form'))return;
@@ -652,25 +652,25 @@ var dx=e.clientX-startPX;
 moved=Math.max(moved,Math.abs(dx));
 var nx=startX+dx;
 if(nx>0)nx=rubberband(nx);
-if(nx<-(lastw))nx=-(lastw)-rubberband(-(lastw)-nx);
+if(nx<-(last*w))nx=-(last*w)-rubberband(-(last*w)-nx);
 setX(nx);
 hist.push({t:performance.now(),x:x});
 if(hist.length>6)hist.shift();
 });
 function endDrag(e){
 if(!dragging)return;dragging=false;
-if(moved<10){springTo(-idxw,0);return;}
+if(moved<10){springTo(-idx*w,0);return;}
 var now=performance.now();
 var old=hist[0],cur=hist[hist.length-1];
 var dt=(cur.t-old.t)/1000||0.016;
 var v=(cur.x-old.x)/dt;
 var projected=cur.x+project(v);
 var target=Math.round(-projected/w);
-if(v<-350&&target=idx)target=idx+1;
-if(v>350&&target=idx)target=idx-1;
+if(v<-350&&target===idx)target=idx+1;
+if(v>350&&target===idx)target=idx-1;
 target=Math.max(0,Math.min(last,target));
 idx=target;
-springTo(-targetw,v);
+springTo(-target*w,v);
 }
 deck.addEventListener('pointerup',endDrag);
 deck.addEventListener('pointercancel',endDrag);
@@ -707,7 +707,7 @@ var err=f.querySelector('.err');
 if(err)input.setAttribute('aria-describedby',err.id);
 return ok;
 }
-var emailRe=/^[^\s@]+@[^\s@]+.[^\s@]{2,}$/;
+var emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 function validName(){return document.getElementById('in-name').value.trim().length>=2;}
 function validEmail(id){return emailRe.test(document.getElementById(id).value.trim());}
 function validPw(){return document.getElementById('in-pw').value.length>=8;}
