@@ -173,6 +173,20 @@ export interface TenantGateInput {
 const STALLED_PHASES: ReadonlySet<ProvisioningStatus> = new Set(['purging', 'purged'])
 
 /**
+ * Whether a loaded invitation is actionable right now: present and not
+ * dismissed for the session. Expiry and revocation stay server-enforced
+ * (the loader only fetches pending, unexpired rows; the accept RPC
+ * revalidates). Shared by onboarding gating and in-app discovery so both
+ * agree on what counts as actionable.
+ */
+export function hasActionableInvitation(
+  pendingInvitation: { id: string } | null | undefined,
+  invitationDismissed: boolean,
+): boolean {
+  return !!pendingInvitation && !invitationDismissed
+}
+
+/**
  * Decide the onboarding phase from current resolution state.
  * Order matters: workspace loading/errors precede entity loading/errors,
  * and a missing workspace short-circuits before entity state is consulted.
@@ -182,12 +196,17 @@ export function resolveGatePhase(input: TenantGateInput): TenantGatePhase {
   if (input.workspaceError) return 'error'
 
   if (!input.workspace) {
-    if (input.pendingWorkspace) return 'pending-approval'
-    // An invitee with no membership must accept before they can create their own
-    // workspace, unless they explicitly chose "Pass for now" this session.
+    // A pending invitation always takes precedence: an invitee must reach
+    // the invitation flow before any workspace is created for them, and a
+    // pending workspace must never shadow an invitation. Pass-for-now
+    // dismisses it for the session only.
     if (input.pendingInvitation && !input.invitationDismissed) return 'pending-invitation'
-    // Multiple active memberships: the user must pick one before any entity work.
+    // Usable memberships outrank a pending workspace: a user with workspaces
+    // to choose from must reach selection, never the pending screen. A stale
+    // pending row must not trap active memberships (session picks reset on
+    // reload, so this branch is reachable on every fresh sign-in).
     if (input.workspaceCount > 1) return 'select-workspace'
+    if (input.pendingWorkspace) return 'pending-approval'
     return 'create-workspace'
   }
 

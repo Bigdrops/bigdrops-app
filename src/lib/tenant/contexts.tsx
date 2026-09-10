@@ -155,37 +155,35 @@ export function WorkspaceProvider({
           setWorkspace(null)
         }
 
-        // A user with no active membership may still hold a pending invitation.
-        // RLS (workspace_invitations_select_member) already restricts rows to the
-        // caller's own email, so no email filter is needed on the client.
-        if (active.length === 0) {
-          const { data: inviteRows, error: inviteError } = await supabase
-            .from('workspace_invitations')
-            .select('id, workspace_id, workspace_role, invited_by')
-            .eq('status', 'pending')
-            .gt('expires_at', new Date().toISOString())
-            .order('created_at', { ascending: false })
-            .limit(1)
+        // Pending invitations are visible to every user, with or without
+        // active membership. RLS (workspace_invitations_select_member)
+        // already restricts rows to the caller's own email, so no email
+        // filter is needed on the client. Only unexpired pending rows load;
+        // expiry and revocation stay server-enforced.
+        const { data: inviteRows, error: inviteError } = await supabase
+          .from('workspace_invitations')
+          .select('id, workspace_id, workspace_role, invited_by')
+          .eq('status', 'pending')
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1)
 
-          if (cancelled) return
-          if (inviteError) throw inviteError
+        if (cancelled) return
+        if (inviteError) throw inviteError
 
-          const invite = (inviteRows ?? [])[0] as
-            | { id: string; workspace_id: string; workspace_role: string | null; invited_by: string | null }
-            | undefined
-          setPendingInvitation(
-            invite
-              ? {
-                  id: invite.id,
-                  workspaceId: invite.workspace_id,
-                  workspaceRole: invite.workspace_role,
-                  invitedById: invite.invited_by,
-                }
-              : null,
-          )
-        } else {
-          setPendingInvitation(null)
-        }
+        const invite = (inviteRows ?? [])[0] as
+          | { id: string; workspace_id: string; workspace_role: string | null; invited_by: string | null }
+          | undefined
+        setPendingInvitation(
+          invite
+            ? {
+                id: invite.id,
+                workspaceId: invite.workspace_id,
+                workspaceRole: invite.workspace_role,
+                invitedById: invite.invited_by,
+              }
+            : null,
+        )
       } catch (e) {
         if (!cancelled) setError(String((e as Error)?.message ?? e))
       } finally {

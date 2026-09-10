@@ -35,7 +35,9 @@ test('gate routes a pending invitation ahead of workspace creation', () => {
     resolveGatePhase({ ...base, workspace: null, pendingInvitation: { id: 'inv' } }),
     'pending-invitation',
   )
-  // Own pending workspace outranks an invitation: the user already started onboarding.
+  // A valid pending invitation outranks a pending workspace: the invitee
+  // must reach the invitation flow first. The pending workspace is never
+  // deleted; it simply waits while the invitation is handled.
   assert.equal(
     resolveGatePhase({
       ...base,
@@ -43,7 +45,7 @@ test('gate routes a pending invitation ahead of workspace creation', () => {
       pendingWorkspace: { id: 'pw' },
       pendingInvitation: { id: 'inv' },
     }),
-    'pending-approval',
+    'pending-invitation',
   )
   // "Pass for now" suppresses the invitation for the session.
   assert.equal(
@@ -55,11 +57,69 @@ test('gate routes a pending invitation ahead of workspace creation', () => {
     }),
     'create-workspace',
   )
+  // ...but a dismissed invitation yields to an existing pending workspace.
+  assert.equal(
+    resolveGatePhase({
+      ...base,
+      workspace: null,
+      pendingWorkspace: { id: 'pw' },
+      pendingInvitation: { id: 'inv' },
+      invitationDismissed: true,
+    }),
+    'pending-approval',
+  )
 })
 
 test('gate routes multiple active workspaces to selection', () => {
   assert.equal(resolveGatePhase({ ...base, workspace: null, workspaceCount: 2 }), 'select-workspace')
   assert.equal(resolveGatePhase({ ...base, workspace: null, workspaceCount: 0 }), 'create-workspace')
+})
+
+test('active memberships are never trapped behind a pending workspace', () => {
+  // Fresh sign-in with two usable memberships and a stale pending row:
+  // selection wins, not the pending screen.
+  assert.equal(
+    resolveGatePhase({ ...base, workspace: null, workspaceCount: 2, pendingWorkspace: { id: 'pw' } }),
+    'select-workspace',
+  )
+  // Same when a dismissed invitation is also present.
+  assert.equal(
+    resolveGatePhase({
+      ...base,
+      workspace: null,
+      workspaceCount: 2,
+      pendingWorkspace: { id: 'pw' },
+      pendingInvitation: { id: 'inv' },
+      invitationDismissed: true,
+    }),
+    'select-workspace',
+  )
+  // A resolved workspace plus a stale pending row proceeds to entity flow.
+  assert.equal(
+    resolveGatePhase({
+      ...base,
+      workspace: { id: 'ws-b', status: 'active' },
+      pendingWorkspace: { id: 'pw' },
+      entityCount: 0,
+    }),
+    'create-company',
+  )
+  // Gate output depends only on current input: the same pending row that
+  // routed to pending-approval releases as soon as a workspace resolves.
+  assert.equal(
+    resolveGatePhase({ ...base, workspace: null, workspaceCount: 0, pendingWorkspace: { id: 'pw' } }),
+    'pending-approval',
+  )
+  assert.equal(
+    resolveGatePhase({
+      ...base,
+      workspace: { id: 'ws-b', status: 'active' },
+      workspaceCount: 1,
+      pendingWorkspace: { id: 'pw' },
+      entityCount: 0,
+    }),
+    'create-company',
+  )
 })
 
 test('gate routes entity loading, errors, and counts once a workspace exists', () => {
