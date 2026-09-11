@@ -94,7 +94,7 @@ The audit did not run a database, Docker, or a local Supabase instance. It did n
 |---|---|
 | `supabase/migrations/20260818000001_multi_tenancy_invitation_correctness.sql` | New migration. Applied the four backend corrections. |
 
-The old report file `docs/Reports/multi-tenancy/final-prd-implementation-reconciliation.md` was left unchanged.
+The old report file `docs/reports/multi-tenancy/final-prd-implementation-reconciliation.md` was left unchanged.
 
 ## 8. Skills Used
 

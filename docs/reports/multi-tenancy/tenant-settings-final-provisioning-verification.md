@@ -211,11 +211,11 @@ This is a **future architectural decision**. No change is made during this inves
 
 **Before investigation:**
 ```
-M docs/Reports/GENERAL/delegation-log.md
+M docs/reports/GENERAL/delegation-log.md
 A docs/tickets/Dashboard/deepseek.md
 A docs/tickets/Dashboard/milad.md
 M supabase/migrations/20260809030000_invoice_aggregate_data_migration.sql
-?? docs/Reports/invoice-quote/frontend-invoice-aggregate-integration-audit.md
+?? docs/reports/invoice-quote/frontend-invoice-aggregate-integration-audit.md
 ```
 
 **After investigation:**

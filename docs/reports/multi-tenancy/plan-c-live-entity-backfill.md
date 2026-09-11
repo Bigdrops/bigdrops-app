@@ -30,7 +30,7 @@ Plan C does not cover:
 ## Files changed
 
 - `supabase/migrations/20260817000000_plan_c_live_entity_backfill.sql` (new)
-- `docs/Reports/multi-tenancy/plan-c-live-entity-backfill.md` (this report)
+- `docs/reports/multi-tenancy/plan-c-live-entity-backfill.md` (this report)
 
 ## Skills used
 

@@ -18,7 +18,7 @@ The blueprint is read-only. It changes no code, database, or permissions.
 
 ## Files changed
 
-- Created: `docs/Reports/multi-tenancy/final-reconciliation-blueprint.md`.
+- Created: `docs/reports/multi-tenancy/final-reconciliation-blueprint.md`.
 
 ## Skills used
 

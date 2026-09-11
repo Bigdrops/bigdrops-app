@@ -129,7 +129,7 @@ Recommended, in order, no implementation in this task:
 
 ## EXACT FILES CHANGED
 
-Report only: `docs/Reports/multi-tenancy/workspace-pending-invitation-lifecycle-audit-2026-09-09.md` (this file).
+Report only: `docs/reports/multi-tenancy/workspace-pending-invitation-lifecycle-audit-2026-09-09.md` (this file).
 
 ## GIT STATUS BEFORE / AFTER
 

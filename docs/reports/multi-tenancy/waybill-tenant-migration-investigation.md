@@ -134,7 +134,7 @@ The migration:
 
 ### 6.2 Report added
 
-- `docs/Reports/multi-tenancy/waybill-tenant-migration-investigation.md` (this file)
+- `docs/reports/multi-tenancy/waybill-tenant-migration-investigation.md` (this file)
 
 ### 6.3 Files read, not changed
 
@@ -325,7 +325,7 @@ Verification of the migration itself:
 - `bun run typecheck`: not applicable (no TypeScript change).
 - `git status`: new untracked files:
   - `supabase/migrations/20260819000001_waybill_permission_and_grant_fix.sql`
-  - `docs/Reports/multi-tenancy/waybill-tenant-migration-investigation.md`
+  - `docs/reports/multi-tenancy/waybill-tenant-migration-investigation.md`
 - `bun run build`: skipped due to hardware policy.
 
 The migration was executed against production via `supabase db query --linked` on 2026-08-19.

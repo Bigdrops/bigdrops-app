@@ -35,7 +35,7 @@ Added to `src/pages/settings/AdminSettingsSection.tsx`:
 
 ### 3. Report relocation
 
-Moved `docs/Reports/general/workspace-management-gaps-audit.md` to `docs/Reports/multi-tenancy/workspace-management-gaps-audit.md`.
+Moved `docs/reports/general/workspace-management-gaps-audit.md` to `docs/reports/multi-tenancy/workspace-management-gaps-audit.md`.
 
 ## PRD audit: Administrative action status
 

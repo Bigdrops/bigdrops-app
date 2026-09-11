@@ -364,10 +364,10 @@ completing Phase 3 (full tenant cutover):
 - `20260809070000` — Composite invoice RPCs
 
 ### Reports cross-referenced
-- `docs/Reports/multi-tenancy/phase-3-invoice-write-path-inventory.md`
-- `docs/Reports/multi-tenancy/phase-3-blocker-resolution-architecture-investigation.md`
+- `docs/reports/multi-tenancy/phase-3-invoice-write-path-inventory.md`
+- `docs/reports/multi-tenancy/phase-3-blocker-resolution-architecture-investigation.md`
 - `docs/tickets/Critical-production-issue.md`
-- `docs/Reports/GENERAL/financial-operations-architecture-audit.md`
+- `docs/reports/GENERAL/financial-operations-architecture-audit.md`
 
 ### Source files inspected
 - `src/hooks/useDashboardData.ts` — dashboard data loading

@@ -49,8 +49,8 @@ M8 cannot be marked complete: Step 2 is done but unrecorded, Step 3 is genuinely
 - `src/tests/critical/invitationVisibility.test.js` (helper plus no-force coverage).
 - `src/tests/critical/firstCompanyBootstrap.test.js`, `firstWorkspaceBootstrap.test.js`, `workspaceBootstrapDecision.test.js` (unit-level bootstrap coverage).
 - `package.json:9` (single unit-test script).
-- `docs/Reports/general/first-company-bootstrap-2026-09-05.md:58`, `first-workspace-bootstrap-2026-09-05.md:57` (safe-env deferral).
-- `docs/Reports/taxation-made-easy/accounting-foundation-increment-2-positive-path-verification-2026-09-05.md:54` (no-sandbox fact).
+- `docs/reports/general/first-company-bootstrap-2026-09-05.md:58`, `first-workspace-bootstrap-2026-09-05.md:57` (safe-env deferral).
+- `docs/reports/taxation-made-easy/accounting-foundation-increment-2-positive-path-verification-2026-09-05.md:54` (no-sandbox fact).
 
 ## Git History Evidence
 

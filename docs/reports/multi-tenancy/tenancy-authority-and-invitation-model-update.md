@@ -34,7 +34,7 @@ The pass covers three files:
 - `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md`
 - `docs/prd/Platform-god/platform-office-prd.md`
 - `docs/prd/multi-tenancy/three-prd-tenancy-illustration.html`
-- `docs/Reports/multi-tenancy/tenancy-authority-and-invitation-model-update.md` (this report)
+- `docs/reports/multi-tenancy/tenancy-authority-and-invitation-model-update.md` (this report)
 
 ## Skills used
 
@@ -151,7 +151,7 @@ This pass modified documentation files and the documentation illustration only. 
 The following implementation questions remain:
 
 - The database representation of the two-level administration model is unresolved. It is the next reconciliation question.
-- The status of `docs/Reports/multi-tenancy/multi-tenancy-prd-content-pass.md` is unresolved. This report covers the same pass. The earlier report may be superseded.
+- The status of `docs/reports/multi-tenancy/multi-tenancy-prd-content-pass.md` is unresolved. This report covers the same pass. The earlier report may be superseded.
 
 ## Verification result
 
@@ -170,4 +170,4 @@ The following implementation questions remain:
 ## Deferred work
 
 - Resolve the database representation of the two-level administration model.
-- Decide the status of `docs/Reports/multi-tenancy/multi-tenancy-prd-content-pass.md`.
+- Decide the status of `docs/reports/multi-tenancy/multi-tenancy-prd-content-pass.md`.

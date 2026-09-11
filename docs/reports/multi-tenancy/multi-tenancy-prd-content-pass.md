@@ -29,7 +29,7 @@ The Platform Office PRD is frozen and context-only. It is not edited.
 - `docs/prd/multi-tenancy/erp-frontend-prd-v1.4.md`
 - `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md`
 - `docs/prd/multi-tenancy/three-prd-tenancy-illustration.html`
-- `docs/Reports/multi-tenancy/erp-prd-filename-version-update.md` (previous rename report)
+- `docs/reports/multi-tenancy/erp-prd-filename-version-update.md` (previous rename report)
 
 ## Skills used
 

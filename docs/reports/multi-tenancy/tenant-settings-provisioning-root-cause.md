@@ -135,7 +135,7 @@ tenantClient.from('settings') → { company_name: 'BIGDROPS' }
 |------|---------|
 | `supabase/migrations/20260717000000_entity_provisioning_engine.sql` | Original provisioning engine (no seed step) |
 | `supabase/migrations/20260809000000_provisioning_settings_seed.sql` | Settings seed migration (not executed live) |
-| `docs/Reports/multi-tenancy/provisioning-settings-seed.md` | Migration report confirming not executed |
+| `docs/reports/multi-tenancy/provisioning-settings-seed.md` | Migration report confirming not executed |
 | `src/hooks/useSettings.js` | Settings read/write architecture |
 | `src/lib/tenant/contexts.tsx` | EntityProvider, schema resolution |
 | `src/lib/tenantClient.ts` | Tenant schema client |

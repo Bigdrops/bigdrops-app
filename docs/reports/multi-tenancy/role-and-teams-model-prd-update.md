@@ -12,14 +12,14 @@ This report was written by deepseek-v4-flash-free on 2026-08-17 via opencode.
 - Frontend PRD: `docs/prd/multi-tenancy/erp-frontend-prd-v1.5.md` (filename unchanged; internal version 1.6)
 - Platform Office PRD: `docs/prd/Platform-god/platform-office-prd.md` (mirrored copy; changelog row 1.4 added)
 - Illustration: `docs/prd/multi-tenancy/three-prd-tenancy-illustration.html`
-- Report: `docs/Reports/multi-tenancy/role-and-teams-model-prd-update.md`
+- Report: `docs/reports/multi-tenancy/role-and-teams-model-prd-update.md`
 
 ## Files changed
 - `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md`
 - `docs/prd/multi-tenancy/erp-frontend-prd-v1.5.md`
 - `docs/prd/Platform-god/platform-office-prd.md`
 - `docs/prd/multi-tenancy/three-prd-tenancy-illustration.html`
-- `docs/Reports/multi-tenancy/role-and-teams-model-prd-update.md` (this report)
+- `docs/reports/multi-tenancy/role-and-teams-model-prd-update.md` (this report)
 
 Skills used: NONE
 Documentation standard: ADS-STE100 Simplified Technical English

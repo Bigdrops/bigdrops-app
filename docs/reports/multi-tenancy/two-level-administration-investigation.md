@@ -277,7 +277,7 @@ apply_permission_template is SECURITY DEFINER with no internal authorization che
 
 ## Files Changed
 
-- docs/Reports/multi-tenancy/two-level-administration-investigation.md (new report)
+- docs/reports/multi-tenancy/two-level-administration-investigation.md (new report)
 
 ## Verification
 

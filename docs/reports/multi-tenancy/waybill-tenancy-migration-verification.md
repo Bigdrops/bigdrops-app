@@ -113,7 +113,7 @@ A tenant-only waybill would silently fail on every one of these actions.
 
 ### 6.2 Report added
 
-- `docs/Reports/multi-tenancy/waybill-tenancy-migration-verification.md` (this file)
+- `docs/reports/multi-tenancy/waybill-tenancy-migration-verification.md` (this file)
 
 ## 7. Skills Used
 

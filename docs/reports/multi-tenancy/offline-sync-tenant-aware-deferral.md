@@ -14,7 +14,7 @@ The implementation analysis, tenant-identity requirements, future architecture s
 
 `docs/tickets/Deferred-Work/deferred-offline-sync-debt.md`
 
-Purge gate verdict: `docs/Reports/multi-tenancy/public-purge-readiness-gate.md`.
+Purge gate verdict: `docs/reports/multi-tenancy/public-purge-readiness-gate.md`.
 
 ## Skills used
 

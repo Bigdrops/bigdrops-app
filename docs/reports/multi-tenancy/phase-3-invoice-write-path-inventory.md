@@ -495,6 +495,6 @@ Tooling (not production):
   scratch/import_invoices.ts, query_audit.mjs
 
 Docs cross-referenced:
-- docs/Reports/invoice/view-invoice-inventory.md,
-  docs/Reports/Audit-trail/third-audit-trail-financial-lineage.md,
-  docs/Reports/GENERAL/payment-void-audit-trace.md
+- docs/reports/invoice/view-invoice-inventory.md,
+  docs/reports/Audit-trail/third-audit-trail-financial-lineage.md,
+  docs/reports/GENERAL/payment-void-audit-trace.md

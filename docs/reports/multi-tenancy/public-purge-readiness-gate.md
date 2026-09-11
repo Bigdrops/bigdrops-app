@@ -86,12 +86,12 @@ All tenant RPCs and views are installed and verified. Public copies remain only 
 
 - `bun run typecheck`: passed. This task changed no application code, so typecheck is a repository safety check only.
 - `bun run audit:load`: not re-run; no code changed in this task.
-- `git status`: one file changed by this task (`docs/Reports/multi-tenancy/offline-sync-tenant-aware-deferral.md`). The working tree also contains concurrent, unrelated changes from another task (`src/App.tsx` legacy signup-approval cleanup, deletion of `src/pages/PendingApproval.tsx`), which do not affect the offline-sync reachability or this determination.
+- `git status`: one file changed by this task (`docs/reports/multi-tenancy/offline-sync-tenant-aware-deferral.md`). The working tree also contains concurrent, unrelated changes from another task (`src/App.tsx` legacy signup-approval cleanup, deletion of `src/pages/PendingApproval.tsx`), which do not affect the offline-sync reachability or this determination.
 - `bun run build`: skipped per hardware policy.
 
 ## Files modified
 
-- `docs/Reports/multi-tenancy/offline-sync-tenant-aware-deferral.md` — updated with the full future architecture scope and the non-functional classification.
+- `docs/reports/multi-tenancy/offline-sync-tenant-aware-deferral.md` — updated with the full future architecture scope and the non-functional classification.
 
 ## Remaining risks
 

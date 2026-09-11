@@ -43,7 +43,7 @@ See the Changes made section for the added conformance section.
 ## Files changed
 
 - `docs/prd/multi-tenancy/erp-frontend-prd-v1.1.md` (amended)
-- `docs/Reports/multi-tenancy/erp-frontend-prd-v1.2-amendment.md` (this report)
+- `docs/reports/multi-tenancy/erp-frontend-prd-v1.2-amendment.md` (this report)
 
 ## Skills used
 

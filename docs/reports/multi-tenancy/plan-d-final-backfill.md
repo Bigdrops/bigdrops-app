@@ -30,7 +30,7 @@ Plan D does not cover:
 
 - `supabase/migrations/20260821590000_remove_sasquo324_duplicate.sql` (new)
 - `supabase/migrations/20260822000000_plan_d_final_backfill.sql` (new)
-- `docs/Reports/multi-tenancy/plan-d-final-backfill.md` (this report)
+- `docs/reports/multi-tenancy/plan-d-final-backfill.md` (this report)
 
 ## Skills used
 

@@ -19,7 +19,7 @@ The audit is read-only. It changes no code, database, or permissions.
 
 ## Files changed
 
-- Created: `docs/Reports/multi-tenancy/full-reconciliation-audit-v3.md`.
+- Created: `docs/reports/multi-tenancy/full-reconciliation-audit-v3.md`.
 
 ## Skills used
 

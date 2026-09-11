@@ -6,7 +6,7 @@ This report was written by OpenCode on 2026-08-09 via Local Runner.
 
 This report defines what a "read-only migration" means for the Settings and Clients modules in BIGDROPS multi-tenancy Phase 2.
 
-It replaces `docs/Reports/multi-tenancy/phase-2-scope-extraction-report.md` (v1). V1 had three defects. This report corrects them:
+It replaces `docs/reports/multi-tenancy/phase-2-scope-extraction-report.md` (v1). V1 had three defects. This report corrects them:
 
 1. **V1 claimed no public settings/clients table existed.** This is false. `public.settings` and `public.clients` exist in `20260520090000_core_tables.sql` and the app reads them today. Details in Section D.
 2. **V1 cited `Calculations.ts` as the action taxonomy source.** This is false. The action strings come from the RLS policy installer in the provisioning engine (`view`, `create`, `edit`, `delete`). Details in Section E.

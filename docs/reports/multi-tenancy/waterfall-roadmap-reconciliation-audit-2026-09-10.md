@@ -121,7 +121,7 @@ Documentation only, not applied: split M5 into company (done) plus workspace-cho
 
 ## 16. Files Created
 
-`docs/Reports/multi-tenancy/waterfall-roadmap-reconciliation-audit-2026-09-10.md` (this report). Nothing else.
+`docs/reports/multi-tenancy/waterfall-roadmap-reconciliation-audit-2026-09-10.md` (this report). Nothing else.
 
 ## 17. Git Scope
 

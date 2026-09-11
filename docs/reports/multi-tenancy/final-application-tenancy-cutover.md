@@ -32,7 +32,7 @@ This session converted:
 - `src/hooks/useGlobalSearch.ts`
 - `src/hooks/useInvoiceSave.ts`
 - `src/modules/invoices/services/invoiceConversionService.ts`
-- `docs/Reports/multi-tenancy/final-public-business-purge-inventory.md` (deferral note appended)
+- `docs/reports/multi-tenancy/final-public-business-purge-inventory.md` (deferral note appended)
 
 Earlier sessions converted all remaining modules listed under Changes Made.
 

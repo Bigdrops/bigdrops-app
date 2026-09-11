@@ -22,7 +22,7 @@ Three files were updated:
 - `docs/prd/Platform-god/platform-office-prd.md` (FIX 1)
 - `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md` (FIX 2)
 - `docs/prd/multi-tenancy/erp-frontend-prd-v1.1.md` (FIX 3)
-- `docs/Reports/multi-tenancy/prd-tenancy-documentation-update.md` (this report)
+- `docs/reports/multi-tenancy/prd-tenancy-documentation-update.md` (this report)
 
 ## Skills used
 

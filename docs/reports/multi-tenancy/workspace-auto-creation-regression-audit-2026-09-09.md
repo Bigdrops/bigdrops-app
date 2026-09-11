@@ -78,7 +78,7 @@ CONFIRMED PRODUCT REGRESSION. The PRD and design required user choice with user-
 
 ## EXACT FILES CHANGED
 
-Report only: `docs/Reports/multi-tenancy/workspace-auto-creation-regression-audit-2026-09-09.md` (this file).
+Report only: `docs/reports/multi-tenancy/workspace-auto-creation-regression-audit-2026-09-09.md` (this file).
 
 ## GIT STATUS BEFORE / AFTER
 

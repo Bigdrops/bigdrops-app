@@ -774,8 +774,8 @@ query_audit.mjs
 
 Docs cross-referenced: docs/prd/financial-operations-prd.md,
 docs/prd/audit-trail-integrity-prd.md, docs/standard/audit-trail-standard.md,
-docs/Reports/invoice/view-invoice-inventory.md,
-docs/Reports/GENERAL/financial-operations-architecture-audit.md,
-docs/Reports/invoice-quote/third-audit-trail-financial-lineage.md,
-docs/Reports/multi-tenancy/phase-3-invoice-write-path-inventory.md (prior
+docs/reports/invoice/view-invoice-inventory.md,
+docs/reports/GENERAL/financial-operations-architecture-audit.md,
+docs/reports/invoice-quote/third-audit-trail-financial-lineage.md,
+docs/reports/multi-tenancy/phase-3-invoice-write-path-inventory.md (prior
 report, reconciled in Section J).

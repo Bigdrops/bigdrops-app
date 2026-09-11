@@ -361,7 +361,7 @@ The hooks `useItemSuggestionEngine`, `useItemMerge`, `useItemAliases`, `useItemH
 - No source files changed.
 - No migration files changed.
 - No configuration files changed.
-- This report created: `docs/Reports/multi-tenancy/public-schema-business-access-audit.md`
+- This report created: `docs/reports/multi-tenancy/public-schema-business-access-audit.md`
 - Temporary query files written to the opencode temp directory only.
 
 ### 13.2 Commands Used

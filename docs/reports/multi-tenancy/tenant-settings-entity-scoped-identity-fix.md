@@ -3,7 +3,7 @@
 This report was written by Buffy on 2026-08-10 via Freebuff.
 
 **Task:** Implement the architecture established by the read-only investigation
-`docs/Reports/multi-tenancy/tenant-settings-document-identity-architecture.md`
+`docs/reports/multi-tenancy/tenant-settings-document-identity-architecture.md`
 (decision report). Active code + migration change. No production SQL was
 executed by this agent; migration 20260810010000 is human-executed.
 

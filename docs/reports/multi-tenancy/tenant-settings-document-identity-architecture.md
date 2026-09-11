@@ -240,11 +240,11 @@ For the confirmed entity (`entity_bigdrops-main_main`, id=1), backfill the tenan
 **Before this investigation** (unchanged by prior work at session start — see conversation git state):
 ```
 M  .commandcode/taste/taste.md
-M  docs/Reports/GENERAL/delegation-log.md
-A  docs/Reports/invoice-quote/frontend-invoice-aggregate-integration-audit.md
-A  docs/Reports/multi-tenancy/tenant-settings-complete-identity-investigation.md
-A  docs/Reports/multi-tenancy/tenant-settings-final-provisioning-verification.md
-A  docs/Reports/multi-tenancy/tenant-settings-live-db-investigation.md
+M  docs/reports/GENERAL/delegation-log.md
+A  docs/reports/invoice-quote/frontend-invoice-aggregate-integration-audit.md
+A  docs/reports/multi-tenancy/tenant-settings-complete-identity-investigation.md
+A  docs/reports/multi-tenancy/tenant-settings-final-provisioning-verification.md
+A  docs/reports/multi-tenancy/tenant-settings-live-db-investigation.md
 A  docs/tickets/Dashboard/deepseek.md
 A  docs/tickets/Dashboard/milad.md
 M  src/components/batch/BatchActionFooter.tsx

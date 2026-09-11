@@ -246,14 +246,14 @@ Reasons:
 **Before investigation:**
 ```
 M  .commandcode/taste/taste.md
-M  docs/Reports/GENERAL/delegation-log.md
-A  docs/Reports/invoice-quote/frontend-invoice-aggregate-integration-audit.md
-A  docs/Reports/multi-tenancy/tenant-settings-final-provisioning-verification.md
+M  docs/reports/GENERAL/delegation-log.md
+A  docs/reports/invoice-quote/frontend-invoice-aggregate-integration-audit.md
+A  docs/reports/multi-tenancy/tenant-settings-final-provisioning-verification.md
 A  docs/tickets/Dashboard/deepseek.md
 A  docs/tickets/Dashboard/milad.md
 M  supabase/migrations/20260809030000_invoice_aggregate_data_migration.sql
 A  temp-investigation.sql
-?? docs/Reports/multi-tenancy/tenant-settings-live-db-investigation.md
+?? docs/reports/multi-tenancy/tenant-settings-live-db-investigation.md
 ```
 
 **After investigation:**
