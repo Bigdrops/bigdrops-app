@@ -31,8 +31,9 @@ BIGDROPS is a private internal operations tool used exclusively by company staff
 | **Payments** | Record payments against invoices with amount, method, date, and automatic outstanding balance computation |
 | **Receipts** | Immutable payment receipts with sequential numbering and PDF output |
 | **Projects** | Project-centric aggregation of invoices, payments, quotations, and CSRs under a single client engagement |
-| **Client Management** | Add, edit, view, and link clients to projects and documents |
-| **Workspaces & Companies** | Multi-company organization: workspace selection and creation, entity (company) switching, invitations, and role-based access |
+| **Client Management** | Add, edit, view, and link clients to projects and documents, with a dedicated client workspace view |
+| **Workspaces & Companies** | Multi-company organization: workspace selection and creation through a pending-approval gate, entity (company) switching, invitations, and role-based access |
+| **Accounting** | Double-entry accounting kernel: chart of accounts, balanced journal posting, source transactions, reversals, and journal-derived reporting (`src/domain/accounting/`) |
 | **Reports** | Aggregated reporting views across documents and financials |
 | **Compliance Hub** | Compliance tracking and regulatory document management |
 | **Item Library** | Centralized catalog of reusable line items across documents |
@@ -72,10 +73,10 @@ src/
 ├── config/        Module adapters, filter configs, quick tiles
 ├── context/       React contexts (DocumentQueryContext)
 ├── contexts/      Additional React contexts
-├── domain/        Domain logic per module (invoice, quotation, waybill, csr, boq, rfq, audit, compliance)
+├── domain/        Domain logic per module (invoice, quotation, waybill, csr, boq, rfq, audit, compliance, accounting, tenant, team)
 ├── hooks/         Custom React hooks
 ├── lib/           Calculations.ts (single source of truth), fonts, icons, PDF, themes, tenant client, utilities
-├── modules/       Module-specific logic (invoices, quotations, compliance, item-library)
+├── modules/       Module-specific logic (invoices, quotations, compliance, item-library, accounting)
 ├── pages/         Route-level page components
 ├── services/      External service integrations
 ├── styles/        Global CSS
@@ -130,6 +131,8 @@ Both are required — the Supabase client in `src/supabase.ts` will not initiali
 - **Schema-per-entity multi-tenancy.** Every company (entity) owns an isolated Postgres schema. The app resolves the active workspace and entity at startup and routes all queries through a tenant-scoped Supabase client using `supabase.schema()`. Row-level security and action-based permissions enforce isolation. The authoritative model is `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md`.
 - **Entity lifecycle (§8A).** Entities follow a state machine: `active → archived → purging → purged`. Archive is reversible (30-day retention enforced server-side). Purge is irreversible. Every transition is logged to `entity_lifecycle_audit`. DB migration: `supabase/migrations/20260905020000_entity_lifecycle.sql`.
 - **Action-based permissions (§3).** Workspace abilities are action-based (`invoice:create`, `entity:manage`), not CRUD verbs. Role bundles are editable via `workspace_roles` + `workspace_role_abilities`. Owner role is immutable.
+- **Workspace approval gate.** New workspaces start in `pending_approval` and resolve through a dedicated routing gate. A SECURITY DEFINER `abandon_pending_workspace` RPC lets a creator drop a pending request; it refuses workspaces that already hold business data. Covered by critical tests in `src/tests/critical/`.
+- **Accounting posting kernel.** `src/domain/accounting/` enforces double-entry at the posting boundary: unbalanced entries are rejected (`invariants.ts`), amounts use Decimal.js with ROUND_HALF_UP (`money.ts`), and reporting derives trial balances from journal lines with a provenance walk. Execution order follows the gated Waterfall roadmap.
 
 ## Agent Workflow
 
@@ -145,7 +148,10 @@ All coding agents must read `AGENTS.md` at the project root before modifying any
 | Entity lifecycle migration | `supabase/migrations/20260905020000_entity_lifecycle.sql` |
 | Workspace management migration | `supabase/migrations/20260905010000_workspace_management_gaps.sql` |
 | Taxation PRD & references | `docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/` |
-| Reports | `docs/Reports/` |
+| Taxation waterfall roadmap (gated phases, GATE A–F) | `docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Waterfall-roadmap.md` |
+| UI/UX facelift PRD (24-part, with Design.md and roadmap) | `docs/prd/Adaptive Mobile-First UIUX Facelift PRD/` |
+| ERP frontend PRD v1.5 | `docs/prd/multi-tenancy/erp-frontend-prd-v1.5.md` |
+| Reports | `docs/reports/` |
 | Project skill index | `docs/PROJECTSKILLINDEX.md` |
 
 ## License
