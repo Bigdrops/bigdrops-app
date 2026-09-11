@@ -14,7 +14,7 @@ as specified in `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md` (PRD v2.1).
 - Five analysis angles: Backend Architecture, Database Optimization, Security Architecture,
   Frontend Implementation, and Code Review/Cross-Cutting.
 - Completed corrections from Round 1 (already applied to
-  `docs/Reports/architecture/multi-tenancy-gap-analysis.md`).
+  `docs/reports/architecture/multi-tenancy-gap-analysis.md`).
 - Line-level evidence from 20+ codebase files.
 
 **Explicitly excluded:**
@@ -30,9 +30,9 @@ as specified in `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md` (PRD v2.1).
 | Document | Path | Status |
 |----------|------|--------|
 | PRD v2.1 (authoritative) | `docs/prd/multi-tenancy/multi-tenancy-prd-v2.1.md` | Final |
-| Round 1 report (corrected) | `docs/Reports/architecture/multi-tenancy-gap-analysis.md` | Corrected |
-| PRD report (supplementary) | `docs/Reports/GENERAL/multi-tenancy-prd-report.md` | Supplementary |
-| Frontend audit (supplementary) | `docs/Reports/GENERAL/multi-tenancy-frontend-audit.md` | Supplementary |
+| Round 1 report (corrected) | `docs/reports/architecture/multi-tenancy-gap-analysis.md` | Corrected |
+| PRD report (supplementary) | `docs/reports/GENERAL/multi-tenancy-prd-report.md` | Supplementary |
+| Frontend audit (supplementary) | `docs/reports/GENERAL/multi-tenancy-frontend-audit.md` | Supplementary |
 
 ---
 

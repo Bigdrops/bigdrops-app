@@ -85,7 +85,7 @@ Root cause: dependency additions without a removal pass; AI-assisted
 experimental installs (PDF engines, font families) never cleaned up.
 
 Note on `@formepdf/*` and `takumi-pdf`: the Gap 1 session confirmed the
-`docs/Reports/pdf/poc/` POC references `@formepdf/react`. The packages are
+`docs/reports/pdf/poc/` POC references `@formepdf/react`. The packages are
 unused in `src/` today. Keep them only if the PDF POC is active.
 
 ### 3. No pull-request CI for code — HIGH

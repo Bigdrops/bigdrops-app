@@ -78,7 +78,7 @@ This report was written by Muse Spark on 2026-09-09 via OpenCode (read-only audi
 ### 7. Docs and Comment Evidence
 
 - 997 markdown files under `docs/`. Normative standards: `docs/standard/` (15 files). PRD authority: `docs/prd/multi-tenancy/Readme.md` (v2.1 single source of truth). Skill index: `docs/PROJECTSKILLINDEX.md` (110 skills). Agent rules: `AGENTS.md`, `CLAUDE.md`.
-- Debt signal: `docs/Reports/architecture/tech-debt-drift-audit-2026-09-08.md` exists; working tree shows concurrent-agent churn (staged deletions of `dev/null`, `tsconfig.tsbuildinfo`, debris SQL).
+- Debt signal: `docs/reports/architecture/tech-debt-drift-audit-2026-09-08.md` exists; working tree shows concurrent-agent churn (staged deletions of `dev/null`, `tsconfig.tsbuildinfo`, debris SQL).
 
 ---
 
