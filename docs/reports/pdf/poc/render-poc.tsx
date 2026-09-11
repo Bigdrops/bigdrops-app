@@ -1,6 +1,6 @@
 /**
  * POC RUNNER — renders the prepared fixture through Takumi and measures output.
- * Run: bun docs/Reports/pdf/poc/render-poc.ts
+ * Run: bun docs/reports/pdf/poc/render-poc.ts
  *
  * Steps: fixture (production math) → vendored pdfcn/Takumi JSX →
  * takumi-pdf render() → PDF files + measurements.json.

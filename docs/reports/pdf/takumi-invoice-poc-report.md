@@ -8,7 +8,7 @@ Test whether the Takumi/pdfcn stack reproduces one representative BIGDROPS comme
 
 ## Scope
 
-Isolated POC under `docs/Reports/pdf/poc/`. Production code was not touched. Financial math was not reimplemented. Only `package.json`/`bun.lock` gained the two authorized Takumi dependencies.
+Isolated POC under `docs/reports/pdf/poc/`. Production code was not touched. Financial math was not reimplemented. Only `package.json`/`bun.lock` gained the two authorized Takumi dependencies.
 
 ## Files Changed
 
@@ -113,8 +113,8 @@ Do NOT migrate. Authorize deeper evaluation only if the density and header-repea
 
 ## Final Status
 
-- Files Created: `docs/Reports/pdf/poc/` — `fixture.ts`, `invoice-document.tsx`, `make-logo.ts`, `render-poc.tsx`, `analyze-poc.tsx`, `reactpdf-baseline.tsx`, `measurements.json`, `analysis.json`, `takumi-invoice-a4.pdf`, `takumi-invoice-long.pdf`, `takumi-thead-repeat.pdf`, `reactpdf-invoice-baseline.pdf`, `assets/poc-logo.png`, `vendor/` (10 files: `pdf-primitives.tsx`, `resolve-color.ts`, `pdf-theme-types.ts`, `primitives.ts`, `professional.ts`, `theme-provider.tsx`, `text.tsx`, `table.styles.ts`, `table.tsx`, `table.types.ts`); `docs/Reports/pdf/takumi-invoice-poc-report.md` (this report).
+- Files Created: `docs/reports/pdf/poc/` — `fixture.ts`, `invoice-document.tsx`, `make-logo.ts`, `render-poc.tsx`, `analyze-poc.tsx`, `reactpdf-baseline.tsx`, `measurements.json`, `analysis.json`, `takumi-invoice-a4.pdf`, `takumi-invoice-long.pdf`, `takumi-thead-repeat.pdf`, `reactpdf-invoice-baseline.pdf`, `assets/poc-logo.png`, `vendor/` (10 files: `pdf-primitives.tsx`, `resolve-color.ts`, `pdf-theme-types.ts`, `primitives.ts`, `professional.ts`, `theme-provider.tsx`, `text.tsx`, `table.styles.ts`, `table.tsx`, `table.types.ts`); `docs/reports/pdf/takumi-invoice-poc-report.md` (this report).
 - Files Modified: `package.json`, `bun.lock` (two added Takumi dependencies only).
 - Files Deleted: none.
-- Production Code Touched: none (all new files live under `docs/Reports/pdf/poc/`; production modules were only imported).
+- Production Code Touched: none (all new files live under `docs/reports/pdf/poc/`; production modules were only imported).
 - React-PDF Status: remains the production renderer, untouched.

@@ -1,6 +1,6 @@
 /**
  * POC RUNNER (INDUSTRY) — BIGDROPS-owned Industry template through Forme.
- * Run: bun docs/Reports/pdf/poc/render-industry.tsx
+ * Run: bun docs/reports/pdf/poc/render-industry.tsx
  */
 import { writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

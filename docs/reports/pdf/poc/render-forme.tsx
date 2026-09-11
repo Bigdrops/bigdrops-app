@@ -1,6 +1,6 @@
 /**
  * POC RUNNER (FORME) — renders the prepared fixture through Forme and measures.
- * Run: bun docs/Reports/pdf/poc/render-forme.tsx
+ * Run: bun docs/reports/pdf/poc/render-forme.tsx
  *
  * Steps: fixture (production math) → vendored pdfcn Forme JSX + native
  * Forme JSX → renderDocument() from @formepdf/core → PDFs + measurements.

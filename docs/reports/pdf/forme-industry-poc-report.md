@@ -8,7 +8,7 @@ Prove whether Forme can carry a BIGDROPS-owned Industry Invoice template with th
 
 ## Scope
 
-Isolated POC under `docs/Reports/pdf/poc/`. Production IndustryTemplate, adapter, calculations, standards, and delivery pipeline untouched. No pdfcn demo block used as the template. No migration.
+Isolated POC under `docs/reports/pdf/poc/`. Production IndustryTemplate, adapter, calculations, standards, and delivery pipeline untouched. No pdfcn demo block used as the template. No migration.
 
 ## Files Changed
 
@@ -90,7 +90,7 @@ None in this task. `@formepdf/react` + `@formepdf/core` 0.20.1 already present f
 ## Git Status Verification
 
 - Before: prior POC files present; `components.json` carried `@pdfcn`; Forme deps in `package.json`; assorted concurrent-agent entries.
-- After: new files all under `docs/Reports/pdf/poc/` + this report. No `package.json`/`bun.lock` change. Zero production files modified. Zero existing POC files modified (fixture/logo reused by import).
+- After: new files all under `docs/reports/pdf/poc/` + this report. No `package.json`/`bun.lock` change. Zero production files modified. Zero existing POC files modified (fixture/logo reused by import).
 - Not run per constraints: build, typecheck, lint.
 
 ## Recommendation

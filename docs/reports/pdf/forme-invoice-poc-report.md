@@ -8,7 +8,7 @@ Inventory the pdfcn template/block catalogue for Takumi and Forme. Build an isol
 
 ## Scope
 
-Isolated POC under `docs/Reports/pdf/poc/`. Production PDF code, financial logic, standards, and delivery pipeline were not touched. Only `package.json`/`bun.lock` gained the two Forme dependencies.
+Isolated POC under `docs/reports/pdf/poc/`. Production PDF code, financial logic, standards, and delivery pipeline were not touched. Only `package.json`/`bun.lock` gained the two Forme dependencies.
 
 ## Files Changed
 
@@ -144,7 +144,7 @@ Exact tests that would resolve the remainder:
 ## Verification
 
 - `git status` before: Takumi POC intact; `components.json` already carried `@pdfcn`; takumi deps in `package.json`; assorted concurrent-agent entries present.
-- After: new files all under `docs/Reports/pdf/poc/` (`vendor-forme/` 7 files, `forme-invoice-document.tsx`, `render-forme.tsx`, 4 Forme PDFs, `forme-measurements.json`, `assets/inter-var.ttf`, this report). Modified: `package.json` + `bun.lock` (Forme deps only — diff verified). No production PDF source modified. No existing POC file modified (fixture/logo reused by import). No unrelated application file modified.
+- After: new files all under `docs/reports/pdf/poc/` (`vendor-forme/` 7 files, `forme-invoice-document.tsx`, `render-forme.tsx`, 4 Forme PDFs, `forme-measurements.json`, `assets/inter-var.ttf`, this report). Modified: `package.json` + `bun.lock` (Forme deps only — diff verified). No production PDF source modified. No existing POC file modified (fixture/logo reused by import). No unrelated application file modified.
 - Not run per constraints: build, typecheck, lint.
 
 ## Limitations

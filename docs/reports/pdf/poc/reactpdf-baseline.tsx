@@ -1,7 +1,7 @@
 /**
  * POC BASELINE — same prepared fixture through the production-adjacent
  * React-PDF path (Document/Page/Text/View/Image primitives, Helvetica).
- * Run: bun docs/Reports/pdf/poc/reactpdf-baseline.tsx
+ * Run: bun docs/reports/pdf/poc/reactpdf-baseline.tsx
  *
  * Scope: renderer comparison only. Uses the identical prepared money
  * strings from fixture.ts. Helvetica is a built-in React-PDF font, so no

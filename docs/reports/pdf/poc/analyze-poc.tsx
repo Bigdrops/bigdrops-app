@@ -1,6 +1,6 @@
 /**
  * POC ANALYZER — per-page text structure of the generated PDFs.
- * Run: bun docs/Reports/pdf/poc/analyze-poc.tsx
+ * Run: bun docs/reports/pdf/poc/analyze-poc.tsx
  * Read-only over the POC artifacts. Writes analysis.json for the report.
  */
 import { readFileSync, writeFileSync } from "node:fs";

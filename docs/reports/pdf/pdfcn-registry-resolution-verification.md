@@ -37,8 +37,8 @@ Relevant pre-existing git changes (belong to concurrent agents, left untouched):
 - Staged new file: `docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/settings/settings-redesign-candidate-v4-android.html`
 - Staged new file: `src/tests/critical/record-capture.test.js`
 - Unstaged modification to the same HTML file.
-- Untracked: `docs/Reports/pdf/pdfcn-installation-integration-discovery.md` (prior discovery report).
-- Untracked: `docs/Reports/settings/settings-v4-candidate-correction-report.md` (another agent).
+- Untracked: `docs/reports/pdf/pdfcn-installation-integration-discovery.md` (prior discovery report).
+- Untracked: `docs/reports/settings/settings-v4-candidate-correction-report.md` (another agent).
 
 ## 2. Configuration Change
 
@@ -121,6 +121,6 @@ The next step is an isolated Takumi proof-of-concept. No production migration is
 
 ## 7. Files Changed
 
-- Files created: `docs/Reports/pdfcn-registry-resolution-verification.md` (this report).
+- Files created: `docs/reports/pdfcn-registry-resolution-verification.md` (this report).
 - Files modified: `components.json` (one registry line added).
 - Files deleted: none.

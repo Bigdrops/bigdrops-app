@@ -2,7 +2,7 @@
  * POC BASELINE (INDUSTRY) — same industry fixture through @react-pdf/renderer
  * with production IndustryTemplate style numbers (page 14/64/24, base 10.5,
  * title 27, tight table padding). Helvetica built-in.
- * Run: bun docs/Reports/pdf/poc/reactpdf-industry-baseline.tsx
+ * Run: bun docs/reports/pdf/poc/reactpdf-industry-baseline.tsx
  *
  * Purpose: like-for-like density comparison only. Glyph note: Helvetica
  * WinAnsi cannot encode ₦ (renders as ¦) — production solves this with

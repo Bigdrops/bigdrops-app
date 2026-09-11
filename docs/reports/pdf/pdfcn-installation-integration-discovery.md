@@ -186,7 +186,7 @@ Do not install components into production paths until the proof-of-concept passe
 ## Verification
 
 - `git status` BEFORE investigation: staged `docs/prd/.../settings-redesign-candidate-v4-android.html` (new file) and `src/tests/critical/record-capture.test.js` (new file); unstaged modification to the same HTML file. Both belong to another agent. They were left untouched.
-- `git status` AFTER investigation: same pre-existing entries, plus one unrelated untracked file from a concurrent agent (`docs/Reports/settings/settings-v4-candidate-correction-report.md`, not created by this task), plus this report. No deletions. No modifications to tracked files.
+- `git status` AFTER investigation: same pre-existing entries, plus one unrelated untracked file from a concurrent agent (`docs/reports/settings/settings-v4-candidate-correction-report.md`, not created by this task), plus this report. No deletions. No modifications to tracked files.
 - Probing command `bunx --bun shadcn@latest view @pdfcn/takumi/text` performed network resolution only. It wrote no project files. `components.json` and `package.json` are byte-identical to the before state.
 - Not run per task constraints: `bun run audit:load`, `bun run typecheck`, lint, tests, build.
 
@@ -207,7 +207,7 @@ Do not install components into production paths until the proof-of-concept passe
 
 ## 10. Files Changed
 
-- Files created: `docs/Reports/pdfcn-installation-integration-discovery.md` (this report).
+- Files created: `docs/reports/pdfcn-installation-integration-discovery.md` (this report).
 - Files modified: none.
 - Files deleted: none.
-- Note: this task used `docs/Reports/` per explicit user instruction. AGENTS.md section 9 specifies lowercase `docs/reports/<domain>/`. The explicit instruction takes precedence per AGENTS.md rule precedence item 1. Future reports should confirm which path is canonical.
+- Note: this task used `docs/reports/` per explicit user instruction. AGENTS.md section 9 specifies lowercase `docs/reports/<domain>/`. The explicit instruction takes precedence per AGENTS.md rule precedence item 1. Future reports should confirm which path is canonical.

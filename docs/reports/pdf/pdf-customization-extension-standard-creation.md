@@ -25,12 +25,12 @@ Create the PDF Customization Extension Standard at `docs/standard/pdf-customizat
 | File | Role |
 |------|------|
 | `docs/prd/pdf-customization-extension-system.md` | Locked product requirements — section 18 specifies standard creation rule |
-| `docs/Reports/PDF/pdf-customization-engine-implementation.md` | Engine creation report — confirms three-layer architecture |
-| `docs/Reports/PDF/phase-1.5-audit-report.md` | Resolver audit — confirmed `handwritingFont`/`handwritingColor` naming |
-| `docs/Reports/PDF/waybill-pdf-customization-engine-adoption.md` | Waybill bridge adoption — documents `bridgeToDesignPreset()` pattern |
-| `docs/Reports/WAYBILL/waybill-embed-customize-panel-report.md` | Confirms embedded DocumentSheet pattern, no standalone drawer |
-| `docs/Reports/WAYBILL/waybill-phase2.3-ink-propagation-and-switch.md` | Documents CSR-style Switch with auto/custom sentinel |
-| `docs/Reports/WAYBILL/waybill-phase2.4-ink-audit-fix.md` | Phase 2.4 completion — ink propagation verified across all 6 templates |
+| `docs/reports/PDF/pdf-customization-engine-implementation.md` | Engine creation report — confirms three-layer architecture |
+| `docs/reports/PDF/phase-1.5-audit-report.md` | Resolver audit — confirmed `handwritingFont`/`handwritingColor` naming |
+| `docs/reports/PDF/waybill-pdf-customization-engine-adoption.md` | Waybill bridge adoption — documents `bridgeToDesignPreset()` pattern |
+| `docs/reports/WAYBILL/waybill-embed-customize-panel-report.md` | Confirms embedded DocumentSheet pattern, no standalone drawer |
+| `docs/reports/WAYBILL/waybill-phase2.3-ink-propagation-and-switch.md` | Documents CSR-style Switch with auto/custom sentinel |
+| `docs/reports/WAYBILL/waybill-phase2.4-ink-audit-fix.md` | Phase 2.4 completion — ink propagation verified across all 6 templates |
 | `src/domain/pdf/customization/types.ts` | Live types — `PdfCustomizationCapabilities`, `PdfCustomizationPolicy`, `PdfTemplateDefaults`, `ResolvedPdfCustomization`, `PdfCustomizationDocumentFamily` |
 | `src/domain/pdf/customization/resolver.ts` | Pure resolver — three exported functions: `resolveSettings`, `resolvePdfCustomization`, `resolveFull` |
 | `src/domain/pdf/customization/hooks.ts` | `usePdfCustomization` hook — localStorage persistence with category key |
