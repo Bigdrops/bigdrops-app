@@ -14,7 +14,7 @@ Verify whether the migrations in the repository have been applied to the live Su
 - The `supabase_migrations.schema_migrations` ledger state as reported by the Supabase CLI.
 
 **Excluded:**
-- Object-level comparison of the live database schema. This is covered by `docs/Reports/Audit-trail/2026-08-11-live-db-object-inventory-drift.md`.
+- Object-level comparison of the live database schema. This is covered by `docs/reports/Audit-trail/2026-08-11-live-db-object-inventory-drift.md`.
 - Row data and tenant (`ws_*`) schemas.
 - Any change to the live database.
 
@@ -25,7 +25,7 @@ The Supabase CLI was run from PowerShell in the repository root. No database wri
 1. `supabase migration list --linked` — lists local and remote migrations.
 2. `supabase db push --linked --dry-run` — reports what a migration push would do, without executing it.
 3. Local migration files listed with `Get-ChildItem`.
-4. Full CLI table captured to `docs/Reports/Audit-trail/2026-08-11-live-migration-list.txt`.
+4. Full CLI table captured to `docs/reports/Audit-trail/2026-08-11-live-migration-list.txt`.
 
 The CLI authenticated successfully. It did not print any secret values.
 
@@ -71,8 +71,8 @@ The evidence does not distinguish between these.
 
 ## Changes Made
 
-- Created `docs/Reports/Audit-trail/2026-08-11-supabase-migration-ledger-reconciliation.md`.
-- Overwrote `docs/Reports/Audit-trail/2026-08-11-live-migration-list.txt` with the full captured CLI table.
+- Created `docs/reports/Audit-trail/2026-08-11-supabase-migration-ledger-reconciliation.md`.
+- Overwrote `docs/reports/Audit-trail/2026-08-11-live-migration-list.txt` with the full captured CLI table.
 - No database changes were made.
 
 ## Verification

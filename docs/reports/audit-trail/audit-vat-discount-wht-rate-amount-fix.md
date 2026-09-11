@@ -11,7 +11,7 @@ Extend the SASINV055 vat-rate-vs-amount audit fix to cover all monetary fields t
 - Fix `updatedInvoice` construction in `InvoiceFormPage.tsx` for `vat`, `discount`, and `wht` — all three must use `documentTotals.*` (computed amounts) instead of form-state values (rates/input values).
 - Audit `QuotationFormPage.tsx` for the same pattern.
 - No changes to `Calculations.ts`, `useInvoiceHydration.ts`, `normalize.ts`, or the DB payload path (already correct).
-- No changes to the VAT investigation report (`docs/Reports/invoice-quote/audit-vat-phantom-row-sasinv055.md`) — this is a companion fix.
+- No changes to the VAT investigation report (`docs/reports/invoice-quote/audit-vat-phantom-row-sasinv055.md`) — this is a companion fix.
 
 ## Key Evidence
 
@@ -149,4 +149,4 @@ The typecheck passing confirms the change is TypeScript-correct. The build timeo
 
 - Manual smoke test with `bun run dev` if desired (not performed due to session constraints; the typecheck pass provides sufficient correctness confidence for a pure TypeScript change).
 - The `src/domain/quotation/normalize.ts` override at lines 156-158 remains as-is — it's harmless for Quotation's audit path but could be cleaned up in a future refactor if desired.
-- Prior SASINV055 report at `docs/Reports/invoice-quote/audit-vat-phantom-row-sasinv055.md` covers the original vat-only investigation.
+- Prior SASINV055 report at `docs/reports/invoice-quote/audit-vat-phantom-row-sasinv055.md` covers the original vat-only investigation.

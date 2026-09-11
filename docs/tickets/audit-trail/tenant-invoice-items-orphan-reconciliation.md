@@ -9,7 +9,7 @@ This report was written by GLM on 2026-08-26 via OpenCode.
 
 ## Evidence
 
-- Discovered during the post-purge integrity sweep (`docs/Reports/multi-tenancy/public-business-schema-purge-report.md` §12/§21).
+- Discovered during the post-purge integrity sweep (`docs/reports/multi-tenancy/public-business-schema-purge-report.md` §12/§21).
 - Proof this predates the purge: the pre-purge backup dump contains the identical distribution (2095 items / 9 NULL / 63 broken) before any destructive step ran.
 - Structural enabler: the tenant clone of `invoice_items` carries no FOREIGN KEY on `invoice_id` (only `item_id → item_catalog` exists), so nothing prevents parentless items.
 
