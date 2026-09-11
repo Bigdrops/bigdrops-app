@@ -20,6 +20,7 @@ import { RfqPreview } from '@/components/rfq/RfqPreview'
 import { denormalizeToDbRfq, normalizeDbRfq } from '@/domain/rfq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { feedback } from '@/lib/feedback'
+import { downloadTextFile, userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
@@ -121,7 +122,7 @@ export default function ViewRfq() {
         subdirectory: 'rfq',
         element: <RfqPdfDocument rfq={rfq} rows={rfq.table_rows} columns={rfq.table_columns} />,
       })
-      showToast('Download ready', `${rfq.rfq_number || 'RFQ'} exported as PDF.`, 'success')
+      showToast('Download ready', `${rfq.rfq_number || 'RFQ'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the RFQ PDF.'
       showToast('Download failed', message)
@@ -130,7 +131,7 @@ export default function ViewRfq() {
     }
   }
 
-  const handleExportCsv = () => {
+  const handleExportCsv = async () => {
     if (!rfq) return
 
     const rows = (Array.isArray(rfq.table_rows) ? rfq.table_rows : []).filter((row: any) => row?.row_type !== 'section')
@@ -148,14 +149,12 @@ export default function ViewRfq() {
       ].map(escapeCsv).join(',')),
     ].join('\n')
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = window.URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `${rfq.rfq_number || 'rfq'}.csv`
-    anchor.click()
-    window.URL.revokeObjectURL(url)
-    showToast('CSV ready', 'RFQ items exported as CSV.', 'success')
+    try {
+      await downloadTextFile({ fileName: `${rfq.rfq_number || 'rfq'}.csv`, text: csv })
+      showToast('CSV ready', `RFQ items saved to ${userDownloadLocationLabel()}.`, 'success')
+    } catch (error) {
+      showToast('Download failed', error instanceof Error ? error.message : 'Could not export CSV.')
+    }
   }
 
   const handleUpdateStatus = async (status: string, successLabel: string) => {

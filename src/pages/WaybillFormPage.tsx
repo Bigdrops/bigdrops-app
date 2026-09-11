@@ -8,6 +8,7 @@ import { getNextWaybillNumber, mapDbWaybill, parseWaybillCustomFields, collectWa
 import type { Waybill, WaybillType, WaybillItem, WaybillCustomFields, WaybillCustomColumn } from '../components/waybill/waybillUtils'
 import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { feedback } from '../lib/feedback'
+import { userDownloadLocationLabel } from '../lib/native/fileDownload'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { isPermissionError } from '@/domain/tenant/tenantGate'
@@ -123,7 +124,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
             companyPhone: settings?.company_phone || undefined,
             companyEmail: settings?.company_email || undefined,
           })
-          feedback.success(`Blank template ${waybillNumber} downloaded`)
+          feedback.success(`Blank template ${waybillNumber} saved to ${userDownloadLocationLabel()}`)
           return
         }
 

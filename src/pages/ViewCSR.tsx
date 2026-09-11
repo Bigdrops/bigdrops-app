@@ -18,6 +18,7 @@ import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
+import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { getPdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
 import {
@@ -241,7 +242,7 @@ export default function ViewCSR() {
         subdirectory: 'csr',
         element: getCsrPdfDocument({ csr: previewData, comments, branding, template, designPreset }) as any,
       })
-      showToast('Download ready', `${previewData.csr_number || 'CSR'} exported as PDF.`, 'success')
+      showToast('Download ready', `${previewData.csr_number || 'CSR'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the CSR PDF.'
       showToast('Download failed', message)

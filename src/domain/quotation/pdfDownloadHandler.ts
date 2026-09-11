@@ -8,6 +8,7 @@ import {
   normalizeInvoicePdfTemplateId,
 } from "@/domain/invoice";
 import { resolveCommercialDesignPreset } from "@/domain/pdf/customization/commercial";
+import { userDownloadLocationLabel } from "@/lib/native/fileDownload";
 
 export async function handleDownloadQuotationPdf(input: {
   quotation: any;
@@ -163,7 +164,7 @@ export async function handleDownloadQuotationPdf(input: {
       templateId: normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry",
       compact: pdfOutput.compact === true,
     });
-    showToast("Download ready", "Quotation PDF downloaded.", "success");
+    showToast("Download ready", `Quotation PDF saved to ${userDownloadLocationLabel()}.`, "success");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not generate the quotation PDF.";
     showToast("Download failed", message);

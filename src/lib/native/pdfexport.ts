@@ -1,7 +1,7 @@
-import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { FileOpener } from '@capacitor-community/file-opener'
 import { isNativePlatform } from './capacitor'
+import { saveUserFile } from './fileDownload'
 
 export type ExportedPdfFile = {
   fileName: string
@@ -78,33 +78,17 @@ export async function exportPdfToDevice({
     return downloadBlobOnWeb(blob, safeFileName)
   }
 
-  const relativePath = `${subdirectory}/${safeFileName}`
-  const data = await toBase64FromBlob(blob)
+  const relativeData = await toBase64FromBlob(blob)
 
-  await Filesystem.mkdir({
-    path: subdirectory,
-    directory: Directory.Cache,
-    recursive: true,
-  }).catch(() => {
-    // folder may already exist
-  })
-
-  await Filesystem.writeFile({
-    path: relativePath,
-    directory: Directory.Cache,
-    data,
-    recursive: true,
-  })
-
-  const uriResult = await Filesystem.getUri({
-    path: relativePath,
-    directory: Directory.Cache,
+  // Canonical persistence: user-visible Documents storage, never app cache.
+  const saved = await saveUserFile({
+    fileName: safeFileName,
+    base64Data: relativeData,
+    subdirectory,
   })
 
   return {
-    fileName: safeFileName,
-    path: relativePath,
-    uri: uriResult.uri,
+    ...saved,
     sizeBytes: blob.size,
   }
 }

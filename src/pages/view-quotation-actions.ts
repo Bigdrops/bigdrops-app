@@ -63,7 +63,7 @@ export async function loadQuotationViewData(id: string, tenantClient: TenantClie
   }
 }
 
-export function downloadQuotationCsvFile({
+export async function downloadQuotationCsvFile({
   quotation,
   items,
   totals,
@@ -85,7 +85,7 @@ export function downloadQuotationCsvFile({
     totals,
     customFields: customFields || quotationCustomFields,
   })
-  downloadQuotationCsv(`${quotation.quotation_number || 'quotation'}.csv`, csv)
+  await downloadQuotationCsv(`${quotation.quotation_number || 'quotation'}.csv`, csv)
 }
 
 export async function duplicateQuotationRecord({

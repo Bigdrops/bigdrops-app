@@ -12,6 +12,8 @@ import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './typ
 export type PdfGenerationResult = {
   status: 'generated'
   filename: string
+  /** Persisted file URI (native Documents or web object URL) for Open/Share. */
+  uri?: string
 }
 
 type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
@@ -120,7 +122,7 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
 
   feedbackBus.emit({ kind: 'downloaded', documentType: docType, timestamp: Date.now(), fileName: filename })
 
-  return { status: 'generated', filename }
+  return { status: 'generated', filename, uri: result.uri }
 }
 
 export async function generateInvoicePdf(request: PdfGenerationRequest<InvoicePdfModel>): Promise<PdfGenerationResult> {

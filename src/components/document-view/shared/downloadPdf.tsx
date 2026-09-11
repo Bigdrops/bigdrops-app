@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 
 import { exportPdfToDevice, openExportedPdf, shareExportedPdf } from '@/lib/native/pdfexport'
+import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { isNativePlatform } from '@/lib/native/capacitor'
 import { emitFeedback } from '@/lib/NativeFeedbackBus'
 
@@ -41,7 +42,7 @@ export async function downloadPdfFromElement({
 
     emitFeedback({
       type: 'download:success',
-      payload: { fileName: result.fileName, path: result.path },
+      payload: { fileName: result.fileName, path: result.path, location: userDownloadLocationLabel() },
     })
 
     return result

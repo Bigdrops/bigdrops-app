@@ -16,6 +16,7 @@ import {
   updateQuotationStatus,
 } from "../pages/view-quotation-actions";
 import { useSettings } from "@/hooks/useSettings";
+import { userDownloadLocationLabel } from "@/lib/native/fileDownload";
 
 export function useQuotationActions(input: {
   quotation: any;
@@ -102,10 +103,14 @@ export function useQuotationActions(input: {
     [],
   );
 
-  const handleDownloadCsv = () => {
+  const handleDownloadCsv = async () => {
     if (!quotation) return;
-    downloadQuotationCsvFile({ quotation, items, totals, customFields });
-    showToast("CSV downloaded", "Quotation CSV exported.", "success");
+    try {
+      await downloadQuotationCsvFile({ quotation, items, totals, customFields });
+      showToast("CSV downloaded", `Quotation CSV saved to ${userDownloadLocationLabel()}.`, "success");
+    } catch (error) {
+      showToast("Download failed", error instanceof Error ? error.message : "Could not export CSV.");
+    }
   };
 
   const handleUpdateStatus = async (status: string, successLabel: string) => {

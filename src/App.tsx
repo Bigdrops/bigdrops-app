@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useEffect, useState, useRef, lazy, Suspense } from 'react'
+import { useEffect, useState, useRef, useCallback, lazy, Suspense } from 'react'
 import type { Session, AuthChangeEvent, Subscription } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { Toaster } from '@/components/ui/toaster'
@@ -526,6 +526,14 @@ function App() {
     debugAuth('profileState', profile)
   }, [profile])
 
+  // Stable identity: BiometricGate depends on this callback for its
+  // verification lifecycle. An inline closure would recreate it on every
+  // App render and retrigger biometric verification after a successful
+  // unlock. Behavior is unchanged: sign out locally on auth failure.
+  const handleBiometricAuthFailure = useCallback(() => {
+    void supabase.auth.signOut({ scope: 'local' })
+  }, [])
+
   const currentSessionUserId = session?.user?.id || null
   const profileResolvedForCurrentSession =
     !currentSessionUserId || resolvedProfileUserId === currentSessionUserId
@@ -581,12 +589,10 @@ function App() {
                     : !offlineAccessState.allowed
                       ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                       : withBoundary(
-                          <BiometricGate
-                            enabled={biometricLockEnabled}
-                            onAuthFailure={() => {
-                              void supabase.auth.signOut({ scope: 'local' })
-                            }}
-                          >
+                           <BiometricGate
+                             enabled={biometricLockEnabled}
+                             onAuthFailure={handleBiometricAuthFailure}
+                           >
                             <WorkspaceProvider userId={session.user.id}>
                               <EntityProvider>
                                 <TenantGate>

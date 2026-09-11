@@ -50,7 +50,7 @@ function eventToIntent(event: FeedbackEvent): UIIntent | null {
       return { id: 'download', title: event.payload.fileName, description: 'Downloading...', variant: 'loading', duration: 0, createdAt: now }
 
     case 'download:success':
-      return { id: 'download', title: `${event.payload.fileName} downloaded`, description: event.payload.path, variant: 'success', duration: 3000, createdAt: now }
+      return { id: 'download', title: `${event.payload.fileName} downloaded`, description: event.payload.location ? `Saved to ${event.payload.location}` : event.payload.path, variant: 'success', duration: 3000, createdAt: now }
 
     case 'download:fail':
       return { id: 'download', title: 'Download failed', description: event.payload.error, variant: 'error', duration: 5000, createdAt: now }

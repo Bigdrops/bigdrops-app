@@ -303,12 +303,6 @@ export async function downloadBlankWaybillTemplate(options: BlankTemplateOptions
     : <BlankExternalTemplate {...contentData} />
 
   const blob = await pdf(element).toBlob()
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `blank-${options.type}-waybill.pdf`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  const { downloadBlobFile } = await import('@/lib/native/fileDownload')
+  await downloadBlobFile({ fileName: `blank-${options.type}-waybill.pdf`, blob })
 }

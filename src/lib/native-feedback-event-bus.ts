@@ -1,6 +1,6 @@
 export type FeedbackEvent =
   | { type: 'download:start'; payload: { fileName: string } }
-  | { type: 'download:success'; payload: { fileName: string; path: string } }
+  | { type: 'download:success'; payload: { fileName: string; path: string; location?: string } }
   | { type: 'download:fail'; payload: { fileName: string; error: string } }
   | { type: 'ai:launch:attempt'; payload: { providerName: string; method: 'native' | 'browser' } }
   | { type: 'ai:launch:success'; payload: { providerName: string; method: 'native' | 'browser' } }

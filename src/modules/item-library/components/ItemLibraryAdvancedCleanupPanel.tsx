@@ -78,14 +78,9 @@ function asArray<T>(value: T[] | null | undefined): T[] {
   return safeArray(value)
 }
 
-function downloadJson(filename: string, value: string) {
-  const blob = new Blob([value], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  anchor.click()
-  URL.revokeObjectURL(url)
+async function downloadJson(filename: string, value: string) {
+  const { downloadTextFile } = await import('@/lib/native/fileDownload')
+  await downloadTextFile({ fileName: filename, text: value })
 }
 
 function SectionTitle({
@@ -311,7 +306,7 @@ export function ItemLibraryAdvancedCleanupPanel({
 
   const handleDownload = () => {
     if (!currentBatch || !currentExportPayload) return
-    downloadJson(
+    void downloadJson(
       `bigdrops-catalog-cleanup-${currentBatch.batch_id}-${new Date().toISOString().slice(0, 10)}.json`,
       exportJson,
     )

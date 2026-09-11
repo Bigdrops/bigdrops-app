@@ -41,14 +41,14 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
 
       switch (format) {
         case 'JSON_RAW':
-          triggerFileDownload(
+          await triggerFileDownload(
             JSON.stringify(data, null, 2),
             `${baseFilename}_all_data.json`,
             'application/json',
           );
           break;
         case 'CSV_SUMMARY':
-          triggerFileDownload(
+          await triggerFileDownload(
             compileToCSV(data, domain),
             `${baseFilename}_summary.csv`,
             'text/csv',
@@ -56,7 +56,7 @@ export const ContextualExportDropdown: React.FC<ContextualExportDropdownProps> =
           break;
         case 'CSV_FLATTENED_LINE_ITEMS': {
           const flatRows = flattenLineItems(data, domain);
-          triggerFileDownload(
+          await triggerFileDownload(
             compileToCSV(flatRows),
             `${baseFilename}_line_items.csv`,
             'text/csv',

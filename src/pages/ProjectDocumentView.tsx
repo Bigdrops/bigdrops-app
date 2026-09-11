@@ -84,18 +84,10 @@ export default function ProjectDocumentView() {
       const blob = await pdf(
         <ProjectDocumentPDF document={documentRecord} projectName={projectName} settings={settings ?? {}} />,
       ).toBlob()
-      const url = URL.createObjectURL(blob)
-      const anchor = window.document.createElement('a')
-      anchor.href = url
-      anchor.download = getProjectDocumentFileName(documentRecord)
-      window.document.body.appendChild(anchor)
-      anchor.click()
-      setTimeout(() => {
-        window.document.body.removeChild(anchor)
-        URL.revokeObjectURL(url)
-      }, 100)
+      const { downloadBlobFile, userDownloadLocationLabel } = await import('@/lib/native/fileDownload')
+      await downloadBlobFile({ fileName: getProjectDocumentFileName(documentRecord), blob })
       feedback.success('PDF ready', {
-        description: `${meta.label} exported for internal use.`,
+        description: `${meta.label} saved to ${userDownloadLocationLabel()}.`,
       })
     } catch (error) {
       console.error(error)

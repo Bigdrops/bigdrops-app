@@ -11,6 +11,8 @@ import {
 } from "@/lib/pdf"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
+import { feedback } from "@/lib/feedback"
+import { userDownloadLocationLabel } from "@/lib/native/fileDownload"
 import { CenteredSpinner } from "@/components/loading/AppLoadingStates"
 import DocumentPage from "@/components/document-view/shared/DocumentPage"
 import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav"
@@ -47,27 +49,34 @@ export default function ViewReceipt() {
 
   const handleDownload = useCallback(async () => {
     if (!receipt) return
-    registerPdfFonts()
-    const model = buildReceiptPreviewData(receipt)
-    const fileName = `receipt-${receipt.receipt_number}.pdf`
+    try {
+      registerPdfFonts()
+      const model = buildReceiptPreviewData(receipt)
+      const fileName = `receipt-${receipt.receipt_number}.pdf`
 
-    const generator = new DefaultPdfGenerator(
-      () => <ReceiptPdf model={model} designPreset={designPreset} />,
-    )
+      const generator = new DefaultPdfGenerator(
+        () => <ReceiptPdf model={model} designPreset={designPreset} />,
+      )
 
-    const asset = await generator.generate({
-      template: 'receipt', model, filename: fileName, documentType: 'receipt',
-    })
+      const asset = await generator.generate({
+        template: 'receipt', model, filename: fileName, documentType: 'receipt',
+      })
 
-    const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
-    const result = await delivery.deliver({ asset, mode: 'download' })
+      const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
+      const result = await delivery.deliver({ asset, mode: 'download' })
 
-    const feedbackBus = new DefaultFeedbackBus()
-    if (!result.success) {
-      feedbackBus.emit({ kind: 'failed', documentType: 'receipt', timestamp: Date.now(), fileName, error: result.error })
-      throw new Error(result.error ?? 'PDF delivery failed')
+      const feedbackBus = new DefaultFeedbackBus()
+      if (!result.success) {
+        feedbackBus.emit({ kind: 'failed', documentType: 'receipt', timestamp: Date.now(), fileName, error: result.error })
+        throw new Error(result.error ?? 'PDF delivery failed')
+      }
+      feedbackBus.emit({ kind: 'downloaded', documentType: 'receipt', timestamp: Date.now(), fileName })
+      feedback.success("Download ready", { description: `Receipt PDF saved to ${userDownloadLocationLabel()}.` })
+    } catch (error) {
+      feedback.error("Download failed", {
+        description: error instanceof Error ? error.message : "Could not generate the receipt PDF.",
+      })
     }
-    feedbackBus.emit({ kind: 'downloaded', documentType: 'receipt', timestamp: Date.now(), fileName })
   }, [receipt, designPreset])
 
   if (loading) return <CenteredSpinner />

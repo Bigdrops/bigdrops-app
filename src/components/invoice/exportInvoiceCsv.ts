@@ -99,16 +99,7 @@ export function buildInvoiceCsv(params: {
   return rows.map((row) => row.map(escapeCsv).join(',')).join('\n')
 }
 
-export function downloadInvoiceCsv(filename: string, csv: string) {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = filename
-  document.body.appendChild(anchor)
-  anchor.click()
-  setTimeout(() => {
-    document.body.removeChild(anchor)
-    URL.revokeObjectURL(url)
-  }, 100)
+export async function downloadInvoiceCsv(filename: string, csv: string): Promise<void> {
+  const { downloadTextFile } = await import('@/lib/native/fileDownload')
+  await downloadTextFile({ fileName: filename, text: csv })
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { pdf } from '@react-pdf/renderer'
 import { feedback } from '@/lib/feedback'
+import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 
 import Layout from '../components/Layout'
 import CsrFormScreen from '@/components/csr/CsrFormScreen'
@@ -321,13 +322,9 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         { technicianSignatory: null },
       )
       const blob = await pdf(getCsrPdfDocument({ csr: previewData, comments, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
-      const url = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `${blankNumber}.pdf`
-      anchor.click()
-      URL.revokeObjectURL(url)
-      feedback.success(`Blank CSR ${blankNumber} downloaded`)
+      const { downloadBlobFile } = await import('@/lib/native/fileDownload')
+      await downloadBlobFile({ fileName: `${blankNumber}.pdf`, blob })
+      feedback.success(`Blank CSR ${blankNumber} saved to ${userDownloadLocationLabel()}`)
     } catch (err) {
       feedback.error(err instanceof Error ? err.message : 'Download failed')
     }
@@ -438,11 +435,8 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
               : null
             const previewData = buildCsrPreviewData(csrData, { technicianSignatory })
             const blob = await pdf(getCsrPdfDocument({ csr: previewData, comments, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
-            const url = URL.createObjectURL(blob)
-            const anchor = document.createElement('a')
-            anchor.href = url
-            anchor.download = (csrData.csr_number || 'csr') + '.pdf'
-            anchor.click()
+            const { downloadBlobFile } = await import('@/lib/native/fileDownload')
+            await downloadBlobFile({ fileName: (csrData.csr_number || 'csr') + '.pdf', blob })
           } catch (error) {
             console.error('Failed to generate PDF', error)
           }

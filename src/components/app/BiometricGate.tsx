@@ -37,6 +37,9 @@ export default function BiometricGate({
   const [gated, setGated] = useState(true);
   const wasInBackground = useRef(false);
   const verifying = useRef(false);
+  // Mount-scoped guard: cold-launch verification runs exactly once per
+  // enablement, regardless of parent re-renders or callback identity churn.
+  const didLaunchVerification = useRef(false);
 
   const runVerification = useCallback(
     async (reason: "launch" | "resume") => {
@@ -73,15 +76,24 @@ export default function BiometricGate({
     [onAuthFailure],
   );
 
-  // Cold launch verification
+  // Latest-callback ref so effects below never depend on callback identity.
+  // Parent re-renders must not retrigger verification on their own.
+  const runVerificationRef = useRef(runVerification);
+  runVerificationRef.current = runVerification;
+
+  // Cold launch verification — explicitly one-shot per enablement.
   useEffect(() => {
     if (!enabled || !isNativePlatform()) {
       setGated(false);
+      didLaunchVerification.current = false;
       return;
     }
 
-    void runVerification("launch");
-  }, [enabled, runVerification]);
+    if (didLaunchVerification.current) return;
+    didLaunchVerification.current = true;
+
+    void runVerificationRef.current("launch");
+  }, [enabled]);
 
   // Resume-from-background listener
   useEffect(() => {
@@ -96,6 +108,12 @@ export default function BiometricGate({
         async ({ isActive }) => {
           if (cancelled) return;
 
+          // Lifecycle events fired while our own verification prompt is on
+          // screen belong to the native biometric sheet, not to the user
+          // backgrounding the app. Ignore them so a successful scan cannot
+          // relock the gate it just unlocked.
+          if (verifying.current) return;
+
           if (!isActive) {
             // App going to background — mark it.
             wasInBackground.current = true;
@@ -106,7 +124,7 @@ export default function BiometricGate({
           if (wasInBackground.current) {
             wasInBackground.current = false;
             setGated(true);
-            await runVerification("resume");
+            await runVerificationRef.current("resume");
           }
         },
       );
@@ -118,7 +136,7 @@ export default function BiometricGate({
       cancelled = true;
       void listener?.remove();
     };
-  }, [enabled, runVerification]);
+  }, [enabled]);
 
   // Lock is disabled — render children immediately.
   if (!enabled) return <>{children}</>;

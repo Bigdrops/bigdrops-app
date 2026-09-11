@@ -204,7 +204,7 @@ async function clearParentAdvanceInvoiceConfig({
   }
 }
 
-export function downloadInvoiceCsvFile({
+export async function downloadInvoiceCsvFile({
   invoice,
   items,
   invoiceTotal,
@@ -242,7 +242,7 @@ export function downloadInvoiceCsvFile({
     },
     customFields,
   })
-  downloadInvoiceCsv(`${invoice.invoice_number || 'invoice'}.csv`, csv)
+  await downloadInvoiceCsv(`${invoice.invoice_number || 'invoice'}.csv`, csv)
 }
 
 export function buildWaybillPrefill(invoice: any) {

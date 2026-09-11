@@ -18,6 +18,7 @@ import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { feedback } from '@/lib/feedback'
+import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
@@ -130,7 +131,7 @@ export default function ViewBoq() {
         subdirectory: 'boq',
         element: <BoqPdfDocument boq={boq} />,
       })
-      showToast('Download ready', `${boq.boq_number || 'BOQ'} exported as PDF.`, 'success')
+      showToast('Download ready', `${boq.boq_number || 'BOQ'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the BOQ PDF.'
       showToast('Download failed', message)

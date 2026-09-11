@@ -19,6 +19,7 @@ import { buildWaybillCustomFields, mapDbWaybill, parseWaybillCustomFields } from
 import { buildWaybillRenderModel } from '@/domain/waybill/engine/assembly'
 import type { ResolvedColumn, CompanySettings } from '@/domain/waybill/engine/types'
 import { feedback } from '@/lib/feedback'
+import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { getPdfDesignPreset, type PdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
 import { useSettings } from '@/hooks/useSettings'
@@ -289,7 +290,7 @@ export default function ViewWaybill() {
           subdirectory: 'waybill',
           element: <WaybillPDF model={model} designPreset={designPreset} template={template} />,
         })
-      showToast('Download ready', `${waybill.waybill_number || 'Waybill'} exported as PDF.`, 'success')
+      showToast('Download ready', `${waybill.waybill_number || 'Waybill'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the waybill PDF.'
       showToast('Download failed', message)

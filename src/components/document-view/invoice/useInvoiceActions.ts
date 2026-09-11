@@ -14,6 +14,7 @@ import { archiveInvoice, deleteInvoice, duplicateInvoice, syncAndGetInvoiceStatu
 import { voidInvoicePayment } from "@/modules/invoices/services/paymentService";
 import { revertInvoiceToQuotationService } from "@/modules/invoices/services/invoiceConversionService";
 import { downloadInvoicePdfDocument } from "./invoicePdfActions";
+import { userDownloadLocationLabel } from "@/lib/native/fileDownload";
 
 const SHEET_CUSTOMIZE = "customize-output";
 const SHEET_MORE = "more-actions";
@@ -87,7 +88,7 @@ export function useInvoiceActions({
         targetPayments: Array.isArray(payments) ? payments : [],
         client, settings, bankAccounts, signatories, pdfOutput, pdfTemplateId, settingsData
       });
-      showToast("Download ready", "Invoice PDF downloaded.", "success");
+      showToast("Download ready", `Invoice PDF saved to ${userDownloadLocationLabel()}.`, "success");
     } catch (error: any) {
       showToast("Download failed", error?.message || "Could not generate PDF.");
     } finally {
@@ -150,10 +151,14 @@ export function useInvoiceActions({
     }
   };
 
-  const handleDownloadCsv = () => {
+  const handleDownloadCsv = async () => {
     if (!invoice) return;
-    downloadInvoiceCsvFile({ invoice, items: Array.isArray(items) ? items : [], invoiceTotal: viewModel.invoiceTotal });
-    showToast("CSV downloaded", "Invoice CSV exported.", "success");
+    try {
+      await downloadInvoiceCsvFile({ invoice, items: Array.isArray(items) ? items : [], invoiceTotal: viewModel.invoiceTotal });
+      showToast("CSV downloaded", `Invoice CSV saved to ${userDownloadLocationLabel()}.`, "success");
+    } catch (error: any) {
+      showToast("Download failed", error?.message || "Could not export CSV.");
+    }
   };
 
   const handleCopyNumber = async () => {
@@ -284,7 +289,7 @@ export function useInvoiceActions({
         targetPayments: [],
         client, settings, bankAccounts, signatories, pdfOutput, pdfTemplateId, settingsData
       });
-      showToast("Download ready", "Advance PDF downloaded.", "success");
+      showToast("Download ready", `Advance PDF saved to ${userDownloadLocationLabel()}.`, "success");
     } catch (error: any) {
       showToast("Download failed", error?.message || "Could not generate PDF.");
     } finally {

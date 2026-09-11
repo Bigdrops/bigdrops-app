@@ -213,41 +213,48 @@ export function flattenLineItems(
 }
 
 /**
- * Triggers a native client-side web browser file download.
- * Creates a blob, generates a temporary download link, and simulates a click.
+ * Triggers a client-side file download.
  *
- * This is the standard pattern for client-side file downloads in modern browsers.
- * The file is downloaded to the user's default Downloads folder.
+ * Web browsers use the standard anchor-download pattern into the default
+ * Downloads folder. On native Android the file persists to user-visible
+ * Documents storage through the canonical native utility.
  *
  * @param content - File content as string
  * @param filename - Suggested filename for the download
- * @param mimeType - MIME type (e.g., 'text/csv', 'application/json')
+ * @param mimeType - MIME type (e.g. 'text/csv', 'application/json')
  */
-export function triggerFileDownload(
+export async function triggerFileDownload(
   content: string,
   filename: string,
-  mimeType: string
-): void {
-  // Create blob from content
-  const blob = new Blob([content], { type: mimeType });
+  mimeType: string,
+): Promise<void> {
+  const { isNativePlatform } = await import('@/lib/native/capacitor')
+  if (!isNativePlatform()) {
+    // Create blob from content
+    const blob = new Blob([content], { type: mimeType });
 
-  // Generate temporary object URL
-  const url = window.URL.createObjectURL(blob);
+    // Generate temporary object URL
+    const url = window.URL.createObjectURL(blob);
 
-  // Create temporary anchor element
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
+    // Create temporary anchor element
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
 
-  // Append to DOM (required for some browsers)
-  document.body.appendChild(link);
+    // Append to DOM (required for some browsers)
+    document.body.appendChild(link);
 
-  // Trigger download
-  link.click();
+    // Trigger download
+    link.click();
 
-  // Cleanup
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return;
+  }
+
+  const { downloadTextFile } = await import('@/lib/native/fileDownload')
+  await downloadTextFile({ fileName: filename, text: content })
 }
 
 /**
