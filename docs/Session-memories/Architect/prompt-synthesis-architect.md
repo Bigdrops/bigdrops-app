@@ -401,7 +401,7 @@ It strictly enforces project fundamentals, locked math/rules, audit-first workfl
 OpenCode must report actual commands and results, not predicted results.
 
 - **All tasks:** use `git status` immediately before and after implementation to verify scope.
-- **Strict audits, investigations, and zero-code reports:** create or modify only the requested markdown report under `docs/Reports/`; do not alter application source files; do not run `bun run typecheck` or linting unless explicitly requested.
+- **Strict audits, investigations, and zero-code reports:** create or modify only the requested markdown report under `docs/reports/`; do not alter application source files; do not run `bun run typecheck` or linting unless explicitly requested.
 - **Active code changes and bug fixes:** run `bun run typecheck`; run `bun run audit:load` only when schema, query, or data-layer logic is touched; use `git status` to confirm exact modified-file scope.
 - Do not claim runtime, visual, end-to-end, deployment, or production readiness without corresponding evidence.
 - If verification is unavailable or fails, state the exact limitation and mark the result as unverified or needs work.

@@ -20,8 +20,8 @@ The work was intentionally executed in multiple evidence-driven phases rather th
 
 This document is based on the findings contained in:
 
-- `docs/Reports/GENERAL/phase2-document-view-css-architecture-audit.md`
-- `docs/Reports/GENERAL/phase-2c-token-governance-audit.md`
+- `docs/reports/GENERAL/phase2-document-view-css-architecture-audit.md`
+- `docs/reports/GENERAL/phase-2c-token-governance-audit.md`
 
 Those reports contain the detailed inventories, token traces, consumer maps, and governance evidence.
 
@@ -165,5 +165,5 @@ Future work should focus on evolving the platform design system rather than cont
 
 For complete inventories, token classifications, consumer matrices, and governance evidence, refer to:
 
-- `docs/Reports/GENERAL/phase2-document-view-css-architecture-audit.md`
-- `docs/Reports/GENERAL/phase-2c-token-governance-audit.md`
+- `docs/reports/GENERAL/phase2-document-view-css-architecture-audit.md`
+- `docs/reports/GENERAL/phase-2c-token-governance-audit.md`

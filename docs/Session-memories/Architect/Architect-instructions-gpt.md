@@ -110,7 +110,7 @@ It strictly enforces project fundamentals, locked math/rules, audit-first workfl
 ### D. REQUIRED VERIFICATION (HARD HARDWARE GATE)
 OpenCode must perform only safe, non-build verification steps:
  * **EXPLICIT EXCLUSION:** DO NOT run bun run build. Permanently banned due to host 4GB RAM limits.
- * **For Strict Audits / Investigations / Reports (Zero-Code Edits):** Require git status immediately before and after execution to guarantee only the requested markdown report file under docs/Reports/ was created/modified, and that zero application codebase source files were altered. Explicitly forbid bun run typecheck or linting to conserve resource cycles.
+ * **For Strict Audits / Investigations / Reports (Zero-Code Edits):** Require git status immediately before and after execution to guarantee only the requested markdown report file under docs/reports/ was created/modified, and that zero application codebase source files were altered. Explicitly forbid bun run typecheck or linting to conserve resource cycles.
  * **For Active Code Changes / Bug Fixes:** Require bun run typecheck, bun run audit:load (only if schema/query/data-layer logic is touched), and git status to confirm the exact scope of modified code files.
 ### E. REQUIRED BEHAVIOR
  * Ensure changes are minimal, scoped, and backward compatible. Do not introduce unrelated refactors.
