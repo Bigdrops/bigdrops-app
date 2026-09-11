@@ -19,7 +19,7 @@ Compare the candidate CSR form template (`CSR Full-Page Live Form.jsx`) against 
 
 ## Files Changed
 
-- Created: `docs/Reports/csr/csr-template-vs-live-audit.md` (this report)
+- Created: `docs/reports/csr/csr-template-vs-live-audit.md` (this report)
 
 ---
 
@@ -725,7 +725,7 @@ However, the template cannot serve as-is. It requires structural changes before 
 ## 14. Verification
 
 - git status (before): Pre-existing staged and untracked files noted
-- git status (after): Only new file `docs/Reports/csr/csr-template-vs-live-audit.md` created
+- git status (after): Only new file `docs/reports/csr/csr-template-vs-live-audit.md` created
 - Production source files modified: **None**
 - bun run audit:load: skipped (no code changes)
 - bun run typecheck: skipped (no code changes)

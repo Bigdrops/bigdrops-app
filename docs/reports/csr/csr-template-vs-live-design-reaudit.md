@@ -1074,7 +1074,7 @@ The result should be a fresh design that combines the candidate's structural inn
 | Live form offline | `src/lib/native/csrOffline.ts`, `src/lib/native/csrSync.ts` |
 | Live form actions | `src/pages/viewCSRActions.ts` |
 | Live form previews | `src/components/csr/CSRPreviewContent.js`, `src/components/csr/preview-templates/*.tsx` |
-| Existing audit | `docs/Reports/CSR/csr-template-vs-live-audit.md` |
+| Existing audit | `docs/reports/CSR/csr-template-vs-live-audit.md` |
 
 ---
 
@@ -1082,7 +1082,7 @@ The result should be a fresh design that combines the candidate's structural inn
 
 ```
 git status (before): Pre-existing staged and untracked files noted
-git status (after): Only new file docs/Reports/CSR/csr-template-vs-live-design-reaudit.md created
+git status (after): Only new file docs/reports/CSR/csr-template-vs-live-design-reaudit.md created
 Production source files modified: NONE
 src/ files modified: NONE
 Migrations modified: NONE
