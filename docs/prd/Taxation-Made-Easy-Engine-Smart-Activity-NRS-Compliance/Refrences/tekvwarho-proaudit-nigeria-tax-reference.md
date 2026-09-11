@@ -12,7 +12,7 @@ code. TekVwarho is licensed as Proprietary.
 - Inspected: commit 2c9d905, 2026-01-30, version 0.1.0
 - Stack: Python 3.11, FastAPI, SQLAlchemy async, PostgreSQL, Alembic
 - License: Proprietary
-- Full evidence: docs/Reports/general/tekvwarho-proaudit-nigeria-tax-architecture-audit-2026-09-05.md
+- Full evidence: docs/reports/general/tekvwarho-proaudit-nigeria-tax-architecture-audit-2026-09-05.md
 
 ## Why this reference exists
 

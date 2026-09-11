@@ -21,8 +21,8 @@ This roadmap sequences the BIGDROPS taxation and accounting workstream. It is th
 | :--- | :--- | :--- |
 | Active technical plan | Technical-plan-v1.1.md | Confirmed active. Technical-plan.md (v1.0) is superseded. Technical-plan-v1.2.md does not exist and must not be created. |
 | Target architecture | Accounting-foundation-blueprint-v1.md | Confirmed target. Architecture Blueprint, not implementation. |
-| Current implementation state | docs/Reports/general/accounting-foundation-implementation-audit-2026-09-05.md | Confirmed evidence baseline. Do not claim implemented capability without this audit's support. |
-| Scope reconciliation | docs/Reports/general/record-capture-accounting-foundation-reconciliation-2026-09-05.md | Record Capture stays a narrow capture surface. Accounting Foundation is downstream. |
+| Current implementation state | docs/reports/general/accounting-foundation-implementation-audit-2026-09-05.md | Confirmed evidence baseline. Do not claim implemented capability without this audit's support. |
+| Scope reconciliation | docs/reports/general/record-capture-accounting-foundation-reconciliation-2026-09-05.md | Record Capture stays a narrow capture surface. Accounting Foundation is downstream. |
 
 ### 0.3 Dependency chain
 

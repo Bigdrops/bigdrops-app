@@ -12,7 +12,7 @@ from either project. Do not import either project into BIGDROPS.
   2026-09-04. AGPL-3.0 (code), Guide License v1.0 (content).
 - openfisca/openfisca-core — inspected commit 0e4be15, 2026-09-04.
   AGPL-3.0. Plus openfisca/country-template v8.0.0.
-- Full evidence: docs/Reports/general/openaccountants-openfisca-tax-architecture-audit-2026-09-05.md
+- Full evidence: docs/reports/general/openaccountants-openfisca-tax-architecture-audit-2026-09-05.md
 
 ## What each project is
 

@@ -12,7 +12,7 @@ from any project. Do not adopt any project as a dependency.
 - beancount/beancount — commit 9747213, 2026-08-22. GPL-2.0.
 - ianberryman/OpenBooks — commit 6e1b6a1, 2026-08-03. Pre-release.
 - artivisi/balaka — commit e2d257e, 2026-08-31. Apache-2.0.
-- Full evidence: docs/Reports/general/tax-foundation-pslmodels-balaka-openbooks-beancount-audit-2026-09-05.md
+- Full evidence: docs/reports/general/tax-foundation-pslmodels-balaka-openbooks-beancount-audit-2026-09-05.md
 
 ## What each project is
 
