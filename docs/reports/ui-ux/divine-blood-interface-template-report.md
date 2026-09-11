@@ -40,7 +40,7 @@ It does not change application code.
 - Added: `docs/TEMPLATES/htmltemps/Divine-blood/divine-blood.css`
 - Added: `docs/TEMPLATES/htmltemps/Divine-blood/divine-blood.js`
 - Modified: `docs/TEMPLATES/htmltemps/Divine-blood/divine-blood.css` (added status and numeric styles)
-- Added: `docs/Reports/Ui-Ux/divine-blood-interface-template-report.md`
+- Added: `docs/reports/Ui-Ux/divine-blood-interface-template-report.md`
 
 The prior dashboard file stays unchanged.
 

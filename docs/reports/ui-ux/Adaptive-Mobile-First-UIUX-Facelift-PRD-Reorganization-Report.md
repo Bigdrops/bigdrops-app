@@ -173,7 +173,7 @@ The two PRDs remain separate. The Facelift PRD establishes design tokens and vis
 ## Final Git Status
 
 ```
-A  docs/Reports/Ui-Ux/adaptive-mobile-first-facelift-prd-inventory-report.md
+A  docs/reports/Ui-Ux/adaptive-mobile-first-facelift-prd-inventory-report.md
 RM loading-state.md → 10-loading-and-refresh.md
 R  ai-integration.md → 13-ai-integration.md
 R  v2.html → themes/v2.html

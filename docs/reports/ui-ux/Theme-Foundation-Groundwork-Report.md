@@ -24,7 +24,7 @@ Establish the canonical BIGDROPS theme foundation and create a structured ledger
 | File | Change | Purpose |
 |------|--------|---------|
 | `src/styles/formTheme.css` | Modified — added `.dark` block with ~80 token overrides | Dark mode bridge tokens for `--bd-*` semantic layer |
-| `docs/Reports/design-issue-ledger.md` | Created | 12 design/UX issues recorded for future approval |
+| `docs/reports/design-issue-ledger.md` | Created | 12 design/UX issues recorded for future approval |
 
 ---
 
@@ -108,7 +108,7 @@ All three layers now have dark mode support. Components using `bg-bd-surface`, `
 
 ### Ledger Path
 
-`docs/Reports/design-issue-ledger.md`
+`docs/reports/design-issue-ledger.md`
 
 ### Number of Issues Recorded
 

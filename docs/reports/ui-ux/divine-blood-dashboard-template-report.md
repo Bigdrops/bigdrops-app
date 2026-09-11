@@ -33,7 +33,7 @@ It does not change application code.
 
 - Added: `docs/TEMPLATES/htmltemps/Divine-blood/divine-blood-dashboard.html`
 - Deleted: `docs/TEMPLATES/htmltemps/Divine-blood/1.html` (stray placeholder)
-- Added: `docs/Reports/Ui-Ux/divine-blood-dashboard-template-report.md`
+- Added: `docs/reports/Ui-Ux/divine-blood-dashboard-template-report.md`
 
 ## Skills Used
 

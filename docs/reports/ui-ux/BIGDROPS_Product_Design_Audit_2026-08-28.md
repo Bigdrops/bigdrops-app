@@ -761,7 +761,7 @@ This audit explicitly did NOT:
 - Change any runtime behavior
 - Execute any destructive commands
 
-The only file created is this Markdown report under `docs/Reports/`.
+The only file created is this Markdown report under `docs/reports/`.
 
 ---
 

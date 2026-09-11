@@ -33,7 +33,7 @@ It does not change application code.
 ## Files Changed
 
 - Modified: `docs/TEMPLATES/Designsdotmds/Divine-blood.md`
-- Added: `docs/Reports/Ui-Ux/divine-blood-design-rewrite-report.md`
+- Added: `docs/reports/Ui-Ux/divine-blood-design-rewrite-report.md`
 
 ## Skills Used
 
