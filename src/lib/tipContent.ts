@@ -7,7 +7,7 @@
  * relates to that module.
  *
  * @see docs/prd/Adaptive\ Mobile-First\ UIUX\ Facelift\ PRD/10-loading-and-refresh.md §7
- * @see docs/Reports/GENERAL/Tips-and-Tricks-Hidden-Functionality-Audit-2026-08-31.md
+ * @see docs/reports/GENERAL/Tips-and-Tricks-Hidden-Functionality-Audit-2026-08-31.md
  */
 
 export type TipCategory =
