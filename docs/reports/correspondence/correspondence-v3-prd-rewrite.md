@@ -16,7 +16,7 @@ Complete rewrite of the Correspondence Module V2 PRD to produce V3, incorporatin
 - V3 PRD: `docs/prd/Correspondence-module/Correspondence-module-V3.md` (839 lines, 18 sections)
 - V2 PRD: `docs/prd/Correspondence-module/Correspondence-module-V2.md` (superseded)
 - V1 PRD: `docs/prd/Correspondence-module/Correspondence-modulev1.md` (historical context)
-- All analyses: `docs/Reports/correspondence/`
+- All analyses: `docs/reports/correspondence/`
 
 ### Subagent Analyses Used
 
