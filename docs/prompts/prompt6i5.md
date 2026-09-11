@@ -248,7 +248,7 @@ The final git status must prove:
 - zero configuration changes  
 - zero unrelated files changed  
 
-Only the requested markdown forensic report may be created under docs/Reports/.  
+Only the requested markdown forensic report may be created under docs/reports/.  
 Do not create temporary files inside the repository unless absolutely required, and remove them before completion.
 
 **Required behaviour – establish these facts**  
@@ -385,9 +385,9 @@ The investigation is complete only when the report establishes:
 The report must distinguish PROVEN FACTS from HYPOTHESES.
 
 **Report output**  
-Create only a markdown forensic report under docs/Reports/.  
+Create only a markdown forensic report under docs/reports/.  
 Use a descriptive filename such as:  
-docs/Reports/invoice-view-pdf-financial-rendering-forensic-2026-08-13.md  
+docs/reports/invoice-view-pdf-financial-rendering-forensic-2026-08-13.md  
 
 The report must contain these sections:  
 # Objective  

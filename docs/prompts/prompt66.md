@@ -227,7 +227,7 @@ J. REPORT
 
 Create:
 
-docs/Reports/multi-tenancy/final-public-business-purge-inventory.md
+docs/reports/multi-tenancy/final-public-business-purge-inventory.md
 
 The report must contain:
 
