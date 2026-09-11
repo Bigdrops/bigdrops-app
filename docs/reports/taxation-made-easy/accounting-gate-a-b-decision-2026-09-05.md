@@ -16,7 +16,7 @@ Close Gate A (authoritative accounting entity boundary) and finalize the persist
 
 ## Files Changed
 
-- docs/Reports/taxation-made-easy/accounting-gate-a-b-decision-2026-09-05.md (this report, new file).
+- docs/reports/taxation-made-easy/accounting-gate-a-b-decision-2026-09-05.md (this report, new file).
 - No source file changed. No migration changed.
 
 ## Skills Used
@@ -125,7 +125,7 @@ The next increment may proceed only because Gate A is CLOSED.
 ## Verification Result
 
 - git status before changes: clean tree (no uncommitted changes; HEAD at accounting increment 1 commit).
-- git status after changes: one new untracked file under docs/Reports/taxation-made-easy/. No other change.
+- git status after changes: one new untracked file under docs/reports/taxation-made-easy/. No other change.
 - git diff --check: passed (new file only, no whitespace error).
 - bun run typecheck: not run (no TypeScript source changed).
 - bun run audit:load: not run (AGENTS.md requires it before typecheck; typecheck did not apply).

@@ -22,7 +22,7 @@ Start Phase 1 (Accounting Foundation) execution. Implement the first slice: the 
 - src/domain/accounting/postingKernel.ts
 - src/domain/accounting/index.ts
 - src/tests/critical/accountingKernel.test.js
-- docs/Reports/taxation-made-easy/accounting-foundation-increment-1-domain-kernel-2026-09-05.md (this report)
+- docs/reports/taxation-made-easy/accounting-foundation-increment-1-domain-kernel-2026-09-05.md (this report)
 
 No other file was created or modified by this task.
 

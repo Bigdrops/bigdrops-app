@@ -144,7 +144,7 @@ Verification:
 - git diff --check: passed (exit 0). Staged diff check also passed.
 - git status: only the five Gap 1 files plus pre-existing changes owned by
   other agents (three staged UIUX PRD design files; the untracked phantom
-  `docs/Reports/pdf/poc/vendor-forme/` directory).
+  `docs/reports/pdf/poc/vendor-forme/` directory).
 - bun run build: skipped due to hardware policy.
 
 ## Risks or limitations
@@ -176,4 +176,4 @@ Verification:
 
 Three UIUX PRD design files were staged by another agent during this task.
 They were not touched. The phantom untracked directory
-`docs/Reports/pdf/poc/vendor-forme/` predates this task and was not touched.
+`docs/reports/pdf/poc/vendor-forme/` predates this task and was not touched.

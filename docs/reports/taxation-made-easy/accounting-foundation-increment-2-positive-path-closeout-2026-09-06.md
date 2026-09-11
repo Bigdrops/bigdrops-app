@@ -25,7 +25,7 @@ The Increment 2 positive-path verification was OPEN and blocked as of 2026-09-05
 Only documentation was updated.
 
 Files changed:
-- docs/Reports/taxation-made-easy/accounting-foundation-increment-2-positive-path-closeout-2026-09-06.md
+- docs/reports/taxation-made-easy/accounting-foundation-increment-2-positive-path-closeout-2026-09-06.md
 
 No application code, schema, migration, accounting logic, permissions, or UI behavior was modified. No new report was created to replace the prior verification report; the new close-out note is an addition that records the completed verification.
 

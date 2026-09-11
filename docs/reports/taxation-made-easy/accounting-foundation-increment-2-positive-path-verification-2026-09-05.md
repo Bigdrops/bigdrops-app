@@ -25,7 +25,7 @@ Prove that a genuinely authenticated and authorized tenant operator can post a b
 
 ## Files Changed
 
-- docs/Reports/taxation-made-easy/accounting-foundation-increment-2-positive-path-verification-2026-09-05.md (this report, new file).
+- docs/reports/taxation-made-easy/accounting-foundation-increment-2-positive-path-verification-2026-09-05.md (this report, new file).
 - No other file was created or modified by this task.
 
 ## Skills Used

@@ -17,8 +17,8 @@ Implement the persistence layer for the accounting domain kernel. Store accounts
 
 - supabase/migrations/20260905142503_accounting_persistence.sql (new).
 - src/tests/critical/accountingPersistenceContract.test.js (new).
-- docs/Reports/taxation-made-easy/accounting-gate-a-b-decision-2026-09-05.md (relocated from docs/Reports/general/; path references updated).
-- docs/Reports/taxation-made-easy/accounting-foundation-increment-2-persistence-2026-09-05.md (this report, new).
+- docs/reports/taxation-made-easy/accounting-gate-a-b-decision-2026-09-05.md (relocated from docs/reports/general/; path references updated).
+- docs/reports/taxation-made-easy/accounting-foundation-increment-2-persistence-2026-09-05.md (this report, new).
 - No source file changed. No existing migration changed. No tax table changed.
 
 ## Skills Used

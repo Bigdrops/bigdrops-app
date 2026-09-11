@@ -234,8 +234,8 @@ The PRD is sufficiently specified for a first increment. The core capture flow i
 | `docs/standard/json-import-standard.md` | Applicable standard (no conflict) |
 | `docs/standard/audit-trail-standard.md` | Applicable standard (extend for expense events) |
 | `docs/standard/receipt-standard.md` | Reference (no direct applicability) |
-| `docs/Reports/taxation-made-easy/accounting-increment7-activity-coverage-audit-2026-09-07.md` | Prior audit findings |
-| `docs/Reports/taxation-made-easy/accounting-increment8-roadmap-reconciliation-2026-09-07.md` | Prior audit findings |
+| `docs/reports/taxation-made-easy/accounting-increment7-activity-coverage-audit-2026-09-07.md` | Prior audit findings |
+| `docs/reports/taxation-made-easy/accounting-increment8-roadmap-reconciliation-2026-09-07.md` | Prior audit findings |
 | `supabase/migrations/20260520090009_tax.sql` | Current tax_input_entries schema |
 | `src/components/compliance/VatInputsPanel.tsx` | Current VAT input UI (to be replaced) |
 | `src/domain/accounting/types.ts` | Accounting domain types |

@@ -25,7 +25,7 @@ Replace the mobile More popup with a full-page More Options destination and expo
 - src/components/app/AppShell.tsx (6 routes added).
 - src/components/Layout.tsx (More tap navigates to /more; More sheet unwired).
 - src/components/layout/navData.ts (/more, /letters, /accounting map to more tab).
-- docs/Reports/taxation-made-easy/mobile-more-accounting-navigation-2026-09-05.md (this report).
+- docs/reports/taxation-made-easy/mobile-more-accounting-navigation-2026-09-05.md (this report).
 
 ## Skills Used
 
