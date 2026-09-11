@@ -47,7 +47,7 @@ No PDF rendering, grouping mechanics, database schema, update-mode architecture,
 - `src/pages/EditInvoice.tsx`
 - `src/pages/NewInvoice.tsx`
 - `src/components/quotation/QuotationForm.tsx`
-- `docs/Reports/json-import-save-validation-hardening.md`
+- `docs/reports/json-import-save-validation-hardening.md`
 
 ## Exact code changes
 
