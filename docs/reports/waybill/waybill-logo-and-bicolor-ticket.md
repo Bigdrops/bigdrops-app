@@ -67,7 +67,7 @@ Two independent changes: (1) fix logo background bleed on the Slate waybill temp
 - [x] `bun run audit:load` passes
 - [x] `bun run typecheck` passes with zero errors
 - [x] `bun run lint` shows zero new errors on changed files
-- [x] Work report saved to `docs/Reports/waybill-logo-and-bicolor-ticket.md`
+- [x] Work report saved to `docs/reports/waybill-logo-and-bicolor-ticket.md`
 - [x] No files outside the documented scope were modified
 
 ---

@@ -102,7 +102,7 @@
 | File | Purpose |
 |---|---|
 | `docs/htmltemps/waybill/waybill-portrait-corrected.html` | Corrected portrait template |
-| `docs/Reports/blank-waybill-portrait-corrections.md` | This report |
+| `docs/reports/blank-waybill-portrait-corrections.md` | This report |
 
 ## Files NOT Modified
 
