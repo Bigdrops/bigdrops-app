@@ -252,7 +252,7 @@ Historical code (via `git show`):
 
 Previous report:
 
-- `docs/Reports/invoice/edit-invoice-discount-persistence.md`
+- `docs/reports/invoice/edit-invoice-discount-persistence.md`
 
 Live database (read-only):
 

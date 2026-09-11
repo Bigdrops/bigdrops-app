@@ -47,7 +47,7 @@ It has no `COALESCE`. The new invoice behavior follows this reference.
 ## Files Changed
 
 - `supabase/migrations/20260814000000_fix_invoice_item_discount_null.sql` (new migration).
-- `docs/Reports/invoice/edit-invoice-discount-persistence.md` (forensic report from prior task).
+- `docs/reports/invoice/edit-invoice-discount-persistence.md` (forensic report from prior task).
 
 ## Changes Made
 

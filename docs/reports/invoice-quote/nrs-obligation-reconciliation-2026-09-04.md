@@ -38,7 +38,7 @@ M  AGENTS.md
 MM README.md
 A  docs/reports/general/calculation-entry-point-doc-fix.md
 A  docs/reports/invoice-quote/calculation-entry-point-split-inspection.md
-?? docs/Reports/general/readme-repository-state-reconciliation.md
+?? docs/reports/general/readme-repository-state-reconciliation.md
 ```
 
 These are pre-existing staged, unstaged, and untracked changes. They belong to other work. This task does not modify, revert, or overwrite any of them.
