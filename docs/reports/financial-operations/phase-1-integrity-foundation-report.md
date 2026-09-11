@@ -41,7 +41,7 @@ Out of scope: payment system redesign, new user workflows, changes to `src/lib/C
 
 **Verification:** Grep for `RecordPaymentModal` across all non-deleted files found only:
 - 3 self-references (the file itself)
-- References in `docs/Reports/` (documentation)
+- References in `docs/reports/` (documentation)
 
 Zero imports from any `src/` TS/TSX/JS file. The current payment recording flow uses `RecordPaymentSheet` (via `RecordPaymentSheetTrigger`), not this modal.
 

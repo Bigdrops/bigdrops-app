@@ -12,7 +12,7 @@ The BIGDROPS platform **cannot** currently generate immutable, legally correct r
 
 The platform has strong foundational patterns (prefix engine, document transformation standard, audit infrastructure, WHT receipt scaffold) but zero receipt-specific implementation. Building the Receipt module requires: (1) a new `receipts` table with denormalized snapshot columns, (2) a new `receipt` key in the prefix engine, (3) snapshot population at payment recording time, and (4) immutability enforcement post-save.
 
-**Verification gate:** `bun run audit:load` passed (711 files scanned). `git status` confirms zero application source modifications — only `docs/Reports/FinancialOperations/phase-2-6d-upload-error-surfacing.md` was pre-existing modified.
+**Verification gate:** `bun run audit:load` passed (711 files scanned). `git status` confirms zero application source modifications — only `docs/reports/FinancialOperations/phase-2-6d-upload-error-surfacing.md` was pre-existing modified.
 
 ---
 
