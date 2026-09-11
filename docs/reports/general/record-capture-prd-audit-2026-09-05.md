@@ -27,10 +27,10 @@ A  docs/reports/general/invoice-to-quotation-revert-blocker.md
  M src/modules/invoices/services/invoiceConversionService.ts
  M src/pages/settings/AdminSettingsSection.tsx
 M  src/pages/viewQuotationActions.ts
-?? docs/Reports/general/files-tax-monthly-prd-audit-2026-09-05.md
-?? docs/Reports/general/invoice-to-quotation-revert-fix.md
-?? docs/Reports/general/vat-filing-support-prd-update-2026-09-05.md
-?? docs/Reports/general/workspace-management-gaps-audit.md
+?? docs/reports/general/files-tax-monthly-prd-audit-2026-09-05.md
+?? docs/reports/general/invoice-to-quotation-revert-fix.md
+?? docs/reports/general/vat-filing-support-prd-update-2026-09-05.md
+?? docs/reports/general/workspace-management-gaps-audit.md
 ?? docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Files-tax-monthly-v1.md
 ?? supabase/migrations/20260905000000_revert_invoice_canonical_tenant_install.sql
 ?? supabase/migrations/20260905010000_workspace_management_gaps.sql

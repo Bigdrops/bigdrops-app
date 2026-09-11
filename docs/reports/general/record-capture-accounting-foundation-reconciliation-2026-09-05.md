@@ -27,7 +27,7 @@ The task did not implement accounting code, database schema, migrations, UI, or 
 
 - docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Record-capture-v1.md
 - docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Readme.md
-- docs/Reports/general/record-capture-accounting-foundation-reconciliation-2026-09-05.md (this report)
+- docs/reports/general/record-capture-accounting-foundation-reconciliation-2026-09-05.md (this report)
 
 No other file was changed by this task.
 

@@ -56,7 +56,7 @@ Verified statutory anchors cited in the blueprint, from `NRS-docs/NIGERIA-TAX-AC
 
 ## Verification
 
-- `git status --short` (before): working tree contained pre-existing modifications from a concurrent agent (`src/domain/tenant/tenantCreation.ts`, `src/domain/tenant/tenantGate.ts`, `src/pages/CompanyCreation.tsx`, `src/tests/critical/firstCompanyBootstrap.test.js`, `docs/Reports/general/first-company-bootstrap-2026-09-05.md`) and the previous evidence-correction pass (four PRD files, `docs/Reports/general/tax-prd-folder-evidence-correction-2026-09-05.md`). These were left untouched.
+- `git status --short` (before): working tree contained pre-existing modifications from a concurrent agent (`src/domain/tenant/tenantCreation.ts`, `src/domain/tenant/tenantGate.ts`, `src/pages/CompanyCreation.tsx`, `src/tests/critical/firstCompanyBootstrap.test.js`, `docs/reports/general/first-company-bootstrap-2026-09-05.md`) and the previous evidence-correction pass (four PRD files, `docs/reports/general/tax-prd-folder-evidence-correction-2026-09-05.md`). These were left untouched.
 - `git status --short` (after): the only new file attributable to this task is `Accounting-foundation-blueprint-v1.md`. No `src/`, `supabase/`, migration, or unrelated PRD file changed.
 - `git diff --stat` reviewed. The diff contains only the intended blueprint file.
 - `bun run build`, `bun run typecheck`, `bun run lint`, and `bun run audit:load` were not run, per task instruction and hardware policy.

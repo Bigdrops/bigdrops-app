@@ -39,7 +39,7 @@ Key evidence files:
 - supabase/migrations/20260905020000_entity_lifecycle.sql
 - Full migration inventory: supabase/migrations/
 
-Supporting documents: AGENTS.md, the folder Readme.md, Record-capture-v1.md, Record-engagement-plan-v1.md, Files-tax-monthly-v1.md, Technical-plan-v1.1.md, NRS-docs/OBLIGATION-LOOKUP-INDEX.md, prior audit reports under docs/Reports/general/.
+Supporting documents: AGENTS.md, the folder Readme.md, Record-capture-v1.md, Record-engagement-plan-v1.md, Files-tax-monthly-v1.md, Technical-plan-v1.1.md, NRS-docs/OBLIGATION-LOOKUP-INDEX.md, prior audit reports under docs/reports/general/.
 
 ## Executive Summary
 

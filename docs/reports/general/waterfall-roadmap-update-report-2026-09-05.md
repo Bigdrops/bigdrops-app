@@ -15,7 +15,7 @@ Replace the placeholder Waterfall Roadmap in the Taxation-Made-Easy PRD folder w
 ## Files Changed
 
 - docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Waterfall-roadmap.md
-- docs/Reports/general/waterfall-roadmap-update-report-2026-09-05.md (this report)
+- docs/reports/general/waterfall-roadmap-update-report-2026-09-05.md (this report)
 
 No other file was changed by this task.
 
@@ -31,8 +31,8 @@ ASD-STE100 Simplified Technical English
 
 - Technical-plan-v1.1.md (confirmed active baseline; v1.2 does not exist)
 - Accounting-foundation-blueprint-v1.md (target architecture)
-- docs/Reports/general/accounting-foundation-implementation-audit-2026-09-05.md (current-state evidence)
-- docs/Reports/general/record-capture-accounting-foundation-reconciliation-2026-09-05.md
+- docs/reports/general/accounting-foundation-implementation-audit-2026-09-05.md (current-state evidence)
+- docs/reports/general/record-capture-accounting-foundation-reconciliation-2026-09-05.md
 - Files-tax-monthly-v1.md
 - Record-engagement-plan-v1.md
 - Folder Readme.md

@@ -124,8 +124,8 @@ The only files in scope for this Phase 1 correction session:
 | File | Change |
 |---|---|
 | `src/lib/tenant/contexts.tsx` | Added runtime type guard + safe status parsing |
-| `docs/Reports/GENERAL/delegation-log.md` | Delegation log entry appended |
-| `docs/Reports/GENERAL/typecheck-contexts-tenancy-fix.md` | Report for prior typecast fix |
+| `docs/reports/GENERAL/delegation-log.md` | Delegation log entry appended |
+| `docs/reports/GENERAL/typecheck-contexts-tenancy-fix.md` | Report for prior typecast fix |
 
 ---
 

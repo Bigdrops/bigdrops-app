@@ -20,7 +20,7 @@ Captured before any change:
 ```
 A  docs/reports/general/invoice-to-quotation-revert-blocker.md
 M  src/pages/viewQuotationActions.ts
-?? docs/Reports/general/invoice-to-quotation-revert-fix.md
+?? docs/reports/general/invoice-to-quotation-revert-fix.md
 ?? supabase/migrations/20260905000000_revert_invoice_canonical_tenant_install.sql
 ```
 
@@ -109,7 +109,7 @@ The VAT return deadline at day 21 is confirmed from NTAA §22(1), gazette page A
 A  docs/reports/general/invoice-to-quotation-revert-blocker.md
  M src/modules/invoices/services/invoiceConversionService.ts
 M  src/pages/viewQuotationActions.ts
-?? docs/Reports/general/invoice-to-quotation-revert-fix.md
+?? docs/reports/general/invoice-to-quotation-revert-fix.md
 ?? docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Files-tax-monthly-v1.md
 ?? supabase/migrations/20260905000000_revert_invoice_canonical_tenant_install.sql
 ```

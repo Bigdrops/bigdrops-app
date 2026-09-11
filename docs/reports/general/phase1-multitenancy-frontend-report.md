@@ -121,7 +121,7 @@ Changes in `src/pages/debug/TenantDebug.tsx`:
 The runtime type guard (`VALID_PROVISIONING_STATES`, `isProvisioningStatus`,
 safe status parsing) from the prior correction session is present in the
 current file and verified intact. See
-`docs/Reports/GENERAL/phase1-multitenancy-review.md` for that session's detail.
+`docs/reports/GENERAL/phase1-multitenancy-review.md` for that session's detail.
 
 ---
 
@@ -131,7 +131,7 @@ current file and verified intact. See
 | --- | --- |
 | `src/lib/tenant/contexts.tsx` | Added `SchemaResolutionSource` type, `schemaSource` state, source recording effect, context value wiring |
 | `src/pages/debug/TenantDebug.tsx` | Replaced hardcoded source display with `entity.schemaSource` via `SOURCE_DISPLAY` map; added type import |
-| `docs/Reports/GENERAL/delegation-log.md` | Delegation log entry appended |
+| `docs/reports/GENERAL/delegation-log.md` | Delegation log entry appended |
 
 No business module was modified. `src/supabase.ts` was not modified.
 `src/lib/tenantClient.ts` and `src/components/app/AppShell.tsx` required no

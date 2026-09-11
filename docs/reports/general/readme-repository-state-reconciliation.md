@@ -177,7 +177,7 @@ Supabase client is `src/supabase.ts`; `src/supabase/` contains
   - `M AGENTS.md` (staged, my prior doc-fix task)
   - `M README.md` (staged, my prior doc-fix task)
   - `A docs/reports/invoice-quote/calculation-entry-point-split-inspection.md`
-  - `?? docs/Reports/general/calculation-entry-point-doc-fix.md`
+  - `?? docs/reports/general/calculation-entry-point-doc-fix.md`
 - `git status --short` after changes:
   - `M AGENTS.md`
   - `MM README.md` (staged prior correction plus this task's edits)

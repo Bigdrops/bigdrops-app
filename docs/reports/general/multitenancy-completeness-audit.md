@@ -10,7 +10,7 @@ This report was written by OpenCode on 2026-08-10 via Local Runner.
 
 **Scope:** READ-ONLY audit of every data access path in `src/`. No code changes, no migrations, no builds.
 
-**Method:** Grep-based enumeration of `tenantClient.from(`, `tenantClient.rpc(`, `supabase.from(`, and `useEntity()` across the entire codebase. Cross-referenced with 14 existing multi-tenancy reports in `docs/Reports/` and `docs/Reports/multi-tenancy/`.
+**Method:** Grep-based enumeration of `tenantClient.from(`, `tenantClient.rpc(`, `supabase.from(`, and `useEntity()` across the entire codebase. Cross-referenced with 14 existing multi-tenancy reports in `docs/reports/` and `docs/reports/multi-tenancy/`.
 
 ---
 

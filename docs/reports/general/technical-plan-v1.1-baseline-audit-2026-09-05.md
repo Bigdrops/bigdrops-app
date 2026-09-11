@@ -37,7 +37,7 @@ Technical-plan-v1.2.md does not exist and was not created by this audit.
 
 - docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Technical-plan-v1.1.md
 - docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Readme.md
-- docs/Reports/general/technical-plan-v1.1-baseline-audit-2026-09-05.md (this report)
+- docs/reports/general/technical-plan-v1.1-baseline-audit-2026-09-05.md (this report)
 
 ## Skills Used
 

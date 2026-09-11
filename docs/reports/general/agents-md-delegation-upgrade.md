@@ -12,7 +12,7 @@ This task upgrades the repo-root `AGENTS.md` to establish the subagent directory
 - Surgical append of a "Skills vs Subagents" clarification block to §5.
 - Author this evidence-based report.
 
-**Out of scope (intentionally excluded):** changes to any [LOCKED] item in §2; the §3 Verification Gate commands; naming conventions and domain-segregation rules; the §4 Standards Hierarchy; the §6 reporting identity standard; any section renumbering of §1–§7; any code, standards, or subagent-file changes; creation of `docs/SUBAGENTS.md` or `docs/Reports/GENERAL/delegation-log.md` (those artifacts are referenced by the new protocol but not created by this task).
+**Out of scope (intentionally excluded):** changes to any [LOCKED] item in §2; the §3 Verification Gate commands; naming conventions and domain-segregation rules; the §4 Standards Hierarchy; the §6 reporting identity standard; any section renumbering of §1–§7; any code, standards, or subagent-file changes; creation of `docs/SUBAGENTS.md` or `docs/reports/GENERAL/delegation-log.md` (those artifacts are referenced by the new protocol but not created by this task).
 
 ## Facts (Evidence-Based)
 
@@ -28,7 +28,7 @@ All paths relative to `C:\Users\DELL\Desktop\bigdrops-app`.
    - §8.2 Skills vs Subagents (precedence 1→2→3; §3 rule retained for skill loading).
    - §8.3 Decision Procedure (six numbered steps using canonical domain tokens).
    - §8.4 Invocation methods (`@<agent-name>`, `/agent`, Task dispatch).
-   - §8.5 Mandatory Delegation & Logging (non-negotiable; both code-fenced log templates: Match and No-match; recording destinations (a) response and (b) `docs/Reports/GENERAL/delegation-log.md`).
+   - §8.5 Mandatory Delegation & Logging (non-negotiable; both code-fenced log templates: Match and No-match; recording destinations (a) response and (b) `docs/reports/GENERAL/delegation-log.md`).
    - §8.6 Routing Quick Reference table (17 rows mapping domain → recommended subagent, including the LOCKED financial/prefix row delegating to `NONE` + `code-reviewer`).
 
 4. **§4 left untouched** — No natural insertion point exists in the Standards Hierarchy section for subagent references; spec permitted leaving §4 unchanged, so it was not modified.
@@ -50,7 +50,7 @@ All paths relative to `C:\Users\DELL\Desktop\bigdrops-app`.
 
 ## Delegation Protocol Summary
 
-The new §8 makes `.opencode/agents/*.md` (indexed in `docs/SUBAGENTS.md`) the canonical delegation target. Precedence: (1) matching subagent → invoke; (2) else matching skill → load; (3) else generic execution with `subagent=NONE` logged. Every task must emit a `[DELEGATION]` log line recorded in the response and appended to `docs/Reports/GENERAL/delegation-log.md`. A 17-row routing table binds canonical domain tokens (invoice, waybill, BOQ-RFQ, security, docs, git, etc.) to recommended personas, with the LOCKED financial/prefix engine explicitly reserved in-house (`NONE` + `code-reviewer`). This task itself falls under the "Documentation / reports / AGENTS.md edits → `technical-writer`" routing row.
+The new §8 makes `.opencode/agents/*.md` (indexed in `docs/SUBAGENTS.md`) the canonical delegation target. Precedence: (1) matching subagent → invoke; (2) else matching skill → load; (3) else generic execution with `subagent=NONE` logged. Every task must emit a `[DELEGATION]` log line recorded in the response and appended to `docs/reports/GENERAL/delegation-log.md`. A 17-row routing table binds canonical domain tokens (invoice, waybill, BOQ-RFQ, security, docs, git, etc.) to recommended personas, with the LOCKED financial/prefix engine explicitly reserved in-house (`NONE` + `code-reviewer`). This task itself falls under the "Documentation / reports / AGENTS.md edits → `technical-writer`" routing row.
 
 ## Risks & Limitations
 
@@ -67,5 +67,5 @@ The new §8 makes `.opencode/agents/*.md` (indexed in `docs/SUBAGENTS.md`) the c
 ## Deferred Work
 
 - Population of `docs/SUBAGENTS.md` with the 232 subagent persona entries (referenced by §8 but not created here).
-- Initialization/appending of `docs/Reports/GENERAL/delegation-log.md` (the §8.5 recording destination) — to be written by future tasks as they emit delegation log lines.
+- Initialization/appending of `docs/reports/GENERAL/delegation-log.md` (the §8.5 recording destination) — to be written by future tasks as they emit delegation log lines.
 - Resolution of the 18 pre-existing `fillableBold`/`fillableColor` typecheck errors in the waybill PDF templates (separate task, outside this documentation scope).

@@ -43,11 +43,11 @@ M  src/pages/settings/AdminSettingsSection.tsx
 M  src/pages/viewQuotationActions.ts
 A  supabase/migrations/20260905000000_revert_invoice_canonical_tenant_install.sql
 A  supabase/migrations/20260905010000_workspace_management_gaps.sql
-?? docs/Reports/general/cit-readiness-audit-2026-09-05.md
-?? docs/Reports/general/luca-vs-bigdrops-accounting-architecture-audit-2026-09-05.md
-?? docs/Reports/general/record-capture-prd-audit-2026-09-05.md
-?? docs/Reports/multi-tenancy/entity-lifecycle-audit.md
-?? docs/Reports/multi-tenancy/ownership-transfer-ui.md
+?? docs/reports/general/cit-readiness-audit-2026-09-05.md
+?? docs/reports/general/luca-vs-bigdrops-accounting-architecture-audit-2026-09-05.md
+?? docs/reports/general/record-capture-prd-audit-2026-09-05.md
+?? docs/reports/multi-tenancy/entity-lifecycle-audit.md
+?? docs/reports/multi-tenancy/ownership-transfer-ui.md
 ?? docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Record-capture-v1.md
 ?? docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Refrences/
 ```

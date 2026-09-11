@@ -308,4 +308,4 @@ Key files referenced in this report, with line counts and roles:
 
 ## 9. Previously Audited Modules
 
-A prior architecture audit was completed in `docs/Reports/GENERAL/shared-systems-architecture-audit.md`. Cross-cutting systems (notification, import/export, document columns, PDF) were covered there. This audit focuses on the five domain-specific areas not covered by the shared systems audit.
+A prior architecture audit was completed in `docs/reports/GENERAL/shared-systems-architecture-audit.md`. Cross-cutting systems (notification, import/export, document columns, PDF) were covered there. This audit focuses on the five domain-specific areas not covered by the shared systems audit.

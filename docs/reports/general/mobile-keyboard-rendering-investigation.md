@@ -369,6 +369,6 @@ The `--app-keyboard-inset` variable is already set but never consumed by any dia
 # Verification
 
 - **Before investigation:** `git status` showed only `.mimocode/.cron-lock` modified (clean working tree).
-- **After investigation:** `git status` shows the same state plus the new report file at `docs/Reports/GENERAL/mobile-keyboard-rendering-investigation.md`.
+- **After investigation:** `git status` shows the same state plus the new report file at `docs/reports/GENERAL/mobile-keyboard-rendering-investigation.md`.
 - **No application source files were modified.**
 - **No `bun run build` or `bun run typecheck` was executed** (read-only investigation per prompt instructions).

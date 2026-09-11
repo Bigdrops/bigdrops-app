@@ -676,9 +676,9 @@ Before implementation, the user must decide:
 
 | Document | Purpose |
 |----------|---------|
-| `docs/Reports/Ui-Ux/dashboard-kpi-cards-implementation-report.md` | Previous KPI implementation report |
+| `docs/reports/Ui-Ux/dashboard-kpi-cards-implementation-report.md` | Previous KPI implementation report |
 | `docs/tickets/view-invoice-csr-issues.md` | Known view issues |
-| `docs/Reports/multi-tenancy/live-reconciliation-audit.md` | Tenant scoping audit |
+| `docs/reports/multi-tenancy/live-reconciliation-audit.md` | Tenant scoping audit |
 
 ---
 
@@ -692,7 +692,7 @@ Before implementation, the user must decide:
 
 And 2 untracked items:
 - `.commandcode/`
-- `docs/Reports/GENERAL/2026-08-26-client-list-entity-scoped-cache-fix.md`
+- `docs/reports/GENERAL/2026-08-26-client-list-entity-scoped-cache-fix.md`
 
 **After audit:** This report is the only new file. No application code, configuration, database migration, or KPI UI was modified.
 

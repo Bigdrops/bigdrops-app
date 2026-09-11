@@ -48,7 +48,7 @@ The only file changed by this task is:
 
 Plus this report:
 
-- docs/Reports/general/files-tax-technical-plan-reference-cleanup-2026-09-05.md
+- docs/reports/general/files-tax-technical-plan-reference-cleanup-2026-09-05.md
 
 ## Risks or Limitations
 

@@ -58,7 +58,7 @@ All four are shallow clones. Only the head commit was inspected.
 
 ## Files changed
 
-- docs/Reports/general/tax-foundation-pslmodels-balaka-openbooks-beancount-audit-2026-09-05.md
+- docs/reports/general/tax-foundation-pslmodels-balaka-openbooks-beancount-audit-2026-09-05.md
 - docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Refrences/tax-foundation-pslmodels-balaka-openbooks-beancount-reference.md
 
 ## Changes made
@@ -88,13 +88,13 @@ A  supabase/migrations/20260905010000_workspace_management_gaps.sql
 A  docs/reports/general/openaccountants-openfisca-tax-architecture-audit-2026-09-05.md
 A  docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Refrences/openaccountants-openfisca-tax-reference.md
 AM docs/prd/multi-tenancy/Readme.md
-?? docs/Reports/general/cit-readiness-audit-2026-09-05.md
-?? docs/Reports/general/luca-vs-bigdrops-accounting-architecture-audit-2026-09-05.md
-?? docs/Reports/general/record-capture-prd-audit-2026-09-05.md
-?? docs/Reports/general/taxbridge-nigeria-cit-architecture-audit-2026-09-05.md
-?? docs/Reports/general/tekvwarho-proaudit-nigeria-tax-architecture-audit-2026-09-05.md
-?? docs/Reports/multi-tenancy/entity-lifecycle-audit.md
-?? docs/Reports/multi-tenancy/ownership-transfer-ui.md
+?? docs/reports/general/cit-readiness-audit-2026-09-05.md
+?? docs/reports/general/luca-vs-bigdrops-accounting-architecture-audit-2026-09-05.md
+?? docs/reports/general/record-capture-prd-audit-2026-09-05.md
+?? docs/reports/general/taxbridge-nigeria-cit-architecture-audit-2026-09-05.md
+?? docs/reports/general/tekvwarho-proaudit-nigeria-tax-architecture-audit-2026-09-05.md
+?? docs/reports/multi-tenancy/entity-lifecycle-audit.md
+?? docs/reports/multi-tenancy/ownership-transfer-ui.md
 ?? docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Record-capture-v1.md
 ?? docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/Refrences/
 ```

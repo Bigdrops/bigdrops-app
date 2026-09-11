@@ -48,7 +48,7 @@ Verification:
 - `bun run audit:load`: skipped (no schema, query, or data-layer logic touched)
 - `bun run build`: skipped due to hardware policy
 - Popup search in Accounting path: zero matches for `alert(`, `confirm(`, `prompt(`, `window.alert`, `window.confirm`, `window.prompt`
-- `git status`: unchanged from start (pre-existing `bun.lock` and `package.json` modifications plus untracked `docs/Reports/pdf/*` files belong to another agent and were left intact)
+- `git status`: unchanged from start (pre-existing `bun.lock` and `package.json` modifications plus untracked `docs/reports/pdf/*` files belong to another agent and were left intact)
 - Settings files modified: none
 
 ## Risks or limitations

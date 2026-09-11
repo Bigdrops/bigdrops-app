@@ -148,7 +148,7 @@ Our changes (unstaged):
 - `docs/tickets/postgrest-schema-overwrite-bug.md` — existing ticket
 
 New file (untracked):
-- `docs/Reports/general/postgrest-schema-exposure-forensic-audit.md` — this report
+- `docs/reports/general/postgrest-schema-exposure-forensic-audit.md` — this report
 
 ---
 
