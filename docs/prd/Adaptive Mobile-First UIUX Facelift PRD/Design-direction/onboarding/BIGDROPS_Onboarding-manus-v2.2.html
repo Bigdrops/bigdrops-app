@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BIGDROPS onboarding. Run your whole business operation from one place. See it work, then set up your workspace in about 30 seconds.">
+<title>BIGDROPS · Onboarding v2.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens · Design.md contract ============ */
+:root{
+  --bg:#f0f4f8; --surface:#ffffff; --surface-raised:#f8fafc; --surface-muted:#e2e8f0; --surface-strong:#cbd5e1;
+  --ink:#0f172a; --ink-2:#475569; --ink-3:#94a3b8;
+  --line:rgba(15,23,42,.07); --line-strong:rgba(15,23,42,.14);
+  --primary:#1e3a5f; --primary-bright:#3b82f6; --primary-soft:rgba(30,58,95,.14);
+  --secondary:#0f172a; --secondary-bright:#64748b; --secondary-soft:rgba(15,23,42,.13);
+  --success:#16a34a; --warning:#d97706; --danger:#dc2626;
+  --shadow:0 12px 28px color-mix(in srgb,var(--primary) 8%,transparent),0 2px 6px rgba(15,23,42,.04);
+  --shadow-float:0 18px 40px color-mix(in srgb,var(--primary) 18%,transparent),0 3px 9px rgba(15,23,42,.07);
+  --grad:135deg,#1e3a5f 0%,#0f172a 100%;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  --ez:cubic-bezier(.23,1,.32,1); --drawer:cubic-bezier(.32,.72,0,1);
+  --smt:0 .35s; --smt2:0 .55s;
+}
+/* v2.2 · canonical Design.md §4 light theme. The white-and-blue mix is the
+   contract's own three-level depth: cool blue-white canvas (#f0f4f8) under
+   pure white cards, primary-tinted shadows, 14% soft primary, grain at .035.
+   Dark mode is intentionally absent so reviews always see the light theme. */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);color:var(--ink);
+  min-height:100dvh;overflow:hidden;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  -webkit-tap-highlight-color:transparent;overscroll-behavior:none;
+}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.grain{pointer-events:none;position:absolute;inset:0;z-index:0;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");mix-blend-mode:multiply}
+.skiplink{position:fixed;left:12px;top:calc(var(--sat) + 10px);z-index:80;transform:translateY(-260%);background:var(--primary);color:#fff;padding:12px 18px;border-radius:12px;font-weight:800;font-size:13px;transition:transform .2s}
+.skiplink:focus{transform:none}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:active{transform:scale(.97)}
+:focus-visible{outline:2px solid var(--primary-bright);outline-offset:2px;border-radius:8px}
+.mono{font-family:"DM Mono",ui-monospace,monospace}
+
+/* ============ app frame ============ */
+.app{position:relative;height:100dvh;display:flex;flex-direction:column}
+.topbar{
+  position:absolute;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(var(--sat) + 12px) calc(var(--sar) + 20px) 10px calc(var(--sal) + 20px);
+  background:linear-gradient(180deg,var(--bg) 55%,transparent);
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:-.01em}
+.logo{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:16px;box-shadow:var(--shadow)}
+.stepchip{font-size:12px;font-weight:700;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* ============ deck ============ */
+.deck{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:pan-y}
+.track{display:flex;height:100%;will-change:transform}
+.slide{
+  flex:0 0 100%;min-width:0;height:100%;display:flex;flex-direction:column;
+  padding:calc(var(--sat) + 66px) calc(var(--sar) + 24px) calc(var(--sab) + 128px) calc(var(--sal) + 24px);
+  overflow:hidden;
+}
+.stage{position:relative;flex:1 1 auto;min-height:140px;display:flex;align-items:center;justify-content:center}
+.text{flex:0 0 auto}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);margin-bottom:8px}
+h1{font-size:clamp(1.75rem,6.4vw,2.3rem);line-height:1.08;letter-spacing:-.025em;font-weight:800;text-wrap:balance}
+.copy{margin-top:10px;font-size:.95rem;line-height:1.6;color:var(--ink-2);max-width:38ch;text-wrap:pretty}
+body:not(.single) h1{font-size:clamp(1.6rem,4.4vw,2.6rem)}
+body:not(.single) .copy{max-width:44ch}
+
+/* ============ bottom zone ============ */
+.bottom{
+  position:absolute;left:0;right:0;bottom:0;z-index:40;
+  padding:12px calc(var(--sar) + 24px) calc(var(--sab) + 16px) calc(var(--sal) + 24px);
+  display:flex;flex-direction:column;gap:12px;
+  background:linear-gradient(180deg,transparent,var(--bg) 40%);
+}
+.meta{display:flex;align-items:center;min-height:44px}
+.backbtn{
+  width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  color:var(--ink-2);background:var(--surface);border:1px solid var(--line-strong);box-shadow:var(--shadow);
+  visibility:hidden;
+}
+.backbtn.show{visibility:visible}
+.dots{flex:1;display:flex;justify-content:center;gap:6px}
+.dots button{width:28px;height:44px;display:grid;place-items:center;border-radius:12px}
+.dots button i{width:7px;height:7px;border-radius:4px;background:var(--surface-strong);transition:width .35s var(--ez),background .35s;display:block}
+.dots button[aria-current="true"] i{width:24px;background:var(--primary)}
+.cta{
+  width:100%;min-height:54px;border-radius:16px;
+  background:var(--grad);color:#fff;
+  font-weight:800;font-size:16px;letter-spacing:-.01em;
+  box-shadow:var(--shadow-float);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .15s ease-out,opacity .2s,filter .2s;
+}
+.cta:hover{filter:brightness(1.08)}
+.cta:disabled{opacity:.55;box-shadow:none;cursor:not-allowed}
+.cta.busy{pointer-events:none;filter:saturate(.7)}
+.cta .spin{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite;display:none}
+.cta.busy .spin{display:block}
+.fine{text-align:center;color:var(--ink-3);font-size:11px}
+.timenote{min-height:15px;text-align:center;color:var(--ink-3);font-size:11px;font-weight:600}
+
+/* ============ v2.1 · skip control ============ */
+.skipbtn{
+  min-height:44px;padding:0 14px;border-radius:12px;
+  font-size:13px;font-weight:800;color:var(--ink-3);
+  background:transparent;border:1px solid transparent;
+  transition:color .2s,border-color .2s;
+}
+.skipbtn:hover{color:var(--ink-2);border-color:var(--line-strong)}
+
+/* ============ v2.1 · SSO ============ */
+.sso.has{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.ssobtn{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  width:100%;min-height:52px;border-radius:15px;
+  background:var(--surface);border:1.5px solid var(--surface-strong);
+  font-size:14.5px;font-weight:800;color:var(--ink);
+  box-shadow:var(--shadow);
+  transition:transform .15s ease-out,border-color .2s,opacity .2s;
+}
+.ssobtn:hover{border-color:var(--primary-bright)}
+.ssobtn:disabled{opacity:.55;cursor:not-allowed}
+.ssobtn.busy{pointer-events:none;opacity:.7}
+.ssobtn .sspin{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--surface-strong);border-top-color:var(--primary);animation:spin .7s linear infinite;display:none}
+.ssobtn.busy .sspin{display:block}
+.ssobtn svg{flex:0 0 auto}
+.ssoor{display:flex;align-items:center;gap:12px;margin:2px 0;color:var(--ink-3);font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.ssoor::before,.ssoor::after{content:"";flex:1;border-top:1px solid var(--line-strong)}
+
+/* ============ v2.1 · living illustrations ============ */
+/* invoice: the Paid step glows when its dot lands */
+.slide.active .tickdot.go-paid{animation:dotGo .4s var(--ez) 2.4s forwards,paidGlow 2.6s ease-out 2.8s}
+@keyframes paidGlow{0%{box-shadow:0 0 0 0 rgba(22,163,74,.45)}45%{box-shadow:0 0 0 9px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+.slide.active .vrow-paid{animation:paidRow 2.4s var(--ez) 2.6s both}
+@keyframes paidRow{0%,100%{background:transparent}25%{background:rgba(22,163,74,.08)}}
+/* logistics: proof-of-delivery chip pulses once its reveal lands */
+.slide.active .chip.chip-signed{animation:riseR .6s var(--ez) 1.4s both,celebrate 2.2s ease-out 2.1s}
+@keyframes celebrate{0%{box-shadow:var(--shadow)}30%{box-shadow:0 0 0 5px rgba(22,163,74,.18),var(--shadow)}100%{box-shadow:var(--shadow)}}
+/* taxes: the NRS chip carries a slow attention shimmer */
+.slide.active .chip-nrs::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);background-size:220% 100%;animation:shimmer 3.2s ease-in-out 2s infinite;pointer-events:none}
+.chip-nrs{overflow:hidden}
+@keyframes shimmer{0%{background-position:120% 0}55%,100%{background-position:-120% 0}}
+
+/* ============ v2.1 · peak + end moments ============ */
+.waitstep.done:first-child i{background:rgba(22,163,74,.12);color:var(--success)}
+.waitstep.justdone i{background:var(--success);color:#fff;animation:justPop .5s cubic-bezier(.34,1.4,.64,1) both}
+@keyframes justPop{0%{transform:scale(.4)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.endcard{
+  margin-top:12px;padding:11px 13px;border-radius:13px;
+  background:rgba(22,163,74,.07);border:1px solid rgba(22,163,74,.18);
+  font-size:12px;font-weight:700;color:var(--success);line-height:1.5;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.endcard svg{flex:0 0 auto;margin-top:1px}
+.endcard{opacity:0;transform:translateY(6px)}
+.endcard.reveal{animation:riseIn .5s var(--ez) both}
+.credline{display:flex;align-items:center;justify-content:center;gap:6px}
+.credline svg{color:var(--success)}
+
+/* ============ reveal system ============ */
+.rv,.rv-l,.rv-r{opacity:0}
+.slide.active .rv{animation:riseIn .6s var(--ez) var(--d,0s) both}
+.slide.active .rv-l{animation:riseL .6s var(--ez) var(--d,0s) both}
+.slide.active .rv-r{animation:riseR .6s var(--ez) var(--d,0s) both}
+.growbar{transform:scaleX(0);transform-origin:left center}
+.slide.active .growbar{animation:growW .65s var(--ez) var(--d,0s) both}
+.pop{opacity:0;transform:scale(.5)}
+.slide.active .pop{animation:popIn .55s cubic-bezier(.34,1.4,.64,1) var(--d,0s) both}
+.float{animation:none}
+.slide.active .float{animation:riseIn .6s var(--ez) var(--d,0s) both,floatY 3.8s ease-in-out var(--fd,0s) infinite}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes riseL{from{opacity:0;transform:translate(-20px,10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes riseR{from{opacity:0;transform:translate(20px,10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes growW{to{transform:scaleX(1)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.5)}70%{opacity:1;transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ shared card ============ */
+.artcard{
+  width:min(88%,330px);background:var(--surface);
+  border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-float);
+  padding:18px 16px 14px;margin:10px 0;position:relative;
+}
+.cardhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.minibrand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px}
+.mini-logo{width:22px;height:22px;border-radius:7px;background:var(--grad);color:#fff;display:grid;place-items:center;font-size:12.5px;font-weight:800}
+.pill{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px}
+.pill-ok{color:var(--success);background:rgba(22,163,74,.10)}
+.pill-live{color:var(--primary-bright);background:var(--primary-soft)}
+.pill-warn{color:var(--warning);background:rgba(217,119,6,.10)}
+.row{display:flex;align-items:center;gap:9px;padding:10px 2px;border-top:1px solid var(--line);font-size:13px;font-weight:700;color:var(--ink-2)}
+.row em{margin-left:auto;font-style:normal;font-size:11px;font-weight:800;color:var(--ink-3);background:var(--surface-muted);border-radius:999px;padding:3px 9px}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.dot.ok{background:var(--success)}
+.dot.live{background:var(--primary-bright)}
+.dot.warn{background:var(--warning)}
+.chip{
+  position:absolute;z-index:2;display:flex;align-items:center;gap:7px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:9px 12px;font-size:11.5px;font-weight:800;color:var(--ink-2);white-space:nowrap;
+}
+.chip svg{flex:0 0 auto;color:var(--primary)}
+
+/* ============ S1 · intro orbit ============ */
+.orbitwrap{position:relative;width:min(80vw,320px);height:min(80vw,320px);display:grid;place-items:center}
+.orbitring{position:absolute;inset:0;border-radius:50%;border:1.5px dashed var(--line-strong);animation:orbitSpin 26s linear infinite}
+.orbitring2{position:absolute;inset:13%;border-radius:50%;border:1.5px dashed var(--line);animation:orbitSpin 40s linear infinite reverse}
+@keyframes orbitSpin{to{transform:rotate(360deg)}}
+.brandtile{
+  width:104px;height:104px;border-radius:26px;background:var(--grad);
+  display:grid;place-items:center;color:#fff;box-shadow:var(--shadow-float);position:relative;z-index:1;
+}
+.brandtile span{font-size:44px;font-weight:800}
+.modchip{
+  position:absolute;z-index:2;display:flex;align-items:center;gap:7px;
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow);
+  padding:9px 13px;font-size:12px;font-weight:800;color:var(--ink-2);
+}
+.modchip i{width:8px;height:8px;border-radius:50%;background:var(--primary);flex:0 0 auto}
+.mc-invoice{top:6%;left:2%}
+.mc-waybill{top:16%;right:-3%}
+.mc-tax{bottom:20%;right:0%}
+.mc-project{bottom:5%;left:6%}
+.mc-fleet{top:46%;left:-7%}
+
+/* ============ S2 · invoicing ============ */
+.invhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.invno{font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.04em}
+.invamt{font-size:clamp(1.9rem,8vw,2.35rem);font-weight:800;letter-spacing:-.03em;margin:2px 0 12px}
+.invamt .cur{font-size:.62em;font-weight:700;color:var(--ink-3);margin-right:2px;vertical-align:6%}
+.vatrow{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);padding:9px 0;border-top:1px solid var(--line)}
+.vatrow em{margin-left:auto;font-style:normal;font-size:10.5px;font-weight:800;color:var(--primary);background:var(--primary-soft);border-radius:999px;padding:3px 9px}
+.tickflow{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;gap:6px;align-items:center}
+.tickseg{height:4px;flex:1;border-radius:2px;background:var(--surface-muted);position:relative;overflow:hidden}
+.slide.active .tickseg::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--primary);transform:scaleX(0);transform-origin:left;animation:growW .5s var(--ez) forwards}
+.slide.active .tickseg:nth-child(2)::after{animation-delay:1.1s}
+.slide.active .tickseg:nth-child(4)::after{animation-delay:1.55s}
+.slide.active .tickseg:nth-child(6)::after{animation-delay:2s}
+.tickdot{width:8px;height:8px;border-radius:50%;background:var(--surface-strong);flex:0 0 auto}
+.slide.active .tickdot{animation:dotGo .4s var(--ez) var(--d,0s) forwards}
+@keyframes dotGo{to{background:var(--success)}}
+
+/* ============ S3 · logistics ============ */
+.routebox{position:relative;width:min(88%,330px)}
+.routehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.routepts{display:flex;align-items:center;gap:10px;font-weight:800;font-size:14px}
+.routepts .pt{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.pt-a{background:var(--ink-3)}
+.pt-b{background:var(--primary)}
+.routeline{position:relative;height:2px;background:var(--line-strong);border-radius:1px}
+.routeline .trace{position:absolute;inset:0;border-radius:inherit;background:var(--primary);transform:scaleX(0);transform-origin:left}
+.slide.active .routeline .trace{animation:growW 1.6s var(--drawer) .5s forwards}
+.routetruck{position:absolute;top:-11px;left:0;width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line-strong);box-shadow:var(--shadow);display:grid;place-items:center;will-change:transform}
+.slide.active .routetruck{animation:truckGo 1.6s var(--drawer) .5s both}
+@keyframes truckGo{from{transform:translateX(0)}to{transform:translateX(calc(var(--linew,300px) - 22px))}}
+.c-signed{bottom:8%;right:-4%}
+.routemeta{display:flex;justify-content:space-between;margin-top:12px;font-size:10.5px;font-weight:700;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+.waybilllist{margin-top:6px}
+.waybillrow{display:flex;align-items:center;gap:9px;padding:10px 2px;border-top:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.wb-chip{font-family:"DM Mono",monospace;font-size:10.5px;color:var(--primary);background:var(--primary-soft);border-radius:6px;padding:2px 7px;font-weight:500}
+.c-route{top:-4%;right:-4%}
+.c-signed{bottom:-5%;left:-5%}
+
+/* ============ S4 · taxes ============ */
+.taxflow{margin-top:12px;padding-top:13px;border-top:1px solid var(--line)}
+.trackline{position:relative;height:4px;border-radius:2px;background:var(--surface-muted)}
+.trackline::before{content:"";position:absolute;left:0;top:0;bottom:0;width:66%;border-radius:2px;background:var(--primary-soft)}
+.flowdot{position:absolute;top:50%;left:0;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.slide.active .flowdot{animation:flowmove 4.8s ease-in-out 1.1s infinite}
+@keyframes flowmove{0%{transform:translateX(0);opacity:1}30%{transform:translateX(78px);opacity:1}60%{transform:translateX(156px);opacity:1}66%{opacity:1;transform:translateX(156px)}70%{opacity:0;transform:translateX(156px)}72%{transform:translateX(0);opacity:0}78%,100%{opacity:1;transform:translateX(0)}}
+.steps{display:flex;justify-content:space-between;margin-top:9px}
+.steps span{font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.slide.active .steps span{animation:stepPulse 4.8s ease-in-out 1.1s infinite}
+.slide.active .steps span:nth-child(2){animation-delay:2.7s}
+.slide.active .steps span:nth-child(3){animation-delay:4.3s}
+@keyframes stepPulse{0%{color:var(--primary)}26%{color:var(--primary)}52%{color:var(--ink-3)}100%{color:var(--ink-3)}}
+.c-record{top:0%;left:-4%}
+.c-vat{top:10%;right:-5%}
+.c-nrs{bottom:-2%;left:-2%}
+
+/* ============ S5 · tenancy map ============ */
+/* The map is a deliberate dark preview card. It uses fixed dark values so it
+   stays legible in both modes. var(--secondary) flips pale in dark mode and
+   would leave its light text invisible. */
+.board{position:relative;width:min(88%,330px);border-radius:20px;background:#0f172a;color:#f1f5f9;border:1px solid rgba(148,163,184,.22);padding:15px 17px;box-shadow:var(--shadow-float)}
+.board .cardhead{margin-bottom:11px}
+.board .minibrand{color:#f1f5f9}
+.board .mini-logo{background:var(--grad)}
+.boardlabel{color:rgba(241,245,249,.55);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.maphub{display:flex;align-items:center;gap:8px;width:max-content;margin:0 auto;padding:6px 12px 6px 7px;border-radius:11px;background:rgba(241,245,249,.08);border:1px solid rgba(241,245,249,.16)}
+.hublogo{width:21px;height:21px;display:grid;place-items:center;border-radius:7px;background:var(--grad);color:#fff;font-size:11px;font-weight:800}
+.hubtext strong{display:block;font-size:10.5px;letter-spacing:.01em}
+.hubtext span{display:block;margin-top:1px;font-size:8.5px;color:rgba(241,245,249,.55)}
+.stem-v{width:1px;height:9px;margin:0 auto;border-left:1px dashed rgba(148,163,184,.5)}
+.stem-h{position:relative;height:1px;margin:0 15%;border-top:1px dashed rgba(148,163,184,.5)}
+.stem-h::before,.stem-h::after{content:"";position:absolute;top:0;width:1px;height:8px;border-left:1px dashed rgba(148,163,184,.5)}
+.stem-h::before{left:0}
+.stem-h::after{right:0}
+.silo{position:relative;padding:10px 11px 8px;border-radius:14px;background:rgba(241,245,249,.04);border:1px solid rgba(148,163,184,.30);border-left:3px solid var(--tn,#60a5fa)}
+.silo + .silo{margin-top:8px}
+.silo-top{display:flex;align-items:center;gap:8px}
+.silo-icon{width:25px;height:25px;flex:0 0 auto;display:grid;place-items:center;border-radius:8px;background:var(--tn);color:#fff;font-size:11px;font-weight:800}
+.silo-name{min-width:0}
+.silo-name strong{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.silo-name span{display:block;margin-top:1px;font-size:8.5px;color:rgba(241,245,249,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.silo-theme{margin-left:auto;display:flex;align-items:center;gap:3px;flex:0 0 auto;font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(241,245,249,.65)}
+.silo-theme i{width:8px;height:8px;border-radius:50%;display:block}
+.ladder{display:flex;align-items:center;gap:6px;margin-top:8px}
+.rung{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:7px;background:rgba(241,245,249,.09);font-size:8.5px;font-weight:800;letter-spacing:.02em;color:rgba(241,245,249,.92);white-space:nowrap}
+.rung i{width:7px;height:7px;border-radius:50%;background:var(--tn);flex:0 0 auto}
+.rung.r2 i{background:rgba(241,245,249,.6)}
+.rung.r3 i{background:rgba(241,245,249,.32)}
+.link{flex:1;min-width:5px;border-top:1px dashed rgba(148,163,184,.35)}
+.silo-wall{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:7px;border-top:1px dashed rgba(148,163,184,.3);font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(241,245,249,.55)}
+.silo-wall svg{flex:0 0 auto;opacity:.7}
+.isolation{
+  position:absolute;right:-10px;bottom:-8px;display:flex;align-items:center;gap:6px;
+  padding:10px 13px;border-radius:13px;background:var(--surface);border:1px solid var(--line);
+  color:var(--success);font-size:11px;font-weight:800;box-shadow:var(--shadow-float);
+}
+.isolation::before{content:"✓";display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;color:#fff;background:var(--success);font-size:10px}
+@media (max-height:640px){
+  .board{padding:11px 13px}
+  .board .cardhead{margin-bottom:8px}
+  .maphub{padding:5px 10px 5px 6px}
+  .stem-v{height:7px}
+  .stem-h::before,.stem-h::after{height:6px}
+  .silo{padding:8px 9px 6px}
+  .silo + .silo{margin-top:6px}
+  .ladder{margin-top:6px}
+  .silo-wall{margin-top:6px;padding-top:5px}
+}
+
+/* ============ S6 · auth ============ */
+.signupwrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.forms{position:relative;flex:1;min-height:0;margin-top:16px}
+.formpane{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px;transition:opacity .3s var(--ez),transform .3s var(--ez)}
+.formpane[hidden]{display:none}
+.formpane.out{opacity:0;transform:translateX(-14px);pointer-events:none}
+.formpane.in{opacity:0;transform:translateX(14px)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:800;letter-spacing:.02em;color:var(--ink-2);margin-bottom:6px}
+.control{position:relative}
+.control input{
+  width:100%;min-height:52px;border-radius:14px;border:1.5px solid var(--surface-strong);
+  background:var(--surface);color:var(--ink);
+  font:inherit;font-size:15.5px;font-weight:600;padding:0 14px;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.control input::placeholder{color:var(--ink-3);font-weight:500;opacity:.75}
+.control input:focus{outline:none;border-color:var(--primary-bright);box-shadow:0 0 0 4px var(--primary-soft)}
+.field.invalid input{border-color:var(--danger);box-shadow:0 0 0 4px rgba(220,38,38,.10)}
+.field.valid input{border-color:var(--primary-bright)}
+.err{display:none;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--danger)}
+.field.invalid .err{display:flex;align-items:center;gap:5px}
+.field .ok{position:absolute;right:14px;top:50%;transform:translateY(-50%) scale(0);color:var(--success);transition:transform .25s var(--ez)}
+.field.valid .ok{transform:translateY(-50%) scale(1)}
+.pwtoggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--ink-3)}
+.field.haspw input{padding-right:52px}
+.meter{display:flex;gap:5px;margin-top:8px}
+.meter i{height:4px;flex:1;border-radius:2px;background:var(--surface-strong);transition:background .3s}
+.meter.s1 i:nth-child(1){background:var(--danger)}
+.meter.s2 i:nth-child(-n+2){background:var(--warning)}
+.meter.s3 i{background:var(--success)}
+.meterlabel{font-size:11.5px;font-weight:700;color:var(--ink-3);margin-top:5px;min-height:15px}
+.choicegrid{display:grid;gap:11px}
+.authchoice{
+  display:flex;align-items:center;gap:13px;width:100%;padding:15px 16px;border-radius:16px;text-align:left;
+  background:var(--surface);border:1px solid var(--line-strong);box-shadow:var(--shadow);
+  transition:transform .15s ease-out,border-color .2s;
+}
+.authchoice:hover{border-color:var(--primary-bright)}
+.authchoice .aicon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--primary-soft);color:var(--primary);flex:0 0 auto}
+.authchoice.primary-choice{background:var(--grad);border-color:transparent;color:#fff;box-shadow:var(--shadow-float)}
+.authchoice.primary-choice .aicon{background:rgba(255,255,255,.16);color:#fff}
+.authchoice strong{display:block;font-size:14.5px}
+.authchoice span.asub{display:block;margin-top:2px;opacity:.72;font-size:11.5px;font-weight:600}
+.alt{margin-top:6px;text-align:center;font-size:13.5px;color:var(--ink-2)}
+.alt button{color:var(--primary);font-weight:800;min-height:44px;padding:0 6px}
+.waitcard{border:1px solid var(--line-strong);border-radius:18px;background:var(--surface);box-shadow:var(--shadow);padding:20px 18px}
+.waiticon{width:46px;height:46px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin-bottom:13px}
+.waitsteps{margin-top:14px;display:grid;gap:9px}
+.waitstep{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.waitstep i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:800;flex:0 0 auto;background:var(--surface-muted);color:var(--ink-3)}
+.waitstep.done i{background:rgba(22,163,74,.12);color:var(--success)}
+.waitstep.on i{background:var(--primary-soft);color:var(--primary)}
+.waitstep.on i::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary);animation:pulseDot 1.6s ease-in-out infinite}
+@keyframes pulseDot{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+.waitnote{margin-top:14px;font-size:11.5px;color:var(--ink-3);line-height:1.5}
+
+/* ============ responsive: fold + desktop ============ */
+@media (min-width:640px){
+  .app{max-width:none}
+  .slide{
+    padding-top:calc(var(--sat) + 72px);
+    padding-bottom:calc(var(--sab) + 132px);
+  }
+  .stage-inner{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:32px;width:100%;max-width:880px;margin:0 auto}
+  .stage{align-items:center}
+  .slide .stage-col{min-height:0}
+  .artcard,.board,.routebox{width:100%;max-width:360px;margin:0 auto}
+  .orbitwrap{margin:0 auto}
+  .text{margin-top:8px}
+}
+@media (min-width:1024px){
+  .slide{padding-bottom:calc(var(--sab) + 140px)}
+  .stage-inner{max-width:1040px;gap:56px;grid-template-columns:1fr 1fr}
+  h1{font-size:clamp(2.1rem,3.2vw,3rem)}
+  .copy{font-size:1.02rem}
+  .artcard,.board,.routebox{max-width:400px}
+  .brandtile{width:120px;height:120px;border-radius:30px}
+  .brandtile span{font-size:52px}
+  .orbitwrap{width:360px;height:360px}
+  .bottom{padding-left:calc(var(--sal) + 48px);padding-right:calc(var(--sar) + 48px)}
+  .bottom-inner{max-width:880px;margin:0 auto;width:100%}
+  .topbar{padding-left:calc(var(--sal) + 48px);padding-right:calc(var(--sar) + 48px)}
+  .topbar-inner{max-width:1040px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between}
+}
+@media (min-width:640px) and (max-width:1023px){
+  .mc-fleet{left:2%}
+}
+/* fold (e.g. Surface Duo 540 to 639px): single column but wider gutters */
+@media (min-width:540px) and (max-width:639px){
+  .slide{padding-left:calc(var(--sal) + 40px);padding-right:calc(var(--sar) + 40px)}
+}
+/* short phones */
+@media (max-height:640px){
+  .slide{padding-top:calc(var(--sat) + 58px);padding-bottom:calc(var(--sab) + 118px)}
+  .artcard,.board,.routebox{padding:14px 14px 10px;margin:4px 0}
+  h1{font-size:1.65rem}
+  .copy{font-size:.9rem}
+  .invamt{font-size:1.8rem}
+  .orbitwrap{width:min(62vw,250px);height:min(62vw,250px)}
+}
+
+/* ============ reduced motion ============ */
+@media (prefers-reduced-motion:reduce){
+  *,::before,::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .rv,.rv-l,.rv-r,.pop{opacity:1 !important;transform:none !important}
+  .growbar{transform:scaleX(1) !important}
+  .routeline .trace{transform:scaleX(1) !important}
+  .routetruck{transform:translateX(calc(var(--linew,300px) - 22px)) !important}
+  .flowdot{opacity:1;left:52%}
+  .steps span{color:var(--primary)}
+  .tickseg::after{transform:scaleX(1)}
+  .tickdot{background:var(--success)}
+}
+</style>
+</head>
+<body>
+<a class="skiplink vh" href="#signupFields">Skip to sign-up form</a>
+<p class="vh" role="status" id="liveStatus">Step 1 of 6: Welcome</p>
+
+<div class="app">
+  <div class="grain" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="logo" aria-hidden="true">b</span>BIGDROPS</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="stepchip" id="stepChip" aria-hidden="true">01 / 06</div>
+        <button type="button" class="skipbtn" id="skipBtn">Skip</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="deck" id="deck" aria-roledescription="carousel" aria-label="BIGDROPS onboarding">
+    <div class="track" id="track">
+
+      <!-- ═══════ 1 · WELCOME ═══════ -->
+      <section class="slide active" id="s0" aria-roledescription="slide" aria-label="1 of 6">
+        <div class="stage-inner">
+          <div class="stage-col stage">
+            <div class="orbitwrap" role="img" aria-label="The BIGDROPS brand with the modules of the business orbiting around it">
+              <div class="orbitring" aria-hidden="true"></div>
+              <div class="orbitring2" aria-hidden="true"></div>
+              <div class="brandtile rv" style="--d:.05s"><span>b</span></div>
+              <div class="modchip mc-invoice rv-l float" style="--d:.4s;--fd:.2s"><i></i>Invoices</div>
+              <div class="modchip mc-waybill rv-r float" style="--d:.55s;--fd:.7s"><i></i>Waybills</div>
+              <div class="modchip mc-tax rv-l float" style="--d:.7s;--fd:1.1s"><i></i>Taxes</div>
+              <div class="modchip mc-project rv-r float" style="--d:.85s;--fd:1.6s"><i></i>Projects</div>
+              <div class="modchip mc-fleet float" style="--d:1s;--fd:.4s"><i></i>Delivery</div>
+              <div class="chip rv" style="--d:1.25s;position:absolute;bottom:-5%;left:50%;margin-left:-118px;width:236px;justify-content:center;text-align:center;white-space:normal">One login. Every part of the business.</div>
+            </div>
+          </div>
+          <div class="text-col text">
+            <p class="eyebrow rv" style="--d:.1s">Welcome to BIGDROPS</p>
+            <h1 class="rv" style="--d:.18s">Run the whole operation from one place.</h1>
+            <p class="copy rv" style="--d:.28s">Invoices, deliveries, projects and taxes. The everyday work of your business, kept in one system that talks to itself.</p>
+            <p class="copy rv timenote" style="--d:.36s">A 30-second look before you set up.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ 2 · INVOICING ═══════ -->
+      <section class="slide" id="s1" aria-roledescription="slide" aria-label="2 of 6">
+        <div class="stage-inner">
+          <div class="stage-col stage">
+            <div class="artcard" role="img" aria-label="An invoice for 1,250,000 naira assembles while its VAT line shows applied and payment progresses">
+              <div class="cardhead">
+                <span class="minibrand"><span class="mini-logo" aria-hidden="true">b</span>BIGDROPS</span>
+                <span class="pill pill-live">Invoice</span>
+              </div>
+              <div class="invhead"><span class="invno">INV-2049</span></div>
+              <div class="invamt mono"><span class="cur">₦</span>1,250,000</div>
+              <div class="vatrow"><i class="dot live"></i><span>VAT</span><em>Applied</em></div>
+              <div class="vatrow"><i class="dot live"></i><span>WHT</span><em>Applied</em></div>
+              <div class="tickflow" aria-hidden="true">
+                <i class="tickdot" style="--d:1.1s"></i><i class="tickseg"></i>
+                <i class="tickdot" style="--d:1.5s"></i><i class="tickseg"></i>
+                <i class="tickdot" style="--d:1.95s"></i><i class="tickseg"></i>
+                <i class="tickdot go-paid" style="--d:2.4s"></i>
+              </div>
+              <div class="routemeta" style="margin-top:8px"><span>Sent</span><span>Viewed</span><span class="vrow-paid" style="border-radius:6px">Paid</span></div>
+            </div>
+          </div>
+          <div class="text-col text">
+            <p class="eyebrow rv" style="--d:.1s">Invoicing</p>
+            <h1 class="rv" style="--d:.18s">From job done to money in.</h1>
+            <p class="copy rv" style="--d:.28s">Build a professional invoice in seconds. VAT and WHT are applied the moment you record the transaction, and every invoice lands ready for the tax authority.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ 3 · LOGISTICS ═══════ -->
+      <section class="slide" id="s2" aria-roledescription="slide" aria-label="3 of 6">
+        <div class="stage-inner">
+          <div class="stage-col stage">
+            <div class="routebox">
+              <div class="artcard" role="img" aria-label="A delivery route from Lagos to Abuja draws itself while two waybills move through their journey">
+                <div class="cardhead">
+                  <span class="minibrand"><span class="mini-logo" aria-hidden="true">b</span>BIGDROPS</span>
+                  <span class="pill pill-live">En route</span>
+                </div>
+                <div class="routepts"><span class="pt pt-a"></span>Lagos <span style="flex:1"></span>Abuja<span class="pt pt-b"></span></div>
+                <div class="routeline" style="margin-top:10px"><span class="trace"></span>
+                  <span class="routetruck" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h9M8 4l4 4-4 4"/></svg>
+                  </span>
+                </div>
+                <div class="routemeta"><span>Departed 8:40am</span><span>ETA 6:15pm</span></div>
+                <div class="waybilllist">
+                  <div class="waybillrow rv" style="--d:.9s"><span class="wb-chip">WB-4417</span><span>Chevron tusker 33kva</span><em style="margin-left:auto">Moving</em></div>
+                  <div class="waybillrow rv" style="--d:1.05s"><span class="wb-chip">WB-4418</span><span>Slab brackets ×240</span><em style="margin-left:auto">Loading</em></div>
+                </div>
+              </div>
+              <div class="chip c-route rv-l float" style="--d:1.2s;--fd:.3s">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5l5 2L14 3l-2.5 10-3.5-3-2.5 3z"/></svg>
+                Live tracking
+              </div>
+              <div class="chip c-signed chip-signed rv-r float" style="--d:1.4s;--fd:.9s">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Proof of delivery
+              </div>
+            </div>
+          </div>
+          <div class="text-col text">
+            <p class="eyebrow rv" style="--d:.1s">Logistics</p>
+            <h1 class="rv" style="--d:.18s">Every delivery, on record.</h1>
+            <p class="copy rv" style="--d:.28s">Assign a driver, send a waybill and watch it move. Live tracking and signed proof of delivery stay attached to the job it belongs to.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ 4 · TAXES ═══════ -->
+      <section class="slide" id="s3" aria-roledescription="slide" aria-label="4 of 6">
+        <div class="stage-inner">
+          <div class="stage-col stage">
+            <div class="artcard" role="img" aria-label="A tax position card shows VAT tracked, WHT tracked and one item for review, with a record-to-ready flow">
+              <div class="cardhead">
+                <span class="minibrand"><span class="mini-logo" aria-hidden="true">b</span>Monthly tax position</span>
+                <span class="pill pill-ok">On track</span>
+              </div>
+              <div class="row"><i class="dot ok"></i><span>VAT position</span><em>Tracked</em></div>
+              <div class="row"><i class="dot ok"></i><span>WHT position</span><em>Tracked</em></div>
+              <div class="row"><i class="dot warn"></i><span>Attention items</span><em>Review</em></div>
+              <div class="taxflow rv" style="--d:.66s">
+                <div class="trackline"><i class="flowdot"></i></div>
+                <div class="steps"><span>Recorded</span><span>Calculated</span><span>Ready</span></div>
+              </div>
+            </div>
+            <div class="chip c-record rv-l float" style="--d:.8s;--fd:.3s">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3l2 2"/></svg>
+              Record payment
+            </div>
+            <div class="chip c-vat rv-r float" style="--d:.95s;--fd:.8s">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="1.5" width="11" height="13" rx="2.5"/><path d="M5.5 5h5M5.5 8.5h.01M8 8.5h.01M10.5 8.5h.01"/></svg>
+              Built from your records
+            </div>
+            <div class="chip c-nrs chip-nrs float" style="--d:1.1s;--fd:1.2s">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5l5 2L14 3l-2.5 10-3.5-3-2.5 3z"/></svg>
+              Ready for NRS
+            </div>
+          </div>
+          <div class="text-col text">
+            <p class="eyebrow rv" style="--d:.1s">Taxes</p>
+            <h1 class="rv" style="--d:.18s">Taxes, without the headache.</h1>
+            <p class="copy rv" style="--d:.28s">Keep recording what the business spends and earns. The tax position builds itself from those records, in plain words. No jargon, no spreadsheets.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ 5 · TENANCY ═══════ -->
+      <section class="slide" id="s4" aria-roledescription="slide" aria-label="5 of 6">
+        <div class="stage-inner">
+          <div class="stage-col stage">
+            <div class="board" role="img" aria-label="One login opens two separate businesses. Each business keeps its own team of owner, admins and members, its own books, tax files and its own colours. Data never crosses between them.">
+              <div class="cardhead">
+                <span class="minibrand"><span class="mini-logo" aria-hidden="true">b</span>your login</span>
+                <span class="boardlabel">Multitenancy &amp; theming</span>
+              </div>
+              <div class="maphub"><span class="hublogo" aria-hidden="true">b</span><span class="hubtext"><strong>One login</strong><span>every business sits under it</span></span></div>
+              <div class="stem-v" aria-hidden="true"></div>
+              <div class="stem-h" aria-hidden="true"></div>
+              <div class="silo" style="--tn:#0d9488">
+                <div class="silo-top">
+                  <span class="silo-icon" aria-hidden="true">N</span>
+                  <span class="silo-name"><strong>Northstar Studio</strong><span>Creative services</span></span>
+                  <span class="silo-theme" aria-hidden="true"><i style="background:#0d9488"></i><i style="background:#14b8a6"></i><i style="background:#0891b2"></i>Teal</span>
+                </div>
+                <div class="ladder" aria-hidden="true"><span class="rung r1"><i></i>Owner</span><span class="link"></span><span class="rung r2"><i></i>2 admins</span><span class="link"></span><span class="rung r3"><i></i>6 members</span></div>
+                <div class="silo-wall"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Books · VAT · Files stay inside</div>
+              </div>
+              <div class="silo" style="--tn:#b45309">
+                <div class="silo-top">
+                  <span class="silo-icon" aria-hidden="true">P</span>
+                  <span class="silo-name"><strong>Peakline Goods</strong><span>Retail operations</span></span>
+                  <span class="silo-theme" aria-hidden="true"><i style="background:#b45309"></i><i style="background:#d97706"></i><i style="background:#c2410c"></i>Amber</span>
+                </div>
+                <div class="ladder" aria-hidden="true"><span class="rung r1"><i></i>Owner</span><span class="link"></span><span class="rung r2"><i></i>1 admin</span><span class="link"></span><span class="rung r3"><i></i>4 members</span></div>
+                <div class="silo-wall"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Books · WHT · Files stay inside</div>
+              </div>
+              <div class="isolation rv pop" style="--d:1s">Foolproof isolation</div>
+            </div>
+          </div>
+          <div class="text-col text">
+            <p class="eyebrow rv" style="--d:.1s">Workspaces</p>
+            <h1 class="rv" style="--d:.18s">Two businesses. One login. Nothing mixes.</h1>
+            <p class="copy rv" style="--d:.28s">Run more than one company under one login. Each business keeps its own people and roles, its own records and its own colours. Nothing crosses between them.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════ 6 · GET STARTED ═══════ -->
+      <section class="slide" id="s5" aria-roledescription="slide" aria-label="6 of 6">
+        <div class="signupwrap">
+          <div class="text" style="margin-top:0">
+            <p class="eyebrow rv" style="--d:.05s">Get started</p>
+            <h1 class="rv" style="--d:.1s">Set up your workspace.</h1>
+            <p class="copy rv" style="--d:.18s">One workspace holds your businesses, your team and your records.</p>
+          </div>
+          <div class="forms" style="margin-top:16px">
+            <!-- choice pane -->
+            <div class="formpane" id="choicePane">
+              <div class="sso has" style="margin-bottom:14px">
+                <button type="button" class="ssobtn" id="ssoGoogle">
+                  <span class="sspin" aria-hidden="true"></span>
+                  <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                  Google
+                </button>
+                <button type="button" class="ssobtn" id="ssoApple">
+                  <span class="sspin" aria-hidden="true"></span>
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                  Apple
+                </button>
+              </div>
+              <div class="ssoor" style="margin-bottom:14px">or with email</div>
+              <div class="choicegrid">
+                <button type="button" class="authchoice primary-choice" id="goCreate">
+                  <span class="aicon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+                  <span><strong>Create a workspace</strong><span class="asub">Start your first business in minutes</span></span>
+                </button>
+                <button type="button" class="authchoice" id="goJoin">
+                  <span class="aicon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="3.2"/><path d="M21 21v-2a4 4 0 0 0-3-3.87M16.5 3.6a4 4 0 0 1 0 6.8"/></svg></span>
+                  <span><strong>Join a workspace</strong><span class="asub">Your team added you already</span></span>
+                </button>
+                <button type="button" class="authchoice" id="goSignin">
+                  <span class="aicon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg></span>
+                  <span><strong>Sign in</strong><span class="asub">Checking an approval? We'll show it here</span></span>
+                </button>
+              </div>
+            </div>
+            <!-- create pane -->
+            <form class="formpane" id="signupPane" hidden novalidate aria-label="Create your workspace">
+              <div id="signupFields">
+                <div class="field" id="f-name">
+                  <label for="in-name">Full name</label>
+                  <div class="control">
+                    <input id="in-name" name="name" type="text" autocomplete="name" placeholder="Adaeze Okafor" autocapitalize="words">
+                    <span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  </div>
+                  <p class="err" id="e-name" role="alert">Please enter your full name.</p>
+                </div>
+                <div class="field" id="f-email">
+                  <label for="in-email">Work email</label>
+                  <div class="control">
+                    <input id="in-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com">
+                    <span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  </div>
+                  <p class="err" id="e-email" role="alert">Enter a valid email address.</p>
+                </div>
+                <div class="field haspw" id="f-pw">
+                  <label for="in-pw">Password</label>
+                  <div class="control">
+                    <input id="in-pw" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+                    <button type="button" class="pwtoggle" id="pwToggle" aria-label="Show password" aria-pressed="false">
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
+                  <div class="meter" id="pwMeter" aria-hidden="true"><i></i><i></i><i></i></div>
+                  <p class="meterlabel" id="pwLabel"></p>
+                  <p class="err" id="e-pw" role="alert">Password must be at least 8 characters.</p>
+                </div>
+              </div>
+              <button class="cta" type="submit" id="signupCta"><span class="spin" aria-hidden="true"></span><span class="lbl">Create workspace</span></button>
+              <p class="fine" style="margin-top:10px">Your workspace opens after a quick approval.</p>
+            </form>
+            <!-- join pane -->
+            <form class="formpane" id="joinPane" hidden novalidate aria-label="Join a workspace">
+              <div class="field" id="f-j-email">
+                <label for="in-j-email">Work email</label>
+                <div class="control">
+                  <input id="in-j-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com">
+                  <span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+                <p class="err" id="e-j-email" role="alert">Enter a valid email address.</p>
+              </div>
+              <p class="fine" style="margin:10px 0 14px">If your team added this email, we'll take you straight in. Otherwise, ask an admin to send an invite.</p>
+              <button class="cta" type="submit" id="joinCta"><span class="spin" aria-hidden="true"></span><span class="lbl">Continue</span></button>
+            </form>
+            <!-- sign in pane -->
+            <form class="formpane" id="signinPane" hidden novalidate aria-label="Sign in">
+              <div class="field" id="f-si-email">
+                <label for="in-si-email">Email</label>
+                <div class="control">
+                  <input id="in-si-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@company.com">
+                  <span class="ok" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+                <p class="err" id="e-si-email" role="alert">Enter a valid email address.</p>
+              </div>
+              <div class="field haspw" id="f-si-pw">
+                <label for="in-si-pw">Password</label>
+                <div class="control">
+                  <input id="in-si-pw" name="password" type="password" autocomplete="current-password" placeholder="Your password">
+                </div>
+                <p class="err" id="e-si-pw" role="alert">Enter your password.</p>
+              </div>
+              <button class="cta" type="submit" id="signinCta"><span class="spin" aria-hidden="true"></span><span class="lbl">Sign in</span></button>
+              <p class="fine" style="margin-top:10px">Approval status appears on sign-in. No need to recheck.</p>
+            </form>
+            <!-- waiting pane -->
+            <div class="formpane" id="waitPane" hidden aria-label="Waiting for approval">
+              <div class="waitcard">
+                <div class="waiticon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                </div>
+                <h2 style="font-size:19px;font-weight:800;letter-spacing:-.02em">Waiting for approval</h2>
+                <p style="margin-top:6px;font-size:13.5px;color:var(--ink-2);line-height:1.5" id="waitLead">Your workspace request is in. We'll review it and open the doors shortly.</p>
+                <div class="waitsteps" role="status">
+                  <div class="waitstep done" data-step="0"><i aria-hidden="true">✓</i><span>Request received</span></div>
+                  <div class="waitstep on" data-step="1"><i aria-hidden="true"></i><span>Awaiting review</span></div>
+                  <div class="waitstep" data-step="2"><i aria-hidden="true">3</i><span>Workspace opened</span></div>
+                </div>
+                <p class="waitnote">This screen updates by itself when you're approved. You can close the app. Signing back in lands here until approval lands.</p>
+              </div>
+              <div class="endcard" id="endcard" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
+                <span>You're on the list. Most workspaces open the same day.</span>
+              </div>
+              <button type="button" class="alt" id="waitBack" style="width:100%;margin-top:14px;min-height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--line-strong);font-weight:800;color:var(--ink-2)">Back</button>
+            </div>
+          </div>
+          <p class="alt" id="altLine"><span id="altLabel">Already set up?</span> <button type="button" id="altSwitch">Sign in</button></p>
+          <p class="fine credline"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>Built for Nigerian business. Your records stay yours.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- bottom zone -->
+  <div class="bottom" id="bottomZone">
+    <div class="bottom-inner">
+      <div class="meta">
+        <button class="backbtn" id="backBtn" aria-label="Previous step">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="dots" id="dots" role="tablist" aria-label="Onboarding steps"></div>
+        <span style="width:44px" aria-hidden="true"></span>
+      </div>
+      <button class="cta" id="nextBtn"><span class="lbl">Get started</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var track=document.getElementById('track');
+var deck=document.getElementById('deck');
+var dotsWrap=document.getElementById('dots');
+var nextBtn=document.getElementById('nextBtn');
+var backBtn=document.getElementById('backBtn');
+var bottomZone=document.getElementById('bottomZone');
+var live=document.getElementById('liveStatus');
+var stepChip=document.getElementById('stepChip');
+var names=['Welcome','Invoicing','Logistics','Taxes','Workspaces','Get started'];
+var labels=['See how it works','See money come in','See a delivery land','See taxes get easy','See teams stay separate','Create my workspace'];
+var last=slides.length-1;
+var idx=0,w=0,reduced=false,reducedMQ;
+var x=0,vx=0,tx=0,raf=null;
+
+function isReduced(){return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
+reduced=isReduced();
+
+/* dots */
+slides.forEach(function(_,i){
+  var b=document.createElement('button');
+  b.type='button';b.setAttribute('role','tab');
+  b.setAttribute('aria-label','Go to step '+(i+1)+': '+names[i]);
+  b.innerHTML='<i></i>';
+  b.addEventListener('click',function(){goTo(i);});
+  dotsWrap.appendChild(b);
+});
+var dots=[].slice.call(dotsWrap.children);
+
+function metrics(){
+  w=deck.clientWidth;
+  document.querySelectorAll('.routeline').forEach(function(r){r.style.setProperty('--linew',r.clientWidth+'px');});
+}
+function setX(nx){x=nx;track.style.transform='translate3d('+x+'px,0,0)';}
+function rubberband(over){var d=w,c=0.55;return (over*d)/(d+c*Math.abs(over));}
+function project(v){var d=0.998;return (v/1000)*d/(1-d);}
+
+/* spring toward tx */
+var K,C;
+function springConsts(){var resp=0.42,wn=2*Math.PI/resp;K=wn*wn;C=2*wn;}
+springConsts();
+function springTo(target,vel){
+  tx=target;
+  if(reduced){vx=0;setX(tx);afterSettle();return;}
+  cancelAnimationFrame(raf);
+  var lastT=performance.now();
+  function step(now){
+    var dt=Math.min((now-lastT)/1000,1/30);lastT=now;
+    var a=K*(tx-x)-C*vx;
+    vx+=a*dt;x+=vx*dt;
+    if(Math.abs(tx-x)<0.4&&Math.abs(vx)<6){setX(tx);vx=0;raf=null;afterSettle();return;}
+    setX(x);
+    raf=requestAnimationFrame(step);
+  }
+  vx=vel||vx;
+  raf=requestAnimationFrame(step);
+}
+function stopSpring(){if(raf){cancelAnimationFrame(raf);raf=null;}}
+
+function afterSettle(){
+  slides.forEach(function(s,i){s.classList.toggle('active',i===idx);});
+  dots.forEach(function(d,i){d.setAttribute('aria-current',i===idx?'true':'false');});
+  backBtn.classList.toggle('show',idx>0&&idx<last);
+  nextBtn.parentElement.parentElement.style.display=(idx===last)?'none':'flex';
+  nextBtn.querySelector('.lbl').textContent=labels[idx];
+  live.textContent='Step '+(idx+1)+' of '+slides.length+': '+names[idx];
+  stepChip.textContent='0'+(idx+1)+' / 0'+slides.length;
+}
+function goTo(i,vel){
+  i=Math.max(0,Math.min(last,i));
+  idx=i;
+  springTo(-i*w,vel||0);
+}
+nextBtn.addEventListener('click',function(){goTo(idx>=last?last:idx+1);});
+document.getElementById('skipBtn').addEventListener('click',function(){goTo(last);});
+backBtn.addEventListener('click',function(){goTo(idx-1);});
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'){goTo(idx+1);}
+  else if(e.key==='ArrowLeft'){goTo(idx-1);}
+});
+
+/* pointer swipe */
+var dragging=false,startPX=0,startX=0,hist=[],moved=0;
+deck.addEventListener('pointerdown',function(e){
+  if(e.target.closest('input,button,form'))return;
+  dragging=true;moved=0;hist=[];
+  startPX=e.clientX;startX=x;
+  stopSpring();vx=0;
+  deck.setPointerCapture(e.pointerId);
+  hist.push({t:performance.now(),x:x});
+});
+deck.addEventListener('pointermove',function(e){
+  if(!dragging)return;
+  var dx=e.clientX-startPX;
+  moved=Math.max(moved,Math.abs(dx));
+  var nx=startX+dx;
+  if(nx>0)nx=rubberband(nx);
+  if(nx<-(last*w))nx=-(last*w)-rubberband(-(last*w)-nx);
+  setX(nx);
+  hist.push({t:performance.now(),x:x});
+  if(hist.length>6)hist.shift();
+});
+function endDrag(e){
+  if(!dragging)return;dragging=false;
+  if(moved<10){springTo(-idx*w,0);return;}
+  var now=performance.now();
+  var old=hist[0],cur=hist[hist.length-1];
+  var dt=(cur.t-old.t)/1000||0.016;
+  var v=(cur.x-old.x)/dt;
+  var projected=cur.x+project(v);
+  var target=Math.round(-projected/w);
+  if(v<-350&&target===idx)target=idx+1;
+  if(v>350&&target===idx)target=idx-1;
+  target=Math.max(0,Math.min(last,target));
+  idx=target;
+  springTo(-target*w,v);
+}
+deck.addEventListener('pointerup',endDrag);
+deck.addEventListener('pointercancel',endDrag);
+deck.addEventListener('click',function(e){if(moved>10){e.stopPropagation();e.preventDefault();}},true);
+window.addEventListener('resize',function(){metrics();stopSpring();setX(-idx*w);});
+reducedMQ=window.matchMedia('(prefers-reduced-motion: reduce)');
+if(reducedMQ.addEventListener){reducedMQ.addEventListener('change',function(e){reduced=e.matches;});}
+
+/* password visibility + strength */
+var pwToggle=document.getElementById('pwToggle');
+var pwInput=document.getElementById('in-pw');
+pwToggle.addEventListener('click',function(){
+  var show=pwInput.type==='password';
+  pwInput.type=show?'text':'password';
+  pwToggle.setAttribute('aria-pressed',show?'true':'false');
+  pwToggle.setAttribute('aria-label',show?'Hide password':'Show password');
+});
+pwInput.addEventListener('input',function(){
+  var v=pwInput.value,meter=document.getElementById('pwMeter'),lab=document.getElementById('pwLabel');
+  var cls=' s0',txt='';
+  if(v.length>=8&&/[a-zA-Z]/.test(v)&&/\d/.test(v)){cls=' s3';txt='Strong password';}
+  else if(v.length>=8){cls=' s2';txt='Good. Add a number for strength';}
+  else if(v.length>=5){cls=' s1';txt='Keep going. Use 8+ characters';}
+  meter.className='meter'+cls;
+  lab.textContent=v?txt:'';
+});
+
+/* validation */
+function setFieldState(fieldId,ok){
+  var f=document.getElementById(fieldId);
+  f.classList.toggle('invalid',!ok);
+  f.classList.toggle('valid',ok);
+  var input=f.querySelector('input');
+  input.setAttribute('aria-invalid',ok?'false':'true');
+  var err=f.querySelector('.err');
+  if(err)input.setAttribute('aria-describedby',err.id);
+  return ok;
+}
+var emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function validName(){return document.getElementById('in-name').value.trim().length>=2;}
+function validEmail(id){return emailRe.test(document.getElementById(id).value.trim());}
+function validPw(){return document.getElementById('in-pw').value.length>=8;}
+function bindLive(field,input,fn){
+  input.addEventListener('blur',function(){if(input.value)setFieldState(field,fn());});
+  input.addEventListener('input',function(){
+    var f=document.getElementById(field);
+    if(f.classList.contains('invalid')&&fn())setFieldState(field,true);
+  });
+}
+bindLive('f-name',document.getElementById('in-name'),validName);
+bindLive('f-email',document.getElementById('in-email'),function(){return validEmail('in-email');});
+bindLive('f-pw',pwInput,validPw);
+bindLive('f-j-email',document.getElementById('in-j-email'),function(){return validEmail('in-j-email');});
+bindLive('f-si-email',document.getElementById('in-si-email'),function(){return validEmail('in-si-email');});
+bindLive('f-si-pw',document.getElementById('in-si-pw'),function(){return document.getElementById('in-si-pw').value.length>0;});
+
+/* pane switcher */
+var panes={choice:document.getElementById('choicePane'),signup:document.getElementById('signupPane'),join:document.getElementById('joinPane'),signin:document.getElementById('signinPane'),wait:document.getElementById('waitPane')};
+var altLine=document.getElementById('altLine');
+function showPane(key,animate){
+  Object.keys(panes).forEach(function(k){
+    var p=panes[k];
+    if(k===key){p.hidden=false;if(animate&&!reduced){p.classList.add('in');requestAnimationFrame(function(){requestAnimationFrame(function(){p.classList.remove('in');});});}}
+    else{p.hidden=true;p.classList.remove('out','in');}
+  });
+  altLine.style.display=(key==='choice'||key==='wait')?'none':'block';
+}
+function showWait(nameInputId){
+  showPane('wait',true);
+  var card=document.getElementById('endcard');
+  var lead=document.getElementById('waitLead');
+  var base='Your workspace request is in. We\u2019ll review it and open the doors shortly.';
+  if(nameInputId==='reset'){
+    lead.textContent=base;
+  }else if(nameInputId){
+    var raw=document.getElementById(nameInputId).value.trim().split(/\s+/)[0];
+    if(raw){lead.textContent=raw+', your workspace request is in. We\u2019ll review it and open the doors shortly.';}
+    else{lead.textContent=base;}
+  }else if(lead.textContent.indexOf('Good news')!==0){
+    lead.textContent=base;
+  }
+  if(card&&!reduced){
+    card.classList.remove('reveal');void card.offsetWidth;
+    card.setAttribute('aria-hidden','false');
+    card.classList.add('reveal');
+  }else if(card){card.setAttribute('aria-hidden','false');card.style.opacity='1';card.style.transform='none';}
+  live.textContent='Waiting for approval. This screen updates by itself.';
+}
+
+/* choice buttons */
+document.getElementById('goCreate').addEventListener('click',function(){showPane('signup',true);document.getElementById('in-name').focus();});
+document.getElementById('goJoin').addEventListener('click',function(){showPane('join',true);document.getElementById('in-j-email').focus();});
+document.getElementById('goSignin').addEventListener('click',function(){showPane('signin',true);document.getElementById('in-si-email').focus();});
+document.getElementById('waitBack').addEventListener('click',function(){showPane('signup',true);});
+
+/* v2.1 · SSO prototype flows */
+document.querySelectorAll('.ssobtn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    if(btn.classList.contains('busy'))return;
+    document.querySelectorAll('.ssobtn').forEach(function(b){b.disabled=true;});
+    btn.classList.add('busy');
+    setTimeout(function(){
+      btn.classList.remove('busy');
+      document.querySelectorAll('.ssobtn').forEach(function(b){b.disabled=false;});
+      showWait(null);
+    },1100);
+  });
+});
+
+/* submit flows */
+function busy(btn,label){
+  btn.classList.add('busy');btn.disabled=true;
+  var lbl=btn.querySelector('.lbl'),old=lbl.textContent;
+  lbl.textContent=label;
+  return function(resetLabel){btn.classList.remove('busy');btn.disabled=false;lbl.textContent=resetLabel||old;};
+}
+document.getElementById('signupPane').addEventListener('submit',function(e){
+  e.preventDefault();
+  var ok=true,first=null;
+  if(!setFieldState('f-name',validName())){ok=false;first=first||document.getElementById('in-name');}
+  if(!setFieldState('f-email',validEmail('in-email'))){ok=false;first=first||document.getElementById('in-email');}
+  if(!setFieldState('f-pw',validPw())){ok=false;first=first||document.getElementById('in-pw');}
+  if(!ok){if(first)first.focus();return;}
+  var unbusy=busy(document.getElementById('signupCta'),'Setting up…');
+  setTimeout(function(){unbusy();showWait('in-name');},900);
+});
+document.getElementById('joinPane').addEventListener('submit',function(e){
+  e.preventDefault();
+  if(!setFieldState('f-j-email',validEmail('in-j-email')))return;
+  var unbusy=busy(document.getElementById('joinCta'),'Checking…');
+  setTimeout(function(){
+    unbusy('Continue');
+    var lead=document.getElementById('waitLead');
+    lead.textContent='Good news. Your email is on the team. Approve-in happens with your workspace admin.';
+    showWait();
+  },800);
+});
+document.getElementById('signinPane').addEventListener('submit',function(e){
+  e.preventDefault();
+  var ok=true;
+  if(!setFieldState('f-si-email',validEmail('in-si-email')))ok=false;
+  if(!setFieldState('f-si-pw',document.getElementById('in-si-pw').value.length>0))ok=false;
+  if(!ok)return;
+  var unbusy=busy(document.getElementById('signinCta'),'Signing in…');
+  setTimeout(function(){unbusy();showWait('reset');},800);
+});
+
+metrics();
+var h=(location.hash||'').replace('#','');
+var hi=-1;slides.forEach(function(s,i){if(s.id===h)hi=i;});
+if(hi>0){idx=hi;reduced=true;}
+setX(-idx*w);
+afterSettle();
+if(hi>0)reduced=isReduced();
+})();
+</script>
+</body>
+</html>
