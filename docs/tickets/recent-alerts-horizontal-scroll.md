@@ -29,7 +29,7 @@ only at the real first and last card. No snap-back. No position reset. No hidden
 - Removed embla provider, items, and arrows.
 - Restored: `flex flex-nowrap gap-2 overflow-x-auto`, fixed 200px cards (220px md),
   hidden scrollbars, `-webkit-overflow-scrolling: touch`.
-- Source: `docs/Reports/dashboard/recent-alerts-carousel-forensics-2026-09-06.md`.
+- Source: `docs/reports/dashboard/recent-alerts-carousel-forensics-2026-09-06.md`.
 - The false-end mechanism is structurally removed. The snap engine is gone.
 - Result: symptom persists per user inspection on device. Root cause not yet confirmed.
 
@@ -52,7 +52,7 @@ File: `src/components/dashboard/RecentAlertsCarousel.tsx`
 - `docs/TEMPLATES/React-temps/reui/*carousel*` — embla reference, unused here
 - Canonical spec: `mobile-dashboard-v6.html` `.alerts-scroll`, PRD 06 Alert Card
   (200px, horizontal scroll, no snap)
-- Forensics report: `docs/Reports/dashboard/recent-alerts-carousel-forensics-2026-09-06.md`
+- Forensics report: `docs/reports/dashboard/recent-alerts-carousel-forensics-2026-09-06.md`
 
 ## Open investigation items
 

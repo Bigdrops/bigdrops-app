@@ -16,7 +16,7 @@ Reconciled on 2026-08-25 against the final tenancy state. The modules are reacha
 
 The modules are retained, not deleted. They address tables by string name and import no generated `database.types.ts` types, so they do not affect TypeScript safety after the public purge. This ticket is excluded from the purge dependency graph.
 
-Purge gate record: `docs/Reports/multi-tenancy/public-purge-readiness-gate.md` (verdict: READY FOR PURGE).
+Purge gate record: `docs/reports/multi-tenancy/public-purge-readiness-gate.md` (verdict: READY FOR PURGE).
 
 ## Current Quotation Offline-Sync Implementation
 
