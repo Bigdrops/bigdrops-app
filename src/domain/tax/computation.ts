@@ -192,5 +192,12 @@ function buildTrace(
     development_levy: toMoney(devLevy),
     tax_payable: toMoney(taxPayable),
     classification,
+    rule_versions: {
+      cit: rules.cit.rule_version,
+      capital_allowance: rules.capital_allowance.rule_version,
+      loss: rules.loss.rule_version,
+      qce: rules.qce.rule_version,
+      exemption: rules.exemption?.rule_version ?? null,
+    },
   }
 }

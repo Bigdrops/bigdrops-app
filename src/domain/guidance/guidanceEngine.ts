@@ -265,6 +265,7 @@ export class GuidanceEngine {
   // effect bodies) and read through subscription.
 
   private slots = new Map<string, string>()
+  private slotStartedAt = new Map<string, number>()
 
   /** Select, expose, and pin the current tip for a loader slot. */
   activateSlot(slot: string, context: string | null, offline: boolean): void {
@@ -275,15 +276,19 @@ export class GuidanceEngine {
     tip = tip ?? this.selectTip(context)
     if (!tip) {
       this.slots.delete(slot)
+      this.slotStartedAt.delete(slot)
       return
     }
     this.slots.set(slot, tip.id)
+    this.slotStartedAt.set(slot, Date.now())
     this.recordExposure(tip.id)
   }
 
   /** Release a loader slot. History is kept — nothing resets. */
   deactivateSlot(slot: string): void {
-    if (this.slots.delete(slot)) this.emit()
+    const removed = this.slots.delete(slot)
+    this.slotStartedAt.delete(slot)
+    if (removed) this.emit()
   }
 
   /** Advance a slot to the next tip (rotation, manual advance). */
@@ -310,6 +315,24 @@ export class GuidanceEngine {
     const id = this.slots.get(slot)
     if (!id) return null
     return TIP_LIBRARY.find((tip) => tip.id === id) ?? null
+  }
+
+  /**
+   * Effective connectivity for a slot. Pure read — safe during render.
+   * Elapsed waiting is measured from the slot's activation, so slow
+   * reflects honest waiting time, never a network diagnosis.
+   */
+  slotConnectivity(
+    slot: string,
+    opts: { online: boolean; reconnectedAtMs: number | null; nowMs: number },
+  ): Connectivity {
+    return resolveEffectiveConnectivity({
+      online: opts.online,
+      active: this.slots.has(slot),
+      activeSinceMs: this.slotStartedAt.get(slot) ?? null,
+      reconnectedAtMs: opts.reconnectedAtMs,
+      nowMs: opts.nowMs,
+    })
   }
 
   /**

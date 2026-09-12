@@ -101,14 +101,18 @@ VALUES (
   NULL,
   '{
     "qualifying_categories": [
-      "plant_expenditure",
-      "motor_vehicle_expenditure",
-      "furniture_fittings_expenditure",
       "building_expenditure",
       "agricultural_expenditure",
-      "software_expenditure",
+      "agricultural_equipment_expenditure",
+      "mast_expenditure",
+      "intangible_assets_expenditure",
+      "heavy_transport_expenditure",
+      "plant_expenditure",
+      "furniture_fittings_expenditure",
       "mining_expenditure",
       "other_equipment_expenditure",
+      "motor_vehicle_expenditure",
+      "software_expenditure",
       "other_capital_expenditure"
     ],
     "non_qualifying_categories": [],

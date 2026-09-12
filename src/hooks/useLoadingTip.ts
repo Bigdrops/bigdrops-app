@@ -17,7 +17,6 @@ import {
   RECONNECTING_WINDOW_MS,
   SAFE_WORKFLOW,
   getGuidanceEngine,
-  resolveEffectiveConnectivity,
   resolveLaunchStatus,
   type Connectivity,
   type GuidanceLevel,
@@ -93,7 +92,6 @@ export function useLoadingTip({
   const onlineRef = useRef<boolean>(online)
   const [nowMs, setNowMs] = useState<number>(() => Date.now())
   const [reconnectedAtMs, setReconnectedAtMs] = useState<number | null>(null)
-  const [activeSinceMs, setActiveSinceMs] = useState<number | null>(null)
   // Stable per-mount slot id. The engine pins this loader's tip to it.
   const slot = useId()
 
@@ -135,16 +133,11 @@ export function useLoadingTip({
     return () => clearInterval(id)
   }, [active])
 
-  // Latch the activation start so elapsed waiting time is honest.
-  useEffect(() => {
-    if (active) setActiveSinceMs(Date.now())
-    else setActiveSinceMs(null)
-  }, [active])
-
-  const connectivity: Connectivity = resolveEffectiveConnectivity({
+  // Effective connectivity is a pure engine read: slow reflects elapsed
+  // waiting from the slot's activation only, reconnecting holds briefly
+  // after the link returns.
+  const connectivity: Connectivity = engine.slotConnectivity(slot, {
     online,
-    active,
-    activeSinceMs,
     reconnectedAtMs:
       reconnectedAtMs !== null && nowMs - reconnectedAtMs < RECONNECTING_WINDOW_MS
         ? reconnectedAtMs

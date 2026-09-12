@@ -16,6 +16,7 @@ import {
 import { useWorkspace } from '@/lib/tenant/contexts'
 import { abandonPendingWorkspace } from '@/domain/tenant/tenantCreation'
 import { isPermissionError } from '@/domain/tenant/tenantGate'
+import LoadingTips from '@/components/loading/LoadingTips'
 
 const POLL_INTERVAL_MS = 5000
 
@@ -122,6 +123,13 @@ export default function WorkspacePendingApproval() {
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   This page refreshes automatically. Approval usually takes a few minutes.
                 </p>
+                {/* Waiting-room waits share the session guidance rotation. */}
+                <div className="mt-4 flex justify-center">
+                  <LoadingTips
+                    pathname={typeof window !== 'undefined' ? window.location.pathname : '/'}
+                    active
+                  />
+                </div>
               </CardContent>
             </div>
           </CardHeader>

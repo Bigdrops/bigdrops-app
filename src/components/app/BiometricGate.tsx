@@ -9,6 +9,7 @@ import {
 } from "@/lib/native/biometric";
 import { isNativePlatform } from "@/lib/native/capacitor";
 import PageLoader from "@/components/app/PageLoader";
+import LoadingTips from "@/components/loading/LoadingTips";
 
 interface BiometricGateProps {
   /** When true, the gate is active and blocks children until biometric succeeds. */
@@ -141,8 +142,17 @@ export default function BiometricGate({
   // Lock is disabled — render children immediately.
   if (!enabled) return <>{children}</>;
 
-  // Gate is active — show loader until biometric succeeds.
-  if (gated) return <PageLoader />;
+  // Gate is active — show loader until biometric succeeds. The native
+  // sheet is system UI; the app background shares session guidance.
+  if (gated)
+    return (
+      <PageLoader>
+        <LoadingTips
+          pathname={typeof window !== "undefined" ? window.location.pathname : "/"}
+          active
+        />
+      </PageLoader>
+    );
 
   return <>{children}</>;
 }

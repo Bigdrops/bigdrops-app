@@ -227,8 +227,8 @@ export function InactivityNudge({ pathname }: { pathname: string }) {
 
   if (dismissed || !nudgeId) return null
 
+  // Above the bottom nav on desktop, above the FAB on phones.
   return (
-    {/* Above the bottom nav on desktop, above the FAB on phones. */}
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(158px+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 md:bottom-[calc(78px+env(safe-area-inset-bottom))]">
       <div className="pointer-events-auto w-full max-w-[320px]">
         <GuidanceTip

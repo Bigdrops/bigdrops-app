@@ -96,7 +96,7 @@ test('effective connectivity separates offline, reconnecting, slow, online', () 
     'reconnecting',
   )
   assert.equal(
-    resolveEffectiveConnectivity({ ...base, online: true, reconnectedAtMs: 1_000, nowMs: 20_000 }),
+    resolveEffectiveConnectivity({ ...base, online: true, reconnectedAtMs: 1_000, nowMs: 9_000 }),
     'online',
     'reconnecting window expires',
   )

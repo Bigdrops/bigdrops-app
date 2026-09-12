@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { supabase } from '../supabase'
 import { useEntity } from '@/lib/tenant/contexts'
+import LoadingTips from '@/components/loading/LoadingTips'
 
 const POLL_INTERVAL_MS = 3000
 
@@ -76,6 +77,13 @@ export default function ProvisioningProgress() {
                   <Layers className="h-4 w-4 text-sky-600" aria-hidden="true" />
                   This page refreshes automatically.
                 </p>
+                {/* Provisioning waits share the session guidance rotation. */}
+                <div className="mt-4 flex justify-center">
+                  <LoadingTips
+                    pathname={typeof window !== 'undefined' ? window.location.pathname : '/'}
+                    active
+                  />
+                </div>
               </CardContent>
             </div>
           </CardHeader>

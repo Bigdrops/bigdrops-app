@@ -62,16 +62,6 @@ export const QCE_TYPES = [
 ] as const
 export type QceType = (typeof QCE_TYPES)[number]
 
-export const QCE_CATEGORIES = [
-  'rent',
-  'repair',
-  'depreciation',
-  'fuel',
-  'maintenance',
-  'other',
-] as const
-export type QceCategory = (typeof QCE_CATEGORIES)[number]
-
 /**
  * Qualifying Capital Expenditure facts only.
  * No capital allowance calculations, no WDV, no annual/initial allowance.
@@ -284,6 +274,13 @@ export const CAPITAL_ALLOWANCE_CATEGORIES = [
 ] as const
 export type CapitalAllowanceCategory = (typeof CAPITAL_ALLOWANCE_CATEGORIES)[number]
 
+/**
+ * QCE categories = capital allowance categories (NTA 2025 First Schedule).
+ * Qualifying capital expenditure maps 1:1 to capital allowance classes.
+ */
+export const QCE_CATEGORIES = CAPITAL_ALLOWANCE_CATEGORIES
+export type QceCategory = CapitalAllowanceCategory
+
 /** Section 56 — CIT rate and company classification rules. */
 export interface CitRulePayload {
   /** s.56 — standard CIT rate (e.g. 30%) */
@@ -436,6 +433,14 @@ export interface GateEComputationTrace {
   development_levy: string
   tax_payable: string
   classification: TaxClassification
+  /** Rule versions used — audit trail for statutory traceability (SOURCE TRACEABILITY). */
+  rule_versions: {
+    cit: string
+    capital_allowance: string
+    loss: string
+    qce: string
+    exemption: string | null
+  }
 }
 
 /** Final output of Gate E computation. */

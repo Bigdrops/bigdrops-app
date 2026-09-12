@@ -456,7 +456,45 @@ test('classifier: ETR minimum applies for large turnover', async () => {
   assert.equal(result.etr_minimum_rate, '0.15')
 })
 
-// ── 7. Computation logic tests ──
+// ── 7. QCE category alignment ──
+
+test('QCE_CATEGORIES matches CAPITAL_ALLOWANCE_CATEGORIES', () => {
+  // NTA 2025: QCE categories = capital allowance categories (First Schedule)
+  assert.ok(
+    typesSource.includes('QCE_CATEGORIES = CAPITAL_ALLOWANCE_CATEGORIES'),
+    'QCE_CATEGORIES must be an alias for CAPITAL_ALLOWANCE_CATEGORIES',
+  )
+  assert.ok(
+    typesSource.includes('QceCategory = CapitalAllowanceCategory'),
+    'QceCategory must alias CapitalAllowanceCategory',
+  )
+})
+
+test('seed qce_rules has all 13 qualifying categories', () => {
+  const expected = [
+    'building_expenditure',
+    'agricultural_expenditure',
+    'agricultural_equipment_expenditure',
+    'mast_expenditure',
+    'intangible_assets_expenditure',
+    'heavy_transport_expenditure',
+    'plant_expenditure',
+    'furniture_fittings_expenditure',
+    'mining_expenditure',
+    'other_equipment_expenditure',
+    'motor_vehicle_expenditure',
+    'software_expenditure',
+    'other_capital_expenditure',
+  ]
+  for (const cat of expected) {
+    assert.ok(
+      seedMigrationSql.includes(`"${cat}"`),
+      `seed qce_rules missing qualifying_category: ${cat}`,
+    )
+  }
+})
+
+// ── 8. Computation logic tests ──
 
 test('computation: small company pays 0% CIT', async () => {
   const { computeTax } = await import('../../domain/tax/computation.js')
