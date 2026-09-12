@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "audit:load": "node scripts/check-load-risk.cjs",
-    "audit:supabase-queries": "npx tsx tools/audit-supabase-queries.ts"
+    "audit:supabase-queries": "npx tsx tools/audit-supabase-queries.ts",
+    "android:debug": "sh scripts/android-debug.sh",
+    "android:debug:release": "sh scripts/android-debug-release.sh"
   },
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.0",
