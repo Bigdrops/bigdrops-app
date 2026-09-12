@@ -114,3 +114,6 @@ git rev-parse HEAD
 Failure: If push fails – report, don't retry.
 
 Output: List of commit hashes + "Pushed to main successfully."
+don't write reports like agents.md required for all tasks
+this task is an exception 
+just list of commit hash and messages in chat is enough 
