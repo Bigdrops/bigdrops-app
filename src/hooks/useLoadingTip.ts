@@ -1,28 +1,30 @@
 /**
  * Tip selection hook for the loading-tip system.
  *
- * Implements the priority-based selection and anti-repetition strategy
- * defined in §6 of the loading PRD.
+ * Selection and history live in the session-scoped Product Guidance
+ * engine (`src/domain/guidance/guidanceEngine.ts`). Each mounted loader
+ * owns an engine slot; deactivating hides the tip but never clears
+ * history, so repeated mounts and second loading passes continue the
+ * rotation instead of restarting it.
  *
  * @see docs/prd/Adaptive\ Mobile-First\ UIUX\ Facelift\ PRD/10-loading-and-refresh.md §6
+ * @see docs/prd/Adaptive\ Mobile-First\ UIUX\ Facelift\ PRD/Product-Guidance-Engagement-System.md
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import {
-  TIP_LIBRARY,
-  type LoadingTip,
-} from '@/lib/tipContent'
-
-// ── Constants ──────────────────────────────────────────────────────
-
-/** Maximum tips shown in a single loading session before recycling. */
-const MAX_TIPS_PER_SESSION = 3
-
-/** Minimum interval (ms) between tip rotations during long operations. */
-const ROTATION_INTERVAL_MS = 8_000
-
-/** How many recent tips to exclude when alternatives exist. */
-const RECENT_HISTORY_SIZE = 5
+  GUIDANCE_ROTATION_INTERVAL_MS,
+  RECONNECTING_WINDOW_MS,
+  SAFE_WORKFLOW,
+  getGuidanceEngine,
+  resolveEffectiveConnectivity,
+  resolveLaunchStatus,
+  type Connectivity,
+  type GuidanceLevel,
+  type LaunchStage,
+  type WorkflowSafety,
+} from '@/domain/guidance/guidanceEngine'
+import type { LoadingTip } from '@/lib/tipContent'
 
 // ── State ──────────────────────────────────────────────────────────
 
@@ -37,20 +39,6 @@ const CONTEXT_MAP: Record<string, string> = {
   '/compliance': 'compliance',
 }
 
-// ── Helpers ────────────────────────────────────────────────────────
-
-function getActiveTips(): LoadingTip[] {
-  return TIP_LIBRARY.filter((tip) => tip.active)
-}
-
-function getTipsForContext(context: string | null): LoadingTip[] {
-  const all = getActiveTips()
-  if (!context) return all
-  return all.filter(
-    (tip) => tip.context === context || tip.context === null,
-  )
-}
-
 function resolveContext(pathname: string): string | null {
   for (const [prefix, context] of Object.entries(CONTEXT_MAP)) {
     if (pathname.startsWith(prefix)) return context
@@ -58,38 +46,9 @@ function resolveContext(pathname: string): string | null {
   return null
 }
 
-/**
- * Select the next tip using the priority order from §6:
- * 1. Contextually relevant tip
- * 2. Feature or workflow tip relevant to the current module
- * 3. General productivity tip
- * 4. General product knowledge tip
- *
- * Excludes recently shown tips when alternatives exist.
- */
-function selectTip(opts: {
-  context: string | null
-  recentIds: string[]
-  sessionCount: number
-}): LoadingTip | null {
-  const { context, recentIds, sessionCount } = opts
-
-  // Session cap: after MAX_TIPS_PER_SESSION, allow recycling
-  const pool =
-    sessionCount >= MAX_TIPS_PER_SESSION
-      ? getActiveTips()
-      : getTipsForContext(context)
-
-  if (pool.length === 0) return null
-
-  // Prefer non-recent tips
-  const fresh = pool.filter((tip) => !recentIds.includes(tip.id))
-  const candidates = fresh.length > 0 ? fresh : pool
-
-  // Sort by priority (lower = first)
-  candidates.sort((a, b) => a.priority - b.priority)
-
-  return candidates[0] ?? null
+function readOnline(): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return false
+  return true
 }
 
 // ── Hook ───────────────────────────────────────────────────────────
@@ -99,8 +58,12 @@ export type UseLoadingTipOptions = {
   pathname: string
   /** Whether the loading state is active. */
   active: boolean
-  /** Interval between rotations in ms. Defaults to ROTATION_INTERVAL_MS. */
+  /** Interval between rotations in ms. Defaults to 8s per §6. */
   rotationInterval?: number
+  /** Live-launch stage, when the caller knows it. Drives status lines. */
+  stage?: LaunchStage
+  /** Workflow-safety flags. Caps presentation while the user works. */
+  safety?: WorkflowSafety
 }
 
 export type UseLoadingTipResult = {
@@ -108,82 +71,127 @@ export type UseLoadingTipResult = {
   tip: LoadingTip | null
   /** Advance to the next tip manually. */
   nextTip: () => void
+  /** Dismiss the current tip for the rest of the session. */
+  dismissTip: () => void
+  /** Honest status line for the current launch/connectivity state. */
+  status: string
+  /** Current connectivity as seen by the guidance layer. */
+  connectivity: Connectivity
+  /** Presentation ceiling for the current workflow state. */
+  cap: GuidanceLevel
 }
 
 export function useLoadingTip({
   pathname,
   active,
-  rotationInterval = ROTATION_INTERVAL_MS,
+  rotationInterval = GUIDANCE_ROTATION_INTERVAL_MS,
+  stage = 'workspace',
+  safety = SAFE_WORKFLOW,
 }: UseLoadingTipOptions): UseLoadingTipResult {
-  const [tip, setTip] = useState<LoadingTip | null>(null)
-  const recentIdsRef = useRef<string[]>([])
-  const sessionCountRef = useRef(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const engine = getGuidanceEngine()
+  const [online, setOnline] = useState<boolean>(() => readOnline())
+  const onlineRef = useRef<boolean>(online)
+  const [nowMs, setNowMs] = useState<number>(() => Date.now())
+  const [reconnectedAtMs, setReconnectedAtMs] = useState<number | null>(null)
+  const [activeSinceMs, setActiveSinceMs] = useState<number | null>(null)
+  // Stable per-mount slot id. The engine pins this loader's tip to it.
+  const slot = useId()
 
-  // Keep pathname in a ref so the interval callback always reads the
-  // latest value without restarting the timer on route changes.
-  const pathnameRef = useRef(pathname)
-  pathnameRef.current = pathname
+  // Re-render when the engine state changes (activation, rotation, dismiss).
+  useSyncExternalStore(
+    useCallback((notify: () => void) => engine.subscribe(notify), [engine]),
+    useCallback(() => engine.getVersion(), [engine]),
+  )
 
-  const selectNext = useCallback(() => {
-    const context = resolveContext(pathnameRef.current)
-    const next = selectTip({
-      context,
-      recentIds: recentIdsRef.current,
-      sessionCount: sessionCountRef.current,
-    })
-
-    if (next) {
-      setTip(next)
-      sessionCountRef.current += 1
-
-      // Update recent history
-      recentIdsRef.current = [next.id, ...recentIdsRef.current].slice(
-        0,
-        RECENT_HISTORY_SIZE,
-      )
+  // Track connectivity. The offline→online flip latches a brief
+  // reconnecting window so recovery guidance acknowledges the transition
+  // without forcing reloads.
+  useEffect(() => {
+    const markOnline = () => {
+      if (!onlineRef.current) {
+        onlineRef.current = true
+        setOnline(true)
+        setReconnectedAtMs(Date.now())
+      }
+    }
+    const markOffline = () => {
+      onlineRef.current = false
+      setOnline(false)
+    }
+    markOnline()
+    window.addEventListener('online', markOnline)
+    window.addEventListener('offline', markOffline)
+    return () => {
+      window.removeEventListener('online', markOnline)
+      window.removeEventListener('offline', markOffline)
     }
   }, [])
 
-  // Select first tip when becoming active.
-  // Reset state when deactivated.
+  // Tick while active so prolonged waits can transition to the slow
+  // state. Idle hooks never tick.
   useEffect(() => {
-    if (active) {
-      selectNext()
-    } else {
-      setTip(null)
-      sessionCountRef.current = 0
-      recentIdsRef.current = []
-    }
+    if (!active) return
+    const id = setInterval(() => setNowMs(Date.now()), 1_000)
+    return () => clearInterval(id)
   }, [active])
 
-  // Rotate tips during long operations.
-  // selectNext reads from refs, so the interval never restarts due to
-  // pathname or tip state changes.
+  // Latch the activation start so elapsed waiting time is honest.
+  useEffect(() => {
+    if (active) setActiveSinceMs(Date.now())
+    else setActiveSinceMs(null)
+  }, [active])
+
+  const connectivity: Connectivity = resolveEffectiveConnectivity({
+    online,
+    active,
+    activeSinceMs,
+    reconnectedAtMs:
+      reconnectedAtMs !== null && nowMs - reconnectedAtMs < RECONNECTING_WINDOW_MS
+        ? reconnectedAtMs
+        : null,
+    nowMs,
+  })
+
+  const context = resolveContext(pathname)
+
+  // Pin the slot's tip while active; release on deactivation. The engine
+  // owns all state — the effect body calls engine methods only.
   useEffect(() => {
     if (!active) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      engine.deactivateSlot(slot)
       return
     }
-
-    intervalRef.current = setInterval(() => {
-      selectNext()
-    }, rotationInterval)
-
+    engine.activateSlot(slot, context, connectivity === 'offline')
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      engine.deactivateSlot(slot)
     }
-  }, [active, rotationInterval])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine, slot, active, pathname, connectivity])
+
+  // Rotate during long operations. History guarantees the sequence
+  // continues across passes instead of restarting.
+  useEffect(() => {
+    if (!active) return
+    const id = setInterval(() => {
+      engine.advanceSlot(slot, resolveContext(pathname))
+    }, rotationInterval)
+    return () => clearInterval(id)
+  }, [engine, slot, active, rotationInterval, pathname])
 
   const nextTip = useCallback(() => {
-    selectNext()
-  }, [])
+    engine.advanceSlot(slot, resolveContext(pathname))
+  }, [engine, slot, pathname])
 
-  return { tip, nextTip }
+  const dismissTip = useCallback(() => {
+    engine.dismissSlot(slot)
+  }, [engine, slot])
+
+  return {
+    tip: active ? engine.currentFor(slot) : null,
+    nextTip,
+    dismissTip,
+    status: resolveLaunchStatus({ stage, connectivity }),
+    connectivity,
+    cap: engine.presentationCap(safety),
+  }
 }

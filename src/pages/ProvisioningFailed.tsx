@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, ArrowLeftRight, Building2 } from 'lucide-react'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,16 +15,22 @@ import {
 import { supabase } from '../supabase'
 import { useEntity, useWorkspace } from '@/lib/tenant/contexts'
 import { CompanySelectionSheet } from '@/components/layout/CompanySelectionSheet'
+import GuidanceTip from '@/components/guidance/GuidanceTip'
+import { getGuidanceEngine } from '@/domain/guidance/guidanceEngine'
 
 export default function ProvisioningFailed() {
   const entityCtx = useEntity()
   const { workspace } = useWorkspace()
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false)
   const [switcherOpen, setSwitcherOpen] = useState(false)
-
   const failedName = entityCtx.entity?.name || 'Your company'
   const hasOtherCompanies = entityCtx.entityCount > 1
   const workspaceName = workspace?.name || 'your workspace'
+  // Recovery guidance coexists beneath the failure. Retry stays primary.
+  const recoveryTip = useMemo(() => getGuidanceEngine().selectTip(null), [])
+  useEffect(() => {
+    if (recoveryTip) getGuidanceEngine().recordExposure(recoveryTip.id)
+  }, [recoveryTip])
 
   const handleRetry = () => {
     entityCtx.recheckProvisioning()
@@ -41,7 +47,7 @@ export default function ProvisioningFailed() {
 
   return (
     <>
-      <div className="min-h-screen bg-stone-100 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center gap-4 p-6">
         <Card className="w-full max-w-md border-0 shadow-xl shadow-black/5 rounded-2xl bg-card">
           <CardHeader className="flex flex-col items-center text-center space-y-4 pt-8">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-red-200 bg-red-50 shadow-sm">
@@ -101,6 +107,7 @@ export default function ProvisioningFailed() {
             </Button>
           </CardFooter>
         </Card>
+        <GuidanceTip tip={recoveryTip} level={4} />
       </div>
 
       {/* Company Switcher */}

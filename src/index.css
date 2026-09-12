@@ -673,3 +673,17 @@ html[data-keyboard-open="true"] .app-ambient::after {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ── Product Guidance entrance ───────────────────────────────────────
+   Single 200ms ease-out entrance for guidance surfaces (transform +
+   opacity only, GPU-composited). Keying on the tip id replays it on
+   replacement. The global reduced-motion rule above collapses this to
+   a near-instant fade.
+   ────────────────────────────────────────────────────────────────── */
+.bd-guidance-enter {
+  animation: bd-guidance-enter 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes bd-guidance-enter {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

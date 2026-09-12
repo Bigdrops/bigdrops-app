@@ -1,4 +1,7 @@
 import type { OfflineAccessState } from "../../lib/native/offlineAccess";
+import GuidanceTip from "@/components/guidance/GuidanceTip";
+import { OFFLINE_TIP_ID } from "@/domain/guidance/guidanceEngine";
+import { TIP_LIBRARY } from "@/lib/tipContent";
 
 type OfflineAccessBlockedProps = {
   accessState: Extract<OfflineAccessState, { allowed: false }>;
@@ -23,7 +26,7 @@ export default function OfflineAccessBlocked({
       : "Your 48-hour offline access window has expired. Reconnect to the internet to continue.";
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6 flex items-center justify-center">
+    <div className="min-h-screen bg-background px-4 py-6 flex flex-col items-center justify-center gap-4">
       <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-sm">
         <p className="text-xs font-black uppercase tracking-[0.28em] text-muted-foreground">
           Offline access paused
@@ -41,6 +44,13 @@ export default function OfflineAccessBlocked({
           </p>
         ) : null}
       </div>
+      {/* Offline guidance: useful context while blocked. The blocked state
+          stays primary — guidance never replaces it or invents a new rule. */}
+      <GuidanceTip
+        tip={TIP_LIBRARY.find((tip) => tip.id === OFFLINE_TIP_ID && tip.active) ?? null}
+        level={4}
+        className="max-w-md"
+      />
     </div>
   );
 }

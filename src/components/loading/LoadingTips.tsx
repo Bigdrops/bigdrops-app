@@ -13,88 +13,7 @@
 
 import { useLoadingTip } from '@/hooks/useLoadingTip'
 import { cn } from '@/lib/utils'
-import type { LoadingTip } from '@/lib/tipContent'
-
-// ── Animation families ──────────────────────────────────────────────
-
-type AnimationFamily = 'payment' | 'document' | 'search' | 'archive' | 'compliance' | 'workspace'
-
-const CONTEXT_FAMILY_MAP: Record<string, AnimationFamily> = {
-  invoices: 'payment',
-  waybills: 'document',
-  clients: 'search',
-  projects: 'archive',
-  compliance: 'compliance',
-  csr: 'compliance',
-  quotations: 'document',
-}
-
-function resolveFamily(tip: LoadingTip | null): AnimationFamily {
-  if (!tip?.context) return 'workspace'
-  return CONTEXT_FAMILY_MAP[tip.context] ?? 'workspace'
-}
-
-// ── Avatar icon per family ──────────────────────────────────────────
-
-function AvatarIcon({ family }: { family: AnimationFamily }) {
-  switch (family) {
-    case 'payment':
-      // Credit card → receipt flow
-      return (
-        <div className="relative h-8 w-8" aria-hidden="true">
-          <div className="bd-avatar-payment absolute inset-0 flex items-center justify-center text-lg">
-            💳
-          </div>
-        </div>
-      )
-    case 'document':
-      // Document with checkmark
-      return (
-        <div className="relative h-8 w-8" aria-hidden="true">
-          <div className="bd-avatar-document absolute inset-0 flex items-center justify-center text-lg">
-            📄
-          </div>
-        </div>
-      )
-    case 'search':
-      // Magnifying glass scanning
-      return (
-        <div className="relative h-8 w-8" aria-hidden="true">
-          <div className="bd-avatar-search absolute inset-0 flex items-center justify-center text-lg">
-            🔍
-          </div>
-        </div>
-      )
-    case 'archive':
-      // Archive box opening
-      return (
-        <div className="relative h-8 w-8" aria-hidden="true">
-          <div className="bd-avatar-archive absolute inset-0 flex items-center justify-center text-lg">
-            📦
-          </div>
-        </div>
-      )
-    case 'compliance':
-      // Shield with checkmark
-      return (
-        <div className="relative h-8 w-8" aria-hidden="true">
-          <div className="bd-avatar-compliance absolute inset-0 flex items-center justify-center text-lg">
-            🛡️
-          </div>
-        </div>
-      )
-    case 'workspace':
-    default:
-      // Gear / workspace loading
-      return (
-        <div className="relative h-8 w-8" aria-hidden="true">
-          <div className="bd-avatar-workspace absolute inset-0 flex items-center justify-center text-lg">
-            ⚙️
-          </div>
-        </div>
-      )
-  }
-}
+import { GuidanceAvatar, familyForTip } from '@/components/guidance/GuidanceTip'
 
 // ── Props ───────────────────────────────────────────────────────────
 
@@ -125,8 +44,6 @@ export default function LoadingTips({
 
   if (!active || !tip) return null
 
-  const family = resolveFamily(tip)
-
   return (
     <div
       role="status"
@@ -137,7 +54,7 @@ export default function LoadingTips({
         className,
       )}
     >
-      <AvatarIcon family={family} />
+      <GuidanceAvatar family={familyForTip(tip)} />
       <div className="min-w-0 flex-1">
         <p className="text-[8px] font-extrabold uppercase tracking-[0.11em] text-muted-foreground/60">
           QUICK TIP

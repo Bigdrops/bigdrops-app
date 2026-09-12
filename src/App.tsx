@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect, useState, useRef, useCallback, lazy, Suspense } from 'react'
 import type { Session, AuthChangeEvent, Subscription } from '@supabase/supabase-js'
 import { supabase } from './supabase'
@@ -17,6 +17,8 @@ import { PushNotificationRuntime } from '@/components/notifications/PushNotifica
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import { useLoadingTip } from '@/hooks/useLoadingTip'
+import { InactivityNudge } from '@/components/guidance/GuidanceTip'
+import type { LaunchStage } from '@/domain/guidance/guidanceEngine'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
 import BiometricGate from '@/components/app/BiometricGate'
@@ -28,15 +30,6 @@ import type { OfflineAccessState } from '@/lib/native/offlineAccess'
 
 const Login = lazy(() => import('./pages/Login'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
-
-const SPLASH_TIPS = [
-  'Arranging your papers and records...',
-  'Preparing your workspace...',
-  'Getting documents and projects in order...',
-]
-
-// Legacy status messages above are retained for the status text area.
-// The educational quick-tip is powered by useLoadingTip.
 
 const RECOVERY_COOLDOWN_MS = 1500
 
@@ -61,6 +54,12 @@ function debugAuth(...args: any[]) {}
 
 const withBoundary = (element: React.ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
 
+/** Session-level inactivity guidance. Informational only, never navigates. */
+function NudgeMount() {
+  const location = useLocation()
+  return <InactivityNudge pathname={location.pathname} />
+}
+
 export interface Profile {
   id: string
   has_password?: boolean | null
@@ -82,10 +81,13 @@ function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [resolvedProfileUserId, setResolvedProfileUserId] = useState<string | null>(null)
-  const [tipIndex, setTipIndex] = useState(0)
-  const { tip: loadingTip } = useLoadingTip({
+  // Launch stage drives contextual guidance: splash → profile → workspace.
+  const launchStage: LaunchStage =
+    profileLoading ? 'profile' : authLoading || offlineAccessLoading ? 'splash' : 'workspace'
+  const { tip: loadingTip, status: launchStatus } = useLoadingTip({
     pathname: typeof window !== 'undefined' ? window.location.pathname : '/',
     active: showSplash,
+    stage: launchStage,
   })
 
   const loadingRef = useRef(false)
@@ -339,13 +341,8 @@ function App() {
     }
   }, [])
 
-  // Legacy status-message rotation (retained for the status text area)
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % SPLASH_TIPS.length)
-    }, 2200)
-    return () => clearInterval(id)
-  }, [])
+  // Splash status lines are contextual to the launch stage. The
+  // educational quick-tip rotates through the guidance engine.
 
   useEffect(() => {
     let isActive = true
@@ -566,6 +563,7 @@ function App() {
         <PushNotificationRuntime userId={profile?.id} />
         <Toaster />
         <NativeFeedbackRenderer />
+        <NudgeMount />
         {isAndroidNative() && (
           <>
             <AndroidBackHandler />
@@ -613,7 +611,7 @@ function App() {
       </BrowserRouter>
       <SplashOverlay
         visible={showSplash}
-        tip={SPLASH_TIPS[tipIndex]}
+        tip={launchStatus}
         quickTip={loadingTip?.message ?? null}
       />
     </>

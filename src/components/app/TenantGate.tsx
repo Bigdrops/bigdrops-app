@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
@@ -7,6 +7,8 @@ import {
 } from '@/domain/tenant/tenantGate'
 import PageLoader from '@/components/app/PageLoader'
 import LoadingTips from '@/components/loading/LoadingTips'
+import GuidanceTip from '@/components/guidance/GuidanceTip'
+import { getGuidanceEngine } from '@/domain/guidance/guidanceEngine'
 import { Button } from '@/components/ui/button'
 import WorkspaceCreation from '@/pages/WorkspaceCreation'
 import WorkspaceSelection from '@/pages/WorkspaceSelection'
@@ -17,8 +19,14 @@ import ProvisioningProgress from '@/pages/ProvisioningProgress'
 import ProvisioningFailed from '@/pages/ProvisioningFailed'
 
 function GateError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  // Recovery guidance coexists beneath the error. The error stays primary:
+  // it renders first, owns focus order, and is never replaced or hidden.
+  const recoveryTip = useMemo(() => getGuidanceEngine().selectTip(null), [])
+  useEffect(() => {
+    if (recoveryTip) getGuidanceEngine().recordExposure(recoveryTip.id)
+  }, [recoveryTip])
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6">
       <div className="w-full max-w-md rounded-2xl border border-black/10 bg-card p-8 text-center shadow-[0_25px_80px_rgba(0,0,0,0.10)]">
         <h2 className="text-xl font-semibold tracking-tight text-foreground">
           Something went wrong
@@ -32,8 +40,9 @@ function GateError({ message, onRetry }: { message: string; onRetry: () => void 
           Try Again
         </Button>
       </div>
+      <GuidanceTip tip={recoveryTip} level={4} className="max-w-md" />
     </div>
-  )
+  );
 }
 
 export default function TenantGate({ children }: { children: ReactNode }) {
