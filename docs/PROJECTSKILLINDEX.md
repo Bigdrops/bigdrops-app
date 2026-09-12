@@ -10,10 +10,10 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 147 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs + 38 from the marketing pack) |
+| `.agents/skills/` | 153 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs + 38 from the marketing pack + 6 from `plannotator/effective-html`) |
 | `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **148 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **154 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 > **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and were purged from `.commandcode/skills/` (not indexed because they already exist in `.agents`/`.claude`).
 
@@ -209,6 +209,18 @@ Installed by the user on 2026-09-10. 38 marketing, growth, and conversion skills
 | 147 | site-architecture | .agents/skills/site-architecture/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\site-architecture\SKILL.md | Site architecture — IA, internal linking |
 | 148 | social | .agents/skills/social/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\social\SKILL.md | Social media — content, channels, calendar |
 
+### Added via `plannotator/effective-html`
+Installed by the user on 2026-09-12. 6 self-contained single-file HTML artifact skills. Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, `.commandcode/skills/`, `.continue/skills/`, `.hermes/skills/`, `.kiro/skills/`, `.roo/skills/`, `.windsurf/skills/`; this index lists the canonical `.agents/skills/` copy.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 149 | html | .agents/skills/html/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\html\SKILL.md | Single-file HTML artifacts — reports, explainers, landing pages, decks, tools; implicit router, delegates wireframe/prototype/plan/diagram to specialists |
+| 150 | html-wireframe | .agents/skills/html-wireframe/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\html-wireframe\SKILL.md | Low-fidelity HTML wireframes — hierarchy, navigation, task flow, 2-3 layout directions, no polished mockups |
+| 151 | html-prototype | .agents/skills/html-prototype/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\html-prototype\SKILL.md | Polished HTML mockups and interactive prototypes — mockup (static) vs prototype (working flow) modes |
+| 152 | html-plan | .agents/skills/html-plan/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\html-plan\SKILL.md | HTML plans and roadmaps — preserves source commitments, phases, owners, dependencies, acceptance checks |
+| 153 | html-diagram | .agents/skills/html-diagram/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\html-diagram\SKILL.md | HTML diagrams — topology, sequence, process, state, hierarchy, timeline, matrix; smallest legible model |
+| 154 | design-artifact | .agents/skills/design-artifact/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\design-artifact\SKILL.md | Creative direction for HTML artifacts — palette, type pairing, layout, theming, anti-AI-slop; composes with html specialists |
+
 ---
 ## `.claude/skills/`
 Higher-order skills for design intelligence, testing, meta-skill creation, and coding discipline.
@@ -248,6 +260,12 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │   └── skills/
 │       ├── accessibility/
 │       ├── deploy-to-vercel/
+│       ├── design-artifact/
+│       ├── html/
+│       ├── html-diagram/
+│       ├── html-plan/
+│       ├── html-prototype/
+│       ├── html-wireframe/
 │       ├── mobile-app-ui-design/
 │       ├── material-3/
 │       ├── mobile-android-design/
@@ -281,5 +299,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: September 10, 2026 — added the 38-skill marketing pack (user install, mirrored in `.claude`). Total .agents/skills: 147. Deleted `.commandcode/` (purged symlink duplicates).*
+*Last updated: September 12, 2026 — added the 6-skill effective-html pack (`plannotator/effective-html`, mirrored across 8 harnesses). Total .agents/skills: 153. Deleted `.commandcode/` (purged symlink duplicates).*
 ```
