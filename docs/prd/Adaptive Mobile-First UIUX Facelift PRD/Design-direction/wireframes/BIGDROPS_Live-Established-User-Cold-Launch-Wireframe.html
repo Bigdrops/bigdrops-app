@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIGDROPS · Established-User Cold Launch Wireframe (Forensic Capture)</title>
+<style>
+/* ============================================================
+   FORENSIC CAPTURE — CURRENT LIVE FLOW
+   Established-user cold launch: app start with an existing session.
+   Sources: src/App.tsx (init, offline access, splash, route gate),
+   src/lib/native/offlineAccess.ts, src/components/app/OfflineAccessBlocked.tsx,
+   src/components/app/{PageLoader,BiometricGate,TenantGate}.tsx,
+   src/lib/native/biometric.ts, src/pages/{WorkspaceSelection,WorkspacePendingApproval}.tsx,
+   src/components/app/AppShell.tsx
+   Copy strings are verbatim from the listed components.
+   ============================================================ */
+:root{
+  --screen-bg:#f5f5f4;  --card:#ffffff; --fg:#18181b; --fg-muted:#71717a;
+  --border:rgba(0,0,0,.10); --primary-btn:#111111; --primary-btn-hover:#000000;
+  --amber-50:#fffbeb; --amber-200:#fde68a; --amber-500:#f59e0b; --amber-600:#d97706;
+  --blue-50:#eff6ff; --blue-200:#bfdbfe; --blue-600:#2563eb;
+  --slate-50:#f8fafc; --slate-200:#e2e8f0; --slate-500:#64748b; --slate-800:#1e293b;
+  --chrome-bg:#18181b; --chrome-panel:#26262a; --chrome-fg:#e4e4e7; --chrome-muted:#a1a1aa; --chrome-accent:#60a5fa; --chrome-line:rgba(255,255,255,.12);
+}
+.dark{
+  --card:#18181b; --fg:#fafafa; --fg-muted:#a1a1aa; --border:rgba(255,255,255,.14);
+  --screen-bg:#09090b; --slate-50:rgba(255,255,255,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--chrome-bg);color:var(--chrome-fg);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--chrome-accent);outline-offset:2px;border-radius:6px}
+
+/* ============ Forensic chrome ============ */
+.f-banner{position:sticky;top:0;z-index:60;background:#0b0b0d;border-bottom:1px solid var(--chrome-line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.f-banner .tag{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#fde68a;display:flex;align-items:center;gap:8px}
+.f-banner .tag .dot{width:8px;height:8px;border-radius:50%;background:#f59e0b;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.f-banner .sub{font-size:11px;color:var(--chrome-muted)}
+.f-layout{display:grid;grid-template-columns:1fr;max-width:1280px;margin:0 auto}
+@media(min-width:1024px){.f-layout{grid-template-columns:minmax(0,1fr) 340px}}
+.f-stage{padding:22px 16px 48px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.f-controls{position:sticky;bottom:0;z-index:60;background:var(--chrome-panel);border-top:1px solid var(--chrome-line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.f-btn{min-height:36px;padding:0 14px;border-radius:9px;font-size:12.5px;font-weight:700;background:#3f3f46;color:#fff;border:1px solid rgba(255,255,255,.14)}
+.f-btn:hover{background:#52525b}
+.f-btn.primary{background:var(--chrome-accent);color:#0b0b0d;border-color:transparent}
+.f-btn.primary:hover{filter:brightness(1.1)}
+.f-btn:disabled{opacity:.4;cursor:not-allowed}
+.f-select{min-height:36px;max-width:360px;border-radius:9px;background:#3f3f46;color:#fff;border:1px solid rgba(255,255,255,.14);font-size:12.5px;font-weight:600;padding:0 10px}
+.f-seg{display:flex;border:1px solid rgba(255,255,255,.14);border-radius:9px;overflow:hidden}
+.f-seg button{min-height:36px;padding:0 12px;font-size:12px;font-weight:700;color:var(--chrome-muted);background:#3f3f46}
+.f-seg button[aria-pressed="true"]{background:var(--chrome-accent);color:#0b0b0d}
+.f-statecount{font-size:11px;color:var(--chrome-muted);font-variant-numeric:tabular-nums}
+.f-flow{background:var(--chrome-panel);border:1px solid var(--chrome-line);border-radius:14px;padding:14px 16px;width:100%;max-width:980px}
+.f-flow h3{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-muted);margin-bottom:10px}
+.f-flow .lane{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.chip{font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;background:#3f3f46;color:#e4e4e7;border:1px solid rgba(255,255,255,.12);white-space:nowrap}
+.chip.final{background:#14532d;border-color:rgba(74,222,128,.4);color:#bbf7d0}
+.chip.gate{background:#3b2f0b;border-color:rgba(245,158,11,.45);color:#fde68a}
+.chip.branch{background:#1e293b;border-color:rgba(148,163,184,.4);color:#cbd5e1}
+.chip.native{background:#2d1b45;border-color:rgba(167,139,250,.5);color:#ddd6fe}
+.chip.active{outline:2px solid var(--chrome-accent);outline-offset:1px}
+.arrow{color:#71717a;font-size:12px;font-weight:700}
+.lane-label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#71717a;margin:10px 0 6px}
+.f-notes{background:var(--chrome-panel);border-left:1px solid var(--chrome-line);padding:18px 16px 48px;font-size:12.5px;line-height:1.65;color:var(--chrome-muted)}
+@media(max-width:1023px){.f-notes{border-left:0;border-top:1px solid var(--chrome-line)}}
+.f-notes h2{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-fg);margin-bottom:4px}
+.f-notes .state-name{font-size:15px;font-weight:800;color:var(--chrome-fg);margin:8px 0 2px}
+.f-notes .kv{margin:10px 0}
+.f-notes .kv b{display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-accent);margin-bottom:3px}
+.f-notes code{background:#0b0b0d;border:1px solid var(--chrome-line);border-radius:5px;padding:1px 5px;font-size:11.5px;color:#fde68a;word-break:break-all}
+.f-notes .legend{border-top:1px solid var(--chrome-line);margin-top:16px;padding-top:12px}
+.f-notes .legend .chip{display:inline-block;margin:2px 2px 2px 0}
+
+/* ============ Simulated app viewport ============ */
+.viewport{background:#0b0b0d;border:1px solid var(--chrome-line);border-radius:26px;padding:10px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.viewport.tablet{width:720px;max-width:96vw;border-radius:22px}
+.viewport.desktop{width:1080px;max-width:96vw;border-radius:16px;padding:8px}
+.screen{position:relative;width:390px;max-width:calc(96vw - 20px);height:760px;max-height:78vh;border-radius:18px;overflow:hidden;background:var(--screen-bg);color:var(--fg)}
+.viewport.tablet .screen{width:100%;height:640px}
+.viewport.desktop .screen{width:100%;height:640px}
+.screen .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#0b0b0d;border-radius:0 0 12px 12px;z-index:50}
+.app-surface{position:absolute;inset:0;overflow:hidden auto}
+.app-surface::-webkit-scrollbar{width:0}
+.f-live{position:absolute;left:10px;bottom:8px;z-index:55;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(24,24,27,.4);pointer-events:none}
+.dark .f-live{color:rgba(250,250,250,.35)}
+
+/* App primitives */
+.center-screen{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:28rem;background:var(--card);border-radius:16px;box-shadow:0 20px 25px -5px rgba(0,0,0,.08),0 8px 10px -6px rgba(0,0,0,.02)}
+.eyebrow{font-size:12px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--fg-muted)}
+.btn{width:100%;min-height:48px;border-radius:9999px;display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--fg);font-size:15px;font-weight:600;border:1px solid var(--border)}
+.btn:hover{background:rgba(0,0,0,.04)}
+.btn:disabled{opacity:.55}
+.input{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--border);background:var(--card);padding:0 16px;font-size:16px;color:var(--fg);outline:none}
+.input::placeholder{color:#a1a1aa}
+.pageloader{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:var(--card)}
+.loader-sq{width:56px;height:56px;border-radius:18px;border:1px solid rgba(24,24,27,.10);background:var(--card);box-shadow:0 6px 18px rgba(24,24,27,.05);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.floaty{animation:floaty 2.8s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.pulsering{position:absolute;inset:-24px;border-radius:50%;background:rgba(245,158,11,.10);filter:blur(12px);animation:pulse2 2.2s ease-in-out infinite}
+@keyframes pulse2{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.12);opacity:.8}}
+.dashring{position:absolute;inset:-8px;border-radius:50%;border:2px dashed rgba(252,211,77,.7);animation:spin7 7s linear infinite}
+@keyframes spin7{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+
+/* Splash */
+.splash{position:absolute;inset:0;background:var(--card);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:40}
+.splash .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-58%);width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(24,24,27,.10) 0%,rgba(24,24,27,.05) 34%,transparent 74%);animation:halo 3.2s ease-in-out infinite}
+@keyframes halo{0%,100%{transform:translate(-50%,-58%) scale(1);opacity:.8}50%{transform:translate(-50%,-58%) scale(1.06);opacity:1}}
+.wordmark{font-size:34px;font-weight:600;letter-spacing:-.04em;color:var(--fg);margin-top:12px;position:relative}
+.splash .tip{margin-top:8px;font-size:15px;color:var(--fg-muted);position:relative}
+.quicktip{margin-top:20px;width:280px;border:1px solid var(--border);background:var(--card);border-radius:18px;padding:10px 12px}
+.quicktip .qt-label{font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--fg-muted);text-align:center;opacity:.7}
+.quicktip .qt-msg{margin-top:4px;font-size:12px;font-weight:600;line-height:1.6;color:var(--fg-muted);text-align:center}
+.circuit{position:relative;width:320px;height:150px}
+.node{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid #71717a;background:var(--card)}
+.node.active{border-color:#18181b;background:#18181b}
+.node .nlabel{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:var(--fg-muted);white-space:nowrap}
+.trace{position:absolute;height:2px;background:#d4d4d8;overflow:hidden}
+.trace::after{content:"";position:absolute;inset:0;width:34%;background:#18181b;animation:flow 1.6s linear infinite}
+@keyframes flow{0%{transform:translateX(-110%)}100%{transform:translateX(400%)}}
+
+/* Quick tip card (PageLoader/TenantGate variant) */
+.tipcard{display:flex;align-items:center;gap:12px;border:1px solid var(--border);background:var(--card);border-radius:18px;padding:12px 16px;width:320px}
+.tipcard .avatar{font-size:20px}
+.tipcard .t-label{font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--fg-muted);opacity:.7}
+.tipcard .t-msg{margin-top:2px;font-size:12px;font-weight:600;line-height:1.6;color:var(--fg-muted)}
+
+/* Offline blocked */
+.offline-card{width:100%;max-width:28rem;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:24px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.offline-card .k{font-size:12px;font-weight:900;letter-spacing:.28em;text-transform:uppercase;color:var(--fg-muted)}
+.offline-card h1{margin-top:12px;font-size:24px;font-weight:600;letter-spacing:-.04em;color:var(--fg);line-height:1.2}
+.offline-card .m{margin-top:12px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)}
+.offline-card .expiry{margin-top:20px;background:var(--slate-50);border-radius:16px;padding:12px 16px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-muted)}
+
+/* Workspace rows */
+.wsrow{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;border:1px solid var(--border);background:var(--card);border-radius:12px;padding:12px 16px;margin-top:12px}
+.wsrow:hover{background:rgba(0,0,0,.04)}
+.wsrow .n{font-size:14px;font-weight:600;color:var(--fg)}
+.wsrow .s{font-size:12px;color:var(--fg-muted)}
+.wsrow .r{font-size:12px;font-weight:500;color:var(--fg-muted)}
+.icon-tile{width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:16px;border:1px solid var(--blue-200);background:var(--blue-50)}
+.icon-tile svg{width:32px;height:32px;color:var(--blue-600)}
+.icon-tile.amber{border-radius:50%;border-color:var(--amber-200);background:var(--amber-50)}
+.icon-tile.amber svg{color:var(--amber-600)}
+
+/* Biometric prompts (native system sheets — schematic) */
+.bio-layer{position:absolute;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+.bio-sheet{width:calc(100% - 48px);max-width:340px;background:var(--card);border-radius:22px;padding:28px 24px;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.35)}
+.bio-sheet .icon{width:56px;height:56px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--blue-50);color:var(--blue-600)}
+.bio-sheet .icon svg{width:28px;height:28px}
+.bio-sheet h2{margin-top:14px;font-size:17px;font-weight:600;color:var(--fg)}
+.bio-sheet p{margin-top:6px;font-size:13px;line-height:1.45;color:var(--fg-muted)}
+.bio-sheet .cancel{margin-top:18px;min-height:40px;width:100%;border-radius:12px;border:1px solid var(--border);font-size:14px;font-weight:600;color:var(--fg)}
+
+/* Dashboard */
+.dash{min-height:100%;background:var(--screen-bg);display:flex;flex-direction:column}
+.dash-top{padding:18px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+.dash-top .who{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--fg-muted)}
+.dash-top h1{font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--fg);margin-top:2px}
+.dash-body{padding:8px 20px 90px;display:grid;gap:10px}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.tile .k{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-muted)}
+.tile .v{margin-top:4px;font-size:20px;font-weight:700;color:var(--fg)}
+.dash-nav{position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;background:var(--card);border-top:1px solid var(--border);padding:8px 6px 14px}
+.dash-nav .ni{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:600;color:var(--fg-muted)}
+.dash-nav .ni svg{width:20px;height:20px}
+.dash-nav .ni.on{color:var(--fg)}
+.representative-badge{position:absolute;top:8px;right:8px;z-index:35;font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:#0b0b0d;color:#fde68a;border:1px solid rgba(245,158,11,.5);border-radius:6px;padding:3px 6px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<header class="f-banner">
+  <div>
+    <div class="tag"><span class="dot"></span> CURRENT LIVE FLOW — DESIGN CAPTURE</div>
+    <div class="sub">BIGDROPS established-user cold launch: app start with an existing session → dashboard. Forensic capture of repository implementation. Not a redesign.</div>
+  </div>
+  <div class="sub" id="f-source">Traced from: src/App.tsx · src/lib/native/offlineAccess.ts · src/components/app/{OfflineAccessBlocked,PageLoader,BiometricGate,TenantGate,AppShell}.tsx · src/lib/native/biometric.ts · src/domain/tenant/tenantGate.ts</div>
+</header>
+
+<div class="f-layout">
+  <main class="f-stage">
+    <section class="f-flow" aria-label="Discovered flow map">
+      <h3>Discovered flow — primary cold-launch path (returning user, existing session)</h3>
+      <div class="lane" id="flowLane1"></div>
+      <div class="lane-label">Conditional / branch states (evidence-backed, not on the primary path)</div>
+      <div class="lane" id="flowLane2"></div>
+    </section>
+
+    <div class="viewport" id="viewport">
+      <div class="screen" id="screen">
+        <div class="notch"></div>
+        <div class="app-surface" id="appSurface" aria-live="polite"></div>
+        <div class="f-live">Simulated UI — forensic capture</div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="f-notes" id="notesPanel">
+    <h2>Design-capture notes</h2>
+    <div class="state-name" id="nName">—</div>
+    <div class="kv"><b>State id</b><span id="nId">—</span></div>
+    <div class="kv"><b>Source component / route</b><span id="nSource">—</span></div>
+    <div class="kv"><b>Why included</b><span id="nWhy">—</span></div>
+    <div class="kv"><b>Next state</b><span id="nNext">—</span></div>
+    <div class="kv"><b>Uncertainty</b><span id="nUnc">—</span></div>
+    <div class="legend">
+      <b style="display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-accent);margin-bottom:4px">Legend</b>
+      <span class="chip gate">gate</span> blocking state ·
+      <span class="chip final">endpoint</span> dashboard ·
+      <span class="chip branch">branch</span> conditional ·
+      <span class="chip native">native</span> Android/Capacitor-only states.
+    </div>
+  </aside>
+</div>
+
+<nav class="f-controls" aria-label="Prototype controls">
+  <div class="group">
+    <button class="f-btn" id="btnPrev">◀ Prev</button>
+    <button class="f-btn primary" id="btnNext">Next ▶</button>
+    <button class="f-btn" id="btnRestart" title="Restart journey">⟲ Restart</button>
+  </div>
+  <div class="group"><select class="f-select" id="stateSelect" aria-label="State selector"></select></div>
+  <div class="group f-seg" role="group" aria-label="Viewport">
+    <button data-vp="phone" aria-pressed="true">Phone</button>
+    <button data-vp="tablet" aria-pressed="false">Tablet</button>
+    <button data-vp="desktop" aria-pressed="false">Desktop</button>
+  </div>
+  <div class="group f-seg" role="group" aria-label="Theme">
+    <button data-th="light" aria-pressed="true">Light</button>
+    <button data-th="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="f-statecount" id="stateCount"></span>
+</nav>
+
+<script>
+const ICONS = {
+  building2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>',
+  clock3:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  file:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18h-5"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>',
+  wifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 20 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg>',
+  fingerprint:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>',
+  lockphone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+};
+
+/* Verbatim strings */
+const SPLASH_TIPS = ['Arranging your papers and records...','Preparing your workspace...','Getting documents and projects in order...'];
+const TIP_COMPLIANCE = 'The Compliance Hub tracks VAT exposure, WHT receipts, tax filings, and obligations. Open it from the menu to see what needs attention.';
+const TIP_OFFLINE = 'On Android, you can create quotation and CSR drafts offline. They sync when you reconnect.';
+const TIP_SEARCH = 'Tap the search icon to find any document across all modules. Search by document number, client name, or project name.';
+
+/* kind: gate | endpoint | branch | native */
+const STATES = [
+{
+  id:'splash-cold', name:'Splash overlay (cold launch)', kind:'gate',
+  source:'src/App.tsx — showSplash=true at mount; src/components/app/SplashOverlay.tsx + QuickTipCard.tsx',
+  why:'Cold launch always opens on the full-screen splash while init() runs: offline-access check, session restore, profile load, sync bootstrap. Rotating legacy tips + educational Quick Tip card.',
+  next:'init() completes → offline-access state decides the route gate. Splash hides when all loaders finish (min 600ms visible).',
+  unc:'Circuit visual is the live SplashCircuit (mobile variant) reproduced schematically. Tip rotates every 2.2s; Quick Tip sample is tip.feature.compliance-hub from src/lib/tipContent.ts.',
+  render(){ return el('div',{style:'height:100%;position:relative;background:var(--card)'},[
+    el('div',{class:'splash'},[
+      el('div',{class:'halo'}),
+      el('div',{class:'circuit'},[
+        el('div',{class:'trace',style:'left:60px;top:74px;width:90px'}),
+        el('div',{class:'trace',style:'left:170px;top:74px;width:90px'}),
+        el('div',{class:'node active',style:'left:45px;top:70px'},el('span',{class:'nlabel'},'Session')),
+        el('div',{class:'node',style:'left:155px;top:40px'},el('span',{class:'nlabel'},'Auth')),
+        el('div',{class:'node active',style:'left:265px;top:70px'},el('span',{class:'nlabel'},'Workspace'))
+      ]),
+      el('div',{class:'wordmark'},'BigDrops'),
+      el('div',{class:'tip',id:'splashTip'},SPLASH_TIPS[0]),
+      el('div',{class:'quicktip'},[el('div',{class:'qt-label'},'Quick Tip'),el('div',{class:'qt-msg'},TIP_COMPLIANCE)])
+    ])
+  ])}
+},
+{
+  id:'offline-loading', name:'PageLoader (offline-access check)', kind:'gate',
+  source:'src/App.tsx — offlineAccessLoading=true → <PageLoader/> in route gate; src/components/app/PageLoader.tsx',
+  why:'Native builds run getOfflineAccessState() before the route gate resolves; the web path returns not_native but the loader is still rendered while offlineAccessLoading is true. User-visible full-screen loader during the check.',
+  next:'Check resolves allowed → profile/splash continue. Check resolves blocked → Offline Access Paused screen.',
+  unc:'On web, the check is instant (not_native), so this loader is brief or skipped; on Android it is user-visible while SQLite reads run.',
+  render(){ return el('div',{class:'pageloader'},[
+    el('div',{class:'loader-sq'}),
+    el('div',{class:'tipcard'},[
+      el('span',{class:'avatar'},'⚙️'),
+      el('div',{},[
+        el('div',{class:'t-label'},'Quick Tip'),
+        el('div',{class:'t-msg'},TIP_SEARCH)
+      ])
+    ])
+  ])}
+},
+{
+  id:'offline-blocked', name:'Offline Access Paused (window expired / no window / device mismatch)', kind:'branch',
+  source:'src/components/app/OfflineAccessBlocked.tsx; decision: src/lib/native/offlineAccess.ts getOfflineAccessState()',
+  why:'Native-only. When offline with an expired 48-hour window, no window recorded, or a device-assignment mismatch, the route gate renders this screen instead of the app. Headline and card copy verbatim.',
+  next:'Reconnect to the internet → visibility/online handlers re-run refreshOfflineAccessState → access re-allowed → launch continues to biometric/gates.',
+  unc:'Message body is one of two verbatim variants: "Connect to the internet to complete your first online login on this device." (missing_window) or "Your 48-hour offline access window has expired. Reconnect to the internet to continue." (expired_offline_window). Expiry stamp is dynamic — sample formatted via toLocaleString(). Reasons missing_assignment and user_mismatch render the same screen without a specific body variant.',
+  render(){ return el('div',{style:'min-height:100%;background:var(--card);display:flex;align-items:center;justify-content:center;padding:24px 16px'},[
+    el('div',{class:'offline-card'},[
+      el('div',{class:'k'},'Offline access paused'),
+      el('h1',{},'Internet connection required'),
+      el('p',{class:'m'},'Your 48-hour offline access window has expired. Reconnect to the internet to continue.'),
+      el('div',{class:'expiry'},'Offline window expired at ' + new Date().toLocaleString())
+    ])
+  ])}
+},
+{
+  id:'profile-loader', name:'PageLoader (profile resolution)', kind:'gate',
+  source:'src/App.tsx — waitingForProfileResolution → <PageLoader/>; src/components/app/PageLoader.tsx',
+  why:'The route gate holds while the profiles row for the restored session resolves (loadProfile → setResolvedProfileUserId). Always part of a cold launch with a live session.',
+  next:'Profile resolved → BiometricGate (native, if lock enabled) → WorkspaceProvider → EntityProvider → TenantGate.',
+  unc:'Plain frame shows only the rounded square; a LoadingTips card is included here to represent the TenantGate-loading visual family.',
+  render(){ return el('div',{class:'pageloader'},[
+    el('div',{class:'loader-sq'}),
+    el('div',{class:'tipcard'},[
+      el('span',{class:'avatar'},'⚙️'),
+      el('div',{},[
+        el('div',{class:'t-label'},'Quick Tip'),
+        el('div',{class:'t-msg'},TIP_OFFLINE)
+      ])
+    ])
+  ])}
+},
+{
+  id:'biometric-launch', name:'Biometric verification (cold launch, native)', kind:'native',
+  source:'src/App.tsx (BiometricGate enabled=biometricLockEnabled) → src/components/app/BiometricGate.tsx; pref: src/lib/native/biometric.ts',
+  why:'Native-only. When the biometric lock preference is on, the cold launch renders PageLoader and triggers verifyBiometricIdentity() once. The user sees the OS biometric sheet (system UI) while the app holds on the loader.',
+  next:'Success → children render (tenant gate). Failure or cancel → onAuthFailure → local sign-out → Login screen. No hardware/availability → sign-out path.',
+  unc:'Schematic representation: the OS sheet (Android BiometricPrompt) is native UI, not app DOM. Its title text and icon vary by device; shown generically. App-rendered background is the PageLoader.',
+  render(){ return el('div',{style:'height:100%;position:relative;background:var(--card)'},[
+    el('div',{class:'pageloader'},[el('div',{class:'loader-sq'})]),
+    el('div',{class:'bio-layer'},[
+      el('div',{class:'bio-sheet'},[
+        el('div',{class:'icon'},el('span',{style:'display:inline-flex;width:28px;height:28px',inner:ICONS.fingerprint})),
+        el('h2',{},'Biometric verification required'),
+        el('p',{},'Confirm it is you to unlock BigDrops.'),
+        el('button',{class:'cancel'},'Cancel')
+      ])
+    ])
+  ])}
+},
+{
+  id:'biometric-resume', name:'Biometric re-lock (resume from background)', kind:'native',
+  source:'src/components/app/BiometricGate.tsx — appStateChange listener (resume path)',
+  why:'Native-only, distinct from cold launch but part of the same gate: when the app returns from background with the lock enabled, the gate re-locks and verifies again. Included because a reviewer of cold-launch UX must know the gate recurs.',
+  next:'Success → app content returns. Cancel/failure → sign-out → Login.',
+  unc:'Same schematic OS sheet as cold-launch verification. The app shows PageLoader behind the sheet while gated.',
+  render(){ return el('div',{style:'height:100%;position:relative;background:var(--card)'},[
+    el('div',{class:'pageloader'},[el('div',{class:'loader-sq'})]),
+    el('div',{class:'bio-layer'},[
+      el('div',{class:'bio-sheet'},[
+        el('div',{class:'icon'},el('span',{style:'display:inline-flex;width:28px;height:28px',inner:ICONS.lockphone})),
+        el('h2',{},'Biometric verification required'),
+        el('p',{},'Confirm it is you to unlock BigDrops.'),
+        el('button',{class:'cancel'},'Cancel')
+      ])
+    ])
+  ])}
+},
+{
+  id:'tenant-loading', name:'TenantGate loading (workspace + entity resolution)', kind:'gate',
+  source:'src/components/app/TenantGate.tsx phase loading → PageLoader + LoadingTips (pathname="/"); src/domain/tenant/tenantGate.ts resolveGatePhase()',
+  why:'After the auth/profile gates, TenantGate re-resolves workspace and entity state on every cold launch (session picks reset on reload) and holds on this loading screen while queries run.',
+  next:'resolveGatePhase() → ready (single active workspace) → Dashboard. Multiple workspaces → Choose a workspace. Pending workspace → Awaiting approval. Zero workspaces → onboarding (new-user flow).',
+  unc:'Verbatim structure: PageLoader frame + LoadingTips card. Quick Tip text is data-driven from src/lib/tipContent.ts — sample shown.',
+  render(){ return el('div',{class:'pageloader'},[
+    el('div',{class:'loader-sq'}),
+    el('div',{class:'tipcard'},[
+      el('span',{class:'avatar'},'⚙️'),
+      el('div',{},[
+        el('div',{class:'t-label'},'Quick Tip'),
+        el('div',{class:'t-msg'},TIP_SEARCH)
+      ])
+    ])
+  ])}
+},
+{
+  id:'workspace-selection', name:'Choose a workspace (re-selected every launch)', kind:'branch',
+  source:'src/components/app/TenantGate.tsx phase select-workspace → src/pages/WorkspaceSelection.tsx',
+  why:'Tenancy gate re-evaluates on every cold launch. A user with more than one active workspace lands here again each launch because the session workspace choice resets on reload (comment in tenantGate.ts). Documented as conditional.',
+  next:'Select a workspace → session-scoped choice → company/entity resolution → Dashboard.',
+  unc:'Verbatim copy; rows are data-driven — names/slugs/roles are illustrative.',
+  render(){ return el('div',{class:'center-screen'},el('div',{class:'card',style:'padding:32px'},[
+    iconTile(ICONS.building2),
+    el('div',{style:'margin-top:24px'},[
+      el('div',{class:'eyebrow'},'BigDrops ERP'),
+      el('h2',{style:'margin-top:12px;font-size:24px;font-weight:600;letter-spacing:-.015em;color:var(--fg)'},'Choose a workspace'),
+      el('p',{style:'margin-top:8px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'You belong to more than one workspace. Select one to continue. The choice lasts for this session only.')
+    ]),
+    el('div',{},[
+      wsRow('Tunde and Sons Limited','tunde-and-sons-limited','owner'),
+      wsRow('Kola Trade Co.','kola-trade-co','member')
+    ]),
+    el('button',{class:'btn',style:'margin-top:24px'},'Sign Out')
+  ]))}
+},
+{
+  id:'workspace-pending', name:'Workspace Awaiting Approval (stale pending row)', kind:'branch',
+  source:'src/components/app/TenantGate.tsx phase pending-approval → src/pages/WorkspacePendingApproval.tsx',
+  why:'Reachable at cold launch when the user has no active workspace but an own pending one (e.g. approval has not happened yet). Polls every 5s. Documented as conditional.',
+  next:'Approval arrives → gate re-resolves → company gate or Dashboard. Leave waiting room / Sign Out are the escapes.',
+  unc:'Verbatim copy; pending name dynamic. Primary path of the new-user journey covers this gate in depth; shown here as the returning-user encounter.',
+  render(){ return el('div',{class:'center-screen'},el('div',{class:'card',style:'text-align:center'},[
+    el('div',{style:'padding:32px 32px 0'},[
+      el('div',{class:'floaty',style:'position:relative;width:96px;height:96px;margin:0 auto'},[
+        el('div',{class:'pulsering'}),
+        el('div',{class:'dashring'}),
+        el('div',{class:'icon-tile amber',style:'position:relative;z-index:1;margin:16px auto 0'},el('span',{style:'display:inline-flex;width:32px;height:32px',inner:ICONS.clock3}))
+      ]),
+      el('div',{style:'margin-top:16px'},[
+        el('h2',{style:'font-size:20px;font-weight:600;color:var(--fg)'},'Workspace Awaiting Approval'),
+        el('p',{style:'margin-top:8px;font-size:14px;font-weight:600;color:var(--fg)'},'“Tunde and Sons Limited” is waiting for approval.'),
+        el('p',{style:'margin-top:4px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'Your workspace was created. An administrator must approve it before you can create a company and start using BigDrops.'),
+        el('p',{style:'margin-top:12px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'This page refreshes automatically. Approval usually takes a few minutes.')
+      ])
+    ]),
+    el('div',{style:'display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 32px 32px'},[
+      el('button',{class:'btn'},'Leave waiting room'),
+      el('button',{class:'btn'},'Sign Out')
+    ])
+  ]))}
+},
+{
+  id:'tenant-error', name:'Gate error / blocked / unavailable', kind:'branch',
+  source:'src/components/app/TenantGate.tsx — GateError (phases error, blocked, unavailable)',
+  why:'Workspace/entity load failure at cold launch, a purged workspace ("This workspace has been blocked."), or a purging state ("This workspace is no longer available."). Documented as conditional.',
+  next:'Try Again re-runs workspace + entity refresh; recovery routes back into the correct phase.',
+  unc:'Verbatim headline "Something went wrong" and button "Try Again"; message body runtime-derived (sample "Unknown error.").',
+  render(){ return el('div',{style:'min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--card)'},el('div',{style:'width:100%;max-width:28rem;border:1px solid var(--border);background:var(--card);border-radius:16px;padding:32px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,.10)'},[
+    el('h2',{style:'font-size:20px;font-weight:600;color:var(--fg)'},'Something went wrong'),
+    el('p',{style:'margin-top:8px;font-size:14px;line-height:1.5rem;color:var(--fg-muted);word-break:break-word'},'Unknown error.'),
+    el('button',{class:'btn',style:'margin-top:24px;border-radius:12px'},'Try Again')
+  ]))}
+},
+{
+  id:'dashboard', name:'Dashboard accessible (endpoint)', kind:'endpoint',
+  source:'src/components/app/AppShell.tsx — Route "/" → Dashboard',
+  why:'Cold launch completes: splash hidden, offline access allowed, profile resolved, biometric passed (if enabled), tenant gate ready. Only a representative frame is included per scope.',
+  next:'End of cold-launch journey. App is interactive.',
+  unc:'Dashboard content intentionally representative (not reproduced).',
+  render(){ return representativeDashboard() }
+}
+];
+
+/* ============ helpers ============ */
+function el(tag, attrs, ...children){
+  const n = document.createElement(tag);
+  if(attrs) for(const [k,v] of Object.entries(attrs)){
+    if(k==='class') n.className=v;
+    else if(k==='style') n.style.cssText=v;
+    else if(k==='inner') n.innerHTML=v;
+    else if(k.startsWith('on')) n.addEventListener(k.slice(2),v);
+    else n.setAttribute(k,v);
+  }
+  for(const c of children.flat(9)){
+    if(c==null) continue;
+    n.append(c.nodeType?c:document.createTextNode(String(c)));
+  }
+  return n;
+}
+function iconTile(svg){ const t=el('div',{class:'icon-tile'}); const s=el('span',{inner:svg,style:'display:inline-flex'}); t.append(s); return t; }
+function wsRow(name,slug,role){
+  return el('button',{class:'wsrow'},[
+    el('div',{},[el('div',{class:'n'},name), el('div',{class:'s'},'/'+slug)]),
+    el('div',{class:'r'},role)
+  ]);
+}
+function representativeDashboard(){
+  return el('div',{class:'dash'},[
+    el('div',{class:'dash-top'},[
+      el('div',{},[el('div',{class:'who'},'BigDrops ERP'),el('h1',{},'Good day, Tunde')]),
+      el('div',{style:'width:36px;height:36px;border-radius:50%;background:var(--primary-btn)'})
+    ]),
+    el('div',{class:'dash-body'},[
+      el('div',{style:'display:grid;grid-template-columns:1fr 1fr;gap:10px'},[
+        el('div',{class:'tile'},[el('div',{class:'k'},'Outstanding'),el('div',{class:'v'},'₦ —')]),
+        el('div',{class:'tile'},[el('div',{class:'k'},'Invoices'),el('div',{class:'v'},'—')])
+      ]),
+      el('div',{class:'tile'},[el('div',{class:'k'},'Quick actions'),el('div',{class:'v',style:'font-size:14px;font-weight:600;color:var(--fg-muted)'},'New invoice · New quotation · New CSR')])
+    ]),
+    el('div',{class:'dash-nav'},[
+      navItem(ICONS.home,'Home',true), navItem(ICONS.file,'Invoices'), navItem(ICONS.users,'Clients'), navItem(ICONS.truck,'Waybills')
+    ]),
+    el('div',{class:'representative-badge'},'Representative frame — not reproduced')
+  ]);
+}
+function navItem(svg,label,on){
+  const n=el('div',{class:'ni'+(on?' on':'')});
+  n.append(el('span',{inner:svg,style:'display:inline-flex'}),document.createTextNode(label));
+  return n;
+}
+
+/* ============ flow map ============ */
+const PRIMARY = ['splash-cold','profile-loader','tenant-loading','dashboard'];
+const NATIVE_LANE = ['offline-loading','biometric-launch','biometric-resume'];
+const BRANCHES = ['offline-blocked','workspace-selection','workspace-pending','tenant-error'];
+function shortName(id){ const s=STATES.find(x=>x.id===id); return s?s.name.replace(/ \(.*\)$/,''):id; }
+function buildFlow(){
+  const l1=document.getElementById('flowLane1'); l1.innerHTML='';
+  PRIMARY.forEach((id,i)=>{
+    const st=STATES.find(s=>s.id===id);
+    const chip=el('button',{class:'chip'+(st.kind==='endpoint'?' final':' gate'),'data-flow':id,onclick:()=>goTo(STATES.findIndex(s=>s.id===id))},shortName(id));
+    l1.append(chip);
+    if(i<PRIMARY.length-1) l1.append(el('span',{class:'arrow'},'→'));
+  });
+  const lN=document.getElementById('flowLane2'); lN.innerHTML='';
+  const label1=el('span',{class:'lane-label',style:'margin:0 6px 0 0'},'Native lane (Android/Capacitor):');
+  lN.append(label1);
+  NATIVE_LANE.forEach((id,i)=>{
+    const chip=el('button',{class:'chip native','data-flow':id,onclick:()=>goTo(STATES.findIndex(s=>s.id===id))},shortName(id));
+    lN.append(chip);
+    if(i<NATIVE_LANE.length-1) lN.append(el('span',{class:'arrow'},'·'));
+  });
+  lN.append(el('span',{class:'lane-label',style:'margin:0 6px 0 14px'},'Conditional:'));
+  BRANCHES.forEach((id,i)=>{
+    const chip=el('button',{class:'chip branch','data-flow':id,onclick:()=>goTo(STATES.findIndex(s=>s.id===id))},shortName(id));
+    lN.append(chip);
+    if(i<BRANCHES.length-1) lN.append(el('span',{class:'arrow'},'·'));
+  });
+}
+
+/* ============ engine ============ */
+let current=0;
+const surface=document.getElementById('appSurface');
+const sel=document.getElementById('stateSelect');
+function buildSelect(){
+  sel.innerHTML='';
+  const g1=el('optgroup',{label:'Primary journey'});
+  const g2=el('optgroup',{label:'Native (Android/Capacitor)'});
+  const g3=el('optgroup',{label:'Conditional / branch'});
+  STATES.forEach((s,i)=>{
+    const mark=s.kind==='endpoint'?'◉ ':s.kind==='native'?'📱 ':s.kind==='branch'?'⟂ ':'';
+    const o=el('option',{value:String(i)},mark+s.name);
+    (s.kind==='native'?g2:s.kind==='branch'?g3:g1).append(o);
+  });
+  sel.append(g1,g2,g3);
+}
+function render(){
+  const st=STATES[current];
+  surface.innerHTML='';
+  surface.style.background=(st.id==='splash-cold'||st.id==='profile-loader'||st.id==='offline-loading'||st.id==='tenant-loading'||st.id==='biometric-launch'||st.id==='biometric-resume')?'var(--card)':'var(--screen-bg)';
+  surface.append(st.render());
+  document.getElementById('nName').textContent=st.name;
+  document.getElementById('nId').textContent=st.id+(st.kind==='branch'?' (conditional)':st.kind==='native'?' (native)':'');
+  document.getElementById('nSource').textContent=st.source;
+  document.getElementById('nWhy').textContent=st.why;
+  document.getElementById('nNext').textContent=st.next;
+  document.getElementById('nUnc').textContent=st.unc;
+  document.getElementById('stateCount').textContent='State '+(current+1)+' of '+STATES.length;
+  sel.value=String(current);
+  document.querySelectorAll('[data-flow]').forEach(c=>c.classList.toggle('active',c.getAttribute('data-flow')===st.id));
+  document.getElementById('btnPrev').disabled=current===0;
+  document.getElementById('btnNext').disabled=current===STATES.length-1;
+  if(st.id==='splash-cold'){
+    let i=0; clearInterval(window.__tipTimer);
+    window.__tipTimer=setInterval(()=>{ i=(i+1)%SPLASH_TIPS.length; const t=document.getElementById('splashTip'); if(t)t.textContent=SPLASH_TIPS[i]; },2200);
+  }
+}
+function goTo(i){ if(i<0||i>=STATES.length) return; current=i; render(); }
+document.getElementById('btnPrev').onclick=()=>goTo(current-1);
+document.getElementById('btnNext').onclick=()=>goTo(current+1);
+document.getElementById('btnRestart').onclick=()=>goTo(0);
+sel.onchange=e=>goTo(Number(e.target.value));
+
+const vp=document.getElementById('viewport');
+document.querySelectorAll('[data-vp]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('[data-vp]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+    vp.className='viewport'+(b.dataset.vp==='phone'?'':' '+b.dataset.vp);
+  };
+});
+const screen=document.getElementById('screen');
+document.querySelectorAll('[data-th]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+    screen.classList.toggle('dark',b.dataset.th==='dark');
+  };
+});
+
+buildFlow();
+buildSelect();
+goTo(0);
+</script>
+</body>
+</html>

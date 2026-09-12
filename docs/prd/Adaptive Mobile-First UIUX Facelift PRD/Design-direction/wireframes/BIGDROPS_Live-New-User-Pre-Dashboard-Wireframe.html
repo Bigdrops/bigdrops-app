@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIGDROPS · Live New-User Pre-Dashboard Wireframe (Forensic Capture)</title>
+<style>
+/* ============================================================
+   FORENSIC CAPTURE — CURRENT LIVE FLOW
+   Sources: src/App.tsx, src/pages/Login.tsx,
+   src/components/app/{SplashOverlay,PageLoader,TenantGate,SetPasswordModal,AppShell}.tsx,
+   src/pages/{WorkspaceCreation,WorkspacePendingApproval,WorkspaceSelection,WorkspaceInvitation,
+   CompanyCreation,ProvisioningProgress,ProvisioningFailed}.tsx,
+   src/domain/tenant/tenantGate.ts
+   Copy strings are verbatim from the listed components.
+   ============================================================ */
+:root{
+  /* App tokens (Tailwind/shadcn values observed in source) */
+  --screen-bg:#f5f5f4;            /* bg-stone-100 (gate screens) */
+  --login-bg:#f6f6f4;             /* Login page bg */
+  --card:#ffffff;                 /* bg-card */
+  --fg:#18181b;                   /* text-foreground (zinc-900) */
+  --fg-muted:#71717a;             /* text-muted-foreground (zinc-500) */
+  --border:rgba(0,0,0,.10);       /* border-black/10 */
+  --primary-btn:#111111;          /* bg-[#111111] */
+  --primary-btn-hover:#000000;
+  --emerald-50:#ecfdf5; --emerald-200:#a7f3d0; --emerald-600:#059669; --emerald-700:#047857; --emerald-800:#065f46;
+  --blue-50:#eff6ff;   --blue-200:#bfdbfe;   --blue-600:#2563eb;
+  --amber-50:#fffbeb;  --amber-200:#fde68a;  --amber-500:#f59e0b;  --amber-600:#d97706;
+  --sky-50:#f0f9ff;    --sky-200:#bae6fd;    --sky-600:#0284c7;
+  --red-50:#fef2f2;    --red-200:#fecaca;    --red-600:#dc2626;    --red-700:#b91c1c;
+  --slate-50:#f8fafc;  --slate-200:#e2e8f0;  --slate-500:#64748b;  --slate-800:#1e293b;
+  --destructive:#dc2626; --destructive-10:rgba(220,38,38,.10); --destructive-20:rgba(220,38,38,.20);
+  --shadow-card:0 20px 25px -5px rgba(0,0,0,.05),0 8px 10px -6px rgba(0,0,0,.01);
+  /* Forensic chrome tokens (control panel only — not part of simulated UI) */
+  --chrome-bg:#18181b; --chrome-panel:#26262a; --chrome-fg:#e4e4e7; --chrome-muted:#a1a1aa; --chrome-accent:#60a5fa; --chrome-line:rgba(255,255,255,.12);
+}
+.dark{
+  /* Real app dark mode flips variable-driven surfaces (shadcn zinc dark).
+     Hardcoded Tailwind classes (bg-stone-100, #f6f6f4, white cards on Login)
+     do NOT flip — forensic fidelity kept. See notes. */
+  --card:#18181b; --fg:#fafafa; --fg-muted:#a1a1aa; --border:rgba(255,255,255,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--chrome-bg);color:var(--chrome-fg);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--chrome-accent);outline-offset:2px;border-radius:6px}
+
+/* ============ Forensic chrome (outside simulated app) ============ */
+.f-banner{
+  position:sticky;top:0;z-index:60;
+  background:#0b0b0d;border-bottom:1px solid var(--chrome-line);
+  padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+}
+.f-banner .tag{
+  font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#fde68a;
+  display:flex;align-items:center;gap:8px;
+}
+.f-banner .tag .dot{width:8px;height:8px;border-radius:50%;background:#f59e0b;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.f-banner .sub{font-size:11px;color:var(--chrome-muted)}
+.f-layout{display:grid;grid-template-columns:1fr;gap:0;max-width:1280px;margin:0 auto}
+@media(min-width:1024px){.f-layout{grid-template-columns:minmax(0,1fr) 340px}}
+.f-stage{padding:22px 16px 48px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.f-controls{
+  position:sticky;bottom:0;z-index:60;
+  background:var(--chrome-panel);border-top:1px solid var(--chrome-line);
+  padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+}
+.f-controls .group{display:flex;gap:8px;align-items:center}
+.f-btn{
+  min-height:36px;padding:0 14px;border-radius:9px;font-size:12.5px;font-weight:700;
+  background:#3f3f46;color:#fff;border:1px solid rgba(255,255,255,.14);
+}
+.f-btn:hover{background:#52525b}
+.f-btn.primary{background:var(--chrome-accent);color:#0b0b0d;border-color:transparent}
+.f-btn.primary:hover{filter:brightness(1.1)}
+.f-btn:disabled{opacity:.4;cursor:not-allowed}
+.f-select{
+  min-height:36px;max-width:340px;border-radius:9px;background:#3f3f46;color:#fff;
+  border:1px solid rgba(255,255,255,.14);font-size:12.5px;font-weight:600;padding:0 10px;
+}
+.f-seg{display:flex;border:1px solid rgba(255,255,255,.14);border-radius:9px;overflow:hidden}
+.f-seg button{min-height:36px;padding:0 12px;font-size:12px;font-weight:700;color:var(--chrome-muted);background:#3f3f46}
+.f-seg button[aria-pressed="true"]{background:var(--chrome-accent);color:#0b0b0d}
+.f-statecount{font-size:11px;color:var(--chrome-muted);font-variant-numeric:tabular-nums}
+
+/* Flow map */
+.f-flow{
+  background:var(--chrome-panel);border:1px solid var(--chrome-line);border-radius:14px;
+  padding:14px 16px;width:100%;max-width:980px;
+}
+.f-flow h3{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-muted);margin-bottom:10px}
+.f-flow .lane{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.chip{
+  font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;
+  background:#3f3f46;color:#e4e4e7;border:1px solid rgba(255,255,255,.12);white-space:nowrap;
+}
+.chip.final{background:#14532d;border-color:rgba(74,222,128,.4);color:#bbf7d0}
+.chip.gate{background:#3b2f0b;border-color:rgba(245,158,11,.45);color:#fde68a}
+.chip.branch{background:#1e293b;border-color:rgba(148,163,184,.4);color:#cbd5e1}
+.chip.active{outline:2px solid var(--chrome-accent);outline-offset:1px}
+.arrow{color:#71717a;font-size:12px;font-weight:700}
+.lane-label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#71717a;margin:10px 0 6px}
+
+/* Notes panel */
+.f-notes{
+  background:var(--chrome-panel);border-left:1px solid var(--chrome-line);
+  padding:18px 16px 48px;font-size:12.5px;line-height:1.65;color:var(--chrome-muted);
+}
+@media(max-width:1023px){.f-notes{border-left:0;border-top:1px solid var(--chrome-line)}}
+.f-notes h2{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--chrome-fg);margin-bottom:4px}
+.f-notes .state-name{font-size:15px;font-weight:800;color:var(--chrome-fg);margin:8px 0 2px}
+.f-notes .kv{margin:10px 0}
+.f-notes .kv b{display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-accent);margin-bottom:3px}
+.f-notes code{background:#0b0b0d;border:1px solid var(--chrome-line);border-radius:5px;padding:1px 5px;font-size:11.5px;color:#fde68a;word-break:break-all}
+.f-notes .warn{border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.08);color:#fde68a;border-radius:9px;padding:8px 10px;margin:10px 0}
+.f-notes .legend{border-top:1px solid var(--chrome-line);margin-top:16px;padding-top:12px}
+
+/* ============ Simulated app viewport ============ */
+.viewport{
+  background:#0b0b0d;border:1px solid var(--chrome-line);border-radius:26px;padding:10px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5);
+}
+.viewport.tablet{width:720px;max-width:96vw;border-radius:22px}
+.viewport.desktop{width:1080px;max-width:96vw;border-radius:16px;padding:8px}
+.screen{
+  position:relative;width:390px;max-width:calc(96vw - 20px);height:760px;max-height:78vh;
+  border-radius:18px;overflow:hidden;background:var(--screen-bg);color:var(--fg);
+}
+.viewport.tablet .screen{width:100%;height:640px}
+.viewport.desktop .screen{width:100%;height:640px}
+.screen .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#0b0b0d;border-radius:0 0 12px 12px;z-index:50}
+.app-surface{position:absolute;inset:0;overflow:hidden auto}
+.app-surface::-webkit-scrollbar{width:0}
+
+/* App primitives (mirror Tailwind classes used in source) */
+.center-screen{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{
+  width:100%;max-width:28rem;background:var(--card);border-radius:16px;
+  box-shadow:0 20px 25px -5px rgba(0,0,0,.08),0 8px 10px -6px rgba(0,0,0,.02);
+}
+.card.pad{padding:32px}
+.eyebrow{font-size:12px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--fg-muted)}
+.h2{margin-top:12px;font-size:24px;font-weight:600;letter-spacing:-.015em;color:var(--fg);line-height:1.2}
+.sub{margin-top:8px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)}
+.icon-tile{
+  width:64px;height:64px;display:flex;align-items:center;justify-content:center;
+  border-radius:16px;border:1px solid var(--emerald-200);background:var(--emerald-50);
+}
+.icon-tile svg{width:32px;height:32px}
+.icon-tile.blue{border-color:var(--blue-200);background:var(--blue-50)}
+.icon-tile.blue svg{color:var(--blue-600)}
+.icon-tile.emerald svg{color:var(--emerald-600)}
+.icon-tile.amber{border-radius:50%;border-color:var(--amber-200);background:var(--amber-50)}
+.icon-tile.amber svg{color:var(--amber-600)}
+.icon-tile.sky{border-color:var(--sky-200);background:var(--sky-50)}
+.icon-tile.sky svg{color:var(--sky-600)}
+.icon-tile.red{border-radius:50%;border-color:var(--red-200);background:var(--red-50)}
+.icon-tile.red svg{color:var(--red-600)}
+.btn{
+  width:100%;min-height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--primary-btn);color:#fff;font-size:15px;font-weight:600;border:1px solid transparent;
+}
+.btn:hover{background:var(--primary-btn-hover)}
+.btn.outline{background:transparent;color:var(--fg);border-color:var(--border)}
+.btn.outline:hover{background:rgba(0,0,0,.04)}
+.btn.pill{border-radius:9999px;min-height:44px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--fg-muted)}
+.btn:disabled{opacity:.55}
+.input{
+  width:100%;min-height:48px;border-radius:12px;border:1px solid var(--border);
+  background:var(--card);padding:0 16px;font-size:16px;color:var(--fg);outline:none;
+}
+.input::placeholder{color:#a1a1aa}
+.input:focus{border-color:rgba(0,0,0,.28)}
+.label{font-size:14px;color:#334155}
+.dark .label{color:#cbd5e1}
+.field{margin-top:16px}
+.field .label{display:block;margin-bottom:8px}
+.notice{border-radius:12px;border:1px solid;padding:8px 12px;font-size:14px}
+.notice.error{border-color:var(--red-200);background:var(--red-50);color:var(--red-700)}
+.notice.success{border-color:var(--emerald-200);background:var(--emerald-50);color:var(--emerald-700)}
+.seg{
+  margin-top:24px;display:flex;border:1px solid var(--border);background:rgba(0,0,0,.05);
+  border-radius:12px;padding:4px;
+}
+.seg button{
+  flex:1;min-height:44px;border-radius:8px;font-size:14px;font-weight:600;color:var(--fg-muted);
+}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* Splash */
+.splash{position:absolute;inset:0;background:var(--card);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:40}
+.splash .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-58%);width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle,rgba(24,24,27,.10) 0%,rgba(24,24,27,.05) 34%,transparent 74%);animation:halo 3.2s ease-in-out infinite}
+@keyframes halo{0%,100%{transform:translate(-50%,-58%) scale(1);opacity:.8}50%{transform:translate(-50%,-58%) scale(1.06);opacity:1}}
+.wordmark{font-size:34px;font-weight:600;letter-spacing:-.04em;color:var(--fg);margin-top:12px;position:relative}
+.splash .tip{margin-top:8px;font-size:15px;color:var(--fg-muted);position:relative}
+.quicktip{margin-top:20px;width:280px;border:1px solid var(--border);background:var(--card);border-radius:18px;padding:10px 12px}
+.quicktip .qt-label{font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--fg-muted);text-align:center;opacity:.7}
+.quicktip .qt-msg{margin-top:4px;font-size:12px;font-weight:600;line-height:1.6;color:var(--fg-muted);text-align:center}
+.circuit{position:relative;width:320px;height:150px}
+.circuit svg{position:absolute;inset:0}
+.node{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid #71717a;background:var(--card)}
+.node.active{border-color:#18181b;background:#18181b}
+.node .nlabel{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:var(--fg-muted);white-space:nowrap}
+.trace{position:absolute;height:2px;background:#d4d4d8;overflow:hidden}
+.trace::after{content:"";position:absolute;inset:0;width:34%;background:#18181b;animation:flow 1.6s linear infinite}
+@keyframes flow{0%{transform:translateX(-110%)}100%{transform:translateX(400%)}}
+
+/* PageLoader */
+.pageloader{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:var(--card)}
+.loader-sq{width:56px;height:56px;border-radius:18px;border:1px solid rgba(24,24,27,.10);background:var(--card);box-shadow:0 6px 18px rgba(24,24,27,.05);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Pending approval / provisioning animations */
+.floaty{animation:floaty 2.8s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.pulsering{position:absolute;inset:-24px;border-radius:50%;background:rgba(245,158,11,.10);filter:blur(12px);animation:pulse2 2.2s ease-in-out infinite}
+@keyframes pulse2{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.12);opacity:.8}}
+.dashring{position:absolute;inset:-8px;border-radius:50%;border:2px dashed rgba(252,211,77,.7);animation:spin7 7s linear infinite}
+@keyframes spin7{to{transform:rotate(360deg)}}
+.skyglow{position:absolute;inset:-24px;border-radius:50%;background:rgba(2,132,199,.10);filter:blur(12px);animation:pulse2 2.2s ease-in-out infinite}
+.bluelight{position:absolute;inset:-24px;border-radius:50%;background:rgba(37,99,235,.10);filter:blur(14px)}
+.spinner{width:32px;height:32px;border-radius:50%;border:2.5px solid var(--sky-200);border-top-color:var(--sky-600);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner.small{width:20px;height:20px;border-width:2px}
+.spinner.invert{border-color:rgba(255,255,255,.35);border-top-color:#fff}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+
+/* Status rows in CompanyCreation */
+.statusrow{margin-top:24px;display:flex;align-items:center;gap:12px;border:1px solid var(--slate-200);background:var(--slate-50);border-radius:12px;padding:12px 16px}
+.dark .statusrow{background:rgba(255,255,255,.04);border-color:var(--border)}
+.statusrow .t1{font-size:14px;font-weight:600;color:var(--slate-800)}
+.dark .statusrow .t1{color:var(--fg)}
+.statusrow .t2{font-size:12px;color:var(--slate-500)}
+.okrow{margin-top:24px;display:flex;align-items:center;gap:12px;border:1px solid var(--emerald-200);background:var(--emerald-50);border-radius:12px;padding:12px 16px}
+.okrow .t1{font-size:14px;font-weight:600;color:var(--emerald-800)}
+.okrow .t2{font-size:12px;color:var(--emerald-600)}
+
+/* Workspace rows (selection) */
+.wsrow{
+  width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;
+  border:1px solid var(--border);background:var(--card);border-radius:12px;padding:12px 16px;margin-top:12px;
+}
+.wsrow:hover{background:rgba(0,0,0,.04)}
+.wsrow .n{font-size:14px;font-weight:600;color:var(--fg)}
+.wsrow .s{font-size:12px;color:var(--fg-muted)}
+.wsrow .r{font-size:12px;font-weight:500;color:var(--fg-muted)}
+
+/* Dialog (SetPasswordModal — shadcn Dialog, sm:max-w-md, no close button) */
+.dialog-layer{position:absolute;inset:0;z-index:30}
+.dialog-scrim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.dialog{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:calc(100% - 32px);max-width:28rem;background:var(--card);color:var(--fg);
+  border-radius:10px;border:1px solid var(--border);
+  box-shadow:0 25px 50px -12px rgba(0,0,0,.25);padding:24px;
+}
+.dialog .dt{font-size:18px;font-weight:600;line-height:1.33;letter-spacing:-.01em}
+.dialog .dd{margin-top:6px;font-size:14px;color:var(--fg-muted);line-height:1.45}
+.dialog .row{display:flex;gap:8px;margin-top:14px}
+.dialog .row .btn{min-height:40px;font-size:14px;flex:1;border-radius:8px}
+.dialog .input{min-height:40px;border-radius:8px;font-size:14px;margin-top:10px}
+.okbox{margin-top:14px;border-radius:8px;border:1px solid var(--emerald-200);background:var(--emerald-50);padding:12px 16px;text-align:center;font-size:14px;font-weight:500;color:var(--emerald-700)}
+
+/* Representative dashboard frame (endpoint — minimal, not redesigned) */
+.dash{min-height:100%;background:var(--screen-bg);display:flex;flex-direction:column}
+.dash-top{padding:18px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+.dash-top .who{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--fg-muted)}
+.dash-top h1{font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--fg);margin-top:2px}
+.dash-body{padding:8px 20px 90px;display:grid;gap:10px}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.tile .k{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-muted)}
+.tile .v{margin-top:4px;font-size:20px;font-weight:700;color:var(--fg)}
+.dash-nav{
+  position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;
+  background:var(--card);border-top:1px solid var(--border);padding:8px 6px 14px;
+}
+.dash-nav .ni{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:600;color:var(--fg-muted)}
+.dash-nav .ni svg{width:20px;height:20px}
+.dash-nav .ni.on{color:var(--fg)}
+.representative-badge{
+  position:absolute;top:8px;right:8px;z-index:35;font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  background:#0b0b0d;color:#fde68a;border:1px solid rgba(245,158,11,.5);border-radius:6px;padding:3px 6px;
+}
+
+/* Forensic watermark on simulated screen */
+.f-live{
+  position:absolute;left:10px;bottom:8px;z-index:55;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(24,24,27,.4);pointer-events:none;
+}
+.modal-hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- ============ FORENSIC BANNER — outside simulated UI ============ -->
+<header class="f-banner">
+  <div>
+    <div class="tag"><span class="dot"></span> CURRENT LIVE FLOW — DESIGN CAPTURE</div>
+    <div class="sub">BIGDROPS new-user journey: post-signup → pre-dashboard. Forensic capture of repository implementation. Not a redesign.</div>
+  </div>
+  <div class="sub" id="f-source">Traced from: src/App.tsx · src/pages/Login.tsx · src/components/app/* · src/pages/* · src/domain/tenant/tenantGate.ts</div>
+</header>
+
+<div class="f-layout">
+  <main class="f-stage">
+    <!-- Flow map -->
+    <section class="f-flow" aria-label="Discovered flow map">
+      <h3>Discovered flow — primary path (new user, email signup)</h3>
+      <div class="lane" id="flowLane1"></div>
+      <div class="lane-label">Conditional / branch states (evidence-backed, not on the primary path)</div>
+      <div class="lane" id="flowLane2"></div>
+    </section>
+
+    <!-- Simulated app viewport -->
+    <div class="viewport" id="viewport">
+      <div class="screen" id="screen">
+        <div class="notch"></div>
+        <div class="app-surface" id="appSurface" aria-live="polite"></div>
+        <div class="f-live">Simulated UI — forensic capture</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ Notes panel — outside simulated UI ============ -->
+  <aside class="f-notes" id="notesPanel">
+    <h2>Design-capture notes</h2>
+    <div class="state-name" id="nName">—</div>
+    <div class="kv"><b>State id</b><span id="nId">—</span></div>
+    <div class="kv"><b>Source component / route</b><span id="nSource">—</span></div>
+    <div class="kv"><b>Why included</b><span id="nWhy">—</span></div>
+    <div class="kv"><b>Next state</b><span id="nNext">—</span></div>
+    <div class="kv"><b>Uncertainty</b><span id="nUnc">—</span></div>
+    <div class="legend">
+      <b style="display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--chrome-accent);margin-bottom:4px">Legend</b>
+      Chips: <span class="chip gate">gate</span> blocking state ·
+      <span class="chip final">endpoint</span> dashboard access ·
+      <span class="chip branch">branch</span> conditional state.
+      The "Create Password" gate confirmed by the product owner exists in code as
+      <code>SetPasswordModal</code> ("Set System Password") — see its note.
+    </div>
+  </aside>
+</div>
+
+<!-- ============ Prototype controls — outside simulated UI ============ -->
+<nav class="f-controls" aria-label="Prototype controls">
+  <div class="group">
+    <button class="f-btn" id="btnPrev">◀ Prev</button>
+    <button class="f-btn primary" id="btnNext">Next ▶</button>
+    <button class="f-btn" id="btnRestart" title="Restart journey">⟲ Restart</button>
+  </div>
+  <div class="group">
+    <select class="f-select" id="stateSelect" aria-label="State selector"></select>
+  </div>
+  <div class="group f-seg" role="group" aria-label="Viewport">
+    <button data-vp="phone" aria-pressed="true">Phone</button>
+    <button data-vp="tablet" aria-pressed="false">Tablet</button>
+    <button data-vp="desktop" aria-pressed="false">Desktop</button>
+  </div>
+  <div class="group f-seg" role="group" aria-label="Theme (app supports both via CSS variables)">
+    <button data-th="light" aria-pressed="true">Light</button>
+    <button data-th="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="f-statecount" id="stateCount"></span>
+</nav>
+
+<script>
+/* ============================================================
+   DISCOVERED STATE MACHINE
+   Order derived from resolveGatePhase() + App.tsx routing gate.
+   ============================================================ */
+const ICONS = {
+  building2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>',
+  building:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01M8 18h.01M16 18h.01M12 18h.01"/></svg>',
+  mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+  clock3:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  alerttriangle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  alertcircle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
+  checkcircle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+  layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  file:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18h-5"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>',
+  google:'<svg viewBox="0 0 24 24" width="16" height="16"><path d="M21.805 10.023h-9.8v3.955h5.617c-.242 1.27-.967 2.346-2.06 3.07v2.55h3.33c1.95-1.796 3.073-4.444 3.073-7.598 0-.67-.06-1.314-.16-1.977Z" fill="#4285F4"/><path d="M12.005 22c2.79 0 5.13-.924 6.84-2.502l-3.33-2.55c-.924.62-2.104.987-3.51.987-2.7 0-4.99-1.823-5.81-4.273H2.75v2.63A10.326 10.326 0 0 0 12.005 22Z" fill="#34A853"/><path d="M6.195 13.662a6.2 6.2 0 0 1-.325-1.96c0-.68.117-1.34.325-1.96v-2.63H2.75A10.326 10.326 0 0 0 1.68 11.7c0 1.66.397 3.232 1.07 4.59l3.445-2.628Z" fill="#FBBC05"/><path d="M12.005 5.467c1.52 0 2.887.523 3.962 1.55l2.968-2.968C17.13 2.37 14.79 1.4 12.005 1.4A10.326 10.326 0 0 0 2.75 7.112l3.445 2.63c.82-2.45 3.11-4.275 5.81-4.275Z" fill="#EA4335"/></svg>'
+};
+
+const SPLASH_TIPS = ['Arranging your papers and records...','Preparing your workspace...','Getting documents and projects in order...'];
+const SAMPLE_TIP = 'The Compliance Hub tracks VAT exposure, WHT receipts, tax filings, and obligations. Open it from the menu to see what needs attention.';
+
+/* State registry. kind: gate | endpoint | branch. Sample dynamic values marked with * */
+const STATES = [
+{
+  id:'post-signup-email', name:'Check your email (account created)', kind:'gate',
+  source:'src/pages/Login.tsx — signupCompleteEmail branch (rendered in the same Login route, "/")',
+  why:'Immediately after supabase.auth.signUp() succeeds, the Login card swaps to this confirmation state. First post-signup screen.',
+  next:'User confirms via email link, returns and signs in → "Sign in to continue".',
+  unc:'Email address is dynamic — "tunde@example.com" is an illustrative substitution. Exact layout, copy and buttons verbatim.',
+  render(){ return el('div',{class:'app-surface-inner',style:'height:100%;background:var(--login-bg)'},[
+    floatingShapes(),
+    el('div',{class:'center-screen'},[
+      el('div',{class:'card',style:'padding:32px;border-radius:32px;border:1px solid var(--border);background:rgba(255,255,255,.9)'},[
+        el('div',{style:'text-align:left'},[
+          el('div',{class:'eyebrow'},'Account Created'),
+          el('h2',{class:'h2',style:'font-size:30px'},'Check your email'),
+          el('p',{class:'sub'},null,[
+            document.createTextNode('We sent a confirmation link to '),
+            el('span',{style:'font-weight:600;color:var(--fg)'},'tunde@example.com'),
+            document.createTextNode('.')
+          ])
+        ]),
+        el('div',{class:'notice success',style:'margin-top:20px;border-radius:16px;padding:16px;color:#065f46'},[
+          el('div',{style:'font-weight:600'},'Next steps'),
+          el('div',{style:'margin-top:8px'},'1. Open the confirmation email.'),
+          el('div',{},'2. Confirm your account.'),
+          el('div',{},'3. Return here and sign in.')
+        ]),
+        el('div',{style:'margin-top:16px;border:1px solid var(--border);background:rgba(0,0,0,.03);border-radius:16px;padding:16px;font-size:14px;color:var(--fg-muted)'},'If you already confirmed your email, you can go straight back to sign in.'),
+        el('button',{class:'btn',style:'margin-top:20px'},'Back to Sign In')
+      ])
+    ])
+  ])}
+},
+{
+  id:'sign-in', name:'Sign in to continue (post-confirmation)', kind:'gate',
+  source:'src/pages/Login.tsx — signin mode (route "/")',
+  why:'The confirmation copy directs the user back to sign in. This is the actual auth step that starts the in-app journey.',
+  next:'Successful sign-in re-shows the splash overlay → Splash (sign-in).',
+  unc:'Form values are illustrative. Google button is part of the live form; the Set Password gate at the end applies to OAuth signups (see its note).',
+  render(){ return el('div',{style:'height:100%;background:var(--login-bg);position:relative'},[
+    floatingShapes(),
+    el('div',{class:'center-screen'},[
+      el('div',{class:'card',style:'padding:32px;border-radius:32px;border:1px solid var(--border);background:rgba(255,255,255,.9)'},[
+        el('div',{class:'eyebrow'},'BigDrops ERP'),
+        el('h2',{class:'h2',style:'font-size:30px'},'Sign in to continue'),
+        el('p',{class:'sub'},'Access your business workspace from one place.'),
+        el('div',{class:'field'},[
+          el('label',{class:'label'},'Email'),
+          el('input',{class:'input',type:'email',value:'tunde@example.com'})
+        ]),
+        el('div',{class:'field'},[
+          el('label',{class:'label'},'Password'),
+          el('input',{class:'input',type:'password',value:'••••••••'})
+        ]),
+        el('div',{style:'display:flex;justify-content:flex-end;margin-top:10px'},el('button',{style:'font-size:14px;color:var(--fg-muted)'},'Forgot Password?')),
+        el('button',{class:'btn',style:'margin-top:14px'},el('span',{style:'display:inline-flex;align-items:center;gap:8px'},[el('span',{class:'spinner invert small',style:'display:none'}),'Sign In'])),
+        el('button',{class:'btn outline',style:'margin-top:10px'},el('span',{style:'display:inline-flex;align-items:center;gap:8px'},[spans(ICONS.google),'Continue with Google'])),
+        el('div',{style:'padding-top:8px;text-align:center;font-size:14px;color:var(--fg-muted)'},'Don\'t have an account? ', el('button',{style:'font-weight:600;color:var(--fg);text-decoration:underline'},'Sign Up'))
+      ])
+    ])
+  ])}
+},
+{
+  id:'splash-signin', name:'Splash overlay (session restore + sign-in)', kind:'gate',
+  source:'src/App.tsx (showSplash, SPLASH_TIPS) + src/components/app/SplashOverlay.tsx + QuickTipCard.tsx',
+  why:'Visible full-screen splash during boot and again after a real sign-in (App.tsx re-shows it on SIGNED_IN). Rotating legacy tips + educational Quick Tip card.',
+  next:'Auth + profile resolution complete (min 600ms) → Profile loader (PageLoader) if profile still resolving, then TenantGate.',
+  unc:'Circuit visual is the live SplashCircuit (mobile variant: Session → Auth → Workspace nodes, animated traces) reproduced schematically. Tip rotates every 2.2s; Quick Tip from src/lib/tipContent.ts — sample shown is tip.feature.compliance-hub.',
+  render(){ return el('div',{style:'height:100%;position:relative;background:var(--card)'},[
+    el('div',{class:'splash'},[
+      el('div',{class:'halo'}),
+      el('div',{class:'circuit'},[
+        el('div',{class:'trace',style:'left:60px;top:74px;width:90px'}),
+        el('div',{class:'trace',style:'left:170px;top:74px;width:90px'}),
+        el('div',{class:'node active',style:'left:45px;top:70px'},el('span',{class:'nlabel'},'Session')),
+        el('div',{class:'node',style:'left:155px;top:40px'},el('span',{class:'nlabel'},'Auth')),
+        el('div',{class:'node active',style:'left:265px;top:70px'},el('span',{class:'nlabel'},'Workspace'))
+      ]),
+      el('div',{class:'wordmark'},'BigDrops'),
+      el('div',{class:'tip',id:'splashTip'},SPLASH_TIPS[0]),
+      el('div',{class:'quicktip'},[el('div',{class:'qt-label'},'Quick Tip'),el('div',{class:'qt-msg'},SAMPLE_TIP)])
+    ])
+  ])}
+},
+{
+  id:'profile-loader', name:'PageLoader (profile resolution)', kind:'gate',
+  source:'src/App.tsx (waitingForProfileResolution → <PageLoader/>) + src/components/app/PageLoader.tsx',
+  why:'Between a live session and the TenantGate, the app holds the route while the profiles row resolves. User-visible full-screen loader.',
+  next:'Profile resolved → TenantGate evaluates: workspace loading, then gate phases.',
+  unc:'Plain frame shows only the rounded square; TenantGate loading additionally renders a LoadingTips card (shown here, as it is the same visual family).',
+  render(){ return el('div',{class:'pageloader'},[
+    el('div',{class:'loader-sq'}),
+    el('div',{style:'display:flex;align-items:center;gap:12px;border:1px solid var(--border);background:var(--card);border-radius:18px;padding:12px 16px;width:320px'},[
+      el('div',{style:'font-size:20px'},'⚙️'),
+      el('div',{},[
+        el('div',{style:'font-size:8px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--fg-muted);opacity:.7'},'Quick Tip'),
+        el('div',{style:'margin-top:2px;font-size:12px;font-weight:600;line-height:1.6;color:var(--fg-muted)'},'Loading your account. This takes only a moment.')
+      ])
+    ])
+  ])}
+},
+{
+  id:'workspace-creation', name:'Create your workspace (first gate)', kind:'gate',
+  source:'src/components/app/TenantGate.tsx (phase create-workspace) → src/pages/WorkspaceCreation.tsx · decision: src/domain/tenant/tenantGate.ts resolveGatePhase()',
+  why:'A brand-new user has zero workspaces and no pending invitation, so the gate renders WorkspaceCreation. First blocking gate inside the app.',
+  next:'Submit workspace name → workspace row is created with status pending_approval → "Workspace Awaiting Approval". (Join tab and invitation flow are branch states.)',
+  unc:'All copy verbatim. Error messages (unique name, permission, network) exist in toFriendlyError() but are runtime states.',
+  render(){ return gateCard([
+    iconTile('emerald',ICONS.building2),
+    el('div',{style:'margin-top:24px'},[
+      el('div',{class:'eyebrow'},'BigDrops ERP'),
+      el('h2',{class:'h2'},'Create your workspace'),
+      el('p',{class:'sub'},'A workspace holds your business data. Your workspace must be approved before you can create a company inside it.')
+    ]),
+    el('div',{class:'seg'},[
+      el('button',{'aria-pressed':'true'},'Create'),
+      el('button',{'aria-pressed':'false'},'Join')
+    ]),
+    el('form',{style:'margin-top:24px'},[
+      el('div',{class:'field',style:'margin-top:0'},[
+        el('label',{class:'label',style:'display:block;margin-bottom:8px'},'Workspace name'),
+        el('input',{class:'input',type:'text',placeholder:'e.g. Tunde and Sons Limited'})
+      ]),
+      el('button',{class:'btn',style:'margin-top:16px'},'Create Workspace')
+    ])
+  ])}
+},
+{
+  id:'workspace-join', name:'Join a workspace (Create/Join tab)', kind:'branch',
+  source:'src/pages/WorkspaceCreation.tsx — mode "join"',
+  why:'WorkspaceCreation presents an explicit Create-vs-Join choice; Join mode is a user-visible tab of the first gate.',
+  next:'Join is informational (no join code). Invitation arrives at next sign-in → "You have been invited" (branch).',
+  unc:'Verbatim copy.',
+  render(){ return gateCard([
+    iconTile('emerald',ICONS.building2),
+    el('div',{style:'margin-top:24px'},[
+      el('div',{class:'eyebrow'},'BigDrops ERP'),
+      el('h2',{class:'h2'},'Join a workspace'),
+      el('p',{class:'sub'},'Workspaces are invite-only. Ask your company or team to send you an invitation.')
+    ]),
+    el('div',{class:'seg'},[
+      el('button',{'aria-pressed':'false'},'Create'),
+      el('button',{'aria-pressed':'true'},'Join')
+    ]),
+    el('div',{style:'margin-top:24px;border:1px solid var(--border);background:var(--card);border-radius:12px;padding:16px'},[
+      el('h3',{style:'font-size:14px;font-weight:600;color:var(--fg)'},'Invitation required'),
+      el('p',{style:'margin-top:4px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'Ask the administrator of the company or team you work with to invite this account\'s email address. There is no join code.')
+    ]),
+    el('p',{style:'margin-top:16px;font-size:12px;line-height:1.25rem;color:var(--fg-muted)'},'Once an invitation is sent, it appears automatically the next time you sign in and you can accept it from your invitation screen.')
+  ])}
+},
+{
+  id:'workspace-invitation', name:'You have been invited', kind:'branch',
+  source:'src/components/app/TenantGate.tsx (phase pending-invitation) → src/pages/WorkspaceInvitation.tsx',
+  why:'Gate phase pending-invitation outranks workspace creation: an invitee sees this before any workspace exists for them. Reachable by invited new users.',
+  next:'Accept Invitation → membership activates → workspace resolution continues (selection if multiple, else company gate). "Pass for now" dismisses for the session.',
+  unc:'Verbatim copy. Accept shows "Accepting…" while pending; accept errors render in red.',
+  render(){ return el('div',{class:'center-screen'},el('div',{class:'card',style:'text-align:center'},[
+    el('div',{style:'padding:32px 32px 8px'},[
+      el('div',{style:'position:relative;width:96px;height:96px;margin:0 auto'},[
+        el('div',{class:'bluelight'}),
+        el('div',{class:'icon-tile blue',style:'border-radius:50%;width:64px;height:64px;position:relative;z-index:1;margin:16px auto 0'},spans(ICONS.mail))
+      ]),
+      el('h2',{style:'margin-top:16px;font-size:20px;font-weight:600;color:var(--fg)'},'You have been invited'),
+      el('p',{style:'margin-top:8px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'Someone has invited you to join their workspace on BigDrops. Accept the invitation to become a member and access shared companies.')
+    ]),
+    el('div',{style:'display:flex;flex-direction:column;gap:8px;padding:8px 32px 32px'},[
+      el('button',{class:'btn pill'},'Accept Invitation'),
+      el('button',{class:'btn pill outline'},'Sign Out'),
+      el('button',{class:'btn pill ghost'},'Pass for now'),
+      el('p',{style:'padding:0 8px;text-align:center;font-size:12px;line-height:1.25rem;color:var(--fg-muted)'},'The invitation stays pending. You can accept it on a later sign-in.')
+    ])
+  ]))}
+},
+{
+  id:'workspace-selection', name:'Choose a workspace (multiple memberships)', kind:'branch',
+  source:'src/components/app/TenantGate.tsx (phase select-workspace) → src/pages/WorkspaceSelection.tsx',
+  why:'Gate phase select-workspace renders when the user has more than one active workspace. Documented as conditional — reachable when an invited user gains a second workspace.',
+  next:'Select a workspace → session-scoped choice → company gate for the chosen workspace.',
+  unc:'Verbatim copy. Rows are data-driven — names/slugs/roles are illustrative sample values.',
+  render(){ return gateCard([
+    iconTile('blue',ICONS.building2),
+    el('div',{style:'margin-top:24px'},[
+      el('div',{class:'eyebrow'},'BigDrops ERP'),
+      el('h2',{class:'h2'},'Choose a workspace'),
+      el('p',{class:'sub'},'You belong to more than one workspace. Select one to continue. The choice lasts for this session only.')
+    ]),
+    el('div',{},[
+      wsRow('Tunde and Sons Limited','tunde-and-sons-limited','owner'),
+      wsRow('Kola Trade Co.','kola-trade-co','member')
+    ]),
+    el('button',{class:'btn pill outline',style:'margin-top:24px'},'Sign Out')
+  ])}
+},
+{
+  id:'workspace-pending', name:'Workspace Awaiting Approval', kind:'gate',
+  source:'src/components/app/TenantGate.tsx (phase pending-approval) → src/pages/WorkspacePendingApproval.tsx',
+  why:'createWorkspace() leaves status pending_approval; the gate holds here and polls every 5s. Mandatory blocking gate for self-created workspaces.',
+  next:'Administrator approves (status active) → gate re-resolves → Create your company (auto-bootstrap).',
+  unc:'Verbatim copy; workspace name dynamic ("Tunde and Sons Limited" is illustrative). "Leave waiting room" opens a confirm dialog ("Leave the waiting room?"). Animated amber icon per source keyframes.',
+  render(){ return el('div',{class:'center-screen'},el('div',{class:'card',style:'text-align:center'},[
+    el('div',{style:'padding:32px 32px 0'},[
+      el('div',{class:'floaty',style:'position:relative;width:96px;height:96px;margin:0 auto'},[
+        el('div',{class:'pulsering'}),
+        el('div',{class:'dashring'}),
+        el('div',{class:'icon-tile amber',style:'position:relative;z-index:1;margin:16px auto 0'},spans(ICONS.clock3))
+      ]),
+      el('div',{style:'margin-top:16px'},[
+        el('h2',{style:'font-size:20px;font-weight:600;color:var(--fg)'},'Workspace Awaiting Approval'),
+        el('p',{style:'margin-top:8px;font-size:14px;font-weight:600;color:var(--fg)'},'“Tunde and Sons Limited” is waiting for approval.'),
+        el('p',{style:'margin-top:4px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'Your workspace was created. An administrator must approve it before you can create a company and start using BigDrops.'),
+        el('p',{style:'margin-top:12px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'This page refreshes automatically. Approval usually takes a few minutes.')
+      ])
+    ]),
+    el('div',{style:'display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 32px 32px'},[
+      el('button',{class:'btn pill outline'},'Leave waiting room'),
+      el('button',{class:'btn pill outline'},'Sign Out')
+    ])
+  ]))}
+},
+{
+  id:'company-creating', name:'Create your company (auto-bootstrap running)', kind:'gate',
+  source:'src/components/app/TenantGate.tsx (phase create-company) → src/pages/CompanyCreation.tsx (phase creating/provisioning)',
+  why:'Once the workspace is active with zero companies, CompanyCreation mounts and automatically runs ensureInitialCompany() — no form submit required. Shows "Creating company…" then "Setting up schema…".',
+  next:'Provisioning ready + exposure confirmed → "Company created" success → dashboard path. Timeout/extended wait shows "Taking longer than expected…"; failure → error state.',
+  unc:'Verbatim copy. Default company name derived from workspace ("Tunde and Sons Limited Company") per buildInitialCompanyInput(); manual fallback form (label "Company name", button "Create Company") exists but is not the primary path.',
+  render(){ return gateCard([
+    iconTile('sky',ICONS.building),
+    el('div',{style:'margin-top:24px'},[
+      el('div',{class:'eyebrow'},'BigDrops ERP'),
+      el('h2',{class:'h2'},'Create your company'),
+      el('p',{class:'sub'},'Your company lives inside Tunde and Sons Limited. Provisioning starts automatically once the company is created.')
+    ]),
+    el('div',{class:'statusrow'},[
+      el('span',{class:'spinner',style:'flex:0 0 auto'}),
+      el('div',{},[
+        el('div',{class:'t1'},'Setting up schema…'),
+        el('div',{class:'t2'},'Tunde and Sons Limited Company')
+      ])
+    ])
+  ])}
+},
+{
+  id:'company-created', name:'Company created (bootstrap success)', kind:'gate',
+  source:'src/pages/CompanyCreation.tsx — phase "success"',
+  why:'When ensureInitialCompany() completes and the tenant schema is exposed, the same screen flips to its success state before the dashboard renders.',
+  next:'Gate returns "ready" → AppShell renders. For OAuth profiles without a password, the Set System Password modal appears over the app (final gate).',
+  unc:'Verbatim copy; company/workspace names illustrative.',
+  render(){ return gateCard([
+    iconTile('emerald',ICONS.checkcircle),
+    el('div',{style:'margin-top:24px'},[
+      el('div',{class:'eyebrow'},'BigDrops ERP'),
+      el('h2',{class:'h2'},'Company created'),
+      el('p',{class:'sub'},'Tunde and Sons Limited Company is now active in Tunde and Sons Limited.')
+    ]),
+    el('div',{class:'okrow'},[
+      el('span',{style:'font-size:20px;color:var(--emerald-600)'},spans(ICONS.checkcircle.replace('width="24"','width="20"').replace('height="24"','height="20"'))),
+      el('div',{},[
+        el('div',{class:'t1'},'Tunde and Sons Limited Company'),
+        el('div',{class:'t2'},'Added to Tunde and Sons Limited')
+      ])
+    ])
+  ])}
+},
+{
+  id:'company-error', name:'Company setup error (retry)', kind:'branch',
+  source:'src/pages/CompanyCreation.tsx — phase "error"',
+  why:'Provisioning failure inside the bootstrap flips the same card to an error state with Try Again. Documented as conditional.',
+  next:'Try Again returns to the manual form; provisioning failure at gate level renders the dedicated failed screen (branch).',
+  unc:'Error text is runtime-derived — sample uses the source\'s fallback copy "Provisioning failed. The company was created but is not ready to use."',
+  render(){ return gateCard([
+    iconTile('red',ICONS.alertcircle),
+    el('div',{style:'margin-top:24px'},[
+      el('div',{class:'eyebrow'},'BigDrops ERP'),
+      el('h2',{class:'h2'},'Something went wrong'),
+      el('p',{class:'sub'},'Provisioning failed. The company was created but is not ready to use.')
+    ]),
+    el('button',{class:'btn',style:'margin-top:20px;background:var(--card);color:var(--fg);border-color:var(--border)'},'Try Again')
+  ])}
+},
+{
+  id:'provisioning-progress', name:'Setting Up Your Company (gate-held provisioning)', kind:'gate',
+  source:'src/components/app/TenantGate.tsx (phase provisioning) → src/pages/ProvisioningProgress.tsx',
+  why:'When the entity exists but provisioning/exposure is not confirmed, the gate holds here and re-checks every 3s. Also shown when bootstrap times out (extended wait).',
+  next:'Provisioning ready + exposure probe true → gate "ready" → dashboard path. Failure → "Company Setup Failed".',
+  unc:'Verbatim copy. Sign Out opens confirm dialog with copy "…Provisioning will continue in the background."',
+  render(){ return el('div',{class:'center-screen'},el('div',{class:'card',style:'text-align:center'},[
+    el('div',{style:'padding:32px 32px 0'},[
+      el('div',{class:'floaty',style:'position:relative;width:96px;height:96px;margin:0 auto'},[
+        el('div',{class:'skyglow'}),
+        el('div',{class:'icon-tile sky',style:'border-radius:50%;position:relative;z-index:1;margin:16px auto 0'},el('span',{class:'spinner'}))
+      ]),
+      el('div',{style:'margin-top:16px'},[
+        el('h2',{style:'font-size:20px;font-weight:600;color:var(--fg)'},'Setting Up Your Company'),
+        el('p',{style:'margin-top:8px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},'We are creating your company workspace: tables, permissions and defaults. This usually takes a few seconds.'),
+        el('p',{style:'margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;color:var(--fg-muted)'},[
+          el('span',{style:'color:var(--sky-600);display:inline-flex;width:16px;height:16px'},spans(ICONS.layers)),
+          document.createTextNode('This page refreshes automatically.')
+        ])
+      ])
+    ]),
+    el('div',{style:'display:flex;justify-content:center;padding:16px 32px 32px'},el('button',{class:'btn pill outline'},'Sign Out'))
+  ]))}
+},
+{
+  id:'provisioning-failed', name:'Company Setup Failed', kind:'branch',
+  source:'src/components/app/TenantGate.tsx (phase provisioning-failed) → src/pages/ProvisioningFailed.tsx',
+  why:'Dedicated gate screen when provisioning status is "failed". Documented as conditional.',
+  next:'Try Again re-checks provisioning; Switch Company opens the company sheet (only when other companies exist); Sign Out exits.',
+  unc:'Verbatim copy; company/workspace names and error box are runtime-derived (illustrative sample shown).',
+  render(){ return el('div',{class:'center-screen'},el('div',{class:'card',style:'text-align:center'},[
+    el('div',{style:'padding:32px 32px 0'},[
+      el('div',{class:'icon-tile red',style:'margin:0 auto'},spans(ICONS.alerttriangle)),
+      el('div',{style:'margin-top:16px'},[
+        el('h2',{style:'font-size:20px;font-weight:600;color:var(--fg)'},'Company Setup Failed'),
+        el('p',{style:'margin-top:8px;font-size:14px;line-height:1.5rem;color:var(--fg-muted)'},[
+          el('span',{style:'font-weight:600;color:var(--fg)'},'Tunde and Sons Limited Company'),
+          document.createTextNode(' could not be set up in Tunde and Sons Limited.')
+        ]),
+        el('p',{style:'margin-top:12px;border:1px solid var(--red-200);background:var(--red-50);border-radius:12px;padding:8px 12px;text-align:left;font-size:12px;color:var(--red-700)'},'Schema creation failed. Please try again.')
+      ])
+    ]),
+    el('div',{style:'display:flex;flex-direction:column;gap:12px;padding:16px 32px 32px'},[
+      el('button',{class:'btn',style:'border-radius:12px'},'Switch Company'),
+      el('button',{class:'btn outline',style:'border-radius:12px;font-weight:600'},'Try Again'),
+      el('button',{class:'btn ghost',style:'border-radius:12px'},'Sign Out')
+    ])
+  ]))}
+},
+{
+  id:'gate-error', name:'Gate error / blocked / unavailable', kind:'branch',
+  source:'src/components/app/TenantGate.tsx — GateError (phases error, blocked, unavailable)',
+  why:'TenantGate renders GateError for workspace/entity load errors ("Something went wrong"), purged workspaces ("blocked") and purging states ("unavailable"). Documented as conditional.',
+  next:'Try Again re-runs workspace + entity refresh; recovery returns the journey to the correct gate phase.',
+  unc:'Verbatim copy; message body is runtime-derived (sample uses "Unknown error.").',
+  render(){ return el('div',{style:'min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--card)'},el('div',{style:'width:100%;max-width:28rem;border:1px solid var(--border);background:var(--card);border-radius:16px;padding:32px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,.10)'},[
+    el('h2',{style:'font-size:20px;font-weight:600;color:var(--fg)'},'Something went wrong'),
+    el('p',{style:'margin-top:8px;font-size:14px;line-height:1.5rem;color:var(--fg-muted);word-break:break-word'},'Unknown error.'),
+    el('button',{class:'btn',style:'margin-top:24px;height:44px;border-radius:12px'},'Try Again')
+  ]))}
+},
+{
+  id:'set-password', name:'Set System Password (final gate, modal over app)', kind:'gate',
+  source:'src/components/app/SetPasswordModal.tsx, mounted in src/components/app/AppShell.tsx when profile.has_password is false and provider ≠ "email"',
+  why:'This is the repository implementation of the product-confirmed "Create Password" final popup. It renders as a shadcn Dialog (sm:max-w-md, no close button) over the already-routed app — shown here over a representative dashboard frame.',
+  next:'Set Password → success banner "Password set successfully." → onComplete() after 1.5s → modal unmounts, dashboard fully accessible. "Skip for now" also unmounts it.',
+  unc:'IMPORTANT: for email signups the signup flow sets profiles.has_password = true (src/pages/Login.tsx handleSignUp), so this modal primarily gates Google-OAuth signups. Validation copy is exact: "Password must be at least 6 characters", "Passwords do not match"; Supabase update errors render verbatim. Loading label "Setting...".',
+  render(){ return el('div',{style:'height:100%'},[
+    representativeDashboard(),
+    el('div',{class:'dialog-layer'},[
+      el('div',{class:'dialog-scrim'}),
+      el('div',{class:'dialog',role:'dialog','aria-modal':'true'},[
+        el('div',{class:'dt'},'Set System Password'),
+        el('div',{class:'dd'},'Set a password to sign in with email. You only need to do this once.'),
+        el('input',{class:'input',type:'password',placeholder:'New password'}),
+        el('input',{class:'input',type:'password',placeholder:'Confirm password'}),
+        el('div',{class:'row'},[
+          el('button',{class:'btn outline'},'Skip for now'),
+          el('button',{class:'btn'},'Set Password')
+        ])
+      ])
+    ]),
+    el('div',{class:'representative-badge'},'Dashboard is representative')
+  ])}
+},
+{
+  id:'set-password-success', name:'Set System Password — success', kind:'gate',
+  source:'src/components/app/SetPasswordModal.tsx — done state (1.5s before onComplete)',
+  why:'Post-submit success state inside the same modal, before it unmounts.',
+  next:'Modal unmounts after ~1.5s → Dashboard accessible (endpoint).',
+  unc:'Verbatim copy. Behind the modal, the app is interactive-ready; representative frame shown.',
+  render(){ return el('div',{style:'height:100%'},[
+    representativeDashboard(),
+    el('div',{class:'dialog-layer'},[
+      el('div',{class:'dialog-scrim'}),
+      el('div',{class:'dialog',role:'dialog','aria-modal':'true'},[
+        el('div',{class:'dt'},'Set System Password'),
+        el('div',{class:'dd'},'Set a password to sign in with email. You only need to do this once.'),
+        el('div',{class:'okbox'},'Password set successfully.')
+      ])
+    ]),
+    el('div',{class:'representative-badge'},'Dashboard is representative')
+  ])}
+},
+{
+  id:'dashboard', name:'Dashboard accessible (endpoint)', kind:'endpoint',
+  source:'src/components/app/AppShell.tsx — Route "/" → Dashboard',
+  why:'After the final gate resolves, the dashboard is reachable. Only a representative frame is included per scope.',
+  next:'End of pre-dashboard journey.',
+  unc:'Dashboard content is intentionally representative (not reproduced) — the frame exists only to show the gate completed.',
+  render(){ return representativeDashboard(true) }
+}
+];
+
+/* ============ helpers ============ */
+function el(tag, attrs, ...children){
+  const n = document.createElement(tag);
+  if(attrs) for(const [k,v] of Object.entries(attrs)){
+    if(k==='class') n.className=v;
+    else if(k==='style') n.style.cssText=v;
+    else if(k.startsWith('on')) n.addEventListener(k.slice(2),v);
+    else n.setAttribute(k,v);
+  }
+  for(const c of children.flat(9)){
+    if(c==null) continue;
+    n.append(c.nodeType?c:document.createTextNode(String(c)));
+  }
+  return n;
+}
+function spans(svg){ const d=el('span'); d.style.cssText='display:inline-flex;width:32px;height:32px'; d.innerHTML=svg; return d; }
+function iconTile(variant, svg){
+  const t=el('div',{class:'icon-tile '+(variant||'')});
+  const s=el('span'); s.style.cssText='display:inline-flex'; s.innerHTML=svg;
+  t.append(s); return t;
+}
+function floatingShapes(){
+  return el('div',{style:'position:absolute;inset:0;overflow:hidden;pointer-events:none'},[
+    el('div',{style:'position:absolute;left:-64px;top:96px;width:160px;height:160px;border-radius:40px;background:#fff;box-shadow:0 30px 80px rgba(0,0,0,.08)'}),
+    el('div',{style:'position:absolute;right:-56px;top:56px;width:128px;height:128px;border-radius:50%;background:#111;box-shadow:0 30px 60px rgba(0,0,0,.18)'}),
+    el('div',{style:'position:absolute;bottom:112px;left:-32px;width:112px;height:112px;border-radius:50%;border:1px solid rgba(0,0,0,.1);background:rgba(255,255,255,.9);box-shadow:0 20px 40px rgba(0,0,0,.06)'}),
+    el('div',{style:'position:absolute;bottom:64px;right:24px;width:96px;height:96px;border-radius:28px;background:#d9d9d4;box-shadow:0 20px 40px rgba(0,0,0,.08)'})
+  ]);
+}
+function gateCard(children){
+  return el('div',{class:'center-screen'},el('div',{class:'card pad'},children));
+}
+function wsRow(name,slug,role){
+  return el('button',{class:'wsrow'},[
+    el('div',{},[el('div',{class:'n'},name), slug?el('div',{class:'s'},'/'+slug):null]),
+    el('div',{class:'r'},role)
+  ]);
+}
+function representativeDashboard(full){
+  const frame = el('div',{class:'dash'},[
+    el('div',{class:'dash-top'},[
+      el('div',{},[el('div',{class:'who'},'BigDrops ERP'),el('h1',{},'Good day, Tunde')]),
+      el('div',{style:'width:36px;height:36px;border-radius:50%;background:var(--primary-btn)'})
+    ]),
+    el('div',{class:'dash-body'},[
+      el('div',{style:'display:grid;grid-template-columns:1fr 1fr;gap:10px'},[
+        el('div',{class:'tile'},[el('div',{class:'k'},'Outstanding'),el('div',{class:'v'},'₦ —')]),
+        el('div',{class:'tile'},[el('div',{class:'k'},'Invoices'),el('div',{class:'v'},'—')])
+      ]),
+      el('div',{class:'tile'},[el('div',{class:'k'},'Quick actions'),el('div',{class:'v',style:'font-size:14px;font-weight:600;color:var(--fg-muted)'},'New invoice · New quotation · New CSR')])
+    ]),
+    el('div',{class:'dash-nav'},[
+      navItem(ICONS.home,'Home',true), navItem(ICONS.file,'Invoices'), navItem(ICONS.users,'Clients'), navItem(ICONS.truck,'Waybills')
+    ])
+  ]);
+  if(full){
+    const badge = el('div',{class:'representative-badge'},'Representative frame — not reproduced');
+    frame.append(badge);
+  }
+  return frame;
+}
+function navItem(svg,label,on){
+  const n=el('div',{class:'ni'+(on?' on':'')});
+  const s=el('span'); s.style.cssText='display:inline-flex'; s.innerHTML=svg;
+  n.append(s,document.createTextNode(label));
+  return n;
+}
+
+/* ============ flow map ============ */
+const PRIMARY = ['post-signup-email','sign-in','splash-signin','profile-loader','workspace-creation','workspace-pending','company-creating','company-created','set-password','set-password-success','dashboard'];
+const BRANCHES = ['workspace-join','workspace-invitation','workspace-selection','company-error','provisioning-progress','provisioning-failed','gate-error'];
+function shortName(id){ const s=STATES.find(x=>x.id===id); return s?s.name.replace(/ \(.*\)$/,''):id; }
+function buildFlow(){
+  const l1=document.getElementById('flowLane1'); l1.innerHTML='';
+  PRIMARY.forEach((id,i)=>{
+    const st=STATES.find(s=>s.id===id);
+    const chip=el('button',{class:'chip'+(st.kind==='endpoint'?' final':(id==='set-password'||id==='set-password-success'||id==='workspace-pending'?' gate':'')),'data-flow':id,onclick:()=>goTo(i+1)},shortName(id));
+    l1.append(chip);
+    if(i<PRIMARY.length-1) l1.append(el('span',{class:'arrow'},'→'));
+  });
+  const l2=document.getElementById('flowLane2'); l2.innerHTML='';
+  BRANCHES.forEach((id,i)=>{
+    const idx=STATES.findIndex(s=>s.id===id);
+    const chip=el('button',{class:'chip branch','data-flow':id,onclick:()=>goTo(idx)},shortName(id));
+    l2.append(chip);
+    if(i<BRANCHES.length-1) l2.append(el('span',{class:'arrow'},'·'));
+  });
+}
+
+/* ============ engine ============ */
+let current=0;
+const surface=document.getElementById('appSurface');
+const sel=document.getElementById('stateSelect');
+function buildSelect(){
+  sel.innerHTML='';
+  const g1=el('optgroup',{label:'Primary journey'});
+  const g2=el('optgroup',{label:'Conditional / branch'});
+  STATES.forEach((s,i)=>{
+    const o=el('option',{value:String(i)},(s.kind==='branch'?'⟂ ':s.kind==='endpoint'?'◉ ':'')+s.name);
+    (s.kind==='branch'?g2:g1).append(o);
+  });
+  sel.append(g1,g2);
+}
+function render(){
+  const st=STATES[current];
+  surface.innerHTML='';
+  if(st.id==='splash-signin'||st.id==='profile-loader'){
+    surface.style.background='var(--card)';
+  } else if(st.id==='sign-in'||st.id==='post-signup-email'){
+    surface.style.background='var(--login-bg)';
+  } else {
+    surface.style.background='var(--screen-bg)';
+  }
+  surface.append(st.render());
+  document.getElementById('nName').textContent=st.name;
+  document.getElementById('nId').textContent=st.id+(st.kind==='branch'?' (conditional)':'');
+  document.getElementById('nSource').textContent=st.source;
+  document.getElementById('nWhy').textContent=st.why;
+  document.getElementById('nNext').textContent=st.next;
+  document.getElementById('nUnc').textContent=st.unc;
+  document.getElementById('stateCount').textContent='State '+(current+1)+' of '+STATES.length;
+  sel.value=String(current);
+  document.querySelectorAll('[data-flow]').forEach(c=>c.classList.toggle('active',c.getAttribute('data-flow')===st.id));
+  document.getElementById('btnPrev').disabled=current===0;
+  document.getElementById('btnNext').disabled=current===STATES.length-1;
+  if(st.id==='splash-signin'){
+    let i=0; clearInterval(window.__tipTimer);
+    window.__tipTimer=setInterval(()=>{ i=(i+1)%SPLASH_TIPS.length; const t=document.getElementById('splashTip'); if(t)t.textContent=SPLASH_TIPS[i]; },2200);
+  }
+}
+function goTo(i){ if(i<0||i>=STATES.length) return; current=i; render(); }
+document.getElementById('btnPrev').onclick=()=>goTo(current-1);
+document.getElementById('btnNext').onclick=()=>goTo(current+1);
+document.getElementById('btnRestart').onclick=()=>goTo(0);
+sel.onchange=e=>goTo(Number(e.target.value));
+
+/* viewport */
+const vp=document.getElementById('viewport');
+document.querySelectorAll('[data-vp]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('[data-vp]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+    vp.className='viewport'+(b.dataset.vp==='phone'?'':' '+b.dataset.vp);
+  };
+});
+/* theme — mirrors app dark mode via CSS variables */
+const screen=document.getElementById('screen');
+document.querySelectorAll('[data-th]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+    screen.classList.toggle('dark',b.dataset.th==='dark');
+  };
+});
+
+buildFlow();
+buildSelect();
+goTo(0);
+</script>
+</body>
+</html>

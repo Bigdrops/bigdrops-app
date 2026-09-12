@@ -36,6 +36,7 @@ These agent skills are directly relevant to implementing this PRD. Load them whe
 | **review-animations** | Reviewing animation code against a high craft bar — 10 non-negotiable standards, block/approve verdict | `.agents/skills/review-animations/SKILL.md` |
 | **capacitor-best-practices** | Capacitor app development — project structure, plugin usage, performance, security, deployment | `.agents/skills/capacitor-best-practices/SKILL.md` |
 | **capacitor-accessibility** | Accessibility in Capacitor apps — screen readers, semantic HTML, focus management, WCAG compliance | `.agents/skills/capacitor-accessibility/SKILL.md` |
+| **html-wireframe (Recommended for wireframe)** | Wireframe extraction and low-fidelity HTML wireframes — structure, hierarchy, navigation, task flow before visual design | `.agents/skills/html-wireframe/SKILL.md` |
 
 ---
 
