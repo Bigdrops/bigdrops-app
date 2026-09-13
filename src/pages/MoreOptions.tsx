@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  Calculator,
   ChevronRight,
   ClipboardList,
   FileText,
@@ -106,6 +107,7 @@ export default function MoreOptions() {
         { key: 'compliance', label: 'Compliance Hub', icon: ShieldCheck, path: '/compliance' },
         { key: 'receipts', label: 'Receipts', icon: Receipt, path: '/receipts' },
         { key: 'item-library', label: 'Item Library', icon: NotebookPen, path: '/item-library' },
+        { key: 'tax', label: 'Tax', icon: Calculator, path: '/tax' },
       ],
     },
     {
