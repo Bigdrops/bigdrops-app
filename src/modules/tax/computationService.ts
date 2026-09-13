@@ -5,10 +5,13 @@
  * The immutability trigger on tax_computation_results prevents
  * changes to input_snapshot after finalization.
  *
- * Pattern: src/modules/accounting/reportingService.ts
+ * Entity isolation is schema-based (TenantClient sets search_path),
+ * not via an entity_id column.
+ *
+ * Pattern: src/modules/compliance/repositories/complianceRepository.ts
  */
 
-import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import type { GateEComputationResult } from '@/domain/tax/types'
 import type { GateFComputationData } from '@/domain/tax/orchestrator'
 
@@ -25,7 +28,7 @@ import type { GateFComputationData } from '@/domain/tax/orchestrator'
  * Caller finalizes by updating status to 'finalized'.
  */
 export async function persistComputation(
-  entityId: string,
+  client: TenantClient,
   accountingPeriodId: string,
   result: GateEComputationResult,
   data: GateFComputationData,
@@ -43,10 +46,9 @@ export async function persistComputation(
     classification: result.classification,
   }
 
-  const { data: inputRow, error: inputError } = await supabase
+  const { data: inputRow, error: inputError } = await client
     .from('tax_computation_inputs')
     .insert({
-      entity_id: entityId,
       accounting_period_id: accountingPeriodId,
       input_snapshot: inputSnapshot,
       status: 'draft',
@@ -58,17 +60,15 @@ export async function persistComputation(
     throw new Error(`Gate F: failed to persist computation input: ${inputError.message}`)
   }
 
-  const { data: resultRow, error: resultError } = await supabase
+  const { data: resultRow, error: resultError } = await client
     .from('tax_computation_results')
     .insert({
-      entity_id: entityId,
       accounting_period_id: accountingPeriodId,
       computation_input_id: inputRow.id,
       assessment_profit: result.assessment_profit,
       chargeable_income: result.chargeable_income,
       tax_payable: result.tax_payable,
       tax_credits: result.tax_credits,
-      rule_versions: result.trace.rule_versions,
       status: 'draft',
     })
     .select()

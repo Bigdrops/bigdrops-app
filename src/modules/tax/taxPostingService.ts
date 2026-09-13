@@ -5,10 +5,13 @@
  * calls the pure bridge function, and returns a draft journal entry.
  * The entry is not posted — caller routes through the posting kernel.
  *
- * Pattern: src/modules/tax/computationService.ts
+ * Entity isolation is schema-based (TenantClient sets search_path),
+ * not via an entity_id column.
+ *
+ * Pattern: src/modules/compliance/repositories/complianceRepository.ts
  */
 
-import { supabase } from '@/supabase'
+import type { TenantClient } from '@/lib/tenantClient'
 import { createTaxJournalEntry, TAX_ACCOUNTS } from '@/domain/tax/taxBridge'
 import type { Account, AccountingPeriod, JournalEntry } from '@/domain/accounting/types'
 import type { GateEComputationResult } from '@/domain/tax/types'
@@ -16,21 +19,18 @@ import type { GateEComputationResult } from '@/domain/tax/types'
 /**
  * Build a draft journal entry from a finalized tax computation result.
  *
- * Reads the entity's chart of accounts and open periods from the DB,
+ * Reads the entity's chart of accounts and open periods via TenantClient,
  * then delegates to the pure bridge function.
  */
 export async function buildTaxPosting(
-  entityId: string,
+  client: TenantClient,
   result: GateEComputationResult,
   development_levy: string,
 ): Promise<JournalEntry> {
-  if (!entityId) throw new Error('Gate G: entity id is required')
-
-  // Fetch accounts for this entity
-  const { data: accountRows, error: acctError } = await supabase
+  // Fetch accounts — entity isolation via TenantClient schema
+  const { data: accountRows, error: acctError } = await client
     .from('accounts')
     .select('*')
-    .eq('entity_id', entityId)
 
   if (acctError) {
     throw new Error(`Gate G: failed to fetch accounts: ${acctError.message}`)
@@ -48,11 +48,10 @@ export async function buildTaxPosting(
     updatedAt: row.updated_at as string,
   }))
 
-  // Fetch periods for this entity
-  const { data: periodRows, error: periodError } = await supabase
+  // Fetch periods — entity isolation via TenantClient schema
+  const { data: periodRows, error: periodError } = await client
     .from('accounting_periods')
     .select('*')
-    .eq('entity_id', entityId)
 
   if (periodError) {
     throw new Error(`Gate G: failed to fetch periods: ${periodError.message}`)
