@@ -1,4 +1,4 @@
-import { isNativePlatform } from './capacitor'
+import { isAndroidNative, isNativePlatform } from './capacitor'
 
 // ---------------------------------------------------------------------------
 // Canonical user-file persistence.
@@ -135,6 +135,11 @@ async function findAvailableFileName(
  * Persist a file to user-visible Android storage (Documents/BigDrops).
  * Returns the URI so callers can Open/Share the persisted file.
  * Throws on write failure — callers must report failure, never false success.
+ *
+ * Residual race: the collision check snapshots the folder, so two saves that
+ * run at the same instant can pick the same name and the later write wins.
+ * The Filesystem API offers no atomic exclusive-create flag, and this utility
+ * keeps no global state by design — sequential saves never collide.
  */
 export async function saveUserFile({
   fileName,
@@ -144,6 +149,16 @@ export async function saveUserFile({
   const { Directory, Filesystem } = await import('@capacitor/filesystem')
 
   const folder = subdirectory ? `${USER_DOWNLOAD_ROOT}/${subdirectory}` : USER_DOWNLOAD_ROOT
+
+  // ponytail: MediaStore bridge owns Android 10+ writes; raw Documents writes
+  // are OS-blocked there. Older runtimes fall through to the Filesystem flow.
+  if (isAndroidNative()) {
+    const bridged = await saveViaDownloadBridge(folder, fileName, base64Data).catch(() => null)
+    if (bridged) {
+      await presentOpenWithChooser(bridged.uri, bridged.fileName)
+      return bridged
+    }
+  }
 
   await Filesystem.mkdir({
     path: folder,
@@ -168,11 +183,85 @@ export async function saveUserFile({
     directory: Directory.Documents,
   })
 
-  return {
+  const saved: SavedUserFile = {
     fileName: availableFileName,
     path: persistedPath,
     uri: uriResult.uri,
     sizeBytes: Math.floor(base64Data.length * 0.75),
+  }
+
+  // ponytail: "Open with" chooser after every native download; a missing
+  // viewer must never flip a good download into a failure.
+  if (isNativePlatform()) {
+    await presentOpenWithChooser(saved.uri, saved.fileName)
+  }
+
+  return saved
+}
+
+const OPEN_WITH_CONTENT_TYPES: Record<string, string> = {
+  pdf: 'application/pdf',
+  csv: 'text/csv',
+  json: 'application/json',
+  txt: 'text/plain',
+}
+
+function contentTypeForFileName(fileName: string): string {
+  const { extension } = splitFileName(fileName)
+  const key = extension.replace(/^\./, '').toLowerCase()
+  return OPEN_WITH_CONTENT_TYPES[key] ?? 'application/octet-stream'
+}
+
+/** Best-effort system "Open with" chooser. Never throws. */
+async function presentOpenWithChooser(uri: string, fileName: string): Promise<void> {
+  try {
+    const { FileOpener } = await import('@capacitor-community/file-opener')
+    await FileOpener.open({
+      filePath: uri,
+      contentType: contentTypeForFileName(fileName),
+      openWithDefault: false,
+    })
+  } catch {
+    // No viewer installed or opener unavailable — the file is still saved.
+  }
+}
+
+type DownloadBridgeApi = {
+  save(options: {
+    folder: string
+    fileName: string
+    base64Data: string
+    mimeType: string
+  }): Promise<{ fileName: string; uri: string }>
+}
+
+/**
+ * MediaStore write path for Android 10+. Returns null when the bridge is
+ * unavailable (older native shell, e.g. via live update) so callers fall
+ * back to the Filesystem flow. Never throws.
+ */
+async function saveViaDownloadBridge(
+  folder: string,
+  fileName: string,
+  base64Data: string,
+): Promise<SavedUserFile | null> {
+  try {
+    const { registerPlugin } = await import('@capacitor/core')
+    const bridge = registerPlugin<DownloadBridgeApi>('DownloadBridge')
+    const result = await bridge.save({
+      folder,
+      fileName,
+      base64Data,
+      mimeType: contentTypeForFileName(fileName),
+    })
+    return {
+      fileName: result.fileName,
+      path: `${folder}/${result.fileName}`,
+      uri: result.uri,
+      sizeBytes: Math.floor(base64Data.length * 0.75),
+    }
+  } catch {
+    return null
   }
 }
 
