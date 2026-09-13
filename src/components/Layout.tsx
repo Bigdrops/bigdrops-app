@@ -125,6 +125,7 @@ export default function Layout({
       compliance: '/compliance',
       receipts: '/receipts',
       'item-library': '/item-library',
+      tax: '/tax',
       settings: '/settings',
     }
     setMoreOpen(false)

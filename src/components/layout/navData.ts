@@ -1,6 +1,7 @@
 import { Icons } from '@/lib/iconRegistry'
 import { QUICK_TILE_REGISTRY } from '@/config/quickTiles'
 import type { LucideIcon } from 'lucide-react'
+import { Calculator } from 'lucide-react'
 
 export const APP_NAME = 'BIGDROPS'
 
@@ -137,6 +138,13 @@ export const moreGroups: NavGroup[] = [
         label: 'Item Library',
         subtitle: 'Review price history and master item usage.',
         icon: Icons.itemLibrary as LucideIcon,
+        iconBg: 'bg-muted text-foreground',
+      },
+      {
+        key: 'tax',
+        label: 'Tax',
+        subtitle: 'CIT computations and journal entries.',
+        icon: Calculator as LucideIcon,
         iconBg: 'bg-muted text-foreground',
       },
     ],

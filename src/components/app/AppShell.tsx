@@ -74,6 +74,9 @@ const Accounts = lazy(() => import('@/pages/accounting/Accounts'))
 const Periods = lazy(() => import('@/pages/accounting/Periods'))
 const Journal = lazy(() => import('@/pages/accounting/Journal'))
 const NewJournalEntry = lazy(() => import('@/pages/accounting/NewJournalEntry'))
+const TaxOverview = lazy(() => import('@/pages/tax/TaxOverview'))
+const NewTaxComputation = lazy(() => import('@/pages/tax/NewTaxComputation'))
+const TaxDetail = lazy(() => import('@/pages/tax/TaxDetail'))
 const SetPasswordModal = lazy(() => import('@/components/app/SetPasswordModal'))
 const TenantDebug = lazy(() => import('@/pages/debug/TenantDebug'))
 const ErrorsDashboard = lazy(() => import('@/pages/debug/ErrorsDashboard'))
@@ -297,6 +300,9 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/accounting/periods" element={withBoundary(<Periods />)} />
           <Route path="/accounting/journal" element={withBoundary(<Journal />)} />
           <Route path="/accounting/journal/new" element={withBoundary(<NewJournalEntry />)} />
+          <Route path="/tax" element={withBoundary(<TaxOverview />)} />
+          <Route path="/tax/new" element={withBoundary(<NewTaxComputation />)} />
+          <Route path="/tax/:id" element={withBoundary(<TaxDetail />)} />
           <Route path="/projects" element={withBoundary(<Projects />)} />
           <Route path="/projects/new" element={withBoundary(<NewProject />)} />
           <Route
