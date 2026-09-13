@@ -15,6 +15,14 @@ Create these in GitHub repo Settings → Secrets and variables → Actions:
 | `BIGDROPS_KEY_ALIAS` | Key alias inside the keystore |
 | `BIGDROPS_KEY_PASSWORD` | Key password |
 
+Web build secrets (same Actions secrets page; without these the APK
+shows a white screen because `src/supabase.ts` throws at startup):
+
+| Secret name | Content |
+| --- | --- |
+| `VITE_SUPABASE_URL` | Supabase project URL (same value as local `.env`) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon public key (same value as local `.env`) |
+
 ## One-time key creation (maintainer machine only)
 
 Run once on a trusted machine. Never commit the output files.

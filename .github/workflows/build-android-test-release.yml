@@ -140,7 +140,16 @@ jobs:
 
       # ── 10. Build web assets ─────────────────────────────────────────────
       - name: Build production web assets
-        run: bun run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          # Fail fast: without these the bundle throws at import and shows a white screen.
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY secrets. Add them in repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          bun run build
 
       # ── 11. Verify Vite build output ─────────────────────────────────────
       - name: Verify Vite build output

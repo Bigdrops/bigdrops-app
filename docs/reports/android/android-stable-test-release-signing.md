@@ -80,3 +80,20 @@ Documentation standard: ASD-STE100 Simplified Technical English
 - Create the four GitHub Secrets (one-time human setup).
 - Run the workflow once and confirm in-place update from v1 to v2.
 - Future phase: in-app update checker. It stays out of this task.
+
+## Follow-Up: White-Screen Fix (2026-09-13)
+
+- Symptom: workflow APKs installed but showed a white screen.
+- Cause: `src/supabase.ts` throws at module import when
+  `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` is missing. Vite bakes
+  these values at build time. CI runners had no `.env`, so every
+  workflow bundle crashed before React mounted. Local builds worked
+  because `.env` exists on the dev machine.
+- Fix: workflow `Build production web assets` step now reads both values
+  from GitHub Secrets and fails fast with a clear error when absent.
+  Added `.env.example` (placeholder values only). Added the two web
+  secrets to `docs/android-test-release-signing.md`.
+- Files changed: `.github/workflows/build-android-test-release.yml`,
+  `.env.example`, `docs/android-test-release-signing.md`.
+- Verification: `git diff --check` passed, `bun run typecheck` passed.
+  Real proof needs a new tagged run after the two web secrets exist.
