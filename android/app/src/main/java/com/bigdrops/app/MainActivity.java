@@ -12,6 +12,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.bigdrops.app.plugins.DownloadBridgePlugin;
 import com.bigdrops.app.plugins.FoldAwarenessPlugin;
 import com.getcapacitor.BridgeActivity;
 
@@ -28,6 +29,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(DownloadBridgePlugin.class);
         registerPlugin(FoldAwarenessPlugin.class);
         super.onCreate(savedInstanceState);
 
