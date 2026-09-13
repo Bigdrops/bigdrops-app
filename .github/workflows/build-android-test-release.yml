@@ -25,6 +25,9 @@ jobs:
     name: Build Test-Release APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # ponytail: least privilege; contents:write only for tag-triggered release publishing.
+    permissions:
+      contents: write
 
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────
