@@ -24,7 +24,8 @@ import type {
  * If multiple rules match, the one with the latest effective_date wins.
  * Throws if no rule matches (statutory coverage must be complete).
  */
-export function findEffectiveRule<T extends Record<string, unknown>>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function findEffectiveRule<T = Record<string, unknown>>(
   rules: TaxRuleVersion[],
   ruleType: RuleType,
   periodStart: string,

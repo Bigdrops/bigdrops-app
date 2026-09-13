@@ -28,3 +28,12 @@ dist-ssr
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Android signing material — never commit private keys or keystores
+*.jks
+*.keystore
+*.p12
+android/app/*.keystore
+android/app/*.jks
+bigdrops-*.keystore
+bigdrops-*.jks

@@ -1,0 +1,264 @@
+name: Build Android Test-Release APK
+
+# Stable-signed BIGDROPS test-release APK for GitHub Releases distribution.
+# Uses the dedicated test-release keystore from GitHub Secrets (never committed).
+# Local debug builds are unaffected: they use assembleDebug without secrets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to build (branch, tag, or SHA). Defaults to the default branch."
+        required: false
+        default: ""
+  push:
+    tags:
+      - "test-release-*"
+
+# Prevent concurrent builds on the same branch to avoid cache corruption
+concurrency:
+  group: android-test-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-release-apk:
+    name: Build Test-Release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      # ── 2. Compute build metadata ────────────────────────────────────────
+      - name: Compute build metadata
+        id: meta
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            BRANCH="${GITHUB_REF#refs/tags/}"
+          fi
+          SHORT_SHA="${GITHUB_SHA::7}"
+          SANITIZED_BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9]/-/g; s/-\+/-/g; s/^-//; s/-$//')
+          if [ -z "$SANITIZED_BRANCH" ]; then
+            SANITIZED_BRANCH="unknown"
+          fi
+          # ponytail: run_number is monotonic per workflow; base 1000 keeps every
+          # test-release versionCode above the legacy hardcoded 1.
+          VERSION_CODE=$((1000 + GITHUB_RUN_NUMBER))
+          VERSION_NAME="1.0.${GITHUB_RUN_NUMBER}"
+
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "sanitized_branch=$SANITIZED_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+
+          echo "────────────── Build Metadata ──────────────"
+          echo "Branch      : $BRANCH"
+          echo "Commit SHA  : ${{ github.sha }}"
+          echo "Short SHA   : $SHORT_SHA"
+          echo "Run Number  : ${{ github.run_number }}"
+          echo "VersionCode : $VERSION_CODE"
+          echo "VersionName : $VERSION_NAME"
+          echo "Actor       : ${{ github.actor }}"
+          echo "Build Time  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "────────────────────────────────────────────"
+
+      # ── 3. Set up Java 21 ────────────────────────────────────────────────
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      # ── 4. Set up Bun ────────────────────────────────────────────────────
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # ── 5. Log tool versions ─────────────────────────────────────────────
+      - name: Log tool versions
+        run: |
+          echo "────────────── Tool Versions ───────────────"
+          echo "Java        : $(java -version 2>&1 | head -1)"
+          echo "Gradle      : (bundled with wrapper — see android/gradle/wrapper/gradle-wrapper.properties)"
+          echo "Bun         : $(bun --version)"
+          echo "Node        : $(node --version 2>/dev/null || echo 'N/A')"
+          CAPACITOR_VERSION=$(grep '"@capacitor/core"' package.json 2>/dev/null | sed 's/.*: "//; s/".*//' || echo 'unknown')
+          echo "Capacitor   : $CAPACITOR_VERSION"
+          echo "────────────────────────────────────────────"
+
+      # ── 6. Validate prerequisites ────────────────────────────────────────
+      - name: Validate Android project exists
+        run: |
+          if [ ! -d "android" ]; then
+            echo "::error::android/ directory not found. This workflow requires a Capacitor Android project."
+            exit 1
+          fi
+          if [ ! -f "android/gradlew" ]; then
+            echo "::error::android/gradlew not found. Gradle wrapper is missing."
+            exit 1
+          fi
+          if [ ! -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
+            echo "::error::android/gradle/wrapper/gradle-wrapper.properties not found."
+            exit 1
+          fi
+          if [ -z "${{ secrets.BIGDROPS_KEYSTORE_BASE64 }}" ]; then
+            echo "::error::Missing BIGDROPS_KEYSTORE_BASE64 secret. See docs/android-test-release-signing.md for one-time setup."
+            exit 1
+          fi
+          echo "✅ Android project structure validated."
+
+      # ── 7. Cache Bun dependencies ────────────────────────────────────────
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      # ── 8. Install dependencies ──────────────────────────────────────────
+      - name: Install dependencies with Bun
+        run: bun install --frozen-lockfile
+
+      # ── 9. Clean stale build artifacts ──────────────────────────────────
+      - name: Clean stale build artifacts
+        run: |
+          rm -rf dist/
+          rm -rf android/app/src/main/assets/public/
+          echo "✅ Cleaned dist/ and android/app/src/main/assets/public/"
+
+      # ── 10. Build web assets ─────────────────────────────────────────────
+      - name: Build production web assets
+        run: bun run build
+
+      # ── 11. Verify Vite build output ─────────────────────────────────────
+      - name: Verify Vite build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "::error::dist/index.html not found."
+            exit 1
+          fi
+          if ! grep -q '\./assets/' dist/index.html; then
+            echo "::error::index.html does not contain relative asset paths."
+            exit 1
+          fi
+          echo "✅ Vite build verified."
+
+      # ── 12. Sync Capacitor ───────────────────────────────────────────────
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      # ── 13. Verify Capacitor assets ──────────────────────────────────────
+      - name: Verify Capacitor assets
+        run: |
+          if [ ! -f "android/app/src/main/assets/public/index.html" ]; then
+            echo "::error::android/app/src/main/assets/public/index.html not found after Capacitor sync."
+            exit 1
+          fi
+          if [ ! -d "android/app/src/main/assets/public/assets" ]; then
+            echo "::error::android/app/src/main/assets/public/assets/ directory not found after Capacitor sync."
+            exit 1
+          fi
+          echo "✅ Capacitor assets verified."
+
+      # ── 14. Make Gradle wrapper executable ───────────────────────────────
+      - name: Make Gradle wrapper executable
+        run: chmod +x android/gradlew
+
+      # ── 15. Restore test-release keystore from secrets ───────────────────
+      - name: Restore test-release keystore
+        env:
+          BIGDROPS_KEYSTORE_BASE64: ${{ secrets.BIGDROPS_KEYSTORE_BASE64 }}
+        run: |
+          # Secret value is never echoed. Decode to a temp file inside android/app/.
+          printf '%s' "$BIGDROPS_KEYSTORE_BASE64" | base64 --decode > android/app/bigdrops-test-release.keystore
+          chmod 600 android/app/bigdrops-test-release.keystore
+          echo "✅ Keystore restored (contents never logged)."
+
+      # ── 16. Build signed Test-Release APK ────────────────────────────────
+      - name: Build signed Test-Release APK
+        working-directory: android
+        env:
+          BIGDROPS_KEYSTORE_FILE: ${{ github.workspace }}/android/app/bigdrops-test-release.keystore
+          BIGDROPS_KEYSTORE_PASSWORD: ${{ secrets.BIGDROPS_KEYSTORE_PASSWORD }}
+          BIGDROPS_KEY_ALIAS: ${{ secrets.BIGDROPS_KEY_ALIAS }}
+          BIGDROPS_KEY_PASSWORD: ${{ secrets.BIGDROPS_KEY_PASSWORD }}
+          BIGDROPS_VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          BIGDROPS_VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      # ── 17. Remove temporary keystore ────────────────────────────────────
+      - name: Remove temporary keystore
+        if: always()
+        run: |
+          rm -f android/app/bigdrops-test-release.keystore
+          echo "✅ Temporary signing material removed."
+
+      # ── 18. Locate and rename APK ───────────────────────────────────────
+      - name: Locate and rename APK
+        id: find-apk
+        run: |
+          APK_PATH=$(find android -name "*.apk" -type f -path "*/outputs/apk/release/*" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::No release APK found in android/outputs/. The build may have failed silently."
+            exit 1
+          fi
+          APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
+
+          NEW_NAME="BIGDROPS-test-release-${{ steps.meta.outputs.version_name }}-run${{ github.run_number }}-${{ steps.meta.outputs.short_sha }}.apk"
+          NEW_PATH="$(dirname "$APK_PATH")/$NEW_NAME"
+          mv "$APK_PATH" "$NEW_PATH"
+
+          echo "apk_path=$NEW_PATH" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$NEW_NAME" >> "$GITHUB_OUTPUT"
+          echo "apk_size=$APK_SIZE" >> "$GITHUB_OUTPUT"
+          echo "✅ APK renamed: $NEW_NAME ($APK_SIZE)"
+
+      # ── 19. Generate Build Summary ───────────────────────────────────────
+      - name: Generate Build Summary
+        run: |
+          {
+            echo "# Android Test-Release Build"
+            echo ""
+            echo "| Item | Value |"
+            echo "|------|-------|"
+            echo "| App ID | com.bigdrops.app |"
+            echo "| VersionCode | ${{ steps.meta.outputs.version_code }} |"
+            echo "| VersionName | ${{ steps.meta.outputs.version_name }} |"
+            echo "| Commit | ${{ steps.meta.outputs.short_sha }} |"
+            echo "| Run | ${{ github.run_number }} |"
+            echo "| APK | ${{ steps.find-apk.outputs.apk_name }} |"
+            echo "| APK Size | ${{ steps.find-apk.outputs.apk_size }} |"
+            echo "| Signing | stable test-release key (secrets) |"
+            echo "| Status | ✅ Success |"
+            echo ""
+            echo "First install over an old random-debug APK may need one final uninstall. Later test releases update in place."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 20. Upload APK artifact ──────────────────────────────────────────
+      - name: Upload Test-Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BIGDROPS-test-release-run${{ github.run_number }}
+          path: ${{ steps.find-apk.outputs.apk_path }}
+          retention-days: 90
+          if-no-files-found: error
+
+      # ── 21. Publish GitHub Release on tags ───────────────────────────────
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/test-release-')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" "${{ steps.find-apk.outputs.apk_path }}" \
+            --title "BIGDROPS test release ${{ steps.meta.outputs.version_name }} ($TAG)" \
+            --notes "BIGDROPS Android test-release APK. App ID com.bigdrops.app, versionCode ${{ steps.meta.outputs.version_code }}, versionName ${{ steps.meta.outputs.version_name }}. Signed with the stable test-release key. First install over an old random-debug APK may need one final uninstall; later test releases update in place."

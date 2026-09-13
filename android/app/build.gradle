@@ -8,8 +8,10 @@ android {
         applicationId "com.bigdrops.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // ponytail: env override for GitHub test releases only; local default stays 1.
+        def requestedCode = System.getenv("BIGDROPS_VERSION_CODE")?.trim()
+        versionCode (requestedCode?.isInteger() && requestedCode.toInteger() > 0 ? requestedCode.toInteger() : 1)
+        versionName (System.getenv("BIGDROPS_VERSION_NAME")?.trim() ?: "1.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         aaptOptions {
@@ -18,10 +20,30 @@ android {
         }
     }
 
+    signingConfigs {
+        // Stable BIGDROPS test-release identity. Credentials come only from
+        // environment variables (GitHub Secrets in CI). Never hardcode here.
+        bigdropsTestRelease {
+            def storePath = System.getenv("BIGDROPS_KEYSTORE_FILE")?.trim()
+            if (storePath) {
+                storeFile file(storePath)
+            }
+            storePassword System.getenv("BIGDROPS_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("BIGDROPS_KEY_ALIAS")
+            keyPassword System.getenv("BIGDROPS_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // ponytail: local builds without the keystore keep default unsigned
+            // release behavior; CI sets BIGDROPS_KEYSTORE_FILE to sign.
+            def storePath = System.getenv("BIGDROPS_KEYSTORE_FILE")?.trim()
+            if (storePath && file(storePath).exists()) {
+                signingConfig signingConfigs.bigdropsTestRelease
+            }
         }
     }
     compileOptions {
@@ -59,4 +81,4 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.gms.google-services'

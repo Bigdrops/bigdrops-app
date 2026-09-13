@@ -19,8 +19,8 @@ import type {
   GateEComputationInput,
   GateEComputationResult,
   ResolvedTaxRules,
-  TaxAdjustmentRow,
-  TaxQceRow,
+  TaxAdjustment,
+  TaxQce,
 } from './types'
 import { computeTax } from './computation'
 
@@ -53,8 +53,8 @@ export interface ClassificationFactSet {
  */
 export interface GateFComputationData {
   accounting_profit: AccountingProfitFact
-  adjustments: TaxAdjustmentRow[]
-  qce: TaxQceRow[]
+  adjustments: TaxAdjustment[]
+  qce: TaxQce[]
   loss_opening_balance: string
   loss_arising: string
   classification_facts: ClassificationFactSet
