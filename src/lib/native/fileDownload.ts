@@ -92,6 +92,45 @@ export type SaveUserFileOptions = {
   subdirectory?: string
 }
 
+function splitFileName(fileName: string): { baseName: string; extension: string } {
+  const extensionIndex = fileName.lastIndexOf('.')
+
+  if (extensionIndex <= 0) {
+    return { baseName: fileName, extension: '' }
+  }
+
+  return {
+    baseName: fileName.slice(0, extensionIndex),
+    extension: fileName.slice(extensionIndex),
+  }
+}
+
+async function findAvailableFileName(
+  Filesystem: typeof import('@capacitor/filesystem').Filesystem,
+  Directory: typeof import('@capacitor/filesystem').Directory,
+  folder: string,
+  fileName: string,
+): Promise<string> {
+  const existingEntries = await Filesystem.readdir({
+    path: folder,
+    directory: Directory.Documents,
+  })
+  const existingNames = new Set(existingEntries.files.map((entry) => entry.name))
+
+  if (!existingNames.has(fileName)) {
+    return fileName
+  }
+
+  const { baseName, extension } = splitFileName(fileName)
+  let suffix = 1
+
+  while (existingNames.has(`${baseName} (${suffix})${extension}`)) {
+    suffix += 1
+  }
+
+  return `${baseName} (${suffix})${extension}`
+}
+
 /**
  * Persist a file to user-visible Android storage (Documents/BigDrops).
  * Returns the URI so callers can Open/Share the persisted file.
@@ -105,7 +144,6 @@ export async function saveUserFile({
   const { Directory, Filesystem } = await import('@capacitor/filesystem')
 
   const folder = subdirectory ? `${USER_DOWNLOAD_ROOT}/${subdirectory}` : USER_DOWNLOAD_ROOT
-  const relativePath = `${folder}/${fileName}`
 
   await Filesystem.mkdir({
     path: folder,
@@ -115,21 +153,24 @@ export async function saveUserFile({
     // folder may already exist
   })
 
+  const availableFileName = await findAvailableFileName(Filesystem, Directory, folder, fileName)
+  const persistedPath = `${folder}/${availableFileName}`
+
   await Filesystem.writeFile({
-    path: relativePath,
+    path: persistedPath,
     directory: Directory.Documents,
     data: base64Data,
     recursive: true,
   })
 
   const uriResult = await Filesystem.getUri({
-    path: relativePath,
+    path: persistedPath,
     directory: Directory.Documents,
   })
 
   return {
-    fileName,
-    path: relativePath,
+    fileName: availableFileName,
+    path: persistedPath,
     uri: uriResult.uri,
     sizeBytes: Math.floor(base64Data.length * 0.75),
   }
