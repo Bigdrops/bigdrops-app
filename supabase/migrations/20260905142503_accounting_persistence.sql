@@ -683,9 +683,12 @@ BEGIN
             (''2000'', ''Accounts Payable'', ''liability'', ''credit'', true),
             (''2100'', ''VAT Control'', ''liability'', ''credit'', true),
             (''2200'', ''WHT Control'', ''liability'', ''credit'', true),
+            (''2310'', ''CIT Payable'', ''liability'', ''credit'', true),
+            (''2320'', ''Development Levy Payable'', ''liability'', ''credit'', true),
             (''3000'', ''Equity'', ''equity'', ''credit'', true),
             (''4000'', ''Revenue'', ''revenue'', ''credit'', true),
-            (''5000'', ''Operating Expenses'', ''expense'', ''debit'', true)
+            (''5000'', ''Operating Expenses'', ''expense'', ''debit'', true),
+            (''5500'', ''Tax Expense'', ''expense'', ''debit'', true)
          ON CONFLICT (code) DO NOTHING',
         p_schema_name
     );

@@ -21,9 +21,12 @@ export const SEED_ACCOUNT_GROUPS: { code: string; name: string; type: Account['t
   { code: '2000', name: 'Accounts Payable', type: 'liability', normalBalance: 'credit' },
   { code: '2100', name: 'VAT Control', type: 'liability', normalBalance: 'credit' },
   { code: '2200', name: 'WHT Control', type: 'liability', normalBalance: 'credit' },
+  { code: '2310', name: 'CIT Payable', type: 'liability', normalBalance: 'credit' },
+  { code: '2320', name: 'Development Levy Payable', type: 'liability', normalBalance: 'credit' },
   { code: '3000', name: 'Equity', type: 'equity', normalBalance: 'credit' },
   { code: '4000', name: 'Revenue', type: 'revenue', normalBalance: 'credit' },
   { code: '5000', name: 'Operating Expenses', type: 'expense', normalBalance: 'debit' },
+  { code: '5500', name: 'Tax Expense', type: 'expense', normalBalance: 'debit' },
 ]
 
 /**

@@ -53,9 +53,9 @@ test('seed chart is deterministic across builds', () => {
   )
 })
 
-test('seed chart holds the 11-account policy with unique codes', () => {
+test('seed chart holds the 14-account policy with unique codes', () => {
   const chart = createSeedChartOfAccounts()
-  assert.equal(chart.length, 11)
+  assert.equal(chart.length, 14)
   const codes = chart.map((a) => a.code)
   assert.equal(new Set(codes).size, codes.length)
 })

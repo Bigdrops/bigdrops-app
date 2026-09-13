@@ -97,3 +97,5 @@ Documentation standard: ASD-STE100 Simplified Technical English
   `.env.example`, `docs/android-test-release-signing.md`.
 - Verification: `git diff --check` passed, `bun run typecheck` passed.
   Real proof needs a new tagged run after the two web secrets exist.
+- Outcome (2026-09-13): user confirmed the rebuilt APK works. No white
+  screen. Signing pipeline and web-secret fix both verified in production.
