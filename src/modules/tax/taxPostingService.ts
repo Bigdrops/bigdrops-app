@@ -66,7 +66,7 @@ export async function buildTaxPosting(
   }))
 
   // Validate required tax accounts exist
-  const requiredCodes = [TAX_ACCOUNTS.TAX_EXPENSE, TAX_ACCOUNTS.CIT_PAYABLE]
+  const requiredCodes: string[] = [TAX_ACCOUNTS.TAX_EXPENSE, TAX_ACCOUNTS.CIT_PAYABLE]
   if (development_levy !== '0') {
     requiredCodes.push(TAX_ACCOUNTS.DEV_LEVY_PAYABLE)
   }

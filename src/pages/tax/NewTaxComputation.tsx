@@ -242,7 +242,6 @@ export default function NewTaxComputation() {
                 {result.development_levy && result.development_levy !== '0' && (
                   <ResultRow label="Development Levy" value={result.development_levy} />
                 )}
-                <ResultRow label="Entity Type" value={result.classification?.entity_type || '—'} />
                 <ResultRow label="Company Type" value={result.classification?.company_type || '—'} />
               </div>
 
