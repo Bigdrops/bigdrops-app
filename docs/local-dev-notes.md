@@ -40,3 +40,8 @@ bun run android:debug:release
 ```
 
 Requires the GitHub CLI, installed and signed in (`gh auth login`). It prints the release URL. Requires no emulator, no Android Studio, and no manual APK hunt.
+
+
+running GitHub codespace cli on pc poweshell 
+
+gh codespace ssh -c organic-space-robot-rv5j76rrw99cwxgx -- -vv
