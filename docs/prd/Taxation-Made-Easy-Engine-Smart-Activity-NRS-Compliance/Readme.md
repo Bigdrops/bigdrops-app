@@ -24,7 +24,15 @@
 | adaptive-uiux-alignment.md | ✅ Active | All | Alignment & tracking — keeps this folder conscious of the Adaptive Mobile-First UIUX Facelift PRD; ensures no document here violates or contradicts it |
 | bigdrops-tax-ux-vision-v1.md | 🔄 Draft | Product, UX, Discovery | Companion vision document — payment recording as first-class record, "Why?" explanation layer, unrecorded activity loop. Not yet buildable |
 | Openai-ux-contribution.md | 🔄 Draft | Product, UX | UX review and product philosophy — reframes the product from "NRS compliance engine" to "make tax easy for Nigerian businesses" |
-| Waterfall-roadmap.md | ⛔ Pending | Project Management | Execution sequence and milestone tracker — currently all phases pending, awaiting PRD sign-off |
+| Waterfall-roadmap.md | ✅ Active | Project Management | Execution sequence and milestone tracker — updated with PRD documentation status and milestone progress |
+| Expense-Money-Out-PRD-v1.md | ✅ Active | Engineering, Product | Expense / money-out recording — structured expense capture with category mapping, GST treatment, money-out lifecycle |
+| Fixed-Assets-Depreciation-PRD-v1.md | ✅ Active | Engineering, Product | Fixed asset register and depreciation — asset lifecycle, class schedules (A-D), capital allowances, NBV tracking |
+| Tax-Adjustments-PRD-v1.md | ✅ Active | Engineering, Product | CIT tax adjustments — Section 9 ITA 2027 adjustment categories, taxable/non-taxable, add-backs, capital allowances |
+| Loss-Register-PRD-v1.md | ✅ Active | Engineering, Product | Loss register and utilisation — Section 27(6) indefinite loss carry-forward, trade-specific matching, loss dashboard |
+| Capital-Allowances-PRD-v1.md | ✅ Active | Engineering, Product | Capital allowances — First Schedule Part I & II, three classes (10%/20%/25%), restrict vs base, terminal loss |
+| Tax-Rules-Engine-PRD-v1.md | ✅ Active | Engineering, Product | Tax rules engine — versioned rule resolution, rate tables, thresholds, First Schedule Part II, s.56/s.202 compliance |
+| CIT-Computation-PRD-v1.md | ✅ Active | Engineering, Product | CIT computation engine — full pipeline from accounting profit to tax payable, tax credits, ETR minimum |
+| Tax-Journal-Bridge-PRD-v1.md | ✅ Active | Engineering, Product | Tax journal bridge — Gate G double-entry for Dr Tax Expense, Cr CIT Payable, Cr Dev Levy Payable |
 | NRS-docs/ | ✅ Active | All | Reference source material — official Nigeria Tax Act 2025 gazette text in Markdown and JSON forms, plus the obligation lookup index |
 | Refrences/ | ✅ Active | Engineering, Architecture | Curated external-architecture references — accounting and tax-engine patterns researched for the BIGDROPS-native accounting/CIT foundation. Reference only, not statutory authority |
 | Readme.md | ✅ Active | All | This file — master index and navigation hub |
@@ -85,7 +93,7 @@
 These are source-of-truth reference documents. Do not edit the Act conversions. The lookup index is the navigation aid; update it when a PRD rule or the Act text changes.
 
 ### 7. Refrences/
-**TL;DR:** Curated architecture references from the completed external-research series for the BIGDROPS-native accounting and tax foundation. Each document is labeled REFERENCE ONLY — NOT STATUTORY AUTHORITY. Five documents exist:
+**TL;DR:** Curated architecture references from the completed external-research series for the BIGDROPS-native accounting and tax foundation. Five documents exist:
 - `luca-v05-accounting-architecture-reference.md` — double-entry GL patterns (journal, period locking, idempotency, append-only corrections). Luca verdict: reference architecture only.
 - `taxbridge-nigeria-cit-reference.md` — CIT engine structure lessons. TaxBridge uses a wrong ₦100M/20%-band model; borrow structure, never values.
 - `tekvwarho-proaudit-nigeria-tax-reference.md` — a full double-entry accounting layer; tax values internally inconsistent. Borrow the accounting architecture.
@@ -93,6 +101,30 @@ These are source-of-truth reference documents. Do not edit the Act conversions. 
 - `tax-foundation-pslmodels-balaka-openbooks-beancount-reference.md` — final synthesis: exact money, DB-enforced append-only journals, period locks, year-keyed statutory parameters. Closes broad external research.
 
 These documents preserve durable architectural knowledge. They are not requirements. No external project is a dependency.
+
+### 8. Expense-Money-Out-PRD-v1.md
+**TL;DR:** Defines the structured expense and money-out recording surface. Covers category mapping (food, transport, utilities, rent, supplies, fees, transport, other), GST treatment per category, vendor/payee capture, receipt evidence, expense lifecycle (draft → confirmed → reconciled → closed), entity-scoped storage, and the downstream flow into Gate D accounting journal entries. No expense domain module exists in codebase — this PRD is implementation-ready but not yet built.
+
+### 9. Fixed-Assets-Depreciation-PRD-v1.md
+**TL;DR:** Defines the fixed asset register and depreciation engine. Covers four asset classes (Class A: building/infrastructure, Class B: plant/machinery/equipment, Class C: furniture/fixtures/vehicles, Class D: intangible assets), acquisition/derecognition lifecycle, depreciation methods (straight-line, reducing balance, units-of-production), capital allowances vs book depreciation split, net book value tracking, NBV adjustment triggers, and entity-scoped storage. No fixed asset module exists in codebase — this PRD is implementation-ready but not yet built.
+
+### 10. Tax-Adjustments-PRD-v1.md
+**TL;DR:** Defines the CIT tax adjustment categories and rules. Covers Section 9 ITA 2027 adjustment taxonomy: income adjustments (non-taxable income, exempt income), expense adjustments (non-deductible expenses, depreciation, amortisation), capital adjustments (capital allowances, restrict), loss adjustments (prior-year losses, carry-forward), and other adjustments (tax credits, withholding tax). Maps each category to the existing `tax_input_entries.category` codes and the computation pipeline. Partially implemented in `computation.ts` but no standalone adjustment domain module exists.
+
+### 11. Loss-Register-PRD-v1.md
+**TL;DR:** Defines the loss register and utilisation engine. Covers Section 27(6) indefinite loss carry-forward (trade-specific matching only), prior-year loss tracking, loss utilisation schedule, loss dashboard (available, utilised, remaining), entity-scoped storage, and the downstream flow into Gate E chargeable income calculation. Loss utilisation logic exists in `computation.ts` but no standalone loss register module or dashboard exists.
+
+### 12. Capital-Allowances-PRD-v1.md
+**TL;DR:** Defines the capital allowances engine. Covers First Schedule Part I (three classes: Class 1 at 10% for building/intangible/heavy transport, Class 2 at 20% for plant/equipment/furniture/mining, Class 3 at 25% for motor vehicle/software/other), First Schedule Part II (special rates: 10% for registered haulage, 15% for building works, 20% for plant, 25% for motor vehicle/software), restriction rules, base year allocation, terminal loss treatment, and the downstream flow into Gate E assessable profit calculation. Capital allowance rates exist in `ruleResolver.ts` seed rules but no standalone capital allowance module exists.
+
+### 13. Tax-Rules-Engine-PRD-v1.md
+**TL;DR:** Defines the versioned tax rules engine. Covers rule resolution by jurisdiction/year, rate tables (s.56 CIT rates, s.57 ETR minimum, s.202 small company thresholds), First Schedule Part II asset rates, threshold tables (₦50M turnover / ₦250M fixed assets for small company), rule versioning (statutory-version, effective-from, superseded-at), and the rule resolver API. Fully implemented in `ruleResolver.ts` + `tax_rule_definitions` DB table + seed rules — this PRD is the canonical reference for what is already built.
+
+### 14. CIT-Computation-PRD-v1.md
+**TL;DR:** Defines the full CIT computation pipeline from accounting profit to tax payable. Covers Gate E orchestration (accounting profit → tax adjustments → adjusted profit → capital allowances → assessable profit → loss utilisation → chargeable income → CIT rate → tax before credits → tax credits → tax payable), entity classification (small/medium/large), development levy calculation, ETR minimum, and the computation result schema. Fully implemented in `computation.ts` + `classifier.ts` + `orchestrator.ts` — this PRD is the canonical reference for what is already built.
+
+### 15. Tax-Journal-Bridge-PRD-v1.md
+**TL;DR:** Defines the Gate G tax journal bridge. Covers the double-entry for CIT (Dr Tax Expense 5500, Cr CIT Payable 2310), Development Levy (Dr Tax Expense 5500, Cr Dev Levy Payable 2320), idempotency key generation, Decimal.js arithmetic, entity-scoped posting, and the downstream flow into the accounting ledger. Fully implemented in `taxBridge.ts` + `taxPostingService.ts` — this PRD is the canonical reference for what is already built.
 
 ---
 
@@ -123,6 +155,9 @@ These documents preserve durable architectural knowledge. They are not requireme
 
 | Date | Action Taken | Changed File |
 |------|--------------|--------------|
+| 2026-09-14 | Missing PRD Completion Sprint — 8 PRDs created: Expense-Money-Out-PRD-v1.md, Fixed-Assets-Depreciation-PRD-v1.md, Tax-Adjustments-PRD-v1.md, Loss-Register-PRD-v1.md, Capital-Allowances-PRD-v1.md, Tax-Rules-Engine-PRD-v1.md, CIT-Computation-PRD-v1.md, Tax-Journal-Bridge-PRD-v1.md | 8 new PRD files |
+| 2026-09-14 | Readme.md updated — 8 new PRDs added to file directory, summaries, and dependencies | Readme.md |
+| 2026-09-14 | Waterfall-roadmap.md updated — milestone tracker progressed (all gates 100%, M1/M2/M4/M5 partial), PRD documentation status table added | Waterfall-roadmap.md |
 | 2026-09-08 | Gap-1-journal-derived-reporting-foundation-spec-v1.md created — canonical Gap 1 specification (read-only journal-derived reporting foundation); Readme.md indexed it | Gap-1-journal-derived-reporting-foundation-spec-v1.md, Readme.md |
 | 2026-09-08 | Block-A-accounting-foundation-core-spec-v1.md created — canonical Block A implementation specification reconstructed from the blueprint, CIT-Readiness Roadmap, Gate A/B record, and Increments 1–10; Readme.md indexed it | Block-A-accounting-foundation-core-spec-v1.md, Readme.md |
 | 2026-09-05 | Readme.md updated — Technical-plan-v1.2.md references corrected to Technical-plan-v1.1.md (current technical baseline); Technical-plan-v1.2.md does not exist and was not created | Readme.md |

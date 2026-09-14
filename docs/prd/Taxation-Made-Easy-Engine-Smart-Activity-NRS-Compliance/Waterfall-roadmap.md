@@ -1,9 +1,8 @@
 # 🏗️ WATERFALL ROADMAP [EXECUTION SEQUENCE]
 
-> ⛔ **STATUS: ACTIVE PLANNING BASELINE — PHASES PENDING UNTIL GATES CLOSE**
+> ⛔ **STATUS: ACTIVE — GATES A-F IMPLEMENTED, PHASES PARTIAL**
 >
-> This is a **Living Command Document**. The baselines below are locked. Phases stay **PENDING** until their exit gates close.
-> Once a phase's gate closes, this document becomes the single source of truth for its execution order.
+> This is a **Living Command Document**. Gates A through F are implemented. Phases 1-5 are partially complete (Phase 3 fully implemented). PRD documentation status table tracks module coverage.
 >
 > *Owner:* BIGDROPS Taxation / Accounting Workstream
 
@@ -422,19 +421,37 @@ Marked as future scope. Do not pull these into v1 without a separate approved de
 
 | ID | Milestone / Phase | Priority | Status | % Complete | Last Updated |
 |----|-------------------|----------|--------|------------|--------------|
-| GA | GATE A — entity accounting boundary decided | CRIT | ⛔ PENDING | 0% | N/A |
-| GB | GATE B — money precision and financial-path policy | CRIT | ⛔ PENDING | 0% | N/A |
-| M0 | Phase 0 — baseline lock and architecture gates | HIGH | ⛔ PENDING | 0% | N/A |
-| GC | GATE C — balanced posting kernel exists | CRIT | ⛔ PENDING | 0% | N/A |
-| M1 | Phase 1 — Accounting Foundation | HIGH | ⛔ PENDING | 0% | N/A |
-| GD | GATE D — accounting-to-tax bridge exists | CRIT | ⛔ PENDING | 0% | N/A |
-| M2 | Phase 2 — Accounting → Tax Bridge | HIGH | ⛔ PENDING | 0% | N/A |
-| GE | GATE E — statutory evidence for production rules | CRIT | ⛔ PENDING | 0% | N/A |
-| M3 | Phase 3 — Nigerian Tax Rules Engine | HIGH | ⛔ PENDING | 0% | N/A |
-| GF | GATE F — reproducible compliance | CRIT | ⛔ PENDING | 0% | N/A |
-| M4 | Phase 4 — Compliance | HIGH | ⛔ PENDING | 0% | N/A |
-| M5 | Phase 5 — Record Engagement integration | MED | ⛔ PENDING | 0% | N/A |
+| GA | GATE A — entity accounting boundary decided | CRIT | ✅ IMPLEMENTED | 100% | 2026-09-08 |
+| GB | GATE B — money precision and financial-path policy | CRIT | ✅ IMPLEMENTED | 100% | 2026-09-08 |
+| M0 | Phase 0 — baseline lock and architecture gates | HIGH | ✅ IMPLEMENTED | 100% | 2026-09-08 |
+| GC | GATE C — balanced posting kernel exists | CRIT | ✅ IMPLEMENTED | 100% | 2026-09-08 |
+| M1 | Phase 1 — Accounting Foundation | HIGH | 🔄 PARTIAL | 75% | 2026-09-14 |
+| GD | GATE D — accounting-to-tax bridge exists | CRIT | ✅ IMPLEMENTED | 100% | 2026-09-12 |
+| M2 | Phase 2 — Accounting → Tax Bridge | HIGH | 🔄 PARTIAL | 70% | 2026-09-14 |
+| GE | GATE E — statutory evidence for production rules | CRIT | ✅ IMPLEMENTED | 100% | 2026-09-12 |
+| M3 | Phase 3 — Nigerian Tax Rules Engine | HIGH | ✅ IMPLEMENTED | 100% | 2026-09-12 |
+| GF | GATE F — reproducible compliance | CRIT | ✅ IMPLEMENTED | 100% | 2026-09-12 |
+| M4 | Phase 4 — Compliance | HIGH | 🔄 PARTIAL | 40% | 2026-09-14 |
+| M5 | Phase 5 — Record Engagement integration | MED | 🔄 PARTIAL | 20% | 2026-09-14 |
 | M6 | Phase 6 — deferred extensions (review) | LOW | ⛔ PENDING | 0% | N/A |
+
+### 12.1 PRD Documentation Status
+
+| Module | PRD Created | Implementation | Notes |
+|--------|-------------|----------------|-------|
+| Business Activity | ✅ Business-Activity-PRD-v1.md | ✅ Implemented | Source transaction layer |
+| Record | ✅ Record-PRD-v1.md | ✅ Implemented | Record capture surface |
+| Expense / Money Out | ✅ Expense-Money-Out-PRD-v1.md | ❌ Missing | No expense domain module |
+| Fixed Assets / Depreciation | ✅ Fixed-Assets-Depreciation-PRD-v1.md | ❌ Missing | No fixed asset module |
+| Accounting Source Transaction | ✅ Accounting-Source-Transaction-PRD-v1.md | ✅ Implemented | Posting kernel exists |
+| Journal | ✅ Journal-PRD-v1.md | ✅ Implemented | Balanced posting kernel |
+| Accounting Profit / P&L | Not needed (derived from reporting.ts) | ✅ Implemented | DerivedAccountBalance + TrialBalanceAssertion cover it |
+| Tax Adjustments | ✅ Tax-Adjustments-PRD-v1.md | 🔄 Partial | Simplified categories in code |
+| Capital Allowances | ✅ Capital-Allowances-PRD-v1.md | 🔄 Partial | Rates in rule resolver, no standalone module |
+| Loss Register | ✅ Loss-Register-PRD-v1.md | 🔄 Partial | Loss utilisation in computation, no register |
+| Tax Rules Engine | ✅ Tax-Rules-Engine-PRD-v1.md | ✅ Implemented | ruleResolver.ts + DB trigger + seed rules |
+| CIT Computation | ✅ CIT-Computation-PRD-v1.md | ✅ Implemented | computation.ts + classifier.ts |
+| Tax Journal Bridge | ✅ Tax-Journal-Bridge-PRD-v1.md | ✅ Implemented | taxBridge.ts + taxPostingService.ts |
 
 **Status legend (unchanged):** ✅ IMPLEMENTED | 🔄 IMPROVED | 🛠️ CORRECTED | ⏭️ SUPERSEDED | ⛔ PENDING
 
