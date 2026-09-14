@@ -1,15 +1,15 @@
-AGENTS.md — BIGDROPS AI Agent Guide
+# AGENTS.md — BIGDROPS AI Agent Guide
 
 Read this file before you change the repository.
 
 ---
 
-1. Project Fundamentals
+## 1. Project Fundamentals
 
-· Product: B2B business management suite for Nigerian SMEs.
-· Stack: React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase/Postgres, Vite 7, Bun, Vercel, Capacitor 8.
-· Package manager: Bun only.
-· Do not use: npm, yarn, pnpm.
+- Product: B2B business management suite for Nigerian SMEs.
+- Stack: React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase/Postgres, Vite 7, Bun, Vercel, Capacitor 8.
+- Package manager: Bun only.
+- Do not use: npm, yarn, pnpm.
 
 Commands:
 
@@ -28,36 +28,36 @@ For all SQL and Supabase work, follow supabase/database-workflow.md.
 
 Naming conventions:
 
-· Components: PascalCase (example: WaybillForm.tsx)
-· Files/utilities: kebab-case (example: waybill-utils.ts)
-· Database fields: snake_case (example: waybill_number)
+- Components: PascalCase (example: WaybillForm.tsx)
+- Files/utilities: kebab-case (example: waybill-utils.ts)
+- Database fields: snake_case (example: waybill_number)
 
 ---
 
-2. Concurrent Agent Safety
+## 2. Concurrent Agent Safety
 
 Multiple AI agents may work on this repository at the same time.
 
-· Treat any pre-existing uncommitted, staged, or untracked change as belonging to another agent.
-· Do not destroy another agent's work.
-· Do not run these commands without explicit user authorization:
-  · git reset
-  · git reset --hard
-  · git checkout -- <file>
-  · git restore <file>
-  · git clean
-  · git stash (on another agent's work)
-  · Any equivalent command that discards or overwrites pre-existing work.
-· Do not delete untracked files, revert modifications, or overwrite files that you did not change.
-· Do not revert changes because they cause typecheck, lint, or build failures.
-· Pre-existing changes are immutable. Do not clean the working tree.
-· A file that seems unrelated or contains errors is still protected.
-· Before you modify any file, run git status and identify pre-existing changes.
-· Modify only files required by the current task.
-· If pre-existing changes block verification, do not modify or revert them. Report the conflict.
-· If another agent modifies the same file, stop and report the collision. Do not overwrite or merge.
-· git status and git diff are for observation only. They do not permit cleanup.
-· For every task:
+- Treat any pre-existing uncommitted, staged, or untracked change as belonging to another agent.
+- Do not destroy another agent's work.
+- Do not run these commands without explicit user authorization:
+  - git reset
+  - git reset --hard
+  - git checkout -- <file>
+  - git restore <file>
+  - git clean
+  - git stash (on another agent's work)
+  - Any equivalent command that discards or overwrites pre-existing work.
+- Do not delete untracked files, revert modifications, or overwrite files that you did not change.
+- Do not revert changes because they cause typecheck, lint, or build failures.
+- Pre-existing changes are immutable. Do not clean the working tree.
+- A file that seems unrelated or contains errors is still protected.
+- Before you modify any file, run git status and identify pre-existing changes.
+- Modify only files required by the current task.
+- If pre-existing changes block verification, do not modify or revert them. Report the conflict.
+- If another agent modifies the same file, stop and report the collision. Do not overwrite or merge.
+- git status and git diff are for observation only. They do not permit cleanup.
+- For every task:
   1. Capture git status before changes.
   2. Record pre-existing modified/staged/untracked files.
   3. Make only task-scoped changes.
@@ -66,7 +66,7 @@ Multiple AI agents may work on this repository at the same time.
 
 ---
 
-3. Core Guardrails
+## 3. Core Guardrails
 
 These guardrails protect business correctness. Do not violate them unless the user explicitly instructs otherwise.
 
@@ -74,24 +74,24 @@ Financial calculations
 
 src/lib/Calculations.ts is the financial source of truth.
 
-· Use computeDocument() for financial calculations. It wraps normalizeDocumentInput() and calculateDocument() and is the only entry point used in production.
-· calcTotals() and resolveRowVat(), in src/domain/invoice/calculations.ts, are deprecated. They have no production callers as of 2026-09-04. Do not call them in new code. Do not remove them without a separate, explicit task — this patch does not authorize deletion.
-· Do not duplicate financial calculation logic.
-· Do not bypass Calculations.ts.
-· Quotations must reuse the invoice/domain financial layer.
+- Use computeDocument() for financial calculations. It wraps normalizeDocumentInput() and calculateDocument() and is the only entry point used in production.
+- calcTotals() and resolveRowVat(), in src/domain/invoice/calculations.ts, are deprecated. They have no production callers as of 2026-09-04. Do not call them in new code. Do not remove them without a separate, explicit task — this patch does not authorize deletion.
+- Do not duplicate financial calculation logic.
+- Do not bypass Calculations.ts.
+- Quotations must reuse the invoice/domain financial layer.
 
 Domain boundaries
 
-· PDFs are renderers. They receive prepared data only.
-· PDFs must not calculate prices, taxes, totals, VAT, or discounts.
-· Quotation logic must reuse the invoice domain layer.
-· When you transform invoice items to waybills, remove monetary values:
-  · unit_price
-  · rate
-  · vat
-  · discount
-  · subtotal
-  · grand_total
+- PDFs are renderers. They receive prepared data only.
+- PDFs must not calculate prices, taxes, totals, VAT, or discounts.
+- Quotation logic must reuse the invoice domain layer.
+- When you transform invoice items to waybills, remove monetary values:
+  - unit_price
+  - rate
+  - vat
+  - discount
+  - subtotal
+  - grand_total
 
 Document lifecycle
 
@@ -103,21 +103,21 @@ docs/standard/document-transformation-standard.md
 
 Database guardrails
 
-· You MUST write a migration file for every schema change.
-· You MUST push the migration with supabase db push.
-· You MUST fix every error that Supabase returns. Push again after each fix.
-· You MUST repeat the push-and-fix loop until the push succeeds.
-· Do NOT stop after you write the SQL file. The push is part of the task.
-· Do NOT mark the task complete if the push fails.
-· Skip the push only when the user says "do not push" in clear words.
-· Do NOT edit the hosted database by hand.
-· Do NOT run Docker. Do NOT run supabase start.
-· Follow supabase/database-workflow.md for the full procedure.
-· Use the Supabase skills in this order: db diff, db shell, db dump.
+- You MUST write a migration file for every schema change.
+- You MUST push the migration with supabase db push.
+- You MUST fix every error that Supabase returns. Push again after each fix.
+- You MUST repeat the push-and-fix loop until the push succeeds.
+- Do NOT stop after you write the SQL file. The push is part of the task.
+- Do NOT mark the task complete if the push fails.
+- Skip the push only when the user says "do not push" in clear words.
+- Do NOT edit the hosted database by hand.
+- Do NOT run Docker. Do NOT run supabase start.
+- Follow supabase/database-workflow.md for the full procedure.
+- Use the Supabase skills in this order: db diff, db shell, db dump.
 
 ---
 
-4. Execution Rules
+## 4. Execution Rules
 
 Before you change code:
 
@@ -131,16 +131,16 @@ Before you change code:
 
 Rules:
 
-· Make surgical changes only.
-· Do not refactor unrelated code.
-· Do not rename unrelated symbols.
-· Do not change business behavior unless requested.
-· Preserve audit trails, document lineage, and existing output behavior.
-· Prefer simple, readable control flow over abstraction.
+- Make surgical changes only.
+- Do not refactor unrelated code.
+- Do not rename unrelated symbols.
+- Do not change business behavior unless requested.
+- Preserve audit trails, document lineage, and existing output behavior.
+- Prefer simple, readable control flow over abstraction.
 
 ---
 
-5. Verification Gate
+## 5. Verification Gate
 
 Run these checks before you report completion:
 
@@ -174,7 +174,7 @@ must not be used as a normal verification step. The local machine has limited RA
 
 ---
 
-6. Standards
+## 6. Standards
 
 Standards live under:
 
@@ -186,12 +186,12 @@ docs/standard/ is normative.
 
 Rules:
 
-· Follow all active standards under docs/standard/.
-· Do not silently diverge from a standard.
-· If an implementation conflicts with a standard, fix the implementation or stop and ask.
-· Extend an existing standard before creating a new one.
-· Do not duplicate a concept already covered by an existing standard.
-· If a standard is marked placeholder, coming soon, or excluded, do not treat it as authoritative unless the user says otherwise.
+- Follow all active standards under docs/standard/.
+- Do not silently diverge from a standard.
+- If an implementation conflicts with a standard, fix the implementation or stop and ask.
+- Extend an existing standard before creating a new one.
+- Do not duplicate a concept already covered by an existing standard.
+- If a standard is marked placeholder, coming soon, or excluded, do not treat it as authoritative unless the user says otherwise.
 
 New document modules must conform to:
 
@@ -211,7 +211,7 @@ A loaded skill controls implementation approach, but it must not violate explici
 
 ---
 
-7. Skills
+## 7. Skills
 
 Skills are the primary instruction mechanism for how work is performed.
 
@@ -232,20 +232,20 @@ Load skills from one of these locations:
 
 Skill rules:
 
-· If a skill is loaded, record it in the task report.
-· A loaded skill may guide or override non-normative workflow behavior in this file.
-· A skill must not silently override:
-  · active standards under docs/standard/
-  · financial calculation integrity
-  · document transformation integrity
-  · audit trail integrity
-  · database safety rules (including the mandatory push rule)
-  · security rules
-· If a skill appears to conflict with any of those, stop and ask.
+- If a skill is loaded, record it in the task report.
+- A loaded skill may guide or override non-normative workflow behavior in this file.
+- A skill must not silently override:
+  - active standards under docs/standard/
+  - financial calculation integrity
+  - document transformation integrity
+  - audit trail integrity
+  - database safety rules (including the mandatory push rule)
+  - security rules
+- If a skill appears to conflict with any of those, stop and ask.
 
 ---
 
-8. Subagents
+## 8. Subagents
 
 Subagents are optional.
 
@@ -257,20 +257,20 @@ docs/SUBAGENTS.md
 
 Use a subagent only when:
 
-· the user explicitly asks for one, or
-· no suitable skill exists and a specialist persona is clearly useful.
+- the user explicitly asks for one, or
+- no suitable skill exists and a specialist persona is clearly useful.
 
 Rules:
 
-· Subagents do not override skills.
-· Subagents do not require delegation logs.
-· Subagents must not bypass standards or locked business rules.
-· If a skill and a subagent conflict, follow the skill.
-· If the user gives direct instruction, follow the user.
+- Subagents do not override skills.
+- Subagents do not require delegation logs.
+- Subagents must not bypass standards or locked business rules.
+- If a skill and a subagent conflict, follow the skill.
+- If the user gives direct instruction, follow the user.
 
 ---
 
-9. Reports
+## 9. Reports
 
 Every completed task must produce a report under:
 
@@ -309,16 +309,16 @@ Use the actual AI name, date, and harness. Do not use placeholder text.
 
 Each report must include:
 
-· Objective
-· Scope
-· Files changed
-· Skills used
-· Documentation standard
-· Changes made
-· Verification result (include the push result if the task changed SQL)
-· Supabase push status
-· Risks or limitations
-· Deferred work
+- Objective
+- Scope
+- Files changed
+- Skills used
+- Documentation standard
+- Changes made
+- Verification result (include the push result if the task changed SQL)
+- Supabase push status
+- Risks or limitations
+- Deferred work
 
 Required fields:
 
@@ -368,38 +368,38 @@ Verification:
 
 ---
 
-10. Documentation Standard
+## 10. Documentation Standard
 
 All technical documentation must adhere to ASD-STE100 Simplified Technical English.
 
 This applies to:
 
-· architecture documents
-· design documents
-· pattern documents
-· READMEs
-· specifications
-· API documentation
-· developer guides
-· contribution guides
-· AI-generated documentation
-· reports
+- architecture documents
+- design documents
+- pattern documents
+- READMEs
+- specifications
+- API documentation
+- developer guides
+- contribution guides
+- AI-generated documentation
+- reports
 
 Writing rules:
 
-· Use short, direct sentences.
-· Use active voice.
-· Use consistent terminology.
-· Define technical terms before using them.
-· Explain concepts before implementation details.
-· Use one idea per paragraph.
-· Prefer bullet lists and tables over long prose.
-· Remove unnecessary adjectives and filler.
-· Do not use marketing language.
-· Do not use conversational language.
-· Do not use AI-style hedging.
-· Avoid repetition.
-· Make documents easy to scan.
+- Use short, direct sentences.
+- Use active voice.
+- Use consistent terminology.
+- Define technical terms before using them.
+- Explain concepts before implementation details.
+- Use one idea per paragraph.
+- Prefer bullet lists and tables over long prose.
+- Remove unnecessary adjectives and filler.
+- Do not use marketing language.
+- Do not use conversational language.
+- Do not use AI-style hedging.
+- Avoid repetition.
+- Make documents easy to scan.
 
 Documentation workflow:
 
@@ -414,7 +414,7 @@ Duplicate documentation is a defect.
 
 ---
 
-11. Architecture Map
+## 11. Architecture Map
 
 High-level boundaries:
 
@@ -431,6 +431,6 @@ src/tests/        Critical tests
 
 Rules:
 
-· Keep business logic in src/domain/ or src/lib/, not in UI components.
-· Keep PDF components as renderers.
-· Keep database access through the established Supabase layer.
+- Keep business logic in src/domain/ or src/lib/, not in UI components.
+- Keep PDF components as renderers.
+- Keep database access through the established Supabase layer.

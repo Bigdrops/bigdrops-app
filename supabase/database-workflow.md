@@ -58,7 +58,7 @@ export SUPABASE_ACCESS_TOKEN=<token>
 
 Do NOT commit the token to the repository.
 
-2.2 Link the repository to the hosted project
+### 2.2 Link the repository to the hosted project
 
 ```bash
 supabase link --project-ref xqlpekpkbszpdgtuwybh
@@ -90,7 +90,7 @@ YYYYMMDDHHMMSS_<description>.sql
 
 Migrations run in file-name order.
 
-3.1 Create a new migration
+### 3.1 Create a new migration
 
 ```bash
 supabase migration new <description>
@@ -98,7 +98,7 @@ supabase migration new <description>
 
 Write your SQL in the new file.
 
-3.2 Apply migrations to the hosted project
+### 3.2 Apply migrations to the hosted project
 
 ```bash
 supabase db push
@@ -106,7 +106,7 @@ supabase db push
 
 You MUST run this command. See rule 1.1.
 
-3.3 Compare local files with the hosted database
+### 3.3 Compare local files with the hosted database
 
 ```bash
 supabase db diff --linked
@@ -122,19 +122,19 @@ Note: supabase db push applies only the migration files in supabase/migrations/.
 
 Supabase can reject a migration. You MUST fix the error and push again.
 
-4.1 Read the error
+### 4.1 Read the error
 
 Read the full error message. The message tells you the line and the cause.
 
-4.2 Common causes
+### 4.2 Common causes
 
-· The migration uses an object that does not exist.
-· The migration drops an object that other objects use.
-· The migration has a syntax error.
-· The migration conflicts with an object in the hosted database.
-· The migration order is wrong. An older file needs a change.
+- The migration uses an object that does not exist.
+- The migration drops an object that other objects use.
+- The migration has a syntax error.
+- The migration conflicts with an object in the hosted database.
+- The migration order is wrong. An older file needs a change.
 
-4.3 Fix the error
+### 4.3 Fix the error
 
 1. Open the migration file.
 2. Correct the SQL.
@@ -145,7 +145,7 @@ Do NOT edit the hosted database by hand to hide the error.
 
 Do NOT delete the migration to skip the error. Correct it.
 
-4.4 Use the Supabase skills
+### 4.4 Use the Supabase skills
 
 Use the Supabase tools and skills in this order:
 
@@ -157,19 +157,19 @@ Use the Supabase tools and skills in this order:
 
 5. Probe the Database
 
-5.1 Open a SQL shell to the hosted database
+### 5.1 Open a SQL shell to the hosted database
 
 ```bash
 supabase db shell
 ```
 
-5.2 List schemas
+### 5.2 List schemas
 
 ```sql
 SELECT nspname FROM pg_namespace ORDER BY nspname;
 ```
 
-5.3 List functions in a schema
+### 5.3 List functions in a schema
 
 ```sql
 SELECT p.proname
@@ -179,7 +179,7 @@ WHERE n.nspname = '<schema_name>'
 ORDER BY p.proname;
 ```
 
-5.4 Check that a function exists
+### 5.4 Check that a function exists
 
 ```sql
 SELECT to_regprocedure('<schema_name>.<function_name>(<argument_types>)');
@@ -193,19 +193,19 @@ SELECT to_regprocedure('entity_bigdrops-main_main.save_invoice_with_items_transa
 
 A null result means the function does not exist in that schema.
 
-5.5 List tables in a schema
+### 5.5 List tables in a schema
 
 ```sql
 SELECT tablename FROM pg_tables WHERE schemaname = '<schema_name>' ORDER BY tablename;
 ```
 
-5.6 List views in a schema
+### 5.6 List views in a schema
 
 ```sql
 SELECT viewname FROM pg_views WHERE schemaname = '<schema_name>' ORDER BY viewname;
 ```
 
-5.7 Reload the PostgREST schema cache
+### 5.7 Reload the PostgREST schema cache
 
 PostgREST caches the structure of each exposed schema.
 
@@ -227,25 +227,25 @@ Could not find the function <schema>.<function>(...) in the schema cache.
 
 6. Dump the Live Schema
 
-6.1 Dump the whole hosted database
+### 6.1 Dump the whole hosted database
 
 ```bash
 supabase db dump --linked
 ```
 
-6.2 Write the dump to a file
+### 6.2 Write the dump to a file
 
 ```bash
 supabase db dump --linked -f dump.sql
 ```
 
-6.3 Dump one schema
+### 6.3 Dump one schema
 
 ```bash
 supabase db dump --linked --schema entity_bigdrops-main_main -f entity-schema.sql
 ```
 
-6.4 Dump data only
+### 6.4 Dump data only
 
 ```bash
 supabase db dump --linked --data-only -f data.sql
@@ -259,15 +259,16 @@ Tenant schemas have the prefix entity_.
 
 7. Common Commands
 
-Purpose Command
-Log in to the CLI supabase login
-Link the repository supabase link --project-ref xqlpekpkbszpdgtuwybh
-Create a migration supabase migration new <description>
-Apply migrations supabase db push
-Diff migrations supabase db diff --linked
-Open a SQL shell supabase db shell
-Dump schema and data supabase db dump --linked
-Check CLI status supabase status
+| Purpose | Command |
+| --- | --- |
+| Log in to the CLI | `supabase login` |
+| Link the repository | `supabase link --project-ref xqlpekpkbszpdgtuwybh` |
+| Create a migration | `supabase migration new <description>` |
+| Apply migrations | `supabase db push` |
+| Diff migrations | `supabase db diff --linked` |
+| Open a SQL shell | `supabase db shell` |
+| Dump schema and data | `supabase db dump --linked` |
+| Check CLI status | `supabase status` |
 
 ---
 
@@ -280,5 +281,3 @@ A task is done only when:
 3. No errors remain.
 
 If the push fails and you cannot fix it, report the error to the user. Do NOT mark the task complete.
-
-```
