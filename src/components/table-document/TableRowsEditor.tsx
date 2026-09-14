@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { pageFormLabelClassName } from '@/components/ui/form-page-styles'
 import { createEmptyTableRow } from '@/domain/table-document/rows'
 import type { TableDocumentColumn, TableDocumentRow } from '@/domain/table-document/types'
+import { computeRowProfit } from '@/domain/boq/calculateBoqTotals'
 
 type Props = {
   rows: TableDocumentRow[]
@@ -146,6 +147,15 @@ export function TableRowsEditor({
                         <Input value={row.sp} onChange={(event) => updateRow(index, { sp: event.target.value })} placeholder="Selling price" className="mt-1" />
                       </div>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {row.row_type === 'item' && visibleColumns.some((column) => column.key === 'cp' || column.key === 'sp') ? (
+                  <div>
+                    <Label className={pageFormLabelClassName}>Profit</Label>
+                    <div className="mt-1 px-3 py-2 text-sm font-mono bg-muted/50 rounded border border-border">
+                      {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(computeRowProfit(row))}
+                    </div>
                   </div>
                 ) : null}
 

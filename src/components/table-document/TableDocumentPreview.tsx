@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react'
 
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
+import { computeRowProfit } from '@/domain/boq/calculateBoqTotals'
+import { formatCurrency } from '@/lib/formatters/money'
 
 type DocumentLike = {
   title?: string
@@ -186,12 +188,15 @@ function BorderedSchedulePreview({ documentType, document, rows, columns }: Prop
                 {column.label}
               </th>
             ))}
+            {visibleColumns.some((c) => c.key === 'cp' || c.key === 'sp') ? (
+              <th className="border border-slate-500 px-2 py-2 text-right font-bold">Profit</th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
           {displayRows.length === 0 ? (
             <tr>
-              <td colSpan={visibleColumns.length + 1} className="border border-slate-400 px-2 py-6 text-center text-slate-500">
+              <td colSpan={visibleColumns.length + 1 + (visibleColumns.some((c) => c.key === 'cp' || c.key === 'sp') ? 1 : 0)} className="border border-slate-400 px-2 py-6 text-center text-slate-500">
                 No rows added yet
               </td>
             </tr>
@@ -213,6 +218,11 @@ function BorderedSchedulePreview({ documentType, document, rows, columns }: Prop
                     </td>
                   )
                 })}
+                {visibleColumns.some((c) => c.key === 'cp' || c.key === 'sp') ? (
+                  <td className="border border-slate-400 px-2 py-2 align-top text-right font-mono">
+                    {formatCurrency(computeRowProfit(row))}
+                  </td>
+                ) : null}
               </tr>
             )
           ))}

@@ -3,6 +3,7 @@ import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import { PdfCurrencyText } from '@/components/pdf/pdfCurrency'
 
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
+import { computeRowProfit } from '@/domain/boq/calculateBoqTotals'
 
 type DocumentLike = {
   title?: string
@@ -50,13 +51,14 @@ function titleFor(documentType: TableDocumentType, document: DocumentLike) {
 
 const widthsByKey: Record<string, number> = {
   s_no: 8,
-  description: 34,
-  specification: 18,
-  quantity: 10,
-  unit: 10,
-  make_brand: 12,
+  description: 30,
+  specification: 16,
+  quantity: 8,
+  unit: 8,
+  make_brand: 10,
   cp: 8,
   sp: 8,
+  profit: 10,
 }
 
 export function TableDocumentPdfDocument({ documentType, templateId, document, rows, columns }: Props) {
@@ -94,6 +96,9 @@ export function TableDocumentPdfDocument({ documentType, templateId, document, r
                 {column.label}
               </Text>
             ))}
+            {visibleColumns.some((c) => c.key === 'cp' || c.key === 'sp') ? (
+              <Text style={[styles.cell, { width: `${widthsByKey.profit}%`, borderColor }]}>Profit</Text>
+            ) : null}
           </View>
 
           {displayRows.map((row, index) => (
@@ -113,6 +118,12 @@ export function TableDocumentPdfDocument({ documentType, templateId, document, r
                     style={[styles.cell, { width: `${widthsByKey[column.key] || 12}%`, borderColor }]}
                   />
                 ))}
+                {visibleColumns.some((c) => c.key === 'cp' || c.key === 'sp') ? (
+                  <PdfCurrencyText
+                    value={String(computeRowProfit(row))}
+                    style={[styles.cell, { width: `${widthsByKey.profit}%`, borderColor }]}
+                  />
+                ) : null}
               </View>
             )
           ))}

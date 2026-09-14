@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { FileText, Layout, List } from 'lucide-react'
 
 import type { Boq } from '@/domain/boq/types'
+import { computeBoqTotals } from '@/domain/boq/calculateBoqTotals'
 import { BoqCustomizationPanel } from './BoqCustomizationPanel'
 import { TableRowsEditor } from '@/components/table-document/TableRowsEditor'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,12 @@ export function BoqForm({
   boq: Boq
   onChange: (patch: Partial<Boq>) => void
 }) {
+  const totals = useMemo(() => computeBoqTotals(boq.table_rows || []), [boq.table_rows])
+  const totalCost = totals.total_cost
+  const totalSellingPrice = totals.total_selling_price
+  const grossProfit = totals.gross_profit
+  const fmt = (n: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(n)
+
   return (
     <Tabs defaultValue="details" className="w-full">
       <TabsList className="grid grid-cols-3 mb-6 bg-muted/30">
@@ -66,6 +73,13 @@ export function BoqForm({
 
       <TabsContent value="output" className="space-y-6">
         <BoqCustomizationPanel boq={boq} onChange={onChange} />
+
+        <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+          <div className="text-xs font-bold uppercase tracking-widest opacity-40 mb-3">Totals</div>
+          <div className="flex justify-between text-sm"><span className="opacity-70">Total Cost</span><span className="font-mono font-bold">{fmt(totalCost)}</span></div>
+          <div className="flex justify-between text-sm"><span className="opacity-70">Total Selling Price</span><span className="font-mono font-bold">{fmt(totalSellingPrice)}</span></div>
+          <div className="flex justify-between text-sm pt-2 border-t border-border"><span className="font-bold">Gross Profit</span><span className="font-mono font-black text-green-600">{fmt(grossProfit)}</span></div>
+        </div>
       </TabsContent>
     </Tabs>
   )

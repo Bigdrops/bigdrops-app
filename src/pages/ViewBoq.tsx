@@ -23,6 +23,7 @@ import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './view-boq-actions'
+import { computeBoqTotals } from '@/domain/boq/calculateBoqTotals'
 import { normalizeDbBoq } from '@/domain/boq/normalize'
 import { useSettings } from '@/hooks/useSettings'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
@@ -228,11 +229,14 @@ export default function ViewBoq() {
   }
 
   const rowCount = Array.isArray(boq.table_rows) ? boq.table_rows.length : 0
-  const subtotal = (Array.isArray(boq.table_rows) ? boq.table_rows : []).reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0)
+  const totals = useMemo(() => computeBoqTotals(boq.table_rows || []), [boq.table_rows])
+  const fmt = (n: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(n)
 
   const metrics = [
     { label: 'Lines', value: `${rowCount} items` },
-    { label: 'Subtotal', value: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(subtotal), tone: 'blue' as const },
+    { label: 'Total Cost', value: fmt(totals.total_cost), tone: 'blue' as const },
+    { label: 'Total Selling Price', value: fmt(totals.total_selling_price) },
+    { label: 'Gross Profit', value: fmt(totals.gross_profit), tone: 'green' as const },
     { label: 'Status', value: boq.status || 'open', tone: boq.status === 'approved' ? 'green' as const : 'amber' as const },
   ]
 
