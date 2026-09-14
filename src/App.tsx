@@ -22,6 +22,9 @@ import type { LaunchStage } from '@/domain/guidance/guidanceEngine'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
 import BiometricGate from '@/components/app/BiometricGate'
+import { useAppUpdate } from '@/hooks/useAppUpdate'
+import UpdateGate from '@/components/app/UpdateGate'
+import UpdateBanner from '@/components/app/UpdateBanner'
 import { isBiometricLockEnabled } from '@/lib/native/biometric'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
@@ -89,6 +92,10 @@ function App() {
     active: showSplash,
     stage: launchStage,
   })
+
+  // Android mandatory-update discovery: launch + resume, throttled.
+  // Non-Android contexts resolve immediately to up_to_date (no gate).
+  const appUpdate = useAppUpdate({ enabled: true })
 
   const loadingRef = useRef(false)
   const splashStartRef = useRef(Date.now())
@@ -564,6 +571,7 @@ function App() {
         <Toaster />
         <NativeFeedbackRenderer />
         <NudgeMount />
+        {appUpdate.state.status === 'grace' && <UpdateBanner update={appUpdate} />}
         {isAndroidNative() && (
           <>
             <AndroidBackHandler />
@@ -576,7 +584,11 @@ function App() {
             <Route
               path="/*"
               element={
-                !session
+                appUpdate.state.status === 'blocked' ? (
+                  // Mandatory-update gate: deadline expired. Both update
+                  // paths stay functional; normal usage is paused.
+                  withBoundary(<UpdateGate update={appUpdate} />)
+                ) : !session
                   ? !offlineAccessState.allowed
                     ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                     : offlineAccessLoading
