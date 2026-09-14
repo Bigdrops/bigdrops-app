@@ -1,15 +1,15 @@
-# AGENTS.md — BIGDROPS AI Agent Guide
+AGENTS.md — BIGDROPS AI Agent Guide
 
 Read this file before you change the repository.
 
 ---
 
-## 1. Project Fundamentals
+1. Project Fundamentals
 
-- **Product:** B2B business management suite for Nigerian SMEs.
-- **Stack:** React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase/Postgres, Vite 7, Bun, Vercel, Capacitor 8.
-- **Package manager:** Bun only.
-- **Do not use:** npm, yarn, pnpm.
+· Product: B2B business management suite for Nigerian SMEs.
+· Stack: React 19, TypeScript 5.9, Tailwind CSS 3.4, Supabase/Postgres, Vite 7, Bun, Vercel, Capacitor 8.
+· Package manager: Bun only.
+· Do not use: npm, yarn, pnpm.
 
 Commands:
 
@@ -24,7 +24,7 @@ bun run audit:load
 
 Run bun run audit:load before bun run typecheck.
 
-For database connection, follow supabase/database-workflow.md.
+For all SQL and Supabase work, follow supabase/database-workflow.md.
 
 Naming conventions:
 
@@ -74,14 +74,8 @@ Financial calculations
 
 src/lib/Calculations.ts is the financial source of truth.
 
-· Use computeDocument() for financial calculations. It wraps
-  normalizeDocumentInput() and calculateDocument() and is the
-  only entry point used in production.
-· calcTotals() and resolveRowVat(), in
-  src/domain/invoice/calculations.ts, are deprecated. They have
-  no production callers as of 2026-09-04. Do not call them in
-  new code. Do not remove them without a separate, explicit task —
-  this patch does not authorize deletion.
+· Use computeDocument() for financial calculations. It wraps normalizeDocumentInput() and calculateDocument() and is the only entry point used in production.
+· calcTotals() and resolveRowVat(), in src/domain/invoice/calculations.ts, are deprecated. They have no production callers as of 2026-09-04. Do not call them in new code. Do not remove them without a separate, explicit task — this patch does not authorize deletion.
 · Do not duplicate financial calculation logic.
 · Do not bypass Calculations.ts.
 · Quotations must reuse the invoice/domain financial layer.
@@ -106,6 +100,20 @@ Edit, duplicate, revert, and transformation operations must follow:
 ```md
 docs/standard/document-transformation-standard.md
 ```
+
+Database guardrails
+
+· You MUST write a migration file for every schema change.
+· You MUST push the migration with supabase db push.
+· You MUST fix every error that Supabase returns. Push again after each fix.
+· You MUST repeat the push-and-fix loop until the push succeeds.
+· Do NOT stop after you write the SQL file. The push is part of the task.
+· Do NOT mark the task complete if the push fails.
+· Skip the push only when the user says "do not push" in clear words.
+· Do NOT edit the hosted database by hand.
+· Do NOT run Docker. Do NOT run supabase start.
+· Follow supabase/database-workflow.md for the full procedure.
+· Use the Supabase skills in this order: db diff, db shell, db dump.
 
 ---
 
@@ -147,6 +155,14 @@ If relevant, also run:
 ```bash
 bun run test
 ```
+
+If the task changed SQL or the database:
+
+```bash
+supabase db push
+```
+
+The push MUST succeed before you report completion. See Section 3, Database guardrails.
 
 Hard rule:
 
@@ -217,19 +233,15 @@ Load skills from one of these locations:
 Skill rules:
 
 · If a skill is loaded, record it in the task report.
-
-A loaded skill may guide or override non-normative workflow behavior in this file.
-
-A skill must not silently override:
-
-· active standards under docs/standard/
-· financial calculation integrity
-· document transformation integrity
-· audit trail integrity
-· database safety rules
-· security rules
-
-If a skill appears to conflict with any of those, stop and ask.
+· A loaded skill may guide or override non-normative workflow behavior in this file.
+· A skill must not silently override:
+  · active standards under docs/standard/
+  · financial calculation integrity
+  · document transformation integrity
+  · audit trail integrity
+  · database safety rules (including the mandatory push rule)
+  · security rules
+· If a skill appears to conflict with any of those, stop and ask.
 
 ---
 
@@ -303,7 +315,8 @@ Each report must include:
 · Skills used
 · Documentation standard
 · Changes made
-· Verification result
+· Verification result (include the push result if the task changed SQL)
+· Supabase push status
 · Risks or limitations
 · Deferred work
 
@@ -333,11 +346,23 @@ Verification section must state exact results.
 
 Example:
 
-``
+```
 Verification:
 - bun run audit:load: passed
 - bun run typecheck: passed
 - git status: clean
+- supabase db push: passed
+- bun run build: skipped due to hardware policy
+```
+
+If no SQL changed, write:
+
+```
+Verification:
+- bun run audit:load: passed
+- bun run typecheck: passed
+- git status: clean
+- supabase db push: not applicable
 - bun run build: skipped due to hardware policy
 ```
 
@@ -393,7 +418,7 @@ Duplicate documentation is a defect.
 
 High-level boundaries:
 
-
+```text
 src/app/          App bootstrap
 src/components/   UI components and reusable UI modules
 src/domain/       Business logic, module rules, types, factories
@@ -409,5 +434,3 @@ Rules:
 · Keep business logic in src/domain/ or src/lib/, not in UI components.
 · Keep PDF components as renderers.
 · Keep database access through the established Supabase layer.
-
-```
