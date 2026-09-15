@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50 text-slate-900">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Team & Role Manager v2 — BIGDROPS ERP</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+              950: '#022c22',
+            },
+            mint: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+            }
+          },
+          boxShadow: {
+            'emerald-glow': '0 10px 25px -5px rgba(16, 185, 129, 0.2), 0 8px 10px -6px rgba(16, 185, 129, 0.1)',
+            'card': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+            'sheet': '0 -10px 30px rgba(0, 0, 0, 0.15)',
+          },
+          animation: {
+            'slide-up': 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            'fade-in': 'fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            'pop-in': 'popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            'pulse-soft': 'pulseSoft 2s infinite ease-in-out',
+          },
+          keyframes: {
+            slideUp: {
+              '0%': { transform: 'translateY(100%)', opacity: '0.5' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            popIn: {
+              '0%': { transform: 'scale(0.92)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
+            },
+            pulseSoft: {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '0.7' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Android Smooth Touch Scroll & Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Touch target min dimensions for Android */
+    .touch-target {
+      min-height: 48px;
+      min-width: 48px;
+    }
+
+    .active-tap:active {
+      transform: scale(0.96);
+      transition: transform 0.1s ease;
+    }
+
+    /* Glass Effect light surface */
+    .light-glass {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-50 font-sans text-slate-900 antialiased selection:bg-emerald-500 selection:text-white pb-20 sm:pb-8">
+  <div id="root" class="min-h-full flex flex-col"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+
+    // SVG Icon Component helper with broad crisp icons
+    const Icon = ({ name, className = "w-5 h-5", ...props }) => {
+      const icons = {
+        users: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        ),
+        shield: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        ),
+        roleEdit: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        ),
+        plus: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+        ),
+        search: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        ),
+        check: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        ),
+        cross: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ),
+        grid: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+        ),
+        list: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        ),
+        key: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+        ),
+        trash: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        ),
+        copy: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" {...props}>
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+          </svg>
+        ),
+        test: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.6 15.12a2 2 0 00-1.162.138L2.4 16.3A2 2 0 001.2 18.163v1.674A2 2 0 003.2 21.84h17.6a2 2 0 002-2v-1.674a2 2 0 00-1.372-1.914l-2-1.824zM12 3a4 4 0 100 8 4 4 0 000-8z" />
+          </svg>
+        ),
+        duplicate: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+          </svg>
+        ),
+        chevronRight: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        ),
+        building: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a2 2 0 012-2h2a2 2 0 012 2v5m-6 0h6" />
+          </svg>
+        ),
+        mail: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        ),
+        sparkles: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
+        ),
+        toggleOn: (
+          <svg className={className} fill="currentColor" viewBox="0 0 24 24" {...props}>
+            <path d="M17 7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+          </svg>
+        ),
+        toggleOff: (
+          <svg className={className} fill="currentColor" viewBox="0 0 24 24" {...props}>
+            <path d="M17 7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zM7 15c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" opacity="0.4"/>
+          </svg>
+        ),
+        device: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        )
+      };
+      return icons[name] || null;
+    };
+
+    const PERMISSION_TAXONOMY = [
+      {
+        category: 'Hardware & Grid Infrastructure',
+        items: [
+          { id: 'telemetry.read', label: 'View Telemetry & Sensor Logs', desc: 'Read live solar grid metrics, voltage & temperature data.' },
+          { id: 'hardware.config', label: 'Configure Hardware Parameters', desc: 'Modify inverter thresholds, battery discharge profiles.' },
+          { id: 'hardware.reboot', label: 'Remote Device Reboot / Flash', desc: 'Issue firmware updates and emergency hardware restarts.' },
+        ]
+      },
+      {
+        category: 'Team & Identity Management',
+        items: [
+          { id: 'team.invite', label: 'Invite Workspace Members', desc: 'Generate & send email join links for workspace.' },
+          { id: 'team.roles', label: 'Manage Roles & Grant Entitlements', desc: 'Create custom roles and attach permission policies.' },
+          { id: 'team.remove', label: 'Offboard & Remove Members', desc: 'Revoke access and purge active user session tokens.' },
+        ]
+      },
+      {
+        category: 'Operations & Requisitions',
+        items: [
+          { id: 'ops.approve', label: 'Approve Material Requisitions', desc: 'Sign off on inventory requests and field equipment.' },
+          { id: 'ops.inventory', label: 'Manage Warehouse Stock', desc: 'Edit inventory numbers, supplier logs, and orders.' },
+        ]
+      },
+      {
+        category: 'Finance & Compliance',
+        items: [
+          { id: 'finance.read', label: 'View Financial Dashboards & PnL', desc: 'Access revenue metrics and client billing statements.' },
+          { id: 'finance.billing', label: 'Manage Enterprise Billing & Subscriptions', desc: 'Modify credit cards, upgrade tiers, and export invoices.' },
+          { id: 'audit.export', label: 'Export Security Audit Logs', desc: 'Download compliance trail logs in CSV/PDF formats.' },
+        ]
+      }
+    ];
+
+    // Default Pre-built Roles
+    const INITIAL_ROLES = [
+      {
+        id: 'admin',
+        name: 'Company Admin',
+        color: 'emerald',
+        badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+        desc: 'Full administrative control over hardware, team, and billing operations.',
+        isSystem: true,
+        permissions: [
+          'telemetry.read', 'hardware.config', 'hardware.reboot',
+          'team.invite', 'team.roles', 'team.remove',
+          'ops.approve', 'ops.inventory',
+          'finance.read', 'finance.billing', 'audit.export'
+        ]
+      },
+      {
+        id: 'engineer',
+        name: 'Field Engineer',
+        color: 'teal',
+        badgeBg: 'bg-teal-100 text-teal-800 border-teal-300',
+        desc: 'Technical access to grid hardware telemetry and remote sensor controls.',
+        isSystem: true,
+        permissions: ['telemetry.read', 'hardware.config', 'hardware.reboot', 'ops.approve']
+      },
+      {
+        id: 'manager',
+        name: 'Operations Manager',
+        color: 'amber',
+        badgeBg: 'bg-amber-100 text-amber-800 border-amber-300',
+        desc: 'Oversees inventory logistics, member invitations, and compliance audits.',
+        isSystem: true,
+        permissions: ['telemetry.read', 'team.invite', 'ops.approve', 'ops.inventory', 'audit.export']
+      },
+      {
+        id: 'auditor',
+        name: 'Compliance Auditor',
+        color: 'purple',
+        badgeBg: 'bg-purple-100 text-purple-800 border-purple-300',
+        desc: 'Read-only access for external audit logs and financial statements.',
+        isSystem: false,
+        permissions: ['telemetry.read', 'finance.read', 'audit.export']
+      },
+      {
+        id: 'viewer',
+        name: 'Read-Only Viewer',
+        color: 'slate',
+        badgeBg: 'bg-slate-100 text-slate-700 border-slate-300',
+        desc: 'Basic read access to public operational dashboards and telemetry logs.',
+        isSystem: true,
+        permissions: ['telemetry.read']
+      }
+    ];
+
+    // Default Initial Members
+    const INITIAL_MEMBERS = [
+      {
+        id: 'usr-1',
+        name: 'Adewale Musa',
+        email: 'adewale@example.com',
+        avatar: 'AM',
+        avatarBg: 'bg-emerald-600 text-white',
+        joined: '12 Jan 2026',
+        lastActive: 'Online now',
+        isOwner: true,
+        isSelf: true,
+        status: 'Active',
+        department: 'Executive Board',
+        roleIds: ['admin', 'engineer'],
+        securityScore: 98,
+        twoFactor: true,
+      },
+      {
+        id: 'usr-2',
+        name: 'Kemi Adeyemi',
+        email: 'kemi@example.com',
+        avatar: 'KA',
+        avatarBg: 'bg-teal-600 text-white',
+        joined: '03 Feb 2026',
+        lastActive: '12 mins ago',
+        isOwner: false,
+        isSelf: false,
+        status: 'Active',
+        department: 'Field Engineering',
+        roleIds: ['engineer'],
+        securityScore: 92,
+        twoFactor: true,
+      },
+      {
+        id: 'usr-3',
+        name: 'Tunde Balogun',
+        email: 'tunde@example.com',
+        avatar: 'TB',
+        avatarBg: 'bg-amber-600 text-white',
+        joined: '18 Mar 2026',
+        lastActive: '2 hours ago',
+        isOwner: false,
+        isSelf: false,
+        status: 'Active',
+        department: 'Operations & Logistics',
+        roleIds: ['manager'],
+        securityScore: 88,
+        twoFactor: false,
+      },
+      {
+        id: 'usr-4',
+        name: 'Fatima Yusuf',
+        email: 'fatima@example.com',
+        avatar: 'FY',
+        avatarBg: 'bg-purple-600 text-white',
+        joined: '27 May 2026',
+        lastActive: 'Yesterday',
+        isOwner: false,
+        isSelf: false,
+        status: 'Active',
+        department: 'Finance & Compliance',
+        roleIds: ['auditor'],
+        securityScore: 95,
+        twoFactor: true,
+      }
+    ];
+
+    function App() {
+      // Data States
+      const [roles, setRoles] = useState(INITIAL_ROLES);
+      const [members, setMembers] = useState(INITIAL_MEMBERS);
+      
+      // UI State
+      const [activeTab, setActiveTab] = useState('roles'); // 'roles' | 'members' | 'matrix' | 'test'
+      const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+      const [searchQuery, setSearchQuery] = useState('');
+      const [toast, setToast] = useState(null);
+
+      // Modal / Sheet States
+      const [editingRole, setEditingRole] = useState(null); // null or role object being edited/created
+      const [selectedMember, setSelectedMember] = useState(null); // for member drawer
+      const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+      const [testSimulatorTarget, setTestSimulatorTarget] = useState({ memberId: 'usr-2', permId: 'hardware.config' });
+
+      // Trigger crisp toast alert
+      const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3500);
+      };
+
+      // Save or Update Role
+      const handleSaveRole = (roleData) => {
+        if (!roleData.name.trim()) {
+          showToast('Please specify a valid role name.', 'error');
+          return;
+        }
+
+        if (editingRole && editingRole.id && roles.some(r => r.id === editingRole.id)) {
+          // Update Existing Role
+          setRoles(prev => prev.map(r => r.id === editingRole.id ? { ...r, ...roleData } : r));
+          showToast(`Updated role "${roleData.name}" permissions successfully!`);
+        } else {
+          // Create New Custom Role
+          const newRoleId = `role-${Date.now()}`;
+          const newRole = {
+            id: newRoleId,
+            name: roleData.name,
+            desc: roleData.desc || 'Custom created organizational role.',
+            color: roleData.color || 'emerald',
+            badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            isSystem: false,
+            permissions: roleData.permissions || []
+          };
+          setRoles(prev => [...prev, newRole]);
+          showToast(`Created new role "${newRole.name}"!`);
+        }
+        setEditingRole(null);
+      };
+
+      // Duplicate Role
+      const handleDuplicateRole = (role) => {
+        const duplicatedRole = {
+          ...role,
+          id: `role-${Date.now()}`,
+          name: `${role.name} (Copy)`,
+          isSystem: false,
+        };
+        setRoles(prev => [...prev, duplicatedRole]);
+        showToast(`Duplicated role as "${duplicatedRole.name}"`);
+      };
+
+      // Delete Custom Role
+      const handleDeleteRole = (roleId, roleName) => {
+        const assignedMembers = members.filter(m => m.roleIds.includes(roleId));
+        if (assignedMembers.length > 0) {
+          showToast(`Cannot delete "${roleName}". ${assignedMembers.length} member(s) still hold this role!`, 'error');
+          return;
+        }
+        setRoles(prev => prev.filter(r => r.id !== roleId));
+        showToast(`Deleted custom role "${roleName}"`, 'info');
+      };
+
+      // Handle member role toggle
+      const handleToggleMemberRole = (memberId, roleId) => {
+        setMembers(prev => prev.map(m => {
+          if (m.id !== memberId) return m;
+          const has = m.roleIds.includes(roleId);
+          const updated = has ? m.roleIds.filter(id => id !== roleId) : [...m.roleIds, roleId];
+          const rObj = roles.find(r => r.id === roleId);
+          showToast(`${has ? 'Revoked' : 'Assigned'} ${rObj?.name || 'role'} for ${m.name}`);
+          return { ...m, roleIds: updated };
+        }));
+
+        if (selectedMember && selectedMember.id === memberId) {
+          setSelectedMember(prev => ({
+            ...prev,
+            roleIds: prev.roleIds.includes(roleId) 
+              ? prev.roleIds.filter(id => id !== roleId)
+              : [...prev.roleIds, roleId]
+          }));
+        }
+      };
+
+      const filteredMembers = useMemo(() => {
+        return members.filter(m => {
+          const q = searchQuery.toLowerCase();
+          return m.name.toLowerCase().includes(q) || 
+                 m.email.toLowerCase().includes(q) ||
+                 m.department.toLowerCase().includes(q);
+        });
+      }, [members, searchQuery]);
+
+      // Check if a member has a specific permission via any assigned role
+      const checkMemberPermission = (memberId, permId) => {
+        const targetMember = members.find(m => m.id === memberId);
+        if (!targetMember) return false;
+        
+        return targetMember.roleIds.some(rId => {
+          const rObj = roles.find(r => r.id === rId);
+          return rObj ? rObj.permissions.includes(permId) : false;
+        });
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+          
+          {}
+          {toast && (
+            <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 animate-pop-in flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-slate-900 text-white text-xs font-semibold shadow-2xl border border-slate-700">
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${toast.type === 'error' ? 'bg-rose-500' : 'bg-emerald-400'} animate-pulse`}></span>
+                <span>{toast.message}</span>
+              </div>
+              <button onClick={() => setToast(null)} className="p-1 text-slate-400 hover:text-white">
+                <Icon name="cross" className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Sticky Responsive Header */}
+          <header className="sticky top-0 z-30 light-glass border-b border-slate-200 px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-emerald-glow shrink-0">
+                <Icon name="shield" className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">BIGDROPS v2</span>
+                  <span className="text-slate-300">/</span>
+                  <span className="text-xs font-semibold text-slate-500">Access Center</span>
+                </div>
+                <h1 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">Team & Role Manager</h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setEditingRole({ name: '', desc: '', color: 'emerald', permissions: [] })}
+                className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold hover:bg-slate-100 shadow-sm active-tap"
+              >
+                <Icon name="plus" className="w-4 h-4 text-emerald-600" />
+                <span>Create Role</span>
+              </button>
+
+              <button 
+                onClick={() => setIsInviteModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-emerald-glow active-tap"
+              >
+                <Icon name="users" className="w-4 h-4" />
+                <span>Invite Member</span>
+              </button>
+            </div>
+          </header>
+
+          {/* Main Body */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 flex flex-col gap-6">
+
+            {}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Roles</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+                    <Icon name="key" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-slate-900">{roles.length}</div>
+                  <p className="text-[11px] font-medium text-emerald-700 mt-0.5">
+                    {roles.filter(r => !r.isSystem).length} Custom Roles Defined
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Team Seats</span>
+                  <div className="p-2 rounded-xl bg-teal-50 text-teal-700">
+                    <Icon name="users" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-slate-900">{members.length} / 10</div>
+                  <p className="text-[11px] font-medium text-slate-500 mt-0.5">4 Enterprise licenses used</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Security Index</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+                    <Icon name="shield" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-slate-900">96%</div>
+                  <p className="text-[11px] font-medium text-emerald-700 mt-0.5">3 of 4 enforce 2FA MFA</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card flex flex-col justify-between">
+                <div className="flex items-center justify-between text-slate-500 mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Entitlements</span>
+                  <div className="p-2 rounded-xl bg-amber-50 text-amber-700">
+                    <Icon name="sparkles" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-slate-900">11</div>
+                  <p className="text-[11px] font-medium text-slate-500 mt-0.5">Granular policy keys</p>
+                </div>
+              </div>
+
+            </div>
+
+            {}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              
+              {/* Tab Switcher Buttons (Android Touch Friendly) */}
+              <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-200/80 w-full sm:w-auto overflow-x-auto">
+                
+                <button
+                  onClick={() => setActiveTab('roles')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active-tap ${
+                    activeTab === 'roles'
+                      ? 'bg-emerald-600 text-white shadow-emerald-glow'
+                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-300/50'
+                  }`}
+                >
+                  <Icon name="roleEdit" className="w-4 h-4" />
+                  <span>Role Manager</span>
+                  <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-emerald-700 text-emerald-100 font-extrabold">
+                    {roles.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('members')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active-tap ${
+                    activeTab === 'members'
+                      ? 'bg-emerald-600 text-white shadow-emerald-glow'
+                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-300/50'
+                  }`}
+                >
+                  <Icon name="users" className="w-4 h-4" />
+                  <span>Members</span>
+                  <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-100 text-slate-800 font-bold">
+                    {members.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('matrix')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active-tap ${
+                    activeTab === 'matrix'
+                      ? 'bg-emerald-600 text-white shadow-emerald-glow'
+                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-300/50'
+                  }`}
+                >
+                  <Icon name="key" className="w-4 h-4" />
+                  <span>Permissions Matrix</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('test')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active-tap ${
+                    activeTab === 'test'
+                      ? 'bg-emerald-600 text-white shadow-emerald-glow'
+                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-300/50'
+                  }`}
+                >
+                  <Icon name="test" className="w-4 h-4" />
+                  <span>Test Sandbox</span>
+                </button>
+              </div>
+
+              {/* Action and Search Filter tools for Members tab */}
+              {activeTab === 'members' && (
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 sm:w-64">
+                    <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search member, role, dept..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 shadow-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center p-1 rounded-xl bg-slate-200/80">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}`}
+                      title="Grid Cards"
+                    >
+                      <Icon name="grid" className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('table')}
+                      className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'}`}
+                      title="Data Table"
+                    >
+                      <Icon name="list" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* TAB 1: ROLE MANAGER (THE CORE V2 FEATURE) */}
+            {activeTab === 'roles' && (
+              <div className="flex flex-col gap-5 animate-fade-in">
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-extrabold text-slate-900">Custom & Predefined Roles</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Create, modify, and configure granular permission templates assigned to your workspace team.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setEditingRole({ name: '', desc: '', color: 'emerald', permissions: [] })}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-emerald-glow active-tap"
+                  >
+                    <Icon name="plus" className="w-4 h-4" />
+                    <span>Create New Role</span>
+                  </button>
+                </div>
+
+                {}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {roles.map(role => {
+                    const assignedCount = members.filter(m => m.roleIds.includes(role.id)).length;
+                    
+                    return (
+                      <div 
+                        key={role.id}
+                        className="bg-white rounded-2xl p-5 border border-slate-200 shadow-card hover:shadow-md transition-all flex flex-col justify-between group relative"
+                      >
+                        <div>
+                          {/* Card Header */}
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
+                                <Icon name="roleEdit" className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                                  {role.name}
+                                </h3>
+                                <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider mt-0.5 border ${role.badgeBg}`}>
+                                  {role.isSystem ? 'System Template' : 'Custom Role'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-slate-600 leading-relaxed mb-4">{role.desc}</p>
+
+                          {/* Permissions Count Badge & Samples */}
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 mb-4">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-2">
+                              <span>Configured Capabilities</span>
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
+                                {role.permissions.length} of 11 Active
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {role.permissions.slice(0, 3).map(pId => (
+                                <span key={pId} className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] text-slate-600 font-medium truncate max-w-[140px]">
+                                  {pId}
+                                </span>
+                              ))}
+                              {role.permissions.length > 3 && (
+                                <span className="px-2 py-0.5 rounded bg-slate-200 text-[10px] text-slate-700 font-bold">
+                                  +{role.permissions.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Bottom Actions */}
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-slate-500">
+                            <strong>{assignedCount}</strong> {assignedCount === 1 ? 'member' : 'members'} assigned
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleDuplicateRole(role)}
+                              className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold active-tap"
+                              title="Duplicate Role"
+                            >
+                              <Icon name="duplicate" className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => setEditingRole(role)}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold active-tap flex items-center gap-1"
+                            >
+                              <Icon name="roleEdit" className="w-3.5 h-3.5" />
+                              <span>Edit</span>
+                            </button>
+
+                            {!role.isSystem && (
+                              <button
+                                onClick={() => handleDeleteRole(role.id, role.name)}
+                                className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold active-tap"
+                                title="Delete Custom Role"
+                              >
+                                <Icon name="trash" className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB 2: TEAM MEMBERS VIEW */}
+            {activeTab === 'members' && (
+              <div className="animate-fade-in">
+                {viewMode === 'grid' ? (
+                  /* Grid Card View */
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredMembers.map(member => (
+                      <div key={member.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-card flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-start gap-3.5 mb-4">
+                            <div className={`w-12 h-12 rounded-2xl ${member.avatarBg} flex items-center justify-center font-black text-base shadow-md shrink-0`}>
+                              {member.avatar}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-base font-extrabold text-slate-900 truncate">{member.name}</h3>
+                                {member.isOwner && (
+                                  <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 border border-purple-200 text-[10px] font-black uppercase">
+                                    Owner
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-500 truncate">{member.email}</p>
+                              <p className="text-[11px] font-semibold text-emerald-700 mt-1">{member.department}</p>
+                            </div>
+                          </div>
+
+                          {/* Member Roles */}
+                          <div className="mb-4">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Assigned Roles</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {roles.map(role => {
+                                const hasRole = member.roleIds.includes(role.id);
+                                return (
+                                  <button
+                                    key={role.id}
+                                    onClick={() => !member.isSelf && handleToggleMemberRole(member.id, role.id)}
+                                    disabled={member.isSelf}
+                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all border ${
+                                      hasRole
+                                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                                        : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                                    } ${member.isSelf ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer active-tap'}`}
+                                  >
+                                    <Icon name={hasRole ? 'check' : 'cross'} className="w-3 h-3" />
+                                    <span>{role.name}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>2FA Protected</span>
+                          </span>
+
+                          <button
+                            onClick={() => setSelectedMember(member)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-200 active-tap"
+                          >
+                            Manage Access
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* Data Table View */
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-card overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-100 text-slate-600 uppercase font-black text-[10px] tracking-wider border-b border-slate-200">
+                          <tr>
+                            <th className="py-3.5 px-4">Member</th>
+                            <th className="py-3.5 px-4">Department</th>
+                            <th className="py-3.5 px-4">Assigned Roles</th>
+                            <th className="py-3.5 px-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredMembers.map(member => (
+                            <tr key={member.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-9 h-9 rounded-xl ${member.avatarBg} flex items-center justify-center font-bold text-xs shrink-0`}>
+                                    {member.avatar}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-slate-900">{member.name}</p>
+                                    <p className="text-[11px] text-slate-500">{member.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 font-semibold text-slate-700">{member.department}</td>
+                              <td className="py-3 px-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {member.roleIds.map(rId => {
+                                    const rObj = roles.find(r => r.id === rId);
+                                    return (
+                                      <span key={rId} className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 font-extrabold text-[10px]">
+                                        {rObj?.name || rId}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <button
+                                  onClick={() => setSelectedMember(member)}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold border border-emerald-200 text-xs active-tap"
+                                >
+                                  Edit Access
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: PERMISSIONS MATRIX VIEW */}
+            {activeTab === 'matrix' && (
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card animate-fade-in overflow-x-auto">
+                <div className="mb-4">
+                  <h3 className="text-base font-extrabold text-slate-900">Capabilities Matrix Overview</h3>
+                  <p className="text-xs text-slate-500">Live matrix view mapping roles to specific operational capability tokens.</p>
+                </div>
+
+                <table className="w-full text-left text-xs border-collapse min-w-[600px]">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 bg-slate-50">
+                      <th className="py-3 px-4 font-bold text-slate-600 uppercase text-[10px]">Permission Policy Token</th>
+                      {roles.map(r => (
+                        <th key={r.id} className="py-3 px-3 font-extrabold text-slate-900 text-center">
+                          {r.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {PERMISSION_TAXONOMY.flatMap(cat => cat.items).map(perm => (
+                      <tr key={perm.id} className="hover:bg-slate-50/80">
+                        <td className="py-3 px-4">
+                          <p className="font-bold text-slate-900">{perm.label}</p>
+                          <p className="text-[11px] text-slate-500">{perm.desc}</p>
+                        </td>
+                        {roles.map(r => {
+                          const has = r.permissions.includes(perm.id);
+                          return (
+                            <td key={r.id} className="py-3 px-3 text-center">
+                              {has ? (
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black">
+                                  ✓
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-300">
+                                  -
+                                </span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* TAB 4: PERMISSION TEST SANDBOX (NEW INTERACTIVE TOOL) */}
+            {activeTab === 'test' && (
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card animate-fade-in">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <Icon name="test" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">Live Entitlement Simulator</h3>
+                    <p className="text-xs text-slate-500">Pick a team member and test whether their aggregated roles permit a specific ERP action.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Selector Controls */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Select Target Team Member</label>
+                      <select
+                        value={testSimulatorTarget.memberId}
+                        onChange={(e) => setTestSimulatorTarget(prev => ({ ...prev, memberId: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-bold focus:outline-none focus:border-emerald-500"
+                      >
+                        {members.map(m => (
+                          <option key={m.id} value={m.id}>{m.name} ({m.department})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Select Policy Action to Test</label>
+                      <select
+                        value={testSimulatorTarget.permId}
+                        onChange={(e) => setTestSimulatorTarget(prev => ({ ...prev, permId: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-bold focus:outline-none focus:border-emerald-500"
+                      >
+                        {PERMISSION_TAXONOMY.flatMap(cat => cat.items).map(p => (
+                          <option key={p.id} value={p.id}>{p.label} [{p.id}]</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Simulator Live Result Card */}
+                  {(() => {
+                    const memberObj = members.find(m => m.id === testSimulatorTarget.memberId);
+                    const permObj = PERMISSION_TAXONOMY.flatMap(cat => cat.items).find(p => p.id === testSimulatorTarget.permId);
+                    const hasAccess = checkMemberPermission(testSimulatorTarget.memberId, testSimulatorTarget.permId);
+
+                    return (
+                      <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
+                        hasAccess 
+                          ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950' 
+                          : 'bg-rose-50/60 border-rose-300 text-rose-950'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Evaluation Result</span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
+                              hasAccess ? 'bg-emerald-600 text-white shadow-emerald-glow' : 'bg-rose-600 text-white'
+                            }`}>
+                              {hasAccess ? 'ACCESS ALLOWED ✓' : 'ACCESS DENIED ✕'}
+                            </span>
+                          </div>
+
+                          <h4 className="text-base font-extrabold mb-1">
+                            {memberObj?.name} attempting to: "{permObj?.label}"
+                          </h4>
+                          <p className="text-xs opacity-80 mb-4">{permObj?.desc}</p>
+
+                          <div className="text-xs font-medium space-y-1 bg-white/80 p-3 rounded-xl border border-slate-200">
+                            <div className="font-bold text-slate-700 mb-1">Evaluated Assigned Roles:</div>
+                            {memberObj?.roleIds.map(rId => {
+                              const r = roles.find(x => x.id === rId);
+                              const grantsIt = r?.permissions.includes(testSimulatorTarget.permId);
+                              return (
+                                <div key={rId} className="flex items-center justify-between">
+                                  <span>• {r?.name}</span>
+                                  <span className={`font-bold ${grantsIt ? 'text-emerald-700' : 'text-slate-400'}`}>
+                                    {grantsIt ? 'Grants Access' : 'No Policy Match'}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-medium text-slate-500">
+                          Policy evaluation executed via BIGDROPS RBAC Engine v2
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {}
+          
+          {/* MODAL / BOTTOM SHEET: CREATE OR EDIT ROLE */}
+          {editingRole && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full sm:max-w-2xl max-h-[90vh] sm:rounded-3xl rounded-t-3xl border border-slate-200 shadow-2xl flex flex-col overflow-hidden animate-slide-up sm:animate-pop-in">
+                
+                {/* Drag handle for mobile */}
+                <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-2.5 sm:hidden"></div>
+
+                <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">
+                      {editingRole.id ? `Edit Role: ${editingRole.name}` : 'Create New Custom Role'}
+                    </h3>
+                    <p className="text-xs text-slate-500">Configure role identity & policy privileges</p>
+                  </div>
+                  <button onClick={() => setEditingRole(null)} className="p-1 text-slate-400 hover:text-slate-700">
+                    <Icon name="cross" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-5 flex-1">
+                  
+                  {/* Role Metadata Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Role Name *</label>
+                      <input
+                        type="text"
+                        value={editingRole.name}
+                        onChange={(e) => setEditingRole(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g. Field Inspector"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-bold focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={editingRole.desc}
+                        onChange={(e) => setEditingRole(prev => ({ ...prev, desc: e.target.value }))}
+                        placeholder="Short operational summary..."
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Permission Checkboxes by Category */}
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-emerald-700 mb-3">
+                      Select Entitlement Policies ({editingRole.permissions?.length || 0} selected)
+                    </h4>
+
+                    <div className="space-y-4">
+                      {PERMISSION_TAXONOMY.map(cat => (
+                        <div key={cat.category} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                          <h5 className="text-xs font-extrabold text-slate-900 mb-2">{cat.category}</h5>
+                          <div className="space-y-2">
+                            {cat.items.map(item => {
+                              const checked = editingRole.permissions?.includes(item.id);
+                              return (
+                                <label
+                                  key={item.id}
+                                  className={`flex items-start gap-3 p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                    checked ? 'bg-white border-emerald-500 shadow-sm' : 'bg-transparent border-transparent hover:bg-white/60'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked || false}
+                                    onChange={(e) => {
+                                      const perms = editingRole.permissions || [];
+                                      const updated = e.target.checked
+                                        ? [...perms, item.id]
+                                        : perms.filter(x => x !== item.id);
+                                      setEditingRole(prev => ({ ...prev, permissions: updated }));
+                                    }}
+                                    className="mt-0.5 accent-emerald-600 w-4 h-4 rounded"
+                                  />
+                                  <div>
+                                    <span className="text-xs font-bold text-slate-900 block">{item.label}</span>
+                                    <span className="text-[11px] text-slate-500 block">{item.desc}</span>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Footer Controls */}
+                <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => setEditingRole(null)}
+                    className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 active-tap"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleSaveRole(editingRole)}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-emerald-glow active-tap"
+                  >
+                    Save Role Template
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* MODAL / SHEET: MEMBER ACCESS MANAGEMENT */}
+          {selectedMember && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-end bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full sm:max-w-md h-[85vh] sm:h-full p-6 border-l border-slate-200 shadow-2xl flex flex-col justify-between overflow-y-auto rounded-t-3xl sm:rounded-none animate-slide-up sm:animate-fade-in">
+                <div>
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-2xl ${selectedMember.avatarBg} flex items-center justify-center font-bold text-sm`}>
+                        {selectedMember.avatar}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-extrabold text-slate-900">{selectedMember.name}</h3>
+                        <p className="text-xs text-slate-500">{selectedMember.email}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setSelectedMember(null)} className="p-1 text-slate-400 hover:text-slate-700">
+                      <Icon name="cross" className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="py-5 space-y-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-emerald-700">Assigned Roles Checklist</h4>
+
+                    <div className="space-y-2">
+                      {roles.map(role => {
+                        const hasRole = selectedMember.roleIds.includes(role.id);
+                        return (
+                          <div key={role.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-bold text-slate-900 block">{role.name}</span>
+                              <span className="text-[10px] text-slate-500 block">{role.permissions.length} capabilities</span>
+                            </div>
+                            <button
+                              onClick={() => handleToggleMemberRole(selectedMember.id, role.id)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold active-tap ${
+                                hasRole
+                                  ? 'bg-emerald-600 text-white shadow-sm'
+                                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              {hasRole ? 'Assigned ✓' : '+ Assign'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSelectedMember(null)}
+                  className="w-full py-3 rounded-xl bg-slate-900 text-white font-bold text-xs active-tap"
+                >
+                  Done Editing Member
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: INVITE MEMBER */}
+          {isInviteModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+              <div className="bg-white w-full max-w-md p-6 rounded-3xl border border-slate-200 shadow-2xl relative animate-pop-in">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                      <Icon name="mail" className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900">Invite Workspace Member</h3>
+                      <p className="text-xs text-slate-500">Send an invitation email with role template</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsInviteModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+                    <Icon name="cross" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  showToast('Invitation dispatched!');
+                  setIsInviteModalOpen(false);
+                }} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Email Address</label>
+                    <input
+                      required
+                      type="email"
+                      placeholder="e.g. colleague@company.com"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Primary Role Assignment</label>
+                    <select className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 font-bold focus:outline-none focus:border-emerald-500">
+                      {roles.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsInviteModalOpen(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-emerald-glow"
+                    >
+                      Send Invitation
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {}
+          <div className="fixed bottom-5 right-5 z-40 sm:hidden">
+            <button
+              onClick={() => setEditingRole({ name: '', desc: '', color: 'emerald', permissions: [] })}
+              className="w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-emerald-glow active-tap"
+              title="Create Role"
+            >
+              <Icon name="plus" className="w-7 h-7" />
+            </button>
+          </div>
+
+        </div>
+      );
+    }
+
+    // Render App
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

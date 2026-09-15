@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Team &amp; Roles — BIGDROPS</title>
+<!--
+  v3 — kept from v2/v1: BIGDROPS tokens (Manrope+DM Mono, slate-navy,
+  primary-tinted shadow, 18px card radius), single-control role toggle
+  chips, confirm dialogs on destructive actions, per-role color coding.
+
+  Stolen from the Gemini variants, adapted to fit the above instead of
+  replacing it:
+  - A real Role Editor: create/edit/duplicate/delete custom roles
+    against a permission taxonomy, not just 4 fixed booleans.
+  - Invite dialog now lists every role (built-in + custom) with its
+    description inline, so pre-assigning access at invite time is an
+    informed choice, not a blind checkbox list.
+  - Delete guard: built-in roles can't be deleted; custom roles can't
+    be deleted while a member still holds them (mirrors Gemini's guard,
+    now with a dialog explaining which reason applies).
+  - Richer stat strip (Members / Roles / Pending / Owners), each
+    showing a one-line qualifier, similar spirit to Gemini's
+    "11 · Granular policy keys" pairing.
+
+  Deliberately NOT carried over: the React+Babel+Tailwind-CDN runtime
+  (compiles JSX in-browser on every load — heavy, and dead without
+  network), and the invented scope that had nothing to do with the
+  source screen (security scores, license-seat counters, 2FA flags).
+  Also left out for now: the "Test Sandbox" permission simulator and
+  grid/table view toggle — both are good ideas, just separate asks;
+  happy to add either on request.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f0f4f8; --surface: #ffffff; --surface-raised: #f8fafc;
+    --surface-muted: #e2e8f0; --surface-strong: #cbd5e1;
+    --ink: #0f172a; --ink-2: #475569; --ink-3: #94a3b8;
+    --primary: #1e3a5f; --primary-bright: #3b82f6;
+    --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+    --secondary: #0f172a;
+    --attention: #dc2626; --attention-soft: color-mix(in srgb, var(--attention) 10%, transparent);
+    --success: #16a34a; --success-soft: color-mix(in srgb, var(--success) 12%, transparent);
+    --warn: #b45309; --warn-soft: color-mix(in srgb, var(--warn) 14%, transparent);
+    --line: rgba(15,23,42,.08); --line-strong: rgba(15,23,42,.14);
+    --scrim: rgba(15,23,42,.45);
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow: 0 12px 28px color-mix(in srgb, var(--primary) 7%, transparent), 0 2px 6px rgba(15,23,42,.04);
+    --font: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+    --number: 'DM Mono', ui-monospace, Menlo, monospace;
+
+    /* Role color palette — chosen at role-creation time, not fixed per role name */
+    --clr-violet: #7c3aed; --clr-violet-soft: color-mix(in srgb, var(--clr-violet) 15%, transparent);
+    --clr-blue:   #0284c7; --clr-blue-soft:   color-mix(in srgb, var(--clr-blue) 14%, transparent);
+    --clr-amber:  #b45309; --clr-amber-soft:  color-mix(in srgb, var(--clr-amber) 15%, transparent);
+    --clr-slate:  #334155; --clr-slate-soft:  color-mix(in srgb, var(--clr-slate) 10%, transparent);
+    --clr-teal:   #0d9488; --clr-teal-soft:   color-mix(in srgb, var(--clr-teal) 14%, transparent);
+    --clr-rose:   #e11d48; --clr-rose-soft:   color-mix(in srgb, var(--clr-rose) 12%, transparent);
+    --clr-sky:    #0ea5e9; --clr-sky-soft:    color-mix(in srgb, var(--clr-sky) 14%, transparent);
+    --clr-indigo: #4f46e5; --clr-indigo-soft: color-mix(in srgb, var(--clr-indigo) 13%, transparent);
+  }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    background-image: radial-gradient(circle at top, color-mix(in srgb, var(--primary) 4%, transparent), transparent 42%);
+    color: var(--ink);
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, input, textarea { font-family: inherit; }
+  .page { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+
+  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .head-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; flex-shrink: 0; }
+  .head-icon svg { width: 18px; height: 18px; }
+  .head h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.03em; }
+  .head-desc { font-size: 11px; color: var(--ink-2); margin: 4px 0 22px 48px; max-width: 40rem; line-height: 1.5; }
+
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 18px; }
+  @media (min-width: 520px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 14px; padding: 12px; }
+  .stat-top { display: flex; align-items: center; gap: 6px; color: var(--ink-3); }
+  .stat-top svg { width: 13px; height: 13px; }
+  .stat-top span { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+  .stat-val { margin-top: 6px; font-family: var(--number); font-size: 20px; font-weight: 500; letter-spacing: -0.03em; }
+  .stat-val.warn { color: var(--warn); }
+  .stat-sub { margin-top: 2px; font-size: 9px; font-weight: 600; color: var(--ink-3); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+  .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .panel-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-2); }
+  .panel-sub { margin-top: 2px; font-size: 10px; color: var(--ink-3); }
+  .panel-badge { flex-shrink: 0; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; background: var(--surface-muted); color: var(--ink-2); border-radius: 999px; padding: 4px 9px; }
+
+  .search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; margin-top: 14px; background: var(--surface-muted); border-radius: 10px; color: var(--ink-3); }
+  .search svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .search input { flex: 1; border: none; outline: none; background: none; font-size: 12px; color: var(--ink); }
+  .search input::placeholder { color: var(--ink-3); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 9px; font-weight: 700; color: var(--ink-2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rc); flex-shrink: 0; }
+
+  /* ---- Matrix (desktop) ---- */
+  .matrix-wrap { display: none; margin-top: 14px; overflow-x: auto; }
+  .matrix { width: 100%; border-collapse: collapse; }
+  .matrix th { text-align: left; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); padding: 0 10px 8px; white-space: nowrap; }
+  .matrix th.rolecol { text-align: center; }
+  .matrix td { padding: 10px; border-top: 1px solid var(--line); vertical-align: middle; }
+  .matrix tr:first-child td { border-top: none; }
+  .matrix .memcell { display: flex; align-items: center; gap: 10px; min-width: 190px; }
+  .matrix .rolecell { text-align: center; }
+
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--surface-muted); color: var(--ink-2); display: grid; place-items: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+  .avatar.you { background: var(--primary-soft); color: var(--primary); }
+  .who b { display: block; font-size: 12.5px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+  .who span { display: block; font-size: 10px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+  .tagrow { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; flex-wrap: wrap; }
+  .tag { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; border-radius: 999px; padding: 2px 7px; }
+  .tag.owner { background: var(--clr-violet-soft); color: var(--clr-violet); }
+  .tag.you { background: var(--primary-soft); color: var(--primary); }
+  .tag.system { background: var(--surface-muted); color: var(--ink-3); }
+
+  .rolechip {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 26px; padding: 0 10px; border-radius: 999px;
+    border: 1.5px solid color-mix(in srgb, var(--rc, var(--ink-3)) 30%, var(--line-strong));
+    background: var(--surface); color: color-mix(in srgb, var(--rc, var(--ink-3)) 60%, var(--ink-3));
+    font-family: inherit; font-size: 9.5px; font-weight: 700;
+    cursor: pointer; white-space: nowrap;
+  }
+  .rolechip svg { width: 11px; height: 11px; flex-shrink: 0; }
+  .rolechip[data-on="true"] { background: var(--rc-soft, var(--success-soft)); border-color: transparent; color: var(--rc, var(--success)); font-weight: 800; }
+  .rolechip[disabled] { cursor: not-allowed; opacity: 0.6; }
+  .rolechip:active:not([disabled]) { transform: scale(0.96); }
+  .rolebtn-icon-only {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1.5px solid color-mix(in srgb, var(--rc, var(--ink-3)) 30%, var(--line-strong));
+    background: var(--surface); color: color-mix(in srgb, var(--rc, var(--ink-3)) 60%, var(--ink-3));
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .rolebtn-icon-only[data-on="true"] { background: var(--rc-soft, var(--success-soft)); border-color: transparent; color: var(--rc, var(--success)); }
+  .rolebtn-icon-only[disabled] { cursor: not-allowed; opacity: 0.55; }
+  .rolebtn-icon-only svg { width: 13px; height: 13px; }
+
+  .no-access { margin-top: 6px; font-size: 9px; font-weight: 600; color: var(--warn); }
+
+  .cards { margin-top: 14px; }
+  .mcard { border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .mcard + .mcard { margin-top: 10px; }
+  .mcard.self { border-color: color-mix(in srgb, var(--primary) 30%, var(--line)); background: var(--primary-soft); }
+  .mcard-head { display: flex; align-items: flex-start; gap: 10px; }
+  .mcard-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .mcard-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .mcard-note { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 10px; color: var(--ink-3); display: flex; align-items: center; gap: 5px; }
+  .mcard-note svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+  .ghost-icon { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 10px; border: none; background: none; font-family: inherit; font-size: 10.5px; font-weight: 700; cursor: pointer; }
+  .ghost-icon svg { width: 12px; height: 12px; }
+  .ghost-icon.transfer { color: var(--clr-violet); }
+  .ghost-icon.transfer:active { background: var(--clr-violet-soft); }
+  .ghost-icon.danger { color: var(--attention); }
+  .ghost-icon.danger:active { background: var(--attention-soft); }
+  .ghost-icon[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+  .invite-btn, .role-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; height: 44px; margin-top: 14px;
+    border: none; border-radius: 12px;
+    background: var(--gradient); color: #fff;
+    font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .invite-btn svg, .role-btn svg { width: 14px; height: 14px; }
+  .invite-btn:active, .role-btn:active { transform: scale(0.985); }
+  .invite-caption { margin-top: 8px; text-align: center; font-size: 9.5px; color: var(--ink-3); }
+
+  .invite-row { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 12px; }
+  .invite-row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .pending-when { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 10px; color: var(--ink-3); }
+  .pending-when svg { width: 11px; height: 11px; }
+  .pending-when b { color: var(--warn); font-weight: 700; }
+
+  /* ---- Role cards ---- */
+  .role-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+  @media (min-width: 640px) { .role-grid { grid-template-columns: 1fr 1fr; } }
+  .role-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; }
+  .role-card-top { display: flex; align-items: flex-start; gap: 10px; }
+  .role-dot { width: 30px; height: 30px; border-radius: 9px; background: var(--rc-soft); color: var(--rc); display: grid; place-items: center; flex-shrink: 0; }
+  .role-dot svg { width: 15px; height: 15px; }
+  .role-card b { font-size: 13px; font-weight: 800; }
+  .role-card-desc { margin-top: 6px; font-size: 10.5px; color: var(--ink-2); line-height: 1.5; flex: 1; }
+  .role-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .role-card-meta { font-size: 9px; font-weight: 700; color: var(--ink-3); }
+  .role-card-actions { display: flex; gap: 2px; }
+
+  /* ---- Overlays ---- */
+  .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .18s; }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .dialog {
+    position: fixed; z-index: 41; left: 50%; top: 50%;
+    width: min(360px, calc(100vw - 40px));
+    background: var(--surface); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 20px; transform: translate(-50%,-50%) scale(0.94); opacity: 0; pointer-events: none;
+    transition: opacity .18s, transform .18s;
+    max-height: 86vh; overflow-y: auto;
+  }
+  .dialog.wide { width: min(480px, calc(100vw - 32px)); }
+  .dialog.show { opacity: 1; pointer-events: auto; transform: translate(-50%,-50%) scale(1); }
+  .dialog h3 { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
+  .dialog p { margin-top: 8px; font-size: 11.5px; color: var(--ink-2); line-height: 1.5; }
+  .dialog .field { margin-top: 14px; }
+  .dialog label { display: block; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); margin-bottom: 5px; }
+  .dialog input[type=email], .dialog input[type=text], .dialog textarea {
+    width: 100%; height: 38px; border: 1px solid var(--line-strong); border-radius: 9px;
+    background: var(--surface-muted); padding: 0 10px; font-size: 12px; outline: none;
+  }
+  .dialog textarea { height: 56px; padding: 8px 10px; resize: none; line-height: 1.4; }
+  .dialog input:focus, .dialog textarea:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
+  .field-err { margin-top: 6px; font-size: 10px; font-weight: 600; color: var(--attention); }
+  .field-err[hidden] { display: none; }
+
+  .role-check-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+  .role-check { display: flex; align-items: flex-start; gap: 9px; padding: 8px; border-radius: 9px; background: var(--surface-muted); }
+  .role-check input { width: 15px; height: 15px; margin-top: 2px; accent-color: var(--primary); flex-shrink: 0; }
+  .role-check-text b { display: block; font-size: 11.5px; font-weight: 700; }
+  .role-check-text span { display: block; font-size: 9.5px; color: var(--ink-2); margin-top: 1px; line-height: 1.4; }
+
+  .swatch-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; background: var(--sw); }
+  .swatch[data-active="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px color-mix(in srgb, var(--ink) 25%, transparent); }
+
+  .perm-cat { margin-top: 14px; }
+  .perm-cat:first-child { margin-top: 6px; }
+  .perm-cat-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); margin-bottom: 6px; }
+  .perm-item { display: flex; align-items: flex-start; gap: 9px; padding: 7px 8px; border-radius: 8px; }
+  .perm-item:hover { background: var(--surface-muted); }
+  .perm-item input { width: 15px; height: 15px; margin-top: 2px; accent-color: var(--primary); flex-shrink: 0; }
+  .perm-item b { display: block; font-size: 11px; font-weight: 700; }
+  .perm-item span { display: block; font-size: 9.5px; color: var(--ink-3); margin-top: 1px; line-height: 1.4; }
+
+  .dialog-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .dbtn { flex: 1; height: 38px; border: none; border-radius: 10px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .dbtn.cancel { background: var(--surface-muted); color: var(--ink); }
+  .dbtn.primary { background: var(--primary); color: #fff; }
+  .dbtn.danger { background: var(--attention); color: #fff; }
+  .dbtn:active { transform: scale(0.97); }
+  .dbtn[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+  .snackbar {
+    position: fixed; left: 16px; right: 16px; bottom: 20px; z-index: 45;
+    max-width: 420px; margin: 0 auto;
+    background: var(--ink); color: var(--bg); border-radius: 12px;
+    padding: 12px 16px; font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 18px 40px rgba(15,23,42,.25);
+    opacity: 0; transform: translateY(10px); pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  .snackbar.show { opacity: 1; transform: translateY(0); }
+  .snackbar button { margin-left: auto; border: none; background: none; color: #93c5fd; font-family: inherit; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; }
+
+  @media (min-width: 760px) { .cards { display: none; } .matrix-wrap { display: block; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="head">
+    <div class="head-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <h1>Team &amp; Roles</h1>
+  </div>
+  <p class="head-desc">Manage who has access to this business, and what each role can do.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Members</span></div>
+      <div class="stat-val" id="statMembers">4</div>
+      <div class="stat-sub" id="statMembersSub">1 owner</div>
+    </div>
+    <div class="stat">
+      <div class="stat-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg><span>Roles</span></div>
+      <div class="stat-val" id="statRoles">4</div>
+      <div class="stat-sub" id="statRolesSub">0 custom</div>
+    </div>
+    <div class="stat">
+      <div class="stat-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Pending</span></div>
+      <div class="stat-val warn" id="statPending">1</div>
+      <div class="stat-sub">invite&nbsp;sent</div>
+    </div>
+    <div class="stat">
+      <div class="stat-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v6h16v-6"/><path d="M12 2 6 9h4v6h4V9h4Z"/></svg><span>Owner</span></div>
+      <div class="stat-val" id="statOwnerName" style="font-size:13px;font-family:var(--font);font-weight:800;letter-spacing:-0.01em;">Adewale</div>
+      <div class="stat-sub">can transfer below</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">Team Members</div>
+        <div class="panel-sub" id="companyLine">Access shown for Sun &amp; Shield Power Solutions</div>
+      </div>
+      <span class="panel-badge" id="memberCountBadge">4 members</span>
+    </div>
+
+    <div class="legend" id="roleLegend"></div>
+
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="memberSearch" type="search" placeholder="Search members by name or email" aria-label="Search members">
+    </div>
+
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <thead><tr id="matrixHeadRow"><th>Member</th></tr></thead>
+        <tbody id="matrixBody"></tbody>
+      </table>
+    </div>
+
+    <div class="cards" id="cardsWrap"></div>
+
+    <button class="invite-btn" type="button" id="inviteOpenBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Invite member
+    </button>
+    <p class="invite-caption">They'll get an email invite with the roles you choose below.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">Roles</div>
+        <div class="panel-sub">Permission templates assigned to members above</div>
+      </div>
+      <span class="panel-badge" id="roleCountBadge">4 roles</span>
+    </div>
+    <div class="role-grid" id="roleGrid"></div>
+    <button class="role-btn" type="button" id="roleCreateBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New role
+    </button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Pending Invitations</div>
+      <span class="panel-badge" id="pendingBadge">1 pending</span>
+    </div>
+    <div id="pendingWrap"></div>
+  </div>
+
+  <p style="margin-top:32px;text-align:center;font-size:9px;font-weight:800;letter-spacing:0.25em;text-transform:uppercase;color:var(--ink-3);opacity:.5;">BIGDROPS ERP</p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- Invite: every role, with its description, so pre-assigning access is informed -->
+<div class="dialog wide" id="inviteDialog" role="dialog" aria-label="Invite member">
+  <h3>Invite member</h3>
+  <p>Send an email invite and pre-assign their access.</p>
+  <div class="field"><label>Email address</label><input type="email" id="inviteEmail" placeholder="name@example.com"></div>
+  <div class="field-err" id="inviteErr" hidden>Enter a valid email address.</div>
+  <div class="field">
+    <label>Access to grant</label>
+    <div class="role-check-list" id="inviteRoleChecks"></div>
+  </div>
+  <div class="dialog-actions">
+    <button class="dbtn cancel" type="button" data-close>Cancel</button>
+    <button class="dbtn primary" type="button" id="inviteSendBtn">Send invite</button>
+  </div>
+</div>
+
+<div class="dialog" id="removeDialog" role="alertdialog" aria-label="Remove member">
+  <h3 id="removeTitle">Remove member?</h3>
+  <p id="removeBody"></p>
+  <div class="dialog-actions">
+    <button class="dbtn cancel" type="button" data-close>Cancel</button>
+    <button class="dbtn danger" type="button" id="removeConfirmBtn">Remove</button>
+  </div>
+</div>
+
+<div class="dialog" id="transferDialog" role="alertdialog" aria-label="Transfer ownership">
+  <h3 id="transferTitle">Transfer ownership?</h3>
+  <p id="transferBody"></p>
+  <div class="dialog-actions">
+    <button class="dbtn cancel" type="button" data-close>Cancel</button>
+    <button class="dbtn primary" type="button" id="transferConfirmBtn">Transfer</button>
+  </div>
+</div>
+
+<div class="dialog" id="revokeDialog" role="alertdialog" aria-label="Revoke invite">
+  <h3>Revoke invite?</h3>
+  <p id="revokeBody"></p>
+  <div class="dialog-actions">
+    <button class="dbtn cancel" type="button" data-close>Cancel</button>
+    <button class="dbtn danger" type="button" id="revokeConfirmBtn">Revoke</button>
+  </div>
+</div>
+
+<!-- Role editor: create, edit, duplicate land here -->
+<div class="dialog wide" id="roleEditorDialog" role="dialog" aria-label="Role editor">
+  <h3 id="roleEditorTitle">New role</h3>
+  <p>Choose what members with this role can do.</p>
+  <div class="field"><label>Role name</label><input type="text" id="roleName" placeholder="e.g. Regional Supervisor"></div>
+  <div class="field-err" id="roleNameErr" hidden>Give this role a name.</div>
+  <div class="field"><label>Description</label><textarea id="roleDesc" placeholder="One line explaining who this is for"></textarea></div>
+  <div class="field"><label>Color</label><div class="swatch-row" id="roleSwatchRow"></div></div>
+  <div class="field"><label>Permissions</label><div id="roleEditorPerms"></div></div>
+  <div class="dialog-actions">
+    <button class="dbtn cancel" type="button" data-close>Cancel</button>
+    <button class="dbtn primary" type="button" id="roleSaveBtn">Save role</button>
+  </div>
+</div>
+
+<div class="dialog" id="roleDeleteDialog" role="alertdialog" aria-label="Delete role">
+  <h3 id="roleDeleteTitle">Delete role?</h3>
+  <p id="roleDeleteBody"></p>
+  <div class="dialog-actions">
+    <button class="dbtn cancel" type="button" data-close>Cancel</button>
+    <button class="dbtn danger" type="button" id="roleDeleteConfirmBtn">Delete</button>
+  </div>
+</div>
+
+<div class="snackbar" id="snackbar"><span id="snackText"></span><button type="button" id="snackAction" hidden>Undo</button></div>
+
+<script>
+  var COMPANY = 'Sun & Shield Power Solutions';
+  var COLORS = ['violet','blue','amber','slate','teal','rose','sky','indigo'];
+
+  var PERMISSIONS = [
+    { cat: 'Documents', items: [
+      { id: 'doc.create', label: 'Create invoices & quotations', desc: 'Draft and send new documents to clients.' },
+      { id: 'doc.edit', label: 'Edit or void documents', desc: 'Change or cancel documents after creation.' },
+      { id: 'doc.approve', label: 'Approve waybills & CSR', desc: 'Sign off on dispatch and completion records.' },
+    ]},
+    { cat: 'Field & Equipment', items: [
+      { id: 'field.view', label: 'View telemetry & device status', desc: 'Read live readings from installed equipment.' },
+      { id: 'field.config', label: 'Configure hardware settings', desc: 'Change thresholds and device parameters.' },
+      { id: 'field.inventory', label: 'Manage inventory & stock', desc: 'Edit stock counts and supplier records.' },
+    ]},
+    { cat: 'Team & Access', items: [
+      { id: 'team.invite', label: 'Invite members', desc: 'Send workspace invitations by email.' },
+      { id: 'team.roles', label: 'Manage roles & permissions', desc: 'Create, edit, and assign role templates.' },
+      { id: 'team.remove', label: 'Remove members', desc: 'Revoke a member\u2019s access entirely.' },
+    ]},
+    { cat: 'Finance & Reports', items: [
+      { id: 'fin.view', label: 'View financial reports', desc: 'See revenue, balances, and statements.' },
+      { id: 'fin.billing', label: 'Manage billing & subscription', desc: 'Change payment details and plan tier.' },
+      { id: 'fin.export', label: 'Export data', desc: 'Download records as CSV or PDF.' },
+    ]},
+  ];
+
+  var ROLES = [
+    { id: 'admin', name: 'Admin', color: 'violet', isSystem: true,
+      desc: 'Full control across documents, field operations, team, and billing.',
+      permissions: ['doc.create','doc.edit','doc.approve','field.view','field.config','field.inventory','team.invite','team.roles','team.remove','fin.view','fin.billing','fin.export'] },
+    { id: 'engineer', name: 'Engineer', color: 'blue', isSystem: true,
+      desc: 'Field access: equipment configuration, inventory, and dispatch approval.',
+      permissions: ['field.view','field.config','field.inventory','doc.approve'] },
+    { id: 'manager', name: 'Manager', color: 'amber', isSystem: true,
+      desc: 'Runs day-to-day operations: invites, approvals, inventory, and reports.',
+      permissions: ['team.invite','doc.approve','field.inventory','fin.view'] },
+    { id: 'viewer', name: 'Viewer', color: 'slate', isSystem: true,
+      desc: 'Read-only access to telemetry and financial reports.',
+      permissions: ['field.view','fin.view'] },
+    { id: 'auditor', name: 'Compliance Auditor', color: 'rose', isSystem: false,
+      desc: 'External-facing read access for audits — reports and exports only.',
+      permissions: ['fin.view','fin.export'] },
+  ];
+
+  var MEMBERS = [
+    { id: 'm1', name: 'Adewale Musa', email: 'adewale@example.com', joined: '12 Jan 2026', accountRole: 'Owner', self: true,  roleIds: ['admin','engineer','manager','viewer'] },
+    { id: 'm2', name: 'Kemi Adeyemi', email: 'kemi@example.com',    joined: '3 Feb 2026',  accountRole: 'Member', self: false, roleIds: ['engineer'] },
+    { id: 'm3', name: 'Tunde Balogun',email: 'tunde@example.com',   joined: '18 Mar 2026', accountRole: 'Member', self: false, roleIds: ['manager'] },
+    { id: 'm4', name: 'Fatima Yusuf', email: 'fatima@example.com',  joined: '27 May 2026', accountRole: 'Member', self: false, roleIds: ['viewer','auditor'] },
+  ];
+  var PENDING = [ { id: 'p1', email: 'chidi.okeke@example.com', invited: '9 Sep 2026', expires: '16 Sep 2026' } ];
+
+  function roleById(id) { return ROLES.find(function (r) { return r.id === id; }); }
+  function initials(name) { return name.split(' ').map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase(); }
+  function iconSvg(inner, size) { return '<svg viewBox="0 0 24 24" width="'+(size||11)+'" height="'+(size||11)+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>'; }
+  var ICON_TRANSFER = '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>';
+  var ICON_TRASH = '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>';
+  var ICON_LOCK = '<rect x="3.5" y="11" width="17" height="10.5" rx="2"/><path d="M7 11V7.5a5 5 0 0 1 10 0V11"/>';
+  var ICON_X = '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>';
+  var ICON_CLOCK = '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>';
+  var ICON_SHIELD = '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>';
+  var ICON_EDIT = '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4.2 1L4 15.8 16.5 3.5z"/>';
+  var ICON_COPY = '<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
+
+  function rc(color) { return 'style="--rc:var(--clr-' + color + ');--rc-soft:var(--clr-' + color + '-soft)"'; }
+
+  function updateStats() {
+    document.getElementById('statMembers').textContent = MEMBERS.length;
+    var owners = MEMBERS.filter(function (m) { return m.accountRole === 'Owner'; });
+    document.getElementById('statMembersSub').textContent = owners.length + ' owner' + (owners.length === 1 ? '' : 's');
+    document.getElementById('statRoles').textContent = ROLES.length;
+    document.getElementById('statRolesSub').textContent = ROLES.filter(function (r) { return !r.isSystem; }).length + ' custom';
+    document.getElementById('statPending').textContent = PENDING.length;
+    document.getElementById('statOwnerName').textContent = (owners[0] || {}).name ? owners[0].name.split(' ')[0] : '—';
+    document.getElementById('memberCountBadge').textContent = MEMBERS.length + ' member' + (MEMBERS.length === 1 ? '' : 's');
+    document.getElementById('pendingBadge').textContent = PENDING.length + ' pending';
+    document.getElementById('roleCountBadge').textContent = ROLES.length + ' role' + (ROLES.length === 1 ? '' : 's');
+  }
+
+  function roleChip(member, role, iconOnly) {
+    var on = member.roleIds.indexOf(role.id) > -1;
+    var disabled = member.self;
+    var cls = iconOnly ? 'rolebtn-icon-only' : 'rolechip';
+    return '<button class="' + cls + '" ' + rc(role.color) + ' type="button" data-toggle-role data-member="' + member.id + '" data-role="' + role.id + '" data-on="' + on + '"' +
+      (disabled ? ' disabled title="Owner access can\'t be edited here"' : '') + ' aria-pressed="' + on + '" aria-label="' + role.name + (on ? ' — granted' : ' — not granted') + '">' +
+      iconSvg(ICON_SHIELD, iconOnly ? 13 : 11) + (iconOnly ? '' : '<span>' + role.name + '</span>') + '</button>';
+  }
+
+  function renderLegend() {
+    document.getElementById('roleLegend').innerHTML = ROLES.map(function (r) {
+      return '<span class="legend-item"><span class="legend-dot" ' + rc(r.color) + '></span>' + r.name + '</span>';
+    }).join('');
+  }
+
+  function renderMatrixHead() {
+    var row = document.getElementById('matrixHeadRow');
+    row.innerHTML = '<th>Member</th>' + ROLES.map(function (r) { return '<th class="rolecol">' + r.name + '</th>'; }).join('') + '<th class="rolecol">Actions</th>';
+  }
+
+  function renderMatrix() {
+    var body = document.getElementById('matrixBody');
+    body.innerHTML = filteredMembers().map(function (m) {
+      var roleCells = ROLES.map(function (r) { return '<td class="rolecell">' + roleChip(m, r, true) + '</td>'; }).join('');
+      var actions = m.self
+        ? '<span title="You cannot remove yourself">' + iconSvg(ICON_LOCK, 14) + '</span>'
+        : '<button class="ghost-icon transfer" type="button" data-transfer="' + m.id + '" title="Transfer ownership">' + iconSvg(ICON_TRANSFER, 13) + '</button>' +
+          '<button class="ghost-icon danger" type="button" data-remove="' + m.id + '" title="Remove member">' + iconSvg(ICON_TRASH, 13) + '</button>';
+      return '<tr>' +
+        '<td><div class="memcell"><div class="avatar' + (m.self ? ' you' : '') + '">' + initials(m.name) + '</div>' +
+          '<div class="who"><b>' + m.name + '</b><span>' + m.email + '</span>' +
+          '<span class="tagrow">' + (m.accountRole === 'Owner' ? '<span class="tag owner">Owner</span>' : '') + (m.self ? '<span class="tag you">You</span>' : '') + '</span></div></div></td>' +
+        roleCells +
+        '<td class="rolecell" style="white-space:nowrap">' + actions + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderCards() {
+    var host = document.getElementById('cardsWrap');
+    host.innerHTML = filteredMembers().map(function (m) {
+      var chips = ROLES.map(function (r) { return roleChip(m, r, false); }).join('');
+      var noAccess = ROLES.every(function (r) { return m.roleIds.indexOf(r.id) === -1; })
+        ? '<p class="no-access">No access assigned yet.</p>' : '';
+      var footer = m.self
+        ? '<div class="mcard-note">' + iconSvg(ICON_LOCK, 11) + ' You can\'t remove or transfer away from yourself here.</div>'
+        : '<div class="mcard-actions">' +
+            '<button class="ghost-icon transfer" type="button" data-transfer="' + m.id + '">' + iconSvg(ICON_TRANSFER, 12) + ' Transfer</button>' +
+            '<button class="ghost-icon danger" type="button" data-remove="' + m.id + '">' + iconSvg(ICON_TRASH, 12) + ' Remove</button>' +
+          '</div>';
+      return '<div class="mcard' + (m.self ? ' self' : '') + '">' +
+        '<div class="mcard-head"><div class="avatar' + (m.self ? ' you' : '') + '">' + initials(m.name) + '</div>' +
+        '<div class="who"><b>' + m.name + '</b><span>' + m.email + ' · joined ' + m.joined + '</span>' +
+        '<span class="tagrow">' + (m.accountRole === 'Owner' ? '<span class="tag owner">Owner</span>' : '') + (m.self ? '<span class="tag you">You</span>' : '') + '</span></div></div>' +
+        '<div class="mcard-chips">' + chips + '</div>' + noAccess + footer +
+      '</div>';
+    }).join('');
+  }
+
+  function renderRoles() {
+    var host = document.getElementById('roleGrid');
+    host.innerHTML = ROLES.map(function (r) {
+      var count = MEMBERS.filter(function (m) { return m.roleIds.indexOf(r.id) > -1; }).length;
+      var canDelete = !r.isSystem && count === 0;
+      var deleteTitle = r.isSystem ? 'Built-in role can\'t be deleted' : (count > 0 ? count + ' member(s) still have this role' : 'Delete role');
+      return '<div class="role-card">' +
+        '<div class="role-card-top"><div class="role-dot" ' + rc(r.color) + '>' + iconSvg(ICON_SHIELD, 15) + '</div>' +
+        '<div style="flex:1;min-width:0"><b>' + r.name + '</b>' + (r.isSystem ? ' <span class="tag system">Built-in</span>' : '') + '</div></div>' +
+        '<p class="role-card-desc">' + r.desc + '</p>' +
+        '<div class="role-card-foot">' +
+          '<span class="role-card-meta">' + count + ' member' + (count === 1 ? '' : 's') + ' · ' + r.permissions.length + ' permissions</span>' +
+          '<span class="role-card-actions">' +
+            '<button class="ghost-icon" type="button" data-role-edit="' + r.id + '" title="Edit role">' + iconSvg(ICON_EDIT, 13) + '</button>' +
+            '<button class="ghost-icon" type="button" data-role-dup="' + r.id + '" title="Duplicate role">' + iconSvg(ICON_COPY, 13) + '</button>' +
+            '<button class="ghost-icon danger" type="button" data-role-del="' + r.id + '" title="' + deleteTitle + '"' + (canDelete ? '' : ' disabled') + '>' + iconSvg(ICON_TRASH, 13) + '</button>' +
+          '</span>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  function renderPending() {
+    var host = document.getElementById('pendingWrap');
+    if (!PENDING.length) { host.innerHTML = '<p style="margin-top:12px;font-size:11px;color:var(--ink-3)">No pending invitations.</p>'; return; }
+    host.innerHTML = PENDING.map(function (p) {
+      var roleNames = (p.roleIds || []).map(function (id) { var r = roleById(id); return r ? r.name : null; }).filter(Boolean);
+      return '<div class="invite-row">' +
+        '<div class="invite-row-head"><div class="who"><b>' + p.email + '</b>' +
+        '<span class="pending-when">' + iconSvg(ICON_CLOCK, 11) + ' Invited ' + p.invited + ' · <b>expires ' + p.expires + '</b></span>' +
+        (roleNames.length ? '<span class="tagrow">' + roleNames.map(function (n) { return '<span class="tag system">' + n + '</span>'; }).join('') + '</span>' : '') +
+        '</div>' +
+        '<button class="ghost-icon danger" type="button" data-revoke="' + p.id + '">' + iconSvg(ICON_X, 12) + ' Revoke</button></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  var searchTerm = '';
+  function filteredMembers() {
+    if (!searchTerm) return MEMBERS;
+    var q = searchTerm.toLowerCase();
+    return MEMBERS.filter(function (m) { return m.name.toLowerCase().indexOf(q) > -1 || m.email.toLowerCase().indexOf(q) > -1; });
+  }
+  function renderAll() { renderMatrixHead(); renderMatrix(); renderCards(); renderPending(); renderRoles(); updateStats(); renderLegend(); }
+
+  document.getElementById('memberSearch').addEventListener('input', function (e) { searchTerm = e.target.value; renderMatrix(); renderCards(); });
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-toggle-role]');
+    if (!t || t.disabled) return;
+    var member = MEMBERS.find(function (m) { return m.id === t.dataset.member; });
+    var roleId = t.dataset.role;
+    var idx = member.roleIds.indexOf(roleId);
+    if (idx > -1) member.roleIds.splice(idx, 1); else member.roleIds.push(roleId);
+    var granted = idx === -1;
+    renderMatrix(); renderCards(); renderRoles();
+    snack(roleById(roleId).name + (granted ? ' granted to ' : ' revoked from ') + member.name.split(' ')[0]);
+  });
+
+  function openDialog(id) { document.getElementById('scrim').classList.add('show'); document.getElementById(id).classList.add('show'); }
+  function closeDialogs() { document.getElementById('scrim').classList.remove('show'); document.querySelectorAll('.dialog').forEach(function (d) { d.classList.remove('show'); }); }
+  document.getElementById('scrim').addEventListener('click', closeDialogs);
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeDialogs(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDialogs(); });
+
+  var pendingRemoveId, pendingTransferId, pendingRevokeId, pendingDeleteRoleId;
+  document.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-remove]');
+    if (rm) {
+      pendingRemoveId = rm.dataset.remove;
+      var m = MEMBERS.find(function (x) { return x.id === pendingRemoveId; });
+      document.getElementById('removeTitle').textContent = 'Remove ' + m.name + '?';
+      document.getElementById('removeBody').textContent = m.name + ' will lose access to ' + COMPANY + ' immediately. You can re-invite them later.';
+      openDialog('removeDialog');
+    }
+    var tr = e.target.closest('[data-transfer]');
+    if (tr) {
+      pendingTransferId = tr.dataset.transfer;
+      var m2 = MEMBERS.find(function (x) { return x.id === pendingTransferId; });
+      document.getElementById('transferTitle').textContent = 'Transfer ownership to ' + m2.name + '?';
+      document.getElementById('transferBody').textContent = 'You will become an Admin. ' + m2.name + ' becomes the new Owner of ' + COMPANY + '.';
+      openDialog('transferDialog');
+    }
+    var rv = e.target.closest('[data-revoke]');
+    if (rv) {
+      pendingRevokeId = rv.dataset.revoke;
+      var p = PENDING.find(function (x) { return x.id === pendingRevokeId; });
+      document.getElementById('revokeBody').textContent = p.email + ' will no longer be able to accept this invitation.';
+      openDialog('revokeDialog');
+    }
+    var re = e.target.closest('[data-role-edit]');
+    if (re) openRoleEditor(roleById(re.dataset.roleEdit));
+    var rd = e.target.closest('[data-role-dup]');
+    if (rd) {
+      var src = roleById(rd.dataset.roleDup);
+      var copy = { id: 'role' + Date.now(), name: src.name + ' (Copy)', color: src.color, isSystem: false, desc: src.desc, permissions: src.permissions.slice() };
+      ROLES.push(copy);
+      renderAll();
+      snack('Duplicated as "' + copy.name + '"');
+      openRoleEditor(copy);
+    }
+    var rdel = e.target.closest('[data-role-del]');
+    if (rdel && !rdel.disabled) {
+      pendingDeleteRoleId = rdel.dataset.roleDel;
+      var role = roleById(pendingDeleteRoleId);
+      document.getElementById('roleDeleteTitle').textContent = 'Delete "' + role.name + '"?';
+      document.getElementById('roleDeleteBody').textContent = 'This role has no members and can be removed. This can\'t be undone.';
+      openDialog('roleDeleteDialog');
+    }
+  });
+
+  document.getElementById('removeConfirmBtn').addEventListener('click', function () {
+    var idx = MEMBERS.findIndex(function (m) { return m.id === pendingRemoveId; });
+    var removed = MEMBERS.splice(idx, 1)[0];
+    closeDialogs(); renderAll();
+    snack(removed.name + ' removed', function () { MEMBERS.splice(idx, 0, removed); renderAll(); snack('Removal undone'); });
+  });
+  document.getElementById('transferConfirmBtn').addEventListener('click', function () {
+    var newOwner = MEMBERS.find(function (m) { return m.id === pendingTransferId; });
+    var oldOwner = MEMBERS.find(function (m) { return m.accountRole === 'Owner'; });
+    oldOwner.accountRole = 'Member'; oldOwner.self = false;
+    newOwner.accountRole = 'Owner'; newOwner.self = true;
+    ROLES.forEach(function (r) { if (newOwner.roleIds.indexOf(r.id) === -1) newOwner.roleIds.push(r.id); });
+    closeDialogs(); renderAll();
+    snack('Ownership transferred to ' + newOwner.name);
+  });
+  document.getElementById('revokeConfirmBtn').addEventListener('click', function () {
+    var idx = PENDING.findIndex(function (p) { return p.id === pendingRevokeId; });
+    var removed = PENDING.splice(idx, 1)[0];
+    closeDialogs(); renderAll();
+    snack('Invite to ' + removed.email + ' revoked');
+  });
+  document.getElementById('roleDeleteConfirmBtn').addEventListener('click', function () {
+    var idx = ROLES.findIndex(function (r) { return r.id === pendingDeleteRoleId; });
+    var removed = ROLES.splice(idx, 1)[0];
+    closeDialogs(); renderAll();
+    snack('Role "' + removed.name + '" deleted');
+  });
+
+  /* ---- Role editor (create / edit / duplicate land here) ---- */
+  var editingRoleId = null, editorColor = 'teal';
+  function openRoleEditor(role) {
+    editingRoleId = role ? role.id : null;
+    editorColor = role ? role.color : 'teal';
+    document.getElementById('roleEditorTitle').textContent = role ? 'Edit "' + role.name + '"' : 'New role';
+    document.getElementById('roleName').value = role ? role.name : '';
+    document.getElementById('roleDesc').value = role ? role.desc : '';
+    document.getElementById('roleNameErr').hidden = true;
+    document.getElementById('roleSwatchRow').innerHTML = COLORS.map(function (c) {
+      return '<button class="swatch" type="button" data-swatch="' + c + '" data-active="' + (c === editorColor) + '" style="--sw:var(--clr-' + c + ')" aria-label="' + c + '"></button>';
+    }).join('');
+    var checked = role ? role.permissions : [];
+    document.getElementById('roleEditorPerms').innerHTML = PERMISSIONS.map(function (cat) {
+      return '<div class="perm-cat"><div class="perm-cat-title">' + cat.cat + '</div>' +
+        cat.items.map(function (it) {
+          return '<label class="perm-item"><input type="checkbox" value="' + it.id + '"' + (checked.indexOf(it.id) > -1 ? ' checked' : '') + '>' +
+            '<span><b>' + it.label + '</b><span>' + it.desc + '</span></span></label>';
+        }).join('') + '</div>';
+    }).join('');
+    openDialog('roleEditorDialog');
+  }
+  document.getElementById('roleCreateBtn').addEventListener('click', function () { openRoleEditor(null); });
+  document.getElementById('roleSwatchRow').addEventListener('click', function (e) {
+    var sw = e.target.closest('[data-swatch]');
+    if (!sw) return;
+    editorColor = sw.dataset.swatch;
+    document.querySelectorAll('#roleSwatchRow .swatch').forEach(function (s) { s.dataset.active = (s.dataset.swatch === editorColor); });
+  });
+  document.getElementById('roleSaveBtn').addEventListener('click', function () {
+    var name = document.getElementById('roleName').value.trim();
+    if (!name) { document.getElementById('roleNameErr').hidden = false; return; }
+    document.getElementById('roleNameErr').hidden = true;
+    var desc = document.getElementById('roleDesc').value.trim() || 'Custom role.';
+    var perms = Array.prototype.slice.call(document.querySelectorAll('#roleEditorPerms input:checked')).map(function (i) { return i.value; });
+    if (editingRoleId) {
+      var role = roleById(editingRoleId);
+      role.name = name; role.desc = desc; role.color = editorColor; role.permissions = perms;
+      snack('Role "' + name + '" updated');
+    } else {
+      ROLES.push({ id: 'role' + Date.now(), name: name, desc: desc, color: editorColor, isSystem: false, permissions: perms });
+      snack('Role "' + name + '" created');
+    }
+    closeDialogs(); renderAll();
+  });
+
+  /* ---- Invite ---- */
+  document.getElementById('inviteOpenBtn').addEventListener('click', function () {
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteErr').hidden = true;
+    document.getElementById('inviteRoleChecks').innerHTML = ROLES.map(function (r) {
+      return '<label class="role-check"><input type="checkbox" value="' + r.id + '"' + (r.id === 'viewer' ? ' checked' : '') + '>' +
+        '<span class="role-check-text"><b>' + r.name + '</b><span>' + r.desc + '</span></span></label>';
+    }).join('');
+    openDialog('inviteDialog');
+  });
+  document.getElementById('inviteSendBtn').addEventListener('click', function () {
+    var email = document.getElementById('inviteEmail').value.trim();
+    var err = document.getElementById('inviteErr');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.hidden = false; return; }
+    err.hidden = true;
+    var roleIds = Array.prototype.slice.call(document.querySelectorAll('#inviteRoleChecks input:checked')).map(function (i) { return i.value; });
+    PENDING.push({ id: 'p' + Date.now(), email: email, invited: 'today', expires: 'in 7 days', roleIds: roleIds });
+    closeDialogs(); renderAll();
+    snack('Invite sent to ' + email);
+  });
+
+  var snackTimer;
+  function snack(msg, undo) {
+    var s = document.getElementById('snackbar');
+    document.getElementById('snackText').textContent = msg;
+    var btn = document.getElementById('snackAction');
+    btn.hidden = !undo;
+    if (undo) btn.onclick = function () { undo(); s.classList.remove('show'); };
+    s.classList.add('show');
+    clearTimeout(snackTimer);
+    snackTimer = setTimeout(function () { s.classList.remove('show'); }, 3200);
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

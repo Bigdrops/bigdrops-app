@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#F2F2F7] text-slate-900">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Team Hub & Access Studio v4 — Apple HIG Edition</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Plus Jakarta Sans', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            appleBg: '#F2F2F7',
+            appleCard: '#FFFFFF',
+            appleBlue: {
+              50: '#F0F6FF',
+              100: '#E0EDFF',
+              500: '#007AFF',
+              600: '#0062D6',
+              700: '#004FB8',
+            },
+            appleGreen: {
+              50: '#E8F9EE',
+              100: '#D1F4DD',
+              500: '#34C759',
+              600: '#28A745',
+            },
+            appleIndigo: {
+              50: '#EEEEFC',
+              500: '#5856D6',
+            },
+            applePurple: {
+              50: '#F7EDFC',
+              500: '#AF52DE',
+            },
+            appleOrange: {
+              50: '#FFF5E6',
+              500: '#FF9500',
+            },
+            appleRed: {
+              50: '#FFEEEE',
+              500: '#FF3B30',
+            }
+          },
+          boxShadow: {
+            'apple-sm': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+            'apple-card': '0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)',
+            'apple-float': '0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04)',
+            'apple-modal': '0 20px 48px rgba(0, 0, 0, 0.16)',
+          },
+          borderRadius: {
+            'apple-card': '20px',
+            'apple-lg': '24px',
+            'apple-xl': '28px',
+          },
+          animation: {
+            'ios-banner': 'iosBanner 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+            'ios-sheet': 'iosSheet 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+            'fade-in': 'fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          },
+          keyframes: {
+            iosBanner: {
+              '0%': { transform: 'translateY(-100%) scale(0.9)', opacity: '0' },
+              '100%': { transform: 'translateY(0) scale(1)', opacity: '1' },
+            },
+            iosSheet: {
+              '0%': { transform: 'translateY(100%)', opacity: '0.4' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Apple UI Custom Styling */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #C7C7CC; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #8E8E93; }
+
+    .apple-glass {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .apple-dark-glass {
+      background: rgba(28, 28, 30, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .apple-press {
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
+    }
+    .apple-press:active {
+      transform: scale(0.97);
+      opacity: 0.85;
+    }
+
+    /* iOS Style Toggle Switch */
+    .ios-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 26px;
+    }
+    .ios-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .ios-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #E9E9EA;
+      transition: .25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 34px;
+    }
+    .ios-slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input:checked + .ios-slider {
+      background-color: #34C759;
+    }
+    input:checked + .ios-slider:before {
+      transform: translateX(18px);
+    }
+  </style>
+</head>
+<body class="h-full bg-[#F2F2F7] font-sans text-slate-900 antialiased selection:bg-appleBlue-500 selection:text-white pb-20 sm:pb-12">
+  <div id="root" class="min-h-full flex flex-col"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+
+    // SF Icon Helper
+    const Icon = ({ name, className = "w-4 h-4", ...props }) => {
+      const icons = {
+        users: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        ),
+        shield: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        ),
+        roleEdit: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        ),
+        plus: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        ),
+        search: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        ),
+        check: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        ),
+        cross: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ),
+        grid: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+        ),
+        list: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm0 5.25h.007v.008H3.75V12zm0 5.25h.007v.008H3.75v-.008z" />
+          </svg>
+        ),
+        key: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+          </svg>
+        ),
+        trash: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+          </svg>
+        ),
+        duplicate: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v2.25A2.25 2.25 0 0113.5 21.75h-9a2.25 2.25 0 01-2.25-2.25v-9A2.25 2.25 0 014.5 8.25h2.25m11.25 0v-2.25A2.25 2.25 0 0015.75 3.75h-9a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h2.25" />
+          </svg>
+        ),
+        mail: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+          </svg>
+        ),
+        test: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5a3.75 3.75 0 01-3.75 3.75H8.75A3.75 3.75 0 015 14.5m14 0V18a2.25 2.25 0 01-2.25 2.25H7.25A2.25 2.25 0 015 18v-3.5" />
+          </svg>
+        ),
+        chevronDown: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+          </svg>
+        ),
+        download: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+        ),
+        activity: (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+          </svg>
+        )
+      };
+      return icons[name] || null;
+    };
+
+    const PERMISSION_TAXONOMY = [
+      {
+        category: 'Grid Hardware & IoT Telemetry',
+        badge: 'bg-appleBlue-50 text-appleBlue-600',
+        items: [
+          { id: 'telemetry.read', label: 'View Solar Metrics & Live Sensors', desc: 'Read voltage, battery SoC, ambient temperature & inverter yield.' },
+          { id: 'hardware.config', label: 'Modify Inverter Parameters', desc: 'Adjust discharge profiles, dump load switches, and trip levels.' },
+          { id: 'hardware.reboot', label: 'Remote Gateway Flash & Reboot', desc: 'Issue emergency hardware reset tokens over MQTT.' },
+        ]
+      },
+      {
+        category: 'Identity & Access Control',
+        badge: 'bg-appleIndigo-50 text-appleIndigo-500',
+        items: [
+          { id: 'team.invite', label: 'Invite Workspace Members', desc: 'Generate single-use workspace join links with assigned roles.' },
+          { id: 'team.roles', label: 'Manage Roles & Privilege Policies', desc: 'Create custom role templates and attach privilege scopes.' },
+          { id: 'team.remove', label: 'Offboard & Revoke Access', desc: 'Purge active session JWT tokens and revoke credentials instantly.' },
+        ]
+      },
+      {
+        category: 'Operations & Logistics',
+        badge: 'bg-appleGreen-50 text-appleGreen-600',
+        items: [
+          { id: 'ops.approve', label: 'Approve Equipment Requisitions', desc: 'Sign off on warehouse dispatch for field engineering projects.' },
+          { id: 'ops.inventory', label: 'Manage Warehouse Stock', desc: 'Update supplier catalog, serial number logs, and returns.' },
+        ]
+      },
+      {
+        category: 'Finance & Compliance',
+        badge: 'bg-applePurple-50 text-applePurple-500',
+        items: [
+          { id: 'finance.read', label: 'View Financial PnL & Invoices', desc: 'Read revenue metrics, power purchase agreements, and billing.' },
+          { id: 'finance.billing', label: 'Manage Enterprise Subscriptions', desc: 'Modify credit cards, upgrade tier seats, and export invoices.' },
+          { id: 'audit.export', label: 'Export Security Audit Logs', desc: 'Download compliance audit logs in CSV/PDF formats.' },
+        ]
+      }
+    ];
+
+    const INITIAL_ROLES = [
+      {
+        id: 'admin',
+        name: 'Company Admin',
+        color: 'blue',
+        badgeStyle: 'bg-appleBlue-50 text-appleBlue-600 border-appleBlue-100',
+        desc: 'Full administrative control over hardware, team, and billing operations.',
+        isSystem: true,
+        permissions: [
+          'telemetry.read', 'hardware.config', 'hardware.reboot',
+          'team.invite', 'team.roles', 'team.remove',
+          'ops.approve', 'ops.inventory',
+          'finance.read', 'finance.billing', 'audit.export'
+        ]
+      },
+      {
+        id: 'engineer',
+        name: 'Field Engineer',
+        color: 'green',
+        badgeStyle: 'bg-appleGreen-50 text-appleGreen-600 border-appleGreen-100',
+        desc: 'Technical access to grid hardware telemetry and remote sensor controls.',
+        isSystem: true,
+        permissions: ['telemetry.read', 'hardware.config', 'hardware.reboot', 'ops.approve']
+      },
+      {
+        id: 'manager',
+        name: 'Operations Manager',
+        color: 'orange',
+        badgeStyle: 'bg-appleOrange-50 text-appleOrange-500 border-orange-100',
+        desc: 'Oversees inventory logistics, member invitations, and compliance audits.',
+        isSystem: true,
+        permissions: ['telemetry.read', 'team.invite', 'ops.approve', 'ops.inventory', 'audit.export']
+      },
+      {
+        id: 'auditor',
+        name: 'Compliance Auditor',
+        color: 'purple',
+        badgeStyle: 'bg-applePurple-50 text-applePurple-500 border-purple-100',
+        desc: 'Read-only access for external audit logs and financial statements.',
+        isSystem: false,
+        permissions: ['telemetry.read', 'finance.read', 'audit.export']
+      },
+      {
+        id: 'viewer',
+        name: 'Read-Only Viewer',
+        color: 'gray',
+        badgeStyle: 'bg-slate-100 text-slate-600 border-slate-200',
+        desc: 'Basic read access to public operational dashboards and telemetry logs.',
+        isSystem: true,
+        permissions: ['telemetry.read']
+      }
+    ];
+
+    const INITIAL_MEMBERS = [
+      {
+        id: 'usr-1',
+        name: 'Adewale Musa',
+        email: 'adewale@example.com',
+        avatar: 'AM',
+        avatarBg: 'bg-appleBlue-500 text-white',
+        joined: '12 Jan 2026',
+        lastActive: 'Online now',
+        isOwner: true,
+        isSelf: true,
+        status: 'Active',
+        department: 'Executive Board',
+        roleIds: ['admin', 'engineer'],
+        securityScore: 98,
+        twoFactor: true,
+      },
+      {
+        id: 'usr-2',
+        name: 'Kemi Adeyemi',
+        email: 'kemi@example.com',
+        avatar: 'KA',
+        avatarBg: 'bg-appleGreen-500 text-white',
+        joined: '03 Feb 2026',
+        lastActive: '14 mins ago',
+        isOwner: false,
+        isSelf: false,
+        status: 'Active',
+        department: 'Field Engineering',
+        roleIds: ['engineer'],
+        securityScore: 94,
+        twoFactor: true,
+      },
+      {
+        id: 'usr-3',
+        name: 'Tunde Balogun',
+        email: 'tunde@example.com',
+        avatar: 'TB',
+        avatarBg: 'bg-appleOrange-500 text-white',
+        joined: '18 Mar 2026',
+        lastActive: '2 hours ago',
+        isOwner: false,
+        isSelf: false,
+        status: 'Active',
+        department: 'Operations & Logistics',
+        roleIds: ['manager'],
+        securityScore: 88,
+        twoFactor: false,
+      },
+      {
+        id: 'usr-4',
+        name: 'Fatima Yusuf',
+        email: 'fatima@example.com',
+        avatar: 'FY',
+        avatarBg: 'bg-applePurple-500 text-white',
+        joined: '27 May 2026',
+        lastActive: 'Yesterday',
+        isOwner: false,
+        isSelf: false,
+        status: 'Active',
+        department: 'Finance & Compliance',
+        roleIds: ['auditor'],
+        securityScore: 96,
+        twoFactor: true,
+      }
+    ];
+
+    const INITIAL_AUDIT_LOGS = [
+      { id: 'log-1', action: 'Modified Role entitlement policy', user: 'Adewale Musa', target: 'Compliance Auditor', time: '10 mins ago', type: 'security' },
+      { id: 'log-2', action: 'Invited team member chidi@example.com', user: 'Adewale Musa', target: 'Field Engineering', time: '1 hour ago', type: 'invite' },
+      { id: 'log-3', action: 'Executed Remote Gateway Flash', user: 'Kemi Adeyemi', target: 'Kano Microgrid Inverter 4', time: '3 hours ago', type: 'hardware' },
+      { id: 'log-4', action: 'Exported Financial Compliance Audit', user: 'Fatima Yusuf', target: 'Q3 Financials', time: 'Yesterday', type: 'audit' },
+    ];
+
+    function App() {
+      const [roles, setRoles] = useState(INITIAL_ROLES);
+      const [members, setMembers] = useState(INITIAL_MEMBERS);
+      const [auditLogs, setAuditLogs] = useState(INITIAL_AUDIT_LOGS);
+
+      // Workspace Selector State
+      const [workspaces] = useState([
+        { id: 'ws-1', name: 'Sun & Shield Power', plan: 'Enterprise', seats: '4/10' },
+        { id: 'ws-2', name: 'Kano Microgrid Project', plan: 'Starter', seats: '2/5' },
+      ]);
+      const [selectedWorkspace, setSelectedWorkspace] = useState(workspaces[0]);
+      const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false);
+
+      // Tab Controls: 'members' | 'roles' | 'matrix' | 'test' | 'audit'
+      const [activeTab, setActiveTab] = useState('members');
+      const [viewMode, setViewMode] = useState('grid');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [departmentFilter, setDepartmentFilter] = useState('all');
+      
+      // Batch selections & Toasts
+      const [selectedMemberIds, setSelectedMemberIds] = useState([]);
+      const [toast, setToast] = useState(null);
+
+      // Modals / Drawers
+      const [editingRole, setEditingRole] = useState(null);
+      const [selectedMemberDrawer, setSelectedMemberDrawer] = useState(null);
+      const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+      const [testSimulatorTarget, setTestSimulatorTarget] = useState({ memberId: 'usr-2', permId: 'hardware.config' });
+
+      // Trigger iOS Banner Notification
+      const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3600);
+      };
+
+      // Handle Role Save / Update
+      const handleSaveRole = (roleData) => {
+        if (!roleData.name.trim()) {
+          showToast('Please specify a role title.', 'error');
+          return;
+        }
+
+        if (editingRole && editingRole.id && roles.some(r => r.id === editingRole.id)) {
+          setRoles(prev => prev.map(r => r.id === editingRole.id ? { ...r, ...roleData } : r));
+          showToast(`Updated "${roleData.name}" entitlement policies`);
+        } else {
+          const newRole = {
+            id: `role-${Date.now()}`,
+            name: roleData.name,
+            desc: roleData.desc || 'Custom created role template.',
+            color: 'purple',
+            badgeStyle: 'bg-applePurple-50 text-applePurple-500 border-purple-100',
+            isSystem: false,
+            permissions: roleData.permissions || []
+          };
+          setRoles(prev => [...prev, newRole]);
+          showToast(`Created role template "${newRole.name}"`);
+        }
+        setEditingRole(null);
+      };
+
+      // Duplicate Role Template
+      const handleDuplicateRole = (role) => {
+        const dup = {
+          ...role,
+          id: `role-${Date.now()}`,
+          name: `${role.name} Copy`,
+          isSystem: false,
+        };
+        setRoles(prev => [...prev, dup]);
+        showToast(`Duplicated role as "${dup.name}"`);
+      };
+
+      // Delete Custom Role
+      const handleDeleteRole = (roleId, roleName) => {
+        const count = members.filter(m => m.roleIds.includes(roleId)).length;
+        if (count > 0) {
+          showToast(`Cannot delete "${roleName}". ${count} member(s) hold this role.`, 'error');
+          return;
+        }
+        setRoles(prev => prev.filter(r => r.id !== roleId));
+        showToast(`Deleted custom role "${roleName}"`, 'info');
+      };
+
+      // Toggle Member Role Assignment
+      const handleToggleMemberRole = (memberId, roleId) => {
+        setMembers(prev => prev.map(m => {
+          if (m.id !== memberId) return m;
+          const has = m.roleIds.includes(roleId);
+          const updated = has ? m.roleIds.filter(id => id !== roleId) : [...m.roleIds, roleId];
+          const rObj = roles.find(r => r.id === roleId);
+          showToast(`${has ? 'Revoked' : 'Assigned'} ${rObj?.name || 'role'} for ${m.name}`);
+          return { ...m, roleIds: updated };
+        }));
+
+        if (selectedMemberDrawer && selectedMemberDrawer.id === memberId) {
+          setSelectedMemberDrawer(prev => ({
+            ...prev,
+            roleIds: prev.roleIds.includes(roleId)
+              ? prev.roleIds.filter(id => id !== roleId)
+              : [...prev.roleIds, roleId]
+          }));
+        }
+      };
+
+      // Filtered Members calculation
+      const filteredMembers = useMemo(() => {
+        return members.filter(m => {
+          const q = searchQuery.toLowerCase();
+          const matchesQuery = m.name.toLowerCase().includes(q) || 
+                               m.email.toLowerCase().includes(q) ||
+                               m.department.toLowerCase().includes(q);
+          const matchesDept = departmentFilter === 'all' || m.department === departmentFilter;
+          return matchesQuery && matchesDept;
+        });
+      }, [members, searchQuery, departmentFilter]);
+
+      // Department extraction
+      const departments = useMemo(() => {
+        return Array.from(new Set(members.map(m => m.department)));
+      }, [members]);
+
+      // Check member permission logic
+      const checkMemberPermission = (memberId, permId) => {
+        const m = members.find(x => x.id === memberId);
+        if (!m) return false;
+        return m.roleIds.some(rId => {
+          const r = roles.find(x => x.id === rId);
+          return r ? r.permissions.includes(permId) : false;
+        });
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-[#F2F2F7] text-slate-900 font-sans">
+          
+          {/* iOS Floating Banner Notification */}
+          {toast && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-ios-banner flex items-center gap-3 px-5 py-3 rounded-full apple-dark-glass text-white text-xs font-semibold shadow-apple-float border border-white/10 max-w-sm w-full">
+              <span className={`w-2.5 h-2.5 rounded-full ${toast.type === 'error' ? 'bg-appleRed-500' : 'bg-appleGreen-500'} animate-pulse`}></span>
+              <span className="flex-1 truncate">{toast.message}</span>
+              <button onClick={() => setToast(null)} className="p-0.5 text-slate-400 hover:text-white">
+                <Icon name="cross" className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Apple Style Translucent Navigation Bar */}
+          <header className="sticky top-0 z-30 apple-glass border-b border-slate-200/60 px-4 lg:px-8 py-3.5">
+            <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+              
+              {/* Brand & Workspace Popover Menu */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-appleBlue-600 to-appleBlue-500 flex items-center justify-center text-white shadow-apple-sm shrink-0">
+                  <Icon name="shield" className="w-5 h-5" />
+                </div>
+                
+                <div>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsWorkspaceMenuOpen(!isWorkspaceMenuOpen)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-appleBlue-500 transition-colors apple-press"
+                    >
+                      <span>{selectedWorkspace.name}</span>
+                      <span className="px-1.5 py-0.2 rounded-md text-[9px] font-extrabold bg-appleBlue-50 text-appleBlue-600 border border-appleBlue-100 uppercase tracking-wider">
+                        {selectedWorkspace.plan}
+                      </span>
+                      <Icon name="chevronDown" className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
+
+                    {/* iOS Context Menu */}
+                    {isWorkspaceMenuOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-60 rounded-2xl bg-white/90 backdrop-blur-xl border border-slate-200/80 shadow-apple-float p-1.5 z-40 animate-fade-in">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1.5">Switch Workspace</div>
+                        {workspaces.map(ws => (
+                          <button
+                            key={ws.id}
+                            onClick={() => {
+                              setSelectedWorkspace(ws);
+                              setIsWorkspaceMenuOpen(false);
+                              showToast(`Switched workspace to ${ws.name}`);
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-all ${
+                              ws.id === selectedWorkspace.id ? 'bg-appleBlue-50 text-appleBlue-600 font-bold' : 'hover:bg-slate-100/70 text-slate-700'
+                            }`}
+                          >
+                            <span>{ws.name}</span>
+                            <span className="text-[10px] text-slate-400">{ws.seats} seats</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium">Team Access & Roles • Apple HIG v4</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditingRole({ name: '', desc: '', permissions: [] })}
+                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/90 border border-slate-200/80 text-slate-700 hover:bg-white font-semibold text-xs shadow-apple-sm apple-press"
+                >
+                  <Icon name="plus" className="w-4 h-4 text-appleBlue-500" />
+                  <span>New Role</span>
+                </button>
+
+                <button
+                  onClick={() => setIsInviteModalOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-appleBlue-500 hover:bg-appleBlue-600 text-white font-semibold text-xs shadow-apple-sm apple-press"
+                >
+                  <Icon name="mail" className="w-4 h-4" />
+                  <span>Invite Member</span>
+                </button>
+              </div>
+
+            </div>
+          </header>
+
+          {}
+          <main className="flex-1 max-w-6xl w-full mx-auto px-4 lg:px-8 py-6 flex flex-col gap-6">
+
+            {/* HIG Dashboard Metric Widgets */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+              
+              <div className="bg-white/80 backdrop-blur-md p-4 rounded-apple-card border border-slate-200/60 shadow-apple-card flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Defined Roles</span>
+                  <div className="w-8 h-8 rounded-full bg-appleBlue-50 text-appleBlue-500 flex items-center justify-center font-bold">
+                    <Icon name="key" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">{roles.length}</div>
+                  <p className="text-[11px] font-semibold text-appleBlue-500 mt-0.5">
+                    {roles.filter(r => !r.isSystem).length} Custom Roles
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-md p-4 rounded-apple-card border border-slate-200/60 shadow-apple-card flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Seats</span>
+                  <div className="w-8 h-8 rounded-full bg-appleGreen-50 text-appleGreen-500 flex items-center justify-center font-bold">
+                    <Icon name="users" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">{members.length} / 10</div>
+                  <p className="text-[11px] font-semibold text-appleGreen-600 mt-0.5">4 Licenses Used</p>
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-md p-4 rounded-apple-card border border-slate-200/60 shadow-apple-card flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Security Score</span>
+                  <div className="w-8 h-8 rounded-full bg-applePurple-50 text-applePurple-500 flex items-center justify-center font-bold">
+                    <Icon name="shield" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">96%</div>
+                  <p className="text-[11px] font-semibold text-applePurple-500 mt-0.5">3 of 4 2FA Protected</p>
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-md p-4 rounded-apple-card border border-slate-200/60 shadow-apple-card flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending Invites</span>
+                  <div className="w-8 h-8 rounded-full bg-appleOrange-50 text-appleOrange-500 flex items-center justify-center font-bold">
+                    <Icon name="mail" className="w-4 h-4" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">1</div>
+                  <p className="text-[11px] font-semibold text-appleOrange-500 mt-0.5">Expires in 7 days</p>
+                </div>
+              </div>
+
+            </div>
+
+            {}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              
+              {/* Apple iOS Segmented Control */}
+              <div className="p-1 rounded-2xl bg-slate-200/70 backdrop-blur-md flex items-center gap-1 w-full sm:w-auto overflow-x-auto shadow-inner">
+                
+                <button
+                  onClick={() => setActiveTab('members')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all apple-press ${
+                    activeTab === 'members'
+                      ? 'bg-white text-slate-900 shadow-apple-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon name="users" className="w-4 h-4" />
+                  <span>Directory</span>
+                  <span className="px-1.5 py-0.2 rounded-md text-[10px] bg-slate-100 font-extrabold text-slate-700">
+                    {members.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('roles')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all apple-press ${
+                    activeTab === 'roles'
+                      ? 'bg-white text-slate-900 shadow-apple-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon name="roleEdit" className="w-4 h-4" />
+                  <span>Role Studio</span>
+                  <span className="px-1.5 py-0.2 rounded-md text-[10px] bg-appleBlue-50 text-appleBlue-600 font-extrabold">
+                    {roles.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('matrix')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all apple-press ${
+                    activeTab === 'matrix'
+                      ? 'bg-white text-slate-900 shadow-apple-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon name="key" className="w-4 h-4" />
+                  <span>Matrix</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('test')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all apple-press ${
+                    activeTab === 'test'
+                      ? 'bg-white text-slate-900 shadow-apple-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon name="test" className="w-4 h-4" />
+                  <span>Simulator</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('audit')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all apple-press ${
+                    activeTab === 'audit'
+                      ? 'bg-white text-slate-900 shadow-apple-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon name="activity" className="w-4 h-4" />
+                  <span>Audit Trail</span>
+                </button>
+
+              </div>
+
+              {/* Filtering Controls */}
+              {activeTab === 'members' && (
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 sm:w-52">
+                    <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search directory..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-appleBlue-500 shadow-apple-sm"
+                    />
+                  </div>
+
+                  <select
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-700 focus:outline-none focus:border-appleBlue-500 shadow-apple-sm"
+                  >
+                    <option value="all">All Depts</option>
+                    {departments.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+
+                  <div className="flex items-center p-0.5 rounded-xl bg-slate-200/70">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white text-appleBlue-500 shadow-apple-sm' : 'text-slate-600'}`}
+                      title="Grid Layout"
+                    >
+                      <Icon name="grid" className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('table')}
+                      className={`p-1.5 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white text-appleBlue-500 shadow-apple-sm' : 'text-slate-600'}`}
+                      title="List Layout"
+                    >
+                      <Icon name="list" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {}
+            
+            {/* TAB 1: TEAM DIRECTORY */}
+            {activeTab === 'members' && (
+              <div className="animate-fade-in space-y-4">
+                
+                {/* Batch Actions Floating Toolbar */}
+                {selectedMemberIds.length > 0 && (
+                  <div className="p-3 rounded-apple-card bg-slate-900 text-white flex items-center justify-between shadow-apple-float animate-fade-in">
+                    <span className="text-xs font-bold pl-2">
+                      {selectedMemberIds.length} member(s) selected
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          showToast(`Exported access profile for ${selectedMemberIds.length} members`);
+                          setSelectedMemberIds([]);
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-appleBlue-500 hover:bg-appleBlue-600 text-xs font-bold apple-press flex items-center gap-1.5"
+                      >
+                        <Icon name="download" className="w-3.5 h-3.5" />
+                        <span>Export CSV</span>
+                      </button>
+                      <button
+                        onClick={() => setSelectedMemberIds([])}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white"
+                      >
+                        Deselect
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filteredMembers.map(member => {
+                      const isSelected = selectedMemberIds.includes(member.id);
+                      return (
+                        <div
+                          key={member.id}
+                          className={`bg-white rounded-apple-lg p-5 border shadow-apple-card hover:shadow-apple-float transition-all flex flex-col justify-between ${
+                            isSelected ? 'border-appleBlue-500 bg-appleBlue-50/20' : 'border-slate-200/70'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-3 mb-4">
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) setSelectedMemberIds(prev => [...prev, member.id]);
+                                    else setSelectedMemberIds(prev => prev.filter(x => x !== member.id));
+                                  }}
+                                  className="w-4 h-4 accent-appleBlue-500 rounded"
+                                />
+                                <div className={`w-11 h-11 rounded-full ${member.avatarBg} flex items-center justify-center font-bold text-sm shadow-apple-sm shrink-0`}>
+                                  {member.avatar}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-extrabold text-slate-900">{member.name}</h3>
+                                    {member.isOwner && (
+                                      <span className="px-2 py-0.5 rounded-md bg-applePurple-50 text-applePurple-500 text-[9px] font-extrabold uppercase tracking-wider border border-purple-100">
+                                        Owner
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-slate-500 font-medium">{member.email}</p>
+                                </div>
+                              </div>
+                              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+                                {member.department}
+                              </span>
+                            </div>
+
+                            {/* Role Badges */}
+                            <div className="mb-4 bg-slate-50/80 p-3 rounded-2xl border border-slate-100">
+                              <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Assigned Roles</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {roles.map(role => {
+                                  const hasRole = member.roleIds.includes(role.id);
+                                  return (
+                                    <button
+                                      key={role.id}
+                                      onClick={() => !member.isSelf && handleToggleMemberRole(member.id, role.id)}
+                                      disabled={member.isSelf}
+                                      className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border ${
+                                        hasRole
+                                          ? 'bg-appleBlue-500 text-white border-appleBlue-600 shadow-apple-sm'
+                                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                                      } ${member.isSelf ? 'opacity-80 cursor-not-allowed' : 'cursor-pointer apple-press'}`}
+                                    >
+                                      <Icon name={hasRole ? 'check' : 'cross'} className="w-3 h-3" />
+                                      <span>{role.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                            <span className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px]">
+                              <span className="w-2 h-2 rounded-full bg-appleGreen-500"></span>
+                              <span>2FA Protected</span>
+                            </span>
+
+                            <button
+                              onClick={() => setSelectedMemberDrawer(member)}
+                              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-800 font-bold text-xs border border-slate-200/60 apple-press"
+                            >
+                              Manage Access
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-apple-lg border border-slate-200/70 shadow-apple-card overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-[10px] tracking-wider border-b border-slate-200/60">
+                          <tr>
+                            <th className="py-3.5 px-4">Member</th>
+                            <th className="py-3.5 px-4">Department</th>
+                            <th className="py-3.5 px-4">Assigned Roles</th>
+                            <th className="py-3.5 px-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredMembers.map(member => (
+                            <tr key={member.id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-9 h-9 rounded-full ${member.avatarBg} flex items-center justify-center font-bold text-xs shrink-0`}>
+                                    {member.avatar}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-slate-900">{member.name}</p>
+                                    <p className="text-[11px] text-slate-500">{member.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 font-medium text-slate-700">{member.department}</td>
+                              <td className="py-3 px-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {member.roleIds.map(rId => {
+                                    const rObj = roles.find(r => r.id === rId);
+                                    return (
+                                      <span key={rId} className="px-2 py-0.5 rounded-md bg-appleBlue-50 text-appleBlue-600 border border-appleBlue-100 font-bold text-[10px]">
+                                        {rObj?.name || rId}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <button
+                                  onClick={() => setSelectedMemberDrawer(member)}
+                                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold border border-slate-200 text-xs apple-press"
+                                >
+                                  Edit Access
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: ROLE STUDIO */}
+            {activeTab === 'roles' && (
+              <div className="flex flex-col gap-5 animate-fade-in">
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-extrabold text-slate-900">Custom Role Studio</h2>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Design role templates with custom permission scopes and iOS toggle parameters.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setEditingRole({ name: '', desc: '', permissions: [] })}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-appleBlue-500 hover:bg-appleBlue-600 text-white font-semibold text-xs shadow-apple-sm apple-press"
+                  >
+                    <Icon name="plus" className="w-4 h-4" />
+                    <span>Create Custom Role</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {roles.map(role => {
+                    const assignedCount = members.filter(m => m.roleIds.includes(role.id)).length;
+                    
+                    return (
+                      <div 
+                        key={role.id}
+                        className="bg-white rounded-apple-lg p-5 border border-slate-200/70 shadow-apple-card hover:shadow-apple-float transition-all flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-2xl bg-appleBlue-50 text-appleBlue-500 border border-appleBlue-100 flex items-center justify-center shrink-0 font-bold">
+                                <Icon name="roleEdit" className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-extrabold text-slate-900">{role.name}</h3>
+                                <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase tracking-wider mt-0.5 border ${role.badgeStyle}`}>
+                                  {role.isSystem ? 'System Template' : 'Custom Role'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-slate-600 leading-relaxed mb-4">{role.desc}</p>
+
+                          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 mb-4">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-2">
+                              <span>Configured Scopes</span>
+                              <span className="px-2 py-0.5 rounded-full bg-appleBlue-100 text-appleBlue-700 text-[10px] font-black">
+                                {role.permissions.length} Enabled
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {role.permissions.slice(0, 3).map(pId => (
+                                <span key={pId} className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] text-slate-600 font-medium">
+                                  {pId}
+                                </span>
+                              ))}
+                              {role.permissions.length > 3 && (
+                                <span className="px-2 py-0.5 rounded bg-slate-200 text-[10px] text-slate-700 font-bold">
+                                  +{role.permissions.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-slate-500">
+                            <strong>{assignedCount}</strong> {assignedCount === 1 ? 'member' : 'members'}
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleDuplicateRole(role)}
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold apple-press"
+                              title="Duplicate Template"
+                            >
+                              <Icon name="duplicate" className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => setEditingRole(role)}
+                              className="px-3.5 py-1.5 rounded-xl bg-appleBlue-50 hover:bg-appleBlue-100 text-appleBlue-600 border border-appleBlue-100 text-xs font-bold apple-press flex items-center gap-1"
+                            >
+                              <Icon name="roleEdit" className="w-3.5 h-3.5" />
+                              <span>Edit</span>
+                            </button>
+
+                            {!role.isSystem && (
+                              <button
+                                onClick={() => handleDeleteRole(role.id, role.name)}
+                                className="p-2 rounded-xl bg-appleRed-50 hover:bg-appleRed-50/80 text-appleRed-500 text-xs font-bold apple-press"
+                                title="Delete Custom Role"
+                              >
+                                <Icon name="trash" className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB 3: PERMISSIONS MATRIX */}
+            {activeTab === 'matrix' && (
+              <div className="bg-white rounded-apple-lg p-6 border border-slate-200/70 shadow-apple-card animate-fade-in overflow-x-auto">
+                <div className="mb-4">
+                  <h3 className="text-base font-extrabold text-slate-900">Capabilities & Entitlements Matrix</h3>
+                  <p className="text-xs text-slate-500 font-medium">Cross-reference map between active system roles and operational policy tokens.</p>
+                </div>
+
+                <table className="w-full text-left text-xs border-collapse min-w-[650px]">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200/80 bg-slate-50">
+                      <th className="py-3.5 px-4 font-bold text-slate-500 uppercase text-[10px]">Permission Policy Token</th>
+                      {roles.map(r => (
+                        <th key={r.id} className="py-3.5 px-3 font-extrabold text-slate-900 text-center">
+                          {r.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {PERMISSION_TAXONOMY.flatMap(cat => cat.items).map(perm => (
+                      <tr key={perm.id} className="hover:bg-slate-50/80">
+                        <td className="py-3.5 px-4">
+                          <p className="font-bold text-slate-900">{perm.label}</p>
+                          <p className="text-[11px] text-slate-500">{perm.desc}</p>
+                        </td>
+                        {roles.map(r => {
+                          const has = r.permissions.includes(perm.id);
+                          return (
+                            <td key={r.id} className="py-3.5 px-3 text-center">
+                              {has ? (
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-appleGreen-50 text-appleGreen-600 font-extrabold text-xs">
+                                  ✓
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-300">
+                                  -
+                                </span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* TAB 4: POLICY SIMULATOR */}
+            {activeTab === 'test' && (
+              <div className="bg-white rounded-apple-lg p-6 border border-slate-200/70 shadow-apple-card animate-fade-in">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200/60">
+                  <div className="w-10 h-10 rounded-2xl bg-appleBlue-50 text-appleBlue-500 flex items-center justify-center font-bold">
+                    <Icon name="test" className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">Live Entitlement Policy Simulator</h3>
+                    <p className="text-xs text-slate-500 font-medium">Pick a target team member and simulate whether their aggregated roles permit an action.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Select Target Member</label>
+                      <select
+                        value={testSimulatorTarget.memberId}
+                        onChange={(e) => setTestSimulatorTarget(prev => ({ ...prev, memberId: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 font-bold focus:outline-none focus:border-appleBlue-500 shadow-apple-sm"
+                      >
+                        {members.map(m => (
+                          <option key={m.id} value={m.id}>{m.name} ({m.department})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Select Action Token to Test</label>
+                      <select
+                        value={testSimulatorTarget.permId}
+                        onChange={(e) => setTestSimulatorTarget(prev => ({ ...prev, permId: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 font-bold focus:outline-none focus:border-appleBlue-500 shadow-apple-sm"
+                      >
+                        {PERMISSION_TAXONOMY.flatMap(cat => cat.items).map(p => (
+                          <option key={p.id} value={p.id}>{p.label} [{p.id}]</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const memberObj = members.find(m => m.id === testSimulatorTarget.memberId);
+                    const permObj = PERMISSION_TAXONOMY.flatMap(cat => cat.items).find(p => p.id === testSimulatorTarget.permId);
+                    const hasAccess = checkMemberPermission(testSimulatorTarget.memberId, testSimulatorTarget.permId);
+
+                    return (
+                      <div className={`p-5 rounded-apple-lg border flex flex-col justify-between ${
+                        hasAccess 
+                          ? 'bg-appleGreen-50/50 border-appleGreen-100 text-emerald-950' 
+                          : 'bg-appleRed-50/50 border-appleRed-50 text-rose-950'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Evaluation Result</span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                              hasAccess ? 'bg-appleGreen-500 text-white shadow-apple-sm' : 'bg-appleRed-500 text-white shadow-apple-sm'
+                            }`}>
+                              {hasAccess ? 'ACCESS ALLOWED ✓' : 'ACCESS DENIED ✕'}
+                            </span>
+                          </div>
+
+                          <h4 className="text-base font-extrabold mb-1">
+                            {memberObj?.name} ➔ "{permObj?.label}"
+                          </h4>
+                          <p className="text-xs opacity-80 mb-4">{permObj?.desc}</p>
+
+                          <div className="text-xs font-medium space-y-1.5 bg-white/90 p-3.5 rounded-2xl border border-slate-200/80">
+                            <div className="font-bold text-slate-700 mb-1">Inherited Role Policy Matches:</div>
+                            {memberObj?.roleIds.map(rId => {
+                              const r = roles.find(x => x.id === rId);
+                              const grantsIt = r?.permissions.includes(testSimulatorTarget.permId);
+                              return (
+                                <div key={rId} className="flex items-center justify-between">
+                                  <span>• {r?.name}</span>
+                                  <span className={`font-bold ${grantsIt ? 'text-appleGreen-600' : 'text-slate-400'}`}>
+                                    {grantsIt ? 'Grants Access' : 'No Policy Match'}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] font-semibold text-slate-500">
+                          Evaluated via BIGDROPS Apple HIG RBAC Engine v4
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: SECURITY AUDIT TRAIL */}
+            {activeTab === 'audit' && (
+              <div className="bg-white rounded-apple-lg p-6 border border-slate-200/70 shadow-apple-card animate-fade-in">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/60">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">Security & Access Audit Log</h3>
+                    <p className="text-xs text-slate-500 font-medium">Real-time immutable event log of administrative privilege changes.</p>
+                  </div>
+
+                  <button
+                    onClick={() => showToast('Refreshed security audit logs')}
+                    className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold apple-press"
+                  >
+                    Refresh Logs
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {auditLogs.map(log => (
+                    <div key={log.id} className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-appleBlue-50 text-appleBlue-500 flex items-center justify-center font-bold shrink-0">
+                          <Icon name="shield" className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900">{log.action}</p>
+                          <p className="text-[11px] text-slate-500">By {log.user} • Target: {log.target}</p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-400 shrink-0">{log.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {}
+          
+          {/* MODAL 1: CREATE / EDIT ROLE SHEET */}
+          {editingRole && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-md animate-fade-in p-0 sm:p-4">
+              <div className="bg-white w-full sm:max-w-2xl max-h-[90vh] rounded-t-apple-xl sm:rounded-apple-xl border border-slate-200 shadow-apple-modal flex flex-col overflow-hidden animate-ios-sheet">
+                
+                {/* Mobile iOS Drag Handle Bar */}
+                <div className="w-9 h-1 bg-slate-300 rounded-full mx-auto my-3 sm:hidden"></div>
+
+                <div className="px-6 py-4 border-b border-slate-200/60 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">
+                      {editingRole.id ? `Edit Role: ${editingRole.name}` : 'Create Custom Role'}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">Configure role identity and iOS switch entitlement controls</p>
+                  </div>
+                  <button onClick={() => setEditingRole(null)} className="p-1 text-slate-400 hover:text-slate-700">
+                    <Icon name="cross" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                  
+                  {/* Metadata Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Role Title *</label>
+                      <input
+                        type="text"
+                        value={editingRole.name}
+                        onChange={(e) => setEditingRole(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g. Field Inspector"
+                        className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 font-bold focus:outline-none focus:border-appleBlue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={editingRole.desc}
+                        onChange={(e) => setEditingRole(prev => ({ ...prev, desc: e.target.value }))}
+                        placeholder="Short operational summary..."
+                        className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 focus:outline-none focus:border-appleBlue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* iOS Style Grouped List Permissions Switch Checklist */}
+                  <div>
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-appleBlue-600 mb-3">
+                      Entitlement Policies ({editingRole.permissions?.length || 0} enabled)
+                    </h4>
+
+                    <div className="space-y-4">
+                      {PERMISSION_TAXONOMY.map(cat => (
+                        <div key={cat.category} className="p-4 rounded-apple-lg bg-slate-50/80 border border-slate-200/60">
+                          <h5 className="text-xs font-extrabold text-slate-900 mb-3">{cat.category}</h5>
+                          <div className="space-y-2.5">
+                            {cat.items.map(item => {
+                              const checked = editingRole.permissions?.includes(item.id);
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center justify-between p-3 rounded-2xl bg-white border border-slate-100 shadow-apple-sm"
+                                >
+                                  <div className="pr-4">
+                                    <span className="text-xs font-bold text-slate-900 block">{item.label}</span>
+                                    <span className="text-[11px] text-slate-500 block">{item.desc}</span>
+                                  </div>
+                                  
+                                  {/* iOS Toggle Switch */}
+                                  <label className="ios-switch shrink-0">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked || false}
+                                      onChange={(e) => {
+                                        const perms = editingRole.permissions || [];
+                                        const updated = e.target.checked
+                                          ? [...perms, item.id]
+                                          : perms.filter(x => x !== item.id);
+                                        setEditingRole(prev => ({ ...prev, permissions: updated }));
+                                      }}
+                                    />
+                                    <span className="ios-slider"></span>
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+
+                <div className="px-6 py-4 border-t border-slate-200/60 bg-slate-50 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => setEditingRole(null)}
+                    className="px-4 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 apple-press"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleSaveRole(editingRole)}
+                    className="px-5 py-2.5 rounded-2xl bg-appleBlue-500 hover:bg-appleBlue-600 text-white font-bold text-xs shadow-apple-sm apple-press"
+                  >
+                    Save Role Template
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* MODAL 2: MEMBER ACCESS DRAWER */}
+          {selectedMemberDrawer && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-end bg-slate-900/40 backdrop-blur-md animate-fade-in">
+              <div className="bg-white w-full sm:max-w-md h-[85vh] sm:h-full p-6 border-l border-slate-200 shadow-apple-modal flex flex-col justify-between overflow-y-auto rounded-t-apple-xl sm:rounded-none animate-ios-sheet">
+                <div>
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-200/60">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full ${selectedMemberDrawer.avatarBg} flex items-center justify-center font-bold text-sm text-white`}>
+                        {selectedMemberDrawer.avatar}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-extrabold text-slate-900">{selectedMemberDrawer.name}</h3>
+                        <p className="text-xs text-slate-500">{selectedMemberDrawer.email}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setSelectedMemberDrawer(null)} className="p-1 text-slate-400 hover:text-slate-700">
+                      <Icon name="cross" className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="py-5 space-y-4">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-appleBlue-600">Assigned Roles</h4>
+
+                    <div className="space-y-2">
+                      {roles.map(role => {
+                        const hasRole = selectedMemberDrawer.roleIds.includes(role.id);
+                        return (
+                          <div key={role.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-bold text-slate-900 block">{role.name}</span>
+                              <span className="text-[10px] text-slate-500 block">{role.permissions.length} capabilities</span>
+                            </div>
+                            <button
+                              onClick={() => handleToggleMemberRole(selectedMemberDrawer.id, role.id)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold apple-press ${
+                                hasRole
+                                  ? 'bg-appleBlue-500 text-white shadow-apple-sm'
+                                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              {hasRole ? 'Assigned ✓' : '+ Assign'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSelectedMemberDrawer(null)}
+                  className="w-full py-3 rounded-2xl bg-slate-900 text-white font-bold text-xs apple-press"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL 3: INVITE MEMBER MODAL */}
+          {isInviteModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-fade-in">
+              <div className="bg-white w-full max-w-md p-6 rounded-apple-xl border border-slate-200 shadow-apple-modal relative animate-ios-sheet">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-2xl bg-appleBlue-50 text-appleBlue-500 flex items-center justify-center font-bold">
+                      <Icon name="mail" className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900">Invite Workspace Member</h3>
+                      <p className="text-xs text-slate-500 font-medium">Send an email invitation with initial role</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsInviteModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+                    <Icon name="cross" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  showToast('Invitation dispatched to team member!');
+                  setIsInviteModalOpen(false);
+                }} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Email Address</label>
+                    <input
+                      required
+                      type="email"
+                      placeholder="e.g. colleague@company.com"
+                      className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 focus:outline-none focus:border-appleBlue-500 shadow-apple-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Initial Role Template</label>
+                    <select className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 font-bold focus:outline-none focus:border-appleBlue-500 shadow-apple-sm">
+                      {roles.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsInviteModalOpen(false)}
+                      className="px-4 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-2xl bg-appleBlue-500 hover:bg-appleBlue-600 text-xs font-bold text-white shadow-apple-sm apple-press"
+                    >
+                      Send Invitation
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // Render Application
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
