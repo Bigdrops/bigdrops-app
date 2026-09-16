@@ -14,15 +14,19 @@
 --           External cron (cron-job.org) provides server-side recovery.
 -- ============================================================
 
--- 1. Unschedule pg_cron job
-DO $$
+-- 1. Unschedule pg_cron job (only if pg_cron extension exists)
+DO $block$
 DECLARE r RECORD;
 BEGIN
-  FOR r IN SELECT jobid FROM cron.job WHERE jobname = 'process-pgrst-schemas' LOOP
-    PERFORM cron.unschedule(r.jobid);
-    RAISE NOTICE 'Unscheduled pg_cron job: %', r.jobid;
-  END LOOP;
-END $$;
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'cron') THEN
+    FOR r IN SELECT jobid FROM cron.job WHERE jobname = 'process-pgrst-schemas' LOOP
+      PERFORM cron.unschedule(r.jobid);
+      RAISE NOTICE 'Unscheduled pg_cron job: %', r.jobid;
+    END LOOP;
+  ELSE
+    RAISE NOTICE 'pg_cron extension not installed — skipping unschedule';
+  END IF;
+END $block$;
 
 -- 2. Drop the pg_cron processor function (no longer needed)
 DROP FUNCTION IF EXISTS public._process_pending_pgrst_schemas();

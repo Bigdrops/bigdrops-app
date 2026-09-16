@@ -9,7 +9,16 @@
 -- "permission denied for table wht_receipts" in the Compliance Hub.
 --
 -- This matches the grant pattern used by other tenant tables.
+--
+-- Fresh-database guard (2026-09-15): the production schema does not exist on
+-- a clean replay. Skip there; run unchanged where the schema exists.
 
-GRANT SELECT, INSERT, UPDATE, DELETE
-  ON "entity_bigdrops-main_main".wht_receipts
-  TO anon, authenticated, service_role;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'entity_bigdrops-main_main') THEN
+    RAISE NOTICE 'Skipping wht_receipts tenant GRANT for disposable (schema missing) — no-op';
+    RETURN;
+  END IF;
+  GRANT SELECT, INSERT, UPDATE, DELETE
+    ON "entity_bigdrops-main_main".wht_receipts
+    TO anon, authenticated, service_role;
+END $$;

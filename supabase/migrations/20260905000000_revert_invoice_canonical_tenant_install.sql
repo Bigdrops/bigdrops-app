@@ -30,6 +30,7 @@
 -- Only schemas with the quotations table can compile the function (the typed
 -- variable v_row %I.quotations is resolved at CREATE FUNCTION time).
 
+DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'entity_bigdrops-main_main') THEN
 CREATE OR REPLACE FUNCTION "entity_bigdrops-main_main".revert_invoice_to_quotation_transaction(
     p_invoice_id uuid,
     p_quotation_payload jsonb,
@@ -128,7 +129,9 @@ BEGIN
     RETURN v_created_quotation;
 END;
 $function$;
+END IF; END $$;
 
+DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'entity_bigdrops-main_agbado') THEN
 CREATE OR REPLACE FUNCTION "entity_bigdrops-main_agbado".revert_invoice_to_quotation_transaction(
     p_invoice_id uuid,
     p_quotation_payload jsonb,
@@ -224,7 +227,9 @@ BEGIN
     RETURN v_created_quotation;
 END;
 $function$;
+END IF; END $$;
 
+DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'entity_bigdrops-main_alarm') THEN
 CREATE OR REPLACE FUNCTION "entity_bigdrops-main_alarm".revert_invoice_to_quotation_transaction(
     p_invoice_id uuid,
     p_quotation_payload jsonb,
@@ -320,7 +325,9 @@ BEGIN
     RETURN v_created_quotation;
 END;
 $function$;
+END IF; END $$;
 
+DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'entity_bigdrops-main_ogombo') THEN
 CREATE OR REPLACE FUNCTION "entity_bigdrops-main_ogombo".revert_invoice_to_quotation_transaction(
     p_invoice_id uuid,
     p_quotation_payload jsonb,
@@ -416,6 +423,7 @@ BEGIN
     RETURN v_created_quotation;
 END;
 $function$;
+END IF; END $$;
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- C. Safety: drop any public remnant (already purged, belt-and-suspenders)

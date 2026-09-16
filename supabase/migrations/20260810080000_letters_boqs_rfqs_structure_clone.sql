@@ -5,18 +5,16 @@
 -- boq_rows and rfq_items stay in public (not in template tables).
 -- Drop their incoming FKs that LIKE INCLUDING ALL copies.
 --
--- Compatible with SQL editor (each DO block is self-contained).
-
-BEGIN;
-
--- ============================================================
--- 1. Clone empty tables
--- ============================================================
+-- All steps wrapped in a single DO block so early RETURN skips everything
+-- on non-production environments where entity_bigdrops-main_main doesn't exist.
 
 DO $$
 DECLARE
   v_entity_id TEXT;
   v_table RECORD;
+  v_letters INT;
+  v_boqs INT;
+  v_rfqs INT;
 BEGIN
   SELECT e.id::text INTO v_entity_id
   FROM public.entities e
@@ -26,12 +24,17 @@ BEGIN
   LIMIT 1;
 
   IF v_entity_id IS NULL THEN
-    RAISE EXCEPTION 'Production entity not found';
+    RAISE NOTICE 'Production entity not found — skipping letters/boqs/rfqs clone (non-production environment)';
+    RETURN;
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = v_entity_id) THEN
     EXECUTE format('CREATE SCHEMA %I', v_entity_id);
   END IF;
+
+  -- ============================================================
+  -- 1. Clone empty tables
+  -- ============================================================
 
   FOR v_table IN
     SELECT unnest(ARRAY['letters', 'boqs', 'rfqs']) AS table_name
@@ -42,24 +45,10 @@ BEGIN
     );
     RAISE NOTICE 'Cloned %.% (empty)', v_entity_id, v_table.table_name;
   END LOOP;
-END $$;
 
--- ============================================================
--- 2. Drop incoming FKs from child tables not in template tables
--- ============================================================
--- boq_rows references boqs, rfq_items references rfqs.
--- These child tables stay in public; drop their FKs on tenant side.
-
-DO $$
-DECLARE
-  v_entity_id TEXT;
-BEGIN
-  SELECT e.id::text INTO v_entity_id
-  FROM public.entities e
-  JOIN public.workspaces w ON w.id = e.workspace_id
-  WHERE w.slug = 'bigdrops-main'
-    AND e.slug = 'main'
-  LIMIT 1;
+  -- ============================================================
+  -- 2. Drop incoming FKs from child tables not in template tables
+  -- ============================================================
 
   EXECUTE format(
     'ALTER TABLE %I.%I DROP CONSTRAINT IF EXISTS boq_rows_boq_id_fkey',
@@ -72,23 +61,10 @@ BEGIN
   );
 
   RAISE NOTICE 'Dropped boq_rows/rfq_items FKs on tenant side';
-END $$;
 
--- ============================================================
--- 3. Enable RLS on tenant side
--- ============================================================
-
-DO $$
-DECLARE
-  v_entity_id TEXT;
-  v_table RECORD;
-BEGIN
-  SELECT e.id::text INTO v_entity_id
-  FROM public.entities e
-  JOIN public.workspaces w ON w.id = e.workspace_id
-  WHERE w.slug = 'bigdrops-main'
-    AND e.slug = 'main'
-  LIMIT 1;
+  -- ============================================================
+  -- 3. Enable RLS on tenant side
+  -- ============================================================
 
   FOR v_table IN
     SELECT unnest(ARRAY['letters', 'boqs', 'rfqs']) AS table_name
@@ -98,25 +74,10 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE 'Enabled RLS on tenant letters/boqs/rfqs';
-END $$;
 
--- ============================================================
--- 4. Validate
--- ============================================================
-
-DO $$
-DECLARE
-  v_entity_id TEXT;
-  v_letters INT;
-  v_boqs INT;
-  v_rfqs INT;
-BEGIN
-  SELECT e.id::text INTO v_entity_id
-  FROM public.entities e
-  JOIN public.workspaces w ON w.id = e.workspace_id
-  WHERE w.slug = 'bigdrops-main'
-    AND e.slug = 'main'
-  LIMIT 1;
+  -- ============================================================
+  -- 4. Validate
+  -- ============================================================
 
   EXECUTE format('SELECT count(*) FROM %I.letters', v_entity_id) INTO v_letters;
   EXECUTE format('SELECT count(*) FROM %I.boqs', v_entity_id) INTO v_boqs;
@@ -127,6 +88,5 @@ BEGIN
   END IF;
 
   RAISE NOTICE 'Letters/BOQs/RFQs structure-only clone validated (all empty)';
-END $$;
 
-COMMIT;
+END $$;

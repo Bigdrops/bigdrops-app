@@ -1,11 +1,8 @@
--- Domain: Audit & Activity
--- Tables: activity_events, audit_logs
--- Created: 2026-05-20
--- Source: Supabase SQL Editor CSV exports
+-- Bootstrap activity_events + audit_logs + core functions + tenant_master_template schema
+-- so migrations 20260520090001/02/03 can reference the type.
+-- 20260520090008_audit_activity.sql will skip its own CREATE TABLE IF NOT EXISTS.
 
--- ============================================================
--- TABLES
--- ============================================================
+CREATE SCHEMA IF NOT EXISTS tenant_master_template;
 
 CREATE TABLE IF NOT EXISTS activity_events (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -37,10 +34,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     reason text
 );
 
--- ============================================================
--- PRIMARY KEYS
--- ============================================================
-
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'activity_events_pkey') THEN
     ALTER TABLE activity_events ADD CONSTRAINT activity_events_pkey PRIMARY KEY (id);
@@ -53,10 +46,6 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- ============================================================
--- INDEXES
--- ============================================================
-
 CREATE INDEX IF NOT EXISTS idx_activity_events_entity ON public.activity_events USING btree (entity_type, entity_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_activity_events_event_type ON public.activity_events USING btree (event_type, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_activity_events_actor ON public.activity_events USING btree (actor_id, created_at DESC);
@@ -66,10 +55,6 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON public.audit_logs USING btre
 CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON public.audit_logs USING btree (actor_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs USING btree (action, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_scope ON public.audit_logs USING btree (scope_type, created_at DESC);
-
--- ============================================================
--- RLS POLICIES
--- ============================================================
 
 ALTER TABLE activity_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
@@ -91,10 +76,6 @@ DO $$ BEGIN
     CREATE POLICY team_members_can_view_all_audit_logs ON audit_logs FOR SELECT TO authenticated USING (true);
   END IF;
 END $$;
-
--- ============================================================
--- FUNCTIONS
--- ============================================================
 
 CREATE OR REPLACE FUNCTION public.record_activity_event(p_entity_type text, p_entity_id uuid, p_event_type text, p_entity_label text DEFAULT NULL::text, p_actor_id uuid DEFAULT NULL::uuid, p_actor_label text DEFAULT NULL::text, p_source text DEFAULT 'web'::text, p_scope_type text DEFAULT 'app'::text, p_metadata jsonb DEFAULT '{}'::jsonb, p_reason text DEFAULT NULL::text, p_dedupe_seconds integer DEFAULT 0)
  RETURNS activity_events

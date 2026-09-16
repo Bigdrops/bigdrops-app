@@ -45,6 +45,12 @@ DECLARE
     v_entity_id uuid;
 BEGIN
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.quotations') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping quotation member permission backfill (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     SELECT e.id INTO v_entity_id
     FROM public.entities e
     JOIN public.workspaces w ON w.id = e.workspace_id

@@ -34,6 +34,14 @@ DECLARE
     v_con RECORD;
     v_count INTEGER := 0;
 BEGIN
+    -- Skip clone if source schema does not exist (fresh DB).
+    -- The template seed migration (20260915194332) populates
+    -- tenant_master_template from committed DDL instead.
+    IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = v_src) THEN
+        RAISE NOTICE 'Source schema % does not exist — skipping clone', v_src;
+        RETURN;
+    END IF;
+
     -- Create template schema
     IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = v_tpl) THEN
         EXECUTE format('DROP SCHEMA %I CASCADE', v_tpl);

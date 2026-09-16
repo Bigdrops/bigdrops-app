@@ -48,6 +48,8 @@
 -- 1. CANONICAL TABLES IN tenant_master_template
 -- ============================================================
 
+CREATE SCHEMA IF NOT EXISTS tenant_master_template;
+
 CREATE TABLE IF NOT EXISTS tenant_master_template.accounting_accounts (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     code text NOT NULL,

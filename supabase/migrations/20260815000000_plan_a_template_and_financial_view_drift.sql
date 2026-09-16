@@ -210,6 +210,12 @@ DECLARE
     v_has_wrong    boolean;
 BEGIN
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.project_documents') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping Plan A production repair (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     -- Resolve the production entity from the schema name (no hardcoded UUIDs).
     SELECT
         e.id

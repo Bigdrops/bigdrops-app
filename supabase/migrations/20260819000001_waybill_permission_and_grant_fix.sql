@@ -39,6 +39,12 @@ DECLARE
     v_entity_id uuid;
 BEGIN
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.waybills') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping waybill permission seed (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     -- Resolve the production entity from the schema name (no hardcoded UUIDs).
     SELECT
         e.id
@@ -88,10 +94,19 @@ $do$;
 -- 2. TENANT TABLE GRANTS (mirror plan-c 20260817000000)
 -- ============================================================
 
-GRANT SELECT, INSERT, UPDATE, DELETE
-    ON "entity_bigdrops-main_main".waybills
-    TO anon, authenticated, service_role;
+DO $do$
+BEGIN
+    IF to_regclass('entity_bigdrops-main_main.waybills') IS NULL THEN
+        RAISE NOTICE 'entity_bigdrops-main_main.waybills not found — skipping GRANTs (non-production)';
+        RETURN;
+    END IF;
 
-GRANT SELECT, INSERT, UPDATE, DELETE
-    ON "entity_bigdrops-main_main".blank_waybill_logs
-    TO anon, authenticated, service_role;
+    GRANT SELECT, INSERT, UPDATE, DELETE
+        ON "entity_bigdrops-main_main".waybills
+        TO anon, authenticated, service_role;
+
+    GRANT SELECT, INSERT, UPDATE, DELETE
+        ON "entity_bigdrops-main_main".blank_waybill_logs
+        TO anon, authenticated, service_role;
+END;
+$do$;

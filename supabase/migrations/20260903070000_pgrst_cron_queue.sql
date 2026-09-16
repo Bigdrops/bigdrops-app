@@ -108,17 +108,24 @@ END;
 $$;
 
 -- 4. Schedule pg_cron job (runs every second, processes pending entries)
--- Safely unschedule any existing job with this name
-DO $$
-DECLARE r RECORD;
+-- Guard: skip if pg_cron extension is not installed
+DO $block$
+DECLARE
+  r RECORD;
 BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'cron') THEN
+    RAISE NOTICE 'pg_cron extension not installed — skipping cron job scheduling';
+    RETURN;
+  END IF;
+
+  -- Safely unschedule any existing job with this name
   FOR r IN SELECT jobid FROM cron.job WHERE jobname = 'process-pgrst-schemas' LOOP
     PERFORM cron.unschedule(r.jobid);
   END LOOP;
-END $$;
 
-SELECT cron.schedule(
-  'process-pgrst-schemas',
-  '* * * * * *',
-  $$SELECT public._process_pending_pgrst_schemas()$$
-);
+  PERFORM cron.schedule(
+    'process-pgrst-schemas',
+    '* * * * * *',
+    'SELECT public._process_pending_pgrst_schemas()'
+  );
+END $block$;

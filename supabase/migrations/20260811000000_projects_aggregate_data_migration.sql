@@ -48,6 +48,12 @@ BEGIN
         RAISE EXCEPTION 'Dependency missing: public._prov_install_triggers() must exist. Apply migration 20260809010000 before this one.';
     END IF;
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.projects') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping projects data migration (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     RAISE NOTICE '=== Projects aggregate data migration for schema % ===', v_schema;
 
     -- ============================================================

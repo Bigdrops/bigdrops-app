@@ -41,6 +41,12 @@ DECLARE
     v_before_pub bigint;
     v_before_ten bigint;
 BEGIN
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.quotations') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping SASQUO-324 duplicate removal (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     -- Sanity: confirm the two rows exist and are exactly what we expect
     SELECT count(*) INTO v_before_pub FROM public.quotations WHERE id = v_pub_quota;
     SELECT count(*) INTO v_before_ten FROM "entity_bigdrops-main_main".quotations WHERE id = v_ten_quota;

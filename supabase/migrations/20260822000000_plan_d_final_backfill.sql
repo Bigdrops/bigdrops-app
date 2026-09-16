@@ -66,6 +66,12 @@ BEGIN
         RAISE EXCEPTION 'Dependency missing: provisioning helpers (_prov_install_triggers, _prov_readd_foreign_keys) must exist. Apply migrations 20260717000000 and 20260809010000 before this one.';
     END IF;
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.quotations') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping Plan D backfill (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     RAISE NOTICE '=== Plan D — final public-only backfill for schema % ===', v_schema;
 
     -- ============================================================

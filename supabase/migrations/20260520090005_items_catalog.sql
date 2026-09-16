@@ -136,6 +136,33 @@ AS $function$
   );
 $function$;
 
+-- View needed by get_item_suggestions; originally in 090010_views.sql
+CREATE OR REPLACE VIEW item_price_summary_v AS
+SELECT
+    ic.id AS item_id,
+    ic.name,
+    ic.standard_price,
+    ic.is_active,
+    count(ii.id) AS usage_count,
+    min(ii.unit_price) AS min_price,
+    max(ii.unit_price) AS max_price,
+    avg(ii.unit_price) AS avg_price,
+    (array_agg(ii.unit_price ORDER BY coalesce(inv.created_at, ii.updated_at) DESC))[1] AS last_sold_price,
+    max(coalesce(inv.created_at, ii.updated_at)) AS last_used_at,
+    (array_agg(
+        CASE WHEN inv.id IS NOT NULL THEN 'invoice' ELSE 'quotation' END
+        ORDER BY coalesce(inv.created_at, ii.updated_at) DESC
+    ))[1] AS last_source_type,
+    (array_agg(
+        coalesce(inv.id, qi.quotation_id)
+        ORDER BY coalesce(inv.created_at, ii.updated_at) DESC
+    ))[1] AS last_source_document_id
+FROM item_catalog ic
+LEFT JOIN invoice_items ii ON ii.item_id = ic.id
+LEFT JOIN invoices inv ON inv.id = ii.invoice_id
+LEFT JOIN quotation_items qi ON qi.item_id = ic.id
+GROUP BY ic.id, ic.name, ic.standard_price, ic.is_active;
+
 CREATE OR REPLACE FUNCTION public.get_item_suggestions(search_text text, result_limit integer DEFAULT 5)
  RETURNS TABLE(item_id uuid, display_name text, matched_text text, is_alias boolean, standard_price numeric, last_sold_price numeric, usage_count bigint, rank_score integer)
  LANGUAGE sql

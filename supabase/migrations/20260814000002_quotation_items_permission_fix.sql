@@ -76,6 +76,12 @@ DECLARE
     v_policy       text;
 BEGIN
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.quotation_items') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping quotation_items permission fix (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     -- Resolve the production entity from the schema name (no hardcoded UUIDs).
     SELECT
         e.id

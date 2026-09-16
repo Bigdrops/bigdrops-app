@@ -52,6 +52,12 @@ BEGIN
             'Dependency missing: public._prov_seed_default_permissions(). Apply migration 20260810000000 first.';
     END IF;
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.settings') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping tenant settings identity backfill (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
 
     -- ============================================================
     -- 1. RESOLVE ENTITY + WORKSPACE FROM SCHEMA NAME

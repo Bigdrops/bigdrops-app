@@ -164,8 +164,12 @@ ALTER TABLE waybills DROP CONSTRAINT IF EXISTS waybills_created_by_fkey;
 -- ============================================================
 ALTER TABLE public.blank_waybill_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS blank_waybill_logs_authenticated_all ON public.blank_waybill_logs
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'blank_waybill_logs_authenticated_all' AND tablename = 'blank_waybill_logs') THEN
+    CREATE POLICY blank_waybill_logs_authenticated_all ON public.blank_waybill_logs
+      FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
 
 -- ============================================================
 -- 11. RLS: waybills — replace fragmented policies with single FOR ALL policy
@@ -175,5 +179,9 @@ DROP POLICY IF EXISTS waybills_authenticated_insert ON waybills;
 DROP POLICY IF EXISTS waybills_authenticated_update ON waybills;
 DROP POLICY IF EXISTS waybills_authenticated_delete ON waybills;
 
-CREATE POLICY IF NOT EXISTS waybills_authenticated_all ON public.waybills
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'waybills_authenticated_all' AND tablename = 'waybills') THEN
+    CREATE POLICY waybills_authenticated_all ON public.waybills
+      FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;

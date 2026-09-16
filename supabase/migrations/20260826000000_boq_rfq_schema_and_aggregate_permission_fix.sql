@@ -51,6 +51,12 @@ DECLARE
     v_entity_id uuid;
 BEGIN
 
+    -- Skip on non-production environments where the source schema doesn't exist
+    IF to_regclass(v_schema || '.csrs') IS NULL THEN
+        RAISE NOTICE 'Schema % does not exist — skipping BOQ/RFQ/CSR permission backfill (non-production environment)', v_schema;
+        RETURN;
+    END IF;
+
     -- Resolve the production entity from the schema name (no hardcoded UUIDs).
     SELECT
         e.id
