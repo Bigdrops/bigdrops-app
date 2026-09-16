@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { ROLE_ACTIONS, ROLE_RESOURCES, categoryState, markCategory, permissionCovers, removedPermissions } from '../../domain/team/role-permissions'
-import { buildGroups } from '../../pages/settings/settings-config'
+import { buildGroups, isLiveSettingsSection } from '../../pages/settings/settings-config'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { SettingsNav } from '../../components/settings/SettingsNav'
 
 const rpc = mock(async () => ({ data: 'role-id', error: null }))
 mock.module('@/supabase', () => ({ supabase: { rpc } }))
@@ -78,14 +81,25 @@ describe('existing role RPC contracts', () => {
   })
 })
 
-test('all 17 settings stay reachable in their corrected scope with owner gates', () => {
-  const groups = buildGroups(true, true)
-  expect(groups.flatMap(group => group.items)).toHaveLength(17)
-  expect(groups.find(group => group.id === 'workspace').items.map(item => item.id)).toContain('team')
-  const company = groups.find(group => group.id === 'company').items.map(item => item.id)
-  expect(company[0]).toBe('company-manage')
-  expect(company).toContain('documents')
-  expect(company).toContain('archives')
-  expect(groups.find(group => group.id === 'account').items.map(item => item.id)).toContain('theme')
-  expect(buildGroups(false, false).flatMap(group => group.items).map(item => item.id)).not.toContain('devices')
+test('unified Settings retains all candidate rows and activates only the two authorized destinations', () => {
+  const groups = buildGroups()
+  expect(groups.map(group => group.label)).toEqual(['Account', 'Workspace', 'Company', 'Preferences'])
+  expect(groups.flatMap(group => group.items).map(item => item.label)).toEqual([
+    'Profile & Security', 'Notifications', 'Switch Workspace', 'Team Hub',
+    'Switch Company', 'Company Info', 'Logo & Branding', 'Banking', 'Signatories',
+    'Theme & Appearance', 'App Lock',
+  ])
+  expect(groups.flatMap(group => group.items).filter(item => isLiveSettingsSection(item.id)).map(item => item.id)).toEqual(['workspace-switch', 'team'])
+  expect(isLiveSettingsSection(null)).toBe(false)
+})
+
+test('Settings navigation renders two buttons and keeps the other nine rows inert', () => {
+  const groups = buildGroups()
+  groups[1].items[0].count = 0
+  const html = renderToStaticMarkup(createElement(SettingsNav, { groups, activeSection: 'team', onSelect() {} }))
+  expect(html.match(/<button /g)).toHaveLength(2)
+  expect(html.match(/aria-disabled="true"/g)).toHaveLength(9)
+  expect(html).toContain('aria-current="page"')
+  expect(html).toContain('su-srow-count">0</span>')
+  expect(html).not.toContain('<a ')
 })
