@@ -17,7 +17,7 @@ type ProfileRow = {
 
 export function useTeamMembers(workspaceId: string | null, currentUserId: string | null) {
   const [members, setMembers] = useState<TeamMember[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchMembers = useCallback(async () => {
