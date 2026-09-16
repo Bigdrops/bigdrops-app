@@ -839,6 +839,14 @@ DEFERRED
 
 Teams is the membership and governance surface. It has two scopes:
 
+Settings navigation (2026-09-16): Team Hub is under Workspace. Switch
+Company is the first Company section. Document Controls and Archives are
+under Company. Personal theme preferences are under Account. Shared custom
+colors show the company scope. Team Hub shows assignment records separately
+from visible effective permissions. The M8 role-management RPCs control
+template changes and assignment changes. Save adds permissions. Removal of
+obsolete effective rows requires a separate synchronization confirmation.
+
 WORKSPACE SCOPE (workspace-wide)
 
 - Members and invitations for the workspace.

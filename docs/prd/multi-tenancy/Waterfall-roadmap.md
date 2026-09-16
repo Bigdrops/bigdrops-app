@@ -34,7 +34,7 @@
 | M5 | First-user bootstrap: auto workspace + auto company | HIGH | ✅ IMPLEMENTED | 100% | 2026-09-05 |
 | M6 | Manual creation + workspace/company switching intact | HIGH | ✅ IMPLEMENTED | 100% | 2026-09-05 |
 | M7 | Production recovery: `entities.status` mismatch repaired | CRIT | 🛠️ CORRECTED | 100% | 2026-09-05 |
-| M8 | Hardening & deferred verification | MED | ⛔ PENDING | 0% | N/A |
+| M8 | Hardening & deferred verification | MED | 🛠️ CORRECTED | 70% | 2026-09-15 |
 
 ---
 
@@ -70,10 +70,10 @@
 ### Phase 4: Recovery & hardening (M7–M8)
 - [x] **Step 1:** Repair production `entities.status` mismatch (reorder + push `20260905020000`; verify 7/7 rows active).
   - *Status:* 🛠️ CORRECTED
-- [ ] **Step 2:** Fix pre-existing `tenantGate` `multi-entity` test expectation.
-  - *Status:* ⛔ PENDING
+- [x] **Step 2:** Fix pre-existing `tenantGate` `multi-entity` test expectation.
+  - *Status:* ✅ IMPLEMENTED (stale assertion removed in c0c13e8b, verified 2026-09-15)
 - [ ] **Step 3:** Run live provisioning test in a safe non-production environment.
-  - *Status:* ⛔ PENDING
+  - *Status:* 🛠️ CORRECTED (migration guards committed bb67a156; fresh DB push verified on disposable jfijijipdlppyoqyocmi; trigger gap identified, fix pending)
 
 ---
 
