@@ -93,30 +93,23 @@ export function RoleBuilder({ workspaceId, workspaceName, templates, isOwner, ca
 
   return (
     <section className="space-y-3" aria-label="Workspace role library">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="text-base font-bold">Role Builder</h3>
-          <p className="text-sm text-bd-text-muted">Role library · {workspaceName}</p>
-        </div>
-        {isOwner && <Button className="min-h-11" onClick={() => openEditor({ mode: 'create' })}>Create Custom Role</Button>}
-      </div>
-      <p className="text-sm text-bd-text-muted">Define company permissions here, then assign roles to members in each company. Workspace membership and invitations are managed separately.</p>
-      {!isOwner && <p className="text-sm text-bd-text-muted">Only the workspace owner can change roles. Permissions above your company authority are disabled.</p>}
-      {notice && <p role="status" className="rounded-lg border border-bd-border bg-bd-surface p-3 text-sm">{notice}</p>}
-      {templates.length === 0 && <p className="text-sm text-bd-text-muted">No roles yet.</p>}
-      <div className="divide-y divide-bd-border overflow-hidden rounded-[18px] border border-bd-border bg-bd-card-bg">
+
+      {!isOwner && <p className="su-ia-note">Only the workspace owner can change roles.</p>}
+      {notice && <p role="status" className="su-ia-note">{notice}</p>}
+      {templates.length === 0 && <p className="su-ia-note">No roles yet.</p>}
+      <div className="su-scope-card su-role-library">
         {templates.map(template => (
-          <button type="button" key={template.id} className="flex min-h-14 w-full items-center gap-3 p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" disabled={busy} onClick={() => openEditor({ mode: 'edit', template })}>
-            <ShieldCheck size={18} className="shrink-0 text-primary" />
-            <div className="min-w-0 flex-1 basis-40">
-              <h4 className="break-words text-xs font-extrabold">{template.name}</h4>
-              <p className="break-words text-[11px] text-bd-text-muted">{template.description || `${template.items.length} permission rows`}</p>
-              <p className="mt-1 text-[10px] text-bd-text-muted">{[...assignmentsByUser.values()].filter(roles => roles.has(template.id)).length} holder(s) · {template.items.length} permission rows</p>
-            </div>
-            <ChevronRight size={15} className="shrink-0 text-bd-text-muted" />
+          <button type="button" key={template.id} className="su-srow" disabled={busy} onClick={() => openEditor({ mode: 'edit', template })}>
+            <span className="su-srow-icon"><ShieldCheck aria-hidden="true" /></span>
+            <span className="su-srow-main">
+              <span className="su-srow-label">{template.name}</span>
+              <span className="su-srow-meta">{[...assignmentsByUser.values()].filter(roles => roles.has(template.id)).length} holder(s) · {template.items.length} permission rows</span>
+            </span>
+            <span className="su-srow-end"><ChevronRight aria-hidden="true" /></span>
           </button>
         ))}
       </div>
+      {isOwner && <button type="button" className="su-primarybtn" onClick={() => openEditor({ mode: 'create' })}>Create Custom Role</button>}
 
       <SettingsSheet open={!!editor} onClose={() => { if (!busy) setEditor(null) }}
         title={editor?.mode === 'create' ? 'Create role' : editor?.mode === 'duplicate' ? 'Duplicate role' : isOwner ? 'Edit role' : 'Inspect role'}

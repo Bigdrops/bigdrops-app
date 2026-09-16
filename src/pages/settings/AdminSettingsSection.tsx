@@ -5,7 +5,6 @@ import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession } from './settings-types'
 import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel } from '@/components/ui/alert-dialog'
 import { SettingsLoadingState } from './SettingsLoadingState'
@@ -58,20 +57,24 @@ function RemoveConfirmModal(props: MemberConfirmProps) {
 function TransferConfirmModal(props: MemberConfirmProps) {
   return <MemberConfirmModal {...props} transfer />
 }
-export function TeamSettingsSection({ session }: { session: SettingsSession }) {
+export function TeamSettingsSection({ session, team, showRoles, setShowRoles }: {
+  session: SettingsSession
+  team: ReturnType<typeof useTeamMembers>
+  showRoles: boolean
+  setShowRoles: (open: boolean) => void
+}) {
   const { workspace, refresh: refreshWorkspace } = useWorkspace()
   const workspaceId = workspace?.id ?? null
   const isOwner = workspace?.role === 'owner'
   const currentUserId = session?.user?.id ?? null
-  const { members, loading, error, refresh } = useTeamMembers(workspaceId, currentUserId)
-  const { invitations, refresh: refreshInvitations } = useTeamInvitations(workspaceId)
+  const { members, loading, error, refresh } = team
+  const { invitations, loading: invitationsLoading, error: invitationsError, refresh: refreshInvitations } = useTeamInvitations(workspaceId)
   const { entity } = useEntity()
   const entityId = entity?.id ?? null
   const { templates, effectiveByUser, assignmentsByUser, loading: rolesLoading, error: rolesError, refresh: refreshRoles } = usePermissionTemplates(workspaceId, entityId)
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
   const [memberSearch, setMemberSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [showRoles, setShowRoles] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
   const [modalMember, setModalMember] = useState<TeamMember | null>(null)
   const [roleActionKey, setRoleActionKey] = useState<string | null>(null)
@@ -205,14 +208,14 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
 
   if (showRoles) return (
     <div className="space-y-3">
-      <Button variant="ghost" className="min-h-11" onClick={() => setShowRoles(false)}><ArrowLeft size={16} className="mr-2" />Team Hub</Button>
+      <Button variant="ghost" className="su-roles-back min-h-11" onClick={() => setShowRoles(false)}><ArrowLeft size={16} className="mr-2" />Team Hub</Button>
       {rolesLoading && !templates.length ? <SettingsLoadingState /> : rolesError ? <div role="alert"><p>{rolesError}</p><Button onClick={() => void refreshRoles()}>Retry roles</Button></div> :
         <RoleBuilder key={workspaceId} workspaceId={workspaceId} workspaceName={workspace?.name ?? 'Workspace'} templates={templates} isOwner={isOwner} callerPermissions={effectiveByUser.get(currentUserId ?? '') ?? []} assignmentsByUser={assignmentsByUser} refresh={refreshRoles} />}
     </div>
   )
 
   return (
-    <div className="space-y-4">
+    <div className="su-team">
       {modalMember ? <RemoveConfirmModal member={modalMember} onConfirm={handleRemove} onCancel={closeModal} loading={!!actionId} /> : null}
       {transferMember ? <TransferConfirmModal member={transferMember} onConfirm={() => void handleTransfer()} onCancel={() => setTransferMember(null)} loading={transferring} /> : null}
 
@@ -228,72 +231,63 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
           </form>}
       </SettingsSheet>
 
-      <section className="grid grid-cols-2 gap-2" aria-label="Team summary">
-        {[
-          ['Members', members.length, 'Workspace-wide'],
-          ['Pending invites', invitations.length, 'Awaiting response'],
-        ].map(([label, value, detail]) => <div key={label} className="min-w-0 rounded-[18px] border border-bd-border bg-bd-card-bg p-3">
-          <p className="text-[11px] font-semibold text-bd-text-muted">{label}</p>
-          <p className="mt-1 truncate text-[17px] font-mono font-medium tracking-tight text-bd-text">{value}</p>
-          <p className="mt-1 text-[10px] text-bd-text-muted">{detail}</p>
-        </div>)}
+
+      <section className="su-stats" aria-label="Team summary">
+        <div className="su-stat"><div className="su-stat-label">Workspace</div><div className="su-stat-val">{members.length}</div><div className="su-stat-sub">members</div></div>
+        <div className="su-stat"><div className="su-stat-label">Company</div><div className="su-stat-val accent">{rolesLoading ? '…' : rolesError ? '—' : members.filter(member => effectiveByUser.has(member.userId)).length}</div><div className="su-stat-sub">visible access</div></div>
+        <div className="su-stat"><div className="su-stat-label">Pending</div><div className="su-stat-val">{invitationsLoading ? '…' : invitationsError ? '—' : invitations.length}</div><div className="su-stat-sub">invites</div></div>
       </section>
 
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-bold">Team members <span className="ml-1 text-bd-text-muted">{members.length}</span></h3>
-        <div className="flex items-center gap-2">
-          {isOwner && <Button className="min-h-11 rounded-xl" onClick={() => setInviteOpen(true)}><UserPlus size={15} className="mr-2" />Invite</Button>}
-          <button type="button" onClick={() => setShowSearch(v => !v)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-bd-border bg-bd-card-bg text-bd-text-muted transition-colors hover:bg-bd-surface-muted">
-            <Search size={16} />
-          </button>
-        </div>
+      <div className="su-sechead">
+        <h2>Team Members</h2>
+        <button type="button" onClick={() => setShowSearch(v => !v)} className="su-iconbtn" aria-label="Toggle member search" aria-expanded={showSearch}><Search size={14} /></button>
       </div>
-      {showSearch && <Input type="search" aria-label="Search members by name or email" value={memberSearch} onChange={event => setMemberSearch(event.target.value)} placeholder="Search by name or email" className="min-h-11 rounded-[13px]" />}
-      {rolesError && <div role="alert" className="text-sm text-destructive">Roles could not load: {rolesError} <Button variant="outline" onClick={() => void refreshRoles()}>Retry</Button></div>}
-      <div className="space-y-2">
+      {showSearch && <div className="su-searchwrap active"><Search size={14} aria-hidden="true" /><input autoFocus type="search" aria-label="Search members by name or email" value={memberSearch} onChange={event => setMemberSearch(event.target.value)} placeholder="Search members..." /></div>}
+      {rolesError && <div role="alert" className="su-error">Roles could not load: {rolesError} <Button variant="outline" onClick={() => void refreshRoles()}>Retry</Button></div>}
+      <div>
         {visibleMembers.map(member => {
           const roles = assignmentsByUser.get(member.userId)
           return <button key={member.membershipId} type="button" onClick={() => setSelectedMemberId(member.userId)}
-            className={cn('w-full rounded-xl border border-bd-border bg-bd-card-bg p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary', member.isCurrentUser && 'bg-[hsl(var(--primary)/0.06)] border-[hsl(var(--primary)/0.24)]')}>
-            <span className="flex items-center gap-2.5">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-bd-surface-muted text-xs font-extrabold">{member.initials}</span>
-              <span className="min-w-0 flex-1">
-                <span className="flex flex-wrap items-center gap-1.5 text-xs font-extrabold">{member.name}
-                  <Badge variant="outline" className="text-[9px]">{member.role === 'owner' ? 'Workspace owner' : 'Member'}</Badge>
-                  {member.isCurrentUser && <Badge variant="secondary" className="text-[9px]">You</Badge>}
+            className={cn('su-mcard', member.isCurrentUser && 'self')}>
+            <span className="su-mcard-top">
+              <span className={cn('su-avatar', member.isCurrentUser && 'you')}>{member.initials}</span>
+              <span className="su-who">
+                <span className="su-who-name">{member.name}
+                  {member.role === 'owner' && <span className="su-pill owner">Owner</span>}
+                  {member.isCurrentUser && <span className="su-pill you">You</span>}
                 </span>
-                <span className="mt-1 block truncate text-[10px] text-bd-text-muted">{member.email}</span>
+                <span className="su-who-mail">{member.email}{member.joinedAt ? ' · joined ' + new Date(member.joinedAt).toLocaleDateString() : ''}</span>
               </span>
-              <ChevronRight size={15} className="shrink-0 text-bd-text-muted" />
+              <span className="su-chev"><ChevronRight aria-hidden="true" /></span>
             </span>
-            <span className="mt-2.5 block text-[10px] text-bd-text-muted">Entity · {entity?.name ?? 'Select a company'}</span>
-            <span className="mt-1 flex flex-wrap gap-1">
-              {rolesLoading ? <span className="text-[11px]">Loading roles…</span> : rolesError ? <span className="text-[11px]">Roles unavailable</span> : roles?.size ?
-                templates.filter(template => roles.has(template.id)).map(template => <span key={template.id} className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--primary)/0.1)] px-2 py-1 text-[10px] font-bold text-primary"><ShieldCheck size={10} />{template.name}</span>) :
-                <span className="text-[11px] text-bd-text-muted">No roles assigned.</span>}
+            <span className="su-chips">
+              {rolesLoading ? <span className="su-no-access">Loading roles…</span> : rolesError ? <span className="su-no-access">Roles unavailable</span> : roles?.size ?
+                templates.filter(template => roles.has(template.id)).map(template => <span key={template.id} className="su-chip"><ShieldCheck size={10} />{template.name}</span>) :
+                <span className="su-no-access">No roles assigned.</span>}
             </span>
           </button>
         })}
-        {!visibleMembers.length && <p className="py-4 text-center text-sm text-bd-text-muted">No members match that search.</p>}
+        {!visibleMembers.length && <p className="su-noresults show">No members match your search.</p>}
       </div>
 
       <SettingsSheet open={!!selectedMember} onClose={() => { if (!roleActionKey) setSelectedMemberId(null) }} title={selectedMember?.name ?? 'Member'} subtitle={selectedMember?.email}>
         {selectedMember && <div className="space-y-4">
-          <div className="rounded-xl border border-bd-border p-3">
-            <p className="text-xs font-bold">Workspace membership · {workspace?.name}</p>
-            <p className="mt-1 text-sm">{selectedMember.role === 'owner' ? 'Owner' : 'Member'} · Joined {selectedMember.joinedAt ? new Date(selectedMember.joinedAt).toLocaleDateString() : '—'}</p>
+          <div className="su-grp">
+            <div className="su-grp-row"><span className="su-grp-k">Workspace membership</span><span className="su-grp-v">{selectedMember.role === 'owner' ? 'Owner' : 'Member'}</span></div>
+            <div className="su-grp-row"><span className="su-grp-k">Joined</span><span className="su-grp-v font-mono">{selectedMember.joinedAt ? new Date(selectedMember.joinedAt).toLocaleDateString() : '—'}</span></div>
           </div>
           <div className="space-y-3">
             <h3 className="text-sm font-bold">Roles in {entity?.name ?? 'the active company'}</h3>
             {!entity ? <p className="text-sm">Select a company to manage roles.</p> : rolesLoading ? <p role="status">Loading access…</p> : rolesError ? <p role="alert">{rolesError}</p> : <>
               <p className="text-xs text-bd-text-muted">Company access: {memberPairs.length ? 'confirmed by visible permission rows.' : 'not confirmed by visible rows. The server checks company membership before assignment.'}</p>
               <p className="text-xs text-bd-text-muted">Multiple roles can coexist. Removing one preserves pairs covered by other roles and the company view baseline. Direct grants have no source record and can overlap.</p>
-              <div className="divide-y divide-bd-border rounded-xl border border-bd-border px-3">
+              <div>
                 {templates.map(template => {
                   const assigned = memberRoles?.has(template.id) === true
-                  return <div key={template.id} className="flex min-h-14 items-center justify-between gap-2 py-1">
-                    <span className="min-w-0 text-xs font-bold">{template.name}<span className="mt-1 block text-[10px] font-medium text-bd-text-muted">{assigned ? 'Assigned' : 'Not assigned'}</span></span>
-                    {isOwner && !selectedMember.isCurrentUser && <Button variant="outline" className="min-h-11 shrink-0" disabled={!!roleActionKey} onClick={() => void handleToggleRole(selectedMember, template)}>{roleActionKey === `${selectedMember.membershipId}:${template.id}` ? 'Working…' : assigned ? 'Remove role' : 'Assign role'}</Button>}
+                  return <div key={template.id} className="su-mrow">
+                    <span className="su-mrow-icon"><ShieldCheck aria-hidden="true" /></span>
+                    <span className="su-mrow-main"><span className="su-mrow-name">{template.name}</span><span className="su-mrow-meta">{assigned ? 'Assigned' : 'Not assigned'} · {template.items.length} permission rows</span></span>
+                    {isOwner && !selectedMember.isCurrentUser && <button type="button" className="su-mrow-act" disabled={!!roleActionKey} onClick={() => void handleToggleRole(selectedMember, template)}>{roleActionKey === `${selectedMember.membershipId}:${template.id}` ? 'Working…' : assigned ? 'Revoke' : 'Assign'}</button>}
                   </div>
                 })}
                 {!templates.length && <p className="py-3 text-sm">No roles defined yet.</p>}
@@ -313,27 +307,30 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
         </div>}
       </SettingsSheet>
 
-      <section className="space-y-2">
-        <h3 className="text-sm font-bold">Pending invitations <span className="ml-1 text-bd-text-muted">{invitations.length}</span></h3>
-        {!invitations.length && <p className="text-xs text-bd-text-muted">No pending invitations.</p>}
-        {invitations.map(invitation => <div key={invitation.id} className="flex flex-wrap items-center gap-2.5 rounded-xl border border-bd-border bg-bd-card-bg p-3">
-          <Mail size={18} className="text-bd-text-muted" />
-          <div className="min-w-0 flex-1 basis-36">
-            <p className="break-all text-xs font-bold">{invitation.email}</p>
-            <p className="mt-1 text-[10px] text-bd-text-muted">Invited {new Date(invitation.createdAt).toLocaleDateString()}{invitation.expiresAt ? ` · Expires ${new Date(invitation.expiresAt).toLocaleDateString()}` : ''}</p>
-          </div>
-          {isOwner && <Button variant="outline" className="min-h-11" disabled={revokingId === invitation.id} onClick={() => void handleRevoke(invitation)}>{revokingId === invitation.id ? 'Revoking…' : 'Revoke'}</Button>}
-        </div>)}
+
+      <section className="su-pending">
+        <div className="su-sechead"><h2>Pending Invitations</h2><span className="count">{invitationsLoading ? '…' : invitationsError ? '—' : invitations.length}</span></div>
+        {invitationsLoading ? <p role="status" className="su-ia-note">Loading invitations…</p> : invitationsError ? <p role="alert" className="su-error">{invitationsError} <Button onClick={() => void refreshInvitations()}>Retry invitations</Button></p> : <>
+          {!invitations.length && <p className="su-ia-note">No pending invitations.</p>}
+          {invitations.map(invitation => <div key={invitation.id} className="su-irow">
+            <span className="su-irow-icon accent"><Mail size={15} aria-hidden="true" /></span>
+            <div className="min-w-0 flex-1">
+              <div className="su-who-name break-all">{invitation.email}</div>
+              <div className="su-irow-when">Invited {new Date(invitation.createdAt).toLocaleDateString()}{invitation.expiresAt ? ' · expires ' + new Date(invitation.expiresAt).toLocaleDateString() : ''}</div>
+            </div>
+            {isOwner && <button type="button" className="su-ghostbtn" disabled={revokingId === invitation.id} onClick={() => void handleRevoke(invitation)}>{revokingId === invitation.id ? 'Revoking…' : 'Revoke'}</button>}
+          </div>)}
+        </>}
       </section>
 
-      <section className="space-y-2">
-        <h3 className="text-xs font-bold text-bd-text-muted">Access control</h3>
-        <button type="button" onClick={() => setShowRoles(true)} className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-bd-border bg-bd-card-bg p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
-          <ShieldCheck size={18} className="text-primary" />
-          <span className="flex-1"><span className="block text-xs font-bold">Roles &amp; access</span><span className="text-[10px] text-bd-text-muted">Define what company members can do</span></span>
-          <ChevronRight size={15} />
+      <div className="su-scope su-pending"><div className="su-scope-card">
+        <button type="button" onClick={() => setShowRoles(true)} className="su-srow">
+          <span className="su-srow-icon accent"><ShieldCheck aria-hidden="true" /></span>
+          <span className="su-srow-main"><span className="su-srow-label">Roles &amp; Access</span><span className="su-srow-meta">{rolesLoading ? 'Loading roles…' : rolesError ? 'Roles unavailable' : templates.length + ' roles configured'}</span></span>
+          <span className="su-srow-end">{!rolesLoading && !rolesError && <span className="su-srow-count">{templates.length}</span>}<ChevronRight aria-hidden="true" /></span>
         </button>
-      </section>
+      </div></div>
+      {isOwner && <button type="button" className="su-fab" aria-label="Invite Member" title="Invite Member" onClick={() => setInviteOpen(true)}><UserPlus /></button>}
     </div>
   )
 }

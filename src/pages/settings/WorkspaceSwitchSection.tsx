@@ -1,21 +1,15 @@
 import * as React from 'react'
-import { ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Building2, Check, Info } from 'lucide-react'
 import { useWorkspace } from '@/lib/tenant/contexts'
 import { hasActionableInvitation } from '@/domain/tenant/tenantGate'
 import { acceptWorkspaceInvitation } from '@/domain/tenant/tenantCreation'
-import { WorkspaceSelectionSheet } from '@/components/layout/WorkspaceSelectionSheet'
 
 export function WorkspaceSwitchSection() {
-  const { workspace, activeWorkspaces, pendingInvitation, invitationDismissed, dismissInvitation, refresh } =
+  const { workspace, activeWorkspaces, selectWorkspace, isLoading, error, pendingInvitation, invitationDismissed, dismissInvitation, refresh } =
     useWorkspace()
-  const [sheetOpen, setSheetOpen] = React.useState(false)
   const [accepting, setAccepting] = React.useState(false)
   const [acceptError, setAcceptError] = React.useState<string | null>(null)
 
-  const wsName = String(workspace?.name || '').trim() || '—'
-  const hasMultiple = activeWorkspaces.length > 1
-  const initials = wsName.charAt(0).toUpperCase()
   const showInvitation = hasActionableInvitation(pendingInvitation, invitationDismissed)
 
   const handleAccept = async () => {
@@ -36,31 +30,22 @@ export function WorkspaceSwitchSection() {
 
   return (
     <>
-      {/* Current workspace row — tappable when multiple workspaces exist */}
-      <button
-        type="button"
-        onClick={hasMultiple ? () => setSheetOpen(true) : undefined}
-        aria-label={`Current workspace: ${wsName}. ${hasMultiple ? 'Tap to switch.' : ''}`}
-        className={cn(
-          'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition active:scale-[0.985]',
-          hasMultiple
-            ? 'hover:bg-[hsl(var(--surface-muted))]/50'
-            : 'cursor-default',
-        )}
-      >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[11px] font-[800]">
-          {initials}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[12px] font-[800] text-bd-text">{wsName}</div>
-          <div className="truncate text-[10px] text-bd-text-muted">
-            {hasMultiple ? `${activeWorkspaces.length} workspaces available` : 'Active workspace'}
+      <div className="su-sechead"><h2>Switch Workspace</h2></div>
+      {isLoading ? <p role="status">Loading workspaces…</p> : error ? <p role="alert" className="su-error">{error}</p> : <div className="su-scope-card mt-2">
+        {activeWorkspaces.map(ws => {
+          const current = ws.id === workspace?.id
+          return <div key={ws.id} className={`su-irow${current ? ' su-ws-current' : ''}`}>
+            <span className="su-irow-icon"><Building2 size={15} aria-hidden="true" /></span>
+            <div className="min-w-0 flex-1">
+              <div className="su-who-name su-ws-name">{ws.name ?? ws.slug ?? '—'}{current && <span className="su-pill you">Current</span>}</div>
+              <div className="su-irow-when">{ws.slug}{ws.role ? ` · ${ws.role}` : ''}</div>
+            </div>
+            {current ? <span className="su-ghostbtn su-ws-actions"><Check size={11} />Active</span> : <button type="button" className="su-ghostbtn su-ws-actions" onClick={() => selectWorkspace(ws.id)}>Switch</button>}
           </div>
-        </div>
-        {hasMultiple ? (
-          <ChevronRight className="h-4 w-4 shrink-0 text-bd-text-muted" aria-hidden="true" />
-        ) : null}
-      </button>
+        })}
+        {!activeWorkspaces.length && <p className="su-ia-note">No active workspaces available.</p>}
+      </div>}
+      <p className="su-ia-note"><Info aria-hidden="true" /><span>Switching workspace changes your active workspace. Your memberships stay.</span></p>
 
       {/* Pending workspace invitation — visible to members, not just onboarding */}
       {showInvitation ? (
@@ -95,8 +80,6 @@ export function WorkspaceSwitchSection() {
         </div>
       ) : null}
 
-      {/* Canonical workspace selection sheet */}
-      <WorkspaceSelectionSheet open={sheetOpen} onOpenChange={setSheetOpen} />
     </>
   )
 }

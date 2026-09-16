@@ -1,152 +1,58 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
-import {
-  TeamSettingsSection,
-  DeviceSettingsSection,
-  AppThemeSettingsSection,
-  SecuritySettingsSection,
-  ArchivesSettingsSection,
-  BankingSettingsSection,
-  BrandingSettingsSection,
-  CompanyManageSection,
-  CompanySettingsSection,
-  DashboardSettingsSection,
-  DocumentPrefixesSettingsSection,
-  DocumentsSettingsSection,
-  NotificationSettingsPage,
-  SignatoriesSettingsSection,
-  UserSettingsSection,
-  WorkspaceSwitchSection,
-} from './settings/index'
-import {
-  ActiveSectionId,
-  buildGroups,
-} from './settings/settings-config'
+import { TeamSettingsSection } from './settings/AdminSettingsSection'
+import { WorkspaceSwitchSection } from './settings/WorkspaceSwitchSection'
+import { buildGroups, type LiveSettingsSection } from './settings/settings-config'
 import type { SettingsSession } from './settings/settings-types'
 import { SettingsShell } from '@/components/settings/SettingsShell'
-import { feedback } from '@/lib/feedback'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
+import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
+import { feedback } from '@/lib/feedback'
 
 export default function Settings() {
-  const [active, setActive] = useState<ActiveSectionId | null>(null)
   const [session, setSession] = useState<SettingsSession>(null)
-  const [isOperator, setIsOperator] = useState(false)
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
-  }, [])
-
-  useEffect(() => {
-    const userId = session?.user?.id
-    if (!userId) return
-    let cancelled = false
-
-    async function probeOperator() {
-      try {
-        const { data } = await supabase.rpc('is_platform_operator', { p_user_id: userId })
-        if (!cancelled && data === true) setIsOperator(true)
-      } catch {
-        // Fail closed: leave isOperator false on any error.
-      }
-    }
-
-    void probeOperator()
-    return () => {
-      cancelled = true
-    }
-  }, [session?.user?.id])
-
+  const [active, setActive] = useState<LiveSettingsSection | null>(null)
+  const [showRoles, setShowRoles] = useState(false)
   const { workspace } = useWorkspace()
-  const { entity } = useEntity()
-  const isOwner = workspace?.role === 'owner'
-  const groups = buildGroups(isOwner, isOperator)
-
-  const showToast = useCallback((msg: string) => {
-    feedback.success(msg)
+  useEffect(() => {
+    let mounted = true
+    void supabase.auth.getSession().then(({ data }) => { if (mounted) setSession(data.session) })
+    const { data } = supabase.auth.onAuthStateChange((_event, next) => setSession(next))
+    return () => { mounted = false; data.subscription.unsubscribe() }
   }, [])
+  return <Layout title="Settings" session={session} hidePageHeader contentClassName="!p-0">
+    <SettingsContent key={workspace?.id ?? 'no-workspace'} session={session} active={active} setActive={setActive} showRoles={showRoles} setShowRoles={setShowRoles} />
+  </Layout>
+}
 
-  const renderSection = () => {
-    switch (active) {
-      case 'user':
-        return <UserSettingsSection session={session} onToast={showToast} />
-      case 'workspace-switch':
-        return <WorkspaceSwitchSection />
-      case 'company-manage':
-        return <CompanyManageSection />
-      case 'company':
-        return <CompanySettingsSection />
-      case 'branding':
-        return <BrandingSettingsSection />
-      case 'banking':
-        return <BankingSettingsSection />
-      case 'signatories':
-        return <SignatoriesSettingsSection />
-      case 'theme':
-        return <AppThemeSettingsSection userId={session?.user?.id} />
-      case 'notifications':
-        return <NotificationSettingsPage />
-      case 'dashboard':
-        return <DashboardSettingsSection />
-      case 'documents':
-        return <DocumentsSettingsSection />
-      case 'prefixes':
-        return <DocumentPrefixesSettingsSection />
-      case 'archives':
-        return <ArchivesSettingsSection />
-      case 'team':
-        return <TeamSettingsSection key={`${workspace?.id}:${entity?.id}`} session={session} />
-      case 'devices':
-        return <DeviceSettingsSection />
-      case 'security':
-        return <SecuritySettingsSection />
-      case 'tenant-debug':
-        return null
-      default:
-        return null
-    }
-  }
+function SettingsContent({ session, active, setActive, showRoles, setShowRoles }: {
+  session: SettingsSession
+  active: LiveSettingsSection | null
+  setActive: (id: LiveSettingsSection | null) => void
+  showRoles: boolean
+  setShowRoles: (open: boolean) => void
+}) {
+  const { workspace, activeWorkspaces, isLoading: workspaceLoading, error: workspaceError } = useWorkspace()
+  const { entity, entities, isLoading: entityLoading, error: entityError } = useEntity()
+  const team = useTeamMembers(workspace?.id ?? null, session?.user.id ?? null)
+  const { preference, save } = useThemePreferenceContext()
+  const dark = preference.themeMode === 'dark' || (preference.themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const wsName = workspaceLoading ? 'Loading…' : workspaceError ? 'Unavailable' : workspace?.name ?? '—'
+  const coName = entityLoading ? 'Loading…' : entityError ? 'Unavailable' : entity?.name ?? '—'
+  const groups = buildGroups().map(group => ({ ...group, items: group.items.map(item => {
+    if (item.id === 'workspace-switch') return { ...item, desc: `Current: ${wsName}`, count: workspaceLoading || workspaceError ? undefined : activeWorkspaces.length }
+    if (item.id === 'company-manage') return { ...item, desc: `Current: ${coName}`, count: entityLoading || entityError ? undefined : entities.length }
+    if (item.id === 'team') return { ...item, desc: team.loading ? 'Loading members…' : team.error ? 'Members unavailable' : `${team.members.length} members`, count: team.loading || team.error ? undefined : team.members.length }
+    return item
+  }) }))
 
-  const handleSelectSection = useCallback((id: ActiveSectionId) => {
-    if (id === 'tenant-debug') {
-      navigate('/debug/tenant')
-      return
-    }
-    setActive(id)
-  }, [navigate])
-
-  const wsName = String(workspace?.name || '').trim() || '—'
-  const coName = entity?.name || '—'
-
-  return (
-    <Layout
-      title="Settings"
-      session={session}
-      hidePageHeader
-      contentClassName="bg-bd-surface"
-    >
-      <SettingsShell
-        groups={groups}
-        activeSection={active}
-        setActiveSection={handleSelectSection}
-        renderContent={renderSection}
-        isAdmin={isOwner}
-        workspaceContext={
-          <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface px-3.5 py-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[11px] font-[800]">
-                {wsName.charAt(0).toUpperCase()}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[12px] font-[800] text-bd-text">Workspace · {wsName}</div>
-                <div className="truncate text-[10px] font-[600] text-bd-text-muted">Company · {coName}</div>
-              </div>
-            </div>
-          </div>
-        }
-      />
-    </Layout>
-  )
+  return <SettingsShell groups={groups} activeSection={active} setActiveSection={id => { setShowRoles(false); setActive(id) }} workspaceName={wsName} companyName={coName}
+    detailTitle={active === 'team' && showRoles ? 'Roles & Access' : undefined}
+    onBack={active === 'team' && showRoles ? () => setShowRoles(false) : undefined}
+    dark={dark} onToggleTheme={() => { void save({ themeMode: dark ? 'light' : 'dark' }).catch(error => feedback.error(String(error))) }}>
+    {active === 'workspace-switch' && <WorkspaceSwitchSection />}
+    {active === 'team' && <TeamSettingsSection key={entity?.id ?? 'no-company'} session={session} team={team} showRoles={showRoles} setShowRoles={setShowRoles} />}
+  </SettingsShell>
 }
