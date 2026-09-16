@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1e3a5f" id="metaTheme">
+<title>Team Hub &amp; Access Manager v5 — BIGDROPS ERP</title>
+<!--
+  Team Hub & Access Manager — v5 (Mobile-First Facelift candidate)
+
+  Built to the Adaptive Mobile-First UIUX Facelift PRD, not to the other candidates:
+
+  Structure (00, 02, 05):
+  - Phone-first app shell: top bar 58px + safe-area, scroll area (0 14px, bottom 106px+safe),
+    FAB 50x50 above a 5-tab bottom nav (62px, radius 20, solid var(--nav), no glassmorphism).
+  - Desktop = adaptive tier: 430px device frame, nothing redesigned.
+  - Only overlay is the bottom sheet (24px top radius, max-height 78%, 0.3s cubic-bezier(.2,.9,.24,1),
+    grab handle 34x3). No centered dialogs anywhere (15 §2).
+
+  Tokens (03, 04):
+  - Locked slate-navy palette, exact v6 values, light + dark via data-theme.
+  - Locked type scale: 7px workspace labels, 8px eyebrows, 9px section titles, 11px row primary,
+    13px topbar name, 17px sheet titles, 6px status pills, 17px mono metric values.
+  - --shadow / --shadow-float primary-tinted; dark mode shadows go pure black (03 elevation rules).
+  - No new color tokens; naming follows the v6 convention.
+
+  Interaction (15):
+  - Android-idiomatic: press feedback via interim active:scale(0.965) + surface change (15 §1 fallback),
+    snackbar bottom-center above nav with Undo for recoverable actions (15 §6),
+    top-center toast for ephemeral confirmations (06), Escape pops the sheet stack (15 §3 fallback),
+    meta theme-color follows --primary (15 §4). No Material 3 vocabulary.
+
+  IA + Team Hub fixes (docs/tickets/settings-information-architecture-ux-redesign.md):
+  - Workspace membership and company access are separated and labelled. Membership is workspace-wide;
+    role templates are company-scoped. The company context is displayed read-only (16 §16.3:
+    switching is not administration — switching lives in the drawer, not here).
+  - The false on/off toggle is gone. Cards summarise granted templates; the member sheet assigns
+    templates and expands each template into the abilities it grants ("effective access"), so what a
+    member can actually do is always visible.
+
+  Deliberately excluded (scope honesty):
+  - No departments, 2FA, seat counts, security scores, batch CSV, "RBAC engine" branding.
+  - No custom-role editor — the product has fixed permission templates; editing them is a DB/product
+    decision, not a UI pass. Open questions listed at the bottom of this file.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* Colour tokens — locked slate-navy (04-theme-system.md) */
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface-raised: #f8fafc;
+    --surface-muted: #e2e8f0;
+    --surface-strong: #cbd5e1;
+    --ink: #0f172a;
+    --ink-2: #475569;
+    --ink-3: #94a3b8;
+    --primary: #1e3a5f;
+    --primary-bright: #3b82f6;
+    --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+    --secondary: #0f172a;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 13%, transparent);
+    --attention: #ef4444;
+    --attention-soft: #fee2e2;
+    --sage: #64748b;
+    --sage-soft: #f1f5f9;
+    --line: rgba(15, 23, 42, .07);
+    --line-strong: rgba(15, 23, 42, .14);
+    --nav: rgba(255, 255, 255, .88);
+    --scrim: rgba(14, 12, 10, .38);
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow: 0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04);
+    --shadow-float: 0 18px 40px color-mix(in srgb, var(--primary) 18%, transparent), 0 3px 9px rgba(15,23,42,.07);
+    --font: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    --number: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-raised: #253448;
+    --surface-muted: #334155;
+    --surface-strong: #475569;
+    --ink: #f1f5f9;
+    --ink-2: #cbd5e1;
+    --ink-3: #64748b;
+    --primary: #60a5fa;
+    --primary-bright: #93c5fd;
+    --primary-soft: color-mix(in srgb, var(--primary) 20%, transparent);
+    --secondary: #94a3b8;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 18%, transparent);
+    --attention: #f87171;
+    --attention-soft: #3b1518;
+    --sage: #94a3b8;
+    --sage-soft: #1e293b;
+    --line: rgba(241, 245, 249, .08);
+    --line-strong: rgba(241, 245, 249, .15);
+    --nav: rgba(15, 23, 42, .88);
+    --shadow: 0 12px 28px rgba(0,0,0,.32), 0 2px 6px rgba(0,0,0,.24);
+    --shadow-float: 0 18px 40px rgba(0,0,0,.4), 0 3px 9px rgba(0,0,0,.28);
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font-family: inherit; color: inherit; }
+  button { cursor: pointer; border: none; background: none; }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+
+  /* ---- Device shell: full-bleed on phone, 430px frame on larger screens (00 §canonical) ---- */
+  .device {
+    position: relative;
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100dvh;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  @media (min-width: 700px) {
+    body { display: grid; place-items: center; background: color-mix(in srgb, var(--ink) 4%, var(--bg)); }
+    .device {
+      height: min(860px, calc(100dvh - 48px));
+      border-radius: 40px;
+      border: 1px solid var(--line-strong);
+      box-shadow: var(--shadow-float);
+    }
+  }
+  .screen {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: calc(66px + var(--safe-top)) 14px calc(118px + var(--safe-bottom));
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* ---- Top bar (05) ---- */
+  .topbar {
+    position: absolute; top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    height: calc(58px + var(--safe-top));
+    padding: var(--safe-top) 8px 8px;
+    background: linear-gradient(180deg, var(--bg) 72%, transparent);
+  }
+  .iconbtn {
+    width: 36px; height: 36px; border-radius: 12px;
+    display: grid; place-items: center;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .iconbtn:active { transform: scale(0.965); background: var(--surface-muted); }
+  .iconbtn svg { width: 17px; height: 17px; }
+  .identity { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding-left: 2px; }
+  .identity-label {
+    font-size: 7px; font-weight: 800; letter-spacing: 0.075em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .identity-name {
+    font-size: 13px; font-weight: 800; letter-spacing: -0.045em;
+    color: var(--ink); line-height: 1.2; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar-actions { display: flex; gap: 6px; }
+
+  /* ---- Company context banner (read-only, per 16 §16.3) ---- */
+  .ctx {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 11px 12px;
+    margin-bottom: 8px;
+  }
+  .ctx-icon {
+    width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+    background: var(--primary-soft); color: var(--primary);
+    display: grid; place-items: center;
+  }
+  .ctx-icon svg { width: 16px; height: 16px; }
+  .ctx-eyebrow {
+    font-size: 7px; font-weight: 800; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .ctx-name { font-size: 11px; font-weight: 800; letter-spacing: -0.025em; margin-top: 1px; }
+  .ctx-note { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; }
+
+  /* ---- Stat grid (06: 2-column locked) ---- */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 11px 12px 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat::after {
+    content: ""; position: absolute; right: -36px; bottom: -42px;
+    width: 84px; height: 84px; border-radius: 50%; opacity: .5;
+    background: radial-gradient(circle at 35% 35%, var(--primary-soft), transparent 140%);
+  }
+  .stat-label {
+    font-size: 8px; font-weight: 800; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .stat-val {
+    margin-top: 6px; font-family: var(--number); font-size: 17px;
+    font-weight: 500; letter-spacing: -0.075em; line-height: 1.2;
+  }
+  .stat-val.text { font-family: var(--font); font-size: 13px; font-weight: 800; letter-spacing: -0.045em; }
+  .stat-sub { margin-top: 2px; font-size: 8px; font-weight: 500; color: var(--ink-3); }
+  .stat-sub.warn { color: var(--attention); font-weight: 700; }
+
+  /* ---- Section header (06) ---- */
+  .sechead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 0 2px 8px;
+  }
+  .sechead h2 {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.105em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .sechead .count { font-size: 9px; font-weight: 800; color: var(--primary); }
+
+  /* ---- Member card ---- */
+  .mcard {
+    display: block; width: 100%; text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 12px;
+    margin-bottom: 8px;
+    transition: transform .12s ease;
+  }
+  .mcard:active { transform: scale(0.985); }
+  .mcard.self {
+    background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary) 24%, var(--line));
+  }
+  .mcard-top { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface-muted); color: var(--ink-2);
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 800; letter-spacing: 0.02em;
+  }
+  .avatar.you { background: var(--primary-soft); color: var(--primary); }
+  .who { flex: 1; min-width: 0; }
+  .who-name {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2;
+    white-space: nowrap; overflow: hidden;
+  }
+  .who-mail {
+    display: block; font-size: 8px; font-weight: 500; color: var(--ink-3);
+    margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pill {
+    flex-shrink: 0;
+    font-size: 6px; font-weight: 800; letter-spacing: 0.07em;
+    text-transform: uppercase; border-radius: 5px; padding: 2px 5px;
+  }
+  .pill.owner { background: var(--secondary-soft); color: var(--secondary); }
+  .pill.you { background: var(--primary-soft); color: var(--primary); }
+  .chev { flex-shrink: 0; color: var(--ink-3); }
+  .chev svg { width: 15px; height: 15px; }
+
+  .acc-label {
+    display: block; margin: 10px 2px 5px;
+    font-size: 7px; font-weight: 800; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--primary-soft); color: var(--primary);
+    border-radius: 999px; padding: 3px 8px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.04em;
+  }
+  .chip svg { width: 10px; height: 10px; }
+  .no-access { font-size: 8px; font-weight: 700; color: var(--attention); }
+
+  /* ---- Pending invitation row ---- */
+  .irow {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 11px 12px;
+    margin-bottom: 8px;
+  }
+  .irow-icon {
+    width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+    background: var(--primary-soft); color: var(--primary);
+    display: grid; place-items: center;
+  }
+  .irow-icon svg { width: 15px; height: 15px; }
+  .irow-when {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 2px;
+  }
+  .irow-when svg { width: 10px; height: 10px; }
+  .irow-when b { color: var(--attention); font-weight: 700; }
+  .ghost-danger {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 4px;
+    height: 30px; padding: 0 10px; border-radius: 10px;
+    color: var(--attention); font-size: 9px; font-weight: 800;
+    background: var(--attention-soft);
+  }
+  .ghost-danger:active { transform: scale(0.965); }
+  .ghost-danger svg { width: 11px; height: 11px; }
+
+  .ia-note {
+    display: flex; align-items: flex-start; gap: 6px;
+    margin: 2px 2px 14px; padding: 0 2px;
+    font-size: 8px; font-weight: 500; color: var(--ink-3); line-height: 1.5;
+  }
+  .ia-note svg { width: 11px; height: 11px; flex-shrink: 0; margin-top: 1px; color: var(--sage); }
+
+  .footer {
+    margin-top: 26px; text-align: center;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--ink-3); opacity: .5;
+  }
+
+  /* ---- FAB (05) ---- */
+  .fab {
+    position: absolute; right: 16px;
+    bottom: calc(82px + var(--safe-bottom));
+    width: 50px; height: 50px; border-radius: 18px;
+    background: var(--gradient); color: #fff;
+    display: grid; place-items: center;
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 40%, transparent);
+    z-index: 31;
+  }
+  .fab:active { transform: scale(0.965); }
+  .fab svg { width: 21px; height: 21px; }
+
+  /* ---- Bottom nav (05: 5 tabs locked, solid, no blur) ---- */
+  .bottomnav {
+    position: absolute; left: 10px; right: 10px;
+    bottom: max(8px, var(--safe-bottom));
+    height: 62px;
+    background: var(--nav);
+    border: 1px solid var(--line-strong);
+    border-radius: 20px;
+    box-shadow: var(--shadow-float);
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    padding: 4px;
+    z-index: 31;
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; border-radius: 15px; color: var(--ink-3);
+  }
+  .tab svg { width: 17px; height: 17px; }
+  .tab span { font-size: 7px; font-weight: 800; }
+  .tab.active {
+    background: var(--gradient); color: #fff;
+    box-shadow: 0 5px 12px color-mix(in srgb, var(--primary) 35%, transparent);
+  }
+  .tab:active:not(.active) { background: var(--surface-muted); }
+
+  /* ---- Scrim + bottom sheet (05, 15 §2) ---- */
+  .scrim {
+    position: absolute; inset: 0; z-index: 40;
+    background: var(--scrim);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s cubic-bezier(.2,.9,.24,1);
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 43;
+    max-height: 78%;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -16px 40px rgba(0, 0, 0, .24);
+    transform: translateY(106%);
+    transition: transform .3s cubic-bezier(.2,.9,.24,1);
+    display: flex; flex-direction: column;
+  }
+  .sheet.show { transform: translateY(0); }
+  .grab { width: 34px; height: 3px; border-radius: 99px; background: var(--surface-strong); margin: 8px auto 0; flex-shrink: 0; }
+  .sheet-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    padding: 10px 16px 8px; flex-shrink: 0;
+  }
+  .sheet-title { font-size: 17px; font-weight: 800; letter-spacing: -0.05em; line-height: 1.2; }
+  .sheet-desc { font-size: 9px; font-weight: 700; color: var(--ink-3); margin-top: 2px; }
+  .sheet-close {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface-muted); color: var(--ink-2);
+    display: grid; place-items: center;
+  }
+  .sheet-close svg { width: 13px; height: 13px; }
+  .sheet-body { overflow-y: auto; padding: 4px 13px calc(16px + var(--safe-bottom)); }
+
+  /* ---- Sheet inner blocks ---- */
+  .grp {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 4px 10px;
+    margin-top: 8px;
+  }
+  .grp-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 9px 0;
+  }
+  .grp-row + .grp-row { border-top: 1px solid var(--line); }
+  .grp-k { font-size: 8px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  .grp-v { font-size: 10px; font-weight: 800; letter-spacing: -0.01em; }
+  .grp-v.mono { font-family: var(--number); font-weight: 500; }
+
+  .tpl-row {
+    width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 8px 8px 10px;
+    border-radius: 14px;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    margin-top: 8px;
+    transition: background .12s ease;
+  }
+  .tpl-row:active { background: var(--surface-muted); }
+  .tpl-icon {
+    width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: var(--surface-muted); color: var(--ink-3);
+  }
+  .tpl-row[data-on="true"] .tpl-icon { background: var(--primary-soft); color: var(--primary); }
+  .tpl-icon svg { width: 15px; height: 15px; }
+  .tpl-main { flex: 1; min-width: 0; }
+  .tpl-name { font-size: 11px; font-weight: 800; letter-spacing: -0.025em; }
+  .tpl-meta { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; }
+  .tpl-caret { color: var(--ink-3); transition: transform .2s ease; }
+  .tpl-row[aria-expanded="true"] .tpl-caret { transform: rotate(90deg); }
+  .tpl-caret svg { width: 13px; height: 13px; }
+  .tpl-act {
+    flex-shrink: 0;
+    height: 30px; padding: 0 12px; border-radius: 10px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    background: var(--surface-muted); color: var(--ink-2);
+  }
+  .tpl-act:active { transform: scale(0.965); }
+  .tpl-row[data-on="true"] .tpl-act { background: var(--attention-soft); color: var(--attention); }
+  .tpl-row[data-on="false"] .tpl-act { background: var(--primary-soft); color: var(--primary); }
+  .tpl-act[disabled] { opacity: .45; cursor: not-allowed; }
+
+  .abilities {
+    display: none;
+    margin: 2px 8px 8px 10px;
+    padding: 8px 10px;
+    background: var(--surface-raised);
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+  }
+  .abilities.open { display: block; }
+  .ab-head { font-size: 7px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 5px; }
+  .ab-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 9px; font-weight: 700; color: var(--ink-2); }
+  .ab-row svg { width: 11px; height: 11px; color: var(--primary); flex-shrink: 0; }
+
+  .self-note {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 10px; padding: 9px 10px;
+    background: var(--surface-raised); border: 1px solid var(--line); border-radius: 12px;
+    font-size: 8px; font-weight: 600; color: var(--ink-3);
+  }
+  .self-note svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+  .member-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .mact {
+    flex: 1; height: 40px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 10px; font-weight: 800;
+    background: var(--surface-muted); color: var(--ink);
+  }
+  .mact.danger { background: var(--attention-soft); color: var(--attention); }
+  .mact:active { transform: scale(0.965); }
+  .mact svg { width: 13px; height: 13px; }
+
+  .field { margin-top: 12px; }
+  .field label {
+    display: block; margin-bottom: 5px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+  .field input {
+    width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 12px;
+    background: var(--surface-raised); padding: 0 12px;
+    font-size: 11px; font-weight: 600; outline: none;
+  }
+  .field input:focus { border-color: var(--primary); }
+  .field-err { margin-top: 5px; font-size: 8px; font-weight: 700; color: var(--attention); }
+  .field-err[hidden] { display: none; }
+
+  .check-row {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 9px 10px; border-radius: 14px;
+    background: var(--surface-raised); border: 1px solid var(--line);
+    margin-top: 8px; cursor: pointer;
+  }
+  .check-row input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--primary); flex-shrink: 0; }
+  .check-name { font-size: 11px; font-weight: 800; letter-spacing: -0.02em; }
+  .check-desc { font-size: 8px; font-weight: 500; color: var(--ink-2); line-height: 1.45; margin-top: 1px; }
+
+  .sheet-cta {
+    width: 100%; height: 44px; border-radius: 12px;
+    background: var(--gradient); color: #fff;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    margin-top: 14px;
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .sheet-cta:active { transform: scale(0.985); }
+  .sheet-cta svg { width: 14px; height: 14px; }
+  .sheet-cta.danger { background: var(--attention); box-shadow: 0 8px 20px color-mix(in srgb, var(--attention) 30%, transparent); }
+  .sheet-cta.ghost { background: var(--surface-muted); color: var(--ink); box-shadow: none; }
+
+  /* ---- Toast (06) + Snackbar (15 §6) ---- */
+  .toast {
+    position: absolute; top: calc(10px + var(--safe-top)); left: 50%; z-index: 60;
+    transform: translate(-50%, -12px);
+    background: var(--ink); color: var(--bg);
+    border-radius: 12px; padding: 8px 14px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.01em;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    max-width: calc(100% - 32px); text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .snackbar {
+    position: absolute; left: 16px; right: 16px; bottom: calc(78px + var(--safe-bottom)); z-index: 55;
+    margin: 0 auto; max-width: 420px;
+    background: var(--ink); color: var(--bg);
+    border-radius: 14px; padding: 11px 14px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 10px; font-weight: 700;
+    opacity: 0; transform: translateY(10px); pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .snackbar.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .snackbar button {
+    margin-left: auto; flex-shrink: 0;
+    color: var(--primary-bright);
+    font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  /* ---- Motion guard (11) ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="device">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="iconbtn" type="button" aria-label="Back to Settings" title="Settings navigation is outside this candidate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="identity">
+        <div style="min-width:0;">
+          <div class="identity-label">Settings · Workspace</div>
+          <div class="identity-name">Team &amp; Access</div>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="iconbtn" type="button" id="themeBtn" aria-label="Toggle dark mode">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Scroll area -->
+  <main class="screen" id="screen">
+
+    <!-- Company context — read-only display, not a switcher (16 §16.3) -->
+    <section class="ctx" aria-label="Active company context">
+      <div class="ctx-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
+      </div>
+      <div style="min-width:0;">
+        <div class="ctx-eyebrow">Company context</div>
+        <div class="ctx-name" id="ctxName">Sun &amp; Shield Power Solutions</div>
+        <div class="ctx-note">Access below applies to this company. Switch it from the drawer.</div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats" aria-label="Team summary">
+      <div class="stat">
+        <div class="stat-label">Members</div>
+        <div class="stat-val" id="statMembers">4</div>
+        <div class="stat-sub" id="statMembersSub">1 owner · workspace-wide</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Pending invites</div>
+        <div class="stat-val" id="statPending">1</div>
+        <div class="stat-sub" id="statPendingSub">1 awaiting response</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Access templates</div>
+        <div class="stat-val" id="statTemplates">4</div>
+        <div class="stat-sub">assigned per company</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">You</div>
+        <div class="stat-val text" id="statYou">Owner</div>
+        <div class="stat-sub">full access everywhere</div>
+      </div>
+    </section>
+
+    <!-- Members -->
+    <div class="sechead">
+      <h2>Team members</h2>
+      <span class="count" id="memberCount">4</span>
+    </div>
+    <div id="memberList"></div>
+
+    <p class="ia-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <span>Membership is workspace-wide. Roles are granted per company, so the same person can hold different access in each business.</span>
+    </p>
+
+    <!-- Pending invitations -->
+    <div class="sechead">
+      <h2>Pending invitations</h2>
+      <span class="count" id="pendingCount">1</span>
+    </div>
+    <div id="pendingList"></div>
+
+    <p class="footer">BIGDROPS ERP</p>
+  </main>
+
+  <!-- FAB — the one primary action on this screen -->
+  <button class="fab" type="button" id="inviteOpenBtn" aria-label="Invite member">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+  </button>
+
+  <!-- Bottom nav — 5-tab locked model, More active (Team lives under More → Settings) -->
+  <nav class="bottomnav" aria-label="Primary">
+    <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
+    <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 10v4"/><path d="M7 4v.01"/><path d="M17 4v.01"/><path d="M17 14v.01"/><path d="M7 18v.01"/><path d="M17 18v.01"/></svg><span>Projects</span></button>
+    <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m7 14 4-4 4 3 5-6"/></svg><span>Sales</span></button>
+    <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="12" cy="10" r="3"/><path d="M8 21v-1a4 4 0 0 1 8 0v1"/></svg><span>Clients</span></button>
+    <button class="tab active" type="button" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg><span>More</span></button>
+  </nav>
+
+  <!-- Scrim + sheets -->
+  <div class="scrim" id="scrim"></div>
+
+  <!-- Member access sheet -->
+  <div class="sheet" id="memberSheet" role="dialog" aria-modal="true" aria-labelledby="memberSheetTitle">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <div class="avatar" id="msAvatar">AM</div>
+        <div style="min-width:0;">
+          <div class="sheet-title" id="memberSheetTitle" style="font-size:15px;">Adewale Musa</div>
+          <div class="sheet-desc" id="msMail">adewale@example.com</div>
+        </div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="msBody"></div>
+  </div>
+
+  <!-- Invite sheet -->
+  <div class="sheet" id="inviteSheet" role="dialog" aria-modal="true" aria-labelledby="inviteTitle">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title" id="inviteTitle">Invite member</div>
+        <div class="sheet-desc">They join the workspace. Grant company access now or later.</div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="inviteEmail">Email address</label>
+        <input type="email" id="inviteEmail" placeholder="name@example.com" autocomplete="email">
+        <div class="field-err" id="inviteErr" hidden>Enter a valid email address.</div>
+      </div>
+      <div class="field">
+        <label>Grant access in Sun &amp; Shield (optional)</label>
+        <div id="inviteChecks"></div>
+      </div>
+      <button class="sheet-cta" type="button" id="inviteSendBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        Send invite
+      </button>
+    </div>
+  </div>
+
+  <!-- Confirm sheet (shared) -->
+  <div class="sheet" id="confirmSheet" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title" id="confirmTitle">Remove member?</div>
+        <div class="sheet-desc" id="confirmDesc"></div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="grp" style="margin-top:0;">
+        <div class="grp-row"><span class="grp-k">This will</span><span class="grp-v" id="confirmEffect"></span></div>
+      </div>
+      <button class="sheet-cta ghost" type="button" data-close>Cancel</button>
+      <button class="sheet-cta danger" type="button" id="confirmGo">Remove</button>
+    </div>
+  </div>
+
+  <!-- Toast + Snackbar -->
+  <div class="toast" id="toast" role="status"></div>
+  <div class="snackbar" id="snackbar" aria-live="polite"><span id="snackText"></span><button type="button" id="snackAction" hidden>Undo</button></div>
+
+</div>
+
+<script>
+  /* ---------- Data (sample state matches the live Settings → Team section) ---------- */
+  var COMPANY = 'Sun & Shield Power Solutions';
+
+  var ABILITIES = {
+    view_docs:  'View documents',
+    edit_docs:  'Create & edit documents',
+    dispatch:   'Approve waybills & CSR',
+    inventory:  'Manage inventory & stock',
+    reports:    'View financial reports',
+    invite:     'Invite members',
+    access:     'Manage member access',
+    settings:   'Edit company settings'
+  };
+
+  var TEMPLATES = [
+    { id: 'admin',    name: 'Company Admin', desc: 'Full control of this company\u2019s documents, team, and settings.',
+      abilities: ['view_docs','edit_docs','dispatch','inventory','reports','invite','access','settings'] },
+    { id: 'engineer', name: 'Engineer', desc: 'Field delivery: waybills, CSR sign-off, and inventory.',
+      abilities: ['view_docs','dispatch','inventory'] },
+    { id: 'manager',  name: 'Manager', desc: 'Runs day-to-day work: documents, approvals, and reports.',
+      abilities: ['view_docs','edit_docs','dispatch','reports','invite'] },
+    { id: 'viewer',   name: 'Viewer', desc: 'Read-only view of documents and reports.',
+      abilities: ['view_docs','reports'] }
+  ];
+
+  var MEMBERS = [
+    { id: 'm1', name: 'Adewale Musa',  email: 'adewale@example.com',  joined: '12 Jan 2026', accountRole: 'Owner',  self: true,  tpl: ['admin','engineer','manager','viewer'] },
+    { id: 'm2', name: 'Kemi Adeyemi',  email: 'kemi@example.com',     joined: '3 Feb 2026',  accountRole: 'Member', self: false, tpl: ['engineer'] },
+    { id: 'm3', name: 'Tunde Balogun', email: 'tunde@example.com',    joined: '18 Mar 2026', accountRole: 'Member', self: false, tpl: ['manager'] },
+    { id: 'm4', name: 'Fatima Yusuf',  email: 'fatima@example.com',   joined: '27 May 2026', accountRole: 'Member', self: false, tpl: ['viewer'] }
+  ];
+
+  var PENDING = [
+    { id: 'p1', email: 'chidi.okeke@example.com', invited: '9 Sep 2026', expires: '16 Sep 2026', tpl: [] }
+  ];
+
+  /* ---------- Icons ---------- */
+  var I = {
+    shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+    shieldOff: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    chev: '<path d="m9 18 6-6-6-6"/>',
+    trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    transfer: '<path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v1"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v-1"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+    lock: '<rect x="3.5" y="11" width="17" height="10.5" rx="2"/><path d="M7 11V7.5a5 5 0 0 1 10 0V11"/>',
+    userplus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>',
+    send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>'
+  };
+  function svg(inner, size) {
+    return '<svg viewBox="0 0 24 24" width="' + (size || 15) + '" height="' + (size || 15) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+  }
+  function initials(name) { return name.split(' ').map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase(); }
+  function tplById(id) { return TEMPLATES.find(function (t) { return t.id === id; }); }
+
+  /* ---------- Feedback: toast (ephemeral) + snackbar (with Undo) ---------- */
+  var toastTimer;
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  var snackTimer;
+  function snack(msg, undoFn) {
+    var s = document.getElementById('snackbar');
+    var btn = document.getElementById('snackAction');
+    document.getElementById('snackText').textContent = msg;
+    btn.hidden = !undoFn;
+    if (undoFn) btn.onclick = function () { undoFn(); s.classList.remove('show'); };
+    s.classList.add('show');
+    clearTimeout(snackTimer);
+    snackTimer = setTimeout(function () { s.classList.remove('show'); }, undoFn ? 5000 : 3000);
+  }
+
+  /* ---------- Sheet stack (back stack: sheet pops first, Escape per 15 §3) ---------- */
+  function openSheet(id) {
+    closeSheets();
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeSheets() {
+    document.getElementById('scrim').classList.remove('show');
+    document.querySelectorAll('.sheet').forEach(function (s) { s.classList.remove('show'); });
+  }
+  document.getElementById('scrim').addEventListener('click', closeSheets);
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeSheets(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheets(); });
+
+  /* ---------- Rendering ---------- */
+  function renderStats() {
+    document.getElementById('statMembers').textContent = MEMBERS.length;
+    var owners = MEMBERS.filter(function (m) { return m.accountRole === 'Owner'; }).length;
+    document.getElementById('statMembersSub').textContent = owners + ' owner · workspace-wide';
+    document.getElementById('statPending').textContent = PENDING.length;
+    document.getElementById('statPendingSub').textContent = PENDING.length + ' awaiting response';
+    document.getElementById('statPendingSub').className = 'stat-sub' + (PENDING.length ? ' warn' : '');
+    document.getElementById('memberCount').textContent = MEMBERS.length;
+    document.getElementById('pendingCount').textContent = PENDING.length;
+  }
+
+  function renderMembers() {
+    var host = document.getElementById('memberList');
+    host.innerHTML = MEMBERS.map(function (m) {
+      var chips = m.tpl.map(function (id) {
+        var t = tplById(id);
+        return '<span class="chip">' + svg(I.shield, 10) + t.name + '</span>';
+      }).join('');
+      var accessLine = chips
+        ? '<div class="chips">' + chips + '</div>'
+        : '<p class="no-access">No access in ' + COMPANY + ' yet.</p>';
+      return '<button class="mcard' + (m.self ? ' self' : '') + '" type="button" data-member="' + m.id + '"' +
+        ' aria-label="Open access for ' + m.name + ', ' + m.accountRole + '">' +
+        '<div class="mcard-top">' +
+          '<div class="avatar' + (m.self ? ' you' : '') + '">' + initials(m.name) + '</div>' +
+          '<div class="who">' +
+            '<div class="who-name">' + m.name +
+              (m.accountRole === 'Owner' ? '<span class="pill owner">Owner</span>' : '') +
+              (m.self ? '<span class="pill you">You</span>' : '') +
+            '</div>' +
+            '<span class="who-mail">' + m.email + ' · joined ' + m.joined + '</span>' +
+          '</div>' +
+          '<span class="chev">' + svg(I.chev, 15) + '</span>' +
+        '</div>' +
+        '<span class="acc-label">Access in ' + COMPANY + '</span>' +
+        accessLine +
+      '</button>';
+    }).join('');
+  }
+
+  function renderPending() {
+    var host = document.getElementById('pendingList');
+    if (!PENDING.length) {
+      host.innerHTML = '<p class="ia-note" style="margin-top:0;"><span>No pending invitations.</span></p>';
+      return;
+    }
+    host.innerHTML = PENDING.map(function (p) {
+      var tags = p.tpl.map(function (id) {
+        return '<span class="chip">' + svg(I.shield, 10) + tplById(id).name + '</span>';
+      }).join('');
+      return '<div class="irow">' +
+        '<div class="irow-icon">' + svg(I.mail, 15) + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="who-name" style="white-space:normal;">' + p.email + '</div>' +
+          '<div class="irow-when">' + svg(I.clock, 10) + ' Invited ' + p.invited + ' · <b>expires ' + p.expires + '</b></div>' +
+          (tags ? '<div class="chips" style="margin-top:5px;">' + tags + '</div>' : '') +
+        '</div>' +
+        '<button class="ghost-danger" type="button" data-revoke="' + p.id + '">' + svg(I.x, 11) + ' Revoke</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderAll() { renderStats(); renderMembers(); renderPending(); }
+
+  /* ---------- Member access sheet ---------- */
+  var openMemberId = null, expandedTpl = {};
+
+  function memberSheetHtml(m) {
+    var isOwner = m.accountRole === 'Owner';
+    var html = '';
+
+    /* Workspace membership */
+    html += '<div class="grp" style="margin-top:0;">' +
+      '<div class="grp-row"><span class="grp-k">Workspace membership</span><span class="grp-v">' + (isOwner ? 'Owner' : 'Member') + '</span></div>' +
+      '<div class="grp-row"><span class="grp-k">Joined</span><span class="grp-v mono">' + m.joined + '</span></div>' +
+    '</div>';
+
+    /* Company access templates with expandable abilities */
+    html += '<div class="acc-label" style="margin-top:14px;">Access in ' + COMPANY + '</div>';
+    html += TEMPLATES.map(function (t) {
+      var on = m.tpl.indexOf(t.id) > -1;
+      var open = expandedTpl[t.id];
+      var abilities = t.abilities.map(function (a) {
+        return '<div class="ab-row">' + svg(I.check, 11) + ABILITIES[a] + '</div>';
+      }).join('');
+      return '<div class="tpl-row" data-on="' + on + '" data-tpl="' + t.id + '" role="button" tabindex="0"' +
+          ' aria-expanded="' + (open ? 'true' : 'false') + '"' +
+          ' aria-label="' + t.name + (on ? ', granted' : ', not granted') + '. Tap to see abilities.">' +
+        '<span class="tpl-icon">' + svg(on ? I.shield : I.shieldOff, 15) + '</span>' +
+        '<span class="tpl-main"><span class="tpl-name">' + t.name + '</span>' +
+          '<span class="tpl-meta">' + t.abilities.length + ' abilities · ' + t.desc + '</span></span>' +
+        '<span class="tpl-caret">' + svg(I.chev, 13) + '</span>' +
+        '<button class="tpl-act" type="button" data-grant="' + t.id + '" aria-label="' + (on ? 'Revoke ' : 'Grant ') + t.name + '">' + (on ? 'Revoke' : 'Grant') + '</button>' +
+      '</div>' +
+      '<div class="abilities' + (open ? ' open' : '') + '" id="ab-' + t.id + '">' +
+        '<div class="ab-head">Abilities this template grants</div>' + abilities +
+      '</div>';
+    }).join('');
+
+    /* Self / owner protection — live-app wording preserved */
+    if (m.self) {
+      html += '<div class="self-note">' + svg(I.lock, 11) + ' You cannot remove yourself from this view.</div>';
+    } else {
+      html += '<div class="member-actions">' +
+        '<button class="mact" type="button" data-transfer="' + m.id + '">' + svg(I.transfer, 13) + ' Transfer ownership</button>' +
+        '<button class="mact danger" type="button" data-remove="' + m.id + '">' + svg(I.trash, 13) + ' Remove member</button>' +
+      '</div>';
+    }
+    return html;
+  }
+
+  function openMember(id) {
+    openMemberId = id;
+    var m = MEMBERS.find(function (x) { return x.id === id; });
+    document.getElementById('msAvatar').textContent = initials(m.name);
+    document.getElementById('msAvatar').className = 'avatar' + (m.self ? ' you' : '');
+    document.getElementById('memberSheetTitle').textContent = m.name;
+    document.getElementById('msMail').textContent = m.email;
+    document.getElementById('msBody').innerHTML = memberSheetHtml(m);
+    openSheet('memberSheet');
+  }
+
+  document.getElementById('msBody').addEventListener('click', function (e) {
+    var grant = e.target.closest('[data-grant]');
+    if (grant) {
+      e.stopPropagation();
+      var m = MEMBERS.find(function (x) { return x.id === openMemberId; });
+      var t = tplById(grant.dataset.grant);
+      var idx = m.tpl.indexOf(t.id);
+      if (idx > -1) { m.tpl.splice(idx, 1); toast(t.name + ' revoked from ' + m.name.split(' ')[0]); }
+      else { m.tpl.push(t.id); toast(t.name + ' granted to ' + m.name.split(' ')[0]); }
+      renderAll();
+      document.getElementById('msBody').innerHTML = memberSheetHtml(m);
+      return;
+    }
+    var row = e.target.closest('.tpl-row');
+    if (row) {
+      var tid = row.dataset.tpl;
+      expandedTpl[tid] = !expandedTpl[tid];
+      row.setAttribute('aria-expanded', expandedTpl[tid] ? 'true' : 'false');
+      document.getElementById('ab-' + tid).classList.toggle('open', expandedTpl[tid]);
+      return;
+    }
+    var tr = e.target.closest('[data-transfer]');
+    if (tr) { askConfirm('transfer', tr.dataset.transfer); return; }
+    var rm = e.target.closest('[data-remove]');
+    if (rm) { askConfirm('remove', rm.dataset.remove); }
+  });
+  document.getElementById('msBody').addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('tpl-row')) {
+      e.preventDefault();
+      e.target.click();
+    }
+  });
+
+  document.getElementById('memberList').addEventListener('click', function (e) {
+    var card = e.target.closest('[data-member]');
+    if (card) openMember(card.dataset.member);
+  });
+
+  /* ---------- Confirm sheet (remove / transfer / revoke) ---------- */
+  var confirmAction = null, confirmTargetId = null;
+  function askConfirm(kind, id) {
+    confirmAction = kind; confirmTargetId = id;
+    var title = document.getElementById('confirmTitle');
+    var desc = document.getElementById('confirmDesc');
+    var effect = document.getElementById('confirmEffect');
+    var go = document.getElementById('confirmGo');
+    if (kind === 'remove') {
+      var m = MEMBERS.find(function (x) { return x.id === id; });
+      title.textContent = 'Remove ' + m.name + '?';
+      desc.textContent = 'This removes their workspace membership.';
+      effect.textContent = 'Lose access to ' + COMPANY + ' and all companies here.';
+      go.textContent = 'Remove member';
+    } else if (kind === 'transfer') {
+      var m2 = MEMBERS.find(function (x) { return x.id === id; });
+      title.textContent = 'Transfer ownership to ' + m2.name.split(' ')[0] + '?';
+      desc.textContent = 'You become a Member. They become the Owner.';
+      effect.textContent = 'New owner keeps current access and gains owner rights.';
+      go.textContent = 'Transfer';
+    } else {
+      var p = PENDING.find(function (x) { return x.id === id; });
+      title.textContent = 'Revoke invite?';
+      desc.textContent = p.email;
+      effect.textContent = 'This email can no longer accept the invitation.';
+      go.textContent = 'Revoke invite';
+    }
+    openSheet('confirmSheet');
+  }
+
+  document.getElementById('confirmGo').addEventListener('click', function () {
+    if (confirmAction === 'remove') {
+      var idx = MEMBERS.findIndex(function (x) { return x.id === confirmTargetId; });
+      var removed = MEMBERS.splice(idx, 1)[0];
+      closeSheets(); renderAll();
+      snack(removed.name + ' removed', function () {
+        MEMBERS.splice(idx, 0, removed); renderAll(); toast('Removal undone');
+      });
+    } else if (confirmAction === 'transfer') {
+      var newOwner = MEMBERS.find(function (x) { return x.id === confirmTargetId; });
+      var oldOwner = MEMBERS.find(function (x) { return x.accountRole === 'Owner'; });
+      oldOwner.accountRole = 'Member'; oldOwner.self = false;
+      newOwner.accountRole = 'Owner'; newOwner.self = true;
+      closeSheets(); renderAll();
+      toast('Ownership transferred to ' + newOwner.name.split(' ')[0]);
+    } else if (confirmAction === 'revoke') {
+      var pi = PENDING.findIndex(function (x) { return x.id === confirmTargetId; });
+      var inv = PENDING.splice(pi, 1)[0];
+      closeSheets(); renderAll();
+      toast('Invite to ' + inv.email + ' revoked');
+    }
+    confirmAction = null;
+  });
+
+  document.getElementById('pendingList').addEventListener('click', function (e) {
+    var rv = e.target.closest('[data-revoke]');
+    if (rv) askConfirm('revoke', rv.dataset.revoke);
+  });
+
+  /* ---------- Invite sheet ---------- */
+  function renderInviteChecks() {
+    document.getElementById('inviteChecks').innerHTML = TEMPLATES.map(function (t) {
+      return '<label class="check-row">' +
+        '<input type="checkbox" value="' + t.id + '">' +
+        '<span><span class="check-name">' + t.name + '</span>' +
+        '<span class="check-desc">' + t.desc + ' (' + t.abilities.length + ' abilities)</span></span>' +
+      '</label>';
+    }).join('');
+  }
+  document.getElementById('inviteOpenBtn').addEventListener('click', function () {
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteErr').hidden = true;
+    renderInviteChecks();
+    openSheet('inviteSheet');
+  });
+  document.getElementById('inviteSendBtn').addEventListener('click', function () {
+    var email = document.getElementById('inviteEmail').value.trim();
+    var err = document.getElementById('inviteErr');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.hidden = false; return; }
+    err.hidden = true;
+    var tpl = Array.prototype.slice.call(document.querySelectorAll('#inviteChecks input:checked'))
+      .map(function (i) { return i.value; });
+    PENDING.push({ id: 'p' + Date.now(), email: email, invited: 'Today', expires: 'in 7 days', tpl: tpl });
+    closeSheets(); renderAll();
+    toast('Invite sent to ' + email);
+  });
+
+  /* ---------- Theme toggle (04: colour only) ---------- */
+  var MOON = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>';
+  var SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var root = document.documentElement;
+    var dark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+    document.getElementById('themeIcon').innerHTML = dark ? MOON : SUN;
+    document.getElementById('metaTheme').setAttribute('content', dark ? '#1e3a5f' : '#60a5fa');
+  });
+
+  /* ---------- Init ---------- */
+  renderAll();
+</script>
+
+<!--
+  OPEN QUESTIONS for the implementation ticket (not decided in this candidate):
+  1. Where template definitions are edited. This screen assigns fixed templates only; a template
+     editor is a product + database decision.
+  2. Whether a member sheet should show access across all companies at once (cross-company view)
+     or stay scoped to the active company as modelled here.
+  3. Whether revoking a template needs a confirm sheet. Current model: direct action + toast,
+     matching the live section's Grant/Remove pattern.
+  4. Snackbar swipe-to-dismiss is omitted in this static candidate; the interaction model (15 §6)
+     requires it in implementation.
+-->
+</body>
+</html>

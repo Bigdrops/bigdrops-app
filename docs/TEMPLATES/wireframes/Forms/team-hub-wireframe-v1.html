@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Hub — Wireframe v1</title>
+<style>
+  :root {
+    --ground: #f6f6f5;
+    --surface: #ffffff;
+    --line: #d9d9d6;
+    --line-soft: #e7e7e4;
+    --ink: #1c1c1b;
+    --muted: #6d6d68;
+    --soft: #ececea;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 20px 64px;
+  }
+  a { color: inherit; }
+
+  /* ---------- wireframe chrome ---------- */
+  .wf-banner {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .wf-banner h1 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    line-height: 1.3;
+  }
+  .wf-banner p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .wf-banner .meta {
+    margin-top: 8px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .wf-note {
+    border: 1px dashed var(--muted);
+    border-radius: 3px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 10px 0;
+  }
+  .wf-note strong { color: var(--ink); }
+
+  /* ---------- direction selector ---------- */
+  .dir-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 4px;
+    padding: 0;
+    border: 0;
+  }
+  .dir-select button {
+    font: inherit;
+    font-size: 12.5px;
+    padding: 7px 12px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .dir-select button:focus-visible,
+  .btn:focus-visible,
+  summary:focus-visible,
+  select:focus-visible,
+  .member-btn:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  .dir-select button[aria-selected="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+  }
+  .dir-tradeoff {
+    margin: 0 0 18px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  /* ---------- shared blocks ---------- */
+  .card {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 4px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .card-head h3 { margin: 0; font-size: 13.5px; }
+  .card-head .count {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .card-body { padding: 0 14px; }
+  .card-body > *:last-child { margin-bottom: 12px; }
+  .card-body > :first-child { margin-top: 12px; }
+
+  .scope-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin: 18px 0 6px;
+  }
+
+  .ctx-bar {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+  }
+  .ctx-bar .ctx-item span {
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .ctx-bar .ctx-item b { font-weight: 600; }
+
+  .btn {
+    font: inherit;
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+  }
+  .btn.subtle {
+    border-style: dashed;
+    color: var(--muted);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 1px 6px;
+    color: var(--muted);
+    background: var(--soft);
+  }
+  .badge.role-owner {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* member row */
+  .member-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .member-row:last-child { border-bottom: 0; }
+  .member-main { min-width: 0; flex: 1; }
+  .member-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+  .member-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .member-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* ability display */
+  .ability-group { border-bottom: 1px solid var(--line-soft); }
+  .ability-group:last-child { border-bottom: 0; }
+  .ability-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    font-size: 12.5px;
+  }
+  .ability-row .res { font-weight: 600; }
+  .ability-row .acts { color: var(--muted); text-align: right; }
+  .ability-note {
+    font-size: 11.5px;
+    color: var(--muted);
+    padding: 8px 0 10px;
+  }
+
+  details.access {
+    margin: 8px 0 12px;
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+  }
+  details.access > summary {
+    cursor: pointer;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: baseline;
+  }
+  details.access > summary::-webkit-details-marker { display: none; }
+  details.access > summary::after {
+    content: "show / hide";
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  details.access .access-inner { padding: 0 12px 10px; border-top: 1px solid var(--line-soft); }
+
+  select.plain {
+    font: inherit;
+    font-size: 12.5px;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  /* direction C panes */
+  .pane-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .member-btn {
+    font: inherit;
+    text-align: left;
+    width: 100%;
+    background: var(--surface);
+    border: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .member-btn:last-child { border-bottom: 0; }
+  .member-btn:hover { background: var(--ground); }
+  .member-btn[aria-current="true"] { background: var(--soft); }
+  .pane-detail .back-mobile { display: none; }
+
+  /* problem reference */
+  details.problem {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+    margin: 0 0 18px;
+  }
+  details.problem > summary {
+    cursor: pointer;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    list-style: none;
+  }
+  details.problem > summary::-webkit-details-marker { display: none; }
+  details.problem > summary::before { content: "+ "; }
+  details.problem[open] > summary::before { content: "− "; }
+  details.problem .problem-inner {
+    padding: 0 14px 14px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .toggle-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .toggle-chip {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .toggle-chip .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--muted);
+    margin-right: 5px;
+    vertical-align: 1px;
+  }
+  .toggle-chip.on .dot { background: var(--muted); }
+
+  /* open questions */
+  .open-q { margin-top: 26px; }
+  .open-q h2 { font-size: 13.5px; margin: 0 0 8px; }
+  .open-q ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+  .open-q li { margin-bottom: 5px; }
+
+  .direction[hidden] { display: none; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 720px) {
+    .page { padding: 16px 12px 48px; }
+    .pane-grid { grid-template-columns: 1fr; }
+    .pane-detail { display: none; }
+    .pane-grid.show-detail .pane-detail { display: block; }
+    .pane-grid.show-detail .pane-list { display: none; }
+    .pane-detail .back-mobile { display: inline-block; margin-bottom: 10px; }
+    .member-actions { flex-direction: column; align-items: flex-end; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="wf-banner">
+    <h1>Team Hub — structure wireframe</h1>
+    <p>Review question: how should Team Hub separate workspace membership from per-company access,
+       and how should role state be displayed without the misleading on/off toggle found in the
+       2026-09-14 audit?</p>
+    <p class="meta">Wireframe v1 · BIGDROPS ERP · low fidelity · grayscale on purpose · 2026-09-14</p>
+  </header>
+
+  <details class="problem">
+    <summary>Reference: what the current Team Hub shows today (the problem being tested)</summary>
+    <div class="problem-inner">
+      <p style="margin:12px 0 0; font-size:12.5px;">
+        Today each member row shows one pill per role template with an on/off state and
+        Grant / Remove buttons. The state is computed as coverage of
+        <code>entity_permissions</code> rows on the active company — it is not a stored
+        assignment. Overlapping grants and template edits after assignment make the
+        display wrong in both directions. Source:
+        <code>docs/tickets/settings-information-architecture-ux-redesign.md</code> §6.
+      </p>
+      <div class="toggle-strip" aria-label="Current role toggle representation">
+        <span class="toggle-chip on"><span class="dot"></span>Engineer — Remove</span>
+        <span class="toggle-chip"><span class="dot"></span>Manager — Grant</span>
+        <span class="toggle-chip"><span class="dot"></span>Viewer — Grant</span>
+        <span class="toggle-chip"><span class="dot"></span>Company Admin — Grant</span>
+      </div>
+      <p class="wf-note" style="margin-bottom:2px;">
+        <strong>Problem:</strong> this reads as a stored switch. The data model has no such
+        switch — only expanded permission rows. The three directions below each replace it.
+      </p>
+    </div>
+  </details>
+
+  <div class="ctx-bar" aria-label="Context">
+    <div class="ctx-item"><span>Workspace</span><b>Mr C&rsquo;s Agency</b></div>
+    <div class="ctx-item"><span>Active company</span><b>Sun &amp; Shield Power Solutions</b></div>
+    <div class="ctx-item"><span>Signed in as</span><b>Adewale Musa (Owner)</b></div>
+  </div>
+
+  <nav class="dir-select" role="tablist" aria-label="Wireframe direction">
+    <button role="tab" id="tab-a" aria-selected="true" aria-controls="dir-a">A · Membership first</button>
+    <button role="tab" id="tab-b" aria-selected="false" aria-controls="dir-b" tabindex="-1">B · Two scopes stacked</button>
+    <button role="tab" id="tab-c" aria-selected="false" aria-controls="dir-c" tabindex="-1">C · Member drill-down</button>
+  </nav>
+  <p class="dir-tradeoff" id="dir-tradeoff">
+    Familiar single list, least re-learning; the company scope lives inside each member row.
+  </p>
+
+  <!-- ================================================== -->
+  <!-- DIRECTION A — MEMBERSHIP FIRST                     -->
+  <!-- ================================================== -->
+  <section class="direction" id="dir-a" role="tabpanel" aria-labelledby="tab-a">
+
+    <div class="scope-label">People · workspace scope</div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Members</h3>
+        <span class="count">4 members</span>
+      </div>
+      <div class="card-body">
+
+        <div class="member-row">
+          <div class="avatar">AM</div>
+          <div class="member-main">
+            <div class="member-name">Adewale Musa <span class="badge role-owner">Owner</span> <span class="badge">You</span></div>
+            <div class="member-sub">adewale@example.com · joined 12 Jan 2026</div>
+          </div>
+          <div class="member-actions">
+            <span class="badge">Full workspace powers</span>
+          </div>
+        </div>
+
+        <div class="member-row">
+          <div class="avatar">KA</div>
+          <div class="member-main">
+            <div class="member-name">Kemi Adeyemi <span class="badge">Member</span></div>
+            <div class="member-sub">kemi@example.com · joined 03 Feb 2026</div>
+            <details class="access">
+              <summary>Access in Sun &amp; Shield Power Solutions <span class="badge">≈ Engineer</span></summary>
+              <div class="access-inner">
+                <div class="ability-group">
+                  <div class="ability-row"><span class="res">Invoice</span><span class="acts">view · edit</span></div>
+                  <div class="ability-row"><span class="res">Quotation</span><span class="acts">view · edit</span></div>
+                  <div class="ability-row"><span class="res">Waybill</span><span class="acts">view · create · edit</span></div>
+                  <div class="ability-row"><span class="res">Project</span><span class="acts">view · create · edit</span></div>
+                  <div class="ability-row"><span class="res">BOQ</span><span class="acts">view · create · edit</span></div>
+                  <div class="ability-row"><span class="res">Client</span><span class="acts">view</span></div>
+                </div>
+                <p class="ability-note">
+                  Effective abilities on this company. “≈ Engineer” is derived coverage —
+                  the member may hold these abilities from more than one source.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="member-row">
+          <div class="avatar">TB</div>
+          <div class="member-main">
+            <div class="member-name">Tunde Balogun <span class="badge">Member</span></div>
+            <div class="member-sub">tunde@example.com · joined 18 Mar 2026</div>
+            <details class="access">
+              <summary>Access in Sun &amp; Shield Power Solutions <span class="badge">≈ Manager</span></summary>
+              <div class="access-inner">
+                <div class="ability-group">
+                  <div class="ability-row"><span class="res">All resources</span><span class="acts">view · create · edit</span></div>
+                </div>
+                <p class="ability-note">No delete ability. Owner-only actions are workspace governance, not listed here.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="member-row">
+          <div class="avatar">FY</div>
+          <div class="member-main">
+            <div class="member-name">Fatima Yusuf <span class="badge">Member</span></div>
+            <div class="member-sub">fatima@example.com · joined 27 May 2026</div>
+            <details class="access">
+              <summary>Access in Sun &amp; Shield Power Solutions <span class="badge">≈ Viewer</span></summary>
+              <div class="access-inner">
+                <div class="ability-group">
+                  <div class="ability-row"><span class="res">All resources</span><span class="acts">view</span></div>
+                </div>
+                <p class="ability-note">Read-only across this company.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Pending invitations</h3>
+        <span class="count">1 pending</span>
+      </div>
+      <div class="card-body">
+        <div class="member-row">
+          <div class="avatar">✉</div>
+          <div class="member-main">
+            <div class="member-name">chidi.okeke@example.com</div>
+            <div class="member-sub">Invited 09 Sep 2026 · expires 16 Sep 2026</div>
+          </div>
+          <div class="member-actions">
+            <button class="btn" type="button" disabled title="Out of scope for this wireframe">Revoke</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn primary" type="button" disabled title="Invite flow is covered by the existing invite dialog; out of scope here">+ Invite member</button>
+
+    <div class="wf-note">
+      <strong>Open point for this direction:</strong> the “Access in …” panel is per member and
+      per active company. Reviewers should confirm that hiding other companies&rsquo; access here
+      is acceptable, or whether a company picker is needed inside each row (Direction B tests that).
+    </div>
+
+  </section>
+
+  <!-- ================================================== -->
+  <!-- DIRECTION B — TWO SCOPES STACKED                   -->
+  <!-- ================================================== -->
+  <section class="direction" id="dir-b" role="tabpanel" aria-labelledby="tab-b" hidden>
+
+    <div class="scope-label">Section 1 · Workspace — people</div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>People in Mr C&rsquo;s Agency</h3>
+        <span class="count">4 members · 1 invitation</span>
+      </div>
+      <div class="card-body">
+        <div class="member-row">
+          <div class="avatar">AM</div>
+          <div class="member-main">
+            <div class="member-name">Adewale Musa <span class="badge role-owner">Owner</span></div>
+            <div class="member-sub">adewale@example.com · joined 12 Jan 2026</div>
+          </div>
+        </div>
+        <div class="member-row">
+          <div class="avatar">KA</div>
+          <div class="member-main">
+            <div class="member-name">Kemi Adeyemi <span class="badge">Member</span></div>
+            <div class="member-sub">kemi@example.com · joined 03 Feb 2026</div>
+          </div>
+          <div class="member-actions"><button class="btn" type="button" disabled title="Out of scope">Remove</button></div>
+        </div>
+        <div class="member-row">
+          <div class="avatar">TB</div>
+          <div class="member-main">
+            <div class="member-name">Tunde Balogun <span class="badge">Member</span></div>
+            <div class="member-sub">tunde@example.com · joined 18 Mar 2026</div>
+          </div>
+          <div class="member-actions"><button class="btn" type="button" disabled title="Out of scope">Remove</button></div>
+        </div>
+        <div class="member-row">
+          <div class="avatar">FY</div>
+          <div class="member-main">
+            <div class="member-name">Fatima Yusuf <span class="badge">Member</span></div>
+            <div class="member-sub">fatima@example.com · joined 27 May 2026</div>
+          </div>
+          <div class="member-actions"><button class="btn" type="button" disabled title="Out of scope">Remove</button></div>
+        </div>
+        <div class="member-row">
+          <div class="avatar">✉</div>
+          <div class="member-main">
+            <div class="member-name">chidi.okeke@example.com <span class="badge">Invitation pending</span></div>
+            <div class="member-sub">Invited 09 Sep 2026 · expires 16 Sep 2026</div>
+          </div>
+          <div class="member-actions"><button class="btn" type="button" disabled title="Out of scope">Revoke</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scope-label">Section 2 · Company — access in one company at a time</div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Access in <span id="b-company-name">Sun &amp; Shield Power Solutions</span></h3>
+        <label style="font-size:12px; color:var(--muted); display:flex; gap:6px; align-items:center;">
+          Company
+          <select class="plain" id="b-company-select" aria-label="Choose company">
+            <option value="sun">Sun &amp; Shield Power Solutions</option>
+            <option value="lagos">Lagos Ironworks Ltd</option>
+          </select>
+        </label>
+      </div>
+      <div class="card-body" id="b-access-list"><!-- rendered by script --></div>
+    </div>
+
+    <div class="wf-note">
+      <strong>Tradeoff:</strong> clearest scope separation — workspace people and company access
+      never mix on one row. Cost: a member&rsquo;s access is one section away from their name, and
+      the reviewer must pick a company to see anything.
+    </div>
+
+  </section>
+
+  <!-- ================================================== -->
+  <!-- DIRECTION C — MEMBER DRILL-DOWN                    -->
+  <!-- ================================================== -->
+  <section class="direction" id="dir-c" role="tabpanel" aria-labelledby="tab-c" hidden>
+
+    <div class="scope-label">List → member detail</div>
+
+    <div class="pane-grid" id="c-grid">
+      <div class="card pane-list" style="margin-bottom:0;">
+        <div class="card-head"><h3>Members</h3><span class="count">4</span></div>
+        <div id="c-member-list" style="border-top:1px solid var(--line-soft);"><!-- rendered by script --></div>
+      </div>
+
+      <div class="pane-detail" id="c-detail" aria-live="polite">
+        <button class="btn back-mobile" type="button" id="c-back">← Back to members</button>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-head"><h3>Membership</h3><span class="count">Workspace scope</span></div>
+          <div class="card-body">
+            <div id="c-membership"><!-- rendered by script --></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <div class="card-head">
+            <h3>Access in <span id="c-company-name">Sun &amp; Shield Power Solutions</span></h3>
+            <label style="font-size:12px; color:var(--muted); display:flex; gap:6px; align-items:center;">
+              Company
+              <select class="plain" id="c-company-select" aria-label="Choose company">
+                <option value="sun">Sun &amp; Shield Power Solutions</option>
+                <option value="lagos">Lagos Ironworks Ltd</option>
+              </select>
+            </label>
+          </div>
+          <div class="card-body">
+            <div id="c-access"><!-- rendered by script --></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wf-note">
+      <strong>Tradeoff:</strong> leanest list and the most mobile-friendly; every quick
+      “who is in this workspace?” glance costs one tap less. Cost: reviewing access requires
+      opening each member, and the desktop two-pane layout needs its own confirmation with
+      real content density.
+    </div>
+
+  </section>
+
+  <!-- ================================================== -->
+  <!-- OPEN QUESTIONS                                     -->
+  <!-- ================================================== -->
+  <div class="open-q">
+    <h2>Open questions for reviewers</h2>
+    <ul>
+      <li>Should granting and revoking abilities stay in Team Hub at all, or move to a
+          company-scoped “Access” section (audit ticket §4 puts Team under Workspace and
+          roles under the company)?</li>
+      <li>Is a derived summary chip like “≈ Engineer” helpful, or should the display show
+          only the ability list (Direction B shows no chips)?</li>
+      <li>Does the owner need a view of one member&rsquo;s access across all companies in one
+          screen? No direction shows that today.</li>
+      <li>Where does invite expiry editing belong — invite creation only, or also on the
+          pending row?</li>
+      <li>Remove / Transfer ownership / Revoke are shown as plain stubs. Confirm placement
+          before any visual design pass.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- data ---------------- */
+  var COMPANIES = {
+    sun: { name: "Sun & Shield Power Solutions" },
+    lagos: { name: "Lagos Ironworks Ltd" }
+  };
+
+  var MEMBERS = [
+    { id: "am", initials: "AM", name: "Adewale Musa", role: "owner", owner: true,
+      email: "adewale@example.com", joined: "12 Jan 2026" },
+    { id: "ka", initials: "KA", name: "Kemi Adeyemi", role: "member",
+      email: "kemi@example.com", joined: "03 Feb 2026",
+      access: {
+        sun: { approx: "Engineer", groups: [
+          ["Invoice", "view · edit"], ["Quotation", "view · edit"],
+          ["Waybill", "view · create · edit"], ["Project", "view · create · edit"],
+          ["BOQ", "view · create · edit"], ["Client", "view"]
+        ]},
+        lagos: { approx: "Viewer", groups: [["All resources", "view"]] }
+      } },
+    { id: "tb", initials: "TB", name: "Tunde Balogun", role: "member",
+      email: "tunde@example.com", joined: "18 Mar 2026",
+      access: {
+        sun: { approx: "Manager", groups: [["All resources", "view · create · edit"]] },
+        lagos: { approx: "none", groups: [] }
+      } },
+    { id: "fy", initials: "FY", name: "Fatima Yusuf", role: "member",
+      email: "fatima@example.com", joined: "27 May 2026",
+      access: {
+        sun: { approx: "Viewer", groups: [["All resources", "view"]] },
+        lagos: { approx: "Viewer", groups: [["All resources", "view"]] }
+      } }
+  ];
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  /* ---------------- direction selector ---------------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var tradeoffs = {
+    "tab-a": "Familiar single list, least re-learning; the company scope lives inside each member row.",
+    "tab-b": "Clearest scope separation — workspace people and company access never mix; costs one extra section and a company picker.",
+    "tab-c": "Leanest list and most mobile-friendly; reviewing access costs one tap per member."
+  };
+
+  function selectTab(tab) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      var panel = document.getElementById(t.getAttribute("aria-controls"));
+      if (panel) { if (on) { panel.removeAttribute("hidden"); } else { panel.setAttribute("hidden", ""); } }
+    });
+    document.getElementById("dir-tradeoff").textContent = tradeoffs[tab.id] || "";
+  }
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { selectTab(t); });
+    t.addEventListener("keydown", function (e) {
+      var dir = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!dir) { return; }
+      e.preventDefault();
+      var next = tabs[(i + dir + tabs.length) % tabs.length];
+      selectTab(next);
+      next.focus();
+    });
+  });
+
+  /* ---------------- ability list renderer ---------------- */
+  function abilityHtml(access) {
+    if (!access || !access.groups || access.groups.length === 0) {
+      return '<p class="ability-note">No abilities in this company. This member cannot open its data.</p>';
+    }
+    var rows = access.groups.map(function (g) {
+      return '<div class="ability-row"><span class="res">' + esc(g[0]) +
+             '</span><span class="acts">' + esc(g[1]) + "</span></div>";
+    }).join("");
+    var note = '<p class="ability-note">Effective abilities on this company' +
+               (access.approx ? '. Summary derived from coverage — the member may hold these from more than one source.' : '.') +
+               "</p>";
+    return '<div class="ability-group">' + rows + "</div>" + note;
+  }
+
+  /* ---------------- direction B: company picker ---------------- */
+  var bSelect = document.getElementById("b-company-select");
+  var bName = document.getElementById("b-company-name");
+  var bList = document.getElementById("b-access-list");
+
+  function renderB(companyKey) {
+    bName.textContent = COMPANIES[companyKey].name;
+    bList.innerHTML = MEMBERS.filter(function (m) { return !m.owner; }).map(function (m) {
+      var a = m.access[companyKey];
+      var approx = a && a.approx && a.approx !== "none"
+        ? '<span class="badge">≈ ' + esc(a.approx) + "</span>" : "";
+      return '<div class="member-row"><div class="avatar">' + esc(m.initials) + "</div>" +
+        '<div class="member-main"><div class="member-name">' + esc(m.name) + " " + approx + "</div>" +
+        '<div class="ability-group" style="border:0;">' +
+        (a && a.groups.length ? a.groups.map(function (g) {
+          return '<div class="ability-row"><span class="res">' + esc(g[0]) +
+                 '</span><span class="acts">' + esc(g[1]) + "</span></div>";
+        }).join("") : '<p class="ability-note">No abilities in this company.</p>') +
+        "</div></div></div>";
+    }).join("");
+  }
+  bSelect.addEventListener("change", function () { renderB(bSelect.value); });
+  renderB("sun");
+
+  /* ---------------- direction C: drill-down ---------------- */
+  var cList = document.getElementById("c-member-list");
+  var cGrid = document.getElementById("c-grid");
+  var cMembership = document.getElementById("c-membership");
+  var cAccess = document.getElementById("c-access");
+  var cCompanyName = document.getElementById("c-company-name");
+  var cCompanySelect = document.getElementById("c-company-select");
+  var cSelected = "ka";
+  var cCompany = "sun";
+
+  function renderCList() {
+    cList.innerHTML = MEMBERS.map(function (m) {
+      var a = m.access && m.access[cCompany];
+      var count = a && a.groups.length
+        ? a.groups.length + (a.groups.length === 1 ? " resource" : " resources")
+        : "no access";
+      return '<button type="button" class="member-btn" data-id="' + m.id + '" aria-current="' +
+        (m.id === cSelected ? "true" : "false") + '">' +
+        '<span class="avatar">' + esc(m.initials) + "</span>" +
+        '<span class="member-main"><span class="member-name" style="display:block;">' + esc(m.name) + "</span>" +
+        '<span class="member-sub" style="display:block;">' + count + " in " + esc(COMPANIES[cCompany].name.split(" ")[0]) + "</span></span></button>";
+    }).join("");
+    Array.prototype.forEach.call(cList.querySelectorAll(".member-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        cSelected = btn.getAttribute("data-id");
+        renderC();
+        cGrid.classList.add("show-detail");
+      });
+    });
+  }
+
+  function renderCDetail() {
+    var m = MEMBERS.filter(function (x) { return x.id === cSelected; })[0];
+    if (!m) { return; }
+    cMembership.innerHTML =
+      '<div class="member-row" style="border-bottom:0; padding-top:0;">' +
+      '<div class="avatar">' + esc(m.initials) + "</div>" +
+      '<div class="member-main"><div class="member-name">' + esc(m.name) +
+      (m.owner ? ' <span class="badge role-owner">Owner</span>' : ' <span class="badge">Member</span>') + "</div>" +
+      '<div class="member-sub">' + esc(m.email) + " · joined " + esc(m.joined) + "</div></div></div>";
+    var a = m.access && m.access[cCompany];
+    cAccess.innerHTML = abilityHtml(a);
+    cCompanyName.textContent = COMPANIES[cCompany].name;
+  }
+
+  function renderC() { renderCList(); renderCDetail(); }
+
+  cCompanySelect.addEventListener("change", function () {
+    cCompany = cCompanySelect.value;
+    renderC();
+  });
+
+  document.getElementById("c-back").addEventListener("click", function () {
+    cGrid.classList.remove("show-detail");
+  });
+
+  renderC();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team — BIGDROPS ERP (live replica)</title>
+<!--
+  Faithful static replica of the live Settings → Team section (TeamSettingsSection).
+  Sources replicated on 2026-09-14:
+    src/pages/settings/AdminSettingsSection.tsx   (section content)
+    src/pages/settings/SettingsSectionFrame.tsx   (frame header + content surface)
+    src/components/settings/SettingsSummaryCard.tsx (summary card/row)
+    src/index.css + src/styles/formTheme.css      (design tokens, slate-navy light default)
+  No redesign. Static snapshot: dialogs closed, buttons non-functional, as the page loads live.
+-->
+<style>
+  /* ===== tokens copied from src/index.css :root (light default) ===== */
+  :root {
+    color-scheme: light;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 210 20% 99%;
+    --popover: 210 20% 99%;
+    --primary: 225 75% 48%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 44% 98%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 32% 95.5%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 34% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 70% 48%;
+    --border: 214 30% 88%;
+    --input: 214 30% 88%;
+    --ring: 225 75% 48%;
+    --radius: 0.75rem;
+
+    /* ===== bridge tokens copied from src/styles/formTheme.css ===== */
+    --bd-app-bg: var(--background);
+    --bd-border-strong: var(--border);
+    --bd-text-soft: var(--muted-foreground);
+    --bd-input-bg: var(--background);
+    --bd-input-border: var(--input);
+    --bd-card-bg: var(--card);
+    --bd-card-border: var(--border);
+    --bd-button-primary-bg: var(--primary);
+    --bd-button-primary-text: var(--primary-foreground);
+    --bd-surface: var(--card);
+    --bd-surface-muted: var(--muted);
+    --bd-border: var(--border);
+    --bd-text: var(--foreground);
+    --bd-text-muted: var(--muted-foreground);
+
+    --bd-radius: var(--radius);
+    --bd-radius-sm: calc(var(--radius) - 4px);
+    --bd-radius-md: calc(var(--radius) - 2px);
+    --bd-radius-lg: var(--radius);
+    --bd-radius-xl: calc(var(--radius) + 4px);
+    --bd-card-padding: 16px;
+  }
+
+  * { box-sizing: border-box; border: 0 solid hsl(var(--border)); }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background-color: hsl(var(--background));
+    background-image: radial-gradient(circle at top, hsl(var(--primary) / 0.03), transparent 40%);
+    color: hsl(var(--foreground));
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  p { margin: 0; }
+  h2, h3, h4, h5 { margin: 0; }
+
+  .page { max-width: 860px; margin: 0 auto; padding: 24px 16px 0; }
+
+  /* ===== SettingsSectionFrame ===== */
+  .frame { display: flex; flex-direction: column; }
+  .frame-header { display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px; padding: 0 16px; }
+  @media (min-width: 768px) { .frame-header { padding: 0; } }
+  .frame-header-row { display: flex; align-items: center; gap: 12px; }
+  .back-btn {
+    display: none;
+    height: 36px; width: 36px; flex-shrink: 0;
+    align-items: center; justify-content: center;
+    border-radius: 9999px;
+    background: hsl(var(--bd-surface-muted) / 0.5);
+    color: hsl(var(--bd-text));
+    transition: all .15s ease;
+  }
+  .back-btn:active { transform: scale(0.95); }
+  .frame-title-group { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .frame-icon {
+    display: flex; align-items: center; justify-content: center;
+    height: 36px; width: 36px;
+    border-radius: var(--bd-radius-sm);
+    background: hsl(var(--bd-surface-muted));
+    color: hsl(var(--bd-button-primary-bg));
+  }
+  .frame-title {
+    font-size: 17px; font-weight: 800; letter-spacing: -0.05em;
+    color: hsl(var(--bd-text));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .frame-desc-wrap { margin-top: 2px; opacity: 0.7; }
+  .frame-desc {
+    font-size: 10px; font-weight: 500; color: hsl(var(--bd-text-muted));
+    max-width: 42rem; line-height: 1.625;
+  }
+  .content-surface {
+    background: hsl(var(--bd-card-bg));
+    border: 1px solid hsl(var(--bd-border) / 0.5);
+    border-radius: var(--bd-radius-xl);
+    padding: var(--bd-card-padding);
+    overflow: hidden;
+  }
+  @media (min-width: 768px) { .content-surface { padding: 1.5rem; } }
+  @media (max-width: 767px) {
+    .back-btn { display: inline-flex; }
+    .content-surface { border-left: 0; border-right: 0; border-radius: 0; }
+    .frame-header { padding-left: 16px; padding-right: 16px; }
+  }
+
+  /* ===== section eyebrow ===== */
+  .eyebrow-wrap { padding: 0 4px; }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.2em; color: hsl(var(--bd-text-muted)); opacity: 0.6;
+  }
+
+  .stack { display: grid; gap: 24px; }
+
+  /* ===== SettingsSummaryCard ===== */
+  .sum-card {
+    overflow: hidden;
+    border-radius: var(--bd-radius-xl);
+    border: 1px solid hsl(var(--bd-border) / 0.5);
+    background: hsl(var(--bd-card-bg));
+    transition: all .15s ease;
+  }
+  .sum-card-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    border-bottom: 1px solid hsl(var(--bd-border) / 0.4);
+    background: hsl(var(--bd-surface-muted) / 0.3);
+    padding: 16px 20px;
+  }
+  .sum-card-title { font-size: 14px; font-weight: 700; color: hsl(var(--bd-text)); }
+  .sum-card-desc { margin-top: 2px; font-size: 12px; line-height: 1.625; color: hsl(var(--bd-text-muted)); }
+  .sum-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 20px;
+    transition: background-color .15s ease;
+  }
+  .sum-row:hover { background: hsl(var(--bd-surface-muted) / 0.2); }
+  .sum-row-icon {
+    display: flex; height: 32px; width: 32px; flex-shrink: 0;
+    align-items: center; justify-content: center;
+    border-radius: var(--bd-radius-md);
+    background: hsl(var(--bd-surface-muted));
+    color: hsl(var(--bd-text-muted));
+  }
+  .sum-row-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: hsl(var(--bd-text-muted)); opacity: 0.7;
+  }
+  .sum-row-value { margin-top: 2px; font-size: 14px; font-weight: 500; color: hsl(var(--bd-text)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sum-row-value-flex { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+  .sum-count { font-size: 14px; font-weight: 700; }
+
+  /* ===== badge (shadcn outline base + usage overrides) ===== */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    border-radius: 6px; border: 1px solid hsl(var(--border));
+    padding: 2px 8px; font-size: 12px; font-weight: 600;
+    background: transparent; white-space: nowrap;
+  }
+  .badge-active { height: 20px; padding: 0 6px; font-size: 9px; font-weight: 900; text-transform: uppercase; background: #ecfdf5; color: #047857; border-color: #d1fae5; }
+  .badge-count { height: 20px; padding: 0 6px; font-size: 9px; font-weight: 900; text-transform: uppercase; background: hsl(var(--bd-surface-muted)); color: hsl(var(--bd-text-muted)); border-color: hsl(var(--bd-border) / 0.5); }
+  .badge-pending-count { font-size: 9px; font-weight: 900; text-transform: uppercase; background: #fffbeb; color: #b45309; border-color: #fde68a; }
+
+  /* ===== members card ===== */
+  .panel {
+    border-radius: var(--bd-radius-xl);
+    border: 1px solid hsl(var(--bd-border) / 0.5);
+    background: hsl(var(--bd-card-bg));
+    padding: 20px;
+  }
+  .panel + .panel { margin-top: 0; }
+  .stack > * + * { margin-top: 24px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; }
+  .panel-head + * { margin-top: 12px; }
+  .panel-title {
+    font-size: 11px; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 0.1em; color: hsl(var(--bd-text-muted));
+  }
+
+  /* member card */
+  .member-card {
+    border-radius: var(--bd-radius-lg);
+    border: 1px solid hsl(var(--bd-border) / 0.5);
+    background: hsl(var(--bd-card-bg));
+    padding: 16px;
+    transition: all .15s ease;
+  }
+  .member-card + .member-card { margin-top: 12px; }
+  .member-card.self { border-color: #bfdbfe; background: hsl(214 100% 97% / 0.5); }
+  .member-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .member-id { display: flex; gap: 12px; min-width: 0; }
+  .avatar {
+    display: flex; height: 36px; width: 36px; flex-shrink: 0;
+    align-items: center; justify-content: center;
+    border-radius: 9999px;
+    background: hsl(var(--bd-surface-muted));
+    color: hsl(var(--bd-text-muted));
+    font-size: 11px; font-weight: 900;
+  }
+  .avatar.icon { color: hsl(var(--bd-text-muted)); }
+  .member-meta { min-width: 0; }
+  .member-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .member-name { font-size: 14px; font-weight: 700; color: hsl(var(--bd-text)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .role-pill {
+    flex-shrink: 0; border-radius: 9999px; padding: 2px 8px;
+    font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+    background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;
+  }
+  .role-pill.owner { background: #faf5ff; color: #7e22ce; border-color: #f3e8ff; }
+  .you-pill {
+    flex-shrink: 0; border-radius: 9999px; padding: 2px 6px;
+    font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+    background: #dbeafe; color: #2563eb;
+  }
+  .member-email { font-size: 11px; color: hsl(var(--bd-text-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .member-joined { margin-top: 2px; font-size: 11px; color: hsl(var(--bd-text-muted)); }
+  .status-pill {
+    flex-shrink: 0; border-radius: 9999px; padding: 4px 8px;
+    font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;
+    background: #ecfdf5; color: #047857;
+  }
+
+  /* roles & access block */
+  .roles-block {
+    margin-bottom: 12px;
+    border-radius: var(--bd-radius-lg);
+    border: 1px solid hsl(var(--bd-border) / 0.3);
+    background: hsl(var(--bd-surface-muted) / 0.4);
+    padding: 10px 12px;
+  }
+  .roles-block + .roles-block { margin-bottom: 0; }
+  .roles-title {
+    font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+    color: hsl(var(--bd-text-muted));
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .roles-list { margin-top: 6px; }
+  .template-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 0;
+  }
+  .template-row + .template-row { border-top: 1px solid hsl(var(--bd-border) / 0.2); }
+  .template-pill {
+    display: inline-flex; align-items: center; gap: 4px; min-width: 0;
+    border-radius: 9999px; border: 1px solid #e2e8f0; padding: 2px 8px;
+    font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+    background: #f8fafc; color: #64748b;
+  }
+  .template-pill.on { border-color: #d1fae5; background: #ecfdf5; color: #047857; }
+  .template-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .roles-caption { margin-top: 6px; font-size: 9px; line-height: 1.4; color: hsl(var(--bd-text-muted)); opacity: 0.7; }
+
+  /* action buttons (ghost variants) */
+  .ghost-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    height: 28px; padding: 0 10px;
+    border-radius: var(--bd-radius-lg);
+    background: transparent; border: 0;
+    font-size: 10px; font-weight: 700; color: hsl(var(--foreground));
+    transition: all .15s ease; white-space: nowrap;
+  }
+  .ghost-btn:hover { background: #ecfdf5; color: #047857; }
+  .ghost-btn.grant:hover { background: #ecfdf5; color: #047857; }
+  .ghost-btn.h8 { height: 32px; padding: 0 12px; font-size: 11px; }
+  .ghost-btn.transfer { color: #9333ea; }
+  .ghost-btn.transfer:hover { background: #faf5ff; color: #7e22ce; }
+  .ghost-btn.remove { color: #ef4444; }
+  .ghost-btn.remove:hover { background: #fef2f2; color: #dc2626; }
+  .ghost-btn.revoke { color: #d97706; }
+  .ghost-btn.revoke:hover { background: #fffbeb; color: #b45309; }
+
+  .member-actions {
+    display: flex; gap: 8px; justify-content: flex-end;
+    padding-top: 8px; border-top: 1px solid hsl(var(--bd-border) / 0.3);
+  }
+  .self-note {
+    padding-top: 8px; border-top: 1px solid hsl(var(--bd-border) / 0.3);
+    font-size: 10px; font-weight: 500; color: hsl(var(--bd-text-muted));
+  }
+
+  /* invite button (outline) */
+  .invite-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; height: 40px; margin-top: 8px;
+    border: 1px dashed hsl(var(--input)); border-radius: var(--bd-radius-xl);
+    background: transparent;
+    font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+    color: hsl(var(--foreground));
+    transition: background-color .15s ease;
+  }
+  .invite-btn:hover { background: hsl(var(--accent)); }
+  .invite-caption { margin-top: 8px; text-align: center; font-size: 10px; color: hsl(var(--bd-text-muted)); }
+
+  /* pending invitation row */
+  .invite-row {
+    border-radius: var(--bd-radius-lg);
+    border: 1px solid hsl(var(--bd-border) / 0.5);
+    background: hsl(var(--bd-card-bg));
+    padding: 16px;
+  }
+  .invite-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .invite-when { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 11px; color: hsl(var(--bd-text-muted)); }
+  .invite-when .sep { opacity: 0.7; }
+  .invite-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px; margin-top: 8px; border-top: 1px solid hsl(var(--bd-border) / 0.3); }
+  .pending-pill {
+    flex-shrink: 0; border-radius: 9999px; padding: 4px 8px;
+    font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;
+    background: #fffbeb; color: #d97706;
+  }
+
+  /* shell footer */
+  .shell-footer {
+    margin-top: 48px; padding-bottom: 24px; text-align: center;
+    font-size: 10px; font-weight: 900; text-transform: uppercase;
+    letter-spacing: 0.3em; color: hsl(var(--bd-text-muted)); opacity: 0.4;
+  }
+
+  @media (max-width: 767px) {
+    .member-actions { flex-direction: column; align-items: flex-end; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ===== SettingsSectionFrame header (desktop: no back button; mobile: back shown) ===== -->
+  <div class="frame">
+    <div class="frame-header">
+      <div class="frame-header-row">
+        <button class="back-btn" type="button" aria-label="Back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="frame-title-group">
+          <div class="frame-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h2 class="frame-title">Team</h2>
+        </div>
+      </div>
+      <div class="frame-desc-wrap">
+        <p class="frame-desc">Manage the people who have access to this business.</p>
+      </div>
+    </div>
+
+    <!-- ===== content surface ===== -->
+    <div class="content-surface">
+      <div class="eyebrow-wrap">
+        <p class="eyebrow">Team</p>
+      </div>
+
+      <div class="stack" style="margin-top:24px;">
+
+        <!-- ===== summary card ===== -->
+        <div class="sum-card">
+          <div class="sum-card-head">
+            <div style="min-width:0; flex:1;">
+              <h3 class="sum-card-title">Team</h3>
+              <p class="sum-card-desc">Manage the people who have access to this business.</p>
+            </div>
+          </div>
+          <div>
+            <div class="sum-row">
+              <div class="sum-row-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+              </div>
+              <div style="min-width:0; flex:1;">
+                <p class="sum-row-label">Members</p>
+                <div class="sum-row-value-flex">
+                  <span class="sum-count">4 Members</span>
+                  <span class="badge badge-active">4 Active</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== team members panel ===== -->
+        <div class="panel">
+          <div class="panel-head">
+            <h5 class="panel-title">Team Members</h5>
+            <span class="badge badge-count">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              4 Members
+            </span>
+          </div>
+
+          <!-- member: Adewale (current user, owner) -->
+          <div class="member-card self">
+            <div class="member-head">
+              <div class="member-id">
+                <div class="avatar">AM</div>
+                <div class="member-meta">
+                  <div class="member-name-row">
+                    <p class="member-name">Adewale Musa</p>
+                    <span class="role-pill owner">Owner</span>
+                    <span class="you-pill">You</span>
+                  </div>
+                  <p class="member-email">adewale@example.com</p>
+                  <p class="member-joined">Joined 12/1/2026</p>
+                </div>
+              </div>
+              <span class="status-pill">Active</span>
+            </div>
+
+            <div class="roles-block">
+              <p class="roles-title">Roles &amp; Access · Sun &amp; Shield Power Solutions</p>
+              <div class="roles-list">
+                <div class="template-row">
+                  <span class="template-pill on">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Company Admin</span>
+                  </span>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill on">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Engineer</span>
+                  </span>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill on">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Manager</span>
+                  </span>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill on">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Viewer</span>
+                  </span>
+                </div>
+              </div>
+              <p class="roles-caption">Shows effective access for this company. Permissions can overlap between roles.</p>
+            </div>
+
+            <p class="self-note">You cannot remove yourself from this view.</p>
+          </div>
+
+          <!-- member: Kemi (Engineer granted) -->
+          <div class="member-card">
+            <div class="member-head">
+              <div class="member-id">
+                <div class="avatar">KA</div>
+                <div class="member-meta">
+                  <div class="member-name-row">
+                    <p class="member-name">Kemi Adeyemi</p>
+                    <span class="role-pill">Member</span>
+                  </div>
+                  <p class="member-email">kemi@example.com</p>
+                  <p class="member-joined">Joined 3/2/2026</p>
+                </div>
+              </div>
+              <span class="status-pill">Active</span>
+            </div>
+
+            <div class="roles-block">
+              <p class="roles-title">Roles &amp; Access · Sun &amp; Shield Power Solutions</p>
+              <div class="roles-list">
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Company Admin</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill on">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Engineer</span>
+                  </span>
+                  <button class="ghost-btn" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    Remove
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Manager</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Viewer</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+              </div>
+              <p class="roles-caption">Shows effective access for this company. Permissions can overlap between roles.</p>
+            </div>
+
+            <div class="member-actions">
+              <button class="ghost-btn h8 transfer" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                Transfer Ownership
+              </button>
+              <button class="ghost-btn h8 remove" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <!-- member: Tunde (Manager granted) -->
+          <div class="member-card">
+            <div class="member-head">
+              <div class="member-id">
+                <div class="avatar">TB</div>
+                <div class="member-meta">
+                  <div class="member-name-row">
+                    <p class="member-name">Tunde Balogun</p>
+                    <span class="role-pill">Member</span>
+                  </div>
+                  <p class="member-email">tunde@example.com</p>
+                  <p class="member-joined">Joined 18/3/2026</p>
+                </div>
+              </div>
+              <span class="status-pill">Active</span>
+            </div>
+
+            <div class="roles-block">
+              <p class="roles-title">Roles &amp; Access · Sun &amp; Shield Power Solutions</p>
+              <div class="roles-list">
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Company Admin</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Engineer</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill on">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Manager</span>
+                  </span>
+                  <button class="ghost-btn" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    Remove
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Viewer</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+              </div>
+              <p class="roles-caption">Shows effective access for this company. Permissions can overlap between roles.</p>
+            </div>
+
+            <div class="member-actions">
+              <button class="ghost-btn h8 transfer" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                Transfer Ownership
+              </button>
+              <button class="ghost-btn h8 remove" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <!-- member: Fatima (Viewer granted) -->
+          <div class="member-card">
+            <div class="member-head">
+              <div class="member-id">
+                <div class="avatar">FY</div>
+                <div class="member-meta">
+                  <div class="member-name-row">
+                    <p class="member-name">Fatima Yusuf</p>
+                    <span class="role-pill">Member</span>
+                  </div>
+                  <p class="member-email">fatima@example.com</p>
+                  <p class="member-joined">Joined 27/5/2026</p>
+                </div>
+              </div>
+              <span class="status-pill">Active</span>
+            </div>
+
+            <div class="roles-block">
+              <p class="roles-title">Roles &amp; Access · Sun &amp; Shield Power Solutions</p>
+              <div class="roles-list">
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Company Admin</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Engineer</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    <span>Manager</span>
+                  </span>
+                  <button class="ghost-btn grant" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Grant
+                  </button>
+                </div>
+                <div class="template-row">
+                  <span class="template-pill on">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>Viewer</span>
+                  </span>
+                  <button class="ghost-btn" type="button">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/></svg>
+                    Remove
+                  </button>
+                </div>
+              </div>
+              <p class="roles-caption">Shows effective access for this company. Permissions can overlap between roles.</p>
+            </div>
+
+            <div class="member-actions">
+              <button class="ghost-btn h8 transfer" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                Transfer Ownership
+              </button>
+              <button class="ghost-btn h8 remove" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <!-- invite -->
+          <button class="invite-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+            + Invite member
+          </button>
+          <p class="invite-caption">Invitations are sent by workspace owners. Ask an owner to invite by email.</p>
+        </div>
+
+        <!-- ===== pending invitations panel ===== -->
+        <div class="panel">
+          <div class="panel-head">
+            <h5 class="panel-title">Pending Invitations</h5>
+            <span class="badge badge-pending-count">1 Pending</span>
+          </div>
+
+          <div class="invite-row" style="margin-top:12px;">
+            <div class="invite-head">
+              <div class="member-id">
+                <div class="avatar icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                </div>
+                <div class="member-meta">
+                  <p class="member-name">chidi.okeke@example.com</p>
+                  <p class="invite-when">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Invited 9/9/2026
+                    <span class="sep">· Expires 16/9/2026</span>
+                  </p>
+                </div>
+              </div>
+              <span class="pending-pill">Pending</span>
+            </div>
+            <div class="invite-actions">
+              <button class="ghost-btn h8 revoke" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                Revoke
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <p class="shell-footer">BIGDROPS ERP</p>
+</div>
+</body>
+</html>

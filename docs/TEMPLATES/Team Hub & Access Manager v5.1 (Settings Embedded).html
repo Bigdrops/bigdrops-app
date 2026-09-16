@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1e3a5f" id="metaTheme">
+<title>Team Hub &amp; Access Manager v5.1 — Settings Embedded</title>
+<!--
+  Team Hub & Access Manager — v5.1 (Settings Embedded)
+
+  One file. The Team Hub redesign (v5 language) is embedded inside a Settings
+  candidate, replacing team_hub_access_studio_v5_bigdrops_design_system.html.
+
+  What changed against that candidate, per review + instructions:
+  - Switch Company moved into the Workspace scope (user instruction; note the
+    multi-tenancy UX spec puts switching in the drawer — kept here as instructed).
+  - Team Hub is a SECOND PAGE: Settings list -> Team & Access (team + roles
+    management), and Switch Company gets its own second page too.
+  - ROLE EDITOR added: create / edit / duplicate custom roles against an
+    ability taxonomy. System templates are locked (duplicate only); custom
+    roles can be deleted only while no member holds them. Mirrors the live
+    app's template guards.
+  - Member cards show ONLY the roles the member is entitled to. No off-state
+    chips. Sule shows Engineer and nothing else. All roles appear in the
+    member management popup instead.
+  - NO GREEN AND RED anywhere. Granted = primary-soft fill. Suspension =
+    amber. Destructive = ink. State never depends on hue alone.
+  - Member popup manages the person: Give role, Take role, Suspend for a
+    duration, Banish (remove from workspace, with Undo snackbar).
+  - The word "Enterprise" is gone: BIGDROPS has no plan/billing module, so a
+    tier label would be invented scope. Same for RC numbers, departments,
+    2FA, seats, security scores, and solar-telemetry permissions.
+
+  Stack: vanilla HTML/CSS/JS. No CDN, no build, works offline.
+  Tokens: locked slate-navy set (04-theme-system.md), light + dark.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface-raised: #f8fafc;
+    --surface-muted: #e2e8f0;
+    --surface-strong: #cbd5e1;
+    --ink: #0f172a;
+    --ink-2: #475569;
+    --ink-3: #94a3b8;
+    --primary: #1e3a5f;
+    --primary-bright: #3b82f6;
+    --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+    --secondary: #0f172a;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 13%, transparent);
+    --caution: #b45309;
+    --caution-soft: color-mix(in srgb, var(--caution) 13%, transparent);
+    --line: rgba(15, 23, 42, .07);
+    --line-strong: rgba(15, 23, 42, .14);
+    --nav: rgba(255, 255, 255, .88);
+    --scrim: rgba(14, 12, 10, .38);
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow: 0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04);
+    --shadow-float: 0 18px 40px color-mix(in srgb, var(--primary) 18%, transparent), 0 3px 9px rgba(15,23,42,.07);
+    --font: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    --number: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-raised: #253448;
+    --surface-muted: #334155;
+    --surface-strong: #475569;
+    --ink: #f1f5f9;
+    --ink-2: #cbd5e1;
+    --ink-3: #64748b;
+    --primary: #60a5fa;
+    --primary-bright: #93c5fd;
+    --primary-soft: color-mix(in srgb, var(--primary) 20%, transparent);
+    --secondary: #94a3b8;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 18%, transparent);
+    --caution: #fbbf24;
+    --caution-soft: color-mix(in srgb, var(--caution) 16%, transparent);
+    --line: rgba(241, 245, 249, .08);
+    --line-strong: rgba(241, 245, 249, .15);
+    --nav: rgba(15, 23, 42, .88);
+    --shadow: 0 12px 28px rgba(0,0,0,.32), 0 2px 6px rgba(0,0,0,.24);
+    --shadow-float: 0 18px 40px rgba(0,0,0,.4), 0 3px 9px rgba(0,0,0,.28);
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font-family: inherit; color: inherit; }
+  button { cursor: pointer; border: none; background: none; }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+
+  /* Device shell */
+  .device {
+    position: relative; max-width: 430px; margin: 0 auto;
+    height: 100dvh; background: var(--bg); overflow: hidden;
+  }
+  @media (min-width: 700px) {
+    body { display: grid; place-items: center; background: color-mix(in srgb, var(--ink) 4%, var(--bg)); }
+    .device {
+      height: min(880px, calc(100dvh - 48px));
+      border-radius: 40px; border: 1px solid var(--line-strong);
+      box-shadow: var(--shadow-float);
+    }
+  }
+  .screen {
+    position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+    padding: calc(66px + var(--safe-top)) 14px calc(28px + var(--safe-bottom));
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* Top bar */
+  .topbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; gap: 6px;
+    height: calc(58px + var(--safe-top));
+    padding: var(--safe-top) 8px 8px;
+    background: linear-gradient(180deg, var(--bg) 72%, transparent);
+  }
+  .iconbtn {
+    width: 36px; height: 36px; border-radius: 12px;
+    display: grid; place-items: center;
+    color: var(--ink-2); background: var(--surface); border: 1px solid var(--line);
+    transition: transform .12s ease;
+  }
+  .iconbtn:active { transform: scale(0.965); background: var(--surface-muted); }
+  .iconbtn svg { width: 17px; height: 17px; }
+  .identity { flex: 1; min-width: 0; padding-left: 2px; }
+  .identity-label { font-size: 7px; font-weight: 800; letter-spacing: 0.075em; text-transform: uppercase; color: var(--ink-3); }
+  .identity-name { font-size: 13px; font-weight: 800; letter-spacing: -0.045em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .backbtn { display: none; }
+  .device.subpage .backbtn { display: grid; }
+
+  /* Settings rows */
+  .scope { margin-bottom: 14px; }
+  .scope-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 0 2px 6px;
+  }
+  .scope-title { font-size: 9px; font-weight: 800; letter-spacing: 0.105em; text-transform: uppercase; color: var(--ink-3); }
+  .scope-badge { font-size: 7px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); opacity: .7; }
+  .scope-card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 18px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .srow {
+    width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px; min-height: 44px;
+    transition: background .12s ease, transform .12s ease;
+  }
+  .srow:active { background: var(--surface-muted); }
+  .srow + .srow { border-top: 1px solid var(--line); }
+  .srow-icon {
+    width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+    background: var(--primary-soft); color: var(--primary);
+    display: grid; place-items: center;
+  }
+  .srow-icon.plain { background: var(--surface-muted); color: var(--ink-3); }
+  .srow-icon svg { width: 15px; height: 15px; }
+  .srow-main { flex: 1; min-width: 0; }
+  .srow-label { font-size: 11px; font-weight: 800; letter-spacing: -0.025em; }
+  .srow-meta { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .srow-end { flex-shrink: 0; display: flex; align-items: center; gap: 6px; color: var(--ink-3); }
+  .srow-end svg { width: 14px; height: 14px; }
+  .srow-count { font-family: var(--number); font-size: 10px; font-weight: 500; }
+  .groupline { height: 5px; }
+
+  /* Team page */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+    box-shadow: var(--shadow); padding: 11px 12px 10px;
+    position: relative; overflow: hidden;
+  }
+  .stat::after {
+    content: ""; position: absolute; right: -36px; bottom: -42px;
+    width: 84px; height: 84px; border-radius: 50%; opacity: .5;
+    background: radial-gradient(circle at 35% 35%, var(--primary-soft), transparent 140%);
+  }
+  .stat-label { font-size: 8px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+  .stat-val { margin-top: 6px; font-family: var(--number); font-size: 17px; font-weight: 500; letter-spacing: -0.075em; line-height: 1.2; }
+  .stat-val.text { font-family: var(--font); font-size: 13px; font-weight: 800; letter-spacing: -0.045em; }
+  .stat-sub { margin-top: 2px; font-size: 8px; font-weight: 500; color: var(--ink-3); }
+  .stat-sub.warn { color: var(--caution); font-weight: 700; }
+
+  .sechead { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 8px; }
+  .sechead h2 { font-size: 9px; font-weight: 800; letter-spacing: 0.105em; text-transform: uppercase; color: var(--ink-3); }
+  .sechead .count { font-size: 9px; font-weight: 800; color: var(--primary); }
+
+  .mcard {
+    display: block; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+    box-shadow: var(--shadow); padding: 12px; margin-bottom: 8px;
+    transition: transform .12s ease;
+  }
+  .mcard:active { transform: scale(0.985); }
+  .mcard.self {
+    background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary) 24%, var(--line));
+  }
+  .mcard-top { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface-muted); color: var(--ink-2);
+    display: grid; place-items: center; font-size: 12px; font-weight: 800;
+  }
+  .avatar.you { background: var(--primary-soft); color: var(--primary); }
+  .who { flex: 1; min-width: 0; }
+  .who-name { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; white-space: nowrap; overflow: hidden; }
+  .who-mail { display: block; font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill { flex-shrink: 0; font-size: 6px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; border-radius: 5px; padding: 2px 5px; }
+  .pill.owner { background: var(--secondary-soft); color: var(--secondary); }
+  .pill.you { background: var(--primary-soft); color: var(--primary); }
+  .pill.suspended { background: var(--caution-soft); color: var(--caution); }
+  .chev { flex-shrink: 0; color: var(--ink-3); }
+  .chev svg { width: 15px; height: 15px; }
+
+  .acc-label { display: block; margin: 10px 2px 5px; font-size: 7px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--primary-soft); color: var(--primary);
+    border-radius: 999px; padding: 3px 8px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.04em;
+  }
+  .chip svg { width: 10px; height: 10px; }
+  .chip.suspended { background: var(--caution-soft); color: var(--caution); }
+  .no-access { font-size: 8px; font-weight: 700; color: var(--ink-3); }
+
+  .irow {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+    box-shadow: var(--shadow); padding: 11px 12px; margin-bottom: 8px;
+  }
+  .irow-icon { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; }
+  .irow-icon svg { width: 15px; height: 15px; }
+  .irow-when { display: flex; align-items: center; gap: 4px; font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
+  .irow-when svg { width: 10px; height: 10px; }
+  .irow-when b { color: var(--caution); font-weight: 700; }
+  .ghostbtn {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;
+    height: 30px; padding: 0 10px; border-radius: 10px;
+    color: var(--ink); font-size: 9px; font-weight: 800;
+    background: var(--surface-muted);
+  }
+  .ghostbtn:active { transform: scale(0.965); }
+  .ghostbtn svg { width: 11px; height: 11px; }
+
+  .ia-note {
+    display: flex; align-items: flex-start; gap: 6px;
+    margin: 2px 2px 14px; font-size: 8px; font-weight: 500; color: var(--ink-3); line-height: 1.5;
+  }
+  .ia-note svg { width: 11px; height: 11px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Role cards */
+  .rcard {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+    box-shadow: var(--shadow); padding: 12px; margin-bottom: 8px;
+  }
+  .rcard-top { display: flex; align-items: center; gap: 10px; }
+  .rcard-icon { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; }
+  .rcard-icon svg { width: 15px; height: 15px; }
+  .rcard-name { font-size: 11px; font-weight: 800; letter-spacing: -0.025em; display: flex; align-items: center; gap: 5px; }
+  .rcard-desc { font-size: 8.5px; font-weight: 500; color: var(--ink-2); line-height: 1.45; margin-top: 6px; }
+  .rcard-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); }
+  .rcard-meta { font-size: 8px; font-weight: 700; color: var(--ink-3); }
+  .rcard-actions { display: flex; gap: 4px; }
+  .mini {
+    height: 28px; padding: 0 9px; border-radius: 9px;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--surface-muted); color: var(--ink);
+    font-size: 8px; font-weight: 800; letter-spacing: 0.03em;
+  }
+  .mini:active { transform: scale(0.965); }
+  .mini svg { width: 11px; height: 11px; }
+  .mini[disabled] { opacity: .4; cursor: not-allowed; }
+
+  .primarybtn {
+    width: 100%; height: 44px; border-radius: 12px;
+    background: var(--gradient); color: #fff;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    margin-top: 10px;
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 30%, transparent);
+    transition: transform .12s ease;
+  }
+  .primarybtn:active { transform: scale(0.985); }
+  .primarybtn svg { width: 14px; height: 14px; }
+  .primarybtn.ink { background: var(--ink); box-shadow: none; }
+
+  .footer { margin-top: 22px; text-align: center; font-size: 9px; font-weight: 800; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-3); opacity: .5; }
+
+  /* Sheets */
+  .scrim {
+    position: absolute; inset: 0; z-index: 40;
+    background: var(--scrim);
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s cubic-bezier(.2,.9,.24,1);
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 43;
+    max-height: 82%;
+    background: var(--surface); border-radius: 24px 24px 0 0;
+    box-shadow: 0 -16px 40px rgba(0, 0, 0, .24);
+    transform: translateY(106%);
+    transition: transform .3s cubic-bezier(.2,.9,.24,1);
+    display: flex; flex-direction: column;
+  }
+  .sheet.show { transform: translateY(0); }
+  .grab { width: 34px; height: 3px; border-radius: 99px; background: var(--surface-strong); margin: 8px auto 0; flex-shrink: 0; }
+  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 10px 16px 8px; flex-shrink: 0; }
+  .sheet-title { font-size: 17px; font-weight: 800; letter-spacing: -0.05em; line-height: 1.2; }
+  .sheet-title.sm { font-size: 15px; }
+  .sheet-desc { font-size: 9px; font-weight: 700; color: var(--ink-3); margin-top: 2px; }
+  .sheet-close { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; background: var(--surface-muted); color: var(--ink-2); display: grid; place-items: center; }
+  .sheet-close svg { width: 13px; height: 13px; }
+  .sheet-body { overflow-y: auto; padding: 4px 13px calc(16px + var(--safe-bottom)); }
+
+  .grp { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 14px; padding: 4px 10px; margin-top: 8px; }
+  .grp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; }
+  .grp-row + .grp-row { border-top: 1px solid var(--line); }
+  .grp-k { font-size: 8px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  .grp-v { font-size: 10px; font-weight: 800; letter-spacing: -0.01em; }
+  .grp-v.mono { font-family: var(--number); font-weight: 500; }
+
+  .mrow {
+    width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 8px 8px 10px; border-radius: 14px;
+    background: var(--surface-raised); border: 1px solid var(--line);
+    margin-top: 8px;
+  }
+  .mrow-icon { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; background: var(--surface-muted); color: var(--ink-3); }
+  .mrow[data-on="true"] .mrow-icon { background: var(--primary-soft); color: var(--primary); }
+  .mrow-icon svg { width: 15px; height: 15px; }
+  .mrow-main { flex: 1; min-width: 0; }
+  .mrow-name { font-size: 11px; font-weight: 800; letter-spacing: -0.025em; }
+  .mrow-meta { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; line-height: 1.4; }
+  .mrow-act {
+    flex-shrink: 0; height: 30px; padding: 0 12px; border-radius: 10px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    background: var(--surface-muted); color: var(--ink);
+  }
+  .mrow-act:active { transform: scale(0.965); }
+  .mrow[data-on="true"] .mrow-act { background: var(--secondary-soft); color: var(--ink); }
+  .mrow[data-on="false"] .mrow-act { background: var(--primary-soft); color: var(--primary); }
+
+  .banner {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px; padding: 9px 10px;
+    background: var(--caution-soft); border: 1px solid color-mix(in srgb, var(--caution) 30%, transparent);
+    border-radius: 12px;
+    font-size: 8.5px; font-weight: 700; color: var(--caution);
+  }
+  .banner svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .banner .banner-act {
+    margin-left: auto; flex-shrink: 0;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--ink); background: var(--surface);
+    padding: 4px 8px; border-radius: 8px;
+  }
+
+  .durrow { display: none; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .durrow.open { display: flex; }
+  .dur {
+    height: 30px; padding: 0 12px; border-radius: 999px;
+    background: var(--surface-raised); border: 1px solid var(--line-strong);
+    font-size: 9px; font-weight: 800; color: var(--ink-2);
+  }
+  .dur[data-sel="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .member-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .mact {
+    flex: 1; height: 40px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 10px; font-weight: 800;
+    background: var(--surface-muted); color: var(--ink);
+  }
+  .mact:active { transform: scale(0.965); }
+  .mact svg { width: 13px; height: 13px; }
+  .mact[disabled] { opacity: .4; cursor: not-allowed; }
+
+  .field { margin-top: 12px; }
+  .field label { display: block; margin-bottom: 5px; font-size: 8px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+  .field input {
+    width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 12px;
+    background: var(--surface-raised); padding: 0 12px;
+    font-size: 11px; font-weight: 600; outline: none;
+  }
+  .field input:focus { border-color: var(--primary); }
+  .field-err { margin-top: 5px; font-size: 8px; font-weight: 700; color: var(--ink); font-weight: 800; }
+  .field-err[hidden] { display: none; }
+
+  .check-row {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 9px 10px; border-radius: 14px;
+    background: var(--surface-raised); border: 1px solid var(--line);
+    margin-top: 8px; cursor: pointer;
+  }
+  .check-row input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--primary); flex-shrink: 0; }
+  .check-name { font-size: 11px; font-weight: 800; letter-spacing: -0.02em; }
+  .check-desc { font-size: 8px; font-weight: 500; color: var(--ink-2); line-height: 1.45; margin-top: 1px; }
+
+  .perm-cat { margin-top: 12px; }
+  .perm-cat-title { font-size: 8px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 2px; }
+  .perm-item { display: flex; align-items: flex-start; gap: 9px; padding: 7px 8px; border-radius: 10px; cursor: pointer; }
+  .perm-item:hover { background: var(--surface-raised); }
+  .perm-item input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--primary); flex-shrink: 0; }
+  .perm-item b { display: block; font-size: 10.5px; font-weight: 800; }
+  .perm-item span { display: block; font-size: 8.5px; color: var(--ink-3); margin-top: 1px; line-height: 1.4; }
+
+  /* Toast + snackbar */
+  .toast {
+    position: absolute; top: calc(10px + var(--safe-top)); left: 50%; z-index: 60;
+    transform: translate(-50%, -12px);
+    background: var(--ink); color: var(--bg);
+    border-radius: 12px; padding: 8px 14px;
+    font-size: 9px; font-weight: 800;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    max-width: calc(100% - 32px); text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .snackbar {
+    position: absolute; left: 16px; right: 16px; bottom: calc(20px + var(--safe-bottom)); z-index: 55;
+    margin: 0 auto; max-width: 420px;
+    background: var(--ink); color: var(--bg);
+    border-radius: 14px; padding: 11px 14px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 10px; font-weight: 700;
+    opacity: 0; transform: translateY(10px); pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .snackbar.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .snackbar button { margin-left: auto; flex-shrink: 0; color: var(--primary-bright); font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="device" id="device">
+
+  <header class="topbar">
+    <button class="iconbtn backbtn" type="button" id="backBtn" aria-label="Back to Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="identity">
+      <div class="identity-label" id="pageKicker">Settings · Workspace</div>
+      <div class="identity-name" id="pageTitle">BIGDROPS Settings</div>
+    </div>
+    <button class="iconbtn" type="button" id="themeBtn" aria-label="Toggle dark mode">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+  </header>
+
+  <main class="screen" id="screen"></main>
+
+  <div class="scrim" id="scrim"></div>
+
+  <!-- Member management popup -->
+  <div class="sheet" id="memberSheet" role="dialog" aria-modal="true" aria-labelledby="memberSheetTitle">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <div class="avatar" id="msAvatar">AM</div>
+        <div style="min-width:0;">
+          <div class="sheet-title sm" id="memberSheetTitle">Adewale Musa</div>
+          <div class="sheet-desc" id="msMail">adewale@example.com</div>
+        </div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="msBody"></div>
+  </div>
+
+  <!-- Role editor popup -->
+  <div class="sheet" id="roleSheet" role="dialog" aria-modal="true" aria-labelledby="roleSheetTitle">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title sm" id="roleSheetTitle">New role</div>
+        <div class="sheet-desc">Choose what members with this role can do.</div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="field" style="margin-top:4px;">
+        <label for="roleName">Role name</label>
+        <input type="text" id="roleName" placeholder="e.g. Regional Supervisor">
+        <div class="field-err" id="roleNameErr" hidden>Give this role a name.</div>
+      </div>
+      <div class="field">
+        <label for="roleDesc">Description</label>
+        <input type="text" id="roleDesc" placeholder="One line explaining who this is for">
+      </div>
+      <div id="rolePerms"></div>
+      <button class="primarybtn" type="button" id="roleSaveBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+        Save role
+      </button>
+    </div>
+  </div>
+
+  <!-- Invite popup -->
+  <div class="sheet" id="inviteSheet" role="dialog" aria-modal="true" aria-labelledby="inviteTitle">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title sm" id="inviteTitle">Invite member</div>
+        <div class="sheet-desc">They join the workspace. Grant company access now or later.</div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="field" style="margin-top:4px;">
+        <label for="inviteEmail">Email address</label>
+        <input type="email" id="inviteEmail" placeholder="name@example.com" autocomplete="email">
+        <div class="field-err" id="inviteErr" hidden>Enter a valid email address.</div>
+      </div>
+      <div class="field">
+        <label>Grant access in <span id="inviteCo">Sun &amp; Shield</span> (optional)</label>
+        <div id="inviteChecks"></div>
+      </div>
+      <button class="primarybtn" type="button" id="inviteSendBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        Send invite
+      </button>
+    </div>
+  </div>
+
+  <!-- Confirm popup -->
+  <div class="sheet" id="confirmSheet" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title sm" id="confirmTitle">Are you sure?</div>
+        <div class="sheet-desc" id="confirmDesc"></div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="grp" style="margin-top:0;">
+        <div class="grp-row"><span class="grp-k">This will</span><span class="grp-v" id="confirmEffect"></span></div>
+      </div>
+      <button class="primarybtn ink" type="button" id="confirmGo">Confirm</button>
+      <button class="primarybtn" type="button" data-close style="background:var(--surface-muted);color:var(--ink);box-shadow:none;">Cancel</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div class="snackbar" id="snackbar" aria-live="polite"><span id="snackText"></span><button type="button" id="snackAction" hidden>Undo</button></div>
+
+</div>
+
+<script>
+  /* ============================== DATA ============================== */
+  var COMPANY = 'Sun & Shield Power Solutions';
+  var DAY = 864e5;
+
+  var CATEGORIES = [
+    { cat: 'Documents', items: [
+      { id: 'view_docs', label: 'View documents', desc: 'Open invoices, quotations, waybills, and CSR records.' },
+      { id: 'edit_docs', label: 'Create & edit documents', desc: 'Draft, change, or void documents after creation.' },
+      { id: 'dispatch',  label: 'Approve waybills & CSR', desc: 'Sign off on dispatch and completion records.' }
+    ]},
+    { cat: 'Field & Stock', items: [
+      { id: 'inventory', label: 'Manage inventory & stock', desc: 'Edit stock counts and supplier records.' }
+    ]},
+    { cat: 'Finance', items: [
+      { id: 'reports', label: 'View financial reports', desc: 'See revenue, balances, and statements.' }
+    ]},
+    { cat: 'Team & Access', items: [
+      { id: 'invite',   label: 'Invite members', desc: 'Send workspace invitations by email.' },
+      { id: 'access',   label: 'Manage member access', desc: 'Grant, take, suspend, or banish members.' },
+      { id: 'settings', label: 'Edit company settings', desc: 'Change business information, branding, banking.' }
+    ]}
+  ];
+  var ABILITY_LABEL = {};
+  CATEGORIES.forEach(function (c) { c.items.forEach(function (i) { ABILITY_LABEL[i.id] = i.label; }); });
+
+  var TEMPLATES = [
+    { id: 'admin',    name: 'Company Admin', desc: 'Full control of this company\u2019s documents, team, and settings.', system: true,
+      abilities: ['view_docs','edit_docs','dispatch','inventory','reports','invite','access','settings'] },
+    { id: 'manager',  name: 'Manager', desc: 'Runs day-to-day work: documents, approvals, and reports.', system: true,
+      abilities: ['view_docs','edit_docs','dispatch','reports','invite'] },
+    { id: 'engineer', name: 'Engineer', desc: 'Field delivery: waybills, CSR sign-off, and inventory.', system: true,
+      abilities: ['view_docs','dispatch','inventory'] },
+    { id: 'viewer',   name: 'Viewer', desc: 'Read-only view of documents and reports.', system: true,
+      abilities: ['view_docs','reports'] },
+    { id: 'auditor',  name: 'Auditor', desc: 'External-facing read access for audits: documents and reports only.', system: false,
+      abilities: ['view_docs','reports'] }
+  ];
+
+  var MEMBERS = [
+    { id: 'm1', name: 'Adewale Musa',  email: 'adewale@example.com', joined: '12 Jan 2026', accountRole: 'Owner',  self: true,  roles: ['admin','engineer','manager','viewer','auditor'], suspendedUntil: 0 },
+    { id: 'm2', name: 'Kemi Adeyemi',  email: 'kemi@example.com',    joined: '3 Feb 2026',  accountRole: 'Member', self: false, roles: ['engineer'], suspendedUntil: 0 },
+    { id: 'm3', name: 'Tunde Balogun', email: 'tunde@example.com',   joined: '18 Mar 2026', accountRole: 'Member', self: false, roles: ['manager'], suspendedUntil: 0 },
+    { id: 'm4', name: 'Sule Danjuma',  email: 'sule@example.com',    joined: '27 May 2026', accountRole: 'Member', self: false, roles: ['engineer'], suspendedUntil: 0 },
+    { id: 'm5', name: 'Fatima Yusuf',  email: 'fatima@example.com',  joined: '2 Jun 2026',  accountRole: 'Member', self: false, roles: ['auditor'], suspendedUntil: 0 }
+  ];
+
+  var PENDING = [
+    { id: 'p1', email: 'chidi.okeke@example.com', invited: '9 Sep 2026', expires: '16 Sep 2026', roles: [] }
+  ];
+
+  var COMPANIES = [
+    { id: 'c1', name: 'Sun & Shield Power Solutions', type: 'Limited', current: true },
+    { id: 'c2', name: 'Shield Energy Ltd',            type: 'Limited', current: false }
+  ];
+
+  /* ============================== HELPERS ============================== */
+  var I = {
+    shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+    shieldOff: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m2 2 20 20"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    chev: '<path d="m9 18 6-6-6-6"/>',
+    trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4.2 1L4 15.8 16.5 3.5z"/>',
+    copy: '<rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    transfer: '<path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v1"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v-1"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+    pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+    play: '<path d="m6 4 14 8-14 8V4z"/>',
+    ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    building: '<path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/><path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/>',
+    plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+    lock: '<rect x="3.5" y="11" width="17" height="10.5" rx="2"/><path d="M7 11V7.5a5 5 0 0 1 10 0V11"/>'
+  };
+  function svg(inner, size) {
+    return '<svg viewBox="0 0 24 24" width="' + (size || 15) + '" height="' + (size || 15) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+  }
+  function initials(n) { return n.split(' ').map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase(); }
+  function tpl(id) { return TEMPLATES.find(function (t) { return t.id === id; }); }
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function isSuspended(m) { return m.suspendedUntil > Date.now(); }
+  function suspendDaysLeft(m) { return Math.max(1, Math.ceil((m.suspendedUntil - Date.now()) / DAY)); }
+
+  /* ============================== FEEDBACK ============================== */
+  var toastTimer;
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  var snackTimer;
+  function snack(msg, undoFn) {
+    var s = document.getElementById('snackbar');
+    var btn = document.getElementById('snackAction');
+    document.getElementById('snackText').textContent = msg;
+    btn.hidden = !undoFn;
+    if (undoFn) btn.onclick = function () { undoFn(); s.classList.remove('show'); };
+    s.classList.add('show');
+    clearTimeout(snackTimer);
+    snackTimer = setTimeout(function () { s.classList.remove('show'); }, undoFn ? 5000 : 3000);
+  }
+
+  /* ============================== SHEETS ============================== */
+  function openSheet(id) {
+    closeSheets();
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeSheets() {
+    document.getElementById('scrim').classList.remove('show');
+    document.querySelectorAll('.sheet').forEach(function (s) { s.classList.remove('show'); });
+  }
+  document.getElementById('scrim').addEventListener('click', closeSheets);
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeSheets(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheets(); });
+
+  /* ============================== NAV ============================== */
+  var view = 'settings'; // settings | team | companies
+  var PAGE_META = {
+    settings:  { kicker: 'BIGDROPS · Workspace', title: 'Settings' },
+    team:      { kicker: 'Settings · Team & Access', title: 'Team & Access' },
+    companies: { kicker: 'Settings · Workspace', title: 'Switch Company' }
+  };
+  function go(v) {
+    view = v;
+    document.getElementById('device').classList.toggle('subpage', v !== 'settings');
+    var m = PAGE_META[v];
+    document.getElementById('pageKicker').textContent = m.kicker;
+    document.getElementById('pageTitle').textContent = m.title;
+    document.getElementById('screen').scrollTop = 0;
+    render();
+  }
+  document.getElementById('backBtn').addEventListener('click', function () { go('settings'); });
+
+  /* ============================== RENDER: SETTINGS ============================== */
+  function srow(opt) {
+    return '<button class="srow" type="button" data-nav="' + (opt.nav || '') + '" data-stub="' + (opt.stub ? '1' : '') + '"' +
+      (opt.aria ? ' aria-label="' + opt.aria + '"' : '') + '>' +
+      '<span class="srow-icon' + (opt.plain ? ' plain' : '') + '">' + svg(opt.icon, 15) + '</span>' +
+      '<span class="srow-main"><span class="srow-label">' + opt.label + '</span>' +
+      (opt.meta ? '<span class="srow-meta">' + opt.meta + '</span>' : '') + '</span>' +
+      '<span class="srow-end">' + (opt.count ? '<span class="srow-count">' + opt.count + '</span>' : '') + svg(I.chev, 14) + '</span>' +
+    '</button>';
+  }
+
+  function renderSettings() {
+    var memberCount = MEMBERS.length;
+    var pendingCount = PENDING.length;
+    var roleCount = TEMPLATES.length;
+    var current = COMPANIES.find(function (c) { return c.current; });
+    var html = '';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">Account</span><span class="scope-badge">You</span></div><div class="scope-card">';
+    html += srow({ icon: I.users, label: 'Profile & Security', meta: 'Your sign-in and personal details', stub: 1 });
+    html += srow({ icon: I.mail, label: 'Notifications', meta: 'What emails and alerts you receive', stub: 1 });
+    html += '</div></div>';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">Workspace</span><span class="scope-badge">People & context</span></div><div class="scope-card">';
+    html += srow({ icon: I.building, label: 'Switch Workspace', meta: 'Change the organisation you work inside', stub: 1 });
+    html += '<div class="groupline"></div>';
+    html += srow({ icon: I.users, label: 'Team Hub', meta: memberCount + ' members · ' + roleCount + ' roles' + (pendingCount ? ' · ' + pendingCount + ' pending' : ''), count: memberCount, nav: 'team', aria: 'Open Team Hub. ' + memberCount + ' members, ' + roleCount + ' roles.' });
+    html += '<div class="groupline"></div>';
+    html += srow({ icon: I.building, label: 'Switch Company', meta: 'Now working in ' + esc(current.name), count: COMPANIES.length, nav: 'companies', aria: 'Switch company. Current company ' + current.name + '.' });
+    html += '<div class="groupline"></div>';
+    html += srow({ icon: I.pause, label: 'Devices', meta: 'Phones and tablets signed in', stub: 1 });
+    html += '</div></div>';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">Company</span><span class="scope-badge">' + esc(current.name) + '</span></div><div class="scope-card">';
+    html += srow({ icon: I.building, label: 'Business Information', meta: 'Legal name, contact details, address', stub: 1 });
+    html += srow({ icon: I.shield, label: 'Logo & Branding', meta: 'Brand mark used on documents', stub: 1 });
+    html += srow({ icon: I.mail, label: 'Payment Destinations', meta: 'Bank accounts that receive payments', stub: 1 });
+    html += srow({ icon: I.clock, label: 'Document Numbering', meta: 'Invoice, waybill, and quotation prefixes', stub: 1 });
+    html += '</div></div>';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">System</span><span class="scope-badge">Platform</span></div><div class="scope-card">';
+    html += srow({ icon: I.info, label: 'Tenant Debug', meta: 'Diagnostics for platform operators', plain: true, stub: 1 });
+    html += '</div></div>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: TEAM ============================== */
+  function memberCard(m) {
+    var suspended = isSuspended(m);
+    var chips = m.roles.map(function (id) {
+      return '<span class="chip">' + svg(I.shield, 10) + tpl(id).name + '</span>';
+    }).join('');
+    var access = suspended
+      ? '<div class="chips"><span class="chip suspended">' + svg(I.pause, 10) + 'Suspended · ' + suspendDaysLeft(m) + 'd left</span></div>'
+      : (chips ? '<div class="chips">' + chips + '</div>' : '<p class="no-access">No access in ' + esc(COMPANIES.find(function (c) { return c.current; }).name) + ' yet.</p>');
+    return '<button class="mcard' + (m.self ? ' self' : '') + '" type="button" data-member="' + m.id + '"' +
+      ' aria-label="Manage ' + m.name + ', ' + m.accountRole + (suspended ? ', suspended' : '') + '">' +
+      '<div class="mcard-top">' +
+        '<div class="avatar' + (m.self ? ' you' : '') + '">' + initials(m.name) + '</div>' +
+        '<div class="who">' +
+          '<div class="who-name">' + m.name +
+            (m.accountRole === 'Owner' ? '<span class="pill owner">Owner</span>' : '') +
+            (m.self ? '<span class="pill you">You</span>' : '') +
+            (suspended ? '<span class="pill suspended">Suspended</span>' : '') +
+          '</div>' +
+          '<span class="who-mail">' + m.email + ' · joined ' + m.joined + '</span>' +
+        '</div>' +
+        '<span class="chev">' + svg(I.chev, 15) + '</span>' +
+      '</div>' +
+      '<span class="acc-label">Roles in ' + esc(COMPANIES.find(function (c) { return c.current; }).name) + '</span>' +
+      access +
+    '</button>';
+  }
+
+  function roleCard(r) {
+    var holders = MEMBERS.filter(function (m) { return m.roles.indexOf(r.id) > -1 && !isSuspended(m); }).length;
+    var canDelete = !r.system && holders === 0;
+    var delTitle = r.system ? 'Built-in role: locked' : (holders > 0 ? holders + ' member(s) still hold this role' : 'Delete role');
+    return '<div class="rcard">' +
+      '<div class="rcard-top">' +
+        '<div class="rcard-icon">' + svg(I.shield, 15) + '</div>' +
+        '<div class="who"><div class="rcard-name">' + r.name +
+          (r.system ? '<span class="pill">Built-in</span>' : '<span class="pill you">Custom</span>') +
+        '</div></div>' +
+      '</div>' +
+      '<p class="rcard-desc">' + r.desc + '</p>' +
+      '<div class="rcard-foot">' +
+        '<span class="rcard-meta">' + holders + ' holder' + (holders === 1 ? '' : 's') + ' · ' + r.abilities.length + ' abilities</span>' +
+        '<span class="rcard-actions">' +
+          '<button class="mini" type="button" data-role-edit="' + r.id + '">' + svg(I.edit, 11) + (r.system ? 'View' : 'Edit') + '</button>' +
+          '<button class="mini" type="button" data-role-dup="' + r.id + '">' + svg(I.copy, 11) + 'Copy</button>' +
+          '<button class="mini" type="button" data-role-del="' + r.id + '" title="' + delTitle + '"' + (canDelete ? '' : ' disabled') + '>' + svg(I.trash, 11) + '</button>' +
+        '</span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderTeam() {
+    var current = COMPANIES.find(function (c) { return c.current; });
+    var suspendedCount = MEMBERS.filter(isSuspended).length;
+    var html = '';
+
+    html += '<section class="stats" aria-label="Team summary">' +
+      '<div class="stat"><div class="stat-label">Members</div><div class="stat-val" id="sMembers">' + MEMBERS.length + '</div><div class="stat-sub">1 owner · workspace-wide</div></div>' +
+      '<div class="stat"><div class="stat-label">Pending invites</div><div class="stat-val">' + PENDING.length + '</div><div class="stat-sub' + (PENDING.length ? ' warn' : '') + '">' + (PENDING.length ? 'awaiting response' : 'none') + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Roles</div><div class="stat-val">' + TEMPLATES.length + '</div><div class="stat-sub">' + TEMPLATES.filter(function (t) { return !t.system; }).length + ' custom · per company</div></div>' +
+      '<div class="stat"><div class="stat-label">Suspended</div><div class="stat-val' + (suspendedCount ? '' : '') + '">' + suspendedCount + '</div><div class="stat-sub' + (suspendedCount ? ' warn' : '') + '">' + (suspendedCount ? 'temporary loss of access' : 'no one suspended') + '</div></div>' +
+    '</section>';
+
+    html += '<div class="sechead"><h2>Team members</h2><span class="count">' + MEMBERS.length + '</span></div>';
+    html += MEMBERS.map(memberCard).join('');
+    html += '<p class="ia-note">' + svg(I.info, 11) + '<span>Cards show only the roles each person holds. Tap a member to give or take roles, suspend, or remove them.</span></p>';
+
+    html += '<div class="sechead"><h2>Pending invitations</h2><span class="count">' + PENDING.length + '</span></div>';
+    html += PENDING.length ? PENDING.map(function (p) {
+      var tags = p.roles.map(function (id) { return '<span class="chip">' + svg(I.shield, 10) + tpl(id).name + '</span>'; }).join('');
+      return '<div class="irow">' +
+        '<div class="irow-icon">' + svg(I.mail, 15) + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="who-name" style="white-space:normal;">' + p.email + '</div>' +
+          '<div class="irow-when">' + svg(I.clock, 10) + ' Invited ' + p.invited + ' · <b>expires ' + p.expires + '</b></div>' +
+          (tags ? '<div class="chips" style="margin-top:5px;">' + tags + '</div>' : '') +
+        '</div>' +
+        '<button class="ghostbtn" type="button" data-revoke="' + p.id + '">' + svg(I.x, 11) + ' Revoke</button>' +
+      '</div>';
+    }).join('') : '<p class="ia-note" style="margin-top:0;"><span>No pending invitations.</span></p>';
+
+    html +=      '<div class="sechead" style="margin-top:16px;"><h2>Roles &amp; access</h2><span class="count">' + TEMPLATES.length + '</span></div>';
+    html += '<button class="primarybtn" type="button" id="inviteBtn" style="margin-top:0;">' + svg(I.mail, 14) + ' Invite member</button>';
+    html += TEMPLATES.map(roleCard).join('');
+    html += '<button class="primarybtn" type="button" id="newRoleBtn">' + svg(I.plus, 14) + ' New role</button>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: COMPANIES ============================== */
+  function renderCompanies() {
+    var html = '<div class="sechead"><h2>Companies in this workspace</h2><span class="count">' + COMPANIES.length + '</span></div>';
+    html += COMPANIES.map(function (c) {
+      var isCur = c.current;
+      return '<div class="irow" style="align-items:flex-start;' + (isCur ? 'border-color:color-mix(in srgb, var(--primary) 24%, var(--line));background:color-mix(in srgb, var(--primary) 5%, var(--surface));' : '') + '">' +
+        '<div class="irow-icon">' + svg(I.building, 15) + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="who-name" style="white-space:normal;">' + esc(c.name) +
+            (isCur ? '<span class="pill you">Working here</span>' : '') +
+          '</div>' +
+          '<div class="irow-when">' + c.type + ' · ' + (MEMBERS.length) + ' members share this workspace</div>' +
+        '</div>' +
+        (isCur
+          ? '<span class="ghostbtn" style="background:var(--primary-soft);color:var(--primary);">' + svg(I.check, 11) + ' Active</span>'
+          : '<button class="ghostbtn" type="button" data-switch="' + c.id + '">Switch</button>') +
+      '</div>';
+    }).join('');
+    html += '<p class="ia-note">' + svg(I.info, 11) + '<span>Switching changes the company you operate in. Membership and invitations stay workspace-wide.</span></p>';
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER ROOT ============================== */
+  function render() {
+    var screen = document.getElementById('screen');
+    if (view === 'settings') screen.innerHTML = renderSettings();
+    else if (view === 'team') screen.innerHTML = renderTeam();
+    else screen.innerHTML = renderCompanies();
+  }
+
+  /* Settings + companies navigation */
+
+  /* ============================== MEMBER POPUP ============================== */
+  var openMemberId = null;
+
+  function memberSheetHtml(m) {
+    var current = COMPANIES.find(function (c) { return c.current; });
+    var suspended = isSuspended(m);
+    var html = '';
+
+    html += '<div class="grp" style="margin-top:0;">' +
+      '<div class="grp-row"><span class="grp-k">Workspace membership</span><span class="grp-v">' + m.accountRole + '</span></div>' +
+      '<div class="grp-row"><span class="grp-k">Joined</span><span class="grp-v mono">' + m.joined + '</span></div>' +
+    '</div>';
+
+    if (suspended) {
+      html += '<div class="banner">' + svg(I.pause, 12) +
+        '<span>Suspended · access paused for ' + suspendDaysLeft(m) + ' more day' + (suspendDaysLeft(m) === 1 ? '' : 's') + '.</span>' +
+        '<button class="banner-act" type="button" data-restore>Restore</button></div>';
+    }
+
+    html += '<div class="acc-label" style="margin-top:14px;">Roles in ' + esc(current.name) + '</div>';
+
+    /* Roles the member HOLDS — Take */
+    var held = m.roles.map(function (id) { return tpl(id); }).filter(Boolean);
+    html += held.length ? held.map(function (r) {
+      var abil = r.abilities.map(function (a) { return ABILITY_LABEL[a]; }).join(' · ');
+      return '<div class="mrow" data-on="true">' +
+        '<span class="mrow-icon">' + svg(I.shield, 15) + '</span>' +
+        '<span class="mrow-main"><span class="mrow-name">' + r.name + '</span>' +
+          '<span class="mrow-meta">' + abil + '</span></span>' +
+        '<button class="mrow-act" type="button" data-take="' + r.id + '"' + (m.self ? ' disabled title="You cannot change your own access here"' : '') + '>Take</button>' +
+      '</div>';
+    }).join('') : '<p class="no-access" style="margin:6px 2px 0;">No roles yet.</p>';
+
+    /* Roles the member DOES NOT hold — Give */
+    var rest = TEMPLATES.filter(function (r) { return m.roles.indexOf(r.id) === -1; });
+    if (rest.length && !suspended) {
+      html += '<div class="acc-label" style="margin-top:12px;">Give a role</div>';
+      html += rest.map(function (r) {
+        return '<div class="mrow" data-on="false">' +
+          '<span class="mrow-icon">' + svg(I.shieldOff, 15) + '</span>' +
+          '<span class="mrow-main"><span class="mrow-name">' + r.name + '</span>' +
+            '<span class="mrow-meta">' + r.abilities.length + ' abilities · ' + r.desc + '</span></span>' +
+          '<button class="mrow-act" type="button" data-give="' + r.id + '"' + (m.self ? ' disabled' : '') + '>Give</button>' +
+        '</div>';
+      }).join('');
+    }
+
+    /* Suspend */
+    if (!m.self && m.accountRole !== 'Owner') {
+      html += '<div class="acc-label" style="margin-top:12px;">Suspension</div>';
+      if (!suspended) {
+        html += '<div class="durrow open" id="durRow">' +
+          '<button class="dur" type="button" data-dur="1" data-sel="false">1 day</button>' +
+          '<button class="dur" type="button" data-dur="7" data-sel="true">7 days</button>' +
+          '<button class="dur" type="button" data-dur="30" data-sel="false">30 days</button>' +
+          '<button class="mini" type="button" data-suspend style="margin-left:auto;">' + svg(I.pause, 11) + ' Suspend</button>' +
+        '</div>';
+      }
+    }
+
+    /* Member removal actions */
+    if (!m.self) {
+      html += '<div class="member-actions">' +
+        (m.accountRole === 'Owner' ? '' : '<button class="mact" type="button" data-transfer="' + m.id + '">' + svg(I.transfer, 13) + ' Transfer ownership</button>') +
+        '<button class="mact" type="button" data-banish="' + m.id + '">' + svg(I.ban, 13) + ' Banish member</button>' +
+      '</div>';
+    } else {
+      html += '<div class="banner" style="background:var(--surface-raised);border-color:var(--line);color:var(--ink-3);">' + svg(I.lock, 12) +
+        '<span>You cannot suspend, banish, or change your own access here.</span></div>';
+    }
+    return html;
+  }
+
+  function openMember(id) {
+    openMemberId = id;
+    var m = MEMBERS.find(function (x) { return x.id === id; });
+    document.getElementById('msAvatar').textContent = initials(m.name);
+    document.getElementById('msAvatar').className = 'avatar' + (m.self ? ' you' : '');
+    document.getElementById('memberSheetTitle').textContent = m.name;
+    document.getElementById('msMail').textContent = m.email;
+    document.getElementById('msBody').innerHTML = memberSheetHtml(m);
+    openSheet('memberSheet');
+  }
+
+  var suspendDays = 7;
+  document.getElementById('msBody').addEventListener('click', function (e) {
+    var dur = e.target.closest('[data-dur]');
+    if (dur) {
+      suspendDays = parseInt(dur.dataset.dur, 10);
+      document.querySelectorAll('#durRow .dur').forEach(function (d) { d.dataset.sel = (d === dur) ? 'true' : 'false'; });
+      return;
+    }
+    var m = MEMBERS.find(function (x) { return x.id === openMemberId; });
+    if (!m) return;
+
+    if (e.target.closest('[data-give]')) {
+      var g = tpl(e.target.closest('[data-give]').dataset.give);
+      m.roles.push(g.id);
+      toast(g.name + ' given to ' + m.name.split(' ')[0]);
+      refreshMember(m); return;
+    }
+    if (e.target.closest('[data-take]')) {
+      var t = tpl(e.target.closest('[data-take]').dataset.take);
+      m.roles.splice(m.roles.indexOf(t.id), 1);
+      toast(t.name + ' taken from ' + m.name.split(' ')[0]);
+      refreshMember(m); return;
+    }
+    if (e.target.closest('[data-suspend]')) {
+      m.suspendedUntil = Date.now() + suspendDays * DAY;
+      toast(m.name.split(' ')[0] + ' suspended for ' + suspendDays + ' day' + (suspendDays === 1 ? '' : 's'));
+      refreshMember(m); return;
+    }
+    if (e.target.closest('[data-restore]')) {
+      m.suspendedUntil = 0;
+      toast(m.name.split(' ')[0] + '\u2019s access restored');
+      refreshMember(m); return;
+    }
+    var tr = e.target.closest('[data-transfer]');
+    if (tr) { askConfirm('transfer', tr.dataset.transfer); return; }
+    var bn = e.target.closest('[data-banish]');
+    if (bn) { askConfirm('banish', bn.dataset.banish); }
+  });
+
+  function refreshMember(m) {
+    render();
+    document.getElementById('msBody').innerHTML = memberSheetHtml(m);
+  }
+
+  /* One delegated listener for every in-page tap */
+  document.getElementById('screen').addEventListener('click', function (e) {
+    var nav = e.target.closest('[data-nav]');
+    if (nav && nav.dataset.nav) { go(nav.dataset.nav); return; }
+    var stub = e.target.closest('[data-stub]');
+    if (stub) { toast('Outside this candidate\u2019s scope'); return; }
+    var sw = e.target.closest('[data-switch]');
+    if (sw) {
+      var c = COMPANIES.find(function (x) { return x.id === sw.dataset.switch; });
+      COMPANIES.forEach(function (x) { x.current = x.id === c.id; });
+      render();
+      toast('Now working in ' + c.name);
+      return;
+    }
+    if (view !== 'team') return;
+    var inv = e.target.closest('#inviteBtn');
+    if (inv) { openInvite(); return; }
+    var card = e.target.closest('[data-member]');
+    if (card) { openMember(card.dataset.member); return; }
+    var rv = e.target.closest('[data-revoke]');
+    if (rv) { askConfirm('revoke', rv.dataset.revoke); return; }
+    var re = e.target.closest('[data-role-edit]');
+    if (re) { openRoleEditor(tpl(re.dataset.roleEdit)); return; }
+    var rd = e.target.closest('[data-role-dup]');
+    if (rd) {
+      var src = tpl(rd.dataset.roleDup);
+      var copy = { id: 'role' + Date.now(), name: src.name + ' (Copy)', desc: src.desc, system: false, abilities: src.abilities.slice() };
+      TEMPLATES.push(copy);
+      render();
+      toast('Duplicated as \u201C' + copy.name + '\u201D');
+      openRoleEditor(copy);
+      return;
+    }
+    var rdel = e.target.closest('[data-role-del]');
+    if (rdel && !rdel.disabled) { askConfirm('deleteRole', rdel.dataset.roleDel); return; }
+    var nr = e.target.closest('#newRoleBtn');
+    if (nr) openRoleEditor(null);
+    var ib = e.target.closest('#inviteBtn');
+    if (ib) openInvite();
+  });
+
+  /* ============================== ROLE EDITOR ============================== */
+  var editingRoleId = null;
+  function openRoleEditor(r) {
+    editingRoleId = r ? r.id : null;
+    var readOnly = r && r.system;
+    document.getElementById('roleSheetTitle').textContent = r ? (r.system ? r.name : 'Edit \u201C' + r.name + '\u201D') : 'New role';
+    document.getElementById('roleName').value = r ? r.name : '';
+    document.getElementById('roleDesc').value = r ? r.desc : '';
+    document.getElementById('roleName').readOnly = !!readOnly;
+    document.getElementById('roleDesc').readOnly = !!readOnly;
+    document.getElementById('roleNameErr').hidden = true;
+    document.getElementById('rolePerms').innerHTML = CATEGORIES.map(function (c) {
+      return '<div class="perm-cat"><div class="perm-cat-title">' + c.cat + '</div>' +
+        c.items.map(function (i) {
+          var on = r ? r.abilities.indexOf(i.id) > -1 : false;
+          return '<label class="perm-item"><input type="checkbox" value="' + i.id + '"' + (on ? ' checked' : '') + (readOnly ? ' disabled' : '') + '>' +
+            '<span><b>' + i.label + '</b><span>' + i.desc + '</span></span></label>';
+        }).join('') + '</div>';
+    }).join('');
+    document.getElementById('roleSaveBtn').textContent = readOnly ? 'Done' : 'Save role';
+    openSheet('roleSheet');
+  }
+  document.getElementById('roleSaveBtn').addEventListener('click', function () {
+    var r = editingRoleId ? tpl(editingRoleId) : null;
+    if (r && r.system) { closeSheets(); return; }
+    var name = document.getElementById('roleName').value.trim();
+    if (!name) { document.getElementById('roleNameErr').hidden = false; return; }
+    var abilities = Array.prototype.slice.call(document.querySelectorAll('#rolePerms input:checked')).map(function (i) { return i.value; });
+    if (!abilities.length) { toast('Pick at least one ability'); return; }
+    if (r) {
+      r.name = name; r.desc = document.getElementById('roleDesc').value.trim() || r.desc; r.abilities = abilities;
+      toast('Role \u201C' + name + '\u201D updated');
+    } else {
+      TEMPLATES.push({ id: 'role' + Date.now(), name: name, desc: document.getElementById('roleDesc').value.trim() || 'Custom role.', system: false, abilities: abilities });
+      toast('Role \u201C' + name + '\u201D created');
+    }
+    closeSheets(); render();
+  });
+
+  /* ============================== INVITE ============================== */
+
+  /* ============================== CONFIRM ============================== */
+  var confirmKind = null, confirmId = null;
+  function askConfirm(kind, id) {
+    confirmKind = kind; confirmId = id;
+    var title = document.getElementById('confirmTitle');
+    var desc = document.getElementById('confirmDesc');
+    var effect = document.getElementById('confirmEffect');
+    var go = document.getElementById('confirmGo');
+    if (kind === 'banish') {
+      var m = MEMBERS.find(function (x) { return x.id === id; });
+      title.textContent = 'Banish ' + m.name + '?';
+      desc.textContent = 'Removes their workspace membership.';
+      effect.textContent = 'Lose access to every company here. You can re-invite them.';
+      go.textContent = 'Banish member';
+    } else if (kind === 'transfer') {
+      var m2 = MEMBERS.find(function (x) { return x.id === id; });
+      title.textContent = 'Transfer ownership to ' + m2.name.split(' ')[0] + '?';
+      desc.textContent = 'You become a Member. They become the Owner.';
+      effect.textContent = 'New owner gains owner rights everywhere.';
+      go.textContent = 'Transfer';
+    } else if (kind === 'revoke') {
+      var p = PENDING.find(function (x) { return x.id === id; });
+      title.textContent = 'Revoke invite?';
+      desc.textContent = p.email;
+      effect.textContent = 'This email can no longer accept the invitation.';
+      go.textContent = 'Revoke invite';
+    } else if (kind === 'deleteRole') {
+      var r = tpl(id);
+      title.textContent = 'Delete \u201C' + r.name + '\u201D?';
+      desc.textContent = 'No member holds this role.';
+      effect.textContent = 'The role is removed. This cannot be undone.';
+      go.textContent = 'Delete role';
+    }
+    openSheet('confirmSheet');
+  }
+
+  document.getElementById('confirmGo').addEventListener('click', function () {
+    if (confirmKind === 'banish') {
+      var idx = MEMBERS.findIndex(function (x) { return x.id === confirmId; });
+      var removed = MEMBERS.splice(idx, 1)[0];
+      closeSheets(); render();
+      snack(removed.name + ' banished', function () {
+        MEMBERS.splice(idx, 0, removed); render(); toast('Banish undone');
+      });
+    } else if (confirmKind === 'transfer') {
+      var newOwner = MEMBERS.find(function (x) { return x.id === confirmId; });
+      var oldOwner = MEMBERS.find(function (x) { return x.accountRole === 'Owner'; });
+      oldOwner.accountRole = 'Member'; oldOwner.self = false;
+      newOwner.accountRole = 'Owner'; newOwner.self = true;
+      closeSheets(); render();
+      toast('Ownership transferred to ' + newOwner.name.split(' ')[0]);
+    } else if (confirmKind === 'revoke') {
+      var pi = PENDING.findIndex(function (x) { return x.id === confirmId; });
+      PENDING.splice(pi, 1)[0];
+      closeSheets(); render();
+      toast('Invite revoked');
+    } else if (confirmKind === 'deleteRole') {
+      var ri = TEMPLATES.findIndex(function (x) { return x.id === confirmId; });
+      var role = TEMPLATES.splice(ri, 1)[0];
+      closeSheets(); render();
+      toast('Role \u201C' + role.name + '\u201D deleted');
+    }
+    confirmKind = null;
+  });
+
+  /* ============================== INVITE SHEET ============================== */
+  function openInvite() {
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteErr').hidden = true;
+    document.getElementById('inviteCo').textContent = COMPANIES.find(function (c) { return c.current; }).name;
+    document.getElementById('inviteChecks').innerHTML = TEMPLATES.map(function (t) {
+      return '<label class="check-row"><input type="checkbox" value="' + t.id + '">' +
+        '<span><span class="check-name">' + t.name + '</span>' +
+        '<span class="check-desc">' + t.desc + '</span></span></label>';
+    }).join('');
+    openSheet('inviteSheet');
+  }
+  document.getElementById('inviteSendBtn').addEventListener('click', function () {
+    var email = document.getElementById('inviteEmail').value.trim();
+    var err = document.getElementById('inviteErr');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.hidden = false; return; }
+    var roles = Array.prototype.slice.call(document.querySelectorAll('#inviteChecks input:checked')).map(function (i) { return i.value; });
+    PENDING.push({ id: 'p' + Date.now(), email: email, invited: 'Today', expires: 'in 7 days', roles: roles });
+    closeSheets(); render();
+    toast('Invite sent to ' + email);
+  });
+
+  /* ============================== THEME ============================== */
+  var MOON = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>';
+  var SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var root = document.documentElement;
+    var dark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+    document.getElementById('themeIcon').innerHTML = dark ? MOON : SUN;
+    document.getElementById('metaTheme').setAttribute('content', dark ? '#1e3a5f' : '#60a5fa');
+  });
+
+  /* ============================== INIT ============================== */
+  render();
+</script>
+</body>
+</html>
