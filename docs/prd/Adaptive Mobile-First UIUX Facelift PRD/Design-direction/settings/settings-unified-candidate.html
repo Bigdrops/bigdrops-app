@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1e3a5f" id="metaTheme">
+<title>Settings — Unified Candidate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface-raised: #f8fafc;
+    --surface-muted: #e2e8f0;
+    --surface-strong: #cbd5e1;
+    --ink: #0f172a;
+    --ink-2: #475569;
+    --ink-3: #94a3b8;
+    --primary: #1e3a5f;
+    --primary-bright: #3b82f6;
+    --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+    --secondary: #0f172a;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 13%, transparent);
+    --caution: #b45309;
+    --caution-soft: color-mix(in srgb, var(--caution) 13%, transparent);
+    --accent: #2563eb;
+    --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+    --chev: var(--accent);
+    --chip-bg: var(--accent-soft);
+    --chip-ink: var(--accent);
+    --you-bg: var(--accent-soft);
+    --you-ink: var(--accent);
+    --line: rgba(15, 23, 42, .07);
+    --line-strong: rgba(15, 23, 42, .14);
+    --nav: rgba(255, 255, 255, .88);
+    --scrim: rgba(14, 12, 10, .38);
+    --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    --shadow: 0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04);
+    --shadow-float: 0 18px 40px color-mix(in srgb, var(--primary) 18%, transparent), 0 3px 9px rgba(15,23,42,.07);
+    --font: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    --number: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-raised: #253448;
+    --surface-muted: #334155;
+    --surface-strong: #475569;
+    --ink: #f1f5f9;
+    --ink-2: #cbd5e1;
+    --ink-3: #64748b;
+    --primary: #60a5fa;
+    --primary-bright: #93c5fd;
+    --primary-soft: color-mix(in srgb, var(--primary) 20%, transparent);
+    --secondary: #94a3b8;
+    --secondary-soft: color-mix(in srgb, var(--secondary) 18%, transparent);
+    --caution: #fbbf24;
+    --caution-soft: color-mix(in srgb, var(--caution) 16%, transparent);
+    --accent: #93c5fd;
+    --accent-soft: color-mix(in srgb, var(--accent) 13%, transparent);
+    --chev: var(--ink-3);
+    --chip-bg: var(--surface-muted);
+    --chip-ink: var(--ink-2);
+    --you-bg: var(--surface-muted);
+    --you-ink: var(--ink-2);
+    --gradient: linear-gradient(135deg, #3b4a63, #0b1220);
+    --line: rgba(241, 245, 249, .08);
+    --line-strong: rgba(241, 245, 249, .15);
+    --nav: rgba(15, 23, 42, .88);
+    --shadow: 0 12px 28px rgba(0,0,0,.32), 0 2px 6px rgba(0,0,0,.24);
+    --shadow-float: 0 18px 40px rgba(0,0,0,.4), 0 3px 9px rgba(0,0,0,.28);
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font-family: inherit; color: inherit; }
+  button { cursor: pointer; border: none; background: none; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* ============================== DEVICE LAYOUT ============================== */
+  .device {
+    position: relative; width: 100%; max-width: 430px; margin: 0 auto;
+    height: 100dvh; background: var(--bg); overflow: hidden;
+    transition: max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.3s ease;
+  }
+  .device.mode-fold { max-width: 820px; }
+  .device.mode-desktop { max-width: 1180px; }
+
+  @media (min-width: 700px) {
+    body { display: grid; place-items: center; background: color-mix(in srgb, var(--ink) 4%, var(--bg)); }
+    .device {
+      height: min(880px, calc(100dvh - 48px));
+      border-radius: 28px; border: 1px solid var(--line-strong);
+      box-shadow: var(--shadow-float);
+    }
+  }
+
+  /* ============================== PANE ARCHITECTURE ============================== */
+  .pane-container { display: flex; width: 100%; height: 100%; position: relative; }
+
+  .screen {
+    position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+    padding: calc(62px + var(--safe-top)) 14px calc(24px + var(--safe-bottom));
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  .pane-nav { width: 100%; height: 100%; z-index: 1; }
+  .pane-detail { width: 100%; height: 100%; z-index: 2; background: var(--bg); display: none; }
+
+  .device.mode-fold .pane-container,
+  .device.mode-desktop .pane-container {
+    display: grid; grid-template-columns: 360px 1fr; gap: 1px; background: var(--line-strong);
+  }
+  .device.mode-fold .pane-nav,
+  .device.mode-desktop .pane-nav { position: relative; width: 100%; background: var(--bg); }
+  .device.mode-fold .pane-detail,
+  .device.mode-desktop .pane-detail { position: relative; width: 100%; display: block; background: var(--bg); }
+
+  .device.mode-fold .backbtn,
+  .device.mode-desktop .backbtn { display: none !important; }
+
+  /* ============================== TOP BAR ============================== */
+  .topbar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; gap: 6px;
+    height: calc(58px + var(--safe-top));
+    padding: var(--safe-top) 10px 6px;
+    background: linear-gradient(180deg, var(--bg) 88%, transparent);
+  }
+  .iconbtn {
+    width: 34px; height: 34px; border-radius: 8px;
+    display: grid; place-items: center;
+    color: var(--ink-2); background: var(--surface); border: 1px solid var(--line);
+    transition: transform .12s ease, background .12s ease;
+  }
+  .iconbtn:hover { background: var(--surface-raised); color: var(--ink); }
+  .iconbtn:active { transform: scale(0.965); background: var(--surface-muted); }
+  .iconbtn svg { width: 16px; height: 16px; }
+
+  .identity { flex: 1; min-width: 0; padding-left: 2px; }
+  .identity-name { font-size: 15px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; }
+  .identity-context {
+    display: flex; align-items: center; gap: 5px; margin-top: 2px;
+    font-size: 9px; font-weight: 700; color: var(--ink-3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .identity-context b { color: var(--ink-2); font-weight: 800; }
+  .identity-context span.sep { opacity: 0.4; }
+
+  .backbtn { display: none; }
+  .device.mode-mobile.subpage .backbtn { display: grid; }
+
+  /* Device Selector */
+  .device-switch {
+    display: flex; align-items: center; background: var(--surface-muted);
+    border-radius: 8px; padding: 2px; gap: 2px; border: 1px solid var(--line);
+  }
+  .dev-opt {
+    padding: 4px 7px; font-size: 9px; font-weight: 800; border-radius: 6px;
+    color: var(--ink-3); transition: all .15s ease;
+  }
+  .dev-opt.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* ============================== SETTINGS ROWS ============================== */
+  .scope { margin-bottom: 12px; }
+  .scope-head { margin: 0 2px 4px; }
+  .scope-title { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+  .scope-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+
+  .srow {
+    width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 13px; min-height: 44px;
+    transition: background .12s ease, transform .12s ease;
+  }
+  .srow:hover { background: var(--surface-raised); }
+  .srow:hover .srow-label { color: var(--primary); }
+  .srow:active { background: var(--surface-muted); }
+  .srow.active-nav { background: var(--accent-soft); }
+  .srow.active-nav .srow-label { color: var(--accent); font-weight: 800; }
+  .srow + .srow { border-top: 1px solid var(--line); }
+
+  .srow-icon {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    background: var(--surface-muted); color: var(--ink-3);
+    display: grid; place-items: center;
+  }
+  .srow-icon.accent { background: var(--accent-soft); color: var(--accent); }
+  .srow-icon svg { width: 15px; height: 15px; }
+
+  .srow-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .srow-label { font-size: 13px; font-weight: 600; letter-spacing: 0; line-height: 1.2; display: block; }
+  .srow-meta { font-size: 12px; font-weight: 500; color: var(--ink-3); margin-top: 2px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .srow-end { flex-shrink: 0; display: flex; align-items: center; gap: 6px; color: var(--chev); }
+  .srow-end svg { width: 14px; height: 14px; }
+  .srow-count { font-family: var(--number); font-size: 11px; font-weight: 500; }
+  .groupline { height: 5px; }
+
+  /* ============================== TEAM HUB COMPONENTS ============================== */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 11px 12px 10px; position: relative; overflow: hidden;
+  }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--ink-3); }
+  .stat-val { margin-top: 4px; font-family: var(--number); font-size: 17px; font-weight: 500; letter-spacing: -0.075em; line-height: 1.2; }
+  .stat-val.accent { color: var(--accent); }
+  .stat-sub { margin-top: 2px; font-size: 8px; font-weight: 500; color: var(--ink-3); }
+  .stat-sub.warn { color: var(--caution); font-weight: 700; }
+
+  .sechead { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 8px; }
+  .sechead h2 { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .sechead .count { font-size: 12px; font-weight: 800; color: var(--accent); }
+
+  /* Toggleable Search */
+  .searchwrap {
+    display: none; align-items: center; gap: 8px;
+    height: 38px; padding: 0 12px; margin-bottom: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; color: var(--ink-3); animation: fadeIn 0.18s ease-out;
+  }
+  .searchwrap.active { display: flex; }
+  .searchwrap input { flex: 1; border: 0; outline: none; background: none; font-size: 11px; font-weight: 600; color: var(--ink); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Member Cards */
+  .mcard {
+    display: block; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; margin-bottom: 8px; transition: transform .12s ease;
+  }
+  .mcard:active { transform: scale(0.985); }
+  .mcard.self {
+    background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary) 24%, var(--line));
+  }
+  .mcard-top { display: flex; align-items: center; gap: 10px; }
+
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface-muted); color: var(--ink-2);
+    display: grid; place-items: center; font-size: 12px; font-weight: 800;
+  }
+  .avatar.you { background: var(--you-bg); color: var(--you-ink); }
+
+  .who { flex: 1; min-width: 0; }
+  .who-name { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; }
+  .who-mail { display: block; font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 1px; }
+
+  .pill { flex-shrink: 0; font-size: 8px; font-weight: 700; border-radius: 5px; padding: 2px 6px; text-transform: uppercase; }
+  .pill.owner { background: var(--secondary-soft); color: var(--secondary); }
+  .pill.you { background: var(--you-bg); color: var(--you-ink); }
+  .pill.suspended { background: var(--caution-soft); color: var(--caution); }
+
+  .chev { flex-shrink: 0; color: var(--ink-3); }
+  .chev svg { width: 15px; height: 15px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--chip-bg); color: var(--chip-ink);
+    border-radius: 999px; padding: 3px 8px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.04em;
+  }
+  .chip svg { width: 10px; height: 10px; }
+  .chip.suspended { background: var(--caution-soft); color: var(--caution); }
+  .no-access { font-size: 8px; font-weight: 700; color: var(--ink-3); margin-top: 6px; }
+
+  /* Info Rows */
+  .irow {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 11px 12px; margin-bottom: 8px;
+  }
+  .irow-icon { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; background: var(--surface-muted); color: var(--ink-3); display: grid; place-items: center; }
+  .irow-icon.accent { background: var(--accent-soft); color: var(--accent); }
+  .irow-when { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
+
+  .ghostbtn {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;
+    height: 30px; padding: 0 10px; border-radius: 8px;
+    color: var(--ink); font-size: 9px; font-weight: 800; background: var(--surface-muted);
+  }
+
+  /* FAB */
+  .fab {
+    position: absolute; bottom: calc(20px + var(--safe-bottom)); right: 20px; z-index: 30;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--gradient); color: #fff;
+    display: grid; place-items: center;
+    box-shadow: var(--shadow-float);
+    animation: fabBounce 2.6s infinite cubic-bezier(0.28, 0.84, 0.42, 1);
+    transition: transform 0.15s ease;
+  }
+  .fab:hover { transform: scale(1.08); }
+  .fab:active { transform: scale(0.94); }
+  .fab svg { width: 22px; height: 22px; stroke-width: 2.1; }
+
+  @keyframes fabBounce {
+    0%, 100% { transform: translateY(0); }
+    12% { transform: translateY(-7px); }
+    24% { transform: translateY(0); }
+    32% { transform: translateY(-3px); }
+    40% { transform: translateY(0); }
+  }
+
+  .ia-note { display: flex; align-items: flex-start; gap: 7px; margin: 4px 2px 14px; font-size: 11px; font-weight: 500; color: var(--ink-3); line-height: 1.55; }
+  .ia-note svg { width: 11px; height: 11px; flex-shrink: 0; margin-top: 1px; }
+
+  .footer { margin-top: 22px; text-align: center; font-size: 9px; font-weight: 800; letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-3); opacity: .5; }
+
+  .empty-pane {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; text-align: center; padding: 40px 20px; color: var(--ink-3);
+  }
+  .empty-pane svg { width: 42px; height: 42px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-pane h3 { font-size: 14px; font-weight: 800; color: var(--ink-2); }
+  .empty-pane p { font-size: 11px; margin-top: 4px; max-width: 220px; }
+
+  .noresults {
+    display: none; text-align: center; padding: 18px 12px; font-size: 9.5px; font-weight: 700; color: var(--ink-3);
+    background: var(--surface-raised); border: 1px dashed var(--line-strong); border-radius: 10px; margin-bottom: 8px;
+  }
+  .noresults.show { display: block; }
+
+  /* ============================== SHEETS & DIALOGS ============================== */
+  .scrim {
+    position: absolute; inset: 0; z-index: 40;
+    background: var(--scrim); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none; transition: opacity .3s ease;
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 43;
+    max-height: 82%; background: var(--surface); border-radius: 16px 16px 0 0;
+    box-shadow: 0 -16px 40px rgba(0, 0, 0, .24);
+    transform: translateY(106%); transition: transform .3s ease;
+    display: flex; flex-direction: column;
+  }
+  .sheet.show { transform: translateY(0); }
+  .grab { width: 34px; height: 3px; border-radius: 99px; background: var(--surface-strong); margin: 8px auto 0; flex-shrink: 0; }
+  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 10px 16px 8px; flex-shrink: 0; }
+  .sheet-title { font-size: 16px; font-weight: 800; letter-spacing: -0.04em; }
+  .sheet-desc { font-size: 9px; font-weight: 700; color: var(--ink-3); margin-top: 2px; }
+  .sheet-close { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-muted); color: var(--ink-2); display: grid; place-items: center; }
+  .sheet-close svg { width: 13px; height: 13px; }
+  .sheet-body { overflow-y: auto; padding: 4px 13px calc(16px + var(--safe-bottom)); }
+
+  .grp { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 4px 10px; margin-top: 8px; }
+  .grp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; }
+  .grp-row + .grp-row { border-top: 1px solid var(--line); }
+  .grp-k { font-size: 8px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+  .grp-v { font-size: 10px; font-weight: 800; }
+
+  .mrow {
+    width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 8px 8px 10px; border-radius: 10px;
+    background: var(--surface-raised); border: 1px solid var(--line);
+    margin-top: 8px;
+  }
+  .mrow-icon { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; background: var(--surface-muted); color: var(--ink-3); }
+  .mrow-icon svg { width: 15px; height: 15px; }
+  .mrow-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .mrow-name { font-size: 11px; font-weight: 800; line-height: 1.2; }
+  .mrow-meta { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
+  .mrow-act {
+    flex-shrink: 0; height: 30px; padding: 0 12px; border-radius: 10px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    background: var(--surface-muted); color: var(--ink);
+  }
+
+  .acc-label { font-size: 11px; font-weight: 800; margin-top: 12px; }
+  .banner { display: flex; align-items: center; gap: 7px; padding: 8px 10px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: 8px; font-weight: 700; margin-top: 8px; }
+  .banner-act { margin-left: auto; font-size: 8px; font-weight: 800; color: var(--accent); }
+  .durrow { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .durrow.open { display: flex; }
+  .dur {
+    height: 30px; padding: 0 12px; border-radius: 999px;
+    background: var(--surface-raised); border: 1px solid var(--line-strong);
+    font-size: 9px; font-weight: 800; color: var(--ink-2);
+  }
+  .dur[data-sel="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .mini {
+    height: 28px; padding: 0 10px; border-radius: 8px;
+    font-size: 8px; font-weight: 800; background: var(--surface-muted); color: var(--ink);
+  }
+
+  .member-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .mact {
+    flex: 1; height: 40px; border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 10px; font-weight: 800;
+    background: var(--surface-muted); color: var(--ink);
+  }
+
+  .field { margin-top: 12px; }
+  .field label { display: block; margin-bottom: 5px; font-size: 8px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+  .field input {
+    width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 12px;
+    background: var(--surface-raised); padding: 0 12px; font-size: 11px; font-weight: 600; outline: none;
+  }
+  .field-err { margin-top: 5px; font-size: 8px; font-weight: 800; color: var(--caution); }
+
+  .check-row { display: flex; align-items: flex-start; gap: 9px; padding: 7px 8px; border-radius: 10px; cursor: pointer; }
+  .check-row input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--accent); }
+  .check-name { font-size: 10.5px; font-weight: 800; display: block; }
+  .check-desc { font-size: 8.5px; color: var(--ink-3); display: block; margin-top: 1px; }
+
+  .perm-cat { margin-top: 12px; }
+  .perm-cat-title { font-size: 8px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
+  .perm-item { display: flex; align-items: flex-start; gap: 9px; padding: 7px 8px; border-radius: 10px; cursor: pointer; }
+  .perm-item input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--accent); }
+  .perm-item b { font-size: 10.5px; font-weight: 800; display: block; }
+  .perm-item span span { font-size: 8.5px; color: var(--ink-3); display: block; margin-top: 1px; }
+
+  .primarybtn {
+    width: 100%; height: 44px; border-radius: 10px;
+    background: var(--gradient); color: #fff;
+    font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 10px;
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+
+  /* ============================== FULL-PAGE FORMS ============================== */
+  .form-section { margin-top: 16px; }
+  .form-section-title {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px;
+  }
+  .form-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; overflow: hidden;
+  }
+  .form-card .field { margin-top: 10px; }
+  .form-card .field:first-child { margin-top: 0; }
+
+  .logo-upload {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    background: var(--surface-raised); border: 1px dashed var(--line-strong);
+    border-radius: 10px; cursor: pointer; transition: border-color .15s;
+  }
+  .logo-upload:hover { border-color: var(--accent); }
+  .logo-placeholder {
+    width: 52px; height: 52px; border-radius: 10px;
+    background: var(--surface-muted); display: grid; place-items: center;
+    color: var(--ink-3); flex-shrink: 0;
+  }
+  .logo-placeholder svg { width: 22px; height: 22px; }
+  .logo-text { font-size: 10px; font-weight: 700; color: var(--ink-2); }
+  .logo-hint { font-size: 8px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
+
+  /* Floating Save FAB — matches live invoice FormFooter */
+  .fab-float {
+    position: absolute;
+    bottom: calc(var(--bd-app-bottom-nav-offset, 72px) + env(safe-area-inset-bottom, 0px) + 16px);
+    right: 16px;
+    z-index: 60;
+    width: 50px; height: 50px;
+    border-radius: 18px;
+    background: var(--accent); color: #fff;
+    display: grid; place-items: center;
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 30%, transparent), 0 2px 6px rgba(0,0,0,.12);
+    animation: fabFloat 2.6s infinite cubic-bezier(0.28, 0.84, 0.42, 1);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .fab-float:hover { transform: scale(1.08); box-shadow: 0 8px 28px color-mix(in srgb, var(--accent) 38%, transparent); }
+  .fab-float:active { transform: scale(0.95); }
+  .fab-float svg { width: 22px; height: 22px; }
+
+  @keyframes fabFloat {
+    0%, 100% { transform: translateY(0); }
+    12% { transform: translateY(-5px); }
+    24% { transform: translateY(0); }
+    32% { transform: translateY(-2px); }
+    40% { transform: translateY(0); }
+  }
+
+  /* Company status pills */
+  .pill-active { background: var(--accent-soft); color: var(--accent); }
+  .pill-archived { background: var(--caution-soft); color: var(--caution); }
+
+  /* Role detail read-only */
+  .role-detail-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px; margin-top: 8px;
+  }
+  .role-detail-card .perm-item { cursor: default; }
+  .role-detail-card .perm-item input:disabled { opacity: .5; }
+
+  /* Responsive inner screens */
+  .device.mode-fold .inner-grid,
+  .device.mode-desktop .inner-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .device.mode-fold .form-card,
+  .device.mode-desktop .form-card {
+    padding: 20px;
+  }
+  .device.mode-fold .primarybtn,
+  .device.mode-desktop .primarybtn {
+    height: 48px; font-size: 12px;
+  }
+
+  .toast {
+    position: absolute; top: calc(10px + var(--safe-top)); left: 50%; z-index: 60;
+    transform: translate(-50%, -12px); background: var(--ink); color: var(--bg);
+    border-radius: 8px; padding: 8px 14px; font-size: 9px; font-weight: 800;
+    opacity: 0; pointer-events: none; transition: all .2s ease;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="device mode-mobile" id="device">
+
+  <header class="topbar">
+    <button class="iconbtn backbtn" type="button" id="backBtn" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="identity">
+      <div class="identity-name" id="pageTitle">Settings</div>
+      <div class="identity-context" id="pageContext">
+        <span>Workspace: <b id="lblWorkspace">BIGDROPS</b></span>
+        <span class="sep">·</span>
+        <span>Company: <b id="lblCompany">Sun &amp; Shield Power Solutions</b></span>
+      </div>
+    </div>
+    <div class="device-switch" role="radiogroup" aria-label="Device View Mode">
+      <button class="dev-opt active" type="button" id="btnMobile">Mobile</button>
+      <button class="dev-opt" type="button" id="btnFold">Fold</button>
+      <button class="dev-opt" type="button" id="btnDesktop">Desktop</button>
+    </div>
+    <button class="iconbtn" type="button" id="themeBtn" aria-label="Toggle theme" style="margin-left:4px;">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+  </header>
+
+  <div class="pane-container">
+    <main class="screen pane-nav" id="paneNav"></main>
+    <main class="screen pane-detail" id="paneDetail"></main>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+
+  <!-- Member Sheet -->
+  <div class="sheet" id="memberSheet" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <div class="avatar" id="msAvatar">AM</div>
+        <div style="min-width:0;">
+          <div class="sheet-title" id="memberSheetTitle">Adewale Musa</div>
+          <div class="sheet-desc" id="msMail">adewale@example.com</div>
+        </div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="msBody"></div>
+  </div>
+
+  <!-- Role Editor Sheet -->
+  <div class="sheet" id="roleSheet" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title" id="roleSheetTitle">Role Editor</div>
+        <div class="sheet-desc">Configure ability permissions.</div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="roleName">Role Name</label>
+        <input type="text" id="roleName" placeholder="e.g. Inspector">
+      </div>
+      <div class="field">
+        <label for="roleDesc">Description</label>
+        <input type="text" id="roleDesc" placeholder="Brief description">
+      </div>
+      <div id="rolePerms"></div>
+      <div id="roleEditorActions" style="display:flex;gap:6px;margin-top:10px;"></div>
+      <button class="primarybtn" type="button" id="roleSaveBtn">Save Role</button>
+    </div>
+  </div>
+
+  <!-- Invite Sheet -->
+  <div class="sheet" id="inviteSheet" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title">Invite Member</div>
+        <div class="sheet-desc">Grant team access to <span id="inviteCo">this workspace</span>.</div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="inviteEmail">Email Address</label>
+        <input type="email" id="inviteEmail" placeholder="name@example.com">
+        <div class="field-err" id="inviteErr" hidden>Please enter a valid email address.</div>
+      </div>
+      <div id="inviteChecks"></div>
+      <button class="primarybtn" type="button" id="inviteSendBtn">Send Invite</button>
+    </div>
+  </div>
+
+  <!-- Confirm Sheet -->
+  <div class="sheet" id="confirmSheet" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <div class="sheet-head">
+      <div>
+        <div class="sheet-title" id="confirmTitle">Confirm Action</div>
+        <div class="sheet-desc" id="confirmDesc"></div>
+      </div>
+      <button class="sheet-close" type="button" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <p id="confirmEffect" style="font-size:9px;font-weight:600;color:var(--ink-3);margin-bottom:10px;"></p>
+      <button class="primarybtn" type="button" id="confirmGo">Confirm</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+</div>
+
+<script>
+  /* ============================== STATE ============================== */
+  var WORKSPACE_NAME = 'BIGDROPS';
+  var DAY = 864e5;
+  var deviceMode = 'mobile';
+  var view = 'settings';
+  var searchActive = false;
+  var roleDetailId = null;
+
+  var WORKSPACES = [
+    { id: 'ws1', name: 'BIGDROPS', slug: 'bigdrops', memberCount: 2, current: true }
+  ];
+
+  var CATEGORIES = [
+    { cat: 'Documents', items: [{ id: 'view_docs', label: 'View documents', desc: 'Browse documents in the workspace.' }, { id: 'edit_docs', label: 'Create & edit documents', desc: 'Create, modify, and delete documents.' }] },
+    { cat: 'Team & Access', items: [{ id: 'invite', label: 'Invite members', desc: 'Send workspace invitations.' }, { id: 'access', label: 'Manage member access', desc: 'View and change member roles and status.' }] }
+  ];
+
+  var TEMPLATES = [
+    { id: 'admin',    name: 'Company Admin', desc: 'Full control of this company.', system: true, abilities: ['view_docs','edit_docs','invite','access'] },
+    { id: 'manager',  name: 'Manager', desc: 'Runs day-to-day work.', system: true, abilities: ['view_docs','edit_docs'] },
+    { id: 'engineer', name: 'Engineer', desc: 'Field delivery.', system: true, abilities: ['view_docs'] }
+  ];
+
+  var MEMBERS = [
+    { id: 'm1', name: 'Adewale Musa', email: 'adewale@example.com', joined: '12 Jan 2026', accountRole: 'Owner', self: true, roles: ['admin','engineer'], suspendedUntil: 0 },
+    { id: 'm2', name: 'Kemi Adeyemi', email: 'kemi@example.com', joined: '3 Feb 2026', accountRole: 'Member', self: false, roles: ['engineer'], suspendedUntil: 0 }
+  ];
+
+  var PENDING = [
+    { id: 'p1', email: 'chidi.okeke@example.com', invited: '9 Sep 2026', expires: '16 Sep 2026', roles: [] }
+  ];
+
+  var COMPANIES = [
+    { id: 'c1', name: 'Sun & Shield Power Solutions', type: 'Limited', current: true },
+    { id: 'c2', name: 'Shield Energy Ltd', type: 'Limited', current: false }
+  ];
+
+  /* ============================== ICONS ============================== */
+  var I = {
+    shield:   '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+    shieldOff:'<path d="m2 2 20 20"/><path d="M5 5.6A5 5 0 0 1 19 8"/>',
+    check:    '<path d="M20 6 9 17l-5-5"/>',
+    chev:     '<path d="m9 18 6-6-6-6"/>',
+    users:    '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
+    building: '<path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/>',
+    info:     '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+    lock:     '<rect x="3.5" y="11" width="17" height="10.5" rx="2"/><path d="M7 11V7.5a5 5 0 0 1 10 0V11"/>',
+    pen:      '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4.2 1L4 15.8 16.5 3.5z"/>',
+    mail:     '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+    search:   '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>',
+    pause:    '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+    x:        '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    plus:     '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    trash:    '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+    copy:     '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    ban:      '<circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/>',
+    transfer: '<path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/>',
+    saveAll:  '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>'
+  };
+
+  function svg(inner, size) {
+    return '<svg viewBox="0 0 24 24" width="' + (size || 15) + '" height="' + (size || 15) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+  }
+  function initials(n) { return n.split(' ').map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase(); }
+  function tpl(id) { return TEMPLATES.find(function (t) { return t.id === id; }); }
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function isSuspended(m) { return m.suspendedUntil > Date.now(); }
+  function suspendDaysLeft(m) { return Math.max(0, Math.ceil((m.suspendedUntil - Date.now()) / DAY)); }
+
+  /* ============================== DEVICE ============================== */
+  function setDeviceMode(mode) {
+    deviceMode = mode;
+    var dev = document.getElementById('device');
+    dev.className = 'device mode-' + mode;
+    document.querySelectorAll('.dev-opt').forEach(function(el) { el.classList.remove('active'); });
+    if (mode === 'mobile') document.getElementById('btnMobile').classList.add('active');
+    if (mode === 'fold') document.getElementById('btnFold').classList.add('active');
+    if (mode === 'desktop') document.getElementById('btnDesktop').classList.add('active');
+    render();
+  }
+  document.getElementById('btnMobile').addEventListener('click', function() { setDeviceMode('mobile'); });
+  document.getElementById('btnFold').addEventListener('click', function() { setDeviceMode('fold'); });
+  document.getElementById('btnDesktop').addEventListener('click', function() { setDeviceMode('desktop'); });
+
+  /* ============================== NAV ============================== */
+  function go(v) {
+    view = v;
+    document.getElementById('device').classList.toggle('subpage', v !== 'settings');
+    var titles = {
+      settings: 'Settings', team: 'Team & Access', roles: 'Roles & Access',
+      workspace: 'Switch Workspace', 'create-workspace': 'Create Workspace',
+      'switch-company': 'Switch Company', 'create-company': 'Create Company',
+      'role-detail': 'Role Details'
+    };
+    document.getElementById('pageTitle').textContent = titles[v] || 'Settings';
+    render();
+  }
+  document.getElementById('backBtn').addEventListener('click', function () {
+    var backMap = { team: 'settings', roles: 'settings', workspace: 'settings',
+      'create-workspace': 'workspace', 'switch-company': 'settings',
+      'create-company': 'switch-company', 'role-detail': 'roles' };
+    go(backMap[view] || 'settings');
+  });
+
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2000);
+  }
+  var _snackTimer = null;
+  function snack(msg, undo) {
+    var t = document.getElementById('toast');
+    t.innerHTML = msg + ' <button style="background:none;border:none;color:var(--accent);font-weight:800;font-size:9px;margin-left:8px;text-decoration:underline;cursor:pointer;" id="snackUndo">Undo</button>';
+    t.classList.add('show');
+    document.getElementById('snackUndo').addEventListener('click', function() { t.classList.remove('show'); if (undo) undo(); clearTimeout(_snackTimer); });
+    _snackTimer = setTimeout(function () { t.classList.remove('show'); }, 4000);
+  }
+
+  /* ============================== SETTINGS ROW BUILDER ============================== */
+  function srow(opt) {
+    var isActive = deviceMode !== 'mobile' && view === opt.nav;
+    return '<button class="srow ' + (isActive ? 'active-nav' : '') + '" type="button" data-nav="' + (opt.nav || '') + '" data-stub="' + (opt.stub ? '1' : '') + '">' +
+      '<span class="srow-icon' + (opt.nav ? ' accent' : '') + '">' + svg(opt.icon, 15) + '</span>' +
+      '<span class="srow-main"><span class="srow-label">' + opt.label + '</span>' +
+      (opt.meta ? '<span class="srow-meta">' + opt.meta + '</span>' : '') + '</span>' +
+      '<span class="srow-end">' + (opt.count ? '<span class="srow-count">' + opt.count + '</span>' : '') + svg(I.chev, 14) + '</span>' +
+    '</button>';
+  }
+
+  /* ============================== RENDER: SETTINGS HOME ============================== */
+  function renderSettings() {
+    var current = COMPANIES.find(function (c) { return c.current; });
+    var html = '';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">Account</span></div><div class="scope-card">';
+    html += srow({ icon: I.users, label: 'Profile & Security', meta: 'Sign-in and personal details', stub: 1 });
+    html += srow({ icon: I.mail, label: 'Notifications', meta: 'Email and alert preferences', stub: 1 });
+    html += '</div></div>';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">Workspace</span></div><div class="scope-card">';
+    html += srow({ icon: I.building, label: 'Switch Workspace', meta: 'Current: ' + WORKSPACE_NAME, count: 1, nav: 'workspace' });
+    html += '<div class="groupline"></div>';
+    html += srow({ icon: I.users, label: 'Team Hub', meta: MEMBERS.length + ' members', count: MEMBERS.length, nav: 'team' });
+    html += '<div class="groupline"></div>';
+    html += '</div></div>';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">Company</span></div><div class="scope-card">';
+    html += srow({ icon: I.building, label: 'Switch Company', meta: 'Current: ' + current.name, count: COMPANIES.length, nav: 'switch-company' });
+    html += '<div class="groupline"></div>';
+    html += srow({ icon: I.building, label: 'Company Info', meta: 'Business name, address, and tax details', stub: 1 });
+    html += srow({ icon: I.shield, label: 'Logo & Branding', meta: 'Logo used on documents', stub: 1 });
+    html += srow({ icon: I.mail, label: 'Banking', meta: 'Accounts that receive payments', stub: 1 });
+    html += srow({ icon: I.pen, label: 'Signatories', meta: 'Authorized people who can sign documents', stub: 1 });
+    html += '</div></div>';
+
+    html += '<div class="scope"><div class="scope-head"><span class="scope-title">Preferences</span></div><div class="scope-card">';
+    html += srow({ icon: I.info, label: 'Theme & Appearance', meta: 'Colors, cards, and display preferences', stub: 1 });
+    html += srow({ icon: I.lock, label: 'App Lock', meta: 'Biometric lock for device level security', stub: 1 });
+    html += '</div></div>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: TEAM HUB ============================== */
+  function renderTeam() {
+    var suspendedCount = MEMBERS.filter(isSuspended).length;
+    var companyMembers = MEMBERS.filter(function (m) { return !isSuspended(m); }).length;
+    var html = '';
+
+    html += '<section class="stats">' +
+      '<div class="stat"><div class="stat-label">Workspace</div><div class="stat-val">7</div><div class="stat-sub">members</div></div>' +
+      '<div class="stat"><div class="stat-label">Company</div><div class="stat-val accent">3</div><div class="stat-sub">active</div></div>' +
+      '<div class="stat"><div class="stat-label">Pending</div><div class="stat-val">' + PENDING.length + '</div><div class="stat-sub">invites</div></div>' +
+    '</section>';
+
+    html += '<div class="sechead"><h2>Team Members</h2>' +
+      '<button class="iconbtn" type="button" id="btnToggleSearch" aria-label="Toggle Search" style="width:28px;height:28px;">' + svg(I.search, 14) + '</button>' +
+    '</div>';
+
+    html += '<div class="searchwrap ' + (searchActive ? 'active' : '') + '" id="searchWrap">' +
+      svg(I.search, 14) +
+      '<input type="search" id="memberSearch" placeholder="Search members..." autocomplete="off">' +
+    '</div>';
+
+    html += MEMBERS.map(function(m) {
+      var suspended = isSuspended(m);
+      var chips = m.roles.map(function (id) {
+        return '<span class="chip">' + svg(I.shield, 10) + tpl(id).name + '</span>';
+      }).join('');
+      var access = suspended
+        ? '<div class="chips"><span class="chip suspended">' + svg(I.pause, 10) + 'Suspended</span></div>'
+        : (chips ? '<div class="chips">' + chips + '</div>' : '<p class="no-access">No roles assigned.</p>');
+
+      return '<button class="mcard' + (m.self ? ' self' : '') + '" type="button" data-member="' + m.id + '">' +
+        '<div class="mcard-top">' +
+          '<div class="avatar' + (m.self ? ' you' : '') + '">' + initials(m.name) + '</div>' +
+          '<div class="who"><div class="who-name">' + m.name +
+            (m.accountRole === 'Owner' ? '<span class="pill owner">Owner</span>' : '') +
+            (m.self ? '<span class="pill you">You</span>' : '') +
+            (suspended ? '<span class="pill suspended">Suspended</span>' : '') +
+          '</div>' +
+          '<span class="who-mail">' + m.email + ' · joined ' + m.joined + '</span></div>' +
+          '<span class="chev">' + svg(I.chev, 15) + '</span>' +
+        '</div>' +
+        access +
+      '</button>';
+    }).join('');
+
+    html += '<div class="noresults" id="noResults">No members match your search.</div>';
+
+    html += '<div class="sechead" style="margin-top:16px;"><h2>Pending Invitations</h2><span class="count">' + PENDING.length + '</span></div>';
+    html += PENDING.length ? PENDING.map(function (p) {
+      return '<div class="irow">' +
+        '<div class="irow-icon accent">' + svg(I.mail, 15) + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="who-name">' + p.email + '</div>' +
+          '<div class="irow-when">Invited ' + p.invited + ' · expires ' + p.expires + '</div>' +
+        '</div>' +
+        '<button class="ghostbtn" type="button" data-revoke="' + p.id + '">' + svg(I.x, 11) + ' Revoke</button>' +
+      '</div>';
+    }).join('') : '<p class="ia-note">No pending invitations.</p>';
+
+    html += '<div class="scope" style="margin-top:16px;"><div class="scope-card">';
+    html += srow({ icon: I.shield, label: 'Roles & Access', meta: TEMPLATES.length + ' roles configured', count: TEMPLATES.length, nav: 'roles' });
+    html += '</div></div>';
+
+    html += '<button class="fab" type="button" id="fabInviteBtn" aria-label="Invite Member" title="Invite Member">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M18 21a6 6 0 0 0-12 0"/><circle cx="12" cy="11" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>' +
+      '</svg>' +
+    '</button>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: ROLES ============================== */
+  function renderRoles() {
+    var html = '<div class="scope-card" style="margin-top:8px;">';
+    html += TEMPLATES.map(function (r) {
+      var holders = MEMBERS.filter(function (m) { return m.roles.indexOf(r.id) > -1; }).length;
+      var label = r.name + (r.system ? '<span class="pill owner" style="margin-left:5px;">System</span>' : '');
+      return srow({ icon: I.shield, label: label, meta: holders + ' holder(s) · ' + (r.system ? 'Built-in' : 'Custom'), count: '', nav: '' }).replace('data-nav=""', 'data-role-edit="' + r.id + '"');
+    }).join('');
+    html += '</div>';
+    html += '<button class="primarybtn" type="button" id="newRoleBtn">' + svg(I.plus, 14) + ' Create Custom Role</button>';
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER WORKSPACE ============================== */
+  function renderWorkspace() {
+    var html = '<div class="sechead"><h2>Switch Workspace</h2></div>';
+    html += '<div class="scope-card" style="margin-top:8px;">';
+    html += WORKSPACES.map(function (ws) {
+      var isCur = ws.current;
+      var isArchived = ws.status === 'archived';
+      var statusPill = isArchived
+        ? '<span class="pill pill-archived">Archived</span>'
+        : (isCur ? '<span class="pill you">Current</span>' : '');
+      var actions = '';
+      if (isCur) {
+        actions = '<span class="ghostbtn" style="background:var(--accent-soft);color:var(--accent);">' + svg(I.check, 11) + ' Active</span>';
+      } else if (isArchived) {
+        actions = '<button class="ghostbtn" type="button" data-restore-ws="' + ws.id + '">Restore</button>';
+      } else {
+        actions = '<span style="display:flex;gap:6px;">' +
+          '<button class="ghostbtn" type="button" data-switch-ws="' + ws.id + '">Switch</button>' +
+          '<button class="ghostbtn" type="button" data-archive-ws="' + ws.id + '" style="color:var(--caution);" title="Archive">' + svg(I.pause, 11) + '</button>' +
+          '<button class="ghostbtn" type="button" data-delete-ws="' + ws.id + '" style="color:var(--caution);" title="Delete">' + svg(I.trash, 11) + '</button>' +
+        '</span>';
+      }
+      return '<div class="irow" style="align-items:flex-start;' + (isCur ? 'border-color:color-mix(in srgb, var(--accent) 26%, var(--line));background:color-mix(in srgb, var(--accent) 5%, var(--surface));' : '') + '">' +
+        '<div class="irow-icon">' + svg(I.building, 15) + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="who-name" style="white-space:normal;">' + esc(ws.name) + statusPill + '</div>' +
+          '<div class="irow-when">' + ws.slug + ' · ' + ws.memberCount + ' members' + (isArchived ? ' · archived' : '') + '</div>' +
+        '</div>' +
+        actions +
+      '</div>';
+    }).join('');
+    html += '</div>';
+    html += '<p class="ia-note">' + svg(I.info, 11) + '<span>Switching workspace changes your active workspace. Your memberships stay. Archived workspaces retain data for 30 days.</span></p>';
+
+    html += '<button class="fab" type="button" id="fabCreateWsBtn" aria-label="Create Workspace" title="Create Workspace">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' + I.plus + '</svg>' +
+    '</button>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: CREATE WORKSPACE ============================== */
+  function renderCreateWorkspace() {
+    var html = '<div class="form-section"><div class="form-section-title">Workspace Details</div>';
+    html += '<div class="form-card">';
+    html += '<div class="field"><label>Workspace name</label><input type="text" id="wsName" placeholder="e.g. ACME Corp"></div>';
+    html += '<div class="field"><label>Slug</label><input type="text" id="wsSlug" placeholder="e.g. acme-corp"></div>';
+    html += '<p class="ia-note" style="margin:10px 0 0;">' + svg(I.info, 11) + '<span>Workspace goes to <b>pending approval</b> after creation. 30-day soft-delete retention applies.</span></p>';
+    html += '</div></div>';
+
+    html += '<button class="primarybtn" type="button" id="wsCreateBtn" style="margin-top:16px;">' + svg(I.plus, 14) + ' Create Workspace</button>';
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: SWITCH COMPANY ============================== */
+  function renderSwitchCompany() {
+    var html = '<div class="sechead"><h2>Switch Company</h2></div>';
+    html += '<div class="scope-card" style="margin-top:8px;">';
+    html += COMPANIES.map(function (co, idx) {
+      var isCur = co.current;
+      var coInitials = initials(co.name);
+      return '<div class="irow" style="align-items:center;' + (isCur ? 'border-color:color-mix(in srgb, var(--accent) 26%, var(--line));background:color-mix(in srgb, var(--accent) 5%, var(--surface));' : '') + '">' +
+        '<div class="avatar' + (isCur ? ' you' : '') + '" style="width:34px;height:34px;font-size:11px;border-radius:12px;flex-shrink:0;">' + coInitials + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="who-name" style="white-space:normal;font-size:12px;font-weight:800;letter-spacing:-0.025em;' + (isCur ? 'color:var(--accent);' : '') + '">' + esc(co.name) + '</div>' +
+          '<div class="irow-when">' + co.type + '</div>' +
+        '</div>' +
+        (isCur
+          ? '<span style="color:var(--accent);flex-shrink:0;">' + svg(I.check, 14) + '</span>'
+          : '<button class="ghostbtn" type="button" data-switch-co="' + co.id + '">Switch</button>') +
+      '</div>';
+    }).join('');
+    html += '</div>';
+
+    html += '<div style="margin-top:8px;"><button class="ghostbtn" type="button" data-nav="create-company" style="width:100%;justify-content:center;gap:6px;">' + svg(I.plus, 14) + ' Create Company</button></div>';
+    html += '<p class="ia-note">' + svg(I.info, 11) + '<span>Switching company changes your active company within this workspace.</span></p>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: CREATE COMPANY ============================== */
+  function renderCreateCompany() {
+    var html = '<div class="form-section"><div class="form-section-title">Business Information</div>';
+    html += '<div class="form-card">';
+
+    html += '<div class="field"><label>Company name *</label><input type="text" id="coName" placeholder="e.g. Sun & Shield Power Solutions"></div>';
+
+    html += '<div class="field"><label>Business type</label><input type="text" id="coType" placeholder="e.g. Limited Liability Company"></div>';
+
+    html += '<div class="field"><label>Registration number</label><input type="text" id="coReg" placeholder="e.g. RC123456"></div>';
+
+    html += '<div class="field"><label>Tax ID</label><input type="text" id="coTax" placeholder="e.g. 12345678-0001"></div>';
+
+    html += '</div></div>';
+
+    html += '<div class="form-section"><div class="form-section-title">Contact Details</div>';
+    html += '<div class="form-card">';
+
+    html += '<div class="field"><label>Phone number</label><input type="tel" id="coPhone" placeholder="+234 ..."></div>';
+
+    html += '<div class="field"><label>Email address</label><input type="email" id="coEmail" placeholder="info@company.com"></div>';
+
+    html += '<div class="field"><label>Address</label><input type="text" id="coAddress" placeholder="Street address, city"></div>';
+
+    html += '</div></div>';
+
+    html += '<div class="form-section"><div class="form-section-title">Branding</div>';
+    html += '<div class="form-card">';
+    html += '<div class="field"><label>Company Logo</label>';
+    html += '<div class="logo-upload" id="logoUpload">';
+    html += '<div class="logo-placeholder">' + svg(I.building, 22) + '</div>';
+    html += '<div><div class="logo-text">Upload logo</div><div class="logo-hint">PNG, JPG or SVG. Max 2MB.</div></div>';
+    html += '</div></div>';
+    html += '</div></div>';
+
+    html += '<p class="ia-note" style="margin:10px 0;">' + svg(I.info, 11) + '<span>Company name is required. All other fields are optional and can be completed later.</span></p>';
+
+    html += '<div style="height:80px;"></div>';
+
+    html += '<button class="fab-float" type="button" id="coSaveBtn" aria-label="Save Company" title="Save Company">' +
+      svg(I.saveAll, 22) +
+    '</button>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER: ROLE DETAIL ============================== */
+  function renderRoleDetail(id) {
+    var r = tpl(id);
+    if (!r) return '<p style="padding:20px;color:var(--ink-3);">Role not found.</p>';
+    var holders = MEMBERS.filter(function (m) { return m.roles.indexOf(r.id) > -1; });
+
+    var html = '<div class="scope-card" style="margin-top:8px;">';
+    html += '<div style="padding:14px;">';
+    html += '<div style="display:flex;align-items:center;gap:8px;">';
+    html += '<div class="irow-icon accent">' + svg(I.shield, 15) + '</div>';
+    html += '<div><div class="who-name" style="font-size:14px;">' + r.name;
+    if (r.system) html += '<span class="pill owner" style="margin-left:6px;">System</span>';
+    html += '</div>';
+    html += '<div class="irow-when">' + r.desc + '</div></div>';
+    html += '</div>';
+    html += '</div></div>';
+
+    html += '<div class="form-section"><div class="form-section-title">Abilities</div>';
+    html += '<div class="role-detail-card">';
+    html += CATEGORIES.map(function (c) {
+      return '<div class="perm-cat"><div class="perm-cat-title">' + c.cat + '</div>' +
+        c.items.map(function (i) {
+          var on = r.abilities.indexOf(i.id) > -1;
+          return '<label class="perm-item"><input type="checkbox" checked' + (on ? '' : ' disabled') + ' disabled>' +
+            '<span><b>' + i.label + '</b><span>' + i.desc + '</span></span></label>';
+        }).join('') + '</div>';
+    }).join('');
+    html += '</div></div>';
+
+    html += '<div class="form-section"><div class="form-section-title">Members with this role (' + holders.length + ')</div>';
+    if (holders.length) {
+      html += '<div class="scope-card">';
+      html += holders.map(function (m) {
+        return '<div class="irow">' +
+          '<div class="avatar' + (m.self ? ' you' : '') + '">' + initials(m.name) + '</div>' +
+          '<div style="flex:1;min-width:0;"><div class="who-name">' + m.name + '</div><div class="irow-when">' + m.email + '</div></div>' +
+        '</div>';
+      }).join('');
+      html += '</div>';
+    } else {
+      html += '<p class="ia-note">No members currently hold this role.</p>';
+    }
+    html += '</div>';
+
+    html += '<p class="footer">BIGDROPS ERP</p>';
+    return html;
+  }
+
+  /* ============================== RENDER EMPTY ============================== */
+  function renderEmptyPane() {
+    return '<div class="empty-pane">' + svg(I.info, 36) + '<h3>Select an Option</h3><p>Choose an item from the menu on the left to view details.</p></div>';
+  }
+
+  /* ============================== RENDER ROOT ============================== */
+  function render() {
+    var navPane = document.getElementById('paneNav');
+    var detailPane = document.getElementById('paneDetail');
+    var dev = document.getElementById('device');
+
+    var currentCompany = COMPANIES.find(function (c) { return c.current; });
+    document.getElementById('lblWorkspace').textContent = WORKSPACE_NAME;
+    document.getElementById('lblCompany').textContent = currentCompany.name;
+
+    dev.classList.toggle('subpage', view !== 'settings');
+
+    if (deviceMode === 'mobile') {
+      detailPane.innerHTML = '';
+      if (view === 'settings') navPane.innerHTML = renderSettings();
+      else if (view === 'team') navPane.innerHTML = renderTeam();
+      else if (view === 'roles') navPane.innerHTML = renderRoles();
+      else if (view === 'workspace') navPane.innerHTML = renderWorkspace();
+      else if (view === 'create-workspace') navPane.innerHTML = renderCreateWorkspace();
+      else if (view === 'switch-company') navPane.innerHTML = renderSwitchCompany();
+      else if (view === 'create-company') navPane.innerHTML = renderCreateCompany();
+      else if (view === 'role-detail') navPane.innerHTML = renderRoleDetail(roleDetailId);
+    } else {
+      navPane.innerHTML = renderSettings();
+      if (view === 'settings') detailPane.innerHTML = renderEmptyPane();
+      else if (view === 'team') detailPane.innerHTML = renderTeam();
+      else if (view === 'roles') detailPane.innerHTML = renderRoles();
+      else if (view === 'workspace') detailPane.innerHTML = renderWorkspace();
+      else if (view === 'create-workspace') detailPane.innerHTML = renderCreateWorkspace();
+      else if (view === 'switch-company') detailPane.innerHTML = renderSwitchCompany();
+      else if (view === 'create-company') detailPane.innerHTML = renderCreateCompany();
+      else if (view === 'role-detail') detailPane.innerHTML = renderRoleDetail(roleDetailId);
+    }
+
+    var toggleBtn = document.getElementById('btnToggleSearch');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function() {
+        searchActive = !searchActive;
+        var wrap = document.getElementById('searchWrap');
+        if (wrap) wrap.classList.toggle('active', searchActive);
+      });
+    }
+
+    var fab = document.getElementById('fabInviteBtn');
+    if (fab) fab.addEventListener('click', openInvite);
+
+    var fabWs = document.getElementById('fabCreateWsBtn');
+    if (fabWs) fabWs.addEventListener('click', function () { go('create-workspace'); });
+
+    var wsCreateBtn = document.getElementById('wsCreateBtn');
+    if (wsCreateBtn) wsCreateBtn.addEventListener('click', handleCreateWorkspace);
+
+    var coSaveBtn = document.getElementById('coSaveBtn');
+    if (coSaveBtn) coSaveBtn.addEventListener('click', handleCreateCompany);
+  }
+
+  /* ============================== MEMBER SHEET ============================== */
+  var openMemberId = null;
+
+  function memberSheetHtml(m) {
+    var current = COMPANIES.find(function (c) { return c.current; });
+    var suspended = isSuspended(m);
+    var html = '';
+
+    html += '<div class="grp" style="margin-top:0;">' +
+      '<div class="grp-row"><span class="grp-k">Workspace membership</span><span class="grp-v">' + m.accountRole + '</span></div>' +
+      '<div class="grp-row"><span class="grp-k">Joined</span><span class="grp-v mono">' + m.joined + '</span></div>' +
+    '</div>';
+
+    if (suspended) {
+      html += '<div class="banner">' + svg(I.pause, 12) +
+        '<span>Suspended · access paused for ' + suspendDaysLeft(m) + ' more day' + (suspendDaysLeft(m) === 1 ? '' : 's') + '.</span>' +
+        '<button class="banner-act" type="button" data-restore>Restore</button></div>';
+    }
+
+    html += '<div class="acc-label" style="margin-top:14px;">Roles in ' + esc(current.name) + '</div>';
+
+    var held = m.roles.map(function (id) { return tpl(id); }).filter(Boolean);
+    html += held.length ? held.map(function (r) {
+      var abil = r.abilities.map(function (a) { return CATEGORIES.reduce(function (found, cat) { return found || cat.items.reduce(function (f2, item) { return f2 || (item.id === a ? item.label : null); }, null); }, null); }).filter(Boolean).join(' · ');
+      return '<div class="mrow" data-on="true">' +
+        '<span class="mrow-icon">' + svg(I.shield, 15) + '</span>' +
+        '<span class="mrow-main"><span class="mrow-name">' + r.name + '</span>' +
+          '<span class="mrow-meta">' + (abil || r.desc) + '</span></span>' +
+          '<button class="mrow-act" type="button" data-revoke-role="' + r.id + '"' + (m.self ? ' disabled title="You cannot change your own access here"' : '') + '>Revoke</button>' +
+      '</div>';
+    }).join('') : '<p class="no-access" style="margin:6px 2px 0;">No roles yet.</p>';
+
+    var rest = TEMPLATES.filter(function (r) { return m.roles.indexOf(r.id) === -1; });
+    if (rest.length && !suspended) {
+      html += '<div class="acc-label" style="margin-top:12px;">Assign a role</div>';
+      html += rest.map(function (r) {
+        return '<div class="mrow" data-on="false">' +
+          '<span class="mrow-icon">' + svg(I.shieldOff, 15) + '</span>' +
+          '<span class="mrow-main"><span class="mrow-name">' + r.name + '</span>' +
+            '<span class="mrow-meta">' + r.abilities.length + ' abilities · ' + r.desc + '</span></span>' +
+          '<button class="mrow-act" type="button" data-assign-role="' + r.id + '"' + (m.self ? ' disabled' : '') + '>Assign</button>' +
+        '</div>';
+      }).join('');
+    }
+
+    if (!m.self && m.accountRole !== 'Owner') {
+      html += '<div class="acc-label" style="margin-top:12px;">Suspension</div>';
+      if (!suspended) {
+        html += '<div class="durrow open" id="durRow">' +
+          '<button class="dur" type="button" data-dur="1" data-sel="false">1 day</button>' +
+          '<button class="dur" type="button" data-dur="7" data-sel="true">7 days</button>' +
+          '<button class="dur" type="button" data-dur="30" data-sel="false">30 days</button>' +
+          '<button class="mini" type="button" data-suspend style="margin-left:auto;">' + svg(I.pause, 11) + ' Suspend</button>' +
+        '</div>';
+      }
+    }
+
+    if (!m.self) {
+      html += '<div class="member-actions">' +
+        (m.accountRole === 'Owner' ? '' : '<button class="mact" type="button" data-transfer="' + m.id + '">' + svg(I.transfer, 13) + ' Transfer ownership</button>') +
+        '<button class="mact" type="button" data-banish="' + m.id + '">' + svg(I.ban, 13) + ' Banish member</button>' +
+      '</div>';
+    } else {
+      html += '<div class="banner" style="background:var(--surface-raised);border-color:var(--line);color:var(--ink-3);">' + svg(I.lock, 12) +
+        '<span>You cannot suspend, banish, or change your own access here.</span></div>';
+    }
+    return html;
+  }
+
+  function openMember(id) {
+    openMemberId = id;
+    var m = MEMBERS.find(function (x) { return x.id === id; });
+    document.getElementById('msAvatar').textContent = initials(m.name);
+    document.getElementById('msAvatar').className = 'avatar' + (m.self ? ' you' : '');
+    document.getElementById('memberSheetTitle').textContent = m.name;
+    document.getElementById('msMail').textContent = m.email;
+    document.getElementById('msBody').innerHTML = memberSheetHtml(m);
+    openSheet('memberSheet');
+  }
+
+  var suspendDays = 7;
+  document.getElementById('msBody').addEventListener('click', function (e) {
+    var dur = e.target.closest('[data-dur]');
+    if (dur) {
+      suspendDays = parseInt(dur.dataset.dur, 10);
+      document.querySelectorAll('#durRow .dur').forEach(function (d) { d.dataset.sel = (d === dur) ? 'true' : 'false'; });
+      return;
+    }
+    var m = MEMBERS.find(function (x) { return x.id === openMemberId; });
+    if (!m) return;
+
+    if (e.target.closest('[data-assign-role]')) {
+      var g = tpl(e.target.closest('[data-assign-role]').dataset.assignRole);
+      m.roles.push(g.id);
+      toast(g.name + ' assigned to ' + m.name.split(' ')[0]);
+      refreshMember(m); return;
+    }
+    if (e.target.closest('[data-revoke-role]')) {
+      var t = tpl(e.target.closest('[data-revoke-role]').dataset.revokeRole);
+      m.roles.splice(m.roles.indexOf(t.id), 1);
+      toast(t.name + ' revoked from ' + m.name.split(' ')[0]);
+      refreshMember(m); return;
+    }
+    if (e.target.closest('[data-suspend]')) {
+      m.suspendedUntil = Date.now() + suspendDays * DAY;
+      toast(m.name.split(' ')[0] + ' suspended for ' + suspendDays + ' day' + (suspendDays === 1 ? '' : 's'));
+      refreshMember(m); return;
+    }
+    if (e.target.closest('[data-restore]')) {
+      m.suspendedUntil = 0;
+      toast(m.name.split(' ')[0] + '\u2019s access restored');
+      refreshMember(m); return;
+    }
+    var tr = e.target.closest('[data-transfer]');
+    if (tr) { askConfirm('transfer', tr.dataset.transfer); return; }
+    var bn = e.target.closest('[data-banish]');
+    if (bn) { askConfirm('banish', bn.dataset.banish); }
+  });
+
+  function refreshMember(m) {
+    render();
+    document.getElementById('msBody').innerHTML = memberSheetHtml(m);
+  }
+
+  /* ============================== SCREEN INTERACTIONS ============================== */
+  document.getElementById('paneNav').addEventListener('click', function (e) { handleNavClick(e); });
+  document.getElementById('paneDetail').addEventListener('click', function (e) { handleNavClick(e); });
+
+  function handleNavClick(e) {
+    var nav = e.target.closest('[data-nav]');
+    if (nav && nav.dataset.nav) { go(nav.dataset.nav); return; }
+    var stub = e.target.closest('[data-stub]');
+    if (stub) { toast('Outside this candidate\u2019s scope'); return; }
+
+    /* --- Workspace lifecycle --- */
+    var sw = e.target.closest('[data-switch-ws]');
+    if (sw) {
+      var ws = WORKSPACES.find(function (w) { return w.id === sw.dataset.switchWs; });
+      if (ws && !ws.current) {
+        WORKSPACES.forEach(function (w) { w.current = w.id === ws.id; });
+        WORKSPACE_NAME = ws.name;
+        toast('Switched to ' + ws.name);
+        render();
+      }
+      return;
+    }
+    var archWs = e.target.closest('[data-archive-ws]');
+    if (archWs) { askConfirm('archiveWs', archWs.dataset.archiveWs); return; }
+    var restWs = e.target.closest('[data-restore-ws]');
+    if (restWs) {
+      var ws2 = WORKSPACES.find(function (w) { return w.id === restWs.dataset.restoreWs; });
+      if (ws2) { ws2.status = 'active'; toast(ws2.name + ' restored'); render(); }
+      return;
+    }
+    var dw = e.target.closest('[data-delete-ws]');
+    if (dw) { askConfirm('deleteWs', dw.dataset.deleteWs); return; }
+
+    /* --- Company switch --- */
+    var swCo = e.target.closest('[data-switch-co]');
+    if (swCo) {
+      var co = COMPANIES.find(function (c) { return c.id === swCo.dataset.switchCo; });
+      if (co && !co.current) {
+        COMPANIES.forEach(function (c) { c.current = c.id === co.id; });
+        toast('Switched to ' + co.name);
+        render();
+      }
+      return;
+    }
+
+    /* --- Role detail --- */
+    var re = e.target.closest('[data-role-edit]');
+    if (re) {
+      roleDetailId = re.dataset.roleEdit;
+      go('role-detail');
+      return;
+    }
+
+    /* --- Team view --- */
+    if (view === 'team') {
+      var inv = e.target.closest('#inviteBtn');
+      if (inv) { openInvite(); return; }
+      var card = e.target.closest('[data-member]');
+      if (card) { openMember(card.dataset.member); return; }
+      var rv = e.target.closest('[data-revoke]');
+      if (rv) { askConfirm('revoke', rv.dataset.revoke); return; }
+      return;
+    }
+
+    /* --- Roles view (create new custom role opens sheet) --- */
+    if (view === 'roles') {
+      var nr = e.target.closest('#newRoleBtn');
+      if (nr) openRoleEditor(null);
+    }
+  }
+
+  document.getElementById('paneNav').addEventListener('input', function (e) { handleSearch(e); });
+  document.getElementById('paneDetail').addEventListener('input', function (e) { handleSearch(e); });
+
+  function handleSearch(e) {
+    if (e.target.id !== 'memberSearch') return;
+    var q = e.target.value.trim().toLowerCase();
+    var any = false;
+    document.querySelectorAll('.mcard').forEach(function (cardEl) {
+      var hit = !q || cardEl.textContent.toLowerCase().indexOf(q) > -1;
+      cardEl.style.display = hit ? '' : 'none';
+      if (hit) any = true;
+    });
+    var noRes = document.getElementById('noResults');
+    if (noRes) noRes.classList.toggle('show', !any);
+  }
+
+  /* ============================== ROLE EDITOR ============================== */
+  var editingRoleId = null;
+  function openRoleEditor(r) {
+    editingRoleId = r ? r.id : null;
+    var readOnly = r && r.system;
+    document.getElementById('roleSheetTitle').innerHTML = r ? (r.system ? r.name + ' <span class="pill owner" style="font-size:7px;vertical-align:middle;">System</span>' : 'Edit \u201C' + r.name + '\u201D') : 'New role';
+    document.getElementById('roleName').value = r ? r.name : '';
+    document.getElementById('roleDesc').value = r ? r.desc : '';
+    document.getElementById('roleName').readOnly = !!readOnly;
+    document.getElementById('roleDesc').readOnly = !!readOnly;
+    document.getElementById('rolePerms').innerHTML = CATEGORIES.map(function (c) {
+      return '<div class="perm-cat"><div class="perm-cat-title">' + c.cat + '</div>' +
+        c.items.map(function (i) {
+          var on = r ? r.abilities.indexOf(i.id) > -1 : false;
+          return '<label class="perm-item"><input type="checkbox" value="' + i.id + '"' + (on ? ' checked' : '') + (readOnly ? ' disabled' : '') + '>' +
+            '<span><b>' + i.label + '</b><span>' + i.desc + '</span></span></label>';
+        }).join('') + '</div>';
+    }).join('');
+    document.getElementById('roleSaveBtn').textContent = readOnly ? 'Done' : 'Save role';
+    var holders = r ? MEMBERS.filter(function (m) { return m.roles.indexOf(r.id) > -1; }).length : 0;
+    var canDelete = r && !r.system && holders === 0;
+    var delTitle = !r ? '' : (r.system ? 'Built-in roles are locked' : (holders > 0 ? holders + ' member(s) hold this role' : 'Delete role'));
+    document.getElementById('roleEditorActions').innerHTML =
+      (r ? '<button class="mini" type="button" id="roleDupBtn">' + svg(I.copy, 11) + ' Duplicate</button>' : '') +
+      (r && !r.system ? '<button class="mini" type="button" id="roleDelBtn"' + (canDelete ? '' : ' disabled title="' + delTitle + '"') + '>' + svg(I.trash, 11) + ' Delete</button>' : '');
+    openSheet('roleSheet');
+  }
+  document.getElementById('roleEditorActions').addEventListener('click', function (e) {
+    var r = tpl(editingRoleId);
+    if (!r) return;
+    if (e.target.closest('#roleDupBtn')) {
+      var copy = { id: 'role' + Date.now(), name: r.name + ' (Copy)', desc: r.desc, system: false, abilities: r.abilities.slice() };
+      TEMPLATES.push(copy);
+      closeSheets(); render();
+      toast('Duplicated as ' + copy.name);
+      openRoleEditor(copy);
+      return;
+    }
+    if (e.target.closest('#roleDelBtn') && !e.target.closest('#roleDelBtn').disabled) {
+      askConfirm('deleteRole', r.id);
+    }
+  });
+  document.getElementById('roleSaveBtn').addEventListener('click', function () {
+    var r = editingRoleId ? tpl(editingRoleId) : null;
+    if (r && r.system) { closeSheets(); return; }
+    var name = document.getElementById('roleName').value.trim();
+    if (!name) { toast('Role name is required'); return; }
+    var abilities = Array.prototype.slice.call(document.querySelectorAll('#rolePerms input:checked')).map(function (i) { return i.value; });
+    if (!abilities.length) { toast('Pick at least one ability'); return; }
+    if (r) {
+      r.name = name; r.desc = document.getElementById('roleDesc').value.trim() || r.desc; r.abilities = abilities;
+      toast('Role \u201C' + name + '\u201D updated');
+    } else {
+      TEMPLATES.push({ id: 'role' + Date.now(), name: name, desc: document.getElementById('roleDesc').value.trim() || 'Custom role.', system: false, abilities: abilities });
+      toast('Role \u201C' + name + '\u201D created');
+    }
+    closeSheets(); render();
+  });
+
+  /* ============================== CONFIRM ============================== */
+  var confirmKind = null, confirmId = null;
+  function askConfirm(kind, id) {
+    confirmKind = kind; confirmId = id;
+    var title = document.getElementById('confirmTitle');
+    var desc = document.getElementById('confirmDesc');
+    var effect = document.getElementById('confirmEffect');
+    var go = document.getElementById('confirmGo');
+    if (kind === 'banish') {
+      var m = MEMBERS.find(function (x) { return x.id === id; });
+      title.textContent = 'Banish ' + m.name + '?';
+      desc.textContent = 'Removes their workspace membership.';
+      effect.textContent = 'Lose access to every company here. You can re-invite them.';
+      go.textContent = 'Banish member';
+    } else if (kind === 'transfer') {
+      var m2 = MEMBERS.find(function (x) { return x.id === id; });
+      title.textContent = 'Transfer ownership to ' + m2.name.split(' ')[0] + '?';
+      desc.textContent = 'You become a Member. They become the Owner.';
+      effect.textContent = 'New owner gains owner rights everywhere.';
+      go.textContent = 'Transfer';
+    } else if (kind === 'revoke') {
+      var p = PENDING.find(function (x) { return x.id === id; });
+      title.textContent = 'Revoke invite?';
+      desc.textContent = p.email;
+      effect.textContent = 'This email can no longer accept the invitation.';
+      go.textContent = 'Revoke invite';
+    } else if (kind === 'deleteRole') {
+      var r = tpl(id);
+      title.textContent = 'Delete \u201C' + r.name + '\u201D?';
+      desc.textContent = 'No member holds this role.';
+      effect.textContent = 'The role is removed. This cannot be undone.';
+      go.textContent = 'Delete role';
+    } else if (kind === 'deleteWs') {
+      var ws = WORKSPACES.find(function (w) { return w.id === id; });
+      title.textContent = 'Delete workspace \u201C' + ws.name + '\u201D?';
+      desc.textContent = 'Soft-delete. Workspace moves to archived status.';
+      effect.textContent = 'Data preserved for 30 days. Owner or archive_entity permission required.';
+      go.textContent = 'Delete workspace';
+    } else if (kind === 'archiveWs') {
+      var ws2 = WORKSPACES.find(function (w) { return w.id === id; });
+      title.textContent = 'Archive workspace \u201C' + ws2.name + '\u201D?';
+      desc.textContent = 'Workspace becomes inactive but data is retained.';
+      effect.textContent = 'Members lose access. Data preserved for 30 days.';
+      go.textContent = 'Archive workspace';
+    }
+    openSheet('confirmSheet');
+  }
+
+  document.getElementById('confirmGo').addEventListener('click', function () {
+    if (confirmKind === 'banish') {
+      var idx = MEMBERS.findIndex(function (x) { return x.id === confirmId; });
+      var removed = MEMBERS.splice(idx, 1)[0];
+      closeSheets(); render();
+      snack(removed.name + ' banished', function () {
+        MEMBERS.splice(idx, 0, removed); render(); toast('Banish undone');
+      });
+    } else if (confirmKind === 'transfer') {
+      var newOwner = MEMBERS.find(function (x) { return x.id === confirmId; });
+      var oldOwner = MEMBERS.find(function (x) { return x.accountRole === 'Owner'; });
+      oldOwner.accountRole = 'Member'; oldOwner.self = false;
+      newOwner.accountRole = 'Owner'; newOwner.self = true;
+      closeSheets(); render();
+      toast('Ownership transferred to ' + newOwner.name.split(' ')[0]);
+    } else if (confirmKind === 'revoke') {
+      var pi = PENDING.findIndex(function (x) { return x.id === confirmId; });
+      PENDING.splice(pi, 1)[0];
+      closeSheets(); render();
+      toast('Invite revoked');
+    } else if (confirmKind === 'deleteRole') {
+      var ri = TEMPLATES.findIndex(function (x) { return x.id === confirmId; });
+      var role = TEMPLATES.splice(ri, 1)[0];
+      closeSheets(); render();
+      toast('Role deleted');
+    } else if (confirmKind === 'deleteWs') {
+      var wi = WORKSPACES.findIndex(function (w) { return w.id === confirmId; });
+      var removedWs = WORKSPACES.splice(wi, 1)[0];
+      closeSheets(); render();
+      snack(removedWs.name + ' archived', function () {
+        WORKSPACES.splice(wi, 0, removedWs); render(); toast('Restore undone');
+      });
+    } else if (confirmKind === 'archiveWs') {
+      var wi2 = WORKSPACES.findIndex(function (w) { return w.id === confirmId; });
+      var archivedWs = WORKSPACES[wi2];
+      archivedWs.status = 'archived';
+      closeSheets(); render();
+      snack(archivedWs.name + ' archived', function () {
+        archivedWs.status = 'active'; render(); toast('Unarchive done');
+      });
+    }
+    confirmKind = null;
+  });
+
+  /* ============================== INVITE ============================== */
+  function openInvite() {
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteErr').hidden = true;
+    document.getElementById('inviteCo').textContent = COMPANIES.find(function (c) { return c.current; }).name;
+    document.getElementById('inviteChecks').innerHTML = TEMPLATES.map(function (t) {
+      return '<label class="check-row"><input type="checkbox" value="' + t.id + '">' +
+        '<span><span class="check-name">' + t.name + '</span>' +
+        '<span class="check-desc">' + t.desc + '</span></span></label>';
+    }).join('');
+    openSheet('inviteSheet');
+  }
+  document.getElementById('inviteSendBtn').addEventListener('click', function () {
+    var email = document.getElementById('inviteEmail').value.trim();
+    var err = document.getElementById('inviteErr');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.hidden = false; return; }
+    var roles = Array.prototype.slice.call(document.querySelectorAll('#inviteChecks input:checked')).map(function (i) { return i.value; });
+    PENDING.push({ id: 'p' + Date.now(), email: email, invited: 'Today', expires: 'in 7 days', roles: roles });
+    closeSheets(); render();
+    toast('Invite sent to ' + email);
+  });
+
+  /* ============================== CREATE WORKSPACE (full page) ============================== */
+  function handleCreateWorkspace() {
+    var name = document.getElementById('wsName').value.trim();
+    var slug = document.getElementById('wsSlug').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    if (!name) { toast('Workspace name is required'); return; }
+    if (!slug) slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    WORKSPACES.push({ id: 'ws' + Date.now(), name: name, slug: slug, memberCount: 1, current: false, status: 'active' });
+    toast('Workspace "' + name + '" created (pending approval)');
+    go('workspace');
+  }
+
+  /* ============================== CREATE COMPANY (full page) ============================== */
+  function handleCreateCompany() {
+    var name = document.getElementById('coName').value.trim();
+    if (!name) { toast('Company name is required'); return; }
+    COMPANIES.forEach(function (c) { c.current = false; });
+    COMPANIES.push({
+      id: 'co' + Date.now(), name: name, current: true,
+      type: document.getElementById('coType').value.trim() || 'Limited Liability Company',
+      reg: document.getElementById('coReg').value.trim(),
+      tax: document.getElementById('coTax').value.trim(),
+      phone: document.getElementById('coPhone').value.trim(),
+      email: document.getElementById('coEmail').value.trim(),
+      address: document.getElementById('coAddress').value.trim()
+    });
+    toast('Company "' + name + '" created and activated');
+    go('settings');
+  }
+
+  /* ============================== SHEETS ============================== */
+  function openSheet(id) {
+    closeSheets();
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeSheets() {
+    document.getElementById('scrim').classList.remove('show');
+    document.querySelectorAll('.sheet').forEach(function(s) { s.classList.remove('show'); });
+  }
+  document.getElementById('scrim').addEventListener('click', closeSheets);
+  document.querySelectorAll('[data-close]').forEach(function(el) { el.addEventListener('click', closeSheets); });
+
+  /* ============================== THEME ============================== */
+  var MOON = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>';
+  var SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var root = document.documentElement;
+    var dark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+    document.getElementById('themeIcon').innerHTML = dark ? MOON : SUN;
+    document.getElementById('metaTheme').setAttribute('content', dark ? '#1e3a5f' : '#60a5fa');
+  });
+
+  /* ============================== INIT ============================== */
+  render();
+</script>
+</body>
+</html>
