@@ -380,3 +380,31 @@ export function getGuidanceEngine(): GuidanceEngine {
 export function resetGuidanceEngine(): void {
   singleton = null
 }
+
+// ── Suspension ───────────────────────────────────────────────────
+
+/**
+ * When true, the inactivity nudge surface (InactivityNudge /
+ * NudgeMount) must not render. All other guidance infrastructure
+ * — engine, tip library, selection, loader slots, loading-state
+ * tips — remains fully operational.
+ *
+ * Re-enabling requires an explicit Product Guidance redesign
+ * task and acceptance against the deferred ticket.
+ */
+let guidanceSuspended = false
+
+/** Suspend the intrusive inactivity tip surface. */
+export function suspendGuidanceSurface(): void {
+  guidanceSuspended = true
+}
+
+/** Resume the intrusive inactivity tip surface. */
+export function resumeGuidanceSurface(): void {
+  guidanceSuspended = false
+}
+
+/** Whether the intrusive inactivity tip surface is currently suspended. */
+export function isGuidanceSurfaceSuspended(): boolean {
+  return guidanceSuspended
+}
