@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ShieldCheck, Mail, UserPlus, ChevronRight, ArrowLeft } from 'lucide-react'
+import { ShieldCheck, Mail, UserPlus, ChevronRight, ArrowLeft, Search } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession } from './settings-types'
@@ -70,6 +70,7 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
   const { templates, effectiveByUser, assignmentsByUser, loading: rolesLoading, error: rolesError, refresh: refreshRoles } = usePermissionTemplates(workspaceId, entityId)
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
   const [memberSearch, setMemberSearch] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   const [showRoles, setShowRoles] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
   const [modalMember, setModalMember] = useState<TeamMember | null>(null)
@@ -231,21 +232,23 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
         {[
           ['Members', members.length, 'Workspace-wide'],
           ['Pending invites', invitations.length, 'Awaiting response'],
-          ['Roles', rolesLoading ? '…' : rolesError ? '—' : templates.length, 'Assigned per company'],
-          ['Company', entity?.name ?? 'None selected', 'Current company'],
         ].map(([label, value, detail]) => <div key={label} className="min-w-0 rounded-[18px] border border-bd-border bg-bd-card-bg p-3">
           <p className="text-[11px] font-semibold text-bd-text-muted">{label}</p>
-          <p className={cn('mt-1 truncate text-[17px] font-medium tracking-tight text-bd-text', label !== 'Company' && 'font-mono')}>{value}</p>
+          <p className="mt-1 truncate text-[17px] font-mono font-medium tracking-tight text-bd-text">{value}</p>
           <p className="mt-1 text-[10px] text-bd-text-muted">{detail}</p>
         </div>)}
       </section>
 
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold">Team members <span className="ml-1 text-bd-text-muted">{members.length}</span></h3>
-        {isOwner && <Button className="min-h-11 rounded-xl" onClick={() => setInviteOpen(true)}><UserPlus size={15} className="mr-2" />Invite member</Button>}
+        <div className="flex items-center gap-2">
+          {isOwner && <Button className="min-h-11 rounded-xl" onClick={() => setInviteOpen(true)}><UserPlus size={15} className="mr-2" />Invite</Button>}
+          <button type="button" onClick={() => setShowSearch(v => !v)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-bd-border bg-bd-card-bg text-bd-text-muted transition-colors hover:bg-bd-surface-muted">
+            <Search size={16} />
+          </button>
+        </div>
       </div>
-      <p className="text-[11px] text-bd-text-muted">Select a member to manage roles in {entity?.name ?? 'the active company'}.</p>
-      <Input type="search" aria-label="Search members by name or email" value={memberSearch} onChange={event => setMemberSearch(event.target.value)} placeholder="Search by name or email" className="min-h-11 rounded-[13px]" />
+      {showSearch && <Input type="search" aria-label="Search members by name or email" value={memberSearch} onChange={event => setMemberSearch(event.target.value)} placeholder="Search by name or email" className="min-h-11 rounded-[13px]" />}
       {rolesError && <div role="alert" className="text-sm text-destructive">Roles could not load: {rolesError} <Button variant="outline" onClick={() => void refreshRoles()}>Retry</Button></div>}
       <div className="space-y-2">
         {visibleMembers.map(member => {
@@ -263,11 +266,11 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
               </span>
               <ChevronRight size={15} className="shrink-0 text-bd-text-muted" />
             </span>
-            <span className="mt-2.5 block text-[10px] text-bd-text-muted">Assigned roles · {entity?.name ?? 'Select a company'}</span>
+            <span className="mt-2.5 block text-[10px] text-bd-text-muted">Entity · {entity?.name ?? 'Select a company'}</span>
             <span className="mt-1 flex flex-wrap gap-1">
               {rolesLoading ? <span className="text-[11px]">Loading roles…</span> : rolesError ? <span className="text-[11px]">Roles unavailable</span> : roles?.size ?
                 templates.filter(template => roles.has(template.id)).map(template => <span key={template.id} className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--primary)/0.1)] px-2 py-1 text-[10px] font-bold text-primary"><ShieldCheck size={10} />{template.name}</span>) :
-                <span className="text-[11px] text-bd-text-muted">No assigned roles. Effective access may still exist.</span>}
+                <span className="text-[11px] text-bd-text-muted">No roles assigned.</span>}
             </span>
           </button>
         })}

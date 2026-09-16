@@ -98,7 +98,7 @@ export function RoleBuilder({ workspaceId, workspaceName, templates, isOwner, ca
           <h3 className="text-base font-bold">Role Builder</h3>
           <p className="text-sm text-bd-text-muted">Role library · {workspaceName}</p>
         </div>
-        {isOwner && <Button className="min-h-11" onClick={() => openEditor({ mode: 'create' })}>Create role</Button>}
+        {isOwner && <Button className="min-h-11" onClick={() => openEditor({ mode: 'create' })}>Create Custom Role</Button>}
       </div>
       <p className="text-sm text-bd-text-muted">Define company permissions here, then assign roles to members in each company. Workspace membership and invitations are managed separately.</p>
       {!isOwner && <p className="text-sm text-bd-text-muted">Only the workspace owner can change roles. Permissions above your company authority are disabled.</p>}
@@ -111,7 +111,7 @@ export function RoleBuilder({ workspaceId, workspaceName, templates, isOwner, ca
             <div className="min-w-0 flex-1 basis-40">
               <h4 className="break-words text-xs font-extrabold">{template.name}</h4>
               <p className="break-words text-[11px] text-bd-text-muted">{template.description || `${template.items.length} permission rows`}</p>
-              <p className="mt-1 text-[10px] text-bd-text-muted">{[...assignmentsByUser.values()].filter(roles => roles.has(template.id)).length} holders in the active company · {template.items.length} permission rows</p>
+              <p className="mt-1 text-[10px] text-bd-text-muted">{[...assignmentsByUser.values()].filter(roles => roles.has(template.id)).length} holder(s) · {template.items.length} permission rows</p>
             </div>
             <ChevronRight size={15} className="shrink-0 text-bd-text-muted" />
           </button>
