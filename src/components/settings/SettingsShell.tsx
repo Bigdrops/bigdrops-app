@@ -1,4 +1,5 @@
 import * as React from 'react'
+import './settings.css'
 import { Search } from 'lucide-react'
 import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
 import { cn } from '@/lib/utils'
@@ -60,7 +61,7 @@ export function SettingsShell({
   // Mobile View: Drill-down logic
   if (isMobile) {
     return (
-      <div className="flex flex-col min-h-[100dvh] w-full bg-bd-surface">
+      <div className="bd-settings-surface flex flex-col min-h-[100dvh] w-full bg-bd-surface">
         {/* Compact Mobile Header */}
         {!activeSection && (
           <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-bd-surface border-b border-[hsl(var(--bd-border)/0.5)]">
@@ -95,6 +96,10 @@ export function SettingsShell({
         )}>
           {!activeSection ? (
             <>
+              <div className="mb-4 px-0.5">
+                <h2 className="text-[25px] font-extrabold leading-tight tracking-[-0.05em] text-bd-text">Workspace settings</h2>
+                <p className="mt-2 text-xs leading-relaxed text-bd-text-muted">Manage your account, the people you work with, and the companies connected to this workspace.</p>
+              </div>
               {workspaceContext ? (
                 <div className="mb-4">{workspaceContext}</div>
               ) : null}
@@ -112,6 +117,7 @@ export function SettingsShell({
                 onBack={() => setActiveSection(null)}
                 showBackButton={true}
               >
+                {workspaceContext ? <div className="mb-4">{workspaceContext}</div> : null}
                 {renderContent()}
               </SettingsSectionFrame>
             )
@@ -125,7 +131,7 @@ export function SettingsShell({
   // Desktop & Tablet View: Sidebar + Content
   return (
     <div className={cn(
-      "grid w-full max-w-7xl mx-auto items-start",
+      "bd-settings-surface grid w-full max-w-7xl mx-auto items-start",
       "gap-[var(--bd-section-gap,2rem)]",
       isTablet ? "grid-cols-[200px,1fr]" : "grid-cols-[260px,1fr]"
     )}>
@@ -142,7 +148,7 @@ export function SettingsShell({
 
       {/* Main Content Area */}
       <main className="min-w-0">
-        {workspaceContext && !activeSection ? (
+        {workspaceContext ? (
           <div className="mb-6">{workspaceContext}</div>
         ) : null}
         {currentSection ? (

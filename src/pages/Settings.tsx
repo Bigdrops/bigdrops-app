@@ -69,8 +69,7 @@ export default function Settings() {
   }, [])
 
   const renderSection = () => {
-    const resolved = active === 'admin' ? 'team' : active
-    switch (resolved) {
+    switch (active) {
       case 'user':
         return <UserSettingsSection session={session} onToast={showToast} />
       case 'workspace-switch':
@@ -98,7 +97,7 @@ export default function Settings() {
       case 'archives':
         return <ArchivesSettingsSection />
       case 'team':
-        return <TeamSettingsSection session={session} />
+        return <TeamSettingsSection key={`${workspace?.id}:${entity?.id}`} session={session} />
       case 'devices':
         return <DeviceSettingsSection />
       case 'security':
@@ -130,7 +129,7 @@ export default function Settings() {
     >
       <SettingsShell
         groups={groups}
-        activeSection={active === 'admin' ? 'team' : active}
+        activeSection={active}
         setActiveSection={handleSelectSection}
         renderContent={renderSection}
         isAdmin={isOwner}
@@ -141,8 +140,8 @@ export default function Settings() {
                 {wsName.charAt(0).toUpperCase()}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[12px] font-[800] text-bd-text">{wsName}</div>
-                <div className="truncate text-[10px] font-[600] text-bd-text-muted">{coName}</div>
+                <div className="truncate text-[12px] font-[800] text-bd-text">Workspace · {wsName}</div>
+                <div className="truncate text-[10px] font-[600] text-bd-text-muted">Company · {coName}</div>
               </div>
             </div>
           </div>

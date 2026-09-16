@@ -1,0 +1,16 @@
+.bd-settings-surface {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --bd-font-label-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.bd-settings-surface .font-mono {
+  font-family: 'DM Mono', ui-monospace, monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-settings-surface,
+  .bd-settings-surface * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

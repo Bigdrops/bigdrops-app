@@ -1,143 +1,63 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Loader2, Trash2, Users, ShieldCheck, ShieldOff, Mail, UserPlus, Clock, X } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { ShieldCheck, Mail, UserPlus, ChevronRight, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession } from './settings-types'
-import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
 import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel } from '@/components/ui/alert-dialog'
 import { SettingsLoadingState } from './SettingsLoadingState'
 import { cn } from '@/lib/utils'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useTeamInvitations } from '@/hooks/useTeamInvitations'
-import { usePermissionTemplates, coversTemplate } from '@/hooks/usePermissionTemplates'
+import { usePermissionTemplates } from '@/hooks/usePermissionTemplates'
+import { RoleBuilder } from './RoleBuilder'
+import SettingsSheet from '@/components/settings/SettingsSheet'
 import type { PermissionTemplate } from '@/hooks/usePermissionTemplates'
 import { createWorkspaceInvitation, revokeWorkspaceInvitation, assignRoleToCompanyMember, removeRoleFromCompanyMember, transferWorkspaceOwnership } from '@/domain/tenant/tenantCreation'
 import type { TeamMember, TeamInvitation } from '@/domain/team/teamTypes'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function RemoveConfirmModal({
-  member,
-  onConfirm,
-  onCancel,
-  loading,
-}: {
+type MemberConfirmProps = {
   member: TeamMember
   onConfirm: () => void
   onCancel: () => void
   loading: boolean
-}) {
-  const [emailInput, setEmailInput] = useState('')
-  const cancelRef = useRef<HTMLButtonElement | null>(null)
-  const inputRef = useRef<HTMLInputElement | null>(null)
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
-    }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [onCancel])
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
-  const emailMatch = emailInput.trim().toLowerCase() === member.email.toLowerCase()
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
-      <div className="w-full max-w-sm overflow-hidden rounded-[var(--bd-radius-xl)] bg-bd-card-bg shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center gap-3 px-5 pb-4 pt-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50">
-            <Trash2 size={22} className="text-red-600" />
-          </div>
-          <h3 className="text-base font-black text-foreground">Remove member</h3>
-        </div>
-        <div className="px-5 pb-5">
-          <p className="text-sm leading-relaxed text-slate-700">
-            This will <span className="font-bold text-red-700">remove</span> <span className="font-bold text-foreground">{member.email}</span> from this workspace.
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">Their profile and login remain; they lose access to this workspace only. History is preserved.</p>
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-            <span className="mt-0.5 text-sm text-red-500">!</span>
-            <p className="text-xs font-semibold text-red-700">This cannot be undone without re-inviting. Type the email to confirm.</p>
-          </div>
-          <input ref={inputRef} value={emailInput} onChange={(e) => setEmailInput(e.target.value)} placeholder={member.email} className="mt-3 w-full rounded-lg border border-input px-3 py-2.5 text-sm font-mono focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-500/20" />
-          {emailInput && !emailMatch ? <p className="mt-1 text-[11px] font-bold text-red-500">Email doesn&apos;t match</p> : null}
-        </div>
-        <div className="flex gap-2 px-5 pb-5">
-          <button ref={cancelRef} onClick={onCancel} disabled={loading} className="flex-1 rounded-xl border border-bd-border py-2.5 text-sm font-bold text-muted-foreground hover:bg-muted/50 disabled:opacity-50">Cancel</button>
-          <button onClick={emailMatch ? onConfirm : undefined} disabled={!emailMatch || loading} className={cn('flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold', emailMatch ? 'bg-red-600 text-white hover:bg-red-700' : 'cursor-not-allowed bg-slate-200 text-slate-400')}>
-            {loading ? <Loader2 size={14} className="animate-spin" /> : null}
-            {loading ? 'Removing…' : 'Remove'}
-          </button>
-        </div>
-        <p className="pb-3 text-center text-[10px] font-bold text-slate-300">Press Esc to cancel</p>
-      </div>
-    </div>
-  )
 }
 
-function TransferConfirmModal({
-  member,
-  onConfirm,
-  onCancel,
-  loading,
-}: {
-  member: TeamMember
-  onConfirm: () => void
-  onCancel: () => void
-  loading: boolean
-}) {
+function MemberConfirmModal({ member, onConfirm, onCancel, loading, transfer = false }: MemberConfirmProps & { transfer?: boolean }) {
   const [emailInput, setEmailInput] = useState('')
-  const inputRef = useRef<HTMLInputElement | null>(null)
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
-  const emailMatch = emailInput.trim().toLowerCase() === member.email.toLowerCase()
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
-      <div className="w-full max-w-sm overflow-hidden rounded-[var(--bd-radius-xl)] bg-bd-card-bg shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center gap-3 px-5 pb-4 pt-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50">
-            <ShieldCheck size={22} className="text-purple-600" />
-          </div>
-          <h3 className="text-base font-black text-foreground">Transfer ownership</h3>
-        </div>
-        <div className="px-5 pb-5">
-          <p className="text-sm leading-relaxed text-slate-700">
-            Transfer ownership to <span className="font-bold text-foreground">{member.email}</span>. You will become a <span className="font-bold">member</span> of this workspace.
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">This action is immediate and cannot be undone from the UI. The new owner can transfer it back.</p>
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
-            <span className="mt-0.5 text-sm text-purple-500">!</span>
-            <p className="text-xs font-semibold text-purple-700">You will lose owner privileges. Type the email to confirm.</p>
-          </div>
-          <input ref={inputRef} value={emailInput} onChange={(e) => setEmailInput(e.target.value)} placeholder={member.email} className="mt-3 w-full rounded-lg border border-input px-3 py-2.5 text-sm font-mono focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20" />
-          {emailInput && !emailMatch ? <p className="mt-1 text-[11px] font-bold text-red-500">Email doesn&apos;t match</p> : null}
-        </div>
-        <div className="flex gap-2 px-5 pb-5">
-          <button onClick={onCancel} disabled={loading} className="flex-1 rounded-xl border border-bd-border py-2.5 text-sm font-bold text-muted-foreground hover:bg-muted/50 disabled:opacity-50">Cancel</button>
-          <button onClick={emailMatch ? onConfirm : undefined} disabled={!emailMatch || loading} className={cn('flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold', emailMatch ? 'bg-purple-600 text-white hover:bg-purple-700' : 'cursor-not-allowed bg-slate-200 text-slate-400')}>
-            {loading ? <Loader2 size={14} className="animate-spin" /> : null}
-            {loading ? 'Transferring…' : 'Transfer ownership'}
-          </button>
-        </div>
-        <p className="pb-3 text-center text-[10px] font-bold text-slate-300">Press Esc to cancel</p>
-      </div>
-    </div>
-  )
+  const matches = emailInput.trim().toLowerCase() === member.email.toLowerCase()
+  return <AlertDialog open onOpenChange={open => { if (!open && !loading) onCancel() }}>
+    <AlertDialogContent className="bd-settings-surface rounded-[var(--bd-overlay-radius)]">
+      <AlertDialogHeader>
+        <AlertDialogTitle>{transfer ? 'Transfer workspace ownership' : 'Remove workspace member'}</AlertDialogTitle>
+        <AlertDialogDescription>{transfer
+          ? `Transfer ownership to ${member.email}. You become a member and lose owner privileges. Only the new owner can transfer ownership back.`
+          : `Remove ${member.email} from this workspace. Their login and history remain. They need a new invitation to return.`}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <label className="block space-y-2 text-sm">Type {member.email} to confirm
+        <Input type="email" value={emailInput} disabled={loading} onChange={event => setEmailInput(event.target.value)} className="min-h-11" />
+      </label>
+      <AlertDialogFooter>
+        <AlertDialogCancel disabled={loading} className="min-h-11">Cancel</AlertDialogCancel>
+        <Button variant="destructive" className="min-h-11" disabled={!matches || loading} onClick={onConfirm}>{loading ? 'Working…' : transfer ? 'Transfer ownership' : 'Remove member'}</Button>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 }
 
+function RemoveConfirmModal(props: MemberConfirmProps) {
+  return <MemberConfirmModal {...props} />
+}
+
+function TransferConfirmModal(props: MemberConfirmProps) {
+  return <MemberConfirmModal {...props} transfer />
+}
 export function TeamSettingsSection({ session }: { session: SettingsSession }) {
   const { workspace, refresh: refreshWorkspace } = useWorkspace()
   const workspaceId = workspace?.id ?? null
@@ -147,7 +67,10 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
   const { invitations, refresh: refreshInvitations } = useTeamInvitations(workspaceId)
   const { entity } = useEntity()
   const entityId = entity?.id ?? null
-  const { templates, effectiveByUser, loading: rolesLoading, error: rolesError, refresh: refreshRoles } = usePermissionTemplates(workspaceId, entityId)
+  const { templates, effectiveByUser, assignmentsByUser, loading: rolesLoading, error: rolesError, refresh: refreshRoles } = usePermissionTemplates(workspaceId, entityId)
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
+  const [memberSearch, setMemberSearch] = useState('')
+  const [showRoles, setShowRoles] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
   const [modalMember, setModalMember] = useState<TeamMember | null>(null)
   const [roleActionKey, setRoleActionKey] = useState<string | null>(null)
@@ -250,9 +173,8 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
 
   const handleToggleRole = async (m: TeamMember, template: PermissionTemplate) => {
     if (!entityId) return
-    // Effective coverage decides which direction to toggle; the backend RPCs
-    // remain authoritative for authorization and for what actually changes.
-    const granted = coversTemplate(effectiveByUser.get(m.userId), template)
+    if (!isOwner || rolesLoading || rolesError || roleActionKey) return
+    const granted = assignmentsByUser.get(m.userId)?.has(template.id) === true
     setRoleActionKey(`${m.membershipId}:${template.id}`)
     try {
       if (granted) {
@@ -270,248 +192,145 @@ export function TeamSettingsSection({ session }: { session: SettingsSession }) {
     }
   }
 
-  if (!workspaceId) {
-    return (
-      <div className="space-y-6 animate-in fade-in">
-        <div className="px-1"><p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">Team</p></div>
-        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-8 text-center text-sm text-bd-text-muted">No workspace selected.</div>
-      </div>
-    )
-  }
-
+  if (!workspaceId) return <p className="text-sm text-bd-text-muted">No workspace selected.</p>
   if (loading) return <SettingsLoadingState />
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
-        <Button variant="outline" onClick={() => void refresh()}>Retry</Button>
-      </div>
-    )
-  }
+  if (error) return <div role="alert" className="space-y-3"><p>{error}</p><Button variant="outline" onClick={() => void refresh()}>Retry</Button></div>
 
-  const activeCount = members.length
+  const selectedMember = members.find(member => member.userId === selectedMemberId)
+  const search = memberSearch.trim().toLowerCase()
+  const visibleMembers = members.filter(member => `${member.name} ${member.email}`.toLowerCase().includes(search))
+  const memberPairs = selectedMember ? effectiveByUser.get(selectedMember.userId) ?? [] : []
+  const memberRoles = selectedMember ? assignmentsByUser.get(selectedMember.userId) : undefined
+
+  if (showRoles) return (
+    <div className="space-y-3">
+      <Button variant="ghost" className="min-h-11" onClick={() => setShowRoles(false)}><ArrowLeft size={16} className="mr-2" />Team Hub</Button>
+      {rolesLoading && !templates.length ? <SettingsLoadingState /> : rolesError ? <div role="alert"><p>{rolesError}</p><Button onClick={() => void refreshRoles()}>Retry roles</Button></div> :
+        <RoleBuilder key={workspaceId} workspaceId={workspaceId} workspaceName={workspace?.name ?? 'Workspace'} templates={templates} isOwner={isOwner} callerPermissions={effectiveByUser.get(currentUserId ?? '') ?? []} assignmentsByUser={assignmentsByUser} refresh={refreshRoles} />}
+    </div>
+  )
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="space-y-4">
       {modalMember ? <RemoveConfirmModal member={modalMember} onConfirm={handleRemove} onCancel={closeModal} loading={!!actionId} /> : null}
       {transferMember ? <TransferConfirmModal member={transferMember} onConfirm={() => void handleTransfer()} onCancel={() => setTransferMember(null)} loading={transferring} /> : null}
 
-      <Dialog open={inviteOpen} onOpenChange={(open) => (open ? setInviteOpen(true) : closeInvite())}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invite member</DialogTitle>
-            <DialogDescription>Send an invitation to join this workspace. The invitee accepts it from their own sign-in.</DialogDescription>
-          </DialogHeader>
-          {inviteSuccess ? (
-            <div className="space-y-3">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">Invitation sent to <span className="font-bold">{inviteSuccess}</span>.</div>
-              <Button variant="outline" className="w-full" onClick={closeInvite}>Done</Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-bd-text-muted">Email address</label>
-                <Input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  autoFocus
-                  disabled={inviteSubmitting}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !inviteSubmitting) void handleInvite() }}
-                  className="h-10"
-                />
-              </div>
-              {inviteError ? <p className="text-[11px] font-bold text-red-500">{inviteError}</p> : null}
-              <DialogFooter>
-                <Button variant="outline" onClick={closeInvite} disabled={inviteSubmitting}>Cancel</Button>
-                <Button onClick={() => void handleInvite()} disabled={inviteSubmitting}>
-                  {inviteSubmitting ? <Loader2 size={14} className="animate-spin mr-1" /> : <Mail size={14} className="mr-1" />}
-                  {inviteSubmitting ? 'Sending…' : 'Send invitation'}
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <SettingsSheet open={inviteOpen} onClose={() => { if (!inviteSubmitting) closeInvite() }} title="Invite member" subtitle={`Workspace · ${workspace?.name ?? ''}`}>
+        {inviteSuccess ? <div className="space-y-3"><p role="status">Invitation sent to {inviteSuccess}.</p><Button onClick={closeInvite}>Done</Button></div> :
+          <form className="space-y-4" onSubmit={event => { event.preventDefault(); void handleInvite() }}>
+            <p className="text-sm text-bd-text-muted">The invitee joins this workspace after acceptance.{entity ? ` The invitation also grants view access in ${entity.name}.` : ''} Assign roles separately after they join.</p>
+            <label className="block space-y-2 text-sm font-semibold">Email address
+              <Input type="email" value={inviteEmail} onChange={event => setInviteEmail(event.target.value)} placeholder="name@example.com" required disabled={inviteSubmitting} className="min-h-11" />
+            </label>
+            {inviteError && <p role="alert" className="text-sm text-destructive">{inviteError}</p>}
+            <Button type="submit" disabled={inviteSubmitting} className="min-h-11 w-full">{inviteSubmitting ? 'Sending…' : 'Send invitation'}</Button>
+          </form>}
+      </SettingsSheet>
 
-      <div className="px-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bd-text-muted opacity-60">Team</p>
+      <section className="grid grid-cols-2 gap-2" aria-label="Team summary">
+        {[
+          ['Members', members.length, 'Workspace-wide'],
+          ['Pending invites', invitations.length, 'Awaiting response'],
+          ['Roles', rolesLoading ? '…' : rolesError ? '—' : templates.length, 'Assigned per company'],
+          ['Company', entity?.name ?? 'None selected', 'Current company'],
+        ].map(([label, value, detail]) => <div key={label} className="min-w-0 rounded-[18px] border border-bd-border bg-bd-card-bg p-3">
+          <p className="text-[11px] font-semibold text-bd-text-muted">{label}</p>
+          <p className={cn('mt-1 truncate text-[17px] font-medium tracking-tight text-bd-text', label !== 'Company' && 'font-mono')}>{value}</p>
+          <p className="mt-1 text-[10px] text-bd-text-muted">{detail}</p>
+        </div>)}
+      </section>
+
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-bold">Team members <span className="ml-1 text-bd-text-muted">{members.length}</span></h3>
+        {isOwner && <Button className="min-h-11 rounded-xl" onClick={() => setInviteOpen(true)}><UserPlus size={15} className="mr-2" />Invite member</Button>}
+      </div>
+      <p className="text-[11px] text-bd-text-muted">Select a member to manage roles in {entity?.name ?? 'the active company'}.</p>
+      <Input type="search" aria-label="Search members by name or email" value={memberSearch} onChange={event => setMemberSearch(event.target.value)} placeholder="Search by name or email" className="min-h-11 rounded-[13px]" />
+      {rolesError && <div role="alert" className="text-sm text-destructive">Roles could not load: {rolesError} <Button variant="outline" onClick={() => void refreshRoles()}>Retry</Button></div>}
+      <div className="space-y-2">
+        {visibleMembers.map(member => {
+          const roles = assignmentsByUser.get(member.userId)
+          return <button key={member.membershipId} type="button" onClick={() => setSelectedMemberId(member.userId)}
+            className={cn('w-full rounded-xl border border-bd-border bg-bd-card-bg p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary', member.isCurrentUser && 'bg-[hsl(var(--primary)/0.06)] border-[hsl(var(--primary)/0.24)]')}>
+            <span className="flex items-center gap-2.5">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-bd-surface-muted text-xs font-extrabold">{member.initials}</span>
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-1.5 text-xs font-extrabold">{member.name}
+                  <Badge variant="outline" className="text-[9px]">{member.role === 'owner' ? 'Workspace owner' : 'Member'}</Badge>
+                  {member.isCurrentUser && <Badge variant="secondary" className="text-[9px]">You</Badge>}
+                </span>
+                <span className="mt-1 block truncate text-[10px] text-bd-text-muted">{member.email}</span>
+              </span>
+              <ChevronRight size={15} className="shrink-0 text-bd-text-muted" />
+            </span>
+            <span className="mt-2.5 block text-[10px] text-bd-text-muted">Assigned roles · {entity?.name ?? 'Select a company'}</span>
+            <span className="mt-1 flex flex-wrap gap-1">
+              {rolesLoading ? <span className="text-[11px]">Loading roles…</span> : rolesError ? <span className="text-[11px]">Roles unavailable</span> : roles?.size ?
+                templates.filter(template => roles.has(template.id)).map(template => <span key={template.id} className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--primary)/0.1)] px-2 py-1 text-[10px] font-bold text-primary"><ShieldCheck size={10} />{template.name}</span>) :
+                <span className="text-[11px] text-bd-text-muted">No assigned roles. Effective access may still exist.</span>}
+            </span>
+          </button>
+        })}
+        {!visibleMembers.length && <p className="py-4 text-center text-sm text-bd-text-muted">No members match that search.</p>}
       </div>
 
-      <div className="grid gap-6">
-        <SettingsSummaryCard title="Team" description="Manage the people who have access to this business.">
-          <SettingsSummaryRow
-            label="Members"
-            value={
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold">{members.length} Members</span>
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 h-5 px-1.5 text-[9px] font-black uppercase">{activeCount} Active</Badge>
-              </div>
-            }
-            icon={<ShieldCheck size={16} />}
-          />
-        </SettingsSummaryCard>
-
-        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Team Members</h5>
-            <Badge variant="outline" className="bg-bd-surface-muted text-bd-text-muted border-[hsl(var(--bd-border)/0.5)] text-[9px] font-black uppercase">
-              <Users className="mr-1 h-2.5 w-2.5" />
-              {members.length} Members
-            </Badge>
+      <SettingsSheet open={!!selectedMember} onClose={() => { if (!roleActionKey) setSelectedMemberId(null) }} title={selectedMember?.name ?? 'Member'} subtitle={selectedMember?.email}>
+        {selectedMember && <div className="space-y-4">
+          <div className="rounded-xl border border-bd-border p-3">
+            <p className="text-xs font-bold">Workspace membership · {workspace?.name}</p>
+            <p className="mt-1 text-sm">{selectedMember.role === 'owner' ? 'Owner' : 'Member'} · Joined {selectedMember.joinedAt ? new Date(selectedMember.joinedAt).toLocaleDateString() : '—'}</p>
           </div>
-
-          {members.length === 0 ? (
-            <p className="py-8 text-center text-sm text-bd-text-muted">No members yet.</p>
-          ) : null}
-
-          {!entity ? (
-            <p className="rounded-lg border border-dashed border-[hsl(var(--bd-border)/0.5)] bg-bd-surface-muted/30 px-3 py-2 text-[10px] font-medium text-bd-text-muted">
-              No active company selected — select or create a company to manage member access.
-            </p>
-          ) : null}
-
-          {members.map((m) => {
-            const canManageRoles = isOwner && !m.isCurrentUser && templates.length > 0
-            const showAccess = !!entity && !rolesLoading && (isOwner || m.isCurrentUser)
-            return (
-            <div key={m.membershipId} className={cn('rounded-[var(--bd-radius-lg)] border p-4 transition-all', m.isCurrentUser ? 'border-blue-200 bg-blue-50/20' : 'border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg')}>
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div className="flex gap-3 min-w-0">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bd-surface-muted text-[11px] font-black text-bd-text-muted">{m.initials}</div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="truncate text-sm font-bold text-bd-text">{m.name}</p>
-                      <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-widest', m.role === 'owner' ? 'bg-purple-50 text-purple-700 border border-purple-100' : 'bg-slate-50 text-slate-600 border border-slate-200')}>{m.role === 'owner' ? 'Owner' : 'Member'}</span>
-                      {m.isCurrentUser ? <span className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-black text-blue-600 uppercase tracking-widest">You</span> : null}
-                    </div>
-                    <p className="truncate text-[11px] text-bd-text-muted">{m.email}</p>
-                    <p className="mt-0.5 text-[11px] text-bd-text-muted">Joined {m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : '—'}</p>
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold">Roles in {entity?.name ?? 'the active company'}</h3>
+            {!entity ? <p className="text-sm">Select a company to manage roles.</p> : rolesLoading ? <p role="status">Loading access…</p> : rolesError ? <p role="alert">{rolesError}</p> : <>
+              <p className="text-xs text-bd-text-muted">Company access: {memberPairs.length ? 'confirmed by visible permission rows.' : 'not confirmed by visible rows. The server checks company membership before assignment.'}</p>
+              <p className="text-xs text-bd-text-muted">Multiple roles can coexist. Removing one preserves pairs covered by other roles and the company view baseline. Direct grants have no source record and can overlap.</p>
+              <div className="divide-y divide-bd-border rounded-xl border border-bd-border px-3">
+                {templates.map(template => {
+                  const assigned = memberRoles?.has(template.id) === true
+                  return <div key={template.id} className="flex min-h-14 items-center justify-between gap-2 py-1">
+                    <span className="min-w-0 text-xs font-bold">{template.name}<span className="mt-1 block text-[10px] font-medium text-bd-text-muted">{assigned ? 'Assigned' : 'Not assigned'}</span></span>
+                    {isOwner && !selectedMember.isCurrentUser && <Button variant="outline" className="min-h-11 shrink-0" disabled={!!roleActionKey} onClick={() => void handleToggleRole(selectedMember, template)}>{roleActionKey === `${selectedMember.membershipId}:${template.id}` ? 'Working…' : assigned ? 'Remove role' : 'Assign role'}</Button>}
                   </div>
-                </div>
-                <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700">Active</span>
+                })}
+                {!templates.length && <p className="py-3 text-sm">No roles defined yet.</p>}
               </div>
-
-              {showAccess ? (
-                <div className="mb-3 space-y-1.5 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.3)] bg-bd-surface-muted/40 px-3 py-2.5">
-                  <p className="truncate text-[9px] font-black uppercase tracking-widest text-bd-text-muted">Roles &amp; Access · {entity?.name || 'Active company'}</p>
-                  {rolesError ? (
-                    <p className="text-[10px] font-bold text-red-500">Could not load roles: {rolesError}</p>
-                  ) : templates.length === 0 ? (
-                    <p className="text-[10px] text-bd-text-muted">No roles are available in this workspace yet.</p>
-                  ) : (
-                    <div className="divide-y divide-[hsl(var(--bd-border)/0.2)]">
-                      {templates.map((tpl) => {
-                        const hasAccess = coversTemplate(effectiveByUser.get(m.userId), tpl)
-                        const rowKey = `${m.membershipId}:${tpl.id}`
-                        return (
-                          <div key={tpl.id} className="flex items-center justify-between gap-2 py-1.5 first:pt-0 last:pb-0">
-                            <span className={cn('inline-flex min-w-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest', hasAccess ? 'border-emerald-100 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-500')}>
-                              {hasAccess ? <ShieldCheck size={10} className="shrink-0" /> : <ShieldOff size={10} className="shrink-0" />}
-                              <span className="truncate">{tpl.name}</span>
-                            </span>
-                            {canManageRoles ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => void handleToggleRole(m, tpl)}
-                                disabled={!!roleActionKey}
-                                className="h-7 shrink-0 rounded-lg px-2.5 text-[10px] font-bold hover:bg-emerald-50 hover:text-emerald-700"
-                              >
-                                {roleActionKey === rowKey ? (
-                                  <Loader2 size={11} className="animate-spin mr-1" />
-                                ) : hasAccess ? (
-                                  <ShieldOff size={11} className="mr-1" />
-                                ) : (
-                                  <ShieldCheck size={11} className="mr-1" />
-                                )}
-                                {roleActionKey === rowKey ? 'Working…' : hasAccess ? 'Remove' : 'Grant'}
-                              </Button>
-                            ) : null}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                  <p className="text-[9px] leading-snug text-bd-text-muted opacity-70">Shows effective access for this company. Permissions can overlap between roles.</p>
-                </div>
-              ) : null}
-
-              {!m.isCurrentUser && isOwner ? (
-                <div className="flex gap-2 pt-2 border-t border-[hsl(var(--bd-border)/0.3)] justify-end">
-                  {m.role !== 'owner' ? (
-                    <Button variant="ghost" size="sm" onClick={() => setTransferMember(m)} disabled={!!actionId || transferring} className="h-8 px-3 text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-lg text-[11px] font-bold">
-                      <ShieldCheck size={12} className="mr-1" />
-                      Transfer Ownership
-                    </Button>
-                  ) : null}
-                  <Button variant="ghost" size="sm" onClick={() => setModalMember(m)} disabled={!!actionId} className="h-8 px-3 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg text-[11px] font-bold">
-                    {actionId === m.membershipId ? <Loader2 size={12} className="animate-spin mr-1" /> : <Trash2 size={12} className="mr-1" />}
-                    Remove
-                  </Button>
-                </div>
-              ) : null}
-              {m.isCurrentUser ? <p className="pt-2 border-t border-[hsl(var(--bd-border)/0.3)] text-[10px] font-medium text-bd-text-muted">You cannot remove yourself from this view.</p> : null}
-            </div>
-            )
-          })}
-
-          <Button
-            variant="outline"
-            disabled={!isOwner}
-            onClick={() => setInviteOpen(true)}
-            className="w-full mt-2 h-10 rounded-xl border-dashed text-[11px] font-black uppercase tracking-widest"
-          >
-            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-            + Invite member
-          </Button>
-          <p className="text-center text-[10px] text-bd-text-muted">Invitations are sent by workspace owners. Ask an owner to invite by email.</p>
-        </div>
-
-        <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Pending Invitations</h5>
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[9px] font-black uppercase">
-              {invitations.length} Pending
-            </Badge>
+              <details className="rounded-xl border border-bd-border p-3">
+                <summary className="cursor-pointer py-2 text-xs font-bold">Effective permissions · visible rows ({memberPairs.length})</summary>
+                <p className="mb-2 text-xs text-bd-text-muted">These rows determine access, independently of role labels. You can see rows held by you or granted by you; other grants may be hidden. A wildcard (*) covers all resources or actions.</p>
+                <ul className="space-y-1 font-mono text-xs">{memberPairs.map(pair => <li key={`${pair.resource}:${pair.action}`}>{pair.resource} / {pair.action}</li>)}</ul>
+                {!memberPairs.length && <p className="text-xs">No permission rows are visible to you.</p>}
+              </details>
+            </>}
           </div>
+          {isOwner && !selectedMember.isCurrentUser && <div className="space-y-2 border-t border-bd-border pt-3">
+            <Button variant="outline" className="min-h-11 w-full" disabled={transferring} onClick={() => { setSelectedMemberId(null); setTransferMember(selectedMember) }}>Transfer workspace ownership</Button>
+            <Button variant="outline" className="min-h-11 w-full text-destructive" disabled={!!actionId} onClick={() => { setSelectedMemberId(null); setModalMember(selectedMember) }}>Remove from workspace</Button>
+          </div>}
+        </div>}
+      </SettingsSheet>
 
-          {invitations.length === 0 ? (
-            <p className="py-6 text-center text-sm text-bd-text-muted">No pending invitations.</p>
-          ) : null}
+      <section className="space-y-2">
+        <h3 className="text-sm font-bold">Pending invitations <span className="ml-1 text-bd-text-muted">{invitations.length}</span></h3>
+        {!invitations.length && <p className="text-xs text-bd-text-muted">No pending invitations.</p>}
+        {invitations.map(invitation => <div key={invitation.id} className="flex flex-wrap items-center gap-2.5 rounded-xl border border-bd-border bg-bd-card-bg p-3">
+          <Mail size={18} className="text-bd-text-muted" />
+          <div className="min-w-0 flex-1 basis-36">
+            <p className="break-all text-xs font-bold">{invitation.email}</p>
+            <p className="mt-1 text-[10px] text-bd-text-muted">Invited {new Date(invitation.createdAt).toLocaleDateString()}{invitation.expiresAt ? ` · Expires ${new Date(invitation.expiresAt).toLocaleDateString()}` : ''}</p>
+          </div>
+          {isOwner && <Button variant="outline" className="min-h-11" disabled={revokingId === invitation.id} onClick={() => void handleRevoke(invitation)}>{revokingId === invitation.id ? 'Revoking…' : 'Revoke'}</Button>}
+        </div>)}
+      </section>
 
-          {invitations.map((inv) => (
-            <div key={inv.id} className="rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex gap-3 min-w-0">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bd-surface-muted text-bd-text-muted"><Mail size={15} /></div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-bd-text">{inv.email}</p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-bd-text-muted">
-                      <Clock size={11} />
-                      Invited {inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : '—'}
-                      {inv.expiresAt ? <span className="opacity-70">· Expires {new Date(inv.expiresAt).toLocaleDateString()}</span> : null}
-                    </p>
-                  </div>
-                </div>
-                <span className="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-amber-600">Pending</span>
-              </div>
-              {isOwner ? (
-                <div className="flex justify-end gap-2 pt-2 border-t border-[hsl(var(--bd-border)/0.3)]">
-                  <Button variant="ghost" size="sm" onClick={() => void handleRevoke(inv)} disabled={revokingId === inv.id} className="h-8 px-3 text-amber-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg text-[11px] font-bold">
-                    {revokingId === inv.id ? <Loader2 size={12} className="animate-spin mr-1" /> : <X size={12} className="mr-1" />}
-                    Revoke
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </div>
+      <section className="space-y-2">
+        <h3 className="text-xs font-bold text-bd-text-muted">Access control</h3>
+        <button type="button" onClick={() => setShowRoles(true)} className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-bd-border bg-bd-card-bg p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+          <ShieldCheck size={18} className="text-primary" />
+          <span className="flex-1"><span className="block text-xs font-bold">Roles &amp; access</span><span className="text-[10px] text-bd-text-muted">Define what company members can do</span></span>
+          <ChevronRight size={15} />
+        </button>
+      </section>
     </div>
   )
 }
-
-// Compatibility alias — Settings.tsx still handles 'admin' → 'team' mapping
-export const AdminSettingsSection = TeamSettingsSection

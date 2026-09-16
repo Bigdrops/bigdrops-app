@@ -25,7 +25,7 @@ export function SettingsSectionFrame({
           {showBackButton && onBack && (
             <button
               onClick={onBack}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-bd-text transition-all active:scale-95"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--bd-surface-muted))/0.5] text-bd-text transition-all active:scale-95"
               aria-label="Back"
             >
               <ChevronLeft size={18} />
@@ -58,8 +58,9 @@ export function SettingsSectionFrame({
 
       {/* Content Surface */}
       <div className={cn(
-        "bg-bd-card-bg md:rounded-[var(--bd-radius-xl)] border-y md:border border-[hsl(var(--bd-border)/0.5)] shadow-none overflow-hidden",
-        "p-[var(--bd-card-padding,1.5rem)]",
+        section.id === 'team'
+          ? "bg-bd-surface px-3.5 py-3 md:px-0"
+          : "bg-bd-card-bg md:rounded-[var(--bd-radius-xl)] border-y md:border border-[hsl(var(--bd-border)/0.5)] shadow-none overflow-hidden p-[var(--bd-card-padding,1.5rem)]",
         "max-md:border-x-0"
       )}>
         <div className="min-h-[200px]">

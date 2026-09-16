@@ -87,7 +87,7 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
 
 export function AppThemeSettingsSection({ userId }: { userId?: string | undefined }) {
   const { settings, loading: settingsLoading } = useSettings()
-  const { tenantClient } = useEntity()
+  const { tenantClient, entity } = useEntity()
   const { preference, loading: prefLoading, save: saveThemePref } = useThemePreferenceContext()
   // Theme family: which color palette is selected (null = default slate-navy)
   const [selectedFamily, setSelectedFamily] = useState<ThemePresetId | null>(null)
@@ -239,7 +239,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
 
       <SettingsSummaryCard 
         title="App Appearance"
-        description="Global theme settings that define the visual language of your workspace."
+        description="Theme family and display mode are personal account preferences."
       >
         <SettingsSummaryRow 
           label="Active Theme" 
@@ -313,7 +313,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
                   <Check size={12} strokeWidth={3} />
                 </div>
               </div>
-              <p className="text-[11px] text-bd-text-muted">Manual surface overrides.</p>
+              <p className="text-[11px] text-bd-text-muted">Use shared custom colors for {entity?.name || 'the active company'}.</p>
             </div>
           </button>
         </div>
@@ -355,7 +355,8 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
         {isCustom && (
           <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
              <div className="h-px bg-[hsl(var(--bd-border)/0.3)]" />
-             <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Manual Color Overrides</h5>
+             <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Company-wide colors · {entity?.name || 'Active company'}</h5>
+             <p className="text-xs text-bd-text-muted">These colors are saved for this company and shared with everyone who uses its custom theme. Your theme family and mode stay personal.</p>
              
              <div className="grid gap-4">
                 <SettingsField label="Page Background">
@@ -395,7 +396,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
                   disabled={saving}
                   className="w-full h-12 rounded-xl bg-bd-button-primary-bg text-bd-button-primary-text hover:opacity-90 text-xs font-black uppercase tracking-widest"
                 >
-                  {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Apply Custom Colors'}
+                  {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Apply Company Colors'}
                 </Button>
              </div>
           </div>
@@ -403,6 +404,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
 
         {/* Reset Control */}
         <div className="pt-2">
+          <p className="mb-2 text-xs text-bd-text-muted">Restores your theme preference and clears shared custom colors for {entity?.name || 'the active company'}.</p>
           <Button
             variant="outline"
             size="lg"

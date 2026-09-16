@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/supabase'
 
 const WILDCARD = '*'
@@ -13,6 +13,7 @@ export type PermissionTemplateItem = {
 export type PermissionTemplate = {
   id: string
   name: string
+  description: string | null
   items: PermissionTemplateItem[]
 }
 
@@ -24,6 +25,7 @@ export type EffectivePermissionPair = {
 type TemplateQueryRow = {
   id: string
   name: string
+  description: string | null
   permission_template_items: PermissionTemplateItem[] | null
 }
 
@@ -63,12 +65,13 @@ export function coversTemplate(
  * Workspace-scoped role templates plus each member's effective permissions on
  * the ACTIVE entity.
  *
- * Read boundary (two narrow queries):
+ * Read boundary:
  * 1. permission_templates + items for the workspace. RLS scopes these to
  *    workspaces the caller belongs to, so templates from other workspaces
  *    never appear.
  * 2. entity_permissions for the active entity. RLS limits rows to those
  *    granted BY the caller or held BY the caller.
+ * 3. entity_role_assignments for assignment display, never authorization.
  *
  * The SECURITY DEFINER assignment RPCs stay authoritative for authorization;
  * this hook is display state only.
@@ -76,13 +79,20 @@ export function coversTemplate(
 export function usePermissionTemplates(workspaceId: string | null, entityId: string | null) {
   const [templates, setTemplates] = useState<PermissionTemplate[]>([])
   const [effectiveByUser, setEffectiveByUser] = useState<Map<string, EffectivePermissionPair[]>>(new Map())
+  const [assignmentsByUser, setAssignmentsByUser] = useState<Map<string, Set<string>>>(new Map())
+  const requestId = useRef(0)
+  const [loadedScope, setLoadedScope] = useState<string | null>(null)
+  const scope = `${workspaceId}:${entityId}`
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    const request = ++requestId.current
     if (!workspaceId) {
       setTemplates([])
       setEffectiveByUser(new Map())
+      setAssignmentsByUser(new Map())
+      setLoadedScope(scope)
       setLoading(false)
       setError(null)
       return
@@ -93,14 +103,14 @@ export function usePermissionTemplates(workspaceId: string | null, entityId: str
     try {
       const { data: tplRows, error: tErr } = await supabase
         .from('permission_templates')
-        .select('id, name, permission_template_items(resource, action)')
+        .select('id, name, description, permission_template_items(resource, action)')
         .eq('workspace_id', workspaceId)
 
       if (tErr) throw tErr
 
       const nextTemplates = ((tplRows as unknown as TemplateQueryRow[]) || [])
         .filter((t) => !!t.id && !!t.name)
-        .map((t) => ({ id: t.id, name: t.name, items: t.permission_template_items ?? [] }))
+        .map((t) => ({ id: t.id, name: t.name, description: t.description, items: t.permission_template_items ?? [] }))
       nextTemplates.sort((a, b) => {
         if (a.name === COMPANY_ADMIN_TEMPLATE_NAME) return -1
         if (b.name === COMPANY_ADMIN_TEMPLATE_NAME) return 1
@@ -108,6 +118,7 @@ export function usePermissionTemplates(workspaceId: string | null, entityId: str
       })
 
       const nextAccess = new Map<string, EffectivePermissionPair[]>()
+      const nextAssignments = new Map<string, Set<string>>()
       if (entityId) {
         const { data: permRows, error: pErr } = await supabase
           .from('entity_permissions')
@@ -121,22 +132,45 @@ export function usePermissionTemplates(workspaceId: string | null, entityId: str
           if (list) list.push({ resource: row.resource, action: row.action })
           else nextAccess.set(row.user_id, [{ resource: row.resource, action: row.action }])
         }
+        const { data: assignmentRows, error: assignmentError } = await supabase
+          .from('entity_role_assignments')
+          .select('user_id, template_id')
+          .eq('entity_id', entityId)
+        if (assignmentError) throw assignmentError
+        for (const row of assignmentRows ?? []) {
+          const roles = nextAssignments.get(row.user_id) ?? new Set<string>()
+          roles.add(row.template_id)
+          nextAssignments.set(row.user_id, roles)
+        }
       }
 
+      if (request !== requestId.current) return
       setTemplates(nextTemplates)
       setEffectiveByUser(nextAccess)
+      setAssignmentsByUser(nextAssignments)
+      setLoadedScope(scope)
     } catch (e) {
+      if (request !== requestId.current) return
       setError(String((e as Error)?.message ?? e))
       setTemplates([])
       setEffectiveByUser(new Map())
+      setAssignmentsByUser(new Map())
+      setLoadedScope(scope)
     } finally {
-      setLoading(false)
+      if (request === requestId.current) setLoading(false)
     }
-  }, [workspaceId, entityId])
+  }, [workspaceId, entityId, scope])
 
   useEffect(() => {
     void refresh()
+    return () => { requestId.current += 1 }
   }, [refresh])
 
-  return { templates, effectiveByUser, loading, error, refresh }
+  const current = loadedScope === scope
+  return {
+    templates: current ? templates : [],
+    effectiveByUser: current ? effectiveByUser : new Map<string, EffectivePermissionPair[]>(),
+    assignmentsByUser: current ? assignmentsByUser : new Map<string, Set<string>>(),
+    loading: loading || !current, error: current ? error : null, refresh,
+  }
 }
