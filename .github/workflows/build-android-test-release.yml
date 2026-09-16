@@ -143,6 +143,9 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # ponytail: full remote URL form matches releaseDiscovery regex and
+          # .env.example; bare github.repository (owner/repo) would not parse.
+          VITE_GIT_REPO: https://github.com/${{ github.repository }}.git
         run: |
           # Fail fast: without these the bundle throws at import and shows a white screen.
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
