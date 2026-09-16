@@ -18,6 +18,7 @@ import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
 import { useLoadingTip } from '@/hooks/useLoadingTip'
 import { InactivityNudge } from '@/components/guidance/GuidanceTip'
+import { suspendGuidanceSurface, isGuidanceSurfaceSuspended } from '@/domain/guidance/guidanceEngine'
 import type { LaunchStage } from '@/domain/guidance/guidanceEngine'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
@@ -57,10 +58,15 @@ function debugAuth(...args: any[]) {}
 
 const withBoundary = (element: React.ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
 
-/** Session-level inactivity guidance. Informational only, never navigates. */
+// Suspend the intrusive inactivity tip surface on module load.
+// The engine and all non-intrusive guidance infrastructure remain
+// fully operational — only the floating dismissible card is off.
+suspendGuidanceSurface()
+
+/** Session-level inactivity guidance. Suspended — intrusive surface disabled. */
 function NudgeMount() {
   const location = useLocation()
-  return <InactivityNudge pathname={location.pathname} />
+  return isGuidanceSurfaceSuspended() ? null : <InactivityNudge pathname={location.pathname} />
 }
 
 export interface Profile {
