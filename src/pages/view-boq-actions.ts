@@ -78,6 +78,7 @@ export async function convertBOQToQuotation({
     status: 'open',
     subtotal: 0,
     total: 0,
+    source_boq_id: boq.id,
     custom_fields: JSON.stringify(
       withSourceTrail(
         {},

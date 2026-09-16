@@ -131,15 +131,18 @@ export default function ViewQuotation() {
     const nextItems: RelatedDocumentItem[] = [];
 
     if (relations.source && (relations.source.id || relations.source.number)) {
-      const sourceType = relations.source.type === "invoice" ? "Invoice" : "Quotation";
+      const sourceNumber = relations.source.number || '';
+      const isBoqSource = sourceNumber.startsWith('BOQ-') || Boolean((quotation as any)?.source_boq_id);
+      const sourceLabel = isBoqSource ? 'BOQ' : relations.source.type === 'invoice' ? 'Invoice' : 'Quotation';
+      const sourceId = (quotation as any)?.source_boq_id || relations.source.id;
+      const sourcePath = isBoqSource ? '/boqs' : relations.source.type === 'invoice' ? '/invoices' : '/quotations';
+
       nextItems.push({
-        id: String(relations.source.id || relations.source.number || "source"),
-        title: `${sourceType} ${relations.source.number || relations.source.id || "Linked source"}`,
-        subtitle: "Source document",
-        kind: relations.source.type === "quotation" ? "quotation" : "document",
-        onClick: relations.source.id
-          ? () => navigate(`/${relations.source?.type === "invoice" ? "invoices" : "quotations"}/${relations.source?.id}`)
-          : undefined,
+        id: String(sourceId || sourceNumber || 'source'),
+        title: `${sourceLabel} ${sourceNumber || sourceId || 'Linked source'}`,
+        subtitle: 'Source document',
+        kind: isBoqSource ? 'document' : relations.source.type === 'quotation' ? 'quotation' : 'document',
+        onClick: sourceId ? () => navigate(`${sourcePath}/${sourceId}`) : undefined,
       });
     }
 

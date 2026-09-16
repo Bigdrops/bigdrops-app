@@ -90,6 +90,15 @@ interface UseQuotationSaveParams {
 let _validatedProject: any = null
 let _savedQuotation: any = null
 
+// ponytail: an RLS-denied quotation write returns zero rows, so the trailing
+// .single() surfaces PostgREST PGRST116 ("Cannot coerce...") instead of an
+// authorization failure. Map it to a clear auth error; keep .single() as is.
+function isSingleObjectCoercionError(error: { code?: string | null; message?: string | null } | null | undefined): boolean {
+  if (!error) return false
+  if (error.code === 'PGRST116') return true
+  return String(error.message ?? '').includes('Cannot coerce the result to a single JSON object')
+}
+
 const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   async validate(input) {
     const { quotation, items, isEdit, initialQuotationSnapshot, tenantClient } = input
@@ -238,6 +247,9 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
         async (candidateNumber: string) => {
           payload.quotation_number = candidateNumber
           const result = await (tenantClient.from('quotations') as any).insert([payload]).select().single()
+          if (isSingleObjectCoercionError(result.error)) {
+            return { data: null, error: { message: "You don't have permission to create quotations." } as any }
+          }
           _savedQuotation = result.data
           return result
         },
@@ -248,6 +260,9 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
       )
     }
     const { data: updated, error } = await (tenantClient.from('quotations') as any).update(payload).eq('id', id).select().single()
+    if (isSingleObjectCoercionError(error)) {
+      return { data: null, error: { message: "You don't have permission to edit this quotation." } as any }
+    }
     _savedQuotation = updated
     return { data: updated, error }
   },
