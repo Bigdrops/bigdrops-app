@@ -1,0 +1,106 @@
+﻿2026-09-17T04:48:50.4899589Z ##[group]Run bun install --frozen-lockfile
+2026-09-17T04:48:50.4899995Z [36;1mbun install --frozen-lockfile[0m
+2026-09-17T04:48:50.4936046Z shell: /usr/bin/bash -e {0}
+2026-09-17T04:48:50.4936347Z env:
+2026-09-17T04:48:50.4936677Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:48:50.4937230Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:48:50.4937641Z ##[endgroup]
+2026-09-17T04:48:50.5028815Z bun install v1.4.2 (744846f84)
+2026-09-17T04:48:52.2594890Z 
+2026-09-17T04:48:52.2595473Z + @capacitor/cli@8.4.0
+2026-09-17T04:48:52.2595935Z + @eslint/js@9.39.4
+2026-09-17T04:48:52.2596318Z + @types/node@25.9.2
+2026-09-17T04:48:52.2596697Z + @types/react@19.2.17
+2026-09-17T04:48:52.2597093Z + @types/react-dom@19.2.3
+2026-09-17T04:48:52.2597522Z + @vitejs/plugin-react@5.2.0
+2026-09-17T04:48:52.2597936Z + autoprefixer@10.5.0
+2026-09-17T04:48:52.2598300Z + email@0.2.7
+2026-09-17T04:48:52.2599063Z + eslint@9.39.4
+2026-09-17T04:48:52.2599722Z + eslint-plugin-react-hooks@7.1.1
+2026-09-17T04:48:52.2600113Z + eslint-plugin-react-refresh@0.4.26
+2026-09-17T04:48:52.2600409Z + globals@16.5.0
+2026-09-17T04:48:52.2601097Z + pdf-parse@2.4.5
+2026-09-17T04:48:52.2601339Z + postcss@8.5.15
+2026-09-17T04:48:52.2601574Z + tailwindcss@3.4.19
+2026-09-17T04:48:52.2601828Z + typescript@5.9.3
+2026-09-17T04:48:52.2602076Z + typescript-eslint@8.61.0
+2026-09-17T04:48:52.2602337Z + vite@7.3.5
+2026-09-17T04:48:52.2602611Z + @capacitor-community/file-opener@8.0.1
+2026-09-17T04:48:52.2602930Z + @capacitor-community/sqlite@8.1.0
+2026-09-17T04:48:52.2603224Z + @capacitor/android@8.4.0
+2026-09-17T04:48:52.2603484Z + @capacitor/app@8.1.0
+2026-09-17T04:48:52.2603748Z + @capacitor/app-launcher@8.0.1
+2026-09-17T04:48:52.2604016Z + @capacitor/browser@8.0.3
+2026-09-17T04:48:52.2604285Z + @capacitor/clipboard@8.0.1
+2026-09-17T04:48:52.2604551Z + @capacitor/core@8.4.0
+2026-09-17T04:48:52.2604813Z + @capacitor/filesystem@8.1.2
+2026-09-17T04:48:52.2605097Z + @capacitor/push-notifications@8.1.1
+2026-09-17T04:48:52.2605410Z + @capacitor/share@8.0.1
+2026-09-17T04:48:52.2605694Z + @capgo/capacitor-native-biometric@8.6.7
+2026-09-17T04:48:52.2606027Z + @dietrichgebert/ponytail@4.8.4
+2026-09-17T04:48:52.2606296Z + @dnd-kit/core@6.3.1
+2026-09-17T04:48:52.2606583Z + @dnd-kit/sortable@10.0.0
+2026-09-17T04:48:52.2606838Z + @dnd-kit/utilities@3.2.2
+2026-09-17T04:48:52.2607101Z + @fontsource-variable/inter@5.2.8
+2026-09-17T04:48:52.2607389Z + @fontsource/caveat@5.2.8
+2026-09-17T04:48:52.2607651Z + @fontsource/cormorant-garamond@5.2.11
+2026-09-17T04:48:52.2607957Z + @fontsource/dejavu-sans@5.3.0
+2026-09-17T04:48:52.2608233Z + @fontsource/handlee@5.2.7
+2026-09-17T04:48:52.2608828Z + @fontsource/inter@5.2.8
+2026-09-17T04:48:52.2609177Z + @fontsource/kalam@5.2.8
+2026-09-17T04:48:52.2609440Z + @fontsource/lato@5.2.7
+2026-09-17T04:48:52.2609707Z + @fontsource/montserrat@5.2.8
+2026-09-17T04:48:52.2609983Z + @fontsource/noto-sans@5.2.10
+2026-09-17T04:48:52.2610257Z + @fontsource/open-sans@5.2.7
+2026-09-17T04:48:52.2610543Z + @fontsource/orbitron@5.2.8
+2026-09-17T04:48:52.2610821Z + @fontsource/patrick-hand@5.2.8
+2026-09-17T04:48:52.2611099Z + @fontsource/poppins@5.2.7
+2026-09-17T04:48:52.2611377Z + @fontsource/raleway@5.2.8
+2026-09-17T04:48:52.2611644Z + @fontsource/reenie-beanie@5.2.8
+2026-09-17T04:48:52.2611924Z + @fontsource/roboto@5.2.10
+2026-09-17T04:48:52.2612187Z + @fontsource/roboto-condensed@5.2.8
+2026-09-17T04:48:52.2612493Z + @fontsource/source-sans-pro@5.2.5
+2026-09-17T04:48:52.2612797Z + @fontsource/sue-ellen-francisco@5.2.8
+2026-09-17T04:48:52.2613087Z + @formepdf/core@0.20.1
+2026-09-17T04:48:52.2613336Z + @formepdf/react@0.20.1
+2026-09-17T04:48:52.2613604Z + @hugeicons/core-free-icons@4.2.0
+2026-09-17T04:48:52.2613901Z + @hugeicons/react@1.1.6
+2026-09-17T04:48:52.2614147Z + @lobehub/icons@5.10.0
+2026-09-17T04:48:52.2614405Z + @react-email/components@1.0.12
+2026-09-17T04:48:52.2614686Z + @react-email/render@2.1.0
+2026-09-17T04:48:52.2614955Z + @react-pdf/renderer@4.5.1
+2026-09-17T04:48:52.2615485Z + @supabase/ssr@0.12.4
+2026-09-17T04:48:52.2615743Z + @supabase/supabase-js@2.112.3
+2026-09-17T04:48:52.2616043Z + @takumi-rs/helpers@2.13.7
+2026-09-17T04:48:52.2616321Z + @tiptap/extension-strike@3.26.0
+2026-09-17T04:48:52.2616612Z + @tiptap/extension-underline@3.26.0
+2026-09-17T04:48:52.2616899Z + @tiptap/pm@3.26.0
+2026-09-17T04:48:52.2617131Z + @tiptap/react@3.26.0
+2026-09-17T04:48:52.2617374Z + @tiptap/starter-kit@3.26.0
+2026-09-17T04:48:52.2617650Z + capacitor-widget-bridge@8.1.0
+2026-09-17T04:48:52.2617939Z + class-variance-authority@0.7.1
+2026-09-17T04:48:52.2618206Z + clsx@2.1.1
+2026-09-17T04:48:52.2626237Z + cuelume@0.2.2
+2026-09-17T04:48:52.2626535Z + decimal.js@10.6.0
+2026-09-17T04:48:52.2626781Z + dompurify@3.4.9
+2026-09-17T04:48:52.2627030Z + embla-carousel-react@8.6.0
+2026-09-17T04:48:52.2627307Z + framer-motion@12.40.0
+2026-09-17T04:48:52.2627552Z + goey-toast@0.4.1
+2026-09-17T04:48:52.2627784Z + html-to-image@1.11.13
+2026-09-17T04:48:52.2628018Z + lucide-react@0.577.0
+2026-09-17T04:48:52.2628269Z + motion@12.42.2
+2026-09-17T04:48:52.2628844Z + pdf-lib@1.17.1
+2026-09-17T04:48:52.2629450Z + radix-ui@1.5.0
+2026-09-17T04:48:52.2629866Z + react@19.2.7
+2026-09-17T04:48:52.2630438Z + react-dom@19.2.7
+2026-09-17T04:48:52.2630843Z + react-icons@5.6.0
+2026-09-17T04:48:52.2631258Z + react-router-dom@7.17.0
+2026-09-17T04:48:52.2631523Z + shadcn@4.11.0
+2026-09-17T04:48:52.2631752Z + sonner@2.0.7
+2026-09-17T04:48:52.2632004Z + tailwind-merge@3.6.0
+2026-09-17T04:48:52.2632269Z + tailwindcss-animate@1.0.7
+2026-09-17T04:48:52.2632528Z + takumi-pdf@0.14.3
+2026-09-17T04:48:52.2632768Z + tw-animate-css@1.4.0
+2026-09-17T04:48:52.2633005Z + zod@4.4.3
+2026-09-17T04:48:52.2633130Z 
+2026-09-17T04:48:52.2633248Z 1308 packages installed [1.76s]

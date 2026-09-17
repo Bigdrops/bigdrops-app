@@ -1,0 +1,16 @@
+﻿2026-09-17T04:49:30.8874434Z ##[group]Run if [ ! -f "android/app/src/main/assets/public/index.html" ]; then
+2026-09-17T04:49:30.8875068Z [36;1mif [ ! -f "android/app/src/main/assets/public/index.html" ]; then[0m
+2026-09-17T04:49:30.8875691Z [36;1m  echo "::error::android/app/src/main/assets/public/index.html not found after Capacitor sync."[0m
+2026-09-17T04:49:30.8876203Z [36;1m  exit 1[0m
+2026-09-17T04:49:30.8876429Z [36;1mfi[0m
+2026-09-17T04:49:30.8876739Z [36;1mif [ ! -d "android/app/src/main/assets/public/assets" ]; then[0m
+2026-09-17T04:49:30.8877351Z [36;1m  echo "::error::android/app/src/main/assets/public/assets/ directory not found after Capacitor sync."[0m
+2026-09-17T04:49:30.8890501Z [36;1m  exit 1[0m
+2026-09-17T04:49:30.8890800Z [36;1mfi[0m
+2026-09-17T04:49:30.8891086Z [36;1mecho "✅ Capacitor assets verified."[0m
+2026-09-17T04:49:30.8926617Z shell: /usr/bin/bash -e {0}
+2026-09-17T04:49:30.8926886Z env:
+2026-09-17T04:49:30.8927227Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:49:30.8927811Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:49:30.8928229Z ##[endgroup]
+2026-09-17T04:49:30.8987151Z ✅ Capacitor assets verified.

@@ -1,0 +1,22 @@
+﻿2026-09-17T04:50:57.8135038Z ##[group]Run APK_PATH=$(find android -name "*.apk" -type f -path "*/outputs/apk/release/*" | head -1)
+2026-09-17T04:50:57.8135778Z [36;1mAPK_PATH=$(find android -name "*.apk" -type f -path "*/outputs/apk/release/*" | head -1)[0m
+2026-09-17T04:50:57.8136265Z [36;1mif [ -z "$APK_PATH" ]; then[0m
+2026-09-17T04:50:57.8136748Z [36;1m  echo "::error::No release APK found in android/outputs/. The build may have failed silently."[0m
+2026-09-17T04:50:57.8137228Z [36;1m  exit 1[0m
+2026-09-17T04:50:57.8137451Z [36;1mfi[0m
+2026-09-17T04:50:57.8137702Z [36;1mAPK_SIZE=$(du -h "$APK_PATH" | cut -f1)[0m
+2026-09-17T04:50:57.8138007Z [36;1m[0m
+2026-09-17T04:50:57.8138627Z [36;1mNEW_NAME="BIGDROPS-test-release-1.0.6-run6-b37ca3e.apk"[0m
+2026-09-17T04:50:57.8139068Z [36;1mNEW_PATH="$(dirname "$APK_PATH")/$NEW_NAME"[0m
+2026-09-17T04:50:57.8139430Z [36;1mmv "$APK_PATH" "$NEW_PATH"[0m
+2026-09-17T04:50:57.8139698Z [36;1m[0m
+2026-09-17T04:50:57.8139958Z [36;1mecho "apk_path=$NEW_PATH" >> "$GITHUB_OUTPUT"[0m
+2026-09-17T04:50:57.8140352Z [36;1mecho "apk_name=$NEW_NAME" >> "$GITHUB_OUTPUT"[0m
+2026-09-17T04:50:57.8140712Z [36;1mecho "apk_size=$APK_SIZE" >> "$GITHUB_OUTPUT"[0m
+2026-09-17T04:50:57.8141072Z [36;1mecho "✅ APK renamed: $NEW_NAME ($APK_SIZE)"[0m
+2026-09-17T04:50:57.8174518Z shell: /usr/bin/bash -e {0}
+2026-09-17T04:50:57.8174803Z env:
+2026-09-17T04:50:57.8175146Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:50:57.8175692Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:50:57.8176107Z ##[endgroup]
+2026-09-17T04:50:57.8585967Z ✅ APK renamed: BIGDROPS-test-release-1.0.6-run6-b37ca3e.apk (33M)

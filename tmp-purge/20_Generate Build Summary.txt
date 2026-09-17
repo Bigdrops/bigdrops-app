@@ -1,0 +1,23 @@
+﻿2026-09-17T04:50:57.8613920Z ##[group]Run {
+2026-09-17T04:50:57.8614213Z [36;1m{[0m
+2026-09-17T04:50:57.8614470Z [36;1m  echo "# Android Test-Release Build"[0m
+2026-09-17T04:50:57.8614965Z [36;1m  echo ""[0m
+2026-09-17T04:50:57.8615215Z [36;1m  echo "| Item | Value |"[0m
+2026-09-17T04:50:57.8615496Z [36;1m  echo "|------|-------|"[0m
+2026-09-17T04:50:57.8615798Z [36;1m  echo "| App ID | com.bigdrops.app |"[0m
+2026-09-17T04:50:57.8616127Z [36;1m  echo "| VersionCode | 1006 |"[0m
+2026-09-17T04:50:57.8616428Z [36;1m  echo "| VersionName | 1.0.6 |"[0m
+2026-09-17T04:50:57.8616730Z [36;1m  echo "| Commit | b37ca3e |"[0m
+2026-09-17T04:50:57.8617011Z [36;1m  echo "| Run | 6 |"[0m
+2026-09-17T04:50:57.8617390Z [36;1m  echo "| APK | BIGDROPS-test-release-1.0.6-run6-b37ca3e.apk |"[0m
+2026-09-17T04:50:57.8617803Z [36;1m  echo "| APK Size | 33M |"[0m
+2026-09-17T04:50:57.8618157Z [36;1m  echo "| Signing | stable test-release key (secrets) |"[0m
+2026-09-17T04:50:57.8618793Z [36;1m  echo "| Status | ✅ Success |"[0m
+2026-09-17T04:50:57.8619111Z [36;1m  echo ""[0m
+2026-09-17T04:50:57.8619630Z [36;1m  echo "First install over an old random-debug APK may need one final uninstall. Later test releases update in place."[0m
+2026-09-17T04:50:57.8620216Z [36;1m} >> "$GITHUB_STEP_SUMMARY"[0m
+2026-09-17T04:50:57.8653642Z shell: /usr/bin/bash -e {0}
+2026-09-17T04:50:57.8653922Z env:
+2026-09-17T04:50:57.8654269Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:50:57.8654807Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:50:57.8655217Z ##[endgroup]

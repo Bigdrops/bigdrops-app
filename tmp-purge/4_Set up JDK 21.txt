@@ -1,0 +1,42 @@
+﻿2026-09-17T04:48:32.1707835Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-17T04:48:32.1709746Z ##[group]Run actions/setup-java@v4
+2026-09-17T04:48:32.1710031Z with:
+2026-09-17T04:48:32.1710241Z   distribution: temurin
+2026-09-17T04:48:32.1710482Z   java-version: 21
+2026-09-17T04:48:32.1710714Z   cache: gradle
+2026-09-17T04:48:32.1710967Z   java-package: jdk
+2026-09-17T04:48:32.1711191Z   check-latest: false
+2026-09-17T04:48:32.1711420Z   server-id: github
+2026-09-17T04:48:32.1711646Z   server-username: GITHUB_ACTOR
+2026-09-17T04:48:32.1711921Z   server-password: GITHUB_TOKEN
+2026-09-17T04:48:32.1712180Z   overwrite-settings: true
+2026-09-17T04:48:32.1712422Z   job-status: success
+2026-09-17T04:48:32.1715156Z   token: ***
+2026-09-17T04:48:32.1715377Z ##[endgroup]
+2026-09-17T04:48:32.3332354Z ##[warning]setup-java v4 is deprecated and will no longer receive updates. Please migrate to actions/setup-java@v5.
+2026-09-17T04:48:32.3342522Z ##[group]Installed distributions
+2026-09-17T04:48:32.3515119Z Resolved Java 21.0.12+1 from tool-cache
+2026-09-17T04:48:32.3515716Z Setting Java 21.0.12+1 as the default
+2026-09-17T04:48:32.3526621Z (node:2193) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-17T04:48:32.3527377Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-17T04:48:32.3531015Z Creating toolchains.xml for JDK version 21 from temurin
+2026-09-17T04:48:32.3610318Z Writing to /home/runner/.m2/toolchains.xml
+2026-09-17T04:48:32.3610821Z 
+2026-09-17T04:48:32.3611029Z Java configuration:
+2026-09-17T04:48:32.3611528Z   Distribution: temurin
+2026-09-17T04:48:32.3612031Z   Version: 21.0.12+1
+2026-09-17T04:48:32.3612726Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:48:32.3613369Z 
+2026-09-17T04:48:32.3613961Z ##[endgroup]
+2026-09-17T04:48:32.3633595Z Creating settings.xml with server-id: github
+2026-09-17T04:48:32.3645725Z Writing to /home/runner/.m2/settings.xml
+2026-09-17T04:48:34.1357440Z Cache hit for: setup-java-Linux-x64-gradle-58f11b33b6bdd8afd5adff7c141e96d3fca6579bc27946913a9e30328afef054
+2026-09-17T04:48:34.1457120Z (node:2193) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-17T04:48:35.1891352Z Received 184549376 of 653425188 (28.2%), 175.6 MBs/sec
+2026-09-17T04:48:36.1894730Z Received 402653184 of 653425188 (61.6%), 191.7 MBs/sec
+2026-09-17T04:48:37.1902796Z Received 629145600 of 653425188 (96.3%), 199.7 MBs/sec
+2026-09-17T04:48:37.3995878Z Received 653425188 of 653425188 (100.0%), 193.9 MBs/sec
+2026-09-17T04:48:37.3996772Z Cache Size: ~623 MB (653425188 B)
+2026-09-17T04:48:37.4133765Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d63853e6-21c1-477e-b411-1f09a4abdea9/cache.tzst -P -C /home/runner/work/bigdrops-app/bigdrops-app --use-compress-program unzstd
+2026-09-17T04:48:41.2788791Z Cache restored successfully
+2026-09-17T04:48:41.3062046Z Cache restored from key: setup-java-Linux-x64-gradle-58f11b33b6bdd8afd5adff7c141e96d3fca6579bc27946913a9e30328afef054

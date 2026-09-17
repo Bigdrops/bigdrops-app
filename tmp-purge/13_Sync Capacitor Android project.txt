@@ -1,0 +1,25 @@
+﻿2026-09-17T04:49:29.3994060Z ##[group]Run npx cap sync android
+2026-09-17T04:49:29.3994410Z [36;1mnpx cap sync android[0m
+2026-09-17T04:49:29.4027838Z shell: /usr/bin/bash -e {0}
+2026-09-17T04:49:29.4028116Z env:
+2026-09-17T04:49:29.4028695Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:49:29.4029386Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-09-17T04:49:29.4029818Z ##[endgroup]
+2026-09-17T04:49:30.6854044Z ✔ Copying web assets from dist to android/app/src/main/assets/public in 48.43ms
+2026-09-17T04:49:30.6862664Z ✔ Creating capacitor.config.json in android/app/src/main/assets in 572.24μs
+2026-09-17T04:49:30.7054613Z ✔ copy android in 104.07ms
+2026-09-17T04:49:30.7514176Z ✔ Updating Android plugins in 12.74ms
+2026-09-17T04:49:30.7535124Z [info] Found 11 Capacitor plugins for android:
+2026-09-17T04:49:30.7536041Z        @capacitor-community/file-opener@8.0.1
+2026-09-17T04:49:30.7536391Z        @capacitor-community/sqlite@8.1.0
+2026-09-17T04:49:30.7536754Z        @capacitor/app@8.1.0
+2026-09-17T04:49:30.7537036Z        @capacitor/app-launcher@8.0.1
+2026-09-17T04:49:30.7537329Z        @capacitor/browser@8.0.3
+2026-09-17T04:49:30.7537609Z        @capacitor/clipboard@8.0.1
+2026-09-17T04:49:30.7537899Z        @capacitor/filesystem@8.1.2
+2026-09-17T04:49:30.7538207Z        @capacitor/push-notifications@8.1.1
+2026-09-17T04:49:30.7538711Z        @capacitor/share@8.0.1
+2026-09-17T04:49:30.7539157Z        @capgo/capacitor-native-biometric@8.6.7
+2026-09-17T04:49:30.7539737Z        capacitor-widget-bridge@8.1.0
+2026-09-17T04:49:30.7981150Z ✔ update android in 75.73ms
+2026-09-17T04:49:30.8167770Z [info] Sync finished in 0.255s
