@@ -13,7 +13,7 @@ import type {
   ColumnConfig,
   InvoicePdfOutput,
 } from '@/domain/invoice'
-import { numberToWords } from './useInvoiceForm'
+import { numberToWords } from '@/lib/formatters/money'
 import { feedback } from '@/lib/feedback'
 import { validateProjectAssignment } from '@/domain/projects'
 import { normalizeRichTextHtml } from '@/components/pdf/core/richText'

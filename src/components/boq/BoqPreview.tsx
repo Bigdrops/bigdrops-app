@@ -3,6 +3,7 @@ import React, { useMemo } from 'react'
 import { TableDocumentPreview } from '@/components/table-document/TableDocumentPreview'
 import type { Boq } from '@/domain/boq/types'
 import { computeBoqTotals } from '@/domain/boq/calculateBoqTotals'
+import { numberToWords } from '@/lib/formatters/money'
 
 export function BoqPreview({ boq }: { boq: Boq }) {
   const totals = useMemo(() => computeBoqTotals(boq.table_rows || []), [boq.table_rows])
@@ -26,6 +27,7 @@ export function BoqPreview({ boq }: { boq: Boq }) {
         <span className="font-bold ml-2">Gross Profit</span>
         <span className="font-mono font-black text-green-600">{fmt(totals.gross_profit)}</span>
       </div>
+      <div className="text-[11px] font-medium italic leading-relaxed text-muted-foreground text-right px-4">{numberToWords(totals.total_selling_price)}</div>
     </div>
   )
 }

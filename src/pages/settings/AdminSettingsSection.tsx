@@ -234,19 +234,29 @@ export function TeamSettingsSection({ session, team, showRoles, setShowRoles }: 
 
       <section className="su-stats" aria-label="Team summary">
         <div className="su-stat">
-          <div className="su-stat-label">Workspace</div>
+          <div className="su-stat-label">Workspace Members</div>
           <div className="su-stat-val">{members.length}</div>
-          <div className="su-stat-sub">members</div>
+          <div className="su-stat-sub">workspace-wide</div>
         </div>
+        {/* Current Company Members. Canonical membership signal = holding ≥1
+            entity_permissions row on the active entity (20260829 baseline:
+            "entity_permissions … IS genuine company membership under the
+            existing model"; assign_role_to_company_member enforces the same
+            rule). RLS (entity_permissions_select_self) hides rows granted by
+            third parties and all granted_by-NULL rows (invitation baseline,
+            system backfills), so any client-side DISTINCT-user count is a
+            strict subset. No SECURITY DEFINER counting RPC exists. Until one
+            does, this card reports the missing capability instead of a
+            knowingly incomplete number. */}
         <div className="su-stat">
-          <div className="su-stat-label">Company</div>
-          <div className="su-stat-val accent">
-            {rolesLoading ? '…' : rolesError ? '—' : members.filter(member => effectiveByUser.has(member.userId)).length}
+          <div className="su-stat-label">Current Company Members</div>
+          <div className="su-stat-val accent">—</div>
+          <div className="su-stat-sub">
+            {rolesLoading ? 'checking access…' : 'count unavailable'}
           </div>
-          <div className="su-stat-sub">members</div>
         </div>
         <div className="su-stat">
-          <div className="su-stat-label">Pending</div>
+          <div className="su-stat-label">Pending Invites</div>
           <div className="su-stat-val">
             {invitationsLoading ? '…' : invitationsError ? '—' : invitations.length}
           </div>

@@ -135,7 +135,9 @@
     background: var(--su-surface); border: 1px solid var(--su-line); border-radius: 12px;
     padding: 9px 8px 8px; position: relative; overflow: hidden;
   }
-  .su-stat-label { font-size: 9px; font-weight: 600; color: var(--su-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Full labels stay readable inside the one-row strip: the strip stays
+     repeat(3, 1fr) at every width; only the text wraps (up to two lines). */
+  .su-stat-label { font-size: 9px; font-weight: 600; color: var(--su-ink-3); white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
   .su-stat-val { margin-top: 3px; font-family: var(--su-number); font-size: 15px; font-weight: 500; letter-spacing: -0.065em; line-height: 1.2; }
   .su-stat-val.accent { color: var(--su-accent); }
   .su-stat-sub { margin-top: 1px; font-size: 7px; font-weight: 500; color: var(--su-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -602,13 +604,18 @@
   bottom: calc(20px + var(--su-safe-bottom));
   margin: 12px 6px 0 auto; z-index: 30;
 }
-/* ghost inline create-company button */
+/* ghost inline create-company button — candidate settings-unified-candidate.html
+   Switch Company: <button class="ghostbtn" data-nav="create-company" style="width:100%;
+   justify-content:center;gap:6px;">+ Create Company</button> inside a margin-top:8px
+   wrapper. Solid surface-muted fill, no border, radius 8, weight 800. Height 44px
+   is this app's mobile-port floor for .su-ghostbtn (candidate base is 30px at its
+   compact prototype scale). */
 .su-create-inline {
   width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
-  height: 40px; border-radius: 10px; margin-top: 10px;
-  font-size: 10px; font-weight: 800; color: var(--su-ink-2);
-  background: var(--su-surface); border: 1px dashed var(--su-line-strong);
+  height: 44px; padding: 0 10px; border-radius: 8px; margin-top: 8px;
+  font-size: 9px; font-weight: 800; color: var(--su-ink);
+  background: var(--su-surface-muted); border: none;
   transition: background .12s ease, border-color .12s ease;
 }
-.su-create-inline:hover { background: var(--su-surface-raised); border-color: var(--su-accent); color: var(--su-accent); }
-.su-create-inline svg { width: 14px; height: 14px; }
+.su-create-inline:hover { background: var(--su-surface-raised); }
+.su-create-inline svg { width: 14px; height: 14px; flex-shrink: 0; }

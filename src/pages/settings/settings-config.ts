@@ -1,7 +1,6 @@
 import {
   ArchiveRestore,
   Building2,
-  FolderKanban,
   Hash,
   Info,
   LayoutDashboard,
@@ -20,15 +19,14 @@ export type ActiveSectionId =
   | 'notifications'
   | 'dashboard'
   | 'workspace-switch'
+  | 'company-manage'
   | 'team'
   | 'devices'
-  | 'company-manage'
   | 'company'
   | 'branding'
   | 'banking'
   | 'signatories'
   | 'prefixes'
-  | 'documents'
   | 'archives'
   | 'theme'
   | 'security'
@@ -76,6 +74,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     label: 'Workspace',
     items: [
       { id: 'workspace-switch', label: 'Switch Workspace', icon: Building2, desc: '', accent: true, gapAfter: true },
+      { id: 'company-manage', label: 'Switch Company', icon: Building2, desc: '', accent: true, gapAfter: true },
       { id: 'team', label: 'Team Hub', icon: Users, desc: '', accent: true, gapAfter: true },
       { id: 'devices', label: 'Devices', icon: Smartphone, desc: 'Linked installations and device codes', adminOnly: true },
     ],
@@ -84,13 +83,11 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     id: 'company',
     label: 'Company',
     items: [
-      { id: 'company-manage', label: 'Switch Company', icon: Building2, desc: '', accent: true, gapAfter: true },
       { id: 'company', label: 'Company Info', icon: Building2, desc: 'Business name, address, and tax details' },
       { id: 'branding', label: 'Logo & Branding', icon: Shield, desc: 'Logo used on documents' },
       { id: 'banking', label: 'Banking', icon: Mail, desc: 'Accounts that receive payments' },
       { id: 'signatories', label: 'Signatories', icon: PenLine, desc: 'Authorized people who can sign documents' },
       { id: 'prefixes', label: 'Document Numbering', icon: Hash, desc: 'Invoice, waybill, and quote prefixes' },
-      { id: 'documents', label: 'Document Controls', icon: FolderKanban, desc: 'Fillable writing for company documents' },
       { id: 'archives', label: 'Archives', icon: ArchiveRestore, desc: 'Restore or remove archived company records' },
     ],
   },

@@ -82,24 +82,39 @@ describe('existing role RPC contracts', () => {
 })
 
 test('unified Settings retains all candidate rows and activates only the two authorized destinations', () => {
-  const groups = buildGroups()
-  expect(groups.map(group => group.label)).toEqual(['Account', 'Workspace', 'Company', 'Preferences'])
+  const groups = buildGroups(true, true)
+  // 2026-09-17 product change: Switch Company moved from Company → Workspace;
+  // Document Controls ('documents') retired as a Settings destination.
+  // Final inventory: 16 destinations across 4 categories.
+  expect(groups.map(group => group.label)).toEqual(['Account', 'Workspace', 'Company', 'Preferences', 'System'])
   expect(groups.flatMap(group => group.items).map(item => item.label)).toEqual([
-    'Profile & Security', 'Notifications', 'Switch Workspace', 'Team Hub',
-    'Switch Company', 'Company Info', 'Logo & Branding', 'Banking', 'Signatories',
-    'Theme & Appearance', 'App Lock',
+    'Profile & Security', 'Notifications', 'Dashboard Layout',
+    'Switch Workspace', 'Switch Company', 'Team Hub', 'Devices',
+    'Company Info', 'Logo & Branding', 'Banking', 'Signatories', 'Document Numbering', 'Archives',
+    'Theme & Appearance', 'App Lock', 'Tenant Debug',
   ])
-  expect(groups.flatMap(group => group.items).filter(item => isLiveSettingsSection(item.id)).map(item => item.id)).toEqual(['workspace-switch', 'team'])
+  expect(groups.flatMap(group => group.items)).toHaveLength(16)
+  const workspaceItems = groups.find(group => group.label === 'Workspace').items
+  expect(workspaceItems.map(item => item.id)).toEqual(['workspace-switch', 'company-manage', 'team', 'devices'])
+  expect(groups.find(group => group.label === 'Company').items.some(item => item.id === 'company-manage')).toBe(false)
+  expect(groups.flatMap(group => group.items).map(item => item.id)).not.toContain('documents')
+  // All destinations are live by product decision (see settings-config.ts);
+  // isLiveSettingsSection only guards the null/no-selection case.
+  expect(groups.flatMap(group => group.items).filter(item => isLiveSettingsSection(item.id))).toHaveLength(16)
   expect(isLiveSettingsSection(null)).toBe(false)
 })
 
-test('Settings navigation renders two buttons and keeps the other nine rows inert', () => {
-  const groups = buildGroups()
+test('Settings navigation renders every destination as a live row (all sections active)', () => {
+  const groups = buildGroups(true, true)
   groups[1].items[0].count = 0
   const html = renderToStaticMarkup(createElement(SettingsNav, { groups, activeSection: 'team', onSelect() {} }))
-  expect(html.match(/<button /g)).toHaveLength(2)
-  expect(html.match(/aria-disabled="true"/g)).toHaveLength(9)
+  expect(html.match(/<button /g)).toHaveLength(16)
+  expect(html.match(/aria-disabled="true"/g)).toBe(null)
   expect(html).toContain('aria-current="page"')
   expect(html).toContain('su-srow-count">0</span>')
   expect(html).not.toContain('<a ')
+})
+
+test('buildGroups without flags hides operator-only destinations', () => {
+  expect(buildGroups().flatMap(group => group.items)).toHaveLength(14)
 })

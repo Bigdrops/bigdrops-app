@@ -10,6 +10,9 @@ import {
   slugify,
 } from '@/domain/tenant/tenantCreation'
 import { isUniqueViolation, isPermissionError } from '@/domain/tenant/tenantGate'
+import { createTenantClient } from '@/lib/tenantClient'
+import { supabase } from '@/supabase'
+import { saveSettings } from '@/hooks/useSettings'
 import {
   Sheet,
   SheetContent,
@@ -36,9 +39,13 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
 
   // ── Form fields ──────────────────────────────────────────────────────────
   const [displayName, setDisplayName] = React.useState('')
+  // business_type, regNumber, taxId have no dedicated schema columns.
+  // They are stored via custom_info (JSON array of {label, value} pairs)
+  // — the same path used by CompanySettingsSection's "Custom Fields" section.
   const [businessType, setBusinessType] = React.useState('')
   const [regNumber, setRegNumber] = React.useState('')
   const [taxId, setTaxId] = React.useState('')
+  // phone, email, address map directly to tenant settings columns.
   const [phone, setPhone] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [address, setAddress] = React.useState('')
@@ -49,6 +56,8 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
   const [createdName, setCreatedName] = React.useState('')
   const [extendedWait, setExtendedWait] = React.useState(false)
   const cancelledRef = React.useRef(false)
+  /** True once the user has been told that entered details could not be saved. */
+  const detailsWarningShownRef = React.useRef(false)
 
   /**
    * Map backend failures to user-facing copy. Raw Supabase/Postgres
@@ -87,6 +96,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
     setCreatedName('')
     setExtendedWait(false)
     cancelledRef.current = false
+    detailsWarningShownRef.current = false
   }
 
   // Reset form when sheet opens
@@ -126,20 +136,98 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
   )
 
   /**
+   * Persist additional company details into the newly-created entity's tenant
+   * settings row.
+   *
+   * This is called AFTER waitForTenantExposure() confirms the schema is
+   * accessible. At that point the schema exists and PostgREST has it in scope,
+   * so we can safely construct a direct tenant client using the known schema
+   * name rather than waiting for the EntityProvider re-render cycle to complete.
+   *
+   * Columns that have a settings path: company_name (seeded by provisioning
+   * from display_name — we overwrite with the user's typed value to ensure
+   * consistency), company_phone, company_email, company_address.
+   *
+   * business_type, registration number, and tax ID have no dedicated columns.
+   * They are stored via custom_info — the same {label, value} array that
+   * CompanySettingsSection's Custom Fields section uses. Only non-empty
+   * values are added. If all three are empty, custom_info is not written.
+   *
+   * Failure is non-blocking for the company itself (the entity was created
+   * and is usable), but it is NEVER silent: the user typed real company
+   * details, so a failed details write raises one explicit warning toast
+   * telling them the values were not stored and where to re-enter them.
+   * Discarding entered data without telling the user is not allowed.
+   */
+  const persistAdditionalDetails = React.useCallback(
+    async (entitySlug: string | null) => {
+      const schemaName = buildTenantSchemaName(workspace?.slug, entitySlug)
+      if (!schemaName) return
+
+      // Construct a direct tenant client. waitForTenantExposure() has already
+      // confirmed the schema is exposed — isReady is safe to assume true here.
+      const directClient = createTenantClient(supabase, schemaName)
+
+      const updates: Record<string, unknown> = {}
+
+      // company_name: overwrite with the user's typed display name so the
+      // settings row matches exactly what was entered (provisioning seeds it
+      // from entities.display_name which uses the same value, but explicit
+      // is safer).
+      updates.company_name = displayName.trim()
+
+      if (phone.trim()) updates.company_phone = phone.trim()
+      if (email.trim()) updates.company_email = email.trim()
+      if (address.trim()) updates.company_address = address.trim()
+
+      // business_type / reg number / tax ID → custom_info JSON array.
+      // We only write if at least one is non-empty.
+      const customEntries: Array<{ label: string; value: string }> = []
+      if (businessType.trim()) customEntries.push({ label: 'Business Type', value: businessType.trim() })
+      if (regNumber.trim()) customEntries.push({ label: 'RC Number', value: regNumber.trim() })
+      if (taxId.trim()) customEntries.push({ label: 'Tax ID', value: taxId.trim() })
+      if (customEntries.length > 0) {
+        updates.custom_info = JSON.stringify(customEntries)
+      }
+
+      try {
+        await saveSettings(updates, directClient)
+      } catch (e) {
+        // Non-blocking for the company (it is created and usable), but never
+        // silent: the user entered real details and must know they were NOT
+        // stored. One explicit warning, de-duplicated for the session.
+        console.error('[company-creation-sheet] Failed to persist additional details:', e)
+        if (!detailsWarningShownRef.current) {
+          detailsWarningShownRef.current = true
+          feedback.warning('Company saved, but some details were not stored', {
+            description: `${createdName || 'The company'} is active. Re-enter the extra details in Settings → Company Info.`,
+          })
+        }
+      }
+    },
+    [workspace?.slug, displayName, phone, email, address, businessType, regNumber, taxId, createdName],
+  )
+
+  /**
    * Confirm the tenant's PostgREST access path before presenting the
-   * company as usable.
+   * company as usable. Returns true only when exposure is confirmed.
+   * Calls persistAdditionalDetails while the schema is confirmed accessible.
    */
   const confirmExposureAndSelect = React.useCallback(
     async (entityId: string, entitySlug: string | null): Promise<boolean> => {
       const schema = buildTenantSchemaName(workspace?.slug, entitySlug)
       const exposed = await waitForTenantExposure(schema)
       if (cancelledRef.current) return false
+      if (exposed) {
+        // Persist additional details now — schema is confirmed accessible.
+        await persistAdditionalDetails(entitySlug)
+      }
       selectEntity(entityId)
       refreshEntity()
       if (!exposed) setExtendedWait(true)
       return exposed
     },
-    [workspace?.slug, selectEntity, refreshEntity],
+    [workspace?.slug, selectEntity, refreshEntity, persistAdditionalDetails],
   )
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -208,6 +296,8 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
         setPhase('error')
         setError(pollResult.error || 'Provisioning failed. The company was created but is not ready to use.')
       } else if (pollResult.status === 'timeout') {
+        // Schema not yet exposed — cannot safely persist additional details yet.
+        // User can complete them in Company Info once the company becomes active.
         selectEntity(entity.id)
         refreshEntity()
         setExtendedWait(true)
@@ -404,6 +494,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
                     aria-describedby={error ? 'co-create-error' : undefined}
                   />
                 </div>
+                {/* business_type → saved as custom_info entry "Business Type" */}
                 <div className="su-field">
                   <label htmlFor="co-type">Business type</label>
                   <input
@@ -415,6 +506,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
                     disabled={isProcessing}
                   />
                 </div>
+                {/* registration_number → saved as custom_info entry "RC Number" */}
                 <div className="su-field">
                   <label htmlFor="co-reg">Registration number</label>
                   <input
@@ -426,6 +518,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
                     disabled={isProcessing}
                   />
                 </div>
+                {/* tax_id → saved as custom_info entry "Tax ID" */}
                 <div className="su-field">
                   <label htmlFor="co-tax">Tax ID</label>
                   <input
@@ -441,6 +534,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
             </div>
 
             {/* Contact Details */}
+            {/* phone → company_phone | email → company_email | address → company_address */}
             <div className="su-form-section">
               <div className="su-form-section-title">Contact Details</div>
               <div className="su-form-card">
@@ -480,38 +574,40 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
               </div>
             </div>
 
-            {/* Branding — logo upload placeholder (logo storage is a separate task) */}
+            {/* Branding — logo upload is only available in Logo & Branding after
+                creation. The tenant schema must exist and PostgREST must expose it
+                before uploads can be associated with this company. No upload widget
+                here to avoid collecting a file that cannot be saved. */}
             <div className="su-form-section">
               <div className="su-form-section-title">Branding</div>
               <div className="su-form-card">
-                <div className="su-field" style={{ marginTop: 0 }}>
-                  <label>Company Logo</label>
-                  <div
-                    className="su-logo-upload"
-                    role="img"
-                    aria-label="Logo upload — available after company creation"
-                  >
-                    <div className="su-logo-placeholder">
-                      <Building2 aria-hidden="true" />
-                    </div>
-                    <div>
-                      <div className="su-logo-text">Upload logo</div>
-                      <div className="su-logo-hint">
-                        Available in Logo &amp; Branding after creation.
-                      </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    background: 'var(--su-surface-raised)',
+                  }}
+                >
+                  <div className="su-logo-placeholder" style={{ flexShrink: 0 }}>
+                    <Building2 aria-hidden="true" />
+                  </div>
+                  <div>
+                    <div className="su-logo-text">Logo &amp; Branding</div>
+                    <div className="su-logo-hint">
+                      Upload your logo in Logo &amp; Branding after the company is created.
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <p
-              className="su-ia-note"
-              style={{ margin: '10px 2px' }}
-            >
+            <p className="su-ia-note" style={{ margin: '10px 2px' }}>
               <span>
-                Company name is required. All other fields are optional and can be completed in
-                Company Info after creation.
+                Company name is required. All other fields are optional. If provisioning takes too
+                long, complete them later in Company Info.
               </span>
             </p>
 
@@ -537,7 +633,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
             {/* Spacer for FAB */}
             <div style={{ height: 80 }} />
 
-            {/* Floating save FAB — matches candidate */}
+            {/* Floating save FAB — matches candidate fab-float */}
             <button
               type="submit"
               className="su-fab-float"

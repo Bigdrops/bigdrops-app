@@ -21,7 +21,6 @@ import { BrandingSettingsSection } from './settings/BrandingSettingsSection'
 import { BankingSettingsSection } from './settings/BankingSettingsSection'
 import { SignatoriesSettingsSection } from './settings/SignatoriesSettingsSection'
 import { DocumentPrefixesSettingsSection } from './settings/DocumentPrefixesSettingsSection'
-import { DocumentsSettingsSection } from './settings/DocumentsSettingsSection'
 import { ArchivesSettingsSection } from './settings/ArchivesSettingsSection'
 import { AppThemeSettingsSection } from './settings/AppThemeSettingsSection'
 import { SecuritySettingsSection } from './settings/SecuritySettingsSection'
@@ -86,7 +85,6 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
     {active === 'banking' && <BankingSettingsSection />}
     {active === 'signatories' && <SignatoriesSettingsSection />}
     {active === 'prefixes' && <DocumentPrefixesSettingsSection />}
-    {active === 'documents' && <DocumentsSettingsSection />}
     {active === 'archives' && <ArchivesSettingsSection />}
     {active === 'theme' && <AppThemeSettingsSection userId={session?.user?.id} />}
     {active === 'security' && <SecuritySettingsSection />}

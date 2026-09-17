@@ -3,6 +3,7 @@ import { FileText, Layout, List } from 'lucide-react'
 
 import type { Boq } from '@/domain/boq/types'
 import { computeBoqTotals } from '@/domain/boq/calculateBoqTotals'
+import { numberToWords } from '@/lib/formatters/money'
 import { BoqCustomizationPanel } from './BoqCustomizationPanel'
 import { TableRowsEditor } from '@/components/table-document/TableRowsEditor'
 import { Input } from '@/components/ui/input'
@@ -79,6 +80,7 @@ export function BoqForm({
           <div className="flex justify-between text-sm"><span className="opacity-70">Total Cost</span><span className="font-mono font-bold">{fmt(totalCost)}</span></div>
           <div className="flex justify-between text-sm"><span className="opacity-70">Total Selling Price</span><span className="font-mono font-bold">{fmt(totalSellingPrice)}</span></div>
           <div className="flex justify-between text-sm pt-2 border-t border-border"><span className="font-bold">Gross Profit</span><span className="font-mono font-black text-green-600">{fmt(grossProfit)}</span></div>
+          <div className="text-[11px] font-medium italic leading-relaxed text-muted-foreground pt-2">{numberToWords(totalSellingPrice)}</div>
         </div>
       </TabsContent>
     </Tabs>

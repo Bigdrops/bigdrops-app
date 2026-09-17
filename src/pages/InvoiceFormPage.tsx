@@ -30,7 +30,7 @@ import {
 } from '../components/useInvoiceColumns'
 import { computeDocument, type ComputedItem, type ComputedGroup } from '../lib/Calculations'
 import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
-import { numberToWords } from '../hooks/useInvoiceForm'
+import { numberToWords } from '@/lib/formatters/money'
 import { useInvoiceEditableState } from '@/hooks/useInvoiceEditableState'
 import { useInvoiceReferenceData } from '@/hooks/useInvoiceReferenceData'
 import { useInvoiceHydration } from '@/hooks/useInvoiceHydration'
