@@ -11,6 +11,21 @@ import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
 import { feedback } from '@/lib/feedback'
 
+import { UserSettingsSection } from './settings/UserSettingsSection'
+import NotificationSettingsPage from './settings/NotificationSettingsPage'
+import { DashboardSettingsSection } from './settings/DashboardSettingsSection'
+import { DeviceSettingsSection } from './settings/DeviceSettingsSection'
+import { CompanyManageSection } from './settings/CompanyManageSection'
+import { CompanySettingsSection } from './settings/CompanySettingsSection'
+import { BrandingSettingsSection } from './settings/BrandingSettingsSection'
+import { BankingSettingsSection } from './settings/BankingSettingsSection'
+import { SignatoriesSettingsSection } from './settings/SignatoriesSettingsSection'
+import { DocumentPrefixesSettingsSection } from './settings/DocumentPrefixesSettingsSection'
+import { DocumentsSettingsSection } from './settings/DocumentsSettingsSection'
+import { ArchivesSettingsSection } from './settings/ArchivesSettingsSection'
+import { AppThemeSettingsSection } from './settings/AppThemeSettingsSection'
+import { SecuritySettingsSection } from './settings/SecuritySettingsSection'
+
 export default function Settings() {
   const [session, setSession] = useState<SettingsSession>(null)
   const [active, setActive] = useState<LiveSettingsSection | null>(null)
@@ -41,7 +56,13 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
   const dark = preference.themeMode === 'dark' || (preference.themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const wsName = workspaceLoading ? 'Loading…' : workspaceError ? 'Unavailable' : workspace?.name ?? '—'
   const coName = entityLoading ? 'Loading…' : entityError ? 'Unavailable' : entity?.name ?? '—'
-  const groups = buildGroups().map(group => ({ ...group, items: group.items.map(item => {
+  
+  // Note: For a real app, isAdmin and isOperator would be fetched from auth claims or context.
+  // Passing true for now to preserve the full inventory explicitly as requested.
+  const isAdmin = true
+  const isOperator = true
+
+  const groups = buildGroups(isAdmin, isOperator).map(group => ({ ...group, items: group.items.map(item => {
     if (item.id === 'workspace-switch') return { ...item, desc: `Current: ${wsName}`, count: workspaceLoading || workspaceError ? undefined : activeWorkspaces.length }
     if (item.id === 'company-manage') return { ...item, desc: `Current: ${coName}`, count: entityLoading || entityError ? undefined : entities.length }
     if (item.id === 'team') return { ...item, desc: team.loading ? 'Loading members…' : team.error ? 'Members unavailable' : `${team.members.length} members`, count: team.loading || team.error ? undefined : team.members.length }
@@ -52,7 +73,23 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
     detailTitle={active === 'team' && showRoles ? 'Roles & Access' : undefined}
     onBack={active === 'team' && showRoles ? () => setShowRoles(false) : undefined}
     dark={dark} onToggleTheme={() => { void save({ themeMode: dark ? 'light' : 'dark' }).catch(error => feedback.error(String(error))) }}>
+    
+    {active === 'user' && <UserSettingsSection session={session} onToast={(msg) => feedback.success(msg)} />}
+    {active === 'notifications' && <NotificationSettingsPage />}
+    {active === 'dashboard' && <DashboardSettingsSection />}
     {active === 'workspace-switch' && <WorkspaceSwitchSection />}
     {active === 'team' && <TeamSettingsSection key={entity?.id ?? 'no-company'} session={session} team={team} showRoles={showRoles} setShowRoles={setShowRoles} />}
+    {active === 'devices' && <DeviceSettingsSection />}
+    {active === 'company-manage' && <CompanyManageSection />}
+    {active === 'company' && <CompanySettingsSection />}
+    {active === 'branding' && <BrandingSettingsSection />}
+    {active === 'banking' && <BankingSettingsSection />}
+    {active === 'signatories' && <SignatoriesSettingsSection />}
+    {active === 'prefixes' && <DocumentPrefixesSettingsSection />}
+    {active === 'documents' && <DocumentsSettingsSection />}
+    {active === 'archives' && <ArchivesSettingsSection />}
+    {active === 'theme' && <AppThemeSettingsSection userId={session?.user?.id} />}
+    {active === 'security' && <SecuritySettingsSection />}
+    {active === 'tenant-debug' && <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">Tenant Diagnostics Environment (Operator Only)</div>}
   </SettingsShell>
 }

@@ -23,7 +23,7 @@ export function SettingsShell({ groups, activeSection, setActiveSection, childre
       {activeSection && <button type="button" className="su-iconbtn su-backbtn" aria-label={onBack ? 'Back to Team Hub' : 'Back to Settings'} onClick={onBack ?? (() => setActiveSection(null))}><ChevronLeft /></button>}
       <div className="su-identity">
         <h1 className="su-identity-name">{detailTitle ?? (activeSection === 'team' ? 'Team & Access' : activeSection === 'workspace-switch' ? 'Switch Workspace' : 'Settings')}</h1>
-        <div className="su-identity-context"><span>Workspace: <b>{workspaceName}</b></span><span className="sep">·</span><span>Company: <b>{companyName}</b></span></div>
+        {!activeSection && <div className="su-identity-context"><span>Workspace: <b>{workspaceName}</b></span><span className="sep">·</span><span>Company: <b>{companyName}</b></span></div>}
       </div>
       <button type="button" className="su-iconbtn" aria-label={dark ? 'Use light theme' : 'Use dark theme'} onClick={onToggleTheme}>{dark ? <Sun /> : <Moon />}</button>
     </header>
