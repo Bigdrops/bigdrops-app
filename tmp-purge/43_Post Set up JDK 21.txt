@@ -1,5 +1,0 @@
-﻿2026-09-17T04:51:02.6701502Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-2026-09-17T04:51:02.6703687Z Post job cleanup.
-2026-09-17T04:51:02.8103688Z (node:2866) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
-2026-09-17T04:51:02.8104590Z (Use `node --trace-deprecation ...` to show where the warning was created)
-2026-09-17T04:51:02.8109709Z Cache hit occurred on the primary key setup-java-Linux-x64-gradle-58f11b33b6bdd8afd5adff7c141e96d3fca6579bc27946913a9e30328afef054, not saving cache.
