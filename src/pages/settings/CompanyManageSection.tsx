@@ -231,17 +231,11 @@ export function CompanyManageSection() {
       <button
         type="button"
         onClick={() => setCreateOpen(true)}
-        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-bd-border bg-bd-card-bg px-4 py-3.5 text-left transition hover:border-[hsl(var(--primary))]/40 hover:bg-[hsl(var(--primary-soft))]/30 active:scale-[0.985]"
+        className="su-create-inline"
+        aria-label="Create a new company in this workspace"
       >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))]">
-          <Plus className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-[800] text-bd-text">Create Company</div>
-          <div className="text-[10px] text-bd-text-muted">
-            Add a new company to {wsName}
-          </div>
-        </div>
+        <Plus className="h-4 w-4" aria-hidden="true" />
+        Create Company
       </button>
 
       <CreateCompanySheet open={createOpen} onOpenChange={setCreateOpen} />

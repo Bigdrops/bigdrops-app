@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { Building2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Building2, Loader2, CheckCircle2, AlertCircle, Save } from 'lucide-react'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
   createEntity,
@@ -34,12 +33,20 @@ const MAX_POLL_ATTEMPTS = 15
 export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetProps) {
   const { workspace } = useWorkspace()
   const { refresh: refreshEntity, selectEntity } = useEntity()
+
+  // ── Form fields ──────────────────────────────────────────────────────────
   const [displayName, setDisplayName] = React.useState('')
+  const [businessType, setBusinessType] = React.useState('')
+  const [regNumber, setRegNumber] = React.useState('')
+  const [taxId, setTaxId] = React.useState('')
+  const [phone, setPhone] = React.useState('')
+  const [email, setEmail] = React.useState('')
+  const [address, setAddress] = React.useState('')
+
+  // ── Provisioning state ───────────────────────────────────────────────────
   const [error, setError] = React.useState('')
   const [phase, setPhase] = React.useState<CreationPhase>('form')
   const [createdName, setCreatedName] = React.useState('')
-  // True once provisioning finished but exposure could not be confirmed
-  // within the wait: still finalizing, not failed. Gate holds meanwhile.
   const [extendedWait, setExtendedWait] = React.useState(false)
   const cancelledRef = React.useRef(false)
 
@@ -67,16 +74,24 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
     return "Couldn't create the company. Try again."
   }
 
+  const resetForm = () => {
+    setDisplayName('')
+    setBusinessType('')
+    setRegNumber('')
+    setTaxId('')
+    setPhone('')
+    setEmail('')
+    setAddress('')
+    setError('')
+    setPhase('form')
+    setCreatedName('')
+    setExtendedWait(false)
+    cancelledRef.current = false
+  }
+
   // Reset form when sheet opens
   React.useEffect(() => {
-    if (open) {
-      setDisplayName('')
-      setError('')
-      setPhase('form')
-      setCreatedName('')
-      setExtendedWait(false)
-      cancelledRef.current = false
-    }
+    if (open) resetForm()
   }, [open])
 
   // Cleanup: mark cancelled on unmount
@@ -88,31 +103,23 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
 
   /**
    * Poll getEntityProvisioningStatus until terminal state (ready/failed) or timeout.
-   * Returns the terminal status string.
    */
   const pollProvisioning = React.useCallback(
     async (entityId: string): Promise<{ status: string; error?: string }> => {
       for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
         if (cancelledRef.current) return { status: 'cancelled' }
-
-        // Wait before checking (skip first check — provisionEntity just ran)
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
         if (cancelledRef.current) return { status: 'cancelled' }
-
         try {
           const result = await getEntityProvisioningStatus(entityId)
-
           if (result.status === 'ready') return { status: 'ready' }
           if (result.status === 'failed') {
             return { status: 'failed', error: result.lastError || 'Provisioning failed.' }
           }
-          // 'creating', 'pending' — continue polling
         } catch {
           // Network or RPC error — continue polling
         }
       }
-
-      // Timeout — provisioning took too long
       return { status: 'timeout' }
     },
     [],
@@ -120,11 +127,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
 
   /**
    * Confirm the tenant's PostgREST access path before presenting the
-   * company as usable. provisioning 'ready' only means the schema exists;
-   * exposure completes asynchronously. Returns true only when exposure is
-   * confirmed — callers must not show success otherwise. Always selects
-   * the entity so the TenantGate keeps holding on its provisioning screen
-   * while exposure completes in the background.
+   * company as usable.
    */
   const confirmExposureAndSelect = React.useCallback(
     async (entityId: string, entitySlug: string | null): Promise<boolean> => {
@@ -168,20 +171,19 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
 
       setPhase('provisioning')
 
-      // Kick off provisioning
       const provisionResult = await provisionEntity(entity.id)
 
       if (cancelledRef.current) return
 
       if (provisionResult.status === 'failed') {
         setPhase('error')
-        setError('Provisioning failed during schema creation. The company was created but is not ready to use.')
+        setError(
+          'Provisioning failed during schema creation. The company was created but is not ready to use.',
+        )
         return
       }
 
       if (provisionResult.status === 'ready') {
-        // Provisioning completed synchronously — still confirm exposure
-        // before claiming the company is active.
         if (await confirmExposureAndSelect(entity.id, entity.slug)) {
           if (cancelledRef.current) return
           setPhase('success')
@@ -191,13 +193,11 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
         return
       }
 
-      // Provisioning is asynchronous (creating/pending) — poll until terminal
       const pollResult = await pollProvisioning(entity.id)
 
       if (cancelledRef.current) return
 
       if (pollResult.status === 'ready') {
-        // Provisioning complete — confirm exposure before claiming active.
         if (await confirmExposureAndSelect(entity.id, entity.slug)) {
           if (cancelledRef.current) return
           setPhase('success')
@@ -208,7 +208,6 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
         setPhase('error')
         setError(pollResult.error || 'Provisioning failed. The company was created but is not ready to use.')
       } else if (pollResult.status === 'timeout') {
-        // Provisioning is still running — select entity and let the tenant gate hold it
         selectEntity(entity.id)
         refreshEntity()
         setExtendedWait(true)
@@ -227,25 +226,25 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[78vh] rounded-t-[var(--bd-overlay-radius)] border-0 p-0"
+        className="max-h-[92vh] rounded-t-[var(--bd-overlay-radius)] border-0 p-0 bd-settings-surface"
         showCloseButton={false}
       >
         {/* Grab handle */}
         <div className="flex justify-center pt-2.5 pb-1">
-          <div className="h-[3px] w-[34px] rounded-full bg-[hsl(var(--surface-strong))]" />
+          <div className="su-grab" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pb-3">
+        <div className="su-sheet-head">
           <div>
-            <SheetTitle className="text-[17px] font-[800] tracking-[-0.05em] text-[hsl(var(--ink))]">
+            <SheetTitle className="su-sheet-title">
               {phase === 'success'
                 ? 'Company Created'
                 : phase === 'error'
                   ? 'Creation Failed'
                   : 'Create Company'}
             </SheetTitle>
-            <SheetDescription className="mt-0.5 text-[9px] font-[700] text-[hsl(var(--ink-3))]">
+            <SheetDescription className="su-sheet-desc">
               {phase === 'success'
                 ? `${createdName} is now available in ${workspaceName}.`
                 : phase === 'error'
@@ -253,31 +252,41 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
                   : `Add a new company to ${workspaceName}.`}
             </SheetDescription>
           </div>
-          {!isProcessing || extendedWait ? (
+          {(!isProcessing || extendedWait) ? (
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="grid h-7 w-7 min-h-[44px] min-w-[44px] place-items-center rounded-full bg-[hsl(var(--surface-muted))] text-[hsl(var(--ink-3))]"
+              className="su-dialog-close"
               aria-label="Close"
             >
-              <span className="text-[11px] font-[800]">×</span>
+              <span style={{ fontSize: 13, fontWeight: 800 }}>×</span>
             </button>
           ) : null}
         </div>
 
-        {/* Success state */}
+        {/* ── Success state ── */}
         {phase === 'success' && (
-          <div className="px-5 pb-6 pt-2">
-            <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <div className="su-sheet-body">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 12,
+                border: '1px solid #bbf7d0',
+                background: '#f0fdf4',
+              }}
+            >
               <CheckCircle2
-                className="h-5 w-5 shrink-0 text-emerald-600"
+                style={{ width: 20, height: 20, flexShrink: 0, color: '#16a34a' }}
                 aria-hidden="true"
               />
               <div>
-                <div className="text-[12px] font-[700] text-emerald-800">
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#14532d' }}>
                   {createdName}
                 </div>
-                <div className="text-[10px] text-emerald-600">
+                <div style={{ fontSize: 10, color: '#16a34a', marginTop: 2 }}>
                   Added to {workspaceName}
                 </div>
               </div>
@@ -285,26 +294,40 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
           </div>
         )}
 
-        {/* Processing state */}
+        {/* ── Processing state ── */}
         {isProcessing && (
-          <div className="px-5 pb-6 pt-2">
+          <div className="su-sheet-body">
             <div
               role="status"
-              className="flex items-center gap-3 rounded-xl border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-4 py-3"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 12,
+                border: '1px solid var(--su-line)',
+                background: 'var(--su-surface-raised)',
+              }}
             >
               <Loader2
-                className="h-5 w-5 shrink-0 animate-spin text-[hsl(var(--primary))]"
+                style={{
+                  width: 20,
+                  height: 20,
+                  flexShrink: 0,
+                  color: 'var(--su-accent)',
+                  animation: 'spin 1s linear infinite',
+                }}
                 aria-hidden="true"
               />
               <div>
-                <div className="text-[12px] font-[700] text-[hsl(var(--ink))]">
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--su-ink)' }}>
                   {phase === 'creating'
                     ? 'Creating company…'
                     : extendedWait
                       ? 'Taking longer than expected…'
                       : 'Setting up schema…'}
                 </div>
-                <div className="text-[10px] text-[hsl(var(--ink-3))]">
+                <div style={{ fontSize: 10, color: 'var(--su-ink-3)', marginTop: 2 }}>
                   {extendedWait
                     ? 'Still finalizing access. You can wait or close — the app continues automatically.'
                     : createdName}
@@ -314,79 +337,218 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
           </div>
         )}
 
-        {/* Error state */}
+        {/* ── Error state ── */}
         {phase === 'error' && (
-          <div className="px-5 pb-6 pt-2 space-y-3">
+          <div className="su-sheet-body">
             <div
               role="alert"
-              className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 12,
+                border: '1px solid #fecaca',
+                background: '#fef2f2',
+                marginBottom: 12,
+              }}
             >
               <AlertCircle
-                className="h-5 w-5 shrink-0 text-red-600"
+                style={{ width: 20, height: 20, flexShrink: 0, color: '#dc2626', marginTop: 1 }}
                 aria-hidden="true"
               />
               <div>
-                <div className="text-[12px] font-[700] text-red-800">
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#991b1b' }}>
                   Creation failed
                 </div>
-                <div className="text-[10px] text-red-600">{error}</div>
+                <div style={{ fontSize: 10, color: '#dc2626', marginTop: 2 }}>{error}</div>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setPhase('form')}
-              className="h-10 w-full rounded-xl border border-[hsl(var(--line))] bg-[hsl(var(--surface))] text-[12px] font-[700] text-[hsl(var(--ink))] transition active:scale-[0.985]"
+              style={{
+                width: '100%',
+                height: 40,
+                borderRadius: 10,
+                border: '1px solid var(--su-line)',
+                background: 'var(--su-surface)',
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--su-ink)',
+              }}
             >
               Try Again
             </button>
           </div>
         )}
 
-        {/* Form */}
+        {/* ── Multi-section form ── */}
         {phase === 'form' && (
-          <form onSubmit={handleSubmit} className="px-5 pb-6 pt-1 space-y-4">
-            <div>
-              <label
-                htmlFor="create-company-name"
-                className="block text-[11px] font-[800] uppercase tracking-[0.075em] text-[hsl(var(--ink-3))] mb-1.5"
-              >
-                Company Name
-              </label>
-              <input
-                id="create-company-name"
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g. Tunde and Sons Limited"
-                autoFocus
-                aria-describedby={error ? 'create-company-error' : undefined}
-                className="h-11 w-full rounded-xl border border-[hsl(var(--line))] bg-[hsl(var(--surface))] px-3.5 text-[13px] font-[600] text-[hsl(var(--ink))] placeholder:text-[hsl(var(--ink-3))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30 focus:border-[hsl(var(--primary))]"
-              />
-              <p className="mt-1.5 text-[10px] text-[hsl(var(--ink-3))]">
-                You can update company details later in Company Settings.
-              </p>
+          <form onSubmit={handleSubmit} className="su-sheet-body">
+            {/* Business Information */}
+            <div className="su-form-section">
+              <div className="su-form-section-title">Business Information</div>
+              <div className="su-form-card">
+                <div className="su-field" style={{ marginTop: 0 }}>
+                  <label htmlFor="co-name">Company name *</label>
+                  <input
+                    id="co-name"
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="e.g. Sun & Shield Power Solutions"
+                    autoFocus
+                    required
+                    disabled={isProcessing}
+                    aria-describedby={error ? 'co-create-error' : undefined}
+                  />
+                </div>
+                <div className="su-field">
+                  <label htmlFor="co-type">Business type</label>
+                  <input
+                    id="co-type"
+                    type="text"
+                    value={businessType}
+                    onChange={(e) => setBusinessType(e.target.value)}
+                    placeholder="e.g. Limited Liability Company"
+                    disabled={isProcessing}
+                  />
+                </div>
+                <div className="su-field">
+                  <label htmlFor="co-reg">Registration number</label>
+                  <input
+                    id="co-reg"
+                    type="text"
+                    value={regNumber}
+                    onChange={(e) => setRegNumber(e.target.value)}
+                    placeholder="e.g. RC123456"
+                    disabled={isProcessing}
+                  />
+                </div>
+                <div className="su-field">
+                  <label htmlFor="co-tax">Tax ID</label>
+                  <input
+                    id="co-tax"
+                    type="text"
+                    value={taxId}
+                    onChange={(e) => setTaxId(e.target.value)}
+                    placeholder="e.g. 12345678-0001"
+                    disabled={isProcessing}
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Contact Details */}
+            <div className="su-form-section">
+              <div className="su-form-section-title">Contact Details</div>
+              <div className="su-form-card">
+                <div className="su-field" style={{ marginTop: 0 }}>
+                  <label htmlFor="co-phone">Phone number</label>
+                  <input
+                    id="co-phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+234 ..."
+                    disabled={isProcessing}
+                  />
+                </div>
+                <div className="su-field">
+                  <label htmlFor="co-email">Email address</label>
+                  <input
+                    id="co-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="info@company.com"
+                    disabled={isProcessing}
+                  />
+                </div>
+                <div className="su-field">
+                  <label htmlFor="co-address">Address</label>
+                  <input
+                    id="co-address"
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Street address, city"
+                    disabled={isProcessing}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Branding — logo upload placeholder (logo storage is a separate task) */}
+            <div className="su-form-section">
+              <div className="su-form-section-title">Branding</div>
+              <div className="su-form-card">
+                <div className="su-field" style={{ marginTop: 0 }}>
+                  <label>Company Logo</label>
+                  <div
+                    className="su-logo-upload"
+                    role="img"
+                    aria-label="Logo upload — available after company creation"
+                  >
+                    <div className="su-logo-placeholder">
+                      <Building2 aria-hidden="true" />
+                    </div>
+                    <div>
+                      <div className="su-logo-text">Upload logo</div>
+                      <div className="su-logo-hint">
+                        Available in Logo &amp; Branding after creation.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p
+              className="su-ia-note"
+              style={{ margin: '10px 2px' }}
+            >
+              <span>
+                Company name is required. All other fields are optional and can be completed in
+                Company Info after creation.
+              </span>
+            </p>
 
             {error ? (
               <div
                 role="alert"
-                id="create-company-error"
-                className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12px] font-[600] text-red-700"
+                id="co-create-error"
+                style={{
+                  borderRadius: 10,
+                  border: '1px solid #fecaca',
+                  background: '#fef2f2',
+                  padding: '10px 12px',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: '#b91c1c',
+                  marginBottom: 8,
+                }}
               >
                 {error}
               </div>
             ) : null}
 
+            {/* Spacer for FAB */}
+            <div style={{ height: 80 }} />
+
+            {/* Floating save FAB — matches candidate */}
             <button
               type="submit"
-              disabled={!displayName.trim()}
-              className="h-12 w-full rounded-xl bg-[hsl(var(--primary))] text-[13px] font-[800] text-white transition active:scale-[0.985] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="su-fab-float"
+              disabled={!displayName.trim() || isProcessing}
+              aria-label="Save Company"
+              title="Save Company"
             >
-              <span className="flex items-center justify-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Create Company
-              </span>
+              <Save aria-hidden="true" />
             </button>
+
+            <p className="su-footer">BIGDROPS ERP</p>
           </form>
         )}
       </SheetContent>

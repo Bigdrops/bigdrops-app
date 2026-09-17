@@ -129,15 +129,16 @@
   .su-groupline { height: 5px; }
 
   /* ============================== TEAM HUB COMPONENTS ============================== */
-  .su-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  /* Three KPI cards always on ONE row — never wrap to two rows. */
+  .su-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
   .su-stat {
     background: var(--su-surface); border: 1px solid var(--su-line); border-radius: 12px;
-    padding: 11px 12px 10px; position: relative; overflow: hidden;
+    padding: 9px 8px 8px; position: relative; overflow: hidden;
   }
-  .su-stat-label { font-size: 11px; font-weight: 600; color: var(--su-ink-3); }
-  .su-stat-val { margin-top: 4px; font-family: var(--su-number); font-size: 17px; font-weight: 500; letter-spacing: -0.075em; line-height: 1.2; }
+  .su-stat-label { font-size: 9px; font-weight: 600; color: var(--su-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .su-stat-val { margin-top: 3px; font-family: var(--su-number); font-size: 15px; font-weight: 500; letter-spacing: -0.065em; line-height: 1.2; }
   .su-stat-val.accent { color: var(--su-accent); }
-  .su-stat-sub { margin-top: 2px; font-size: 8px; font-weight: 500; color: var(--su-ink-3); }
+  .su-stat-sub { margin-top: 1px; font-size: 7px; font-weight: 500; color: var(--su-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .su-stat-sub.warn { color: var(--su-caution); font-weight: 700; }
 
   .su-sechead { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 8px; }
@@ -357,3 +358,257 @@
 @container (min-width: 700px) { .su-roles-back { display: inline-flex; } }
 @media (min-width: 500px) and (max-width: 767px) { .su-device { max-width: 820px; } }
 .su-fab { position: absolute; float: none; bottom: calc(20px + var(--su-safe-bottom)); right: 20px; margin: 0; }
+
+/* ============================== ROLE DETAIL ============================== */
+/* Identity block at the top of the role detail / editor sheet */
+.su-role-identity {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; background: var(--su-surface-raised);
+  border: 1px solid var(--su-line); border-radius: 12px; margin-bottom: 12px;
+}
+.su-role-identity-icon {
+  width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+  background: var(--su-accent-soft); color: var(--su-accent);
+  display: grid; place-items: center;
+}
+.su-role-identity-icon svg { width: 18px; height: 18px; }
+.su-role-identity-body { flex: 1; min-width: 0; }
+.su-role-identity-name {
+  font-size: 15px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.2;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.su-role-identity-desc { font-size: 9px; font-weight: 500; color: var(--su-ink-3); margin-top: 3px; }
+.su-role-meta-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px;
+}
+.su-role-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--su-surface-muted); color: var(--su-ink-2);
+  border-radius: 999px; padding: 3px 8px;
+  font-size: 8px; font-weight: 800; letter-spacing: 0.04em;
+}
+.su-role-badge svg { width: 10px; height: 10px; }
+.su-role-badge.accent { background: var(--su-accent-soft); color: var(--su-accent); }
+
+/* Permission categories — deliberate grouped layout */
+.su-perm-section { margin-top: 12px; }
+.su-perm-section-title {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--su-ink-3); margin-bottom: 6px; padding: 0 2px;
+}
+.su-perm-cat {
+  background: var(--su-surface); border: 1px solid var(--su-line);
+  border-radius: 12px; overflow: hidden; margin-bottom: 8px;
+}
+.su-perm-cat-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid var(--su-line);
+}
+.su-perm-cat-name { font-size: 11px; font-weight: 800; }
+.su-perm-cat-state {
+  font-size: 7px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px;
+}
+.su-perm-cat-state.all { background: var(--su-accent-soft); color: var(--su-accent); }
+.su-perm-cat-state.partial { background: var(--su-caution-soft); color: var(--su-caution); }
+.su-perm-cat-state.none { background: var(--su-surface-muted); color: var(--su-ink-3); }
+.su-perm-actions { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 12px 10px; }
+.su-perm-action-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 9px; font-weight: 700; cursor: pointer;
+  padding: 4px 10px; border-radius: 8px;
+  border: 1px solid var(--su-line); background: var(--su-surface-raised);
+  color: var(--su-ink-2); transition: background .12s ease;
+}
+.su-perm-action-item.active {
+  background: var(--su-accent-soft); color: var(--su-accent);
+  border-color: color-mix(in srgb, var(--su-accent) 30%, transparent);
+  font-weight: 800;
+}
+.su-perm-action-item input { width: 13px; height: 13px; accent-color: var(--su-accent); flex-shrink: 0; }
+
+/* Progressive disclosure — exact permission rows */
+.su-perm-details {
+  margin-top: 12px; border: 1px solid var(--su-line);
+  border-radius: 10px; overflow: hidden;
+}
+.su-perm-details summary {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; font-size: 10px; font-weight: 800; cursor: pointer;
+  color: var(--su-ink-2); list-style: none; user-select: none;
+}
+.su-perm-details summary::-webkit-details-marker { display: none; }
+.su-perm-details summary svg { width: 12px; height: 12px; color: var(--su-ink-3); transition: transform .18s ease; }
+.su-perm-details[open] summary svg { transform: rotate(90deg); }
+.su-perm-details-body { padding: 4px 12px 10px; border-top: 1px solid var(--su-line); }
+
+/* Role holders section */
+.su-role-holders-section { margin-top: 12px; }
+.su-role-holder-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; background: var(--su-surface-raised);
+  border: 1px solid var(--su-line); border-radius: 10px; margin-bottom: 6px;
+}
+
+/* Role action strip */
+.su-role-actions-strip {
+  display: flex; flex-wrap: wrap; gap: 7px;
+  padding-top: 14px; margin-top: 14px;
+  border-top: 1px solid var(--su-line);
+}
+.su-role-action-btn {
+  flex: 1; min-width: 100px; height: 38px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  background: var(--su-surface-muted); color: var(--su-ink);
+  border: 1px solid var(--su-line); transition: background .12s ease;
+}
+.su-role-action-btn:hover { background: var(--su-surface-raised); }
+.su-role-action-btn:active { transform: scale(0.97); }
+.su-role-action-btn svg { width: 12px; height: 12px; }
+.su-role-action-btn.danger { color: var(--su-caution); border-color: color-mix(in srgb, var(--su-caution) 20%, transparent); }
+.su-role-action-btn.danger:hover { background: var(--su-caution-soft); }
+
+/* ============================== MEMBER DETAIL ============================== */
+/* Identity block in member detail sheet — replaces raw grp-row label/value */
+.su-member-profile {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; background: var(--su-surface-raised);
+  border: 1px solid var(--su-line); border-radius: 12px; margin-bottom: 12px;
+}
+.su-member-avatar-lg {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  background: var(--su-surface-muted); color: var(--su-ink-2);
+  display: grid; place-items: center; font-size: 14px; font-weight: 800;
+}
+.su-member-avatar-lg.you { background: var(--su-you-bg); color: var(--su-you-ink); }
+.su-member-profile-info { flex: 1; min-width: 0; }
+.su-member-profile-name { font-size: 14px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.2; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.su-member-profile-email { font-size: 9px; font-weight: 500; color: var(--su-ink-3); margin-top: 3px; overflow-wrap: anywhere; }
+.su-member-profile-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+
+/* Access management section label */
+.su-acc-section { margin-top: 14px; }
+.su-acc-section-title { font-size: 10px; font-weight: 800; color: var(--su-ink-2); margin-bottom: 7px; }
+
+/* Assign/revoke role row — distinct from the raw mrow */
+.su-role-assign-row {
+  width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; border-radius: 10px;
+  background: var(--su-surface-raised); border: 1px solid var(--su-line);
+  margin-top: 7px;
+}
+.su-role-assign-icon {
+  width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--su-accent-soft); color: var(--su-accent);
+}
+.su-role-assign-icon.off { background: var(--su-surface-muted); color: var(--su-ink-3); }
+.su-role-assign-icon svg { width: 15px; height: 15px; }
+.su-role-assign-main { flex: 1; min-width: 0; }
+.su-role-assign-name { font-size: 11px; font-weight: 800; line-height: 1.2; }
+.su-role-assign-meta { font-size: 8px; font-weight: 500; color: var(--su-ink-3); margin-top: 2px; }
+.su-role-assign-act {
+  flex-shrink: 0; height: 30px; padding: 0 12px; border-radius: 10px;
+  font-size: 8px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  background: var(--su-surface-muted); color: var(--su-ink);
+  position: relative;
+}
+.su-role-assign-act::after { content: ''; position: absolute; inset: -7px 0; }
+.su-role-assign-act.revoke { background: color-mix(in srgb, var(--su-caution) 12%, transparent); color: var(--su-caution); }
+
+/* Member dangerous actions */
+.su-member-danger-zone {
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--su-line);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.su-member-danger-btn {
+  width: 100%; height: 40px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 10px; font-weight: 800;
+  background: var(--su-surface-muted); color: var(--su-ink);
+  border: 1px solid var(--su-line); transition: background .12s ease;
+}
+.su-member-danger-btn:hover { background: var(--su-surface-raised); }
+.su-member-danger-btn:active { transform: scale(0.97); }
+.su-member-danger-btn.destructive { color: var(--su-caution); border-color: color-mix(in srgb, var(--su-caution) 20%, transparent); }
+.su-member-danger-btn.destructive:hover { background: var(--su-caution-soft); }
+
+/* ============================== CREATE WORKSPACE / COMPANY FORMS ============================== */
+.su-form-section { margin-top: 14px; }
+.su-form-section-title {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--su-ink-3); margin-bottom: 8px; padding: 0 2px;
+}
+.su-form-card {
+  background: var(--su-surface); border: 1px solid var(--su-line);
+  border-radius: 12px; padding: 14px; overflow: hidden;
+}
+.su-field { margin-top: 12px; }
+.su-field:first-child { margin-top: 0; }
+.su-field label {
+  display: block; margin-bottom: 5px;
+  font-size: 8px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--su-ink-3);
+}
+.su-field input, .su-field select {
+  width: 100%; height: 40px; border: 1px solid var(--su-line-strong); border-radius: 12px;
+  background: var(--su-surface-raised); padding: 0 12px;
+  font-size: 11px; font-weight: 600; outline: none;
+  color: var(--su-ink); font-family: var(--su-font);
+  transition: border-color .15s ease;
+}
+.su-field input:focus, .su-field select:focus { border-color: var(--su-accent); }
+.su-field-hint { margin-top: 5px; font-size: 8px; font-weight: 500; color: var(--su-ink-3); }
+.su-field-err { margin-top: 5px; font-size: 8px; font-weight: 800; color: var(--su-caution); }
+
+/* Logo upload area */
+.su-logo-upload {
+  display: flex; align-items: center; gap: 12px; padding: 12px;
+  background: var(--su-surface-raised); border: 1px dashed var(--su-line-strong);
+  border-radius: 10px; cursor: pointer; transition: border-color .15s;
+}
+.su-logo-upload:hover { border-color: var(--su-accent); }
+.su-logo-placeholder {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--su-surface-muted); display: grid; place-items: center;
+  color: var(--su-ink-3); flex-shrink: 0;
+}
+.su-logo-placeholder svg { width: 20px; height: 20px; }
+.su-logo-text { font-size: 10px; font-weight: 700; color: var(--su-ink-2); }
+.su-logo-hint { font-size: 8px; font-weight: 500; color: var(--su-ink-3); margin-top: 2px; }
+
+/* Floating save FAB for forms */
+.su-fab-float {
+  position: sticky; float: right;
+  bottom: calc(20px + var(--su-safe-bottom));
+  margin: 16px 6px 0 auto; z-index: 30;
+  width: 50px; height: 50px; border-radius: 18px;
+  background: var(--su-accent); color: #fff;
+  display: grid; place-items: center;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--su-accent) 30%, transparent), 0 2px 6px rgba(0,0,0,.12);
+  animation: suFabBounce 2.6s infinite cubic-bezier(0.28, 0.84, 0.42, 1);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.su-fab-float:hover { transform: scale(1.08); box-shadow: 0 8px 28px color-mix(in srgb, var(--su-accent) 38%, transparent); }
+.su-fab-float:active { transform: scale(0.95); }
+.su-fab-float svg { width: 22px; height: 22px; }
+
+/* Create workspace FAB — same gradient as team hub FAB */
+.su-fab-create-ws {
+  position: sticky; float: right;
+  bottom: calc(20px + var(--su-safe-bottom));
+  margin: 12px 6px 0 auto; z-index: 30;
+}
+/* ghost inline create-company button */
+.su-create-inline {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+  height: 40px; border-radius: 10px; margin-top: 10px;
+  font-size: 10px; font-weight: 800; color: var(--su-ink-2);
+  background: var(--su-surface); border: 1px dashed var(--su-line-strong);
+  transition: background .12s ease, border-color .12s ease;
+}
+.su-create-inline:hover { background: var(--su-surface-raised); border-color: var(--su-accent); color: var(--su-accent); }
+.su-create-inline svg { width: 14px; height: 14px; }

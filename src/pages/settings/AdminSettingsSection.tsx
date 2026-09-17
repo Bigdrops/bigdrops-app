@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ShieldCheck, Mail, UserPlus, ChevronRight, ArrowLeft, Search } from 'lucide-react'
+import { ShieldCheck, ShieldOff, Mail, UserPlus, ChevronRight, ArrowLeft, Search, Users, ArrowRightLeft } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { getErrorMessage } from './settings-helpers'
 import type { SettingsSession } from './settings-types'
@@ -233,9 +233,25 @@ export function TeamSettingsSection({ session, team, showRoles, setShowRoles }: 
 
 
       <section className="su-stats" aria-label="Team summary">
-        <div className="su-stat"><div className="su-stat-label">Workspace</div><div className="su-stat-val">{members.length}</div><div className="su-stat-sub">members</div></div>
-        <div className="su-stat"><div className="su-stat-label">Company</div><div className="su-stat-val accent">{rolesLoading ? '…' : rolesError ? '—' : members.filter(member => effectiveByUser.has(member.userId)).length}</div><div className="su-stat-sub">visible access</div></div>
-        <div className="su-stat"><div className="su-stat-label">Pending</div><div className="su-stat-val">{invitationsLoading ? '…' : invitationsError ? '—' : invitations.length}</div><div className="su-stat-sub">invites</div></div>
+        <div className="su-stat">
+          <div className="su-stat-label">Workspace</div>
+          <div className="su-stat-val">{members.length}</div>
+          <div className="su-stat-sub">members</div>
+        </div>
+        <div className="su-stat">
+          <div className="su-stat-label">Company</div>
+          <div className="su-stat-val accent">
+            {rolesLoading ? '…' : rolesError ? '—' : members.filter(member => effectiveByUser.has(member.userId)).length}
+          </div>
+          <div className="su-stat-sub">members</div>
+        </div>
+        <div className="su-stat">
+          <div className="su-stat-label">Pending</div>
+          <div className="su-stat-val">
+            {invitationsLoading ? '…' : invitationsError ? '—' : invitations.length}
+          </div>
+          <div className="su-stat-sub">invites</div>
+        </div>
       </section>
 
       <div className="su-sechead">
@@ -271,39 +287,155 @@ export function TeamSettingsSection({ session, team, showRoles, setShowRoles }: 
       </div>
 
       <SettingsSheet open={!!selectedMember} onClose={() => { if (!roleActionKey) setSelectedMemberId(null) }} title={selectedMember?.name ?? 'Member'} subtitle={selectedMember?.email}>
-        {selectedMember && <div className="space-y-4">
-          <div className="su-grp">
-            <div className="su-grp-row"><span className="su-grp-k">Workspace membership</span><span className="su-grp-v">{selectedMember.role === 'owner' ? 'Owner' : 'Member'}</span></div>
-            <div className="su-grp-row"><span className="su-grp-k">Joined</span><span className="su-grp-v font-mono">{selectedMember.joinedAt ? new Date(selectedMember.joinedAt).toLocaleDateString() : '—'}</span></div>
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold">Roles in {entity?.name ?? 'the active company'}</h3>
-            {!entity ? <p className="text-sm">Select a company to manage roles.</p> : rolesLoading ? <p role="status">Loading access…</p> : rolesError ? <p role="alert">{rolesError}</p> : <>
-              <p className="text-xs text-bd-text-muted">Company access: {memberPairs.length ? 'confirmed by visible permission rows.' : 'not confirmed by visible rows. The server checks company membership before assignment.'}</p>
-              <p className="text-xs text-bd-text-muted">Multiple roles can coexist. Removing one preserves pairs covered by other roles and the company view baseline. Direct grants have no source record and can overlap.</p>
-              <div>
-                {templates.map(template => {
-                  const assigned = memberRoles?.has(template.id) === true
-                  return <div key={template.id} className="su-mrow">
-                    <span className="su-mrow-icon"><ShieldCheck aria-hidden="true" /></span>
-                    <span className="su-mrow-main"><span className="su-mrow-name">{template.name}</span><span className="su-mrow-meta">{assigned ? 'Assigned' : 'Not assigned'} · {template.items.length} permission rows</span></span>
-                    {isOwner && !selectedMember.isCurrentUser && <button type="button" className="su-mrow-act" disabled={!!roleActionKey} onClick={() => void handleToggleRole(selectedMember, template)}>{roleActionKey === `${selectedMember.membershipId}:${template.id}` ? 'Working…' : assigned ? 'Revoke' : 'Assign'}</button>}
-                  </div>
-                })}
-                {!templates.length && <p className="py-3 text-sm">No roles defined yet.</p>}
+        {selectedMember && <div className="space-y-1">
+          {/* ── Identity block ── */}
+          <div className="su-member-profile">
+            <div className={`su-member-avatar-lg${selectedMember.isCurrentUser ? ' you' : ''}`}>
+              {selectedMember.initials}
+            </div>
+            <div className="su-member-profile-info">
+              <div className="su-member-profile-name">
+                {selectedMember.name}
+                {selectedMember.role === 'owner' && <span className="su-pill owner">Owner</span>}
+                {selectedMember.isCurrentUser && <span className="su-pill you">You</span>}
               </div>
-              <details className="rounded-xl border border-bd-border p-3">
-                <summary className="cursor-pointer py-2 text-xs font-bold">Effective permissions · visible rows ({memberPairs.length})</summary>
-                <p className="mb-2 text-xs text-bd-text-muted">These rows determine access, independently of role labels. You can see rows held by you or granted by you; other grants may be hidden. A wildcard (*) covers all resources or actions.</p>
-                <ul className="space-y-1 font-mono text-xs">{memberPairs.map(pair => <li key={`${pair.resource}:${pair.action}`}>{pair.resource} / {pair.action}</li>)}</ul>
-                {!memberPairs.length && <p className="text-xs">No permission rows are visible to you.</p>}
-              </details>
-            </>}
+              <div className="su-member-profile-email">{selectedMember.email}</div>
+              <div className="su-member-profile-badges">
+                <span className="su-role-badge">
+                  <Users size={10} aria-hidden="true" />
+                  {selectedMember.role === 'owner' ? 'Workspace Owner' : 'Workspace Member'}
+                </span>
+                {selectedMember.joinedAt && (
+                  <span className="su-role-badge">
+                    Joined {new Date(selectedMember.joinedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          {isOwner && !selectedMember.isCurrentUser && <div className="space-y-2 border-t border-bd-border pt-3">
-            <Button variant="outline" className="min-h-11 w-full" disabled={transferring} onClick={() => { setSelectedMemberId(null); setTransferMember(selectedMember) }}>Transfer workspace ownership</Button>
-            <Button variant="outline" className="min-h-11 w-full text-destructive" disabled={!!actionId} onClick={() => { setSelectedMemberId(null); setModalMember(selectedMember) }}>Remove from workspace</Button>
-          </div>}
+
+          {/* ── Access management ── */}
+          {!entity ? (
+            <p className="su-ia-note">Select a company to manage roles.</p>
+          ) : rolesLoading ? (
+            <p role="status" className="su-ia-note">Loading access…</p>
+          ) : rolesError ? (
+            <p role="alert" className="su-ia-note" style={{ color: 'var(--su-caution)' }}>{rolesError}</p>
+          ) : (
+            <>
+              {/* Assigned roles */}
+              <div className="su-acc-section">
+                <div className="su-acc-section-title">
+                  Roles in {entity?.name ?? 'the active company'}
+                </div>
+                {(() => {
+                  const held = templates.filter(t => memberRoles?.has(t.id) === true)
+                  return held.length > 0 ? held.map(template => (
+                    <div key={template.id} className="su-role-assign-row">
+                      <span className="su-role-assign-icon">
+                        <ShieldCheck aria-hidden="true" />
+                      </span>
+                      <span className="su-role-assign-main">
+                        <span className="su-role-assign-name">{template.name}</span>
+                        <span className="su-role-assign-meta">
+                          Assigned · {template.items.length} permission{template.items.length !== 1 ? 's' : ''}
+                        </span>
+                      </span>
+                      {isOwner && !selectedMember.isCurrentUser && (
+                        <button
+                          type="button"
+                          className="su-role-assign-act revoke"
+                          disabled={!!roleActionKey}
+                          onClick={() => void handleToggleRole(selectedMember, template)}
+                        >
+                          {roleActionKey === `${selectedMember.membershipId}:${template.id}` ? '…' : 'Revoke'}
+                        </button>
+                      )}
+                    </div>
+                  )) : (
+                    <p className="su-no-access" style={{ margin: '4px 2px 0' }}>No roles assigned yet.</p>
+                  )
+                })()}
+              </div>
+
+              {/* Unassigned roles — assign controls */}
+              {isOwner && !selectedMember.isCurrentUser && (() => {
+                const unassigned = templates.filter(t => memberRoles?.has(t.id) !== true)
+                return unassigned.length > 0 ? (
+                  <div className="su-acc-section">
+                    <div className="su-acc-section-title">Assign a Role</div>
+                    {unassigned.map(template => (
+                      <div key={template.id} className="su-role-assign-row">
+                        <span className="su-role-assign-icon off">
+                          <ShieldOff aria-hidden="true" />
+                        </span>
+                        <span className="su-role-assign-main">
+                          <span className="su-role-assign-name">{template.name}</span>
+                          <span className="su-role-assign-meta">
+                            {template.items.length} permission{template.items.length !== 1 ? 's' : ''}
+                            {template.description ? ` · ${template.description}` : ''}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          className="su-role-assign-act"
+                          disabled={!!roleActionKey}
+                          onClick={() => void handleToggleRole(selectedMember, template)}
+                        >
+                          {roleActionKey === `${selectedMember.membershipId}:${template.id}` ? '…' : 'Assign'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null
+              })()}
+
+              {/* Progressive disclosure: effective permissions */}
+              <details className="su-perm-details" style={{ marginTop: 10 }}>
+                <summary>
+                  <span>Effective permissions · visible rows ({memberPairs.length})</span>
+                  <ChevronRight size={12} aria-hidden="true" />
+                </summary>
+                <div className="su-perm-details-body">
+                  <p style={{ fontSize: 9, color: 'var(--su-ink-3)', marginBottom: 6 }}>
+                    These rows determine access independently of role labels. A wildcard (*) covers all resources or actions.
+                    You can see rows held by you or granted by you; other grants may be hidden.
+                  </p>
+                  <ul style={{ fontFamily: 'var(--su-number)', fontSize: 10, lineHeight: 1.8, listStyle: 'none' }}>
+                    {memberPairs.map(pair => (
+                      <li key={`${pair.resource}:${pair.action}`}>{pair.resource} / {pair.action}</li>
+                    ))}
+                  </ul>
+                  {!memberPairs.length && (
+                    <p style={{ fontSize: 10, color: 'var(--su-ink-3)' }}>No permission rows visible to you.</p>
+                  )}
+                </div>
+              </details>
+
+              {/* ── Dangerous actions ── */}
+              {isOwner && !selectedMember.isCurrentUser && (
+                <div className="su-member-danger-zone">
+                  <button
+                    type="button"
+                    className="su-member-danger-btn"
+                    disabled={transferring}
+                    onClick={() => { setSelectedMemberId(null); setTransferMember(selectedMember) }}
+                  >
+                    <ArrowRightLeft size={14} aria-hidden="true" />
+                    Transfer workspace ownership
+                  </button>
+                  <button
+                    type="button"
+                    className="su-member-danger-btn destructive"
+                    disabled={!!actionId}
+                    onClick={() => { setSelectedMemberId(null); setModalMember(selectedMember) }}
+                  >
+                    Remove from workspace
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>}
       </SettingsSheet>
 
