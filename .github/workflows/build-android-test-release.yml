@@ -36,7 +36,29 @@ jobs:
         with:
           ref: ${{ inputs.ref || github.ref }}
 
-      # ── 2. Compute build metadata ────────────────────────────────────────
+      # ── 2. Compute release tag ───────────────────────────────────────────
+      # For tag-triggered runs: use the triggering tag (already exists).
+      # For workflow_dispatch: generate test-release-run<N> (unique, deterministic).
+      # ponytail: GITHUB_TOKEN-created tags never trigger new workflow runs —
+      # GitHub Actions prevents recursive triggers from GITHUB_TOKEN.
+      - name: Compute release tag
+        id: release_tag
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/test-release-* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            IS_TAG_RUN="true"
+          else
+            TAG_NAME="test-release-run${{ github.run_number }}"
+            IS_TAG_RUN="false"
+          fi
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "is_tag_run=$IS_TAG_RUN" >> "$GITHUB_OUTPUT"
+          echo "────────────── Release Tag ─────────────────"
+          echo "Tag Name    : $TAG_NAME"
+          echo "Is Tag Run  : $IS_TAG_RUN"
+          echo "────────────────────────────────────────────"
+
+      # ── 3. Compute build metadata ────────────────────────────────────────
       - name: Compute build metadata
         id: meta
         run: |
@@ -250,6 +272,8 @@ jobs:
             echo "| VersionName | ${{ steps.meta.outputs.version_name }} |"
             echo "| Commit | ${{ steps.meta.outputs.short_sha }} |"
             echo "| Run | ${{ github.run_number }} |"
+            echo "| Trigger | ${{ steps.release_tag.outputs.is_tag_run == 'true' && 'tag-triggered' || 'manual' }} |"
+            echo "| Release Tag | ${{ steps.release_tag.outputs.tag_name }} |"
             echo "| APK | ${{ steps.find-apk.outputs.apk_name }} |"
             echo "| APK Size | ${{ steps.find-apk.outputs.apk_size }} |"
             echo "| Signing | stable test-release key (secrets) |"
@@ -267,13 +291,33 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
-      # ── 21. Publish GitHub Release on tags ───────────────────────────────
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/test-release-')
+      # ── 21. Create release tag (manual runs only) ───────────────────────
+      # Tag-triggered runs already have their tag. Manual runs generate
+      # test-release-run<N> to avoid requiring local git tag commands.
+      # The tag points to the exact commit that was built (github.sha).
+      - name: Create release tag
+        if: steps.release_tag.outputs.is_tag_run == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG="${{ steps.release_tag.outputs.tag_name }}"
+          # Idempotency: check if tag already exists.
+          if git ls-remote --tags origin "$TAG" | grep -q "$TAG"; then
+            echo "::error::Tag $TAG already exists. This should not happen — run_number is unique per workflow."
+            exit 1
+          fi
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "$TAG"
+          echo "✅ Created tag $TAG → $GITHUB_SHA"
+
+      # ── 22. Publish GitHub Release ──────────────────────────────────────
+      # Tag-triggered: releasing from the triggering tag (already exists).
+      # Manual: releasing from the generated tag (created in step 21).
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.release_tag.outputs.tag_name }}"
           gh release create "$TAG" "${{ steps.find-apk.outputs.apk_path }}" \
             --title "BIGDROPS test release ${{ steps.meta.outputs.version_name }} ($TAG)" \
             --notes "BIGDROPS Android test-release APK. App ID com.bigdrops.app, versionCode ${{ steps.meta.outputs.version_code }}, versionName ${{ steps.meta.outputs.version_name }}. Signed with the stable test-release key. First install over an old random-debug APK may need one final uninstall; later test releases update in place."
