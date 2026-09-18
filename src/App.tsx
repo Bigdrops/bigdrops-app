@@ -24,6 +24,7 @@ import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
 import BiometricGate from '@/components/app/BiometricGate'
 import { useAppUpdate } from '@/hooks/useAppUpdate'
+import { AppUpdateProvider } from '@/contexts/AppUpdateContext'
 import UpdateGate from '@/components/app/UpdateGate'
 import UpdateBanner from '@/components/app/UpdateBanner'
 import { isBiometricLockEnabled } from '@/lib/native/biometric'
@@ -571,6 +572,7 @@ function App() {
   ])
 
   return (
+    <AppUpdateProvider value={appUpdate}>
     <>
       <BrowserRouter>
         <PushNotificationRuntime userId={profile?.id} />
@@ -633,6 +635,7 @@ function App() {
         quickTip={loadingTip?.message ?? null}
       />
     </>
+    </AppUpdateProvider>
   )
 }
 
