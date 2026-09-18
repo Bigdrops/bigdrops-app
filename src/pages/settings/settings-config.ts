@@ -30,6 +30,7 @@ export type ActiveSectionId =
   | 'archives'
   | 'theme'
   | 'security'
+  | 'app-update'
   | 'tenant-debug'
 
 // All sections are live to preserve the 17-destination functional inventory
@@ -103,6 +104,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     id: 'system',
     label: 'System',
     items: [
+      { id: 'app-update', label: 'App Update', icon: Smartphone, desc: 'Check for updates and manage versions' },
       { id: 'tenant-debug', label: 'Tenant Debug', icon: Terminal, desc: 'Platform operator diagnostics', adminOnly: true, operatorOnly: true },
     ],
   },
