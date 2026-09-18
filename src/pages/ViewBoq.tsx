@@ -24,6 +24,7 @@ import { shareDocument } from '@/components/document-view/shared/shareDocument'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './view-boq-actions'
 import { computeBoqTotals } from '@/domain/boq/calculateBoqTotals'
+import { numberToWords } from '@/lib/formatters/money'
 import { normalizeDbBoq } from '@/domain/boq/normalize'
 import { useSettings } from '@/hooks/useSettings'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
@@ -240,6 +241,8 @@ export default function ViewBoq() {
     { label: 'Status', value: boq.status || 'open', tone: boq.status === 'approved' ? 'green' as const : 'amber' as const },
   ]
 
+  const amountInWords = numberToWords(totals.total_selling_price)
+
   return (
     <>
       <DocumentPage
@@ -367,6 +370,7 @@ export default function ViewBoq() {
         <BoqViewPage
           document={docProps}
           metrics={metrics}
+          amountInWords={amountInWords}
           preview={<BoqPreview boq={boq} />}
           onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
           onEdit={() => navigate(`/boqs/edit/${id}`)}
