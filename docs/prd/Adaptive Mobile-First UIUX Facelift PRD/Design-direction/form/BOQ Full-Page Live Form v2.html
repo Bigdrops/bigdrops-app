@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — BOQ Full-Page Live Form v2 (Compact Workbench)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* === Locked Slate Navy tokens (from CSR/Waybill live forms) === */
+  :root{
+    --ink:#0f172a; --sub:#475569; --faint:#94a3b8; --line:rgba(15,23,42,0.08);
+    --bg:#f0f4f8; --card:#ffffff; --soft:#f8fafc; --accent:#1e3a5f;
+    --red:#ef4444; --green:#16a34a; --mono:'DM Mono',monospace;
+    --shadow-card:0 12px 28px rgba(30,58,95,0.08),0 2px 6px rgba(15,23,42,0.04);
+    --shell-max:430px; --row-px:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  input,select,textarea{outline:none}
+  svg{display:block}
+  .wrap{max-width:var(--shell-max);margin:0 auto;padding:12px var(--row-px) 108px}
+
+  /* === Shared primitives (mirrors CSR/Waybill live forms) === */
+  .card{background:var(--card);border-radius:18px;border:1px solid var(--line);padding:12px;box-shadow:var(--shadow-card)}
+  section.card{margin-top:12px}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .sec{display:flex;align-items:center;gap:6px}
+  .sec h2{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+  .mono{font-family:var(--mono)}
+  .lb{display:block;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+  .fld{width:100%;height:44px;padding:0 12px;border-radius:12px;border:1px solid rgba(15,23,42,.14);background:var(--soft);font-size:12px;font-weight:600;transition:background .15s,box-shadow .15s}
+  .fld:focus{background:#fff;box-shadow:0 0 0 2px var(--accent)}
+  .fld::placeholder{color:var(--faint);font-weight:600}
+  textarea.fld{height:auto;min-height:72px;padding:9px 12px;resize:none;font-weight:700;font-size:11px;line-height:1.5}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .sb{display:flex;flex-direction:column;gap:10px}
+  .rowhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;min-height:32px}
+  .pill{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.04em}
+
+  /* === Top bar === */
+  .topbar{display:flex;align-items:center;justify-content:center;padding:2px 0 8px;border-bottom:1px solid var(--line);margin-bottom:4px;position:relative;min-height:44px}
+  .topbar .back{position:absolute;left:0;display:flex;align-items:center;gap:4px;color:var(--sub);font-size:11px;font-weight:800;background:none;border:0;min-height:44px;padding:0 4px;transition:transform .12s}
+  .topbar .back:active{transform:scale(.96)}
+  .topbar h1{font-size:13px;font-weight:800;letter-spacing:-.02em}
+  .topbar .badge{position:absolute;right:0;font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+
+  /* === Overflow menu (destructive actions demoted) === */
+  .more-wrap{position:absolute;right:0;top:44px;background:#fff;border-radius:14px;border:1px solid var(--line);box-shadow:0 18px 40px rgba(30,58,95,.2);padding:6px;display:none;z-index:45;min-width:190px}
+  .more-wrap.show{display:block}
+  .mi{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 10px;border:0;background:none;border-radius:10px;font-size:11px;font-weight:700;color:var(--ink);text-align:left;transition:background .12s}
+  .mi:hover{background:var(--soft)}
+  .mi.danger{color:var(--red)}
+
+  /* === SECTION BANNER (dark gradient) === */
+  .secrow{display:flex;align-items:center;gap:8px;background:linear-gradient(115deg,#0f172a,#1e3a5f 55%,#334155);border-radius:14px;padding:8px 12px;min-height:48px}
+  .secrow .st{flex:1;background:none;border:0;color:#fff;font-size:12px;font-weight:700;letter-spacing:-.01em;min-width:0}
+  .secrow .st::placeholder{color:rgba(255,255,255,.55)}
+  .secrow .cnt{font-family:var(--mono);font-size:9px;color:#cbd5e1;flex-shrink:0}
+  .secbtn{width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,transform .12s}
+  .secbtn:hover{background:rgba(255,255,255,.2)}
+  .secbtn:active{transform:scale(.93)}
+  .secbtn.danger:hover{background:rgba(239,68,68,.6)}
+
+  /* === COMPACT ITEM ROW (scanning state) === */
+  .crow{position:relative;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:14px;padding:8px 10px;min-height:60px;cursor:pointer;transition:border-color .15s,transform .12s,box-shadow .15s}
+  .crow:hover{border-color:rgba(30,58,95,.35)}
+  .crow:active{transform:scale(.985)}
+  .crow.err{border-color:var(--red);box-shadow:0 0 0 2px rgba(239,68,68,.18)}
+  .crow .cbtn{position:absolute;top:-8px;right:-8px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;border:2px solid #fff;display:none;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(15,23,42,.28);z-index:2}
+  .manage .crow .cbtn{display:flex}
+  .cstack{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .idx{width:22px;height:22px;border-radius:6px;background:#e2e8f0;font-family:var(--mono);font-weight:600;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  .cmain{min-width:0;display:flex;flex-direction:column;gap:2px}
+  .cdesc{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cmeta{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--sub)}
+  .cmeta .sep{color:var(--faint)}
+  .chips{display:flex;gap:4px;margin-top:1px}
+  .chip{font-size:8px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:var(--soft);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  .cval{text-align:right;flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+  .csp{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+  .cpf{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--green);letter-spacing:-.01em}
+  .cpf.neg{color:var(--red)}
+
+  /* === Toolbar === */
+  .toolbar{display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .tbn{height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;transition:background .15s,transform .12s;color:var(--ink)}
+  .tbn:hover{background:#e2e8f0}
+  .tbn:active{transform:scale(.96)}
+  .tbn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  /* === Totals === */
+  .sumline{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--sub);font-weight:600;padding:6px 0}
+  .sumline b{font-family:var(--mono);font-weight:600;font-size:12px;color:var(--ink)}
+  .sumtotal{display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);margin-top:6px;padding-top:9px}
+  .sumtotal small{display:block;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumtotal b{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:-.04em;color:var(--accent)}
+  .sumtotal .gp b{color:var(--green)}
+  .words{margin-top:9px;padding:8px 11px;border:1px dashed var(--line);border-radius:8px;background:var(--soft);font-size:9.5px;font-style:italic;color:var(--sub);line-height:1.55}
+
+  /* === FAB (no perpetual halo) === */
+  .fab{position:fixed;right:14px;bottom:calc(20px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:18px;border:0;color:#fff;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e3a5f,#0f172a);box-shadow:0 18px 40px rgba(30,58,95,.28),0 3px 9px rgba(15,23,42,.12);transition:transform .12s;z-index:40}
+  .fab:active{transform:scale(.9)}
+  .fab.saved{background:linear-gradient(135deg,#16a34a,#0f6e33)}
+
+  /* === Bottom sheet (focused editor / pickers) === */
+  .ov{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(2px);display:none;align-items:flex-end;z-index:50}
+  .ov.center{align-items:center;justify-content:center;padding:14px}
+  .ov.show{display:flex}
+  .sheet{width:100%;max-width:430px;margin:0 auto;background:#fff;border-radius:24px 24px 0 0;max-height:82vh;display:flex;flex-direction:column;padding:14px;gap:12px;box-shadow:0 -16px 40px rgba(0,0,0,.24);animation:up .18s ease-out;overflow-y:auto}
+  @keyframes up{from{transform:translateY(50px);opacity:.5}to{transform:none;opacity:1}}
+  .grab{width:34px;height:4px;border-radius:99px;background:#cbd5e1;margin:0 auto 2px;flex-shrink:0}
+  .shd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid rgba(15,23,42,.07)}
+  .shd b{font-size:12px;font-weight:800;letter-spacing:.04em}
+  .shd small{display:block;font-size:9px;color:var(--sub);margin-top:2px}
+  .x{width:36px;height:36px;border-radius:50%;background:#e2e8f0;border:0;display:flex;align-items:center;justify-content:center;color:var(--sub);flex-shrink:0}
+  .x:hover{color:var(--red)}
+  .cta{width:100%;height:46px;border-radius:12px;border:0;color:#fff;font-size:10px;font-weight:800;letter-spacing:.065em;text-transform:uppercase;background:linear-gradient(135deg,#1e3a5f,#0f172a);transition:transform .12s;flex-shrink:0}
+  .cta:active{transform:scale(.97)}
+  .choice{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:52px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--soft);text-align:left;transition:border-color .15s,background .15s,transform .12s}
+  .choice:hover{border-color:var(--accent);background:#fff}
+  .choice:active{transform:scale(.97)}
+  .choice b{display:block;font-size:12px;font-weight:800}
+  .choice small{display:block;font-size:9px;color:var(--sub);margin-top:1px}
+  .colrow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:56px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+  .colrow b{font-size:11px;font-weight:700;display:block}
+  .colrow small{font-size:9px;color:var(--sub);display:block;margin-top:1px}
+  .always{font-size:7px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);background:#e2e8f0;border-radius:5px;padding:2px 5px;margin-left:4px}
+  .sw{position:relative;width:50px;height:30px;border-radius:99px;border:0;background:#cbd5e1;transition:background .16s;flex-shrink:0}
+  .sw::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .16s}
+  .sw.on{background:var(--accent)}
+  .sw.on::after{transform:translateX(20px)}
+  .sw:disabled{opacity:.45;cursor:not-allowed}
+  .note{font-size:9px;color:var(--sub);line-height:1.55;background:var(--soft);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
+  .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);z-index:60;background:var(--ink);color:#f0f4f8;font-size:10px;font-weight:700;padding:9px 15px;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.3);max-width:85vw;display:none}
+  .toast.show{display:block;animation:up .15s ease-out}
+  .toast.err{border:1px solid rgba(239,68,68,.45)}
+  .empty{padding:18px;text-align:center;font-size:10px;font-weight:700;color:var(--faint);border:1px dashed var(--line);border-radius:12px}
+
+  /* === ADAPTIVE TIERS (foldAwareness data attributes, grow/shrink only) === */
+  /* phone = source design; tablet/desktop adapt the same IA */
+  @media (min-width:600px){ :root{--shell-max:720px} .g2{grid-template-columns:1fr 1fr 1fr} .wrap{padding-left:24px;padding-right:24px} }
+  @media (min-width:1200px){ :root{--shell-max:960px} .g2{grid-template-columns:1fr 1fr 1fr 1fr} }
+  /* candidate: desktop keeps the same stacked flow, wider cards, hover affordances */
+  @media (min-width:1200px){
+    .crow:hover{box-shadow:0 6px 16px rgba(30,58,95,.12)}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <button class="back" onclick="toast('Back to BOQs')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      BOQs
+    </button>
+    <h1>Bill of Quantities</h1>
+    <span class="badge" id="modeBadge">Draft</span>
+  </div>
+
+  <!-- 1. DOCUMENT DETAILS — fields map 1:1 to the live Boq model -->
+  <section class="card">
+    <div class="rowhd">
+      <div class="sec"><span class="dot" style="background:var(--accent)"></span><h2>1. Document Details</h2></div>
+      <span class="pill" id="boqNoLabel">BOQ-2026-0142</span>
+    </div>
+    <div class="sb">
+      <div>
+        <label class="lb" for="fTitle">BOQ Title <span class="always">*</span></label>
+        <input class="fld" id="fTitle" value="Renovation Materials Schedule" placeholder="BOQ title">
+      </div>
+      <div class="g2">
+        <div>
+          <label class="lb" for="fNo">BOQ Number <span style="color:var(--red)">*</span></label>
+          <input class="fld mono" id="fNo" style="font-size:12px" value="BOQ-2026-0142" oninput="syncNo()">
+        </div>
+        <div>
+          <label class="lb" for="fDate">Issue Date</label>
+          <input class="fld mono" id="fDate" type="date" value="2026-09-17" style="font-size:12px">
+        </div>
+      </div>
+      <div>
+        <label class="lb" for="fVendor">Vendor Name</label>
+        <input class="fld" id="fVendor" value="Test Construction Vendor Ltd" placeholder="Supplier or contractor">
+      </div>
+      <div>
+        <label class="lb" for="fRef">Vendor Contact</label>
+        <input class="fld" id="fRef" value="REF-D2-001" placeholder="Optional contact / reference">
+      </div>
+      <div>
+        <label class="lb" for="fNotes">Notes</label>
+        <textarea class="fld" id="fNotes" rows="2" placeholder="Optional BOQ notes">Delivered pricing valid for 30 days.</textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. LINE ITEMS (compact workbench) -->
+  <section class="card">
+    <div class="rowhd" style="margin-bottom:6px">
+      <div class="sec"><span class="dot" style="background:var(--green)"></span><h2>2. Line Items</h2></div>
+      <span class="pill" id="countLabel"></span>
+    </div>
+    <div class="toolbar">
+      <button class="tbn primary" onclick="openSheet('add')">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+        Add
+      </button>
+      <button class="tbn" onclick="openSheet('columns')">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M10.3 4.3c.4-1.7 2.9-1.7 3.3 0a1.7 1.7 0 002.6 1c1.5-.9 3.3.9 2.4 2.4a1.7 1.7 0 001 2.6c1.8.4 1.8 2.9 0 3.3a1.7 1.7 0 00-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 00-2.6 1c-.4 1.8-2.9 1.8-3.3 0a1.7 1.7 0 00-2.6-1c-1.5.9-3.3-.9-2.4-2.4a1.7 1.7 0 00-1-2.6c-1.8-.4-1.8-2.9 0-3.3a1.7 1.7 0 001-2.6c-.9-1.5.8-3.3 2.4-2.4.9.6 2.3.1 2.6-1z"/><circle cx="12" cy="12" r="2.6"/></svg>
+        Columns
+      </button>
+      <button class="tbn" id="manageBtn" onclick="toggleManage()" aria-pressed="false">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span id="manageLbl">Manage</span>
+      </button>
+    </div>
+    <div id="rows" class="sb" style="gap:8px"></div>
+    <button class="addline" onclick="openSheet('add')" style="width:100%;height:46px;margin-top:10px;border-radius:12px;border:1px dashed rgba(15,23,42,.16);background:none;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:6px">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+      Add line item
+    </button>
+  </section>
+
+  <!-- 3. TOTALS — locked set only (no margin) -->
+  <section class="card">
+    <div class="rowhd">
+      <div class="sec"><span class="dot" style="background:var(--accent)"></span><h2>3. Totals</h2></div>
+      <span class="pill">CP / SP \u00B7 no VAT \u00B7 no WHT</span>
+    </div>
+    <div class="sumline"><span>Total Cost (CP \u00D7 Qty)</span><b id="tCost">\u20A60</b></div>
+    <div class="sumline"><span>Total Selling Price (SP \u00D7 Qty)</span><b id="tSell">\u20A60</b></div>
+    <div class="sumtotal">
+      <div><small>Gross Profit</small><b id="tProfit" style="color:var(--green)">\u20A60</b></div>
+    </div>
+    <div class="words" id="tWords"></div>
+  </section>
+
+</div>
+
+<!-- Save FAB — no perpetual halo; feedback via state color + toast -->
+<button class="fab" id="fab" onclick="save()" title="Save Bill of Quantities" aria-label="Save BOQ">
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" id="fabIcon"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+</button>
+
+<!-- FOCUSED ROW EDITOR (bottom sheet) -->
+<div class="ov" id="ovEdit">
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b id="edTitle">Edit Item</b><small id="edSub"></small></div>
+      <button class="x" onclick="closeEdit()"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="sb" style="gap:10px">
+      <div>
+        <label class="lb" for="eDesc">Description <span style="color:var(--red)">*</span></label>
+        <textarea class="fld" id="eDesc" rows="2"></textarea>
+      </div>
+      <div id="eSpecWrap">
+        <label class="lb" for="eSpec">Specification</label>
+        <textarea class="fld" id="eSpec" rows="2"></textarea>
+      </div>
+      <div class="g2">
+        <div>
+          <label class="lb" for="eQty">Quantity <span style="color:var(--red)">*</span></label>
+          <input class="fld mono" id="eQty" type="number" min="0" style="font-size:12px">
+        </div>
+        <div>
+          <label class="lb" for="eUnit">Unit</label>
+          <input class="fld" id="eUnit" placeholder="BAG, M, PCS">
+        </div>
+      </div>
+      <div id="eMakeWrap">
+        <label class="lb" for="eMake">Make / Brand</label>
+        <input class="fld" id="eMake" placeholder="Optional">
+      </div>
+      <div class="g2">
+        <div id="eCpWrap">
+          <label class="lb" for="eCp">CP (Cost Price)</label>
+          <input class="fld mono" id="eCp" type="number" min="0" style="font-size:12px">
+        </div>
+        <div id="eSpWrap">
+          <label class="lb" for="eSp">SP (Selling Price) <span style="color:var(--red)">*</span></label>
+          <input class="fld mono" id="eSp" type="number" min="0" style="font-size:12px">
+        </div>
+      </div>
+      <div class="profit" style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(130deg,#0f172a,#1e293b);border-radius:12px;padding:9px 12px">
+        <span style="font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#f1f5f9;opacity:.85">Derived Line Profit \u2014 read only</span>
+        <b class="mono" id="eProfit" style="font-size:14px;color:#f1f5f9">\u20A60</b>
+      </div>
+    </div>
+    <button class="cta" onclick="closeEdit()">Done</button>
+  </div>
+</div>
+
+<!-- ADD CHOOSER -->
+<div class="ov" id="ovAdd">
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Add to Schedule</b><small>Appends to the end of the rows</small></div>
+      <button class="x" onclick="closeSheet('add')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <button class="choice" onclick="addItem()">
+      <span><b>Item Row</b><small>Description, qty, unit, CP / SP</small></span>
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--faint)"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <button class="choice" onclick="addSection()">
+      <span><b>Section Header</b><small>Groups the item rows below it</small></span>
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--faint)"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- COLUMN MANAGER -->
+<div class="ov" id="ovColumns">
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Row Columns</b><small>Item-row field visibility in this form</small></div>
+      <button class="x" onclick="closeSheet('columns')"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="sb" style="gap:6px" id="colList"></div>
+    <div class="note"><b>Unresolved semantics \u2014 marked, not settled.</b> The live model stores per-column <span class="mono">visible</span> flags that the row editor consumes. Whether editor visibility must also drive the BOQ PDF is NOT SPECIFIED in the PRD; this prototype changes editor fields only.</div>
+    <button class="cta" onclick="closeSheet('columns')">Done</button>
+  </div>
+</div>
+
+<!-- CLEAR CONFIRM (destructive, demoted) -->
+<div class="ov center" id="ovClear">
+  <div style="width:min(100%,320px);background:#fff;border-radius:18px;padding:16px;box-shadow:var(--shadow-card);text-align:left">
+    <b style="font-size:13px;font-weight:800">Clear all rows?</b>
+    <p style="font-size:10px;color:var(--sub);margin-top:6px;line-height:1.55">This removes every section and item row from this BOQ. This cannot be undone.</p>
+    <div style="display:flex;justify-content:flex-end;gap:4px;margin-top:14px">
+      <button class="mi" style="color:var(--sub)" onclick="closeSheet('clear')">Cancel</button>
+      <button class="tbn danger" style="border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:var(--red)" onclick="doClearAll()">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const naira = n => '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const svgs = {
+  x: '<svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>',
+  drag: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>'
+};
+
+/* Column semantics mirror the live TableDocumentColumn model: { key, label, visible }. */
+/* CP/SP visible flags exist in the live model; Specification/Make toggle here. */
+let cols = [
+  { key: 'specification', label: 'Specification', desc: 'Technical details / material notes', visible: true },
+  { key: 'make_brand', label: 'Make / Brand', desc: 'Preferred supplier brand', visible: true },
+  { key: 'cp', label: 'CP (Cost Price)', desc: 'Feeds Total Cost \u00B7 derived Profit', visible: true },
+  { key: 'sp', label: 'SP (Selling Price)', desc: 'Feeds Total Selling Price and Amount in Words', visible: true },
+];
+
+let rows = [];
+let seq = 1000, editId = null, errId = null, manage = false, dirty = false;
+
+function blank(over) {
+  return Object.assign({ id: ++seq, type: 'item', description: '', specification: '', quantity: 1, unit: '', make_brand: '', cp: 0, sp: 0 }, over);
+}
+function seed() {
+  const S = (t) => ({ id: ++seq, type: 'section', section_title: t });
+  rows = [
+    S('Section A \u2014 Civil Works'),
+    blank({ description: 'Portland cement, grade 42.5R', specification: 'BS EN 197-1 CEM I, 50kg bag', quantity: 400, unit: 'bags', make_brand: 'Dangote 3X', cp: 5200, sp: 6100 }),
+    blank({ description: 'Reinforcement steel, high yield T12', specification: 'BS4449 B500B, 12m lengths', quantity: 120, unit: 'lengths', make_brand: 'African Foundries', cp: 9800.75, sp: 11500 }),
+    blank({ description: 'Sharp sand, river dredged', quantity: 30, unit: 'trips', make_brand: 'Local', cp: 28000, sp: 33500 }),
+    blank({ description: 'Granite chippings 3/4 inch', specification: 'Cleared, well graded', quantity: 45, unit: 'tons', make_brand: 'Quarry Direct', cp: 42000, sp: 49500 }),
+    S('Section B \u2014 Blockwork & Concrete'),
+    blank({ description: '9 inch hollow sandcrete blocks', quantity: 2200, unit: 'pcs', make_brand: 'Block Industry', cp: 850, sp: 1050 }),
+    blank({ description: 'Ready-mix concrete C20', specification: 'Pumped to slab', quantity: 28, unit: 'm\u00B3', make_brand: 'Lafarge', cp: 78000, sp: 92000 }),
+    blank({ description: 'BRC mesh A142', quantity: 60, unit: 'sheets', cp: 18500, sp: 22500 }),
+    S('Section C \u2014 Finishes'),
+    blank({ description: 'Emulsion paint, 20L pail', specification: 'Interior, white base', quantity: 18, unit: 'pails', make_brand: 'Dulux', cp: 41000, sp: 48500 }),
+    blank({ description: 'Porcelain floor tiles 600\u00D7600', quantity: 320, unit: 'm\u00B2', make_brand: 'Goodwill', cp: 9500, sp: 11800 }),
+    blank({ description: 'PVC ceiling panels', quantity: 140, unit: 'pcs', cp: 6500, sp: 8200 }),
+    blank({ description: 'Aluminium flashing 0.9mm', quantity: 85, unit: 'm', make_brand: 'Alumaco', cp: 5200, sp: 6400 }),
+    S('Section D \u2014 Electrical & Mechanical'),
+    blank({ description: 'MCB distribution board 12-way', quantity: 6, unit: 'pcs', make_brand: 'Schneider', cp: 68000, sp: 82000 }),
+    blank({ description: 'Copper cable 4mm\u00B2 single core', specification: 'FR PVC insulated', quantity: 450, unit: 'm', make_brand: 'Nexans', cp: 1150, sp: 1480 }),
+    blank({ description: 'LED panel light 36W', quantity: 95, unit: 'pcs', cp: 14500, sp: 18200 }),
+    blank({ description: '1.5HP split-unit AC', specification: 'R410A, incl. install kit', quantity: 9, unit: 'units', make_brand: 'Daikin', cp: 385000, sp: 465000 }),
+    blank({ description: 'Exhaust fan 12 inch', quantity: 7, unit: 'pcs', cp: 32000, sp: 39500 }),
+    S('Section E \u2014 Labour & Prelims'),
+    blank({ description: 'Mason \u2014 day rate', quantity: 60, unit: 'days', cp: 9000, sp: 12000 }),
+    blank({ description: 'Site welfare & setup', quantity: 1, unit: 'lot', cp: 350000, sp: 480000 }),
+    blank({ description: 'Water supply \u2014 production', quantity: 1, unit: 'lot', cp: 120000, sp: 165000 }),
+  ];
+}
+seed();
+
+const profit = r => (Number(r.sp || 0) - Number(r.cp || 0)) * Number(r.qty || 0);
+const lineSell = r => Number(r.sp || 0) * Number(r.qty || 0);
+const vis = k => { const c = cols.find(x => x.key === k); return c ? c.visible : true; };
+
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function renderRows() {
+  const host = document.getElementById('rows');
+  const items = rows.filter(r => r.type === 'item');
+  document.getElementById('countLabel').textContent = items.length + ' items \u00B7 ' + (rows.length - items.length) + ' sections';
+  if (!rows.length) { host.innerHTML = '<div class="empty">No rows yet \u2014 use Add to start the schedule.</div>'; return; }
+  let n = 0;
+  host.innerHTML = rows.map((r, i) => {
+    if (r.type === 'section') {
+      let count = 0;
+      for (let j = i + 1; j < rows.length && rows[j].type === 'item'; j++) count++;
+      return `<div class="secrow" data-sec="${r.id}">
+        <input class="st" value="${esc(r.section_title)}" placeholder="Section title" onchange="editField(${r.id},'section_title',this.value)">
+        <small class="cnt">${count} rows</small>
+        <button class="secbtn" title="Section actions" onclick="openSectionSheet(${r.id})" aria-label="Section actions">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </button>
+      </div>`;
+    }
+    n++;
+    const hasMeta = (r.specification && vis('specification')) || (r.make_brand && vis('make_brand'));
+    return `<div class="crow${errId === r.id ? ' err' : ''}" data-id="${r.id}" role="button" tabindex="0" aria-label="Row ${n}: ${esc(r.description)}. ${r.quantity} ${esc(r.unit)}, selling ${naira(lineSell(r))}. Tap to edit." onclick="openEdit(${r.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${r.id})}">
+      <button class="cbtn" title="Remove row" aria-label="Remove row ${n}" onclick="event.stopPropagation();removeRow(${r.id})">${svgs.x}</button>
+      <div class="cstack"><span class="idx">${String(n).padStart(2, '0')}</span></div>
+      <div class="cmain">
+        <div class="cdesc">${esc(r.description) || '<span style="color:var(--faint)">Untitled item</span>'}</div>
+        <div class="cmeta"><span>${r.quantity || 0} ${esc(r.unit)}</span><span class="sep">\u00B7</span><span class="mono">${naira(Number(r.cp || 0))} \u2192 ${naira(Number(r.sp || 0))}</span></div>
+        ${hasMeta ? `<div class="chips">${r.specification && vis('specification') ? '<span class="chip">spec</span>' : ''}${r.make_brand && vis('make_brand') ? '<span class="chip">' + esc(r.make_brand.split(' ')[0]).slice(0, 10) + '</span>' : ''}</div>` : ''}
+      </div>
+      <div class="cval">
+        <span class="csp">${naira(lineSell(r))}</span>
+        <span class="cpf${profit(r) < 0 ? ' neg' : ''}">+${naira(profit(r)).replace('\u20A6', '')}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTotals() {
+  let cost = 0, sell = 0;
+  rows.forEach(r => { if (r.type === 'item') { cost += Number(r.cp || 0) * Number(r.qty || 0); sell += Number(r.sp || 0) * Number(r.qty || 0); } });
+  document.getElementById('tCost').textContent = naira(cost);
+  document.getElementById('tSell').textContent = naira(sell);
+  document.getElementById('tProfit').textContent = naira(sell - cost);
+  document.getElementById('tWords').textContent = words(sell);
+}
+
+function words(num) {
+  if (!num) return 'ZERO NAIRA ONLY';
+  const a = ['', 'ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'];
+  const b = ['', '', 'TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+  const c = x => x < 20 ? a[x] : x < 100 ? b[Math.floor(x/10)] + (x % 10 ? ' ' + a[x % 10] : '') : x < 1000 ? a[Math.floor(x/100)] + ' HUNDRED' + (x % 100 ? ' ' + c(x % 100) : '') : x < 1e6 ? c(Math.floor(x/1000)) + ' THOUSAND' + (x % 1000 ? ' ' + c(x % 1000) : '') : x < 1e9 ? c(Math.floor(x/1e6)) + ' MILLION' + (x % 1e6 ? ' ' + c(x % 1e6) : '') : c(Math.floor(x/1e9)) + ' BILLION' + (x % 1e9 ? ' ' + c(x % 1e9) : '');
+  const w = Math.floor(num), k = Math.round((num - w) * 100);
+  return c(w) + ' NAIRA' + (k ? ' AND ' + c(k) + ' KOBO' : '') + ' ONLY';
+}
+
+function renderCols() {
+  document.getElementById('colList').innerHTML = cols.map((c, i) => `
+    <div class="colrow">
+      <div style="min-width:0"><b>${esc(c.label)}</b><small>${esc(c.desc)}</small></div>
+      <button class="sw ${c.visible ? 'on' : ''}" role="switch" aria-checked="${c.visible}" aria-label="Show ${esc(c.label)}" onclick="toggleCol(${i})"></button>
+    </div>`).join('');
+}
+
+function render() { renderRows(); renderTotals(); }
+
+function markDirty() {
+  dirty = true;
+  document.getElementById('modeBadge').textContent = 'Editing\u2026';
+  document.getElementById('modeBadge').style.color = 'var(--accent)';
+}
+
+function editField(id, key, val) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  r[key] = val;
+  markDirty(); renderTotals(); renderRows();
+}
+
+/* --- focused editor --- */
+function openEdit(id) {
+  const r = rows.find(x => x.id === id);
+  if (!r || r.type !== 'item') return;
+  editId = id;
+  document.getElementById('edTitle').textContent = 'Edit Item';
+  document.getElementById('edSub').textContent = 'Row ' + (rows.filter(x => x.type === 'item' && rows.indexOf(x) <= rows.indexOf(r)).length) + ' \u00B7 changes apply when you tap Done';
+  document.getElementById('eDesc').value = r.description;
+  document.getElementById('eSpec').value = r.specification || '';
+  document.getElementById('eQty').value = r.quantity;
+  document.getElementById('eUnit').value = r.unit || '';
+  document.getElementById('eMake').value = r.make_brand || '';
+  document.getElementById('eCp').value = r.cp;
+  document.getElementById('eSp').value = r.sp;
+  document.getElementById('eSpecWrap').style.display = vis('specification') ? '' : 'none';
+  document.getElementById('eMakeWrap').style.display = vis('make_brand') ? '' : 'none';
+  document.getElementById('eCpWrap').style.display = vis('cp') ? '' : 'none';
+  document.getElementById('eSpWrap').style.display = vis('sp') ? '' : 'none';
+  updProfit();
+  document.getElementById('ovEdit').classList.add('show');
+}
+function updProfit() {
+  const p = (Number(document.getElementById('eSp').value || 0) - Number(document.getElementById('eCp').value || 0)) * Number(document.getElementById('eQty').value || 0);
+  document.getElementById('eProfit').textContent = naira(p);
+}
+['eCp','eSp','eQty'].forEach(id => document.addEventListener('input', e => { if (e.target.id === id) updProfit(); }));
+function closeEdit() {
+  if (editId == null) return;
+  const r = rows.find(x => x.id === editId);
+  if (r) {
+    r.description = document.getElementById('eDesc').value;
+    r.specification = document.getElementById('eSpec').value;
+    r.quantity = Number(document.getElementById('eQty').value) || 0;
+    r.unit = document.getElementById('eUnit').value;
+    r.make_brand = document.getElementById('eMake').value;
+    r.cp = Number(document.getElementById('eCp').value) || 0;
+    r.sp = Number(document.getElementById('eSp').value) || 0;
+  }
+  editId = null;
+  document.getElementById('ovEdit').classList.remove('show');
+  markDirty(); render();
+}
+
+/* --- row management --- */
+function openSectionSheet(id) {
+  const i = rows.findIndex(x => x.id === id);
+  const after = rows.slice(i + 1).findIndex(x => x.type === 'section');
+  const insertAt = after === -1 ? rows.length : i + 1 + after;
+  rows.splice(insertAt, 0, blank());
+  markDirty(); render();
+  toast('Item inserted after section');
+  const el = document.querySelector(`[data-id="${rows[insertAt].id}"]`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function toggleManage() {
+  manage = !manage;
+  document.getElementById('manageLbl').textContent = manage ? 'Done' : 'Manage';
+  document.getElementById('manageBtn').setAttribute('aria-pressed', String(manage));
+  document.getElementById('manageBtn').style.borderColor = manage ? 'var(--accent)' : '';
+  document.getElementById('manageBtn').style.color = manage ? 'var(--accent)' : '';
+  renderRows();
+  toast(manage ? 'Manage mode: red button deletes a row' : 'Manage mode off');
+}
+function removeRow(id) {
+  const r = rows.find(x => x.id === id);
+  rows = rows.filter(x => x.id !== id);
+  markDirty(); render();
+  toast((r && r.type === 'section' ? 'Section removed' : 'Row deleted'));
+}
+function moveRow(id, dir) {
+  const i = rows.findIndex(x => x.id === id);
+  const j = i + dir;
+  if (j < 0 || j >= rows.length) return;
+  [rows[i], rows[j]] = [rows[j], rows[i]];
+  markDirty(); render();
+}
+function dupRow(id) {
+  const i = rows.findIndex(x => x.id === id);
+  rows.splice(i + 1, 0, { ...rows[i], id: ++seq, description: rows[i].description + ' (copy)' });
+  markDirty(); render(); toast('Row duplicated');
+}
+function insertBelow(id) {
+  const i = rows.findIndex(x => x.id === id);
+  rows.splice(i + 1, 0, blank());
+  markDirty(); render(); toast('Blank row inserted below');
+  const el = document.querySelector(`[data-id="${rows[i + 1].id}"]`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function addItem() { rows.push(blank()); closeSheet('add'); markDirty(); render(); toast('Item row added'); }
+function addSection() { rows.push({ id: ++seq, type: 'section', section_title: 'New Section' }); closeSheet('add'); markDirty(); render(); toast('Section header added'); }
+function doClearAll() { rows = []; closeSheet('clear'); markDirty(); render(); toast('All rows cleared'); }
+
+/* --- columns --- */
+function toggleCol(i) {
+  cols[i].visible = !cols[i].visible;
+  renderCols(); renderRows();
+  if (editId != null) openEdit(editId);
+  toast(cols[i].label + (cols[i].visible ? ' shown in the row editor' : ' hidden in the row editor'));
+}
+
+/* --- sheets --- */
+function openSheet(name) {
+  if (name === 'columns') renderCols();
+  document.getElementById('ov' + name[0].toUpperCase() + name.slice(1)).classList.add('show');
+}
+function closeSheet(name) { document.getElementById('ov' + name[0].toUpperCase() + name.slice(1)).classList.remove('show'); }
+
+/* --- save with transient feedback, validation teleports to the bad row --- */
+function save() {
+  if (!document.getElementById('fNo').value.trim()) { toast('Save blocked: BOQ number is required', true); return; }
+  const bad = rows.find(r => r.type === 'item' && (!r.description.trim() || Number(r.quantity) <= 0 || Number(r.sp) <= 0));
+  if (bad) {
+    errId = bad.id;
+    renderRows();
+    toast('Save blocked: an item needs description, qty > 0, SP > 0', true);
+    const el = document.querySelector(`[data-id="${bad.id}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => { errId = null; renderRows(); }, 2600);
+    return;
+  }
+  const fab = document.getElementById('fab');
+  fab.classList.add('saved');
+  document.getElementById('modeBadge').textContent = 'Saved';
+  document.getElementById('modeBadge').style.color = 'var(--green)';
+  toast('BOQ saved \u2014 convert to Quotation from the View page');
+  setTimeout(() => fab.classList.remove('saved'), 1600);
+  dirty = false;
+}
+
+function syncNo() { document.getElementById('boqNoLabel').textContent = document.getElementById('fNo').value; }
+
+document.querySelectorAll('.ov').forEach(ov => ov.addEventListener('click', e => {
+  if (e.target === ov) { ov.classList.remove('show'); if (ov.id === 'ovEdit') closeEdit(); }
+}));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const open = document.querySelector('.ov.show');
+    if (open) { open.classList.remove('show'); if (open.id === 'ovEdit') { editId = null; } }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
