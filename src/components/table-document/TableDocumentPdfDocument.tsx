@@ -3,7 +3,8 @@ import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import { PdfCurrencyText } from '@/components/pdf/pdfCurrency'
 
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
-import { computeRowProfit } from '@/domain/boq/calculateBoqTotals'
+import { computeBoqTotals, computeRowProfit } from '@/domain/boq/calculateBoqTotals'
+import { numberToWords } from '@/lib/formatters/money'
 
 type DocumentLike = {
   title?: string
@@ -35,9 +36,13 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, borderBottomWidth: 1, paddingBottom: 12 },
   title: { fontSize: 18, fontFamily: 'Helvetica-Bold' },
   number: { fontSize: 9, marginTop: 4 },
+  totalsBlock: { marginTop: 16, alignItems: 'flex-end' },
+  totalsLine: { fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  wordsLine: { fontSize: 8, fontFamily: 'Helvetica-Oblique', color: '#64748b', marginTop: 4, textAlign: 'right', maxWidth: '60%' },
   table: { width: '100%' },
   row: { flexDirection: 'row' },
   cell: { borderWidth: 1, padding: 6, fontSize: 9 },
+  cellRight: { textAlign: 'right' },
   sectionCell: { borderWidth: 1, padding: 6, fontSize: 9, fontFamily: 'Helvetica-Bold', backgroundColor: '#f1f5f9' },
 })
 
@@ -48,6 +53,8 @@ function numberFor(documentType: TableDocumentType, document: DocumentLike) {
 function titleFor(documentType: TableDocumentType, document: DocumentLike) {
   return document.title || (documentType === 'boq' ? 'BILL OF QUANTITIES' : 'REQUEST FOR QUOTE')
 }
+
+const RIGHT_ALIGNED_KEYS = new Set(['cp', 'sp', 'profit'])
 
 const widthsByKey: Record<string, number> = {
   s_no: 8,
@@ -63,6 +70,7 @@ const widthsByKey: Record<string, number> = {
 
 export function TableDocumentPdfDocument({ documentType, templateId, document, rows, columns }: Props) {
   const visibleColumns = columns.filter((column) => column.visible)
+  const totals = documentType === 'boq' ? computeBoqTotals(rows) : null
   const displayRows = rows.filter((row) => row.row_type === 'section' ? row.section_title.trim() : row.description.trim() || row.specification.trim() || row.notes.trim())
   const backgroundColor = templateId === 'modern' ? (document.background_color || '#ffffff') : '#ffffff'
   const textColor = templateId === 'modern' ? (document.text_color || '#1F2937') : '#111827'
@@ -97,7 +105,7 @@ export function TableDocumentPdfDocument({ documentType, templateId, document, r
               </Text>
             ))}
             {visibleColumns.some((c) => c.key === 'cp' || c.key === 'sp') ? (
-              <Text style={[styles.cell, { width: `${widthsByKey.profit}%`, borderColor }]}>Profit</Text>
+              <Text style={[styles.cell, styles.cellRight, { width: `${widthsByKey.profit}%`, borderColor }]}>Profit</Text>
             ) : null}
           </View>
 
@@ -115,19 +123,26 @@ export function TableDocumentPdfDocument({ documentType, templateId, document, r
                   <PdfCurrencyText
                     key={column.key}
                     value={String((row[column.key] as string | number) || '-')}
-                    style={[styles.cell, { width: `${widthsByKey[column.key] || 12}%`, borderColor }]}
+                    style={[styles.cell, RIGHT_ALIGNED_KEYS.has(column.key) ? styles.cellRight : null, { width: `${widthsByKey[column.key] || 12}%`, borderColor }]}
                   />
                 ))}
                 {visibleColumns.some((c) => c.key === 'cp' || c.key === 'sp') ? (
                   <PdfCurrencyText
                     value={String(computeRowProfit(row))}
-                    style={[styles.cell, { width: `${widthsByKey.profit}%`, borderColor }]}
+                    style={[styles.cell, styles.cellRight, { width: `${widthsByKey.profit}%`, borderColor }]}
                   />
                 ) : null}
               </View>
             )
           ))}
         </View>
+
+        {totals ? (
+          <View style={styles.totalsBlock}>
+            <Text style={styles.totalsLine}>Total Selling Price: {new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(totals.total_selling_price)}</Text>
+            <Text style={styles.wordsLine}>{numberToWords(totals.total_selling_price)}</Text>
+          </View>
+        ) : null}
       </Page>
     </Document>
   )

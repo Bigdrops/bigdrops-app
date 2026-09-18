@@ -10,6 +10,7 @@ import type { BoqMetric } from './boqViewMockData'
 interface BoqViewPageProps {
   document: BaseDocument
   metrics: BoqMetric[]
+  amountInWords?: string
   preview: ReactNode
   onGenerateQuotation: () => void
   onEdit: () => void
@@ -20,6 +21,7 @@ interface BoqViewPageProps {
 export default function BoqViewPage({
   document: _document,
   metrics,
+  amountInWords,
   preview,
   onGenerateQuotation,
   onEdit,
@@ -29,6 +31,10 @@ export default function BoqViewPage({
   return (
     <div className={styles.stack}>
       <BoqSummaryStrip items={metrics} />
+
+      {amountInWords ? (
+        <div className="text-[11px] font-medium italic leading-relaxed text-muted-foreground text-right px-1">{amountInWords}</div>
+      ) : null}
 
       <div className={styles.actionStack}>
         <BoqPrimaryActions onConvert={onGenerateQuotation} onEdit={onEdit} />
