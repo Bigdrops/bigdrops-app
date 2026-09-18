@@ -59,6 +59,8 @@ export interface UseAppUpdateResult {
   openWebDownload: () => Promise<void>
   /** Clears a finished/failed download file from app cache. */
   cleanupDownload: () => Promise<void>
+  /** Manual check for updates. Bypasses the 6-hour throttle. */
+  checkForUpdate: () => void
 }
 
 export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult {
@@ -319,6 +321,10 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     }
   }, [])
 
+  const checkForUpdate = useCallback(() => {
+    void runCheck(true)
+  }, [runCheck])
+
   const graceRemaining = useMemo(() => {
     if (state.graceDeadlineMs === null) return null
     return describeGraceRemaining(state.graceDeadlineMs, nowMs)
@@ -339,5 +345,6 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     installDownloadedApk,
     openWebDownload,
     cleanupDownload,
+    checkForUpdate,
   }
 }
