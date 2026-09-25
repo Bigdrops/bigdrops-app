@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PROJECT_STATUS_CONFIG, formatCurrency, formatDate, cardClassName, inputClassName } from '@/domain/projectDetailUtils'
 import { feedback } from '@/lib/feedback'
 import { NumericInput } from '@/components/ui/numeric-input'
+import { DateField } from '@/components/ui/date-field'
 
 export default function ProjectDetailHeader({
   project,
@@ -148,11 +149,11 @@ export default function ProjectDetailHeader({
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Start Date
             </label>
-            <input
-              type="date"
+            <DateField
+              label="Start Date"
               className={inputClassName}
               value={editForm.start_date}
-              onChange={(e) => setEditForm((form) => ({ ...form, start_date: e.target.value }))}
+              onChange={(next) => setEditForm((form) => ({ ...form, start_date: next }))}
             />
           </div>
 

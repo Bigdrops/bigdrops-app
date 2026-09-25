@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Loader2, Rows3, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProjectDocumentType, DOCUMENT_TYPE_CONFIG } from './ProjectDocumentTypeSelector'
@@ -99,7 +100,7 @@ export function ProjectDocumentStep3Review({
       </div>
       <div>
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Date</label>
-        <Input type="date" value={form.date} onChange={(event) => updateForm({ date: event.target.value })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
+        <DateField label="Date" value={form.date} onChange={(next) => updateForm({ date: next })} className="h-10 rounded-xl border-zinc-200 bg-background text-sm" />
       </div>
       <div>
         <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">From Party</label>
