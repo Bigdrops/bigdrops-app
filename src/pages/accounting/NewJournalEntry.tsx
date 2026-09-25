@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronsUpDown, Minus, Plus } from 'lucide-react'
 import Layout from '@/components/Layout'
 import { Combobox } from '@/components/ui/combobox'
+import { DateField } from '@/components/ui/date-field'
 import { useEntity } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
 import {
@@ -174,11 +175,11 @@ export default function NewJournalEntry() {
             </div>
             <div>
               <label className={labelClass} htmlFor="je-date">Transaction date</label>
-              <input
+              <DateField
                 id="je-date"
-                type="date"
+                label="Transaction date"
                 value={transactionDate}
-                onChange={(e) => setTransactionDate(e.target.value)}
+                onChange={(next) => setTransactionDate(next)}
                 className={inputClass}
               />
             </div>

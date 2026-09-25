@@ -14,12 +14,31 @@ import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useTeamInvitations } from '@/hooks/useTeamInvitations'
 import { usePermissionTemplates } from '@/hooks/usePermissionTemplates'
 import { RoleBuilder } from './RoleBuilder'
+import { ROLE_ACTIONS, ROLE_RESOURCES } from '@/domain/team/role-permissions'
 import SettingsSheet from '@/components/settings/SettingsSheet'
 import type { PermissionTemplate } from '@/hooks/usePermissionTemplates'
 import { createWorkspaceInvitation, revokeWorkspaceInvitation, assignRoleToCompanyMember, removeRoleFromCompanyMember, transferWorkspaceOwnership } from '@/domain/tenant/tenantCreation'
 import type { TeamMember, TeamInvitation } from '@/domain/team/teamTypes'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PERMISSION_LABELS: Record<string, string> = Object.fromEntries(ROLE_RESOURCES)
+const EFFECTIVE_ACCESS_GROUPS = [
+  { name: 'Documents', resources: ['invoice', 'quotation', 'waybill', 'boq', 'rfq', 'csr', 'letter'] },
+  { name: 'Operations', resources: ['project', 'project_document', 'client', 'item', 'payment', 'receipt'] },
+  { name: 'Company', resources: ['setting', 'signatory', 'bank_account', 'tax_setting', 'account', 'period', 'journal', 'source_transaction', 'audit', 'device'] },
+] as const
+
+function EffectiveAccessSummary({ pairs }: { pairs: Array<{ resource: string; action: string }> }) {
+  const wildcard = pairs.filter(pair => pair.resource === '*')
+  return <section className="su-effective-access" aria-label="Effective access">
+    <div className="su-acc-section-title">Effective Access</div>
+    <p className="su-effective-access-note">Showing effective access visible to you. Other grants may not be shown.</p>
+    {!pairs.length && <p className="su-effective-access-empty">No effective permission rows are visible to you. This does not confirm that the member has no access.</p>}
+    {!!wildcard.length && <div className="su-effective-wildcard"><b>All company resources</b><p>{wildcard.map(pair => `${pair.action === 'view' ? 'View' : pair.action} all company resources`).join(' · ')}</p><div>{ROLE_ACTIONS.map(action => wildcard.some(pair => pair.action === action) && <span key={action} data-action={action} className={`su-role-action-count ${action}`}>{action}</span>)}</div></div>}
+    <div className="su-effective-category-list">{EFFECTIVE_ACCESS_GROUPS.map(group => { const rows = pairs.filter(pair => group.resources.includes(pair.resource)); if (!rows.length) return null; return <article key={group.name} className="su-effective-category"><div><b>{group.name}</b><p>{[...new Set(rows.map(pair => PERMISSION_LABELS[pair.resource] ?? pair.resource))].join(', ')}</p></div><div className="su-role-action-counts">{ROLE_ACTIONS.map(action => { const count = rows.filter(pair => pair.action === action).length; return count ? <span key={action} data-action={action} className={`su-role-action-count ${action}`}>{count} {action}</span> : null })}</div></article> })}</div>
+    <details className="su-perm-details su-effective-details"><summary><span>Advanced details: Exact permission rows ({pairs.length})</span><ChevronRight size={12} aria-hidden="true" /></summary><div className="su-perm-details-body"><p>These are the visible stored resource and action rows.</p><ul>{pairs.map(pair => <li key={`${pair.resource}:${pair.action}`}>{pair.resource} / {pair.action}</li>)}</ul></div></details>
+  </section>
+}
 
 type MemberConfirmProps = {
   member: TeamMember
@@ -210,7 +229,7 @@ export function TeamSettingsSection({ session, team, showRoles, setShowRoles }: 
     <div className="space-y-3">
       <Button variant="ghost" className="su-roles-back min-h-11" onClick={() => setShowRoles(false)}><ArrowLeft size={16} className="mr-2" />Team Hub</Button>
       {rolesLoading && !templates.length ? <SettingsLoadingState /> : rolesError ? <div role="alert"><p>{rolesError}</p><Button onClick={() => void refreshRoles()}>Retry roles</Button></div> :
-        <RoleBuilder key={workspaceId} workspaceId={workspaceId} workspaceName={workspace?.name ?? 'Workspace'} templates={templates} isOwner={isOwner} callerPermissions={effectiveByUser.get(currentUserId ?? '') ?? []} assignmentsByUser={assignmentsByUser} refresh={refreshRoles} />}
+        <RoleBuilder key={workspaceId} workspaceId={workspaceId} workspaceName={workspace?.name ?? 'Workspace'} templates={templates} members={members} isOwner={isOwner} callerPermissions={effectiveByUser.get(currentUserId ?? '') ?? []} assignmentsByUser={assignmentsByUser} refresh={refreshRoles} />}
     </div>
   )
 
@@ -400,27 +419,7 @@ export function TeamSettingsSection({ session, team, showRoles, setShowRoles }: 
                 ) : null
               })()}
 
-              {/* Progressive disclosure: effective permissions */}
-              <details className="su-perm-details" style={{ marginTop: 10 }}>
-                <summary>
-                  <span>Effective permissions · visible rows ({memberPairs.length})</span>
-                  <ChevronRight size={12} aria-hidden="true" />
-                </summary>
-                <div className="su-perm-details-body">
-                  <p style={{ fontSize: 9, color: 'var(--su-ink-3)', marginBottom: 6 }}>
-                    These rows determine access independently of role labels. A wildcard (*) covers all resources or actions.
-                    You can see rows held by you or granted by you; other grants may be hidden.
-                  </p>
-                  <ul style={{ fontFamily: 'var(--su-number)', fontSize: 10, lineHeight: 1.8, listStyle: 'none' }}>
-                    {memberPairs.map(pair => (
-                      <li key={`${pair.resource}:${pair.action}`}>{pair.resource} / {pair.action}</li>
-                    ))}
-                  </ul>
-                  {!memberPairs.length && (
-                    <p style={{ fontSize: 10, color: 'var(--su-ink-3)' }}>No permission rows visible to you.</p>
-                  )}
-                </div>
-              </details>
+              <EffectiveAccessSummary pairs={memberPairs} />
 
               {/* ── Dangerous actions ── */}
               {isOwner && !selectedMember.isCurrentUser && (

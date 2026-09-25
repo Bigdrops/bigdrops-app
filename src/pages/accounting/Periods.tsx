@@ -5,6 +5,7 @@ import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import MobileFab from '@/components/layout/MobileFab'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetFooter } from '@/components/ui/sheet'
+import { DateField } from '@/components/ui/date-field'
 import { Button } from '@/components/ui/button'
 import { useEntity, useAuthorization } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
@@ -171,24 +172,22 @@ export default function Periods() {
               <label className="text-[10px] font-black uppercase tracking-wider text-bd-overlay-muted">
                 Start date
               </label>
-              <input
-                type="date"
+              <DateField
+                label="Start date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                aria-label="Start date"
-                className="h-11 w-full rounded-xl border border-bd-overlay-border bg-bd-overlay-bg px-3 text-sm text-bd-overlay-text outline-none focus:ring-2 focus:ring-bd-overlay-ring"
+                onChange={(next) => setStartDate(next)}
+                className="h-11 rounded-xl border-bd-overlay-border bg-bd-overlay-bg px-3 text-sm text-bd-overlay-text"
               />
             </div>
             <div className="grid gap-2">
               <label className="text-[10px] font-black uppercase tracking-wider text-bd-overlay-muted">
                 End date
               </label>
-              <input
-                type="date"
+              <DateField
+                label="End date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                aria-label="End date"
-                className="h-11 w-full rounded-xl border border-bd-overlay-border bg-bd-overlay-bg px-3 text-sm text-bd-overlay-text outline-none focus:ring-2 focus:ring-bd-overlay-ring"
+                onChange={(next) => setEndDate(next)}
+                className="h-11 rounded-xl border-bd-overlay-border bg-bd-overlay-bg px-3 text-sm text-bd-overlay-text"
               />
             </div>
           </div>

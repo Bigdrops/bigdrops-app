@@ -16,6 +16,7 @@ import { useEntity } from '@/lib/tenant/contexts'
 import { SettingsSummaryCard } from '@/components/settings/SettingsSummaryCard'
 import { feedback } from '@/lib/feedback'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -251,20 +252,20 @@ export function ArchivesSettingsSection() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <label className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">From</label>
-              <input
-                type="date"
+              <DateField
+                label="From date"
                 value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="h-7 rounded-lg border border-bd-border bg-bd-card-bg px-2 text-[11px] font-medium text-bd-text shadow-sm"
+                onChange={next => setDateFrom(next)}
+                className="h-7 px-2 text-[11px]"
               />
             </div>
             <div className="flex items-center gap-2">
               <label className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-bd-text-muted">To</label>
-              <input
-                type="date"
+              <DateField
+                label="To date"
                 value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="h-7 rounded-lg border border-bd-border bg-bd-card-bg px-2 text-[11px] font-medium text-bd-text shadow-sm"
+                onChange={next => setDateTo(next)}
+                className="h-7 px-2 text-[11px]"
               />
             </div>
             {totalArchived > 0 && (

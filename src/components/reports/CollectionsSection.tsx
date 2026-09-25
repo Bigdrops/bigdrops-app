@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Banknote, CreditCard, Filter, Landmark } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import {
   CollectionRow,
   DatePreset,
@@ -112,11 +112,11 @@ export function CollectionsSection({
           <CardContent className="grid gap-3 p-3 md:grid-cols-2">
             <div>
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Start</div>
-              <Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} />
+              <DateField label="Start date" value={customStart} onChange={(next) => setCustomStart(next)} />
             </div>
             <div>
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">End</div>
-              <Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} />
+              <DateField label="End date" value={customEnd} onChange={(next) => setCustomEnd(next)} />
             </div>
           </CardContent>
         </Card>

@@ -9,8 +9,12 @@ import {
   toSnakeCase,
 } from './utils'
 
-function generateGroupId(): string {
-  return 'grp_' + Math.random().toString(36).substring(2, 11)
+function generateDeterministicGroupId(index: number, name: string | undefined, used: Set<string>): string {
+  const base = 'grp_' + (index + 1)
+  if (!used.has(base)) return base
+  let suffix = 2
+  while (used.has(`${base}_${suffix}`)) suffix += 1
+  return `${base}_${suffix}`
 }
 
 const BASE_FIELDS = new Set(['description', 'sub_description', 'quantity', 'unit', 'unit_price', 'make', 'row_number', 'temp_ref', 'group_id'])
@@ -163,18 +167,35 @@ export function normalizeImportData(
 
   const groups: NormalizedImportGroup[] = Array.isArray(input.groups)
     ? input.groups
-        .map((grp): NormalizedImportGroup | null => {
+        .map((grp, grpIndex): NormalizedImportGroup | null => {
           const groupName = normalizeText(grp.name as string)
           if (!groupName) return null
+          const rawId = grp.id ? String(grp.id).trim() : ''
           return {
-            id: grp.id ? String(grp.id) : generateGroupId(),
+            id: rawId || `grp_${grpIndex + 1}`,
             name: groupName,
             showSubtotal: true,
-            itemIds: Array.isArray(grp.itemIds) ? grp.itemIds.filter((id): id is string => typeof id === 'string') : [],
+            itemIds: Array.isArray(grp.itemIds)
+              ? grp.itemIds
+                  .filter((id): id is string => typeof id === 'string')
+                  .map((id) => id.trim())
+                  .filter((id) => id.length > 0)
+              : [],
           }
         })
         .filter((g): g is NonNullable<typeof g> => g !== null)
     : []
+
+  // Ensure deterministic unique group ids (no randomness: same JSON -> same ids).
+  {
+    const seen = new Set<string>()
+    groups.forEach((group, index) => {
+      if (!group.id || seen.has(group.id)) {
+        group.id = generateDeterministicGroupId(index, group.name, seen)
+      }
+      seen.add(group.id as string)
+    })
+  }
 
   return {
     ok: true,

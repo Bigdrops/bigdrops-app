@@ -4,6 +4,7 @@ import { RfqCustomizationPanel } from './RfqCustomizationPanel'
 import { TableRowsEditor } from '@/components/table-document/TableRowsEditor'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FileText, Layout, List } from 'lucide-react'
@@ -116,10 +117,10 @@ export const RfqForm: React.FC<RfqFormProps> = ({
               </div>
               <div>
                 <Label className={pageFormLabelClassName}>Issue Date</Label>
-                <Input
-                  type="date"
+                <DateField
+                  label="Issue Date"
                   value={rfq.issue_date}
-                  onChange={(e) => onUpdateRfq({ issue_date: e.target.value })}
+                  onChange={(next) => onUpdateRfq({ issue_date: next })}
                   className="mt-1"
                 />
               </div>

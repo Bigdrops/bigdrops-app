@@ -4,6 +4,7 @@ import { feedback } from '@/lib/feedback'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -133,11 +134,11 @@ export default function NewProject() {
 
             <div className="space-y-1.5">
               <Label className={pageFormLabelClassName}>Start Date</Label>
-              <Input
-                type="date"
+              <DateField
+                label="Start Date"
                 className={pageFormFieldClassName}
                 value={form.start_date}
-                onChange={e => set('start_date', e.target.value)}
+                onChange={next => set('start_date', next)}
               />
               <p className="text-[11px] text-slate-400">Auto-set to today. Edit if the job started earlier.</p>
             </div>

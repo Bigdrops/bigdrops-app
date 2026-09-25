@@ -114,7 +114,7 @@ export function resolveImportColumns({
       items: resolvedItems,
       columns: nextColumns,
       createdColumns,
-      groups: (validated as any).groups || [],
+      groups: validated.groups || [],
     },
   }
 }

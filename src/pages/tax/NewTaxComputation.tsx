@@ -8,6 +8,7 @@ import { resolveTaxRules } from '@/domain/tax/ruleResolver'
 import { persistComputation } from '@/modules/tax/computationService'
 import { buildTaxPosting } from '@/modules/tax/taxPostingService'
 import type { TaxRuleVersion, GateEComputationResult } from '@/domain/tax/types'
+import { DateField } from '@/components/ui/date-field'
 import type { GateFComputationData, ClassificationFactSet } from '@/domain/tax/orchestrator'
 
 const inputClass =
@@ -151,11 +152,11 @@ export default function NewTaxComputation() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Start Date</label>
-                <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className={inputClass} />
+                <DateField label="Start Date" value={periodStart} onChange={(next) => setPeriodStart(next)} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>End Date</label>
-                <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className={inputClass} />
+                <DateField label="End Date" value={periodEnd} onChange={(next) => setPeriodEnd(next)} className={inputClass} />
               </div>
             </div>
           </section>

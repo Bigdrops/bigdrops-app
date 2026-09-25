@@ -13,6 +13,7 @@
 import { useRef, useState } from "react";
 import { Calendar, ChevronDown, DollarSign, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/ui/date-field";
 import { useDocumentQuery } from "@/context/DocumentQueryContext";
 import { FILTER_CAPABILITIES, STATUS_FILTERS } from "@/config/filterCapabilities";
 import { feedback } from "@/lib/feedback";
@@ -323,27 +324,23 @@ function DateRangeFilter({ isOpen, onToggle, onClose }: FilterChipProps) {
                 <div className="flex items-center gap-2">
                   <div className="flex-1 space-y-1">
                     <label className="text-[9px] font-bold text-bd-text-muted">Start</label>
-                    <input
-                      type="date"
+                    <DateField
+                      label="Start date"
                       value={dateFrom}
-                      onChange={(e) => { setDateFrom(e.target.value); setHasError(false); }}
-                      className={cn(
-                        "w-full h-9 px-2.5 rounded-md border bg-bd-surface-muted text-sm text-bd-text outline-none focus:border-primary",
-                        isInvalid ? "border-red-400" : "border-bd-border"
-                      )}
+                      onChange={(next) => { setDateFrom(next); setHasError(false); }}
+                      invalid={isInvalid}
+                      className="h-9 px-2.5 text-sm"
                     />
                   </div>
                   <span className="text-bd-text-muted text-xs mt-4">–</span>
                   <div className="flex-1 space-y-1">
                     <label className="text-[9px] font-bold text-bd-text-muted">End</label>
-                    <input
-                      type="date"
+                    <DateField
+                      label="End date"
                       value={dateTo}
-                      onChange={(e) => { setDateTo(e.target.value); setHasError(false); }}
-                      className={cn(
-                        "w-full h-9 px-2.5 rounded-md border bg-bd-surface-muted text-sm text-bd-text outline-none focus:border-primary",
-                        isInvalid ? "border-red-400" : "border-bd-border"
-                      )}
+                      onChange={(next) => { setDateTo(next); setHasError(false); }}
+                      invalid={isInvalid}
+                      className="h-9 px-2.5 text-sm"
                     />
                   </div>
                 </div>

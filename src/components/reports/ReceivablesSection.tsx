@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { CalendarDays, FileSpreadsheet, Receipt, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import {
   DatePreset,
   InvoiceFinancialRow,
@@ -124,11 +124,11 @@ export function ReceivablesSection({
         <div className="rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-3 shadow-sm grid gap-3 md:grid-cols-2">
           <div>
             <div className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-bd-text-muted">Start</div>
-            <Input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} className="h-9 rounded-lg" />
+            <DateField label="Start date" value={customStart} onChange={(next) => setCustomStart(next)} className="h-9 rounded-lg" />
           </div>
           <div>
             <div className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-bd-text-muted">End</div>
-            <Input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} className="h-9 rounded-lg" />
+            <DateField label="End date" value={customEnd} onChange={(next) => setCustomEnd(next)} className="h-9 rounded-lg" />
           </div>
         </div>
       ) : null}

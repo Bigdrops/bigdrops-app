@@ -4,43 +4,6 @@ import type { BuildApplyResultOptions } from './types'
 import { detectOverwriteTargets } from './overwrite'
 import { getStandardRowEntries } from './utils'
 
-/**
- * Detects whether group assignments are scattered (interleaved with ungrouped items)
- * or clustered (all grouped items at start or end).
- *
- * Returns `true` if scattered — groups should be preserved.
- * Returns `false` if clustered — groups should be silently stripped.
- */
-function hasScatteredGroups(
-  items: { baseFields: Record<string, unknown> }[],
-  groups: { id?: string; itemIds: string[] }[],
-): boolean {
-  if (groups.length === 0) return false
-
-  const itemTempRefSet = new Set<string>()
-  groups.forEach((g) => g.itemIds.forEach((ref) => itemTempRefSet.add(ref)))
-
-  const hasGroup = items.map((item) => {
-    const tempRef = item.baseFields.temp_ref as string | undefined
-    const groupId = item.baseFields.group_id as string | undefined
-    if (groupId) return true
-    if (tempRef && itemTempRefSet.has(tempRef)) return true
-    return false
-  })
-
-  const firstTrue = hasGroup.indexOf(true)
-  const lastTrue = hasGroup.lastIndexOf(true)
-  const firstFalse = hasGroup.indexOf(false)
-  const lastFalse = hasGroup.lastIndexOf(false)
-
-  if (firstTrue === -1 || firstFalse === -1) return false
-
-  const clusteredStart = lastTrue < firstFalse
-  const clusteredEnd = lastFalse < firstTrue
-
-  return !clusteredStart && !clusteredEnd
-}
-
 function assignResolvedFields(
   item: InvoiceItem,
   source: {
@@ -56,6 +19,8 @@ function assignResolvedFields(
   }
 
   Object.entries(source.baseFields).forEach(([key, value]) => {
+    // ponytail: temp_ref is import-only; group_id is set canonically by the caller, never copied raw.
+    if (key === 'temp_ref' || key === 'group_id' || key === 'row_number') return
     if (value === undefined) return
     const overwriteId = source.row_number ? `${source.row_number}:${key}` : null
     if (overwriteId && exemptOverwriteIds.has(overwriteId)) return
@@ -90,72 +55,88 @@ export function buildApplyResult({
   if (mode === 'Add') {
     const groups = resolved.groups || []
 
-    // Cluster check: if groups are clustered (not scattered), strip them silently
-    const scattered = hasScatteredGroups(resolved.items, groups)
-    if (!scattered && groups.length > 0) {
-      const importedItems: InvoiceItem[] = []
-      let currentSortOrder = existingItems.length
-
-      resolved.items.forEach((item) => {
-        const nextItem = assignResolvedFields(
-          {
-            ...createItem(),
-            row_type: 'standard',
-            group_id: null,
-            group_name: '',
-            sort_order: currentSortOrder++,
-          },
-          item,
-          exemptSet,
-        )
-
-        importedItems.push({
-          ...nextItem,
-          row_type: 'standard' as const,
-          group_id: null,
-          group_name: '',
-        })
-      })
-
-      return {
-        mode,
-        items: [...existingItems, ...importedItems].map((item, index) => ({ ...item, sort_order: index })),
-        columns: resolved.columns.length ? resolved.columns : existingColumns,
-        topLevel: resolved.topLevel,
-        createdColumns: resolved.createdColumns,
-        createdRowCount: importedItems.length,
-        updatedRowNumbers: [],
-        overwriteTargets: [],
-        skippedRows,
-        groups: [],
+    // ponytail: rebuild existing group state from items + param so appends never drop groups.
+    const existingGroupMeta = new Map<string, { id: string; name: string; showSubtotal: boolean }>()
+    for (const g of existingGroups || []) {
+      const gid = String((g as { id?: unknown }).id || '').trim()
+      if (gid && !existingGroupMeta.has(gid)) {
+        existingGroupMeta.set(gid, { id: gid, name: String((g as { name?: unknown }).name || 'Group'), showSubtotal: true })
+      }
+    }
+    const existingHeaderIds = new Set<string>()
+    for (const item of existingItems) {
+      const gid = String(item.group_id || '').trim()
+      if (item.row_type === 'group_header' && gid) {
+        existingHeaderIds.add(gid)
+        if (!existingGroupMeta.has(gid)) {
+          existingGroupMeta.set(gid, { id: gid, name: String(item.group_name || 'Group'), showSubtotal: true })
+        }
       }
     }
 
+    // ponytail: remap imported ids only on true collision (same id, different name). Same id + same name merges.
+    const usedIds = new Set(existingGroupMeta.keys())
+    const finalIdByImportedId = new Map<string, string>()
+    const mergedGroups: { id: string; name: string; showSubtotal: boolean }[] = [...existingGroupMeta.values()]
+    for (const g of groups) {
+      const importedId = String(g.id)
+      const importedName = String(g.name || '').trim() || 'Group'
+      const existing = existingGroupMeta.get(importedId)
+      if (!existing) {
+        usedIds.add(importedId)
+        finalIdByImportedId.set(importedId, importedId)
+        mergedGroups.push({ id: importedId, name: importedName, showSubtotal: true })
+      } else if (existing.name.trim() === importedName) {
+        finalIdByImportedId.set(importedId, importedId)
+      } else {
+        let candidate = `${importedId}_imported`
+        let suffix = 2
+        while (usedIds.has(candidate)) {
+          candidate = `${importedId}_imported_${suffix}`
+          suffix += 1
+        }
+        usedIds.add(candidate)
+        finalIdByImportedId.set(importedId, candidate)
+        mergedGroups.push({ id: candidate, name: importedName, showSubtotal: true })
+      }
+    }
+    // Rewrite itemIds to final ids for corroboration checks below.
+    const resolvedGroups = groups.map((g) => {
+      const importedId = String(g.id)
+      const finalId = finalIdByImportedId.get(importedId) || importedId
+      return { ...g, id: finalId }
+    })
+    const resolvedById = new Map(resolvedGroups.map((g) => [String(g.id), g]))
+
     const importedItems: InvoiceItem[] = []
     let currentSortOrder = existingItems.length
-    const emittedGroupHeaders = new Set<string>()
+    const emittedGroupHeaders = new Set<string>(existingHeaderIds)
 
     resolved.items.forEach((item) => {
-      const tempRef = item.baseFields.temp_ref as string | undefined
-      const itemGroupId = item.baseFields.group_id as string | undefined
+      const tempRef = String(item.baseFields.temp_ref || '').trim() || undefined
+      const rawGroupId = String(item.baseFields.group_id || '').trim() || undefined
+      const itemGroupId = rawGroupId ? finalIdByImportedId.get(rawGroupId) || rawGroupId : undefined
 
-      let matchedGroup: (typeof groups)[number] | undefined
-
-      if (itemGroupId) {
-        matchedGroup = groups.find((g) => g.id === itemGroupId)
-      }
-
-      if (!matchedGroup && tempRef) {
-        matchedGroup = groups.find((g) => g.itemIds.includes(tempRef))
-      }
-
-      if (matchedGroup) {
-        if (!emittedGroupHeaders.has(matchedGroup.id)) {
-          emittedGroupHeaders.add(matchedGroup.id)
+      // ponytail: canonical relationship is items[].group_id; itemIds only corroborates. Never silently ungroup.
+      if (itemGroupId || (tempRef && [...resolvedById.values()].some((g) => g.itemIds.includes(tempRef as string)))) {
+        if (!itemGroupId || !resolvedById.has(itemGroupId)) {
+          throw new Error(
+            `Import failed: item "${tempRef || 'unknown'}" references unknown group "${itemGroupId || 'missing'}".`,
+          )
+        }
+        const matchedGroup = resolvedById.get(itemGroupId) as (typeof resolvedGroups)[number]
+        const matchedGroupId = String(matchedGroup.id)
+        if (!tempRef || !matchedGroup.itemIds.includes(tempRef)) {
+          throw new Error(
+            `Import failed: item "${tempRef || 'unknown'}" is not listed in group "${rawGroupId}" itemIds.`,
+          )
+        }
+        if (!emittedGroupHeaders.has(matchedGroupId)) {
+          emittedGroupHeaders.add(matchedGroupId)
           importedItems.push({
             ...createItem(),
             row_type: 'group_header',
-            group_id: matchedGroup.id,
+            group_id: matchedGroupId,
             group_name: matchedGroup.name,
             sort_order: currentSortOrder++,
             description: matchedGroup.name,
@@ -168,7 +149,7 @@ export function buildApplyResult({
           {
             ...createItem(),
             row_type: 'standard',
-            group_id: matchedGroup.id,
+            group_id: matchedGroupId,
             group_name: matchedGroup.name,
             sort_order: currentSortOrder++,
           },
@@ -179,7 +160,7 @@ export function buildApplyResult({
         importedItems.push({
           ...nextItem,
           row_type: 'standard' as const,
-          group_id: matchedGroup.id,
+          group_id: matchedGroupId,
           group_name: matchedGroup.name,
         })
       } else {
@@ -204,11 +185,7 @@ export function buildApplyResult({
       }
     })
 
-    const resultGroups = groups.map((g) => ({
-      id: g.id,
-      name: g.name,
-      showSubtotal: true,
-    }))
+    const resultGroups = mergedGroups
 
     return {
       mode,

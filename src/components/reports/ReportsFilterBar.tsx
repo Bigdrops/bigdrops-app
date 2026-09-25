@@ -1,6 +1,7 @@
 import React from 'react'
 import { Calendar, Search, Users, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { cn } from '@/lib/utils'
 import { DatePreset } from './reportTypes'
 
@@ -100,18 +101,18 @@ export function ReportsFilterBar({
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-bd-border bg-bd-surface px-3 py-2">
               <Calendar size={12} className="text-bd-text-muted" />
               <div className="flex items-center gap-1">
-                <input 
-                  type="date" 
-                  value={customStart} 
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="bg-transparent text-[10px] font-bold text-bd-text outline-none"
+                <DateField
+                  label="Start date"
+                  value={customStart}
+                  onChange={(next) => setCustomStart(next)}
+                  className="h-8 px-2 text-[10px]"
                 />
                 <span className="text-[10px] font-black text-bd-text-muted">TO</span>
-                <input 
-                  type="date" 
-                  value={customEnd} 
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="bg-transparent text-[10px] font-bold text-bd-text outline-none"
+                <DateField
+                  label="End date"
+                  value={customEnd}
+                  onChange={(next) => setCustomEnd(next)}
+                  className="h-8 px-2 text-[10px]"
                 />
               </div>
             </div>

@@ -118,6 +118,7 @@ button,input,textarea,select{font-family:inherit; color:inherit}
   transition:transform .12s ease, background .12s ease;
 }
 .iconbtn:active{transform:scale(.965)}
+.iconbtn[disabled]{opacity:.35; cursor:default}
 .tierchip{
   font-size:6px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
   padding:4px 6px; border-radius:5px; background:var(--primary-soft); color:var(--primary);
@@ -227,6 +228,7 @@ textarea.inp:focus{padding:9px 11px}
 }
 .gmenu button:active{transform:scale(.965)}
 .gmenu button.warn{background:rgba(239,68,68,.35); border-color:rgba(239,68,68,.6)}
+.gmenu button[disabled]{opacity:.35; cursor:default}
 
 .row{
   background:var(--surface-raised); border:1px solid var(--line);
@@ -287,6 +289,8 @@ textarea.inp:focus{padding:9px 11px}
 .gcell-profit{
   font-family:var(--number); font-size:13px; font-weight:500; text-align:right; padding:0 4px;
 }
+.gcell-profit.neg{color:var(--attention)}
+.gcell-profit.pos{color:#15803d}
 .gacts{display:flex; gap:2px; justify-content:flex-end}
 .gacts .iconbtn{width:44px; height:44px; border-radius:10px}
 .gempty{font-size:9px; font-weight:700; color:var(--ink-3); text-align:center; padding:18px 0}
@@ -300,6 +304,7 @@ textarea.inp:focus{padding:9px 11px}
 .mlabel{font-size:8px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3); line-height:1.25; min-height:2.5em}
 .mval{font-family:var(--number); font-size:13px; font-weight:500; letter-spacing:-.05em; margin-top:6px; overflow:hidden; text-overflow:ellipsis}
 .mval.hero{font-size:15px; color:var(--primary)}
+.mval.hero.neg{color:var(--attention)}
 .words{
   margin-top:var(--space-md); background:var(--readout); color:var(--readout-ink);
   border-radius:8px; padding:8px 10px;
@@ -842,7 +847,701 @@ function validateSave(state) {
 }
 /* //PURE-END// */
 
-/*C4*/
+/* ================= state ================= */
+const $ = (id) => document.getElementById(id)
+const rowsHost = $('rowsHost')
+const FAB_ICON = $('fabSave').innerHTML
+const NUM_FIELDS = new Set(['quantity', 'cp', 'sp'])
+const COL_DEFS = [
+  { key: 'description', label: 'Description', fixed: true, visible: true, w: 'minmax(0,2.6fr)', hint: 'Fixed, always shown' },
+  { key: 'specification', label: 'Specification', fixed: false, visible: false, w: 'minmax(0,1.5fr)', hint: 'Technical detail, optional' },
+  { key: 'make_brand', label: 'Make / Brand', fixed: false, visible: true, w: 'minmax(0,1.4fr)', hint: 'Make or brand, optional' },
+  { key: 'quantity', label: 'Quantity', fixed: true, visible: true, w: '64px', num: true, hint: 'Fixed, numeric' },
+  { key: 'unit', label: 'Unit', fixed: true, visible: true, w: '74px', hint: 'Fixed, measurement unit' },
+  { key: 'cp', label: 'CP', fixed: false, visible: true, w: '92px', num: true, hint: 'Cost price per unit' },
+  { key: 'sp', label: 'SP', fixed: false, visible: true, w: '92px', num: true, hint: 'Selling price per unit' },
+]
+const state = {
+  boq_number: '', issue_date: '', vendor_name: '', vendor_contact: '', notes: '',
+  rows: [], cols: [], tier: 'mobile', expandedId: null, menuGroupId: null,
+  saving: false, dirty: false,
+}
+function findRow(id) { return state.rows.find(r => r.id === id) }
+function itemRows() { return state.rows.filter(r => r.row_type === 'item') }
+function visibleCols() { return state.cols.filter(c => c.visible) }
+function colVisible(key) { const c = state.cols.find(x => x.key === key); return c ? c.visible : true }
+function detectTier() {
+  const w = window.innerWidth
+  return w >= 1200 ? 'desktop' : w >= 600 ? 'tablet' : 'mobile'
+}
+
+/* ================= icons + small helpers ================= */
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+const IC = {
+  chev: '<path d="M9 18l6-6-6-6"/>',
+  up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
+  down: '<path d="M12 5v14M19 12l-7 7-7-7"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+}
+const IC_DOTS = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>'
+function ico(p, s, cls) {
+  return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="0 0 24 24" width="' + s +
+    '" height="' + s + '" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'
+}
+function pad2(n) { return n < 10 ? '0' + n : String(n) }
+function pfText(profit) { return (profit < 0 ? '-' : '+') + fmtMoney(Math.abs(profit)) }
+function sumMeta(r) {
+  const parts = []
+  const brand = String(r.make_brand || '').trim()
+  if (brand) parts.push(brand)
+  parts.push(String(toFiniteAmount(r.quantity)) + (String(r.unit || '').trim() ? ' ' + String(r.unit).trim() : ''))
+  parts.push('CP ' + fmtMoney(r.cp))
+  parts.push('SP ' + fmtMoney(r.sp))
+  return parts.join(' \u00B7 ')
+}
+function gcolsTemplate() {
+  return ['28px'].concat(visibleCols().map(c => c.w), ['96px', '140px']).join(' ')
+}
+function numberMap() {
+  const m = new Map(); let n = 0
+  for (const r of state.rows) if (r.row_type === 'item') { n += 1; m.set(r.id, pad2(n)) }
+  return m
+}
+
+/* ================= render ================= */
+function groupHtml(g, gi, gTotal) {
+  const h = g.header
+  const count = g.items.length
+  const open = !h.collapsed
+  let html = '<div class="group"><div class="ghead">' +
+    '<button class="gchev' + (open ? ' open' : '') + '" data-act="toggle-group" data-id="' + h.id + '" aria-label="' + (open ? 'Collapse group' : 'Expand group') + '">' + ico(IC.chev, 15) + '</button>' +
+    '<input class="gname" data-gname="1" data-id="' + h.id + '" value="' + esc(h.group_name) + '" placeholder="Group name" aria-label="Group name" autocomplete="off">' +
+    '<span class="gcount">' + count + (count === 1 ? ' item' : ' items') + '</span>' +
+    '<button class="gact" data-act="gmenu" data-id="' + h.id + '" aria-label="Group actions" aria-expanded="' + (state.menuGroupId === h.id) + '">' + IC_DOTS + '</button>' +
+    '</div>'
+  if (state.menuGroupId === h.id) {
+    html += '<div class="gmenu">' +
+      '<button data-act="gadd" data-id="' + h.id + '">Add item</button>' +
+      '<button data-act="group-up" data-id="' + h.id + '"' + (gi === 0 ? ' disabled' : '') + '>Move up</button>' +
+      '<button data-act="group-down" data-id="' + h.id + '"' + (gi === gTotal - 1 ? ' disabled' : '') + '>Move down</button>' +
+      '<button class="warn" data-act="group-remove" data-id="' + h.id + '">Remove</button>' +
+      '</div>'
+  }
+  return html + '</div>'
+}
+function fieldHtml(label, f, r, cls) {
+  const num = NUM_FIELDS.has(f)
+  const val = String(r[f] == null ? '' : r[f])
+  return '<div class="field"><label>' + label + '</label>' +
+    '<input class="' + cls + '" ' + (num ? 'inputmode="decimal" ' : '') +
+    'data-f="' + f + '" data-id="' + r.id + '" value="' + esc(val) + '" autocomplete="off"></div>'
+}
+function mobileItemHtml(r, n, expanded) {
+  const desc = String(r.description || '').trim()
+  const profit = computeRowProfit(r)
+  let html = '<div class="row' + (expanded ? ' open' : '') + '" data-row="' + r.id + '">' +
+    '<div class="rowsum" role="button" tabindex="0" data-act="toggle-item" data-id="' + r.id + '" aria-expanded="' + expanded + '">' +
+      '<span class="rowno">' + n + '</span>' +
+      '<div class="rowmain">' +
+        '<div class="rdesc' + (desc ? '' : ' empty') + '" data-sumdesc>' + esc(desc || 'Untitled item') + '</div>' +
+        '<div class="rmeta" data-summeta>' + esc(sumMeta(r)) + '</div>' +
+      '</div>' +
+      '<div class="rownums">' +
+        '<span class="rsp" data-sp="' + r.id + '">' + fmtMoney(toFiniteAmount(r.sp) * toFiniteAmount(r.quantity)) + '</span>' +
+        '<span class="rprofit ' + (profit < 0 ? 'neg' : 'pos') + '" data-pf="' + r.id + '">' + pfText(profit) + '</span>' +
+      '</div>' +
+      ico(IC.chev, 14, 'rowchev') +
+    '</div>'
+  if (expanded) {
+    html += '<div class="rowedit">'
+    html += fieldHtml('Description', 'description', r, 'inp')
+    if (colVisible('specification')) html += fieldHtml('Specification', 'specification', r, 'inp')
+    if (colVisible('make_brand')) html += fieldHtml('Make / Brand', 'make_brand', r, 'inp')
+    html += '<div class="grid2">' + fieldHtml('Quantity', 'quantity', r, 'inp mono') + fieldHtml('Unit', 'unit', r, 'inp') + '</div>'
+    html += '<div class="grid2">' + fieldHtml('Cost price', 'cp', r, 'inp mono') + fieldHtml('Selling price', 'sp', r, 'inp mono') + '</div>'
+    html += '<div class="readout"><span class="rlabel">Line profit</span><span data-pf="' + r.id + '">' + pfText(profit) + '</span></div>'
+    html += '<div class="editacts"><button class="btn" data-act="move-up" data-id="' + r.id + '">Move up</button>' +
+            '<button class="btn" data-act="move-down" data-id="' + r.id + '">Move down</button></div>'
+    html += '<div class="editacts"><button class="btn danger" data-act="delete-item" data-id="' + r.id + '">Delete</button>' +
+            '<button class="btn primary" data-act="done" data-id="' + r.id + '">Done</button></div>'
+    html += '</div>'
+  }
+  return html + '</div>'
+}
+function gridHeadHtml() {
+  let html = '<span>#</span>'
+  for (const c of visibleCols()) html += '<span' + (c.num ? ' class="num"' : '') + '>' + esc(c.label) + '</span>'
+  return html + '<span class="num">Profit</span><span></span>'
+}
+function gridItemHtml(r, n) {
+  const profit = computeRowProfit(r)
+  let html = '<div class="grow" data-row="' + r.id + '"><span class="rowno">' + n + '</span>'
+  for (const c of visibleCols()) {
+    const num = NUM_FIELDS.has(c.key)
+    const val = String(r[c.key] == null ? '' : r[c.key])
+    html += '<input class="inp' + (num ? ' mono cellnum' : '') + '" ' + (num ? 'inputmode="decimal" ' : '') +
+      'data-f="' + c.key + '" data-id="' + r.id + '" value="' + esc(val) + '" aria-label="' + esc(c.label) + '" autocomplete="off">'
+  }
+  html += '<span class="gcell-profit' + (profit < 0 ? ' neg' : '') + '" data-pf="' + r.id + '">' + pfText(profit) + '</span>' +
+    '<div class="gacts">' +
+      '<button class="iconbtn" data-act="move-up" data-id="' + r.id + '" aria-label="Move up">' + ico(IC.up, 15) + '</button>' +
+      '<button class="iconbtn" data-act="move-down" data-id="' + r.id + '" aria-label="Move down">' + ico(IC.down, 15) + '</button>' +
+      '<button class="iconbtn" data-act="delete-item" data-id="' + r.id + '" aria-label="Delete item">' + ico(IC.trash, 15) + '</button>' +
+    '</div></div>'
+  return html
+}
+function renderRows() {
+  const items = itemRows()
+  $('itemCount').textContent = items.length + (items.length === 1 ? ' item' : ' items')
+  const nums = numberMap()
+  const b = splitBlocks(state.rows)
+  let html = ''
+  if (state.rows.length === 0) {
+    html = '<div class="gempty">No items yet. Add an item or import JSON.</div>'
+  } else if (state.tier === 'mobile') {
+    html = '<div class="rows">'
+    if (b.leading.length) {
+      html += '<div class="ungrouped-label">Ungrouped</div>'
+      for (const r of b.leading) html += mobileItemHtml(r, nums.get(r.id), state.expandedId === r.id)
+    }
+    for (let i = 0; i < b.groups.length; i++) {
+      const g = b.groups[i]
+      html += groupHtml(g, i, b.groups.length)
+      if (!g.header.collapsed) for (const r of g.items) html += mobileItemHtml(r, nums.get(r.id), state.expandedId === r.id)
+    }
+    html += '</div>'
+  } else {
+    html = '<div class="gwrap" style="--gcols:' + gcolsTemplate() + '"><div class="gridhead">' + gridHeadHtml() + '</div>'
+    if (b.leading.length) {
+      html += '<div class="ungrouped-label">Ungrouped</div>'
+      for (const r of b.leading) html += gridItemHtml(r, nums.get(r.id))
+    }
+    for (let i = 0; i < b.groups.length; i++) {
+      const g = b.groups[i]
+      html += groupHtml(g, i, b.groups.length)
+      if (!g.header.collapsed) for (const r of g.items) html += gridItemHtml(r, nums.get(r.id))
+    }
+    html += '</div>'
+  }
+  rowsHost.innerHTML = html
+}
+function paintTotals() {
+  const t = computeBoqTotals(state.rows)
+  $('tCost').textContent = fmtMoney(t.total_cost)
+  $('tSp').textContent = fmtMoney(t.total_selling_price)
+  const p = $('tProfit')
+  p.textContent = fmtMoney(t.gross_profit)
+  p.classList.toggle('neg', t.gross_profit < 0)
+  $('tWords').textContent = numberToWords(t.total_selling_price)
+}
+function refreshRow(id) {
+  const row = findRow(id)
+  if (!row) return
+  const profit = computeRowProfit(row)
+  const text = pfText(profit)
+  document.querySelectorAll('[data-pf="' + id + '"]').forEach(n => {
+    n.textContent = text
+    n.classList.toggle('neg', profit < 0)
+    n.classList.toggle('pos', profit >= 0)
+  })
+  const lineSp = toFiniteAmount(row.sp) * toFiniteAmount(row.quantity)
+  document.querySelectorAll('[data-sp="' + id + '"]').forEach(n => { n.textContent = fmtMoney(lineSp) })
+  const host = rowsHost.querySelector('[data-row="' + id + '"]')
+  if (!host) return
+  const sd = host.querySelector('[data-sumdesc]')
+  if (sd) {
+    const desc = String(row.description || '').trim()
+    sd.textContent = desc || 'Untitled item'
+    sd.classList.toggle('empty', !desc)
+  }
+  const sm = host.querySelector('[data-summeta]')
+  if (sm) sm.textContent = sumMeta(row)
+}
+
+/* ================= row operations ================= */
+function addItem(groupId) {
+  const item = makeItemRow({})
+  if (groupId) {
+    const b = splitBlocks(state.rows)
+    const g = b.groups.find(x => x.header.id === groupId)
+    if (g) { g.header.collapsed = false; g.items.push(item); state.rows = joinBlocks(b) }
+    else state.rows.push(item)
+  } else {
+    const b = splitBlocks(state.rows)
+    const at = b.groups.length ? state.rows.indexOf(b.groups[0].header) : state.rows.length
+    state.rows.splice(at, 0, item)
+  }
+  state.dirty = true
+  state.expandedId = item.id
+  state.menuGroupId = null
+  renderRows()
+  requestAnimationFrame(() => {
+    const el = rowsHost.querySelector('[data-row="' + item.id + '"] [data-f="description"]')
+    if (el) el.focus()
+  })
+}
+function addGroup() {
+  const n = state.rows.filter(r => r.row_type === 'group_header').length + 1
+  const g = makeGroupRow('Group ' + n)
+  state.rows.push(g)
+  state.dirty = true
+  state.menuGroupId = null
+  renderRows()
+  requestAnimationFrame(() => {
+    const el = rowsHost.querySelector('.gname[data-id="' + g.id + '"]')
+    if (el) { el.focus(); el.select() }
+  })
+}
+function moveItem(id, dir) {
+  const b = splitBlocks(state.rows)
+  let list = null, gi = -1
+  if (b.leading.some(r => r.id === id)) list = b.leading
+  else {
+    gi = b.groups.findIndex(g => g.items.some(r => r.id === id))
+    if (gi >= 0) list = b.groups[gi].items
+  }
+  if (!list) return
+  const i = list.findIndex(r => r.id === id)
+  const j = i + dir
+  if (j >= 0 && j < list.length) {
+    const tmp = list[i]; list[i] = list[j]; list[j] = tmp
+  } else if (gi >= 0) {
+    const it = list.splice(i, 1)[0]
+    if (dir < 0) {
+      if (gi > 0) b.groups[gi - 1].items.push(it)
+      else b.leading.push(it)
+    } else if (gi < b.groups.length - 1) b.groups[gi + 1].items.unshift(it)
+    else list.splice(i, 0, it)
+  } else if (dir > 0 && b.groups.length) {
+    const it = list.splice(i, 1)[0]
+    b.groups[0].items.unshift(it)
+  }
+  state.rows = joinBlocks(b)
+  state.dirty = true
+  renderRows()
+}
+function moveGroup(id, dir) {
+  const b = splitBlocks(state.rows)
+  const i = b.groups.findIndex(g => g.header.id === id)
+  const j = i + dir
+  if (i < 0 || j < 0 || j >= b.groups.length) return
+  const tmp = b.groups[i]; b.groups[i] = b.groups[j]; b.groups[j] = tmp
+  state.rows = joinBlocks(b)
+  state.dirty = true
+  renderRows()
+}
+function removeGroup(id) {
+  const b = splitBlocks(state.rows)
+  const gi = b.groups.findIndex(g => g.header.id === id)
+  if (gi < 0) return
+  const g = b.groups.splice(gi, 1)[0]
+  b.leading.push(...g.items)
+  state.rows = joinBlocks(b)
+  state.dirty = true
+  renderRows()
+  toast('Group removed. Items kept in ungrouped.')
+}
+function requestRemoveGroup(id) {
+  const b = splitBlocks(state.rows)
+  const g = b.groups.find(x => x.header.id === id)
+  if (!g) return
+  if (g.items.length) {
+    askConfirm('Remove group?', 'Its items move to the ungrouped block. Nothing is deleted.', 'Remove group', () => removeGroup(id))
+  } else removeGroup(id)
+}
+function removeItem(id) {
+  const i = state.rows.findIndex(r => r.id === id)
+  if (i < 0) return
+  state.rows.splice(i, 1)
+  if (state.expandedId === id) state.expandedId = null
+  state.dirty = true
+  renderRows()
+  paintTotals()
+}
+function requestDeleteItem(id) {
+  const r = findRow(id)
+  if (!r) return
+  const hasData = Boolean(
+    String(r.description || '').trim() || String(r.specification || '').trim() ||
+    String(r.make_brand || '').trim() || String(r.unit || '').trim() || String(r.notes || '').trim() ||
+    toFiniteAmount(r.quantity) !== 0 || toFiniteAmount(r.cp) !== 0 || toFiniteAmount(r.sp) !== 0
+  )
+  if (hasData) askConfirm('Delete item?', 'This row has saved values. Remove it permanently.', 'Remove', () => removeItem(id))
+  else removeItem(id)
+}
+
+/* ================= sheets, confirm, toast, busy ================= */
+let activeSheet = null
+let pendingConfirm = null
+function showSheet(id) {
+  const s = $(id)
+  if (!s) return
+  if (activeSheet && activeSheet !== id) {
+    const o = $(activeSheet)
+    o.classList.remove('show')
+    o.hidden = true
+  }
+  activeSheet = id
+  s.hidden = false
+  $('scrim').classList.add('show')
+  requestAnimationFrame(() => s.classList.add('show'))
+}
+function hideSheet(id) {
+  const sid = id || activeSheet
+  if (!sid) return
+  const s = $(sid)
+  if (!s) return
+  s.classList.remove('show')
+  if (activeSheet === sid) activeSheet = null
+  if (!activeSheet) $('scrim').classList.remove('show')
+  setTimeout(() => { if (activeSheet !== sid) s.hidden = true }, 220)
+}
+function askConfirm(title, body, goLabel, fn) {
+  $('confirmTitle').textContent = title
+  $('confirmBody').textContent = body
+  $('btnConfirmGo').textContent = goLabel
+  pendingConfirm = fn
+  showSheet('sheetConfirm')
+}
+let toastTimer = 0
+function toast(msg) {
+  const t = $('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400)
+}
+const sleep = (ms) => new Promise(res => setTimeout(res, ms))
+function setBusy(on) {
+  state.saving = on
+  for (const id of ['btnSave', 'btnDraft', 'btnCancel', 'btnBack', 'fabSave']) $(id).disabled = on
+  $('fabSave').innerHTML = on ? '<span class="spin" aria-hidden="true"></span>' : FAB_ICON
+}
+
+/* ================= validation + save ================= */
+function clearErrors() {
+  $('fNumber').classList.remove('err')
+  $('mNumber').textContent = ''
+  for (const el of rowsHost.querySelectorAll('.pulse')) el.classList.remove('pulse')
+}
+function showErrors(errors) {
+  for (const e of errors) {
+    if (e.field === 'boq_number') {
+      $('fNumber').classList.add('err')
+      $('mNumber').textContent = e.message
+      $('fNumber').scrollIntoView({ behavior: 'smooth', block: 'center' })
+    } else if (e.field === 'description' && e.rowId) {
+      if (state.tier === 'mobile') { state.expandedId = e.rowId; renderRows() }
+      const el = rowsHost.querySelector('[data-row="' + e.rowId + '"]')
+      if (el) {
+        el.classList.add('pulse')
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setTimeout(() => el.classList.remove('pulse'), 1600)
+      }
+    }
+  }
+  toast(errors[0].message)
+}
+async function doSave(kind) {
+  if (state.saving) return
+  clearErrors()
+  const errors = kind === 'draft' ? validateDraft(state) : validateSave(state)
+  if (errors.length) { showErrors(errors); return }
+  setBusy(true)
+  await sleep(900)
+  setBusy(false)
+  state.dirty = false
+  toast(kind === 'draft' ? 'Draft saved.' : 'BOQ saved.')
+}
+function requestCancel() {
+  if (state.dirty) {
+    askConfirm('Discard changes?', 'Your edits to this BOQ will be lost.', 'Discard', () => {
+      loadSeed()
+      toast('Changes discarded.')
+    })
+  } else toast('No changes to discard.')
+}
+
+/* ================= import sheet ================= */
+let importMode = 'add'
+function groupNames() {
+  return state.rows.filter(r => r.row_type === 'group_header')
+    .map(r => String(r.group_name || '').trim()).filter(Boolean)
+}
+function pvRow(label, value, cls) {
+  return '<div class="pv' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span><span>' + esc(value) + '</span></div>'
+}
+function refreshImportPreview() {
+  const text = $('importText').value
+  const box = $('importPreview')
+  if (!text.trim()) {
+    box.innerHTML = pvRow('Rows', '\u2014')
+    $('btnApplyImport').disabled = true
+    return
+  }
+  const result = parseImportPayload(text, importMode)
+  const pv = buildImportPreview(result, groupNames(), importMode, itemRows().length)
+  if (pv.error) {
+    box.innerHTML = pvRow('Error', pv.error, 'bad')
+    $('btnApplyImport').disabled = true
+    return
+  }
+  let html = pvRow('Rows', pv.rows)
+  html += pvRow('Groups', pv.groupsCreate + ' new \u00B7 ' + pv.groupsJoin + ' joined')
+  if (pv.skipped) html += pvRow('Skipped', pv.skipped, 'bad')
+  if (pv.unknown.length) {
+    html += pvRow('Unknown keys', pv.unknown.slice(0, 6).join(', ') + (pv.unknown.length > 6 ? '\u2026' : ''), 'bad')
+  }
+  box.innerHTML = html
+  $('btnApplyImport').disabled = false
+}
+function setImportMode(mode) {
+  importMode = mode
+  $('segAdd').classList.toggle('on', mode === 'add')
+  $('segAdd').setAttribute('aria-selected', mode === 'add')
+  $('segUpdate').classList.toggle('on', mode === 'update')
+  $('segUpdate').setAttribute('aria-selected', mode === 'update')
+  refreshImportPreview()
+}
+function applyImport() {
+  const result = parseImportPayload($('importText').value, importMode)
+  if (!result.ok) { toast(result.error); return }
+  const n = result.items.length
+  state.rows = importMode === 'add'
+    ? applyImportAdd(state.rows, result.items)
+    : applyImportUpdate(state.rows, result.items)
+  state.dirty = true
+  renderRows()
+  paintTotals()
+  hideSheet('sheetImport')
+  toast((importMode === 'add' ? 'Imported ' : 'Updated ') + n + ' rows.')
+}
+
+/* ================= column settings sheet ================= */
+function renderColList() {
+  let html = ''
+  state.cols.forEach((c, i) => {
+    const canUp = i > 0 && !c.fixed && !state.cols[i - 1].fixed
+    const canDown = i < state.cols.length - 1 && !c.fixed && !state.cols[i + 1].fixed
+    html += '<div class="colrow">' +
+      '<button class="switch' + (c.visible ? ' on' : '') + '" role="switch" aria-checked="' + c.visible +
+        '" data-col-toggle="' + c.key + '"' + (c.fixed ? ' disabled' : '') + ' aria-label="Toggle ' + esc(c.label) + '"></button>' +
+      '<div class="cname"><b>' + esc(c.label) + '</b><i>' + esc(c.hint) + '</i></div>' +
+      (c.fixed ? '<span class="fixedbadge">Fixed</span>' : '') +
+      '<button class="iconbtn" data-col-move="up" data-col="' + c.key + '"' + (canUp ? '' : ' disabled') +
+        ' aria-label="Move ' + esc(c.label) + ' up">' + ico(IC.up, 14) + '</button>' +
+      '<button class="iconbtn" data-col-move="down" data-col="' + c.key + '"' + (canDown ? '' : ' disabled') +
+        ' aria-label="Move ' + esc(c.label) + ' down">' + ico(IC.down, 14) + '</button>' +
+      '</div>'
+  })
+  $('colList').innerHTML = html
+}
+function toggleCol(key) {
+  const c = state.cols.find(x => x.key === key)
+  if (!c || c.fixed) return
+  c.visible = !c.visible
+  renderColList()
+  renderRows()
+}
+function moveCol(key, dir) {
+  const i = state.cols.findIndex(x => x.key === key)
+  if (i < 0) return
+  const j = i + dir
+  if (j < 0 || j >= state.cols.length) return
+  if (state.cols[i].fixed || state.cols[j].fixed) return
+  const tmp = state.cols[i]; state.cols[i] = state.cols[j]; state.cols[j] = tmp
+  renderColList()
+  renderRows()
+}
+
+/* ================= events ================= */
+function handleAct(act, id) {
+  const row = findRow(id)
+  switch (act) {
+    case 'toggle-item':
+      state.menuGroupId = null
+      state.expandedId = state.expandedId === id ? null : id
+      renderRows()
+      break
+    case 'toggle-group':
+      if (!row) return
+      state.menuGroupId = null
+      row.collapsed = !row.collapsed
+      state.dirty = true
+      renderRows()
+      break
+    case 'gmenu':
+      state.menuGroupId = state.menuGroupId === id ? null : id
+      renderRows()
+      break
+    case 'gadd': state.menuGroupId = null; addItem(id); break
+    case 'group-up': state.menuGroupId = null; moveGroup(id, -1); break
+    case 'group-down': state.menuGroupId = null; moveGroup(id, 1); break
+    case 'group-remove': state.menuGroupId = null; requestRemoveGroup(id); break
+    case 'move-up': state.menuGroupId = null; moveItem(id, -1); break
+    case 'move-down': state.menuGroupId = null; moveItem(id, 1); break
+    case 'delete-item': state.menuGroupId = null; requestDeleteItem(id); break
+    case 'done': state.expandedId = null; renderRows(); break
+  }
+}
+rowsHost.addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]')
+  if (!btn) return
+  handleAct(btn.dataset.act, btn.dataset.id)
+})
+rowsHost.addEventListener('input', e => {
+  const el = e.target
+  if (el.matches('[data-f]')) {
+    const row = findRow(el.dataset.id)
+    if (!row) return
+    const f = el.dataset.f
+    row[f] = NUM_FIELDS.has(f) ? toFiniteAmount(el.value) : el.value
+    state.dirty = true
+    refreshRow(row.id)
+    paintTotals()
+  } else if (el.matches('[data-gname]')) {
+    const g = findRow(el.dataset.id)
+    if (g) { g.group_name = el.value; state.dirty = true }
+  }
+})
+rowsHost.addEventListener('focusout', e => {
+  const el = e.target
+  if (!el.matches || !el.matches('[data-f]')) return
+  const row = findRow(el.dataset.id)
+  if (!row) return
+  const f = el.dataset.f
+  if (!NUM_FIELDS.has(f)) return
+  row[f] = toFiniteAmount(el.value)
+  el.value = String(row[f])
+  refreshRow(row.id)
+  paintTotals()
+})
+rowsHost.addEventListener('keydown', e => {
+  const el = e.target
+  if (el.classList.contains('rowsum') && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault()
+    handleAct('toggle-item', el.dataset.id)
+    return
+  }
+  if (el.classList.contains('inp') && e.key === 'Enter' && el.tagName !== 'TEXTAREA') el.blur()
+})
+$('btnAddGroup').addEventListener('click', addGroup)
+$('btnAddItem').addEventListener('click', () => addItem(null))
+$('btnImport').addEventListener('click', () => {
+  $('importText').value = ''
+  refreshImportPreview()
+  showSheet('sheetImport')
+})
+$('btnColumns').addEventListener('click', () => { renderColList(); showSheet('sheetColumns') })
+$('btnSave').addEventListener('click', () => doSave('save'))
+$('btnDraft').addEventListener('click', () => doSave('draft'))
+$('fabSave').addEventListener('click', () => doSave('draft'))
+$('btnBack').addEventListener('click', requestCancel)
+$('btnCancel').addEventListener('click', requestCancel)
+$('scrim').addEventListener('click', () => hideSheet())
+$('btnConfirmGo').addEventListener('click', () => {
+  const fn = pendingConfirm
+  pendingConfirm = null
+  hideSheet('sheetConfirm')
+  if (fn) fn()
+})
+$('segAdd').addEventListener('click', () => setImportMode('add'))
+$('segUpdate').addEventListener('click', () => setImportMode('update'))
+$('importText').addEventListener('input', refreshImportPreview)
+$('btnApplyImport').addEventListener('click', applyImport)
+$('btnColReset').addEventListener('click', () => {
+  state.cols = COL_DEFS.map(c => ({ ...c }))
+  renderColList()
+  renderRows()
+  toast('Columns reset.')
+})
+$('colList').addEventListener('click', e => {
+  const tg = e.target.closest('[data-col-toggle]')
+  if (tg) { toggleCol(tg.dataset.colToggle); return }
+  const mv = e.target.closest('[data-col-move]')
+  if (mv) moveCol(mv.dataset.col, mv.dataset.colMove === 'up' ? -1 : 1)
+})
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-close]')
+  if (t) hideSheet(t.dataset.close)
+})
+$('fNumber').addEventListener('input', e => {
+  state.boq_number = e.target.value
+  state.dirty = true
+  $('topTitle').textContent = e.target.value.trim() || 'New BOQ'
+  e.target.classList.remove('err')
+  $('mNumber').textContent = ''
+})
+for (const [id, key] of [['fDate', 'issue_date'], ['fVendor', 'vendor_name'], ['fVendorContact', 'vendor_contact'], ['fNotes', 'notes']]) {
+  $(id).addEventListener('input', e => { state[key] = e.target.value; state.dirty = true })
+}
+const MOON_PATH = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+const SUN_PATH = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>'
+$('btnTheme').addEventListener('click', () => {
+  const root = document.documentElement
+  const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+  root.setAttribute('data-theme', next)
+  $('themeIcon').innerHTML = next === 'dark' ? SUN_PATH : MOON_PATH
+  $('btnTheme').setAttribute('aria-label', next === 'dark' ? 'Switch to light theme' : 'Switch to dark theme')
+})
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (activeSheet) { hideSheet(); return }
+    if (state.menuGroupId) { state.menuGroupId = null; renderRows() }
+  }
+})
+window.addEventListener('resize', () => {
+  const t = detectTier()
+  if (t === state.tier) return
+  state.tier = t
+  document.documentElement.dataset.tier = t
+  $('tierChip').textContent = t
+  if (t !== 'mobile') state.expandedId = null
+  renderRows()
+})
+
+/* ================= seed + init ================= */
+function loadSeed() {
+  _seq = 0
+  state.boq_number = 'BOQ-2026-0042'
+  state.issue_date = '2026-09-25'
+  state.vendor_name = 'Monolith Contractors Ltd'
+  state.vendor_contact = '0803 000 1234'
+  state.notes = 'Prices valid for 30 days. Delivery to site included.'
+  state.rows = [
+    makeItemRow({ description: 'Site clearance and grubbing', quantity: 1, unit: 'LOT', cp: 120000, sp: 150000 }),
+    makeGroupRow('Structure'),
+    makeItemRow({ description: 'Portland cement 42.5N', specification: '50kg bag', make_brand: 'Dangote', quantity: 400, unit: 'BAG', cp: 8500, sp: 9750 }),
+    makeItemRow({ description: 'Granite aggregate', specification: '12mm crushed', quantity: 60, unit: 'TON', cp: 48000, sp: 56000 }),
+    makeItemRow({ description: 'Reinforcement steel Y12', specification: 'High yield, 12mm', make_brand: 'ASCOR', quantity: 2.5, unit: 'TON', cp: 950000, sp: 1100000 }),
+    makeGroupRow('Finishes'),
+    makeItemRow({ description: 'Flexible porcelain floor tiles', specification: '600x600mm, matt', quantity: 180, unit: 'm\u00B2', cp: 4200, sp: 5600 }),
+    makeItemRow({ description: 'Emulsion paint', specification: '2 coats, white', make_brand: 'Dulux', quantity: 45, unit: 'm\u00B2', cp: 1800, sp: 2400 }),
+  ]
+  state.cols = COL_DEFS.map(c => ({ ...c }))
+  state.expandedId = null
+  state.menuGroupId = null
+  state.dirty = false
+  $('fNumber').value = state.boq_number
+  $('fDate').value = state.issue_date
+  $('fVendor').value = state.vendor_name
+  $('fVendorContact').value = state.vendor_contact
+  $('fNotes').value = state.notes
+  $('topTitle').textContent = state.boq_number
+  clearErrors()
+  renderRows()
+  paintTotals()
+}
+function init() {
+  state.tier = detectTier()
+  document.documentElement.dataset.tier = state.tier
+  $('tierChip').textContent = state.tier
+  loadSeed()
+}
+init()
 </script>
 </body>
 </html>

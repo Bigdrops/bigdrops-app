@@ -5,6 +5,7 @@ import { buildGroups, isLiveSettingsSection } from '../../pages/settings/setting
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { SettingsNav } from '../../components/settings/SettingsNav'
+import { RoleInfoPanel, resolveRoleSurface } from '../../pages/settings/RoleBuilder'
 
 const rpc = mock(async () => ({ data: 'role-id', error: null }))
 mock.module('@/supabase', () => ({ supabase: { rpc } }))
@@ -117,4 +118,41 @@ test('Settings navigation renders every destination as a live row (all sections 
 
 test('buildGroups without flags hides operator-only destinations', () => {
   expect(buildGroups().flatMap(group => group.items)).toHaveLength(14)
+})
+
+test('role selection has separate library, info, and editor surfaces', () => {
+  expect(resolveRoleSurface(false, false)).toBe('library')
+  expect(resolveRoleSurface(true, false)).toBe('info')
+  expect(resolveRoleSurface(true, true)).toBe('editor')
+
+  const role = {
+    id: 'engineer', name: 'Engineer', description: 'Builds project work',
+    items: [{ resource: 'invoice', action: 'view' }],
+  }
+  const info = renderToStaticMarkup(createElement(RoleInfoPanel, {
+    template: role, workspaceName: 'BIGDROPS', holderIds: ['known', 'unresolved'],
+    holderMembers: [{ userId: 'known', membershipId: 'member-1', name: 'Engineer Account', email: 'engineer@example.com', initials: 'EA', avatarUrl: null, joinedAt: '', role: 'member', isCurrentUser: false }],
+    isOwner: true, onBack() {}, onEdit() {}, management: createElement('div', null, 'Manage role'),
+  }))
+  expect(info).toContain('Role info')
+  expect(info).toContain('Access by area')
+  expect(info).toContain('Exact permission rows')
+  expect(info).toContain('Edit role')
+  expect(info).toContain('1 assigned holder unavailable')
+  expect(info).not.toContain('<input')
+  expect(info).not.toContain('Mark all')
+
+  const readOnly = renderToStaticMarkup(createElement(RoleInfoPanel, {
+    template: role, workspaceName: 'BIGDROPS', holderIds: [], holderMembers: [],
+    isOwner: false, onBack() {}, onEdit() {}, management: null,
+  }))
+  expect(readOnly).not.toContain('Edit role')
+
+  const source = readFileSync('src/pages/settings/RoleBuilder.tsx', 'utf8')
+  expect(source).toContain("data-role-surface={surface}")
+  expect(source).toContain("surface === 'info'")
+  expect(source).toContain("surface === 'editor'")
+  expect(source).toContain('id="role-editor-form"')
+  expect(source).toContain('Mark all')
+  expect(source).toContain('Include Delete')
 })

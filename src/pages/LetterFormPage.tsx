@@ -9,6 +9,7 @@ import { getLetter } from "@/domain/correspondence/letter/letterRepository"
 import type { LetterDocument } from "@/domain/correspondence/letter/types"
 import type { LetterFormFields } from "@/hooks/useLetterSave"
 import { useEntity } from "@/lib/tenant/contexts"
+import { DateField } from "@/components/ui/date-field"
 
 const inputClass = "h-12 w-full rounded-xl border border-bd-border bg-bd-surface px-4 text-sm text-bd-text placeholder:text-bd-text-muted focus:outline-none focus:ring-2 focus:ring-bd-button-primary-bg disabled:opacity-50 disabled:cursor-not-allowed"
 
@@ -171,7 +172,7 @@ export default function LetterFormPage({ mode }: LetterFormPageProps) {
 
         <div className="space-y-1.5">
           <label className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Date</label>
-          <input type="date" value={fields.date} onChange={(e) => update("date", e.target.value)} className={inputClass} disabled={!isDraft} />
+          <DateField label="Date" value={fields.date} onChange={(next) => update("date", next)} className={inputClass} disabled={!isDraft} />
         </div>
 
         <div className="space-y-3">

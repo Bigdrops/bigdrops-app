@@ -43,6 +43,7 @@ import {
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { FormLineItems } from '@/components/document/FormLineItems'
 import { FormFooter } from '@/components/document/FormFooter'
+import { DateField } from '@/components/ui/date-field'
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 const WaybillImportSheet = lazy(() => import('./WaybillImportSheet').then(m => ({ default: m.WaybillImportSheet })))
@@ -455,12 +456,13 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <MobileTextField
-                    label="DATE"
-                    type="date"
-                    value={waybill.date}
-                    onChange={(e) => updateWaybill('date', e.target.value)}
-                  />
+                  <MobileField label="DATE">
+                    <DateField
+                      label="Date"
+                      value={waybill.date || ''}
+                      onChange={(next) => updateWaybill('date', next)}
+                    />
+                  </MobileField>
                   <MobileTextField
                     label="TIME"
                     type="time"
