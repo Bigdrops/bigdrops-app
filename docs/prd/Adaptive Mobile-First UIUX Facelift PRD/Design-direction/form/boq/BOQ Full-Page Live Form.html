@@ -72,7 +72,7 @@
   .addline{width:100%;height:38px;border-radius:10px;border:1px dashed rgba(15,23,42,.14);background:none;font-size:8px;font-weight:800;letter-spacing:.065em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;transition:border-color .15s,background .15s,transform .12s}
   .addline:hover{border-color:var(--accent);background:var(--soft)}
   .addline:active{transform:scale(.96)}
-  .toolbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;row-gap:6px;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:10px}
   .tbn{height:28px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--soft);font-size:8px;font-weight:800;letter-spacing:.065em;text-transform:uppercase;display:flex;align-items:center;gap:5px;transition:background .15s,transform .12s}
   .tbn:hover{background:#e2e8f0}
   .tbn:active{transform:scale(.96)}
@@ -83,6 +83,30 @@
   .grow small{font-family:var(--mono);font-size:8px;color:#cbd5e1}
   .grow .ear2{width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;transition:background .15s}
   .grow .ear2:hover{background:rgba(239,68,68,.55)}
+  /* group containment */
+  .gwrap{display:flex;flex-direction:column;gap:8px;border:1px solid rgba(30,58,95,.16);border-radius:16px;background:var(--soft);padding:8px}
+  .gwrap>.grow{margin-top:0}
+  .gchev{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+  .gchev:hover{background:rgba(255,255,255,.24)}
+  .gchev svg{transition:transform .15s}
+  .gwrap.closed .gchev svg{transform:rotate(-90deg)}
+  .gmemb{display:flex;flex-direction:column;gap:10px}
+  .gadd{height:30px;border-radius:10px;border:1px dashed rgba(30,58,95,.3);background:none;font-size:8px;font-weight:800;letter-spacing:.065em;text-transform:uppercase;color:var(--accent);transition:background .15s,transform .12s}
+  .gadd:hover{background:rgba(30,58,95,.06)}
+  .gadd:active{transform:scale(.97)}
+  /* per-item sub-description */
+  .subrow{display:flex;flex-direction:column;gap:5px;margin-left:36px}
+  .subtog{display:flex;align-items:center;gap:5px;background:none;border:0;padding:0;font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);align-self:flex-start;transition:color .15s}
+  .subtog:hover{color:var(--accent)}
+  .subtog.has{color:var(--accent)}
+  .subtog svg{transition:transform .15s}
+  .subtog.open svg{transform:rotate(180deg)}
+  .subta{min-height:46px}
+  /* import */
+  .imperr{display:none;font-family:var(--mono);font-size:9px;line-height:1.5;color:var(--red);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);border-radius:8px;padding:7px 9px;white-space:pre-wrap}
+  .imperr.show{display:block}
+  .impnote{font-size:8px;line-height:1.6;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:8px;padding:7px 9px}
+  .impnote code{font-family:var(--mono);font-size:7.5px;color:var(--accent)}
   /* totals */
   .sumline{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--sub);font-weight:600;padding:5px 0}
   .sumline b{font-family:var(--mono);font-weight:600;font-size:11px;color:var(--ink)}
@@ -182,7 +206,7 @@
       <span class="mono" style="font-size:8px;color:var(--faint)" id="countLabel"></span>
     </div>
     <div class="toolbar">
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;row-gap:6px">
         <button class="tbn" onclick="openSheet('columns')">
           <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M10.3 4.3c.4-1.7 2.9-1.7 3.3 0a1.7 1.7 0 002.6 1c1.5-.9 3.3.9 2.4 2.4a1.7 1.7 0 001 2.6c1.8.4 1.8 2.9 0 3.3a1.7 1.7 0 00-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 00-2.6 1c-.4 1.8-2.9 1.8-3.3 0a1.7 1.7 0 00-2.6-1c-1.5.9-3.3-.9-2.4-2.4a1.7 1.7 0 00-1-2.6c-1.8-.4-1.8-2.9 0-3.3a1.7 1.7 0 001-2.6c-.9-1.5.8-3.3 2.4-2.4.9.6 2.3.1 2.6-1z"/><circle cx="12" cy="12" r="2.6"/></svg>
           Columns
@@ -191,6 +215,10 @@
           <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
           Group
         </button>
+        <button class="tbn" onclick="openSheet('import')">
+          <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v10m0 0l-3.5-3.5M12 14l3.5-3.5"/></svg>
+          Import
+        </button>
       </div>
       <button class="tbn danger" onclick="clearAll()">
         <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -198,7 +226,7 @@
       </button>
     </div>
     <div id="items" class="sb" style="gap:10px"></div>
-    <button class="addline" onclick="addItem()">
+    <button class="addline" onclick="addItem()" title="Adds an ungrouped item">
       <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
       Add line item
     </button>
@@ -251,6 +279,22 @@
   </div>
 </div>
 
+<!-- IMPORT SHEET -->
+<div class="ov" id="ovImport">
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Import JSON</b><small>Replaces current groups and line items</small></div>
+      <button class="x" onclick="closeSheet('import')"><svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <textarea class="fld mono" id="impTa" rows="7" placeholder='{"items":[{"id":"i1","description":"Portland cement","quantity":400,"unit":"bags","unit_price":6100,"cost_price":5200}],"groups":[{"id":"g1","name":"Civil Works","itemIds":["i1"]}],"title":"Bill of Quantities"}'></textarea>
+    <div class="imperr" id="impErr"></div>
+    <div class="impnote">Contract keys — items: <code>description</code> <code>sub_description</code> <code>quantity</code> <code>unit</code> <code>unit_price</code> <code>cost_price</code> <code>cp</code> <code>spec</code> <code>make</code> <code>group_id</code> · groups: <code>id</code> <code>name</code> <code>itemIds</code> · top level: <code>items</code> (required), <code>groups</code>, <code>title</code></div>
+    <button class="cta" onclick="doImport()">Import &amp; Replace</button>
+    <button class="tbn" style="border:0;background:none;justify-content:center" onclick="closeSheet('import')">Cancel</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -271,14 +315,15 @@ let cols = [
   { key: 'sp', label: 'SP (Selling Price)', desc: 'What the client pays \u00B7 feeds Total Selling Price', visible: true, locked: true },
 ];
 let rows = [
-  { id: 1, type: 'group', title: 'Group A \u2014 Civil Works' },
-  { id: 2, type: 'item', desc: 'Portland cement, grade 42.5R', spec: 'BS EN 197-1 CEM I 42.5R, 50kg bag', qty: 400, unit: 'bags', make: 'Dangote 3X', cp: 5200, sp: 6100 },
-  { id: 3, type: 'item', desc: 'Reinforcement steel, high yield T12', spec: 'BS4449 B500B, 12m lengths', qty: 120, unit: 'lengths', make: 'African Foundries', cp: 9800.75, sp: 11500 },
-  { id: 4, type: 'item', desc: 'Sharp sand, river dredged', spec: '', qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 33500 },
-  { id: 5, type: 'group', title: 'Group B \u2014 Finishes' },
-  { id: 6, type: 'item', desc: 'Emulsion paint, 20L pail', spec: 'Interior, white base', qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 },
+  { id: 8, type: 'item', gid: null, desc: 'Preliminaries, site supervision and setting out', sub: 'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', subOpen: false, spec: 'Full preliminaries', qty: 1, unit: 'lot', make: '', cp: 150000, sp: 185000 },
+  { id: 1, type: 'group', title: 'Group A \u2014 Civil Works', collapsed: false },
+  { id: 2, type: 'item', gid: 1, desc: 'Portland cement, grade 42.5R', sub: '', subOpen: false, spec: 'BS EN 197-1 CEM I 42.5R, 50kg bag', qty: 400, unit: 'bags', make: 'Dangote 3X', cp: 5200, sp: 6100 },
+  { id: 3, type: 'item', gid: 1, desc: 'Reinforcement steel, high yield T12', sub: '', subOpen: false, spec: 'BS4449 B500B, 12m lengths', qty: 120, unit: 'lengths', make: 'African Foundries', cp: 9800.75, sp: 11500 },
+  { id: 4, type: 'item', gid: 1, desc: 'Sharp sand, river dredged', sub: '', subOpen: false, spec: '', qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 33500 },
+  { id: 5, type: 'group', title: 'Group B \u2014 Finishes', collapsed: false },
+  { id: 6, type: 'item', gid: 5, desc: 'Emulsion paint, 20L pail', sub: 'Two coats over prepared surface.', subOpen: false, spec: 'Interior, white base', qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 },
 ];
-let seq = 100, errId = null;
+let seq = 100, errId = null, nums = {};
 
 const vis = k => cols.find(c => c.key === k).visible;
 const profit = r => (Number(r.sp || 0) - Number(r.cp || 0)) * Number(r.qty || 0);
@@ -292,28 +337,26 @@ function toast(msg, isErr) {
   t._h = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-function renderItems() {
-  const host = document.getElementById('items');
-  const itemIdx = rows.filter(r => r.type === 'item').length;
-  document.getElementById('countLabel').textContent = itemIdx + ' items \u00B7 ' + (rows.length - itemIdx) + ' groups';
-  if (!rows.length) {
-    host.innerHTML = '<div class="empty">No rows yet \u2014 add a line item or a group header.</div>';
-    return;
-  }
-  let n = 0;
-  host.innerHTML = rows.map((r, i) => {
-    if (r.type === 'group') {
-      let count = 0;
-      for (let j = i + 1; j < rows.length && rows[j].type === 'item'; j++) count++;
-      return `<div class="grow">
-        <input class="st" value="${esc(r.title)}" placeholder="Group title" onchange="editRow(${r.id},'title',this.value)">
-        <small>${count} rows</small>
-        <button class="ear2" title="Remove group" onclick="removeRow(${r.id})">${svgs.x}</button>
-      </div>`;
-    }
-    n++;
-    const err = errId === r.id ? ' err' : '';
-    return `<div class="item${err}" data-id="${r.id}">
+const siblings = r => r.gid != null
+  ? rows.filter(x => x.type === 'item' && x.gid === r.gid)
+  : rows.filter(x => x.type === 'group' || x.gid == null);
+const members = gid => rows.filter(x => x.type === 'item' && x.gid === gid);
+
+function profitHTML(r) {
+  return `<div class="profit" data-pid="${r.id}"><span>Line Profit \u00B7 ${r.qty} \u00D7 ${naira(Number(r.sp || 0) - Number(r.cp || 0))}</span><b>${naira(profit(r))}</b></div>`;
+}
+function patchProfit(id) {
+  const r = rows.find(x => x.id === id);
+  const el = document.querySelector(`[data-pid="${id}"]`);
+  if (r && el) el.outerHTML = profitHTML(r);
+}
+
+function itemHTML(r, sib) {
+  const n = nums[r.id] || 0;
+  const err = errId === r.id ? ' err' : '';
+  const k = sib.indexOf(r);
+  const hasSub = !!(r.sub && r.sub.trim());
+  return `<div class="item${err}" data-id="${r.id}">
       <button class="ear" title="Remove item" onclick="removeRow(${r.id})">${svgs.x}</button>
       <div class="uhead">
         <div class="upock">
@@ -322,14 +365,18 @@ function renderItems() {
         </div>
         <textarea class="fld" rows="2" placeholder="Item description / specification... *" oninput="editRow(${r.id},'desc',this.value)">${esc(r.desc)}</textarea>
       </div>
+      <div class="subrow">
+        <button class="subtog${hasSub ? ' has' : ''}${r.subOpen ? ' open' : ''}" onclick="toggleSub(${r.id})">${svgs.down}Sub description</button>
+        ${r.subOpen ? `<textarea class="fld subta" rows="2" placeholder="Sub-description \u2014 detail shown under the main description..." oninput="editRow(${r.id},'sub',this.value)">${esc(r.sub)}</textarea>` : ''}
+      </div>
       <div class="umid">
         <div class="upock">
-          <button class="mbtn" title="Move up" ${i === 0 ? 'disabled' : ''} onclick="moveRow(${i},-1)">${svgs.up}</button>
-          <button class="mbtn" title="Move down" ${i === rows.length - 1 ? 'disabled' : ''} onclick="moveRow(${i},1)">${svgs.down}</button>
+          <button class="mbtn" title="Move up" ${k <= 0 ? 'disabled' : ''} onclick="moveRow(${r.id},-1)">${svgs.up}</button>
+          <button class="mbtn" title="Move down" ${k >= sib.length - 1 ? 'disabled' : ''} onclick="moveRow(${r.id},1)">${svgs.down}</button>
+          <button class="mbtn" title="Duplicate" onclick="dupRow(${r.id})">${svgs.copy}</button>
         </div>
         <div class="uctl">
           ${vis('spec') ? `<input class="fld" style="height:38px" placeholder="Specification" value="${esc(r.spec)}" oninput="editRow(${r.id},'spec',this.value)">` : ''}
-          <button class="mbtn" title="Duplicate" onclick="dupRow(${i})">${svgs.copy}</button>
         </div>
       </div>
       <div class="g3i">
@@ -341,10 +388,48 @@ function renderItems() {
         ${vis('cp') ? `<input class="fld mono" style="height:36px;font-size:10px" type="number" min="0" placeholder="CP (cost)" value="${r.cp}" oninput="editNum(${r.id},'cp',this.value)">` : ''}
         ${vis('sp') ? `<input class="fld mono" style="height:36px;font-size:10px" type="number" min="0" placeholder="SP (sell)" value="${r.sp}" oninput="editNum(${r.id},'sp',this.value)">` : ''}
       </div>
-      <div class="profit"><span>Line Profit \u00B7 ${r.qty} \u00D7 ${naira(Number(r.sp || 0) - Number(r.cp || 0))}</span><b>${naira(profit(r))}</b></div>
-      <button class="ins" onclick="insertBelow(${i})">+ Insert below</button>
+      ${profitHTML(r)}
+      <button class="ins" onclick="insertBelow(${r.id})">+ Insert below</button>
     </div>`;
-  }).join('');
+}
+
+function groupHTML(r) {
+  const mem = members(r.id);
+  return `<div class="gwrap${r.collapsed ? ' closed' : ''}" data-gid="${r.id}">
+    <div class="grow">
+      <button class="gchev" title="${r.collapsed ? 'Expand' : 'Collapse'} group" onclick="toggleGroup(${r.id})">${svgs.down}</button>
+      <input class="st" value="${esc(r.title)}" placeholder="Group title" oninput="editRow(${r.id},'title',this.value)">
+      <small>${mem.length} items</small>
+      <button class="ear2" title="Remove group (items are kept)" onclick="removeRow(${r.id})">${svgs.x}</button>
+    </div>
+    ${r.collapsed ? '' : `<div class="gmemb">${mem.map(m => itemHTML(m, mem)).join('')}</div>
+    <button class="gadd" onclick="addItemTo(${r.id})">+ Add item to this group</button>`}
+  </div>`;
+}
+
+function renderItems() {
+  const host = document.getElementById('items');
+  rows.forEach(r => { if (r.type === 'item' && r.gid != null && !rows.some(g => g.type === 'group' && g.id === r.gid)) r.gid = null; });
+  const nItems = rows.filter(r => r.type === 'item').length;
+  const nGroups = rows.filter(r => r.type === 'group').length;
+  document.getElementById('countLabel').textContent = nItems + ' items \u00B7 ' + nGroups + ' groups';
+  if (!rows.length) {
+    host.innerHTML = '<div class="empty">No rows yet \u2014 add a line item or a group.</div>';
+    return;
+  }
+  nums = {};
+  let n = 0;
+  const walk = [];
+  rows.forEach(r => {
+    if (r.type === 'group') {
+      members(r.id).forEach(m => { nums[m.id] = ++n; });
+      walk.push(groupHTML(r));
+    } else if (r.gid == null) {
+      nums[r.id] = ++n;
+      walk.push(itemHTML(r, siblings(r)));
+    }
+  });
+  host.innerHTML = walk.join('');
 }
 
 function renderTotals() {
@@ -379,43 +464,88 @@ function render() { renderItems(); renderTotals(); }
 
 function editRow(id, key, val) {
   const r = rows.find(x => x.id === id);
-  if (r) r[key] = val;
-  if (key === 'title') return;
-  renderTotals(); renderItems();
+  if (!r) return;
+  r[key] = val;
+  if (key === 'sub') {
+    const tog = document.querySelector(`[data-id="${id}"] .subtog`);
+    if (tog) tog.classList.toggle('has', !!(val && val.trim()));
+  }
 }
 function editNum(id, key, val) {
   const r = rows.find(x => x.id === id);
   if (!r) return;
   const n = Number(val);
   r[key] = Number.isFinite(n) ? n : 0;
-  renderTotals(); renderItems();
+  renderTotals();
+  patchProfit(id);
 }
-function moveRow(i, dir) {
-  const j = i + dir;
-  if (j < 0 || j >= rows.length) return;
-  [rows[i], rows[j]] = [rows[j], rows[i]];
+function moveRow(id, dir) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  const sib = siblings(r);
+  const k = sib.indexOf(r);
+  const target = sib[k + dir];
+  if (!target) return;
+  rows.splice(rows.indexOf(r), 1);
+  const t = rows.indexOf(target);
+  rows.splice(dir > 0 ? t + 1 : t, 0, r);
   render();
 }
-function dupRow(i) {
-  rows.splice(i + 1, 0, { ...rows[i], id: ++seq, desc: rows[i].desc + ' (copy)' });
+function dupRow(id) {
+  const i = rows.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const src = rows[i];
+  rows.splice(i + 1, 0, { ...src, id: ++seq, desc: (src.desc || '') + ' (copy)', subOpen: false });
   render(); toast('Item duplicated');
 }
-function insertBelow(i) {
-  rows.splice(i + 1, 0, blank());
+function insertBelow(id) {
+  const i = rows.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const src = rows[i];
+  rows.splice(i + 1, 0, blank(src.gid));
   render(); toast('Row inserted');
   const el = document.querySelector(`[data-id="${rows[i + 1].id}"]`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
-function blank() { return { id: ++seq, type: 'item', desc: '', spec: '', qty: 1, unit: '', make: '', cp: 0, sp: 0 }; }
-function addItem() { rows.push(blank()); render(); toast('Line item added'); }
-function addGroup() { rows.push({ id: ++seq, type: 'group', title: 'New Group' }); render(); toast('Group header added'); }
+function blank(gid) { return { id: ++seq, type: 'item', gid: gid == null ? null : gid, desc: '', sub: '', subOpen: false, spec: '', qty: 1, unit: '', make: '', cp: 0, sp: 0 }; }
+function addItem() { rows.push(blank(null)); render(); toast('Line item added'); }
+function addItemTo(gid) {
+  const mem = members(gid);
+  const last = mem[mem.length - 1];
+  const at = last ? rows.indexOf(last) + 1 : rows.findIndex(x => x.type === 'group' && x.id === gid) + 1;
+  rows.splice(at >= 0 ? at : rows.length, 0, blank(gid));
+  render(); toast('Item added to group');
+}
+function addGroup() { rows.push({ id: ++seq, type: 'group', title: 'New Group', collapsed: false }); render(); toast('Group added'); }
+function toggleSub(id) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  r.subOpen = !r.subOpen;
+  renderItems();
+  if (r.subOpen) {
+    const ta = document.querySelector(`[data-id="${id}"] .subta`);
+    if (ta) ta.focus();
+  }
+}
+function toggleGroup(id) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  r.collapsed = !r.collapsed;
+  renderItems();
+}
 function removeRow(id) {
   const r = rows.find(x => x.id === id);
-  rows = rows.filter(x => x.id !== id);
-  render();
-  if (r && r.type === 'group') toast('Group removed');
-  else if (r && (r.desc.trim() || Number(r.sp) > 0)) toast('Row deleted');
-  else toast('Row removed');
+  if (!r) return;
+  if (r.type === 'group') {
+    rows.forEach(x => { if (x.type === 'item' && x.gid === id) x.gid = null; });
+    rows = rows.filter(x => x.id !== id);
+    render(); toast('Group removed \u2014 its items kept');
+  } else {
+    rows = rows.filter(x => x.id !== id);
+    render();
+    if ((r.desc && r.desc.trim()) || Number(r.sp) > 0) toast('Row deleted');
+    else toast('Row removed');
+  }
 }
 function clearAll() { document.getElementById('ovClear').classList.add('show'); }
 function doClearAll() { rows = []; closeSheet('clear'); render(); toast('All rows cleared'); }
@@ -426,9 +556,75 @@ function toggleCol(i) {
   renderCols(); renderItems();
   toast(c.label + (c.visible ? ' shown on rows + PDF' : ' hidden from rows + PDF'));
 }
-function openSheet(id) { renderCols(); document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)).classList.add('show'); }
+function openSheet(id) {
+  if (id === 'columns') renderCols();
+  if (id === 'import') showImpErr('');
+  document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)).classList.add('show');
+}
 function closeSheet(id) { document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)).classList.remove('show'); }
 function syncNo() { document.getElementById('boqNoLabel').textContent = document.getElementById('fNo').value; }
+
+function showImpErr(msg) {
+  const el = document.getElementById('impErr');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+function doImport() {
+  const raw = document.getElementById('impTa').value.trim();
+  if (!raw) { showImpErr('Paste JSON first.'); return; }
+  let data;
+  try { data = JSON.parse(raw); } catch (e) { showImpErr('Invalid JSON: ' + e.message); toast('Import failed \u2014 invalid JSON', true); return; }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) { showImpErr('Root must be a JSON object with an "items" array.'); return; }
+  if (!Array.isArray(data.items)) { showImpErr('Missing required "items" array.'); return; }
+  const groups = data.groups == null ? [] : data.groups;
+  if (!Array.isArray(groups)) { showImpErr('"groups" must be an array when present.'); return; }
+  const errors = [];
+  const keyOf = v => (v == null ? null : String(v));
+  const groupRows = [], gidMap = {}, itemGidMap = {};
+  groups.forEach((g, i) => {
+    if (!g || typeof g !== 'object') { errors.push('groups[' + i + '] must be an object with a name.'); return; }
+    if (typeof g.name !== 'string' || !g.name.trim()) { errors.push('groups[' + i + '] needs a non-empty "name".'); return; }
+    const gid = ++seq;
+    gidMap[keyOf(g.id != null ? g.id : i)] = gid;
+    groupRows.push({ id: gid, type: 'group', title: g.name.trim(), collapsed: false });
+    if (Array.isArray(g.itemIds)) g.itemIds.forEach(id => { itemGidMap[keyOf(id)] = gid; });
+  });
+  const payloadItemIds = new Set(data.items.filter(it => it && it.id != null).map(it => String(it.id)));
+  Object.keys(itemGidMap).forEach(k => { if (!payloadItemIds.has(k)) errors.push('groups[].itemIds references unknown item "' + k + '".'); });
+  const itemRows = [];
+  data.items.forEach((it, i) => {
+    if (!it || typeof it !== 'object') { errors.push('items[' + i + '] must be an object.'); return; }
+    let gid = null;
+    const gidRaw = it.group_id != null ? it.group_id : it.gid;
+    if (gidRaw != null) {
+      const mapped = gidMap[keyOf(gidRaw)];
+      if (mapped == null) { errors.push('items[' + i + '] references unknown group_id "' + gidRaw + '".'); return; }
+      gid = mapped;
+    } else if (it.id != null && itemGidMap[keyOf(it.id)] != null) {
+      gid = itemGidMap[keyOf(it.id)];
+    }
+    const q = Number(it.quantity != null ? it.quantity : it.qty);
+    const cpRaw = it.cost_price != null ? it.cost_price : it.cp;
+    itemRows.push({
+      id: ++seq, type: 'item', gid,
+      desc: typeof it.description === 'string' ? it.description : '',
+      sub: typeof it.sub_description === 'string' ? it.sub_description : '',
+      subOpen: false,
+      spec: typeof it.spec === 'string' ? it.spec : '',
+      make: typeof it.make === 'string' ? it.make : '',
+      qty: Number.isFinite(q) ? q : 0,
+      unit: typeof it.unit === 'string' ? it.unit : '',
+      cp: Number.isFinite(Number(cpRaw)) ? Number(cpRaw) : 0,
+      sp: Number.isFinite(Number(it.unit_price)) ? Number(it.unit_price) : 0,
+    });
+  });
+  if (errors.length) { showImpErr(errors.join('\n')); toast('Import failed \u2014 see errors', true); return; }
+  rows = [...groupRows, ...itemRows];
+  if (typeof data.title === 'string' && data.title.trim()) document.getElementById('fTitle').value = data.title;
+  closeSheet('import');
+  render();
+  toast('Imported ' + itemRows.length + ' items \u00B7 ' + groupRows.length + ' groups');
+}
 
 function save() {
   if (!document.getElementById('fNo').value.trim()) {
