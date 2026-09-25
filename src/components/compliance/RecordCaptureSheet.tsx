@@ -3,6 +3,7 @@ import { Camera, Receipt } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -130,11 +131,11 @@ export default function RecordCaptureSheet({ open, onOpenChange, entry, onSaved 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-[11px] font-bold text-bd-text-muted">Date</Label>
-              <Input
-                type="date"
+              <DateField
+                label="Date"
                 className="h-10"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(next) => setDate(next)}
               />
             </div>
 

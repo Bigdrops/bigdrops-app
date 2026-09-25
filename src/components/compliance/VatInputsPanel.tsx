@@ -3,6 +3,7 @@ import { Edit, FileJson, Info, PlusCircle, Trash2, Wallet } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -205,11 +206,11 @@ export default function VatInputsPanel({ taxInputs, onInputsChanged }: VatInputs
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold text-bd-text-muted">Date</Label>
-                <Input
-                  type="date"
+                <DateField
+                  label="Date"
                   className="h-10"
                   value={editingEntry?.date || ''}
-                  onChange={(e) => setEditingEntry({ ...editingEntry, date: e.target.value })}
+                  onChange={(next) => setEditingEntry({ ...editingEntry, date: next })}
                 />
               </div>
 

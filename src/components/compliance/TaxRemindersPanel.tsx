@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
@@ -253,10 +254,10 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
 
             <div className="space-y-2">
               <Label className="text-[11px] font-bold text-bd-text-muted">Due Date</Label>
-              <Input
-                type="date"
+              <DateField
+                label="Due Date"
                 value={editingReminder?.due_date ?? ''}
-                onChange={e => setEditingReminder({ ...editingReminder, due_date: e.target.value })}
+                onChange={next => setEditingReminder({ ...editingReminder, due_date: next })}
                 className="h-10"
               />
             </div>
@@ -264,19 +265,19 @@ export default function TaxRemindersPanel({ reminders, filings, onRemindersChang
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold text-bd-text-muted">Filing Start</Label>
-                <Input
-                  type="date"
+                <DateField
+                  label="Filing Start"
                   value={editingReminder?.period_start ?? ''}
-                  onChange={e => setEditingReminder({ ...editingReminder, period_start: e.target.value || null })}
+                  onChange={next => setEditingReminder({ ...editingReminder, period_start: next || null })}
                   className="h-10"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold text-bd-text-muted">Filing End</Label>
-                <Input
-                  type="date"
+                <DateField
+                  label="Filing End"
                   value={editingReminder?.period_end ?? ''}
-                  onChange={e => setEditingReminder({ ...editingReminder, period_end: e.target.value || null })}
+                  onChange={next => setEditingReminder({ ...editingReminder, period_end: next || null })}
                   className="h-10"
                 />
               </div>

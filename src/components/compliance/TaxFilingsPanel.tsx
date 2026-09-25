@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -253,20 +254,20 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold text-bd-text-muted">Period Start</Label>
-                <Input
-                  type="date"
+                <DateField
+                  label="Period Start"
                   className="h-10"
                   value={editingFiling?.period_start ?? ''}
-                  onChange={e => setEditingFiling({ ...editingFiling, period_start: e.target.value })}
+                  onChange={next => setEditingFiling({ ...editingFiling, period_start: next })}
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold text-bd-text-muted">Period End</Label>
-                <Input
-                  type="date"
+                <DateField
+                  label="Period End"
                   className="h-10"
                   value={editingFiling?.period_end ?? ''}
-                  onChange={e => setEditingFiling({ ...editingFiling, period_end: e.target.value })}
+                  onChange={next => setEditingFiling({ ...editingFiling, period_end: next })}
                 />
               </div>
             </div>
@@ -314,11 +315,11 @@ export default function TaxFilingsPanel({ filings, onFilingsChanged }: TaxFiling
             {/* Submitted date */}
             <div className="space-y-2">
               <Label className="text-[11px] font-bold text-bd-text-muted">Submission Date</Label>
-              <Input
-                type="date"
+              <DateField
+                label="Submission Date"
                 className="h-10"
                 value={editingFiling?.submitted_at ?? ''}
-                onChange={e => setEditingFiling({ ...editingFiling, submitted_at: e.target.value || null })}
+                onChange={next => setEditingFiling({ ...editingFiling, submitted_at: next || null })}
               />
             </div>
 
