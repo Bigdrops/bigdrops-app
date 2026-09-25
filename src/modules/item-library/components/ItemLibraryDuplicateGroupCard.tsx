@@ -9,6 +9,20 @@ type ItemLibraryDuplicateGroupCardProps = {
   onInspectItem: (groupId: string, itemId: string) => void
 }
 
+function getGroupDifferenceSummary(group: DuplicateCandidateGroup) {
+  const prices = group.members
+    .map((member) => member.last_sold_price)
+    .filter((price): price is number => price !== null && price !== undefined)
+  const usageTotal = group.members.reduce((sum, member) => sum + Number(member.usage_count || 0), 0)
+
+  const facts = [`${usageTotal.toLocaleString()} total uses`]
+  if (prices.length > 1) {
+    facts.push(`${formatItemPrice(Math.min(...prices))} to ${formatItemPrice(Math.max(...prices))}`)
+  }
+
+  return facts.join(' - ')
+}
+
 export function ItemLibraryDuplicateGroupCard({
   group,
   selectedGroupId,
@@ -37,12 +51,19 @@ export function ItemLibraryDuplicateGroupCard({
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Possible duplicates</div>
             <h3 className="mt-1 text-[14px] font-extrabold leading-tight text-bd-text">{group.label}</h3>
             <p className="mt-1 text-[11px] leading-relaxed text-bd-text-muted">{group.reason}</p>
+            <p className="mt-2 text-[10px] font-semibold text-bd-text-muted">
+              Review only. Similar wording can still mean different specifications.
+            </p>
           </div>
           <div className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 font-mono text-[10px] font-bold text-bd-text">
             {group.members.length} names
           </div>
         </div>
       </button>
+
+      <div className="mt-3 rounded-lg border border-bd-border bg-bd-surface-muted px-3 py-2 text-[10px] font-semibold text-bd-text-muted">
+        {getGroupDifferenceSummary(group)}
+      </div>
 
       <div className="mt-3 space-y-2">
         {group.members.map((member) => {

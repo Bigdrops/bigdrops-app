@@ -60,13 +60,14 @@ export function ItemLibraryDuplicateReviewPanel({
           <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-bd-text-muted">Possible duplicates</div>
           <h2 className="mt-1 text-[18px] font-extrabold text-bd-text">{group.label}</h2>
           <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-            {group.reason} These items may represent the same product or service and are shown here for review only.
+            {group.reason} This is review evidence, not identity proof. Keep the records separate when the names
+            describe different models, ratings, sizes, materials, or applications.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-bd-text-muted">
             <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 font-semibold text-bd-text">
               {group.members.length} similar names
             </span>
-            <span>Choose one primary item, then review the merge preview before applying.</span>
+            <span>Inspect the differences, choose one primary item only when they are true duplicates, or leave them separate.</span>
           </div>
         </div>
 

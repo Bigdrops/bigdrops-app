@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BIGDROPS — BOQ Inline Form Direction</title>
+
+<style>
+:root{
+  --bg:#f4f6f9;
+  --surface:#ffffff;
+  --surface-soft:#f7f9fc;
+  --field:#f1f4f8;
+  --ink:#182033;
+  --muted:#747b89;
+  --faint:#a0a6b1;
+  --line:#dde2ea;
+  --line-strong:#ccd3de;
+
+  --primary:#4438c8;
+  --primary-soft:#f0efff;
+  --primary-line:#cbc7ff;
+
+  --danger:#c42c68;
+  --danger-soft:#fde7f0;
+
+  --profit:#087d62;
+  --profit-soft:#e7f8f2;
+
+  --warning:#d77a00;
+
+  --radius:16px;
+  --field-radius:14px;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+}
+
+body{
+  background:#e9edf3;
+  color:var(--ink);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+button,
+input,
+textarea{
+  font:inherit;
+}
+
+button{
+  color:inherit;
+}
+
+.app{
+  width:min(100%, 720px);
+  min-height:100vh;
+  margin:auto;
+  background:var(--bg);
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.topbar{
+  height:64px;
+  padding:0 18px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:rgba(255,255,255,.94);
+  border-bottom:1px solid var(--line);
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter:blur(14px);
+}
+
+.back{
+  width:42px;
+  height:42px;
+  border:0;
+  border-radius:13px;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  font-size:26px;
+  cursor:pointer;
+}
+
+.title{
+  min-width:0;
+  flex:1;
+}
+
+.eyebrow{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+.title strong{
+  display:block;
+  margin-top:2px;
+  font-size:16px;
+  letter-spacing:-.02em;
+}
+
+.status{
+  padding:7px 10px;
+  border-radius:999px;
+  background:var(--primary-soft);
+  color:var(--primary);
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.page{
+  padding:18px 18px 120px;
+}
+
+.section{
+  padding-bottom:22px;
+  margin-bottom:22px;
+  border-bottom:1px solid var(--line);
+}
+
+.section-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:15px;
+}
+
+.section-name{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#656c7a;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+.dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--primary);
+}
+
+.count{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:700;
+}
+
+/* =========================================================
+   DOCUMENT DETAILS
+   ========================================================= */
+
+.details{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.field{
+  min-width:0;
+}
+
+.field.full{
+  grid-column:1/-1;
+}
+
+label{
+  display:block;
+  margin:0 0 7px;
+  color:#6d7280;
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+input,
+textarea{
+  width:100%;
+  border:1px solid var(--line);
+  background:var(--surface);
+  border-radius:var(--field-radius);
+  outline:none;
+  color:var(--ink);
+}
+
+input{
+  height:50px;
+  padding:0 14px;
+}
+
+textarea{
+  min-height:84px;
+  padding:13px 14px;
+  resize:vertical;
+}
+
+input:focus,
+textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(68,56,200,.08);
+}
+
+/* =========================================================
+   LINE ITEM TOOLBAR
+   ========================================================= */
+
+.item-toolbar{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.tool{
+  min-height:44px;
+  padding:0 13px;
+  border:1px solid var(--line-strong);
+  background:var(--surface);
+  border-radius:13px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:#656b77;
+  font-size:12px;
+  font-weight:750;
+  cursor:pointer;
+}
+
+.tool.settings{
+  border-color:transparent;
+  background:transparent;
+  justify-content:flex-start;
+}
+
+.tool.clear{
+  color:#8a5267;
+}
+
+/* =========================================================
+   ITEM
+   IMPORTANT:
+   There is NO permanent enumeration gutter.
+   ========================================================= */
+
+.item{
+  position:relative;
+  margin-bottom:14px;
+  padding:0 0 15px;
+  border-bottom:1px solid var(--line);
+}
+
+/*
+  Enumeration is a compact HEADER.
+  It consumes height here and nowhere else.
+*/
+.item-head{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+.enumeration{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  margin-right:auto;
+}
+
+.item-number{
+  width:24px;
+  color:#747b89;
+  font-size:12px;
+  font-weight:800;
+  text-align:center;
+}
+
+.drag{
+  width:28px;
+  height:38px;
+  border:0;
+  background:transparent;
+  color:#9aa0ac;
+  display:grid;
+  place-items:center;
+  cursor:grab;
+}
+
+.drag-grid{
+  display:grid;
+  grid-template-columns:repeat(2,3px);
+  gap:3px;
+}
+
+.drag-grid i{
+  width:3px;
+  height:3px;
+  border-radius:50%;
+  background:currentColor;
+}
+
+.row-actions{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+.micro{
+  width:38px;
+  height:38px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--surface-soft);
+  color:#9298a4;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+.micro.delete{
+  margin-left:3px;
+  background:var(--danger-soft);
+  border-color:#f5c7da;
+  color:var(--danger);
+}
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.description{
+  width:100%;
+  min-height:94px;
+  padding:15px 16px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  font-size:15px;
+  line-height:1.45;
+}
+
+.aux-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:10px 0 17px;
+}
+
+.pill{
+  min-height:39px;
+  padding:0 13px;
+  border:1px solid #9096a2;
+  border-radius:999px;
+  background:transparent;
+  color:#777d88;
+  font-size:12px;
+  font-weight:750;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  cursor:pointer;
+}
+
+/* =========================================================
+   DATA GRID
+   ========================================================= */
+
+.item-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px 12px;
+}
+
+.item-grid input{
+  background:var(--field);
+  border-color:#dce2ea;
+  font-size:15px;
+}
+
+.number-input{
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+.specification{
+  display:none;
+  grid-column:1/-1;
+  margin-bottom:14px;
+}
+
+.specification.open{
+  display:block;
+}
+
+/* =========================================================
+   PROFIT READOUT
+   ========================================================= */
+
+.commercial-strip{
+  margin-top:15px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  border:1px solid var(--line);
+  border-radius:15px;
+  overflow:hidden;
+  background:var(--surface);
+}
+
+.commercial-cell{
+  padding:12px 14px;
+  min-width:0;
+}
+
+.commercial-cell + .commercial-cell{
+  border-left:1px solid var(--line);
+}
+
+.commercial-label{
+  color:#8a909c;
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+.commercial-value{
+  margin-top:4px;
+  font-size:17px;
+  font-weight:800;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+.profit .commercial-value{
+  color:var(--profit);
+}
+
+/* =========================================================
+   INSERT BELOW
+   ========================================================= */
+
+.insert{
+  margin-top:8px;
+  height:34px;
+  border:0;
+  background:transparent;
+  color:#969ca7;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 3px;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+
+.insert b{
+  font-size:22px;
+  line-height:1;
+  font-weight:300;
+}
+
+/* =========================================================
+   GROUP
+   ========================================================= */
+
+.group{
+  margin:16px -6px;
+  border:1px solid var(--primary-line);
+  border-radius:18px;
+  background:linear-gradient(
+    180deg,
+    rgba(238,239,255,.82),
+    rgba(247,248,255,.45)
+  );
+  overflow:hidden;
+}
+
+.group-head{
+  min-height:62px;
+  padding:0 13px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px solid var(--primary-line);
+}
+
+.group-collapse{
+  width:38px;
+  height:42px;
+  border:0;
+  background:transparent;
+  color:var(--primary);
+  font-size:22px;
+}
+
+.group-spine{
+  width:5px;
+  height:34px;
+  border-radius:5px;
+  background:var(--primary);
+}
+
+.group-name{
+  flex:1;
+  min-width:0;
+  font-size:15px;
+  font-weight:850;
+  color:var(--primary);
+}
+
+.group-count{
+  color:#8d87d1;
+  font-size:11px;
+  font-weight:700;
+}
+
+.group-remove{
+  width:38px;
+  height:38px;
+  border:0;
+  background:transparent;
+  color:#8f94a1;
+  font-size:25px;
+  cursor:pointer;
+}
+
+.group-body{
+  padding:8px 12px 4px;
+}
+
+/*
+  Group items still use FULL WIDTH.
+  The group border does not create an item gutter.
+*/
+.group .item:last-of-type{
+  border-bottom:0;
+  margin-bottom:0;
+}
+
+.group-footer{
+  min-height:67px;
+  padding:10px 12px;
+  border-top:1px solid var(--primary-line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background:rgba(255,255,255,.35);
+}
+
+.group-total{
+  padding:8px 12px;
+  border:1px solid var(--primary-line);
+  background:var(--surface);
+  border-radius:999px;
+  color:var(--primary);
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.group-add{
+  min-height:42px;
+  padding:0 15px;
+  border:1px solid var(--primary-line);
+  background:var(--surface);
+  border-radius:999px;
+  color:var(--primary);
+  font-size:12px;
+  font-weight:800;
+  box-shadow:0 3px 10px rgba(68,56,200,.07);
+}
+
+/* =========================================================
+   GLOBAL ADD
+   ========================================================= */
+
+.add-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:18px;
+}
+
+.add-big{
+  min-height:62px;
+  border:1.5px dashed #8e949f;
+  background:transparent;
+  border-radius:16px;
+  color:#676d78;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.add-big.group-add-big{
+  color:var(--primary);
+  border-color:#bbb7ef;
+  background:rgba(238,239,255,.4);
+}
+
+.plus{
+  font-size:30px;
+  line-height:1;
+  font-weight:300;
+}
+
+/* =========================================================
+   TOTALS
+   ========================================================= */
+
+.totals{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:18px;
+  overflow:hidden;
+}
+
+.total-row{
+  min-height:58px;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid var(--line);
+}
+
+.total-row:last-child{
+  border-bottom:0;
+}
+
+.total-copy span{
+  display:block;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.total-copy strong{
+  display:block;
+  margin-top:3px;
+  font-size:10px;
+  color:var(--faint);
+}
+
+.total-money{
+  font-size:18px;
+  font-weight:850;
+  font-variant-numeric:tabular-nums;
+}
+
+.total-row.hero{
+  background:#172139;
+  color:#fff;
+}
+
+.total-row.hero .total-copy span,
+.total-row.hero .total-copy strong{
+  color:#aeb8ce;
+}
+
+.amount-words{
+  padding:13px 14px;
+  background:#202b45;
+  color:#dfe5f1;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.5;
+}
+
+/* =========================================================
+   SAVE
+   ========================================================= */
+
+.save-fab{
+  position:fixed;
+  right:max(20px, calc((100vw - 720px)/2 + 20px));
+  bottom:24px;
+  width:60px;
+  height:60px;
+  border:0;
+  border-radius:21px;
+  background:#3c4667;
+  color:white;
+  box-shadow:0 10px 25px rgba(35,44,74,.28);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  z-index:30;
+}
+
+.save-fab svg{
+  width:27px;
+  height:27px;
+}
+
+/* =========================================================
+   DESKTOP ADAPTATION
+   ========================================================= */
+
+@media(min-width:800px){
+  .app{
+    width:min(1180px,100%);
+  }
+
+  .page{
+    padding:24px 28px 120px;
+  }
+
+  .desktop-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:22px;
+    align-items:start;
+  }
+
+  .totals-column{
+    position:sticky;
+    top:88px;
+  }
+
+  .save-fab{
+    right:max(28px, calc((100vw - 1180px)/2 + 28px));
+  }
+}
+
+@media(max-width:440px){
+  .page{
+    padding-left:14px;
+    padding-right:14px;
+  }
+
+  .group{
+    margin-left:-4px;
+    margin-right:-4px;
+  }
+
+  .group-body{
+    padding-left:9px;
+    padding-right:9px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header class="topbar">
+  <button class="back">‹</button>
+
+  <div class="title">
+    <span class="eyebrow">Bill of Quantities</span>
+    <strong>BOQ-2026-0042</strong>
+  </div>
+
+  <span class="status">Draft</span>
+</header>
+
+<main class="page">
+
+<div class="desktop-layout">
+
+<div>
+
+<!-- DETAILS -->
+<section class="section">
+
+  <div class="section-heading">
+    <div class="section-name">
+      <span class="dot"></span>
+      Details
+    </div>
+  </div>
+
+  <div class="details">
+
+    <div class="field">
+      <label>BOQ Number</label>
+      <input value="BOQ-2026-0042">
+    </div>
+
+    <div class="field">
+      <label>Issue Date</label>
+      <input value="25 Sep 2026">
+    </div>
+
+    <div class="field">
+      <label>Vendor</label>
+      <input value="Monolith Contractors Ltd">
+    </div>
+
+    <div class="field">
+      <label>Vendor Contact</label>
+      <input value="0803 000 1234">
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- LINE ITEMS -->
+<section class="section">
+
+  <div class="section-heading">
+    <div class="section-name">
+      <span class="dot" style="background:#079c78"></span>
+      Line Items
+    </div>
+    <div class="count">3 items</div>
+  </div>
+
+  <div class="item-toolbar">
+
+    <button class="tool">
+      ⇥
+      Import
+    </button>
+
+    <button class="tool settings">
+      ⚙
+      Table settings
+    </button>
+
+    <button class="tool clear">
+      Clear all
+    </button>
+
+  </div>
+
+
+  <!-- UNGROUPED ITEM -->
+  <article class="item">
+
+    <div class="item-head">
+
+      <div class="enumeration">
+        <span class="item-number">1</span>
+
+        <button class="drag" aria-label="Drag item">
+          <span class="drag-grid">
+            <i></i><i></i>
+            <i></i><i></i>
+            <i></i><i></i>
+          </span>
+        </button>
+      </div>
+
+      <div class="row-actions">
+        <button class="micro" title="Move up">↑</button>
+        <button class="micro" title="Move down">↓</button>
+        <button class="micro delete" title="Delete">×</button>
+      </div>
+
+    </div>
+
+    <textarea class="description"
+      placeholder="Item description...">Site clearance and grubbing</textarea>
+
+    <div class="aux-actions">
+      <button class="pill js-spec">⌄ Sub-description</button>
+      <button class="pill">▣ Photo</button>
+    </div>
+
+    <div class="specification">
+      <div class="field">
+        <label>Specification / Sub-description</label>
+        <textarea placeholder="Add specification..."></textarea>
+      </div>
+    </div>
+
+    <div class="item-grid">
+
+      <div class="field">
+        <label>Make</label>
+        <input placeholder="Optional">
+      </div>
+
+      <div class="field">
+        <label>Qty</label>
+        <input class="number-input js-qty" value="1" inputmode="decimal">
+      </div>
+
+      <div class="field">
+        <label>Unit</label>
+        <input value="LOT">
+      </div>
+
+      <div class="field">
+        <label>Cost Price</label>
+        <input class="number-input js-cp" value="120000" inputmode="decimal">
+      </div>
+
+      <div class="field">
+        <label>Selling Price</label>
+        <input class="number-input js-sp" value="150000" inputmode="decimal">
+      </div>
+
+      <div class="field">
+        <label>Profit</label>
+        <input class="number-input js-profit" value="30000" readonly>
+      </div>
+
+    </div>
+
+    <div class="commercial-strip">
+      <div class="commercial-cell">
+        <div class="commercial-label">Selling total</div>
+        <div class="commercial-value js-selling-total">₦150,000</div>
+      </div>
+
+      <div class="commercial-cell profit">
+        <div class="commercial-label">Line profit</div>
+        <div class="commercial-value js-profit-total">+₦30,000</div>
+      </div>
+    </div>
+
+    <button class="insert">
+      <b>＋</b>
+      Insert below
+    </button>
+
+  </article>
+
+
+  <!-- GROUP -->
+  <section class="group">
+
+    <header class="group-head">
+
+      <button class="group-collapse">⌄</button>
+
+      <span class="group-spine"></span>
+
+      <div class="group-name">
+        Group 1
+      </div>
+
+      <span class="group-count">2 items</span>
+
+      <button class="group-remove">×</button>
+
+    </header>
+
+
+    <div class="group-body">
+
+
+      <!-- ITEM 2 -->
+      <article class="item">
+
+        <div class="item-head">
+
+          <div class="enumeration">
+            <span class="item-number">2</span>
+
+            <button class="drag">
+              <span class="drag-grid">
+                <i></i><i></i>
+                <i></i><i></i>
+                <i></i><i></i>
+              </span>
+            </button>
+          </div>
+
+          <div class="row-actions">
+            <button class="micro">↑</button>
+            <button class="micro">↓</button>
+            <button class="micro delete">×</button>
+          </div>
+
+        </div>
+
+        <textarea class="description">Portland cement 42.5N</textarea>
+
+        <div class="aux-actions">
+          <button class="pill js-spec">⌄ Sub-description</button>
+          <button class="pill">▣ Photo</button>
+        </div>
+
+        <div class="specification">
+          <div class="field">
+            <label>Specification / Sub-description</label>
+            <textarea>50kg bag</textarea>
+          </div>
+        </div>
+
+        <div class="item-grid">
+
+          <div class="field">
+            <label>Make</label>
+            <input value="Dangote">
+          </div>
+
+          <div class="field">
+            <label>Qty</label>
+            <input class="number-input js-qty" value="400">
+          </div>
+
+          <div class="field">
+            <label>Unit</label>
+            <input value="BAG">
+          </div>
+
+          <div class="field">
+            <label>Cost Price</label>
+            <input class="number-input js-cp" value="8500">
+          </div>
+
+          <div class="field">
+            <label>Selling Price</label>
+            <input class="number-input js-sp" value="9750">
+          </div>
+
+          <div class="field">
+            <label>Profit</label>
+            <input class="number-input js-profit" readonly>
+          </div>
+
+        </div>
+
+        <div class="commercial-strip">
+
+          <div class="commercial-cell">
+            <div class="commercial-label">Selling total</div>
+            <div class="commercial-value js-selling-total"></div>
+          </div>
+
+          <div class="commercial-cell profit">
+            <div class="commercial-label">Line profit</div>
+            <div class="commercial-value js-profit-total"></div>
+          </div>
+
+        </div>
+
+        <button class="insert">
+          <b>＋</b>
+          Insert below
+        </button>
+
+      </article>
+
+
+      <!-- ITEM 3 -->
+      <article class="item">
+
+        <div class="item-head">
+
+          <div class="enumeration">
+            <span class="item-number">3</span>
+
+            <button class="drag">
+              <span class="drag-grid">
+                <i></i><i></i>
+                <i></i><i></i>
+                <i></i><i></i>
+              </span>
+            </button>
+          </div>
+
+          <div class="row-actions">
+            <button class="micro">↑</button>
+            <button class="micro">↓</button>
+            <button class="micro delete">×</button>
+          </div>
+
+        </div>
+
+        <textarea class="description">Reinforcement steel Y12</textarea>
+
+        <div class="aux-actions">
+          <button class="pill js-spec">⌄ Sub-description</button>
+          <button class="pill">▣ Photo</button>
+        </div>
+
+        <div class="specification">
+          <div class="field">
+            <label>Specification / Sub-description</label>
+            <textarea>High yield, 12mm</textarea>
+          </div>
+        </div>
+
+        <div class="item-grid">
+
+          <div class="field">
+            <label>Make</label>
+            <input value="ASCOR">
+          </div>
+
+          <div class="field">
+            <label>Qty</label>
+            <input class="number-input js-qty" value="2.5">
+          </div>
+
+          <div class="field">
+            <label>Unit</label>
+            <input value="TON">
+          </div>
+
+          <div class="field">
+            <label>Cost Price</label>
+            <input class="number-input js-cp" value="950000">
+          </div>
+
+          <div class="field">
+            <label>Selling Price</label>
+            <input class="number-input js-sp" value="1100000">
+          </div>
+
+          <div class="field">
+            <label>Profit</label>
+            <input class="number-input js-profit" readonly>
+          </div>
+
+        </div>
+
+        <div class="commercial-strip">
+
+          <div class="commercial-cell">
+            <div class="commercial-label">Selling total</div>
+            <div class="commercial-value js-selling-total"></div>
+          </div>
+
+          <div class="commercial-cell profit">
+            <div class="commercial-label">Line profit</div>
+            <div class="commercial-value js-profit-total"></div>
+          </div>
+
+        </div>
+
+        <button class="insert">
+          <b>＋</b>
+          Insert below
+        </button>
+
+      </article>
+
+    </div>
+
+
+    <footer class="group-footer">
+
+      <span class="group-total">
+        Group · 2 items
+      </span>
+
+      <button class="group-add">
+        ＋ Add item to group
+      </button>
+
+    </footer>
+
+  </section>
+
+
+  <!-- ADD CONTROLS -->
+  <div class="add-row">
+
+    <button class="add-big">
+      <span class="plus">＋</span>
+      Add item
+    </button>
+
+    <button class="add-big group-add-big">
+      <span class="plus">⊞</span>
+      Add group
+    </button>
+
+  </div>
+
+</section>
+
+</div>
+
+
+<!-- TOTALS COLUMN -->
+<aside class="totals-column">
+
+<section class="section">
+
+  <div class="section-heading">
+    <div class="section-name">
+      <span class="dot" style="background:#d77a00"></span>
+      BOQ Summary
+    </div>
+  </div>
+
+  <div class="totals">
+
+    <div class="total-row">
+      <div class="total-copy">
+        <span>Total Cost</span>
+        <strong>CP × quantity</strong>
+      </div>
+      <div class="total-money" id="totalCost">₦0</div>
+    </div>
+
+    <div class="total-row">
+      <div class="total-copy">
+        <span>Total Selling Price</span>
+        <strong>SP × quantity</strong>
+      </div>
+      <div class="total-money" id="totalSelling">₦0</div>
+    </div>
+
+    <div class="total-row hero">
+      <div class="total-copy">
+        <span>Gross Profit</span>
+        <strong>Selling − cost</strong>
+      </div>
+      <div class="total-money" id="grossProfit">₦0</div>
+    </div>
+
+    <div class="amount-words" id="amountWords">
+      Amount in words follows Total Selling Price.
+    </div>
+
+  </div>
+
+</section>
+
+</aside>
+
+</div>
+</main>
+
+<button class="save-fab" aria-label="Save BOQ">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+    <path d="M17 21v-8H7v8M7 3v5h8"/>
+  </svg>
+</button>
+
+</div>
+
+
+<script>
+const money = n =>
+  "₦" + Number(n || 0).toLocaleString("en-NG", {
+    maximumFractionDigits: 2
+  });
+
+function calculate(){
+  let totalCost = 0;
+  let totalSelling = 0;
+
+  document.querySelectorAll(".item").forEach(item => {
+    const qty = Number(item.querySelector(".js-qty")?.value || 0);
+    const cp = Number(item.querySelector(".js-cp")?.value || 0);
+    const sp = Number(item.querySelector(".js-sp")?.value || 0);
+
+    const cost = cp * qty;
+    const selling = sp * qty;
+    const profit = selling - cost;
+
+    totalCost += cost;
+    totalSelling += selling;
+
+    const profitInput = item.querySelector(".js-profit");
+    const sellingTotal = item.querySelector(".js-selling-total");
+    const profitTotal = item.querySelector(".js-profit-total");
+
+    if(profitInput) profitInput.value = profit;
+    if(sellingTotal) sellingTotal.textContent = money(selling);
+
+    if(profitTotal){
+      profitTotal.textContent =
+        (profit >= 0 ? "+" : "−") + money(Math.abs(profit));
+
+      profitTotal.style.color =
+        profit >= 0 ? "var(--profit)" : "var(--danger)";
+    }
+  });
+
+  const gross = totalSelling - totalCost;
+
+  document.querySelector("#totalCost").textContent = money(totalCost);
+  document.querySelector("#totalSelling").textContent = money(totalSelling);
+  document.querySelector("#grossProfit").textContent = money(gross);
+}
+
+document.addEventListener("input", e => {
+  if(
+    e.target.matches(".js-qty") ||
+    e.target.matches(".js-cp") ||
+    e.target.matches(".js-sp")
+  ){
+    calculate();
+  }
+});
+
+document.querySelectorAll(".js-spec").forEach(button => {
+  button.addEventListener("click", () => {
+    const item = button.closest(".item");
+    const spec = item.querySelector(".specification");
+
+    spec.classList.toggle("open");
+
+    button.textContent =
+      spec.classList.contains("open")
+        ? "⌃ Sub-description"
+        : "⌄ Sub-description";
+  });
+});
+
+calculate();
+</script>
+
+</body>
+</html>

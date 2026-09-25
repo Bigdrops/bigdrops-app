@@ -111,8 +111,8 @@ export function ItemLibraryDuplicateMergeCard({
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Manual merge</div>
           <h3 className="mt-1 text-[16px] font-extrabold text-bd-text">Choose primary item</h3>
           <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-bd-text-muted">
-            Review the similar names below, keep one primary item active, and merge the others into it. This only
-            relinks catalog references. Historical document descriptions stay unchanged.
+            Review the similar names below. Merge only true duplicates. Keep separate items when a rating, model,
+            part number, size, material, or application makes the identity different.
           </p>
         </div>
 
@@ -233,6 +233,22 @@ export function ItemLibraryDuplicateMergeCard({
           </button>
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-bd-border bg-bd-surface px-3 py-2">
+          <p className="text-[11px] font-semibold text-bd-text-muted">
+            Not duplicates? Leave this group separate and continue reviewing.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedMergedIds([])
+              setSubmissionError(null)
+            }}
+            className="rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-bold text-bd-text transition hover:bg-bd-surface"
+          >
+            Leave separate
+          </button>
+        </div>
+
         {aliasesLoading ? (
           <p className="mt-3 text-[11px] text-bd-text-muted">Loading existing aliases for this group…</p>
         ) : null}
@@ -263,7 +279,7 @@ export function ItemLibraryDuplicateMergeCard({
                 {preview.relinkedHistoryRows.toLocaleString()} linked {preview.relinkedHistoryRows === 1 ? 'row' : 'rows'}
               </div>
               <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">
-                Invoice and quotation `item_id` references will move to the selected primary item.
+                Invoice and quotation catalog links will move to the selected primary item.
               </p>
             </div>
 
@@ -309,7 +325,7 @@ export function ItemLibraryDuplicateMergeCard({
             <AlertDialogTitle className="text-bd-text">Confirm merge</AlertDialogTitle>
             <AlertDialogDescription className="text-bd-text-muted">
               {preview
-                ? `${preview.mergedMembers.length} item name${preview.mergedMembers.length === 1 ? '' : 's'} will be merged into ${preview.winner.name}. Document descriptions stay as they were recorded; only catalog links and aliases are updated.`
+                ? `${preview.mergedMembers.length} item name${preview.mergedMembers.length === 1 ? '' : 's'} will be merged into ${preview.winner.name}. The selected primary identity will survive. The merged items will be retired, their aliases will be kept on the primary item, and future suggestions and linked history will use the primary item. Document descriptions stay as they were recorded.`
                 : 'Review the merge preview before confirming.'}
             </AlertDialogDescription>
           </AlertDialogHeader>

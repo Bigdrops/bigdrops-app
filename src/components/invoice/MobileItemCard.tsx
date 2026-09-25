@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useId, useRef, useState } from 'react'
 import {
   Camera,
   ChevronDown,
@@ -41,6 +41,46 @@ function ItemMiniBtn({ children, className = '', ...props }: ItemMiniBtnProps) {
       {children}
     </button>
   )
+}
+
+function getSuggestionPriceLabel(suggestion: ItemSuggestion) {
+  const clientPrice = suggestion.last_price_for_client
+  if (clientPrice !== null && clientPrice !== undefined) {
+    return {
+      label: 'Client last',
+      value: formatNaira(clientPrice),
+    }
+  }
+
+  const globalPrice = suggestion.last_price_global ?? suggestion.last_sold_price
+  if (globalPrice !== null && globalPrice !== undefined) {
+    return {
+      label: 'Last used',
+      value: formatNaira(globalPrice),
+    }
+  }
+
+  if (suggestion.standard_price !== null && suggestion.standard_price !== undefined) {
+    return {
+      label: 'Standard',
+      value: formatNaira(suggestion.standard_price),
+    }
+  }
+
+  return {
+    label: 'No price',
+    value: '-',
+  }
+}
+
+function getSuggestionMeta(suggestion: ItemSuggestion) {
+  const parts: string[] = []
+  if (suggestion.match_source === 'alias' && suggestion.matched_text && suggestion.matched_text !== suggestion.name) {
+    parts.push(`Alias: ${suggestion.matched_text}`)
+  }
+  if (suggestion.usage_count) parts.push(`${Number(suggestion.usage_count).toLocaleString()} uses`)
+  if (suggestion.last_source_document_number) parts.push(suggestion.last_source_document_number)
+  return parts.join(' - ')
 }
 
 interface MobileItemCardProps {
@@ -93,7 +133,10 @@ function MobileItemCard({
   const [showDetails, setShowDetails] = useState(Boolean(item.sub_description))
   const [uploading, setUploading] = useState(false)
   const [descriptionFocused, setDescriptionFocused] = useState(false)
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const suggestionRootRef = useRef<HTMLDivElement>(null)
+  const suggestionListId = useId()
 
   const updateField = (key: string, value: any) => {
     const policy = ITEM_FIELD_POLICY[ctx]
@@ -156,6 +199,76 @@ function MobileItemCard({
 
   const showSuggestions =
     enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
+  const hasSuggestionPanel = showSuggestions && (suggestionsLoading || suggestions.length > 0)
+  const activeSuggestion = suggestions[activeSuggestionIndex] || null
+
+  useEffect(() => {
+    setActiveSuggestionIndex(0)
+  }, [item.description, suggestions.length])
+
+  useEffect(() => {
+    if (!hasSuggestionPanel) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (suggestionRootRef.current?.contains(event.target as Node)) return
+      setDescriptionFocused(false)
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setDescriptionFocused(false)
+      }
+    }
+
+    const handleScroll = () => {
+      setDescriptionFocused(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('scroll', handleScroll, true)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [hasSuggestionPanel])
+
+  const handleDescriptionBlur = (event: React.FocusEvent<HTMLTextAreaElement>) => {
+    const nextFocusedElement = event.relatedTarget
+    if (nextFocusedElement && suggestionRootRef.current?.contains(nextFocusedElement)) return
+    setDescriptionFocused(false)
+  }
+
+  const handleDescriptionKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!hasSuggestionPanel) return
+
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      setDescriptionFocused(false)
+      return
+    }
+
+    if (suggestions.length === 0) return
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveSuggestionIndex((current) => (current + 1) % suggestions.length)
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveSuggestionIndex((current) => (current - 1 + suggestions.length) % suggestions.length)
+      return
+    }
+
+    if (event.key === 'Enter' && activeSuggestion) {
+      event.preventDefault()
+      handleSuggestionSelect(activeSuggestion)
+    }
+  }
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -225,38 +338,72 @@ function MobileItemCard({
         <div className="min-w-0 flex-1 space-y-3">
           {/* Main Description */}
           <div className="relative">
-            <Textarea
-              value={item.description || ''}
-              onChange={handleDescriptionChange}
-              onFocus={() => setDescriptionFocused(true)}
-              onBlur={() => setTimeout(() => setDescriptionFocused(false), 150)}
-              placeholder="Item description..."
-              className="min-h-[38px] w-full resize-none rounded-[8px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-2.5 text-[13px] font-medium text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
-            />
-            {showSuggestions && (suggestionsLoading || (suggestions && suggestions.length > 0)) && (
-              <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-[280px] overflow-y-auto overscroll-contain rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] shadow-lg">
+            <div ref={suggestionRootRef}>
+              <Textarea
+                value={item.description || ''}
+                onChange={handleDescriptionChange}
+                onFocus={() => setDescriptionFocused(true)}
+                onBlur={handleDescriptionBlur}
+                onKeyDown={handleDescriptionKeyDown}
+                placeholder="Item description..."
+                role={enableItemSuggestions ? 'combobox' : undefined}
+                aria-autocomplete={enableItemSuggestions ? 'list' : undefined}
+                aria-expanded={hasSuggestionPanel}
+                aria-controls={hasSuggestionPanel ? suggestionListId : undefined}
+                aria-activedescendant={activeSuggestion ? `${suggestionListId}-${activeSuggestionIndex}` : undefined}
+                className="min-h-[38px] w-full resize-none rounded-[8px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-2.5 text-[13px] font-medium text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
+              />
+            {hasSuggestionPanel && (
+              <div
+                id={suggestionListId}
+                role="listbox"
+                aria-label="Item suggestions"
+                className="absolute left-0 right-0 top-full z-[60] mt-1 max-h-[min(13rem,calc(100dvh-14rem))] overflow-y-auto overscroll-contain rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg text-bd-text shadow-[0_8px_24px_rgba(15,23,42,0.18)] ring-1 ring-bd-border/60 dark:shadow-[0_14px_32px_rgba(0,0,0,0.45)]"
+              >
                 {suggestionsLoading ? (
-                  <div className="p-3 text-xs text-[var(--bd-text3)]">Loading suggestions...</div>
+                  <div className="p-3 text-xs font-semibold text-bd-text-muted">Loading suggestions...</div>
                 ) : (
-                  suggestions.map((suggestion) => (
+                  suggestions.map((suggestion, suggestionIndex) => {
+                    const price = getSuggestionPriceLabel(suggestion)
+                    const meta = getSuggestionMeta(suggestion)
+                    const isActive = suggestionIndex === activeSuggestionIndex
+
+                    return (
                     <button
                       key={`${suggestion.item_id}-${suggestion.name}`}
+                      id={`${suggestionListId}-${suggestionIndex}`}
+                      role="option"
+                      aria-selected={isActive}
                       type="button"
-                      className="flex w-full items-center justify-between border-b border-[var(--bd-bg2)] p-3 text-left last:border-0 hover:bg-[var(--bd-bg2)]"
+                      className={[
+                        'flex min-h-12 w-full items-center justify-between gap-3 border-b border-bd-border px-3 py-2.5 text-left last:border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bd-focus-ring',
+                        isActive ? 'bg-bd-surface-muted text-bd-text' : 'bg-bd-card-bg text-bd-text hover:bg-bd-surface-muted',
+                      ].join(' ')}
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleSuggestionSelect(suggestion)}
+                      onMouseEnter={() => setActiveSuggestionIndex(suggestionIndex)}
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-bold text-[var(--bd-text)]">{suggestion.name}</div>
+                        <div className="truncate text-[13px] font-bold">{suggestion.name}</div>
+                        {meta ? (
+                          <div className="mt-0.5 truncate text-[10px] font-semibold text-bd-text-muted">{meta}</div>
+                        ) : null}
                       </div>
-                      <div className="text-[13px] font-bold text-[var(--bd-indigo)]">
-                        {suggestion.standard_price ? `N${Number(suggestion.standard_price).toLocaleString()}` : '—'}
+                      <div className="shrink-0 text-right">
+                        <div className="font-mono text-[12px] font-extrabold text-bd-button-primary-bg">{price.value}</div>
+                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-bd-text-muted">{price.label}</div>
                       </div>
                     </button>
-                  ))
+                  )})
                 )}
+                {!suggestionsLoading && suggestions.length > 4 ? (
+                  <div className="border-t border-bd-border bg-bd-card-bg px-3 py-2 text-[10px] font-semibold text-bd-text-muted">
+                    Use arrow keys or scroll for {suggestions.length - 4} more match{suggestions.length - 4 === 1 ? '' : 'es'}.
+                  </div>
+                ) : null}
               </div>
             )}
+            </div>
             {resolvedItemId && priceContextText ? (
               <div className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)] whitespace-pre-line">
                 {priceContextText}
