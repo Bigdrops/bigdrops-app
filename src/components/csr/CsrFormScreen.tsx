@@ -11,6 +11,7 @@ import type { ParsedCsrImport } from '@/components/csr/csrImport'
 import MobileFab from '@/components/layout/MobileFab'
 import '@/components/layout/fabFloat.css'
 import { NumericInput } from '@/components/ui/numeric-input'
+import { DateField } from '@/components/ui/date-field'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { feedback } from '@/lib/feedback'
 
@@ -406,10 +407,11 @@ export default function CsrFormScreen({
             </div>
             <div>
               <FieldLabel>Report Date</FieldLabel>
-              <TextInputMono
-                type="date"
+              <DateField
+                label="Report Date"
                 value={String(csr.date || '')}
-                onChange={(e) => onUpdate('date', e.target.value)}
+                onChange={(next) => onUpdate('date', next)}
+                className="h-10 text-[10px]"
               />
             </div>
           </div>
@@ -623,12 +625,14 @@ export default function CsrFormScreen({
             <div>
               <FieldLabel>Start Date & Time</FieldLabel>
               <div className="flex gap-1.5">
-                <TextInputMono
-                  type="date"
-                  value={String(csr.start_date || '')}
-                  onChange={(e) => onUpdate('start_date', e.target.value)}
-                  className="w-3/5"
-                />
+                <div className="w-3/5">
+                  <DateField
+                    label="Start Date"
+                    value={String(csr.start_date || '')}
+                    onChange={(next) => onUpdate('start_date', next)}
+                    className="h-10 text-[10px]"
+                  />
+                </div>
                 <TextInputMono
                   type="time"
                   value={String(csr.start_time || '')}
@@ -640,12 +644,14 @@ export default function CsrFormScreen({
             <div>
               <FieldLabel>End Date & Time</FieldLabel>
               <div className="flex gap-1.5">
-                <TextInputMono
-                  type="date"
-                  value={String(csr.end_date || '')}
-                  onChange={(e) => onUpdate('end_date', e.target.value)}
-                  className="w-3/5"
-                />
+                <div className="w-3/5">
+                  <DateField
+                    label="End Date"
+                    value={String(csr.end_date || '')}
+                    onChange={(next) => onUpdate('end_date', next)}
+                    className="h-10 text-[10px]"
+                  />
+                </div>
                 <TextInputMono
                   type="time"
                   value={String(csr.end_time || '')}
