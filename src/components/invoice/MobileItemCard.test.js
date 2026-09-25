@@ -55,3 +55,23 @@ test('mobile item card suggestion panel is opaque, compact, dismissable, and key
   assert.match(source, /role="option"/)
   assert.doesNotMatch(source, /setTimeout\(\(\) => setDescriptionFocused\(false\), 150\)/)
 })
+
+test('mobile item card keeps internal suggestion scrolling inside the autocomplete boundary', () => {
+  const source = fs.readFileSync(mobileItemCardPath, 'utf8')
+
+  assert.match(source, /const isInsideSuggestionBoundary = \(target: EventTarget \| null\) =>/)
+  assert.match(source, /suggestionRootRef\.current\?\.contains\(target\)/)
+  assert.match(source, /const handleScroll = \(event: Event\) => \{\s*if \(isInsideSuggestionBoundary\(event\.target\)\) return\s*setDescriptionFocused\(false\)/)
+  assert.match(source, /const handlePointerDown = \(event: PointerEvent\) => \{\s*if \(isInsideSuggestionBoundary\(event\.target\)\) return\s*setDescriptionFocused\(false\)/)
+  assert.doesNotMatch(source, /stopPropagation\(/)
+})
+
+test('mobile item card can reopen suggestions for an unchanged valid description', () => {
+  const source = fs.readFileSync(mobileItemCardPath, 'utf8')
+
+  assert.match(source, /const openSuggestionInteraction = \(\) => \{\s*setDescriptionFocused\(true\)\s*setActiveSuggestionIndex\(0\)\s*\}/)
+  assert.match(source, /onPointerDown=\{openSuggestionInteraction\}/)
+  assert.match(source, /onFocus=\{openSuggestionInteraction\}/)
+  assert.match(source, /const handleDescriptionChange = \(event: React\.ChangeEvent<HTMLTextAreaElement>\) => \{[\s\S]*setDescriptionFocused\(true\)/)
+  assert.match(source, /setActiveSuggestionIndex\(0\)/)
+})

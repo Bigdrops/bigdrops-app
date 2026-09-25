@@ -202,6 +202,16 @@ function MobileItemCard({
   const hasSuggestionPanel = showSuggestions && (suggestionsLoading || suggestions.length > 0)
   const activeSuggestion = suggestions[activeSuggestionIndex] || null
 
+  const openSuggestionInteraction = () => {
+    setDescriptionFocused(true)
+    setActiveSuggestionIndex(0)
+  }
+
+  const isInsideSuggestionBoundary = (target: EventTarget | null) => {
+    if (!(target instanceof Node)) return false
+    return Boolean(suggestionRootRef.current?.contains(target))
+  }
+
   useEffect(() => {
     setActiveSuggestionIndex(0)
   }, [item.description, suggestions.length])
@@ -210,7 +220,7 @@ function MobileItemCard({
     if (!hasSuggestionPanel) return
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (suggestionRootRef.current?.contains(event.target as Node)) return
+      if (isInsideSuggestionBoundary(event.target)) return
       setDescriptionFocused(false)
     }
 
@@ -220,7 +230,8 @@ function MobileItemCard({
       }
     }
 
-    const handleScroll = () => {
+    const handleScroll = (event: Event) => {
+      if (isInsideSuggestionBoundary(event.target)) return
       setDescriptionFocused(false)
     }
 
@@ -237,7 +248,7 @@ function MobileItemCard({
 
   const handleDescriptionBlur = (event: React.FocusEvent<HTMLTextAreaElement>) => {
     const nextFocusedElement = event.relatedTarget
-    if (nextFocusedElement && suggestionRootRef.current?.contains(nextFocusedElement)) return
+    if (isInsideSuggestionBoundary(nextFocusedElement)) return
     setDescriptionFocused(false)
   }
 
@@ -315,6 +326,7 @@ function MobileItemCard({
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const nextDescription = event.target.value
     onUpdate(index, 'description', nextDescription)
+    setDescriptionFocused(true)
     if (resolvedItemId) {
       updateField('item_id', null)
       clearSelection()
@@ -342,7 +354,8 @@ function MobileItemCard({
               <Textarea
                 value={item.description || ''}
                 onChange={handleDescriptionChange}
-                onFocus={() => setDescriptionFocused(true)}
+                onPointerDown={openSuggestionInteraction}
+                onFocus={openSuggestionInteraction}
                 onBlur={handleDescriptionBlur}
                 onKeyDown={handleDescriptionKeyDown}
                 placeholder="Item description..."
