@@ -94,6 +94,93 @@ function asArray<T>(value: T[] | null | undefined): T[] {
   return safeArray(value)
 }
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(',')}]`
+  }
+  if (isRecord(value)) {
+    return `{${Object.keys(value)
+      .sort((left, right) => left.localeCompare(right))
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+function hashString(value: string) {
+  let hash = 2166136261
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(36).padStart(7, '0')
+}
+
+function buildSnapshotId(value: unknown) {
+  return `cleanup-v1-${hashString(stableStringify(value))}`
+}
+
+function canonicalFlaggedGroups(groups: FlaggedCleanupExportGroup[]) {
+  return safeArray(groups)
+    .map((group) => ({
+      group_id: group.group_id,
+      label: group.label,
+      items: safeArray(group.items)
+        .map((item) => ({
+          item_id: item.item_id,
+          name: item.name,
+          aliases: uniqueSorted(item.aliases || []),
+          is_active: item.is_active,
+          last_price: item.last_price ?? null,
+          usage_count: Number(item.usage_count || 0),
+        }))
+        .sort((left, right) => left.item_id.localeCompare(right.item_id)),
+    }))
+    .sort((left, right) => left.group_id.localeCompare(right.group_id))
+}
+
+function createFlaggedSnapshotId(params: {
+  exportType: 'flagged_cleanup' | 'flagged_cleanup_batch'
+  mode: 'flagged' | 'flagged_batch'
+  batchId?: string
+  groups: FlaggedCleanupExportGroup[]
+}) {
+  return buildSnapshotId({
+    export_type: params.exportType,
+    schema_version: FLAGGED_CLEANUP_SCHEMA_VERSION,
+    mode: params.mode,
+    batch_id: params.batchId || null,
+    groups: canonicalFlaggedGroups(params.groups),
+  })
+}
+
+function createCatalogSnapshotId(payload: {
+  sessionId: string
+  batchId: string
+  batchIndex: number
+  batchCount: number
+  items: CatalogCleanupExportItem[]
+}) {
+  return buildSnapshotId({
+    export_type: 'catalog_cleanup_batch',
+    schema_version: FLAGGED_CLEANUP_SCHEMA_VERSION,
+    mode: 'full_catalog_batch',
+    session_id: payload.sessionId,
+    batch_id: payload.batchId,
+    batch_index: payload.batchIndex,
+    batch_count: payload.batchCount,
+    items: safeArray(payload.items)
+      .map((item) => ({
+        item_id: item.item_id,
+        name: item.name,
+        aliases: uniqueSorted(item.aliases || []),
+        cleanup_flags: uniqueSorted(item.cleanup_flags || []),
+        duplicate_group_id: item.duplicate_group_id || null,
+      }))
+      .sort((left, right) => left.item_id.localeCompare(right.item_id)),
+  })
+}
+
 function readStringArray(value: unknown) {
   if (!Array.isArray(value)) return null
   const collected = value.map((entry) => readString(entry))
@@ -186,6 +273,11 @@ export function buildFlaggedCleanupExportPayload(params: {
   return {
     export_type: 'flagged_cleanup',
     schema_version: FLAGGED_CLEANUP_SCHEMA_VERSION,
+    snapshot_id: createFlaggedSnapshotId({
+      exportType: 'flagged_cleanup',
+      mode: 'flagged',
+      groups,
+    }),
     generated_at: params.generatedAt || new Date().toISOString(),
     scope: {
       mode: 'flagged',
@@ -371,13 +463,22 @@ export function buildCatalogCleanupBatchExportPayload(params: {
   batchIndex: number
   generatedAt?: string
 }): CatalogCleanupBatchExportPayload {
+  const batchIndex = params.batchIndex + 1
+
   return {
     export_type: 'catalog_cleanup_batch',
     schema_version: FLAGGED_CLEANUP_SCHEMA_VERSION,
+    snapshot_id: createCatalogSnapshotId({
+      sessionId: params.session.session_id,
+      batchId: params.batch.batch_id,
+      batchIndex,
+      batchCount: params.session.batch_count,
+      items: params.batch.items,
+    }),
     session: {
       session_id: params.session.session_id,
       batch_size: params.session.batch_size,
-      batch_index: params.batchIndex + 1,
+      batch_index: batchIndex,
       batch_count: params.session.batch_count,
     },
     batch_id: params.batch.batch_id,
@@ -452,6 +553,7 @@ export function buildCatalogCleanupPrompt(payload?: CatalogCleanupBatchExportPay
         response_type: 'catalog_cleanup_batch_result',
         schema_version: 1,
         source_export_type: 'catalog_cleanup_batch',
+        snapshot_id: payload?.snapshot_id || 'same-as-export',
         session_id: payload?.session.session_id || 'same-as-export',
         batch_id: payload?.batch_id || 'same-as-export',
         merge_suggestions: [
@@ -664,6 +766,7 @@ export function validateCatalogCleanupBatchImport(
   const responseType = readString(parsedJson.response_type)
   const sourceExportType = readString(parsedJson.source_export_type)
   const schemaVersion = parsedJson.schema_version
+  const snapshotId = readString(parsedJson.snapshot_id)
   const sessionId = readString(parsedJson.session_id)
   const batchId = readString(parsedJson.batch_id)
 
@@ -675,6 +778,11 @@ export function validateCatalogCleanupBatchImport(
   }
   if (schemaVersion !== FLAGGED_CLEANUP_SCHEMA_VERSION) {
     topLevelErrors.push(`schema_version must be ${FLAGGED_CLEANUP_SCHEMA_VERSION}.`)
+  }
+  if (!snapshotId) {
+    topLevelErrors.push('This cleanup result was generated from an older export format and cannot be applied safely. Export the current review set and regenerate the cleanup decisions.')
+  } else if (snapshotId !== exportPayload.snapshot_id) {
+    topLevelErrors.push('This cleanup result was generated from an older or different Cleanup export. The flagged review set has changed. Export the current review set and regenerate the cleanup decisions.')
   }
   if (sessionId !== exportPayload.session.session_id) {
     topLevelErrors.push(
@@ -718,6 +826,7 @@ export function validateCatalogCleanupBatchImport(
     response_type: 'catalog_cleanup_batch_result',
     schema_version: FLAGGED_CLEANUP_SCHEMA_VERSION,
     source_export_type: 'catalog_cleanup_batch',
+    snapshot_id: snapshotId,
     session_id: sessionId,
     batch_id: batchId,
     merge_suggestions: mergeResult.parsed,
@@ -790,6 +899,12 @@ export function buildFlaggedCleanupBatchExportPayload(
   return {
     export_type: 'flagged_cleanup_batch',
     schema_version: FLAGGED_CLEANUP_SCHEMA_VERSION,
+    snapshot_id: createFlaggedSnapshotId({
+      exportType: 'flagged_cleanup_batch',
+      mode: 'flagged_batch',
+      batchId: batch.batch_id,
+      groups: batch.groups,
+    }),
     batch_id: batch.batch_id,
     batch_title: batch.title,
     generated_at: generatedAt || new Date().toISOString(),
@@ -844,6 +959,7 @@ export function buildFlaggedCleanupPrompt(payload: FlaggedCleanupExportPayload |
     '',
     '## Metadata',
     `Input export metadata: export_type=${payload.export_type}, schema_version=${payload.schema_version}, groups=${payload.scope.group_count}, items=${payload.scope.item_count}.`,
+    `Snapshot ID: ${payload.snapshot_id}`,
     isBatch ? `Batch ID: ${(payload as FlaggedCleanupBatchExportPayload).batch_id}` : '',
     '',
     '## Output Format',
@@ -853,6 +969,7 @@ export function buildFlaggedCleanupPrompt(payload: FlaggedCleanupExportPayload |
         response_type: 'flagged_cleanup_result',
         schema_version: 1,
         source_export_type: payload.export_type,
+        snapshot_id: payload.snapshot_id,
         batch_id: isBatch ? (payload as FlaggedCleanupBatchExportPayload).batch_id : undefined,
         merge_groups: [
           {

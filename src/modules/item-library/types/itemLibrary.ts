@@ -130,6 +130,7 @@ export interface FlaggedCleanupExportGroup {
 export interface FlaggedCleanupExportPayload {
   export_type: 'flagged_cleanup'
   schema_version: 1
+  snapshot_id: string
   generated_at: string
   scope: {
     mode: 'flagged'
@@ -152,6 +153,7 @@ export interface FlaggedCleanupImportPayload {
   response_type: 'flagged_cleanup_result'
   schema_version: 1
   source_export_type: 'flagged_cleanup'
+  snapshot_id: string
   merge_groups: FlaggedCleanupResultGroup[]
   ignored_group_ids: string[]
 }
@@ -236,6 +238,7 @@ export interface CatalogCleanupSession {
 export interface CatalogCleanupBatchExportPayload {
   export_type: 'catalog_cleanup_batch'
   schema_version: 1
+  snapshot_id: string
   session: {
     session_id: string
     batch_size: number
@@ -271,6 +274,7 @@ export interface CatalogCleanupBatchImportPayload {
   response_type: 'catalog_cleanup_batch_result'
   schema_version: 1
   source_export_type: 'catalog_cleanup_batch'
+  snapshot_id: string
   session_id: string
   batch_id: string
   merge_suggestions: CatalogCleanupMergeSuggestion[]
@@ -334,6 +338,7 @@ export interface FlaggedCleanupBatch {
 export interface FlaggedCleanupBatchExportPayload {
   export_type: 'flagged_cleanup_batch'
   schema_version: 1
+  snapshot_id: string
   batch_id: string
   batch_title: string
   generated_at: string
