@@ -4,7 +4,6 @@ import assert from 'node:assert/strict'
 import {
   buildFlaggedCleanupExportPayload,
   validateFlaggedCleanupImport,
-  createCleanupApplyProposal,
 } from '../../modules/item-library/domain/itemCleanupExchange.ts'
 import {
   getSyntheticCleanupItemIdFailure,
@@ -34,6 +33,7 @@ test('regression: duplicate outsource flow handles malformed arrays and missing 
     response_type: 'flagged_cleanup_result',
     schema_version: 1,
     source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
     merge_groups: [
       {
         group_id: 'group-0',
@@ -80,24 +80,10 @@ test('regression: duplicate outsource flow handles malformed arrays and missing 
 
   const validation = validateFlaggedCleanupImport(flaggedJson, exportPayload)
 
-  // Validation should catch missing fields if it's strict, but the domain logic should be safe
-  // In the current implementation, validateFlaggedCleanupImport is somewhat strict.
-  // Let's see if it passes or returns rejected groups.
-  
-  assert.equal(validation.preview.merge_groups.length + validation.preview.rejected_groups.length, 5)
-  
-  // The goal is that createCleanupApplyProposal does NOT crash even if we pass it something funky
-  validation.preview.merge_groups.forEach((group) => {
-    try {
-      const proposal = createCleanupApplyProposal(group)
-      assert.ok(proposal)
-      assert.ok(Array.isArray(proposal.merged_item_ids))
-      assert.ok(Array.isArray(proposal.aliases_to_keep))
-      assert.ok(Array.isArray(proposal.aliases_to_retire))
-    } catch (e) {
-      assert.fail(`createCleanupApplyProposal crashed for group ${group.group_id}: ${e.message}`)
-    }
-  })
+  assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
+  assert.equal(validation.preview.rejected_groups.length, 3)
+  assert.equal(validation.parsed, null)
 
   // Test ignored groups normalization
   assert.ok(Array.isArray(validation.preview.ignored_groups))

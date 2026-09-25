@@ -782,7 +782,7 @@ export function validateCatalogCleanupBatchImport(
   if (!snapshotId) {
     topLevelErrors.push('This cleanup result was generated from an older export format and cannot be applied safely. Export the current review set and regenerate the cleanup decisions.')
   } else if (snapshotId !== exportPayload.snapshot_id) {
-    topLevelErrors.push('This cleanup result was generated from an older or different Cleanup export. The flagged review set has changed. Export the current review set and regenerate the cleanup decisions.')
+    topLevelErrors.push('This cleanup result was generated from an older or different Cleanup export. The review set has changed. Export the current review set and regenerate the cleanup decisions.')
   }
   if (sessionId !== exportPayload.session.session_id) {
     topLevelErrors.push(
@@ -1038,6 +1038,7 @@ export function validateFlaggedCleanupImport(
   const responseType = readString(parsedJson.response_type)
   const sourceExportType = readString(parsedJson.source_export_type)
   const schemaVersion = parsedJson.schema_version
+  const snapshotId = readString(parsedJson.snapshot_id)
   const mergeGroupsRaw = parsedJson.merge_groups
   const ignoredGroupIds = readStringArray(parsedJson.ignored_group_ids)
   const importBatchId = readString(parsedJson.batch_id)
@@ -1054,6 +1055,11 @@ export function validateFlaggedCleanupImport(
   }
   if (sourceExportType !== exportPayload.export_type) {
     topLevelErrors.push(`The result identifies as "${sourceExportType || 'unknown'}", but you are reviewing "${exportPayload.export_type}".`)
+  }
+  if (!snapshotId) {
+    topLevelErrors.push('This cleanup result was generated from an older export format and cannot be applied safely. Export the current review set and regenerate the cleanup decisions.')
+  } else if (snapshotId !== exportPayload.snapshot_id) {
+    topLevelErrors.push('This cleanup result was generated from an older or different Cleanup export. The flagged review set has changed. Export the current review set and regenerate the cleanup decisions.')
   }
   if (isBatchExport && importBatchId !== expectedBatchId) {
     topLevelErrors.push(`The AI result belongs to batch "${importBatchId || 'unknown'}", but you are currently reviewing batch "${expectedBatchId}".`)
@@ -1082,6 +1088,7 @@ export function validateFlaggedCleanupImport(
 
   const validPreviewGroups: CleanupPreviewGroup[] = []
   const rejectedGroups: CleanupPreviewRejectedGroup[] = []
+  const seenMergeGroupIds = new Set<string>()
 
   ;(mergeGroupsRaw as any[]).forEach((entry, index) => {
     if (!isRecord(entry)) {
@@ -1103,6 +1110,12 @@ export function validateFlaggedCleanupImport(
     const exportGroup = exportGroups.get(groupId)
 
     if (!groupId || groupId.startsWith('row-')) groupErrors.push('group_id is missing or invalid.')
+    if (groupId && !groupId.startsWith('row-')) {
+      if (seenMergeGroupIds.has(groupId)) {
+        groupErrors.push('Each group_id can appear in merge_groups only once.')
+      }
+      seenMergeGroupIds.add(groupId)
+    }
     if (!canonicalName) groupErrors.push('canonical_name is required.')
     if (!winnerItemId) groupErrors.push('winner_item_id is required.')
     if (!mergedItemIds || mergedItemIds.length === 0) groupErrors.push('merged_item_ids must contain at least one item id.')
@@ -1156,7 +1169,8 @@ export function validateFlaggedCleanupImport(
   const parsed: FlaggedCleanupImportPayload = {
     response_type: 'flagged_cleanup_result',
     schema_version: FLAGGED_CLEANUP_SCHEMA_VERSION,
-    source_export_type: 'flagged_cleanup',
+    source_export_type: exportPayload.export_type,
+    snapshot_id: snapshotId,
     merge_groups: validPreviewGroups.map((group) => ({
       group_id: group.group_id,
       canonical_name: group.canonical_name,
@@ -1171,22 +1185,23 @@ export function validateFlaggedCleanupImport(
   const rejectedCount = rejectedGroups.length + unknownIgnoredGroupIds.length
   const ok = topLevelErrors.length === 0 && rejectedCount === 0
   const errors = ok ? [] : [`The result contains ${rejectedCount} invalid or unknown proposal(s). Review the "Rejected proposals" section below.`]
+  const rejectedPreviewGroups = [
+    ...rejectedGroups,
+    ...unknownIgnoredGroupIds.map((groupId) => ({
+      group_id: groupId,
+      reason: 'This group_id is not present in the current duplicate review scope.',
+    })),
+  ]
 
   return {
     ok,
     errors,
     preview: {
-      merge_groups: validPreviewGroups,
+      merge_groups: ok ? validPreviewGroups : [],
       ignored_groups: ignoredGroups,
-      rejected_groups: [
-        ...rejectedGroups,
-        ...unknownIgnoredGroupIds.map((groupId) => ({
-          group_id: groupId,
-          reason: 'This group_id is not present in the current duplicate review scope.',
-        })),
-      ],
+      rejected_groups: rejectedPreviewGroups,
     },
-    parsed,
+    parsed: ok ? parsed : null,
   }
 }
 

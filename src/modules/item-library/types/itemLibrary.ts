@@ -152,7 +152,7 @@ export interface FlaggedCleanupResultGroup {
 export interface FlaggedCleanupImportPayload {
   response_type: 'flagged_cleanup_result'
   schema_version: 1
-  source_export_type: 'flagged_cleanup'
+  source_export_type: 'flagged_cleanup' | 'flagged_cleanup_batch'
   snapshot_id: string
   merge_groups: FlaggedCleanupResultGroup[]
   ignored_group_ids: string[]

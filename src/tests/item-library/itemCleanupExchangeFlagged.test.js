@@ -34,6 +34,7 @@ test('valid flagged duplicate import does not crash and identifies as ok', () =>
     response_type: 'flagged_cleanup_result',
     schema_version: 1,
     source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
     merge_groups: [
       {
         group_id: 'group-1',
@@ -56,6 +57,118 @@ test('valid flagged duplicate import does not crash and identifies as ok', () =>
   assert.deepEqual(validation.preview.merge_groups[0].merged_item_ids, ['item-2'])
 })
 
+test('flagged cleanup snapshot identity is deterministic for the logical review set', () => {
+  const exportA = buildFlaggedCleanupExportPayload({
+    duplicateGroups: [
+      {
+        group_id: 'group-b',
+        label: 'Group B',
+        reason: 'Similar wording',
+        normalized_label: 'group b',
+        members: [
+          { item_id: 'item-b2', name: 'Item B2', usage_count: 2, last_sold_price: 20 },
+          { item_id: 'item-b1', name: 'Item B1', usage_count: 1, last_sold_price: 10 },
+        ],
+      },
+      {
+        group_id: 'group-a',
+        label: 'Group A',
+        reason: 'Similar wording',
+        normalized_label: 'group a',
+        members: [
+          { item_id: 'item-a1', name: 'Item A1', usage_count: 1, last_sold_price: 10 },
+          { item_id: 'item-a2', name: 'Item A2', usage_count: 2, last_sold_price: 20 },
+        ],
+      },
+    ],
+    aliases: [
+      { id: 'alias-b', item_id: 'item-b1', alias_text: 'B one' },
+      { id: 'alias-a', item_id: 'item-a1', alias_text: 'A one' },
+    ],
+    generatedAt: '2026-09-25T10:00:00.000Z',
+  })
+
+  const exportB = buildFlaggedCleanupExportPayload({
+    duplicateGroups: [
+      {
+        group_id: 'group-a',
+        label: 'Group A',
+        reason: 'Similar wording',
+        normalized_label: 'group a',
+        members: [
+          { item_id: 'item-a2', name: 'Item A2', usage_count: 2, last_sold_price: 20 },
+          { item_id: 'item-a1', name: 'Item A1', usage_count: 1, last_sold_price: 10 },
+        ],
+      },
+      {
+        group_id: 'group-b',
+        label: 'Group B',
+        reason: 'Similar wording',
+        normalized_label: 'group b',
+        members: [
+          { item_id: 'item-b1', name: 'Item B1', usage_count: 1, last_sold_price: 10 },
+          { item_id: 'item-b2', name: 'Item B2', usage_count: 2, last_sold_price: 20 },
+        ],
+      },
+    ],
+    aliases: [
+      { id: 'alias-a', item_id: 'item-a1', alias_text: 'A one' },
+      { id: 'alias-b', item_id: 'item-b1', alias_text: 'B one' },
+    ],
+    generatedAt: '2026-09-25T11:00:00.000Z',
+  })
+
+  const changedMembership = buildFlaggedCleanupExportPayload({
+    duplicateGroups: [
+      {
+        group_id: 'group-a',
+        label: 'Group A',
+        reason: 'Similar wording',
+        normalized_label: 'group a',
+        members: [
+          { item_id: 'item-a1', name: 'Item A1', usage_count: 1, last_sold_price: 10 },
+          { item_id: 'item-a3', name: 'Item A3', usage_count: 2, last_sold_price: 20 },
+        ],
+      },
+    ],
+    aliases: [],
+    generatedAt: '2026-09-25T10:00:00.000Z',
+  })
+
+  assert.equal(exportA.snapshot_id, exportB.snapshot_id)
+  assert.notEqual(exportA.snapshot_id, changedMembership.snapshot_id)
+})
+
+test('flagged cleanup rejects legacy or mismatched snapshot results before proposal validation', () => {
+  const exportPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups,
+    aliases,
+  })
+
+  const baseResult = {
+    response_type: 'flagged_cleanup_result',
+    schema_version: 1,
+    source_export_type: 'flagged_cleanup',
+    merge_groups: [],
+    ignored_group_ids: [],
+  }
+
+  const legacyValidation = validateFlaggedCleanupImport(JSON.stringify(baseResult), exportPayload)
+  assert.equal(legacyValidation.ok, false)
+  assert.equal(legacyValidation.preview, null)
+  assert.equal(legacyValidation.parsed, null)
+  assert.match(legacyValidation.errors.join(' '), /older export format/i)
+
+  const mismatchedValidation = validateFlaggedCleanupImport(
+    JSON.stringify({ ...baseResult, snapshot_id: 'cleanup-v1-stale' }),
+    exportPayload,
+  )
+  assert.equal(mismatchedValidation.ok, false)
+  assert.equal(mismatchedValidation.preview, null)
+  assert.equal(mismatchedValidation.parsed, null)
+  assert.match(mismatchedValidation.errors.join(' '), /older or different Cleanup export/i)
+})
+
 test('unknown group_id is rejected cleanly', () => {
   const exportPayload = buildFlaggedCleanupExportPayload({
     duplicateGroups,
@@ -66,6 +179,7 @@ test('unknown group_id is rejected cleanly', () => {
     response_type: 'flagged_cleanup_result',
     schema_version: 1,
     source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
     merge_groups: [
       {
         group_id: 'unknown-group',
@@ -82,7 +196,96 @@ test('unknown group_id is rejected cleanly', () => {
   const validation = validateFlaggedCleanupImport(invalidResult, exportPayload)
 
   assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
   assert.equal(validation.preview.rejected_groups.length, 1)
+  assert.match(validation.preview.rejected_groups[0].reason, /group_id does not match/i)
+  assert.equal(validation.parsed, null)
+})
+
+test('observed mixed old and current cleanup result blocks all merge proposals', () => {
+  const currentGroups = [
+    {
+      group_id: 'dcf1e5e6-78bb-4136-a96e-699c9d2e15f8::08a37a28-ff0e-4f3d-bbd0-081964ef9e95',
+      label: 'Charging alternator',
+      reason: 'Similar wording',
+      normalized_label: 'charging alternator',
+      members: [
+        { item_id: 'dcf1e5e6-78bb-4136-a96e-699c9d2e15f8', name: 'Charging alternator', usage_count: 1, last_sold_price: 10 },
+        { item_id: '08a37a28-ff0e-4f3d-bbd0-081964ef9e95', name: 'charging alternator 24volts', usage_count: 1, last_sold_price: 10 },
+      ],
+    },
+    {
+      group_id: '0b344c6e-315b-4975-a625-70555b43dcc4::09a63b01-cff5-4f32-b1bd-dc61c3db5096',
+      label: 'Engine Oil',
+      reason: 'Similar wording',
+      normalized_label: 'engine oil',
+      members: [
+        { item_id: '0b344c6e-315b-4975-a625-70555b43dcc4', name: 'Engine Oil', usage_count: 1, last_sold_price: 10 },
+        { item_id: '09a63b01-cff5-4f32-b1bd-dc61c3db5096', name: 'Generator Engine Oil 15W-40', usage_count: 1, last_sold_price: 10 },
+      ],
+    },
+    {
+      group_id: 'eaf64f62-25d0-4d79-aec6-8076a5f3a1b3::031ed85c-a1c8-47ef-bfbe-e41b2332704a',
+      label: '6 Watts pot lights',
+      reason: 'Similar wording',
+      normalized_label: 'watts pot lights',
+      members: [
+        { item_id: 'eaf64f62-25d0-4d79-aec6-8076a5f3a1b3', name: '6 Watts pot lights', usage_count: 1, last_sold_price: 10 },
+        { item_id: '031ed85c-a1c8-47ef-bfbe-e41b2332704a', name: '18 watts pot lights', usage_count: 1, last_sold_price: 10 },
+      ],
+    },
+    {
+      group_id: '24a072a0-8dfc-4d08-9d62-54f9c6f65aa7::78a53f77-e3fb-4d52-b3ae-61b61f1759b7',
+      label: 'COPPER REWINDING WIRE SWG 17',
+      reason: 'Similar wording',
+      normalized_label: 'copper rewinding wire swg',
+      members: [
+        { item_id: '24a072a0-8dfc-4d08-9d62-54f9c6f65aa7', name: 'COPPER REWINDING WIRE SWG 17', usage_count: 1, last_sold_price: 10 },
+        { item_id: '78a53f77-e3fb-4d52-b3ae-61b61f1759b7', name: 'COPPER REWINDING WIRE SWG 17.5', usage_count: 1, last_sold_price: 10 },
+      ],
+    },
+  ]
+  const exportPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups: currentGroups,
+    aliases: [],
+  })
+
+  const mixedResult = JSON.stringify({
+    response_type: 'flagged_cleanup_result',
+    schema_version: 1,
+    source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
+    merge_groups: [
+      {
+        group_id: currentGroups[0].group_id,
+        canonical_name: 'Charging alternator',
+        winner_item_id: 'dcf1e5e6-78bb-4136-a96e-699c9d2e15f8',
+        merged_item_ids: ['08a37a28-ff0e-4f3d-bbd0-081964ef9e95'],
+        aliases_to_keep: [],
+        aliases_to_retire: [],
+      },
+      {
+        group_id: 'f94cc373-feea-464c-a8dc-f5caef9f29c7::9c8c6219-93df-4bcd-9ada-d7125cf13edd',
+        canonical_name: 'Oil filter',
+        winner_item_id: 'f94cc373-feea-464c-a8dc-f5caef9f29c7',
+        merged_item_ids: ['9c8c6219-93df-4bcd-9ada-d7125cf13edd'],
+        aliases_to_keep: [],
+        aliases_to_retire: [],
+      },
+    ],
+    ignored_group_ids: [],
+  })
+
+  const validation = validateFlaggedCleanupImport(mixedResult, exportPayload)
+
+  assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
+  assert.equal(validation.parsed, null)
+  assert.equal(validation.preview.rejected_groups.length, 1)
+  assert.equal(
+    validation.preview.rejected_groups[0].group_id,
+    'f94cc373-feea-464c-a8dc-f5caef9f29c7::9c8c6219-93df-4bcd-9ada-d7125cf13edd',
+  )
   assert.match(validation.preview.rejected_groups[0].reason, /group_id does not match/i)
 })
 
@@ -96,6 +299,7 @@ test('unknown winner_item_id is rejected cleanly', () => {
     response_type: 'flagged_cleanup_result',
     schema_version: 1,
     source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
     merge_groups: [
       {
         group_id: 'group-1',
@@ -112,6 +316,7 @@ test('unknown winner_item_id is rejected cleanly', () => {
   const validation = validateFlaggedCleanupImport(invalidResult, exportPayload)
 
   assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
   assert.equal(validation.preview.rejected_groups.length, 1)
   assert.match(validation.preview.rejected_groups[0].reason, /winner_item_id must reference an item inside the same exported group/i)
 })
@@ -126,6 +331,7 @@ test('merged item from another group is rejected cleanly', () => {
     response_type: 'flagged_cleanup_result',
     schema_version: 1,
     source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
     merge_groups: [
       {
         group_id: 'group-1',
@@ -142,6 +348,7 @@ test('merged item from another group is rejected cleanly', () => {
   const validation = validateFlaggedCleanupImport(invalidResult, exportPayload)
 
   assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
   assert.equal(validation.preview.rejected_groups.length, 1)
   assert.match(validation.preview.rejected_groups[0].reason, /merged_item_ids must all reference items inside the same exported group/i)
 })
@@ -156,6 +363,7 @@ test('empty merged_item_ids is rejected cleanly', () => {
     response_type: 'flagged_cleanup_result',
     schema_version: 1,
     source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
     merge_groups: [
       {
         group_id: 'group-1',
@@ -172,8 +380,51 @@ test('empty merged_item_ids is rejected cleanly', () => {
   const validation = validateFlaggedCleanupImport(invalidResult, exportPayload)
 
   assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
   assert.equal(validation.preview.rejected_groups.length, 1)
   assert.match(validation.preview.rejected_groups[0].reason, /merged_item_ids must contain at least one item id/i)
+})
+
+test('self merge and duplicate group proposals are rejected before application', () => {
+  const exportPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups,
+    aliases,
+  })
+
+  const invalidResult = JSON.stringify({
+    response_type: 'flagged_cleanup_result',
+    schema_version: 1,
+    source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
+    merge_groups: [
+      {
+        group_id: 'group-1',
+        canonical_name: 'Cable Lug 10mm',
+        winner_item_id: 'item-1',
+        merged_item_ids: ['item-1'],
+        aliases_to_keep: [],
+        aliases_to_retire: [],
+      },
+      {
+        group_id: 'group-1',
+        canonical_name: 'Cable Lug 10mm',
+        winner_item_id: 'item-1',
+        merged_item_ids: ['item-2'],
+        aliases_to_keep: [],
+        aliases_to_retire: [],
+      },
+    ],
+    ignored_group_ids: [],
+  })
+
+  const validation = validateFlaggedCleanupImport(invalidResult, exportPayload)
+
+  assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
+  assert.equal(validation.preview.rejected_groups.length, 2)
+  assert.match(validation.preview.rejected_groups[0].reason, /must not include the winner_item_id/i)
+  assert.match(validation.preview.rejected_groups[1].reason, /only once/i)
+  assert.equal(validation.parsed, null)
 })
 
 test('non-JSON review text produces friendly validation error', () => {
@@ -214,6 +465,7 @@ test('complex flagged cleanup result with many ignored groups and mix of alias a
     response_type: 'flagged_cleanup_result',
     schema_version: 1,
     source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
     merge_groups: [
       {
         group_id: 'group-0',

@@ -179,6 +179,7 @@ test('batch import rejects results for the wrong session or batch', () => {
     response_type: 'catalog_cleanup_batch_result',
     schema_version: 1,
     source_export_type: 'catalog_cleanup_batch',
+    snapshot_id: exportPayload.snapshot_id,
     session_id: 'session-other',
     batch_id: 'batch-9',
     merge_suggestions: [],
@@ -193,6 +194,76 @@ test('batch import rejects results for the wrong session or batch', () => {
   assert.equal(validation.ok, false)
   assert.match(validation.errors.join(' '), /session/i)
   assert.match(validation.errors.join(' '), /batch/i)
+})
+
+test('batch import rejects legacy or mismatched snapshot results before item validation', () => {
+  const session = createSession(3)
+  const exportPayload = buildCatalogCleanupBatchExportPayload({
+    session,
+    batch: session.batches[0],
+    batchIndex: 0,
+    generatedAt: '2026-05-01T10:05:00.000Z',
+  })
+
+  const baseResult = {
+    response_type: 'catalog_cleanup_batch_result',
+    schema_version: 1,
+    source_export_type: 'catalog_cleanup_batch',
+    session_id: exportPayload.session.session_id,
+    batch_id: exportPayload.batch_id,
+    merge_suggestions: [],
+    rename_suggestions: [],
+    alias_suggestions: [],
+    ignored_item_ids: [],
+    review_required_item_ids: [],
+  }
+
+  const legacyValidation = validateCatalogCleanupBatchImport(JSON.stringify(baseResult), exportPayload)
+  assert.equal(legacyValidation.ok, false)
+  assert.equal(legacyValidation.preview, null)
+  assert.equal(legacyValidation.parsed, null)
+  assert.match(legacyValidation.errors.join(' '), /older export format/i)
+
+  const mismatchedValidation = validateCatalogCleanupBatchImport(
+    JSON.stringify({ ...baseResult, snapshot_id: 'cleanup-v1-stale' }),
+    exportPayload,
+  )
+  assert.equal(mismatchedValidation.ok, false)
+  assert.equal(mismatchedValidation.preview, null)
+  assert.equal(mismatchedValidation.parsed, null)
+  assert.match(mismatchedValidation.errors.join(' '), /older or different Cleanup export/i)
+})
+
+test('catalog batch snapshot identity is deterministic for the logical batch state', () => {
+  const session = createSession(3)
+  const exportA = buildCatalogCleanupBatchExportPayload({
+    session,
+    batch: session.batches[0],
+    batchIndex: 0,
+    generatedAt: '2026-05-01T10:05:00.000Z',
+  })
+  const exportB = buildCatalogCleanupBatchExportPayload({
+    session,
+    batch: {
+      ...session.batches[0],
+      items: [...session.batches[0].items].reverse(),
+    },
+    batchIndex: 0,
+    generatedAt: '2026-05-01T11:05:00.000Z',
+  })
+  const changedBatch = buildCatalogCleanupBatchExportPayload({
+    session,
+    batch: {
+      ...session.batches[0],
+      item_count: session.batches[0].items.length - 1,
+      items: session.batches[0].items.slice(1),
+    },
+    batchIndex: 0,
+    generatedAt: '2026-05-01T10:05:00.000Z',
+  })
+
+  assert.equal(exportA.snapshot_id, exportB.snapshot_id)
+  assert.notEqual(exportA.snapshot_id, changedBatch.snapshot_id)
 })
 
 test('batch import accepts valid in-scope decisions and rejects out-of-batch ids', () => {
@@ -211,6 +282,7 @@ test('batch import accepts valid in-scope decisions and rejects out-of-batch ids
     response_type: 'catalog_cleanup_batch_result',
     schema_version: 1,
     source_export_type: 'catalog_cleanup_batch',
+    snapshot_id: exportPayload.snapshot_id,
     session_id: 'session-locked-1',
     batch_id: exportPayload.batch_id,
     merge_suggestions: [
@@ -247,6 +319,7 @@ test('batch import accepts valid in-scope decisions and rejects out-of-batch ids
     response_type: 'catalog_cleanup_batch_result',
     schema_version: 1,
     source_export_type: 'catalog_cleanup_batch',
+    snapshot_id: exportPayload.snapshot_id,
     session_id: 'session-locked-1',
     batch_id: exportPayload.batch_id,
     merge_suggestions: [

@@ -253,7 +253,12 @@ export function ItemLibraryAdvancedCleanupPanel({
     return buildCatalogCleanupPrompt(currentExportPayload as CatalogCleanupBatchExportPayload)
   }, [isDuplicates, currentExportPayload])
   const preview = validation?.preview as (CatalogCleanupImportPreview | CleanupImportPreview | null)
-  const applyableMerges: (CleanupPreviewGroup | CatalogCleanupPreviewMergeSuggestion)[] = isDuplicates ? (preview as CleanupImportPreview)?.merge_groups || [] : (preview as CatalogCleanupImportPreview)?.merge_suggestions || []
+  const importPassedPreflight = validation?.ok === true
+  const applyableMerges: (CleanupPreviewGroup | CatalogCleanupPreviewMergeSuggestion)[] = importPassedPreflight
+    ? isDuplicates
+      ? (preview as CleanupImportPreview)?.merge_groups || []
+      : (preview as CatalogCleanupImportPreview)?.merge_suggestions || []
+    : []
   const renameSuggestions = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.rename_suggestions || [] : []
   const aliasSuggestions = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.alias_suggestions || [] : []
   const ignoredItems = !isDuplicates ? (preview as CatalogCleanupImportPreview)?.ignored_items || [] : []
@@ -350,6 +355,11 @@ export function ItemLibraryAdvancedCleanupPanel({
 
     try {
       setApplyError(null)
+
+      if (!importPassedPreflight) {
+        setApplyError('Nothing was applied because the imported cleanup result needs correction.')
+        return
+      }
 
       const proposals: CleanupApplyProposal[] = isDuplicates
         ? safeArray(applyableMerges as CleanupPreviewGroup[])
