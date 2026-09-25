@@ -1,5 +1,6 @@
 import { BriefcaseBusiness, ChevronRight, Hash, Lock, MoreHorizontal } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import {
   fieldCls,
   labelCls,
@@ -139,19 +140,19 @@ export function FormHeader({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>{isQuotation ? 'Quotation Date' : 'Issue Date'}</label>
-                <Input
-                  type="date"
+                <DateField
+                  label={isQuotation ? 'Quotation Date' : 'Issue Date'}
                   value={invoice.issue_date || ''}
-                  onChange={(event) => updateInvoice('issue_date', event.target.value)}
+                  onChange={(next) => updateInvoice('issue_date', next)}
                   className={fieldCls}
                 />
               </div>
               <div>
                 <label className={labelCls}>{isQuotation ? 'Valid Until' : 'Due Date'}</label>
-                <Input
-                  type="date"
+                <DateField
+                  label={isQuotation ? 'Valid Until' : 'Due Date'}
                   value={invoice.due_date || ''}
-                  onChange={(event) => updateInvoice('due_date', event.target.value)}
+                  onChange={(next) => updateInvoice('due_date', next)}
                   className={fieldCls}
                 />
               </div>
