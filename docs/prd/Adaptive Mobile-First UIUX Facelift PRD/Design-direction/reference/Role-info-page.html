@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Engineer · Role info</title><style>
+:root{
+  --bg:#f5f8fd;--card:#ffffff;--border:#e2e8f0;--border-light:#eef1f6;
+  --text:#0f172a;--text-muted:#64748b;--text-faint:#94a3b8;
+  --primary:#1e293b;--primary-hover:#0f172a;--accent:#2563eb;
+  --chip-bg:#fbfcff;--chip-border:#dfe6f0;--chip-text:#5a6b85;
+  --shield-bg:#eaf0ff;--shield-text:#2d64bb;
+  --pill-bg:#f0f4fa;--pill-text:#4c5f79;
+  --menu-bg:#ffffff;--menu-border:#dce4ee;--menu-hover:#f3f6fb;--menu-danger:#ab4b39;
+  --cat-icon-bg:#eef3ff;--cat-icon-text:#356abd;
+  --cat-track:#eef1f6;--cat-fill:#3d72c9;
+  --count-bg:#edf3ff;--count-text:#386ab3;
+  --state-none-bg:#f1f5f9;--state-none-text:#64748b;
+  --state-view-bg:#dbeafe;--state-view-text:#1d4ed8;
+  --state-full-bg:#dcfce7;--state-full-text:#15803d;
+  --state-custom-bg:#fef3c7;--state-custom-text:#b45309;
+  --note-bg:#f5f8fc;--note-text:#6e7c90;
+  --footer-bg:#ffffffed;--toast-bg:#263c61;--toast-text:#ffffff;
+  --shadow:#18305208;
+  --act-view-bg:#dbeafe;--act-view-text:#1d4ed8;--act-view-border:#93c5fd;
+  --act-create-bg:#dcfce7;--act-create-text:#15803d;--act-create-border:#86efac;
+  --act-edit-bg:#fef3c7;--act-edit-text:#b45309;--act-edit-border:#fcd34d;
+  --act-delete-bg:#fee2e2;--act-delete-text:#b91c1c;--act-delete-border:#fca5a5;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);background:var(--bg)
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1521;--card:#161d2b;--border:#252e40;--border-light:#1d2534;
+  --text:#e8edf5;--text-muted:#8b98ad;--text-faint:#5f6b7f;
+  --primary:#e8edf5;--primary-hover:#ffffff;--accent:#5b93f5;
+  --chip-bg:#1a2233;--chip-border:#2b3549;--chip-text:#a3aec2;
+  --shield-bg:#1c2740;--shield-text:#7aa6f5;
+  --pill-bg:#1a2233;--pill-text:#a3aec2;
+  --menu-bg:#161d2b;--menu-border:#2b3549;--menu-hover:#1d2534;--menu-danger:#e08a76;
+  --cat-icon-bg:#1c2740;--cat-icon-text:#7aa6f5;
+  --cat-track:#232c3e;--cat-fill:#5b93f5;
+  --count-bg:#1c2740;--count-text:#7aa6f5;
+  --state-none-bg:#232c3e;--state-none-text:#8b98ad;
+  --state-view-bg:#1c2740;--state-view-text:#7aa6f5;
+  --state-full-bg:#123322;--state-full-text:#4ade80;
+  --state-custom-bg:#3a2a10;--state-custom-text:#facc15;
+  --note-bg:#161d2b;--note-text:#8b98ad;
+  --footer-bg:#161d2bee;--toast-bg:#2b3a5c;--toast-text:#ffffff;
+  --shadow:#00000040;
+  --act-view-bg:#122142;--act-view-text:#7aa6f5;--act-view-border:#2f4a7a;
+  --act-create-bg:#0f2a1c;--act-create-text:#4ade80;--act-create-border:#1f5c3c;
+  --act-edit-bg:#332408;--act-edit-text:#facc15;--act-edit-border:#6b4e12;
+  --act-delete-bg:#341313;--act-delete-text:#f87171;--act-delete-border:#7a2626;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1521;--card:#161d2b;--border:#252e40;--border-light:#1d2534;
+  --text:#e8edf5;--text-muted:#8b98ad;--text-faint:#5f6b7f;
+  --primary:#e8edf5;--primary-hover:#ffffff;--accent:#5b93f5;
+  --chip-bg:#1a2233;--chip-border:#2b3549;--chip-text:#a3aec2;
+  --shield-bg:#1c2740;--shield-text:#7aa6f5;
+  --pill-bg:#1a2233;--pill-text:#a3aec2;
+  --menu-bg:#161d2b;--menu-border:#2b3549;--menu-hover:#1d2534;--menu-danger:#e08a76;
+  --cat-icon-bg:#1c2740;--cat-icon-text:#7aa6f5;
+  --cat-track:#232c3e;--cat-fill:#5b93f5;
+  --count-bg:#1c2740;--count-text:#7aa6f5;
+  --state-none-bg:#232c3e;--state-none-text:#8b98ad;
+  --state-view-bg:#1c2740;--state-view-text:#7aa6f5;
+  --state-full-bg:#123322;--state-full-text:#4ade80;
+  --state-custom-bg:#3a2a10;--state-custom-text:#facc15;
+  --note-bg:#161d2b;--note-text:#8b98ad;
+  --footer-bg:#161d2bee;--toast-bg:#2b3a5c;--toast-text:#ffffff;
+  --shadow:#00000040;
+  --act-view-bg:#122142;--act-view-text:#7aa6f5;--act-view-border:#2f4a7a;
+  --act-create-bg:#0f2a1c;--act-create-text:#4ade80;--act-create-border:#1f5c3c;
+  --act-edit-bg:#332408;--act-edit-text:#facc15;--act-edit-border:#6b4e12;
+  --act-delete-bg:#341313;--act-delete-text:#f87171;--act-delete-border:#7a2626;
+}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer}
+body{margin:0}
+.app{max-width:1120px;margin:auto;min-height:100dvh;padding-top:env(safe-area-inset-top,0)}
+.top{display:flex;align-items:center;gap:14px;padding:24px 28px}
+.back,.icon,.theme-btn{border:1px solid var(--border);background:var(--card);border-radius:14px;width:44px;height:44px;font-size:18px;color:var(--text-muted)}
+.theme-btn{margin-left:auto}
+.crumb{font-size:13px;color:var(--text-faint)}
+.title{font-size:27px;font-weight:750;letter-spacing:-.04em;margin:2px 0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;padding:0 28px 110px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:22px;box-shadow:0 10px 30px var(--shadow)}
+.hero{padding:25px;display:flex;gap:17px;align-items:flex-start;flex-wrap:wrap;position:relative}
+.shield{width:55px;height:55px;border-radius:17px;background:var(--shield-bg);color:var(--shield-text);display:grid;place-items:center;font-size:26px;flex:none}
+.hero h1{margin:0 0 3px;font-size:26px;letter-spacing:-.04em}
+.muted{color:var(--text-faint)}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pill{background:var(--pill-bg);color:var(--pill-text);border-radius:30px;padding:7px 11px;font-size:12px;font-weight:650}
+.hero .more{margin-left:auto;border:1px solid var(--border);background:var(--card);border-radius:12px;padding:8px 13px;color:var(--text-muted);font-size:20px}
+.menu{position:absolute;right:25px;top:70px;background:var(--menu-bg);border:1px solid var(--menu-border);border-radius:13px;box-shadow:0 18px 40px var(--shadow);width:205px;padding:6px;z-index:10}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:11px;border-radius:8px;color:var(--text)}
+.menu button:hover{background:var(--menu-hover)}
+.menu .danger{color:var(--menu-danger)}
+.presets{display:flex;gap:7px;width:100%;margin-top:16px}
+.chip{flex:1;min-height:40px;border:1px solid var(--chip-border);background:var(--chip-bg);border-radius:11px;padding:9px 4px;font-size:12px;font-weight:650;color:var(--chip-text);text-align:center}
+.chip.active{background:var(--primary);border-color:var(--primary);color:var(--bg)}
+.section-head{display:flex;justify-content:space-between;align-items:end;margin:28px 2px 12px}
+.section-head h2{font-size:18px;margin:0}
+.section-head small{color:var(--text-faint)}
+.category{width:100%;text-align:left;display:grid;grid-template-columns:44px minmax(0,1fr) auto 20px;align-items:center;gap:13px;background:var(--card);border:1px solid var(--border);padding:15px 18px;color:inherit}
+.category:first-child{border-radius:18px 18px 0 0}
+.category:last-child{border-radius:0 0 18px 18px}
+.category+.category{border-top:0}
+.category:hover{background:var(--border-light)}
+.cat-icon{width:42px;height:42px;border-radius:12px;background:var(--cat-icon-bg);color:var(--cat-icon-text);display:grid;place-items:center;font-size:20px}
+.cat-name{font-weight:700;font-size:15px}
+.cat-track{background:var(--cat-track);border-radius:20px;height:4px;margin-top:7px;max-width:220px}
+.cat-fill{background:var(--cat-fill);height:100%;border-radius:20px}
+.count{font-size:12px;font-weight:700;color:var(--count-text);background:var(--count-bg);padding:6px 9px;border-radius:20px;white-space:nowrap}
+.state-badge{font-size:11px;font-weight:750;padding:5px 10px;border-radius:20px;white-space:nowrap}
+.state-none{background:var(--state-none-bg);color:var(--state-none-text)}
+.state-view{background:var(--state-view-bg);color:var(--state-view-text)}
+.state-full{background:var(--state-full-bg);color:var(--state-full-text)}
+.state-custom{background:var(--state-custom-bg);color:var(--state-custom-text)}
+.cat-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.chev{font-size:23px;color:var(--text-faint)}
+.advanced{margin-top:18px;border-radius:17px!important;border:1px solid var(--border)!important}
+.note{font-size:13px;line-height:1.55;color:var(--note-text);background:var(--note-bg);padding:15px 17px;border-radius:14px;margin-top:20px}
+.side{padding:23px;height:max-content}
+.side h2{font-size:16px;margin:0 0 16px}
+.holder{display:flex;align-items:center;gap:11px;padding:10px 0}
+.avatar{background:var(--shield-bg);color:var(--shield-text);border-radius:50%;width:36px;height:36px;display:grid;place-items:center;font-weight:750}
+.holder small{display:block;color:var(--text-faint);margin-top:2px}
+.aside-label{font-size:11px;font-weight:800;color:var(--text-faint);letter-spacing:.12em;margin-top:20px}
+.foot{position:fixed;bottom:0;left:0;right:0;background:var(--footer-bg);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:15px max(28px,calc((100vw - 1064px)/2)) calc(15px + env(safe-area-inset-bottom,0));display:flex;justify-content:space-between;align-items:center;gap:12px;z-index:5}
+.status{font-size:13px;color:var(--text-faint)}
+.primary{background:var(--primary);color:var(--bg);border:0;border-radius:13px;padding:13px 25px;font-weight:700}
+.secondary{border:1px solid var(--border);background:var(--card);color:var(--text-muted);border-radius:12px;padding:11px 15px}
+.screen{display:none}
+.screen.active{display:block}
+.detail-head{display:flex;align-items:center;gap:12px;margin:0 0 15px;flex-wrap:wrap}
+.detail-head h2{margin:0;font-size:22px}
+.detail-head p{font-size:13px;color:var(--text-faint);margin:3px 0 0}
+.toolbar{display:flex;gap:8px;margin-left:auto}
+.toolbar button{border:1px solid var(--border);border-radius:9px;background:var(--card);padding:8px 10px;color:var(--accent);font-size:12px;font-weight:700}
+.resource{border-bottom:1px solid var(--border-light);padding:17px 20px}
+.resource:last-child{border:0}
+.res-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
+.res-name{font-weight:680}
+.res-state{font-size:11px;background:var(--state-none-bg);color:var(--state-none-text);border-radius:20px;padding:5px 9px;font-weight:750}
+.res-state.on{background:var(--state-view-bg);color:var(--state-view-text)}
+.res-state.full{background:var(--state-full-bg);color:var(--state-full-text)}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.actions button{border:1px solid var(--chip-border);border-radius:10px;background:var(--chip-bg);padding:10px 3px;color:var(--chip-text);font-size:12px;font-weight:650;text-transform:capitalize}
+.actions button[data-action=view].selected{background:var(--act-view-bg);border-color:var(--act-view-border);color:var(--act-view-text)}
+.actions button[data-action=create].selected{background:var(--act-create-bg);border-color:var(--act-create-border);color:var(--act-create-text)}
+.actions button[data-action=edit].selected{background:var(--act-edit-bg);border-color:var(--act-edit-border);color:var(--act-edit-text)}
+.actions button[data-action=delete].selected{background:var(--act-delete-bg);border-color:var(--act-delete-border);color:var(--act-delete-text)}
+.actions button.locked{box-shadow:inset 0 0 0 1px var(--act-view-border)}
+.actions button:focus-visible,.chip:focus-visible,.category:focus-visible,.primary:focus-visible,.secondary:focus-visible,.back:focus-visible,.more:focus-visible,.theme-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topline{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-light);font-size:13px;color:var(--text-faint)}
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);background:var(--toast-bg);color:var(--toast-text);border-radius:12px;padding:10px 16px;font-size:13px;box-shadow:0 10px 20px var(--shadow);display:none;z-index:20;max-width:88vw;text-align:center}
+.confirm-overlay{position:fixed;inset:0;background:rgba(10,15,25,.5);display:none;align-items:center;justify-content:center;z-index:30;padding:20px}
+.confirm-card{background:var(--card);border-radius:18px;padding:22px;max-width:320px;width:100%;box-shadow:0 20px 50px var(--shadow)}
+.confirm-card p{font-size:14px;line-height:1.55;color:var(--text);margin:0 0 18px}
+.confirm-actions{display:flex;gap:10px}
+.confirm-actions button{flex:1}
+@media(max-width:760px){.top{padding:18px 18px 20px}.title{font-size:24px}.layout{display:block;padding:0 16px 110px}.hero{padding:20px}.side{display:none}.category{padding:14px 13px;gap:10px}.foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0))}.status{font-size:12px}.detail-head{flex-wrap:wrap}.toolbar{width:100%;margin-left:0}.toolbar button{flex:1}.actions button{font-size:11px}.resource{padding:16px}.topline{padding:14px 16px}}
+@media(max-width:360px){.actions{grid-template-columns:repeat(2,1fr)}.presets{flex-wrap:wrap}.chip{min-width:44%}}
+@media(max-width:390px){.category .cat-sub{display:none}.category{min-height:62px}}
+</style></head><body><div class="app">
+<header class="top"><button class="back" id="back" aria-label="Back">‹</button><div><div class="crumb">Settings / Roles &amp; Access</div><div class="title" id="pageTitle">Role info</div></div><button class="theme-btn" id="themeBtn" aria-label="Toggle dark mode">☾</button></header>
+<main class="layout"><div>
+<div class="card hero"><div class="shield">♢</div><div><h1>Engineer</h1><div class="muted">BIGDROPS · Custom role</div><div class="meta"><span class="pill" id="totalPill">17 of 68 permissions</span><span class="pill">1 holder</span></div>
+<div class="presets" id="presets" role="group" aria-label="Permission presets"></div>
+</div>
+<div style="position:relative;margin-left:auto"><button class="more" id="more" aria-label="Role actions" aria-haspopup="true" aria-expanded="false">⋯</button><div class="menu" id="menu" hidden><button data-menu="Duplicate role">Duplicate role</button><button data-menu="Synchronize access">Synchronize access</button><button class="danger" data-menu="Delete role">Delete role</button></div></div>
+</div>
+<section class="screen active" id="overview"><div class="section-head"><h2>Access by area</h2><small>Choose an area to edit</small></div><div id="categories"></div>
+<button class="category advanced" data-open="Advanced"><span class="cat-icon">≡</span><span><div class="cat-name">Exact permission rows</div><div class="cat-sub muted" style="font-size:12px;margin-top:3px">4 custom rules · advanced</div></span><span></span><span class="chev">›</span></button>
+<p class="note">View, create, edit and delete are layered: granting create, edit or delete brings view with it, and removing view will ask to clear the rest too, since you can't act on something you can't see. New permissions take effect when you save; removed permissions may remain effective until you synchronize access.</p></section>
+<section class="screen" id="detail"><div class="section-head detail-head"><div><h2 id="detailTitle"></h2><p id="detailSub"></p></div><div class="toolbar"><button id="selectAll">Select all</button><button id="clearAll">Clear</button></div></div>
+<div class="card"><div class="topline"><span>RESOURCE</span><span>Tap an action to toggle access</span></div><div id="resources"></div></div></section>
+</div>
+<aside class="card side"><h2>Role details</h2><div class="aside-label">ASSIGNED TO</div><div class="holder"><span class="avatar">E</span><div>Engineer account<small>1 holder</small></div></div><div class="aside-label">SCOPE</div><div class="holder">BIGDROPS company</div><div class="aside-label">HOW ACCESS WORKS</div><p class="muted" style="font-size:13px;line-height:1.55">Pick a preset to start, then fine-tune any resource. Create, edit and delete each require view. Save the role when you finish.</p></aside>
+</main></div>
+<footer class="foot"><span class="status" id="status" aria-live="polite">Changes are saved when you choose Save role</span><button class="primary" id="save">Save role</button></footer>
+<div class="toast" id="toast" role="status"></div>
+<div class="confirm-overlay" id="confirmOverlay"><div class="confirm-card" role="alertdialog" aria-modal="true"><p id="confirmMsg"></p><div class="confirm-actions"><button class="secondary" id="confirmCancel">Cancel</button><button class="primary" id="confirmOk">Continue</button></div></div></div>
+<script>
+const data={Documents:['Invoices','Quotations','Waybills','BOQs','RFQs','CSR','Letters'],Operations:['Projects','Project documents','Clients','Suppliers','Inventory'],Finance:['Expenses','Payments','Reports','Accounts'],Administration:['Users','Roles','Devices','Audit','Periods','Journals','Source transactions']};
+const icons={Documents:'▤',Operations:'▦',Finance:'₦',Administration:'⚙'};
+const actions=['view','create','edit','delete'];
+const allResources=()=>Object.values(data).flat();
+const totalSlots=allResources().length*4;
+const presets={
+  Viewer:()=>new Set(allResources().map(r=>r+':view')),
+  Manager:()=>new Set(allResources().flatMap(r=>['view','edit'].map(a=>r+':'+a))),
+  Admin:()=>new Set(allResources().flatMap(r=>actions.map(a=>r+':'+a)))
+};
+let selected=new Set(['Invoices:view','Invoices:create','Invoices:edit','Quotations:view','Quotations:create','Quotations:edit','Waybills:view','Waybills:edit','BOQs:view','BOQs:create','RFQs:view','Projects:view','Projects:edit','Clients:view','Inventory:view','Users:view','Devices:view']);
+let current=null,dirty=false,activePreset='Custom';
+const $=id=>document.getElementById(id);
+function count(cat){return (data[cat]||[]).reduce((n,r)=>n+actions.filter(a=>selected.has(r+':'+a)).length,0)}
+function totalCount(){return allResources().reduce((n,r)=>n+actions.filter(a=>selected.has(r+':'+a)).length,0)}
+function detectPreset(){for(const k in presets){const s=presets[k]();if(s.size===selected.size&&[...s].every(v=>selected.has(v)))return k}return 'Custom'}
+function renderPresets(){$('presets').innerHTML=['Viewer','Manager','Admin','Custom'].map(p=>`<button class="chip${p===activePreset?' active':''}" data-preset="${p}">${p}</button>`).join('')}
+function update(){$('totalPill').textContent=totalCount()+' of '+totalSlots+' permissions';$('status').textContent=dirty?'Unsaved changes':'Changes are saved when you choose Save role';activePreset=detectPreset();renderPresets();renderCategories();if(current)renderResources()}
+function catState(c){const res=data[c],n=count(c),max=res.length*4;
+if(n===0)return{label:'None',cls:'state-none'};
+if(n===max)return{label:'Full access',cls:'state-full'};
+const allViewOnly=res.every(r=>actions.filter(a=>selected.has(r+':'+a)).every(a=>a==='view')&&selected.has(r+':view'));
+if(allViewOnly)return{label:'View only',cls:'state-view'};
+return{label:'Custom',cls:'state-custom'}}
+function renderCategories(){const subs={Documents:'Invoices, Quotations, Waybills + more',Operations:'Projects, Clients, Inventory + more',Finance:'Expenses, Payments, Reports + more',Administration:'Users, Roles, Devices + more'};
+$('categories').innerHTML=Object.keys(data).map(c=>{const max=data[c].length*4,n=count(c),st=catState(c);return `<button class="category" data-open="${c}"><span class="cat-icon">${icons[c]}</span><span><div class="cat-name">${c}</div><div class="cat-sub muted" style="font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${subs[c]}</div><div class="cat-track"><div class="cat-fill" style="width:${max?Math.round(n/max*100):0}%"></div></div></span><span class="cat-right"><span class="state-badge ${st.cls}">${st.label}</span><span class="count">${n}/${max}</span></span><span class="chev">›</span></button>`}).join('')}
+function stateLabel(n){return n===0?'No access':n===4?'Full access':n+' / 4'}
+function renderResources(){if(current==='Advanced'){$('resources').innerHTML='<div class="resource"><div class="res-name">4 exact permission rows</div><p class="muted">This prototype shows where custom rules would live.</p></div>';return}
+$('resources').innerHTML=data[current].map(r=>{let n=actions.filter(a=>selected.has(r+':'+a)).length;
+const hasOthers=['create','edit','delete'].some(x=>selected.has(r+':'+x));
+return `<div class="resource"><div class="res-top"><span class="res-name">${r}</span><span class="res-state ${n===4?'full':n?'on':''}">${stateLabel(n)}</span></div><div class="actions">${actions.map(a=>{const on=selected.has(r+':'+a),lock=a==='view'&&on&&hasOthers;return `<button class="${on?'selected':''}${lock?' locked':''}" data-resource="${r}" data-action="${a}" aria-pressed="${on}"${lock?' title="Turning this off will also remove create, edit and delete on this resource"':''}>${a}</button>`}).join('')}</div></div>`}).join('')}
+function refreshDetailSub(){$('detailSub').textContent=data[current].length+' resources · '+count(current)+' actions granted'}
+function open(cat){current=cat;$('overview').classList.remove('active');$('detail').classList.add('active');$('pageTitle').textContent='Edit access';$('detailTitle').textContent=cat;$('detailSub').textContent=cat==='Advanced'?'Custom permission definitions':data[cat].length+' resources · '+count(cat)+' actions granted';renderResources();window.scrollTo(0,0)}
+function close(){current=null;$('detail').classList.remove('active');$('overview').classList.add('active');$('pageTitle').textContent='Role info';update();window.scrollTo(0,0)}
+function toast(s){$('toast').textContent=s;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2800)}
+function closeMenu(){$('menu').hidden=true;$('more').setAttribute('aria-expanded','false')}
+let pendingConfirm=null;
+function showConfirm(msg,onYes){$('confirmMsg').textContent=msg;$('confirmOverlay').style.display='flex';pendingConfirm=onYes}
+function hideConfirm(){$('confirmOverlay').style.display='none';pendingConfirm=null}
+$('confirmCancel').onclick=hideConfirm;
+$('confirmOk').onclick=()=>{const fn=pendingConfirm;hideConfirm();if(fn)fn()};
+$('confirmOverlay').addEventListener('click',e=>{if(e.target===$('confirmOverlay'))hideConfirm()});
+function toggleAction(r,a){
+  const key=r+':'+a;
+  if(a==='view'){
+    const hasOthers=['create','edit','delete'].some(x=>selected.has(r+':'+x));
+    if(selected.has(key)){
+      if(hasOthers){
+        const others=actions.filter(a=>a!=='view'&&selected.has(r+':'+a)).join(', ');
+        showConfirm('Removing view from '+r+' will also remove '+others+'. Continue?',()=>{
+          actions.forEach(a=>selected.delete(r+':'+a));
+          dirty=true;update();if(current&&current!=='Advanced')refreshDetailSub();
+        });
+        return;
+      }
+      selected.delete(key);
+    } else selected.add(key);
+  } else {
+    if(selected.has(key)) selected.delete(key);
+    else{selected.add(key);selected.add(r+':view')}
+  }
+  dirty=true;update();if(current&&current!=='Advanced')refreshDetailSub();
+}
+document.addEventListener('click',e=>{
+  const openEl=e.target.closest('[data-open]');if(openEl)open(openEl.dataset.open);
+  const b=e.target.closest('[data-resource]');if(b)toggleAction(b.dataset.resource,b.dataset.action);
+  const p=e.target.closest('[data-preset]');if(p){const name=p.dataset.preset;if(presets[name]){selected=presets[name]();dirty=true}activePreset=name;dirty=true;update();if(current&&current!=='Advanced')refreshDetailSub()}
+  if(!e.target.closest('#menu')&&!e.target.closest('#more'))closeMenu();
+});
+$('back').onclick=()=>current?close():toast('Back to Roles & Access');
+$('selectAll').onclick=()=>{if(!data[current])return;data[current].forEach(r=>actions.forEach(a=>selected.add(r+':'+a)));dirty=true;update();refreshDetailSub()};
+$('clearAll').onclick=()=>{if(!data[current])return;const n=count(current);if(n===0)return;showConfirm('Clear all '+n+' permissions in '+current+'?',()=>{data[current].forEach(r=>actions.forEach(a=>selected.delete(r+':'+a)));dirty=true;update();refreshDetailSub()})};
+$('save').onclick=()=>{dirty=false;update();toast('Prototype saved locally for this preview')};
+$('more').onclick=e=>{e.stopPropagation();const willOpen=$('menu').hidden;$('menu').hidden=!willOpen;$('more').setAttribute('aria-expanded',String(willOpen))};
+$('themeBtn').onclick=()=>{const html=document.documentElement;const dark=html.dataset.theme==='dark';html.dataset.theme=dark?'light':'dark';$('themeBtn').textContent=dark?'☾':'☀'};
+document.querySelectorAll('[data-menu]').forEach(b=>b.onclick=()=>{closeMenu();toast(b.dataset.menu+' is a preview action')});
+update();
+</script></body></html>

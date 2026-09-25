@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-tier="mobile">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BOQ Full-Page Live Form v4 — Design Direction</title>
+<!--
+  BOQ Full-Page Live Form v4 (design-direction candidate)
+
+  Basis:
+  - Facelift PRD design language: 02 mobile-first model, 03 structural tokens,
+    04 theme system (Slate Navy v6), 07 forms, 09 documents, 15 interaction
+    model, 19 column manager mobile.
+  - Live BOQ commercial model (src/domain/boq): description, specification,
+    make/brand, qty, unit, CP, SP. Derived line profit = (SP - CP) x Qty.
+    Totals: Total Cost, Total Selling Price, Gross Profit. Amount in words
+    bound to Total Selling Price. No VAT, WHT, discount, margin KPI.
+  - Live group model (src/components/document/FormLineItems.tsx): flat rows,
+    row_type group_header + order-derived membership, ungrouped items first.
+  - Live BOQ column model (src/domain/table-document/templateRegistry.ts):
+    plain visible boolean per column. Not invoice three-mode visibility.
+  - Live formatters (src/lib/formatters/money.ts): formatCurrency, numberToWords.
+  - Production tier breakpoints (src/lib/native/foldAwareness.ts):
+    mobile < 600, tablet < 1200, desktop >= 1200.
+
+  V4 direction (what differs from V3):
+  - Inline-first row editing. The focused edit sheet is NOT the primary editor
+    on any tier. Phone rows expand in place; tablet and desktop edit cells in
+    place. Sheets are reserved for Import JSON, Column Settings, and
+    destructive confirmation.
+  - Column Settings uses BOQ visible boolean semantics (on/off + reorder),
+    not invoice show / hide_display / hide_full modes.
+  - No group subtotal. Production BOQ totals exclude group rows entirely.
+  - Facelift PRD tokens throughout: Manrope + DM Mono, tiny type scale,
+    18px cards, primary-tinted shadows, 44px touch targets, active:scale
+    press feedback, prefers-reduced-motion respected.
+  - Mock state only. No persistence, no Supabase, no production sources touched.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============ structural tokens (03-design-system) ============ */
+:root{
+  --font:'Manrope',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+  --number:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --space-xxs:2px; --space-xs:4px; --space-sm:6px; --space-md:8px;
+  --space-lg:10px; --space-xl:12px; --space-xxl:14px;
+  --shadow:0 12px 28px color-mix(in srgb, var(--primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04);
+  --shadow-float:0 18px 40px color-mix(in srgb, var(--primary) 18%, transparent), 0 3px 9px rgba(15,23,42,.07);
+  --shell:430px;
+}
+/* ============ colour tokens, light v6 (04-theme-system) ============ */
+:root,[data-theme="light"]{
+  --bg:#f0f4f8; --surface:#ffffff; --surface-raised:#f8fafc;
+  --surface-muted:#e2e8f0; --surface-strong:#cbd5e1;
+  --ink:#0f172a; --ink-2:#475569; --ink-3:#94a3b8;
+  --primary:#1e3a5f; --primary-bright:#3b82f6; --primary-soft:rgba(30,58,95,.14);
+  --secondary:#0f172a; --secondary-bright:#64748b; --secondary-soft:rgba(15,23,42,.13);
+  --attention:#ef4444; --attention-soft:#fee2e2;
+  --sage:#64748b; --sage-soft:#f1f5f9;
+  --line:rgba(15,23,42,.07); --line-strong:rgba(15,23,42,.14);
+  --nav:rgba(255,255,255,.88);
+  --gradient:linear-gradient(135deg,var(--primary),var(--secondary));
+  --readout:linear-gradient(135deg,#0f172a,#1e3a5f);
+  --readout-ink:#e2e8f0;
+  --on-dark:#ffffff;
+}
+/* ============ colour tokens, dark v6 ============ */
+[data-theme="dark"]{
+  --bg:#0f172a; --surface:#1e293b; --surface-raised:#253448;
+  --surface-muted:#334155; --surface-strong:#475569;
+  --ink:#f1f5f9; --ink-2:#cbd5e1; --ink-3:#64748b;
+  --primary:#60a5fa; --primary-bright:#93c5fd; --primary-soft:rgba(96,165,250,.2);
+  --secondary:#94a3b8; --secondary-bright:#cbd5e1; --secondary-soft:rgba(148,163,184,.18);
+  --attention:#f87171; --attention-soft:#3b1518;
+  --sage:#94a3b8; --sage-soft:#1e293b;
+  --line:rgba(241,245,249,.08); --line-strong:rgba(241,245,249,.15);
+  --nav:rgba(15,23,42,.88);
+  --readout:linear-gradient(135deg,#0b1220,#14243f);
+  --on-dark:#f1f5f9;
+  --shadow:0 12px 28px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3);
+  --shadow-float:0 18px 40px rgba(0,0,0,.55), 0 3px 9px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font); font-size:12px; line-height:1.4;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font-family:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
+
+/* ============ shell ============ */
+.shell{
+  max-width:var(--shell); margin:0 auto; min-height:100dvh;
+  background:var(--bg); position:relative;
+}
+.topbar{
+  position:sticky; top:0; z-index:40;
+  height:calc(58px + env(safe-area-inset-top));
+  padding-top:env(safe-area-inset-top);
+  display:flex; align-items:center; gap:var(--space-md);
+  padding-left:var(--space-xxl); padding-right:var(--space-xxl);
+  background:var(--nav); backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.topbar .t-main{min-width:0; flex:1}
+.t-eyebrow{font-size:7px; font-weight:800; letter-spacing:.075em; text-transform:uppercase; color:var(--ink-3); line-height:1.2}
+.t-title{font-size:13px; font-weight:800; letter-spacing:-.045em; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.iconbtn{
+  width:36px; height:36px; min-width:36px; border-radius:12px;
+  border:1px solid var(--line); background:var(--surface-raised);
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--ink-2); padding:0;
+  transition:transform .12s ease, background .12s ease;
+}
+.iconbtn:active{transform:scale(.965)}
+.tierchip{
+  font-size:6px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+  padding:4px 6px; border-radius:5px; background:var(--primary-soft); color:var(--primary);
+  white-space:nowrap;
+}
+.scroll{padding:var(--space-xxl) var(--space-xxl) 118px}
+.layout{display:block}
+@media (min-width:1200px){
+  .layout{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:var(--space-xxl); align-items:start}
+  .side{position:sticky; top:calc(72px + env(safe-area-inset-top))}
+}
+.scroll .card + .card, .scroll .toolbar + .card{margin-top:var(--space-xl)}
+
+/* ============ cards + sections ============ */
+.card{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:18px; box-shadow:var(--shadow); padding:var(--space-xl);
+}
+.shead{display:flex; align-items:center; justify-content:space-between; gap:var(--space-md); margin-bottom:var(--space-md)}
+.stitle{font-size:9px; font-weight:800; letter-spacing:.105em; text-transform:uppercase; color:var(--ink-2)}
+.snote{font-size:8px; font-weight:500; color:var(--ink-3)}
+
+/* ============ fields ============ */
+.field{display:flex; flex-direction:column; gap:var(--space-xs); min-width:0}
+.field label{font-size:8px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3)}
+.field .req{color:var(--attention)}
+.inp, textarea.inp, select.inp{
+  height:44px; border:1px solid var(--line); border-radius:12px;
+  background:var(--surface-raised); color:var(--ink);
+  font-family:var(--font); font-size:12px; font-weight:700;
+  padding:0 12px; width:100%;
+}
+textarea.inp{min-height:76px; padding:10px 12px; height:auto; resize:vertical; line-height:1.45; font-weight:500}
+.inp.mono{font-family:var(--number); font-weight:500; font-size:13px}
+.inp:focus{border:2px solid var(--primary); box-shadow:0 0 0 3px var(--primary-soft); outline:none; padding:0 11px}
+textarea.inp:focus{padding:9px 11px}
+.inp.err{border:1px solid var(--attention); box-shadow:0 0 0 3px var(--attention-soft)}
+.fmsg{font-size:8px; font-weight:600; color:var(--attention); min-height:0}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md)}
+.span2{grid-column:1 / -1}
+@media (min-width:1200px){
+  .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-md)}
+  .grid-4 .span2{grid-column:span 2}
+}
+
+/* ============ toolbar ============ */
+.toolbar{display:flex; flex-wrap:wrap; gap:var(--space-sm); margin:var(--space-xl) 0 0}
+.btn{
+  border:1px solid var(--line); background:var(--surface); color:var(--ink);
+  font-size:8px; font-weight:800; letter-spacing:.065em; text-transform:uppercase;
+  padding:7px 10px; min-height:32px; border-radius:10px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:var(--space-xs);
+  transition:transform .12s ease, background .12s ease;
+}
+.btn:active{transform:scale(.965)}
+.btn.primary{background:var(--gradient); background:var(--gradient); color:var(--on-dark); border-color:transparent}
+.btn.ghost{background:transparent; border-color:transparent; color:var(--ink-2)}
+.btn.danger{background:var(--attention); border-color:transparent; color:#fff}
+.btn[disabled]{opacity:.4; pointer-events:none}
+.btn svg{width:13px; height:13px}
+
+/* ============ rows: groups + items ============ */
+.rows{display:flex; flex-direction:column; gap:var(--space-md); margin-top:var(--space-lg)}
+.ungrouped-label{
+  display:flex; align-items:center; gap:var(--space-sm);
+  font-size:6px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--ink-3); margin-top:var(--space-xs);
+}
+.ungrouped-label::after{content:''; flex:1; height:1px; background:var(--line)}
+.group{
+  border:1px solid rgba(59,130,246,.35); border-radius:12px;
+  background:var(--gradient); color:var(--on-dark); padding:10px 12px;
+}
+[data-theme="dark"] .group{border-color:rgba(147,197,253,.35)}
+.ghead{display:flex; align-items:center; gap:var(--space-xs); min-height:34px}
+.gchev{
+  width:44px; height:44px; margin:-5px 0 -5px -10px; border:0; background:transparent;
+  color:var(--on-dark); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  border-radius:10px; transition:transform .15s ease;
+}
+.gchev.open{transform:rotate(90deg)}
+.gname{
+  flex:1; min-width:0; background:transparent; border:1px solid transparent;
+  color:var(--on-dark); font-size:11px; font-weight:800; letter-spacing:-.02em;
+  height:32px; padding:0 6px; border-radius:8px;
+}
+.gname:hover{border-color:rgba(255,255,255,.25)}
+.gname:focus{background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.4); outline:none}
+.gcount{
+  font-size:6px; font-weight:800; letter-spacing:.07em; text-transform:uppercase;
+  background:rgba(255,255,255,.16); border-radius:5px; padding:4px 6px; white-space:nowrap;
+}
+.gact{
+  width:44px; height:44px; margin:-5px -10px -5px 0; border:0; background:transparent;
+  color:var(--on-dark); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  border-radius:10px; transition:transform .12s ease; opacity:.9;
+}
+.gact:active{transform:scale(.965); opacity:1}
+.gmenu{
+  display:flex; gap:var(--space-xs); margin-top:var(--space-sm); padding-top:var(--space-sm);
+  border-top:1px solid rgba(255,255,255,.22);
+}
+.gmenu button{
+  flex:1; min-height:44px; border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.12);
+  color:var(--on-dark); font-size:8px; font-weight:800; letter-spacing:.065em; text-transform:uppercase;
+  border-radius:10px; cursor:pointer; transition:transform .12s ease;
+}
+.gmenu button:active{transform:scale(.965)}
+.gmenu button.warn{background:rgba(239,68,68,.35); border-color:rgba(239,68,68,.6)}
+
+.row{
+  background:var(--surface-raised); border:1px solid var(--line);
+  border-radius:12px; overflow:hidden;
+}
+.row.pulse{animation:pulse .5s ease 2}
+.grow.pulse{animation:pulse .5s ease 2}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 transparent} 50%{box-shadow:0 0 0 3px var(--attention-soft); border-color:var(--attention)}}
+.rowsum{
+  display:flex; align-items:center; gap:var(--space-md);
+  min-height:56px; padding:8px 10px; cursor:pointer; width:100%;
+  background:transparent; border:0; text-align:left; color:inherit;
+}
+.rowsum:active{background:var(--secondary-soft)}
+.rowno{font-family:var(--number); font-size:10px; font-weight:500; color:var(--ink-3); min-width:20px}
+.rowmain{flex:1; min-width:0}
+.rdesc{font-size:12px; font-weight:800; letter-spacing:-.015em; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.rdesc.empty{color:var(--ink-3); font-weight:500; font-style:italic}
+.rmeta{font-size:8px; font-weight:500; color:var(--ink-3); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.rownums{text-align:right; white-space:nowrap}
+.rsp{display:block; font-family:var(--number); font-size:13px; font-weight:500; color:var(--ink)}
+.rprofit{display:block; font-family:var(--number); font-size:9px; font-weight:500; color:var(--sage); margin-top:2px}
+.rprofit.pos{color:#15803d}
+.rprofit.neg{color:var(--attention)}
+.rowchev{color:var(--ink-3); transition:transform .15s ease; flex:none}
+.row.open .rowchev{transform:rotate(90deg)}
+
+.rowedit{border-top:1px solid var(--line); padding:var(--space-lg); background:var(--surface); display:flex; flex-direction:column; gap:var(--space-md)}
+.rowedit[hidden]{display:none}
+.readout{
+  background:var(--readout); color:var(--readout-ink);
+  font-family:var(--number); font-size:13px; font-weight:500;
+  border-radius:8px; padding:8px 10px;
+  display:flex; justify-content:space-between; align-items:center; gap:var(--space-md);
+}
+.readout .rlabel{font-family:var(--font); font-size:8px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; opacity:.75}
+.editacts{display:flex; gap:var(--space-sm)}
+.editacts .btn{flex:1; justify-content:center; min-height:44px}
+
+/* grid tiers (tablet / desktop): inline cells, no expand step */
+.gridhead, .grow{
+  display:grid; gap:var(--space-sm); align-items:center;
+  grid-template-columns:var(--gcols);
+}
+.gridhead{
+  position:sticky; top:calc(58px + env(safe-area-inset-top)); z-index:5;
+  background:var(--surface); padding:6px 0; border-bottom:1px solid var(--line-strong);
+}
+.gridhead span{
+  font-size:6px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.gridhead span.num, .grow .num{text-align:right}
+.grow{background:var(--surface-raised); border:1px solid var(--line); border-radius:12px; padding:6px; min-height:52px}
+.grow .inp{height:44px; font-size:12px}
+.grow .cellnum{text-align:right; font-family:var(--number)}
+.grow .rowno{min-width:0; text-align:center}
+.gcell-profit{
+  font-family:var(--number); font-size:13px; font-weight:500; text-align:right; padding:0 4px;
+}
+.gacts{display:flex; gap:2px; justify-content:flex-end}
+.gacts .iconbtn{width:44px; height:44px; border-radius:10px}
+.gempty{font-size:9px; font-weight:700; color:var(--ink-3); text-align:center; padding:18px 0}
+.gwrap{display:grid; gap:var(--space-md); margin-top:var(--space-lg)}
+.gwrap > .group, .gwrap > .ungrouped-label, .gwrap > .gempty{grid-column:1/-1}
+.mval.neg{color:var(--attention)}
+
+/* ============ totals ============ */
+.metrics{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-md)}
+.metric{background:var(--surface-raised); border:1px solid var(--line); border-radius:12px; padding:10px 8px; min-width:0}
+.mlabel{font-size:8px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3); line-height:1.25; min-height:2.5em}
+.mval{font-family:var(--number); font-size:13px; font-weight:500; letter-spacing:-.05em; margin-top:6px; overflow:hidden; text-overflow:ellipsis}
+.mval.hero{font-size:15px; color:var(--primary)}
+.words{
+  margin-top:var(--space-md); background:var(--readout); color:var(--readout-ink);
+  border-radius:8px; padding:8px 10px;
+}
+.wlabel{font-size:6px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; opacity:.75}
+.wtext{font-size:9px; font-weight:700; line-height:1.4; margin-top:3px}
+@media (min-width:600px){
+  .mlabel{min-height:0}
+  .mval{font-size:17px}
+  .mval.hero{font-size:17px}
+}
+
+/* ============ footer + fab ============ */
+.floatlayer{
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:var(--shell); z-index:50; pointer-events:none;
+}
+.actionbar{
+  pointer-events:auto; display:flex; gap:var(--space-sm);
+  padding:10px var(--space-xxl) calc(10px + env(safe-area-inset-bottom));
+  background:var(--nav); backdrop-filter:blur(14px);
+  border-top:1px solid var(--line-strong);
+}
+.actionbar .btn{flex:1; justify-content:center; min-height:44px; font-size:9px}
+.fab{
+  pointer-events:auto; position:absolute; right:14px; bottom:calc(66px + env(safe-area-inset-bottom));
+  width:50px; height:50px; border-radius:18px; border:0;
+  background:var(--gradient); color:var(--on-dark);
+  box-shadow:var(--shadow-float); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .12s ease;
+}
+.fab:active{transform:scale(.965)}
+.fab[disabled]{opacity:.55; pointer-events:none}
+.fab svg{width:18px; height:18px}
+.spin{width:18px; height:18px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ sheets ============ */
+.scrim{
+  position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:60;
+  opacity:0; pointer-events:none; transition:opacity .2s ease;
+}
+.scrim.show{opacity:1; pointer-events:auto}
+.sheet{
+  position:fixed; left:50%; bottom:0; transform:translate(-50%,100%);
+  width:100%; max-width:var(--shell); z-index:70;
+  background:var(--surface); border-radius:24px 24px 0 0;
+  box-shadow:var(--shadow-float); max-height:78dvh;
+  display:flex; flex-direction:column;
+  transition:transform .22s ease;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.sheet.show{transform:translate(-50%,0)}
+.sheet[hidden]{display:none}
+.grab{width:34px; height:3px; border-radius:2px; background:var(--surface-strong); margin:8px auto 0}
+.sheethead{display:flex; align-items:center; justify-content:space-between; padding:10px var(--space-xxl) 0}
+.sheettitle{font-size:17px; font-weight:800; letter-spacing:-.05em}
+.closebtn{
+  width:28px; height:28px; border-radius:50%; border:1px solid var(--line);
+  background:var(--surface-raised); color:var(--ink-2); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0;
+}
+.sheetbody{padding:var(--space-lg) var(--space-xxl) var(--space-xxl); overflow-y:auto; display:flex; flex-direction:column; gap:var(--space-lg)}
+.sheetbody p{margin:0; font-size:9px; font-weight:700; color:var(--ink-2); line-height:1.5}
+.sheetacts{display:flex; gap:var(--space-sm); padding:0 var(--space-xxl) var(--space-xxl)}
+.sheetacts .btn{flex:1; justify-content:center; min-height:44px; font-size:9px}
+
+.seg{display:flex; background:var(--surface-muted); border-radius:12px; padding:3px; gap:3px}
+.seg button{
+  flex:1; min-height:44px; border:0; background:transparent; border-radius:10px;
+  font-size:8px; font-weight:800; letter-spacing:.065em; text-transform:uppercase;
+  color:var(--ink-2); cursor:pointer;
+}
+.seg button.on{background:var(--surface); color:var(--ink); box-shadow:var(--shadow)}
+textarea.json{
+  font-family:var(--number); font-size:12px; min-height:150px;
+  border:1px solid var(--line); border-radius:12px; background:var(--surface-raised);
+  color:var(--ink); padding:10px 12px; resize:vertical; line-height:1.5; width:100%;
+}
+textarea.json:focus{border:2px solid var(--primary); box-shadow:0 0 0 3px var(--primary-soft); outline:none; padding:9px 11px}
+.preview{background:var(--surface-raised); border:1px solid var(--line); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:4px}
+.preview .pv{display:flex; justify-content:space-between; gap:10px; font-size:9px; font-weight:700}
+.preview .pv span:last-child{font-family:var(--number); font-weight:500}
+.preview .bad{color:var(--attention)}
+.preview .good{color:#15803d}
+
+/* column settings list */
+.collist{display:flex; flex-direction:column; gap:var(--space-xs)}
+.colrow{
+  display:flex; align-items:center; gap:var(--space-md);
+  min-height:52px; background:var(--surface-raised);
+  border:1px solid var(--line); border-radius:12px; padding:4px 8px;
+}
+.colrow .cname{flex:1; min-width:0}
+.colrow .cname b{display:block; font-size:11px; font-weight:800; letter-spacing:-.015em}
+.colrow .cname i{display:block; font-size:8px; font-weight:500; color:var(--ink-3); font-style:normal; margin-top:1px}
+.colrow .fixedbadge{font-size:6px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3); background:var(--surface-muted); border-radius:5px; padding:4px 6px}
+.switch{
+  position:relative; width:44px; height:26px; border-radius:13px; border:0; cursor:pointer;
+  background:var(--surface-strong); padding:0; flex:none; transition:background .15s ease;
+}
+.switch::after{
+  content:''; position:absolute; top:3px; left:3px; width:20px; height:20px;
+  border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(15,23,42,.3);
+  transition:transform .15s ease;
+}
+.switch.on{background:var(--primary)}
+.switch.on::after{transform:translateX(18px)}
+.switch[disabled]{opacity:.4; pointer-events:none}
+
+/* ============ toast ============ */
+.toast{
+  position:fixed; left:50%; bottom:calc(128px + env(safe-area-inset-bottom));
+  transform:translate(-50%,8px); z-index:90;
+  background:var(--ink); color:var(--bg);
+  font-size:9px; font-weight:700; padding:9px 14px; border-radius:12px;
+  box-shadow:var(--shadow-float); opacity:0; pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease; max-width:calc(var(--shell) - 40px);
+  text-align:center;
+}
+.toast.show{opacity:1; transform:translate(-50%,0)}
+
+/* ============ tiers ============ */
+@media (min-width:600px){
+  :root{--shell:860px}
+  .scroll{padding-left:20px; padding-right:20px}
+  .grid2.details{grid-template-columns:1fr 1fr}
+}
+@media (min-width:1200px){
+  :root{--shell:1180px}
+  .scroll{padding-left:24px; padding-right:24px}
+  .side .card + .card{margin-top:var(--space-xl)}
+}
+
+/* reduced motion */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none !important; animation:none !important}
+  .spin{border-top-color:rgba(255,255,255,.9)}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="topbar">
+    <button class="iconbtn" id="btnBack" aria-label="Back to list">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="t-main">
+      <div class="t-eyebrow">Bill of Quantities</div>
+      <div class="t-title" id="topTitle">New BOQ</div>
+    </div>
+    <span class="tierchip" id="tierChip">mobile</span>
+    <button class="iconbtn" id="btnTheme" aria-label="Toggle dark theme">
+      <svg id="themeIcon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </header>
+
+  <div class="scroll">
+    <div class="layout">
+      <div class="main">
+
+        <!-- details -->
+        <section class="card" aria-label="BOQ details">
+          <div class="shead">
+            <span class="stitle">Details</span>
+            <span class="snote">Draft &amp; save rules apply here</span>
+          </div>
+          <div class="grid2 details grid-4">
+            <div class="field">
+              <label for="fNumber">BOQ Number <span class="req" aria-hidden="true">*</span></label>
+              <input class="inp mono" id="fNumber" placeholder="BOQ-0001" autocomplete="off">
+              <div class="fmsg" id="mNumber"></div>
+            </div>
+            <div class="field">
+              <label for="fDate">Issue Date</label>
+              <input class="inp mono" id="fDate" type="date">
+              <div class="fmsg"></div>
+            </div>
+            <div class="field">
+              <label for="fVendor">Vendor</label>
+              <input class="inp" id="fVendor" placeholder="Vendor name" autocomplete="off">
+              <div class="fmsg"></div>
+            </div>
+            <div class="field">
+              <label for="fVendorContact">Vendor Contact</label>
+              <input class="inp" id="fVendorContact" placeholder="Phone or email" autocomplete="off">
+              <div class="fmsg"></div>
+            </div>
+            <div class="field span2">
+              <label for="fNotes">Notes</label>
+              <textarea class="inp" id="fNotes" placeholder="Scope notes, exclusions, delivery terms…"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- toolbar -->
+        <div class="toolbar" role="toolbar" aria-label="Line actions">
+          <button class="btn" id="btnAddGroup">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add group
+          </button>
+          <button class="btn" id="btnAddItem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add item
+          </button>
+          <button class="btn" id="btnImport">Import JSON</button>
+          <button class="btn" id="btnColumns">Columns</button>
+        </div>
+
+        <!-- line items -->
+        <section class="card" aria-label="Line items">
+          <div class="shead">
+            <span class="stitle">Line Items</span>
+            <span class="snote" id="itemCount">0 items</span>
+          </div>
+          <div id="rowsHost"><!-- rows injected --></div>
+        </section>
+
+      </div>
+
+      <aside class="side" aria-label="Totals">
+        <section class="card">
+          <div class="shead">
+            <span class="stitle">Totals</span>
+            <span class="snote">Live</span>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="mlabel">Total Cost</div>
+              <div class="mval" id="tCost">₦0</div>
+            </div>
+            <div class="metric">
+              <div class="mlabel">Total Selling Price</div>
+              <div class="mval" id="tSp">₦0</div>
+            </div>
+            <div class="metric">
+              <div class="mlabel">Gross Profit</div>
+              <div class="mval hero" id="tProfit">₦0</div>
+            </div>
+          </div>
+          <div class="words">
+            <div class="wlabel">Amount in words (Total Selling Price)</div>
+            <div class="wtext" id="tWords">Zero Naira Only</div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <!-- fixed layer: fab + footer -->
+  <div class="floatlayer">
+    <button class="fab" id="fabSave" aria-label="Save BOQ">
+      <svg id="fabIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+    </button>
+    <footer class="actionbar">
+      <button class="btn ghost" id="btnCancel">Cancel</button>
+      <button class="btn" id="btnDraft">Draft</button>
+      <button class="btn primary" id="btnSave">Save</button>
+    </footer>
+  </div>
+
+</div>
+
+<!-- scrim + sheets -->
+<div class="scrim" id="scrim"></div>
+
+<!-- import sheet -->
+<section class="sheet" id="sheetImport" role="dialog" aria-modal="true" aria-labelledby="importTitle" hidden>
+  <div class="grab"></div>
+  <div class="sheethead">
+    <span class="sheettitle" id="importTitle">Import JSON</span>
+    <button class="closebtn" data-close="sheetImport" aria-label="Close import">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="sheetbody">
+    <div class="seg" role="tablist" aria-label="Import mode">
+      <button id="segAdd" class="on" role="tab" aria-selected="true">Add</button>
+      <button id="segUpdate" role="tab" aria-selected="false">Update</button>
+    </div>
+    <p id="importHint">Paste an array of items, or an object with an <b>items</b> array. Alias keys are accepted: desc, qty, cost/price, make/brand, group/section, uom, spec.</p>
+    <textarea class="json" id="importText" spellcheck="false" aria-label="JSON payload" placeholder='[{"description":"Portland cement 42.5N","qty":100,"unit":"BAG","cp":8500,"sp":9750,"group":"Structure"}]'></textarea>
+    <div class="preview" id="importPreview" aria-live="polite">
+      <div class="pv"><span>Rows</span><span>—</span></div>
+    </div>
+  </div>
+  <div class="sheetacts">
+    <button class="btn ghost" data-close="sheetImport">Cancel</button>
+    <button class="btn primary" id="btnApplyImport" disabled>Apply import</button>
+  </div>
+</section>
+
+<!-- column settings sheet -->
+<section class="sheet" id="sheetColumns" role="dialog" aria-modal="true" aria-labelledby="colTitle" hidden>
+  <div class="grab"></div>
+  <div class="sheethead">
+    <span class="sheettitle" id="colTitle">Columns</span>
+    <button class="closebtn" data-close="sheetColumns" aria-label="Close columns">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="sheetbody">
+    <p>Toggle visibility and reorder. Description, quantity, and unit stay fixed. Hidden columns never affect totals.</p>
+    <div class="collist" id="colList"><!-- rows injected --></div>
+  </div>
+  <div class="sheetacts">
+    <button class="btn ghost" id="btnColReset">Reset defaults</button>
+    <button class="btn primary" data-close="sheetColumns">Done</button>
+  </div>
+</section>
+
+<!-- confirm sheet -->
+<section class="sheet" id="sheetConfirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+  <div class="grab"></div>
+  <div class="sheethead">
+    <span class="sheettitle" id="confirmTitle">Discard changes?</span>
+    <button class="closebtn" data-close="sheetConfirm" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="sheetbody">
+    <p id="confirmBody">This row has saved values. Remove it permanently?</p>
+  </div>
+  <div class="sheetacts">
+    <button class="btn ghost" data-close="sheetConfirm">Keep</button>
+    <button class="btn danger" id="btnConfirmGo">Remove</button>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+
+/* ================= PURE LOGIC =================
+   Extractable for offline checks. Mirrors:
+   - src/lib/formatters/money.ts (formatCurrency, numberToWords)
+   - src/domain/boq/calculateBoqTotals.ts (computeBoqTotals, computeRowProfit)
+   //PURE-START// */
+function toFiniteAmount(value) {
+  const parsed = typeof value === 'string'
+    ? Number(value.replace(/[^0-9.-]/g, '') || 0)
+    : Number(value || 0)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+function fmtMoney(value) {
+  const n = toFiniteAmount(value)
+  return '\u20A6' + n.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+}
+function numberToWords(num) {
+  if (!num || num === 0) return 'ZERO NAIRA ONLY'
+  const ones = [
+    '', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE',
+    'TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN',
+    'SEVENTEEN', 'EIGHTEEN', 'NINETEEN',
+  ]
+  const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY']
+  const c = (n) => {
+    if (n < 20) return ones[n]
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '')
+    if (n < 1000) return ones[Math.floor(n / 100)] + ' HUNDRED' + (n % 100 ? ' ' + c(n % 100) : '')
+    if (n < 1e6) return c(Math.floor(n / 1000)) + ' THOUSAND' + (n % 1000 ? ' ' + c(n % 1000) : '')
+    if (n < 1e9) return c(Math.floor(n / 1e6)) + ' MILLION' + (n % 1e6 ? ' ' + c(n % 1e6) : '')
+    return c(Math.floor(n / 1e9)) + ' BILLION' + (n % 1e9 ? ' ' + c(n % 1e9) : '')
+  }
+  const naira = Math.floor(num)
+  const kobo = Math.round((num - naira) * 100)
+  return c(naira) + ' NAIRA' + (kobo > 0 ? ' AND ' + c(kobo) + ' KOBO' : '') + ' ONLY'
+}
+// ponytail: plain floats instead of decimal.js — prototype only, production keeps Decimal
+function computeBoqTotals(rows) {
+  let totalCost = 0, totalSellingPrice = 0
+  for (const row of rows) {
+    if (row.row_type !== 'item') continue
+    totalCost += toFiniteAmount(row.cp) * toFiniteAmount(row.quantity)
+    totalSellingPrice += toFiniteAmount(row.sp) * toFiniteAmount(row.quantity)
+  }
+  return { total_cost: totalCost, total_selling_price: totalSellingPrice, gross_profit: totalSellingPrice - totalCost }
+}
+function computeRowProfit(row) {
+  if (row.row_type !== 'item') return 0
+  return (toFiniteAmount(row.sp) - toFiniteAmount(row.cp)) * toFiniteAmount(row.quantity)
+}
+
+/* ---- row blocks: leading ungrouped + ordered groups ---- */
+function splitBlocks(rows) {
+  const leading = [], groups = []
+  let cur = null
+  for (const r of rows) {
+    if (r.row_type === 'group_header') { cur = { header: r, items: [] }; groups.push(cur) }
+    else if (cur) cur.items.push(r)
+    else leading.push(r)
+  }
+  return { leading, groups }
+}
+function joinBlocks(b) {
+  const out = [...b.leading]
+  for (const g of b.groups) { out.push(g.header); out.push(...g.items) }
+  return out
+}
+let _seq = 0
+function makeId() { _seq += 1; return 'r' + _seq }
+function makeItemRow(rec) {
+  return {
+    id: makeId(), row_type: 'item',
+    description: String(rec.description || '').trim(),
+    specification: String(rec.specification || '').trim(),
+    make_brand: String(rec.make_brand || '').trim(),
+    quantity: toFiniteAmount(rec.quantity),
+    unit: String(rec.unit || '').trim(),
+    cp: toFiniteAmount(rec.cp),
+    sp: toFiniteAmount(rec.sp),
+    notes: String(rec.notes || '').trim(),
+    collapsed: false,
+  }
+}
+function makeGroupRow(name) {
+  return { id: makeId(), row_type: 'group_header', group_name: String(name || '').trim(), collapsed: false }
+}
+function applyImportAdd(rows, items) {
+  const b = splitBlocks(rows)
+  const ungrouped = []
+  const byGroup = new Map()
+  for (const it of items) {
+    const g = String(it.group || '').trim()
+    if (!g) { ungrouped.push(makeItemRow(it)); continue }
+    const key = g.toLowerCase()
+    if (!byGroup.has(key)) byGroup.set(key, { name: g, list: [] })
+    byGroup.get(key).list.push(it)
+  }
+  b.leading.push(...ungrouped.map(makeItemRow))
+  for (const [key, pack] of byGroup) {
+    let g = b.groups.find(x => String(x.header.group_name || '').trim().toLowerCase() === key)
+    if (!g) { g = { header: makeGroupRow(pack.name), items: [] }; b.groups.push(g) }
+    g.items.push(...pack.list.map(makeItemRow))
+  }
+  return joinBlocks(b)
+}
+function applyImportUpdate(rows, items) {
+  const out = rows.map(r => ({ ...r }))
+  const itemRows = out.filter(r => r.row_type === 'item')
+  const patch = (target, field, value, numeric) => {
+    if (value === null || value === undefined || String(value).trim() === '') return
+    target[field] = numeric ? toFiniteAmount(value) : String(value).trim()
+  }
+  for (const it of items) {
+    const target = itemRows[it.row_number - 1]
+    if (!target) continue
+    patch(target, 'description', it.description)
+    patch(target, 'specification', it.specification)
+    patch(target, 'make_brand', it.make_brand)
+    patch(target, 'quantity', it.quantity, true)
+    patch(target, 'unit', it.unit)
+    patch(target, 'cp', it.cp, true)
+    patch(target, 'sp', it.sp, true)
+    patch(target, 'notes', it.notes)
+  }
+  return out
+}
+
+/* ---- import parse ---- */
+const IMPORT_ALIASES = {
+  description: ['description', 'desc', 'item', 'name', 'material', 'title'],
+  specification: ['specification', 'spec', 'specs'],
+  make_brand: ['make_brand', 'make', 'brand', 'manufacturer'],
+  quantity: ['quantity', 'qty', 'qnty', 'quantity_required'],
+  unit: ['unit', 'uom', 'units'],
+  cp: ['cp', 'cost_price', 'cost', 'unit_cost', 'purchase_price'],
+  sp: ['sp', 'selling_price', 'price', 'unit_price', 'rate', 'sell_price'],
+  notes: ['notes', 'note', 'remark', 'remarks'],
+  group: ['group', 'group_name', 'section', 'category'],
+  row_number: ['row_number', 'rownumber', 'row_no', 'rowid', 'index'],
+}
+function parseImportPayload(text, mode) {
+  if (!text || !String(text).trim()) return { ok: false, error: 'Paste a JSON payload first.' }
+  let data
+  try { data = JSON.parse(text) } catch (e) { return { ok: false, error: 'Malformed JSON: ' + e.message } }
+  const arr = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : null)
+  if (!arr) return { ok: false, error: 'Payload must be an array or an object with an items array.' }
+  if (arr.length === 0) return { ok: false, error: 'Item list is empty.' }
+  if (arr.length > 500) return { ok: false, error: 'Row cap exceeded: ' + arr.length + ' rows sent, limit is 500.' }
+  const items = []
+  const unknown = new Set()
+  let skipped = 0
+  for (const raw of arr) {
+    if (!raw || typeof raw !== 'object') { skipped += 1; continue }
+    const rec = { description: '', specification: '', make_brand: '', quantity: '', unit: '', cp: '', sp: '', notes: '', group: '', row_number: null }
+    for (const k of Object.keys(raw)) {
+      const lk = String(k).toLowerCase()
+      let hit = null
+      for (const field in IMPORT_ALIASES) { if (IMPORT_ALIASES[field].indexOf(lk) !== -1) { hit = field; break } }
+      if (hit) rec[hit] = raw[k]
+      else unknown.add(String(k))
+    }
+    const hasData = ['description', 'quantity', 'cp', 'sp'].some(f => String(rec[f] === null ? '' : rec[f]).trim() !== '')
+    if (!hasData) { skipped += 1; continue }
+    if (rec.row_number !== null && String(rec.row_number).trim() !== '') {
+      const rn = parseInt(String(rec.row_number).replace(/[^0-9]/g, ''), 10)
+      rec.row_number = Number.isFinite(rn) ? rn : null
+    }
+    items.push(rec)
+  }
+  if (items.length === 0) return { ok: false, error: 'No usable rows found. Check the alias keys.' }
+  if (mode === 'update') {
+    const missing = items.filter(it => !it.row_number)
+    if (missing.length) return { ok: false, error: missing.length + ' row(s) lack row_number, required for Update mode.' }
+  }
+  return { ok: true, items, skipped, unknownKeys: Array.from(unknown) }
+}
+function buildImportPreview(result, existingGroupNames, mode, itemCount) {
+  if (!result.ok) return { error: result.error }
+  const existing = new Set(existingGroupNames.map(s => String(s).trim().toLowerCase()))
+  const groups = new Set()
+  for (const it of result.items) { const g = String(it.group || '').trim(); if (g) groups.add(g) }
+  let create = 0, join = 0
+  for (const g of groups) { if (existing.has(g.toLowerCase())) join += 1; else create += 1 }
+  let outOfRange = 0
+  if (mode === 'update') {
+    outOfRange = result.items.filter(it => !it.row_number || it.row_number < 1 || it.row_number > itemCount).length
+    if (outOfRange) return { error: outOfRange + ' row(s) target a row_number outside 1..' + itemCount + '.' }
+  }
+  return { rows: result.items.length, skipped: result.skipped, unknown: result.unknownKeys, groupsCreate: create, groupsJoin: join }
+}
+
+/* ---- validation (Save FAB / Draft footer rules) ---- */
+function validateDraft(state) {
+  const errors = []
+  if (!String(state.boq_number || '').trim()) errors.push({ field: 'boq_number', message: 'BOQ number is required to save a draft.' })
+  const items = state.rows.filter(r => r.row_type === 'item')
+  if (items.length === 0) errors.push({ field: 'rows', message: 'Add at least one item before saving.' })
+  return errors
+}
+function validateSave(state) {
+  const errors = validateDraft(state)
+  const missing = state.rows.filter(r => r.row_type === 'item' && !String(r.description || '').trim())
+  if (missing.length) errors.push({ field: 'description', message: 'Every item needs a description before save.', rowId: missing[0].id })
+  return errors
+}
+/* //PURE-END// */
+
+/*C4*/
+</script>
+</body>
+</html>

@@ -1,0 +1,1476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — BOQ Full-Page Live Form v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!--
+  BIGDROPS design-direction candidate — BOQ Full-Page Live Form v3
+  Fidelity mode: PROTOTYPE (working interactions, mock state, no persistence).
+
+  Basis: BOQ Full-Page Live Form.html (v2 visual direction, preserved)
+       + invoice responsive architecture (SharedDocumentForm / FormLineItems study)
+       + invoice Save FAB + footer (FormFooter.tsx pattern: FAB + Cancel/Draft/Save)
+       + invoice Column Settings (ColumnManager.tsx semantics: show / hide_display /
+         hide_full, fixed rows, reorder, custom columns, reset)
+       + invoice JSON import (JsonItemsImportSheet: Add/Update modes, validation,
+         preview, no destructive apply on error)
+       + invoice Groups (row_type 'group_header' + group_id, ungrouped rows,
+         collapse, subtotal toggle) — Sections removed entirely.
+
+  Locked BOQ model (unchanged): CP = Cost Price, SP = Selling Price,
+  line profit = (SP − CP) × Qty, Total Cost = Σ CP×Qty,
+  Total Selling Price = Σ SP×Qty, Gross Profit = Total SP − Total Cost.
+  Amount in words = Total Selling Price. No VAT. No WHT. No discount. No margin KPI.
+
+  Unresolved (annotated, do not treat as locked): editor column visibility vs
+  PDF column visibility are governed separately in production (document fillable
+  settings). This prototype only demonstrates editor visibility.
+-->
+<style>
+  :root{
+    --bg:#f4f7fb; --card:#ffffff; --ink:#0f172a; --navy:#1e3a5f; --muted:#64748b;
+    --faint:#94a3b8; --line:rgba(15,23,42,.08); --line-strong:rgba(15,23,42,.14);
+    --chip:#e2e8f0; --soft:#f8fafc; --ok:#16a34a; --bad:#ef4444; --amber:#b45309;
+    --grad:linear-gradient(135deg,#1e3a5f,#0f172a);
+    --shadow:0 12px 28px rgba(30,58,95,.08);
+    --shadow-pop:0 18px 40px rgba(30,58,95,.2);
+    --r:12px; --r-lg:18px;
+    --mono:'DM Mono',ui-monospace,monospace;
+    --foot-h:78px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Manrope',system-ui,sans-serif; font-size:13px; line-height:1.45;
+    padding-bottom:calc(var(--foot-h) + env(safe-area-inset-bottom,0px));
+  }
+  button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit}
+  input,select,textarea{font-family:inherit; color:var(--ink)}
+  svg{display:block; flex:none}
+
+  /* ── shell: adaptive tiers ───────────────────────────────
+     phone  : default, compact single column, sheet editing
+     fold   : ≥768px  — wider shell, inline grid rows (subset of columns), 3-col header
+     desktop: ≥1200px — document-editor shell, full column set, expanded toolbar */
+  .shell{max-width:560px; margin:0 auto; padding:14px 14px 0; display:flex; flex-direction:column; gap:14px}
+  @media (min-width:768px){ .shell{max-width:760px; padding:18px 20px 0} }
+  @media (min-width:1200px){ .shell{max-width:1120px; padding:22px 28px 0} }
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow)}
+  .card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px 12px; border-bottom:1px solid var(--line); border-radius:var(--r-lg) var(--r-lg) 0 0}
+  .sec-label{display:flex; align-items:center; gap:8px; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#475569}
+  .dot{width:8px; height:8px; border-radius:50%; flex:none}
+  .dot.navy{background:var(--navy)} .dot.green{background:var(--ok)} .dot.amber{background:#d97706}
+
+  /* toolbar (invoice FormLineItems toolbar pattern) */
+  .toolbar{display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap}
+  .tbtn{display:inline-flex; align-items:center; gap:7px; min-height:44px; padding:0 14px; border-radius:11px;
+        border:1px solid var(--line-strong); background:var(--card); font-size:12px; font-weight:800;
+        letter-spacing:.02em; color:var(--ink); transition:background .15s, transform .1s}
+  .tbtn:active{transform:scale(.97); background:var(--soft)}
+  .tbtn.primary{background:var(--grad); border-color:transparent; color:#fff}
+  .tbtn.ghost-ico{padding:0; width:44px; justify-content:center}
+  @media (min-width:1200px){ .tbtn{font-size:12.5px} }
+
+  /* ── document details ── */
+  .fields{display:grid; grid-template-columns:1fr; gap:12px; padding:16px}
+  @media (min-width:768px){ .fields{grid-template-columns:1fr 1fr; padding:18px} }
+  @media (min-width:1200px){ .fields{grid-template-columns:repeat(4,1fr); gap:14px} .fields .span-all{grid-column:1/-1} }
+  .f label{display:block; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:5px}
+  .f .req{color:var(--bad)}
+  .in, .ta{width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--line); border-radius:11px; background:var(--soft);
+        font-size:13px; font-weight:600; outline:none; transition:background .15s, border .15s}
+  .in:focus,.ta:focus{background:#fff; border-color:var(--navy); box-shadow:0 0 0 3px rgba(30,58,95,.12)}
+  .in.mono{font-family:var(--mono)}
+  textarea.ta{resize:vertical; min-height:64px}
+  .f .invalid,.in.invalid{animation:errorPulse 1.1s ease-in-out infinite}
+
+  /* ── rows: shared ── */
+  #rowsHost{padding-bottom:4px}
+  .rows-head{display:none}
+  .row-plain{border-bottom:1px solid var(--line)}
+  .row-plain:last-child{border-bottom:none}
+  .invalid-row{animation:errorPulse 1.1s ease-in-out infinite; background:#fff5f5}
+
+  /* mobile compact scan row */
+  .scan{display:flex; align-items:center; gap:10px; padding:11px 12px 11px 14px; min-height:60px; width:100%; text-align:left}
+  .scan:active{background:var(--soft)}
+  .numchip{flex:none; width:26px; height:26px; border-radius:8px; background:var(--soft); border:1px solid var(--line);
+           display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10.5px; font-weight:600; color:var(--muted)}
+  .scan-main{min-width:0; flex:1; display:block}
+  .scan-desc{display:block; font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .scan-meta{margin-top:2px; font-family:var(--mono); font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .scan-chips{display:flex; gap:5px; margin-top:4px}
+  .mchip{font-size:10px; font-weight:700; color:#475569; background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:1px 6px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .scan-right{flex:none; text-align:right}
+  .scan-total{font-family:var(--mono); font-size:12.5px; font-weight:600}
+  .scan-profit{font-family:var(--mono); font-size:10.5px; margin-top:1px}
+  .pos{color:var(--ok)} .neg{color:var(--bad)} .zero{color:var(--faint)}
+  .scan-chev{flex:none; color:var(--faint)}
+
+  /* group block (invoice MobileGroupCard language, Slate Navy tint) */
+  .grp{border-top:1px solid var(--line)}
+  .grp-head{display:flex; align-items:center; gap:6px; padding:8px 10px; background:linear-gradient(135deg,rgba(30,58,95,.07),#f0f4ff); border-bottom:1px solid rgba(30,58,95,.14)}
+  .grp-bar{width:4px; height:30px; border-radius:99px; background:var(--navy); flex:none}
+  .grp-name{flex:1; min-width:0; border:none; background:transparent; font-size:13.5px; font-weight:800; color:var(--navy); padding:8px 4px; outline:none}
+  .grp-name::placeholder{color:var(--navy); opacity:.35}
+  .grp-count{flex:none; font-family:var(--mono); font-size:10.5px; font-weight:600; color:var(--muted); background:#fff; border:1px solid var(--line); border-radius:7px; padding:3px 7px}
+  .icon-btn{flex:none; width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:background .15s}
+  .icon-btn:active{background:rgba(15,23,42,.06)}
+  .icon-btn.danger{color:var(--bad)}
+  .grp-items.collapsed{display:none}
+  .grp-foot{display:flex; justify-content:flex-end; gap:8px; align-items:baseline; padding:9px 16px; background:var(--soft); border-top:1px solid var(--line)}
+  .grp-foot .lbl{font-size:10px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted)}
+  .grp-foot .val{font-family:var(--mono); font-size:12.5px; font-weight:600}
+  .ungrouped-hint{padding:14px 16px; font-size:12px; color:var(--faint); font-weight:600}
+
+  /* add-row affordances */
+  .insert-link{display:flex; align-items:center; gap:6px; min-height:36px; padding:0 14px; font-size:11px; font-weight:800; color:var(--navy); letter-spacing:.04em}
+  .insert-link:active{background:var(--soft)}
+  .insert-link .pl{color:var(--faint)}
+
+  /* ── fold/desktop inline grid rows ── */
+  .grid-row,.grid-head{display:none}
+  .grid-row input{min-width:0; width:100%}
+  @media (min-width:768px){
+    .scan{display:none}
+    .grid-row{display:grid; align-items:center; gap:8px; padding:6px 12px; min-height:48px}
+    .grid-head{display:grid; gap:8px; padding:8px 12px; position:sticky; top:0; z-index:5; background:var(--card); border-bottom:1px solid var(--line-strong)}
+    .grid-head span{font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+    /* column template is set inline by JS so it follows column settings */
+  }
+  @media (min-width:1200px){
+    .grid-head{padding:9px 14px}
+  }
+  .cell-num input{text-align:right; font-family:var(--mono)}
+  .cell-amount{font-family:var(--mono); font-size:12.5px; font-weight:600; text-align:right}
+  .cell-profit{font-family:var(--mono); font-size:11px; text-align:right}
+  .cell-menu{display:flex; justify-content:flex-end}
+  .in-sm{min-height:38px; padding:7px 9px; border:1px solid transparent; border-radius:9px; background:transparent; font-size:12.5px; font-weight:600; outline:none; transition:background .15s,border .15s}
+  .in-sm:hover{background:var(--soft); border-color:var(--line)}
+  .in-sm:focus{background:#fff; border-color:var(--navy); box-shadow:0 0 0 3px rgba(30,58,95,.12)}
+  .in-sm.mono{font-family:var(--mono)}
+  .grip{width:26px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--faint); cursor:grab; touch-action:none}
+  .grip:active{cursor:grabbing; color:var(--muted)}
+  .drop-target{box-shadow:inset 0 2px 0 var(--navy)}
+
+  /* ── totals ── */
+  .totals{padding:6px 16px 14px}
+  @media (min-width:1200px){ .totals{display:grid; grid-template-columns:1fr 1fr; gap:0 24px; padding:6px 20px 16px} .totals .words{grid-column:1/-1} }
+  .t-row{display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:11px 0; border-bottom:1px dashed var(--line)}
+  .t-row .lbl{font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted)}
+  .t-row .val{font-family:var(--mono); font-size:14px; font-weight:600}
+  .t-row.grand{border-bottom:none; padding-top:13px}
+  .t-row.grand .val{font-size:17px; font-weight:600}
+  .words{padding:10px 12px; background:var(--soft); border:1px solid var(--line); border-radius:11px; margin-top:12px}
+  .words .lbl{font-size:10px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--muted)}
+  .words .txt{margin-top:3px; font-size:12px; font-weight:700; font-style:italic}
+  .no-vat{margin-top:10px; font-size:10.5px; color:var(--faint); font-weight:600; display:flex; align-items:center; gap:6px}
+
+  /* ── footer bar + FAB (invoice FormFooter pattern) ── */
+  .foot{position:fixed; left:0; right:0; bottom:0; z-index:40;
+        background:rgba(255,255,255,.95); backdrop-filter:blur(8px); border-top:1px solid var(--line);
+        padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))}
+  .foot-inner{max-width:560px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr 1.35fr; gap:8px}
+  @media (min-width:768px){ .foot-inner{max-width:760px} }
+  @media (min-width:1200px){ .foot-inner{max-width:1120px; grid-template-columns:160px 160px 220px; justify-content:center} }
+  .fbtn{min-height:46px; border-radius:12px; font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform .1s, background .15s}
+  .fbtn:active{transform:scale(.98)}
+  .fbtn.cancel{border:1px solid var(--line-strong); background:var(--card)}
+  .fbtn.draft{border:1px solid var(--line-strong); background:var(--soft)}
+  .fbtn.save{background:var(--grad); color:#fff; box-shadow:0 6px 16px rgba(30,58,95,.25)}
+  .fab{position:fixed; right:16px; bottom:calc(var(--foot-h) + 14px + env(safe-area-inset-bottom,0px)); z-index:41;
+       width:50px; height:50px; border-radius:16px; background:var(--grad); color:#fff;
+       display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(30,58,95,.32);
+       transition:transform .12s}
+  .fab:active{transform:scale(.94)}
+  .fab:disabled{opacity:.7}
+  .spin{animation:rot 1s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  /* ── sheets & dialogs ── */
+  .overlay{position:fixed; inset:0; z-index:50; background:rgba(15,23,42,.55); backdrop-filter:blur(2px);
+           display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s}
+  .overlay.center{align-items:center; padding:16px}
+  .overlay.open{opacity:1; pointer-events:auto}
+  .sheet{width:100%; max-width:560px; max-height:86vh; overflow:auto; background:var(--card);
+         border-radius:20px 20px 0 0; padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));
+         transform:translateY(24px); transition:transform .2s}
+  .overlay.open .sheet{transform:translateY(0)}
+  .overlay.center .sheet{max-width:400px; border-radius:20px; transform:translateY(12px) scale(.98); padding:18px 16px 16px}
+  .overlay.center.open .sheet{transform:none}
+  @media (min-width:768px){
+    .overlay:not(.center){align-items:center}
+    .overlay:not(.center) .sheet{max-width:640px; border-radius:20px; transform:translateY(12px) scale(.98); padding:18px 18px 18px; max-height:84vh}
+  }
+  .grip-drag{width:44px; height:5px; border-radius:99px; background:var(--chip); margin:4px auto 10px}
+  .sheet-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--line); margin-bottom:12px}
+  .sheet-title{font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase}
+  .x-btn{width:32px; height:32px; border-radius:50%; background:var(--chip); display:flex; align-items:center; justify-content:center; color:#475569}
+  .sheet-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .sheet-grid .span-all{grid-column:1/-1}
+  .sheet-actions{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+  .sbtn{min-height:44px; border-radius:11px; border:1px solid var(--line-strong); background:var(--soft); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:6px}
+  .sbtn:active{background:var(--chip)}
+  .sbtn.danger{color:var(--bad); border-color:rgba(239,68,68,.35); background:#fef5f5}
+  .sbtn.done{background:var(--grad); color:#fff; border-color:transparent}
+
+  /* segmented control (column manager + import mode) */
+  .seg{display:grid; grid-template-columns:repeat(3,1fr); background:var(--soft); border:1px solid var(--line); border-radius:9px; padding:2px; gap:2px}
+  .seg button{min-height:32px; border-radius:7px; font-size:10.5px; font-weight:800; letter-spacing:.03em; color:var(--muted); text-transform:uppercase}
+  .seg button.on{background:var(--navy); color:#fff}
+  .seg.two{grid-template-columns:1fr 1fr}
+  .seg.two button.on{background:var(--navy)}
+  .seg button:disabled{opacity:.4; cursor:not-allowed}
+
+  /* column manager rows */
+  .col-row{display:flex; align-items:center; gap:6px; padding:6px 0; border-bottom:1px solid var(--line); opacity:1; transition:opacity .15s}
+  .col-row:last-child{border-bottom:none}
+  .col-row.off{opacity:.5}
+  .col-row .grow{flex:1; min-width:0}
+  .col-row .in-sm{background:var(--soft); border-color:var(--line)}
+  .badge{flex:none; font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:3px 6px}
+  .badge.totals{color:var(--amber); border-color:rgba(180,83,9,.25); background:#fffaf0}
+  .mgr-note{margin-top:12px; padding:10px 12px; border:1px dashed var(--line-strong); border-radius:11px; background:var(--soft); font-size:11px; color:#475569; line-height:1.5}
+  .mgr-note b{color:var(--ink)}
+  .mgr-tools{display:flex; gap:8px; margin-top:12px}
+
+  /* import sheet */
+  .imp-copy{font-size:11.5px; color:var(--muted); margin:0 0 10px; line-height:1.5}
+  .imp-area{width:100%; min-height:150px; font-family:var(--mono); font-size:11.5px; line-height:1.55; padding:12px; border:1px solid var(--line-strong); border-radius:11px; background:var(--soft); outline:none; resize:vertical}
+  .imp-area:focus{background:#fff; border-color:var(--navy)}
+  .imp-error{display:none; margin-top:10px; padding:10px 12px; border-radius:11px; background:#fef5f5; border:1px solid rgba(239,68,68,.3); color:var(--bad); font-size:12px; font-weight:700}
+  .imp-error.show{display:block}
+  .imp-preview{display:none; margin-top:10px; padding:12px; border-radius:11px; background:#f0fdf4; border:1px solid rgba(22,163,74,.3); font-size:12px; line-height:1.6}
+  .imp-preview.show{display:block}
+  .imp-preview .row{display:flex; justify-content:space-between; gap:10px}
+  .imp-preview .k{color:#166534; font-weight:800}
+  .imp-actions{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px}
+
+  /* menu popover */
+  .pop{position:fixed; z-index:60; min-width:190px; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-pop); padding:6px; display:none}
+  .pop.open{display:block}
+  .pop button{display:flex; align-items:center; gap:9px; width:100%; min-height:44px; padding:0 12px; border-radius:9px; font-size:12.5px; font-weight:700; text-align:left}
+  .pop button:active{background:var(--soft)}
+  .pop button.danger{color:var(--bad)}
+
+  /* toast */
+  .toast{position:fixed; left:50%; bottom:calc(var(--foot-h) + 18px + env(safe-area-inset-bottom,0px)); transform:translate(-50%,12px); z-index:70;
+         background:var(--ink); color:#f0f4f8; font-size:12px; font-weight:700; padding:10px 16px; border-radius:12px;
+         box-shadow:0 18px 40px rgba(0,0,0,.3); max-width:86vw; opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; text-align:center}
+  .toast.show{opacity:1; transform:translate(-50%,0)}
+  .toast.err{background:#7f1d1d}
+
+  @keyframes errorPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.55)}
+    50%{box-shadow:0 0 0 6px rgba(239,68,68,.22)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important}
+    .invalid-row{background:#fee2e2}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ══ 1. DOCUMENT DETAILS (fields verified against src/domain/boq/types.ts) ══ -->
+  <header class="card" id="detailsCard">
+    <div class="card-head">
+      <div class="sec-label"><span class="dot navy"></span>1. Document Details</div>
+      <span class="badge" style="font-size:9.5px">BOQ · v3 candidate</span>
+    </div>
+    <div class="fields">
+      <div class="f" id="f-boqNumber">
+        <label>BOQ Number <span class="req">*</span></label>
+        <input class="in mono" id="boqNumber" value="BOQ-2026-0117" autocomplete="off">
+      </div>
+      <div class="f">
+        <label>Issue Date</label>
+        <input class="in mono" type="date" id="issueDate" value="2026-09-18">
+      </div>
+      <div class="f">
+        <label>Vendor</label>
+        <input class="in" id="vendorName" value="Kaine Metals &amp; Electrical Ltd" autocomplete="off">
+      </div>
+      <div class="f">
+        <label>Reference / Contact</label>
+        <input class="in" id="vendorContact" value="Chuka Obi · +234 803 555 0142" autocomplete="off">
+      </div>
+      <div class="f span-all">
+        <label>Notes</label>
+        <textarea class="ta" id="notes">Rates inclusive of offloading at site. Delivery within 14 days of confirmed PO. Payment terms: 60% mobilisation, 40% on delivery.</textarea>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ 2. LINE ITEMS — Groups (invoice architecture), no Sections ══ -->
+  <section class="card">
+    <div class="card-head">
+      <div class="sec-label"><span class="dot green"></span>2. Line Items</div>
+      <span class="badge" id="rowCount">0 rows</span>
+    </div>
+    <div class="toolbar" role="toolbar" aria-label="Line item actions">
+      <button class="tbtn" id="btnAddGroup" title="Add group"></button>
+      <button class="tbtn primary" id="btnAddItem" title="Add item"></button>
+      <button class="tbtn" id="btnImport" title="Import JSON"></button>
+      <button class="tbtn" id="btnColumns" title="Column settings"></button>
+      <button class="tbtn ghost-ico" id="btnMore" title="More actions" aria-haspopup="menu"></button>
+    </div>
+    <div class="grid-head" id="gridHead" aria-hidden="true"></div>
+    <div id="rowsHost"></div>
+  </section>
+
+  <!-- ══ 3. TOTALS (locked: Cost / Selling / Gross Profit / Words — no margin) ══ -->
+  <section class="card">
+    <div class="card-head">
+      <div class="sec-label"><span class="dot amber"></span>3. Totals</div>
+    </div>
+    <div class="totals">
+      <div class="t-row"><span class="lbl">Total Cost</span><span class="val" id="tCost">₦0</span></div>
+      <div class="t-row"><span class="lbl">Total Selling Price</span><span class="val" id="tSell">₦0</span></div>
+      <div class="t-row grand"><span class="lbl">Gross Profit</span><span class="val" id="tGross">₦0</span></div>
+      <div class="words">
+        <div class="lbl">Amount in words (Total Selling Price)</div>
+        <div class="txt" id="tWords">—</div>
+      </div>
+      <div class="no-vat">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        BOQ commercial model: CP / SP only — no VAT, WHT or discount.
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- footer bar + FAB — FormFooter.tsx pattern -->
+<footer class="foot">
+  <div class="foot-inner">
+    <button class="fbtn cancel" id="fCancel">Cancel</button>
+    <button class="fbtn draft" id="fDraft">Draft</button>
+    <button class="fbtn save" id="fSave"><span id="fSaveLbl">Save BOQ</span></button>
+  </div>
+</footer>
+<button class="fab" id="fab" aria-label="Save BOQ"></button>
+
+<!-- item editor sheet (mobile focused editing) -->
+<div class="overlay" id="edOverlay" role="dialog" aria-modal="true" aria-label="Edit item">
+  <div class="sheet">
+    <div class="grip-drag"></div>
+    <div class="sheet-head">
+      <span class="sheet-title" id="edTitle">Edit item</span>
+      <button class="x-btn" data-close="edOverlay" aria-label="Close"></button>
+    </div>
+    <div class="sheet-grid" id="edFields"></div>
+    <div class="sheet-actions">
+      <button class="sbtn" id="edUp"></button>
+      <button class="sbtn" id="edDown"></button>
+      <button class="sbtn" id="edDup"></button>
+      <button class="sbtn" id="edIns"></button>
+      <button class="sbtn danger" id="edDel"></button>
+      <button class="sbtn done" id="edDone">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- column settings sheet — ColumnManager semantics -->
+<div class="overlay" id="colOverlay" role="dialog" aria-modal="true" aria-label="Column settings">
+  <div class="sheet">
+    <div class="grip-drag"></div>
+    <div class="sheet-head">
+      <span class="sheet-title">Column settings</span>
+      <button class="x-btn" data-close="colOverlay" aria-label="Close"></button>
+    </div>
+    <div id="fixedCols"></div>
+    <div style="margin:14px 0 6px" class="sec-label"><span class="dot navy"></span>Configurable columns</div>
+    <div id="cfgCols"></div>
+    <div class="mgr-tools">
+      <button class="sbtn" id="colAddCustom" style="flex:1"></button>
+      <button class="sbtn" id="colReset" style="flex:1"></button>
+    </div>
+    <div class="mgr-note">
+      <b>Unresolved:</b> these toggles govern <b>editor visibility only</b>. PDF output visibility is
+      governed separately by document fillable settings — the rule “hidden in editor = hidden in PDF”
+      is <b>not</b> established and must not be assumed. Mode semantics mirror the invoice ColumnManager:
+      <b>Shown</b> = editable column · <b>Value kept</b> = hidden column, value retained and counted ·
+      <b>Off</b> = removed from the editor (data preserved in storage).
+      <b>BOQ deviation:</b> CP/SP always feed Total Cost / Total Selling Price regardless of mode — locked math.
+    </div>
+  </div>
+</div>
+
+<!-- import JSON sheet — JsonItemsImportSheet pattern -->
+<div class="overlay" id="impOverlay" role="dialog" aria-modal="true" aria-label="Import JSON items">
+  <div class="sheet">
+    <div class="grip-drag"></div>
+    <div class="sheet-head">
+      <span class="sheet-title">Import JSON items</span>
+      <button class="x-btn" data-close="impOverlay" aria-label="Close"></button>
+    </div>
+    <div class="seg two" id="impModeSeg" role="tablist"></div>
+    <p class="imp-copy" id="impCopy" style="margin-top:10px"></p>
+    <textarea class="imp-area" id="impText" spellcheck="false" placeholder='{
+  "items": [
+    { "description": "4mm single-core PVC cable", "quantity": 40, "unit": "Roll",
+      "make_brand": "Coleman", "cp": 41000, "sp": 46500, "group": "Electrical Materials" }
+  ]
+}'></textarea>
+    <div class="imp-error" id="impError" role="alert"></div>
+    <div class="imp-preview" id="impPreview"></div>
+    <div class="imp-actions">
+      <button class="sbtn" id="impPreviewBtn">Preview</button>
+      <button class="sbtn done" id="impApply">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- confirm dialog (Clear all) -->
+<div class="overlay center" id="clearOverlay" role="dialog" aria-modal="true" aria-label="Clear all items">
+  <div class="sheet">
+    <h3 style="margin:0; font-size:13.5px; font-weight:800">Clear all line items?</h3>
+    <p style="margin:6px 0 0; font-size:12px; color:var(--muted)" id="clearMsg"></p>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px">
+      <button class="sbtn" style="min-width:84px" data-close="clearOverlay">Cancel</button>
+      <button class="sbtn danger" id="clearYes" style="min-width:96px">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div class="pop" id="rowPop" role="menu"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+
+/* ════════ PURE-BEGIN (domain math — mirrors calculateBoqTotals.ts) ════════ */
+function money(n){
+  const v = Math.round(Number(n) || 0);
+  return '\u20A6' + v.toLocaleString('en-NG');
+}
+function lineTotal(it){
+  return (Number(it.quantity) || 0) * (Number(it.sp) || 0);
+}
+function lineProfit(it){
+  return ((Number(it.sp) || 0) - (Number(it.cp) || 0)) * (Number(it.quantity) || 0);
+}
+function computeTotals(items){
+  let totalCost = 0, totalSelling = 0;
+  for (const it of items){
+    if (it.row_type !== 'standard') continue;
+    totalCost    += (Number(it.quantity) || 0) * (Number(it.cp) || 0);
+    totalSelling += (Number(it.quantity) || 0) * (Number(it.sp) || 0);
+  }
+  return { totalCost, totalSelling, grossProfit: totalSelling - totalCost };
+}
+function words(n){
+  n = Math.round(Number(n) || 0);
+  if (n === 0) return 'Zero Naira Only';
+  const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const chunk = (x) => {
+    let s = '';
+    if (x >= 100){ s += ones[Math.floor(x/100)] + ' Hundred'; x %= 100; if (x) s += ' '; }
+    if (x >= 20){ s += tens[Math.floor(x/10)]; x %= 10; if (x) s += ' ' + ones[x]; }
+    else if (x > 0){ s += ones[x]; }
+    return s;
+  };
+  const groups = [ ['Billion',1e9], ['Million',1e6], ['Thousand',1e3], ['Naira',1] ];
+  let out = '';
+  for (const [name, div] of groups){
+    const q = Math.floor(n / div);
+    if (q > 0){ out += (out ? ' ' : '') + chunk(q) + ' ' + name; n -= q * div; }
+  }
+  return out + ' Only';
+}
+const MAX_IMPORTED_ROWS = 500;
+const IMPORT_KEYS = {
+  description:['description','desc','item'],
+  specification:['specification','spec'],
+  make_brand:['make_brand','make','brand'],
+  quantity:['quantity','qty'],
+  unit:['unit'],
+  cp:['cp','cost_price','cost'],
+  sp:['sp','selling_price','price'],
+  group:['group','group_name','section']
+};
+function pick(row, keys){
+  for (const k of keys){ if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return row[k]; }
+  return undefined;
+}
+/* returns {ok:true, rows, patchCount, groupsCreated, skipped:[{n,reason}], unknown:[keys]}
+   or {ok:false, message}. Pure: never mutates existing items. */
+function parseImport(text, mode, existingItems){
+  let data;
+  try { data = JSON.parse(text); }
+  catch (e){ return { ok:false, message:'Invalid JSON: ' + e.message }; }
+  const list = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : null);
+  if (!list) return { ok:false, message:'JSON must be an array of items or an object with an "items" array.' };
+  if (list.length === 0) return { ok:false, message:'No rows found in JSON.' };
+  if (list.length > MAX_IMPORTED_ROWS) return { ok:false, message:'Import contains ' + list.length + ' rows; maximum is ' + MAX_IMPORTED_ROWS + '.' };
+
+  const unknown = new Set();
+  const rows = []; const skipped = [];
+  list.forEach((raw, i) => {
+    const n = i + 1;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)){ skipped.push({ n, reason:'not an object' }); return; }
+    for (const k of Object.keys(raw)){
+      if (k === 'row_number' || k === 'custom_data') continue;
+      if (!Object.values(IMPORT_KEYS).some(ks => ks.includes(k))) unknown.add(k);
+    }
+    const desc = pick(raw, IMPORT_KEYS.description);
+    const qty = Number(pick(raw, IMPORT_KEYS.quantity) ?? 0);
+    const cp  = Number(pick(raw, IMPORT_KEYS.cp) ?? 0);
+    const sp  = Number(pick(raw, IMPORT_KEYS.sp) ?? 0);
+    if (Number.isNaN(qty) || Number.isNaN(cp) || Number.isNaN(sp)){ skipped.push({ n, reason:'qty/cp/sp not numeric' }); return; }
+    if (mode === 'Add'){
+      if (desc === undefined){ skipped.push({ n, reason:'description required' }); return; }
+    } else {
+      if (raw.row_number === undefined){ skipped.push({ n, reason:'row_number required in Update mode' }); return; }
+    }
+    rows.push({
+      row_number: raw.row_number,
+      description: desc === undefined ? '' : String(desc),
+      specification: String(pick(raw, IMPORT_KEYS.specification) ?? ''),
+      make_brand: String(pick(raw, IMPORT_KEYS.make_brand) ?? ''),
+      quantity: qty, unit: String(pick(raw, IMPORT_KEYS.unit) ?? 'Units'), cp, sp,
+      group: pick(raw, IMPORT_KEYS.group) ? String(pick(raw, IMPORT_KEYS.group)) : null
+    });
+  });
+  if (rows.length === 0) return { ok:false, message:'Every row was skipped: ' + skipped.map(s => 'row ' + s.n + ' (' + s.reason + ')').join('; ') };
+
+  let patchCount = 0;
+  if (mode === 'Update'){
+    const std = existingItems.filter(it => it.row_type === 'standard');
+    for (const r of rows){
+      const idx = Number(r.row_number);
+      if (!Number.isInteger(idx) || idx < 1 || idx > std.length){ return { ok:false, message:'row_number ' + r.row_number + ' is out of range (1–' + std.length + ').' }; }
+      patchCount += 1;
+    }
+  }
+  const groupsCreated = mode === 'Add'
+    ? new Set(rows.map(r => r.group).filter(g => g && !existingItems.some(it => it.row_type === 'group_header' && it.group_name === g))).size
+    : 0;
+  return { ok:true, rows, patchCount, groupsCreated, skipped, unknown:[...unknown] };
+}
+/* ════════ PURE-END ════════ */
+
+/* ── icons (lucide-style, 1.9 stroke) ── */
+const I = {
+  plus:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>',
+  folder:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>',
+  fileIn:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 2v6h6M9 15l3 3 3-3M12 12v6"/></svg>',
+  cols:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>',
+  dots:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 5h.01M12 12h.01M12 19h.01"/></svg>',
+  chevD:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>',
+  chevR:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 6 6 6-6 6"/></svg>',
+  x:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M6 18 18 6M6 6l12 12"/></svg>',
+  trash:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
+  copy:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h9"/></svg>',
+  up:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m18 15-6-6-6 6"/></svg>',
+  down:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>',
+  grip:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01"/></svg>',
+  save:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8M7 3v5h8"/></svg>',
+  spinner:(s)=>'<svg class="spin" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M21 12a9 9 0 1 1-6.2-8.56"/></svg>',
+  reset:(s)=>'<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v5h5"/></svg>'
+};
+
+/* ── column model (invoice ColumnManager semantics on the BOQ registry) ── */
+const DEFAULT_COLUMNS = () => ([
+  { key:'description',  label:'Description',   fixed:true, mode:'show' },
+  { key:'quantity',     label:'Qty',           fixed:true, mode:'show', totals:true },
+  { key:'unit',         label:'Unit',          fixed:true, mode:'show' },
+  { key:'specification',label:'Specification', mode:'hide_display' },
+  { key:'make_brand',   label:'Make / Brand',  mode:'show' },
+  { key:'cp',           label:'CP',            mode:'show', totals:true },
+  { key:'sp',           label:'SP',            mode:'show', totals:true },
+  { key:'total',        label:'Total',         fixed:true, mode:'show', derived:true }
+]);
+const MODE_LABEL = { show:'Shown', hide_display:'Value kept', hide_full:'Off' };
+const MODE_TITLE = {
+  show:'Editable column in the editor',
+  hide_display:'Column hidden; value retained, counted in totals and printed (candidate)',
+  hide_full:'Removed from the editor; data preserved in storage'
+};
+const col = (key) => state.columns.find(c => c.key === key);
+const colOn = (key) => { const c = col(key); return !!c && c.mode !== 'hide_full'; };
+const colShown = (key) => { const c = col(key); return !!c && c.mode === 'show'; };
+const customCols = () => state.columns.filter(c => c.key.startsWith('custom_'));
+
+/* ── state ── */
+let uid = 100;
+const nid = () => 'r' + (++uid);
+function std(o){ return Object.assign({ id:nid(), row_type:'standard', group_id:null, description:'', specification:'', make_brand:'', quantity:0, unit:'Units', cp:0, sp:0, custom_data:{} }, o); }
+function grp(o){ return Object.assign({ id:nid(), row_type:'group_header', name:'', showSubtotal:false, collapsed:false }, o); }
+
+const state = {
+  boqNumber:'BOQ-2026-0117', issueDate:'2026-09-18',
+  vendorName:'Kaine Metals & Electrical Ltd', vendorContact:'Chuka Obi \u00B7 +234 803 555 0142',
+  notes:'Rates inclusive of offloading at site. Delivery within 14 days of confirmed PO. Payment terms: 60% mobilisation, 40% on delivery.',
+  columns: DEFAULT_COLUMNS(),
+  rows: [], // flat invoice-style: group_header + standard rows
+  dirty:false, saving:false, importMode:'Add'
+};
+
+/* demo BOQ: 5 groups + ungrouped — 26 rows to prove scanning at scale */
+function seed(){
+  const G = {
+    elec: grp({ name:'Electrical Materials' }),
+    civil: grp({ name:'Civil Works', showSubtotal:true }),
+    mech: grp({ name:'Mechanical / HVAC' }),
+    lab:  grp({ name:'Installation Labour' }),
+    safe: grp({ name:'Safety & Consumables' })
+  };
+  state.rows = [
+    std({ description:'Mobilisation & site clearing', specification:'Includes waste cart-away', make_brand:'', quantity:1, unit:'Lot', cp:120000, sp:185000 }),
+    std({ description:'Diesel for site equipment', specification:'AGO, delivered to site tank', make_brand:'', quantity:500, unit:'Ltr', cp:1100, sp:1350 }),
+    std({ description:'Consumables allowance', specification:'Discs, bits, fasteners \u2014 4% contingency', make_brand:'', quantity:1, unit:'Lot', cp:85000, sp:110000 }),
+    std({ description:'As-built documentation pack', specification:'Test sheets, layout red-lines, O&M files', make_brand:'', quantity:1, unit:'Lot', cp:45000, sp:90000 }),
+    std({ description:'Warranty period support visit', specification:'Quarterly preventive visit \u00D7 4', make_brand:'', quantity:4, unit:'Visit', cp:35000, sp:60000 }),
+    G.elec,
+    std({ group_id:G.elec.id, description:'4mm single-core PVC cable (100m roll)', specification:'Cu/PVC 450/750V, NIS compliant', make_brand:'Coleman', quantity:40, unit:'Roll', cp:41000, sp:46500 }),
+    std({ group_id:G.elec.id, description:'63A triple-pole MCB', specification:'10kA breaking capacity, C-curve', make_brand:'Schneider', quantity:12, unit:'Pcs', cp:18500, sp:23000 }),
+    std({ group_id:G.elec.id, description:'Distribution board 12-way', specification:'IP65 metal enclosure, blank face', make_brand:'Hager', quantity:4, unit:'Pcs', cp:62000, sp:78000 }),
+    std({ group_id:G.elec.id, description:'LED flood light 200W', specification:'IP66, 5000K, 20,000 lm', make_brand:'Philips', quantity:18, unit:'Pcs', cp:34500, sp:41000 }),
+    std({ group_id:G.elec.id, description:'Earthing rod copper-bonded 16mm', specification:'3m, with clamp + inspection pit', make_brand:'Oughington', quantity:10, unit:'Pcs', cp:9500, sp:13500 }),
+    G.civil,
+    std({ group_id:G.civil.id, description:'Ready-mix concrete grade 25', specification:'20mm aggregate, slump 75mm', make_brand:'Lafarge', quantity:35, unit:'m\u00B3', cp:68000, sp:82000 }),
+    std({ group_id:G.civil.id, description:'Reinforcement bar Y16', specification:'High-yield deformed, BS4449', make_brand:'African Foundries', quantity:220, unit:'Length', cp:7400, sp:9200 }),
+    std({ group_id:G.civil.id, description:'Formwork plywood 18mm', specification:'Marine grade, 2440\u00D71220mm', make_brand:'Kronospan', quantity:45, unit:'Sheet', cp:15500, sp:19000 }),
+    std({ group_id:G.civil.id, description:'Anti-termite soil treatment', specification:'Chlorpyrifos 48% EC, 5L/100m\u00B2', make_brand:'Larvet', quantity:6, unit:'Drum', cp:42000, sp:56000 }),
+    G.mech,
+    std({ group_id:G.mech.id, description:'Split AC 2HP inverter', specification:'R410a, dual rotary compressor', make_brand:'Daikin', quantity:8, unit:'Pcs', cp:385000, sp:455000 }),
+    std({ group_id:G.mech.id, description:'Galvanised pipe 2\u2033 class B', specification:'BS1387, threaded both ends', make_brand:'Nasco', quantity:60, unit:'Length', cp:8900, sp:11200 }),
+    std({ group_id:G.mech.id, description:'Circulating pump 1.5kW', specification:'3-phase, 2900 rpm, cast iron', make_brand:'Grundfos', quantity:2, unit:'Pcs', cp:310000, sp:372000 }),
+    std({ group_id:G.mech.id, description:'Pipe insulation 25mm Armaflex', specification:'Closed-cell elastomeric, 2m stick', make_brand:'Armacell', quantity:80, unit:'Stick', cp:3200, sp:4300 }),
+    G.lab,
+    std({ group_id:G.lab.id, description:'Certified electrician \u2014 installation crew', specification:'Day rate, 8-hour shift, incl. tools', make_brand:'', quantity:24, unit:'Day', cp:15000, sp:22000 }),
+    std({ group_id:G.lab.id, description:'Pipe fitting & pressure testing', specification:'Incl. hydro test certificate', make_brand:'', quantity:10, unit:'Day', cp:18000, sp:26000 }),
+    std({ group_id:G.lab.id, description:'Site supervision', specification:'COREN-registered engineer', make_brand:'', quantity:15, unit:'Day', cp:25000, sp:40000 }),
+    G.safe,
+    std({ group_id:G.safe.id, description:'Safety helmet + chin strap', specification:'EN397, ratchet suspension', make_brand:'MSA', quantity:25, unit:'Pcs', cp:4800, sp:6500 }),
+    std({ group_id:G.safe.id, description:'High-visibility vest', specification:'Class 2, reflective tape', make_brand:'', quantity:25, unit:'Pcs', cp:2500, sp:3800 }),
+    std({ group_id:G.safe.id, description:'Safety harness double lanyard', specification:'EN361, shock absorber', make_brand:'3M', quantity:6, unit:'Pcs', cp:42000, sp:52000 }),
+    std({ group_id:G.safe.id, description:'First-aid kit (20-person)', specification:'CE marked, wall-mount', make_brand:'', quantity:3, unit:'Box', cp:18000, sp:24000 })
+  ];
+}
+seed();
+
+/* ── derived helpers ── */
+const stdRows = () => state.rows.filter(r => r.row_type === 'standard');
+function itemNumbers(){
+  const map = new Map(); let n = 0;
+  state.rows.forEach(r => { if (r.row_type === 'standard'){ n += 1; map.set(r.id, n); } });
+  return map;
+}
+function groupItems(gid){
+  const out = []; let started = false;
+  for (const r of state.rows){
+    if (r.row_type === 'group_header'){ started = (r.id === gid); continue; }
+    if (started && r.group_id === gid) out.push(r);
+  }
+  return out;
+}
+const groupSelling = (gid) => groupItems(gid).reduce((s, it) => s + lineTotal(it), 0);
+const groupCost = (gid) => groupItems(gid).reduce((s, it) => s + (Number(it.quantity)||0)*(Number(it.cp)||0), 0);
+
+/* ── money/profit class ── */
+const pc = (v) => v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero';
+
+/* group membership follows document order (invoice flat model): every standard
+   row belongs to the nearest preceding group header; ungrouped rows sit above
+   the first header. */
+function normalizeGroups(){
+  let cur = null;
+  state.rows.forEach(r => {
+    if (r.row_type === 'group_header') cur = r.id;
+    else if (r.row_type === 'standard') r.group_id = cur;
+  });
+}
+
+/* ════════ RENDER ════════ */
+const rowsHost = document.getElementById('rowsHost');
+const gridHead = document.getElementById('gridHead');
+
+function gridTemplate(desk){
+  const t = ['26px','30px','minmax(170px,1.5fr)'];
+  if (desk && colShown('specification')) t.push('minmax(110px,1fr)');
+  if (colShown('make_brand')) t.push('minmax(96px,.8fr)');
+  t.push('54px','56px');
+  if (colShown('cp')) t.push('72px');
+  if (colShown('sp')) t.push('78px');
+  t.push('88px');
+  if (desk) t.push('92px');
+  if (desk) customCols().forEach(c => { if (c.mode === 'show') t.push('minmax(84px,.6fr)'); });
+  t.push('36px');
+  return t.join(' ');
+}
+function renderGridHead(){
+  if (!window.matchMedia('(min-width:768px)').matches){ gridHead.innerHTML = ''; gridHead.style.gridTemplateColumns = ''; return; }
+  const desk = window.matchMedia('(min-width:1200px)').matches;
+  const cells = ['<span></span>','<span>#</span>','<span>Description</span>'];
+  if (desk && colShown('specification')) cells.push('<span>Specification</span>');
+  if (colShown('make_brand')) cells.push('<span>Make / Brand</span>');
+  cells.push('<span>Qty</span>','<span>Unit</span>');
+  if (colShown('cp')) cells.push('<span>CP</span>');
+  if (colShown('sp')) cells.push('<span>SP</span>');
+  cells.push('<span>Total</span>');
+  if (desk) cells.push('<span>Profit</span>');
+  if (desk) customCols().forEach(c => { if (c.mode === 'show') cells.push('<span>' + esc(c.label) + '</span>'); });
+  cells.push('<span></span>');
+  gridHead.innerHTML = cells.join('');
+  gridHead.style.gridTemplateColumns = gridTemplate(desk);
+}
+
+function scanRow(it, num){
+  const parts = [];
+  parts.push((Number(it.quantity)||0) + ' ' + (it.unit||''));
+  if (colOn('cp')) parts.push('CP ' + money(it.cp));
+  if (colOn('sp')) parts.push('SP ' + money(it.sp));
+  const chips = [];
+  if (colOn('specification') && it.specification) chips.push('<span class="mchip" title="Specification">' + esc(it.specification) + '</span>');
+  if (colOn('make_brand') && it.make_brand) chips.push('<span class="mchip" title="Make / Brand">' + esc(it.make_brand) + '</span>');
+  const lp = lineProfit(it);
+  return '' +
+  '<div class="row-plain" data-row-anchor="' + it.id + '">' +
+    '<button class="scan" data-edit="' + it.id + '" data-row-index="' + num + '" aria-label="Edit item ' + num + '">' +
+      '<span class="numchip">' + num + '</span>' +
+      '<span class="scan-main">' +
+        '<span class="scan-desc">' + (esc(it.description) || '<em style="color:var(--faint)">Untitled item</em>') + '</span>' +
+        '<span class="scan-meta">' + parts.join(' \u00B7 ') + '</span>' +
+        (chips.length ? '<span class="scan-chips">' + chips.join('') + '</span>' : '') +
+      '</span>' +
+      '<span class="scan-right">' +
+        '<span class="scan-total" data-lt="' + it.id + '">' + money(lineTotal(it)) + '</span><br>' +
+        '<span class="scan-profit ' + pc(lp) + '" data-lp="' + it.id + '">' + (lp>=0?'+':'') + money(lp) + '</span>' +
+      '</span>' +
+      '<span class="scan-chev">' + I.chevR(14) + '</span>' +
+    '</button>' +
+  '</div>';
+}
+
+function gridRow(it, num){
+  const desk = window.matchMedia('(min-width:1200px)').matches;
+  const cd = it.custom_data || {};
+  const cells = [];
+  cells.push('<span class="grip" draggable="true" data-grip="' + it.id + '" title="Drag to reorder">' + I.grip(14) + '</span>');
+  cells.push('<span class="numchip">' + num + '</span>');
+  cells.push('<span class="c-desc"><input class="in-sm" data-f="description" data-id="' + it.id + '" value="' + escAttr(it.description) + '" placeholder="Item description" aria-label="Description"></span>');
+  if (desk && colShown('specification')) cells.push('<span class="c-spec"><input class="in-sm" data-f="specification" data-id="' + it.id + '" value="' + escAttr(it.specification) + '" placeholder="Specification" aria-label="Specification"></span>');
+  if (colShown('make_brand')) cells.push('<span><input class="in-sm" data-f="make_brand" data-id="' + it.id + '" value="' + escAttr(it.make_brand) + '" placeholder="Make / brand" aria-label="Make or brand"></span>');
+  cells.push('<span class="cell-num"><input class="in-sm mono" inputmode="decimal" data-f="quantity" data-id="' + it.id + '" value="' + attrNum(it.quantity) + '" aria-label="Quantity"></span>');
+  cells.push('<span><input class="in-sm" data-f="unit" data-id="' + it.id + '" value="' + escAttr(it.unit) + '" aria-label="Unit"></span>');
+  if (colShown('cp')) cells.push('<span class="cell-num"><input class="in-sm mono" inputmode="decimal" data-f="cp" data-id="' + it.id + '" value="' + attrNum(it.cp) + '" aria-label="Cost price"></span>');
+  if (colShown('sp')) cells.push('<span class="cell-num"><input class="in-sm mono" inputmode="decimal" data-f="sp" data-id="' + it.id + '" value="' + attrNum(it.sp) + '" aria-label="Selling price"></span>');
+  const lp = lineProfit(it);
+  cells.push('<span class="cell-amount" data-lt="' + it.id + '">' + money(lineTotal(it)) + '</span>');
+  if (desk){
+    cells.push('<span class="cell-profit ' + pc(lp) + '" data-lp="' + it.id + '">' + (lp>=0?'+':'') + money(lp) + '</span>');
+    customCols().forEach(c => {
+      if (c.mode !== 'show') return;
+      cells.push('<span><input class="in-sm" data-f="custom:' + c.key + '" data-id="' + it.id + '" value="' + escAttr(cd[c.key] || '') + '" placeholder="' + escAttr(c.label) + '" aria-label="' + escAttr(c.label) + '"></span>');
+    });
+  }
+  cells.push('<span class="cell-menu"><button class="icon-btn" data-rowmenu="' + it.id + '" aria-haspopup="menu" aria-label="Row actions">' + I.dots(16) + '</button></span>');
+  return '<div class="row-plain grid-row" data-row-anchor="' + it.id + '" data-row-index="' + num + '">' + cells.join('') + '</div>';
+}
+
+function renderGroup(g, nums, desk){
+  const items = groupItems(g.id);
+  const hidden = g.collapsed ? ' collapsed' : '';
+  const foot = g.showSubtotal
+    ? '<div class="grp-foot"><span class="lbl">Group subtotal \u00B7 SP</span><span class="val" data-gsum="' + g.id + '">' + money(groupSelling(g.id)) + '</span></div>'
+    : '';
+  const itemHtml = items.map(it => desk ? gridRow(it, nums.get(it.id)) : scanRow(it, nums.get(it.id))).join('');
+  return '' +
+  '<div class="grp" data-group="' + g.id + '">' +
+    '<div class="grp-head">' +
+      '<button class="icon-btn" data-grpcollapse="' + g.id + '" aria-label="' + (g.collapsed ? 'Expand group' : 'Collapse group') + '" style="width:40px;height:40px">' + (g.collapsed ? I.chevR(16) : I.chevD(16)) + '</button>' +
+      '<span class="grp-bar"></span>' +
+      '<input class="grp-name" data-grpname="' + g.id + '" value="' + escAttr(g.name) + '" placeholder="Group name" aria-label="Group name">' +
+      '<span class="grp-count">' + items.length + (g.showSubtotal ? ' \u00B7 \u03A3' : '') + '</span>' +
+      '<button class="icon-btn" data-grpsub="' + g.id + '" title="Toggle group subtotal" aria-label="Toggle group subtotal" style="color:' + (g.showSubtotal ? 'var(--navy)' : 'var(--faint)') + '">\u03A3</button>' +
+      '<button class="icon-btn" data-grpadd="' + g.id + '" title="Add item to group" aria-label="Add item to group">' + I.plus(16) + '</button>' +
+      '<button class="icon-btn" data-grpup="' + g.id + '" title="Move group up" aria-label="Move group up" style="width:40px">' + I.up(14) + '</button>' +
+      '<button class="icon-btn" data-grpdown="' + g.id + '" title="Move group down" aria-label="Move group down" style="width:40px">' + I.down(14) + '</button>' +
+      '<button class="icon-btn danger" data-grpdel="' + g.id + '" title="Remove group (items become ungrouped)" aria-label="Remove group">' + I.x(16) + '</button>' +
+    '</div>' +
+    '<div class="grp-items' + hidden + '">' + (itemHtml ||
+      '<div class="ungrouped-hint">No items in this group yet \u2014 use + above.</div>') + '</div>' +
+    foot +
+  '</div>';
+}
+
+function render(){
+  normalizeGroups();
+  const nums = itemNumbers();
+  const desk = window.matchMedia('(min-width:768px)').matches;
+  renderGridHead();
+  const out = [];
+  const seen = new Set();
+  let ungroupedOpen = false;
+  state.rows.forEach(r => {
+    if (r.row_type === 'group_header'){
+      if (ungroupedOpen){ out.push('</div>'); ungroupedOpen = false; }
+      seen.add(r.id);
+      out.push(renderGroup(r, nums, desk));
+    } else if (!r.group_id){
+      if (!ungroupedOpen){ out.push('<div class="grp" data-ungrouped>'); out.push('<div class="grp-head" style="background:var(--soft)"><span class="grp-bar" style="background:var(--faint)"></span><span class="grp-name" style="pointer-events:none;color:var(--muted);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase">Ungrouped items</span><span class="grp-count">' + stdRows().filter(x => !x.group_id).length + '</span></div>'); ungroupedOpen = true; }
+      out.push(desk ? gridRow(r, nums.get(r.id)) : scanRow(r, nums.get(r.id)));
+    }
+  });
+  if (ungroupedOpen) out.push('</div>');
+  rowsHost.innerHTML = out.join('');
+  const cnt = stdRows().length;
+  document.getElementById('rowCount').textContent = cnt + (cnt === 1 ? ' row' : ' rows') + ' \u00B7 ' + state.rows.filter(r => r.row_type === 'group_header').length + ' groups';
+  updateTotals();
+}
+
+/* targeted financial refresh: same locked math, no full re-render */
+function refreshRow(id){
+  const it = state.rows.find(r => r.id === id);
+  if (!it) return;
+  const lt = money(lineTotal(it)); const lp = lineProfit(it);
+  document.querySelectorAll('[data-lt="' + id + '"]').forEach(el => { el.textContent = lt; });
+  document.querySelectorAll('[data-lp="' + id + '"]').forEach(el => {
+    el.textContent = (lp >= 0 ? '+' : '') + money(lp);
+    el.className = el.className.replace(/\b(pos|neg|zero)\b/g, '').trim() + ' ' + pc(lp);
+  });
+  state.rows.filter(r => r.row_type === 'group_header').forEach(g => {
+    const el = document.querySelector('[data-gsum="' + g.id + '"]');
+    if (el) el.textContent = money(groupSelling(g.id));
+  });
+  updateTotals();
+}
+function updateTotals(){
+  const t = computeTotals(state.rows);
+  document.getElementById('tCost').textContent = money(t.totalCost);
+  document.getElementById('tSell').textContent = money(t.totalSelling);
+  document.getElementById('tGross').textContent = money(t.grossProfit);
+  document.getElementById('tGross').className = 'val ' + pc(t.grossProfit);
+  document.getElementById('tWords').textContent = words(t.totalSelling);
+}
+
+/* ── utils ── */
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function escAttr(s){ return esc(s); }
+function attrNum(n){ return (n === 0 || n === '0') ? '0' : String(n ?? ''); }
+
+/* ── mutations (invoice FormLineItems parity) ── */
+function lastIndexOfGroupBlock(gid){
+  const hi = state.rows.findIndex(r => r.id === gid);
+  if (hi === -1) return state.rows.length - 1;
+  let last = hi;
+  for (let i = hi + 1; i < state.rows.length; i++){
+    if (state.rows[i].row_type === 'group_header') break;
+    last = i;
+  }
+  return last;
+}
+function addItem(groupId, afterId){
+  const it = std({ group_id: groupId || null });
+  if (afterId){
+    const i = state.rows.findIndex(r => r.id === afterId);
+    state.rows.splice(i + 1, 0, it);
+  } else if (groupId){
+    state.rows.splice(lastIndexOfGroupBlock(groupId) + 1, 0, it);
+  } else {
+    const firstHeader = state.rows.findIndex(r => r.row_type === 'group_header');
+    if (firstHeader === -1) state.rows.push(it); else state.rows.splice(firstHeader, 0, it);
+  }
+  render(); state.dirty = true;
+  focusItem(it.id);
+  return it;
+}
+function addGroup(){
+  const g = grp({ name:'' });
+  state.rows.push(g);
+  render(); state.dirty = true;
+  const el = document.querySelector('[data-grpname="' + g.id + '"]');
+  if (el){ el.focus(); el.scrollIntoView({ behavior:'smooth', block:'center' }); }
+  toast('Group added');
+}
+function duplicateItem(id){
+  const i = state.rows.findIndex(r => r.id === id);
+  const src = state.rows[i];
+  if (!src || src.row_type !== 'standard') return;
+  const copy = std(Object.assign({}, src, { id: nid(), custom_data: Object.assign({}, src.custom_data) }));
+  state.rows.splice(i + 1, 0, copy);
+  render(); state.dirty = true; toast('Row duplicated');
+}
+function insertAfter(id){
+  const src = state.rows.find(r => r.id === id);
+  addItem(src && src.group_id ? src.group_id : null, id);
+  toast('Row inserted');
+}
+function removeItem(id){
+  const i = state.rows.findIndex(r => r.id === id);
+  if (i >= 0){ state.rows.splice(i, 1); render(); state.dirty = true; toast('Row deleted'); }
+}
+function moveItem(id, dir){
+  const i = state.rows.findIndex(r => r.id === id);
+  const j = i + dir;
+  if (j < 0 || j >= state.rows.length) return;
+  const a = state.rows[i], b = state.rows[j];
+  const aG = a.group_id, bOk = b.row_type === 'standard' && b.group_id === aG;
+  if (!bOk){ toast(dir < 0 ? 'Row is at the top of its list' : 'Row is at the bottom of its list'); return; }
+  state.rows[i] = b; state.rows[j] = a;
+  render(); state.dirty = true;
+}
+function moveGroup(gid, dir){
+  const blocks = [];
+  let cur = null;
+  state.rows.forEach(r => {
+    if (r.row_type === 'group_header'){ cur = { type:'group', id:r.id, rows:[r] }; blocks.push(cur); }
+    else if (cur && cur.type === 'group' && cur.id === r.group_id){ cur.rows.push(r); }
+    else { if (!cur || cur.type !== 'ungrouped'){ cur = { type:'ungrouped', rows:[] }; blocks.push(cur); } cur.rows.push(r); }
+  });
+  const bi = blocks.findIndex(b => b.type === 'group' && b.id === gid);
+  if (bi === -1) return;
+  const tj = bi + dir;
+  if (tj < 0){ toast('Group is already first'); return; }
+  if (tj >= blocks.length){ toast('Group is already last'); return; }
+  if (blocks[tj].type === 'ungrouped'){ toast('Ungrouped items stay above groups'); return; }
+  const tmp = blocks[bi]; blocks[bi] = blocks[tj]; blocks[tj] = tmp;
+  state.rows = [];
+  blocks.forEach(b => state.rows.push(...b.rows));
+  normalizeGroups(); render(); state.dirty = true;
+}
+function deleteGroup(gid){
+  const items = groupItems(gid).map(it => Object.assign({}, it, { group_id:null }));
+  state.rows = state.rows.filter(r => r.id !== gid && !(r.row_type === 'standard' && r.group_id === gid));
+  const firstHeader = state.rows.findIndex(r => r.row_type === 'group_header');
+  if (firstHeader === -1) state.rows = state.rows.concat(items);
+  else state.rows.splice(firstHeader, 0, ...items);
+  normalizeGroups(); render(); state.dirty = true;
+  toast('Group removed \u2014 ' + items.length + ' item(s) kept as ungrouped');
+}
+function setField(id, field, value){
+  const it = state.rows.find(r => r.id === id);
+  if (!it) return;
+  if (field.startsWith('custom:')){
+    const key = field.slice(7);
+    it.custom_data = Object.assign({}, it.custom_data, { [key]: value });
+  } else if (field === 'quantity' || field === 'cp' || field === 'sp'){
+    it[field] = Number(String(value).replace(/[^\d.-]/g, '')) || 0;
+  } else {
+    it[field] = value;
+  }
+  state.dirty = true;
+}
+
+/* ════════ EDITOR SHEET (mobile focused editing) ════════ */
+let editingId = null;
+const edOverlay = document.getElementById('edOverlay');
+const edFields = document.getElementById('edFields');const F = (lbl, inner, req) => '<div class="f"><label>' + lbl + (req ? ' <span class="req">*</span>' : '') + '</label>' + inner + '</div>';
+
+function openEditor(id){
+  const it = state.rows.find(r => r.id === id);
+  if (!it) return;
+  editingId = id;
+  const nums = itemNumbers();
+  document.getElementById('edTitle').textContent = 'Edit item ' + (nums.get(id) || '');
+  const cd = it.custom_data || {};
+  let h = '';
+  h += F('Description <span class="req">*</span>', '<input class="in" data-ef="description" value="' + escAttr(it.description) + '" placeholder="Item description">', true);
+  if (colOn('specification')) h += F('Specification', '<textarea class="ta" rows="2" data-ef="specification" placeholder="Spec / standard">' + esc(it.specification) + '</textarea>');
+  if (colOn('make_brand')) h += F('Make / Brand', '<input class="in" data-ef="make_brand" value="' + escAttr(it.make_brand) + '" placeholder="Manufacturer">');
+  h += F('Quantity', '<input class="in mono" inputmode="decimal" data-ef="quantity" value="' + attrNum(it.quantity) + '">');
+  h += F('Unit', '<input class="in" data-ef="unit" value="' + escAttr(it.unit) + '">');
+  if (colOn('cp')) h += F('CP \u2014 Cost Price', '<input class="in mono" inputmode="decimal" data-ef="cp" value="' + attrNum(it.cp) + '">');
+  if (colOn('sp')) h += F('SP \u2014 Selling Price', '<input class="in mono" inputmode="decimal" data-ef="sp" value="' + attrNum(it.sp) + '">');
+  customCols().forEach(c => {
+    if (c.mode === 'hide_full') return;
+    h += F(esc(c.label) + ' <span class="badge" style="font-size:9px">custom</span>', '<input class="in" data-ef="custom:' + c.key + '" value="' + escAttr(cd[c.key] || '') + '">');
+  });
+  h += '<div class="f span-all"><label>Derived line profit \u2014 (SP \u2212 CP) \u00D7 Qty \u00B7 read-only</label>' +
+       '<div class="in mono" style="display:flex;align-items:center;font-weight:600" data-ed-profit>\u2014</div></div>';
+  edFields.innerHTML = h;
+  edFields.querySelectorAll('[data-ef]').forEach(inp => {
+    const f = inp.getAttribute('data-ef');
+    const handler = () => {
+      setField(id, f, inp.value);
+      refreshRow(id);
+      const it2 = state.rows.find(r => r.id === id);
+      const pEl = edFields.querySelector('[data-ed-profit]');
+      const lp = lineProfit(it2);
+      pEl.textContent = (lp >= 0 ? '+' : '') + money(lp);
+      pEl.style.color = lp > 0 ? 'var(--ok)' : lp < 0 ? 'var(--bad)' : 'var(--faint)';
+      if (f === 'description'){
+        const d = document.querySelector('[data-row-anchor="' + id + '"] .scan-desc, [data-row-anchor="' + id + '"] .c-desc input');
+        if (d){ if (d.classList.contains('scan-desc')) d.textContent = it2.description || ''; else d.value = it2.description; }
+      }
+    };
+    inp.addEventListener('input', handler);
+    inp.addEventListener('change', () => { render(); openEditorRefresh(id); });
+  });
+  openEditorRefresh(id);
+  openOverlay('edOverlay');
+}
+function openEditorRefresh(id){
+  const it = state.rows.find(r => r.id === id);
+  if (!it) return;
+  const lp = lineProfit(it);
+  const pEl = edFields.querySelector('[data-ed-profit]');
+  if (pEl){
+    pEl.textContent = (lp >= 0 ? '+' : '') + money(lp);
+    pEl.style.color = lp > 0 ? 'var(--ok)' : lp < 0 ? 'var(--bad)' : 'var(--faint)';
+  }
+}
+document.getElementById('edDone').addEventListener('click', () => { closeOverlay('edOverlay'); render(); });
+document.getElementById('edUp').addEventListener('click', () => { if (editingId){ moveItem(editingId, -1); openEditorRefresh(editingId); } });
+document.getElementById('edDown').addEventListener('click', () => { if (editingId){ moveItem(editingId, 1); openEditorRefresh(editingId); } });
+document.getElementById('edDup').addEventListener('click', () => { if (editingId) duplicateItem(editingId); closeOverlay('edOverlay'); });
+document.getElementById('edIns').addEventListener('click', () => { if (editingId) insertAfter(editingId); closeOverlay('edOverlay'); });
+document.getElementById('edDel').addEventListener('click', () => { if (editingId) removeItem(editingId); closeOverlay('edOverlay'); });
+
+/* ── overlays ── */
+function openOverlay(id){ document.getElementById(id).classList.add('open'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
+  const id = b.getAttribute('data-close'); closeOverlay(id);
+  if (id === 'edOverlay') render();
+}));
+document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', e => {
+  if (e.target === ov){ ov.classList.remove('open'); if (ov.id === 'edOverlay') render(); }
+}));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    document.querySelectorAll('.overlay.open').forEach(ov => { ov.classList.remove('open'); if (ov.id === 'edOverlay') render(); });
+    hidePop();
+  }
+});
+
+/* ════════ COLUMN SETTINGS (ColumnManager semantics) ════════ */
+const colOverlay = document.getElementById('colOverlay');
+function renderColManager(){
+  const fixed = document.getElementById('fixedCols');
+  const cfg = document.getElementById('cfgCols');
+  fixed.innerHTML = state.columns.filter(c => c.fixed).map(c =>
+    '<div class="col-row">' +
+      '<span class="grip" style="width:26px;opacity:.25">' + I.grip(14) + '</span>' +
+      '<span class="grow"><input class="in-sm" value="' + escAttr(c.label) + '" disabled aria-label="' + escAttr(c.label) + ' label (fixed)"></span>' +
+      '<span class="badge">Fixed</span>' +
+    '</div>').join('');
+  cfg.innerHTML = state.columns.filter(c => !c.fixed).map((c) => {
+    const custom = c.key.startsWith('custom_');
+    const idx = state.columns.indexOf(c);
+    return '<div class="col-row' + (c.mode === 'hide_full' ? ' off' : '') + '" data-colrow="' + c.key + '">' +
+      '<span class="grip" draggable="true" data-colgrip="' + c.key + '" title="Drag to reorder">' + I.grip(14) + '</span>' +
+      '<span style="display:flex;flex-direction:column;width:34px">' +
+        '<button class="icon-btn" style="width:34px;height:26px" data-colmove="' + c.key + '" data-dir="-1" aria-label="Move up">' + I.up(12) + '</button>' +
+        '<button class="icon-btn" style="width:34px;height:26px" data-colmove="' + c.key + '" data-dir="1" aria-label="Move down">' + I.down(12) + '</button>' +
+      '</span>' +
+      '<span class="grow"><input class="in-sm" data-collabel="' + c.key + '" value="' + escAttr(c.label) + '"' + (custom ? '' : ' disabled') + ' aria-label="Column label"></span>' +
+      (c.totals ? '<span class="badge totals">Totals</span>' : '') +
+      (custom ? '<span class="badge">Custom</span>' : '') +
+      '<span class="seg" style="width:190px;flex:none">' +
+        ['show','hide_display','hide_full'].map(m =>
+          '<button ' + (c.mode === m ? 'class="on" ' : '') + 'data-colmode="' + c.key + '" data-mode="' + m + '" title="' + MODE_TITLE[m] + '">' + MODE_LABEL[m] + '</button>').join('') +
+      '</span>' +
+      (custom ? '<button class="icon-btn danger" data-colremove="' + c.key + '" aria-label="Remove custom column">' + I.trash(15) + '</button>'
+              : '<span style="width:26px"></span>') +
+      '<input type="hidden" data-colidx="' + c.key + '" value="' + idx + '">' +
+    '</div>';
+  }).join('');
+}
+colOverlay.addEventListener('click', e => {
+  const modeBtn = e.target.closest('[data-colmode]');
+  if (modeBtn){
+    const c = col(modeBtn.getAttribute('data-colmode'));
+    c.mode = modeBtn.getAttribute('data-mode');
+    state.dirty = true; renderColManager(); render();
+    return;
+  }
+  const mv = e.target.closest('[data-colmove]');
+  if (mv){
+    const key = mv.getAttribute('data-colmove');
+    const dir = Number(mv.getAttribute('data-dir'));
+    const cfgKeys = state.columns.map((c, i) => ({ c, i })).filter(x => !x.c.fixed).map(x => x.i);
+    const pos = cfgKeys.indexOf(state.columns.findIndex(c => c.key === key));
+    const target = cfgKeys[pos + dir];
+    if (target === undefined) return;
+    const i = state.columns.findIndex(c => c.key === key);
+    const tmp = state.columns[i]; state.columns[i] = state.columns[target]; state.columns[target] = tmp;
+    state.dirty = true; renderColManager(); render();
+    return;
+  }
+  const rm = e.target.closest('[data-colremove]');
+  if (rm){
+    const key = rm.getAttribute('data-colremove');
+    state.columns = state.columns.filter(c => c.key !== key);
+    state.rows.forEach(r => { if (r.custom_data) delete r.custom_data[key]; });
+    state.dirty = true; renderColManager(); render(); toast('Custom column removed');
+  }
+});
+colOverlay.addEventListener('input', e => {
+  const lab = e.target.closest('[data-collabel]');
+  if (lab){ const c = col(lab.getAttribute('data-collabel')); c.label = lab.value; state.dirty = true; }
+});
+document.getElementById('colAddCustom').addEventListener('click', () => {
+  let n = 1; while (col('custom_' + n)) n += 1;
+  state.columns.splice(state.columns.length - 1, 0, { key:'custom_' + n, label:'Custom ' + n, mode:'show', removable:true });
+  state.rows.forEach(r => { r.custom_data = r.custom_data || {}; });
+  state.dirty = true; renderColManager(); render(); toast('Custom column added');
+});
+document.getElementById('colReset').addEventListener('click', () => {
+  state.columns = DEFAULT_COLUMNS();
+  state.dirty = true; renderColManager(); render(); toast('Columns reset to BOQ defaults');
+});
+document.getElementById('btnColumns').addEventListener('click', () => { renderColManager(); openOverlay('colOverlay'); });
+
+/* column reorder DnD (desktop pointer parity with ColumnManager GripHandle) */
+let colDragKey = null;
+document.addEventListener('dragstart', e => {
+  const g = e.target.closest('[data-colgrip]');
+  if (g){ colDragKey = g.getAttribute('data-colgrip'); e.dataTransfer.setData('text/plain', colDragKey); return; }
+  const rg = e.target.closest('[data-grip]');
+  if (rg){ rowDragId = rg.getAttribute('data-grip'); e.dataTransfer.setData('text/plain', rowDragId); }
+});
+document.addEventListener('dragover', e => {
+  const row = e.target.closest('[data-colrow]');
+  if (row && colDragKey){ e.preventDefault(); row.classList.add('drop-target'); }
+  const grow = e.target.closest('.grid-row[data-row-anchor]');
+  if (grow && rowDragId){ e.preventDefault(); grow.classList.add('drop-target'); }
+});
+document.addEventListener('dragleave', e => {
+  const row = e.target.closest('[data-colrow],.grid-row');
+  if (row) row.classList.remove('drop-target');
+});
+document.addEventListener('drop', e => {
+  const row = e.target.closest('[data-colrow]');
+  if (row && colDragKey){
+    e.preventDefault(); row.classList.remove('drop-target');
+    const targetKey = row.getAttribute('data-colrow');
+    const from = state.columns.findIndex(c => c.key === colDragKey);
+    const to = state.columns.findIndex(c => c.key === targetKey);
+    if (from >= 0 && to >= 0 && from !== to){
+      const [m] = state.columns.splice(from, 1);
+      state.columns.splice(to, 0, m);
+      state.dirty = true; renderColManager(); render();
+    }
+    colDragKey = null; return;
+  }
+  const grow = e.target.closest('.grid-row[data-row-anchor]');
+  if (grow && rowDragId){
+    e.preventDefault(); grow.classList.remove('drop-target');
+    const targetId = grow.getAttribute('data-row-anchor');
+    const from = state.rows.findIndex(r => r.id === rowDragId);
+    const to = state.rows.findIndex(r => r.id === targetId);
+    const a = state.rows[from], b = state.rows[to];
+    if (from >= 0 && to >= 0 && a && b && a.group_id === b.group_id && b.row_type === 'standard'){
+      const [m] = state.rows.splice(from, 1);
+      state.rows.splice(state.rows.findIndex(r => r.id === targetId), 0, m);
+      state.dirty = true; render();
+    } else if (a && b && a.group_id !== b.group_id){
+      toast('Drag reorder works within the same list (invoice parity). Use \u25B2\u25BC in the editor for grouped rows.');
+    }
+    rowDragId = null;
+  }
+});
+let rowDragId = null;
+
+/* ════════ IMPORT JSON (JsonItemsImportSheet pattern) ════════ */
+const impOverlay = document.getElementById('impOverlay');
+const impText = document.getElementById('impText');
+const impError = document.getElementById('impError');
+const impPreview = document.getElementById('impPreview');
+const IMP_COPY = {
+  Add: 'Append new rows below existing items. Rows may declare "group" to join an existing group or create one. Existing rows are never modified.',
+  Update: 'Patch existing rows by "row_number" (1 = first item). Only include changed rows and fields; untouched rows keep their values.'
+};
+function renderImportMode(){
+  const seg = document.getElementById('impModeSeg');
+  const updOk = stdRows().length > 0;
+  seg.innerHTML = ['Add','Update'].map(m =>
+    '<button role="tab" ' + (state.importMode === m ? 'class="on" ' : '') + 'data-impmode="' + m + '"' + (m === 'Update' && !updOk ? ' disabled title="Needs existing items"' : '') + '>' + m + (m === 'Update' ? ' \u00B7 row_number' : ' \u00B7 append') + '</button>').join('');
+  document.getElementById('impCopy').textContent = IMP_COPY[state.importMode];
+}
+impOverlay.addEventListener('click', e => {
+  const b = e.target.closest('[data-impmode]');
+  if (b){ state.importMode = b.getAttribute('data-impmode'); renderImportMode(); impError.classList.remove('show'); impPreview.classList.remove('show'); }
+});
+document.getElementById('btnImport').addEventListener('click', () => {
+  renderImportMode(); impError.classList.remove('show'); impPreview.classList.remove('show');
+  openOverlay('impOverlay');
+});
+document.getElementById('impPreviewBtn').addEventListener('click', () => {
+  impError.classList.remove('show'); impPreview.classList.remove('show');
+  const res = parseImport(impText.value, state.importMode, state.rows);
+  if (!res.ok){ impError.textContent = res.message; impError.classList.add('show'); return; }
+  let html = '';
+  if (state.importMode === 'Add'){
+    html += '<div class="row"><span class="k">Rows to append</span><span>' + res.rows.length + '</span></div>';
+    html += '<div class="row"><span class="k">Groups to create</span><span>' + res.groupsCreated + '</span></div>';
+  } else {
+    html += '<div class="row"><span class="k">Existing rows to patch</span><span>' + res.patchCount + '</span></div>';
+  }
+  if (res.skipped.length) html += '<div class="row"><span class="k">Skipped</span><span>' + res.skipped.map(s => 'row ' + s.n + ' (' + s.reason + ')').join(', ') + '</span></div>';
+  if (res.unknown.length) html += '<div class="row"><span class="k">Unknown keys ignored</span><span>' + res.unknown.join(', ') + '</span></div>';
+  impPreview.innerHTML = html;
+  impPreview.classList.add('show');
+});
+document.getElementById('impApply').addEventListener('click', () => {
+  impError.classList.remove('show'); impPreview.classList.remove('show');
+  const res = parseImport(impText.value, state.importMode, state.rows);
+  if (!res.ok){ impError.textContent = res.message; impError.classList.add('show'); return; }
+  if (state.importMode === 'Add'){
+    const firstHeader = state.rows.findIndex(r => r.row_type === 'group_header');
+    const createdGroups = new Map();
+    const ungrouped = [];
+    const intoExisting = new Map();
+    const newBlocks = [];
+    res.rows.forEach(r => {
+      const mk = () => std({ description:r.description, specification:r.specification, make_brand:r.make_brand, quantity:r.quantity, unit:r.unit, cp:r.cp, sp:r.sp });
+      if (!r.group){ ungrouped.push(mk()); return; }
+      const existing = state.rows.find(x => x.row_type === 'group_header' && x.group_name === r.group);
+      if (existing){
+        if (!intoExisting.has(existing.id)) intoExisting.set(existing.id, []);
+        intoExisting.get(existing.id).push(mk());
+      } else if (createdGroups.has(r.group)){
+        newBlocks.push(mk());
+      } else {
+        const g = grp({ name:r.group });
+        createdGroups.set(r.group, g);
+        newBlocks.push(g, mk());
+      }
+    });
+    if (ungrouped.length){
+      if (firstHeader === -1) state.rows = state.rows.concat(ungrouped);
+      else state.rows.splice(firstHeader, 0, ...ungrouped);
+    }
+    intoExisting.forEach((rowsToAdd, gid2) => {
+      state.rows.splice(lastIndexOfGroupBlock(gid2) + 1, 0, ...rowsToAdd);
+    });
+    state.rows = state.rows.concat(newBlocks);
+    toast(res.rows.length + ' row(s) appended' + (createdGroups.size ? ' \u00B7 ' + createdGroups.size + ' group(s) created' : ''));
+  } else {
+    const stdList = stdRows();
+    res.rows.forEach(r => {
+      const it = stdList[Number(r.row_number) - 1];
+      if (!it) return;
+      if (r.description !== undefined) it.description = r.description;
+      if (r.specification !== undefined) it.specification = r.specification;
+      if (r.make_brand !== undefined) it.make_brand = r.make_brand;
+      if (r.quantity !== undefined) it.quantity = r.quantity;
+      if (r.unit !== undefined) it.unit = r.unit;
+      if (r.cp !== undefined) it.cp = r.cp;
+      if (r.sp !== undefined) it.sp = r.sp;
+    });
+    toast(res.patchCount + ' row(s) patched \u00B7 untouched rows kept');
+  }
+  state.dirty = true;
+  closeOverlay('impOverlay');
+  impText.value = '';
+  render();
+});
+
+/* ════════ ROW MENU (fold/desktop ⋯) + overflow ════════ */
+const rowPop = document.getElementById('rowPop');
+function hidePop(){ rowPop.classList.remove('open'); }
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-rowmenu]');
+  if (btn){
+    const id = btn.getAttribute('data-rowmenu');
+    const r = btn.getBoundingClientRect();
+    rowPop.innerHTML =
+      '<button data-pop="dup:' + id + '">' + I.copy(15) + 'Duplicate</button>' +
+      '<button data-pop="ins:' + id + '">' + I.plus(15) + 'Insert below</button>' +
+      '<button data-pop="del:' + id + '" class="danger">' + I.trash(15) + 'Delete row</button>';
+    rowPop.classList.add('open');
+    const w = 200, h = 150;
+    rowPop.style.left = Math.min(r.left, window.innerWidth - w - 10) + 'px';
+    rowPop.style.top = Math.min(r.bottom + 6, window.innerHeight - h - 10) + 'px';
+    return;
+  }
+  const more = e.target.closest('#btnMore');
+  if (more){
+    rowPop.innerHTML =
+      '<button data-pop="export">' + I.fileIn(15) + 'Copy JSON payload</button>' +
+      '<button data-pop="clear" class="danger">' + I.trash(15) + 'Clear all items\u2026</button>';
+    rowPop.classList.add('open');
+    const r = more.getBoundingClientRect();
+    rowPop.style.left = Math.min(r.left, window.innerWidth - 220) + 'px';
+    rowPop.style.top = (r.bottom + 6) + 'px';
+    return;
+  }
+  const pop = e.target.closest('[data-pop]');
+  if (pop){
+    const [act, arg] = pop.getAttribute('data-pop').split(':');
+    hidePop();
+    if (act === 'dup') duplicateItem(arg);
+    if (act === 'ins') insertAfter(arg);
+    if (act === 'del') removeItem(arg);
+    if (act === 'export'){
+      const payload = JSON.stringify({ items: stdRows().map((it, i) => ({ row_number:i+1, description:it.description, specification:it.specification, make_brand:it.make_brand, quantity:it.quantity, unit:it.unit, cp:it.cp, sp:it.sp, group:(state.rows.find(g => g.id === it.group_id) || {}).name || null })) }, null, 2);
+      navigator.clipboard && navigator.clipboard.writeText(payload).then(() => toast('JSON payload copied'), () => toast('Copy blocked by browser'));
+    }
+    if (act === 'clear'){
+      document.getElementById('clearMsg').textContent = 'This will remove all ' + stdRows().length + ' items and ' + state.rows.filter(r => r.row_type === 'group_header').length + ' groups from this BOQ.';
+      openOverlay('clearOverlay');
+    }
+    return;
+  }
+  if (!e.target.closest('.pop')) hidePop();
+});
+document.getElementById('clearYes').addEventListener('click', () => {
+  state.rows = [];
+  closeOverlay('clearOverlay');
+  render(); state.dirty = true; toast('All line items cleared');
+});
+
+/* ════════ TOOLBAR ════════ */
+document.getElementById('btnAddGroup').innerHTML = I.folder(15) + '<span>Group</span>';
+document.getElementById('btnAddItem').innerHTML = I.plus(15) + '<span>Item</span>';
+document.getElementById('btnImport').innerHTML = I.fileIn(15) + '<span>Import</span>';
+document.getElementById('btnColumns').innerHTML = I.cols(15) + '<span>Columns</span>';
+document.getElementById('btnMore').innerHTML = I.dots(17);
+document.getElementById('btnAddGroup').addEventListener('click', addGroup);
+document.getElementById('btnAddItem').addEventListener('click', () => addItem(null));
+document.getElementById('fCancel').addEventListener('click', () => toast('Cancel \u2014 production would discard draft changes'));
+document.getElementById('fDraft').addEventListener('click', () => { if (validate(true)) { simulateSave('Draft saved'); } });
+document.getElementById('fSave').addEventListener('click', () => { if (validate(false)) simulateSave('BOQ saved'); });
+document.getElementById('fab').innerHTML = I.save(20);
+document.getElementById('fab').addEventListener('click', () => { if (validate(false)) simulateSave('BOQ saved'); });
+
+/* details binding */
+[['boqNumber','boqNumber'],['issueDate','issueDate'],['vendorName','vendorName'],['vendorContact','vendorContact']].forEach(([elId, key]) => {
+  document.getElementById(elId).addEventListener('input', e => { state[key] = e.target.value; state.dirty = true; });
+});
+document.getElementById('notes').addEventListener('input', e => { state.notes = e.target.value; state.dirty = true; });
+
+/* ════════ VALIDATION (adapted to compact rows + focused editor) ════════ */
+function validate(isDraft){
+  if (!String(state.boqNumber || '').trim()){
+    pulseField('f-boqNumber');
+    toast('Save requirement missing: BOQ number required', true);
+    return false;
+  }
+  const items = stdRows();
+  if (!isDraft && items.length === 0){
+    toast('Add at least one line item before saving', true);
+    return false;
+  }
+  if (!isDraft) for (const it of items){
+    if (!String(it.description || '').trim()){
+      pulseRow(it.id);
+      const nums = itemNumbers();
+      toast('Item ' + (nums.get(it.id) || '') + ' needs a description', true);
+      if (window.matchMedia('(max-width:767px)').matches) openEditor(it.id);
+      else { const inp = document.querySelector('[data-row-anchor="' + it.id + '"] input'); if (inp) inp.focus(); }
+      return false;
+    }
+  }
+  return true;
+}
+function pulseRow(id){
+  const el = document.querySelector('[data-row-anchor="' + id + '"]');
+  if (!el) return;
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+  el.classList.add('invalid-row');
+  setTimeout(() => el.classList.remove('invalid-row'), 2200);
+}
+function pulseField(fid){
+  const el = document.getElementById(fid);
+  if (!el) return;
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+  const inp = el.querySelector('input,textarea');
+  if (inp) inp.classList.add('invalid');
+  setTimeout(() => inp && inp.classList.remove('invalid'), 2200);
+}
+
+/* ════════ SAVE (FormFooter pattern: FAB + footer, spinner, no perpetual glow) ════════ */
+function simulateSave(msg){
+  state.saving = true;
+  const fab = document.getElementById('fab');
+  const saveBtn = document.getElementById('fSave');
+  const lbl = document.getElementById('fSaveLbl');
+  fab.innerHTML = I.spinner(20); fab.disabled = true;
+  saveBtn.disabled = true; lbl.innerHTML = 'Saving\u2026';
+  setTimeout(() => {
+    state.saving = false; state.dirty = false;
+    fab.innerHTML = I.save(20); fab.disabled = false;
+    saveBtn.disabled = false; lbl.textContent = 'Save BOQ';
+    toast(msg + ' (candidate \u2014 no persistence)');
+  }, 650);
+}
+
+/* ════════ TOAST ════════ */
+let toastTimer = null;
+function toast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ════════ ROWS HOST DELEGATION ════════ */
+rowsHost.addEventListener('click', e => {
+  const edit = e.target.closest('[data-edit]');
+  if (edit){ openEditor(edit.getAttribute('data-edit')); return; }
+  const rm = e.target.closest('[data-rowmenu]');
+  if (rm) return; // handled globally
+  const gcollapse = e.target.closest('[data-grpcollapse]');
+  if (gcollapse){ const g = state.rows.find(r => r.id === gcollapse.getAttribute('data-grpcollapse')); g.collapsed = !g.collapsed; render(); return; }
+  const gadd = e.target.closest('[data-grpadd]');
+  if (gadd){ addItem(gadd.getAttribute('data-grpadd')); return; }
+  const gsub = e.target.closest('[data-grpsub]');
+  if (gsub){ const g = state.rows.find(r => r.id === gsub.getAttribute('data-grpsub')); g.showSubtotal = !g.showSubtotal; render(); return; }
+  const gup = e.target.closest('[data-grpup]');
+  if (gup){ moveGroup(gup.getAttribute('data-grpup'), -1); return; }
+  const gdown = e.target.closest('[data-grpdown]');
+  if (gdown){ moveGroup(gdown.getAttribute('data-grpdown'), 1); return; }
+  const gdel = e.target.closest('[data-grpdel]');
+  if (gdel){ deleteGroup(gdel.getAttribute('data-grpdel')); return; }
+  const ins = e.target.closest('[data-insert]');
+  if (ins){ insertAfter(ins.getAttribute('data-insert')); return; }
+});
+rowsHost.addEventListener('input', e => {
+  const inp = e.target.closest('[data-f]');
+  if (inp){
+    setField(inp.getAttribute('data-id'), inp.getAttribute('data-f'), inp.value);
+    refreshRow(inp.getAttribute('data-id'));
+    return;
+  }
+  const gn = e.target.closest('[data-grpname]');
+  if (gn){
+    const g = state.rows.find(r => r.id === gn.getAttribute('data-grpname'));
+    if (g){ g.name = gn.value; state.dirty = true; }
+  }
+});
+rowsHost.addEventListener('change', e => {
+  if (e.target.closest('[data-f]')) render(); // normalize numbers/format across both row variants
+});
+
+/* focus helper after add */
+function focusItem(id){
+  render();
+  const el = document.querySelector('[data-row-anchor="' + id + '"]');
+  if (el){
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    if (window.matchMedia('(max-width:767px)').matches) openEditor(id);
+    else { const inp = el.querySelector('input'); if (inp) setTimeout(() => inp.focus(), 250); }
+  }
+}
+
+/* ════════ ADAPTIVE TIER (foldAwareness data-attribute philosophy) ════════ */
+function setTier(){
+  const w = window.innerWidth;
+  const tier = w >= 1200 ? 'desktop' : w >= 768 ? 'fold' : 'phone';
+  if (document.body.dataset.tier !== tier){
+    document.body.dataset.tier = tier;
+    render(); // re-pick scan vs grid row variant
+  }
+}
+window.addEventListener('resize', setTier);
+setTier();
+render();
+</script>
+</body>
+</html>
