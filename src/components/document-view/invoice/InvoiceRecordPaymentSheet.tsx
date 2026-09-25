@@ -5,6 +5,7 @@ import { PaymentAttachmentUploader } from '@/components/ui/PaymentAttachmentUplo
 import type { PaymentAttachment } from '@/lib/attachmentTypes'
 import DocumentSheet from '../shared/DocumentSheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DateField } from '@/components/ui/date-field'
 import { formatNaira } from '@/lib/formatters/money'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { feedback } from '@/lib/feedback'
@@ -268,11 +269,11 @@ export default function InvoiceRecordPaymentSheet({
           <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-widest text-bd-text-muted/60">Date</label>
-              <input
-                type="date"
+              <DateField
+                label="Payment Date"
                 value={form.date}
-                onChange={(e) => setField('date', e.target.value)}
-                className="h-9 w-full rounded-lg border border-bd-border bg-bd-surface px-2.5 text-xs outline-none focus:border-bd-focus-ring"
+                onChange={(next) => setField('date', next)}
+                className="h-9 text-xs"
               />
             </div>
 
