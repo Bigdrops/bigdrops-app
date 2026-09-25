@@ -7,6 +7,7 @@ import { numberToWords } from '@/lib/formatters/money'
 import { BoqCustomizationPanel } from './BoqCustomizationPanel'
 import { TableRowsEditor } from '@/components/table-document/TableRowsEditor'
 import { Input } from '@/components/ui/input'
+import { DateField } from '@/components/ui/date-field'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
@@ -46,7 +47,7 @@ export function BoqForm({
             </div>
             <div>
               <Label className={pageFormLabelClassName}>Issue Date</Label>
-              <Input type="date" value={boq.issue_date} onChange={(event) => onChange({ issue_date: event.target.value })} className="mt-1" />
+              <DateField label="Issue Date" value={boq.issue_date} onChange={(next) => onChange({ issue_date: next })} className="mt-1" />
             </div>
           </div>
 
