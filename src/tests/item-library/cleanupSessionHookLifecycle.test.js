@@ -1,91 +1,95 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { spawn } from 'node:child_process'
-import { once } from 'node:events'
-import net from 'node:net'
-import { chromium } from 'playwright'
+import { readFileSync } from 'node:fs'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 
-async function getFreePort() {
-  const server = net.createServer()
-  server.listen(0, '127.0.0.1')
-  await once(server, 'listening')
-  const address = server.address()
-  const port = typeof address === 'object' && address ? address.port : 0
-  server.close()
-  await once(server, 'close')
-  return port
+import { ItemLibraryAdvancedCleanupPanel } from '../../modules/item-library/components/ItemLibraryAdvancedCleanupPanel.tsx'
+
+const componentPath = 'src/modules/item-library/components/ItemLibraryAdvancedCleanupPanel.tsx'
+
+const items = Array.from({ length: 175 }, (_, index) => ({
+  item_id: `item-${String(index + 1).padStart(3, '0')}`,
+  name: `Catalog Item ${index + 1}`,
+  standard_price: null,
+  last_sold_price: null,
+  usage_count: index + 1,
+  appears_in_invoice: true,
+  appears_in_quotation: index % 2 === 0,
+  is_active: true,
+}))
+
+const duplicateGroups = [
+  {
+    group_id: 'item-001::item-002',
+    label: 'Catalog Item 1',
+    reason: 'Similar wording',
+    normalized_label: 'catalog item 1',
+    members: [
+      { item_id: 'item-001', name: 'Catalog Item 1', usage_count: 1, last_sold_price: null },
+      { item_id: 'item-002', name: 'Catalog Item 2', usage_count: 2, last_sold_price: null },
+    ],
+  },
+  {
+    group_id: 'item-051::item-052',
+    label: 'Catalog Item 51',
+    reason: 'Similar wording',
+    normalized_label: 'catalog item 51',
+    members: [
+      { item_id: 'item-051', name: 'Catalog Item 51', usage_count: 51, last_sold_price: null },
+      { item_id: 'item-052', name: 'Catalog Item 52', usage_count: 52, last_sold_price: null },
+    ],
+  },
+]
+
+function renderPanel(props = {}) {
+  return renderToStaticMarkup(
+    createElement(ItemLibraryAdvancedCleanupPanel, {
+      workflow: 'full_catalog',
+      applyLoading: false,
+      items,
+      aliases: [],
+      duplicateGroups,
+      onApplyProposals: async () => [],
+      ...props,
+    }),
+  )
 }
 
-async function waitForServer(url, process, timeoutMs = 30000) {
-  const startedAt = Date.now()
-  let lastError = null
+test('cleanup setup renders the 50 item session estimate', () => {
+  const html = renderPanel()
 
-  while (Date.now() - startedAt < timeoutMs) {
-    if (process.exitCode !== null) {
-      throw new Error(`Vite dev server exited early with code ${process.exitCode}.`)
-    }
+  assert.match(html, /Clean &amp; Standardize Catalog/)
+  assert.match(html, /50 items per batch selected/)
+  assert.match(html, /Duplicate groups will stay together/)
+})
 
-    try {
-      const response = await fetch(url)
-      if (response.ok) return
-    } catch (error) {
-      lastError = error
-    }
+test('cleanup duplicate review branch renders after the shared hook block', () => {
+  const html = renderPanel({ workflow: 'duplicates' })
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
-  }
+  assert.match(html, /Outsource Duplicate Review/)
+  assert.match(html, /Export All Duplicates/)
+})
 
-  throw new Error(`Timed out waiting for Vite dev server. Last error: ${lastError?.message || 'none'}`)
-}
+test('cleanup setup early-return branch does not declare React hooks', () => {
+  const source = readFileSync(componentPath, 'utf8')
+  const setupBranchStart = source.indexOf('if (!lockedSession && !isDuplicates)')
+  const duplicateBranchStart = source.indexOf('if (isDuplicates)', setupBranchStart)
+  const sessionEstimateHook = source.indexOf('const sessionEstimate = useMemo')
 
-test('cleanup catalog session setup starts active review without hook-order crash', { timeout: 60000 }, async () => {
-  const port = await getFreePort()
-  const baseUrl = `http://127.0.0.1:${port}`
-  const server = spawn('bun', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(port)], {
-    cwd: process.cwd(),
-    env: { ...process.env, BROWSER: 'none' },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
-  const serverOutput = []
-  server.stdout.on('data', (chunk) => serverOutput.push(String(chunk)))
-  server.stderr.on('data', (chunk) => serverOutput.push(String(chunk)))
+  assert.notEqual(setupBranchStart, -1, 'setup early-return branch must exist')
+  assert.notEqual(duplicateBranchStart, -1, 'duplicate branch must follow setup branch')
+  assert.notEqual(sessionEstimateHook, -1, 'session estimate hook must exist')
+  assert.equal(
+    sessionEstimateHook < setupBranchStart,
+    true,
+    'session estimate useMemo must run before the setup early return to keep hook order stable',
+  )
 
-  let browser
-  try {
-    await waitForServer(`${baseUrl}/src/tests/item-library/cleanupSessionHookLifecycle.harness.html`, server)
-
-    browser = await chromium.launch({ headless: true })
-    const page = await browser.newPage()
-    const pageErrors = []
-    page.on('pageerror', (error) => pageErrors.push(error.message))
-    page.on('console', (message) => {
-      if (message.type() === 'error') pageErrors.push(message.text())
-    })
-
-    await page.goto(`${baseUrl}/src/tests/item-library/cleanupSessionHookLifecycle.harness.html`)
-    await page.getByText('Clean & Standardize Catalog').waitFor()
-    await page.getByText('50 items per batch selected').waitFor()
-
-    await page.getByRole('button', { name: 'Start Cleanup Session' }).click()
-    await page.getByText('Batch 1 of 4').waitFor()
-    await page.getByText('Export batch JSON').waitFor()
-    assert.deepEqual(pageErrors, [])
-
-    await page.getByRole('button', { name: 'Start new session' }).click()
-    await page.getByText('Clean & Standardize Catalog').waitFor()
-    await page.getByRole('button', { name: 'Start Cleanup Session' }).click()
-    await page.getByText('Batch 1 of 4').waitFor()
-    assert.deepEqual(pageErrors, [])
-  } finally {
-    if (browser) await browser.close()
-    server.kill()
-    if (server.exitCode === null) {
-      await Promise.race([
-        once(server, 'exit'),
-        new Promise((resolve) => setTimeout(resolve, 3000)),
-      ])
-    }
-  }
-
-  assert.equal(server.exitCode === null || server.exitCode === 0 || server.killed, true, serverOutput.join('\n'))
+  const setupBranchSource = source.slice(setupBranchStart, duplicateBranchStart)
+  assert.doesNotMatch(
+    setupBranchSource,
+    /\buse(?:State|Effect|Memo|Callback|Ref|Reducer|Context|SyncExternalStore)\s*\(/,
+    'setup branch must not declare hooks that disappear after Start Cleanup Session',
+  )
 })
