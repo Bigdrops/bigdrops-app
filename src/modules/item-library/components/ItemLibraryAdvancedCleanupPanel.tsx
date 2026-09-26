@@ -193,6 +193,17 @@ export function ItemLibraryAdvancedCleanupPanel({
   }, [isDuplicates, duplicateGroups, aliases])
 
   const resolvedBatchSize = getBatchSize(batchSizeOption, customBatchSize, (items ?? []).length)
+  const sessionEstimate = useMemo(() => {
+    if (isDuplicates || lockedSession || !resolvedBatchSize) return null
+    return createCatalogCleanupSession({
+      items,
+      aliases,
+      duplicateGroups,
+      batchSize: resolvedBatchSize,
+      sessionId: 'preview-session',
+      generatedAt: 'preview',
+    })
+  }, [aliases, duplicateGroups, isDuplicates, items, lockedSession, resolvedBatchSize])
   
   const currentBatch = isDuplicates 
     ? (flaggedExportPayload ? { batch_id: 'flagged-outsource', title: 'Flagged Duplicates', item_count: flaggedExportPayload.scope.item_count } : null)
@@ -428,17 +439,6 @@ export function ItemLibraryAdvancedCleanupPanel({
   if (!lockedSession && !isDuplicates) {
     const customBatchTouched = batchSizeOption === 'custom' && customBatchSize.trim().length > 0
     const customBatchInvalid = batchSizeOption === 'custom' && customBatchTouched && !resolvedBatchSize
-    const sessionEstimate = useMemo(() => {
-      if (!resolvedBatchSize) return null
-      return createCatalogCleanupSession({
-        items,
-        aliases,
-        duplicateGroups,
-        batchSize: resolvedBatchSize,
-        sessionId: 'preview-session',
-        generatedAt: 'preview',
-      })
-    }, [aliases, duplicateGroups, items, resolvedBatchSize])
 
     return (
       <div className="h-full overflow-y-auto bg-bd-app-bg">

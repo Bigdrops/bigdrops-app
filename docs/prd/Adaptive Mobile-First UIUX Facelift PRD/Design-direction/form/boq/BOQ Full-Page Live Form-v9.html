@@ -13,12 +13,23 @@
     --bg:#f0f4f8; --card:#ffffff; --soft:#f8fafc; --accent:#1e3a5f;
     --red:#ef4444; --green:#16a34a; --mono:'DM Mono',monospace;
     --shadow-card:0 12px 28px rgba(30,58,95,.08),0 2px 6px rgba(15,23,42,.04);
+    --cost:#b45309; --cost-soft:rgba(180,83,9,0.12); --cost-border:rgba(180,83,9,.35);
+    --sell:#15803d; --sell-soft:rgba(21,128,61,0.12); --sell-border:rgba(21,128,61,.35);
+    --loss:#b91c1c; --loss-soft:rgba(185,28,28,0.12);
+    --bg-bd-button-primary-bg:#1e3a5f;
+    --bd-button-primary-text:#f1f5f9;
   }
   [data-theme="dark"]{
     --ink:#f1f5f9; --sub:#cbd5e1; --faint:#64748b; --line:rgba(15,23,42,.22);
     --bg:#0f172a; --card:#1e293b; --soft:#334155; --accent:#38bdf8;
     --red:#f87171; --green:#bbf7d0; --line-dark:rgba(15,23,42,.4);
     --shadow-card:0 12px 28px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.15);
+    --cost:#f59e0b; --cost-soft:rgba(245,158,11,0.18); --cost-border:rgba(245,158,11,.4);
+    --sell:#22c55e; --sell-soft:rgba(34,197,94,0.18); --sell-border:rgba(34,197,94,.4);
+    --loss:#ef4444; --loss-soft:rgba(239,68,68,0.18);
+    --bg-bd-button-primary-bg:#1e3a5f;
+    --bd-button-primary-bg-dark:#0f172a;
+    --bd-button-primary-text:#f1f5f9;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
@@ -41,6 +52,8 @@
   .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .sb{display:flex;flex-direction:column;gap:10px}
   section.card{margin-top:12px}
+  /* Line Items as continuous page flow — no enclosing card */
+  section.flowsec{margin-top:16px}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:2px 0 6px;border-bottom:1px solid var(--line);margin-bottom:4px;position:relative}
   .topbar .back{position:static;display:flex;align-items:center;gap:4px;color:var(--sub);font-size:10px;font-weight:800;background:none;border:0;transition:transform .12s,color .15s;min-height:44px;padding:0 10px}
   .topbar .back:active{transform:scale(.96)}
@@ -49,7 +62,8 @@
   .num-lb{font-size:9px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--sub)}
   .rowhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   /* item row — upper control zone + full-width lower form (no aura) */
-  .item{position:relative;padding:10px 0;border-bottom:1px solid var(--line);transition:background .15s,border-color .15s;display:flex;flex-direction:column;gap:6px}
+  /* closing spacing after Insert Below lives inside the 36px .ins button, so padding-bottom stays 0 */
+  .item{position:relative;padding:14px 0 0;border-bottom:1px solid var(--line);transition:background .15s,border-color .15s;display:flex;flex-direction:column;gap:6px}
   .item.err{background:rgba(239,68,68,.05);border-radius:10px;padding-left:4px;border-left:3px solid var(--red)}
   /* edge-mounted delete button — hanging on the outside top-right corner */
   .ear{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(15,23,42,.22);transition:background .15s,transform .12s;z-index:10;cursor:pointer}
@@ -57,7 +71,7 @@
   .ear:hover{background:var(--red);border-color:#fff}
   .ear:active{transform:scale(.9)}
   .ear svg{width:9px;height:9px}
-  /* compact upper control zone: left pocket exists only beside top fields */
+  /* upper zone: control pocket + description/sub-description only */
   .utop{display:grid;grid-template-columns:24px minmax(0,1fr);gap:6px;align-items:start}
   .upock{display:flex;flex-direction:column;align-items:center;gap:3px}
   .uflds{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -67,12 +81,31 @@
   .mbtn:hover{background:#e2e8f0;color:var(--ink)}
   .mbtn:active{transform:scale(.9)}
   .mbtn:disabled{opacity:.3;pointer-events:none}
-  .g3i{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
-  .sfld{height:36px;padding:0 6px;border-radius:10px;border:1px solid rgba(15,23,42,.12);background:var(--soft);font-size:10px;font-weight:600;text-align:center;transition:background .15s,box-shadow .15s;width:100%;color:var(--ink)}
+  .sfld{height:36px;padding:0 6px;border-radius:10px;border:1px solid var(--line);background:var(--soft);font-size:10px;font-weight:600;text-align:center;transition:background .15s,box-shadow .15s;width:100%;color:var(--ink)}
+  .sfld-cp{border-color:var(--cost-border);background:var(--cost-soft);color:var(--cost)}
+  .sfld-sp{border-color:var(--sell-border);background:var(--sell-soft);color:var(--sell)}
   .sfld:focus{background:#fff;box-shadow:0 0 0 1px var(--accent)}
+  .sfld-cp:focus{background:#fff;box-shadow:0 0 0 2px var(--cost)}
+  .sfld-sp:focus{background:#fff;box-shadow:0 0 0 2px var(--sell)}
   .profit{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(130deg,#0f172a,#1e293b);border-radius:10px;padding:7px 10px;margin-top:2px}
   .profit span{font-size:7px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#f1f5f9;opacity:.85}
   .profit b{font-family:var(--mono);font-size:12px;font-weight:600;color:#f1f5f9;letter-spacing:-.02em}
+  .sfield{display:flex;align-items:center;min-width:0}
+  .sfield .sfld{flex:1;min-width:0}
+  .cp-sp-label{font-size:7px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--cost);background:var(--cost-soft);border-radius:4px;padding:1px 5px;margin-right:6px;flex-shrink:0}
+  .cp-sp-label.sec{color:var(--sell);background:var(--sell-soft);border-radius:4px;padding:1px 5px;margin-right:6px;flex-shrink:0}
+  /* profit semantic states */
+  .profit.neg b{color:var(--loss)}
+  .profit.neg span{color:#fca5a5}
+  .profit.pos b{color:var(--sell)}
+  .profit.zero b{color:#f1f5f9}
+  .profit.zero span{color:var(--faint)}
+  #tProfit.neg{color:var(--loss)}
+  #tProfit.pos{color:var(--sell)}
+  #tProfit.zero{color:var(--ink)}
+  #tMargin.neg{color:var(--loss)}
+  #tMargin.pos{color:var(--sell)}
+  #tMargin.zero{color:var(--ink)}
   .ins{background:none;border:0;color:var(--faint);font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;align-self:flex-start;padding:6px 0;min-height:36px;text-align:left;transition:color .15s}
   .ins:hover{color:var(--accent)}
   /* permanent bottom creation pair: always visible, even with zero rows */
@@ -112,7 +145,7 @@
   .gwrap:first-child{margin-top:0}
   /* group body — enclosed member area inside envelope */
   .gbody{display:flex;flex-direction:column;gap:0;padding:4px 12px 4px 8px;background:#fcfdff}
-  .gbody>.item{padding:10px 0;border-bottom:1px solid rgba(15,23,42,.08)}
+  .gbody>.item{padding:14px 0 0;border-bottom:1px solid rgba(15,23,42,.08)}
   .gbody>.item:last-child,.gbody>.item:last-of-type{border-bottom:0}
   /* empty group body placeholder */
   .gbody-empty{padding:18px 12px;text-align:center;font-size:9px;font-weight:700;color:var(--faint);font-style:italic}
@@ -130,8 +163,10 @@
   #items>.item:last-child{border-bottom:0}
   #items>.gwrap:first-child{margin-top:0}
   #items>.gwrap.collapsed{margin-bottom:8px}
-  #items>.gwrap+.item{margin-top:18px}
-  #items>.gwrap.collapsed+.item{margin-top:12px}
+  #items>.gwrap+.item{margin-top:14px}
+  #items>.gwrap.collapsed+.item{margin-top:8px}
+  /* FULL-WIDTH COMMERCIAL FIELD ZONE */
+  .fwrap{display:grid;grid-template-columns:1fr;gap:8px}
   /* per-item sub-description */
   .subrow{display:flex;flex-direction:column;gap:5px;padding-left:12px;border-left:2px solid var(--line)}
   .subtog{display:flex;align-items:center;gap:5px;background:none;border:0;padding:6px 0;min-height:36px;font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);align-self:flex-start;transition:color .15s}
@@ -153,12 +188,12 @@
   .sumtotal b{font-family:var(--mono);font-size:16px;font-weight:600;letter-spacing:-.04em;color:var(--accent)}
   .words{margin-top:8px;padding:7px 10px;border:1px dashed var(--line);border-radius:8px;background:var(--soft);font-size:8.5px;font-style:italic;color:var(--sub);line-height:1.5}
   /* fab */
-  .fab{position:fixed;right:14px;bottom:calc(20px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;color:#fff;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1e3a5f,#0f172a);box-shadow:0 18px 40px rgba(30,58,95,.28),0 3px 9px rgba(15,23,42,.12);transition:transform .12s;z-index:40}
-  .fab:active{transform:scale(.9)}
-  .fab-halo{position:fixed;right:8px;bottom:calc(14px + env(safe-area-inset-bottom));width:62px;height:62px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,.4),rgba(30,58,95,0) 70%);filter:blur(8px);z-index:39;animation:halo 3.2s ease-in-out infinite;pointer-events:none}
-  @keyframes halo{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:.85;transform:scale(1.22)}}
-  @keyframes errPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 6px rgba(239,68,68,.22)}}
-  .pulse{animation:errPulse 1.2s ease-in-out infinite}
+  .fab{position:fixed;right:16px;bottom:calc(82px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;color:var(--bd-button-primary-text);display:flex;align-items:center;justify-content:center;background:var(--bg-bd-button-primary-bg);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);transition:transform .12s;z-index:50}
+  .fab:active{transform:scale(.95)}
+  .fab:hover{transform:scale(1.05)}
+  .fab svg{width:20px;height:20px;stroke-width:2}
+  /* Save FAB dark-mode override */
+  [data-theme="dark"] .fab{background:var(--bd-button-primary-bg-dark)}
   /* sheet */
   .ov{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(2px);display:none;align-items:flex-end;z-index:50}
   .ov.show{display:flex}
@@ -242,7 +277,7 @@
   </section>
 
   <!-- 2. LINE ITEMS -->
-  <section class="card">
+  <section class="flowsec">
     <div class="rowhd" style="margin-bottom:6px">
       <div class="sec"><span class="dot" style="background:var(--green)"></span><h2>2. Line Items</h2></div>
       <span class="mono" style="font-size:8px;color:var(--faint)" id="countLabel"></span>
@@ -285,8 +320,8 @@
     <div class="sumline"><span>Total Cost (CP × Qty)</span><b id="tCost">₦0</b></div>
     <div class="sumline"><span>Total Selling Price (SP × Qty)</span><b id="tSell">₦0</b></div>
     <div class="sumtotal">
-      <div><small>Gross Profit</small><b id="tProfit" style="color:var(--green)">₦0</b></div>
-      <div style="text-align:right"><small>Margin</small><b id="tMargin" style="font-size:12px;color:var(--green)">0%</b></div>
+      <div><small>Gross Profit</small><b id="tProfit">₦0</b></div>
+      <div style="text-align:right"><small>Margin</small><b id="tMargin">0%</b></div>
     </div>
     <div class="words" id="tWords"></div>
   </section>
@@ -294,9 +329,8 @@
 </div>
 
 <button class="fab" onclick="save()" title="Save Bill of Quantities">
-  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
 </button>
-<div class="fab-halo"></div>
 
 <!-- COLUMN MANAGER SHEET -->
 <div class="ov" id="ovColumns">
@@ -343,7 +377,7 @@
 
 <script>
 const naira = n => '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const esc = s => String(s == null ? '' : s).replace(/[&<>\"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'}[m]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const svgs = {
   up: '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>',
   down: '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>',
@@ -385,7 +419,12 @@ const siblings = r => r.gid != null
 const members = gid => rows.filter(x => x.type === 'item' && x.gid === gid);
 
 function profitHTML(r) {
-  return `<div class="profit" data-pid="${r.id}"><span>Line Profit \u00B7 ${r.qty} \u00D7 ${naira(Number(r.sp || 0) - Number(r.cp || 0))}</span><b>${naira(profit(r))}</b></div>`;
+  const p = profit(r);
+  const pos = p > 0;
+  const zero = p === 0;
+  const neg = p < 0;
+  const cls = `profit ${neg ? 'neg' : ''} ${pos ? 'pos' : ''} ${zero ? 'zero' : ''}`;
+  return `<div class="${cls}" data-pid="${r.id}"><span>Line Profit \u00B7 ${r.qty} \u00D7 ${naira(Number(r.sp || 0) - Number(r.cp || 0))}</span><b>${naira(p)}</b></div>`;
 }
 function patchProfit(id) {
   const r = rows.find(x => x.id === id);
@@ -413,13 +452,16 @@ function itemHTML(r, sib) {
             <button class="subtog${hasSub ? ' has' : ''}${r.subOpen ? ' open' : ''}" onclick="toggleSub(${r.id})">${svgs.down}Sub description</button>
             ${r.subOpen ? `<textarea class="fld subta" rows="2" placeholder="Sub-description \u2014 detail shown under the main description..." oninput="editRow(${r.id},'sub',this.value)">${esc(r.sub)}</textarea>` : ''}
           </div>
-          <div class="g2">
-            <input class="sfld" placeholder="Qty *" value="${r.qty}" oninput="editNum(${r.id},'qty',this.value)">
-            <input class="sfld" placeholder="Unit" value="${esc(r.unit)}" oninput="editRow(${r.id},'unit',this.value)">
-            ${vis('make') ? `<input class="sfld" placeholder="Make" value="${esc(r.make)}" oninput="editRow(${r.id},'make',this.value)">` : `<div class="sfld" style="border-style:dashed;color:var(--faint);display:flex;align-items:center;justify-content:center;font-size:8px">--</div>`}
-            ${vis('cp') ? `<input class="sfld mono" style="height:36px;font-size:10px" type="number" min="0" placeholder="CP (cost)" value="${r.cp}" oninput="editNum(${r.id},'cp',this.value)">` : ''}
-            ${vis('sp') ? `<input class="sfld mono" style="height:36px;font-size:10px" type="number" min="0" placeholder="SP (sell)" value="${r.sp}" oninput="editNum(${r.id},'sp',this.value)">` : ''}
-          </div>
+        </div>
+      </div>
+      <!-- full-width commercial field zone: 2-column grid -->
+      <div class="fwrap">
+        <div class="g2">
+          <input class="sfld" placeholder="Qty *" value="${r.qty}" oninput="editNum(${r.id},'qty',this.value)">
+          <input class="sfld" placeholder="Unit" value="${esc(r.unit)}" oninput="editRow(${r.id},'unit',this.value)">
+          ${vis('make') ? `<input class="sfld" placeholder="Make" value="${esc(r.make)}" oninput="editRow(${r.id},'make',this.value)">` : `<div class="sfld" style="border-style:dashed;color:var(--faint);display:flex;align-items:center;justify-content:center;font-size:8px">--</div>`}
+          ${vis('cp') ? `<div class="sfield"><label class="cp-sp-label">CP</label><input class="sfld sfld-cp mono" style="height:36px;font-size:10px" type="number" min="0" value="${r.cp}" oninput="editNum(${r.id},'cp',this.value)"></div>` : ''}
+          ${vis('sp') ? `<div class="sfield"><label class="cp-sp-label sec">SP</label><input class="sfld sfld-sp mono" style="height:36px;font-size:10px" type="number" min="0" value="${r.sp}" oninput="editNum(${r.id},'sp',this.value)"></div>` : ''}
         </div>
       </div>
       ${profitHTML(r)}
@@ -477,10 +519,17 @@ function renderTotals() {
   let cost = 0, sell = 0;
   rows.forEach(r => { if (r.type === 'item') { cost += Number(r.cp || 0) * Number(r.qty || 0); sell += Number(r.sp || 0) * Number(r.qty || 0); } });
   const p = sell - cost;
+  const sellP = sell > 0 ? 'pos' : (sell === 0 ? 'zero' : 'neg');
+  const pPos = p > 0 ? 'pos' : (p === 0 ? 'zero' : 'neg');
   document.getElementById('tCost').textContent = naira(cost);
   document.getElementById('tSell').textContent = naira(sell);
-  document.getElementById('tProfit').textContent = naira(p);
-  document.getElementById('tMargin').textContent = sell ? Math.round(p / sell * 100) + '%' : '0%';
+  const tProfit = document.getElementById('tProfit');
+  tProfit.textContent = naira(p);
+  tProfit.className = pPos === 'neg' ? 'neg' : (pPos === 'pos' ? 'pos' : 'zero');
+  const tMargin = document.getElementById('tMargin');
+  tMargin.textContent = sell ? Math.round(p / sell * 100) + '%' : '0%';
+  const mPos = p > 0 ? 'pos' : (p === 0 ? 'zero' : 'neg');
+  tMargin.className = mPos;
   document.getElementById('tWords').textContent = words(sell);
 }
 

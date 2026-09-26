@@ -12,6 +12,7 @@ import {
 import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
 import { safeParseJson } from '@/lib/json/safeParseJson'
+import { nextAutomaticNumber } from '@/domain/prefixConstants'
 import type { InvoiceItem } from '@/domain/invoice'
 import type {
   DbQuotation,
@@ -27,11 +28,14 @@ export function getQuotationNumber(row: Partial<DbQuotation> | null | undefined)
 
 export function getNextQuotationNumber(
   rows: Array<Pick<DbQuotation, 'quotation_number'>>,
-  prefix = 'SASIQUO',
+  prefix = 'QTN',
+  cursor?: number,
 ): string {
-  const maxNumber = rows
+  const family = `${prefix}-`
+  const occupied = rows
     .map((row) => String(row.quotation_number || '').trim().toUpperCase())
-    .filter((value) => value.startsWith(`${prefix}-`))
+    .filter((value) => value.startsWith(family))
+  const maxNumber = occupied
     .map((value) => {
       const match = value.match(/-(\d+)$/)
       return match ? Number(match[1]) : null
@@ -39,7 +43,7 @@ export function getNextQuotationNumber(
     .filter((value): value is number => Number.isFinite(value))
     .reduce((max, value) => Math.max(max, value), 0)
 
-  return `${prefix}-${String(maxNumber + 1).padStart(3, '0')}`
+  return nextAutomaticNumber(family, cursor, occupied, maxNumber).candidate
 }
 
 export function mapDbQuotation(row: DbQuotation): Quotation {

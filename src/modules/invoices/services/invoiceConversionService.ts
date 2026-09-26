@@ -3,6 +3,8 @@ import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseDocumentCustomFields, toQuotationItemRow } from '@/domain/documentConversion'
 import { buildInvoiceTrailLink, withInvoiceSourceTrail } from '../domain/invoiceConversionTrail'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 
 export interface RevertToQuotationInput {
   invoice: any
@@ -28,7 +30,12 @@ export async function revertInvoiceToQuotationService(
   ])
 
   const prefix = resolvePrefix(prefixes, 'quotation')
-  const nextQuotationNumber = getNextQuotationNumber((quotationRows || []) as Array<{ quotation_number?: string | null }>, prefix)
+  const quotationFamily = `${prefix}-`
+  const nextQuotationNumber = getNextQuotationNumber(
+    (quotationRows || []) as Array<{ quotation_number?: string | null }>,
+    prefix,
+    await fetchAutoCursor(tenantClient, quotationFamily),
+  )
   const sourceInvoiceFields = parseDocumentCustomFields(latestInvoice?.custom_fields || customFields)
   
   const quotationPayload = {
@@ -87,6 +94,12 @@ export async function revertInvoiceToQuotationService(
   if (error || !createdQuotation) {
     throw new Error(error?.message || 'Failed to revert invoice')
   }
+
+  // Converted documents consume automatic numbers: advance the cursor.
+  const revertedSeq = parseTrailingSequence(
+    (createdQuotation as { quotation_number?: string | null })?.quotation_number,
+  )
+  if (revertedSeq !== null) await advanceAutoCursor(tenantClient, quotationFamily, revertedSeq)
 
   return createdQuotation
 }

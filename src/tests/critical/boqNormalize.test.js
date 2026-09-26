@@ -69,7 +69,7 @@ test('boq row round-trip packs specification into cells', () => {
 })
 
 test('getNextBoqNumber increments from existing rows', () => {
-  assert.equal(getNextBoqNumber([], 'BOQ'), 'BOQ-001')
-  assert.equal(getNextBoqNumber([{ boq_number: 'BOQ-001' }, { boq_number: 'BOQ-004' }], 'BOQ'), 'BOQ-005')
-  assert.equal(getNextBoqNumber([{ boq_number: 'RFQ-100' }], 'BOQ'), 'BOQ-001')
+  assert.equal(getNextBoqNumber([], 'BOQ'), 'BOQ-000001')
+  assert.equal(getNextBoqNumber([{ boq_number: 'BOQ-000001' }, { boq_number: 'BOQ-000004' }], 'BOQ'), 'BOQ-000005')
+  assert.equal(getNextBoqNumber([{ boq_number: 'RFQ-100' }], 'BOQ'), 'BOQ-000001')
 })

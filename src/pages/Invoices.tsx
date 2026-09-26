@@ -103,16 +103,13 @@ function InvoicesContent() {
     try {
       const invoiceDetail = await loadInvoiceById(inv.id, tenantClient)
       if (!invoiceDetail) throw new Error("Invoice not found")
-      const { data: all } = await tenantClient
-        .from("invoices").select("invoice_number").order("created_at", { ascending: false })
-      const newNumber = getNextInvoiceNumber(all || [], resolvePrefix(settings?.document_prefixes, 'invoice'))
       const srcItems = await loadInvoiceItems(inv.id, tenantClient)
       invalidateListCache(INVOICE_CACHE_KEY)
       navigate("/invoices/new", {
         state: {
           prefill: {
             ...invoiceDetail,
-            invoice_number: newNumber,
+            invoice_number: '',
             client_id: null,
             client_name: "",
             project_id: null,

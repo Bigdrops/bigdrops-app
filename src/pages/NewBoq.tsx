@@ -12,6 +12,8 @@ import { supabase } from '@/supabase'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 
 export default function NewBoq() {
@@ -30,10 +32,10 @@ export default function NewBoq() {
       return
     }
 
-    // Get next BOQ number
-    const { data: existingBoqs } = await tenantClient.from('boqs').select('boq_number')
     const boqPrefix = resolvePrefix(settings?.document_prefixes, 'boq')
-    const initialBoqNumber = boq.boq_number || getNextBoqNumber(existingBoqs || [], boqPrefix)
+    const boqFamily = `${boqPrefix}-`
+    // The field starts empty, so any non-empty value was explicitly typed.
+    const manualNumber = String(boq.boq_number || '').trim() || undefined
 
     const { data: createdBoq, error: boqError } = await withUniqueRetry(
       async (candidateNumber: string) => {
@@ -41,10 +43,20 @@ export default function NewBoq() {
         return tenantClient.from('boqs').insert([{ ...dbBoq, user_id: user.id }]).select().single();
       },
       async () => {
-        const { data: rows } = await tenantClient.from('boqs').select('boq_number')
-        return getNextBoqNumber(rows || [], boqPrefix)
+        const [{ data: rows }, cursor] = await Promise.all([
+          tenantClient.from('boqs').select('boq_number'),
+          fetchAutoCursor(tenantClient, boqFamily),
+        ])
+        return getNextBoqNumber(rows || [], boqPrefix, cursor)
       },
+      manualNumber,
     )
+
+    // Advance the automatic cursor only for system-generated numbers.
+    if (!boqError && createdBoq && !manualNumber) {
+      const seq = parseTrailingSequence((createdBoq as { boq_number?: string | null })?.boq_number)
+      if (seq !== null) await advanceAutoCursor(tenantClient, boqFamily, seq)
+    }
 
     if (boqError || !createdBoq) {
       feedback.error('Save failed', {

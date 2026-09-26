@@ -1,6 +1,8 @@
-import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextWaybillNumber } from '@/components/waybill/waybillUtils'
+import { Waybill, WaybillItem, normalizeWaybillStatus, validateWaybill, getNextWaybillNumber, getWaybillRoutingPrefix } from '@/components/waybill/waybillUtils'
 import { invalidateListCache } from '@/lib/cache/listCache'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
 import { recordAuditLog, recordWaybillCreated, recordWaybillStatusChanged, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
@@ -14,8 +16,10 @@ export async function saveWaybill(params: {
   waybillId?: string;
   prefixes?: DocumentPrefixes | null;
   tenantClient: TenantClient;
+  /** True when the number field holds an explicitly typed value (not an untouched pre-fill). */
+  numberIsManual?: boolean;
 }) {
-  const { waybill, items, custom_fields, mode, waybillId, prefixes, tenantClient } = params
+  const { waybill, items, custom_fields, mode, waybillId, prefixes, tenantClient, numberIsManual } = params
   const db = tenantClient;
 
   const errors: string[] = []
@@ -83,21 +87,35 @@ export async function saveWaybill(params: {
 
   if (mode === 'new') {
     const prefix = resolvePrefix(prefixes, 'waybill')
+    const family = getWaybillRoutingPrefix(waybill.type || 'external', prefix)
+    // Manual numbers go first and stay authoritative; untouched pre-fills
+    // and empty fields take the automatic path with collision retry.
+    const manualNumber = numberIsManual ? String(waybillNumber || '').trim() || undefined : undefined
     const { data, error } = await withUniqueRetry(
       async (candidateNumber: string) => {
         payload.waybill_number = candidateNumber
         return db.from('waybills').insert([payload]).select('id').single()
       },
       async () => {
-        const { data: rows } = await db
-          .from('waybills')
-          .select('waybill_number')
-          .order('created_at', { ascending: false })
-          .limit(1000)
+        const [{ data: rows }, cursor] = await Promise.all([
+          db
+            .from('waybills')
+            .select('waybill_number')
+            .order('created_at', { ascending: false })
+            .limit(1000),
+          fetchAutoCursor(db, family),
+        ])
         const existingNumbers = (rows || []).map((w) => w.waybill_number || '').filter(Boolean)
-        return getNextWaybillNumber(waybill.type || 'external', existingNumbers, prefix)
+        return getNextWaybillNumber(waybill.type || 'external', existingNumbers, prefix, 'normal', cursor)
       },
+      manualNumber,
     )
+    // Advance the automatic cursor only for system-generated numbers.
+    // Manual numbers never move it.
+    if (!error && !manualNumber) {
+      const seq = parseTrailingSequence((data as { waybill_number?: string | null } | null)?.waybill_number ?? payload.waybill_number)
+      if (seq !== null) await advanceAutoCursor(db, family, seq)
+    }
     if (error) {
       console.error('Waybill save error:', error)
       throw new Error(`Failed to save waybill: ${error.message}`)

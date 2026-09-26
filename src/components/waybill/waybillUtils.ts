@@ -1,6 +1,7 @@
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 import { WAYBILL_ITEM_KEYS, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
+import { nextAutomaticNumber, parseTrailingSequence } from '@/domain/prefixConstants'
 
 export type WaybillPdfTemplateId = 'evergreen' | 'minimal' | 'thermal' | 'classic' | 'premium' | 'slate'
 
@@ -497,25 +498,33 @@ export function validateWaybill(waybill: Partial<Waybill>): string[] {
   return errors
 }
 
+export function getWaybillRoutingPrefix(
+  type: WaybillType,
+  prefix: string = 'WBL',
+  mode: 'normal' | 'blank' = 'normal',
+): string {
+  if (mode === 'blank') {
+    return `${prefix}${type === 'internal' ? '-MI-' : '-ME-'}`
+  }
+  return `${prefix}${type === 'internal' ? '-I-' : '-E-'}`
+}
+
 export function getNextWaybillNumber(
   type: WaybillType,
   existingNumbers: string[],
   prefix: string = 'WBL',
   mode: 'normal' | 'blank' = 'normal',
+  cursor?: number,
 ): string {
-  let routingSuffix: string
-  if (mode === 'blank') {
-    routingSuffix = type === 'internal' ? '-MI-' : '-ME-'
-  } else {
-    routingSuffix = type === 'internal' ? '-I-' : '-E-'
-  }
-  const routingPrefix = `${prefix}${routingSuffix}`
-  const nums = existingNumbers
-    .filter((n) => n.startsWith(routingPrefix))
-    .map((n) => parseInt(n.slice(routingPrefix.length), 10))
-    .filter((n) => !isNaN(n))
-  const highest = nums.length > 0 ? Math.max(...nums) : 0
-  return `${routingPrefix}${String(highest + 1).padStart(6, '0')}`
+  const routingPrefix = getWaybillRoutingPrefix(type, prefix, mode)
+  const occupied = existingNumbers
+    .map((n) => String(n || '').trim().toUpperCase())
+    .filter((n) => n.startsWith(routingPrefix.toUpperCase()))
+  const maxNumber = occupied
+    .map((n) => parseTrailingSequence(n.slice(routingPrefix.length)))
+    .filter((value): value is number => Number.isFinite(value))
+    .reduce((max, value) => Math.max(max, value), 0)
+  return nextAutomaticNumber(routingPrefix, cursor, occupied, maxNumber).candidate
 }
 
 export function getStatusMeta(status: string) {

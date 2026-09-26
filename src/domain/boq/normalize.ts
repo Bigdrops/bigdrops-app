@@ -2,6 +2,7 @@ import type { Boq, DbBoq, DbBoqRow } from './types'
 import { DEFAULT_TABLE_TEMPLATE, getDefaultColumnsForDocument } from '@/domain/table-document/templateRegistry'
 import { createEmptyTableRow, ensureTableRowKeys } from '@/domain/table-document/rows'
 import type { TableDocumentRow } from '@/domain/table-document/types'
+import { nextAutomaticNumber } from '@/domain/prefixConstants'
 
 const normalizeDate = (value?: string | null): string | null =>
   value && value.trim() ? value : null
@@ -141,10 +142,13 @@ export const denormalizeToDbBoqRow = (row: TableDocumentRow, boqId: string): DbB
 export function getNextBoqNumber(
   rows: Array<{ boq_number: string }>,
   prefix = 'BOQ',
+  cursor?: number,
 ): string {
-  const maxNumber = rows
+  const family = `${prefix}-`
+  const occupied = rows
     .map((row) => String(row.boq_number || '').trim().toUpperCase())
-    .filter((value) => value.startsWith(`${prefix}-`))
+    .filter((value) => value.startsWith(family))
+  const maxNumber = occupied
     .map((value) => {
       const match = value.match(/-(\d+)$/)
       return match ? Number(match[1]) : null
@@ -152,5 +156,5 @@ export function getNextBoqNumber(
     .filter((value): value is number => Number.isFinite(value))
     .reduce((max, value) => Math.max(max, value), 0)
 
-  return `${prefix}-${String(maxNumber + 1).padStart(3, '0')}`
+  return nextAutomaticNumber(family, cursor, occupied, maxNumber).candidate
 }

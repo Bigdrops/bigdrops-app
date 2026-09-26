@@ -14,6 +14,8 @@ import { validateProjectAssignment } from '@/domain/projects'
 import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import type { ComputedItem, ComputedGroup } from '@/lib/Calculations'
@@ -81,6 +83,8 @@ interface UseQuotationSaveParams {
   documentPrefixes: any
   isCreate: boolean
   isEdit: boolean
+  /** True when the number field holds an explicitly typed value (not an untouched pre-fill). */
+  numberIsManual: boolean
   id: string | undefined
   navigate: (path: string) => void
   onInvalidRow: (index: number | null) => void
@@ -243,7 +247,12 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
     }
 
     if (isCreate) {
-      return withUniqueRetry(
+      // Manual numbers go first and stay authoritative; untouched pre-fills
+      // and empty fields take the automatic path with collision retry.
+      const manualNumber = input.numberIsManual ? String(payload.quotation_number || '').trim() || undefined : undefined
+      const quotationPrefix = resolvePrefix(documentPrefixes, 'quotation')
+      const quotationFamily = `${quotationPrefix}-`
+      const created = await withUniqueRetry(
         async (candidateNumber: string) => {
           payload.quotation_number = candidateNumber
           const result = await (tenantClient.from('quotations') as any).insert([payload]).select().single()
@@ -254,10 +263,23 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
           return result
         },
         async () => {
-          const { data: rows } = await tenantClient.from('quotations').select('quotation_number')
-          return getNextQuotationNumber(rows || [], resolvePrefix(documentPrefixes, 'quotation'))
+          const [{ data: rows }, cursor] = await Promise.all([
+            tenantClient.from('quotations').select('quotation_number'),
+            fetchAutoCursor(tenantClient, quotationFamily),
+          ])
+          return getNextQuotationNumber(rows || [], quotationPrefix, cursor)
         },
+        manualNumber,
       )
+      // Advance the automatic cursor only for system-generated numbers.
+      // Manual numbers never move it.
+      if (!created.error && !manualNumber) {
+        const seq = parseTrailingSequence(
+          (created.data as { quotation_number?: string | null } | null)?.quotation_number ?? payload.quotation_number,
+        )
+        if (seq !== null) await advanceAutoCursor(tenantClient, quotationFamily, seq)
+      }
+      return created
     }
     const { data: updated, error } = await (tenantClient.from('quotations') as any).update(payload).eq('id', id).select().single()
     if (isSingleObjectCoercionError(error)) {

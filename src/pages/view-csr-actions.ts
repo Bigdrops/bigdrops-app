@@ -1,5 +1,8 @@
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import type { TenantClient } from '@/lib/tenantClient'
+import { resolvePrefix } from '@/domain/prefixConstants'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 
 export async function archiveCSRRecord(id: string, tenantClient: TenantClient) {
   const { error } = await tenantClient.from('csrs').update({ archived_at: new Date().toISOString() }).eq('id', id)
@@ -28,7 +31,7 @@ export async function duplicateCSRRecord(id: string, tenantClient: TenantClient)
   const { data: original, error: fetchError } = await tenantClient.from('csrs').select('*').eq('id', id).single()
   if (fetchError || !original) throw new Error(fetchError?.message || 'CSR not found')
 
-  const { getNextCsrNumber } = await import('@/components/csr/csrUtils')
+  const { getNextCsrNumber, csrFamilyFor } = await import('@/domain/csr/csrNumbering')
 
   // ponytail: identity fields cleared per Law 2 — preserve equipment details only
   const { id: _id, created_at: _ca, updated_at: _ua, csr_number: _wn,
@@ -51,14 +54,22 @@ export async function duplicateCSRRecord(id: string, tenantClient: TenantClient)
   }
 
   const regenerateNumber = async () => {
-    const { data: latestRows } = await tenantClient
-      .from('csrs')
-      .select('csr_number')
-      .order('created_at', { ascending: false })
-      .limit(1)
-    return getNextCsrNumber(latestRows?.[0]?.csr_number || null)
+    const [{ data: latestRows }, { data: settingsRow }] = await Promise.all([
+      tenantClient
+        .from('csrs')
+        .select('csr_number')
+        .order('created_at', { ascending: false })
+        .limit(1000),
+      tenantClient.from('settings').select('document_prefixes').limit(1).single(),
+    ])
+    const csrPrefix = resolvePrefix((settingsRow as any)?.document_prefixes, 'csr')
+    const numbers = (latestRows || []).map((r: any) => String(r?.csr_number || ''))
+    const cursor = await fetchAutoCursor(tenantClient, csrFamilyFor(csrPrefix, numbers[0] || null))
+    return getNextCsrNumber(numbers[0] || null, csrPrefix, cursor, numbers)
   }
 
+  // System duplicate flow: no user-supplied number exists, so the first
+  // candidate stays automatic and keeps collision retry (no initialValue).
   const { data: created, error: insertError } = await withUniqueRetry(
     async (candidateNumber) => {
       const { data, error } = await tenantClient.from('csrs').insert([{
@@ -68,8 +79,15 @@ export async function duplicateCSRRecord(id: string, tenantClient: TenantClient)
       return { data, error }
     },
     regenerateNumber,
-    await regenerateNumber(),
   )
+
+  if (!insertError && created) {
+    const savedNumber = String((created as { csr_number?: string | null })?.csr_number || '')
+    const { data: settingsRow } = await tenantClient.from('settings').select('document_prefixes').limit(1).single()
+    const csrPrefix = resolvePrefix((settingsRow as any)?.document_prefixes, 'csr')
+    const seq = parseTrailingSequence(savedNumber)
+    if (seq !== null) await advanceAutoCursor(tenantClient, csrFamilyFor(csrPrefix, savedNumber), seq)
+  }
 
   if (insertError || !created) {
     throw insertError || new Error('CSR duplicate failed')

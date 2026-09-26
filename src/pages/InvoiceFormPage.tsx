@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useEntity } from '@/lib/tenant/contexts'
@@ -24,6 +24,7 @@ import type {
 } from '@/domain/invoice'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { fetchAutoCursor } from '@/domain/documentNumbering'
 import {
   buildCalculationInputs,
   useInvoiceColumns,
@@ -264,16 +265,28 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     }))
   }, [isCreate, projectPrefill.clientId, projectPrefill.clientName, projectPrefill.projectId])
 
+  // Last system-generated number shown in the field. A differing field
+  // value means the user explicitly typed it (manual identifier).
+  const autoNumberRef = useRef('')
+
   useEffect(() => {
     if (!isCreate || prefill || !tenantClient.isReady) return
-    tenantClient
-      .from('invoices')
-      .select('invoice_number')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        const newNumber = getNextInvoiceNumber(data || [], resolvePrefix(settings?.document_prefixes, 'invoice'))
-        setInvoice((current) => ({ ...current!, invoice_number: newNumber }))
-      })
+    let cancelled = false
+    Promise.all([
+      tenantClient.from('invoices').select('invoice_number'),
+      fetchAutoCursor(tenantClient, `${resolvePrefix(settings?.document_prefixes, 'invoice')}-`),
+    ]).then(([{ data }, cursor]) => {
+      if (cancelled) return
+      const newNumber = getNextInvoiceNumber(
+        data || [],
+        resolvePrefix(settings?.document_prefixes, 'invoice'),
+        cursor,
+      )
+      autoNumberRef.current = newNumber
+      // Never clobber a manually entered number (e.g. typed before fetch resolves).
+      setInvoice((current) => (current!.invoice_number?.trim() ? current : { ...current!, invoice_number: newNumber }))
+    })
+    return () => { cancelled = true }
   }, [isCreate, prefill, settings?.document_prefixes, tenantClient.isReady, tenantClient.schemaName])
 
   useEffect(() => {
@@ -316,6 +329,7 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
       state: {
         prefill: {
           ...clonedInvoice,
+          invoice_number: '',
           client_id: null,
           client_name: '',
           project_id: null,
@@ -398,6 +412,10 @@ export default function InvoiceFormPage({ mode }: InvoiceFormPageProps) {
     initialInvoiceSnapshot: hydration.initialInvoiceSnapshot,
     baseCustomFields: hydration.baseCustomFields,
     documentPrefixes: settings?.document_prefixes,
+    numberIsManual:
+      isCreate &&
+      !!invoice?.invoice_number?.trim() &&
+      invoice.invoice_number !== autoNumberRef.current,
     navigate,
     onInvalidRow: setInvalidRowIndex,
   })

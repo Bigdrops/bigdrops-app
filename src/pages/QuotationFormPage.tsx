@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { PdfOutputSettings } from '@/components/PdfOutputSettings'
@@ -15,6 +15,7 @@ import type { ExtraCharge, InvoiceFieldEntry, InvoiceItem } from '@/domain/invoi
 import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
 import {
   buildQuotationFormState,
+  getNextQuotationNumber,
   type DbQuotation,
   type DbQuotationItem,
   quotationImportAdapter,
@@ -30,6 +31,7 @@ import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { useSettings } from '@/hooks/useSettings'
 import { useEntity } from '@/lib/tenant/contexts'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { fetchAutoCursor } from '@/domain/documentNumbering'
 import { formatQuotationStatus } from '../components/quotation/quotationStatus'
 import type {
   BankAccountRow,
@@ -67,6 +69,9 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [identityLockDialog, setIdentityLockDialog] = useState<{ open: boolean; field: 'client' | 'quotation_number' | null }>({ open: false, field: null })
+  // Last system-generated number shown in the field. A differing field
+  // value means the user explicitly typed it (manual identifier).
+  const autoNumberRef = useRef('')
   const [quotation, setQuotation] = useState<QuotationEditorState>({
     quotation_number: '',
     po_number: '',
@@ -354,16 +359,16 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
 
         /* ── Normal create mode: generate next number, blank form ── */
         const { data } = await tenantClient.from('quotations').select('quotation_number')
-        const nums = (data || []).map((q: { quotation_number?: string | null }) => {
-          const match = q.quotation_number?.match(/(\d+)$/)
-          return match ? parseInt(match[1], 10) : 0
-        })
-        const next = Math.max(0, ...nums) + 1
         const quotationPrefix = resolvePrefix(settings?.document_prefixes, 'quotation')
-        const nextQuotationNumber = `${quotationPrefix}-${String(next).padStart(4, '0')}`
+        const nextQuotationNumber = getNextQuotationNumber(
+          (data || []) as Array<{ quotation_number?: string | null }>,
+          quotationPrefix,
+          await fetchAutoCursor(tenantClient, `${quotationPrefix}-`),
+        )
+        autoNumberRef.current = nextQuotationNumber
         setQuotation((current) => ({
           ...current,
-          quotation_number: nextQuotationNumber,
+          quotation_number: current.quotation_number || nextQuotationNumber,
         }))
         setAttachments([])
         setExtraCharges([])
@@ -519,6 +524,10 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
     showItemImages,
     documentTotals: totals,
     documentPrefixes: settings?.document_prefixes,
+    numberIsManual:
+      isCreate &&
+      !!quotation?.quotation_number?.trim() &&
+      quotation.quotation_number !== autoNumberRef.current,
     isCreate,
     isEdit,
     id: quotationId,

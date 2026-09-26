@@ -24,6 +24,9 @@ import { validateProjectAssignment } from '@/domain/projects'
 import { createCsr, updateCsr, sanitizeCsrInsertPayload } from '@/domain/csr/csrService'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { csrFamilyFor } from '@/domain/csr/csrNumbering'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { useEntity } from '@/lib/tenant/contexts'
 
@@ -87,6 +90,9 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
       : [{ ...DEFAULT_MATERIAL_ROW }])
   const [comments] = useState('')
   const csrNumberPopulated = useRef(false)
+  // Last system-generated number shown in the field. A differing field
+  // value means the user explicitly typed it (manual identifier).
+  const autoNumberRef = useRef('')
   const [identityLockDialog, setIdentityLockDialog] = useState<{ open: boolean; field: 'client' | 'csr_number' | null }>({ open: false, field: null })
 
   /* ── Create-mode init effects ── */
@@ -116,14 +122,17 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         .from('csrs')
         .select('csr_number')
         .order('created_at', { ascending: false })
-        .order('csr_number', { ascending: false })
-        .limit(1)
+        .limit(1000)
 
-      const latestNumber = latestRows?.[0]?.csr_number || ''
-      const nextNumber = getNextCsrNumber(latestNumber, resolvePrefix(settings?.document_prefixes, 'csr'))
+      const csrPrefix = resolvePrefix(settings?.document_prefixes, 'csr')
+      const numbers = (latestRows || []).map((r: any) => String(r?.csr_number || ''))
+      const family = csrFamilyFor(csrPrefix, numbers[0] || null)
+      const cursor = await fetchAutoCursor(tenantClient, family)
+      const nextNumber = getNextCsrNumber(numbers[0] || null, csrPrefix, cursor, numbers)
 
       if (mounted) {
         csrNumberPopulated.current = true
+        autoNumberRef.current = nextNumber
         setCsr((current: any) => ({
           ...current,
           csr_number: current.csr_number || nextNumber,
@@ -307,14 +316,20 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         .select('csr_number')
         .order('created_at', { ascending: false })
         .limit(1000)
-      const latestNumber = existingRows?.[existingRows.length - 1]?.csr_number || null
-      const blankNumber = getNextCsrNumber(latestNumber, resolvePrefix(settings?.document_prefixes, 'csr'))
+      const csrPrefix = resolvePrefix(settings?.document_prefixes, 'csr')
+      const numbers = (existingRows || []).map((r: any) => String(r?.csr_number || ''))
+      const family = csrFamilyFor(csrPrefix, numbers[0] || null)
+      const cursor = await fetchAutoCursor(tenantClient, family)
+      const blankNumber = getNextCsrNumber(numbers[0] || null, csrPrefix, cursor, numbers)
+      const blankSeq = parseTrailingSequence(blankNumber)
 
       const { error: logError } = await tenantClient.from('blank_csr_logs').insert([{
         assigned_csr_number: blankNumber,
       }])
       if (logError) {
         console.warn('[CsrFormPage] Failed to log blank CSR:', logError)
+      } else if (blankSeq !== null) {
+        await advanceAutoCursor(tenantClient, family, blankSeq)
       }
 
       const previewData = buildCsrPreviewData(
@@ -395,6 +410,13 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
       setSaving(true)
       try {
+        // The field is user-editable: a value differing from the last
+        // system pre-fill is an explicitly typed manual identifier.
+        const manualNumber =
+          String(csr.csr_number || '').trim() && csr.csr_number !== autoNumberRef.current
+            ? String(csr.csr_number).trim()
+            : undefined
+        const csrPrefix = resolvePrefix(settings?.document_prefixes, 'csr')
         const { data: savedCsr, error: saveError } = await withUniqueRetry(
           async (candidateNumber: string) => {
             csrData.csr_number = candidateNumber
@@ -410,11 +432,22 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
               .from('csrs')
               .select('csr_number')
               .order('created_at', { ascending: false })
-              .limit(1)
-            return getNextCsrNumber(rows?.[0]?.csr_number || null, resolvePrefix(settings?.document_prefixes, 'csr'))
+              .limit(1000)
+            const numbers = (rows || []).map((r: any) => String(r?.csr_number || ''))
+            const family = csrFamilyFor(csrPrefix, numbers[0] || null)
+            const cursor = await fetchAutoCursor(tenantClient, family)
+            return getNextCsrNumber(numbers[0] || null, csrPrefix, cursor, numbers)
           },
-          csr.csr_number,
+          manualNumber,
         )
+        // Advance the automatic cursor only for system-generated numbers.
+        if (!saveError && savedCsr && !manualNumber) {
+          const seq = parseTrailingSequence((savedCsr as { csr_number?: string | null })?.csr_number ?? csrData.csr_number)
+          if (seq !== null) {
+            const numbers = [String((savedCsr as { csr_number?: string | null })?.csr_number || '')]
+            await advanceAutoCursor(tenantClient, csrFamilyFor(csrPrefix, numbers[0]), seq)
+          }
+        }
 
         if (saveError || !savedCsr) {
           throw saveError || new Error('CSR save returned no data')

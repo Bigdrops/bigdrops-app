@@ -19,6 +19,8 @@ import { validateProjectAssignment } from '@/domain/projects'
 import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { assertIdentityImmutable } from '@/domain/invoice/assertIdentityImmutable'
@@ -100,6 +102,8 @@ interface UseInvoiceSaveParams {
   documentPrefixes: any
   isCreate: boolean
   isEdit: boolean
+  /** True when the number field holds an explicitly typed value (not an untouched pre-fill). */
+  numberIsManual: boolean
   id: string | undefined
   navigate: (path: string) => void
   onInvalidRow: (index: number | null) => void
@@ -269,11 +273,27 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
   async persist(input, payload, { isCreate, id }) {
     const { tenantClient, entityId } = input
     const itemsToSave = input.items.map((item, index) => toDbItem(item, null, index))
+    const invoicePrefix = resolvePrefix(input.documentPrefixes, 'invoice')
+    const invoiceFamily = `${invoicePrefix}-`
+    const regenerateInvoiceNumber = async () => {
+      const [{ data: rows }, cursor] = await Promise.all([
+        tenantClient.from('invoices').select('invoice_number'),
+        fetchAutoCursor(tenantClient, invoiceFamily),
+      ])
+      return getNextInvoiceNumber(rows || [], invoicePrefix, cursor)
+    }
+    const confirmInvoiceNumber = async (savedNumber: string | null | undefined) => {
+      const seq = parseTrailingSequence(savedNumber)
+      if (seq !== null) await advanceAutoCursor(tenantClient, invoiceFamily, seq)
+    }
 
     // Phase 3: composite save (invoice + items) is atomic via the tenant
     // transaction RPC when the entity id is available (post-cutover).
     if (entityId && isCreate) {
-      return withUniqueRetry(
+      // Manual numbers go first and stay authoritative; untouched pre-fills
+      // and empty fields take the automatic path with collision retry.
+      const manualNumber = input.numberIsManual ? String(payload.invoice_number || '').trim() || undefined : undefined
+      const created = await withUniqueRetry(
         async (candidateNumber: string) => {
           payload.invoice_number = candidateNumber
           const { data, error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
@@ -316,11 +336,17 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
             error: null,
           }
         },
-        async () => {
-          const { data: rows } = await tenantClient.from('invoices').select('invoice_number')
-          return getNextInvoiceNumber(rows || [], resolvePrefix(input.documentPrefixes, 'invoice'))
-        },
+        regenerateInvoiceNumber,
+        manualNumber,
       )
+      // Advance the automatic cursor only for system-generated numbers.
+      // Manual numbers never move it.
+      if (!created.error && !manualNumber) {
+        await confirmInvoiceNumber(
+          (created.data as { invoice_number?: string | null } | null)?.invoice_number ?? payload.invoice_number,
+        )
+      }
+      return created
     }
 
     if (entityId && !isCreate) {
@@ -336,16 +362,21 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
 
     // Pre-cutover fallback: sequential tenant writes (no entity id available).
     if (isCreate) {
-      return withUniqueRetry(
+      const manualNumber = input.numberIsManual ? String(payload.invoice_number || '').trim() || undefined : undefined
+      const created = await withUniqueRetry(
         async (candidateNumber: string) => {
           payload.invoice_number = candidateNumber
           return (tenantClient.from('invoices') as any).insert([payload]).select().single() as Promise<{ data: any; error: any }>
         },
-        async () => {
-          const { data: rows } = await tenantClient.from('invoices').select('invoice_number')
-          return getNextInvoiceNumber(rows || [], resolvePrefix(input.documentPrefixes, 'invoice'))
-        },
+        regenerateInvoiceNumber,
+        manualNumber,
       )
+      if (!created.error && !manualNumber) {
+        await confirmInvoiceNumber(
+          (created.data as { invoice_number?: string | null } | null)?.invoice_number ?? payload.invoice_number,
+        )
+      }
+      return created
     }
     const { error } = await (tenantClient.from('invoices') as any).update(payload).eq('id', id)
     return { data: null, error }

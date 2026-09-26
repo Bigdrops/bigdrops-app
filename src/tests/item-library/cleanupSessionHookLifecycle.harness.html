@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cleanup Session Hook Lifecycle Harness</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React from 'react'
+      import { createRoot } from 'react-dom/client'
+      import { ItemLibraryAdvancedCleanupPanel } from '/src/modules/item-library/components/ItemLibraryAdvancedCleanupPanel.tsx'
+
+      const items = Array.from({ length: 175 }, (_, index) => ({
+        item_id: `item-${String(index + 1).padStart(3, '0')}`,
+        name: `Catalog Item ${index + 1}`,
+        standard_price: null,
+        last_sold_price: null,
+        usage_count: index + 1,
+        appears_in_invoice: true,
+        appears_in_quotation: index % 2 === 0,
+        is_active: true,
+      }))
+
+      const duplicateGroups = [
+        {
+          group_id: 'item-001::item-002',
+          label: 'Catalog Item 1',
+          reason: 'Similar wording',
+          normalized_label: 'catalog item 1',
+          members: [
+            { item_id: 'item-001', name: 'Catalog Item 1', usage_count: 1, last_sold_price: null },
+            { item_id: 'item-002', name: 'Catalog Item 2', usage_count: 2, last_sold_price: null },
+          ],
+        },
+        {
+          group_id: 'item-051::item-052',
+          label: 'Catalog Item 51',
+          reason: 'Similar wording',
+          normalized_label: 'catalog item 51',
+          members: [
+            { item_id: 'item-051', name: 'Catalog Item 51', usage_count: 51, last_sold_price: null },
+            { item_id: 'item-052', name: 'Catalog Item 52', usage_count: 52, last_sold_price: null },
+          ],
+        },
+      ]
+
+      window.__cleanupApplyCalls = []
+
+      createRoot(document.getElementById('root')).render(
+        React.createElement(ItemLibraryAdvancedCleanupPanel, {
+          workflow: 'full_catalog',
+          applyLoading: false,
+          items,
+          aliases: [],
+          duplicateGroups,
+          onApplyProposals: async (exportPayload, proposals) => {
+            window.__cleanupApplyCalls.push({ exportPayload, proposals })
+            return []
+          },
+        }),
+      )
+    </script>
+  </body>
+</html>

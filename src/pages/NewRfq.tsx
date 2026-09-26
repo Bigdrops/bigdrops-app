@@ -9,6 +9,8 @@ import { useEntity } from '@/lib/tenant/contexts'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { useSettings } from '@/hooks/useSettings'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 
 export default function NewRfq() {
@@ -19,11 +21,11 @@ export default function NewRfq() {
 
   const handleSave = async (rfq: Rfq, items: RfqItem[]) => {
     setSaving(true);
-    
-    // Get next RFQ number
-    const { data: existingRfqs } = await tenantClient.from('rfqs').select('rfq_number');
+
     const rfqPrefix = resolvePrefix(settings?.document_prefixes, 'rfq');
-    const initialRfqNumber = rfq.rfq_number || getNextRfqNumber(existingRfqs || [], rfqPrefix);
+    const rfqFamily = `${rfqPrefix}-`;
+    // The field starts empty, so any non-empty value was explicitly typed.
+    const manualNumber = String(rfq.rfq_number || '').trim() || undefined;
 
     const { data: createdRfq, error: rfqError } = await withUniqueRetry(
       async (candidateNumber: string) => {
@@ -31,10 +33,20 @@ export default function NewRfq() {
         return tenantClient.from('rfqs').insert([dbRfq]).select().single();
       },
       async () => {
-        const { data: rows } = await tenantClient.from('rfqs').select('rfq_number');
-        return getNextRfqNumber(rows || [], rfqPrefix);
+        const [{ data: rows }, cursor] = await Promise.all([
+          tenantClient.from('rfqs').select('rfq_number'),
+          fetchAutoCursor(tenantClient, rfqFamily),
+        ]);
+        return getNextRfqNumber(rows || [], rfqPrefix, cursor);
       },
+      manualNumber,
     );
+
+    // Advance the automatic cursor only for system-generated numbers.
+    if (!rfqError && createdRfq && !manualNumber) {
+      const seq = parseTrailingSequence((createdRfq as { rfq_number?: string | null })?.rfq_number);
+      if (seq !== null) await advanceAutoCursor(tenantClient, rfqFamily, seq);
+    }
 
     if (rfqError || !createdRfq) {
       feedback.error('Save failed', {

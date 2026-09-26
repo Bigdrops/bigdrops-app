@@ -22,11 +22,11 @@ import type { TeamMember, TeamInvitation } from '@/domain/team/teamTypes'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PERMISSION_LABELS: Record<string, string> = Object.fromEntries(ROLE_RESOURCES)
-const EFFECTIVE_ACCESS_GROUPS = [
+const EFFECTIVE_ACCESS_GROUPS: Array<{ name: string; resources: string[] }> = [
   { name: 'Documents', resources: ['invoice', 'quotation', 'waybill', 'boq', 'rfq', 'csr', 'letter'] },
   { name: 'Operations', resources: ['project', 'project_document', 'client', 'item', 'payment', 'receipt'] },
   { name: 'Company', resources: ['setting', 'signatory', 'bank_account', 'tax_setting', 'account', 'period', 'journal', 'source_transaction', 'audit', 'device'] },
-] as const
+]
 
 function EffectiveAccessSummary({ pairs }: { pairs: Array<{ resource: string; action: string }> }) {
   const wildcard = pairs.filter(pair => pair.resource === '*')

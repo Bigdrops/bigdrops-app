@@ -23,25 +23,31 @@ export async function duplicateRFQRecord(id: string, tenantClient: TenantClient)
   if (fetchError || !original) throw new Error(fetchError?.message || 'RFQ not found')
 
   const { id: _id, created_at: _ca, updated_at: _ua, rfq_number: _wn, ...rest } = original
-  
-  // Find next number
-  const { data: all } = await tenantClient.from('rfqs').select('rfq_number').like('rfq_number', 'RFQ-%').order('created_at', { ascending: false })
-  let nextNum = 1
-  if (all && all.length > 0) {
-    const nums = all
-      .map((entry: any) => parseInt(String(entry.rfq_number || '').replace('RFQ-', ''), 10))
-      .filter((value: number) => !Number.isNaN(value))
-    nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
-  }
+
+  // Find next number under the tenant's configured prefix family.
+  const { data: settingsRow } = await tenantClient.from('settings').select('document_prefixes').limit(1).single()
+  const rfqPrefix = resolvePrefix((settingsRow as any)?.document_prefixes, 'rfq')
+  const rfqFamily = `${rfqPrefix}-`
+  const { data: all } = await tenantClient.from('rfqs').select('rfq_number').order('created_at', { ascending: false })
+  const { getNextRfqNumber } = await import('@/domain/rfq/normalize')
+  const { fetchAutoCursor, advanceAutoCursor } = await import('@/domain/documentNumbering')
+  const { parseTrailingSequence } = await import('@/domain/prefixConstants')
+  const nextNumber = getNextRfqNumber(
+    (all || []) as Array<{ rfq_number: string }>,
+    rfqPrefix,
+    await fetchAutoCursor(tenantClient, rfqFamily),
+  )
 
   const { data: created, error: insertError } = await tenantClient.from('rfqs').insert([{
     ...rest,
-    rfq_number: `RFQ-${String(nextNum).padStart(4, '0')}`,
+    rfq_number: nextNumber,
     status: 'open',
     issue_date: new Date().toISOString().split('T')[0],
   }]).select().single()
 
   if (insertError) throw insertError
+  const duplicatedSeq = parseTrailingSequence((created as { rfq_number?: string | null })?.rfq_number)
+  if (duplicatedSeq !== null) await advanceAutoCursor(tenantClient, rfqFamily, duplicatedSeq)
   return created
 }
 
@@ -59,13 +65,19 @@ export async function convertRFQToQuotation({
   const [{ data: quotationRows }] = await Promise.all([
     tenantClient.from('quotations').select('quotation_number'),
   ])
-  
+
   const { getNextQuotationNumber } = await import('@/domain/quotation')
   const { buildTrailLink, withSourceTrail, toQuotationItemRow } = await import('@/domain/documentConversion')
-  
+  const { fetchAutoCursor, advanceAutoCursor } = await import('@/domain/documentNumbering')
+  const { parseTrailingSequence } = await import('@/domain/prefixConstants')
+
+  const quotationPrefix = resolvePrefix(prefixes, 'quotation')
+  const quotationFamily = `${quotationPrefix}-`
+  const cursor = await fetchAutoCursor(tenantClient, quotationFamily)
   const nextQuotationNumber = getNextQuotationNumber(
     (quotationRows || []) as Array<{ quotation_number?: string | null }>,
-    resolvePrefix(prefixes, 'quotation'),
+    quotationPrefix,
+    cursor,
   )
   
   const payload = {
@@ -92,6 +104,10 @@ export async function convertRFQToQuotation({
 
   const { data: createdQuotation, error } = await tenantClient.from('quotations').insert([payload]).select().single()
   if (error || !createdQuotation) throw new Error(error?.message || 'Failed to create quotation')
+
+  // Converted documents consume automatic numbers: advance the cursor.
+  const convertedSeq = parseTrailingSequence((createdQuotation as { quotation_number?: string | null })?.quotation_number)
+  if (convertedSeq !== null) await advanceAutoCursor(tenantClient, quotationFamily, convertedSeq)
 
   const itemRows = items
     .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))

@@ -4,7 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import WaybillForm from '../components/waybill/WaybillForm'
 import WaybillGatewayOverlay from '../components/waybill/WaybillGatewayOverlay'
 import { saveWaybill } from '../domain/waybill/waybillMutations'
-import { getNextWaybillNumber, mapDbWaybill, parseWaybillCustomFields, collectWaybillCustomColumns } from '../components/waybill/waybillUtils'
+import { getNextWaybillNumber, getWaybillRoutingPrefix, mapDbWaybill, parseWaybillCustomFields, collectWaybillCustomColumns } from '../components/waybill/waybillUtils'
+import { fetchAutoCursor, advanceAutoCursor } from '@/domain/documentNumbering'
+import { parseTrailingSequence } from '@/domain/prefixConstants'
 import type { Waybill, WaybillType, WaybillItem, WaybillCustomFields, WaybillCustomColumn } from '../components/waybill/waybillUtils'
 import type { WaybillFormData } from '../components/waybill/WaybillForm'
 import { feedback } from '../lib/feedback'
@@ -42,13 +44,17 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
       setLoadingNumber(true)
       try {
         const db = tenantClient
-        const { data: existingWaybills } = await db
-          .from('waybills')
-          .select('waybill_number')
-          .order('created_at', { ascending: false })
-          .limit(1000)
+        const prefix = resolvePrefix(settings?.document_prefixes, 'waybill')
+        const [{ data: existingWaybills }, cursor] = await Promise.all([
+          db
+            .from('waybills')
+            .select('waybill_number')
+            .order('created_at', { ascending: false })
+            .limit(1000),
+          fetchAutoCursor(db, getWaybillRoutingPrefix(type, prefix)),
+        ])
         const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
-        const number = getNextWaybillNumber(type, existingNumbers, resolvePrefix(settings?.document_prefixes, 'waybill'))
+        const number = getNextWaybillNumber(type, existingNumbers, prefix, 'normal', cursor)
         if (!cancelled) setWaybillNumber(number)
       } finally {
         if (!cancelled) setLoadingNumber(false)
@@ -104,7 +110,9 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
           ...(existingWaybills.data || []).map((w) => w.waybill_number || ''),
           ...(existingBlanks.data || []).map((b) => b.assigned_waybill_number || ''),
         ].filter(Boolean)
-        const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, prefix, 'blank')
+        const family = getWaybillRoutingPrefix(blankType, prefix, 'blank')
+        const cursor = await fetchAutoCursor(db, family)
+        const waybillNumber = getNextWaybillNumber(blankType, existingNumbers, prefix, 'blank', cursor)
 
         const { error: logError } = await db.from('blank_waybill_logs').insert([{
           assigned_waybill_number: waybillNumber,
@@ -112,6 +120,8 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
         }])
 
         if (!logError) {
+          const blankSeq = parseTrailingSequence(waybillNumber)
+          if (blankSeq !== null) await advanceAutoCursor(db, family, blankSeq)
           const { downloadBlankWaybillTemplate } = await import('../components/waybill/blankWaybillTemplate')
           await downloadBlankWaybillTemplate({
             type: blankType,
@@ -172,6 +182,11 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
         mode: 'new',
         prefixes: settings?.document_prefixes,
         tenantClient,
+        // The page's number is the last system pre-fill; a differing form
+        // value means the user explicitly typed it (manual identifier).
+        numberIsManual:
+          !!String(data.waybill.waybill_number || '').trim() &&
+          data.waybill.waybill_number !== waybillNumber,
       })
       feedback.success('Waybill created')
       navigate(`/waybills/${result.waybillId}`)

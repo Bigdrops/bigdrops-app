@@ -4,22 +4,22 @@ import type {
   DocumentTrailLink,
   InvoiceItem,
 } from '@/domain/invoice'
+import { nextAutomaticNumber, parseTrailingSequence } from '@/domain/prefixConstants'
 
 export function getNextInvoiceNumber(
   rows: Array<{ invoice_number?: string | null }>,
-  prefix = 'SASINV-B',
+  prefix = 'INV',
+  cursor?: number,
 ): string {
-  const maxNumber = rows
-    .map((row) => String(row.invoice_number || '').trim().toUpperCase())
-    .filter((value) => value.startsWith(prefix.toUpperCase()))
-    .map((value) => {
-      const match = value.match(/(\d+)$/)
-      return match ? Number(match[1]) : null
-    })
+  const family = `${prefix}-`
+  const upper = rows.map((row) => String(row.invoice_number || '').trim().toUpperCase())
+  const occupied = upper.filter((value) => value.startsWith(prefix.toUpperCase()))
+  const maxNumber = occupied
+    .map((value) => parseTrailingSequence(value))
     .filter((value): value is number => Number.isFinite(value))
     .reduce((max, value) => Math.max(max, value), 0)
 
-  return `${prefix}${String(maxNumber + 1).padStart(3, '0')}`
+  return nextAutomaticNumber(family, cursor, occupied, maxNumber).candidate
 }
 
 export function parseDocumentCustomFields(raw: unknown): Record<string, unknown> {

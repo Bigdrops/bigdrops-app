@@ -161,9 +161,14 @@ export async function convertQuotationToInvoice(
     tenantClient.from('invoices').select('invoice_number'),
     tenantClient.from('quotations').select('custom_fields').eq('id', id).single(),
   ])
+  const { fetchAutoCursor, advanceAutoCursor } = await import('@/domain/documentNumbering')
+  const { parseTrailingSequence } = await import('@/domain/prefixConstants')
+  const invoicePrefix = resolvePrefix(prefixes, 'invoice')
+  const invoiceFamily = `${invoicePrefix}-`
   const nextInvoiceNumber = getNextInvoiceNumber(
     (invoiceRows || []) as Array<{ invoice_number?: string | null }>,
-    resolvePrefix(prefixes, 'invoice'),
+    invoicePrefix,
+    await fetchAutoCursor(tenantClient, invoiceFamily),
   )
   const quotationCustomFields = parseDocumentCustomFields(latestQuotation?.custom_fields || quotation.custom_fields)
   const sourceLink = buildTrailLink({
@@ -244,6 +249,9 @@ export async function convertQuotationToInvoice(
     project_id: createdInvoice.project_id ?? quotation.project_id ?? null,
     po_number: createdInvoice.po_number ?? quotation.po_number ?? null,
   })
+  // Converted documents consume automatic numbers: advance the cursor.
+  const convertedSeq = parseTrailingSequence(createdInvoice.invoice_number)
+  if (convertedSeq !== null) await advanceAutoCursor(tenantClient, invoiceFamily, convertedSeq)
   const updatedQuotationFields = appendDerivedTrail(quotationCustomFields, derivedLink)
   const quotationBeforeLink = {
     ...quotation,

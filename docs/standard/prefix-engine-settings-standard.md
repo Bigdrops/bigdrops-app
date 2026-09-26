@@ -440,6 +440,63 @@ Per `docs/prd/pdf-rendering-roadmap.md`, blank downloads will eventually use a s
 
 ---
 
+## 5. Automatic vs Manual Number Allocation Contract (Normative)
+
+Automatic sequence progression and manual document numbers are different concepts.
+
+### 5.1 Definitions
+
+- **Automatic allocation**: the application derives the next identifier from the persisted per-family automatic cursor (see §5.4) plus a skip over occupied identifiers.
+- **Automatic sequence (cursor)**: a per-family counter tracking automatic allocation progression. It advances only when an automatic allocation succeeds.
+- **Manual identifier**: the exact string a user typed into a document-number field. It occupies only itself.
+- **Occupied identifier**: any identifier already stored in the family, automatic or manual.
+- **Number family**: the exact string prefix of a serial run, including routing or variant tokens (for example `SASINV`, `WBL-E-`, `SASCSR-M-`).
+
+### 5.2 Normative example
+
+Given an empty `K` family:
+
+1. Automatic allocation MUST yield `K-000001`.
+2. Automatic allocation MUST yield `K-000002`.
+3. Manual `KP-000007` MUST NOT affect the `K` cursor (different family).
+4. Automatic allocation MUST yield `K-000003`.
+5. Manual `K-000005` MUST NOT move the cursor. The cursor stays at 4.
+6. Automatic allocation MUST yield `K-000004`.
+7. Automatic allocation MUST yield `K-000006`, skipping occupied `K-000005`.
+
+### 5.3 Binding rules
+
+- A manual number MUST NOT advance the automatic sequence, even when it syntactically belongs to the active automatic family.
+- A manual number MUST reserve exactly its own identifier through the existing database uniqueness constraint. Nothing else is reserved.
+- Automatic allocation MUST skip occupied identifiers encountered at or above the cursor.
+- A duplicate manual identifier MUST fail through the existing duplicate/uniqueness error path. It MUST NEVER silently transform into an automatically generated identifier.
+- Automatic collision retry (see §2) remains valid for system-generated candidates only.
+- A manual identifier MUST be attempted exactly as entered. No normalization, padding, or prefix repair may alter it before the save attempt.
+- Sequence gaps from skips, retries, or abandoned forms are permitted. Duplicate identifiers are forbidden.
+
+### 5.4 Cursor persistence binding (current)
+
+Persisted document rows carry no automatic/manual provenance, and provenance MUST NOT be inferred from number shape. The cursor therefore lives outside document rows:
+
+- Cursors persist in the tenant `settings.document_prefixes` JSONB object under the reserved key `__auto_seq`, mapping family string to next sequence integer (for example `{"SASINV": 4}`).
+- The `check_document_prefixes_format` CHECK constraint pattern-checks only the listed prefix keys. The reserved key carries a JSON object and is unaffected by the constraint. No schema migration is required for this binding.
+- Cursor values are advisory. The database uniqueness constraint always arbitrates. A stale cursor costs at most retry attempts; it can never produce a duplicate or reuse an occupied identifier, because every candidate is skip-checked against ground-truth rows and every insert runs inside `withUniqueRetry`.
+- Cursor writes are monotonic (`max(existing, used + 1)`) and best-effort. A failed bump MUST NOT fail the document creation it follows. The next allocation self-heals through skip plus retry.
+- A settings UI save MUST preserve unknown `document_prefixes` keys. Rebuilding the object from known prefix fields only (and thereby dropping `__auto_seq`) is forbidden.
+- Resetting a prefix to its default MUST clear that prefix's cursor families, so the promised fresh sequence (`{prefix}-000001`) actually restarts. Occupied historical numbers are still skipped, so a restart can never reuse an existing identifier.
+
+### 5.5 Bootstrap and legacy data
+
+- When no cursor exists for a family, the cursor initializes to one plus the maximum trailing sequence across ALL family rows, manual or automatic. This is a one-time safe over-advance: it can skip unused values but can never reuse an occupied one.
+- Historical numbers are never rewritten to fit the cursor.
+
+### 5.6 Concurrency
+
+- Two concurrent automatic allocations may read the same cursor. The uniqueness constraint rejects the loser. The loser regenerates from a freshly re-read cursor plus a fresh row scan and retries. No application-level lock is required.
+- Pre-filled but unedited form values are system candidates, not manual identifiers. Only an explicitly typed value is manual. Forms MUST NOT treat an untouched pre-filled value as manual. (Implementation note: compare against the last auto-filled value rather than tracking edit state.)
+
+---
+
 ## Appendix A — File Reference Map
 
 | File | Role |

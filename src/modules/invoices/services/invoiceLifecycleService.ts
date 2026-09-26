@@ -208,21 +208,9 @@ export async function duplicateInvoice(
   { invoice, items }: DuplicateInvoiceInput,
   tenantClient: TenantClient,
 ): Promise<DuplicateInvoicePrefill> {
-  const { data: all } = await tenantClient
-    .from("invoices")
-    .select("invoice_number")
-    .like("invoice_number", "SASINV-B%")
-    .order("created_at", { ascending: false })
-
-  let nextNum = 1
-  if (all && all.length > 0) {
-    const nums = all
-      .map((entry: any) =>
-        parseInt(String(entry.invoice_number || "").replace("SASINV-B", ""), 10)
-      )
-      .filter((value: number) => !Number.isNaN(value))
-    nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
-  }
+  // Duplicate prefills carry no number: the create form mints a fresh
+  // automatic number at save (uniform with quotation and CSR duplicates).
+  // Reserving here would strand gaps for abandoned clones.
 
   const clonedInvoice = JSON.parse(JSON.stringify(invoice))
 
@@ -255,7 +243,7 @@ export async function duplicateInvoice(
   return {
     prefill: {
       ...clonedInvoice,
-      invoice_number: `SASINV-B${String(nextNum).padStart(3, "0")}`,
+      invoice_number: '',
       client_id: null,
       client_name: "",
       project_id: null,

@@ -22,6 +22,10 @@ function tryResolve(base) {
   for (const e of allExtensions) {
     try { accessSync(base + e); return base + e } catch {}
   }
+  // Directory barrel imports (e.g. '@/domain/invoice' -> '@/domain/invoice/index.ts').
+  for (const e of allExtensions) {
+    try { accessSync(base + '/index' + e); return base + '/index' + e } catch {}
+  }
   return null
 }
 

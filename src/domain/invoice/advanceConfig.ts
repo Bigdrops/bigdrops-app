@@ -1,4 +1,4 @@
-import { AdvanceConfig } from './types'
+import type { AdvanceConfig } from './types'
 import { parseCustomFields } from './normalize'
 
 /**

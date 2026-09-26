@@ -14,6 +14,13 @@ import { fetchReleasePolicy } from '@/lib/appUpdate/releasePolicyClient'
 import { fetchApprovedRelease } from '@/lib/appUpdate/releaseDiscovery'
 import { getAppVersionInfo } from '@/lib/appUpdate/appVersion'
 import {
+  logAppUpdateDiagnostic,
+  type CheckDiagnostics,
+  type CheckReason,
+  type DiscoveryOutcome,
+} from '@/lib/appUpdate/updateDiagnostics'
+import { createCheckCoordinator } from '@/lib/appUpdate/checkCoordinator'
+import {
   loadPersistedGraceState,
   savePersistedGraceState,
   clearPersistedGraceState,
@@ -52,6 +59,8 @@ export interface CheckResult {
   state: UpdateState
   /** Approved release detail for the policy target, null when none applies. */
   release: ApprovedRelease | null
+  /** Supplemental safe diagnostics. Product state stays in `state`. */
+  diagnostics: CheckDiagnostics
 }
 
 export interface UseAppUpdateResult {
@@ -92,7 +101,7 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
   const [downloadPhase, setDownloadPhase] = useState<DownloadPhase>({ kind: 'idle' })
 
   const lastCheckAtRef = useRef(0)
-  const checkingRef = useRef(false)
+  const coordinatorRef = useRef(createCheckCoordinator<CheckResult | null>())
   const downloadingUrlRef = useRef<string | null>(null)
   const serverNowRef = useRef<number | null>(null)
   const deviceNowAtServerRef = useRef<number | null>(null)
@@ -116,11 +125,8 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     }
   }, [enabled, isAndroid, tick])
 
-  const runCheck = useCallback(
+  const runCheckInner = useCallback(
     async (force: boolean): Promise<CheckResult | null> => {
-      if (!enabled || !isAndroid) return null
-      if (checkingRef.current) return null
-
       const now = Date.now()
       if (!force && now - lastCheckAtRef.current < MIN_POLICY_FETCH_INTERVAL_MS) {
         // Throttled resume: still re-run the pure state machine against
@@ -135,10 +141,23 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
           nowMs: now,
         })
         setState(throttledState)
-        return { state: throttledState, release: null }
+        // No fetch attempted on this path: the diagnostic fields carry no
+        // fresh signal. Manual callers never receive this result (a forced
+        // request chains a fresh check instead of joining a stale one).
+        return {
+          state: throttledState,
+          release: null,
+          diagnostics: {
+            reason: 'throttled-local',
+            forced: false,
+            joinedInFlight: false,
+            policy: 'no-row',
+            discovery: 'not-attempted',
+            errorCode: null,
+          },
+        }
       }
 
-      checkingRef.current = true
       lastCheckAtRef.current = now
 
       try {
@@ -173,9 +192,20 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
 
         setState(nextState)
 
+        let reason: CheckReason = 'ok'
+        if (policyResult.diagnosis === 'transport-error') {
+          reason = 'policy-fetch-error'
+        } else if (policyResult.diagnosis === 'malformed') {
+          reason = 'policy-malformed'
+        } else if (version.versionCode === null) {
+          reason = 'version-unknown'
+        }
+
         // Release detail (approved asset URL) only matters when a policy
-        // target exists; never fetch it otherwise.
+        // target exists; never fetch it otherwise. Discovery never controls
+        // the product state resolved above.
         let approved: ApprovedRelease | null = null
+        let discovery: DiscoveryOutcome = 'not-attempted'
         if (nextState.policy) {
           if (force) {
             // Awaited so the caller receives the exact completed result.
@@ -185,6 +215,7 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
               nextState.policy.apkAssetPrefix,
             )
             setRelease(approved)
+            discovery = approved ? 'success' : 'failed'
           } else {
             void fetchApprovedRelease(
               nextState.policy.versionCode,
@@ -197,13 +228,69 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
           setRelease(null)
         }
 
-        return { state: nextState, release: approved }
+        const diagnostics: CheckDiagnostics = {
+          reason,
+          forced: force,
+          joinedInFlight: false,
+          policy: policyResult.diagnosis,
+          discovery,
+          errorCode: policyResult.errorCode,
+        }
+        logAppUpdateDiagnostic(diagnostics)
+
+        return { state: nextState, release: approved, diagnostics }
+      } catch {
+        // Truly unexpected failure (leaf operations already fail safe on
+        // their own). Preserve persisted enforcement, never block the app
+        // on missing metadata, and report a safe reason.
+        const persisted = loadPersistedGraceState()
+        const fallback = resolveUpdateState({
+          policyAvailable: false,
+          installedVersionCode: null,
+          rawPolicy: null,
+          persisted,
+          nowMs: Date.now(),
+        })
+        setState(fallback)
+        setRelease(null)
+        const fallbackDiagnostics: CheckDiagnostics = {
+          reason: 'unexpected-error',
+          forced: force,
+          joinedInFlight: false,
+          policy: 'transport-error',
+          discovery: 'not-attempted',
+          errorCode: null,
+        }
+        logAppUpdateDiagnostic(fallbackDiagnostics)
+        return { state: fallback, release: null, diagnostics: fallbackDiagnostics }
       } finally {
-        checkingRef.current = false
         setReady(true)
       }
     },
     [enabled, isAndroid],
+  )
+
+  // Shared in-flight routing: concurrent launch/resume/manual triggers
+  // never cause two simultaneous authoritative fetches. A caller joins a
+  // fresh operation already running; a forced request arriving while only
+  // a stale local-only operation runs chains one fresh check after it
+  // settles instead of inheriting the stale result.
+  const runCheck = useCallback(
+    (force: boolean): Promise<CheckResult | null> => {
+      if (!enabled || !isAndroid) return Promise.resolve(null)
+      const desiresFresh =
+        force || Date.now() - lastCheckAtRef.current >= MIN_POLICY_FETCH_INTERVAL_MS
+      const { promise, joined } = coordinatorRef.current.submit(desiresFresh, (forced) =>
+        runCheckInner(forced),
+      )
+      if (!joined) return promise
+      return promise.then((result) =>
+        result
+          ? { ...result, diagnostics: { ...result.diagnostics, joinedInFlight: true } }
+          : result,
+      )
+    },
+    [enabled, isAndroid, runCheckInner],
   )
 
   // Launch + resume discovery. appStateChange covers background/foreground;

@@ -3,6 +3,7 @@ import { buildCsrRenderModel } from '@/domain/csr/csrRenderModel'
 import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 
 export { getCsrPdfDocument }
+export { getNextCsrNumber, incrementTrailingLetters } from '@/domain/csr/csrNumbering'
 
 export const CSR_META_PREFIX = '__CSR_META_V1__'
 
@@ -139,55 +140,6 @@ export function createDefaultCsr(isField = false): CsrObject {
     show_po: false,
     po_number: '',
   }
-}
-
-function normalizeLetters(value: string): string {
-  return value.toUpperCase()
-}
-
-export function incrementTrailingLetters(value: string): string {
-  if (!value) return 'A'
-  const chars = normalizeLetters(value).split('')
-  let carry = 1
-
-  for (let index = chars.length - 1; index >= 0; index -= 1) {
-    if (!carry) break
-    const code = chars[index].charCodeAt(0) - 65 + carry
-    if (code >= 26) {
-      chars[index] = 'A'
-      carry = 1
-    } else {
-      chars[index] = String.fromCharCode(65 + code)
-      carry = 0
-    }
-  }
-
-  if (carry) chars.unshift('A')
-  return chars.join('')
-}
-
-export function getNextCsrNumber(
-  lastValue: string | null | undefined,
-  prefix: string = 'CSR',
-): string {
-  if (!lastValue) return `${prefix}-000001`
-
-  const digitMatch = lastValue.match(/(\d+)$/)
-  if (digitMatch) {
-    const digits = digitMatch[1]
-    const basePrefix = lastValue.slice(0, -digits.length)
-    const nextDigits = String(Number.parseInt(digits, 10) + 1).padStart(digits.length, '0')
-    return `${basePrefix}${nextDigits}`
-  }
-
-  const letterMatch = lastValue.match(/([A-Za-z]+)$/)
-  if (letterMatch) {
-    const letters = letterMatch[1]
-    const basePrefix = lastValue.slice(0, -letters.length)
-    return `${basePrefix}${incrementTrailingLetters(letters)}`
-  }
-
-  return `${lastValue}-1`
 }
 
 export function formatMaterialsRows(rows: MaterialRow[]): string {

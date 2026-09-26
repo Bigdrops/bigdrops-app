@@ -1,5 +1,7 @@
 import { recordAuditLog, recordWaybillCreated, WAYBILL_TRACKED_FIELDS } from '@/lib/audit'
 import type { TenantClient } from '@/lib/tenantClient'
+import { resolvePrefix } from '@/domain/prefixConstants'
+import { getNextWaybillNumber, getWaybillRoutingPrefix } from '@/components/waybill/waybillUtils'
 
 export async function archiveWaybillRecord(id: string, tenantClient: TenantClient) {
   const db = tenantClient
@@ -73,24 +75,30 @@ export async function duplicateWaybillRecord(id: string, tenantClient: TenantCli
     client_id: _ci, client_name: _cn, project_id: _pi, invoice_id: _ii,
     ...rest } = original
 
-  const prefix = original.type === 'internal' ? 'AWB-I-' : 'AWB-E-'
-  const { data: all } = await db.from('waybills').select('waybill_number').like('waybill_number', `${prefix}%`).order('created_at', { ascending: false })
-  let nextNum = 1
-  if (all && all.length > 0) {
-    const nums = all
-      .map((entry: any) => parseInt(String(entry.waybill_number || '').replace(prefix, ''), 10))
-      .filter((value: number) => !Number.isNaN(value))
-    nextNum = nums.length > 0 ? Math.max(...nums) + 1 : 1
-  }
+  const { data: settingsRow } = await db.from('settings').select('document_prefixes').limit(1).single()
+  const prefix = resolvePrefix((settingsRow as any)?.document_prefixes, 'waybill')
+  const { data: all } = await db.from('waybills').select('waybill_number').order('created_at', { ascending: false })
+  const { fetchAutoCursor, advanceAutoCursor } = await import('@/domain/documentNumbering')
+  const { parseTrailingSequence } = await import('@/domain/prefixConstants')
+  const family = getWaybillRoutingPrefix(original.type, prefix)
+  const nextNumber = getNextWaybillNumber(
+    original.type,
+    (all || []).map((w: any) => w.waybill_number || '').filter(Boolean),
+    prefix,
+    'normal',
+    await fetchAutoCursor(db, family),
+  )
 
   const { data: created, error: insertError } = await db.from('waybills').insert([{
     ...rest,
-    waybill_number: `${prefix}${String(nextNum).padStart(4, '0')}`,
+    waybill_number: nextNumber,
     status: 'dispatched',
     date: new Date().toISOString().split('T')[0],
   }]).select().single()
 
   if (insertError) throw insertError
+  const duplicatedSeq = parseTrailingSequence((created as { waybill_number?: string | null })?.waybill_number)
+  if (duplicatedSeq !== null) await advanceAutoCursor(db, family, duplicatedSeq)
 
   // ponytail: audit inline, no refactoring
   if (created) {

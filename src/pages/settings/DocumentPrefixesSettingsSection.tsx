@@ -20,9 +20,23 @@ import {
 } from '@/components/ui/alert-dialog'
 import {
   DEFAULT_PREFIXES,
+  cursorFamiliesForPrefixKey,
+  mergePrefixUpdate,
+  resetAllPrefixesUpdate,
+  resetPrefixUpdate,
   type DocumentPrefixKey,
   type DocumentPrefixes,
 } from '@/domain/prefixConstants'
+
+/** Fresh raw prefixes JSON for cursor-preserving writes. */
+async function readRawPrefixes(tenantClient: any): Promise<unknown> {
+  try {
+    const { data } = await tenantClient.from('settings').select('document_prefixes').limit(1).single()
+    return (data as { document_prefixes?: unknown })?.document_prefixes ?? {}
+  } catch {
+    return {}
+  }
+}
 
 const PREFIX_KEYS: DocumentPrefixKey[] = [
   'waybill',
@@ -170,7 +184,22 @@ export function DocumentPrefixesSettingsSection() {
       const updated = { ...draft, [key]: defaultVal }
       setDraft(updated)
       setSaving(true)
-      saveSettings({ document_prefixes: updated }, tenantClient)
+      // Reset restarts the sequence: clear that prefix's cursor families.
+      // Merge over fresh raw JSON so concurrent cursor bumps survive.
+      readRawPrefixes(tenantClient)
+        .then((raw) => {
+          const savedVal = typeof (raw as Record<string, unknown>)?.[key] === 'string'
+            ? String((raw as Record<string, unknown>)[key])
+            : defaultVal
+          const families = [
+            ...cursorFamiliesForPrefixKey(key, savedVal),
+            ...cursorFamiliesForPrefixKey(key, defaultVal),
+          ]
+          return saveSettings(
+            { document_prefixes: resetPrefixUpdate(raw, key, defaultVal, families) },
+            tenantClient,
+          )
+        })
         .then(() => feedback.success(`${LABELS[key]} prefix reset to ${defaultVal}`))
         .catch((err) =>
           feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
@@ -184,7 +213,10 @@ export function DocumentPrefixesSettingsSection() {
     const defaults = { ...DEFAULT_PREFIXES }
     setDraft(defaults)
     setSaving(true)
-    saveSettings({ document_prefixes: defaults }, tenantClient)
+    readRawPrefixes(tenantClient)
+      .then((raw) =>
+        saveSettings({ document_prefixes: resetAllPrefixesUpdate(raw, defaults) }, tenantClient),
+      )
       .then(() => feedback.success('All prefixes reset to defaults'))
       .catch((err) =>
         feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
@@ -194,7 +226,9 @@ export function DocumentPrefixesSettingsSection() {
 
   const executeSave = useCallback(() => {
     setSaving(true)
-    saveSettings({ document_prefixes: draft }, tenantClient)
+    // Merge over fresh raw JSON so automatic cursor state survives prefix edits.
+    readRawPrefixes(tenantClient)
+      .then((raw) => saveSettings({ document_prefixes: mergePrefixUpdate(raw, draft) }, tenantClient))
       .then(() => feedback.success('Prefixes updated'))
       .catch((err) =>
         feedback.error(getUserFacingMutationMessage(err, { action: 'save' })),
