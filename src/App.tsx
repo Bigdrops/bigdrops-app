@@ -579,7 +579,7 @@ function App() {
         <Toaster />
         <NativeFeedbackRenderer />
         <NudgeMount />
-        {appUpdate.state.status === 'grace' && <UpdateBanner update={appUpdate} />}
+        {isAndroidNative() && appUpdate.state.status === 'grace' && <UpdateBanner update={appUpdate} />}
         {isAndroidNative() && (
           <>
             <AndroidBackHandler />
@@ -592,9 +592,10 @@ function App() {
             <Route
               path="/*"
               element={
-                appUpdate.state.status === 'blocked' ? (
+                isAndroidNative() && appUpdate.state.status === 'blocked' ? (
                   // Mandatory-update gate: deadline expired. Both update
                   // paths stay functional; normal usage is paused.
+                  // Android-native only: web sessions never enter this gate.
                   withBoundary(<UpdateGate update={appUpdate} />)
                 ) : !session
                   ? !offlineAccessState.allowed

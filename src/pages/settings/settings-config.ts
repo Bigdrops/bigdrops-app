@@ -1,3 +1,4 @@
+import { isAndroidNative } from '@/lib/native/capacitor'
 import {
   ArchiveRestore,
   Building2,
@@ -50,6 +51,8 @@ export type SettingsItem = {
   gapAfter?: boolean
   adminOnly?: boolean
   operatorOnly?: boolean
+  /** Android-native only (APK updater). Hidden on web sessions. */
+  androidOnly?: boolean
 }
 
 export type GroupId = 'account' | 'workspace' | 'company' | 'preferences' | 'system'
@@ -104,17 +107,21 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     id: 'system',
     label: 'System',
     items: [
-      { id: 'app-update', label: 'App Update', icon: Smartphone, desc: 'Check for updates and manage versions' },
+      { id: 'app-update', label: 'App Update', icon: Smartphone, desc: 'Check for updates and manage versions', androidOnly: true },
       { id: 'tenant-debug', label: 'Tenant Debug', icon: Terminal, desc: 'Platform operator diagnostics', adminOnly: true, operatorOnly: true },
     ],
   },
 ]
 
 export function buildGroups(isAdmin?: boolean, isOperator?: boolean): SettingsGroup[] {
+  const android = isAndroidNative()
   return SETTINGS_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter(
-      (item) => (!item.adminOnly || isAdmin) && (!item.operatorOnly || isOperator)
+      (item) =>
+        (!item.adminOnly || isAdmin) &&
+        (!item.operatorOnly || isOperator) &&
+        (!item.androidOnly || android),
     ),
   })).filter(group => group.items.length > 0)
 }

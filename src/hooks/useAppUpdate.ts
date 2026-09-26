@@ -43,6 +43,17 @@ export type DownloadPhase =
   | { kind: 'failed'; message: string }
   | { kind: 'installing' }
 
+/**
+ * Result of one completed update check. Returned directly (not via React
+ * state) so callers can act on the exact check they awaited without
+ * depending on re-render timing.
+ */
+export interface CheckResult {
+  state: UpdateState
+  /** Approved release detail for the policy target, null when none applies. */
+  release: ApprovedRelease | null
+}
+
 export interface UseAppUpdateResult {
   /** Resolved update state (up_to_date/available/grace/blocked/unavailable). */
   state: UpdateState
@@ -59,8 +70,9 @@ export interface UseAppUpdateResult {
   openWebDownload: () => Promise<void>
   /** Clears a finished/failed download file from app cache. */
   cleanupDownload: () => Promise<void>
-  /** Manual check for updates. Bypasses the 6-hour throttle. */
-  checkForUpdate: () => void
+  /** Manual check for updates. Bypasses the 6-hour throttle. Resolves with
+   * the exact completed check result, or null when no check ran. */
+  checkForUpdate: () => Promise<CheckResult | null>
 }
 
 export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult {
@@ -105,9 +117,9 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
   }, [enabled, isAndroid, tick])
 
   const runCheck = useCallback(
-    async (force: boolean) => {
-      if (!enabled || !isAndroid) return
-      if (checkingRef.current) return
+    async (force: boolean): Promise<CheckResult | null> => {
+      if (!enabled || !isAndroid) return null
+      if (checkingRef.current) return null
 
       const now = Date.now()
       if (!force && now - lastCheckAtRef.current < MIN_POLICY_FETCH_INTERVAL_MS) {
@@ -115,16 +127,15 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
         // persisted state so local enforcement continues without fetching.
         const persisted = loadPersistedGraceState()
         const version = await getAppVersionInfo()
-        setState(
-          resolveUpdateState({
-            policyAvailable: false,
-            installedVersionCode: version.versionCode,
-            rawPolicy: null,
-            persisted,
-            nowMs: now,
-          }),
-        )
-        return
+        const throttledState = resolveUpdateState({
+          policyAvailable: false,
+          installedVersionCode: version.versionCode,
+          rawPolicy: null,
+          persisted,
+          nowMs: now,
+        })
+        setState(throttledState)
+        return { state: throttledState, release: null }
       }
 
       checkingRef.current = true
@@ -164,16 +175,29 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
 
         // Release detail (approved asset URL) only matters when a policy
         // target exists; never fetch it otherwise.
+        let approved: ApprovedRelease | null = null
         if (nextState.policy) {
-          void fetchApprovedRelease(
-            nextState.policy.versionCode,
-            nextState.policy.apkAssetPrefix,
-          ).then((approved) => {
-            if (approved) setRelease(approved)
-          })
+          if (force) {
+            // Awaited so the caller receives the exact completed result.
+            // A null outcome clears stale detail instead of reusing it.
+            approved = await fetchApprovedRelease(
+              nextState.policy.versionCode,
+              nextState.policy.apkAssetPrefix,
+            )
+            setRelease(approved)
+          } else {
+            void fetchApprovedRelease(
+              nextState.policy.versionCode,
+              nextState.policy.apkAssetPrefix,
+            ).then((fetched) => {
+              if (fetched) setRelease(fetched)
+            })
+          }
         } else {
           setRelease(null)
         }
+
+        return { state: nextState, release: approved }
       } finally {
         checkingRef.current = false
         setReady(true)
@@ -322,7 +346,7 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
   }, [])
 
   const checkForUpdate = useCallback(() => {
-    void runCheck(true)
+    return runCheck(true)
   }, [runCheck])
 
   const graceRemaining = useMemo(() => {

@@ -1,46 +1,65 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { RefreshCw, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
 import { useAppUpdateContext } from '@/contexts/AppUpdateContext'
 import { getAppVersionInfo, type AppVersionInfo } from '@/lib/appUpdate/appVersion'
+import { isAndroidNative } from '@/lib/native/capacitor'
+import type { CheckResult } from '@/hooks/useAppUpdate'
+import { mapUpdateStatusToSettingsDisplay } from '@/domain/appUpdate/settingsUpdateDisplay'
 import UpdateSheet from '@/components/app/UpdateSheet'
 
+/**
+ * Android-only manual update surface. Renders the exact result of the
+ * awaited forced check — never a timed guess, never policy presence.
+ * Only a successfully resolved `up_to_date` shows the green state.
+ */
 export function AppUpdateSettingsSection() {
   const update = useAppUpdateContext()
   const [version, setVersion] = useState<AppVersionInfo | null>(null)
   const [checking, setChecking] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [result, setResult] = useState<'idle' | 'up_to_date' | 'update_found'>('idle')
+  const [lastCheck, setLastCheck] = useState<CheckResult | null>(null)
 
   useEffect(() => {
-    void getAppVersionInfo().then(setVersion)
+    let cancelled = false
+    void getAppVersionInfo().then((info) => {
+      if (!cancelled) setVersion(info)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const handleCheck = useCallback(() => {
+  const handleCheck = useCallback(async () => {
     setChecking(true)
-    setResult('idle')
-    // Give the hook a tick to process, then read state
-    const t = setTimeout(() => {
-      setChecking(false)
-      if (update.state.policy) {
-        setResult('update_found')
+    try {
+      const result = await update.checkForUpdate()
+      setLastCheck(result)
+      if (
+        result &&
+        (result.state.status === 'available' ||
+          result.state.status === 'grace' ||
+          result.state.status === 'blocked') &&
+        result.state.policy
+      ) {
         setSheetOpen(true)
-      } else {
-        setResult('up_to_date')
       }
-    }, 2000)
-    update.checkForUpdate()
-    return () => clearTimeout(t)
+    } finally {
+      setChecking(false)
+    }
   }, [update])
 
-  // If the update state changes externally (e.g. from the banner auto-check),
-  // reflect it when we're in idle.
-  useEffect(() => {
-    if (result !== 'idle' && update.state.policy) {
-      setResult('update_found')
-    }
-  }, [update.state.policy, result])
+  if (!isAndroidNative()) return null
+
+  // Single truthful source: the exact manual-check result when present,
+  // otherwise the live hook state once its authoritative discovery settled.
+  const source = lastCheck?.state ?? (update.ready ? update.state : null)
+  const display = checking ? 'checking' : source ? mapUpdateStatusToSettingsDisplay(source.status) : 'idle'
+  const policy = source?.policy ?? null
+  const targetLabel =
+    policy && (policy.versionName || policy.versionCode) ? `v${policy.versionCode}` : null
+  const graceRemaining = update.graceRemaining
 
   return (
     <div className="space-y-4">
@@ -52,17 +71,34 @@ export function AppUpdateSettingsSection() {
         <SettingsSummaryRow
           label="Status"
           value={
-            checking ? (
+            display === 'checking' ? (
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <RefreshCw className="size-3.5 animate-spin" /> Checking…
               </span>
-            ) : result === 'update_found' ? (
-              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                <AlertTriangle className="size-3.5" /> Update available
-              </span>
-            ) : result === 'up_to_date' ? (
+            ) : display === 'up_to_date' ? (
               <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="size-3.5" /> Up to date
+              </span>
+            ) : display === 'available' ? (
+              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="size-3.5" /> Update available{targetLabel ? ` (${targetLabel})` : ''}
+              </span>
+            ) : display === 'grace' ? (
+              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="size-3.5" /> Mandatory update available
+                {targetLabel ? ` (${targetLabel})` : ''}
+                {graceRemaining && !graceRemaining.expired
+                  ? ` · ${graceRemaining.days}d ${graceRemaining.hours}h left`
+                  : ''}
+              </span>
+            ) : display === 'blocked' ? (
+              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="size-3.5" /> Update required
+                {targetLabel ? ` (${targetLabel})` : ''}
+              </span>
+            ) : display === 'unavailable' ? (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <AlertCircle className="size-3.5" /> Could not check for updates
               </span>
             ) : (
               '—'
@@ -72,14 +108,14 @@ export function AppUpdateSettingsSection() {
       </SettingsSummaryCard>
 
       <Button
-        onClick={handleCheck}
+        onClick={() => void handleCheck()}
         disabled={checking}
         variant="outline"
         size="lg"
         className="w-full"
       >
         <RefreshCw className="size-4" data-icon="inline-start" />
-        {checking ? 'Checking…' : 'Check for updates'}
+        {checking ? 'Checking…' : display === 'unavailable' ? 'Retry' : 'Check for updates'}
       </Button>
 
       <UpdateSheet open={sheetOpen} onOpenChange={setSheetOpen} update={update} />

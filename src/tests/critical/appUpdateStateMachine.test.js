@@ -293,3 +293,45 @@ test('grace remaining description floors and reports expiry', () => {
 test('check throttle constant avoids resume fetch loops', () => {
   assert.ok(MIN_POLICY_FETCH_INTERVAL_MS >= 60 * 60 * 1000)
 })
+
+test('installed 1009 against approved 1007 resolves up_to_date (controlled promotion)', () => {
+  const result = resolveUpdateState({
+    policyAvailable: true,
+    installedVersionCode: 1009,
+    rawPolicy: {
+      version_code: 1007,
+      version_name: '1.0.7',
+      mandatory: true,
+      effective_at: '2026-09-17T12:50:04.310Z',
+      apk_asset_prefix: 'BIGDROPS-test-release-',
+      web_release_url: 'https://github.com/Bigdrops/bigdrops-app/releases/tag/test-release-20260917-02',
+      release_notes: null,
+    },
+    persisted: null,
+    nowMs: Date.now(),
+  })
+  assert.equal(result.status, 'up_to_date', 'a newer GitHub build never overrides the approved target')
+  assert.equal(result.clearPersistedState, true)
+})
+
+test('future promotion to 1010 offers the update to installed 1009 without code change', () => {
+  const now = Date.now()
+  const result = resolveUpdateState({
+    policyAvailable: true,
+    installedVersionCode: 1009,
+    rawPolicy: {
+      version_code: 1010,
+      version_name: '1.0.10',
+      mandatory: true,
+      effective_at: new Date(now).toISOString(),
+      apk_asset_prefix: 'BIGDROPS-test-release-',
+      web_release_url: 'https://github.com/Bigdrops/bigdrops-app/releases/tag/test-release-run10',
+      release_notes: null,
+    },
+    persisted: null,
+    nowMs: now,
+  })
+  assert.equal(result.status, 'grace', 'approved newer mandatory target enters grace')
+  assert.equal(result.policy?.versionCode, 1010)
+  assert.ok(result.graceAnchorToPersist, 'first sighting records a grace anchor')
+})
