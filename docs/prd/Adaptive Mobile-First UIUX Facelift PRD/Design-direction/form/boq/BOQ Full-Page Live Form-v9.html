@@ -41,11 +41,11 @@
   .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .sb{display:flex;flex-direction:column;gap:10px}
   section.card{margin-top:12px}
-  .topbar{display:flex;align-items:center;justify-content:center;padding:2px 0 6px;border-bottom:1px solid var(--line);margin-bottom:4px;position:relative}
-  .topbar .back{position:absolute;left:-4px;display:flex;align-items:center;gap:4px;min-height:36px;padding:0 4px;color:var(--sub);font-size:10px;font-weight:800;background:none;border:0;transition:transform .12s}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:2px 0 6px;border-bottom:1px solid var(--line);margin-bottom:4px;position:relative}
+  .topbar .back{position:static;display:flex;align-items:center;gap:4px;color:var(--sub);font-size:10px;font-weight:800;background:none;border:0;transition:transform .12s,color .15s;min-height:44px;padding:0 10px}
   .topbar .back:active{transform:scale(.96)}
-  .topbar h1{font-size:13px;font-weight:800;letter-spacing:-.02em}
-  .topbar .badge{position:absolute;right:0;font-family:var(--mono);font-size:8px;font-weight:600;color:var(--faint);letter-spacing:.07em;text-transform:uppercase}
+  .topbar h1{flex:1;min-width:0;font-size:13px;font-weight:800;letter-spacing:-.02em}
+  .topbar .badge{position:static;color:var(--faint);font-size:8px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
   .num-lb{font-size:9px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--sub)}
   .rowhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   /* item row — upper control zone + full-width lower form (no aura) */
@@ -192,8 +192,8 @@
   svg{display:block}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
   /* THEME TOGGLE */
-  .theme-btn{position:absolute;left:8px;top:8px;z-index:2;border:1px solid var(--line);background:var(--soft);color:var(--sub);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;transition:background .15s,color .15s,border-color .15s}
-  .theme-btn:hover{background:#e2e8f0;color:var(--ink)}
+  .topbar .theme-btn{position:static;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--soft);color:var(--sub);width:44px;height:44px;border-radius:10px;font-size:16px;font-weight:800;transition:background .15s,color .15s,border-color .15s;flex-shrink:0}
+  .topbar .theme-btn:hover{background:#e2e8f0;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -206,7 +206,7 @@
     </button>
     <h1>Bill of Quantities</h1>
     <span class="badge" id="modeBadge">Draft</span>
-    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle dark mode">Dark</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle dark mode"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.73 12.73l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
   </div>
 
   <!-- 1. DOCUMENT DETAILS -->
@@ -687,9 +687,14 @@ function save() {
 
 function toggleTheme() {
   const root = document.documentElement;
-  const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  root.setAttribute('data-theme', next);
-  document.getElementById('themeBtn').textContent = next === 'dark' ? 'Light' : 'Dark';
+  const isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.73 12.73l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+  }
 }
 
 document.querySelectorAll('.ov').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('show'); }));
