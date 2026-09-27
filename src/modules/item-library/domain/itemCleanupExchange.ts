@@ -23,6 +23,7 @@ import type {
   ItemAlias,
   FlaggedCleanupBatch,
   FlaggedCleanupBatchExportPayload,
+  ItemReviewedSeparatePair,
 } from '../types'
 
 export const FLAGGED_CLEANUP_SCHEMA_VERSION = 1 as const
@@ -118,6 +119,31 @@ function hashString(value: string) {
 
 function buildSnapshotId(value: unknown) {
   return `cleanup-v1-${hashString(stableStringify(value))}`
+}
+
+function pairKey(leftItemId: string, rightItemId: string) {
+  const ordered = [leftItemId, rightItemId].map((value) => String(value || '').trim()).sort((left, right) => left.localeCompare(right))
+  return `${ordered[0]}::${ordered[1]}`
+}
+
+function buildReviewedSeparatePairSet(pairs: Array<Pick<ItemReviewedSeparatePair, 'item_a_id' | 'item_b_id' | 'status'>>) {
+  return new Set(
+    pairs
+      .filter((pair) => pair.status === 'active')
+      .map((pair) => pairKey(pair.item_a_id, pair.item_b_id)),
+  )
+}
+
+function hasReviewedSeparatePair(itemIds: string[], reviewedSeparatePairs: Set<string>) {
+  const uniqueIds = uniqueSorted(itemIds)
+  for (let leftIndex = 0; leftIndex < uniqueIds.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < uniqueIds.length; rightIndex += 1) {
+      if (reviewedSeparatePairs.has(pairKey(uniqueIds[leftIndex], uniqueIds[rightIndex]))) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 function canonicalFlaggedGroups(groups: FlaggedCleanupExportGroup[]) {
@@ -587,6 +613,7 @@ export function buildCatalogCleanupPrompt(payload?: CatalogCleanupBatchExportPay
 function parseCatalogCleanupMergeSuggestions(
   value: unknown,
   itemMap: Map<string, CatalogCleanupExportItem>,
+  reviewedSeparatePairs: Set<string> = new Set(),
 ): { errors: string[]; preview: CatalogCleanupPreviewMergeSuggestion[]; parsed: CatalogCleanupMergeSuggestion[] } {
   if (!Array.isArray(value)) {
     return { errors: ['merge_suggestions must be an array.'], preview: [], parsed: [] }
@@ -626,6 +653,10 @@ function parseCatalogCleanupMergeSuggestions(
     }
     if (mergedItemIds.includes(winnerItemId)) {
       errors.push(`merge_suggestions[${index}] must not merge the winner into itself.`)
+      return
+    }
+    if (hasReviewedSeparatePair([winnerItemId, ...mergedItemIds], reviewedSeparatePairs)) {
+      errors.push(`merge_suggestions[${index}] includes items that were reviewed and marked separate.`)
       return
     }
 
@@ -735,6 +766,9 @@ function mapScopedItems(
 export function validateCatalogCleanupBatchImport(
   input: string,
   exportPayload: CatalogCleanupBatchExportPayload,
+  options: {
+    reviewedSeparatePairs?: Array<Pick<ItemReviewedSeparatePair, 'item_a_id' | 'item_b_id' | 'status'>>
+  } = {},
 ): CatalogCleanupImportValidationResult {
   const trimmed = input.trim()
   if (!trimmed) {
@@ -800,7 +834,8 @@ export function validateCatalogCleanupBatchImport(
   }
 
   const itemMap = new Map(safeArray(exportPayload.items).map((item) => [item.item_id, item]))
-  const mergeResult = parseCatalogCleanupMergeSuggestions(parsedJson.merge_suggestions, itemMap)
+  const reviewedSeparatePairs = buildReviewedSeparatePairSet(options.reviewedSeparatePairs || [])
+  const mergeResult = parseCatalogCleanupMergeSuggestions(parsedJson.merge_suggestions, itemMap, reviewedSeparatePairs)
   const renameResult = parseCatalogCleanupRenameSuggestions(parsedJson.rename_suggestions, itemMap)
   const aliasResult = parseCatalogCleanupAliasSuggestions(parsedJson.alias_suggestions, itemMap)
   const ignoredItemIds = readStringArray(parsedJson.ignored_item_ids)
@@ -994,6 +1029,9 @@ export function buildFlaggedCleanupPrompt(payload: FlaggedCleanupExportPayload |
 export function validateFlaggedCleanupImport(
   input: string,
   exportPayload: FlaggedCleanupExportPayload | FlaggedCleanupBatchExportPayload,
+  options: {
+    reviewedSeparatePairs?: Array<Pick<ItemReviewedSeparatePair, 'item_a_id' | 'item_b_id' | 'status'>>
+  } = {},
 ): CleanupImportValidationResult {
   const trimmed = input.trim()
   if (!trimmed) {
@@ -1089,6 +1127,7 @@ export function validateFlaggedCleanupImport(
   const validPreviewGroups: CleanupPreviewGroup[] = []
   const rejectedGroups: CleanupPreviewRejectedGroup[] = []
   const seenMergeGroupIds = new Set<string>()
+  const reviewedSeparatePairs = buildReviewedSeparatePairSet(options.reviewedSeparatePairs || [])
 
   ;(mergeGroupsRaw as any[]).forEach((entry, index) => {
     if (!isRecord(entry)) {
@@ -1138,6 +1177,13 @@ export function validateFlaggedCleanupImport(
       }
       if (winnerItemId && mergedItemIds?.includes(winnerItemId)) {
         groupErrors.push('merged_item_ids must not include the winner_item_id.')
+      }
+      if (
+        winnerItemId &&
+        mergedItemIds &&
+        hasReviewedSeparatePair([winnerItemId, ...mergedItemIds], reviewedSeparatePairs)
+      ) {
+        groupErrors.push('This proposal includes items that were reviewed and marked separate.')
       }
 
       if (!groupErrors.length && winner) {

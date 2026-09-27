@@ -50,6 +50,7 @@ Inherited from the interrupted agent. This session kept each file as found:
 
 Changed by this continuation session:
 
+- `src/modules/item-library/domain/historicalReview.ts`
 - `src/tests/item-library/historicalReview.test.js`
 - `docs/reports/item-library/item-library-tier-c-historical-review-stage-1-2026-09-27.md`
 
@@ -61,7 +62,7 @@ Untouched pre-existing work from other agents:
 
 ## Skills Used
 
-Skills used: karpathy, supabase-postgres-best-practices
+Skills used: karpathy, react-dev, typescript-advanced-types, supabase, webapp-testing, systematic-debugging, capacitor-best-practices
 Documentation standard: ASD-STE100 Simplified Technical English
 
 ## Handoff Audit Result
@@ -110,27 +111,109 @@ The page (`ItemLibraryPage.tsx`) adds a distinct Historical Review mode. It does
 
 ### Continuation additions
 
-This session added two tests:
+This continuation added two tests:
 
 - Identity-sensitive separation test. It proves Primary vs Secondary and 12V vs 24V rows form separate cases. It proves specification tokens stay visible. It proves all fuzzy candidates carry advisory strength only. It proves occurrences carry no `item_id` field.
 - Loading, empty, and error state test. It proves the panel wires all three states plus retry and filter-empty copy.
 
-This session changed no production file.
+The runtime fix session changed one production domain file. It corrected only the read-only specification evidence label for square-millimetre conductor area.
+
+The runtime fix session added two more Historical Review tests:
+
+- Square-millimetre cable sizes classify as cross-section evidence, not diameter.
+- Plain linear millimetre values still classify as diameter evidence.
+
+## Runtime Fix
+
+### Observed Runtime Symptom
+
+Android opened Item Library and the Historical Review tab. The page shell rendered. The page then showed the error state:
+
+- `Historical Review could not load`
+- `Failed to load Historical Review cases.`
+
+Real review cases did not render.
+
+### Exact Root Cause
+
+The failed runtime path used a PostgREST embedded select from source rows to parent documents. The source row query tried to read parent document data with a relation such as:
+
+- `invoice_items` with `invoices(...)`
+- `quotation_items` with `quotations(...)`
+
+The tenant schema does not declare the required foreign key relationship for that embed. PostgREST rejected the read before the domain builder could create review cases.
+
+The sanitized live error was:
+
+```text
+PGRST200: Could not find a relationship between 'invoice_items' and 'invoices' in the schema cache.
+```
+
+### Live Evidence
+
+Read-only inspection used the same tenant-scoped `TenantClient` schema path as the application repository. The old embedded source-row read failed with `PGRST200`.
+
+The fixed flat source-row read succeeded. A read-only tenant query returned:
+
+| Metric | Current result |
+| --- | ---: |
+| Review cases | 341 |
+| Unresolved occurrences | 481 |
+| Invoice occurrences | 132 |
+| Quotation occurrences | 349 |
+| Tier D excluded rows | 41 |
+| Truncated | false |
+
+The first returned case was `Primary Air Filter`. It had 8 occurrences, 1 possible existing item, and visible `Role: PRIMARY` evidence.
+
+Anonymous unauthenticated reads returned zero rows. That is not the Android logged-in application path. Service-role read-only inspection was used only to prove current tenant data and query shape without mutation.
+
+### Fix
+
+The repository keeps source-row reads flat. It loads parent invoice and quotation records in batched follow-up reads. This avoids PostgREST embed resolution and keeps document evidence available.
+
+The source-row regression test now verifies that `invoice_items` and `quotation_items` selects do not use embedded relation syntax. Parent document reads remain flat and separate.
+
+### Why Tests Missed It
+
+Earlier automated coverage used stubs and domain fixtures. The stubs did not model PostgREST relationship validation. They allowed embedded relation syntax to appear correct even though the tenant schema could not execute it.
+
+The new regression checks the repository query contract. It prevents source-row embeds from returning.
+
+### Square-Millimetre Correction
+
+The specification extractor previously matched the `6 mm` part of `6 mm²` before it could classify conductor area. The UI therefore labelled cable cross-sectional area as `Diameter`.
+
+The extractor now classifies:
+
+- `6 mm²` as `Cross-section 6 MM²`
+- `16 mm2` as `Cross-section 16 MM2`
+
+Plain linear values such as `20 mm` remain `Diameter`.
+
+This evidence stays advisory. It does not establish identity. It does not link historical rows.
+
+### Read-Only Confirmation
+
+Stage 1 still has no historical identity mutation capability. The runtime fix adds no link action, catalog creation, alias creation, merge path, Keep Separate persistence, Leave Unresolved persistence, or AI workflow.
 
 ## Verification Result
 
 Verification:
 
-- Focused Historical Review tests: 7 passed, 0 failed.
+- Live read probe: old embedded source-row query failed with `PGRST200`; fixed tenant-routed repository read returned 341 cases and 481 occurrences.
+- Focused Historical Review tests: 11 passed, 0 failed.
+- Relevant Item Library regression tests: 33 passed, 0 failed.
 - Direct-entry recognition regression tests: 5 passed, 0 failed.
-- `bun run audit:load`: passed (no new flags on Stage 1 files).
+- Cleanup snapshot and hook-order regression tests: 17 passed, 0 failed.
+- `bun run audit:load`: completed with exit code 0. It reported pre-existing load-risk warnings outside this task.
 - `bun run typecheck`: passed.
 - `git diff --check` on task files: passed.
-- `git status`: working tree holds only inherited changes plus this report. No pre-existing file was reverted.
+- `git status`: final status is recorded in the task response. No pre-existing file was reverted.
 - `supabase db push`: not applicable (no migration).
 - `bun run build`: skipped due to hardware policy.
 
-Full-suite `bun run test` shows pre-existing failures outside this task scope. Four accounting contract tests fail on missing browser environment variables. One cleanup export test fails on unmodified code. This session did not touch those files.
+The full `bun run test` wrapper was not used as a completion gate. An exploratory run still loaded unrelated critical tests and failed on pre-existing browser-environment and cleanup-export assertions outside this task scope. The task-scoped Bun test command passed.
 
 ## Supabase Push Status
 

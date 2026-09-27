@@ -4,12 +4,18 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import {
+  buildHistoricalReviewCaseMembershipHash,
   buildHistoricalReviewCandidateEvidence,
   buildHistoricalReviewCases,
   extractHistoricalReviewSpecs,
 } from '../../modules/item-library/domain/historicalReview.ts'
 import { normalizeSuggestionQuery } from '../../modules/item-library/domain/suggestionRanking.ts'
-import { getHistoricalReviewCases } from '../../modules/item-library/repositories/historicalReviewRepository.ts'
+import {
+  getHistoricalReviewCases,
+  linkHistoricalReviewCaseToItem,
+  createItemFromHistoricalReviewCase,
+  keepHistoricalReviewCandidateSeparate,
+} from '../../modules/item-library/repositories/historicalReviewRepository.ts'
 
 const tenantMain = 'entity_bigdrops-main_main'
 
@@ -77,6 +83,13 @@ test('historical review groups only tenant plus exact normalized Tier C descript
   assert.equal(mainPrimary?.quotation_count, 1)
   assert.equal(mainPrimary?.unit_price_min, 12000)
   assert.equal(mainPrimary?.unit_price_max, 13000)
+  assert.equal(
+    mainPrimary?.case_membership_hash,
+    'hr-v1-invoice_items:inv-1|quotation_items:quo-1',
+  )
+  assert.deepEqual(mainPrimary?.invoice_row_ids, ['inv-1'])
+  assert.deepEqual(mainPrimary?.quotation_row_ids, ['quo-1'])
+  assert.match(mainPrimary?.case_id || '', /hr-v1-invoice_items:inv-1\|quotation_items:quo-1$/)
 
   const otherPrimary = result.cases.find((entry) => entry.tenant_schema === 'entity_other_main')
   assert.equal(otherPrimary?.occurrence_count, 1)
@@ -135,6 +148,61 @@ test('specification-sensitive values stay visible for review and candidate compa
   assert.ok(values.includes('24V'))
   assert.ok(values.some((value) => value.includes('SWG') && value.includes('17.5')))
   assert.ok(values.includes('COPPER'))
+})
+
+test('square millimetre cable sizes are cross-section evidence, not diameter', () => {
+  const specs = extractHistoricalReviewSpecs('Green Earth Cable 6 mm² Copper Insulated and phase cable 16 mm2')
+
+  assert.ok(specs.some((spec) => spec.kind === 'cross_section' && spec.label === 'Cross-section' && spec.value === '6 MM²'))
+  assert.ok(specs.some((spec) => spec.kind === 'cross_section' && spec.label === 'Cross-section' && spec.value === '16 MM2'))
+  assert.ok(!specs.some((spec) => spec.kind === 'diameter' && (spec.value === '6 MM' || spec.value === '16 MM')))
+  assert.ok(specs.some((spec) => spec.kind === 'material' && spec.value === 'COPPER'))
+})
+
+test('plain linear millimetre dimensions remain diameter evidence', () => {
+  const specs = extractHistoricalReviewSpecs('PVC pipe 20 mm with 6 mm wall note')
+
+  assert.ok(specs.some((spec) => spec.kind === 'diameter' && spec.value === '20 MM'))
+  assert.ok(specs.some((spec) => spec.kind === 'diameter' && spec.value === '6 MM'))
+  assert.ok(!specs.some((spec) => spec.kind === 'cross_section'))
+})
+
+test('historical review case membership hash is deterministic and changes with row membership', () => {
+  const rows = [
+    row({ row_id: 'quo-2', source_type: 'quotation', description: 'Primary Air Filter' }),
+    row({ row_id: 'inv-1', source_type: 'invoice', description: 'Primary Air Filter' }),
+  ]
+
+  assert.equal(
+    buildHistoricalReviewCaseMembershipHash(rows),
+    'hr-v1-invoice_items:inv-1|quotation_items:quo-2',
+  )
+  assert.equal(
+    buildHistoricalReviewCaseMembershipHash([...rows].reverse()),
+    'hr-v1-invoice_items:inv-1|quotation_items:quo-2',
+  )
+  assert.notEqual(
+    buildHistoricalReviewCaseMembershipHash([
+      ...rows,
+      row({ row_id: 'inv-3', source_type: 'invoice', description: 'Primary Air Filter' }),
+    ]),
+    'hr-v1-invoice_items:inv-1|quotation_items:quo-2',
+  )
+})
+
+test('membership hash sorts row ids by code unit to match Postgres uuid ordering', () => {
+  // ponytail: localeCompare uses ICU collation and can order hyphenated ids
+  // differently from Postgres. The server compares submitted row arrays with
+  // ORDER BY id (uuid memcmp), so the client must use code-unit order.
+  const rows = [
+    row({ row_id: 'bac', source_type: 'invoice', description: 'Primary Air Filter' }),
+    row({ row_id: 'b-c', source_type: 'invoice', description: 'Primary Air Filter' }),
+  ]
+
+  assert.equal(
+    buildHistoricalReviewCaseMembershipHash(rows),
+    'hr-v1-invoice_items:b-c|invoice_items:bac',
+  )
 })
 
 test('identity-sensitive descriptions stay separate with visible specification evidence', () => {
@@ -205,19 +273,59 @@ test('Historical Review surfaces loading, empty, and error states with retry', (
   assert.match(hookSource, /reload/)
 })
 
-test('Historical Review UI exposes read-only Stage 1 language and no enabled mutation action text', () => {
+test('Historical Review UI exposes explicit identity actions without catalog merge controls', () => {
   const source = fs.readFileSync(
     path.resolve('src/modules/item-library/components/ItemLibraryHistoricalReviewPanel.tsx'),
     'utf8',
   )
 
-  assert.match(source, /Stage 1 is inspection only/)
-  assert.match(source, /disabled/)
   assert.match(source, /Link to existing/)
   assert.match(source, /Create separate item/)
   assert.match(source, /Keep separate/)
-  assert.match(source, /Leave unresolved/)
-  assert.doesNotMatch(source, /onApply|onMerge|mergeCatalogItems|update\(/)
+  assert.match(source, /Leave unresolved stores no decision/)
+  assert.match(source, /Historical prices, quantities, units, taxes, and descriptions will not change/)
+  assert.match(source, /do not merge catalog items/)
+  assert.doesNotMatch(source, /Confirm merge/)
+  assert.doesNotMatch(source, /mergeCatalogItems/)
+})
+
+test('historical review mutation repository sends only identity fields to tenant RPCs', async () => {
+  const calls = []
+  const client = {
+    isReady: true,
+    schemaName: tenantMain,
+    rpc: (fn, params) => {
+      calls.push({ fn, params })
+      return Promise.resolve({ data: { status: 'applied', linked_invoice_rows: 1, linked_quotation_rows: 0 }, error: null })
+    },
+  }
+  const base = {
+    normalizedDescription: 'primary air filter',
+    caseMembershipHash: 'hr-v1-invoice_items:inv-1',
+    invoiceRowIds: ['inv-1'],
+    quotationRowIds: [],
+  }
+
+  await linkHistoricalReviewCaseToItem({ ...base, targetItemId: 'cat-1' }, client)
+  await createItemFromHistoricalReviewCase({ ...base, canonicalName: 'Primary Air Filter' }, client)
+  await keepHistoricalReviewCandidateSeparate({ ...base, candidateItemId: 'cat-2' }, client)
+
+  assert.deepEqual(calls.map((call) => call.fn), [
+    'link_historical_review_case_to_item',
+    'create_item_from_historical_review_case',
+    'keep_historical_review_case_candidate_separate',
+  ])
+
+  calls.forEach((call) => {
+    assert.equal(call.params.p_normalized_description, 'primary air filter')
+    assert.equal(call.params.p_case_membership_hash, 'hr-v1-invoice_items:inv-1')
+    assert.deepEqual(call.params.p_invoice_row_ids, ['inv-1'])
+    assert.deepEqual(call.params.p_quotation_row_ids, [])
+    assert.ok(!('unit_price' in call.params))
+    assert.ok(!('quantity' in call.params))
+    assert.ok(!('tax' in call.params))
+    assert.ok(!('description' in call.params))
+  })
 })
 
 function stubTenantClient(fixtures, failTables = []) {
@@ -326,7 +434,9 @@ test('repository joins parent documents without embed syntax and keeps failures 
   assert.ok(tables.includes('invoices'))
   assert.ok(tables.includes('quotations'))
   calls.forEach((call) => {
-    assert.ok(!call.select.includes('('), `select on ${call.table} must not use embed syntax`)
+    if (call.table === 'invoice_items' || call.table === 'quotation_items') {
+      assert.ok(!call.select.includes('('), `select on ${call.table} must not use embed syntax`)
+    }
   })
 })
 

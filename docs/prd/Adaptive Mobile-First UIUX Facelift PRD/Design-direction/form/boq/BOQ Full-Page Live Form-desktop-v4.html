@@ -1,0 +1,1326 @@
+<!doctype html>
+<!--
+  BIGDROPS - BOQ Full-Page Live Form - Desktop v4
+  Clean-sheet desktop-only prototype. Standalone file. No build step.
+
+  INFORMATION ARCHITECTURE (why this is not mobile geometry):
+
+  A  Desktop command bar      - one labelled primary "Save BOQ" command. No FAB.
+  B  Document strip           - document metadata as one horizontal labelled row.
+  C  Authoring workspace      - the line-item band. The band is a grid with four
+                                fixed zones: enumeration gutter, identity,
+                                attributes, money.
+  D  Summary rail             - sticky. Live totals, readiness, money legend.
+                                This is what keeps CP and SP meaningful at any
+                                scroll depth, together with the permanent inline
+                                cell chips.
+
+  THE ITEM IS NOT A CARD AND NOT A SPREADSHEET CELL GRID.
+  The identity zone is a real wrapping text editor (description over
+  specification). Every other zone holds short instrument-style values:
+  labelled, aligned, and comparable down the page like a ledger.
+
+  EXTENSIBILITY
+  Attribute tracks and money tracks are computed from registries at runtime.
+  A future optional field is one registry entry. See ATTR_FIELDS / COMM_FIELDS
+  and applyBandLayout() below. The band never scrolls the page sideways.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIGDROPS - BOQ Desktop Authoring Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f7; --surface:#ffffff; --surface-2:#f7fafc; --rail-bg:#fbfcfe;
+  --ink:#0f172a; --ink-2:#31415a; --muted:#5b6b80; --faint:#8a99ab;
+  --line:#e2e8f0; --line-2:#cdd7e3; --line-3:#b6c2d1;
+  --accent:#1e3a5f; --accent-2:#2a5a92; --accent-soft:rgba(30,58,95,.09); --accent-ink:#ffffff;
+  --cost:#9a5405; --cost-bg:#fdf3e5; --cost-line:#eed7b2; --cost-soft:rgba(154,84,5,.16);
+  --sell:#0f6a3c; --sell-bg:#ecf8f1; --sell-line:#b9e2ca; --sell-soft:rgba(15,106,60,.16);
+  --loss:#b3261e;
+  --profit-bg:#0f172a; --profit-ink:#f1f5f9; --profit-pos:#5ce49b; --profit-neg:#ff9d95; --profit-zero:#cbd5e1;
+  --group-surface:#f3f7fc; --group-head:#e8eff8; --group-line:#c6d5e6; --group-spine:#1e3a5f;
+  --shadow-1:0 1px 2px rgba(15,23,42,.07);
+  --shadow-2:0 24px 60px rgba(15,23,42,.20), 0 2px 8px rgba(15,23,42,.10);
+  --focus:0 0 0 3px var(--accent-soft);
+  --appbar-h:56px;
+  --w-gutter:56px; --w-attrs:236px; --w-money:344px; --col-gap:8px;
+  --row-cols:var(--w-gutter) minmax(0,1fr) var(--w-attrs) var(--w-money);
+  --mono:'DM Mono',ui-monospace,monospace;
+  --row-hover:rgba(30,58,95,.035);
+}
+[data-theme="dark"]{
+  --bg:#0a111d; --surface:#121c2b; --surface-2:#0f1927; --rail-bg:#0d1624;
+  --row-hover:rgba(255,255,255,.032);
+  --ink:#e9eff8; --ink-2:#c3d0e0; --muted:#93a3b8; --faint:#6d7f95;
+  --line:#1f2c43; --line-2:#2b3b56; --line-3:#3a4f70;
+  --accent:#4aa3f0; --accent-2:#6fb6f5; --accent-soft:rgba(74,163,240,.16); --accent-ink:#04121f;
+  --cost:#f0b054; --cost-bg:rgba(240,176,84,.13); --cost-line:rgba(240,176,84,.36); --cost-soft:rgba(240,176,84,.20);
+  --sell:#4ade9b; --sell-bg:rgba(74,222,155,.13); --sell-line:rgba(74,222,155,.34); --sell-soft:rgba(74,222,155,.20);
+  --loss:#ff8b82;
+  --profit-bg:#0b1421; --profit-ink:#e6edf7; --profit-pos:#4ade9b; --profit-neg:#ff9d95; --profit-zero:#93a3b8;
+  --group-surface:#0f1a2a; --group-head:#16233a; --group-line:#2a3d5b; --group-spine:#4aa3f0;
+  --shadow-1:0 1px 2px rgba(0,0,0,.5);
+  --shadow-2:0 24px 60px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-width:1180px}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;-webkit-tap-highlight-color:transparent}
+input,textarea{outline:none}
+svg{display:block;flex-shrink:0}
+.mono,[data-num]{font-family:var(--mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* ================= A. COMMAND BAR ================= */
+.appbar{position:sticky;top:0;z-index:60;height:var(--appbar-h);display:flex;align-items:center;gap:16px;
+  padding:0 16px;background:var(--surface);border-bottom:1px solid var(--line-2);box-shadow:var(--shadow-1)}
+.appbar-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.iconbtn{width:34px;height:34px;border-radius:8px;border:1px solid transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s,color .12s,border-color .12s}
+.iconbtn svg{width:17px;height:17px}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink);border-color:var(--line-2)}
+.crumb{font-size:12px;font-weight:700;color:var(--faint);white-space:nowrap}
+.doc-title{font-size:14.5px;font-weight:800;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44ch}
+.docno{font-family:var(--mono);font-size:11px;color:var(--muted);padding:3px 7px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface-2);white-space:nowrap}
+.state{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-2);white-space:nowrap}
+.state::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.appbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.vrule{width:1px;height:24px;background:var(--line-2);margin:0 4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 13px;border-radius:8px;
+  border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:700;
+  transition:background .12s,border-color .12s,color .12s,box-shadow .12s}
+.btn svg{width:15px;height:15px}
+.btn:hover{background:var(--surface-2);border-color:var(--line-3);color:var(--ink)}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.quiet:hover{background:var(--surface-2);color:var(--ink)}
+.btn.danger{color:var(--loss);border-color:var(--line-2)}
+.btn.danger:hover{background:rgba(179,38,30,.08);border-color:var(--loss)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);height:38px;padding:0 16px;box-shadow:var(--shadow-1)}
+.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2);color:var(--accent-ink)}
+.btn.sm{height:30px;padding:0 10px;font-size:11.5px}
+.btn.dashed{border-style:dashed;color:var(--muted)}
+.btn.dashed:hover{color:var(--accent-2);border-color:var(--accent-2)}
+
+/* ================= PAGE GRID ================= */
+.page{display:grid;grid-template-columns:minmax(0,1fr) clamp(260px,19vw,344px);gap:20px;align-items:start;
+  padding:16px 16px 64px;max-width:1920px}
+@media (min-width:1440px){.page{padding:18px 20px 72px;gap:24px}}
+
+/* ================= B. DOCUMENT STRIP ================= */
+.strip{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:10px 14px 12px;box-shadow:var(--shadow-1)}
+.strip-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.strip-head h2{font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.strip-head .note{font-size:11px;color:var(--faint);font-weight:600}
+.strip-head .rule{flex:1;height:1px;background:var(--line)}
+.dgrid{display:grid;grid-template-columns:2.1fr 1.05fr 1fr 1.7fr 1.3fr;gap:12px}
+.f-label{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.f-label .req{color:var(--loss)}
+.fld{width:100%;height:34px;padding:0 10px;border:1px solid var(--line-2);border-radius:7px;background:var(--surface);
+  font-size:12.5px;font-weight:600;color:var(--ink);transition:border-color .12s,box-shadow .12s,background .12s}
+.fld::placeholder{color:var(--faint);font-weight:500}
+.fld:hover{border-color:var(--line-3)}
+.fld:focus{border-color:var(--accent-2);box-shadow:var(--focus);background:var(--surface)}
+textarea.fld{height:auto;min-height:32px;padding:7px 10px;resize:none;line-height:1.5;font-weight:600}
+
+/* ================= C. WORKSPACE ================= */
+.workspace{min-width:0}
+.region-head{display:flex;align-items:center;gap:12px;margin:12px 0 8px}
+.region-head h2{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.region-head .counts{font-size:11.5px;font-weight:700;color:var(--muted);font-family:var(--mono)}
+.region-head .rule{flex:1;height:1px;background:var(--line-2)}
+.region-head .acts{display:flex;gap:8px}
+
+.band{--pad:0}
+.band-head{position:sticky;top:var(--appbar-h);z-index:30;display:grid;grid-template-columns:var(--row-cols);
+  column-gap:var(--col-gap);align-items:end;padding:0 0 7px;background:var(--bg);border-bottom:1px solid var(--line-3)}
+.band-head .hcell{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.band-head .hattrs,.band-head .hmoney{display:grid;column-gap:8px;align-items:end}
+.band-head .hattrs{grid-template-columns:var(--attr-cols)}
+.band-head .hmoney{grid-template-columns:var(--money-cols);column-gap:6px}
+.band-head .h-money{display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.band-head .h-money.cost{color:var(--cost)}
+.band-head .h-money.sell{color:var(--sell)}
+.band-head .h-money.profit{color:var(--muted)}
+.band-head .h-money svg{width:9px;height:9px}
+
+/* ---------- ROW ---------- */
+.rows{position:relative}
+.row{display:grid;grid-template-columns:var(--row-cols);column-gap:var(--col-gap);align-items:start;
+  padding:6px 0 0;border-bottom:1px solid var(--line);background:transparent;transition:background .12s}
+.row:hover{background:var(--row-hover)}
+.row.invalid{background:rgba(179,38,30,.07);box-shadow:inset 3px 0 0 var(--loss)}
+.row.flash{animation:flashRow 1.6s ease-out}
+@keyframes flashRow{0%{background:var(--accent-soft)}100%{background:transparent}}
+
+/* gutter: enumeration + row actions. Fully used, no dead space. */
+.gutter{display:flex;flex-direction:column;gap:3px;align-items:stretch}
+.num{display:flex;align-items:center;justify-content:center;height:22px;border:1px solid var(--line-2);border-radius:6px;
+  background:var(--surface);font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-2)}
+.row.invalid .num{border-color:var(--loss);color:var(--loss)}
+.gbtns{display:flex;gap:2px}
+.gbtn{flex:1;height:20px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface);color:var(--muted);
+  display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s,border-color .12s}
+.gbtn svg{width:13px;height:13px}
+.gbtn:hover{background:var(--surface-2);color:var(--ink);border-color:var(--line-3)}
+.gbtn[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent-2);border-color:var(--accent-2)}
+
+/* identity: description with the specification directly beneath it.
+   A populated specification is ALWAYS on screen and editable - it is never
+   hidden behind a disclosure. An empty one costs one compact affordance. */
+.identity{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;min-width:0;container-type:inline-size}
+.id-desc{display:flex;align-items:flex-start;gap:8px;min-width:0}
+.f-desc{flex:1;min-width:0;font-size:12.5px;font-weight:600;padding-top:5px;padding-bottom:5px}
+.f-spec{padding-top:5px;padding-bottom:5px}
+.f-desc:placeholder-shown{font-weight:500}
+.add-spec{flex-shrink:0;height:32px;padding:0 9px;border:1px dashed var(--line-2);border-radius:7px;background:transparent;
+  color:var(--faint);font-size:11px;font-weight:700;white-space:nowrap}
+.add-spec:hover{border-color:var(--accent-2);color:var(--accent-2)}
+.spec-block{display:none;align-items:flex-start;gap:7px;min-width:0}
+.spec-block.has,.row.spec-editing .spec-block{display:flex}
+.row.spec-editing .add-spec{display:none}
+.spec-tag{flex-shrink:0;margin-top:7px;font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--faint);border:1px solid var(--line-2);border-radius:5px;padding:2px 5px;background:var(--surface-2)}
+.spec-block.has .spec-tag{color:var(--accent-2);border-color:var(--accent-soft);background:var(--accent-soft)}
+.f-spec{flex:1;min-width:0;min-height:26px;font-size:11.5px;color:var(--ink-2);border-color:transparent;background:transparent;padding-left:0;padding-right:0}
+.spec-block.has .f-spec,.row.spec-editing .f-spec{border-color:var(--line-2);background:var(--surface);padding-left:10px;padding-right:10px;color:var(--ink)}
+.f-spec:hover{border-color:var(--line-2);background:var(--surface)}
+.f-spec:focus{border-color:var(--accent-2);background:var(--surface);padding-left:10px;padding-right:10px;box-shadow:var(--focus)}
+@container (min-width:700px){
+  .identity{grid-template-columns:minmax(0,1.75fr) minmax(260px,1fr);gap:14px;align-items:start}
+  .id-desc{grid-column:1}
+  .spec-block{grid-column:2;flex-direction:column;gap:4px}
+  .identity.no-spec .id-desc{grid-column:1/-1}
+  .spec-tag{margin-top:0}
+  .spec-block{width:100%}
+}
+
+/* attributes: sub-grid of short instrument fields, tracks from the registry */
+.attrs{display:grid;grid-template-columns:var(--attr-cols);column-gap:8px;grid-auto-rows:auto;align-items:start}
+.attr{min-width:0}
+.attr .fld{height:32px;font-size:12px}
+.attr.qty .fld{font-family:var(--mono);text-align:right;padding-right:8px}
+
+/* money: CP out, SP in, line profit. Permanent inline identity in every cell. */
+.money{display:grid;grid-template-columns:var(--money-cols);column-gap:6px;align-items:start}
+.mcell{display:flex;align-items:center;height:32px;border:1px solid var(--line-2);border-radius:7px;background:var(--surface);overflow:hidden;transition:border-color .12s,box-shadow .12s}
+.mchip{display:flex;align-items:center;gap:3px;height:100%;padding:0 6px;flex-shrink:0;
+  font-size:9.5px;font-weight:800;letter-spacing:.07em;border-right:1px solid var(--line);user-select:none}
+.mchip svg{width:9px;height:9px}
+.mcell.cost .mchip{color:var(--cost);background:var(--cost-bg);border-right-color:var(--cost-line)}
+.mcell.sell .mchip{color:var(--sell);background:var(--sell-bg);border-right-color:var(--sell-line)}
+.mcell.cost{border-left:3px solid var(--cost)}
+.mcell.sell{border-left:3px solid var(--sell)}
+.mnum{flex:1;min-width:0;height:100%;border:0;background:transparent;text-align:right;padding:0 8px;
+  font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--ink)}
+.mcell.cost:focus-within{border-color:var(--cost);box-shadow:0 0 0 3px var(--cost-soft)}
+.mcell.sell:focus-within{border-color:var(--sell);box-shadow:0 0 0 3px var(--sell-soft)}
+.mcell.cost:hover,.mcell.sell:hover{border-color:var(--line-3)}
+.mcell.profit{background:var(--profit-bg);border-color:var(--profit-bg);justify-content:space-between}
+.mcell.profit .mchip{color:var(--profit-zero);background:transparent;border-right-color:rgba(255,255,255,.14);opacity:.8}
+.mval{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--profit-ink);padding:0 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcell.profit.pos .mval{color:var(--profit-pos)}
+.mcell.profit.neg .mval{color:var(--profit-neg)}
+.mcell.profit.zero .mval{color:var(--profit-zero)}
+
+/* insert boundary: compact, part of the row grid */
+.insert{grid-column:2/-1;display:flex;align-items:center;gap:8px;height:12px;margin:2px 0 3px;
+  color:var(--faint);font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;opacity:.5;transition:opacity .12s,color .12s}
+.insert::after{content:'';flex:1;height:1px;background:var(--line)}
+.insert:hover,.insert:focus-visible{opacity:1;color:var(--accent-2)}
+.insert:hover::after{background:var(--accent-2)}
+
+/* ---------- GROUP: desktop containment region ---------- */
+.gwrap{border:1px solid var(--group-line);border-left:8px solid var(--group-spine);border-radius:8px;
+  background:var(--group-surface);margin:8px 0;overflow:hidden}
+.group-head{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto;align-items:center;gap:10px;
+  padding:7px 12px 7px 8px;background:var(--group-head);border-bottom:1px solid var(--group-line)}
+.gchev{width:28px;height:28px;border-radius:6px;border:1px solid var(--group-line);background:var(--surface);color:var(--ink-2);display:flex;align-items:center;justify-content:center}
+.gchev svg{width:14px;height:14px;transition:transform .15s}
+.gchev:hover{border-color:var(--accent-2);color:var(--accent-2)}
+.gwrap.is-collapsed .gchev svg{transform:rotate(-90deg)}
+.gtitle{width:100%;background:transparent;border:1px solid transparent;border-radius:6px;padding:5px 7px;
+  font-size:13px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+.gtitle:hover{border-color:var(--group-line);background:var(--surface)}
+.gtitle:focus{border-color:var(--accent-2);background:var(--surface);box-shadow:var(--focus)}
+.gcount{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.gsum{display:flex;align-items:center;gap:12px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.gsum .cst{color:var(--cost)}
+.gsum .sel{color:var(--sell)}
+.gsum b{font-family:var(--mono);font-weight:500}
+.group-body{padding:0 12px 2px 12px;background:var(--group-surface)}
+.group-body .row:hover{background:var(--row-hover)}
+.group-body .row:last-child{border-bottom:0}
+.group-foot{display:flex;align-items:center;gap:12px;padding:7px 12px;background:var(--group-head);
+  border-top:2px solid var(--group-line)}
+.group-foot .gf-note{font-size:10.5px;font-weight:700;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+.gwrap.is-collapsed .group-body,.gwrap.is-collapsed .group-foot{display:none}
+.gwrap.is-collapsed{margin:8px 0}
+
+/* terminal block: ends the flow with the creation pair and the grand total */
+.terminal{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 0 0;border-top:2px solid var(--line-2)}
+.terminal .grand{margin-left:auto;display:flex;align-items:baseline;gap:9px}
+.terminal .grand small{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.terminal .grand b{font-family:var(--mono);font-size:19px;font-weight:500;color:var(--accent-2);letter-spacing:-.02em}
+.empty{padding:30px 20px;text-align:center;border:1px dashed var(--line-3);border-radius:8px;background:var(--surface)}
+.empty b{display:block;font-size:13px;font-weight:800;margin-bottom:4px}
+.empty span{font-size:12px;color:var(--muted)}
+
+/* ================= D. SUMMARY RAIL ================= */
+.rail{position:sticky;top:calc(var(--appbar-h) + 16px);display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - var(--appbar-h) - 32px);overflow:auto}
+.panel{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:12px 13px;box-shadow:var(--shadow-1)}
+.panel > h3{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  padding-bottom:8px;margin-bottom:9px;border-bottom:1px solid var(--line)}
+.kv{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;font-size:11.5px;font-weight:600;color:var(--muted)}
+.kv b{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--ink)}
+.kv.sell b{color:var(--sell)}
+.kv.cost b{color:var(--cost)}
+.big{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:9px;padding-top:10px;border-top:2px solid var(--line-2)}
+.big small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.big b{font-family:var(--mono);font-size:21px;font-weight:500;letter-spacing:-.03em;color:var(--accent-2)}
+.big .right{text-align:right}
+#tProfit.pos,#tMargin.pos{color:var(--sell)}
+#tProfit.neg,#tMargin.neg{color:var(--loss)}
+.words{margin-top:10px;padding:8px 10px;border:1px dashed var(--line-2);border-radius:7px;background:var(--surface-2);
+  font-size:10.5px;font-style:italic;line-height:1.55;color:var(--muted)}
+
+/* readiness */
+.ready{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.ready.ok{color:var(--sell)}
+.ready.warn{color:var(--cost)}
+.ready .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chipbtn{font-family:var(--mono);font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;
+  border:1px solid var(--cost-line);background:var(--cost-bg);color:var(--cost)}
+.chipbtn:hover{border-color:var(--cost)}
+.ready-note{margin-top:8px;font-size:10.5px;line-height:1.5;color:var(--faint)}
+
+/* legend */
+.legend{display:flex;flex-direction:column;gap:9px}
+.legend-row{display:flex;align-items:flex-start;gap:9px}
+.legend .lchip{display:flex;align-items:center;gap:3px;padding:3px 7px;border-radius:6px;font-size:9.5px;font-weight:800;letter-spacing:.07em;flex-shrink:0;border:1px solid transparent}
+.legend .lchip svg{width:9px;height:9px}
+.legend .lchip.cost{color:var(--cost);background:var(--cost-bg);border-color:var(--cost-line)}
+.legend .lchip.sell{color:var(--sell);background:var(--sell-bg);border-color:var(--sell-line)}
+.legend .lchip.profit{color:var(--profit-ink);background:var(--profit-bg)}
+.legend p{font-size:10.5px;line-height:1.5;color:var(--muted)}
+.legend p b{color:var(--ink-2)}
+
+/* ================= ROW MENU (popover) ================= */
+.rowmenu{position:fixed;z-index:80;min-width:206px;background:var(--surface);border:1px solid var(--line-2);
+  border-radius:9px;box-shadow:var(--shadow-2);padding:5px;display:none}
+.rowmenu.open{display:block}
+.rowmenu-head{padding:6px 9px 7px;border-bottom:1px solid var(--line);margin-bottom:5px}
+.rowmenu-head b{font-size:11.5px;font-weight:800}
+.rowmenu-head small{display:block;font-size:10px;color:var(--faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.mi{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:6px;font-size:12px;font-weight:600;color:var(--ink-2);text-align:left}
+.mi svg{width:14px;height:14px;color:var(--muted)}
+.mi:hover{background:var(--surface-2);color:var(--ink)}
+.mi.danger{color:var(--loss)}
+.mi.danger svg{color:var(--loss)}
+.mi.danger:hover{background:rgba(179,38,30,.09)}
+.mi kbd{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--faint);border:1px solid var(--line-2);border-radius:4px;padding:1px 4px}
+.rowmenu .sep{height:1px;background:var(--line);margin:5px 0}
+
+/* ================= MODALS ================= */
+.backdrop{position:fixed;inset:0;z-index:90;background:rgba(8,14,26,.5);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;padding:28px}
+.backdrop.open{display:flex}
+.modal{width:min(760px,100%);max-height:calc(100vh - 56px);display:flex;flex-direction:column;background:var(--surface);
+  border:1px solid var(--line-2);border-radius:12px;box-shadow:var(--shadow-2);overflow:hidden}
+.modal.narrow{width:min(460px,100%)}
+.mhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.mhead b{font-size:13.5px;font-weight:800}
+.mhead small{display:block;margin-top:2px;font-size:11px;color:var(--muted)}
+.mbody{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.mfoot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--line);background:var(--surface-2)}
+.mfoot .spacer{flex:1}
+.colrow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface-2)}
+.colrow b{font-size:12.5px;font-weight:700}
+.colrow small{display:block;margin-top:2px;font-size:11px;color:var(--muted)}
+.locktag{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:5px;padding:2px 5px;background:var(--surface)}
+.sw{position:relative;width:42px;height:24px;border-radius:99px;background:var(--line-3);flex-shrink:0;transition:background .15s}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s}
+.sw.on{background:var(--accent-2)}
+.sw.on::after{transform:translateX(18px)}
+.sw:disabled{opacity:.5;cursor:not-allowed}
+.hintline{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.55;color:var(--muted);background:var(--surface-2);border:1px dashed var(--line-2);border-radius:8px;padding:9px 11px}
+.hintline code{font-family:var(--mono);font-size:10px;color:var(--accent-2)}
+.imperr{display:none;font-family:var(--mono);font-size:11px;line-height:1.6;white-space:pre-wrap;color:var(--loss);
+  background:rgba(179,38,30,.08);border:1px solid var(--loss);border-radius:7px;padding:9px 11px}
+.imperr.show{display:block}
+.re-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.re-grid .span2{grid-column:1/-1}
+.re-profit{display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:700;color:var(--muted)}
+.re-profit .mcell{height:32px}
+.pv{font-family:var(--mono);font-size:13px;font-weight:500}
+.pv.pos{color:var(--sell)}.pv.neg{color:var(--loss)}.pv.zero{color:var(--ink)}
+.money-legend-row{display:flex;gap:10px;align-items:center;font-size:11px;color:var(--muted)}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);z-index:100;
+  padding:10px 16px;border-radius:9px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:700;
+  box-shadow:var(--shadow-2);opacity:0;pointer-events:none;transition:opacity .16s,transform .16s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--loss);color:#fff}
+
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= A. COMMAND BAR ================= -->
+<header class="appbar">
+  <div class="appbar-left">
+    <button class="iconbtn" title="Back to BOQs" aria-label="Back to BOQs" onclick="toast('Back to BOQs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <span class="crumb">BOQs</span>
+    <span class="doc-title" id="appbarTitle">Renovation Materials Schedule</span>
+    <span class="docno" id="boqNoLabel">BOQ-2026-0142</span>
+    <span class="state" id="modeBadge">Draft</span>
+  </div>
+  <div class="appbar-right">
+    <button class="btn quiet" onclick="openModal('import')" title="Import a BOQ JSON payload">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v10m0 0l-3.5-3.5M12 14l3.5-3.5"/></svg>
+      Import JSON
+    </button>
+    <button class="btn quiet" onclick="openModal('columns')" title="Choose which fields appear on every row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M9 4v16M15 4v16"/></svg>
+      Columns
+    </button>
+    <button class="iconbtn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+    <span class="vrule"></span>
+    <button class="btn danger" onclick="clearAll()" title="Remove every row from this BOQ">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>
+      Clear all
+    </button>
+    <button class="btn primary" id="saveBtn" onclick="save()" title="Save BOQ (Ctrl+S)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
+      Save BOQ
+    </button>
+  </div>
+</header>
+
+<div class="page">
+  <main class="workspace">
+
+    <!-- ================= B. DOCUMENT STRIP ================= -->
+    <section class="strip">
+      <div class="strip-head">
+        <h2>Document details</h2>
+        <span class="rule"></span>
+        <span class="note">Prices are cost and selling only &middot; no VAT &middot; no WHT</span>
+      </div>
+      <div class="dgrid">
+        <div>
+          <label class="f-label" for="fTitle">BOQ title</label>
+          <input class="fld" id="fTitle" value="Renovation Materials Schedule" placeholder="BOQ title" oninput="syncTitle()">
+        </div>
+        <div>
+          <label class="f-label" for="fNo">BOQ number <span class="req">*</span></label>
+          <input class="fld mono" id="fNo" value="BOQ-2026-0142" oninput="syncNo()">
+        </div>
+        <div>
+          <label class="f-label" for="fDate">Issue date</label>
+          <input class="fld mono" id="fDate" type="date" value="2026-09-17">
+        </div>
+        <div>
+          <label class="f-label" for="fVendor">Vendor / contractor</label>
+          <input class="fld" id="fVendor" value="Test Construction Vendor Ltd" placeholder="Supplier or contractor">
+        </div>
+        <div>
+          <label class="f-label" for="fRef">Reference / contact</label>
+          <input class="fld" id="fRef" value="REF-D2-001" placeholder="Optional reference">
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= C. LINE ITEM WORKSPACE ================= -->
+    <section class="band" id="band">
+      <div class="region-head">
+        <h2>Line items</h2>
+        <span class="rule"></span>
+        <span class="counts" id="countLabel"></span>
+        <span class="acts">
+          <button class="btn sm" onclick="addItem()" title="Add an ungrouped line item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+            Add line item
+          </button>
+          <button class="btn sm dashed" onclick="addGroup()" title="Add an empty group">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M4 12h10M4 17h7"/></svg>
+            Add group
+          </button>
+        </span>
+      </div>
+
+      <div class="band-head" id="bandHead"></div>
+      <div class="rows" id="items"></div>
+
+      <div class="terminal">
+        <button class="btn sm" onclick="addItem()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+          Add line item
+        </button>
+        <button class="btn sm dashed" onclick="addGroup()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M4 12h10M4 17h7"/></svg>
+          Add group
+        </button>
+        <span class="grand"><small>BOQ total</small><b id="tGrand">&nbsp;</b></span>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= D. SUMMARY RAIL ================= -->
+  <aside class="rail">
+    <section class="panel">
+      <h3>Document summary</h3>
+      <div class="kv"><span>Items</span><b id="tItems">0</b></div>
+      <div class="kv"><span>Groups</span><b id="tGroups">0</b></div>
+      <div class="kv cost"><span>Total cost (CP &times; qty)</span><b id="tCost">&nbsp;</b></div>
+      <div class="kv sell"><span>Total selling price (SP &times; qty)</span><b id="tSell">&nbsp;</b></div>
+      <div class="big">
+        <div><small>Gross profit</small><b id="tProfit">&nbsp;</b></div>
+        <div class="right"><small>Margin</small><b id="tMargin">&nbsp;</b></div>
+      </div>
+      <div class="words" id="tWords"></div>
+    </section>
+
+    <section class="panel">
+      <h3>Readiness</h3>
+      <div class="ready ok" id="readyState"><span class="dot"></span><span id="readyText">All rows ready</span></div>
+      <div class="chips" id="readyChips"></div>
+      <p class="ready-note">A row needs a description, a quantity above zero, and a selling price above zero before save.</p>
+    </section>
+
+    <section class="panel">
+      <h3>Money legend</h3>
+      <div class="legend">
+        <div class="legend-row">
+          <span class="lchip cost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>CP</span>
+          <p><b>Cost price</b> &mdash; money out. Feeds total cost.</p>
+        </div>
+        <div class="legend-row">
+          <span class="lchip sell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>SP</span>
+          <p><b>Selling price</b> &mdash; money in. Feeds total selling price.</p>
+        </div>
+        <div class="legend-row">
+          <span class="lchip profit">Profit</span>
+          <p>Line profit = (SP &minus; CP) &times; quantity.</p>
+        </div>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<!-- ================= ROW MENU ================= -->
+<div class="rowmenu" id="rowMenu" role="menu" aria-label="Row actions"></div>
+
+<!-- ================= ROW EDITOR ================= -->
+<div class="backdrop" id="bdRow">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Row editor">
+    <div class="mhead">
+      <div><b>Row editor</b><small id="reSub">Item 01</small></div>
+      <button class="iconbtn" aria-label="Close row editor" onclick="closeModal('row')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody" id="rowEditorBody"></div>
+    <div class="mfoot">
+      <span class="re-profit">Line profit <span class="mcell profit" data-re-profit=""></span></span>
+      <span class="spacer"></span>
+      <button class="btn" onclick="closeModal('row')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= COLUMNS ================= -->
+<div class="backdrop" id="bdColumns">
+  <div class="modal narrow" role="dialog" aria-modal="true" aria-label="Row columns">
+    <div class="mhead">
+      <div><b>Row columns</b><small>Fields shown on every line item and in the BOQ PDF</small></div>
+      <button class="iconbtn" aria-label="Close columns" onclick="closeModal('columns')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <div id="colList" style="display:flex;flex-direction:column;gap:9px"></div>
+      <div class="hintline"><span>Additional optional fields appear in this list as they are enabled. A new field joins the attribute zone of every row. No page-wide scrolling is used.</span></div>
+    </div>
+    <div class="mfoot"><span class="spacer"></span><button class="btn" onclick="closeModal('columns')">Done</button></div>
+  </div>
+</div>
+
+<!-- ================= IMPORT ================= -->
+<div class="backdrop" id="bdImport">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Import JSON">
+    <div class="mhead">
+      <div><b>Import JSON</b><small>Replaces the current groups and line items</small></div>
+      <button class="iconbtn" aria-label="Close import" onclick="closeModal('import')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mbody">
+      <textarea class="fld mono" id="impTa" rows="9" style="font-size:11.5px" placeholder='{"items":[],"groups":[],"title":"Bill of Quantities"}'></textarea>
+      <div class="imperr" id="impErr"></div>
+      <div class="hintline"><span>Contract keys &mdash; items: <code>description</code> <code>sub_description</code> <code>quantity</code> <code>unit</code> <code>unit_price</code> <code>cost_price</code> <code>cp</code> <code>make</code> <code>group_id</code> &middot; groups: <code>id</code> <code>name</code> <code>itemIds</code> &middot; top level: <code>items</code> (required), <code>groups</code>, <code>title</code></span></div>
+    </div>
+    <div class="mfoot">
+      <span class="spacer"></span>
+      <button class="btn" onclick="closeModal('import')">Cancel</button>
+      <button class="btn primary" onclick="doImport()">Import &amp; replace</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CLEAR CONFIRM ================= -->
+<div class="backdrop" id="bdClear">
+  <div class="modal narrow" role="dialog" aria-modal="true" aria-label="Clear all line items">
+    <div class="mhead"><div><b>Clear all line items?</b><small>This removes every group and item row from this BOQ.</small></div></div>
+    <div class="mfoot">
+      <span class="spacer"></span>
+      <button class="btn" onclick="closeModal('clear')">Cancel</button>
+      <button class="btn danger" onclick="doClearAll()">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ================================================================
+   Data model - identical semantics to the phone/fold prototype.
+   ================================================================ */
+var naira = function(n){ return '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); };
+var svgs = {
+  down:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>',
+  up:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>',
+  copy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
+  x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>',
+  more:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
+  chev:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>',
+  plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>',
+  arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>',
+  pencil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>'
+};
+
+/* ---------- column manager registry (same three entries as the phone prototype) ---------- */
+var cols = [
+  { key: 'make', label: 'Make / brand', desc: 'Preferred supplier brand \u00B7 attribute zone', visible: true },
+  { key: 'cp', label: 'CP (cost price)', desc: 'What you pay \u00B7 feeds total cost', visible: true, locked: true },
+  { key: 'sp', label: 'SP (selling price)', desc: 'What the client pays \u00B7 feeds total selling price', visible: true, locked: true }
+];
+var vis = function(k){ var c = cols.find(function(x){ return x.key === k; }); return !c || c.visible; };
+
+/* ---------- extensible field registries ----------
+   Tier 1 identity      : description, specification   (free width, wrapping editors)
+   Tier 2 commercial    : CP, SP, line profit           (fixed tracks, permanent inline labels)
+   Tier 3 attributes    : qty, unit, make               (fixed tracks, registry driven)
+   Tier 4 secondary     : long text fields              (row editor only, never a band track)
+
+   To add an optional attribute, add one entry to ATTR_FIELDS with a design
+   width. applyBandLayout() re-computes the track list and the zone width. The
+   rows and the band header both read the same computed tracks, so columns stay
+   aligned. Tracks wrap inside the attribute zone before the page can scroll
+   sideways. Architecturally tested, deliberately NOT enabled:
+     discount, tax, rate, material, labour, location, phase, remarks */
+var ATTR_FIELDS = [
+  { key: 'qty',  label: 'Qty',       ph: 'Qty *',       numeric: true,  width: 50, align: 'num' },
+  { key: 'unit', label: 'Unit',      ph: 'Unit',        numeric: false, width: 62 },
+  { key: 'make', label: 'Make',      ph: 'Make / brand', numeric: false, width: 108, col: 'make' }
+];
+var COMM_FIELDS = [
+  { key: 'cp', tag: 'CP', title: 'Cost price \u2014 money out', tone: 'cost', glyph: 'down', width: 104, locked: true },
+  { key: 'sp', tag: 'SP', title: 'Selling price \u2014 money in', tone: 'sell', glyph: 'up',  width: 104, locked: true }
+];
+var PROFIT_TRACK = 124;
+
+/* ---------- document model (seed data identical to the phone prototype) ---------- */
+var rows = [
+  { id: 8, type: 'item', gid: null, desc: 'Preliminaries, site supervision and setting out', sub: 'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', qty: 1, unit: 'lot', make: '', cp: 150000, sp: 185000 },
+  { id: 1, type: 'group', title: 'Group A \u2014 Civil Works', collapsed: false },
+  { id: 2, type: 'item', gid: 1, desc: 'Portland cement, grade 42.5R', sub: '', qty: 400, unit: 'bags', make: 'Dangote 3X', cp: 5200, sp: 6100 },
+  { id: 3, type: 'item', gid: 1, desc: 'Reinforcement steel, high yield T12', sub: 'Cut and bent to schedule. Fix with 1.6mm binding wire.', qty: 120, unit: 'lengths', make: 'African Foundries', cp: 9800.75, sp: 11500 },
+  { id: 4, type: 'item', gid: 1, desc: 'Sharp sand, river dredged', sub: '', qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 33500 },
+  { id: 5, type: 'group', title: 'Group B \u2014 Finishes', collapsed: false },
+  { id: 6, type: 'item', gid: 5, desc: 'Emulsion paint, 20L pail', sub: 'Two coats over prepared surface.', qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 }
+];
+var seq = 100, errId = null, nums = {}, menuRowId = null, reRowId = null;
+
+var profit = function(r){ return (Number(r.sp || 0) - Number(r.cp || 0)) * Number(r.qty || 0); };
+var siblings = function(r){
+  return r.gid != null
+    ? rows.filter(function(x){ return x.type === 'item' && x.gid === r.gid; })
+    : rows.filter(function(x){ return x.type === 'group' || x.gid == null; });
+};
+var members = function(gid){ return rows.filter(function(x){ return x.type === 'item' && x.gid === gid; }); };
+var invalidItem = function(r){ return r.type === 'item' && (!String(r.desc || '').trim() || Number(r.qty) <= 0 || Number(r.sp) <= 0); };
+
+function toast(msg, isErr){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+/* ================================================================
+   Band layout: compute the zone tracks from the registries.
+   ================================================================ */
+function enabledAttrs(){ return ATTR_FIELDS.filter(function(f){ return !f.col || vis(f.col); }); }
+function enabledComm(){ return COMM_FIELDS.filter(function(f){ return vis(f.key); }); }
+
+var MIN_IDENTITY = 300;   /* the description column never drops below this */
+var GUTTER_W = 56;        /* enumeration gutter width */
+var COL_GAP = 8;          /* band column gap */
+var MIN_TRACK = 96;       /* smallest readable attribute track */
+
+function applyBandLayout(){
+  var band = document.getElementById('band');
+  var attrs = enabledAttrs(), comm = enabledComm();
+
+  var moneyWidth = comm.reduce(function(s, f){ return s + f.width; }, 0) + PROFIT_TRACK + comm.length * 6;
+  var moneyTracks = comm.map(function(f){ return f.width + 'px'; }).join(' ') + ' ' + PROFIT_TRACK + 'px';
+
+  var bandW = band.clientWidth || 900;
+  var availAttrs = Math.max(MIN_TRACK, bandW - GUTTER_W - moneyWidth - COL_GAP * 3 - MIN_IDENTITY);
+  var designW = attrs.reduce(function(s, f){ return s + f.width; }, 0) + Math.max(0, attrs.length - 1) * COL_GAP;
+
+  var template, zoneW, perLine = attrs.length, wrapped = false;
+  if (designW <= availAttrs) {
+    /* everything fits on one line at the designed widths */
+    template = attrs.map(function(f){ return f.width + 'px'; }).join(' ');
+    zoneW = designW;
+  } else {
+    /* promote to uniform tracks and let extra fields wrap inside the zone.
+       The page itself never scrolls sideways and the description keeps its floor. */
+    wrapped = true;
+    perLine = Math.max(1, Math.min(attrs.length, Math.floor((availAttrs + COL_GAP) / (MIN_TRACK + COL_GAP))));
+    template = 'repeat(' + perLine + ', minmax(0,1fr))';
+    zoneW = Math.min(availAttrs, perLine * MIN_TRACK + (perLine - 1) * COL_GAP);
+  }
+
+  band.style.setProperty('--attr-cols', template || '1fr');
+  band.style.setProperty('--money-cols', moneyTracks);
+  band.style.setProperty('--w-attrs', Math.round(zoneW) + 'px');
+  band.style.setProperty('--w-money', moneyWidth + 'px');
+  band.setAttribute('data-attr-count', String(attrs.length));
+  band.setAttribute('data-attr-per-line', String(perLine));
+  band.setAttribute('data-attr-wrapped', String(wrapped));
+}
+
+/* ================================================================
+   Band header: same grid as the rows, so labels always align.
+   ================================================================ */
+function renderBandHead(){
+  var attrs = enabledAttrs();
+  var head = document.getElementById('bandHead');
+  head.innerHTML =
+    '<div class="hcell">#</div>' +
+    '<div class="hcell">Description &amp; specification</div>' +
+    '<div class="hattrs">' + attrs.map(function(f){ return '<span class="hcell">' + esc(f.label) + '</span>'; }).join('') + '</div>' +
+    '<div class="hmoney">' +
+      '<span class="h-money cost">' + svgs.down + 'CP \u00B7 money out</span>' +
+      '<span class="h-money sell">' + svgs.up + 'SP \u00B7 money in</span>' +
+      '<span class="h-money profit">Line profit</span>' +
+    '</div>';
+}
+
+/* ================================================================
+   Row fragments
+   ================================================================ */
+function profitHTML(r){
+  var p = profit(r), cls = p > 0 ? ' pos' : (p < 0 ? ' neg' : ' zero');
+  return '<div class="mcell profit' + cls + '" data-pid="' + r.id + '" title="Line profit = (SP \u2212 CP) \u00D7 qty">' +
+    '<span class="mchip">Profit</span><span class="mval">' + naira(p) + '</span></div>';
+}
+function patchProfit(id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var html = profitHTML(r);
+  document.querySelectorAll('[data-pid="' + id + '"]').forEach(function(el){ el.outerHTML = html; });
+}
+
+function attrHTML(r){
+  return enabledAttrs().map(function(f){
+    var cls = 'attr' + (f.align === 'num' ? ' qty' : '');
+    var handler = f.numeric ? 'editNum' : 'editRow';
+    return '<div class="' + cls + '">' +
+      '<input class="fld' + (f.numeric ? ' mono' : '') + '" inputmode="' + (f.numeric ? 'decimal' : 'text') + '"' +
+      ' placeholder="' + esc(f.ph) + '" title="' + esc(f.label) + '" aria-label="' + esc(f.label) + ' \u2014 item ' + (nums[r.id] || '') + '"' +
+      ' value="' + esc(r[f.key]) + '" oninput="' + handler + '(' + r.id + ',\'' + f.key + '\',this.value)">' +
+      '</div>';
+  }).join('');
+}
+
+function moneyHTML(r){
+  var cells = enabledComm().map(function(f){
+    return '<div class="mcell ' + f.tone + '" title="' + esc(f.title) + '">' +
+      '<span class="mchip" aria-hidden="true">' + svgs[f.glyph] + esc(f.tag) + '</span>' +
+      '<input class="mnum" inputmode="decimal" aria-label="' + esc(f.title) + ' \u2014 item ' + (nums[r.id] || '') + '"' +
+      ' value="' + r[f.key] + '" oninput="editNum(' + r.id + ',\'' + f.key + '\',this.value)">' +
+      '</div>';
+  }).join('');
+  return cells + profitHTML(r);
+}
+
+function rowHTML(r){
+  var n = String(nums[r.id] || 0).padStart(2, '0');
+  var invalid = (errId === r.id);
+  var hasSub = !!String(r.sub || '').trim();
+  return '<article class="row' + (invalid ? ' invalid' : '') + '" data-id="' + r.id + '">' +
+      '<div class="gutter">' +
+        '<span class="num" title="Item ' + n + '">' + n + '</span>' +
+        '<div class="gbtns">' +
+          '<button class="gbtn" title="Row actions for item ' + n + '" aria-label="Row actions for item ' + n + '" aria-haspopup="menu" aria-expanded="false" onclick="openRowMenu(this,' + r.id + ')">' + svgs.more + '</button>' +
+          '<button class="gbtn" title="Duplicate item ' + n + '" aria-label="Duplicate item ' + n + '" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="identity' + (hasSub ? '' : ' no-spec') + '">' +
+        '<div class="id-desc">' +
+          '<textarea class="fld f-desc" rows="1" placeholder="Item description / specification *" aria-label="Description for item ' + n + '" oninput="editRow(' + r.id + ',\'desc\',this.value);autoGrow(this)">' + esc(r.desc) + '</textarea>' +
+          (hasSub ? '' : '<button class="add-spec" title="Add a specification to item ' + n + '" onclick="focusSpec(' + r.id + ')">+ Spec</button>') +
+        '</div>' +
+        '<div class="spec-block' + (hasSub ? ' has' : '') + '" data-spec="' + r.id + '">' +
+          '<span class="spec-tag" title="Sub-description">Spec</span>' +
+          '<textarea class="fld f-spec" rows="1" placeholder="Specification / sub-description" aria-label="Specification for item ' + n + '" oninput="editSub(' + r.id + ',this.value);autoGrow(this)" onblur="collapseEmptySpec(' + r.id + ',this)">' + esc(r.sub) + '</textarea>' +
+        '</div>' +
+      '</div>' +
+      '<div class="attrs">' + attrHTML(r) + '</div>' +
+      '<div class="money">' + moneyHTML(r) + '</div>' +
+      '<button class="insert" onclick="insertBelow(' + r.id + ')">+ Insert below</button>' +
+    '</article>';
+}
+
+function groupHTML(r){
+  var mem = members(r.id);
+  var cost = 0, sell = 0;
+  mem.forEach(function(m){ cost += Number(m.cp || 0) * Number(m.qty || 0); sell += Number(m.sp || 0) * Number(m.qty || 0); });
+  var label = mem.length + ' item' + (mem.length === 1 ? '' : 's');
+  var body = mem.length
+    ? mem.map(function(m){ return rowHTML(m); }).join('')
+    : '<div class="empty" style="margin:16px 0"><b>No items in this group yet</b><span>Use the button below to add the first item.</span></div>';
+  return '<section class="gwrap' + (r.collapsed ? ' is-collapsed' : '') + '" data-gwrap="' + r.id + '">' +
+    '<header class="group-head">' +
+      '<button class="gchev" title="' + (r.collapsed ? 'Expand group' : 'Collapse group') + '" aria-expanded="' + (!r.collapsed) + '" aria-label="' + (r.collapsed ? 'Expand' : 'Collapse') + ' group" onclick="toggleGroup(' + r.id + ')">' + svgs.chev + '</button>' +
+      '<input class="gtitle" value="' + esc(r.title) + '" placeholder="Group title" aria-label="Group title" oninput="editRow(' + r.id + ',\'title\',this.value)">' +
+      '<span class="gsum" title="Derived from member rows">' +
+        '<span class="cst">CP <b>' + naira(cost) + '</b></span>' +
+        '<span class="sel">SP <b>' + naira(sell) + '</b></span>' +
+      '</span>' +
+      '<span class="gcount">' + label + (r.collapsed ? ' \u00B7 collapsed' : '') + '</span>' +
+    '</header>' +
+    '<div class="group-body">' + body + '</div>' +
+    '<footer class="group-foot">' +
+      '<button class="btn sm" onclick="addItemTo(' + r.id + ')">' + svgs.plus + ' Add item to this group</button>' +
+      '<span class="gf-note">' + label + ' \u00B7 group closes here</span>' +
+    '</footer>' +
+  '</section>';
+}
+
+/* ================================================================
+   Render
+   ================================================================ */
+function renderItems(){
+  var host = document.getElementById('items');
+  rows.forEach(function(r){
+    if (r.type === 'item' && r.gid != null && !rows.some(function(g){ return g.type === 'group' && g.id === r.gid; })) r.gid = null;
+  });
+  var nItems = rows.filter(function(r){ return r.type === 'item'; }).length;
+  var nGroups = rows.filter(function(r){ return r.type === 'group'; }).length;
+  document.getElementById('countLabel').textContent = nItems + ' items \u00B7 ' + nGroups + ' groups';
+  document.getElementById('tItems').textContent = nItems;
+  document.getElementById('tGroups').textContent = nGroups;
+  if (!rows.length) {
+    host.innerHTML = '<div class="empty"><b>This BOQ is empty</b><span>Add a line item, or add a group to organise a work section.</span></div>';
+    renderReadiness();
+    return;
+  }
+  nums = {};
+  var n = 0, walk = [];
+  rows.forEach(function(r){
+    if (r.type === 'group') {
+      members(r.id).forEach(function(m){ nums[m.id] = ++n; });
+      walk.push(groupHTML(r));
+    } else if (r.gid == null) {
+      nums[r.id] = ++n;
+      walk.push(rowHTML(r));
+    }
+  });
+  host.innerHTML = walk.join('');
+  growAll();
+  renderReadiness();
+  refreshRowEditor();
+}
+
+function renderTotals(){
+  var cost = 0, sell = 0;
+  rows.forEach(function(r){
+    if (r.type === 'item') { cost += Number(r.cp || 0) * Number(r.qty || 0); sell += Number(r.sp || 0) * Number(r.qty || 0); }
+  });
+  var p = sell - cost;
+  document.getElementById('tCost').textContent = naira(cost);
+  document.getElementById('tSell').textContent = naira(sell);
+  var tp = document.getElementById('tProfit');
+  tp.textContent = naira(p);
+  tp.className = p > 0 ? 'pos' : (p === 0 ? 'zero' : 'neg');
+  var tm = document.getElementById('tMargin');
+  tm.textContent = sell ? Math.round(p / sell * 100) + '%' : '0%';
+  tm.className = p > 0 ? 'pos' : (p === 0 ? 'zero' : 'neg');
+  document.getElementById('tGrand').textContent = naira(sell);
+  document.getElementById('tWords').textContent = words(sell);
+}
+
+function words(num){
+  if (!num) return 'ZERO NAIRA ONLY';
+  var a = ['', 'ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'];
+  var b = ['', '', 'TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+  var c = function(x){
+    return x < 20 ? a[x]
+      : x < 100 ? b[Math.floor(x / 10)] + (x % 10 ? ' ' + a[x % 10] : '')
+      : x < 1000 ? a[Math.floor(x / 100)] + ' HUNDRED' + (x % 100 ? ' ' + c(x % 100) : '')
+      : x < 1e6 ? c(Math.floor(x / 1000)) + ' THOUSAND' + (x % 1000 ? ' ' + c(x % 1000) : '')
+      : x < 1e9 ? c(Math.floor(x / 1e6)) + ' MILLION' + (x % 1e6 ? ' ' + c(x % 1e6) : '')
+      : c(Math.floor(x / 1e9)) + ' BILLION' + (x % 1e9 ? ' ' + c(x % 1e9) : '');
+  };
+  var w = Math.floor(num), k = Math.round((num - w) * 100);
+  return c(w) + ' NAIRA' + (k ? ' AND ' + c(k) + ' KOBO' : '') + ' ONLY';
+}
+
+function renderCols(){
+  document.getElementById('colList').innerHTML = cols.map(function(c, i){
+    return '<div class="colrow">' +
+      '<div><b>' + esc(c.label) + (c.locked ? ' <span class="locktag">always shown</span>' : '') + '</b><small>' + esc(c.desc) + '</small></div>' +
+      '<button class="sw ' + (c.visible ? 'on' : '') + '" role="switch" aria-checked="' + c.visible + '" aria-label="Show ' + esc(c.label) + '" ' + (c.locked ? 'disabled' : '') + ' onclick="toggleCol(' + i + ')"></button>' +
+      '</div>';
+  }).join('');
+}
+
+function renderReadiness(){
+  var bad = rows.filter(invalidItem);
+  var st = document.getElementById('readyState');
+  var txt = document.getElementById('readyText');
+  var chips = document.getElementById('readyChips');
+  if (!bad.length) {
+    st.className = 'ready ok';
+    txt.textContent = rows.length ? 'All ' + rows.filter(function(r){ return r.type === 'item'; }).length + ' rows ready to save' : 'Nothing to validate yet';
+    chips.innerHTML = '';
+    return;
+  }
+  st.className = 'ready warn';
+  txt.textContent = bad.length + ' row' + (bad.length === 1 ? '' : 's') + ' still need input';
+  chips.innerHTML = bad.map(function(r){
+    var n = String(nums[r.id] || 0).padStart(2, '0');
+    var miss = !String(r.desc || '').trim() ? 'description' : (Number(r.qty) <= 0 ? 'quantity' : 'selling price');
+    return '<button class="chipbtn" title="Item ' + n + ' needs a ' + miss + '" onclick="goToRow(' + r.id + ')">' + n + '</button>';
+  }).join('');
+}
+
+function render(){ applyBandLayout(); renderBandHead(); renderItems(); renderTotals(); }
+
+function goToRow(id){
+  var el = document.querySelector('.row[data-id="' + id + '"]');
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+
+/* ---------- textarea auto growth ---------- */
+function autoGrow(el){
+  el.style.height = 'auto';
+  var max = el.classList.contains('f-spec') ? 54 : 70;
+  var h = Math.min(el.scrollHeight, max);
+  el.style.height = h + 'px';
+  el.style.overflowY = el.scrollHeight > max ? 'auto' : 'hidden';
+}
+function growAll(){
+  requestAnimationFrame(function(){
+    document.querySelectorAll('.f-desc, .f-spec').forEach(autoGrow);
+  });
+}
+
+/* ================================================================
+   Edits
+   ================================================================ */
+function editRow(id, key, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r[key] = val;
+  if (key === 'desc' || key === 'make') renderReadinessLight();
+}
+function editSub(id, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.sub = val;
+  var has = !!String(val || '').trim();
+  var block = document.querySelector('.spec-block[data-spec="' + id + '"]');
+  if (block) {
+    block.classList.toggle('has', has);
+    var ident = block.parentElement;
+    if (ident) ident.classList.toggle('no-spec', !has);
+  }
+  var other = document.querySelector('[data-re-sub="' + id + '"]');
+  if (other) other.value = val;
+}
+/* Empty specification collapses back to a single compact affordance. */
+function focusSpec(id){
+  var rowEl = document.querySelector('.row[data-id="' + id + '"]');
+  if (!rowEl) return;
+  rowEl.classList.add('spec-editing');
+  var ta = rowEl.querySelector('.f-spec');
+  if (ta) { ta.focus(); autoGrow(ta); }
+}
+function collapseEmptySpec(id, el){
+  if (String(el.value || '').trim()) return;
+  var rowEl = el.closest('.row');
+  if (!rowEl) return;
+  rowEl.classList.remove('spec-editing');
+  var block = rowEl.querySelector('.spec-block');
+  if (block) block.classList.remove('has');
+  var ident = rowEl.querySelector('.identity');
+  if (ident) ident.classList.add('no-spec');
+  autoGrow(el);
+}
+function editNum(id, key, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var n = Number(val);
+  r[key] = Number.isFinite(n) ? n : 0;
+  renderTotals();
+  patchProfit(id);
+  if (key === 'qty') renderReadinessLight();
+}
+function renderReadinessLight(){ renderReadiness(); }
+
+function moveRow(id, dir){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var sib = siblings(r);
+  var k = sib.indexOf(r);
+  var target = sib[k + dir];
+  if (!target) return;
+  rows.splice(rows.indexOf(r), 1);
+  var t = rows.indexOf(target);
+  rows.splice(dir > 0 ? t + 1 : t, 0, r);
+  render();
+  closeRowMenu();
+  goToRow(id);
+}
+function dupRow(id){
+  var i = rows.findIndex(function(x){ return x.id === id; });
+  if (i < 0) return;
+  var src = rows[i], copy = {};
+  for (var key in src) copy[key] = src[key];
+  copy.id = ++seq;
+  copy.desc = (src.desc || '') + ' (copy)';
+  rows.splice(i + 1, 0, copy);
+  render();
+  closeRowMenu();
+  toast('Item duplicated');
+  goToRow(copy.id);
+}
+function insertBelow(id){
+  var i = rows.findIndex(function(x){ return x.id === id; });
+  if (i < 0) return;
+  rows.splice(i + 1, 0, blank(rows[i].gid));
+  render();
+  closeRowMenu();
+  toast('Row inserted');
+  goToRow(rows[i + 1].id);
+}
+function blank(gid){
+  return { id: ++seq, type: 'item', gid: gid == null ? null : gid, desc: '', sub: '', qty: 1, unit: '', make: '', cp: 0, sp: 0 };
+}
+function addItem(){ rows.push(blank(null)); render(); toast('Line item added'); }
+function addItemTo(gid){
+  var mem = members(gid);
+  var last = mem[mem.length - 1];
+  var at = last ? rows.indexOf(last) + 1 : rows.findIndex(function(x){ return x.type === 'group' && x.id === gid; }) + 1;
+  rows.splice(at >= 0 ? at : rows.length, 0, blank(gid));
+  render();
+  toast('Item added to group');
+}
+function addGroup(){ rows.push({ id: ++seq, type: 'group', title: 'New Group', collapsed: false }); render(); toast('Group added'); }
+function toggleGroup(id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.collapsed = !r.collapsed;
+  renderItems();
+  renderTotals();
+}
+function removeRow(id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  closeRowMenu();
+  if (r.type === 'group') {
+    rows.forEach(function(x){ if (x.type === 'item' && x.gid === id) x.gid = null; });
+    rows = rows.filter(function(x){ return x.id !== id; });
+    render();
+    toast('Group removed \u2014 its items kept as ungrouped rows');
+  } else {
+    rows = rows.filter(function(x){ return x.id !== id; });
+    render();
+    toast((String(r.desc || '').trim() || Number(r.sp) > 0) ? 'Row deleted' : 'Row removed');
+  }
+}
+function clearAll(){ openModal('clear'); }
+function doClearAll(){ rows = []; closeModal('clear'); render(); toast('All rows cleared'); }
+function toggleCol(i){
+  var c = cols[i];
+  if (c.locked) { toast(c.label + ' is always shown'); return; }
+  c.visible = !c.visible;
+  renderCols();
+  render();
+  toast(c.label + (c.visible ? ' shown on rows' : ' hidden from rows'));
+  var attrs = enabledAttrs();
+  if (attrs.length > 4) toast('Attribute zone now wraps to ' + Math.ceil(attrs.length / 4) + ' lines per row', true);
+}
+
+/* ================================================================
+   Row menu (popover)
+   ================================================================ */
+function openRowMenu(btn, id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var menu = document.getElementById('rowMenu');
+  var sib = siblings(r), k = sib.indexOf(r);
+  var n = String(nums[id] || 0).padStart(2, '0');
+  menuRowId = id;
+  menu.innerHTML =
+    '<div class="rowmenu-head"><b>Item ' + n + '</b><small>' + esc(emailSafe(r.desc) || 'Untitled row') + '</small></div>' +
+    '<button class="mi" role="menuitem" onclick="insertBelow(' + id + ')">' + svgs.plus + 'Insert below</button>' +
+    '<button class="mi" role="menuitem" ' + (k <= 0 ? 'disabled style="opacity:.4"' : '') + ' onclick="moveRow(' + id + ',-1)">' + svgs.up + 'Move up</button>' +
+    '<button class="mi" role="menuitem" ' + (k >= sib.length - 1 ? 'disabled style="opacity:.4"' : '') + ' onclick="moveRow(' + id + ',1)">' + svgs.down + 'Move down</button>' +
+    '<button class="mi" role="menuitem" onclick="dupRow(' + id + ')">' + svgs.copy + 'Duplicate item</button>' +
+    '<button class="mi" role="menuitem" onclick="openRowEditor(' + id + ')">' + svgs.pencil + 'Row editor\u2026</button>' +
+    '<div class="sep"></div>' +
+    '<button class="mi danger" role="menuitem" onclick="removeRow(' + id + ')">' + svgs.x + 'Delete item</button>';
+  var b = btn.getBoundingClientRect();
+  menu.classList.add('open');
+  var w = 206, h = menu.offsetHeight;
+  menu.style.left = Math.min(b.left, window.innerWidth - w - 12) + 'px';
+  menu.style.top = (b.bottom + h + 12 > window.innerHeight ? Math.max(12, b.top - h - 6) : b.bottom + 6) + 'px';
+  document.querySelectorAll('.gbtn[aria-expanded="true"]').forEach(function(el){ el.setAttribute('aria-expanded', 'false'); });
+  btn.setAttribute('aria-expanded', 'true');
+  menu._btn = btn;
+}
+function emailSafe(s){ return String(s || '').slice(0, 60); }
+function closeRowMenu(){
+  var menu = document.getElementById('rowMenu');
+  menu.classList.remove('open');
+  if (menu._btn) { menu._btn.setAttribute('aria-expanded', 'false'); menu._btn = null; }
+  menuRowId = null;
+}
+
+/* ================================================================
+   Row editor: every field in one focused form. Future optional fields
+   join this form automatically. No band track required.
+   ================================================================ */
+function openRowEditor(id){
+  closeRowMenu();
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  reRowId = id;
+  var n = String(nums[id] || 0).padStart(2, '0');
+  document.getElementById('reSub').textContent = 'Item ' + n + ' \u00B7 all fields, including non-promoted ones';
+  var attrs = ATTR_FIELDS.map(function(f){
+    var handler = f.numeric ? 'editNum' : 'editRow';
+    return '<div><label class="f-label" for="re-' + f.key + '">' + esc(f.label) + (f.col && !vis(f.col) ? ' <span style="opacity:.6">(hidden on row)</span>' : '') + '</label>' +
+      '<input class="fld' + (f.numeric ? ' mono' : '') + '" id="re-' + f.key + '" data-re="' + f.key + '" value="' + esc(r[f.key]) + '" oninput="' + handler + '(' + id + ',\'' + f.key + '\',this.value)"></div>';
+  }).join('');
+  var comms = COMM_FIELDS.map(function(f){
+    return '<div><label class="f-label" for="re-' + f.key + '">' + esc(f.title) + '</label>' +
+      '<input class="fld mono" id="re-' + f.key + '" data-re="' + f.key + '" inputmode="decimal" value="' + r[f.key] + '" oninput="editNum(' + id + ',\'' + f.key + '\',this.value)"></div>';
+  }).join('');
+  document.getElementById('rowEditorBody').innerHTML =
+    '<div class="re-grid">' +
+      '<div class="span2"><label class="f-label" for="re-desc">Description *</label>' +
+        '<textarea class="fld" id="re-desc" rows="2" oninput="editRow(' + id + ',\'desc\',this.value)">' + esc(r.desc) + '</textarea></div>' +
+      '<div class="span2"><label class="f-label" for="re-sub">Specification / sub-description</label>' +
+        '<textarea class="fld" id="re-sub" rows="2" data-re-sub="' + id + '" oninput="editSub(' + id + ',this.value)">' + esc(r.sub) + '</textarea></div>' +
+      attrs + comms +
+    '</div>';
+  document.querySelector('[data-re-profit]').outerHTML = profitHTML(r).replace('class="mcell profit', 'data-re-profit="" class="mcell profit');
+  openModal('row');
+}
+function refreshRowEditor(){
+  if (!reRowId) return;
+  var open = document.getElementById('bdRow').classList.contains('open');
+  if (!open) return;
+  var r = rows.find(function(x){ return x.id === reRowId; });
+  if (!r) { closeModal('row'); return; }
+  var body = document.getElementById('rowEditorBody');
+  body.querySelectorAll('[data-re]').forEach(function(el){ el.value = r[el.getAttribute('data-re')]; });
+  var d = body.querySelector('#re-desc'); if (d) d.value = r.desc;
+  var s = body.querySelector('#re-sub'); if (s) s.value = r.sub;
+}
+
+/* ================================================================
+   Modals
+   ================================================================ */
+var focusReturn = null;
+var bdOf = function(id){ return document.getElementById('bd' + id[0].toUpperCase() + id.slice(1)); };
+function openModal(id){
+  var el = bdOf(id);
+  var active = document.activeElement;
+  if (active && active.focus && !(active.closest && active.closest('.backdrop'))) focusReturn = active;
+  if (id === 'columns') renderCols();
+  if (id === 'import') showImpErr('');
+  el.classList.add('open');
+  var first = el.querySelector('input, textarea, button:not(.iconbtn)');
+  if (first) first.focus();
+}
+function closeModal(id){
+  var el = bdOf(id);
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
+  /* the row editor writes to the model, so the inline row must be refreshed */
+  if (id === 'row') { reRowId = null; renderItems(); renderTotals(); }
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+}
+
+/* ================================================================
+   Import (same contract and validation as the phone prototype)
+   ================================================================ */
+function showImpErr(msg){
+  var el = document.getElementById('impErr');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+function doImport(){
+  var raw = document.getElementById('impTa').value.trim();
+  if (!raw) { showImpErr('Paste JSON first.'); return; }
+  var data;
+  try { data = JSON.parse(raw); } catch (e) { showImpErr('Invalid JSON: ' + e.message); toast('Import failed \u2014 invalid JSON', true); return; }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) { showImpErr('Root must be a JSON object with an "items" array.'); return; }
+  if (!Array.isArray(data.items)) { showImpErr('Missing required "items" array.'); return; }
+  var groups = data.groups == null ? [] : data.groups;
+  if (!Array.isArray(groups)) { showImpErr('"groups" must be an array when present.'); return; }
+  var errors = [];
+  var keyOf = function(v){ return v == null ? null : String(v); };
+  var groupRows = [], gidMap = {}, itemGidMap = {};
+  groups.forEach(function(g, i){
+    if (!g || typeof g !== 'object') { errors.push('groups[' + i + '] must be an object with a name.'); return; }
+    if (typeof g.name !== 'string' || !g.name.trim()) { errors.push('groups[' + i + '] needs a non-empty "name".'); return; }
+    var gid = ++seq;
+    gidMap[keyOf(g.id != null ? g.id : i)] = gid;
+    groupRows.push({ id: gid, type: 'group', title: g.name.trim(), collapsed: false });
+    if (Array.isArray(g.itemIds)) g.itemIds.forEach(function(id){ itemGidMap[keyOf(id)] = gid; });
+  });
+  var payloadItemIds = new Set(data.items.filter(function(it){ return it && it.id != null; }).map(function(it){ return String(it.id); }));
+  Object.keys(itemGidMap).forEach(function(k){
+    if (!payloadItemIds.has(k)) errors.push('groups[].itemIds references unknown item "' + k + '".');
+  });
+  var itemRows = [];
+  data.items.forEach(function(it, i){
+    if (!it || typeof it !== 'object') { errors.push('items[' + i + '] must be an object.'); return; }
+    var gid = null;
+    var gidRaw = it.group_id != null ? it.group_id : it.gid;
+    if (gidRaw != null) {
+      var mapped = gidMap[keyOf(gidRaw)];
+      if (mapped == null) { errors.push('items[' + i + '] references unknown group_id "' + gidRaw + '".'); return; }
+      gid = mapped;
+    } else if (it.id != null && itemGidMap[keyOf(it.id)] != null) {
+      gid = itemGidMap[keyOf(it.id)];
+    }
+    var q = Number(it.quantity != null ? it.quantity : it.qty);
+    var cpRaw = it.cost_price != null ? it.cost_price : it.cp;
+    itemRows.push({
+      id: ++seq, type: 'item', gid: gid,
+      desc: typeof it.description === 'string' ? it.description : '',
+      sub: typeof it.sub_description === 'string' ? it.sub_description : '',
+      make: typeof it.make === 'string' ? it.make : '',
+      qty: Number.isFinite(q) ? q : 0,
+      unit: typeof it.unit === 'string' ? it.unit : '',
+      cp: Number.isFinite(Number(cpRaw)) ? Number(cpRaw) : 0,
+      sp: Number.isFinite(Number(it.unit_price)) ? Number(it.unit_price) : 0
+    });
+  });
+  if (errors.length) { showImpErr(errors.join('\n')); toast('Import failed \u2014 see errors', true); return; }
+  rows = groupRows.concat(itemRows);
+  if (typeof data.title === 'string' && data.title.trim()) { document.getElementById('fTitle').value = data.title; syncTitle(); }
+  closeModal('import');
+  render();
+  toast('Imported ' + itemRows.length + ' items \u00B7 ' + groupRows.length + ' groups');
+}
+
+/* ================================================================
+   Save (same validation as the phone prototype)
+   ================================================================ */
+function save(){
+  if (!document.getElementById('fNo').value.trim()) { toast('Save blocked: BOQ number is required', true); return; }
+  var bad = rows.find(invalidItem);
+  if (bad) {
+    errId = bad.id;
+    renderItems();
+    toast('Save blocked: an item is missing a description, quantity, or selling price', true);
+    goToRow(bad.id);
+    setTimeout(function(){ errId = null; renderItems(); }, 2600);
+    return;
+  }
+  document.getElementById('modeBadge').textContent = 'Saved';
+  toast('BOQ saved \u00B7 ' + rows.filter(function(r){ return r.type === 'item'; }).length + ' items');
+}
+
+/* ================================================================
+   Theme
+   ================================================================ */
+function toggleTheme(){
+  var root = document.documentElement;
+  var isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  var icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  }
+}
+
+/* ================================================================
+   Wiring
+   ================================================================ */
+function syncNo(){ document.getElementById('boqNoLabel').textContent = document.getElementById('fNo').value; }
+function syncTitle(){
+  var v = document.getElementById('fTitle').value;
+  document.getElementById('appbarTitle').textContent = v || 'Untitled BOQ';
+}
+
+Array.prototype.forEach.call(document.querySelectorAll('.backdrop'), function(bd){
+  bd.addEventListener('click', function(e){ if (e.target === bd) { closeModal(bd.id.slice(2).toLowerCase()); } });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') {
+    if (document.getElementById('rowMenu').classList.contains('open')) { closeRowMenu(); return; }
+    var open = document.querySelector('.backdrop.open');
+    if (open) { closeModal(open.id.slice(2).toLowerCase()); return; }
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+});
+document.addEventListener('click', function(e){
+  var menu = document.getElementById('rowMenu');
+  if (!menu.classList.contains('open')) return;
+  if (menu.contains(e.target)) return;
+  if (e.target.closest && e.target.closest('.gbtn')) return;
+  closeRowMenu();
+});
+window.addEventListener('resize', closeRowMenu);
+window.addEventListener('scroll', closeRowMenu, true);var resizeTimer = null;
+window.addEventListener('resize', function(){
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function(){ applyBandLayout(); growAll(); }, 120);
+});
+
+document.getElementById('rowMenu').addEventListener('keydown', function(e){
+  var items = Array.prototype.slice.call(this.querySelectorAll('.mi'));
+  var i = items.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown') { e.preventDefault(); (items[i + 1] || items[0]).focus(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); (items[i - 1] || items[items.length - 1]).focus(); }
+});
+
+render();
+</script>
+</body>
+</html>

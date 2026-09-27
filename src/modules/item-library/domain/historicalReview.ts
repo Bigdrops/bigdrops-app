@@ -125,6 +125,31 @@ function stableCaseId(tenant_schema: string, normalized_description: string) {
   return `${tenant_schema || 'tenant'}::${normalized_description}`
 }
 
+// ponytail: code-unit order matches Postgres uuid ordering (memcmp) used
+// by compute_historical_review_case_hash and array_agg(id ORDER BY id).
+// localeCompare uses ICU collation and can disagree with the server.
+function compareIdentifiers(left: string, right: string) {
+  if (left < right) return -1
+  if (left > right) return 1
+  return 0
+}
+
+export function buildHistoricalReviewCaseMembershipHash(rows: HistoricalReviewRawOccurrence[]) {
+  const members = rows
+    .map((row) => ({
+      sourceTable: row.source_type === 'invoice' ? 'invoice_items' : 'quotation_items',
+      rowId: String(row.row_id || ''),
+    }))
+    .filter((row) => row.rowId)
+    .sort((left, right) => {
+      if (left.sourceTable !== right.sourceTable) return compareIdentifiers(left.sourceTable, right.sourceTable)
+      return compareIdentifiers(left.rowId, right.rowId)
+    })
+    .map((row) => `${row.sourceTable}:${row.rowId}`)
+
+  return `hr-v1-${members.join('|')}`
+}
+
 function getOccurrenceDate(row: HistoricalReviewRawOccurrence) {
   return row.document_date || row.updated_at || null
 }
@@ -157,7 +182,8 @@ function buildSpecificationPatterns() {
     { kind: 'wattage', label: 'Wattage', regex: /\b\d+(?:\.\d+)?\s*w(?:atts?)?\b/gi },
     { kind: 'amperage', label: 'Amperage', regex: /\b\d+(?:\.\d+)?\s*a(?:mp|amps|ampere|amperes)?\b/gi },
     { kind: 'gauge', label: 'Gauge', regex: /\b(?:swg\s*)?\d+(?:\.\d+)?\s*(?:swg|awg|gauge)\b|\bswg\s*\d+(?:\.\d+)?\b/gi },
-    { kind: 'diameter', label: 'Diameter', regex: /\b\d+(?:\.\d+)?\s*(?:mm|cm|inch|in|")\b/gi },
+    { kind: 'cross_section', label: 'Cross-section', regex: /\b\d+(?:\.\d+)?\s*(?:mm\s*(?:²|2)|sq\.?\s*mm|sqmm)(?=\s|$|[^a-z0-9])/gi },
+    { kind: 'diameter', label: 'Diameter', regex: /\b\d+(?:\.\d+)?\s*(?:mm(?!\s*(?:²|2))|cm|inch|in|")\b/gi },
     { kind: 'capacity', label: 'Capacity', regex: /\b\d+(?:\.\d+)?\s*(?:ah|mah|kva|va|uf|mf|l|litre|liter|kg)\b/gi },
     { kind: 'dimension', label: 'Dimension', regex: /\b\d+(?:\.\d+)?\s*[x×]\s*\d+(?:\.\d+)?(?:\s*[x×]\s*\d+(?:\.\d+)?)?\s*(?:mm|cm|m|inch|in)?\b/gi },
     { kind: 'part_number', label: 'Part number', regex: /\b(?:p\/n|pn|part\s*no\.?|part\s*number)\s*[:#-]?\s*[a-z0-9][a-z0-9./_-]*\b/gi },
@@ -403,9 +429,19 @@ export function buildHistoricalReviewCases(params: {
         group.near_alias ? 'similar alias text' : null,
         group.near_candidate ? 'similar unresolved history' : null,
       ].filter((value): value is string => Boolean(value))
+      const caseMembershipHash = buildHistoricalReviewCaseMembershipHash(group.rows)
+      const invoiceRowIds = occurrences
+        .filter((row) => row.source_type === 'invoice')
+        .map((row) => row.row_id)
+        .sort(compareIdentifiers)
+      const quotationRowIds = occurrences
+        .filter((row) => row.source_type === 'quotation')
+        .map((row) => row.row_id)
+        .sort(compareIdentifiers)
 
       return {
-        case_id: stableCaseId(group.tenant_schema, group.normalized_description),
+        case_id: `${stableCaseId(group.tenant_schema, group.normalized_description)}::${caseMembershipHash}`,
+        case_membership_hash: caseMembershipHash,
         tenant_schema: group.tenant_schema,
         normalized_description: group.normalized_description,
         display_description: getDisplayDescription(group.rows),
@@ -424,6 +460,8 @@ export function buildHistoricalReviewCases(params: {
         candidate_reason_labels: candidateReasons,
         candidates: buildHistoricalReviewCandidateEvidence(group.normalized_description, params.catalogRefs),
         occurrences,
+        invoice_row_ids: invoiceRowIds,
+        quotation_row_ids: quotationRowIds,
       }
     })
     .sort((left, right) => {

@@ -19,6 +19,8 @@ type ItemLibraryDuplicateReviewPanelProps = {
   error: Error | null
   mergeLoading: boolean
   onInspectItem: (itemId: string) => void
+  onKeepSeparate: (request: ItemLibraryMergeRequest) => Promise<void>
+  isPairReviewedSeparate?: (leftItemId: string, rightItemId: string) => boolean
   onMerge: (request: ItemLibraryMergeRequest) => Promise<void>
 }
 
@@ -47,6 +49,8 @@ export function ItemLibraryDuplicateReviewPanel({
   error,
   mergeLoading,
   onInspectItem,
+  onKeepSeparate,
+  isPairReviewedSeparate,
   onMerge,
 }: ItemLibraryDuplicateReviewPanelProps) {
   if (!group) {
@@ -79,6 +83,8 @@ export function ItemLibraryDuplicateReviewPanel({
           inspectedItemId={item?.item_id || null}
           mergeLoading={mergeLoading}
           onInspectItem={onInspectItem}
+          onKeepSeparate={onKeepSeparate}
+          isPairReviewedSeparate={isPairReviewedSeparate}
           onMerge={onMerge}
         />
       </div>

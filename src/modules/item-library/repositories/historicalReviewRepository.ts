@@ -2,9 +2,15 @@ import type { TenantClient } from '@/lib/tenantClient'
 import { buildHistoricalReviewCases } from '../domain/historicalReview'
 import { normalizeItemText } from '../domain/suggestionRanking'
 import type {
+  CreateHistoricalReviewItemRequest,
   HistoricalReviewCatalogRef,
+  HistoricalReviewMutationResult,
   HistoricalReviewRawOccurrence,
   HistoricalReviewResult,
+  ItemReviewedSeparatePair,
+  KeepCatalogItemsSeparateRequest,
+  KeepHistoricalReviewCandidateSeparateRequest,
+  LinkHistoricalReviewCaseRequest,
 } from '../types'
 
 const HISTORICAL_REVIEW_PAGE_SIZE = 1000
@@ -302,4 +308,148 @@ export async function getHistoricalReviewCases(client: TenantClient): Promise<Hi
       aliasesResult.truncated ||
       summaryResult.truncated,
   })
+}
+
+export async function getActiveReviewedSeparatePairs(
+  itemIds: string[],
+  client: TenantClient,
+): Promise<ItemReviewedSeparatePair[]> {
+  if (!client.isReady || !client.schemaName) return []
+  const uniqueItemIds = [...new Set(itemIds.map((itemId) => String(itemId || '').trim()).filter(Boolean))]
+  if (!uniqueItemIds.length) return []
+
+  const [leftResult, rightResult] = await Promise.all([
+    client
+      .from('item_reviewed_separate_pairs')
+      .select('id, item_a_id, item_b_id, status')
+      .eq('status', 'active')
+      .in('item_a_id', uniqueItemIds),
+    client
+      .from('item_reviewed_separate_pairs')
+      .select('id, item_a_id, item_b_id, status')
+      .eq('status', 'active')
+      .in('item_b_id', uniqueItemIds),
+  ])
+
+  if (leftResult.error) throw leftResult.error
+  if (rightResult.error) throw rightResult.error
+
+  const rowsById = new Map<string, Record<string, unknown>>()
+  ;[...(Array.isArray(leftResult.data) ? leftResult.data : []), ...(Array.isArray(rightResult.data) ? rightResult.data : [])]
+    .forEach((row: any) => {
+      const id = String(row.id || '')
+      if (id) rowsById.set(id, row)
+    })
+
+  return [...rowsById.values()].map((row: any) => ({
+    id: String(row.id || ''),
+    item_a_id: String(row.item_a_id || ''),
+    item_b_id: String(row.item_b_id || ''),
+    status: row.status === 'active' || row.status === 'revoked' || row.status === 'stale' ? row.status : 'active',
+  })).filter((row) => row.id && row.item_a_id && row.item_b_id)
+}
+
+function normalizeMutationResult(data: unknown): HistoricalReviewMutationResult {
+  const row = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>
+  const status = String(row.status || 'failed')
+  return {
+    status: status === 'applied' || status === 'stale' || status === 'conflict' ? status : 'failed',
+    reason: row.reason ? String(row.reason) : undefined,
+    reused: typeof row.reused === 'boolean' ? row.reused : undefined,
+    decision_id: row.decision_id ? String(row.decision_id) : undefined,
+    target_item_id: row.target_item_id ? String(row.target_item_id) : undefined,
+    created_item_id: row.created_item_id ? String(row.created_item_id) : undefined,
+    linked_invoice_rows: toNumber(row.linked_invoice_rows) ?? undefined,
+    linked_quotation_rows: toNumber(row.linked_quotation_rows) ?? undefined,
+    current_hash: row.current_hash ? String(row.current_hash) : undefined,
+  }
+}
+
+function assertHistoricalReviewClient(client: TenantClient) {
+  if (!client.isReady || !client.schemaName) {
+    throw new Error('Tenant schema is not available yet.')
+  }
+}
+
+function baseCaseParams(request: {
+  normalizedDescription: string
+  caseMembershipHash: string
+  invoiceRowIds: string[]
+  quotationRowIds: string[]
+  reason?: string | null
+}) {
+  return {
+    p_normalized_description: request.normalizedDescription,
+    p_case_membership_hash: request.caseMembershipHash,
+    p_invoice_row_ids: request.invoiceRowIds,
+    p_quotation_row_ids: request.quotationRowIds,
+    p_reason: request.reason || null,
+  }
+}
+
+export async function linkHistoricalReviewCaseToItem(
+  request: LinkHistoricalReviewCaseRequest,
+  client: TenantClient,
+): Promise<HistoricalReviewMutationResult> {
+  assertHistoricalReviewClient(client)
+  const { data, error } = await client.rpc('link_historical_review_case_to_item', {
+    ...baseCaseParams(request),
+    p_target_item_id: request.targetItemId,
+    p_source_context: {
+      source: 'historical_review',
+      case_membership_hash: request.caseMembershipHash,
+    },
+  })
+  if (error) throw error
+  return normalizeMutationResult(data)
+}
+
+export async function createItemFromHistoricalReviewCase(
+  request: CreateHistoricalReviewItemRequest,
+  client: TenantClient,
+): Promise<HistoricalReviewMutationResult> {
+  assertHistoricalReviewClient(client)
+  const { data, error } = await client.rpc('create_item_from_historical_review_case', {
+    ...baseCaseParams(request),
+    p_canonical_name: request.canonicalName,
+    p_source_context: {
+      source: 'historical_review',
+      case_membership_hash: request.caseMembershipHash,
+    },
+  })
+  if (error) throw error
+  return normalizeMutationResult(data)
+}
+
+export async function keepHistoricalReviewCandidateSeparate(
+  request: KeepHistoricalReviewCandidateSeparateRequest,
+  client: TenantClient,
+): Promise<HistoricalReviewMutationResult> {
+  assertHistoricalReviewClient(client)
+  const { data, error } = await client.rpc('keep_historical_review_case_candidate_separate', {
+    ...baseCaseParams(request),
+    p_candidate_item_id: request.candidateItemId,
+    p_source_context: {
+      source: 'historical_review',
+      case_membership_hash: request.caseMembershipHash,
+    },
+  })
+  if (error) throw error
+  return normalizeMutationResult(data)
+}
+
+export async function keepCatalogItemsSeparate(
+  request: KeepCatalogItemsSeparateRequest,
+  client: TenantClient,
+): Promise<HistoricalReviewMutationResult> {
+  assertHistoricalReviewClient(client)
+  const { data, error } = await client.rpc('keep_item_catalog_entries_separate', {
+    p_item_a_id: request.itemAId,
+    p_item_b_id: request.itemBId,
+    p_reason: request.reason || null,
+    p_source_workflow: request.sourceWorkflow || 'cleanup_hub',
+    p_source_context: request.sourceContext || {},
+  })
+  if (error) throw error
+  return normalizeMutationResult(data)
 }

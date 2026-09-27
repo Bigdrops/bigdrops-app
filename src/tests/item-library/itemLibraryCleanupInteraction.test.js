@@ -17,12 +17,16 @@ test('cleanup duplicate review presents similarity as review evidence, not ident
   assert.match(groupSource, /different specifications/i)
 })
 
-test('cleanup merge card supports leaving records separate and keeps merges deliberate', () => {
+test('cleanup merge card supports durable Keep Separate and keeps merges deliberate', () => {
   const source = fs.readFileSync(mergeCardPath, 'utf8')
 
-  assert.match(source, /Leave separate/)
+  assert.match(source, /Keep separate/)
+  assert.match(source, /onKeepSeparate/)
+  assert.match(source, /isPairReviewedSeparate/)
+  assert.match(source, /hasReviewedSeparateSelection/)
   assert.match(source, /setSelectedMergedIds\(\[\]\)/)
   assert.match(source, /Merge only true duplicates/)
+  assert.match(source, /already reviewed and marked separate/)
   assert.match(source, /future suggestions and linked history will use the primary item/)
   assert.match(source, /Document descriptions stay as they were recorded/)
   assert.match(source, /AlertDialog/)

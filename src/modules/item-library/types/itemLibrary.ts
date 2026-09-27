@@ -155,6 +155,7 @@ export interface HistoricalReviewOccurrence {
 
 export interface HistoricalReviewCase {
   case_id: string
+  case_membership_hash: string
   tenant_schema: string
   normalized_description: string
   display_description: string
@@ -173,6 +174,8 @@ export interface HistoricalReviewCase {
   candidate_reason_labels: string[]
   candidates: HistoricalReviewCandidate[]
   occurrences: HistoricalReviewOccurrence[]
+  invoice_row_ids: string[]
+  quotation_row_ids: string[]
 }
 
 export interface HistoricalReviewSummary {
@@ -194,6 +197,53 @@ export interface HistoricalReviewResult {
   tenant_schema: string
   cases: HistoricalReviewCase[]
   summary: HistoricalReviewSummary
+}
+
+export interface HistoricalReviewCaseMutationRequest {
+  normalizedDescription: string
+  caseMembershipHash: string
+  invoiceRowIds: string[]
+  quotationRowIds: string[]
+  reason?: string | null
+}
+
+export interface LinkHistoricalReviewCaseRequest extends HistoricalReviewCaseMutationRequest {
+  targetItemId: string
+}
+
+export interface CreateHistoricalReviewItemRequest extends HistoricalReviewCaseMutationRequest {
+  canonicalName: string
+}
+
+export interface KeepHistoricalReviewCandidateSeparateRequest extends HistoricalReviewCaseMutationRequest {
+  candidateItemId: string
+}
+
+export interface KeepCatalogItemsSeparateRequest {
+  itemAId: string
+  itemBId: string
+  reason?: string | null
+  sourceWorkflow?: 'cleanup_hub' | 'historical_review' | string
+  sourceContext?: Record<string, unknown>
+}
+
+export interface ItemReviewedSeparatePair {
+  id: string
+  item_a_id: string
+  item_b_id: string
+  status: 'active' | 'revoked' | 'stale'
+}
+
+export interface HistoricalReviewMutationResult {
+  status: 'applied' | 'stale' | 'conflict' | 'failed'
+  reason?: string
+  reused?: boolean
+  decision_id?: string
+  target_item_id?: string
+  created_item_id?: string
+  linked_invoice_rows?: number
+  linked_quotation_rows?: number
+  current_hash?: string
 }
 
 export interface ItemHistoryRow {

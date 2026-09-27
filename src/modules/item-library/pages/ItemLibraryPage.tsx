@@ -15,6 +15,10 @@ import { detectDuplicateGroups } from '../domain/duplicateDetection'
 import { getCleanupExportItemIds } from '../domain/cleanupExportPayload'
 import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
 import {
+  keepCatalogItemsSeparateDecision,
+  loadActiveReviewedSeparatePairs,
+} from '../services'
+import {
   useItemAliases,
   useItemHistoryDetail,
   useItemHistoryList,
@@ -27,6 +31,7 @@ import type {
   CleanupApplyProposal,
   CleanupApplyResult,
   FlaggedCleanupBatchExportPayload,
+  ItemReviewedSeparatePair,
   ItemLibraryMergeRequest,
 } from '../types'
 import type { ItemLibraryFilterType, ItemLibraryViewMode } from '../types'
@@ -70,8 +75,36 @@ function BackArrow() {
   )
 }
 
+function cleanupPairKey(leftItemId: string, rightItemId: string) {
+  return [leftItemId, rightItemId]
+    .map((value) => String(value || '').trim())
+    .sort((left, right) => left.localeCompare(right))
+    .join('::')
+}
+
+function createReviewedSeparatePairSet(pairs: ItemReviewedSeparatePair[]) {
+  return new Set(
+    pairs
+      .filter((pair) => pair.status === 'active')
+      .map((pair) => cleanupPairKey(pair.item_a_id, pair.item_b_id)),
+  )
+}
+
+function duplicateGroupContainsReviewedSeparatePair(
+  group: { members: Array<{ item_id: string }> },
+  reviewedSeparatePairs: Set<string>,
+) {
+  const itemIds = group.members.map((member) => member.item_id)
+  for (let leftIndex = 0; leftIndex < itemIds.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < itemIds.length; rightIndex += 1) {
+      if (reviewedSeparatePairs.has(cleanupPairKey(itemIds[leftIndex], itemIds[rightIndex]))) return true
+    }
+  }
+  return false
+}
+
 export default function ItemLibraryPage() {
-  const { schemaName } = useEntity()
+  const { schemaName, tenantClient } = useEntity()
   const [searchText, setSearchText] = useState('')
   const [workflowMode, setWorkflowMode] = useState<'library' | 'cleanup' | 'historical_review'>('library')
   const [viewMode, setViewMode] = useState<ItemLibraryViewMode>('catalog')
@@ -80,6 +113,8 @@ export default function ItemLibraryPage() {
   const [selectedDuplicateGroupId, setSelectedDuplicateGroupId] = useState<string | null>(null)
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
   const [pendingHistoryRefreshItemId, setPendingHistoryRefreshItemId] = useState<string | null>(null)
+  const [reviewedSeparatePairs, setReviewedSeparatePairs] = useState<ItemReviewedSeparatePair[]>([])
+  const [reviewedSeparatePairsError, setReviewedSeparatePairsError] = useState<Error | null>(null)
   const {
     data: summaryItems,
     loading: summaryLoading,
@@ -97,7 +132,12 @@ export default function ItemLibraryPage() {
 
   const { counts: serverFilterCounts, loading: filterCountsLoading } = useItemFilterCounts()
 
-  const allDuplicateGroups = useMemo(() => detectDuplicateGroups(summaryItems), [summaryItems])
+  const rawDuplicateGroups = useMemo(() => detectDuplicateGroups(summaryItems), [summaryItems])
+  const reviewedSeparatePairSet = useMemo(() => createReviewedSeparatePairSet(reviewedSeparatePairs), [reviewedSeparatePairs])
+  const allDuplicateGroups = useMemo(
+    () => rawDuplicateGroups.filter((group) => !duplicateGroupContainsReviewedSeparatePair(group, reviewedSeparatePairSet)),
+    [rawDuplicateGroups, reviewedSeparatePairSet],
+  )
   const allDuplicateItemIdsSet = useMemo(
     () => new Set(allDuplicateGroups.flatMap((group) => group.members.map((member) => member.item_id))),
     [allDuplicateGroups],
@@ -122,8 +162,42 @@ export default function ItemLibraryPage() {
     })
   }, [activeFilter, searchText, summaryItems, allDuplicateItemIdsSet])
 
-  const duplicateGroups = useMemo(() => detectDuplicateGroups(filteredItems), [filteredItems])
+  const duplicateGroups = useMemo(
+    () => detectDuplicateGroups(filteredItems).filter((group) => !duplicateGroupContainsReviewedSeparatePair(group, reviewedSeparatePairSet)),
+    [filteredItems, reviewedSeparatePairSet],
+  )
   const cleanupDuplicateGroups = workflowMode === 'cleanup' ? allDuplicateGroups : duplicateGroups
+  const summaryItemIds = useMemo(() => summaryItems.map((item) => item.item_id), [summaryItems])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const run = async () => {
+      if (!tenantClient.isReady || !summaryItemIds.length) {
+        setReviewedSeparatePairs([])
+        setReviewedSeparatePairsError(null)
+        return
+      }
+
+      try {
+        const pairs = await loadActiveReviewedSeparatePairs(summaryItemIds, tenantClient)
+        if (!cancelled) {
+          setReviewedSeparatePairs(pairs)
+          setReviewedSeparatePairsError(null)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setReviewedSeparatePairs([])
+          setReviewedSeparatePairsError(error instanceof Error ? error : new Error('Reviewed-separate safety state could not load.'))
+        }
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [summaryItemIds, tenantClient])
 
   useEffect(() => {
     if (!filteredItems.length) {
@@ -196,7 +270,6 @@ export default function ItemLibraryPage() {
     () => buildFlaggedCleanupExportPayload({ duplicateGroups: allDuplicateGroups, aliases: duplicateAliases }),
     [allDuplicateGroups, duplicateAliases],
   )
-  const summaryItemIds = useMemo(() => summaryItems.map((item) => item.item_id), [summaryItems])
   const { data: allItemAliases } = useItemAliases(summaryItemIds, { enabled: workflowMode === 'cleanup' && viewMode === 'advanced_cleanup' })
   const { mergeItems, loading: mergeLoading } = useItemMerge()
 
@@ -217,6 +290,9 @@ export default function ItemLibraryPage() {
   }, [pendingHistoryRefreshItemId, reloadHistoryRows, selectedItemId])
 
   const handleMerge = async (request: ItemLibraryMergeRequest) => {
+    if (reviewedSeparatePairsError) {
+      throw new Error('Reviewed-separate safety state could not load. Retry before merging.')
+    }
     const result = await mergeItems(request)
     const relinkedTotal = result.relinked_invoice_rows + result.relinked_quotation_rows
 
@@ -246,6 +322,14 @@ export default function ItemLibraryPage() {
     proposals: CleanupApplyProposal[],
   ): Promise<CleanupApplyResult[]> => {
     const results: CleanupApplyResult[] = []
+    if (reviewedSeparatePairsError) {
+      return proposals.map((proposal) => ({
+        group_id: proposal.group_id,
+        canonical_name: proposal.canonical_name,
+        status: 'failed',
+        message: 'Reviewed-separate safety state could not load. Retry before applying cleanup proposals.',
+      }))
+    }
     const validItemIds = getCleanupExportItemIds(exportPayload)
 
     for (const proposal of proposals) {
@@ -257,6 +341,19 @@ export default function ItemLibraryPage() {
           canonical_name: proposal.canonical_name,
           status: 'stale',
           message: 'This merge proposal no longer matches the locked current batch.',
+        })
+        continue
+      }
+
+      if (duplicateGroupContainsReviewedSeparatePair(
+        { members: [proposal.winner_item_id, ...proposal.merged_item_ids].map((item_id) => ({ item_id })) },
+        reviewedSeparatePairSet,
+      )) {
+        results.push({
+          group_id: proposal.group_id,
+          canonical_name: proposal.canonical_name,
+          status: 'failed',
+          message: 'This proposal includes items that were reviewed and marked separate.',
         })
         continue
       }
@@ -320,6 +417,46 @@ export default function ItemLibraryPage() {
 
     return results
   }
+
+  const refreshReviewedSeparatePairs = async () => {
+    if (!tenantClient.isReady) return
+    try {
+      const pairs = await loadActiveReviewedSeparatePairs(summaryItemIds, tenantClient)
+      setReviewedSeparatePairs(pairs)
+      setReviewedSeparatePairsError(null)
+    } catch (error) {
+      setReviewedSeparatePairsError(error instanceof Error ? error : new Error('Reviewed-separate safety state could not load.'))
+    }
+  }
+
+  const handleKeepDuplicateGroupSeparate = async (request: ItemLibraryMergeRequest) => {
+    if (reviewedSeparatePairsError) {
+      throw new Error('Reviewed-separate safety state could not load. Retry before recording Keep Separate.')
+    }
+    await Promise.all(
+      request.mergedItemIds.map((mergedItemId) =>
+        keepCatalogItemsSeparateDecision(
+          {
+            itemAId: request.winnerItemId,
+            itemBId: mergedItemId,
+            sourceWorkflow: 'cleanup_hub',
+            sourceContext: {
+              group_id: selectedDuplicateGroupId,
+              source: 'manual_cleanup_review',
+            },
+          },
+          tenantClient,
+        ),
+      ),
+    )
+    await refreshReviewedSeparatePairs()
+    feedback.success('Keep Separate saved', {
+      description: `${request.mergedItemIds.length} reviewed relationship${request.mergedItemIds.length === 1 ? '' : 's'} will be excluded from future cleanup proposals.`,
+    })
+  }
+
+  const isPairReviewedSeparate = (leftItemId: string, rightItemId: string) =>
+    reviewedSeparatePairSet.has(cleanupPairKey(leftItemId, rightItemId))
 
   const handleNeedsCleanupDeepLink = (itemId: string) => {
     const group = allDuplicateGroups.find(g => g.members.some(m => m.item_id === itemId))
@@ -440,6 +577,19 @@ export default function ItemLibraryPage() {
         {summaryError ? (
           <div className="border-b border-bd-status-danger-border bg-bd-status-danger-bg px-5 py-3 text-[12px] text-bd-status-danger-text">
             {summaryError.message || 'Failed to load item library.'}
+          </div>
+        ) : null}
+
+        {workflowMode === 'cleanup' && reviewedSeparatePairsError ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-bd-status-warning-border bg-bd-status-warning-bg px-5 py-3 text-[12px] font-semibold text-bd-status-warning-text">
+            <span>Reviewed-separate safety state could not load. Merge and cleanup apply actions are paused until retry.</span>
+            <button
+              type="button"
+              onClick={() => void refreshReviewedSeparatePairs()}
+              className="rounded-md border border-bd-status-warning-border bg-bd-card-bg px-3 py-1.5 text-[11px] font-bold text-bd-text"
+            >
+              Retry safety load
+            </button>
           </div>
         ) : null}
 
@@ -567,8 +717,10 @@ export default function ItemLibraryPage() {
                     historyRows={historyRows}
                     loading={historyLoading}
                     error={historyError}
-                    mergeLoading={mergeLoading}
+                    mergeLoading={mergeLoading || Boolean(reviewedSeparatePairsError)}
                     onInspectItem={(itemId) => setSelectedItemId(itemId)}
+                    onKeepSeparate={handleKeepDuplicateGroupSeparate}
+                    isPairReviewedSeparate={isPairReviewedSeparate}
                     onMerge={handleMerge}
                   />
                 ) : (
@@ -578,6 +730,7 @@ export default function ItemLibraryPage() {
                     items={summaryItems}
                     aliases={allItemAliases}
                     duplicateGroups={allDuplicateGroups}
+                    reviewedSeparatePairs={reviewedSeparatePairs}
                     onApplyProposals={handleApplyCleanupProposals}
                   />
                 )
@@ -588,6 +741,7 @@ export default function ItemLibraryPage() {
                   items={summaryItems}
                   aliases={allItemAliases}
                   duplicateGroups={allDuplicateGroups}
+                  reviewedSeparatePairs={reviewedSeparatePairs}
                   onApplyProposals={handleApplyCleanupProposals}
                 />
               ) : workflowMode === 'cleanup' && viewMode === 'merge_history' ? (

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
+  CheckCircle2,
   ClipboardList,
   FileClock,
   Info,
   Link2,
-  LockKeyhole,
   RefreshCw,
   Search,
 } from 'lucide-react'
@@ -14,11 +14,13 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatDisplayDate } from '@/lib/formatters/date'
+import { feedback } from '@/lib/feedback'
 import { cn } from '@/lib/utils'
 import { useHistoricalReviewCases } from '../hooks'
 import type {
   HistoricalReviewCandidate,
   HistoricalReviewCase,
+  HistoricalReviewMutationResult,
   HistoricalReviewSpecToken,
 } from '../types'
 
@@ -89,7 +91,7 @@ function EmptyState() {
         </div>
         <h2 className="mt-4 text-[16px] font-extrabold text-bd-text">No unresolved historical cases</h2>
         <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-          Item Library has no read-only Tier C review cases for this tenant.
+          Item Library has no unresolved Tier C review cases for this tenant.
         </p>
       </div>
     </div>
@@ -160,7 +162,35 @@ function CaseQueueItem({
   )
 }
 
-function CandidateRow({ reviewCase, candidate }: { reviewCase: HistoricalReviewCase; candidate: HistoricalReviewCandidate }) {
+function getMutationMessage(result: HistoricalReviewMutationResult) {
+  if (result.status === 'applied') return 'Historical Review was updated.'
+  if (result.status === 'stale') return 'This review case changed. Reload and review the current evidence.'
+  if (result.status === 'conflict') return 'This action conflicts with current Item Library state.'
+  return 'The action could not be completed.'
+}
+
+function caseMutationBase(item: HistoricalReviewCase) {
+  return {
+    normalizedDescription: item.normalized_description,
+    caseMembershipHash: item.case_membership_hash,
+    invoiceRowIds: item.invoice_row_ids,
+    quotationRowIds: item.quotation_row_ids,
+  }
+}
+
+function CandidateRow({
+  reviewCase,
+  candidate,
+  mutating,
+  onLink,
+  onKeepSeparate,
+}: {
+  reviewCase: HistoricalReviewCase
+  candidate: HistoricalReviewCandidate
+  mutating: boolean
+  onLink: (candidate: HistoricalReviewCandidate) => void
+  onKeepSeparate: (candidate: HistoricalReviewCandidate) => void
+}) {
   const reviewSpecsByKind = new Map(reviewCase.specifications.map((spec) => [spec.kind, spec.value]))
   const differingSpecs = candidate.specifications.filter((spec) => {
     const reviewValue = reviewSpecsByKind.get(spec.kind)
@@ -202,17 +232,106 @@ function CandidateRow({ reviewCase, candidate }: { reviewCase: HistoricalReviewC
           Specification difference: {differingSpecs.map((spec) => `${spec.label} ${reviewSpecsByKind.get(spec.kind)} vs ${spec.value}`).join('; ')}
         </div>
       ) : null}
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          disabled={mutating}
+          onClick={() => onLink(candidate)}
+          className="min-h-[42px] rounded-md border border-bd-button-primary-bg bg-bd-button-primary-bg px-3 text-[12px] font-bold text-bd-button-primary-text disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Link to existing
+        </button>
+        <button
+          type="button"
+          disabled={mutating}
+          onClick={() => onKeepSeparate(candidate)}
+          className="min-h-[42px] rounded-md border border-bd-border bg-bd-card-bg px-3 text-[12px] font-bold text-bd-text disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Keep separate
+        </button>
+      </div>
     </article>
   )
 }
 
-function CaseDetail({ item }: { item: HistoricalReviewCase | null }) {
+function CaseDetail({
+  item,
+  mutating,
+  onLinkCase,
+  onCreateItem,
+  onKeepCandidateSeparate,
+}: {
+  item: HistoricalReviewCase | null
+  mutating: boolean
+  onLinkCase: (item: HistoricalReviewCase, candidate: HistoricalReviewCandidate) => Promise<HistoricalReviewMutationResult>
+  onCreateItem: (item: HistoricalReviewCase, canonicalName: string) => Promise<HistoricalReviewMutationResult>
+  onKeepCandidateSeparate: (item: HistoricalReviewCase, candidate: HistoricalReviewCandidate) => Promise<HistoricalReviewMutationResult>
+}) {
+  const [canonicalName, setCanonicalName] = useState('')
+
+  useEffect(() => {
+    setCanonicalName(item?.display_description || '')
+  }, [item?.case_id, item?.display_description])
+
   if (!item) {
     return (
       <div className="rounded-lg border border-dashed border-bd-border bg-bd-card-bg p-6 text-center text-[12px] text-bd-text-muted">
         Select a review case to inspect its historical evidence.
       </div>
     )
+  }
+
+  const handleResult = (result: HistoricalReviewMutationResult) => {
+    const message = getMutationMessage(result)
+    if (result.status === 'applied') {
+      feedback.success(message)
+    } else {
+      feedback.warning(message, { description: result.reason })
+    }
+  }
+
+  const handleLink = async (candidate: HistoricalReviewCandidate) => {
+    const ok = window.confirm(
+      `Link ${item.occurrence_count} historical occurrence${item.occurrence_count === 1 ? '' : 's'} for "${item.display_description}" to "${candidate.name}"? Historical prices, quantities, units, taxes, and descriptions will not change.`,
+    )
+    if (!ok) return
+    try {
+      const result = await onLinkCase(item, candidate)
+      handleResult(result)
+    } catch (error) {
+      feedback.error('Link failed', { description: error instanceof Error ? error.message : 'Try again after reload.' })
+    }
+  }
+
+  const handleKeepSeparate = async (candidate: HistoricalReviewCandidate) => {
+    const ok = window.confirm(
+      `Mark this historical review case as separate from "${candidate.name}"? This does not link rows or change catalog data.`,
+    )
+    if (!ok) return
+    try {
+      const result = await onKeepCandidateSeparate(item, candidate)
+      handleResult(result)
+    } catch (error) {
+      feedback.error('Keep separate failed', { description: error instanceof Error ? error.message : 'Try again after reload.' })
+    }
+  }
+
+  const handleCreateItem = async () => {
+    const name = canonicalName.trim()
+    if (!name) {
+      feedback.error('Canonical name required')
+      return
+    }
+    const ok = window.confirm(
+      `Create a separate Item Library entry named "${name}" and link ${item.occurrence_count} historical occurrence${item.occurrence_count === 1 ? '' : 's'} to it? Historical prices, quantities, units, taxes, and descriptions will not change.`,
+    )
+    if (!ok) return
+    try {
+      const result = await onCreateItem(item, name)
+      handleResult(result)
+    } catch (error) {
+      feedback.error('Create separate item failed', { description: error instanceof Error ? error.message : 'Try again after reload.' })
+    }
   }
 
   return (
@@ -227,7 +346,7 @@ function CaseDetail({ item }: { item: HistoricalReviewCase | null }) {
             <p className="mt-1 text-[12px] font-semibold text-bd-text-muted">{item.normalized_description}</p>
           </div>
           <Badge variant="secondary" className="rounded-md">
-            Read-only
+            Identity review
           </Badge>
         </div>
 
@@ -250,7 +369,7 @@ function CaseDetail({ item }: { item: HistoricalReviewCase | null }) {
           Evidence, not identity proof
         </div>
         <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-          Exact text evidence and similar text evidence help a person review the case. Stage 1 does not link, merge, create aliases, or change historical rows.
+          Exact text evidence and similar text evidence help a person review the case. Link and create decisions update identity only. They do not merge catalog items or rewrite commercial history.
         </p>
       </div>
 
@@ -264,7 +383,14 @@ function CaseDetail({ item }: { item: HistoricalReviewCase | null }) {
         <div className="mt-3 space-y-2">
           {item.candidates.length ? (
             item.candidates.map((candidate) => (
-              <CandidateRow key={candidate.item_id} reviewCase={item} candidate={candidate} />
+              <CandidateRow
+                key={candidate.item_id}
+                reviewCase={item}
+                candidate={candidate}
+                mutating={mutating}
+                onLink={handleLink}
+                onKeepSeparate={handleKeepSeparate}
+              />
             ))
           ) : (
             <p className="rounded-lg border border-dashed border-bd-border p-4 text-[12px] text-bd-text-muted">
@@ -312,25 +438,37 @@ function CaseDetail({ item }: { item: HistoricalReviewCase | null }) {
 
       <section className="rounded-lg border border-bd-border bg-bd-card-bg p-4" aria-labelledby="historical-review-future-actions">
         <div className="flex items-center gap-2">
-          <LockKeyhole className="h-4 w-4 text-bd-text-muted" aria-hidden="true" />
+          <CheckCircle2 className="h-4 w-4 text-bd-button-primary-bg" aria-hidden="true" />
           <h3 id="historical-review-future-actions" className="text-[13px] font-extrabold text-bd-text">
             Reconciliation actions
           </h3>
         </div>
         <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-          These decisions are planned for a later reconciliation stage. They are disabled here because Stage 1 is inspection only.
+          Link and create actions update identity only. They do not rewrite historical prices, quantities, units, taxes, or descriptions.
         </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {['Link to existing', 'Create separate item', 'Keep separate', 'Leave unresolved'].map((label) => (
+        <div className="mt-3 rounded-lg border border-bd-border bg-bd-surface-muted p-3">
+          <label className="text-[11px] font-bold uppercase tracking-[0.12em] text-bd-text-muted" htmlFor="historical-review-canonical-name">
+            New canonical name
+          </label>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <input
+              id="historical-review-canonical-name"
+              value={canonicalName}
+              onChange={(event) => setCanonicalName(event.target.value)}
+              className="min-h-[42px] min-w-0 flex-1 rounded-md border border-bd-border bg-bd-card-bg px-3 text-[13px] font-semibold text-bd-text outline-none focus:border-bd-button-primary-bg focus:ring-2 focus:ring-bd-button-primary-bg/20"
+            />
             <button
-              key={label}
               type="button"
-              disabled
-              className="min-h-[44px] rounded-md border border-bd-border bg-bd-surface-muted px-3 text-left text-[12px] font-bold text-bd-text-muted disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={mutating}
+              onClick={handleCreateItem}
+              className="min-h-[42px] rounded-md border border-bd-border bg-bd-card-bg px-3 text-[12px] font-bold text-bd-text disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {label} · coming in reconciliation stage
+              Create separate item
             </button>
-          ))}
+          </div>
+        </div>
+        <div className="mt-3 rounded-lg border border-dashed border-bd-border p-3 text-[12px] text-bd-text-muted">
+          Leave unresolved stores no decision. The case remains available for later review.
         </div>
       </section>
     </section>
@@ -338,7 +476,7 @@ function CaseDetail({ item }: { item: HistoricalReviewCase | null }) {
 }
 
 export function ItemLibraryHistoricalReviewPanel() {
-  const { data, loading, error, reload } = useHistoricalReviewCases()
+  const { data, loading, error, mutating, reload, linkCaseToItem, createItemFromCase, keepCandidateSeparate } = useHistoricalReviewCases()
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null)
   const [filter, setFilter] = useState<ReviewFilter>('all')
   const [searchText, setSearchText] = useState('')
@@ -374,6 +512,24 @@ export function ItemLibraryHistoricalReviewPanel() {
 
   const selectedCase = filteredCases.find((item) => item.case_id === selectedCaseId) || null
 
+  const handleLinkCase = (item: HistoricalReviewCase, candidate: HistoricalReviewCandidate) =>
+    linkCaseToItem({
+      ...caseMutationBase(item),
+      targetItemId: candidate.item_id,
+    })
+
+  const handleCreateItem = (item: HistoricalReviewCase, canonicalName: string) =>
+    createItemFromCase({
+      ...caseMutationBase(item),
+      canonicalName,
+    })
+
+  const handleKeepCandidateSeparate = (item: HistoricalReviewCase, candidate: HistoricalReviewCandidate) =>
+    keepCandidateSeparate({
+      ...caseMutationBase(item),
+      candidateItemId: candidate.item_id,
+    })
+
   if (loading) return <LoadingState />
   if (error) return <ErrorState message={error.message || 'Try again to load the current tenant review cases.'} onRetry={reload} />
   if (!data.cases.length) return <EmptyState />
@@ -396,7 +552,7 @@ export function ItemLibraryHistoricalReviewPanel() {
               Historical Review
             </h1>
             <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-              Review unresolved historical line-item descriptions. This stage is read-only and does not change catalog or document data.
+              Review unresolved historical line-item descriptions and apply deliberate identity decisions. Historical commercial values are not changed.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[430px]">
@@ -465,7 +621,13 @@ export function ItemLibraryHistoricalReviewPanel() {
         </aside>
 
         <div className="min-h-0 overflow-y-auto p-3 md:p-4">
-          <CaseDetail item={selectedCase} />
+          <CaseDetail
+            item={selectedCase}
+            mutating={mutating}
+            onLinkCase={handleLinkCase}
+            onCreateItem={handleCreateItem}
+            onKeepCandidateSeparate={handleKeepCandidateSeparate}
+          />
         </div>
       </div>
     </div>

@@ -2,8 +2,11 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  buildCatalogCleanupBatchExportPayload,
   buildFlaggedCleanupExportPayload,
+  createCatalogCleanupSession,
   validateFlaggedCleanupImport,
+  validateCatalogCleanupBatchImport,
   createCleanupApplyProposal,
 } from '../../modules/item-library/domain/itemCleanupExchange.ts'
 
@@ -55,6 +58,109 @@ test('valid flagged duplicate import does not crash and identifies as ok', () =>
   assert.equal(validation.preview.merge_groups[0].export_label, 'Cable Lug 10mm')
   assert.equal(validation.preview.merge_groups[0].winner_item_id, 'item-1')
   assert.deepEqual(validation.preview.merge_groups[0].merged_item_ids, ['item-2'])
+})
+
+test('flagged duplicate import rejects reviewed-separate merge proposals during preflight', () => {
+  const exportPayload = buildFlaggedCleanupExportPayload({
+    duplicateGroups,
+    aliases,
+  })
+
+  const resultText = JSON.stringify({
+    response_type: 'flagged_cleanup_result',
+    schema_version: 1,
+    source_export_type: 'flagged_cleanup',
+    snapshot_id: exportPayload.snapshot_id,
+    merge_groups: [
+      {
+        group_id: 'group-1',
+        canonical_name: 'Cable Lug 10mm',
+        winner_item_id: 'item-1',
+        merged_item_ids: ['item-2'],
+        aliases_to_keep: [],
+        aliases_to_retire: [],
+      },
+    ],
+    ignored_group_ids: [],
+  })
+
+  const validation = validateFlaggedCleanupImport(resultText, exportPayload, {
+    reviewedSeparatePairs: [
+      { id: 'reviewed-1', item_a_id: 'item-2', item_b_id: 'item-1', status: 'active' },
+    ],
+  })
+
+  assert.equal(validation.ok, false)
+  assert.equal(validation.preview.merge_groups.length, 0)
+  assert.equal(validation.parsed, null)
+  assert.match(validation.preview.rejected_groups[0].reason, /reviewed and marked separate/i)
+})
+
+test('catalog cleanup batch import rejects reviewed-separate merge suggestions during preflight', () => {
+  const items = [
+    {
+      item_id: 'item-1',
+      name: 'Primary Air Filter',
+      standard_price: null,
+      last_sold_price: null,
+      usage_count: 1,
+      appears_in_invoice: true,
+      appears_in_quotation: false,
+    },
+    {
+      item_id: 'item-2',
+      name: 'Secondary Air Filter',
+      standard_price: null,
+      last_sold_price: null,
+      usage_count: 1,
+      appears_in_invoice: true,
+      appears_in_quotation: false,
+    },
+  ]
+  const session = createCatalogCleanupSession({
+    items,
+    aliases: [],
+    duplicateGroups,
+    batchSize: 2,
+    sessionId: 'session-reviewed-separate',
+    generatedAt: '2026-09-27T12:00:00.000Z',
+  })
+  const exportPayload = buildCatalogCleanupBatchExportPayload({
+    session,
+    batch: session.batches[0],
+    batchIndex: 0,
+  })
+
+  const resultText = JSON.stringify({
+    response_type: 'catalog_cleanup_batch_result',
+    schema_version: 1,
+    source_export_type: 'catalog_cleanup_batch',
+    snapshot_id: exportPayload.snapshot_id,
+    session_id: session.session_id,
+    batch_id: exportPayload.batch_id,
+    merge_suggestions: [
+      {
+        canonical_name: 'Air Filter',
+        winner_item_id: 'item-1',
+        merged_item_ids: ['item-2'],
+      },
+    ],
+    rename_suggestions: [],
+    alias_suggestions: [],
+    ignored_item_ids: [],
+    review_required_item_ids: [],
+  })
+
+  const validation = validateCatalogCleanupBatchImport(resultText, exportPayload, {
+    reviewedSeparatePairs: [
+      { id: 'reviewed-1', item_a_id: 'item-1', item_b_id: 'item-2', status: 'active' },
+    ],
+  })
+
+  assert.equal(validation.ok, false)
+  assert.equal(validation.preview, null)
+  assert.equal(validation.parsed, null)
+  assert.match(validation.errors.join(' '), /reviewed and marked separate/i)
 })
 
 test('flagged cleanup snapshot identity is deterministic for the logical review set', () => {

@@ -32,6 +32,7 @@ import type {
   FlaggedCleanupBatchExportPayload,
   FlaggedCleanupExportPayload,
   CleanupImportPreview,
+  ItemReviewedSeparatePair,
 } from '../types'
 
 type ItemLibraryAdvancedCleanupPanelProps = {
@@ -40,6 +41,7 @@ type ItemLibraryAdvancedCleanupPanelProps = {
   items: ItemCatalogItem[]
   aliases: ItemAlias[]
   duplicateGroups: DuplicateCandidateGroup[]
+  reviewedSeparatePairs?: ItemReviewedSeparatePair[]
   onApplyProposals: (
     exportPayload: CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
     proposals: CleanupApplyProposal[],
@@ -171,6 +173,7 @@ export function ItemLibraryAdvancedCleanupPanel({
   items,
   aliases,
   duplicateGroups,
+  reviewedSeparatePairs = [],
   onApplyProposals,
 }: ItemLibraryAdvancedCleanupPanelProps) {
   const [batchSizeOption, setBatchSizeOption] = useState<'25' | '50' | '100' | 'all' | 'custom'>('50')
@@ -225,10 +228,18 @@ export function ItemLibraryAdvancedCleanupPanel({
   const validation = useMemo(() => {
     if (!currentExportPayload) return null
     if (isDuplicates) {
-      return validateFlaggedCleanupImport(importText, currentExportPayload as FlaggedCleanupExportPayload | FlaggedCleanupBatchExportPayload)
+      return validateFlaggedCleanupImport(
+        importText,
+        currentExportPayload as FlaggedCleanupExportPayload | FlaggedCleanupBatchExportPayload,
+        { reviewedSeparatePairs },
+      )
     }
-    return validateCatalogCleanupBatchImport(importText, currentExportPayload as CatalogCleanupBatchExportPayload)
-  }, [isDuplicates, currentExportPayload, importText])
+    return validateCatalogCleanupBatchImport(
+      importText,
+      currentExportPayload as CatalogCleanupBatchExportPayload,
+      { reviewedSeparatePairs },
+    )
+  }, [isDuplicates, currentExportPayload, importText, reviewedSeparatePairs])
 
   useEffect(() => {
     if (!currentBatch || !validation) return

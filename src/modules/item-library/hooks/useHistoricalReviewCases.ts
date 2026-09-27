@@ -1,8 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useEntity } from '@/lib/tenant/contexts'
-import { loadHistoricalReviewCases } from '../services'
-import type { HistoricalReviewResult } from '../types'
+import {
+  createHistoricalReviewItem,
+  keepHistoricalReviewCandidateSeparateDecision,
+  linkHistoricalReviewCase,
+  loadHistoricalReviewCases,
+} from '../services'
+import type {
+  CreateHistoricalReviewItemRequest,
+  HistoricalReviewMutationResult,
+  HistoricalReviewResult,
+  KeepHistoricalReviewCandidateSeparateRequest,
+  LinkHistoricalReviewCaseRequest,
+} from '../types'
 
 const EMPTY_RESULT: HistoricalReviewResult = {
   tenant_schema: 'unknown',
@@ -28,6 +39,7 @@ export function useHistoricalReviewCases() {
   const [data, setData] = useState<HistoricalReviewResult>(EMPTY_RESULT)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [mutating, setMutating] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
@@ -59,10 +71,47 @@ export function useHistoricalReviewCases() {
     }
   }, [reloadKey, tenantClient, schemaName])
 
+  const reload = useCallback(() => setReloadKey((value) => value + 1), [])
+
+  const runMutation = useCallback(
+    async (operation: () => Promise<HistoricalReviewMutationResult>) => {
+      setMutating(true)
+      setError(null)
+      try {
+        const result = await operation()
+        if (result.status === 'applied') reload()
+        return result
+      } finally {
+        setMutating(false)
+      }
+    },
+    [reload],
+  )
+
+  const linkCaseToItem = useCallback(
+    (request: LinkHistoricalReviewCaseRequest) => runMutation(() => linkHistoricalReviewCase(request, tenantClient)),
+    [runMutation, tenantClient],
+  )
+
+  const createItemFromCase = useCallback(
+    (request: CreateHistoricalReviewItemRequest) => runMutation(() => createHistoricalReviewItem(request, tenantClient)),
+    [runMutation, tenantClient],
+  )
+
+  const keepCandidateSeparate = useCallback(
+    (request: KeepHistoricalReviewCandidateSeparateRequest) =>
+      runMutation(() => keepHistoricalReviewCandidateSeparateDecision(request, tenantClient)),
+    [runMutation, tenantClient],
+  )
+
   return {
     data,
     loading,
     error,
-    reload: () => setReloadKey((value) => value + 1),
+    mutating,
+    reload,
+    linkCaseToItem,
+    createItemFromCase,
+    keepCandidateSeparate,
   }
 }

@@ -23,6 +23,8 @@ type ItemLibraryDuplicateMergeCardProps = {
   inspectedItemId: string | null
   mergeLoading: boolean
   onInspectItem: (itemId: string) => void
+  onKeepSeparate: (request: ItemLibraryMergeRequest) => Promise<void>
+  isPairReviewedSeparate?: (leftItemId: string, rightItemId: string) => boolean
   onMerge: (request: ItemLibraryMergeRequest) => Promise<void>
 }
 
@@ -42,6 +44,8 @@ export function ItemLibraryDuplicateMergeCard({
   inspectedItemId,
   mergeLoading,
   onInspectItem,
+  onKeepSeparate,
+  isPairReviewedSeparate,
   onMerge,
 }: ItemLibraryDuplicateMergeCardProps) {
   const [winnerItemId, setWinnerItemId] = useState<string | null>(suggestPrimaryItemId(group))
@@ -69,8 +73,21 @@ export function ItemLibraryDuplicateMergeCard({
     () => buildMergePreview({ aliases, group, request }),
     [aliases, group, request],
   )
+  const selectedScopeIds = useMemo(
+    () => (request ? [request.winnerItemId, ...request.mergedItemIds] : []),
+    [request],
+  )
+  const hasReviewedSeparateSelection = useMemo(() => {
+    if (!isPairReviewedSeparate || selectedScopeIds.length < 2) return false
+    for (let leftIndex = 0; leftIndex < selectedScopeIds.length; leftIndex += 1) {
+      for (let rightIndex = leftIndex + 1; rightIndex < selectedScopeIds.length; rightIndex += 1) {
+        if (isPairReviewedSeparate(selectedScopeIds[leftIndex], selectedScopeIds[rightIndex])) return true
+      }
+    }
+    return false
+  }, [isPairReviewedSeparate, selectedScopeIds])
 
-  const disableMerge = !request || aliasesLoading || Boolean(aliasesError) || mergeLoading
+  const disableMerge = !request || aliasesLoading || Boolean(aliasesError) || mergeLoading || hasReviewedSeparateSelection
 
   const handleWinnerChange = (itemId: string) => {
     setWinnerItemId(itemId)
@@ -101,6 +118,18 @@ export function ItemLibraryDuplicateMergeCard({
       setConfirmOpen(false)
     } catch (error) {
       setSubmissionError(error instanceof Error ? error.message : 'Could not complete the merge.')
+    }
+  }
+
+  const handleKeepSeparate = async () => {
+    if (!request || request.mergedItemIds.length === 0) return
+
+    try {
+      setSubmissionError(null)
+      await onKeepSeparate(request)
+      setSelectedMergedIds([])
+    } catch (error) {
+      setSubmissionError(error instanceof Error ? error.message : 'Could not keep these items separate.')
     }
   }
 
@@ -235,19 +264,23 @@ export function ItemLibraryDuplicateMergeCard({
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-bd-border bg-bd-surface px-3 py-2">
           <p className="text-[11px] font-semibold text-bd-text-muted">
-            Not duplicates? Leave this group separate and continue reviewing.
+            Not duplicates? Keep the selected primary and merge candidates separate.
           </p>
           <button
             type="button"
-            onClick={() => {
-              setSelectedMergedIds([])
-              setSubmissionError(null)
-            }}
-            className="rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-bold text-bd-text transition hover:bg-bd-surface"
+            disabled={!request || request.mergedItemIds.length === 0 || mergeLoading}
+            onClick={handleKeepSeparate}
+            className="rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-bold text-bd-text transition hover:bg-bd-surface disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Leave separate
+            Keep separate
           </button>
         </div>
+
+        {hasReviewedSeparateSelection ? (
+          <p className="mt-3 rounded-md border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] font-semibold text-bd-status-warning-text">
+            This selection includes items that were already reviewed and marked separate. Remove that item before merging.
+          </p>
+        ) : null}
 
         {aliasesLoading ? (
           <p className="mt-3 text-[11px] text-bd-text-muted">Loading existing aliases for this group…</p>
