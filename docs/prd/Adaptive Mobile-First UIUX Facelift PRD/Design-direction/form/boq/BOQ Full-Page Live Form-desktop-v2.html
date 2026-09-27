@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIGDROPS — BOQ Full-Page Live Form (Desktop v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a; --sub:#475569; --faint:#94a3b8;
+    --line:rgba(15,23,42,.10); --line-2:rgba(15,23,42,.17);
+    --bg:#eef2f7; --card:#ffffff; --soft:#f6f8fb;
+    --accent:#1e3a5f; --red:#ef4444; --green:#16a34a; --mono:'DM Mono',monospace;
+    --cost:#b45309; --cost-bg:rgba(180,83,9,.10); --cost-line:rgba(180,83,9,.38);
+    --sell:#15803d; --sell-bg:rgba(21,128,61,.10); --sell-line:rgba(21,128,61,.38);
+    --loss:#b91c1c;
+    --gring:rgba(30,58,95,.42);
+    --shadow-card:0 12px 28px rgba(30,58,95,.08),0 2px 6px rgba(15,23,42,.04);
+    --primary:#1e3a5f; --primary-ink:#f8fafc;
+    --barh:58px; --gut:clamp(20px,2.6vw,44px);
+  }
+  [data-theme="dark"]{
+    --ink:#f1f5f9; --sub:#cbd5e1; --faint:#7c8ba1;
+    --line:rgba(148,163,184,.18); --line-2:rgba(148,163,184,.3);
+    --bg:#0f172a; --card:#1e293b; --soft:#273549;
+    --accent:#38bdf8; --red:#f87171; --green:#4ade80;
+    --cost:#f59e0b; --cost-bg:rgba(245,158,11,.14); --cost-line:rgba(245,158,11,.45);
+    --sell:#22c55e; --sell-bg:rgba(34,197,94,.14); --sell-line:rgba(34,197,94,.45);
+    --loss:#f87171;
+    --gring:rgba(56,189,248,.4);
+    --shadow-card:0 12px 28px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.2);
+    --primary:#2563eb; --primary-ink:#f8fafc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  input,textarea,select{outline:none}
+  svg{display:block}
+  .mono{font-family:var(--mono)}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .sec{display:flex;align-items:center;gap:7px}
+  .sec h2{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+  .lb{display:block;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .cmdbar{position:sticky;top:0;height:var(--barh);display:flex;align-items:center;gap:10px;padding:0 var(--gut);background:var(--card);border-bottom:1px solid var(--line);z-index:40;box-shadow:0 4px 14px rgba(15,23,42,.06)}
+  [data-theme="dark"] .cmdbar{box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  .cmdbar .back{display:flex;align-items:center;gap:5px;color:var(--sub);font-size:11px;font-weight:800;background:none;border:0;padding:7px 10px;border-radius:8px;transition:background .15s,color .15s;white-space:nowrap}
+  .cmdbar .back:hover{background:var(--soft);color:var(--ink)}
+  .cmdbar h1{font-size:15px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+  .barNo{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);padding:4px 9px;border:1px dashed var(--line-2);border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:22ch}
+  .badge{color:var(--faint);font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:4px 8px;border:1px dashed var(--line-2);border-radius:6px;white-space:nowrap}
+  .cmdbar .spacer{flex:1}
+  .toolbar{display:flex;align-items:center;gap:8px}
+  .tbn{height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line-2);background:var(--soft);font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;transition:background .15s,transform .12s,border-color .15s;white-space:nowrap}
+  .tbn:hover{background:var(--card);border-color:var(--gring)}
+  .tbn:active{transform:scale(.96)}
+  .tbn.danger{border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.08);color:var(--red)}
+  .tbn.danger:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.45)}
+  .tbn.save{height:36px;padding:0 16px;border:1px solid var(--primary);background:var(--primary);color:var(--primary-ink);box-shadow:0 5px 14px rgba(30,58,95,.28)}
+  .tbn.save:hover{filter:brightness(1.12);background:var(--primary)}
+  [data-theme="dark"] .tbn.save{box-shadow:0 5px 14px rgba(0,0,0,.45)}
+  .theme-btn{display:flex;align-items:center;justify-content:center;border:1px solid var(--line-2);background:var(--soft);color:var(--sub);width:34px;height:34px;border-radius:9px;transition:background .15s,color .15s;flex-shrink:0}
+  .theme-btn:hover{background:var(--card);color:var(--ink)}
+
+  .app{max-width:1800px;margin:0 auto;padding:20px var(--gut) 40px}
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-card);overflow:hidden}
+  .meta{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.15fr) minmax(0,1fr) minmax(0,1.6fr) minmax(0,1.1fr);gap:14px 16px;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .meta .fld{height:34px}
+  .meta .fld.big{height:40px;font-size:15.5px;font-weight:700;letter-spacing:-.01em;border-color:var(--line-2)}
+  .fld{width:100%;padding:0 11px;border-radius:9px;border:1px solid var(--line-2);background:var(--soft);font-size:13px;font-weight:600;transition:background .15s,box-shadow .15s,border-color .15s;color:var(--ink);min-width:0}
+  .fld:focus{background:var(--card);box-shadow:0 0 0 2px var(--accent);border-color:var(--accent)}
+  .fld::placeholder{color:var(--faint);font-weight:600}
+  textarea.fld{height:auto;min-height:36px;padding:8px 10px;resize:vertical;font-weight:700;font-size:12.5px;line-height:1.45}
+
+  .work{padding:14px 18px 4px}
+  .workhd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px}
+  #countLabel{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+
+  .thead,.item{
+    --c1:46px; --cdesc:minmax(210px,2.6fr); --c2:76px; --c3:84px; --cmake:minmax(100px,1.1fr);
+    --ccp:114px; --csp:114px; --cpft:130px; --cact:106px; --gap:10px;
+    display:grid;
+    grid-template-columns:var(--c1) var(--cdesc) var(--c2) var(--c3) var(--cmake) var(--ccp) var(--csp) var(--cpft) var(--cact);
+    column-gap:var(--gap);
+  }
+  .thead.nomake,#items.nomake .item{
+    grid-template-columns:var(--c1) var(--cdesc) var(--c2) var(--c3) var(--ccp) var(--csp) var(--cpft) var(--cact);
+  }
+  .thead{position:sticky;top:var(--barh);z-index:20;padding:8px 12px;background:var(--soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .thead .th{font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .thead .c-cp{color:var(--cost)} .thead .c-sp{color:var(--sell)} .thead .c-acts{text-align:right}
+  #items{position:relative}
+
+  .item{position:relative;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);transition:background .12s}
+  .item:hover{background:var(--soft)}
+  .item>*{min-width:0}
+  .item.err{background:rgba(239,68,68,.06);box-shadow:inset 3px 0 0 var(--red)}
+  .idx{font-family:var(--mono);font-size:11px;color:var(--faint);font-weight:500}
+  .dcell{position:relative}
+  .descta{width:100%;min-height:40px;max-height:120px;padding:8px 72px 8px 10px;border:1px solid var(--line-2);border-radius:8px;background:var(--card);font-size:13px;font-weight:700;line-height:1.4;color:var(--ink);resize:vertical;transition:box-shadow .15s,border-color .15s;display:block}
+  .descta:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+  .descta::placeholder{color:var(--faint);font-weight:600}
+  .subtog{position:absolute;right:6px;bottom:6px;display:flex;align-items:center;gap:3px;height:21px;padding:0 7px;border:1px dashed var(--line-2);border-radius:6px;background:var(--soft);color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;transition:background .15s,color .15s,border-color .15s}
+  .subtog:hover{background:var(--card);color:var(--ink)}
+  .subtog svg{width:9px;height:9px;transition:transform .15s}
+  .subtog.has{color:var(--accent);border-color:var(--accent);border-style:solid}
+  .subtog.open svg{transform:rotate(180deg)}
+  .subta{margin-top:6px;min-height:36px}
+
+  .cm{position:relative;display:flex;align-items:center;gap:6px}
+  .cqty::before{content:"";position:absolute;left:calc((var(--gap) / -2) - 1px);top:-5px;bottom:-5px;width:1px;background:var(--line-2)}
+  .pre{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);flex-shrink:0}
+  .pre.cost{color:var(--cost)} .pre.sell{color:var(--sell)}
+  .sfld{flex:1;min-width:0;height:34px;padding:0 8px;border:1px solid var(--line-2);border-radius:8px;background:var(--soft);font-family:var(--mono);font-size:12.5px;font-weight:500;text-align:right;color:var(--ink);transition:box-shadow .15s,border-color .15s,background .15s}
+  .sfld.txt{text-align:left;font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px}
+  .sfld:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);background:var(--card)}
+  .ccp .sfld:focus{border-color:var(--cost);box-shadow:0 0 0 2px var(--cost)}
+  .csp .sfld:focus{border-color:var(--sell);box-shadow:0 0 0 2px var(--sell)}
+  .sfld::-webkit-outer-spin-button,.sfld::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .sfld[type=number]{-moz-appearance:textfield}
+
+  .profit{display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-variant-numeric:tabular-nums}
+  .profit b{font-family:var(--mono);font-size:13.5px;font-weight:600;color:var(--ink)}
+  .profit small{font-family:var(--mono);font-size:9.5px;font-weight:600;color:var(--faint);white-space:nowrap}
+  .profit.neg b,.profit.neg small{color:var(--loss)}
+  .profit.zero b{color:var(--faint)}
+
+  .acts{display:flex;align-items:center;justify-content:flex-end;gap:3px;opacity:.5;transition:opacity .14s}
+  .item:hover .acts,.item:focus-within .acts{opacity:1}
+  .ibtn{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--faint);transition:background .12s,color .12s;flex-shrink:0}
+  .ibtn:hover{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(15,23,42,.16)}
+  .ibtn.del:hover{background:rgba(239,68,68,.12);color:var(--red);box-shadow:none}
+  .ibtn svg{width:13px;height:13px}
+  .ibtn:disabled{opacity:.3;pointer-events:none}
+  .ins{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);height:17px;padding:0 11px;border:1px dashed var(--gring);border-radius:99px;background:var(--card);color:var(--accent);font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s,background .12s,color .12s;z-index:15;box-shadow:0 1px 5px rgba(15,23,42,.14)}
+  .item:hover .ins,.item:focus-within .ins{opacity:1;pointer-events:auto}
+  .ins:hover{background:var(--accent);color:#fff}
+  [data-theme="dark"] .ins{box-shadow:0 1px 5px rgba(0,0,0,.45)}
+  [data-theme="dark"] .ibtn:hover{background:var(--card)}
+
+  .createpair{display:flex;gap:10px;padding:14px 0 16px}
+  .addbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 18px;border-radius:11px;font-size:12px;font-weight:800;letter-spacing:.03em;transition:background .15s,transform .12s,box-shadow .15s}
+  .addbtn:hover{transform:translateY(-1px)}
+  .addbtn:active{transform:translateY(0) scale(.985)}
+  .addbtn svg{width:14px;height:14px}
+  .addbtn.primary{border:1px solid var(--primary);background:var(--primary);color:var(--primary-ink);box-shadow:0 6px 16px rgba(30,58,95,.22)}
+  .addbtn.primary:hover{box-shadow:0 9px 22px rgba(30,58,95,.3)}
+  .addbtn.ghost{border:1px dashed var(--gring);background:transparent;color:var(--accent)}
+  .addbtn.ghost:hover{background:rgba(30,58,95,.06)}
+  [data-theme="dark"] .addbtn.ghost:hover{background:rgba(56,189,248,.08)}
+
+  .gwrap{position:relative;border-radius:12px;margin:16px 0 0;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--gring);transition:box-shadow .15s}
+  .gwrap:focus-within{box-shadow:inset 0 0 0 1.5px var(--accent)}
+  #items>.item+.gwrap{margin-top:16px}
+  #items>.gwrap+.item{margin-top:10px}
+  .gwrap.collapsed{box-shadow:none;background:transparent;margin-top:12px;margin-bottom:6px}
+  .gwrap.collapsed .gbody,.gwrap.collapsed .gfoot{display:none}
+  .ghdr{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 14px;background:linear-gradient(90deg,rgba(30,58,95,.07),rgba(30,58,95,0));border-bottom:1px solid var(--line);border-radius:11px 11px 0 0}
+  [data-theme="dark"] .ghdr{background:linear-gradient(90deg,rgba(56,189,248,.08),rgba(56,189,248,0))}
+  .gwrap.collapsed .ghdr{border:1px dashed var(--gring);border-radius:99px;background:var(--soft);padding:8px 14px}
+  .gtog{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid var(--line-2);border-radius:7px;background:var(--card);color:var(--sub);transition:transform .15s,background .15s,color .15s;flex-shrink:0}
+  .gtog:hover{background:var(--soft);color:var(--ink)}
+  .gtog svg{width:11px;height:11px;transition:transform .15s}
+  .gwrap.collapsed .gtog svg{transform:rotate(-90deg)}
+  .gname{flex:0 1 auto;min-width:110px;max-width:46ch;height:30px;padding:0 8px;border:1px solid transparent;border-radius:7px;background:transparent;font-size:13.5px;font-weight:800;color:var(--ink);letter-spacing:-.01em;transition:background .15s,border-color .15s}
+  .gname:hover{background:var(--card);border-color:var(--line-2)}
+  .gname:focus{background:var(--card);border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+  .gwrap.collapsed .gname{height:26px;font-size:12.5px}
+  .gcount{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+  .ghdr .spacer{flex:1}
+  .gbody{padding:0}
+  .gbody-empty{padding:14px;text-align:center;color:var(--faint);font-size:12px;font-weight:600;border-bottom:1px solid var(--line)}
+  .gfoot{display:flex;justify-content:center;padding:9px 12px 11px;border-top:1px dashed var(--line);border-radius:0 0 11px 11px}
+  .gfoot .addbtn{height:32px;padding:0 16px;font-size:11px}
+
+  .empty{padding:34px 12px;text-align:center;color:var(--faint);font-size:12.5px;font-weight:600;border-bottom:1px solid var(--line)}
+
+  .closing{border-top:1px solid var(--line);background:var(--soft);padding:16px 18px 18px}
+  .sumhd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-bottom:10px}
+  .sumhd .note{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.04em}
+  .ledger{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 16px}
+  .lrow{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .lrow:last-child{border-bottom:0}
+  .lrow span{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+  .lrow span em{font-style:normal;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--faint);font-size:10.5px}
+  .lrow b{font-family:var(--mono);font-size:15.5px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink)}
+  #tCost{color:var(--cost)} #tSell{color:var(--sell)}
+  .lrow.strong{border-top:1px solid var(--line-2);border-bottom:0;padding-top:12px}
+  .lrow.strong span{color:var(--ink)}
+  .lrow.strong b{font-size:21px;font-weight:600;letter-spacing:-.02em}
+  #tProfit.neg{color:var(--loss)} #tProfit.pos{color:var(--green)} #tProfit.zero{color:var(--ink)}
+  #tMargin{font-size:14px}
+  #tMargin.neg{color:var(--loss)} #tMargin.pos{color:var(--green)} #tMargin.zero{color:var(--faint)}
+  .words{margin-top:12px;font-family:var(--mono);font-size:11.5px;line-height:1.6;color:var(--sub);background:var(--card);border:1px dashed var(--line-2);border-radius:11px;padding:11px 14px}
+
+  .ov{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);padding:24px}
+  .ov.open{display:flex}
+  .modal{width:min(460px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);padding:20px;max-height:84vh;overflow:auto}
+  .modal.wide{width:min(580px,100%)}
+  .modal h3{font-size:14.5px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px}
+  .modal .sub{font-size:11.5px;color:var(--sub);margin-bottom:14px;line-height:1.55}
+  .mhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
+  .x{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:0;border-radius:8px;background:var(--soft);color:var(--sub);transition:background .12s,color .12s;flex-shrink:0}
+  .x:hover{background:rgba(239,68,68,.14);color:var(--red)}
+  .x svg{width:13px;height:13px}
+  .collist{display:flex;flex-direction:column;gap:7px}
+  .colrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-size:12.5px;font-weight:700}
+  .colrow.locked{opacity:.65}
+  .colrow small{display:block;font-size:10px;font-weight:600;color:var(--faint);margin-top:2px}
+  .tag{font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);border:1px dashed var(--line-2);border-radius:6px;padding:2px 6px;white-space:nowrap;margin-left:6px}
+  .sw{position:relative;width:36px;height:20px;border-radius:99px;background:#cbd5e1;border:0;transition:background .15s;flex-shrink:0}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+  .sw.on{background:var(--accent)}
+  .sw.on::after{transform:translateX(16px)}
+  .sw:disabled{opacity:.55;cursor:not-allowed}
+  .mfoot{display:flex;gap:10px;margin-top:16px}
+  .mbtn{height:38px;padding:0 16px;border-radius:10px;font-size:11.5px;font-weight:800;letter-spacing:.04em;transition:background .15s,transform .12s}
+  .mbtn:hover{transform:translateY(-1px)}
+  .mbtn.primary{border:1px solid var(--primary);background:var(--primary);color:var(--primary-ink);flex:1}
+  .mbtn.ghost{border:1px solid var(--line-2);background:var(--soft);color:var(--sub);flex:1}
+  .mbtn.ghost:hover{background:var(--card);color:var(--ink)}
+  .mbtn.danger{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.1);color:var(--red);flex:1}
+  .mbtn.danger:hover{background:rgba(239,68,68,.18)}
+  #impTa{width:100%;min-height:150px;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--soft);font-family:var(--mono);font-size:11.5px;line-height:1.55;resize:vertical;color:var(--ink)}
+  #impTa:focus{background:var(--card);box-shadow:0 0 0 2px var(--accent)}
+  .impnote{margin-top:10px;font-size:10.5px;line-height:1.6;color:var(--sub);background:var(--soft);border:1px dashed var(--line-2);border-radius:9px;padding:8px 10px}
+  .impnote code{font-family:var(--mono);font-size:10px;color:var(--accent)}
+  #impErr{display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(239,68,68,.35);border-radius:10px;background:rgba(239,68,68,.08);color:var(--red);font-size:11.5px;line-height:1.55;white-space:pre-wrap}
+  #impErr.show{display:block}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:80;opacity:0;pointer-events:none;background:#0f172a;color:#f1f5f9;font-size:12px;font-weight:700;padding:10px 16px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:opacity .2s,transform .2s;max-width:80vw}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #toast.err{background:#b91c1c}
+
+  @media (max-width:1439px){
+    .thead,.item{--c1:44px;--cdesc:minmax(180px,2.4fr);--c2:70px;--c3:78px;--cmake:minmax(92px,1fr);--ccp:104px;--csp:104px;--cpft:116px;--cact:100px;--gap:8px}
+  }
+  @media (max-width:1279px){
+    .thead,.item{--c1:40px;--cdesc:minmax(150px,2.2fr);--c2:62px;--c3:70px;--cmake:minmax(80px,1fr);--ccp:94px;--csp:94px;--cpft:104px;--cact:94px;--gap:6px}
+    .meta{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 14px}
+    .work{padding:12px 14px 4px}
+    .meta,.closing{padding-left:14px;padding-right:14px}
+    .thead,.item{padding-left:10px;padding-right:10px}
+  }
+  @media (max-width:1023px){
+    .thead,.item{--cdesc:minmax(130px,2fr);--cmake:minmax(72px,1fr);--ccp:86px;--csp:86px;--cpft:94px;--cact:88px;--gap:5px}
+    .cmdbar{gap:7px}
+    .cmdbar h1{font-size:13.5px}
+    .barNo{max-width:14ch}
+    .createpair{flex-wrap:wrap}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="cmdbar">
+  <button class="back" onclick="history.length>1?history.back():location.href='#'" title="Back to BOQs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    BOQs
+  </button>
+  <h1>Bill of Quantities</h1>
+  <span class="barNo mono" id="barNo">BOQ-2026-0142</span>
+  <span class="badge" id="modeBadge">Draft</span>
+  <span class="spacer"></span>
+  <nav class="toolbar">
+    <button class="tbn" onclick="openSheet('ovImport')">JSON Import</button>
+    <button class="tbn" onclick="openSheet('ovColumns')">Columns</button>
+    <button class="tbn danger" onclick="openSheet('ovClear')">Clear All</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
+    <button class="tbn save" onclick="save()" title="Save Bill of Quantities">Save BOQ</button>
+  </nav>
+</header>
+
+<main class="app">
+  <section class="sheet">
+    <div class="meta">
+      <div><label class="lb" for="fTitle">Project title</label><input class="fld big" id="fTitle" value="Office Fit-Out — Phase 1" placeholder="Project title"></div>
+      <div><label class="lb" for="fNo">BOQ no. *</label><input class="fld mono" id="fNo" value="BOQ-2026-0142" placeholder="BOQ no." oninput="syncNo()"></div>
+      <div><label class="lb" for="fDate">Issue date</label><input class="fld mono" id="fDate" type="date" value="2026-09-17"></div>
+      <div><label class="lb" for="fVendor">Vendor / contractor</label><input class="fld" id="fVendor" value="Northbridge Estates Ltd" placeholder="Vendor or contractor"></div>
+      <div><label class="lb" for="fRef">Reference / contact</label><input class="fld mono" id="fRef" value="RFQ-8841" placeholder="Reference"></div>
+    </div>
+
+    <div class="work">
+      <div class="workhd">
+        <div class="sec"><span class="dot" style="background:var(--green)"></span><h2>Line items</h2></div>
+        <span id="countLabel"></span>
+      </div>
+      <div class="thead" id="thead">
+        <div class="th">No.</div>
+        <div class="th">Description / specification</div>
+        <div class="th c-qty">Qty</div>
+        <div class="th">Unit</div>
+        <div class="th c-make">Make / brand</div>
+        <div class="th c-cp">CP</div>
+        <div class="th c-sp">SP</div>
+        <div class="th c-profit">Line profit</div>
+        <div class="th c-acts">Actions</div>
+      </div>
+      <div id="items"></div>
+      <div class="createpair">
+        <button class="addbtn primary" onclick="addItem()" title="Adds an ungrouped line item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Add line item
+        </button>
+        <button class="addbtn ghost" onclick="addGroup()" title="Adds an empty group">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+          Add group
+        </button>
+      </div>
+    </div>
+
+    <div class="closing">
+      <div class="sumhd">
+        <div class="sec"><span class="dot" style="background:var(--accent)"></span><h2>Totals</h2></div>
+        <span class="note">CP / SP — no VAT, no WHT</span>
+      </div>
+      <div class="ledger">
+        <div class="lrow"><span>Total cost <em>(CP × Qty)</em></span><b id="tCost">&#8358;0.00</b></div>
+        <div class="lrow"><span>Total selling price <em>(SP × Qty)</em></span><b id="tSell">&#8358;0.00</b></div>
+        <div class="lrow strong"><span>Gross profit</span><b id="tProfit">&#8358;0.00</b></div>
+        <div class="lrow"><span>Margin <em>on selling price</em></span><b id="tMargin">0%</b></div>
+      </div>
+      <div class="words" id="tWords">ZERO NAIRA ONLY</div>
+    </div>
+  </section>
+</main>
+
+<div class="ov" id="ovColumns" onclick="if(event.target===this)closeSheet('ovColumns')">
+  <div class="modal">
+    <div class="mhead"><div><h3>Columns</h3><p class="sub">Toggle optional columns. Description, CP, SP, profit and actions always stay on the row.</p></div><button class="x" onclick="closeSheet('ovColumns')" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div id="colList" class="collist"></div>
+    <div class="mfoot"><button class="mbtn primary" onclick="closeSheet('ovColumns')">Done</button></div>
+  </div>
+</div>
+
+<div class="ov" id="ovClear" onclick="if(event.target===this)closeSheet('ovClear')">
+  <div class="modal">
+    <div class="mhead"><div><h3>Clear all line items?</h3><p class="sub">This removes every group and item row from this BOQ. This action cannot be undone.</p></div><button class="x" onclick="closeSheet('ovClear')" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <div class="mfoot">
+      <button class="mbtn ghost" onclick="closeSheet('ovClear')">Cancel</button>
+      <button class="mbtn danger" onclick="doClearAll()">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ovImport" onclick="if(event.target===this)closeSheet('ovImport')">
+  <div class="modal wide">
+    <div class="mhead"><div><h3>JSON Import</h3><p class="sub">Paste a BOQ JSON document. Existing groups and line items are replaced.</p></div><button class="x" onclick="closeSheet('ovImport')" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+    <textarea id="impTa" placeholder='{"title":"...","items":[...],"groups":[...]}'></textarea>
+    <div id="impErr" role="alert"></div>
+    <div class="impnote">Contract keys — items: <code>description</code> <code>sub_description</code> <code>quantity</code> <code>unit</code> <code>unit_price</code> <code>cost_price</code> <code>cp</code> <code>make</code> <code>group_id</code> · groups: <code>id</code> <code>name</code> <code>itemIds</code> · top level: <code>items</code> (required), <code>groups</code>, <code>title</code></div>
+    <div class="mfoot">
+      <button class="mbtn ghost" onclick="closeSheet('ovImport')">Cancel</button>
+      <button class="mbtn primary" onclick="doImport()">Import &amp; Replace</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const naira = n => '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const svgs = {
+  up: '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>',
+  down: '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>',
+  copy: '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
+  x: '<svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>'
+};
+
+let cols = [
+  { key: 'make', label: 'Make / Brand', desc: 'Preferred supplier brand', visible: true },
+  { key: 'cp', label: 'CP (Cost Price)', desc: 'What you pay \u00B7 feeds Total Cost', visible: true, locked: true },
+  { key: 'sp', label: 'SP (Selling Price)', desc: 'What the client pays \u00B7 feeds Total Selling Price', visible: true, locked: true },
+];
+let rows = [
+  { id: 8, type: 'item', gid: null, desc: 'Preliminaries, site supervision and setting out', sub: 'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', subOpen: false, qty: 1, unit: 'lot', make: '', cp: 150000, sp: 185000 },
+  { id: 1, type: 'group', title: 'Group A \u2014 Civil Works', collapsed: false },
+  { id: 2, type: 'item', gid: 1, desc: 'Portland cement, grade 42.5R', sub: '', subOpen: false, qty: 400, unit: 'bags', make: 'Dangote 3X', cp: 5200, sp: 6100 },
+  { id: 3, type: 'item', gid: 1, desc: 'Reinforcement steel, high yield T12', sub: '', subOpen: false, qty: 120, unit: 'lengths', make: 'African Foundries', cp: 9800.75, sp: 11500 },
+  { id: 4, type: 'item', gid: 1, desc: 'Sharp sand, river dredged', sub: '', subOpen: false, qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 33500 },
+  { id: 5, type: 'group', title: 'Group B \u2014 Finishes', collapsed: false },
+  { id: 6, type: 'item', gid: 5, desc: 'Emulsion paint, 20L pail', sub: 'Two coats over prepared surface.', subOpen: false, qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 },
+];
+let seq = 100, errId = null, nums = {};
+
+const vis = k => cols.find(c => c.key === k).visible;
+const profit = r => (Number(r.sp || 0) - Number(r.cp || 0)) * Number(r.qty || 0);
+const siblings = r => r.gid != null
+  ? rows.filter(x => x.type === 'item' && x.gid === r.gid)
+  : rows.filter(x => x.type === 'group' || x.gid == null);
+const members = gid => rows.filter(x => x.type === 'item' && x.gid === gid);
+
+function profitHTML(r) {
+  const p = profit(r);
+  const unit = Math.abs(Number(r.sp || 0) - Number(r.cp || 0));
+  const sign = p > 0 ? '+' : p < 0 ? '-' : '';
+  const cls = p < 0 ? 'profit neg' : p === 0 ? 'profit zero' : 'profit';
+  return `<div class="${cls}" data-pid="${r.id}"><b>${naira(p)}</b><small>${sign}${naira(unit)} / unit</small></div>`;
+}
+function patchProfit(id) {
+  const r = rows.find(x => x.id === id);
+  const el = document.querySelector(`[data-pid="${id}"]`);
+  if (r && el) el.outerHTML = profitHTML(r);
+}
+function itemHTML(r, sib) {
+  const n = nums[r.id] || 0;
+  const err = errId === r.id ? ' err' : '';
+  const k = sib.indexOf(r);
+  const hasSub = !!(r.sub && r.sub.trim());
+  return `<div class="item${err}" data-id="${r.id}">
+    <span class="idx">${String(n).padStart(2, '0')}</span>
+    <div class="dcell">
+      <div class="dmain">
+        <textarea class="descta" rows="2" placeholder="Item description / specification... *" oninput="editRow(${r.id},'desc',this.value)">${esc(r.desc)}</textarea>
+        <button class="subtog${hasSub ? ' has' : ''}${r.subOpen ? ' open' : ''}" onclick="toggleSub(${r.id})">${svgs.down}Sub</button>
+      </div>
+      ${r.subOpen ? `<textarea class="fld subta" rows="2" placeholder="Sub-description \u2014 detail under the main description..." oninput="editRow(${r.id},'sub',this.value)">${esc(r.sub)}</textarea>` : ''}
+    </div>
+    <div class="cm cqty"><span class="pre">Qty</span><input class="sfld" value="${r.qty}" oninput="editNum(${r.id},'qty',this.value)" aria-label="Quantity"></div>
+    <div class="cm"><input class="sfld txt" placeholder="Unit" value="${esc(r.unit)}" oninput="editRow(${r.id},'unit',this.value)" aria-label="Unit"></div>
+    ${vis('make')
+      ? `<div class="cm"><input class="sfld txt" placeholder="Make / brand" value="${esc(r.make)}" oninput="editRow(${r.id},'make',this.value)" aria-label="Make or brand"></div>`
+      : ''}
+    <div class="cm ccp"><span class="pre cost">CP</span><input class="sfld" type="number" min="0" value="${r.cp}" oninput="editNum(${r.id},'cp',this.value)" aria-label="Cost price"></div>
+    <div class="cm csp"><span class="pre sell">SP</span><input class="sfld" type="number" min="0" value="${r.sp}" oninput="editNum(${r.id},'sp',this.value)" aria-label="Selling price"></div>
+    ${profitHTML(r)}
+    <div class="acts">
+      <button class="ibtn" title="Move up" aria-label="Move up" ${k <= 0 ? 'disabled' : ''} onclick="moveRow(${r.id},-1)">${svgs.up}</button>
+      <button class="ibtn" title="Move down" aria-label="Move down" ${k >= sib.length - 1 ? 'disabled' : ''} onclick="moveRow(${r.id},1)">${svgs.down}</button>
+      <button class="ibtn" title="Duplicate" aria-label="Duplicate" onclick="dupRow(${r.id})">${svgs.copy}</button>
+      <button class="ibtn del" title="Delete item" aria-label="Delete item" onclick="removeRow(${r.id})">${svgs.x}</button>
+    </div>
+    <button class="ins" onclick="insertBelow(${r.id})">+ Insert below</button>
+  </div>`;
+}
+function groupHTML(r) {
+  const mem = members(r.id);
+  const label = mem.length + ' item' + (mem.length === 1 ? '' : 's') + (r.collapsed ? ' \u00B7 collapsed' : '');
+  const body = mem.length
+    ? mem.map(m => itemHTML(m, mem)).join('')
+    : '<div class="gbody-empty">No items in this group yet</div>';
+  return `<div class="gwrap${r.collapsed ? ' collapsed' : ''}" data-gid="${r.id}">
+    <div class="ghdr">
+      <button class="gtog" title="${r.collapsed ? 'Expand group' : 'Collapse group'}" aria-expanded="${!r.collapsed}" onclick="toggleGroup(${r.id})">${svgs.down}</button>
+      <input class="gname" value="${esc(r.title)}" placeholder="Group title" oninput="editRow(${r.id},'title',this.value)" aria-label="Group title">
+      <span class="gcount">${label}</span>
+      <span class="spacer"></span>
+      <button class="ibtn del" title="Remove group (items are kept)" aria-label="Remove group" onclick="removeRow(${r.id})">${svgs.x}</button>
+    </div>
+    <div class="gbody">${body}</div>
+    <div class="gfoot"><button class="addbtn ghost" onclick="addItemTo(${r.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add item to this group</button></div>
+  </div>`;
+}
+function renderHead() {
+  const on = vis('make');
+  const c = document.querySelector('#thead .c-make');
+  if (c) c.style.display = on ? '' : 'none';
+  document.getElementById('thead').classList.toggle('nomake', !on);
+  document.getElementById('items').classList.toggle('nomake', !on);
+}
+function renderItems() {
+  const host = document.getElementById('items');
+  rows.forEach(r => { if (r.type === 'item' && r.gid != null && !rows.some(g => g.type === 'group' && g.id === r.gid)) r.gid = null; });
+  const nItems = rows.filter(r => r.type === 'item').length;
+  const nGroups = rows.filter(r => r.type === 'group').length;
+  document.getElementById('countLabel').textContent = nItems + ' items \u00B7 ' + nGroups + ' groups';
+  if (!rows.length) {
+    host.innerHTML = '<div class="empty">No rows yet \u2014 add a line item or a group.</div>';
+    return;
+  }
+  nums = {};
+  const out = [];
+  let n = 0;
+  rows.forEach(r => {
+    if (r.type === 'group') {
+      members(r.id).forEach(m => { nums[m.id] = ++n; });
+      out.push(groupHTML(r));
+    } else if (r.gid == null) {
+      nums[r.id] = ++n;
+      out.push(itemHTML(r, siblings(r)));
+    }
+  });
+  host.innerHTML = out.join('');
+}
+function renderTotals() {
+  let cost = 0, sell = 0;
+  rows.forEach(r => {
+    if (r.type !== 'item') return;
+    cost += Number(r.cp || 0) * Number(r.qty || 0);
+    sell += Number(r.sp || 0) * Number(r.qty || 0);
+  });
+  const p = sell - cost;
+  document.getElementById('tProfit').textContent = naira(p);
+  document.getElementById('tProfit').className = p < 0 ? 'neg' : p > 0 ? 'pos' : 'zero';
+  document.getElementById('tMargin').textContent = sell ? Math.round(p / sell * 100) + '%' : '0%';
+  document.getElementById('tMargin').className = p < 0 ? 'neg' : p > 0 ? 'pos' : 'zero';
+  document.getElementById('tCost').textContent = naira(cost);
+  document.getElementById('tSell').textContent = naira(sell);
+  document.getElementById('tWords').textContent = words(sell);
+}
+function words(num) {
+  if (!num) return 'ZERO NAIRA ONLY';
+  const a = ['', 'ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'];
+  const b = ['', '', 'TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+  const c = x => x < 20 ? a[x] : x < 100 ? b[Math.floor(x/10)] + (x % 10 ? ' ' + a[x % 10] : '') : x < 1000 ? a[Math.floor(x/100)] + ' HUNDRED' + (x % 100 ? ' ' + c(x % 100) : '') : x < 1e6 ? c(Math.floor(x/1000)) + ' THOUSAND' + (x % 1000 ? ' ' + c(x % 1000) : '') : x < 1e9 ? c(Math.floor(x/1e6)) + ' MILLION' + (x % 1e6 ? ' ' + c(x % 1e6) : '') : c(Math.floor(x/1e9)) + ' BILLION' + (x % 1e9 ? ' ' + c(x % 1e9) : '');
+  const w = Math.floor(num), k = Math.round((num - w) * 100);
+  return c(w) + ' NAIRA' + (k ? ' AND ' + c(k) + ' KOBO' : '') + ' ONLY';
+}
+function renderCols() {
+  document.getElementById('colList').innerHTML = cols.map((c, i) => `
+    <div class="colrow${c.locked ? ' locked' : ''}">
+      <div><b>${esc(c.label)}${c.locked ? ' <span class="tag">always shown</span>' : ''}</b><small>${esc(c.desc)}</small></div>
+      <button class="sw ${c.visible ? 'on' : ''}" role="switch" aria-checked="${c.visible}" aria-label="Show ${esc(c.label)}" ${c.locked ? 'disabled' : ''} onclick="toggleCol(${i})"></button>
+    </div>`).join('');
+}
+function render() { renderHead(); renderItems(); renderTotals(); }
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function editRow(id, key, val) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  r[key] = val;
+  if (key === 'sub') {
+    const tog = document.querySelector(`[data-id="${id}"] .subtog`);
+    if (tog) tog.classList.toggle('has', !!(val && val.trim()));
+  }
+}
+function editNum(id, key, val) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  const n = Number(val);
+  r[key] = Number.isFinite(n) ? n : 0;
+  renderTotals();
+  patchProfit(id);
+}
+function moveRow(id, dir) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  const sib = siblings(r);
+  const k = sib.indexOf(r);
+  const target = sib[k + dir];
+  if (!target) return;
+  rows.splice(rows.indexOf(r), 1);
+  const t = rows.indexOf(target);
+  rows.splice(dir > 0 ? t + 1 : t, 0, r);
+  render();
+}
+function dupRow(id) {
+  const i = rows.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const src = rows[i];
+  rows.splice(i + 1, 0, { ...src, id: ++seq, desc: (src.desc || '') + ' (copy)', subOpen: false });
+  render(); toast('Item duplicated');
+}
+function insertBelow(id) {
+  const i = rows.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const src = rows[i];
+  rows.splice(i + 1, 0, blank(src.gid));
+  render(); toast('Row inserted');
+  const el = document.querySelector(`[data-id="${rows[i + 1].id}"]`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function blank(gid) { return { id: ++seq, type: 'item', gid: gid == null ? null : gid, desc: '', sub: '', subOpen: false, qty: 1, unit: '', make: '', cp: 0, sp: 0 }; }
+function addItem() { rows.push(blank(null)); render(); toast('Line item added'); }
+function addItemTo(gid) {
+  const mem = members(gid);
+  const last = mem[mem.length - 1];
+  const at = last ? rows.indexOf(last) + 1 : rows.findIndex(x => x.type === 'group' && x.id === gid) + 1;
+  rows.splice(at >= 0 ? at : rows.length, 0, blank(gid));
+  render(); toast('Item added to group');
+}
+function addGroup() { rows.push({ id: ++seq, type: 'group', title: 'New Group', collapsed: false }); render(); toast('Group added'); }
+function toggleSub(id) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  r.subOpen = !r.subOpen;
+  renderItems();
+  if (r.subOpen) {
+    const ta = document.querySelector(`[data-id="${id}"] .subta`);
+    if (ta) ta.focus();
+  }
+}
+function toggleGroup(id) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  r.collapsed = !r.collapsed;
+  renderItems();
+}
+function removeRow(id) {
+  const r = rows.find(x => x.id === id);
+  if (!r) return;
+  if (r.type === 'group') {
+    rows.forEach(x => { if (x.type === 'item' && x.gid === id) x.gid = null; });
+    rows = rows.filter(x => x.id !== id);
+    render(); toast('Group removed \u2014 its items kept');
+  } else {
+    rows = rows.filter(x => x.id !== id);
+    render();
+    if ((r.desc && r.desc.trim()) || Number(r.sp) > 0) toast('Row deleted');
+    else toast('Row removed');
+  }
+}
+function clearAll() { openSheet('ovClear'); }
+function doClearAll() { rows = []; closeSheet('ovClear'); render(); toast('All rows cleared'); }
+function toggleCol(i) {
+  const c = cols[i];
+  if (c.locked) { toast(c.label + ' is always shown'); return; }
+  c.visible = !c.visible;
+  renderCols(); render();
+  toast(c.label + (c.visible ? ' shown on rows' : ' hidden from rows'));
+}
+function openSheet(id) {
+  if (id === 'ovColumns') renderCols();
+  if (id === 'ovImport') showImpErr('');
+  document.getElementById(id).classList.add('open');
+}
+function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+function syncNo() { document.getElementById('barNo').textContent = document.getElementById('fNo').value; }
+
+function showImpErr(msg) {
+  const el = document.getElementById('impErr');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+function doImport() {
+  const raw = document.getElementById('impTa').value.trim();
+  if (!raw) { showImpErr('Paste JSON first.'); return; }
+  let data;
+  try { data = JSON.parse(raw); } catch (e) { showImpErr('Invalid JSON: ' + e.message); toast('Import failed \u2014 invalid JSON', true); return; }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) { showImpErr('Root must be a JSON object with an "items" array.'); return; }
+  if (!Array.isArray(data.items)) { showImpErr('Missing required "items" array.'); return; }
+  const groups = data.groups == null ? [] : data.groups;
+  if (!Array.isArray(groups)) { showImpErr('"groups" must be an array when present.'); return; }
+  const errors = [];
+  const keyOf = v => (v == null ? null : String(v));
+  const groupRows = [], gidMap = {}, itemGidMap = {};
+  groups.forEach((g, i) => {
+    if (!g || typeof g !== 'object') { errors.push('groups[' + i + '] must be an object with a name.'); return; }
+    if (typeof g.name !== 'string' || !g.name.trim()) { errors.push('groups[' + i + '] needs a non-empty "name".'); return; }
+    const gid = ++seq;
+    gidMap[keyOf(g.id != null ? g.id : i)] = gid;
+    groupRows.push({ id: gid, type: 'group', title: g.name.trim(), collapsed: false });
+    if (Array.isArray(g.itemIds)) g.itemIds.forEach(id => { itemGidMap[keyOf(id)] = gid; });
+  });
+  const payloadItemIds = new Set(data.items.filter(it => it && it.id != null).map(it => String(it.id)));
+  Object.keys(itemGidMap).forEach(k => { if (!payloadItemIds.has(k)) errors.push('groups[].itemIds references unknown item "' + k + '".'); });
+  const itemRows = [];
+  data.items.forEach((it, i) => {
+    if (!it || typeof it !== 'object') { errors.push('items[' + i + '] must be an object.'); return; }
+    let gid = null;
+    const gidRaw = it.group_id != null ? it.group_id : it.gid;
+    if (gidRaw != null) {
+      const mapped = gidMap[keyOf(gidRaw)];
+      if (mapped == null) { errors.push('items[' + i + '] references unknown group_id "' + gidRaw + '".'); return; }
+      gid = mapped;
+    } else if (it.id != null && itemGidMap[keyOf(it.id)] != null) {
+      gid = itemGidMap[keyOf(it.id)];
+    }
+    const q = Number(it.quantity != null ? it.quantity : it.qty);
+    const cpRaw = it.cost_price != null ? it.cost_price : it.cp;
+    itemRows.push({
+      id: ++seq, type: 'item', gid,
+      desc: typeof it.description === 'string' ? it.description : '',
+      sub: typeof it.sub_description === 'string' ? it.sub_description : '',
+      subOpen: false,
+      make: typeof it.make === 'string' ? it.make : '',
+      qty: Number.isFinite(q) ? q : 0,
+      unit: typeof it.unit === 'string' ? it.unit : '',
+      cp: Number.isFinite(Number(cpRaw)) ? Number(cpRaw) : 0,
+      sp: Number.isFinite(Number(it.unit_price)) ? Number(it.unit_price) : 0,
+    });
+  });
+  if (errors.length) { showImpErr(errors.join('\n')); toast('Import failed \u2014 see errors', true); return; }
+  rows = [...groupRows, ...itemRows];
+  if (typeof data.title === 'string' && data.title.trim()) document.getElementById('fTitle').value = data.title;
+  closeSheet('ovImport');
+  render();
+  toast('Imported ' + itemRows.length + ' items \u00B7 ' + groupRows.length + ' groups');
+}
+function save() {
+  if (!document.getElementById('fNo').value.trim()) {
+    toast('Save blocked: BOQ number is required', true);
+    return;
+  }
+  const bad = rows.find(r => r.type === 'item' && (!r.desc.trim() || Number(r.qty) <= 0 || Number(r.sp) <= 0));
+  if (bad) {
+    errId = bad.id;
+    renderItems();
+    toast('Save blocked: an item is missing a description, qty, or SP', true);
+    const el = document.querySelector(`[data-id="${bad.id}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => { errId = null; renderItems(); }, 2600);
+    return;
+  }
+  document.getElementById('modeBadge').textContent = 'Saved';
+  toast('BOQ saved \u2014 convert to Quotation from the View page');
+}
+
+const moonSVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const sunSVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.73 12.73l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+function toggleTheme() {
+  const root = document.documentElement;
+  const isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeBtn').innerHTML = isDark ? moonSVG : sunSVG;
+}
+
+document.querySelectorAll('.ov').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.ov.open').forEach(o => o.classList.remove('open')); });
+
+document.getElementById('themeBtn').innerHTML = moonSVG;
+render();
+</script>
+</body>
+</html>
