@@ -14,8 +14,8 @@
   Kept from v10:
   - Enumeration + row controls (number, move, duplicate) form a deliberate
     structural node cluster, not an accidental gutter.
-  - Registry-driven field composition (META_OPTIONAL / COMM_OPTIONAL) so a
-    future optional column is one registry entry, not a redesign.
+  - Registry-driven field composition (META_FIELDS / COMM_FIELDS) so a future
+    optional column is one registry entry, not a redesign.
   - Fold recomposes the item into an identity column + data column instead of
     centering a phone layout.
 
@@ -185,20 +185,18 @@
   .idesc{display:flex;flex-direction:column;gap:8px;min-width:0}
   .desc{min-height:64px}
 
-  /* sub description - a compact field-style row inside the content stack
-     (reference composition). Closed + empty: "+ Add sub description".
-     Closed + populated: the ACTUAL text, clamped to 2 lines. Open: a "Sub
-     description" header row with the editor below it. Make / Brand follows
-     directly after - no dead region, no third column, no duplicate field. */
+  /* sub description - the content itself is the collapsed state. Empty: one
+     compact add affordance row. Populated: the ACTUAL text as a compact
+     2-line clamp preview; tapping the row opens/closes the editor below. */
   .subrow{display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid var(--line);transition:border-color .15s}
   .subrow.has{border-left-color:var(--accent)}
   .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:34px;padding:7px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
+  .subtog:hover,.subtog:focus-visible{color:var(--accent)}
   .subtog.sub-add{align-items:center}
-  .subtog:hover,.subtog:focus-visible{color:var(--accent);border-color:var(--line-strong)}
-  .stog-icon{width:15px;height:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .stog-icon svg{width:12px;height:12px}
-  .stog-label{flex:1;min-width:0;text-transform:none;letter-spacing:0}
-  .stog-chev{width:12px;height:12px;flex-shrink:0;color:var(--faint);transition:transform .15s}
+  .stog-icon{width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .stog-icon svg{width:11px;height:11px}
+  .stog-label{flex:1;min-width:0}
+  .stog-chev{width:11px;height:11px;flex-shrink:0;margin-top:2px;color:var(--accent);transition:transform .15s}
   .subrow.open .stog-chev{transform:rotate(180deg)}
   .sub-prev-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.45;color:var(--sub)}
   .subfield{min-height:58px}
@@ -368,47 +366,6 @@
   .dbtn.danger{border-color:var(--red);background:var(--red-soft);color:var(--red)}
   .imperr{display:none;font-family:var(--mono);font-size:9px;line-height:1.55;white-space:pre-wrap;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:9px;padding:8px 10px}
   .imperr.show{display:block}
-  /* column manager rows - prototype port of the shared document Column
-     Manager (ColumnManager.tsx + useInvoiceColumns): grip + up/down order
-     controls, editable labels, TEXT/NUM badges, visibility switch, remove
-     for custom columns, reset-to-defaults with confirm. */
-  .cm-list{border:1px solid var(--line);border-radius:11px;background:var(--soft);overflow:hidden}
-  .cm-row{display:flex;align-items:center;gap:2px;min-height:44px;padding:5px 4px;border-bottom:1px solid var(--line)}
-  .cm-row:last-child{border-bottom:0}
-  .cm-row.full-hidden{opacity:.4}
-  .cm-grip{display:flex;align-items:center;justify-content:center;width:26px;height:100%;color:var(--faint);flex-shrink:0;touch-action:none}
-  .cm-grip svg{width:13px;height:13px}
-  .cm-ord{display:flex;flex-direction:column;flex-shrink:0}
-  .cm-ord button{display:flex;align-items:center;justify-content:center;width:26px;height:20px;color:var(--faint);transition:color .15s}
-  .cm-ord button:hover{color:var(--ink)}
-  .cm-ord button:disabled{opacity:.2;pointer-events:none}
-  .cm-ord svg{width:12px;height:12px}
-  .cm-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:0 2px}
-  .cm-labrow{display:flex;align-items:center;gap:5px;min-width:0}
-  .cm-lab{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;font-size:11.5px;font-weight:700;color:var(--ink);transition:border-color .15s,background .15s}
-  .cm-lab:hover{border-color:var(--line)}
-  .cm-lab:focus{border-color:var(--accent);background:var(--card)}
-  .cm-row.full-hidden .cm-lab{color:var(--faint);text-decoration:line-through}
-  .cm-desc-in{flex:1;min-width:0;height:30px;padding:0 8px;font-size:11.5px;font-weight:700;color:var(--ink);background:transparent;border:0}
-  .cm-badge{flex-shrink:0;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);font-size:7.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
-  .cm-sub{display:flex;align-items:center;gap:6px;padding:0 2px 2px}
-  .cm-sub input{width:62px;height:24px;padding:0 6px;border:1px solid var(--line);border-radius:7px;background:var(--card);font-family:var(--mono);font-size:10px}
-  .cm-sub span{font-size:9.5px;font-weight:600;color:var(--sub)}
-  .cm-sw{position:relative;width:40px;height:28px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0;transition:background .16s}
-  .cm-sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .16s}
-  .cm-sw.on{background:var(--accent)}
-  .cm-sw.on::after{transform:translateX(12px)}
-  .cm-sw:disabled{opacity:.45;cursor:not-allowed}
-  .cm-act{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:var(--faint);transition:background .15s,color .15s}
-  .cm-act svg{width:13px;height:13px}
-  .cm-act:hover{background:var(--soft);color:var(--ink)}
-  .cm-act.danger:hover{background:var(--red-soft);color:var(--red)}
-  .cm-sec{margin:12px 0 6px;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .cm-add{width:100%;margin-top:8px;min-height:40px;border-radius:10px;border:0;background:none;color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
-  .cm-add svg{width:12px;height:12px}
-  .cm-add:hover{background:var(--accent-soft)}
-  .cm-reset{width:100%;margin-top:2px;padding:6px 0;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;transition:color .15s}
-  .cm-reset:hover{color:var(--ink)}
   .impnote{font-size:8.5px;line-height:1.65;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
   .impnote code{font-family:var(--mono);font-size:8px;color:var(--accent)}
 
@@ -442,7 +399,6 @@
     /* item becomes identity column + data column, side by side */
     .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);column-gap:20px}
     .ihead{grid-column:1;grid-row:1}
-
     .idata{grid-column:2;grid-row:1;margin-top:0;padding-left:18px;border-left:1px solid var(--line)}
     .ins{grid-column:1/-1;grid-row:2}
     .desc{min-height:92px}
@@ -585,20 +541,15 @@
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
 </button>
 
-<!-- COLUMN MANAGER SHEET - prototype port of the shared document Column
-     Manager (src/components/ColumnManager.tsx): fixed Description row,
-     ordered columns with drag + up/down ordering, editable labels,
-     TEXT/NUM badges, visibility switches, reset-to-defaults with confirm,
-     Done footer. Row Overrides and Add Custom Column stay absent: the BOQ
-     table contract has neither (see the docColumns comment). -->
+<!-- COLUMN MANAGER SHEET -->
 <div class="ov" id="ovColumns">
-  <div class="sheet" role="dialog" aria-modal="true" aria-label="Column Settings">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Row columns">
     <div class="grab"></div>
     <div class="shd">
-      <div><b>Column Settings</b><small>Row fields, order, and labels</small></div>
+      <div><b>Row columns</b><small>Shown on every item row and the BOQ PDF</small></div>
       <button class="x" aria-label="Close" onclick="closeSheet('columns')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
-    <div id="colList" style="display:flex;flex-direction:column;min-height:0;overflow-y:auto"></div>
+    <div style="display:flex;flex-direction:column;gap:8px" id="colList"></div>
     <button class="cta" onclick="closeSheet('columns')">Done</button>
   </div>
 </div>
@@ -631,18 +582,6 @@
   </div>
 </div>
 
-<!-- RESET COLUMNS CONFIRM - same confirm pattern as Clear all -->
-<div class="ov center" id="ovColreset">
-  <div class="dialog" role="dialog" aria-modal="true" aria-label="Reset columns to defaults">
-    <b>Reset columns to defaults?</b>
-    <p>This restores the default column order, labels, and visibility. Items are not removed.</p>
-    <div class="acts">
-      <button class="dbtn" onclick="closeSheet('colreset')">Cancel</button>
-      <button class="dbtn danger" onclick="doResetCols()">Reset</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -661,7 +600,6 @@ var svgs = {
   copy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
   x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>',
   chev:  '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>',
-  grip:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
   plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>',
   out:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>',
@@ -669,63 +607,24 @@ var svgs = {
   note:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h7"/></svg>'
 };
 
-/* ---------- configurable row columns - document column standard ----------
-   Port of the shared document Column Manager architecture (ColumnManager.tsx
-   + useInvoiceColumns) onto the BOQ table-document contract. Seven BOQ keys
-   in canonical order, persisted contract {key,label,visible}, exactly as in
-   src/domain/table-document/types.ts (TableDocumentColumn) and
-   src/components/table-document/TableRowsEditor.tsx.
+/* ---------- configurable row columns (contract preserved from v9/v10) ---------- */
+var cols = [
+  { key: 'make', label: 'Make / Brand', desc: 'Preferred supplier brand', visible: true },
+  { key: 'cp', label: 'CP (Cost Price)', desc: 'What you pay \u00B7 feeds Total Cost', visible: true, locked: true },
+  { key: 'sp', label: 'SP (Selling Price)', desc: 'What the client pays \u00B7 feeds Total Selling Price', visible: true, locked: true }
+];
+var vis = function(k){ var c = cols.find(function(x){ return x.key === k; }); return !c || c.visible; };
 
-   Business truth, carried over unchanged:
-   - description (the item description) is fixed - always rendered, always
-     first, never removable, never reordered.
-   - specification = Sub Description. A distinct field with its own column
-     visibility toggle. The production BOQ editor renders it conditionally
-     on its column being visible.
-   - Row overrides and formula columns do not exist in the BOQ table system,
-     so the shared Column Manager's Row Overrides section stays absent - it
-     only renders when a reset handler is passed (ColumnManager.tsx).
-   - Custom columns do not exist in the BOQ table contract (no custom_* keys,
-     no custom renderer in TableRowsEditor), so Add Custom Column is not
-     exposed.
-   - Visibility is boolean in the table contract; the switch toggles it.
+/* ---------- extensible field registries ----------
+   Qty/Unit and Make are the fixed, optimized five-field composition (point 5
+   of the brief) and are NOT produced from a generic auto-wrap loop - Make
+   always gets its own full-width row regardless of what else is registered.
 
-   Visibility of every field, including Make / Brand and the Sub Description
-   row, is controlled by the column config - never hard-coded content. */
-var BOQ_CANONICAL_ORDER = ['description', 'specification', 'unit', 'quantity', 'make', 'cp', 'sp'];
-var BOQ_DEFAULT_VISIBLE = { description: true, specification: false, unit: true, quantity: true, make: true, cp: true, sp: true };
-var BOQ_LABELS = { description: 'Description', specification: 'Sub Description', unit: 'Unit', quantity: 'Qty', make: 'Make / Brand', cp: 'CP (Cost Price)', sp: 'SP (Selling Price)' };
-var BOQ_TYPE = { description: 'text', specification: 'text', unit: 'text', quantity: 'num', make: 'text', cp: 'num', sp: 'num' };
-var docColumns = BOQ_CANONICAL_ORDER.map(function(k){ return { key: k, label: BOQ_LABELS[k], visible: BOQ_DEFAULT_VISIBLE[k] }; });
-var findCol = function(key){ return docColumns.find(function(x){ return x.key === key; }); };
-var resolveBoqColumns = function(saved){
-  /* Port of ensureColumnOrderIntegrity + getResetColumnConfigs: empty input
-     returns canonical defaults; description forced to index 0; dedupe by
-     key, first occurrence wins; unknown keys dropped; missing canonical
-     columns appended in canonical order. */
-  if (!Array.isArray(saved) || !saved.length) return BOQ_CANONICAL_ORDER.map(function(k){ return { key: k, label: BOQ_LABELS[k], visible: BOQ_DEFAULT_VISIBLE[k] }; });
-  var out = [], seen = {};
-  saved.forEach(function(c){
-    var k = c && c.key;
-    if (BOQ_CANONICAL_ORDER.indexOf(k) < 0 || seen[k]) return;
-    seen[k] = 1;
-    out.push({ key: k, label: typeof c.label === 'string' && c.label.trim() ? c.label : BOQ_LABELS[k], visible: c.visible !== false });
-  });
-  BOQ_CANONICAL_ORDER.forEach(function(k){ if (!seen[k]) out.push({ key: k, label: BOQ_LABELS[k], visible: BOQ_DEFAULT_VISIBLE[k] }); });
-  var di = out.findIndex(function(c){ return c.key === 'description'; });
-  if (di > 0) { var d = out.splice(di, 1)[0]; out.unshift(d); }
-  return out;
-};
-var vis = function(k){ var c = findCol(k); return !c || c.visible; };
-
-/* ---------- registry-driven item fields (V11 composition preserved) ----------
-   Field visibility resolves through docColumns (the column config), so the
-   column manager drives what renders; the registries stay the render shape
-   (pair / full row / auto-wrap), the config stays the data source.
-
-   META_OPTIONAL / COMM_OPTIONAL remain where a FUTURE field is added: one
-   entry, rendered through the shared .fgrid / .comm-grid auto-wrap (2
-   columns, an odd trailing field claims the full row - see autoGridHTML).
+   META_OPTIONAL / COMM_OPTIONAL are where a FUTURE field is added: one entry,
+   rendered through the shared .fgrid / .comm-grid auto-wrap (2 columns, an
+   odd trailing field claims the full row - see autoGridHTML). No item
+   redesign, no page-wide column, no orphan half-width cell, whether the
+   eventual count is odd or even.
    Architectural tests (NOT enabled): discount, tax, rate, material, labour,
    location, phase, remarks.
    COMM_OPTIONAL monetary entries set numeric: true - their input then gets
@@ -733,8 +632,8 @@ var vis = function(k){ var c = findCol(k); return !c || c.visible; };
    fmtMoney). Future numeric fields are therefore formatted for free. */
 var META_OPTIONAL = [];
 var COMM_FIELDS = [
-  { key: 'cp', tag: 'CP', hint: 'money out', tone: 'cost', icon: 'out', locked: true, numeric: true },
-  { key: 'sp', tag: 'SP', hint: 'money in',  tone: 'sell', icon: 'inn', locked: true, numeric: true }
+  { key: 'cp', tag: 'CP', hint: 'money out', tone: 'cost', icon: 'out', locked: true },
+  { key: 'sp', tag: 'SP', hint: 'money in',  tone: 'sell', icon: 'inn', locked: true }
 ];
 var COMM_OPTIONAL = [];
 
@@ -801,14 +700,17 @@ function commCellHTML(r, f){
 
 function metaHTML(r){
   var blocks = [];
-  /* fixed pair: Qty | Unit - first block of the full-width zone below the
-     identity stack (Description / Sub Description / Make) */
+  /* fixed pair: Qty | Unit */
   blocks.push(
     '<div class="fgrid">'
     + '<input class="fld mono" inputmode="decimal" placeholder="Qty *" value="' + esc(fmtQty(r.qty)) + '" oninput="editNum(' + r.id + ',\'qty\',this.value)" data-numin="' + r.id + ':qty">'
     + '<input class="fld" placeholder="Unit" value="' + esc(r.unit) + '" oninput="editRow(' + r.id + ',\'unit\',this.value)">'
     + '</div>'
   );
+  /* fixed full-width row: Make / Brand - never squeezed into a half column */
+  if (vis('make')) {
+    blocks.push('<input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)">');
+  }
   if (META_OPTIONAL.length) blocks.push(autoGridHTML(META_OPTIONAL, r));
   return '<div class="meta-stack">' + blocks.join('') + '</div>';
 }
@@ -824,10 +726,6 @@ function commHTML(r){
    the ACTUAL text as a compact 2-line clamp preview; tap opens the editor.
    Empty: one compact add row. No status prose such as "Sub description
    added" - the chevron alone communicates expanded/collapsed. */
-/* Sub Description row - reference composition. Closed + empty: "+ Add sub
-   description". Closed + populated: the ACTUAL text, clamped; tapping it
-   opens the editor directly - no "show more" state, no status prose. Open:
-   a "Sub description" header row with the editable field below it. */
 function subHTML(r){
   var hasSub = !!(r.sub && r.sub.trim());
   var open = !!r.subOpen;
@@ -850,14 +748,6 @@ function itemHTML(r, sib){
   var n = nums[r.id] || 0;
   var errCls = errId === r.id ? ' err' : '';
   var k = sib.indexOf(r);
-  /* compact vertical stack beside the rail (reference composition):
-     Description -> Sub Description row -> Make / Brand, then the full-width
-     zone continues with Qty | Unit, CP | SP, profit. When the Sub Description
-     editor is open it sits between Description and Make in the same flow, and
-     everything below moves down naturally. One instance of every field. */
-  var make = vis('make')
-    ? '<input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)">'
-    : '';
   return '<article class="item' + errCls + '" data-id="' + r.id + '">'
     + '<button class="ear" title="Remove item" aria-label="Remove item" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
     + '<div class="ihead">'
@@ -872,7 +762,6 @@ function itemHTML(r, sib){
     +   '<div class="idesc">'
     +     '<textarea class="fld desc" rows="2" placeholder="Item description *" oninput="editRow(' + r.id + ',\'desc\',this.value)">' + esc(r.desc) + '</textarea>'
     +     subHTML(r)
-    +     make
     +   '</div>'
     + '</div>'
     + '<div class="idata">' + metaHTML(r) + commHTML(r) + profitHTML(r) + '</div>'
@@ -958,77 +847,13 @@ function words(num){
   return c(w) + ' NAIRA' + (k ? ' AND ' + c(k) + ' KOBO' : '') + ' ONLY';
 }
 
-/* ---------- Column Manager (prototype port of ColumnManager.tsx) ----------
-   Same row anatomy as the shared manager: grip + up/down ordering, editable
-   label, TEXT/NUM badge, visibility switch. Description is the fixed section
-   row. Reset opens the same confirm-dialog pattern as Clear all. */
-function cmType(k){ return BOQ_TYPE[k] === 'num' ? 'NUM' : 'TEXT'; }
 function renderCols(){
-  var desc = findCol('description');
-  var rest = docColumns.filter(function(c){ return c.key !== 'description'; });
-  var html = '<div class="cm-sec">Description</div>'
-    + '<div class="cm-list">'
-    + '<div class="cm-row" data-key="description">'
-    +   '<input class="cm-desc-in" value="' + esc(desc.label) + '" aria-label="Description label" onchange="cmUpdateLabel(\'description\',this.value)">'
-    +   '<span class="cm-badge">Fixed</span>'
-    + '</div>'
-    + '</div>'
-    + '<div class="cm-sec">Columns</div>'
-    + '<div class="cm-list">';
-  rest.forEach(function(c){
-    var i = docColumns.findIndex(function(x){ return x.key === c.key; });
-    html += '<div class="cm-row" data-key="' + c.key + '">'
-      + '<div class="cm-grip" draggable="true" data-key="' + c.key + '" title="Drag to reorder" aria-label="Drag to reorder">' + svgs.grip + '</div>'
-      + '<div class="cm-ord">'
-      +   '<button title="Move up" aria-label="Move ' + esc(c.label) + ' up"' + (i <= 1 ? ' disabled' : '') + ' onclick="cmMove(\'' + c.key + '\',' + (i - 1) + ')">' + svgs.up + '</button>'
-      +   '<button title="Move down" aria-label="Move ' + esc(c.label) + ' down"' + (i >= docColumns.length - 1 ? ' disabled' : '') + ' onclick="cmMove(\'' + c.key + '\',' + (i + 1) + ')">' + svgs.down + '</button>'
-      + '</div>'
-      + '<div class="cm-main">'
-      +   '<div class="cm-labrow"><input class="cm-lab" value="' + esc(c.label) + '" aria-label="' + esc(c.label) + ' label" onchange="cmUpdateLabel(\'' + c.key + '\',this.value)"><span class="cm-badge">' + cmType(c.key) + '</span></div>'
-      + '</div>'
-      + '<button class="cm-sw ' + (c.visible ? 'on' : '') + '" role="switch" aria-checked="' + c.visible + '" aria-label="' + (c.visible ? 'Hide ' : 'Show ') + esc(c.label) + '" onclick="cmToggle(\'' + c.key + '\')"></button>'
+  document.getElementById('colList').innerHTML = cols.map(function(c, i){
+    return '<div class="colrow">'
+      + '<div><b>' + esc(c.label) + (c.locked ? ' <span class="tag">always shown</span>' : '') + '</b><small>' + esc(c.desc) + '</small></div>'
+      + '<button class="sw ' + (c.visible ? 'on' : '') + '" role="switch" aria-checked="' + c.visible + '" aria-label="Show ' + esc(c.label) + '" ' + (c.locked ? 'disabled' : '') + ' onclick="toggleCol(' + i + ')"></button>'
       + '</div>';
-  });
-  html += '</div>'
-    + '<button class="cm-reset" onclick="openSheet(\'colreset\')">Reset to defaults</button>';
-  document.getElementById('colList').innerHTML = html;
-}
-function cmToggle(key){
-  var c = findCol(key);
-  if (!c || key === 'description') return;
-  c.visible = !c.visible;
-  renderCols();
-  renderItems();
-  toast(c.label + (c.visible ? ' shown on rows' : ' hidden from rows'));
-}
-function cmUpdateLabel(key, label){
-  var c = findCol(key);
-  if (!c) return;
-  var v = String(label || '').trim();
-  c.label = v || BOQ_LABELS[key];
-  renderCols();
-  renderItems();
-}
-function cmMove(key, targetIdx){
-  /* port of useInvoiceColumns.moveColumn: description locked, out-of-range
-     rejected, index 0 clamped to 1, no-op when already at the target. */
-  if (key === 'description') return;
-  var from = docColumns.findIndex(function(c){ return c.key === key; });
-  if (from < 0 || targetIdx === from) return;
-  if (targetIdx < 0 || targetIdx >= docColumns.length) return;
-  var next = docColumns.slice();
-  var moved = next.splice(from, 1)[0];
-  next.splice(Math.max(1, targetIdx), 0, moved);
-  docColumns = next;
-  renderCols();
-  renderItems();
-}
-function doResetCols(){
-  docColumns = resolveBoqColumns(null);
-  closeSheet('colreset');
-  renderCols();
-  renderItems();
-  toast('Columns reset to defaults');
+  }).join('');
 }
 
 function render(){ renderItems(); renderTotals(); }
@@ -1039,10 +864,9 @@ function editRow(id, key, val){
   if (!r) return;
   r[key] = val;
 }
-/* Sub Description editor input - model update only. The open header label
-   stays "Sub description" (reference composition); the collapsed preview is
-   rebuilt from the model on the next render, so no live preview patching and
-   no caret concerns. Collapse-on-empty on blur is handled by collapseIfEmpty. */
+/* Sub Description - live-state patch on each keystroke; no full re-render,
+   so the caret never jumps. The collapsed state IS the text: populated rows
+   update their preview, empty rows fall back to the compact add row. */
 function editSub(id, val){
   var r = rows.find(function(x){ return x.id === id; });
   if (!r) return;
@@ -1185,7 +1009,14 @@ function removeRow(id){
 }
 function clearAll(){ openSheet('clear'); }
 function doClearAll(){ rows = []; closeSheet('clear'); render(); toast('All rows cleared'); }
-
+function toggleCol(i){
+  var c = cols[i];
+  if (c.locked) { toast(c.label + ' is always shown'); return; }
+  c.visible = !c.visible;
+  renderCols();
+  renderItems();
+  toast(c.label + (c.visible ? ' shown on rows + PDF' : ' hidden from rows + PDF'));
+}
 var ovOf = function(id){ return document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)); };
 var focusReturn = null;
 function openSheet(id){
@@ -1321,29 +1152,6 @@ window.addEventListener('resize', function(){
   syncLayout();
   if (b !== lastBP) { lastBP = b; renderItems(); }
 });
-
-/* drag to reorder columns - same moveColumn semantics as the up/down buttons */
-(function(){
-  var list = document.getElementById('colList');
-  var dragKey = null;
-  list.addEventListener('dragstart', function(e){
-    var g = e.target.closest && e.target.closest('.cm-grip');
-    if (!g) return;
-    dragKey = g.getAttribute('data-key');
-    if (e.dataTransfer) e.dataTransfer.setData('text/plain', dragKey);
-  });
-  list.addEventListener('dragover', function(e){ if (dragKey) e.preventDefault(); });
-  list.addEventListener('drop', function(e){
-    e.preventDefault();
-    var key = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || dragKey;
-    var row = e.target.closest && e.target.closest('.cm-row[data-key]');
-    dragKey = null;
-    if (!key || !row) return;
-    var targetKey = row.getAttribute('data-key');
-    if (!targetKey || targetKey === key) return;
-    cmMove(key, docColumns.findIndex(function(c){ return c.key === targetKey; }));
-  });
-})();
 
 render();
 syncLayout();
