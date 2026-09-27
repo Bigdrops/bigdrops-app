@@ -1,15 +1,19 @@
 -- ============================================================
--- ITEM LIBRARY TIER C STAGE 2B RECONCILIATION
+-- ITEM LIBRARY TIER C STAGE 2B AUDIT TRAIL CORRECTION
 -- ============================================================
--- Adds tenant-local Historical Review reconciliation persistence
--- and mutation RPCs.
+-- Reinstalls the Stage 2B reconciliation objects without tenant
+-- activity_events writes.
 --
--- Stage 2B preserves the identity rules:
--- - Link Existing updates only invoice_items.item_id / quotation_items.item_id.
--- - Create Separate creates one canonical item and then links the case.
--- - Keep Separate is explicit and durable.
--- - Leave Unresolved has no mutation path.
-
+-- Tenant activity_events restricts entity_type to document workflows
+-- (invoice, quotation, project, receipt, waybill, csr, rfq, boq).
+-- The first Stage 2B installer wrote item-scoped audit rows there, so
+-- every keep/link/create call raised check-constraint error 23514.
+--
+-- Provenance stays complete: the decision, pair, and rejection tables
+-- record actor, timestamp, reason, snapshots, workflow, and context.
+-- This reinstall uses CREATE OR REPLACE and IF NOT EXISTS throughout,
+-- so existing decisions, pairs, rejections, and catalog data survive.
+--
 CREATE OR REPLACE FUNCTION public._prov_install_item_library_reconciliation(
     p_schema_name text,
     p_entity_id uuid,
@@ -1213,7 +1217,6 @@ $merge$;
     EXECUTE format('GRANT EXECUTE ON FUNCTION %I.create_item_from_historical_review_case(text, text, text, uuid[], uuid[], text, jsonb) TO anon, authenticated, service_role', p_schema_name);
 END;
 $install$;
-
 DO $$
 DECLARE
     v_entity record;
@@ -1225,12 +1228,10 @@ BEGIN
         WHERE e.id IS NOT NULL
     LOOP
         v_schema := public._prov_get_schema_name(v_entity.id);
-        -- ponytail: historically incomplete schemas (agam, issa-certified,
-        -- ororo) have no item_catalog. Skip them loudly instead of failing.
         IF v_schema IS NOT NULL AND to_regclass(v_schema || '.item_catalog') IS NOT NULL THEN
             PERFORM public._prov_install_item_library_reconciliation(v_schema, v_entity.id);
         ELSE
-            RAISE NOTICE 'Stage 2B reconciliation skipped for schema % (no item_catalog)', v_schema;
+            RAISE NOTICE 'Stage 2B correction skipped for schema % (no item_catalog)', v_schema;
         END IF;
     END LOOP;
 END;
@@ -1241,225 +1242,5 @@ BEGIN
     PERFORM public._prov_install_item_library_reconciliation('tenant_master_template', '00000000-0000-0000-0000-000000000000'::uuid, false);
 END;
 $$;
-
--- Stage 2B extends the live provisioning baseline only.
--- The template table list below matches public._prov_get_template_tables()
--- plus the four reconciliation tables. The provision_entity body below
--- matches the live baseline plus the reconciliation install step.
-CREATE OR REPLACE FUNCTION public._prov_get_template_tables()
- RETURNS text[]
- LANGUAGE sql
- STABLE
- SET search_path TO 'public'
-AS $function$
-    SELECT ARRAY[
-        'clients', 'settings', 'signatories', 'bank_accounts',
-        'projects', 'project_documents',
-        'quotations', 'quotation_items',
-        'invoices', 'invoice_items', 'payments',
-        'wht_receipts',
-        'csrs', 'blank_csr_logs',
-        'waybills', 'blank_waybill_logs',
-        'tax_settings', 'tax_filings', 'tax_input_entries', 'tax_reminders',
-        'receipts', 'letters',
-        'boqs', 'boq_rows',
-        'rfqs', 'rfq_items',
-        'item_catalog', 'item_import_batches', 'item_aliases', 'item_merge_log',
-        'item_reviewed_separate_pairs', 'historical_review_candidate_rejections',
-        'item_historical_reconciliation_decisions', 'item_historical_reconciliation_rows',
-        'audit_logs', 'activity_events',
-        'accounting_accounts', 'accounting_periods',
-        'journal_entries', 'journal_lines',
-        'expenses', 'source_transactions',
-        'tax_adjustments', 'tax_qce', 'tax_loss_balances',
-        'entity_tax_config', 'tax_computation_inputs',
-        'tax_computation_results', 'tax_rule_versions'
-    ];
-$function$;
-
-CREATE OR REPLACE FUNCTION public._prov_table_to_resource(p_table text)
- RETURNS text
- LANGUAGE sql
- STABLE
- SET search_path TO 'public'
-AS $function$
-    SELECT CASE p_table
-        WHEN 'invoices' THEN 'invoice'
-        WHEN 'invoice_items' THEN 'invoice'
-        WHEN 'waybills' THEN 'waybill'
-        WHEN 'blank_waybill_logs' THEN 'waybill'
-        WHEN 'quotations' THEN 'quotation'
-        WHEN 'quotation_items' THEN 'quotation'
-        WHEN 'payments' THEN 'payment'
-        WHEN 'wht_receipts' THEN 'payment'
-        WHEN 'projects' THEN 'project'
-        WHEN 'project_documents' THEN 'project_document'
-        WHEN 'clients' THEN 'client'
-        WHEN 'settings' THEN 'setting'
-        WHEN 'signatories' THEN 'signatory'
-        WHEN 'bank_accounts' THEN 'bank_account'
-        WHEN 'csrs' THEN 'csr'
-        WHEN 'blank_csr_logs' THEN 'csr'
-        WHEN 'tax_settings' THEN 'tax_setting'
-        WHEN 'tax_filings' THEN 'tax_setting'
-        WHEN 'tax_input_entries' THEN 'tax_setting'
-        WHEN 'tax_reminders' THEN 'tax_setting'
-        WHEN 'receipts' THEN 'receipt'
-        WHEN 'letters' THEN 'letter'
-        WHEN 'boqs' THEN 'boq'
-        WHEN 'boq_rows' THEN 'boq'
-        WHEN 'rfqs' THEN 'rfq'
-        WHEN 'rfq_items' THEN 'rfq'
-        WHEN 'item_catalog' THEN 'item'
-        WHEN 'item_aliases' THEN 'item'
-        WHEN 'item_import_batches' THEN 'item'
-        WHEN 'item_merge_log' THEN 'item'
-        WHEN 'item_reviewed_separate_pairs' THEN 'item'
-        WHEN 'historical_review_candidate_rejections' THEN 'item'
-        WHEN 'item_historical_reconciliation_decisions' THEN 'item'
-        WHEN 'item_historical_reconciliation_rows' THEN 'item'
-        WHEN 'audit_logs' THEN 'audit'
-        WHEN 'activity_events' THEN 'audit'
-        WHEN 'accounting_accounts' THEN 'account'
-        WHEN 'accounting_periods' THEN 'period'
-        WHEN 'journal_entries' THEN 'journal'
-        WHEN 'journal_lines' THEN 'journal'
-        WHEN 'expenses' THEN 'expense'
-        WHEN 'source_transactions' THEN 'source_transaction'
-        WHEN 'tax_adjustments' THEN 'tax_setting'
-        WHEN 'tax_qce' THEN 'tax_setting'
-        WHEN 'tax_loss_balances' THEN 'tax_setting'
-        WHEN 'entity_tax_config' THEN 'tax_setting'
-        WHEN 'tax_computation_inputs' THEN 'tax_setting'
-        WHEN 'tax_computation_results' THEN 'tax_setting'
-        WHEN 'tax_rule_versions' THEN 'tax_setting'
-        ELSE p_table
-    END;
-$function$;
-
-CREATE OR REPLACE FUNCTION public.provision_entity(p_entity_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-DECLARE
-    v_idempotency text;
-    v_schema_name text;
-    v_table text;
-    v_resource text;
-    v_tables text[];
-    v_lock_key bigint;
-    v_template_schema text := 'tenant_master_template';
-BEGIN
-    -- 1. Validate permissions
-    PERFORM public._prov_validate_permissions(p_entity_id);
-
-    -- 2. Idempotency check
-    v_idempotency := public._prov_check_idempotency(p_entity_id);
-
-    IF v_idempotency = 'ready' THEN
-        v_schema_name := public._prov_get_schema_name(p_entity_id);
-        RETURN jsonb_build_object(
-            'status', 'ready',
-            'schema_name', v_schema_name,
-            'message', 'Entity already provisioned'
-        );
-    END IF;
-
-    IF v_idempotency = 'creating' THEN
-        RETURN jsonb_build_object(
-            'status', 'creating',
-            'message', 'Provisioning already in progress'
-        );
-    END IF;
-
-    BEGIN
-        -- 3. Acquire advisory lock (transaction-scoped, per-entity)
-        v_lock_key := hashtext(p_entity_id::text);
-        PERFORM pg_advisory_xact_lock(v_lock_key);
-
-        -- 4. Get schema name
-        v_schema_name := public._prov_get_schema_name(p_entity_id);
-
-        -- 5. Update status to 'creating'
-        PERFORM public._prov_update_status(p_entity_id, 'creating');
-
-        -- 6. Create schema (includes scoped GRANT USAGE + DML + EXECUTE)
-        PERFORM public._prov_create_schema(v_schema_name);
-
-        -- 7. Clone template tables from master template
-        v_tables := public._prov_get_template_tables();
-
-        FOREACH v_table IN ARRAY v_tables
-        LOOP
-            PERFORM public._prov_clone_table(v_template_schema, v_schema_name, v_table);
-            v_resource := public._prov_table_to_resource(v_table);
-            PERFORM public._prov_install_rls(v_schema_name, v_table, p_entity_id, v_resource);
-        END LOOP;
-
-        -- 8. Re-add foreign keys (re-pointing from template to target schema)
-        FOREACH v_table IN ARRAY v_tables
-        LOOP
-            PERFORM public._prov_readd_foreign_keys(v_template_schema, v_schema_name, v_table);
-        END LOOP;
-
-        -- 9. Install tenant-local triggers (set_row_updated_at, stamp_row_ownership)
-        FOREACH v_table IN ARRAY v_tables
-        LOOP
-            PERFORM public._prov_install_canonical_triggers(v_schema_name, v_table);
-        END LOOP;
-
-        -- 9b. Install accounting enforcement triggers
-        PERFORM public._prov_install_accounting_triggers(v_schema_name);
-
-        -- 9c. Install tax immutability triggers
-        PERFORM public._prov_install_tax_triggers(v_schema_name);
-
-        -- 10. Build tenant-local financial views
-        PERFORM public._prov_install_financial_views(v_schema_name);
-
-        -- 11. Setup item library
-        PERFORM public._prov_install_item_library(v_schema_name, p_entity_id);
-
-        -- 11b. Setup item library reconciliation (Stage 2B)
-        PERFORM public._prov_install_item_library_reconciliation(v_schema_name, p_entity_id);
-
-        -- 12. Install tenant-local RPCs (audit, lifecycle, activity)
-        PERFORM public._prov_install_tenant_rpcs(v_schema_name);
-
-        -- 13. Seed settings
-        PERFORM public._prov_seed_settings(p_entity_id, v_schema_name);
-
-        -- 13b. Seed accounting chart of accounts (deterministic, idempotent)
-        PERFORM public._prov_seed_chart_of_accounts(v_schema_name);
-
-        -- 14. Seed default permissions (now includes tax resource)
-        PERFORM public._prov_seed_default_permissions(p_entity_id, auth.uid());
-
-        -- 15. Expose schema to PostgREST (Gate 2: pgrst.schemas config)
-        PERFORM public._prov_expose_schema_to_postgrest(v_schema_name);
-
-        -- 16. Finalize
-        PERFORM public._prov_update_status(p_entity_id, 'ready');
-
-        RETURN jsonb_build_object(
-            'status', 'ready',
-            'schema_name', v_schema_name,
-            'message', 'Entity provisioned successfully'
-        );
-
-    EXCEPTION WHEN OTHERS THEN
-        PERFORM public._prov_cleanup_on_error(v_schema_name);
-        PERFORM public._prov_update_status(p_entity_id, 'failed', SQLERRM);
-
-        RETURN jsonb_build_object(
-            'status', 'failed',
-            'error', SQLERRM,
-            'schema_name', v_schema_name
-        );
-    END;
-END;
-$function$;
 
 NOTIFY pgrst, 'reload schema';
