@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.content.FileProvider;
 
@@ -41,6 +42,8 @@ public class ApkUpdatePlugin extends Plugin {
 
     private static final String UPDATES_DIR = "updates";
     private static final String FILE_PROVIDER_AUTHORITY_SUFFIX = ".fileprovider";
+    private static final String DIAGNOSTIC_TAG = "BIGDROPS/Update";
+    private static final int DIAGNOSTIC_MAX_LENGTH = 512;
 
     private final ConcurrentHashMap<Long, PluginCall> activeDownloadCalls = new ConcurrentHashMap<>();
     private volatile Long lastEnqueueId = null;
@@ -235,6 +238,28 @@ public class ApkUpdatePlugin extends Plugin {
             call.reject("Could not delete downloaded file.");
             return;
         }
+        call.resolve();
+    }
+
+    /**
+     * Narrow diagnostic sink for sanitized update reason lines. Uses
+     * android.util.Log directly so output reaches logcat even when
+     * Capacitor's Logger gate is closed on release builds. The message is
+     * sanitized upstream (reason codes only); it is flattened to one
+     * bounded line here as defense in depth.
+     */
+    @PluginMethod
+    public void logDiagnostic(PluginCall call) {
+        String message = call.getString("message");
+        if (message == null) {
+            call.reject("Missing message.");
+            return;
+        }
+        String singleLine = message.replaceAll("[\\r\\n]+", " ");
+        if (singleLine.length() > DIAGNOSTIC_MAX_LENGTH) {
+            singleLine = singleLine.substring(0, DIAGNOSTIC_MAX_LENGTH);
+        }
+        Log.i(DIAGNOSTIC_TAG, singleLine);
         call.resolve();
     }
 

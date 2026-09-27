@@ -37,14 +37,23 @@ export function buildDiagnosticLogLine(diag: CheckDiagnostics): string {
 }
 
 /**
- * Emits the diagnostic line to the WebView console (capturable via adb
- * logcat / chrome://inspect). Always sanitized. Low volume: only fresh
- * full checks log, never throttled local re-evaluations.
+ * Emits the diagnostic line where ADB logcat can capture it. Prefers the
+ * narrow native bridge (android.util.Log, ungated on release builds);
+ * falls back to WebView console output elsewhere. Always sanitized. Low
+ * volume: only fresh full checks log, never throttled local re-evaluations.
  */
 export function logAppUpdateDiagnostic(diag: CheckDiagnostics): void {
-  try {
-    console.info(buildDiagnosticLogLine(diag))
-  } catch {
-    // Logging must never break the update flow.
-  }
+  const line = buildDiagnosticLogLine(diag)
+  void (async () => {
+    try {
+      const { logUpdateDiagnosticNative } = await import('@/lib/native/apkUpdate')
+      await logUpdateDiagnosticNative(line)
+    } catch {
+      try {
+        console.info(line)
+      } catch {
+        // Logging must never break the update flow.
+      }
+    }
+  })()
 }

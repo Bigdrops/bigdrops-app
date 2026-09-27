@@ -38,6 +38,7 @@ export interface ApkUpdatePlugin {
   installApk(options: ApkInstallOptions): Promise<void>
   cancelDownload(): Promise<void>
   deleteDownload(options: { fileName: string }): Promise<void>
+  logDiagnostic(options: { message: string }): Promise<void>
   addListener(
     eventName: 'apkDownloadProgress',
     listenerFunc: (event: ApkDownloadProgressEvent) => void,
@@ -74,6 +75,17 @@ export async function cancelDownloadNative(): Promise<void> {
 /** Removes a no-longer-needed APK from the app cache updates/ directory. */
 export async function deleteDownloadNative(options: { fileName: string }): Promise<void> {
   return ApkUpdate.deleteDownload(options)
+}
+
+/**
+ * Emits one sanitized diagnostic line to logcat via android.util.Log,
+ * bypassing Capacitor's release logging gate. The message must already be
+ * sanitized by the caller. Rejects when the native plugin is unavailable
+ * so the caller can fall back to console output.
+ */
+export async function logUpdateDiagnosticNative(message: string): Promise<void> {
+  if (!hasApkUpdatePlugin()) throw new Error('ApkUpdate plugin unavailable')
+  await ApkUpdate.logDiagnostic({ message })
 }
 
 export async function onApkDownloadProgress(
