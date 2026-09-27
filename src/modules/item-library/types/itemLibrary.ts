@@ -68,6 +68,134 @@ export interface ItemPriceContext {
   last_price_global_document_number?: string | null
 }
 
+export type ItemSuggestionSelectionSource = 'explicit' | 'recognized'
+
+export type HistoricalReviewCandidateEvidence =
+  | 'exact_catalog'
+  | 'exact_alias'
+  | 'similar_catalog'
+  | 'similar_alias'
+
+export type HistoricalReviewEvidenceStrength = 'deterministic' | 'advisory'
+
+export interface HistoricalReviewSpecToken {
+  kind: string
+  label: string
+  value: string
+}
+
+export interface HistoricalReviewRawOccurrence {
+  row_id: string
+  tenant_schema: string
+  source_type: ItemSourceType
+  source_document_id: string
+  source_document_number?: string | null
+  document_date?: string | null
+  client_name?: string | null
+  item_id?: string | null
+  row_type?: string | null
+  description: string
+  normalized_description: string
+  unit?: string | null
+  make?: string | null
+  quantity?: number | string | null
+  unit_price?: number | string | null
+  group_name?: string | null
+  group_id?: string | null
+  updated_at?: string | null
+}
+
+export interface HistoricalReviewCatalogRef {
+  ref_kind: 'catalog' | 'alias'
+  item_id: string
+  name: string
+  normalized_text: string
+  matched_text: string
+  is_active?: boolean
+  is_retired?: boolean
+  standard_price?: number | null
+  usage_count?: number | null
+  last_sold_price?: number | null
+  last_used_at?: string | null
+}
+
+export interface HistoricalReviewCandidate {
+  item_id: string
+  name: string
+  matched_text: string
+  evidence_type: HistoricalReviewCandidateEvidence
+  evidence_strength: HistoricalReviewEvidenceStrength
+  evidence_label: string
+  shared_terms: string[]
+  standard_price: number | null
+  usage_count: number | null
+  last_sold_price: number | null
+  last_used_at: string | null
+  specifications: HistoricalReviewSpecToken[]
+}
+
+export interface HistoricalReviewOccurrence {
+  row_id: string
+  tenant_schema: string
+  source_type: ItemSourceType
+  source_document_id: string
+  source_document_number?: string | null
+  document_date?: string | null
+  client_name?: string | null
+  description: string
+  normalized_description: string
+  unit?: string | null
+  make?: string | null
+  quantity?: number | null
+  unit_price?: number | null
+  group_name?: string | null
+  group_id?: string | null
+  updated_at?: string | null
+}
+
+export interface HistoricalReviewCase {
+  case_id: string
+  tenant_schema: string
+  normalized_description: string
+  display_description: string
+  occurrence_count: number
+  invoice_count: number
+  quotation_count: number
+  latest_used_at: string | null
+  first_used_at: string | null
+  raw_description_variants: Array<{ value: string; count: number }>
+  unit_values: Array<{ value: string; count: number }>
+  make_values: Array<{ value: string; count: number }>
+  group_values: Array<{ value: string; count: number }>
+  unit_price_min: number | null
+  unit_price_max: number | null
+  specifications: HistoricalReviewSpecToken[]
+  candidate_reason_labels: string[]
+  candidates: HistoricalReviewCandidate[]
+  occurrences: HistoricalReviewOccurrence[]
+}
+
+export interface HistoricalReviewSummary {
+  occurrence_count: number
+  case_count: number
+  repeated_case_count: number
+  singleton_case_count: number
+  repeated_occurrence_count: number
+  invoice_occurrence_count: number
+  quotation_occurrence_count: number
+  specification_sensitive_case_count: number
+  cases_with_candidates_count: number
+  tier_d_excluded_count: number
+  tier_b_excluded_count: number
+  truncated: boolean
+}
+
+export interface HistoricalReviewResult {
+  tenant_schema: string
+  cases: HistoricalReviewCase[]
+  summary: HistoricalReviewSummary
+}
+
 export interface ItemHistoryRow {
   row_id: string
   item_id: string

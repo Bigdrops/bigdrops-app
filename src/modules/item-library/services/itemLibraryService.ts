@@ -2,10 +2,11 @@ import { buildFlaggedCleanupExportPayload } from '../domain/itemCleanupExchange'
 import { detectDuplicateGroups } from '../domain/duplicateDetection'
 import { findExactItemSuggestionMatch } from '../domain/invoiceSuggestionSelection'
 import { normalizeSuggestionQuery, rankItemSuggestions } from '../domain/suggestionRanking'
-import { getItemAliases, getItemHistoryDetail, getItemPriceContext, getItemSuggestions, getItemSummaryList, mergeItems } from '../repositories'
+import { getExactItemSuggestionMatch, getHistoricalReviewCases, getItemAliases, getItemHistoryDetail, getItemPriceContext, getItemSuggestions, getItemSummaryList, mergeItems } from '../repositories'
 import type { TenantClient } from '@/lib/tenantClient'
 import type {
   FlaggedCleanupExportPayload,
+  HistoricalReviewResult,
   ItemAlias,
   ItemCatalogItem,
   ItemHistoryRow,
@@ -34,6 +35,9 @@ export async function resolveExactItemMatch(
   const normalizedDescription = normalizeSuggestionQuery(description)
   if (normalizedDescription.length < 2) return null
 
+  const exactMatch = await getExactItemSuggestionMatch(normalizedDescription, tenantClient)
+  if (exactMatch) return exactMatch
+
   const suggestions = await loadSuggestions(normalizedDescription, 10, clientId, tenantClient)
   return findExactItemSuggestionMatch(normalizedDescription, suggestions)
 }
@@ -54,6 +58,10 @@ export async function loadItemHistoryDetail(itemId: string, limit = 50, options:
 
 export async function loadItemAliases(itemIds: string[], tenantClient: TenantClient): Promise<ItemAlias[]> {
   return getItemAliases(itemIds, tenantClient)
+}
+
+export async function loadHistoricalReviewCases(tenantClient: TenantClient): Promise<HistoricalReviewResult> {
+  return getHistoricalReviewCases(tenantClient)
 }
 
 export async function mergeCatalogItems(request: ItemLibraryMergeRequest, tenantClient: TenantClient): Promise<ItemLibraryMergeResult> {

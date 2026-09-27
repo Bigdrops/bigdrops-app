@@ -1,0 +1,220 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+
+import {
+  buildHistoricalReviewCandidateEvidence,
+  buildHistoricalReviewCases,
+  extractHistoricalReviewSpecs,
+} from '../../modules/item-library/domain/historicalReview.ts'
+import { normalizeSuggestionQuery } from '../../modules/item-library/domain/suggestionRanking.ts'
+
+const tenantMain = 'entity_bigdrops-main_main'
+
+function row(overrides) {
+  const description = overrides.description ?? 'Primary Air Filter'
+  return {
+    row_id: overrides.row_id,
+    tenant_schema: overrides.tenant_schema ?? tenantMain,
+    source_type: overrides.source_type ?? 'invoice',
+    source_document_id: overrides.source_document_id ?? `doc-${overrides.row_id}`,
+    source_document_number: overrides.source_document_number ?? `DOC-${overrides.row_id}`,
+    document_date: overrides.document_date ?? '2025-10-14',
+    client_name: overrides.client_name ?? 'Bigdrops Client',
+    item_id: overrides.item_id ?? null,
+    row_type: overrides.row_type ?? 'standard',
+    description,
+    normalized_description: normalizeSuggestionQuery(description),
+    unit: overrides.unit ?? 'pcs',
+    make: overrides.make ?? null,
+    quantity: overrides.quantity ?? 1,
+    unit_price: overrides.unit_price ?? 14000,
+    group_name: overrides.group_name ?? null,
+    group_id: overrides.group_id ?? null,
+    updated_at: overrides.updated_at ?? '2025-10-14T10:00:00.000Z',
+  }
+}
+
+function catalogRef(overrides) {
+  const name = overrides.name
+  return {
+    ref_kind: overrides.ref_kind ?? 'catalog',
+    item_id: overrides.item_id,
+    name,
+    normalized_text: overrides.normalized_text ?? normalizeSuggestionQuery(overrides.matched_text ?? name),
+    matched_text: overrides.matched_text ?? name,
+    is_active: overrides.is_active ?? true,
+    is_retired: overrides.is_retired ?? false,
+    standard_price: overrides.standard_price ?? 0,
+    usage_count: overrides.usage_count ?? 0,
+    last_sold_price: overrides.last_sold_price ?? null,
+    last_used_at: overrides.last_used_at ?? null,
+  }
+}
+
+test('historical review groups only tenant plus exact normalized Tier C descriptions', () => {
+  const result = buildHistoricalReviewCases({
+    tenantSchema: tenantMain,
+    occurrences: [
+      row({ row_id: 'inv-1', source_type: 'invoice', description: 'Primary Engine Air Filter', unit_price: 12000 }),
+      row({ row_id: 'quo-1', source_type: 'quotation', description: ' primary   engine air filter ', unit_price: 13000 }),
+      row({ row_id: 'inv-2', tenant_schema: 'entity_other_main', description: 'Primary Engine Air Filter' }),
+      row({ row_id: 'quo-2', source_type: 'quotation', description: 'Secondary Engine Air Filter' }),
+    ],
+    catalogRefs: [
+      catalogRef({ item_id: 'catalog-secondary-filter', name: 'Secondary Engine Air Filter', usage_count: 4 }),
+    ],
+  })
+
+  assert.equal(result.summary.case_count, 2)
+  assert.equal(result.summary.occurrence_count, 3)
+
+  const mainPrimary = result.cases.find((entry) => entry.tenant_schema === tenantMain && entry.normalized_description === 'primary engine air filter')
+  assert.equal(mainPrimary?.occurrence_count, 2)
+  assert.equal(mainPrimary?.invoice_count, 1)
+  assert.equal(mainPrimary?.quotation_count, 1)
+  assert.equal(mainPrimary?.unit_price_min, 12000)
+  assert.equal(mainPrimary?.unit_price_max, 13000)
+
+  const otherPrimary = result.cases.find((entry) => entry.tenant_schema === 'entity_other_main')
+  assert.equal(otherPrimary?.occurrence_count, 1)
+  assert.notEqual(otherPrimary?.case_id, mainPrimary?.case_id)
+})
+
+test('historical review excludes linked rows, group headers, empty descriptions, exact matches, and Tier B rows', () => {
+  const result = buildHistoricalReviewCases({
+    tenantSchema: tenantMain,
+    occurrences: [
+      row({ row_id: 'tier-c', description: 'Charging Alternator 24V' }),
+      row({ row_id: 'linked', description: 'Charging Alternator 24V', item_id: 'catalog-alt-24v' }),
+      row({ row_id: 'group', description: 'Mechanical Works', row_type: 'group_header' }),
+      row({ row_id: 'empty', description: '   ' }),
+      row({ row_id: 'exact', description: '20mm pvc pipe' }),
+      row({ row_id: 'tier-b', description: 'Standalone new workmanship service' }),
+    ],
+    catalogRefs: [
+      catalogRef({ item_id: 'catalog-alt', name: 'Charging Alternator' }),
+      catalogRef({ item_id: 'catalog-pvc', name: '20mm pvc pipe' }),
+    ],
+  })
+
+  assert.deepEqual(result.cases.map((entry) => entry.normalized_description), ['charging alternator 24v'])
+  assert.equal(result.summary.tier_d_excluded_count, 2)
+  assert.equal(result.summary.tier_b_excluded_count, 1)
+})
+
+test('candidate evidence separates deterministic exact evidence from advisory similarity', () => {
+  const exact = buildHistoricalReviewCandidateEvidence('pvc pipe 20mm', [
+    catalogRef({
+      ref_kind: 'alias',
+      item_id: 'catalog-pvc',
+      name: '20mm pvc pipe',
+      matched_text: 'PVC Pipe 20mm',
+      normalized_text: 'pvc pipe 20mm',
+    }),
+  ])
+  assert.equal(exact[0].evidence_strength, 'deterministic')
+  assert.equal(exact[0].evidence_label, 'Existing alias')
+
+  const advisory = buildHistoricalReviewCandidateEvidence('charging alternator 24v', [
+    catalogRef({ item_id: 'catalog-alt', name: 'Charging Alternator' }),
+  ])
+  assert.equal(advisory[0].evidence_strength, 'advisory')
+  assert.equal(advisory[0].evidence_label, 'Similar catalog item')
+  assert.ok(advisory[0].shared_terms.includes('charging'))
+})
+
+test('specification-sensitive values stay visible for review and candidate comparison', () => {
+  const specs = extractHistoricalReviewSpecs('Fuse Blade 15A P/N 2527-1017, 24V copper SWG 17.5')
+  const values = specs.map((spec) => spec.value)
+
+  assert.ok(values.includes('15A'))
+  assert.ok(values.includes('P/N 2527-1017'))
+  assert.ok(values.includes('24V'))
+  assert.ok(values.some((value) => value.includes('SWG') && value.includes('17.5')))
+  assert.ok(values.includes('COPPER'))
+})
+
+test('identity-sensitive descriptions stay separate with visible specification evidence', () => {
+  const result = buildHistoricalReviewCases({
+    tenantSchema: tenantMain,
+    occurrences: [
+      row({ row_id: 'p1', description: 'Primary Air Filter' }),
+      row({ row_id: 's1', description: 'Secondary Air Filter' }),
+      row({ row_id: 'v12', description: '12V 75AH Battery' }),
+      row({ row_id: 'v24', description: '24V 75AH Battery' }),
+    ],
+    catalogRefs: [
+      catalogRef({ item_id: 'catalog-air-filter', name: 'Air Filter' }),
+      catalogRef({ item_id: 'catalog-battery', name: '75AH Battery' }),
+    ],
+  })
+
+  assert.equal(result.summary.case_count, 4)
+
+  const primaryCase = result.cases.find((entry) => entry.normalized_description === 'primary air filter')
+  const secondaryCase = result.cases.find((entry) => entry.normalized_description === 'secondary air filter')
+  assert.ok(primaryCase)
+  assert.ok(secondaryCase)
+  assert.notEqual(primaryCase.case_id, secondaryCase.case_id)
+  assert.ok(primaryCase.specifications.some((spec) => spec.value === 'PRIMARY'))
+  assert.ok(secondaryCase.specifications.some((spec) => spec.value === 'SECONDARY'))
+
+  const battery12 = result.cases.find((entry) => entry.normalized_description === '12v 75ah battery')
+  const battery24 = result.cases.find((entry) => entry.normalized_description === '24v 75ah battery')
+  assert.ok(battery12)
+  assert.ok(battery24)
+  assert.notEqual(battery12.case_id, battery24.case_id)
+  assert.ok(battery12.specifications.some((spec) => spec.value === '12V'))
+  assert.ok(battery24.specifications.some((spec) => spec.value === '24V'))
+
+  result.cases.forEach((entry) => {
+    entry.candidates.forEach((candidate) => {
+      assert.equal(candidate.evidence_strength, 'advisory')
+    })
+    entry.occurrences.forEach((occurrence) => {
+      assert.ok(!('item_id' in occurrence))
+    })
+  })
+})
+
+test('Historical Review surfaces loading, empty, and error states with retry', () => {
+  const panelSource = fs.readFileSync(
+    path.resolve('src/modules/item-library/components/ItemLibraryHistoricalReviewPanel.tsx'),
+    'utf8',
+  )
+
+  assert.match(panelSource, /if \(loading\) return <LoadingState/)
+  assert.match(panelSource, /Skeleton/)
+  assert.match(panelSource, /if \(!data\.cases\.length\) return <EmptyState/)
+  assert.match(panelSource, /No unresolved historical cases/)
+  assert.match(panelSource, /if \(error\) return <ErrorState/)
+  assert.match(panelSource, /Historical Review could not load/)
+  assert.match(panelSource, /onRetry=\{reload\}/)
+  assert.match(panelSource, /No review cases match this filter/)
+
+  const hookSource = fs.readFileSync(
+    path.resolve('src/modules/item-library/hooks/useHistoricalReviewCases.ts'),
+    'utf8',
+  )
+
+  assert.match(hookSource, /loading/)
+  assert.match(hookSource, /setError/)
+  assert.match(hookSource, /reload/)
+})
+
+test('Historical Review UI exposes read-only Stage 1 language and no enabled mutation action text', () => {
+  const source = fs.readFileSync(
+    path.resolve('src/modules/item-library/components/ItemLibraryHistoricalReviewPanel.tsx'),
+    'utf8',
+  )
+
+  assert.match(source, /Stage 1 is inspection only/)
+  assert.match(source, /disabled/)
+  assert.match(source, /Link to existing/)
+  assert.match(source, /Create separate item/)
+  assert.match(source, /Keep separate/)
+  assert.match(source, /Leave unresolved/)
+  assert.doesNotMatch(source, /onApply|onMerge|mergeCatalogItems|update\(/)
+})

@@ -6,6 +6,7 @@ import { useEntity } from '@/lib/tenant/contexts'
 import { ItemLibraryAdvancedCleanupPanel } from '../components/ItemLibraryAdvancedCleanupPanel'
 import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
+import { ItemLibraryHistoricalReviewPanel } from '../components/ItemLibraryHistoricalReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
 import { ItemLibraryMergeHistoryPanel } from '../components/ItemLibraryMergeHistoryPanel'
 import { ItemLibraryStatusStrip } from '../components/ItemLibraryStatusStrip'
@@ -72,7 +73,7 @@ function BackArrow() {
 export default function ItemLibraryPage() {
   const { schemaName } = useEntity()
   const [searchText, setSearchText] = useState('')
-  const [workflowMode, setWorkflowMode] = useState<'library' | 'cleanup'>('library')
+  const [workflowMode, setWorkflowMode] = useState<'library' | 'cleanup' | 'historical_review'>('library')
   const [viewMode, setViewMode] = useState<ItemLibraryViewMode>('catalog')
   const [activeFilter, setActiveFilter] = useState<ItemLibraryFilterType>('all')
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
@@ -376,7 +377,7 @@ export default function ItemLibraryPage() {
                   setViewMode('catalog')
                 }}
                 className={[
-                  "rounded-[9px] px-4 py-1.5 text-[12px] font-bold transition-all duration-200",
+                  "rounded-[9px] px-2.5 py-1.5 text-[11px] font-bold transition-all duration-200 sm:px-4 sm:text-[12px]",
                   workflowMode === 'library'
                     ? "bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm"
                     : "text-bd-text-muted hover:bg-bd-surface-muted"
@@ -391,7 +392,7 @@ export default function ItemLibraryPage() {
                   setViewMode('catalog')
                 }}
                 className={[
-                  "relative rounded-[var(--bd-radius-md)] px-4 py-1.5 text-[12px] font-bold transition-all duration-200",
+                  "relative rounded-[var(--bd-radius-md)] px-2.5 py-1.5 text-[11px] font-bold transition-all duration-200 sm:px-4 sm:text-[12px]",
                   workflowMode === 'cleanup'
                     ? "bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm"
                     : "text-bd-text-muted hover:bg-bd-surface-muted"
@@ -403,6 +404,22 @@ export default function ItemLibraryPage() {
                     {totalUnresolvedIssues}
                   </span>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWorkflowMode('historical_review')
+                  setViewMode('catalog')
+                  setMobileDetailOpen(false)
+                }}
+                className={[
+                  "rounded-[var(--bd-radius-md)] px-2.5 py-1.5 text-[11px] font-bold transition-all duration-200 sm:px-4 sm:text-[12px]",
+                  workflowMode === 'historical_review'
+                    ? "bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm"
+                    : "text-bd-text-muted hover:bg-bd-surface-muted"
+                ].join(' ')}
+              >
+                Historical Review
               </button>
             </div>
           </div>
@@ -432,7 +449,7 @@ export default function ItemLibraryPage() {
               <ItemLibraryListPanel
                 items={filteredItems}
                 duplicateGroups={cleanupDuplicateGroups}
-                workflowMode={workflowMode}
+                workflowMode={workflowMode === 'cleanup' ? 'cleanup' : 'library'}
                 viewMode={viewMode}
                 selectedItemId={selectedItemId}
                 selectedDuplicateGroupId={selectedDuplicateGroupId}
@@ -475,12 +492,14 @@ export default function ItemLibraryPage() {
                 className="flex items-center gap-[6px] border-none bg-transparent px-4 py-3 text-[13px] font-semibold text-bd-text-muted transition-colors hover:text-bd-text"
               >
                 <BackArrow />
-                {workflowMode === 'library' ? 'Library' : 'Cleanup'}
+                {workflowMode === 'library' ? 'Library' : workflowMode === 'cleanup' ? 'Cleanup' : 'Historical Review'}
               </button>
             </div>
 
             <div className="flex-1 overflow-hidden">
-              {workflowMode === 'cleanup' && viewMode !== 'catalog' ? (
+              {workflowMode === 'historical_review' ? (
+                <ItemLibraryHistoricalReviewPanel />
+              ) : workflowMode === 'cleanup' && viewMode !== 'catalog' ? (
                 <div className="flex items-center justify-between border-b border-bd-border bg-bd-surface-muted/80 px-4 py-3">
                   <button
                     type="button"
@@ -503,7 +522,7 @@ export default function ItemLibraryPage() {
                 </div>
               ) : null}
 
-              {workflowMode === 'cleanup' && viewMode === 'duplicates_choice' ? (
+              {workflowMode === 'historical_review' ? null : workflowMode === 'cleanup' && viewMode === 'duplicates_choice' ? (
                 <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-bd-surface-muted">
                    <div className="max-w-2xl space-y-6">
                       <div className="space-y-2">

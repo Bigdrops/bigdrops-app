@@ -174,6 +174,21 @@ function normalizeAliasRow(row: Record<string, unknown>): ItemAlias {
   }
 }
 
+function normalizeCatalogSuggestionRow(
+  row: Record<string, unknown>,
+  matchSource: ItemSuggestion['match_source'],
+  matchedText: string,
+): ItemSuggestion {
+  return normalizeSuggestionRow({
+    item_id: row.id || row.item_id,
+    name: row.name,
+    matched_text: matchedText,
+    match_source: matchSource,
+    standard_price: row.standard_price,
+    is_active: row.is_active,
+  })
+}
+
 function normalizeMergeResult(payload: unknown, request: ItemLibraryMergeRequest): ItemLibraryMergeResult {
   const row = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {}
 
@@ -266,6 +281,89 @@ export async function getItemSuggestions(
         priceContext.last_price_global_document_number ?? s.last_source_document_number ?? null,
     }
   })
+}
+
+export async function getExactItemSuggestionMatch(
+  normalizedText: string,
+  client: TenantClient,
+): Promise<ItemSuggestion | null> {
+  const stableNormalizedText = String(normalizedText || '').trim()
+  if (stableNormalizedText.length < 2) return null
+
+  const catalogResult = await client
+    .from('item_catalog')
+    .select('id, name, standard_price, is_active')
+    .eq('normalized_name', stableNormalizedText)
+    .eq('is_active', true)
+    .limit(2)
+
+  if (catalogResult.error) throw catalogResult.error
+
+  const catalogRows = Array.isArray(catalogResult.data) ? catalogResult.data : []
+  const catalogMatches = catalogRows.map((row) =>
+    normalizeCatalogSuggestionRow(row as Record<string, unknown>, 'catalog', String((row as any).name || '')),
+  )
+
+  const aliasResult = await client
+    .from('item_aliases')
+    .select('id, item_id, alias_text, normalized_alias_text, is_active, is_retired')
+    .eq('normalized_alias_text', stableNormalizedText)
+    .eq('is_active', true)
+    .eq('is_retired', false)
+    .limit(5)
+
+  if (aliasResult.error) throw aliasResult.error
+
+  const aliasRows = Array.isArray(aliasResult.data) ? aliasResult.data : []
+  const aliasItemIds = [
+    ...new Set(
+      aliasRows
+        .map((row) => String((row as Record<string, unknown>).item_id || '').trim())
+        .filter(Boolean),
+    ),
+  ]
+
+  let activeAliasTargets = new Map<string, Record<string, unknown>>()
+  if (aliasItemIds.length > 0) {
+    const targetResult = await client
+      .from('item_catalog')
+      .select('id, name, standard_price, is_active')
+      .in('id', aliasItemIds)
+      .eq('is_active', true)
+
+    if (targetResult.error) throw targetResult.error
+
+    const targetEntries: Array<[string, Record<string, unknown>]> = (Array.isArray(targetResult.data)
+      ? targetResult.data
+      : [])
+      .map((row) => [String((row as Record<string, unknown>).id || ''), row as Record<string, unknown>] as [string, Record<string, unknown>])
+      .filter(([itemId]) => Boolean(itemId))
+
+    activeAliasTargets = new Map(targetEntries)
+  }
+
+  const aliasMatches = aliasRows
+    .map((aliasRow) => {
+      const itemId = String((aliasRow as Record<string, unknown>).item_id || '').trim()
+      const target = activeAliasTargets.get(itemId)
+      if (!target) return null
+      return normalizeCatalogSuggestionRow(
+        target,
+        'alias',
+        String((aliasRow as Record<string, unknown>).alias_text || ''),
+      )
+    })
+    .filter((row): row is ItemSuggestion => Boolean(row))
+
+  const uniqueMatches = new Map<string, ItemSuggestion>()
+  const exactMatches = [...catalogMatches, ...aliasMatches]
+  exactMatches.forEach((match) => {
+    if (!match.item_id) return
+    uniqueMatches.set(String(match.item_id), match)
+  })
+
+  if (uniqueMatches.size !== 1) return null
+  return [...uniqueMatches.values()][0] || null
 }
 
 export async function getItemPriceContext(itemId: string, clientId: string | null | undefined, client: TenantClient): Promise<ItemPriceContext | null> {

@@ -1,6 +1,6 @@
 import { formatDisplayDate } from '../../../lib/formatters/date'
 import { formatNaira } from '../../../lib/formatters/money'
-import type { ItemPriceContext, ItemSuggestion } from '../types/index.ts'
+import type { ItemPriceContext, ItemSuggestion, ItemSuggestionSelectionSource } from '../types/index.ts'
 
 function formatLastUsedDate(value: string | null | undefined): string | null {
   if (!value) return null
@@ -67,6 +67,30 @@ export function getInvoiceSuggestionPriceContextText(
   if (hasGlobalPrice) {
     return formatLine('Last sold', globalPrice, globalDoc, globalDate)
   }
+
+  return null
+}
+
+export function getRecognizedHistoryPriceActionValue({
+  itemId,
+  priceContext,
+  selectionSource,
+  unitPrice,
+}: {
+  itemId: string | null | undefined
+  priceContext: ItemPriceContext | null | undefined
+  selectionSource: ItemSuggestionSelectionSource | null | undefined
+  unitPrice: number | string | null | undefined
+}): number | null {
+  if (!itemId) return null
+  if (selectionSource !== 'recognized') return null
+  if (Number(unitPrice || 0) !== 0) return null
+
+  const clientPrice = priceContext?.last_price_for_client
+  if (clientPrice !== null && clientPrice !== undefined && Number(clientPrice) > 0) return clientPrice
+
+  const globalPrice = priceContext?.last_price_global
+  if (globalPrice !== null && globalPrice !== undefined && Number(globalPrice) > 0) return globalPrice
 
   return null
 }
