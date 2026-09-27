@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { feedback } from '@/lib/feedback'
 import UnitInput from '@/components/UnitInput'
 import { useItemSuggestionEngine } from '@/modules/item-library/hooks/useItemSuggestionEngine'
+import { getRecognizedHistoryPriceActionValue } from '@/modules/item-library/domain/invoiceSuggestionPriceContext'
 import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { normalizeQuantity } from '@/domain/invoice'
 import { formatNaira } from '@/lib/formatters/money'
@@ -170,7 +171,10 @@ function MobileItemCard({
     suggestions,
     suggestionsLoading,
     exactMatch,
+    priceContext,
     priceContextText,
+    selectionSource,
+    recognizeExactMatch,
     handleSuggestionSelect: engineSelect,
     clearSelection,
   } = useItemSuggestionEngine(
@@ -187,8 +191,9 @@ function MobileItemCard({
     if (resolvedItemId) return
     if (!exactMatch?.item_id) return
 
+    recognizeExactMatch(exactMatch)
     updateField('item_id', exactMatch.item_id)
-  }, [exactMatch, enableItemSuggestions, index, item.description, resolvedItemId, item.row_type, onUpdate])
+  }, [exactMatch, enableItemSuggestions, index, item.description, recognizeExactMatch, resolvedItemId, item.row_type, onUpdate])
 
   const autoInstall = (() => {
     const col = getColumn('install_rate')
@@ -201,6 +206,12 @@ function MobileItemCard({
     enableItemSuggestions && descriptionFocused && String(item.description || '').trim().length >= 2
   const hasSuggestionPanel = showSuggestions && (suggestionsLoading || suggestions.length > 0)
   const activeSuggestion = suggestions[activeSuggestionIndex] || null
+  const usableHistoryPrice = getRecognizedHistoryPriceActionValue({
+    itemId: resolvedItemId,
+    priceContext,
+    selectionSource,
+    unitPrice: item.unit_price,
+  })
 
   const openSuggestionInteraction = () => {
     setDescriptionFocused(true)
@@ -418,8 +429,17 @@ function MobileItemCard({
             )}
             </div>
             {resolvedItemId && priceContextText ? (
-              <div className="mt-2 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)] whitespace-pre-line">
-                {priceContextText}
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium leading-relaxed text-[var(--bd-text3)]">
+                <span className="whitespace-pre-line">{priceContextText}</span>
+                {usableHistoryPrice !== null ? (
+                  <button
+                    type="button"
+                    className="inline-flex h-7 items-center rounded-[7px] border border-bd-border bg-bd-surface px-2 text-[10px] font-bold text-bd-text transition hover:bg-bd-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bd-focus-ring"
+                    onClick={() => onUpdate(index, 'unit_price', usableHistoryPrice)}
+                  >
+                    Use {formatNaira(usableHistoryPrice)}
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </div>

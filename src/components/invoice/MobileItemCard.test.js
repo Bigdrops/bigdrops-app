@@ -26,7 +26,9 @@ test('mobile item card clears linked item context on manual description edits an
 
   assert.match(source, /if \(resolvedItemId\) \{\s*updateField\('item_id', null\)/)
   assert.match(source, /resolvedItemId && priceContextText \? \(/)
-  assert.match(source, />\s*\{priceContextText\}\s*<\/div>/)
+  assert.match(source, /<span className="whitespace-pre-line">\{priceContextText\}<\/span>/)
+  assert.match(source, /getRecognizedHistoryPriceActionValue/)
+  assert.match(source, /onClick=\{\(\) => onUpdate\(index, 'unit_price', usableHistoryPrice\)\}/)
 })
 
 test('mobile item card uses the suggestion engine and keeps selection item ids canonical', () => {
