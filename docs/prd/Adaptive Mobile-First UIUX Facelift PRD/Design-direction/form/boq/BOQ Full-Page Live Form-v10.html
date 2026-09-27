@@ -109,25 +109,28 @@
   /* ============ LINE ITEMS - continuous document flow ============ */
   #items{display:flex;flex-direction:column}
 
-  .item{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:10px;padding:14px 0 0;transition:background .15s}
+  .item{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr);column-gap:10px;padding:18px 0 0;transition:background .15s}
   /* the document spine - spans the item AND its insert band, so it never dangles */
-  .item::before{content:'';position:absolute;left:20px;top:16px;bottom:0;width:1px;background:var(--rail)}
+  .item::before{content:'';position:absolute;left:21px;top:0;bottom:0;width:1px;background:var(--rail)}
   .item.err{background:var(--red-soft);border-radius:12px}
   .item.err .idx{background:var(--red);border-color:var(--red);color:#fff}
   .item.err .desc{border-color:var(--red)}
 
   /* hanging delete - attached to the perimeter, outside content geometry */
-  .ear{position:absolute;top:-9px;right:-9px;width:28px;height:28px;border-radius:10px 10px 10px 4px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
-  .ear::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px}
+  .ear{position:absolute;top:-9px;right:-6px;width:28px;height:28px;border-radius:10px 10px 10px 4px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  /* asymmetric hit area: extends inward and vertically only, so it never adds
+     page width or covers editable text */
+  .ear::after{content:'';position:absolute;top:-8px;bottom:-8px;left:-12px;right:0}
   .ear svg{width:11px;height:11px}
   .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
   .ear:active{transform:scale(.9)}
 
-  /* enumeration rail - a circuit of three nodes across the full item height */
-  .rail{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;grid-column:1;grid-row:1;z-index:2}
-  .rmid{display:flex;flex-direction:column;gap:8px;margin:auto 0}
-  .idx{width:30px;height:30px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
-  .rbtn{position:relative;width:30px;height:30px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  /* enumeration rail - three nodes distributed along the full item height, so the
+     rail fills the item instead of ending in dead space below the number */
+  .rail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:10px;grid-column:1;grid-row:1;z-index:2}
+  .rmid{display:flex;flex-direction:column;gap:10px}
+  .idx{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
+  .rbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s,transform .12s}
   .rbtn::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:42px;height:42px}
   .rbtn svg{width:12px;height:12px}
   .rbtn:hover{background:var(--soft);color:var(--ink);border-color:var(--line-strong)}
@@ -329,8 +332,8 @@
     .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
     .dgrid .wide{grid-column:span 1}
     /* item becomes identity + data side by side */
-    .item{grid-template-columns:48px minmax(0,1fr);column-gap:14px;padding-top:16px}
-    .item::before{left:24px}
+    .item{grid-template-columns:46px minmax(0,1fr);column-gap:14px}
+    .item::before{left:23px}
     .stack{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);column-gap:20px;align-items:start}
     .z-data{border-left:1px solid var(--line);padding-left:18px}
     .desc{min-height:96px}
@@ -454,7 +457,7 @@
 
 <!-- TOOLS SHEET -->
 <div class="ov" id="ovTools">
-  <div class="sheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="BOQ tools">
     <div class="grab"></div>
     <div class="shd">
       <div><b>BOQ tools</b><small>Row fields, import, and document reset</small></div>
@@ -477,7 +480,7 @@
 
 <!-- COLUMN MANAGER SHEET -->
 <div class="ov" id="ovColumns">
-  <div class="sheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Row columns">
     <div class="grab"></div>
     <div class="shd">
       <div><b>Row columns</b><small>Shown on every item row and the BOQ PDF</small></div>
@@ -490,7 +493,7 @@
 
 <!-- IMPORT SHEET -->
 <div class="ov" id="ovImport">
-  <div class="sheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Import JSON">
     <div class="grab"></div>
     <div class="shd">
       <div><b>Import JSON</b><small>Replaces current groups and line items</small></div>
@@ -506,7 +509,7 @@
 
 <!-- CLEAR CONFIRM -->
 <div class="ov center" id="ovClear">
-  <div class="dialog">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Clear all line items">
     <b>Clear all line items?</b>
     <p>This removes every group and item row from this BOQ.</p>
     <div class="acts">
@@ -853,7 +856,7 @@ function removeRow(id){
     toast((r.desc && r.desc.trim()) || Number(r.sp) > 0 ? 'Row deleted' : 'Row removed');
   }
 }
-function clearAll(){ closeSheet('tools'); document.getElementById('ovClear').classList.add('show'); }
+function clearAll(){ hideSheet('tools'); openSheet('clear'); }
 function doClearAll(){ rows = []; closeSheet('clear'); render(); toast('All rows cleared'); }
 function toggleCol(i){
   var c = cols[i];
@@ -863,13 +866,26 @@ function toggleCol(i){
   renderItems();
   toast(c.label + (c.visible ? ' shown on rows + PDF' : ' hidden from rows + PDF'));
 }
+var ovOf = function(id){ return document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)); };
+var focusReturn = null;
 function openSheet(id){
   if (id === 'columns') renderCols();
   if (id === 'import') showImpErr('');
-  document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)).classList.add('show');
+  var el = ovOf(id);
+  var active = document.activeElement;
+  if (active && active.focus && !(active.closest && active.closest('.ov'))) focusReturn = active;
+  el.classList.add('show');
+  var first = el.querySelector('input, textarea, button:not(.x):not(.linkbtn)');
+  if (first) first.focus();
 }
-function openTools(id){ closeSheet('tools'); openSheet(id); }
-function closeSheet(id){ document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)).classList.remove('show'); }
+function openTools(id){ hideSheet('tools'); openSheet(id); }
+function hideSheet(id){ ovOf(id).classList.remove('show'); }
+function closeSheet(id){
+  var el = ovOf(id);
+  if (!el.classList.contains('show')) return;
+  el.classList.remove('show');
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+}
 function syncNo(){ document.getElementById('boqNoLabel').textContent = document.getElementById('fNo').value; }
 function syncLayout(){
   var el = document.getElementById('layoutChip');
@@ -971,10 +987,16 @@ function toggleTheme(){
 
 /* ---------- wiring ---------- */
 document.querySelectorAll('.ov').forEach(function(ov){
-  ov.addEventListener('click', function(e){ if (e.target === ov) ov.classList.remove('show'); });
+  ov.addEventListener('click', function(e){
+    if (e.target !== ov) return;
+    ov.classList.remove('show');
+    if (focusReturn && focusReturn.focus) focusReturn.focus();
+  });
 });
 document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape') document.querySelectorAll('.ov.show').forEach(function(o){ o.classList.remove('show'); });
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.ov.show').forEach(function(o){ o.classList.remove('show'); });
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
 });
 window.addEventListener('resize', function(){
   var b = bp();
