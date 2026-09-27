@@ -9,6 +9,7 @@ import {
   extractHistoricalReviewSpecs,
 } from '../../modules/item-library/domain/historicalReview.ts'
 import { normalizeSuggestionQuery } from '../../modules/item-library/domain/suggestionRanking.ts'
+import { getHistoricalReviewCases } from '../../modules/item-library/repositories/historicalReviewRepository.ts'
 
 const tenantMain = 'entity_bigdrops-main_main'
 
@@ -217,4 +218,122 @@ test('Historical Review UI exposes read-only Stage 1 language and no enabled mut
   assert.match(source, /Keep separate/)
   assert.match(source, /Leave unresolved/)
   assert.doesNotMatch(source, /onApply|onMerge|mergeCatalogItems|update\(/)
+})
+
+function stubTenantClient(fixtures, failTables = []) {
+  const calls = []
+  const tableRows = (table) => fixtures[table] || []
+
+  const builderFor = (table) => {
+    const state = { range: null }
+    const builder = {
+      select: (columns) => {
+        calls.push({ table, select: columns })
+        return builder
+      },
+      is: () => builder,
+      eq: () => builder,
+      order: () => builder,
+      limit: () => builder,
+      in: () => builder,
+      range: (from, to) => {
+        state.range = [from, to]
+        return builder
+      },
+      then: (resolve, reject) => {
+        if (failTables.includes(table)) {
+          return Promise.resolve({ data: null, error: { message: `stub failure on ${table}` } }).then(resolve, reject)
+        }
+        let rows = tableRows(table)
+        if (state.range) rows = rows.slice(state.range[0], state.range[1] + 1)
+        return Promise.resolve({ data: rows, error: null }).then(resolve, reject)
+      },
+    }
+    return builder
+  }
+
+  return {
+    calls,
+    client: {
+      isReady: true,
+      schemaName: tenantMain,
+      from: (table) => builderFor(table),
+    },
+  }
+}
+
+function dbRow(overrides) {
+  return {
+    id: overrides.id,
+    invoice_id: overrides.invoice_id || null,
+    quotation_id: overrides.quotation_id || null,
+    item_id: overrides.item_id || null,
+    description: overrides.description,
+    row_type: overrides.row_type || 'standard',
+    unit: 'pcs',
+    make: null,
+    quantity: 1,
+    unit_price: 12000,
+    group_name: null,
+    group_id: null,
+    updated_at: '2026-06-04T10:00:00.000Z',
+  }
+}
+
+test('repository joins parent documents without embed syntax and keeps failures distinct from empty', async () => {
+  const { calls, client } = stubTenantClient({
+    invoice_items: [
+      dbRow({ id: 'row-inv-1', invoice_id: 'inv-1', description: 'Primary Air Filter' }),
+      dbRow({ id: 'row-orphan', invoice_id: 'missing-doc', description: 'Primary Air Filter' }),
+      dbRow({ id: 'row-linked', invoice_id: 'inv-1', item_id: 'cat-1', description: 'Primary Air Filter' }),
+      dbRow({ id: 'row-header', invoice_id: 'inv-1', row_type: 'group_header', description: 'Mechanical Works' }),
+    ],
+    quotation_items: [
+      dbRow({ id: 'row-quo-1', quotation_id: 'quo-1', description: 'Primary Air Filter' }),
+    ],
+    invoices: [
+      { id: 'inv-1', invoice_number: 'INV-1', issue_date: '2026-06-04', client_name: 'Client A' },
+    ],
+    quotations: [
+      { id: 'quo-1', quotation_number: 'Q-1', issue_date: '2026-06-09', client_name: 'Client B' },
+    ],
+    item_catalog: [
+      { id: 'cat-1', name: 'Air Filter', normalized_name: 'air filter', standard_price: 100, is_active: true },
+    ],
+    item_aliases: [],
+    item_price_summary_v: [
+      { item_id: 'cat-1', usage_count: 3, last_sold_price: 120, last_used_at: '2026-06-01' },
+    ],
+  })
+
+  const result = await getHistoricalReviewCases(client)
+
+  assert.equal(result.summary.case_count, 1)
+  assert.equal(result.summary.occurrence_count, 3)
+  assert.equal(result.cases[0].invoice_count, 2)
+  assert.equal(result.cases[0].quotation_count, 1)
+
+  const numbers = result.cases[0].occurrences.map((entry) => entry.source_document_number)
+  assert.ok(numbers.includes('INV-1'))
+  assert.ok(numbers.includes('Q-1'))
+  assert.ok(numbers.includes(null))
+
+  result.cases[0].candidates.forEach((candidate) => {
+    assert.equal(candidate.evidence_strength, 'advisory')
+  })
+
+  const tables = calls.map((call) => call.table)
+  assert.ok(tables.includes('invoices'))
+  assert.ok(tables.includes('quotations'))
+  calls.forEach((call) => {
+    assert.ok(!call.select.includes('('), `select on ${call.table} must not use embed syntax`)
+  })
+})
+
+test('repository surfaces query failure instead of an empty queue', async () => {
+  const { client } = stubTenantClient({ invoice_items: [] }, ['invoice_items'])
+  await assert.rejects(() => getHistoricalReviewCases(client), (thrown) => {
+    assert.equal(thrown?.message, 'stub failure on invoice_items')
+    return true
+  })
 })

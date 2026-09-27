@@ -17,12 +17,18 @@ function toNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+type HistoricalReviewParentDoc = {
+  document_number: string | null
+  document_date: string | null
+  client_name: string | null
+}
+
 function normalizeHistoricalReviewOccurrence(
   row: Record<string, unknown>,
   sourceType: 'invoice' | 'quotation',
   tenantSchema: string | null,
+  parentDoc: HistoricalReviewParentDoc | null,
 ): HistoricalReviewRawOccurrence {
-  const document = sourceType === 'invoice' ? (row.invoices as any) : (row.quotations as any)
   const description = String(row.description || '')
 
   return {
@@ -30,12 +36,9 @@ function normalizeHistoricalReviewOccurrence(
     tenant_schema: tenantSchema || '',
     source_type: sourceType,
     source_document_id: String(sourceType === 'invoice' ? row.invoice_id || '' : row.quotation_id || ''),
-    source_document_number:
-      sourceType === 'invoice'
-        ? document?.invoice_number ? String(document.invoice_number) : null
-        : document?.quotation_number ? String(document.quotation_number) : null,
-    document_date: document?.issue_date ? String(document.issue_date) : null,
-    client_name: document?.client_name ? String(document.client_name) : null,
+    source_document_number: parentDoc?.document_number || null,
+    document_date: parentDoc?.document_date || null,
+    client_name: parentDoc?.client_name || null,
     item_id: row.item_id ? String(row.item_id) : null,
     row_type: row.row_type ? String(row.row_type) : null,
     description,
@@ -79,10 +82,13 @@ async function loadHistoricalReviewSourceRows(
 
   while (pageStart < HISTORICAL_REVIEW_MAX_ROWS) {
     const pageEnd = Math.min(pageStart + HISTORICAL_REVIEW_PAGE_SIZE - 1, HISTORICAL_REVIEW_MAX_ROWS - 1)
+    // ponytail: flat columns only. PostgREST embeds need a declared FK;
+    // invoice_items has no FK to invoices, so invoices(...) fails with PGRST200.
+    // Parent metadata loads in one batched query below instead.
     const relation =
       tableName === 'invoice_items'
-        ? 'id, invoice_id, item_id, description, row_type, unit, make, quantity, unit_price, group_name, group_id, updated_at, invoices(invoice_number, issue_date, client_name)'
-        : 'id, quotation_id, item_id, description, row_type, unit, make, quantity, unit_price, group_name, group_id, updated_at, quotations(quotation_number, issue_date, client_name)'
+        ? 'id, invoice_id, item_id, description, row_type, unit, make, quantity, unit_price, group_name, group_id, updated_at'
+        : 'id, quotation_id, item_id, description, row_type, unit, make, quantity, unit_price, group_name, group_id, updated_at'
 
     const { data, error } = await client
       .from(tableName)
@@ -127,6 +133,51 @@ async function loadHistoricalReviewPagedRows(
   return { rows, truncated }
 }
 
+async function loadHistoricalReviewParentDocs(
+  client: TenantClient,
+  invoiceIds: string[],
+  quotationIds: string[],
+): Promise<Map<string, HistoricalReviewParentDoc>> {
+  const docs = new Map<string, HistoricalReviewParentDoc>()
+
+  const [invoiceDocsResult, quotationDocsResult] = await Promise.all([
+    invoiceIds.length > 0
+      ? client.from('invoices').select('id, invoice_number, issue_date, client_name').in('id', invoiceIds)
+      : Promise.resolve({ data: [], error: null }),
+    quotationIds.length > 0
+      ? client.from('quotations').select('id, quotation_number, issue_date, client_name').in('id', quotationIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (invoiceDocsResult.error) throw invoiceDocsResult.error
+  if (quotationDocsResult.error) throw quotationDocsResult.error
+
+  const invoiceDocs = Array.isArray(invoiceDocsResult.data) ? invoiceDocsResult.data : []
+  const quotationDocs = Array.isArray(quotationDocsResult.data) ? quotationDocsResult.data : []
+
+  invoiceDocs.forEach((row: any) => {
+    const id = String(row.id || '')
+    if (!id) return
+    docs.set(`invoice:${id}`, {
+      document_number: row.invoice_number ? String(row.invoice_number) : null,
+      document_date: row.issue_date ? String(row.issue_date) : null,
+      client_name: row.client_name ? String(row.client_name) : null,
+    })
+  })
+
+  quotationDocs.forEach((row: any) => {
+    const id = String(row.id || '')
+    if (!id) return
+    docs.set(`quotation:${id}`, {
+      document_number: row.quotation_number ? String(row.quotation_number) : null,
+      document_date: row.issue_date ? String(row.issue_date) : null,
+      client_name: row.client_name ? String(row.client_name) : null,
+    })
+  })
+
+  return docs
+}
+
 export async function getHistoricalReviewCases(client: TenantClient): Promise<HistoricalReviewResult> {
   if (!client.isReady || !client.schemaName) {
     return buildHistoricalReviewCases({
@@ -159,6 +210,12 @@ export async function getHistoricalReviewCases(client: TenantClient): Promise<Hi
         .eq('is_active', true),
     ),
   ])
+
+  const parentDocsById = await loadHistoricalReviewParentDocs(
+    client,
+    [...new Set(invoiceRowsResult.rows.map((row: any) => String(row.invoice_id || '')).filter(Boolean))],
+    [...new Set(quotationRowsResult.rows.map((row: any) => String(row.quotation_id || '')).filter(Boolean))],
+  )
 
   const summaryByItemId = new Map(
     summaryResult.rows.map((row: any) => [
@@ -220,8 +277,18 @@ export async function getHistoricalReviewCases(client: TenantClient): Promise<Hi
     .filter((row): row is HistoricalReviewCatalogRef => Boolean(row))
 
   const occurrences = [
-    ...invoiceRowsResult.rows.map((row) => normalizeHistoricalReviewOccurrence(row, 'invoice', client.schemaName)),
-    ...quotationRowsResult.rows.map((row) => normalizeHistoricalReviewOccurrence(row, 'quotation', client.schemaName)),
+    ...invoiceRowsResult.rows.map((row) => normalizeHistoricalReviewOccurrence(
+      row,
+      'invoice',
+      client.schemaName,
+      parentDocsById.get(`invoice:${String((row as Record<string, unknown>).invoice_id || '')}`) || null,
+    )),
+    ...quotationRowsResult.rows.map((row) => normalizeHistoricalReviewOccurrence(
+      row,
+      'quotation',
+      client.schemaName,
+      parentDocsById.get(`quotation:${String((row as Record<string, unknown>).quotation_id || '')}`) || null,
+    )),
   ]
 
   return buildHistoricalReviewCases({
