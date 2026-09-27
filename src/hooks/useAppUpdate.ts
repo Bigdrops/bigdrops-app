@@ -177,7 +177,7 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
         const nextState = resolveUpdateState({
           policyAvailable: policyResult.available,
           installedVersionCode: version.versionCode,
-          rawPolicy: policyResult.policy,
+          rawPolicy: policyResult.rawRow,
           persisted,
           nowMs: policyResult.serverNowMs ?? Date.now(),
         })

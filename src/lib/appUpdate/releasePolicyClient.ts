@@ -33,6 +33,7 @@ export async function fetchReleasePolicy(): Promise<ReleasePolicyResult> {
       serverNowMs: null,
       diagnosis: 'transport-error',
       errorCode: null,
+      rawRow: null,
     }
   }
 }

@@ -28,6 +28,21 @@ export const MIN_POLICY_FETCH_INTERVAL_MS = 6 * 60 * 60 * 1000
 
 // ── Types ──────────────────────────────────────────────────────────────
 
+/**
+ * Original snake_case RPC row shape. All fields stay unknown here; the
+ * validator below is the single authority that accepts or rejects them.
+ */
+export interface PolicyRpcRow {
+  version_code: unknown
+  version_name: unknown
+  mandatory: unknown
+  effective_at: unknown
+  apk_asset_prefix: unknown
+  web_release_url: unknown
+  release_notes: unknown
+  server_now: unknown
+}
+
 /** Validated, BIGDROPS-controlled policy row (from Supabase). */
 export interface ReleasePolicyInput {
   /** Required Android versionCode of the target release. */
@@ -80,8 +95,12 @@ export interface UpdateStateInput {
   policyAvailable: boolean
   /** Installed Android versionCode. null = unknown (fail-safe: never block). */
   installedVersionCode: number | null
-  /** Raw policy row (pre-validation) or null. */
-  rawPolicy: unknown
+  /**
+   * Raw policy row (pre-validation) or null. Must be the original
+   * snake_case RPC row — never the validated camelCase policy object,
+   * which this machine cannot validate and would always reject.
+   */
+  rawPolicy: PolicyRpcRow | null
   /** Locally persisted grace state, if any. */
   persisted: PersistedGraceState | null
   /** Decision time in ms. Server time when available, device time otherwise. */

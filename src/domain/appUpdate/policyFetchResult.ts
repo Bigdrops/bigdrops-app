@@ -1,4 +1,8 @@
-import { validateReleasePolicy, type ReleasePolicyInput } from './updateStateMachine'
+import {
+  validateReleasePolicy,
+  type PolicyRpcRow,
+  type ReleasePolicyInput,
+} from './updateStateMachine'
 
 /**
  * Pure classification of one policy-fetch outcome.
@@ -16,17 +20,12 @@ export interface ClassifiedPolicyFetch {
   diagnosis: PolicyFetchDiagnosis
   /** Safe RPC error code only. Never a message, URL, or secret. */
   errorCode: string | null
-}
-
-interface PolicyRpcRow {
-  version_code: unknown
-  version_name: unknown
-  mandatory: unknown
-  effective_at: unknown
-  apk_asset_prefix: unknown
-  web_release_url: unknown
-  release_notes: unknown
-  server_now: unknown
+  /**
+   * Original snake_case RPC row, retained so callers can feed the state
+   * machine the representation its contract requires. Null when no row
+   * was returned or the request failed.
+   */
+  rawRow: PolicyRpcRow | null
 }
 
 function toEpochMs(value: unknown): number | null {
@@ -50,6 +49,7 @@ export function classifyPolicyFetch(data: unknown, error: unknown): ClassifiedPo
       serverNowMs: null,
       diagnosis: 'transport-error',
       errorCode: sanitizeErrorCode(error),
+      rawRow: null,
     }
   }
 
@@ -59,15 +59,15 @@ export function classifyPolicyFetch(data: unknown, error: unknown): ClassifiedPo
 
   if (!row) {
     // No policy row: genuinely no update configured.
-    return { available: true, policy: null, serverNowMs: null, diagnosis: 'no-row', errorCode: null }
+    return { available: true, policy: null, serverNowMs: null, diagnosis: 'no-row', errorCode: null, rawRow: null }
   }
 
   const serverNowMs = toEpochMs(row.server_now)
   const policy = validateReleasePolicy(row)
 
   if (!policy) {
-    return { available: true, policy: null, serverNowMs, diagnosis: 'malformed', errorCode: null }
+    return { available: true, policy: null, serverNowMs, diagnosis: 'malformed', errorCode: null, rawRow: row }
   }
 
-  return { available: true, policy, serverNowMs, diagnosis: 'valid', errorCode: null }
+  return { available: true, policy, serverNowMs, diagnosis: 'valid', errorCode: null, rawRow: row }
 }
