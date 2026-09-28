@@ -1,11 +1,14 @@
 import { ItemLibraryDetailPanel } from './ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateMergeCard } from './ItemLibraryDuplicateMergeCard'
+import { ItemLibraryLocalAIReviewPanel } from './ItemLibraryLocalAIReviewPanel'
 import type {
   DuplicateCandidateGroup,
+  FlaggedCleanupExportPayload,
   ItemAlias,
   ItemCatalogItem,
   ItemHistoryRow,
   ItemLibraryMergeRequest,
+  ItemReviewedSeparatePair,
 } from '../types'
 
 type ItemLibraryDuplicateReviewPanelProps = {
@@ -18,6 +21,8 @@ type ItemLibraryDuplicateReviewPanelProps = {
   loading: boolean
   error: Error | null
   mergeLoading: boolean
+  flaggedCleanupExport: FlaggedCleanupExportPayload
+  reviewedSeparatePairs: ItemReviewedSeparatePair[]
   onInspectItem: (itemId: string) => void
   onKeepSeparate: (request: ItemLibraryMergeRequest) => Promise<void>
   isPairReviewedSeparate?: (leftItemId: string, rightItemId: string) => boolean
@@ -48,6 +53,8 @@ export function ItemLibraryDuplicateReviewPanel({
   loading,
   error,
   mergeLoading,
+  flaggedCleanupExport,
+  reviewedSeparatePairs,
   onInspectItem,
   onKeepSeparate,
   isPairReviewedSeparate,
@@ -86,6 +93,13 @@ export function ItemLibraryDuplicateReviewPanel({
           onKeepSeparate={onKeepSeparate}
           isPairReviewedSeparate={isPairReviewedSeparate}
           onMerge={onMerge}
+        />
+
+        <ItemLibraryLocalAIReviewPanel
+          aliases={aliases}
+          exportPayload={flaggedCleanupExport}
+          group={group}
+          reviewedSeparatePairs={reviewedSeparatePairs}
         />
       </div>
 

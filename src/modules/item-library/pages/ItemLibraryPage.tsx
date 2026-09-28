@@ -718,6 +718,8 @@ export default function ItemLibraryPage() {
                     loading={historyLoading}
                     error={historyError}
                     mergeLoading={mergeLoading || Boolean(reviewedSeparatePairsError)}
+                    flaggedCleanupExport={flaggedCleanupExport}
+                    reviewedSeparatePairs={reviewedSeparatePairs}
                     onInspectItem={(itemId) => setSelectedItemId(itemId)}
                     onKeepSeparate={handleKeepDuplicateGroupSeparate}
                     isPairReviewedSeparate={isPairReviewedSeparate}
