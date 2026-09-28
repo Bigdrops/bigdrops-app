@@ -26,9 +26,51 @@ export type LocalAIRuntimeInfo = {
   memoryBeforeLoadBytes?: number
   memoryAfterLoadBytes?: number
   memoryAfterUnloadBytes?: number
+  totalMemoryBytes?: number
   message?: string
 }
 
+export type LocalAINativeStage =
+  | 'start'
+  | 'context_init'
+  | 'vocab'
+  | 'tokenize'
+  | 'prompt_decode'
+  | 'sampler_init'
+  | 'grammar_init'
+  | 'generate'
+  | 'unknown'
+
+export type LocalAINativeError = Error & { stage: LocalAINativeStage }
+
+const NATIVE_STAGE_PATTERN = /\[stage=([a-z_]+)\]/
+
+export function getLocalAINativeStage(error: unknown): LocalAINativeStage {
+  const message = error instanceof Error ? error.message : String(error || '')
+  const match = NATIVE_STAGE_PATTERN.exec(message)
+  const stage = match?.[1]
+  switch (stage) {
+    case 'start':
+    case 'context_init':
+    case 'vocab':
+    case 'tokenize':
+    case 'prompt_decode':
+    case 'sampler_init':
+    case 'grammar_init':
+    case 'generate':
+      return stage
+    default:
+      return 'unknown'
+  }
+}
+
+export function withLocalAINativeStage(error: unknown): LocalAINativeError {
+  const stage = getLocalAINativeStage(error)
+  const message = error instanceof Error ? error.message : String(error || 'Local AI generation failed.')
+  const typed = new Error(message) as LocalAINativeError
+  typed.stage = stage
+  return typed
+}
 export type LocalAILoadModelResult = {
   loaded: boolean
   modelId: string
