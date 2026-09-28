@@ -15,6 +15,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.bigdrops.app.plugins.ApkUpdatePlugin;
 import com.bigdrops.app.plugins.DownloadBridgePlugin;
 import com.bigdrops.app.plugins.FoldAwarenessPlugin;
+import com.bigdrops.app.plugins.LocalAIPlugin;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -33,6 +34,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(ApkUpdatePlugin.class);
         registerPlugin(DownloadBridgePlugin.class);
         registerPlugin(FoldAwarenessPlugin.class);
+        registerPlugin(LocalAIPlugin.class);
         super.onCreate(savedInstanceState);
 
         enableEdgeToEdge();
