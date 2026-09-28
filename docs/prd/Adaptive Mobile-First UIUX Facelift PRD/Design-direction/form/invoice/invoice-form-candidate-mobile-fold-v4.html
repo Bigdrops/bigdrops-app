@@ -21,6 +21,25 @@
   BOQ-only concepts (CP, SP, line profit, gross profit, margin, vendor)
   are NOT part of this prototype. The visible row math is the live
   Invoice contract: Amount = Qty x Rate - row discount; VAT; WHT.
+
+  V4 - authoring-friction pass. The capability model is unchanged. The
+  composition is not.
+  - Item row: identity, reorder, duplicate, amount and delete share one 28px
+    header line. The item amount is no longer a full-width block.
+  - Description is dominant by width and type, not by height. It is one row
+    until the text needs more lines.
+  - Item Library has two visibly different states. State A, discovery: typing
+    opens suggestions with item name, last price, use count and last
+    reference. State B, selected: suggestions close and the history collapses
+    to one contextual line under Description. The bordered history card and
+    its oversized "Use price" component are gone.
+  - Photo and Sub Description share one secondary row next to Description.
+  - Optional columns share a 3-up grid, so one field no longer costs one
+    full-width row and Qty / Unit / Rate stay on a single scan line.
+  - The separate enumeration rail is gone. Row identity is a compact badge in
+    the row header, so no decorative spine runs through empty row height.
+  - Groups are permanently expanded. The group delete X occupies the first
+    control slot, on the left. No collapse control exists anywhere.
 -->
 <html lang="en">
 <head>
@@ -141,42 +160,50 @@
   .itbn.danger{margin-left:auto;border-color:transparent;background:none;color:var(--red);padding:0 8px}
   .itbn.danger:hover{background:var(--red-soft)}
 
+  /* Prototype scaffolding. Names the two Item Library states so a reviewer can
+     see both in one screen. Not part of the shipped form. */
+  .scaffold{margin:0 0 12px;padding:9px 11px;border-radius:11px;border:1px dashed var(--line-strong);background:var(--soft);font-size:9.5px;font-weight:600;line-height:1.55;color:var(--sub);display:flex;flex-direction:column;gap:6px}
+  .scaffold b{font-weight:800;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;font-size:8.5px}
+
   /* ============ LINE ITEMS ============ */
   #items{display:flex;flex-direction:column}
-  #items > .item,#items > .gwrap{margin-top:18px}
+  #items > .item,#items > .gwrap{margin-top:14px}
   #items > .item:first-child,#items > .gwrap:first-child{margin-top:0}
 
-  .item{position:relative;padding-top:14px;transition:background .15s}
-  .item::before{content:'';position:absolute;top:0;left:0;right:26px;height:1px;background:var(--line)}
+  .item{position:relative;padding-top:12px}
+  .item::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--line)}
   #items > .item:first-child::before,.gbody > .item:first-child::before{display:none}
   .item.err{background:var(--red-soft);border-radius:12px}
   .item.err .idx{background:var(--red);border-color:var(--red);color:#fff}
   .item.err .desc{border-color:var(--red)}
 
-  .ear{position:absolute;top:0;right:0;width:26px;height:26px;border-radius:8px 3px 8px 8px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
-  .ear::before{content:'';position:absolute;inset:-9px}
-  .ear::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:14px;background:var(--line-strong);transform:translateX(-50%);transition:background .15s}
-  .ear svg{width:11px;height:11px}
-  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
-  .ear:hover::after{background:var(--red)}
-  .ear:active{transform:scale(.9)}
-
-  .ihead{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:stretch}
-  .rail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;padding:2px 0}
-  .rail::before{content:'';position:absolute;left:50%;top:17px;bottom:17px;width:1px;background:var(--rail);transform:translateX(-50%);z-index:0}
-  .rail>*{position:relative;z-index:1;flex-shrink:0}
-  .idx{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
-  .rmid{display:flex;flex-direction:column;gap:8px}
-  .rbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s,transform .12s}
-  .rbtn::after{content:'';position:absolute;inset:-4px}
-  .rbtn svg{width:12px;height:12px}
+  /* Row header - identity, reorder, duplicate, amount and delete share one
+     28px line. The amount readout lives here instead of in its own full-width
+     block, so it costs no vertical space in the row. */
+  .irow{display:flex;align-items:center;gap:5px;margin-bottom:8px}
+  .irow .sp{flex:1;min-width:0}
+  .idx{width:28px;height:28px;border-radius:9px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em;flex-shrink:0}
+  .rbtn{position:relative;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  /* the invisible hit area holds the real touch target at 38px */
+  .rbtn::after{content:'';position:absolute;inset:-5px}
+  .rbtn svg{width:11px;height:11px}
   .rbtn:hover{background:var(--soft);color:var(--ink);border-color:var(--line-strong)}
   .rbtn:active{transform:scale(.92)}
   .rbtn:disabled{opacity:.32;pointer-events:none}
+  .amt{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;min-width:0;padding-left:8px}
+  .amt small{font-family:var(--mono);font-size:7.5px;font-weight:500;color:var(--faint);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .amt b{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1.15;letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+  .ear{position:relative;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  .ear::after{content:'';position:absolute;inset:-5px}
+  .ear svg{width:11px;height:11px}
+  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
+  .ear:active{transform:scale(.9)}
 
-  .idesc{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .idesc{display:flex;flex-direction:column;gap:6px;min-width:0}
   .descwrap{position:relative}
-  .desc{min-height:64px}
+  /* Description keeps its dominance through width and type, not through
+     height. It stays one row until the text needs more lines, then grows. */
+  textarea.desc{min-height:46px;padding:11px 12px;font-size:13px;line-height:1.4;overflow:hidden}
 
   /* ============ ITEM LIBRARY SUGGESTIONS (live: useItemSuggestionEngine) ============ */
   .sug{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;max-height:196px;overflow-y:auto;overscroll-behavior:contain;background:var(--card);border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 14px 32px rgba(2,6,23,.22)}
@@ -193,29 +220,35 @@
   .sug-empty{padding:10px 12px;font-size:9.5px;font-weight:600;color:var(--sub)}
   .sug-load{padding:10px 12px;font-size:9.5px;font-weight:600;color:var(--faint)}
 
-  /* price context + "Use price" (live: priceContextText + usableHistoryPrice) */
-  .pctx{margin-top:7px;padding:7px 10px;border-radius:9px;background:var(--soft);border:1px dashed var(--line-strong);font-size:9px;font-weight:600;line-height:1.5;color:var(--sub);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .pctx .useprice{flex-shrink:0;height:24px;padding:0 9px;border-radius:7px;border:1px solid var(--line);background:var(--card);font-size:8.5px;font-weight:800;color:var(--accent);transition:background .15s}
-  .pctx .useprice:hover{background:var(--accent-soft)}
+  /* Item Library STATE B - item selected (live: priceContextText +
+     usableHistoryPrice). The library identity and its history collapse into
+     one contextual line under Description. No bordered card, no block. */
+  .libline{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px;padding-left:2px;font-size:9.5px;font-weight:600;line-height:1.45;color:var(--sub)}
+  .libline .dot{width:5px;height:5px;border-radius:50%;background:var(--sell);flex-shrink:0}
+  .libline span{min-width:0}
+  .libline b{font-family:var(--mono);font-weight:600;color:var(--ink)}
+  .libline .libuse{margin-left:auto;flex-shrink:0;height:22px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--card);font-family:var(--mono);font-size:9px;font-weight:600;color:var(--accent);transition:background .15s,border-color .15s}
+  .libline .libuse:hover{background:var(--accent-soft);border-color:var(--accent)}
 
-  /* photo (live: image_url upload) */
-  .photorow{display:flex;align-items:center;gap:8px}
-  .photothumb{position:relative;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:var(--soft)}
+  /* Secondary detail row. Photo and Sub Description stay next to Description.
+     When the Sub Description editor opens it takes its own full-width line. */
+  .srow{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:7px}
+  .photothumb{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:var(--soft);flex-shrink:0}
   .photothumb img{width:100%;height:100%;object-fit:cover}
-  .photothumb .px{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear)}
-  .photothumb .px svg{width:9px;height:9px}
-  .photobtn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);transition:border-color .15s,color .15s}
-  .photobtn:hover{border-color:var(--line-strong);color:var(--ink)}
-  .photobtn svg{width:11px;height:11px}
-  .photobtn.has{border-color:var(--sell);color:var(--sell);background:var(--sell-soft)}
+  .photothumb .px{position:absolute;top:-4px;right:-4px;width:17px;height:17px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear)}
+  .photothumb .px svg{width:8px;height:8px}
+  .photochip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:9px;border:1px dashed var(--line-strong);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);flex-shrink:0;transition:border-color .15s,color .15s}
+  .photochip:hover{border-color:var(--accent);color:var(--accent)}
+  .photochip svg{width:11px;height:11px}
 
   /* Sub Description - accepted BOQ V11 compact behavior, kept:
      empty + collapsed: compact add row; populated + collapsed: actual
      text 2-line clamp, tap opens editor; open: header + editor that
      pushes subsequent content down; collapse on empty blur. */
-  .subrow{display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid var(--line);transition:border-color .15s}
+  .subrow{flex:1 1 180px;min-width:0;display:flex;flex-direction:column;gap:6px;padding-left:9px;border-left:2px solid var(--line);transition:border-color .15s}
   .subrow.has{border-left-color:var(--accent)}
-  .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:34px;padding:7px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
+  .subrow.open{flex-basis:100%}
+  .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:28px;padding:5px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
   .subtog.sub-add{align-items:center}
   .subtog:hover,.subtog:focus-visible{color:var(--accent)}
   .stog-icon{width:15px;height:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -224,11 +257,15 @@
   .stog-chev{width:12px;height:12px;flex-shrink:0;color:var(--faint);transition:transform .15s}
   .subrow.open .stog-chev{transform:rotate(180deg)}
   .sub-prev-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.45;color:var(--sub)}
-  .subfield{min-height:58px}
+  textarea.subfield{min-height:52px}
 
-  .idata{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-  .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .fgrid>*:last-child:nth-child(odd){grid-column:1/-1}
+  /* Data zone. One visible field costs one cell, not one full-width row, so
+     Qty / Unit / Rate stay on one scan line and the enabled optional columns
+     share the same grid instead of stacking. */
+  .idata{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+  .mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .mgrid .fld{min-height:40px;padding:0 10px;font-size:12px}
+  .mgrid .cf-lab{margin:0 0 3px 1px}
   .cfield{display:block;min-width:0}
   .cf-lab{display:flex;align-items:center;gap:4px;margin:0 0 5px 2px;font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   .cf-lab svg{width:10px;height:10px}
@@ -239,18 +276,19 @@
   .cfield.vat .fld:focus{border-color:var(--vat);box-shadow:0 0 0 3px var(--vat-soft)}
   .cfield.disc .fld:focus{border-color:var(--disc);box-shadow:0 0 0 3px var(--disc-soft)}
 
-  /* row amount bar (live: visible_line_total readout) */
-  .amountbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;padding:6px 11px;border-radius:11px;background:var(--amount-bg)}
-  .amountbar .pl{font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .amountbar b{font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:-.02em;color:var(--on-dark);white-space:nowrap}
+  /* The row amount readout (live: visible_line_total) now lives in the row
+     header as .amt. It is no longer a full-width block, so it adds no height. */
 
   .ins{position:relative;display:flex;align-items:center;gap:6px;height:20px;margin-top:10px;color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:left;transition:color .15s}
   .ins::before{content:'';position:absolute;left:0;right:0;top:-10px;bottom:-10px}
   .ins:hover,.ins:focus-visible{color:var(--accent)}
 
   /* ============ GROUPS - same accepted BOQ V11 treatment ============ */
+  /* Groups are permanently expanded in V4. There is no collapse control. The
+     group delete X occupies the first control slot, on the left, and the
+     group keeps its boundary, its item count and its group total. */
   .gwrap{display:flex;flex-direction:column}
-  .gwrap:not(.collapsed){
+  .gwrap{
     width:calc(100% + 2*var(--gutter));
     margin-left:calc(-1*var(--gutter));
     margin-right:calc(-1*var(--gutter));
@@ -271,7 +309,6 @@
   .gbtn:hover{background:rgba(255,255,255,.24)}
   .gbtn:active{transform:scale(.94)}
   .gbtn.danger:hover{background:rgba(239,68,68,.7);border-color:transparent}
-  .gbtn .chev{transition:transform .15s}
   .gbody{display:flex;flex-direction:column;padding:0 var(--gutter)}
   .gbody>.item{padding-top:14px;margin-top:6px}
   .gbody>.item:first-child{margin-top:0;padding-top:14px}
@@ -287,18 +324,7 @@
   .gadd:hover{background:var(--group-soft);border-color:var(--accent)}
   .gadd:active{transform:scale(.98)}
 
-  .gwrap.collapsed{border:1.5px solid var(--group-line);border-left:6px solid var(--group-spine);border-radius:14px;background:var(--card)}
-  .gwrap.collapsed .ghdr{background:var(--card);border-radius:12px;min-height:50px;padding:8px 10px}
-  .gwrap.collapsed .gtitle{color:var(--ink)}
-  .gwrap.collapsed .gtitle::placeholder{color:var(--faint)}
-  .gwrap.collapsed .gcount{color:var(--faint)}
-  .gwrap.collapsed .gsum small{color:var(--faint)}
-  .gwrap.collapsed .gsum b{color:var(--ink)}
-  .gwrap.collapsed .gbtn{background:var(--soft);border-color:var(--line);color:var(--sub)}
-  .gwrap.collapsed .gbtn:hover{background:var(--accent-soft);color:var(--accent)}
-  .gwrap.collapsed .gbtn.danger:hover{background:var(--red-soft);border-color:var(--red);color:var(--red)}
-  .gwrap.collapsed .gchev svg{transform:rotate(-90deg)}
-  .gwrap.collapsed .gbody,.gwrap.collapsed .gfoot{display:none}
+  /* No collapsed variant exists. Every group renders its body and its footer. */
 
   /* ============ COMMERCIAL TERMS (live: FormCommercialTerms) ============ */
   .ccard{border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:8px;overflow:hidden}
@@ -512,28 +538,40 @@
   @media (min-width:430px){
     :root{--gutter:18px}
     .wrap{max-width:560px;padding:10px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
-    .desc{min-height:72px}
+    textarea.desc{min-height:52px}
     .createpair{gap:12px}
   }
 
   /* ============ FOLD (>=600) - recomposed, not a centred phone ============ */
   @media (min-width:600px){
     :root{--gutter:24px}
-    .wrap{max-width:820px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+    .wrap{max-width:880px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
     .tb-meta{font-size:8.5px}
     .tb-save{display:flex}
     .fab{display:none}
     .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
     .dgrid .wide{grid-column:span 1}
-    /* item becomes identity column + data column, side by side */
-    .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);column-gap:20px}
-    .ihead{grid-column:1;grid-row:1}
-    .idata{grid-column:2;grid-row:1;margin-top:0;padding-left:18px;border-left:1px solid var(--line)}
-    .ins{grid-column:1/-1;grid-row:2}
-    .desc{min-height:92px}
+    .scaffold{flex-direction:row;gap:20px}
+    .scaffold span{flex:1}
+    /* The phone authoring model is recomposed, not replaced by a desktop
+       table. Identity column on the left, data column on the right, both
+       authored the same way they are on a phone. */
+    .item{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(310px,1fr);column-gap:22px}
+    .irow{grid-column:1/-1;grid-row:1;margin-bottom:10px}
+    .idesc{grid-column:1;grid-row:2}
+    .srow{grid-column:1;grid-row:3;margin-top:8px}
+    .idata{grid-column:2;grid-row:2/span 2;margin-top:0;padding-left:20px;border-left:1px solid var(--line);gap:10px}
+    .mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .ins{grid-column:1/-1;grid-row:4}
+    textarea.desc{min-height:60px}
     .cf-hint{display:inline}
     .totals-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
     .sumtotal{margin-top:0}
+    /* Commercial terms and supporting info fold into two columns instead of
+       one long stack. */
+    #commercialTerms,#supportInfo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+    #commercialTerms .ccard,#supportInfo .ccard{margin-bottom:0}
+    #supportInfo > div{margin-top:0!important}
     .sheet{max-width:560px;border-radius:22px;margin-bottom:18px}
   }
 </style>
@@ -647,6 +685,11 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>
         Clear all
       </button>
+    </div>
+
+    <div class="scaffold">
+      <span><b>A &middot; Discovery</b> Type 2+ letters into a Description and the library suggestions open with item name, last price, use count and last reference. The last row below is in this state.</span>
+      <span><b>B &middot; Selected</b> After a library pick the suggestions close and the history collapses to one line under Description, with a small price action. Row 02 below is in this state.</span>
     </div>
 
     <div id="items"></div>
@@ -972,6 +1015,7 @@ var suggestionMeta = function(c, q){
   if (c.alias && normText(c.alias) !== normText(c.name) && normText(c.alias).indexOf(normText(q)) >= 0) parts.push('Alias: ' + c.alias);
   if (c.usage_count) parts.push(c.usage_count + ' uses');
   if (c.last_source_document_number) parts.push(c.last_source_document_number);
+  if (c.last_used_at) parts.push(c.last_used_at);
   return parts.join(' \u00B7 ');
 };
 var priceContextText = function(c){
@@ -1002,13 +1046,13 @@ var state = {
   whtType: 'percent',
   vatQuickOpen: false,
   openTerms: {},
-  suggestFor: 8,
+  suggestFor: 6,
   vat: 7.5,
   discount: 0,
   wht: 0,
   items: [
     { id: 8, type: 'item', gid: null, desc: 'Molded case circuit breaker 125A', sub: '4 pole, adjustable thermal-magnetic trip unit', subOpen: false, qty: 3, unit: 'pcs', rate: 184000, make: 'Schneider', partNo: 'NSX160F', condition: 'New', vatRate: 7.5, discRate: null, install: null, installOverride: false, item_id: null, image: null, custom_data: { partNo: 'NSX160F', condition: 'New' } },
-    { id: 1, type: 'group', title: 'Electrical Materials', collapsed: false, showSubtotal: true },
+    { id: 1, type: 'group', title: 'Electrical Materials', showSubtotal: true },
     { id: 2, type: 'item', gid: 1, desc: 'Copper cable 4mm\u00B2', sub: 'FR PVC insulated copper cable', subOpen: false, qty: 40, unit: 'm', rate: 6800, make: 'Nexans', partNo: 'CAB-4MM', condition: 'New', vatRate: null, discRate: null, install: null, installOverride: false, item_id: 'cat-cable', image: null, custom_data: { partNo: 'CAB-4MM', condition: 'New' } },
     { id: 3, type: 'item', gid: 1, desc: 'LED panel light 36W', sub: '', subOpen: false, qty: 24, unit: 'pcs', rate: 23500, make: 'Philips', partNo: 'LED-36W', condition: 'New', vatRate: null, discRate: 5, install: null, installOverride: false, item_id: null, image: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88"><rect width="88" height="88" fill="#1e3a5f"/><rect x="18" y="18" width="52" height="52" rx="8" fill="none" stroke="#7dd3fc" stroke-width="3"/><circle cx="44" cy="44" r="10" fill="#7dd3fc"/></svg>'), custom_data: { partNo: 'LED-36W', condition: 'New' } },
     { id: 6, type: 'item', gid: null, desc: 'Contactor 40A 3-pole', sub: '', subOpen: false, qty: 6, unit: 'pcs', rate: 38500, make: 'Schneider', partNo: 'LC1D40', condition: 'New', vatRate: null, discRate: null, install: null, installOverride: false, item_id: null, image: null, custom_data: { partNo: 'LC1D40', condition: 'New' } }
@@ -1150,6 +1194,19 @@ function toast(msg, isErr){
   t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
 }
 
+/* Textareas size to their content, so a short Description stays one row and a
+   long one grows. Re-applied after every item render. */
+function autoSize(root){
+  if (!root) return;
+  var list = root.querySelectorAll('textarea.desc, textarea.subfield');
+  for (var i = 0; i < list.length; i++){
+    var t = list[i];
+    var min = t.classList.contains('subfield') ? 52 : 46;
+    t.style.height = 'auto';
+    t.style.height = Math.max(min, t.scrollHeight) + 'px';
+  }
+}
+
 /* ---------- item fragment builders ---------- */
 function suggestionHTML(r){
   if (state.suggestFor !== r.id) return '';
@@ -1169,23 +1226,29 @@ function suggestionHTML(r){
   html += '</div>';
   return html;
 }
-function priceContextHTML(r){
+/* Item Library STATE B - item selected. Library identity and history collapse
+   into one contextual line under Description. The old bordered history card
+   and its oversized "Use price" button are gone. */
+function libLineHTML(r){
   if (!r.item_id) return '';
   var c = findCatalog(r.item_id);
   if (!c) return '';
-  var txt = priceContextText(c);
-  if (!txt) return '';
   var price = suggestionPrice(c);
+  var bits = [];
+  if (price.value != null) bits.push('Last sold: <b>' + naira(price.value) + '</b>');
+  if (c.last_source_document_number) bits.push(esc(c.last_source_document_number));
+  if (c.last_used_at) bits.push(esc(c.last_used_at));
+  if (c.usage_count) bits.push(c.usage_count + (c.usage_count === 1 ? ' use' : ' uses'));
   var useBtn = (price.value != null && price.value !== Number(r.rate))
-    ? '<button type="button" class="useprice" onmousedown="event.preventDefault(); usePrice(' + r.id + ',' + price.value + ')">Use ' + naira(price.value) + '</button>'
+    ? '<button type="button" class="libuse" onmousedown="event.preventDefault(); usePrice(' + r.id + ',' + price.value + ')">Use ' + naira(price.value) + '</button>'
     : '';
-  return '<div class="pctx"><span>' + esc(txt) + '</span>' + useBtn + '</div>';
+  return '<div class="libline"><span class="dot"></span><span>' + esc(c.name) + ' &middot; ' + bits.join(' &middot; ') + '</span>' + useBtn + '</div>';
 }
 function photoHTML(r){
   if (r.image) {
-    return '<div class="photorow"><span class="photothumb"><img src="' + r.image + '" alt="Item photo"><button type="button" class="px" title="Remove photo" aria-label="Remove photo" onclick="removePhoto(' + r.id + ')">' + svgs.x + '</button></span></div>';
+    return '<span class="photothumb"><img src="' + r.image + '" alt="Item photo"><button type="button" class="px" title="Remove photo" aria-label="Remove photo" onclick="removePhoto(' + r.id + ')">' + svgs.x + '</button></span>';
   }
-  return '<div class="photorow"><button type="button" class="photobtn" onclick="addPhoto(' + r.id + ')">' + svgs.cam + 'Photo</button></div>';
+  return '<button type="button" class="photochip" onclick="addPhoto(' + r.id + ')" title="Attach a photo">' + svgs.cam + 'Photo</button>';
 }
 function subHTML(r){
   var hasSub = !!(r.sub && r.sub.trim());
@@ -1212,69 +1275,62 @@ function itemHTML(r, sib){
   var errCls = errId === r.id ? ' err' : '';
   var k = sib.indexOf(r);
   var cd = r.custom_data || {};
-  var make = vis('make') ? '<input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)">' : '';
-  var partNo = vis('custom_partNo') ? '<input class="fld" placeholder="Part no." value="' + esc(cd.partNo || '') + '" oninput="editCustom(' + r.id + ',\'partNo\',this.value)">' : '';
-  var condition = vis('custom_condition') ? '<input class="fld" placeholder="Condition" value="' + esc(cd.condition || '') + '" oninput="editCustom(' + r.id + ',\'condition\',this.value)">' : '';
+  /* Optional columns. Each visible one takes one cell of the shared grid, so
+     six enabled optional columns still cost two rows instead of six. */
+  var opt = '';
+  if (vis('make')) opt += '<label class="cfield"><span class="cf-lab">Make</span><input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)"></label>';
+  if (vis('custom_partNo')) opt += '<label class="cfield"><span class="cf-lab">Part no.</span><input class="fld" placeholder="Part no." value="' + esc(cd.partNo || '') + '" oninput="editCustom(' + r.id + ',\'partNo\',this.value)"></label>';
+  if (vis('custom_condition')) opt += '<label class="cfield"><span class="cf-lab">Condition</span><input class="fld" placeholder="Condition" value="' + esc(cd.condition || '') + '" oninput="editCustom(' + r.id + ',\'condition\',this.value)"></label>';
+  docColumns.forEach(function(c){
+    if (!/^custom_/.test(c.key) || c.key === 'custom_partNo' || c.key === 'custom_condition' || !c.visible) return;
+    opt += '<label class="cfield"><span class="cf-lab">' + esc(c.label) + '</span><input class="fld" placeholder="' + esc(c.label) + '" value="' + esc(cd[c.key] || '') + '" oninput="editCustom(' + r.id + ',\'' + c.key + '\',this.value)"></label>';
+  });
   var idata = '<div class="idata">'
-    + '<div class="fgrid">'
-    +   (vis('quantity') ? numFld(r.id, 'qty', fmtQty(r.qty), 'Qty *') : '')
-    +   (vis('unit') ? '<input class="fld" placeholder="Unit" value="' + esc(r.unit) + '" oninput="editRow(' + r.id + ',\'unit\',this.value)">' : '')
-    + '</div>'
-    + '<div class="fgrid">'
+    + '<div class="mgrid">'
+    +   (vis('quantity') ? '<label class="cfield"><span class="cf-lab">Qty</span>' + numFld(r.id, 'qty', fmtQty(r.qty), 'Qty *') + '</label>' : '')
+    +   (vis('unit') ? '<label class="cfield"><span class="cf-lab">Unit</span><input class="fld" placeholder="Unit" value="' + esc(r.unit) + '" oninput="editRow(' + r.id + ',\'unit\',this.value)"></label>' : '')
     +   (vis('unit_price') ? '<label class="cfield money"><span class="cf-lab">Rate</span>' + numFld(r.id, 'rate', fmtMoney(r.rate), '0.00') + '</label>' : '')
     +   (vis('vat_rate') ? '<label class="cfield vat"><span class="cf-lab">VAT %</span>' + numFld(r.id, 'vatRate', r.vatRate === null || r.vatRate === undefined ? '' : fmtQty(r.vatRate), '0') + '</label>' : '')
-    + '</div>'
-    + '<div class="fgrid">'
     +   (vis('discount_rate') ? '<label class="cfield disc"><span class="cf-lab">Disc %</span>' + numFld(r.id, 'discRate', r.discRate === null || r.discRate === undefined ? '' : fmtQty(r.discRate), '0') + '</label>' : '')
     +   (vis('install_rate') ? '<label class="cfield"><span class="cf-lab">Install</span>' + numFld(r.id, 'install', r.install === null || r.install === undefined ? '' : fmtMoney(r.install), 'Auto') + '</label>' : '')
     + '</div>'
+    + (opt ? '<div class="mgrid">' + opt + '</div>' : '')
     + '</div>';
-  var amountBar = vis('amount')
-    ? '<div class="amountbar" data-aid="' + r.id + '"><span class="pl">Amount &middot; ' + fmtQty(r.qty) + ' &times; ' + naira(r.rate) + '</span><b>' + naira(r.line || 0) + '</b></div>'
-    : '';
   return '<article class="item' + errCls + '" data-id="' + r.id + '">'
-    + '<button class="ear" title="Remove item" aria-label="Remove item" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
-    + '<div class="ihead">'
-    +   '<div class="rail">'
-    +     '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
-    +     '<div class="rmid">'
-    +       '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
-    +       '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
-    +     '</div>'
-    +     '<button class="rbtn" title="Duplicate item" aria-label="Duplicate item" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
-    +   '</div>'
-    +   '<div class="idesc">'
-    +     '<div class="descwrap">'
-    +       '<textarea class="fld desc" rows="2" placeholder="Item description * \u2014 type 2+ letters for library suggestions" oninput="editDesc(' + r.id + ',this.value)" onfocus="focusDesc(' + r.id + ')" onblur="blurDesc(' + r.id + ')">' + esc(r.desc) + '</textarea>'
-    +       suggestionHTML(r)
-    +       priceContextHTML(r)
-    +     '</div>'
-    +     photoHTML(r)
-    +     subHTML(r)
-    +     make
-    +     partNo
-    +     condition
+    + '<div class="irow">'
+    +   '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
+    +   '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
+    +   '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
+    +   '<button class="rbtn" title="Duplicate item" aria-label="Duplicate item" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
+    +   '<span class="sp"></span>'
+    +   (vis('amount') ? '<span class="amt"><small>' + fmtQty(r.qty) + ' &times; ' + naira(r.rate) + '</small><b>' + naira(r.line || 0) + '</b></span>' : '')
+    +   '<button class="ear" title="Remove item" aria-label="Remove item" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
+    + '</div>'
+    + '<div class="idesc">'
+    +   '<div class="descwrap">'
+    +     '<textarea class="fld desc" rows="1" placeholder="Item description * \u2014 type 2+ letters for library suggestions" oninput="editDesc(' + r.id + ',this.value)" onfocus="focusDesc(' + r.id + ')" onblur="blurDesc(' + r.id + ')">' + esc(r.desc) + '</textarea>'
+    +     suggestionHTML(r)
+    +     libLineHTML(r)
     +   '</div>'
     + '</div>'
+    + '<div class="srow">' + photoHTML(r) + subHTML(r) + '</div>'
     + idata
-    + amountBar
     + '<button class="ins" onclick="insertBelow(' + r.id + ')">+ Insert below</button>'
     + '</article>';
 }
 function groupHTML(r){
   var mem = members(r.id);
-  var label = mem.length + ' item' + (mem.length === 1 ? '' : 's') + (r.collapsed ? ' \u00B7 collapsed' : '');
+  var label = mem.length + ' item' + (mem.length === 1 ? '' : 's');
   var body = mem.length
     ? mem.map(function(m){ return itemHTML(m, mem); }).join('')
     : '<div class="gempty">No items in this group yet.<br>Use the button below to add the first one.</div>';
   var subtotal = mem.reduce(function(s, m){ return s + (m.line || 0); }, 0);
-  return '<section class="gwrap' + (r.collapsed ? ' collapsed' : '') + '" data-gwrap="' + r.id + '">'
+  return '<section class="gwrap" data-gwrap="' + r.id + '">'
     + '<header class="ghdr">'
-    +   '<button class="gbtn gchev" title="' + (r.collapsed ? 'Expand group' : 'Collapse group') + '" aria-expanded="' + (!r.collapsed) + '" onclick="toggleGroup(' + r.id + ')">' + svgs.chev + '</button>'
+    +   '<button class="gbtn danger" title="Remove group (items are kept)" aria-label="Remove group" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
     +   '<input class="gtitle" value="' + esc(r.title) + '" placeholder="Group title" oninput="editRow(' + r.id + ',\'title\',this.value)">'
     +   '<span class="gcount">' + label + '</span>'
-    +   (r.showSubtotal && !r.collapsed ? '<span class="gsum"><small>Group total</small><b>' + naira(subtotal) + '</b></span>' : '')
-    +   '<button class="gbtn danger" title="Remove group (items are kept)" aria-label="Remove group" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
+    +   (r.showSubtotal ? '<span class="gsum"><small>Group total</small><b>' + naira(subtotal) + '</b></span>' : '')
     + '</header>'
     + '<div class="gbody">' + body + '</div>'
     + '<div class="gfoot">'
@@ -1317,6 +1373,7 @@ function renderItems(){
     }
   });
   host.innerHTML = walk.join('');
+  autoSize(host);
 }
 function rows(){ return state.items; }
 function siblings(r){
@@ -1730,7 +1787,7 @@ function doImport(){
     if (typeof g.name !== 'string' || !g.name.trim()) { errors.push('groups[' + i + '] needs a non-empty "name".'); return; }
     var gid = ++seq;
     gidMap[keyOf(g.id != null ? g.id : i)] = gid;
-    groupRows.push({ id: gid, type: 'group', title: g.name.trim(), collapsed: false, showSubtotal: true });
+    groupRows.push({ id: gid, type: 'group', title: g.name.trim(), showSubtotal: true });
     if (Array.isArray(g.itemIds)) g.itemIds.forEach(function(id){ itemGidMap[keyOf(id)] = gid; });
   });
   var payloadItemIds = new Set(data.items.filter(function(it){ return it && it.id != null; }).map(function(it){ return String(it.id); }));
@@ -1887,6 +1944,8 @@ function editSub(id, val){
   if (tog) tog.classList.toggle('sub-add', !has);
   var icon = wrap.querySelector('.stog-icon');
   if (icon) icon.innerHTML = has ? svgs.note : svgs.plus;
+  var ta = wrap.querySelector('textarea.subfield');
+  if (ta) { ta.style.height = 'auto'; ta.style.height = Math.max(52, ta.scrollHeight) + 'px'; }
   var prev = wrap.querySelector('.sub-prev-text');
   if (has && !prev) {
     var lab = wrap.querySelector('.stog-label');
@@ -2005,7 +2064,7 @@ function addItemTo(gid){
   render();
   toast('Item added to group');
 }
-function addGroup(){ state.items.push({ id: ++seq, type: 'group', title: 'New Group', collapsed: false, showSubtotal: false }); render(); toast('Group added'); }
+function addGroup(){ state.items.push({ id: ++seq, type: 'group', title: 'New Group', showSubtotal: true }); render(); toast('Group added'); }
 function toggleSub(id){
   var r = state.items.find(function(x){ return x.id === id; });
   if (!r) return;
@@ -2015,12 +2074,6 @@ function toggleSub(id){
     var ta = document.querySelector('[data-sub="' + id + '"] .subfield');
     if (ta) ta.focus();
   }
-}
-function toggleGroup(id){
-  var r = state.items.find(function(x){ return x.id === id; });
-  if (!r) return;
-  r.collapsed = !r.collapsed;
-  renderItems();
 }
 function toggleSubtotal(id){
   var r = state.items.find(function(x){ return x.id === id; });
