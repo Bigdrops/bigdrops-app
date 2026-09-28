@@ -1,0 +1,1247 @@
+<!doctype html>
+<!--
+  BIGDROPS - CSR Full-Page Live Form - Phone + Fold candidate.
+  Standalone prototype. Derived from the accepted BOQ V12 design system.
+
+  WHAT TRANSFERS FROM BOQ V12 (the structural system):
+  - Full-page continuous document flow, numbered section headers
+    (number, title, rule, meta cell).
+  - Top bar: back, title + status badge + layout chip, labelled save,
+    dark-mode toggle. Phone FAB + end-of-form completion action.
+  - Sheet/dialog system: role=dialog, aria-modal, Escape close, focus return.
+  - Field system: .lb labels, .fld inputs, 2-col .dgrid header fields.
+  - Segmented enumeration rail (number -> move -> duplicate) with the
+    connecting line scoped to the identity zone only.
+  - Delete as the structural junction box on the row's top-right hairline.
+  - Sub Description compact behavior: closed shows the ACTUAL text clamped;
+    tap opens; empty collapses on blur.  - Registry-driven field columns (.fgrid 2-col auto-wrap, odd cell claims
+    the full row), permanently-expanded groups with the left-side delete X,
+    edge-to-edge group envelope at phone width.
+  - Fold recomposition: identity column + data column, not a stretched phone.
+
+  WHAT IS CSR-SPECIFIC (from the legacy CSR Full-Page Live Form.jsx):
+  - A service report has NO commercial grid: no CP/SP, no qty x rate money
+    fields, no totals section. The result band per row is replaced by a
+    service-status chip on the row. The document ends with an endorsement
+    region, not a totals block.
+  - Materials Used is a single-level item list (item / qty / unit). No groups,
+    because materials are not grouped on a CSR. Group code is removed and the
+    Add group creation pair collapses to one primary button.
+  - Sections: 1 Document details (client account required, CSR number,
+    report date, customer contact, PO number) / 2 Service parameters
+    (call type, service basis, system down) / 3 Equipment specifications
+    (type, location, make, capacity, model, serial no, engine no) /
+    4 Problem & service details (problem reported, service rendered,
+    defects found, engineer remarks) / 5 Execution timeline & status
+    (start date+time, end date+time, status after service) /
+    6 Operational readings (voltage, frequency, battery, temperature,
+    pressure, running hours) / 7 Materials used (the item list) /
+    8 Technician endorsement (name, signatory picker, sign line toggle) /
+    9 Customer acknowledgement (recipient, feedback, signature upload).
+  - Save validation: CSR number and client account are required; the
+    offending control gets the error ring and scrolls into view.
+  - Import replaces fields + materials from JSON. Columns manager is not
+    ported: a service report's row contract is fixed (item/qty/unit).
+
+  READ ORDER PER MATERIAL ROW: identity / controls -> description ->
+  qty | unit pair -> status chip -> insert below. The rail is the BOQ rail;
+  the data zone is two fields wide, per the BOQ V12 field rhythm.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS - CSR Authoring Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a; --sub:#475569; --faint:#8b9ab0;
+    --line:rgba(15,23,42,.10); --line-strong:rgba(15,23,42,.20);
+    --bg:#eef2f7; --card:#ffffff; --soft:#f6f9fc;
+    --accent:#1e3a5f; --accent-soft:rgba(30,58,95,.13); --accent-ink:#ffffff;
+    --red:#dc2626; --red-soft:rgba(220,38,38,.09);
+    --rail:rgba(15,23,42,.22);
+    --mono:'DM Mono',monospace;
+    --cost:#b45309; --cost-soft:rgba(180,83,9,.10);
+    --sell:#15803d; --sell-soft:rgba(21,128,61,.10);
+    --loss:#b91c1c;
+    --group-line:rgba(30,58,95,.38); --group-spine:#1e3a5f; --group-soft:rgba(30,58,95,.07);
+    --group-head:linear-gradient(115deg,#0f172a,#1e3a5f 58%,#334155);
+    --group-on:#f8fafc;
+    --status-bg:linear-gradient(120deg,#0f172a,#1e293b);
+    --on-dark:#f1f5f9; --pos-on-dark:#4ade80; --neg-on-dark:#fca5a5;
+    --shadow-ear:0 3px 9px rgba(15,23,42,.16);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.28);
+    --bg-bd-button-primary-bg:#1e3a5f;
+    --bd-button-primary-text:#f1f5f9;
+    --gutter:14px;
+  }
+  [data-theme="dark"]{
+    --ink:#f1f5f9; --sub:#cbd5e1; --faint:#7d8da5;
+    --line:rgba(148,163,184,.18); --line-strong:rgba(148,163,184,.32);
+    --bg:#0b1220; --card:#16233a; --soft:#111d31;
+    --accent:#38bdf8; --accent-soft:rgba(56,189,248,.16); --accent-ink:#06131f;
+    --red:#f87171; --red-soft:rgba(248,113,113,.13);
+    --rail:rgba(148,163,184,.32);
+    --cost:#fbbf24; --cost-soft:rgba(251,191,36,.14);
+    --sell:#34d399; --sell-soft:rgba(52,211,153,.14);
+    --loss:#f87171;
+    --group-line:rgba(56,189,248,.34); --group-spine:#38bdf8; --group-soft:rgba(56,189,248,.10);
+    --group-head:linear-gradient(115deg,#16233a,#1c3550);
+    --group-on:#e2e8f0;
+    --status-bg:linear-gradient(120deg,#0d1728,#1b2b45);
+    --shadow-ear:0 3px 9px rgba(0,0,0,.45);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.5);
+    --bg-bd-button-primary-bg:#2563eb;
+    --bd-button-primary-text:#f8fafc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:0}
+  input,select,textarea{outline:none}
+  svg{display:block;flex-shrink:0}
+  .mono{font-family:var(--mono)}
+  .wrap{max-width:430px;margin:0 auto;padding:8px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+
+  /* ============ TOP BAR ============ */
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:6px;padding:6px 0 8px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .tb-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,transform .12s,border-color .15s}
+  .tb-btn:hover{color:var(--ink);border-color:var(--line-strong)}
+  .tb-btn:active{transform:scale(.93)}
+  .tb-btn svg{width:17px;height:17px}
+  .tb-title{flex:1;min-width:0;padding:0 2px}
+  .tb-title h1{font-size:13.5px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .tb-meta .badge{color:var(--accent)}
+  .tb-meta .sep{opacity:.55}
+
+  /* ============ SECTIONS - number + typography + rule, no dots ============ */
+  .sec{margin-top:20px}
+  .sec + .sec{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .secno{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--accent);flex-shrink:0}
+  .sec-head h2{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .sec-head .rule{flex:1;height:1px;background:var(--line);min-width:12px}
+  .sec-head .meta{font-family:var(--mono);font-size:8.5px;font-weight:500;color:var(--faint);white-space:nowrap}
+
+  /* ============ FIELDS ============ */
+  .lb{display:block;font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .req{color:var(--red)}
+  .fld{width:100%;min-height:42px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:600;transition:border-color .15s,box-shadow .15s,background .15s}
+  .fld::placeholder{color:var(--faint);font-weight:600}
+  .fld:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-size:12.5px;line-height:1.45}
+  .dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .dgrid .full{grid-column:1/-1}
+  .dgrid .wide{grid-column:1/-1}
+
+  /* ============ LINE ITEMS TOOLBAR - Columns / Import / Clear All are here,
+     directly, permanently. No settings icon, no sheet gating them. ============ */
+  .itemtools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;margin-bottom:14px}
+  .itbn{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;color:var(--sub);transition:border-color .15s,color .15s,background .15s,transform .12s}
+  .itbn svg{width:11px;height:11px}
+  .itbn:hover{border-color:var(--line-strong);color:var(--ink)}
+  .itbn:active{transform:scale(.96)}
+  /* destructive, but visually subordinate - ghost, no fill, pushed to the end */
+  .itbn.danger{margin-left:auto;border-color:transparent;background:none;color:var(--red);padding:0 8px}
+  .itbn.danger:hover{background:var(--red-soft)}
+
+  /* ============ LINE ITEMS - continuous document flow ============ */
+  #items{display:flex;flex-direction:column}
+  #items > .item,#items > .gwrap{margin-top:18px}
+  #items > .item:first-child,#items > .gwrap:first-child{margin-top:0}
+
+  .item{position:relative;padding-top:14px;transition:background .15s}
+  /* the row's own top hairline - stops short of the delete box, which the
+     line visually runs into. Segmented rail, part 1: no line at all here
+     below the identity zone: this rule sits at y=0, the identity zone
+     starts after padding-top. */
+  .item::before{content:'';position:absolute;top:0;left:0;right:26px;height:1px;background:var(--line)}
+  #items > .item:first-child::before,.gbody > .item:first-child::before{display:none}
+  .item.err{background:var(--red-soft);border-radius:12px}
+  .item.err .idx{background:var(--red);border-color:var(--red);color:#fff}
+  .item.err .desc{border-color:var(--red)}
+
+  /* delete as structural junction: the top hairline runs into this box: its
+     top-right corner stays square so the line reads as terminating IN it,
+     and a short stub descends from its underside - the row's own right-side
+     vertical line, not a rail that runs the full item height. */
+  .ear{position:absolute;top:0;right:0;width:26px;height:26px;border-radius:8px 3px 8px 8px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  .ear::before{content:'';position:absolute;inset:-9px}
+  .ear::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:14px;background:var(--line-strong);transform:translateX(-50%);transition:background .15s}
+  .ear svg{width:11px;height:11px}
+  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
+  .ear:hover::after{background:var(--red)}
+  .ear:active{transform:scale(.9)}
+
+  /* identity zone: rail (number / move / duplicate) + description + sub
+     description. The rail's connecting line is scoped to THIS grid row's
+     height only - it cannot leak into the metadata/commercial zone below,
+     because that zone lives outside this grid entirely. */
+  .ihead{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:stretch}
+  .rail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;padding:2px 0}
+  .rail::before{content:'';position:absolute;left:50%;top:17px;bottom:17px;width:1px;background:var(--rail);transform:translateX(-50%);z-index:0}
+  .rail>*{position:relative;z-index:1;flex-shrink:0}
+  .idx{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
+  .rmid{display:flex;flex-direction:column;gap:8px}
+  .rbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  .rbtn::after{content:'';position:absolute;inset:-4px}
+  .rbtn svg{width:12px;height:12px}
+  .rbtn:hover{background:var(--soft);color:var(--ink);border-color:var(--line-strong)}
+  .rbtn:active{transform:scale(.92)}
+  .rbtn:disabled{opacity:.32;pointer-events:none}
+
+  .idesc{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .desc{min-height:64px}
+
+  /* sub description - a compact field-style row inside the content stack
+     (reference composition). Closed + empty: "+ Add sub description".
+     Closed + populated: the ACTUAL text, clamped to 2 lines. Open: a "Sub
+     description" header row with the editor below it. Make / Brand follows
+     directly after - no dead region, no third column, no duplicate field. */
+  .subrow{display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid var(--line);transition:border-color .15s}
+  .subrow.has{border-left-color:var(--accent)}
+  .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:34px;padding:7px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
+  .subtog.sub-add{align-items:center}
+  .subtog:hover,.subtog:focus-visible{color:var(--accent);border-color:var(--line-strong)}
+  .stog-icon{width:15px;height:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .stog-icon svg{width:12px;height:12px}
+  .stog-label{flex:1;min-width:0;text-transform:none;letter-spacing:0}
+  .stog-chev{width:12px;height:12px;flex-shrink:0;color:var(--faint);transition:transform .15s}
+  .subrow.open .stog-chev{transform:rotate(180deg)}
+  .sub-prev-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.45;color:var(--sub)}
+  .subfield{min-height:58px}
+
+  /* metadata zone - FULL item width, no rail indentation. This is
+     where the fields reclaim the width the rail used to reserve. */
+  .idata{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .meta-stack{display:flex;flex-direction:column;gap:8px}
+  /* generic 2-col auto-wrap grid, shared by the Qty/Unit pair and any future
+     registry field group: an odd trailing cell claims the full row so there
+     is never an orphan half-width slot. */
+  .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .fgrid>*:last-child:nth-child(odd){grid-column:1/-1}
+  .slot-off{display:flex;align-items:center;justify-content:center;color:var(--faint);border-style:dashed;background:var(--soft);font-size:9px;letter-spacing:.12em}
+
+  /* status chip - the CSR row result. Same band anatomy the BOQ row uses for
+     its result (label left, value right, dark surface) carrying the service
+     status instead of money. A material row has no amount to show. */
+  .status{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:4px 10px;border-radius:99px;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .status.good{background:var(--sell-soft);color:var(--sell)}
+  .status.warn{background:var(--cost-soft);color:var(--cost)}
+  .status.bad{background:var(--red-soft);color:var(--red)}
+  .status.sel{background:var(--status-bg);color:var(--on-dark)}
+  .status.sel svg{width:10px;height:10px}
+
+  /* insert below - a compact affordance. It carries no trailing rule of its
+     own: the NEXT item supplies that boundary with its own top hairline, so
+     the document never shows two parallel rules between one row and the next. */
+  .ins{position:relative;display:flex;align-items:center;gap:6px;height:20px;margin-top:10px;color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:left;transition:color .15s}
+  .ins::before{content:'';position:absolute;left:0;right:0;top:-10px;bottom:-10px}
+  .ins:hover,.ins:focus-visible{color:var(--accent)}
+
+  /* ============ GROUPS - groups are always expanded ============ */
+  .gwrap{display:flex;flex-direction:column}
+  /* Full-bleed outer envelope. Width/margin cancel the page gutter so the
+     group reaches both screen edges; inner padding is restored below at the
+     same gutter width, so content stays comfortably clear of it. */
+  .gwrap{
+    width:calc(100% + 2*var(--gutter));
+    margin-left:calc(-1*var(--gutter));
+    margin-right:calc(-1*var(--gutter));
+    border-top:1px solid var(--group-line);
+    border-bottom:1px solid var(--group-line);
+    border-left:6px solid var(--group-spine);
+    background:var(--card);
+  }
+  .ghdr{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px var(--gutter);background:var(--group-head)}
+  .gtitle{flex:1;min-width:0;background:none;border:0;padding:0;color:var(--group-on);font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+  .gtitle::placeholder{color:rgba(248,250,252,.55)}
+  .gcount{font-family:var(--mono);font-size:8.5px;color:rgba(248,250,252,.75);white-space:nowrap;flex-shrink:0}
+  .gbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.12);color:var(--group-on);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s,color .15s,transform .12s}
+  .gbtn svg{width:13px;height:13px}
+  .gbtn:hover{background:rgba(255,255,255,.24)}
+  .gbtn:active{transform:scale(.94)}
+  .gbtn.danger:hover{background:rgba(239,68,68,.7);border-color:transparent}
+  .gbody{display:flex;flex-direction:column;padding:0 var(--gutter)}
+  .gbody>.item{padding-top:14px;margin-top:6px}
+  .gbody>.item:first-child{margin-top:0;padding-top:14px}
+  .gbody>.item:last-child .ins{display:none}
+  .gempty{margin:14px 0 2px;padding:16px 12px;text-align:center;font-size:10px;font-weight:700;line-height:1.5;color:var(--faint);border:1px dashed var(--group-line);border-radius:11px}
+  .gfoot{margin-top:8px;padding:8px var(--gutter) 12px;border-top:2px solid var(--group-soft)}
+  .gadd{width:100%;min-height:42px;border-radius:11px;border:1px dashed var(--group-line);background:transparent;color:var(--accent);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .12s}
+  .gadd svg{width:11px;height:11px}
+  .gadd:hover{background:var(--group-soft);border-color:var(--accent)}
+  .gadd:active{transform:scale(.98)}
+
+  /* No collapsed variant exists. Every group always renders its body and its
+     footer, so the group boundary and its contents are always visible. */
+
+  /* ============ GLOBAL CREATION PAIR ============ */
+  .createpair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+  .cbtn{min-height:46px;border-radius:12px;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .12s,color .15s}
+  .cbtn svg{width:12px;height:12px}
+  .cbtn:active{transform:scale(.97)}
+  .cbtn.primary{background:var(--accent);border:1px solid var(--accent);color:var(--accent-ink)}
+  .cbtn.primary:hover{filter:brightness(1.15)}
+  .cbtn.ghost{background:var(--card);border:1px dashed var(--line-strong);color:var(--ink)}
+  .cbtn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .empty{margin-top:2px;padding:20px 16px;text-align:center;font-size:10px;font-weight:700;line-height:1.6;color:var(--faint);border:1px dashed var(--line);border-radius:12px}
+
+  /* ============ TOTALS ============ */
+  .totals{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:12px}
+  .totals-grid{display:grid;grid-template-columns:1fr;gap:0}
+  .sumline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;font-size:11px;font-weight:600;color:var(--sub);border-bottom:1px solid var(--line)}
+  .sumline b{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--ink)}
+  .sumtotal{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px;padding-top:10px;border-top:2px solid var(--line-strong)}
+  .sumtotal small{display:block;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumtotal b{font-family:var(--mono);font-size:18px;font-weight:500;letter-spacing:-.03em;color:var(--accent)}
+  .sumtotal .right{text-align:right}
+  #tProfit.neg,#tMargin.neg{color:var(--loss)}
+  #tProfit.pos,#tMargin.pos{color:var(--sell)}
+  .words{margin-top:10px;padding:9px 11px;border:1px dashed var(--line);border-radius:10px;background:var(--soft);font-size:9.5px;font-style:italic;color:var(--sub);line-height:1.55}
+
+  /* ============ SAVE SURFACES - one save(), three surfaces ============
+     Phone: persistent FAB shortcut + labelled end-of-form completion action.
+     Fold: the FAB is replaced by a labelled sticky top-bar action (same
+     save()); the end-of-form action stays the completion step. The wrap
+     bottom padding clears the FAB zone so it never covers the bottom action. */
+  .savebar{margin-top:18px}
+  .save-cta{min-height:50px;font-size:10px}
+  .tb-save{display:none;height:36px;padding:0 14px;border-radius:11px;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;align-items:center;gap:6px;flex-shrink:0;transition:filter .15s,transform .12s}
+  .tb-save svg{width:13px;height:13px;stroke-width:2}
+  .tb-save:hover{filter:brightness(1.15)}
+  .tb-save:active{transform:scale(.96)}
+
+  /* ============ FAB - persistent phone Save shortcut (hidden at fold) ============ */
+  .fab{position:fixed;right:16px;bottom:calc(82px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);display:flex;align-items:center;justify-content:center;z-index:50;transition:transform .12s}
+  .fab svg{width:20px;height:20px;stroke-width:2}
+  .fab:hover{transform:scale(1.05)}
+  .fab:active{transform:scale(.95)}
+
+  /* ============ SHEETS ============ */
+  .ov{position:fixed;inset:0;background:rgba(8,15,28,.62);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center;z-index:60}
+  .ov.show{display:flex}
+  .ov.center{align-items:center}
+  .sheet{width:100%;max-width:430px;background:var(--card);border-radius:22px 22px 0 0;max-height:82vh;display:flex;flex-direction:column;gap:10px;padding:12px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow-sheet);animation:up .2s ease-out}
+  @keyframes up{from{transform:translateY(44px);opacity:.6}to{transform:none;opacity:1}}
+  .grab{width:36px;height:3px;border-radius:99px;background:var(--line-strong);margin:2px auto 0}
+  .shd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .shd b{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+  .shd small{display:block;margin-top:2px;font-size:9px;font-weight:600;color:var(--sub);text-transform:none;letter-spacing:0}
+  .x{width:38px;height:38px;border-radius:11px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .x svg{width:12px;height:12px}
+  .x:hover{color:var(--ink);border-color:var(--line-strong)}
+  .colrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:var(--soft)}
+  .colrow b{display:block;font-size:11px;font-weight:700}
+  .colrow small{display:block;margin-top:2px;font-size:9px;font-weight:600;line-height:1.45;color:var(--sub)}
+  .tag{padding:2px 6px;border-radius:5px;background:var(--card);border:1px solid var(--line);font-size:7px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub)}
+  .sw{position:relative;width:48px;height:36px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0;transition:background .16s}
+  .sw::after{content:'';position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .16s}
+  .sw.on{background:var(--accent)}
+  .sw.on::after{transform:translateX(12px)}
+  .sw:disabled{opacity:.45;cursor:not-allowed}
+  .cta{width:100%;min-height:46px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;transition:transform .12s,filter .15s}
+  .cta:hover{filter:brightness(1.15)}
+  .cta:active{transform:scale(.98)}
+  .linkbtn{width:100%;min-height:44px;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+  .dialog{width:min(88%,320px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-ear)}
+  .dialog b{font-size:12.5px;font-weight:800}
+  .dialog p{margin-top:6px;font-size:10px;font-weight:600;line-height:1.55;color:var(--sub)}
+  .dialog .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+  .dbtn{min-height:40px;padding:0 14px;border-radius:11px;border:1px solid var(--line);background:var(--soft);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)}
+  .dbtn.danger{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+  .imperr{display:none;font-family:var(--mono);font-size:9px;line-height:1.55;white-space:pre-wrap;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:9px;padding:8px 10px}
+  .imperr.show{display:block}
+  .impnote{font-size:8.5px;line-height:1.65;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
+  .impnote code{font-family:var(--mono);font-size:8px;color:var(--accent)}
+
+  /* CSR-specific compositions on the BOQ field system */
+  /* picker rows (client + signatory sheets): same row anatomy as the BOQ
+     column rows, reused because the shape is a labelled list with an action */
+  .clrow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:var(--soft);text-align:left;transition:border-color .15s,background .15s}
+  .clrow:hover{border-color:var(--accent);background:var(--card)}
+  .cl-main{flex:1;min-width:0}
+  .cl-main b{display:block;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cl-main small{display:block;margin-top:1px;font-size:9px;font-weight:600;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cl-go{color:var(--faint);flex-shrink:0}
+  .cl-go svg{width:12px;height:12px}
+  /* client account strip - the BOQ dgrid hosts it as a full-width button */
+  .clientpick{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;border-radius:12px;border:1px dashed var(--line-strong);background:var(--card);text-align:left;transition:border-color .15s,background .15s}
+  .clientpick:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .cp-av{width:34px;height:34px;border-radius:10px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+  .cp-txt{flex:1;min-width:0}
+  .cp-txt small{display:block;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .cp-txt b{display:block;margin-top:1px;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cp-txt em{display:block;font-style:normal;font-size:9.5px;color:var(--sub);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cp-chev{color:var(--faint);flex-shrink:0}
+  .cp-chev svg{width:14px;height:14px}
+  /* date + time pair inside one dgrid cell */
+  .pairrow{display:flex;gap:6px}
+  .pairrow .fld{min-width:0}
+  .pairrow input[type="date"]{flex:1.6}
+  .pairrow input[type="time"]{flex:1}
+  /* readings use the same 2-col rhythm; mono emphasis stays */
+  .readings .fld{text-align:right}
+  /* signature strip in the acknowledgement section */
+  .sigstrip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 11px;border:1px dashed var(--line-strong);border-radius:11px;background:var(--soft)}
+  .sig-hint{flex:1;min-width:140px;font-size:9px;font-weight:600;line-height:1.5;color:var(--sub)}
+  /* save-validation ring - the legacy CSR error pulse, reduced to a static
+     ring (prefers-reduced-motion is respected by the global rule above) */
+  .err-ring{border-color:var(--red)!important;box-shadow:0 0 0 3px var(--red-soft)!important}
+
+  /* ============ TOAST ============ */
+  .toast{position:fixed;bottom:148px;left:50%;transform:translateX(-50%);z-index:70;max-width:86vw;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:9.5px;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.3);display:none}
+  .toast.show{display:block;animation:up .16s ease-out}
+  .toast.err{border:1px solid var(--red)}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .fab:hover,.fab:active,.tb-btn:active,.rbtn:active,.ear:active,.gbtn:active,.cbtn:active,.gadd:active,.cta:active,.itbn:active,.tb-save:active{transform:none}
+  }
+
+  /* ============ LARGE PHONE (430 - 599) ============ */
+  @media (min-width:430px){
+    :root{--gutter:18px}
+    .wrap{max-width:560px;padding:10px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+    .desc{min-height:72px}
+    .createpair{gap:12px}
+  }
+
+  /* ============ FOLD (>=600) - recomposed, not a centred phone ============ */
+  @media (min-width:600px){
+    :root{--gutter:24px}
+    .wrap{max-width:820px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+    .tb-meta{font-size:8.5px}
+    .tb-save{display:flex}
+    .fab{display:none}
+    .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .dgrid .wide{grid-column:span 1}
+    /* item becomes identity column + data column, side by side */
+    .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);column-gap:20px}
+    .ihead{grid-column:1;grid-row:1}
+
+    .idata{grid-column:2;grid-row:1;margin-top:0;padding-left:18px;border-left:1px solid var(--line)}
+    .ins{grid-column:1/-1;grid-row:2}
+    .desc{min-height:92px}
+    .cf-hint{display:inline}
+    .totals-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
+    .sumtotal{margin-top:0}
+    .sheet{max-width:560px;border-radius:22px;margin-bottom:18px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= TOP BAR ================= -->
+  <header class="topbar">
+    <button class="tb-btn" title="Back to CSRs" aria-label="Back to CSRs" onclick="toast('Back to CSRs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="tb-title">
+      <h1>Customer Service Report</h1>
+      <div class="tb-meta">
+        <span class="badge" id="modeBadge">Draft</span>
+        <span class="sep">&middot;</span>
+        <span id="layoutChip">Phone</span>
+      </div>
+    </div>
+    <button class="tb-save" onclick="save()" title="Save Customer Service Report" aria-label="Save Customer Service Report">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
+      Save CSR
+    </button>
+    <button class="tb-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </header>
+
+  <!-- ================= 1. DOCUMENT DETAILS ================= -->
+  <section class="sec" style="margin-top:14px">
+    <div class="sec-head">
+      <span class="secno">1.</span>
+      <h2>Document details</h2>
+      <span class="rule"></span>
+      <span class="meta" id="boqNoLabel">CSR-2026-0084</span>
+    </div>
+    <div class="dgrid">
+      <div class="full">
+        <label class="lb" for="fClient">Client Account <span class="req">*</span></label>
+        <button class="clientpick" id="fClient" onclick="openSheet('client')" title="Select the client account this service was performed for">
+          <span class="cp-av">DS</span>
+          <span class="cp-txt"><small>Client account</small><b id="cpName">Dangote Sugar Refinery Plc</b><em id="cpAddr">Apapa Port Complex, Wharf Road, Lagos</em></span>
+          <span class="cp-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+        </button>
+      </div>
+      <div>
+        <label class="lb" for="fNo">CSR Number <span class="req">*</span></label>
+        <input class="fld mono" id="fNo" value="CSR-2026-0084" oninput="syncNo()">
+      </div>
+      <div>
+        <label class="lb" for="fDate">Report Date</label>
+        <input class="fld mono" id="fDate" type="date" value="2026-09-02">
+      </div>
+      <div>
+        <label class="lb" for="fContact">Customer Contact</label>
+        <input class="fld" id="fContact" value="Adewale Balogun (Plant Engineer)" placeholder="Contact person">
+      </div>
+      <div>
+        <label class="lb" for="fPo">P.O. Number</label>
+        <input class="fld mono" id="fPo" value="PO-NG-9921" placeholder="PO #">
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. SERVICE PARAMETERS ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">2.</span>
+      <h2>Service parameters</h2>
+      <span class="rule"></span>
+      <span class="meta" id="statusMeta">Complete</span>
+    </div>
+    <div class="dgrid">
+      <div>
+        <label class="lb" for="fCallType">Call Type</label>
+        <select class="fld" id="fCallType">
+          <option>Breakdown</option><option>Preventive Maintenance</option><option>Installation</option><option>Commissioning</option><option>Inspection</option><option>Emergency Repair</option><option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="lb" for="fBasis">Service Basis</label>
+        <select class="fld" id="fBasis">
+          <option>Paid Service</option><option>AMC</option><option selected>Warranty</option>
+        </select>
+      </div>
+      <div>
+        <label class="lb" for="fDown">System Down?</label>
+        <select class="fld" id="fDown"><option selected>Yes</option><option>No</option></select>
+      </div>
+      <div>
+        <label class="lb" for="fStatus">Status After Service</label>
+        <select class="fld" id="fStatus" onchange="syncStatusMeta()">
+          <option selected>Complete</option><option>Incomplete</option><option>Pending for spares</option><option>Under observation</option><option>Working solution provided</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. EQUIPMENT ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">3.</span>
+      <h2>Equipment specifications</h2>
+      <span class="rule"></span>
+      <span class="meta">1 unit</span>
+    </div>
+    <div class="dgrid">
+      <div>
+        <label class="lb" for="fEqType">Equipment Type</label>
+        <input class="fld" id="fEqType" value="Diesel Generator Set" placeholder="e.g. Diesel generator">
+      </div>
+      <div>
+        <label class="lb" for="fEqLoc">Equipment Location</label>
+        <input class="fld" id="fEqLoc" value="Main Powerhouse, Bay 2" placeholder="Site / bay">
+      </div>
+      <div>
+        <label class="lb" for="fEqMake">Make</label>
+        <input class="fld" id="fEqMake" value="Cummins Power" placeholder="Manufacturer">
+      </div>
+      <div>
+        <label class="lb" for="fEqCap">Capacity</label>
+        <input class="fld" id="fEqCap" value="500 kVA" placeholder="e.g. 500 kVA">
+      </div>
+      <div>
+        <label class="lb" for="fEqModel">Model</label>
+        <input class="fld" id="fEqModel" value="QSK19-G4" placeholder="Model ID">
+      </div>
+      <div>
+        <label class="lb" for="fEqSerial">Serial No.</label>
+        <input class="fld mono" id="fEqSerial" value="CU-8849201-NG" placeholder="Serial #">
+      </div>
+      <div class="wide">
+        <label class="lb" for="fEqEngine">Engine No</label>
+        <input class="fld mono" id="fEqEngine" value="ENG-99420-X" placeholder="Engine #">
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. PROBLEM & SERVICE ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">4.</span>
+      <h2>Problem &amp; service details</h2>
+      <span class="rule"></span>
+      <span class="meta">narrative</span>
+    </div>
+    <div class="dgrid">
+      <div class="full">
+        <label class="lb" for="fProblem">Problem Reported</label>
+        <textarea class="fld" id="fProblem" rows="3" placeholder="Client complaint or initial defect description...">Unit tripping intermittently on high coolant temperature alarm during peak plant load.</textarea>
+      </div>
+      <div class="full">
+        <label class="lb" for="fService">Service Rendered</label>
+        <textarea class="fld" id="fService" rows="3" placeholder="Corrective actions taken by engineer...">Flushed closed-loop cooling system, replaced faulty thermostat assembly, and bled fuel rails. Conducted 45-minute step load testing at 80% capacity.</textarea>
+      </div>
+      <div>
+        <label class="lb" for="fDefects">Defects Found</label>
+        <textarea class="fld" id="fDefects" rows="2" placeholder="Root causes...">Debris build-up in radiator fins and degraded thermostat bypass gasket.</textarea>
+      </div>
+      <div>
+        <label class="lb" for="fRemarks">Engineer Remarks</label>
+        <textarea class="fld" id="fRemarks" rows="2" placeholder="Recommendations...">Operating temperatures stabilized at 86&deg;C under full load. Recommended scheduled coolant replacement in 250 running hours.</textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5. EXECUTION TIMELINE ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">5.</span>
+      <h2>Execution timeline</h2>
+      <span class="rule"></span>
+      <span class="meta">5h 45m on site</span>
+    </div>
+    <div class="dgrid">
+      <div>
+        <label class="lb" for="fStartD">Start Date &amp; Time</label>
+        <div class="pairrow"><input class="fld mono" id="fStartD" type="date" value="2026-09-02"><input class="fld mono" id="fStartT" type="time" value="08:30"></div>
+      </div>
+      <div>
+        <label class="lb" for="fEndD">End Date &amp; Time</label>
+        <div class="pairrow"><input class="fld mono" id="fEndD" type="date" value="2026-09-02"><input class="fld mono" id="fEndT" type="time" value="14:15"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 6. OPERATIONAL READINGS ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">6.</span>
+      <h2>Operational readings</h2>
+      <span class="rule"></span>
+      <span class="meta">post-service</span>
+    </div>
+    <div class="dgrid readings">
+      <div><label class="lb" for="rVolt">Voltage</label><input class="fld mono" id="rVolt" value="415 V" placeholder="415 V"></div>
+      <div><label class="lb" for="rFreq">Frequency</label><input class="fld mono" id="rFreq" value="50.2 Hz" placeholder="50 Hz"></div>
+      <div><label class="lb" for="rBatt">Battery</label><input class="fld mono" id="rBatt" value="26.4 VDC" placeholder="24 VDC"></div>
+      <div><label class="lb" for="rTemp">Temperature</label><input class="fld mono" id="rTemp" value="86 &deg;C" placeholder="85 &deg;C"></div>
+      <div><label class="lb" for="rPress">Pressure</label><input class="fld mono" id="rPress" value="4.8 Bar" placeholder="4.5 Bar"></div>
+      <div><label class="lb" for="rHrs">Running Hours</label><input class="fld mono" id="rHrs" value="4,821.5 Hrs" placeholder="Running hrs"></div>
+    </div>
+  </section>
+
+  <!-- ================= 7. MATERIALS USED ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">7.</span>
+      <h2>Materials used</h2>
+      <span class="rule"></span>
+      <span class="meta" id="countLabel"></span>
+    </div>
+
+    <div class="itemtools">
+      <button class="itbn" onclick="openSheet('import')" title="Replace materials from a JSON extraction">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v10m0 0l-3.5-3.5M12 14l3.5-3.5"/></svg>
+        Import
+      </button>
+      <button class="itbn danger" onclick="clearAll()" title="Remove every material row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>
+        Clear all
+      </button>
+    </div>
+
+    <div id="items"></div>
+
+    <div class="createpair">
+      <button class="cbtn primary" style="grid-column:1/-1" onclick="addItem()" title="Adds a material row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+        Add material row
+      </button>
+    </div>
+
+    <!-- parts readout: a service report sums nothing, so the BOQ totals
+         block becomes one live line. Desktop moves this into its sticky
+         summary rail; on phone it closes the materials section. -->
+    <div class="totals" id="csrTotals" style="margin-top:14px">
+      <div class="sumline"><span>Materials issued</span><b id="tCost">&nbsp;</b></div>
+    </div>
+  </section>
+
+  <!-- ================= 8. TECHNICIAN ENDORSEMENT ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">8.</span>
+      <h2>Technician endorsement</h2>
+      <span class="rule"></span>
+      <span class="meta" id="sigMeta">signed</span>
+    </div>
+    <div class="dgrid">
+      <div>
+        <label class="lb" for="fTech">Technician Name</label>
+        <input class="fld" id="fTech" value="Engr. Babatunde Lawal" placeholder="Technician name">
+      </div>
+      <div>
+        <label class="lb">Signatory Record</label>
+        <button class="clientpick" onclick="openSheet('signatory')" title="Pick the registered signatory for this report">
+          <span class="cp-av">BL</span>
+          <span class="cp-txt"><small>Lead Field Service Engineer</small><b id="sigName">Engr. Babatunde Lawal</b><em>Shown on the PDF sign line</em></span>
+          <span class="cp-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 9. CUSTOMER ACKNOWLEDGEMENT ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">9.</span>
+      <h2>Customer acknowledgement</h2>
+      <span class="rule"></span>
+      <span class="meta">pending client sign</span>
+    </div>
+    <div class="dgrid">
+      <div class="full">
+        <label class="lb" for="fRecip">Recipient Name &amp; Title</label>
+        <input class="fld" id="fRecip" value="Adewale Balogun (Plant Engineer)" placeholder="e.g. John Doe (Plant Manager)">
+      </div>
+      <div class="full">
+        <label class="lb" for="fFeedback">Feedback / Endorsement Note</label>
+        <textarea class="fld" id="fFeedback" rows="2" placeholder="Client feedback notes...">Generator ran continuously through production shift without temperature deviation.</textarea>
+      </div>
+      <div class="full">
+        <label class="lb">Recipient Signature</label>
+        <div class="sigstrip">
+          <span class="status warn">Offline blank</span>
+          <span class="sig-hint">Leave blank for physical sign, or attach a photo of the signed report.</span>
+          <button class="itbn" style="margin-left:auto" onclick="toast('Signature capture is a native capability - not prototyped here')" title="Attach a signature image">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="15" cy="13" r="3"/></svg>
+            Attach photo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- end-of-form completion action. Same save() as every other surface. -->
+    <div class="savebar">
+      <button class="cbtn primary save-cta" onclick="save()" title="Save Customer Service Report" aria-label="Save Customer Service Report">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
+        Save CSR
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<button class="fab" onclick="save()" title="Save Customer Service Report" aria-label="Save Customer Service Report">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
+</button>
+
+<!-- CLIENT PICKER SHEET - same sheet anatomy as every other BIGDROPS form -->
+<div class="ov" id="ovClient">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Select client account">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Select client account</b><small>Required. Drives the acknowledgement record.</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('client')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <input class="fld" id="clientSearch" placeholder="Search registered clients..." oninput="renderClientList()">
+    <div id="clientList" style="display:flex;flex-direction:column;gap:6px;min-height:0;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- SIGNATORY PICKER SHEET -->
+<div class="ov" id="ovSignatory">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Choose signatory">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Choose signatory</b><small>Select the registered engineer for the sign line</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('signatory')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div id="sigList" style="display:flex;flex-direction:column;gap:6px;min-height:0;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- IMPORT SHEET -->
+<div class="ov" id="ovImport">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Import CSR JSON">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Import CSR</b><small>Update fields and materials from a JSON extraction</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('import')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <textarea class="fld mono" id="impTa" rows="7" style="font-size:10.5px" placeholder='{"csrNumber":"CSR-2026-0084","problemReported":"...","materials":[{"item":"...","quantity":"1","unit":"Set"}]}'></textarea>
+    <div class="imperr" id="impErr"></div>
+    <div class="impnote">Accepted keys &mdash; header: <code>csrNumber</code> <code>customerName</code> <code>callType</code> <code>serviceBasis</code> <code>systemDown</code> &middot; equipment: <code>equipmentType</code> <code>location</code> <code>make</code> <code>capacity</code> <code>model</code> <code>serialNo</code> &middot; narrative: <code>problemReported</code> <code>serviceRendered</code> <code>defectsFound</code> <code>engineerRemarks</code> &middot; readings: <code>readings.voltage</code> <code>readings.frequency</code> <code>readings.battery</code> <code>readings.temperature</code> <code>readings.pressure</code> <code>readings.hours</code> &middot; materials: <code>materials[].item</code> <code>quantity</code> <code>unit</code></div>
+    <button class="cta" onclick="doImport()">Import &amp; apply</button>
+    <button class="linkbtn" onclick="closeSheet('import')">Cancel</button>
+  </div>
+</div>
+
+<!-- CLEAR CONFIRM -->
+<div class="ov center" id="ovClear">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Clear all material rows">
+    <b>Clear all material rows?</b>
+    <p>This removes every material row from this CSR.</p>
+    <div class="acts">
+      <button class="dbtn" onclick="closeSheet('clear')">Cancel</button>
+      <button class="dbtn danger" onclick="doClearAll()">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+var fmtGroup = function(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits: 20 }); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); };
+
+var svgs = {
+  up:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>',
+  down:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>',
+  copy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
+  x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>',
+  chev:  '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>',
+  plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>',
+  note:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h7"/></svg>'
+};
+
+/* ---------- CSR document model ----------
+   A service report has no groups and no money. rows is a flat list of
+   material rows: item / qty / unit. The BOQ Sub Description row is kept and
+   relabelled "specification" so a material can carry a size, grade or part
+   number when the job needs one. Row controls, the rail and the identity
+   stack are the accepted BOQ V12 anatomy, unchanged. */
+var rows = [
+  { id: 1, type: 'item', desc: 'Thermostat Assembly 82\u00B0C Kit', sub: '', subOpen: false, qty: 1, unit: 'Set' },
+  { id: 2, type: 'item', desc: 'Heavy-Duty Coolant Concentrate (20L)', sub: 'Pre-mixed, nitrite-free formulation rated for closed-loop diesel systems.', subOpen: false, qty: 2, unit: 'Cans' },
+  { id: 3, type: 'item', desc: 'High-Temp Bypass Silicone Gasket', sub: '', subOpen: false, qty: 1, unit: 'Pcs' }
+];
+var seq = 100, errId = null, nums = {};
+
+var bp = function(){ var w = window.innerWidth; return w < 430 ? 'Phone' : (w < 600 ? 'Large phone' : 'Fold'); };
+var lastBP = bp();
+
+function toast(msg, isErr){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+/* ---------- item fragment builder ---------- */
+function itemHTML(r, sib){
+  var n = nums[r.id] || 0;
+  var errCls = errId === r.id ? ' err' : '';
+  var k = sib.indexOf(r);
+  return '<article class="item' + errCls + '" data-id="' + r.id + '">'
+    + '<button class="ear" title="Remove material" aria-label="Remove material" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
+    + '<div class="ihead">'
+    +   '<div class="rail">'
+    +     '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
+    +     '<div class="rmid">'
+    +       '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
+    +       '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
+    +     '</div>'
+    +     '<button class="rbtn" title="Duplicate row" aria-label="Duplicate row" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
+    +   '</div>'
+    +   '<div class="idesc">'
+    +     '<textarea class="fld desc" rows="2" placeholder="Material / item description *" oninput="editRow(' + r.id + ',\'desc\',this.value)"' + (errId === r.id ? ' aria-invalid="true"' : '') + '>' + esc(r.desc) + '</textarea>'
+    +     subHTML(r)
+    +   '</div>'
+    + '</div>'
+    + '<div class="idata">'
+    +   '<div class="fgrid">'
+    +     '<input class="fld mono" inputmode="decimal" placeholder="Qty *" value="' + esc(fmtGroup(r.qty)) + '" oninput="editNum(' + r.id + ',\'qty\',this.value)" data-numin="' + r.id + ':qty"' + (errId === r.id ? ' aria-invalid="true"' : '') + '>'
+    +     '<input class="fld" placeholder="Unit" value="' + esc(r.unit) + '" oninput="editRow(' + r.id + ',\'unit\',this.value)">'
+    +   '</div>'
+    + '</div>'
+    + '<button class="ins" onclick="insertBelow(' + r.id + ')">+ Insert below</button>'
+    + '</article>';
+}
+
+/* Sub Description row - the accepted BOQ V12 behavior, relabelled.
+   Closed + populated shows the ACTUAL text clamped to 2 lines; tap opens the
+   editor; empty + blurred collapses back to the compact add row. */
+function subHTML(r){
+  var hasSub = !!(r.sub && r.sub.trim());
+  var open = !!r.subOpen;
+  var label = '<span class="stog-icon">' + (hasSub ? svgs.note : svgs.plus) + '</span>';
+  if (hasSub) {
+    label += '<span class="stog-label"><span class="sub-prev-text">' + esc(r.sub.trim()) + '</span></span>';
+  } else {
+    label += '<span class="stog-label">Add specification</span>';
+  }
+  return '<div class="subrow' + (hasSub ? ' has' : '') + (open ? ' open' : '') + '" data-sub="' + r.id + '">'
+    + '<button class="subtog' + (hasSub ? '' : ' sub-add') + '" aria-expanded="' + open + '" onclick="toggleSub(' + r.id + ')">'
+    +   label
+    +   '<span class="stog-chev">' + svgs.chev + '</span>'
+    + '</button>'
+    + (open ? '<textarea class="fld subfield" rows="2" placeholder="Specification \u2014 size, grade, part number..." oninput="editSub(' + r.id + ',this.value)" onblur="collapseIfEmpty(' + r.id + ',this.value)">' + esc(r.sub) + '</textarea>' : '')
+    + '</div>';
+}
+
+/* ---------- render ---------- */
+function renderItems(){
+  var host = document.getElementById('items');
+  document.getElementById('countLabel').textContent = rows.length + ' material' + (rows.length === 1 ? '' : 's');
+  if (!rows.length) {
+    host.innerHTML = '<div class="empty">No material rows \u2014 add the first one below.</div>';
+    return;
+  }
+  nums = {};
+  var n = 0;
+  host.innerHTML = rows.map(function(r){ nums[r.id] = ++n; return itemHTML(r, rows); }).join('');
+}
+
+function syncStatusMeta(){
+  var s = document.getElementById('fStatus');
+  var m = document.getElementById('statusMeta');
+  if (s && m) m.textContent = s.value;
+}
+
+/* A service report sums nothing. The totals block is replaced by a parts
+   readout in the same visual slot, so the document still closes with a
+   summary line. */
+function renderTotals(){
+  var parts = 0;
+  rows.forEach(function(r){ parts += Number(r.qty || 0); });
+  var el = document.getElementById('tCost');
+  if (el) el.textContent = parts + ' part' + (parts === 1 ? '' : 's') + ' \u00B7 ' + rows.length + ' line' + (rows.length === 1 ? '' : 's');
+  var sig = document.getElementById('sigMeta');
+  var tech = document.getElementById('fTech');
+  if (sig && tech) sig.textContent = tech.value.trim() ? 'signed' : 'not signed';
+}
+
+function render(){ renderItems(); renderTotals(); syncStatusMeta(); }
+
+/* ---------- edits ---------- */
+function editRow(id, key, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r[key] = val;
+  if (key === 'desc') renderTotals();
+}
+function editSub(id, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.sub = val;
+  var wrap = document.querySelector('.subrow[data-sub="' + id + '"]');
+  if (!wrap) return;
+  var has = !!(val && val.trim());
+  wrap.classList.toggle('has', has);
+  var tog = wrap.querySelector('.subtog');
+  if (tog) tog.classList.toggle('sub-add', !has);
+  var icon = wrap.querySelector('.stog-icon');
+  if (icon) icon.innerHTML = has ? svgs.note : svgs.plus;
+  var prev = wrap.querySelector('.sub-prev-text');
+  if (has && !prev) {
+    var lab = wrap.querySelector('.stog-label');
+    if (lab) lab.innerHTML = '<span class="sub-prev-text">' + esc(val.trim()) + '</span>';
+  } else if (prev) {
+    prev.textContent = val.trim();
+  } else {
+    var lab2 = wrap.querySelector('.stog-label');
+    if (lab2) lab2.textContent = 'Add specification';
+  }
+}
+function collapseIfEmpty(id, val){
+  if (val && val.trim()) return;
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r || r.subOpen !== true) return;
+  r.sub = '';
+  r.subOpen = false;
+  renderItems();
+}
+function editNum(id, key, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var n = Number(val.replace(/,/g, ''));
+  r[key] = Number.isFinite(n) ? n : 0;
+  renderTotals();
+  var el = document.querySelector('[data-numin="' + id + ':' + key + '"]');
+  if (!el || document.activeElement !== el) return;
+  var raw = val.replace(/,/g, '');
+  var inProgress = raw === '' || raw === '.' || /\.$/.test(raw);
+  var hadSel = el.selectionStart !== el.value.length || el.selectionEnd !== el.value.length;
+  var start = el.selectionStart;
+  var digitsBefore = val.slice(0, start).replace(/[^0-9]/g, '').length;
+  var formatted = inProgress ? raw : fmtGroup(r[key]);
+  el.value = formatted;
+  if (hadSel) {
+    var pos = 0, seen = 0;
+    while (pos < formatted.length && seen < digitsBefore) { if (/[0-9]/.test(formatted[pos])) seen++; pos++; }
+    try { el.setSelectionRange(pos, pos); } catch (e) {}
+  }
+}
+function moveRow(id, dir){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var k = rows.indexOf(r);
+  var target = rows[k + dir];
+  if (!target) return;
+  rows.splice(k, 1);
+  rows.splice(dir > 0 ? k + 1 : k, 0, r);
+  render();
+}
+function dupRow(id){
+  var i = rows.findIndex(function(x){ return x.id === id; });
+  if (i < 0) return;
+  var copy = {};
+  for (var key in rows[i]) copy[key] = rows[i][key];
+  copy.id = ++seq;
+  copy.desc = (rows[i].desc || '') + ' (copy)';
+  copy.subOpen = false;
+  rows.splice(i + 1, 0, copy);
+  render();
+  toast('Row duplicated');
+}
+function insertBelow(id){
+  var i = rows.findIndex(function(x){ return x.id === id; });
+  if (i < 0) return;
+  rows.splice(i + 1, 0, blank());
+  render();
+  toast('Row inserted');
+  var el = document.querySelector('[data-id="' + rows[i + 1].id + '"]');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function blank(){
+  return { id: ++seq, type: 'item', desc: '', sub: '', subOpen: false, qty: 1, unit: '' };
+}
+function addItem(){ rows.push(blank()); render(); toast('Material row added'); }
+function toggleSub(id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.subOpen = !r.subOpen;
+  renderItems();
+  if (r.subOpen) {
+    var ta = document.querySelector('[data-sub="' + id + '"] .subfield');
+    if (ta) ta.focus();
+  }
+}
+function removeRow(id){
+  rows = rows.filter(function(x){ return x.id !== id; });
+  render();
+  toast('Row removed');
+}
+function clearAll(){ openSheet('clear'); }
+function doClearAll(){ rows = []; closeSheet('clear'); render(); toast('All material rows cleared'); }
+
+/* ---------- client + signatory pickers ---------- */
+var CLIENTS = [
+  { name: 'Dangote Sugar Refinery Plc', addr: 'Apapa Port Complex, Wharf Road, Lagos' },
+  { name: 'Flour Mills of Nigeria', addr: 'Old Dock Road, Apapa, Lagos' },
+  { name: 'TotalEnergies Exploration E&P', addr: 'Plot 25 Trans Amadi Ind. Layout, Port Harcourt' },
+  { name: 'Guinness Nigeria Brewery', addr: '24 Oba Akran Avenue, Ikeja, Lagos' }
+];
+var SIGNATORIES = [
+  { name: 'Engr. Babatunde Lawal', role: 'Lead Field Service Engineer' },
+  { name: 'Chukwuemeka Obi', role: 'Senior Electromechanical Specialist' },
+  { name: 'Farouk Usman', role: 'Technical Services Supervisor' }
+];
+function renderClientList(){
+  var q = (document.getElementById('clientSearch').value || '').toLowerCase();
+  var host = document.getElementById('clientList');
+  var hits = CLIENTS.filter(function(c){ return c.name.toLowerCase().indexOf(q) >= 0; });
+  host.innerHTML = hits.map(function(c, i){
+    return '<button class="clrow" onclick="pickClient(' + i + ')">'
+      + '<span class="cl-main"><b>' + esc(c.name) + '</b><small>' + esc(c.addr) + '</small></span>'
+      + '<span class="cl-go">' + svgs.chev + '</span></button>';
+  }).join('') || '<div class="empty">No client matches that search.</div>';
+}
+function pickClient(i){
+  var c = CLIENTS[i];
+  document.getElementById('cpName').textContent = c.name;
+  document.getElementById('cpAddr').textContent = c.addr;
+  var av = document.querySelector('#fClient .cp-av');
+  if (av) av.textContent = c.name.split(' ').map(function(w){ return w[0] || ''; }).join('').slice(0, 2).toUpperCase();
+  closeSheet('client');
+  toast('Selected ' + c.name);
+}
+function renderSigList(){
+  var host = document.getElementById('sigList');
+  host.innerHTML = SIGNATORIES.map(function(p, i){
+    return '<button class="clrow" onclick="pickSignatory(' + i + ')">'
+      + '<span class="cl-main"><b>' + esc(p.name) + '</b><small>' + esc(p.role) + '</small></span>'
+      + '<span class="cl-go">' + svgs.chev + '</span></button>';
+  }).join('');
+}
+function pickSignatory(i){
+  var p = SIGNATORIES[i];
+  document.getElementById('fTech').value = p.name;
+  document.getElementById('sigName').textContent = p.name;
+  renderTotals();
+  closeSheet('signatory');
+  toast('Assigned ' + p.name);
+}
+
+/* ---------- import (CSR contract: header, equipment, narrative, readings, materials) ---------- */
+function showImpErr(msg){
+  var el = document.getElementById('impErr');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+function doImport(){
+  var raw = document.getElementById('impTa').value.trim();
+  if (!raw) { showImpErr('Paste JSON first.'); return; }
+  var data;
+  try { data = JSON.parse(raw); } catch (e) { showImpErr('Invalid JSON: ' + e.message); toast('Import failed \u2014 invalid JSON', true); return; }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) { showImpErr('Root must be a JSON object.'); return; }
+  var errors = [];
+  var set = function(id, v){ if (typeof v === 'string' && v.trim()) { var el = document.getElementById(id); if (el) el.value = v; } };
+  set('fNo', data.csrNumber);
+  set('fContact', data.customerName);
+  set('fCallType', data.callType);
+  set('fBasis', data.serviceBasis);
+  if (typeof data.systemDown === 'boolean') document.getElementById('fDown').value = data.systemDown ? 'Yes' : 'No';
+  set('fEqType', data.equipmentType);
+  set('fEqLoc', data.location);
+  set('fEqMake', data.make);
+  set('fEqCap', data.capacity);
+  set('fEqModel', data.model);
+  set('fEqSerial', data.serialNo);
+  set('fEqEngine', data.engineNo);
+  set('fProblem', data.problemReported);
+  set('fService', data.serviceRendered);
+  set('fDefects', data.defectsFound);
+  set('fRemarks', data.engineerRemarks);
+  if (data.readings != null) {
+    if (typeof data.readings === 'object' && !Array.isArray(data.readings)) {
+      set('rVolt', data.readings.voltage);
+      set('rFreq', data.readings.frequency);
+      set('rBatt', data.readings.battery);
+      set('rTemp', data.readings.temperature);
+      set('rPress', data.readings.pressure);
+      set('rHrs', data.readings.hours);
+    } else {
+      errors.push('"readings" must be an object when present.');
+    }
+  }
+  var itemRows = [];
+  if (data.materials != null) {
+    if (!Array.isArray(data.materials)) {
+      errors.push('"materials" must be an array when present.');
+    } else {
+      data.materials.forEach(function(m, i){
+        if (!m || typeof m !== 'object') { errors.push('materials[' + i + '] must be an object.'); return; }
+        var q = Number(m.quantity != null ? m.quantity : m.qty);
+        itemRows.push({
+          id: ++seq, type: 'item',
+          desc: typeof m.item === 'string' ? m.item : (typeof m.description === 'string' ? m.description : ''),
+          sub: typeof m.specification === 'string' ? m.specification : '',
+          subOpen: false,
+          qty: Number.isFinite(q) ? q : 0,
+          unit: typeof m.unit === 'string' ? m.unit : ''
+        });
+      });
+    }
+  }
+  if (errors.length) { showImpErr(errors.join('\n')); toast('Import failed \u2014 see errors', true); return; }
+  if (itemRows.length) rows = itemRows;
+  closeSheet('import');
+  render();
+  syncNo();
+  toast('Imported ' + itemRows.length + ' material rows');
+}
+
+/* ---------- save (CSR validation: number + client + material rows) ---------- */
+function save(){
+  var no = document.getElementById('fNo');
+  if (!no.value.trim()) {
+    no.classList.add('err-ring');
+    no.setAttribute('aria-invalid', 'true');
+    no.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    toast('Save blocked: CSR number is required', true);
+    setTimeout(function(){ no.classList.remove('err-ring'); no.removeAttribute('aria-invalid'); }, 2600);
+    return;
+  }
+  if (document.getElementById('cpName').textContent.indexOf('Select') === 0) {
+    var client = document.getElementById('fClient');
+    client.classList.add('err-ring');
+    client.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    toast('Save blocked: client account must be selected', true);
+    setTimeout(function(){ client.classList.remove('err-ring'); }, 2600);
+    return;
+  }
+  var bad = rows.find(function(r){ return !r.desc.trim() || Number(r.qty) <= 0; });
+  if (bad) {
+    errId = bad.id;
+    renderItems();
+    toast('Save blocked: a material row is missing a description or qty', true);
+    var el = document.querySelector('[data-id="' + bad.id + '"]');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function(){ errId = null; renderItems(); }, 2600);
+    return;
+  }
+  document.getElementById('modeBadge').textContent = 'Saved';
+  toast('CSR ' + no.value.trim() + ' saved (' + document.getElementById('fStatus').value + ')');
+}
+
+/* ---------- sheets ---------- */
+var ovOf = function(id){ return document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)); };
+var focusReturn = null;
+function openSheet(id){
+  if (id === 'client') renderClientList();
+  if (id === 'signatory') renderSigList();
+  if (id === 'import') showImpErr('');
+  var el = ovOf(id);
+  var active = document.activeElement;
+  if (active && active.focus && !(active.closest && active.closest('.ov'))) focusReturn = active;
+  el.classList.add('show');
+  var first = el.querySelector('input, textarea, button:not(.x):not(.linkbtn)');
+  if (first) first.focus();
+}
+function closeSheet(id){
+  var el = ovOf(id);
+  if (!el.classList.contains('show')) return;
+  el.classList.remove('show');
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+}
+function syncNo(){ document.getElementById('boqNoLabel').textContent = document.getElementById('fNo').value; }
+function syncLayout(){
+  var el = document.getElementById('layoutChip');
+  if (el) el.textContent = bp();
+}
+
+function toggleTheme(){
+  var root = document.documentElement;
+  var isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  var icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  }
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll('.ov').forEach(function(ov){
+  ov.addEventListener('click', function(e){
+    if (e.target !== ov) return;
+    ov.classList.remove('show');
+    if (focusReturn && focusReturn.focus) focusReturn.focus();
+  });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.ov.show').forEach(function(o){ o.classList.remove('show'); });
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+});
+window.addEventListener('resize', function(){
+  var b = bp();
+  syncLayout();
+  if (b !== lastBP) { lastBP = b; renderItems(); }
+});
+
+render();
+syncLayout();
+</script>
+</body>
+</html>
+

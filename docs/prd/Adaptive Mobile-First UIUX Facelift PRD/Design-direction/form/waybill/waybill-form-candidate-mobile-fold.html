@@ -1,0 +1,1532 @@
+<!doctype html>
+<!--
+  BIGDROPS - Waybill Full-Page Live Form - Phone + Fold candidate.
+  Standalone prototype. Derived from the accepted BOQ V12 design system.
+
+  WHAT TRANSFERS FROM BOQ V12 (the structural system):
+  - Full-page continuous document flow, numbered section headers
+    (number, title, rule, meta cell).
+  - Top bar: back, title + status badge + layout chip, labelled save,
+    dark-mode toggle. Phone FAB + end-of-form completion action.
+  - Sheet/dialog system: role=dialog, aria-modal, Escape close, focus return.
+  - Field system: .lb labels, .fld inputs, 2-col .dgrid header fields.
+  - Segmented enumeration rail (number -> move -> duplicate) with the
+    connecting line scoped to the identity zone only; delete as the
+    structural junction on the row's top-right hairline.
+  - Sub Description compact behavior, relabelled "handling note" per row.
+  - Registry-driven columns (.fgrid 2-col auto-wrap, odd cell claims the
+    full row) driven by a column manager sheet.
+  - Groups ARE part of the waybill contract (a manifest can move stock for
+    several jobs in one trip), so the accepted V12 group anatomy transfers:
+    permanently expanded, delete X first on the left, one X, edge-to-edge
+    envelope at phone width, group total as a line-count readout (a waybill
+    sums no money).
+  - Fold recomposition: identity column + data column, not a stretched phone.
+
+  WHAT IS WAYBILL-SPECIFIC (from the legacy waybill prototype.jsx):
+  - Two document kinds: External delivery note (client, PO, linked invoice,
+    delivery location) and Internal transfer note (movement route, no
+    client). The kind is a segmented control in Document details - NOT a
+    blocking gateway dialog. Kind drives number prefix (WB-E-/WB-I-),
+    purpose options, client visibility, and save validation.
+  - A waybill carries NO money: no rate, no VAT, no totals in Naira. The
+    totals section is replaced by a dispatch summary (items, total quantity,
+    groups, capture state).
+  - Sections: 1 Document details (kind, client, waybill no, PO, date, time,
+    linked invoice) / 2 Transport (mode, purpose, plate, driver) /
+    3 Line items (the manifest, with groups) / 4 Custody (delivered by,
+    received by, location) / 5 Signatures (sender + receiver, pick saved /
+    camera / draw) / 6 Notes & terms.
+  - Signature capture is represented as a two-card region with status chips
+    and actions; canvas drawing is a native capability and is not prototyped
+    here - the buttons explain the boundary.
+  - Save validation: waybill number, date, at least one item with a
+    description and a positive quantity; external requires a client;
+    internal requires a recipient name.
+
+  READ ORDER PER ITEM ROW: identity / controls -> description -> handling
+  note -> qty | unit pair (+ condition) -> insert below. Field rhythm is the
+  BOQ V12 two-per-row composition.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS - Waybill Authoring Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a; --sub:#475569; --faint:#8b9ab0;
+    --line:rgba(15,23,42,.10); --line-strong:rgba(15,23,42,.20);
+    --bg:#eef2f7; --card:#ffffff; --soft:#f6f9fc;
+    --accent:#1e3a5f; --accent-soft:rgba(30,58,95,.13); --accent-ink:#ffffff;
+    --red:#dc2626; --red-soft:rgba(220,38,38,.09);
+    --rail:rgba(15,23,42,.22);
+    --mono:'DM Mono',monospace;
+    --cost:#b45309; --cost-soft:rgba(180,83,9,.10);
+    --sell:#15803d; --sell-soft:rgba(21,128,61,.10);
+    --loss:#b91c1c;
+    --group-line:rgba(30,58,95,.38); --group-spine:#1e3a5f; --group-soft:rgba(30,58,95,.07);
+    --group-head:linear-gradient(115deg,#0f172a,#1e3a5f 58%,#334155);
+    --group-on:#f8fafc;
+    --summary-bg:linear-gradient(120deg,#0f172a,#1e293b);
+    --on-dark:#f1f5f9; --pos-on-dark:#4ade80; --neg-on-dark:#fca5a5;
+    --shadow-ear:0 3px 9px rgba(15,23,42,.16);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.28);
+    --bg-bd-button-primary-bg:#1e3a5f;
+    --bd-button-primary-text:#f1f5f9;
+    --gutter:14px;
+  }
+  [data-theme="dark"]{
+    --ink:#f1f5f9; --sub:#cbd5e1; --faint:#7d8da5;
+    --line:rgba(148,163,184,.18); --line-strong:rgba(148,163,184,.32);
+    --bg:#0b1220; --card:#16233a; --soft:#111d31;
+    --accent:#38bdf8; --accent-soft:rgba(56,189,248,.16); --accent-ink:#06131f;
+    --red:#f87171; --red-soft:rgba(248,113,113,.13);
+    --rail:rgba(148,163,184,.32);
+    --cost:#fbbf24; --cost-soft:rgba(251,191,36,.14);
+    --sell:#34d399; --sell-soft:rgba(52,211,153,.14);
+    --loss:#f87171;
+    --group-line:rgba(56,189,248,.34); --group-spine:#38bdf8; --group-soft:rgba(56,189,248,.10);
+    --group-head:linear-gradient(115deg,#16233a,#1c3550);
+    --group-on:#e2e8f0;
+    --summary-bg:linear-gradient(120deg,#0d1728,#1b2b45);
+    --shadow-ear:0 3px 9px rgba(0,0,0,.45);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.5);
+    --bg-bd-button-primary-bg:#2563eb;
+    --bd-button-primary-text:#f8fafc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:0}
+  input,select,textarea{outline:none}
+  svg{display:block;flex-shrink:0}
+  .mono{font-family:var(--mono)}
+  .wrap{max-width:430px;margin:0 auto;padding:8px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+
+  /* ============ TOP BAR ============ */
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:6px;padding:6px 0 8px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .tb-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,transform .12s,border-color .15s}
+  .tb-btn:hover{color:var(--ink);border-color:var(--line-strong)}
+  .tb-btn:active{transform:scale(.93)}
+  .tb-btn svg{width:17px;height:17px}
+  .tb-title{flex:1;min-width:0;padding:0 2px}
+  .tb-title h1{font-size:13.5px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .tb-meta .badge{color:var(--accent)}
+  .tb-meta .sep{opacity:.55}
+
+  /* ============ SECTIONS - number + typography + rule, no dots ============ */
+  .sec{margin-top:20px}
+  .sec + .sec{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .secno{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--accent);flex-shrink:0}
+  .sec-head h2{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .sec-head .rule{flex:1;height:1px;background:var(--line);min-width:12px}
+  .sec-head .meta{font-family:var(--mono);font-size:8.5px;font-weight:500;color:var(--faint);white-space:nowrap}
+
+  /* ============ FIELDS ============ */
+  .lb{display:block;font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .req{color:var(--red)}
+  .fld{width:100%;min-height:42px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:600;transition:border-color .15s,box-shadow .15s,background .15s}
+  .fld::placeholder{color:var(--faint);font-weight:600}
+  .fld:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-size:12.5px;line-height:1.45}
+  .dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .dgrid .full{grid-column:1/-1}
+  .dgrid .wide{grid-column:1/-1}
+
+  /* ============ LINE ITEMS TOOLBAR - Columns / Import / Clear All are here,
+     directly, permanently. No settings icon, no sheet gating them. ============ */
+  .itemtools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;margin-bottom:14px}
+  .itbn{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;color:var(--sub);transition:border-color .15s,color .15s,background .15s,transform .12s}
+  .itbn svg{width:11px;height:11px}
+  .itbn:hover{border-color:var(--line-strong);color:var(--ink)}
+  .itbn:active{transform:scale(.96)}
+  /* destructive, but visually subordinate - ghost, no fill, pushed to the end */
+  .itbn.danger{margin-left:auto;border-color:transparent;background:none;color:var(--red);padding:0 8px}
+  .itbn.danger:hover{background:var(--red-soft)}
+
+  /* ============ LINE ITEMS - continuous document flow ============ */
+  #items{display:flex;flex-direction:column}
+  #items > .item,#items > .gwrap{margin-top:18px}
+  #items > .item:first-child,#items > .gwrap:first-child{margin-top:0}
+
+  .item{position:relative;padding-top:14px;transition:background .15s}
+  /* the row's own top hairline - stops short of the delete box, which the
+     line visually runs into. Segmented rail, part 1: no line at all here
+     below the identity zone: this rule sits at y=0, the identity zone
+     starts after padding-top. */
+  .item::before{content:'';position:absolute;top:0;left:0;right:26px;height:1px;background:var(--line)}
+  #items > .item:first-child::before,.gbody > .item:first-child::before{display:none}
+  .item.err{background:var(--red-soft);border-radius:12px}
+  .item.err .idx{background:var(--red);border-color:var(--red);color:#fff}
+  .item.err .desc{border-color:var(--red)}
+
+  /* delete as structural junction: the top hairline runs into this box: its
+     top-right corner stays square so the line reads as terminating IN it,
+     and a short stub descends from its underside - the row's own right-side
+     vertical line, not a rail that runs the full item height. */
+  .ear{position:absolute;top:0;right:0;width:26px;height:26px;border-radius:8px 3px 8px 8px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  .ear::before{content:'';position:absolute;inset:-9px}
+  .ear::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:14px;background:var(--line-strong);transform:translateX(-50%);transition:background .15s}
+  .ear svg{width:11px;height:11px}
+  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
+  .ear:hover::after{background:var(--red)}
+  .ear:active{transform:scale(.9)}
+
+  /* identity zone: rail (number / move / duplicate) + description + sub
+     description. The rail's connecting line is scoped to THIS grid row's
+     height only - it cannot leak into the metadata/commercial zone below,
+     because that zone lives outside this grid entirely. */
+  .ihead{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:stretch}
+  .rail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;padding:2px 0}
+  .rail::before{content:'';position:absolute;left:50%;top:17px;bottom:17px;width:1px;background:var(--rail);transform:translateX(-50%);z-index:0}
+  .rail>*{position:relative;z-index:1;flex-shrink:0}
+  .idx{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
+  .rmid{display:flex;flex-direction:column;gap:8px}
+  .rbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  .rbtn::after{content:'';position:absolute;inset:-4px}
+  .rbtn svg{width:12px;height:12px}
+  .rbtn:hover{background:var(--soft);color:var(--ink);border-color:var(--line-strong)}
+  .rbtn:active{transform:scale(.92)}
+  .rbtn:disabled{opacity:.32;pointer-events:none}
+
+  .idesc{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .desc{min-height:64px}
+
+  /* sub description - a compact field-style row inside the content stack
+     (reference composition). Closed + empty: "+ Add sub description".
+     Closed + populated: the ACTUAL text, clamped to 2 lines. Open: a "Sub
+     description" header row with the editor below it. Make / Brand follows
+     directly after - no dead region, no third column, no duplicate field. */
+  .subrow{display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid var(--line);transition:border-color .15s}
+  .subrow.has{border-left-color:var(--accent)}
+  .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:34px;padding:7px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
+  .subtog.sub-add{align-items:center}
+  .subtog:hover,.subtog:focus-visible{color:var(--accent);border-color:var(--line-strong)}
+  .stog-icon{width:15px;height:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .stog-icon svg{width:12px;height:12px}
+  .stog-label{flex:1;min-width:0;text-transform:none;letter-spacing:0}
+  .stog-chev{width:12px;height:12px;flex-shrink:0;color:var(--faint);transition:transform .15s}
+  .subrow.open .stog-chev{transform:rotate(180deg)}
+  .sub-prev-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.45;color:var(--sub)}
+  .subfield{min-height:58px}
+
+  /* metadata/commercial zone - FULL item width, no rail indentation. This is
+     where the fields reclaim the width the v10 rail used to reserve. */
+  .idata{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .meta-stack{display:flex;flex-direction:column;gap:8px}
+  /* generic 2-col auto-wrap grid, shared by the Qty/Unit pair and any future
+     registry field group: an odd trailing cell claims the full row so there
+     is never an orphan half-width slot. */
+  .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .fgrid>*:last-child:nth-child(odd){grid-column:1/-1}
+  .slot-off{display:flex;align-items:center;justify-content:center;color:var(--faint);border-style:dashed;background:var(--soft);font-size:9px;letter-spacing:.12em}
+
+  /* waybill field tones - no money fields exist, so the commercial tones
+     become field-family markers: identity fields and state fields */
+  .cfield{display:block;min-width:0}
+  .cf-lab{display:flex;align-items:center;gap:4px;margin:0 0 5px 2px;font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+  .cf-lab svg{width:10px;height:10px}
+  .cfield.state .fld{border-left:3px solid var(--sell)}
+  .cfield.state .fld:focus{border-color:var(--sell);box-shadow:0 0 0 3px var(--sell-soft)}
+
+  /* signature cards - the custody capture region. Status chip + three
+     capture actions per side. Canvas drawing is a native capability that
+     this prototype explains instead of embedding. */
+  .sigcard{border:1px solid var(--line);border-radius:12px;background:var(--soft);overflow:hidden;margin-bottom:8px}
+  .sighead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;background:var(--card);border-bottom:1px solid var(--line)}
+  .sighead b{font-size:10.5px;font-weight:800}
+  .sigbody{display:flex;flex-direction:column;gap:8px;padding:10px 11px}
+  .sigslot{display:flex;align-items:center;justify-content:center;min-height:52px;border:1px dashed var(--line-strong);border-radius:10px;background:var(--card);font-size:9px;font-weight:600;color:var(--faint)}
+  .sigslot.captured{border-style:solid;color:var(--ink);font-weight:800;letter-spacing:.04em}
+  .sigacts{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .sigacts .itbn{height:32px}
+  .sigacts .spacer{flex:1}
+
+  /* insert below - a compact affordance. It carries no trailing rule of its
+     own: the NEXT item supplies that boundary with its own top hairline, so
+     the document never shows two parallel rules between one row and the next. */
+  .ins{position:relative;display:flex;align-items:center;gap:6px;height:20px;margin-top:10px;color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:left;transition:color .15s}
+  .ins::before{content:'';position:absolute;left:0;right:0;top:-10px;bottom:-10px}
+  .ins:hover,.ins:focus-visible{color:var(--accent)}
+
+  /* ============ GROUPS - groups are always expanded ============ */
+  .gwrap{display:flex;flex-direction:column}
+  /* Full-bleed outer envelope. Width/margin cancel the page gutter so the
+     group reaches both screen edges; inner padding is restored below at the
+     same gutter width, so content stays comfortably clear of it. */
+  .gwrap{
+    width:calc(100% + 2*var(--gutter));
+    margin-left:calc(-1*var(--gutter));
+    margin-right:calc(-1*var(--gutter));
+    border-top:1px solid var(--group-line);
+    border-bottom:1px solid var(--group-line);
+    border-left:6px solid var(--group-spine);
+    background:var(--card);
+  }
+  .ghdr{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px var(--gutter);background:var(--group-head)}
+  .gtitle{flex:1;min-width:0;background:none;border:0;padding:0;color:var(--group-on);font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+  .gtitle::placeholder{color:rgba(248,250,252,.55)}
+  .gcount{font-family:var(--mono);font-size:8.5px;color:rgba(248,250,252,.75);white-space:nowrap;flex-shrink:0}
+  .gbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.12);color:var(--group-on);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s,color .15s,transform .12s}
+  .gbtn svg{width:13px;height:13px}
+  .gbtn:hover{background:rgba(255,255,255,.24)}
+  .gbtn:active{transform:scale(.94)}
+  .gbtn.danger:hover{background:rgba(239,68,68,.7);border-color:transparent}
+  .gbody{display:flex;flex-direction:column;padding:0 var(--gutter)}
+  .gbody>.item{padding-top:14px;margin-top:6px}
+  .gbody>.item:first-child{margin-top:0;padding-top:14px}
+  .gbody>.item:last-child .ins{display:none}
+  .gempty{margin:14px 0 2px;padding:16px 12px;text-align:center;font-size:10px;font-weight:700;line-height:1.5;color:var(--faint);border:1px dashed var(--group-line);border-radius:11px}
+  .gfoot{margin-top:8px;padding:8px var(--gutter) 12px;border-top:2px solid var(--group-soft)}
+  .gadd{width:100%;min-height:42px;border-radius:11px;border:1px dashed var(--group-line);background:transparent;color:var(--accent);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .12s}
+  .gadd svg{width:11px;height:11px}
+  .gadd:hover{background:var(--group-soft);border-color:var(--accent)}
+  .gadd:active{transform:scale(.98)}
+
+  /* No collapsed variant exists. Every group always renders its body and its
+     footer, so the group boundary and its contents are always visible. */
+
+  /* ============ GLOBAL CREATION PAIR ============ */
+  .createpair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+  .cbtn{min-height:46px;border-radius:12px;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .12s,color .15s}
+  .cbtn svg{width:12px;height:12px}
+  .cbtn:active{transform:scale(.97)}
+  .cbtn.primary{background:var(--accent);border:1px solid var(--accent);color:var(--accent-ink)}
+  .cbtn.primary:hover{filter:brightness(1.15)}
+  .cbtn.ghost{background:var(--card);border:1px dashed var(--line-strong);color:var(--ink)}
+  .cbtn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .empty{margin-top:2px;padding:20px 16px;text-align:center;font-size:10px;font-weight:700;line-height:1.6;color:var(--faint);border:1px dashed var(--line);border-radius:12px}
+
+  /* ============ TOTALS ============ */
+  .totals{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:12px}
+  .totals-grid{display:grid;grid-template-columns:1fr;gap:0}
+  .sumline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;font-size:11px;font-weight:600;color:var(--sub);border-bottom:1px solid var(--line)}
+  .sumline b{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--ink)}
+  .sumtotal{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px;padding-top:10px;border-top:2px solid var(--line-strong)}
+  .sumtotal small{display:block;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumtotal b{font-family:var(--mono);font-size:18px;font-weight:500;letter-spacing:-.03em;color:var(--accent)}
+  .sumtotal .right{text-align:right}
+  #tProfit.neg,#tMargin.neg{color:var(--loss)}
+  #tProfit.pos,#tMargin.pos{color:var(--sell)}
+  .words{margin-top:10px;padding:9px 11px;border:1px dashed var(--line);border-radius:10px;background:var(--soft);font-size:9.5px;font-style:italic;color:var(--sub);line-height:1.55}
+
+  /* ============ SAVE SURFACES - one save(), three surfaces ============
+     Phone: persistent FAB shortcut + labelled end-of-form completion action.
+     Fold: the FAB is replaced by a labelled sticky top-bar action (same
+     save()); the end-of-form action stays the completion step. The wrap
+     bottom padding clears the FAB zone so it never covers the bottom action. */
+  .savebar{margin-top:18px}
+  .save-cta{min-height:50px;font-size:10px}
+  .tb-save{display:none;height:36px;padding:0 14px;border-radius:11px;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;align-items:center;gap:6px;flex-shrink:0;transition:filter .15s,transform .12s}
+  .tb-save svg{width:13px;height:13px;stroke-width:2}
+  .tb-save:hover{filter:brightness(1.15)}
+  .tb-save:active{transform:scale(.96)}
+
+  /* ============ FAB - persistent phone Save shortcut (hidden at fold) ============ */
+  .fab{position:fixed;right:16px;bottom:calc(82px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);display:flex;align-items:center;justify-content:center;z-index:50;transition:transform .12s}
+  .fab svg{width:20px;height:20px;stroke-width:2}
+  .fab:hover{transform:scale(1.05)}
+  .fab:active{transform:scale(.95)}
+
+  /* ============ SHEETS ============ */
+  .ov{position:fixed;inset:0;background:rgba(8,15,28,.62);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center;z-index:60}
+  .ov.show{display:flex}
+  .ov.center{align-items:center}
+  .sheet{width:100%;max-width:430px;background:var(--card);border-radius:22px 22px 0 0;max-height:82vh;display:flex;flex-direction:column;gap:10px;padding:12px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow-sheet);animation:up .2s ease-out}
+  @keyframes up{from{transform:translateY(44px);opacity:.6}to{transform:none;opacity:1}}
+  .grab{width:36px;height:3px;border-radius:99px;background:var(--line-strong);margin:2px auto 0}
+  .shd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .shd b{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+  .shd small{display:block;margin-top:2px;font-size:9px;font-weight:600;color:var(--sub);text-transform:none;letter-spacing:0}
+  .x{width:38px;height:38px;border-radius:11px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .x svg{width:12px;height:12px}
+  .x:hover{color:var(--ink);border-color:var(--line-strong)}
+  .colrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:var(--soft)}
+  .colrow b{display:block;font-size:11px;font-weight:700}
+  .colrow small{display:block;margin-top:2px;font-size:9px;font-weight:600;line-height:1.45;color:var(--sub)}
+  .tag{padding:2px 6px;border-radius:5px;background:var(--card);border:1px solid var(--line);font-size:7px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub)}
+  .sw{position:relative;width:48px;height:36px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0;transition:background .16s}
+  .sw::after{content:'';position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .16s}
+  .sw.on{background:var(--accent)}
+  .sw.on::after{transform:translateX(12px)}
+  .sw:disabled{opacity:.45;cursor:not-allowed}
+  .cta{width:100%;min-height:46px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;transition:transform .12s,filter .15s}
+  .cta:hover{filter:brightness(1.15)}
+  .cta:active{transform:scale(.98)}
+  .linkbtn{width:100%;min-height:44px;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+  .dialog{width:min(88%,320px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-ear)}
+  .dialog b{font-size:12.5px;font-weight:800}
+  .dialog p{margin-top:6px;font-size:10px;font-weight:600;line-height:1.55;color:var(--sub)}
+  .dialog .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+  .dbtn{min-height:40px;padding:0 14px;border-radius:11px;border:1px solid var(--line);background:var(--soft);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)}
+  .dbtn.danger{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+  .imperr{display:none;font-family:var(--mono);font-size:9px;line-height:1.55;white-space:pre-wrap;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:9px;padding:8px 10px}
+  .imperr.show{display:block}
+  /* column manager rows - prototype port of the shared document Column
+     Manager (ColumnManager.tsx + useInvoiceColumns): grip + up/down order
+     controls, editable labels, TEXT/NUM badges, visibility switch, remove
+     for custom columns, reset-to-defaults with confirm. */
+  .cm-list{border:1px solid var(--line);border-radius:11px;background:var(--soft);overflow:hidden}
+  .cm-row{display:flex;align-items:center;gap:2px;min-height:44px;padding:5px 4px;border-bottom:1px solid var(--line)}
+  .cm-row:last-child{border-bottom:0}
+  .cm-row.full-hidden{opacity:.4}
+  .cm-grip{display:flex;align-items:center;justify-content:center;width:26px;height:100%;color:var(--faint);flex-shrink:0;touch-action:none}
+  .cm-grip svg{width:13px;height:13px}
+  .cm-ord{display:flex;flex-direction:column;flex-shrink:0}
+  .cm-ord button{display:flex;align-items:center;justify-content:center;width:26px;height:20px;color:var(--faint);transition:color .15s}
+  .cm-ord button:hover{color:var(--ink)}
+  .cm-ord button:disabled{opacity:.2;pointer-events:none}
+  .cm-ord svg{width:12px;height:12px}
+  .cm-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:0 2px}
+  .cm-labrow{display:flex;align-items:center;gap:5px;min-width:0}
+  .cm-lab{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;font-size:11.5px;font-weight:700;color:var(--ink);transition:border-color .15s,background .15s}
+  .cm-lab:hover{border-color:var(--line)}
+  .cm-lab:focus{border-color:var(--accent);background:var(--card)}
+  .cm-row.full-hidden .cm-lab{color:var(--faint);text-decoration:line-through}
+  .cm-desc-in{flex:1;min-width:0;height:30px;padding:0 8px;font-size:11.5px;font-weight:700;color:var(--ink);background:transparent;border:0}
+  .cm-badge{flex-shrink:0;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);font-size:7.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .cm-sub{display:flex;align-items:center;gap:6px;padding:0 2px 2px}
+  .cm-sub input{width:62px;height:24px;padding:0 6px;border:1px solid var(--line);border-radius:7px;background:var(--card);font-family:var(--mono);font-size:10px}
+  .cm-sub span{font-size:9.5px;font-weight:600;color:var(--sub)}
+  .cm-sw{position:relative;width:40px;height:28px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0;transition:background .16s}
+  .cm-sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .16s}
+  .cm-sw.on{background:var(--accent)}
+  .cm-sw.on::after{transform:translateX(12px)}
+  .cm-sw:disabled{opacity:.45;cursor:not-allowed}
+  .cm-act{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:var(--faint);transition:background .15s,color .15s}
+  .cm-act svg{width:13px;height:13px}
+  .cm-act:hover{background:var(--soft);color:var(--ink)}
+  .cm-act.danger:hover{background:var(--red-soft);color:var(--red)}
+  .cm-sec{margin:12px 0 6px;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .cm-add{width:100%;margin-top:8px;min-height:40px;border-radius:10px;border:0;background:none;color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
+  .cm-add svg{width:12px;height:12px}
+  .cm-add:hover{background:var(--accent-soft)}
+  .cm-reset{width:100%;margin-top:2px;padding:6px 0;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;transition:color .15s}
+  .cm-reset:hover{color:var(--ink)}
+  .impnote{font-size:8.5px;line-height:1.65;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
+  .impnote code{font-family:var(--mono);font-size:8px;color:var(--accent)}
+
+  /* Waybill-specific compositions on the BOQ field system */
+  .clrow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:var(--soft);text-align:left;transition:border-color .15s,background .15s}
+  .clrow:hover{border-color:var(--accent);background:var(--card)}
+  .cl-main{flex:1;min-width:0}
+  .cl-main b{display:block;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cl-main small{display:block;margin-top:1px;font-size:9px;font-weight:600;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cl-go{color:var(--faint);flex-shrink:0}
+  .cl-go svg{width:12px;height:12px}
+  .clientpick{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;border-radius:12px;border:1px dashed var(--line-strong);background:var(--card);text-align:left;transition:border-color .15s,background .15s}
+  .clientpick:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .clientpick.locked{opacity:.75;border-style:solid;border-color:var(--line);background:var(--soft);pointer-events:none}
+  .cp-av{width:34px;height:34px;border-radius:10px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+  .cp-txt{flex:1;min-width:0}
+  .cp-txt small{display:block;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .cp-txt b{display:block;margin-top:1px;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cp-txt em{display:block;font-style:normal;font-size:9.5px;color:var(--sub);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cp-chev{color:var(--faint);flex-shrink:0}
+  .cp-chev svg{width:14px;height:14px}
+  .err-ring{border-color:var(--red)!important;box-shadow:0 0 0 3px var(--red-soft)!important}
+
+  /* ============ TOAST ============ */
+  .toast{position:fixed;bottom:148px;left:50%;transform:translateX(-50%);z-index:70;max-width:86vw;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:9.5px;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.3);display:none}
+  .toast.show{display:block;animation:up .16s ease-out}
+  .toast.err{border:1px solid var(--red)}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .fab:hover,.fab:active,.tb-btn:active,.rbtn:active,.ear:active,.gbtn:active,.cbtn:active,.gadd:active,.cta:active,.itbn:active,.tb-save:active{transform:none}
+  }
+
+  /* ============ LARGE PHONE (430 - 599) ============ */
+  @media (min-width:430px){
+    :root{--gutter:18px}
+    .wrap{max-width:560px;padding:10px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+    .desc{min-height:72px}
+    .createpair{gap:12px}
+  }
+
+  /* ============ FOLD (>=600) - recomposed, not a centred phone ============ */
+  @media (min-width:600px){
+    :root{--gutter:24px}
+    .wrap{max-width:820px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+    .tb-meta{font-size:8.5px}
+    .tb-save{display:flex}
+    .fab{display:none}
+    .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .dgrid .wide{grid-column:span 1}
+    /* item becomes identity column + data column, side by side */
+    .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);column-gap:20px}
+    .ihead{grid-column:1;grid-row:1}
+
+    .idata{grid-column:2;grid-row:1;margin-top:0;padding-left:18px;border-left:1px solid var(--line)}
+    .ins{grid-column:1/-1;grid-row:2}
+    .desc{min-height:92px}
+    .cf-hint{display:inline}
+    .totals-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
+    .sumtotal{margin-top:0}
+    .sheet{max-width:560px;border-radius:22px;margin-bottom:18px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= TOP BAR ================= -->
+  <header class="topbar">
+    <button class="tb-btn" title="Back to waybills" aria-label="Back to waybills" onclick="toast('Back to waybills')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="tb-title">
+      <h1>Waybill</h1>
+      <div class="tb-meta">
+        <span class="badge" id="modeBadge">Draft</span>
+        <span class="sep">&middot;</span>
+        <span id="kindChip">External</span>
+        <span class="sep">&middot;</span>
+        <span id="layoutChip">Phone</span>
+      </div>
+    </div>
+    <button class="tb-save" onclick="save()" title="Save Waybill" aria-label="Save Waybill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
+      Save waybill
+    </button>
+    <button class="tb-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </header>
+
+  <!-- ================= 1. DOCUMENT DETAILS ================= -->
+  <section class="sec" style="margin-top:14px">
+    <div class="sec-head">
+      <span class="secno">1.</span>
+      <h2>Document details</h2>
+      <span class="rule"></span>
+      <span class="meta" id="boqNoLabel">WB-E-004821</span>
+    </div>
+    <div class="dgrid">
+      <div class="full">
+        <label class="lb">Waybill kind</label>
+        <div class="seg" role="tablist" aria-label="Waybill kind">
+          <button id="kExternal" class="on" onclick="setKind('external')">External delivery note</button>
+          <button id="kInternal" onclick="setKind('internal')">Internal transfer note</button>
+        </div>
+      </div>
+      <div class="full" id="clientBlock">
+        <label class="lb" for="fClient">Client Account <span class="req">*</span></label>
+        <button class="clientpick" id="fClient" onclick="openSheet('client')" title="Select the client this consignment is delivered to">
+          <span class="cp-av">AC</span>
+          <span class="cp-txt"><small>Client account</small><b id="cpName">Acme Corp Plc</b><em id="cpAddr">Lagos Island Port Depot, Lagos</em></span>
+          <span class="cp-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+        </button>
+      </div>
+      <div>
+        <label class="lb" for="fNo">Waybill Number <span class="req">*</span></label>
+        <input class="fld mono" id="fNo" value="WB-E-004821" oninput="syncNo()">
+      </div>
+      <div id="poBlock">
+        <label class="lb" for="fPo">P.O. Number</label>
+        <input class="fld mono" id="fPo" value="PO-NG-9921" placeholder="PO #">
+      </div>
+      <div>
+        <label class="lb" for="fDate">Dispatch Date <span class="req">*</span></label>
+        <input class="fld mono" id="fDate" type="date" value="2026-09-02">
+      </div>
+      <div>
+        <label class="lb" for="fTime">Dispatch Time</label>
+        <input class="fld mono" id="fTime" type="time" value="09:30">
+      </div>
+      <div class="full" id="invBlock">
+        <label class="lb" for="fInv">Linked Invoice</label>
+        <input class="fld mono" id="fInv" value="INV-2026-0042" placeholder="Link an invoice on record" onclick="openSheet('invoice')" readonly title="Pick from billed invoices for this client">
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. TRANSPORT ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">2.</span>
+      <h2>Transport</h2>
+      <span class="rule"></span>
+      <span class="meta">by vehicle</span>
+    </div>
+    <div class="dgrid">
+      <div>
+        <label class="lb" for="fMode">Transport Mode</label>
+        <select class="fld" id="fMode" onchange="syncPlate()">
+          <option selected>By Vehicle</option><option>By Hand</option><option>Courier</option><option>Blank</option>
+        </select>
+      </div>
+      <div>
+        <label class="lb" for="fPurpose">Purpose</label>
+        <select class="fld" id="fPurpose">
+          <option selected>Supply</option><option>Return</option><option>Repair</option><option>Transfer</option><option>Other</option>
+        </select>
+      </div>
+      <div id="plateBlock">
+        <label class="lb" for="fPlate">Vehicle Plate</label>
+        <input class="fld mono" id="fPlate" value="LAG-842-XY" placeholder="LAG-000-XX" style="text-transform:uppercase">
+      </div>
+      <div>
+        <label class="lb" for="fDriver">Driver Legal Name</label>
+        <input class="fld" id="fDriver" value="Musa Ibrahim" placeholder="Driver full name">
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. MANIFEST (LINE ITEMS) ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">3.</span>
+      <h2>Manifest</h2>
+      <span class="rule"></span>
+      <span class="meta" id="countLabel"></span>
+    </div>
+
+    <div class="itemtools">
+      <button class="itbn" onclick="openSheet('columns')" title="Choose which fields show on rows and the PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M9 4v16M15 4v16"/></svg>
+        Columns
+      </button>
+      <button class="itbn" onclick="openSheet('import')" title="Replace the manifest from JSON">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v10m0 0l-3.5-3.5M12 14l3.5-3.5"/></svg>
+        Import
+      </button>
+      <button class="itbn danger" onclick="clearAll()" title="Remove every group and item row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>
+        Clear all
+      </button>
+    </div>
+
+    <div id="items"></div>
+
+    <div class="createpair">
+      <button class="cbtn primary" onclick="addItem()" title="Adds an ungrouped manifest line">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+        Add line item
+      </button>
+      <button class="cbtn ghost" onclick="addGroup()" title="Adds an empty group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M4 12h10M4 17h7"/></svg>
+        Add group
+      </button>
+    </div>
+
+    <!-- dispatch readout: a waybill sums no money, so the BOQ totals block
+         becomes one live line. Desktop moves it into its sticky summary rail. -->
+    <div class="totals" id="wbTotals" style="margin-top:14px">
+      <div class="sumline"><span>Dispatch summary</span><b id="tCost">&nbsp;</b></div>
+      <div class="sumline"><span>Record purpose</span><b id="tWords">&nbsp;</b></div>
+    </div>
+  </section>
+
+  <!-- ================= 4. CUSTODY ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">4.</span>
+      <h2>Custody</h2>
+      <span class="rule"></span>
+      <span class="meta">hand-off record</span>
+    </div>
+    <div class="dgrid">
+      <div>
+        <label class="lb" for="fDelBy">Delivered By</label>
+        <input class="fld" id="fDelBy" value="Babatunde Adeleke" placeholder="Sender officer">
+      </div>
+      <div>
+        <label class="lb" for="fRecBy">Received By <span class="req" id="recReq">&nbsp;</span></label>
+        <input class="fld" id="fRecBy" value="Ngozi Okonjo" placeholder="Recipient name">
+      </div>
+      <div class="full">
+        <label class="lb" for="fLoc" id="locLabel">Delivery Location</label>
+        <input class="fld" id="fLoc" value="Lagos Island Port Depot, Gate 2" placeholder="Client site, address, or terminal drop-off">
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5. SIGNATURES ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">5.</span>
+      <h2>Signatures</h2>
+      <span class="rule"></span>
+      <span class="meta" id="sigCount">1 of 2 captured</span>
+    </div>
+    <div class="sigcard">
+      <div class="sighead">
+        <b>Delivered by (sender)</b>
+        <span class="status good" id="sigSenderChip">Captured</span>
+      </div>
+      <div class="sigbody">
+        <div class="sigslot captured" id="sigSenderSlot">Babatunde Adeleke · saved signatory</div>
+        <div class="sigacts">
+          <button class="itbn" onclick="openSheet('signatory')" title="Pick a saved dispatch officer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            Pick saved
+          </button>
+          <button class="itbn" onclick="toast('Camera capture is a native capability - not prototyped here')" title="Attach a photo of a physical signature">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="15" cy="13" r="3"/></svg>
+            Camera
+          </button>
+          <button class="itbn" onclick="toast('Canvas drawing is a native capability - not prototyped here')" title="Draw the signature on a canvas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            Draw
+          </button>
+          <span class="spacer"></span>
+          <button class="itbn danger" onclick="clearSig('sender')" title="Remove the captured signature">Remove</button>
+        </div>
+      </div>
+    </div>
+    <div class="sigcard">
+      <div class="sighead">
+        <b>Collected by (receiver)</b>
+        <span class="status warn" id="sigReceiverChip">Empty</span>
+      </div>
+      <div class="sigbody">
+        <div class="sigslot" id="sigReceiverSlot">No signature attached — leave blank for physical sign</div>
+        <div class="sigacts">
+          <button class="itbn" onclick="toast('Camera capture is a native capability - not prototyped here')" title="Attach a photo of a physical signature">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="15" cy="13" r="3"/></svg>
+            Camera
+          </button>
+          <button class="itbn" onclick="toast('Canvas drawing is a native capability - not prototyped here')" title="Draw the signature on a canvas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            Draw
+          </button>
+          <span class="spacer"></span>
+          <button class="itbn danger" onclick="clearSig('receiver')" title="Remove the captured signature">Remove</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 6. NOTES & TERMS ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">6.</span>
+      <h2>Notes &amp; terms</h2>
+      <span class="rule"></span>
+      <span class="meta">shown on PDF</span>
+    </div>
+    <div class="dgrid">
+      <div class="full">
+        <label class="lb" for="fNotes">Special Handling &amp; Notes</label>
+        <textarea class="fld" id="fNotes" rows="2" placeholder="Security seals, cargo remarks...">Security seals intact on dispatch. Handled under dry cargo conditions.</textarea>
+      </div>
+      <div class="full">
+        <label class="lb" for="fTerms">Terms &amp; Conditions</label>
+        <textarea class="fld" id="fTerms" rows="3" placeholder="Title, risk, discrepancy window...">1. Title and risk of goods pass to consignee upon physical receipt.
+2. Discrepancies must be endorsed on this delivery note within 24 hours of arrival.</textarea>
+      </div>
+    </div>
+
+    <!-- end-of-form completion action. Same save() as every other surface. -->
+    <div class="savebar">
+      <button class="cbtn primary save-cta" onclick="save()" title="Save Waybill" aria-label="Save Waybill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
+        Save waybill
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<button class="fab" onclick="save()" title="Save Waybill" aria-label="Save Waybill">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
+</button>
+
+<!-- CLIENT PICKER SHEET -->
+<div class="ov" id="ovClient">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Select client account">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Select client account</b><small>Required on external waybills</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('client')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <input class="fld" id="clientSearch" placeholder="Search registered clients..." oninput="renderClientList()">
+    <div id="clientList" style="display:flex;flex-direction:column;gap:6px;min-height:0;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- INVOICE LINKER SHEET -->
+<div class="ov" id="ovInvoice">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Link invoice">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Link invoice</b><small>Billed commercial invoices for this client</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('invoice')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <input class="fld" id="invSearch" placeholder="Search by invoice # or PO..." oninput="renderInvList()">
+    <div id="invList" style="display:flex;flex-direction:column;gap:6px;min-height:0;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- SIGNATORY PICKER SHEET -->
+<div class="ov" id="ovSignatory">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Pick saved signatory">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Pick saved signatory</b><small>Registered dispatch officers</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('signatory')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div id="sigList" style="display:flex;flex-direction:column;gap:6px;min-height:0;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- COLUMN MANAGER SHEET - prototype port of the shared document Column
+     Manager (src/components/ColumnManager.tsx): fixed Description row,
+     ordered columns with drag + up/down ordering, editable labels,
+     TEXT/NUM badges, visibility switches, reset-to-defaults with confirm,
+     Done footer. The waybill row contract has no money fields, so the
+     registry carries description, handling note, qty, unit, make, part no
+     and condition only. -->
+<div class="ov" id="ovColumns">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Column Settings">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Column Settings</b><small>Row fields, order, and labels</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('columns')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div id="colList" style="display:flex;flex-direction:column;min-height:0;overflow-y:auto"></div>
+    <button class="cta" onclick="closeSheet('columns')">Done</button>
+  </div>
+</div>
+
+<!-- IMPORT SHEET -->
+<div class="ov" id="ovImport">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Import waybill JSON">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Import manifest</b><small>Replaces current groups and line items</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('import')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <textarea class="fld mono" id="impTa" rows="7" style="font-size:10.5px" placeholder='{"items":[],"groups":[],"plate":"LAG-000-XX","driverName":"..."}'></textarea>
+    <div class="imperr" id="impErr"></div>
+    <div class="impnote">Contract keys &mdash; items: <code>description</code> <code>handling_note</code> <code>quantity</code> <code>unit</code> <code>make</code> <code>partNo</code> <code>condition</code> <code>group_id</code> &middot; groups: <code>id</code> <code>name</code> <code>itemIds</code> &middot; top level: <code>items</code> (required), <code>groups</code>, <code>plate</code>, <code>driverName</code>, <code>location</code></div>
+    <button class="cta" onclick="doImport()">Import &amp; replace</button>
+    <button class="linkbtn" onclick="closeSheet('import')">Cancel</button>
+  </div>
+</div>
+
+<!-- CLEAR CONFIRM -->
+<div class="ov center" id="ovClear">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Clear all line items">
+    <b>Clear the manifest?</b>
+    <p>This removes every group and item row from this waybill.</p>
+    <div class="acts">
+      <button class="dbtn" onclick="closeSheet('clear')">Cancel</button>
+      <button class="dbtn danger" onclick="doClearAll()">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET COLUMNS CONFIRM - same confirm pattern as Clear all -->
+<div class="ov center" id="ovColreset">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Reset columns to defaults">
+    <b>Reset columns to defaults?</b>
+    <p>This restores the default column order, labels, and visibility. Items are not removed.</p>
+    <div class="acts">
+      <button class="dbtn" onclick="closeSheet('colreset')">Cancel</button>
+      <button class="dbtn danger" onclick="doResetCols()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+var fmtGroup = function(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits: 20 }); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); };
+
+var svgs = {
+  up:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>',
+  down:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>',
+  copy:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
+  x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>',
+  chev:  '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>',
+  grip:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+  plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>',
+  note:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h7"/></svg>'
+};
+
+/* ---------- waybill column contract (document column standard) ----------
+   Same registry-driven architecture as BOQ V12: canonical order, persisted
+   {key,label,visible}, description fixed first, resolve() ports
+   ensureColumnOrderIntegrity. A waybill has NO money, so CP/SP are absent
+   and condition (a state column) takes their place in the registry. */
+var WB_CANONICAL_ORDER = ['description', 'handling_note', 'unit', 'quantity', 'make', 'partNo', 'condition'];
+var WB_DEFAULT_VISIBLE = { description: true, handling_note: false, unit: true, quantity: true, make: false, partNo: false, condition: true };
+var WB_LABELS = { description: 'Description', handling_note: 'Handling note', unit: 'Unit', quantity: 'Qty', make: 'Make / Brand', partNo: 'Part No.', condition: 'Condition' };
+var WB_TYPE = { description: 'text', handling_note: 'text', unit: 'text', quantity: 'num', make: 'text', partNo: 'text', condition: 'state' };
+var WB_CANONICAL_LABELS = function(){
+  var out = {}; WB_CANONICAL_ORDER.forEach(function(k){ out[k] = WB_LABELS[k]; }); return out;
+};
+var docColumns = WB_CANONICAL_ORDER.map(function(k){ return { key: k, label: WB_LABELS[k], visible: WB_DEFAULT_VISIBLE[k] }; });
+var findCol = function(key){ return docColumns.find(function(x){ return x.key === key; }); };
+var vis = function(k){ var c = findCol(k); return !c || c.visible; };
+
+/* ---------- waybill document model ----------
+   rows keeps the BOQ group/item shape: a manifest can move stock for several
+   jobs in one trip, so groups transfer. qty stays numeric; no money exists. */
+var rows = [
+  { id: 1, type: 'group', title: 'Job 4421 \u2014 Filter replacement' },
+  { id: 2, type: 'item', gid: 1, desc: 'Industrial Heavy-Duty Air Filter Replacement (Pack of 4)', sub: '', subOpen: false, qty: 12, unit: 'Units', make: '', partNo: '', condition: 'good' },
+  { id: 3, type: 'item', gid: 1, desc: 'Primary filter element, 6-inch', sub: 'Sealed OEM packaging; keep dry until fitting.', subOpen: false, qty: 4, unit: 'Pcs', make: 'Fleetguard', partNo: 'AF25558', condition: 'good' },
+  { id: 4, type: 'group', title: 'Job 4422 \u2014 Compressor service' },
+  { id: 5, type: 'item', gid: 4, desc: 'Synthetic Compressor Oil 15W-40 (20L Drum)', sub: '', subOpen: false, qty: 5, unit: 'Drums', make: 'Shell', partNo: '', condition: 'good' }
+];
+var kind = 'external';
+var seq = 100, errId = null, nums = {};
+
+var bp = function(){ var w = window.innerWidth; return w < 430 ? 'Phone' : (w < 600 ? 'Large phone' : 'Fold'); };
+var lastBP = bp();
+
+function toast(msg, isErr){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+/* ---------- item fragment builders (BOQ V12 anatomy, no money) ---------- */
+function metaHTML(r){
+  var cells = '';
+  if (vis('quantity')) cells += '<label class="cfield"><span class="cf-lab">Qty</span>'
+    + '<input class="fld mono" inputmode="decimal" placeholder="Qty *" value="' + esc(fmtGroup(r.qty)) + '" oninput="editNum(' + r.id + ',\'qty\',this.value)" data-numin="' + r.id + ':qty"' + (errId === r.id ? ' aria-invalid="true"' : '') + '></label>';
+  if (vis('unit')) cells += '<label class="cfield"><span class="cf-lab">Unit</span>'
+    + '<input class="fld" placeholder="Unit" value="' + esc(r.unit) + '" oninput="editRow(' + r.id + ',\'unit\',this.value)"></label>';
+  if (vis('make')) cells += '<label class="cfield"><span class="cf-lab">Make</span>'
+    + '<input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)"></label>';
+  if (vis('partNo')) cells += '<label class="cfield"><span class="cf-lab">Part no.</span>'
+    + '<input class="fld mono" placeholder="Part no." value="' + esc(r.partNo) + '" oninput="editRow(' + r.id + ',\'partNo\',this.value)"></label>';
+  if (vis('condition')) cells += '<label class="cfield state"><span class="cf-lab">Condition</span>'
+    + '<select class="fld" onchange="editRow(' + r.id + ',\'condition\',this.value)">'
+    + ['good', 'damaged', 'partial'].map(function(c){ return '<option' + (r.condition === c ? ' selected' : '') + '>' + c + '</option>'; }).join('')
+    + '</select></label>';
+  return '<div class="meta-stack"><div class="fgrid">' + cells + '</div></div>';
+}
+function itemHTML(r, sib){
+  var n = nums[r.id] || 0;
+  var errCls = errId === r.id ? ' err' : '';
+  var k = sib.indexOf(r);
+  return '<article class="item' + errCls + '" data-id="' + r.id + '">'
+    + '<button class="ear" title="Remove item" aria-label="Remove item" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
+    + '<div class="ihead">'
+    +   '<div class="rail">'
+    +     '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
+    +     '<div class="rmid">'
+    +       '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
+    +       '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
+    +     '</div>'
+    +     '<button class="rbtn" title="Duplicate item" aria-label="Duplicate item" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
+    +   '</div>'
+    +   '<div class="idesc">'
+    +     '<textarea class="fld desc" rows="2" placeholder="Item description *" oninput="editRow(' + r.id + ',\'desc\',this.value)"' + (errId === r.id ? ' aria-invalid="true"' : '') + '>' + esc(r.desc) + '</textarea>'
+    +     subHTML(r)
+    +   '</div>'
+    + '</div>'
+    + '<div class="idata">' + metaHTML(r) + '</div>'
+    + '<button class="ins" onclick="insertBelow(' + r.id + ')">+ Insert below</button>'
+    + '</article>';
+}
+/* Handling note row - the BOQ Sub Description behaviour, relabelled.
+   Closed + populated shows the ACTUAL text clamped; tap opens; empty blurs
+   back to the compact add row. */
+function subHTML(r){
+  var hasSub = !!(r.sub && r.sub.trim());
+  var open = !!r.subOpen;
+  var label = '<span class="stog-icon">' + (hasSub ? svgs.note : svgs.plus) + '</span>';
+  if (hasSub) {
+    label += '<span class="stog-label"><span class="sub-prev-text">' + esc(r.sub.trim()) + '</span></span>';
+  } else {
+    label += '<span class="stog-label">Add handling note</span>';
+  }
+  return '<div class="subrow' + (hasSub ? ' has' : '') + (open ? ' open' : '') + '" data-sub="' + r.id + '">'
+    + '<button class="subtog' + (hasSub ? '' : ' sub-add') + '" aria-expanded="' + open + '" onclick="toggleSub(' + r.id + ')">'
+    +   label
+    +   '<span class="stog-chev">' + svgs.chev + '</span>'
+    + '</button>'
+    + (open ? '<textarea class="fld subfield" rows="2" placeholder="Handling note \u2014 sealing, orientation, fragility..." oninput="editSub(' + r.id + ',this.value)" onblur="collapseIfEmpty(' + r.id + ',this.value)">' + esc(r.sub) + '</textarea>' : '')
+    + '</div>';
+}
+
+function groupHTML(r){
+  var mem = members(r.id);
+  var label = mem.length + ' item' + (mem.length === 1 ? '' : 's');
+  var body = mem.length
+    ? mem.map(function(m){ return itemHTML(m, mem); }).join('')
+    : '<div class="gempty">No items in this group yet.<br>Use the button below to add the first one.</div>';
+  return '<section class="gwrap" data-gwrap="' + r.id + '">'
+    + '<header class="ghdr">'
+    +   '<button class="gbtn danger" title="Remove group (items are kept)" aria-label="Remove group" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
+    +   '<input class="gtitle" value="' + esc(r.title) + '" placeholder="Group title" oninput="editRow(' + r.id + ',\'title\',this.value)">'
+    +   '<span class="gcount">' + label + '</span>'
+    + '</header>'
+    + '<div class="gbody">' + body + '</div>'
+    + '<div class="gfoot"><button class="gadd" onclick="addItemTo(' + r.id + ')">' + svgs.plus + ' Add item to this group</button></div>'
+    + '</section>';
+}
+
+/* ---------- render ---------- */
+function renderItems(){
+  var host = document.getElementById('items');
+  rows.forEach(function(r){
+    if (r.type === 'item' && r.gid != null && !rows.some(function(g){ return g.type === 'group' && g.id === r.gid; })) r.gid = null;
+  });
+  var nItems = rows.filter(function(r){ return r.type === 'item'; }).length;
+  var nGroups = rows.filter(function(r){ return r.type === 'group'; }).length;
+  document.getElementById('countLabel').textContent = nItems + ' items \u00B7 ' + nGroups + ' groups';
+  if (!rows.length) {
+    host.innerHTML = '<div class="empty">No rows yet \u2014 add a line item or a group.</div>';
+    return;
+  }
+  nums = {};
+  var n = 0, walk = [];
+  rows.forEach(function(r){
+    if (r.type === 'group') {
+      members(r.id).forEach(function(m){ nums[m.id] = ++n; });
+      walk.push(groupHTML(r));
+    } else if (r.gid == null) {
+      nums[r.id] = ++n;
+      walk.push(itemHTML(r, siblings(r)));
+    }
+  });
+  host.innerHTML = walk.join('');
+}
+
+/* Dispatch summary: a waybill sums NO money, so the BOQ totals block becomes
+   a quantity + capture readout in the same visual slot. */
+function renderTotals(){
+  var nItems = rows.filter(function(r){ return r.type === 'item'; }).length;
+  var nGroups = rows.filter(function(r){ return r.type === 'group'; }).length;
+  var qty = 0;
+  rows.forEach(function(r){ if (r.type === 'item') qty += Number(r.qty || 0); });
+  var el = document.getElementById('tCost');
+  if (el) el.textContent = fmtGroup(qty) + ' units \u00B7 ' + nItems + ' line' + (nItems === 1 ? '' : 's') + (nGroups ? ' \u00B7 ' + nGroups + ' group' + (nGroups === 1 ? '' : 's') : '');
+  var w = document.getElementById('tWords');
+  if (w) w.textContent = 'No monetary totals \u2014 a waybill records movement, not value.';
+  var sigs = (sigState.sender ? 1 : 0) + (sigState.receiver ? 1 : 0);
+  var sc = document.getElementById('sigCount');
+  if (sc) sc.textContent = sigs + ' of 2 captured';
+}
+
+function render(){ renderItems(); renderTotals(); }
+
+/* ---------- kind switch (external / internal) ---------- */
+function setKind(k){
+  kind = k;
+  var ext = k === 'external';
+  var ke = document.getElementById('kExternal'), ki = document.getElementById('kInternal');
+  if (ke && ki) { ke.classList.toggle('on', ext); ki.classList.toggle('on', !ext); }
+  var chip = document.getElementById('kindChip');
+  if (chip) chip.textContent = ext ? 'External' : 'Internal';
+  var show = function(id, on){ var el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+  show('clientBlock', ext);
+  show('poBlock', ext);
+  show('invBlock', ext);
+  var no = document.getElementById('fNo');
+  if (ext && no.value.indexOf('WB-I-') === 0) no.value = 'WB-E-' + no.value.slice(5);
+  if (!ext && no.value.indexOf('WB-E-') === 0) no.value = 'WB-I-' + no.value.slice(5);
+  var purpose = document.getElementById('fPurpose');
+  if (purpose) purpose.value = ext ? 'Supply' : 'Transfer';
+  var locLabel = document.getElementById('locLabel');
+  var loc = document.getElementById('fLoc');
+  if (locLabel) locLabel.textContent = ext ? 'Delivery Location' : 'Movement Route / Destination';
+  if (loc) loc.placeholder = ext ? 'Client site, address, or terminal drop-off' : 'Where items are moving within operations';
+  var recReq = document.getElementById('recReq');
+  if (recReq) recReq.textContent = ext ? '\u00A0' : '*';
+  syncNo();
+  toast(ext ? 'External delivery note' : 'Internal transfer note');
+}
+function syncPlate(){
+  var mode = document.getElementById('fMode').value;
+  var vehicular = mode === 'By Vehicle' || mode === 'Blank';
+  var block = document.getElementById('plateBlock');
+  if (block) block.style.display = vehicular ? '' : 'none';
+}
+
+/* ---------- edits (same semantics as BOQ V12) ---------- */
+function editRow(id, key, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r[key] = val;
+}
+function editSub(id, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.sub = val;
+  var wrap = document.querySelector('.subrow[data-sub="' + id + '"]');
+  if (!wrap) return;
+  var has = !!(val && val.trim());
+  wrap.classList.toggle('has', has);
+  var tog = wrap.querySelector('.subtog');
+  if (tog) tog.classList.toggle('sub-add', !has);
+  var icon = wrap.querySelector('.stog-icon');
+  if (icon) icon.innerHTML = has ? svgs.note : svgs.plus;
+  var prev = wrap.querySelector('.sub-prev-text');
+  if (has && !prev) {
+    var lab = wrap.querySelector('.stog-label');
+    if (lab) lab.innerHTML = '<span class="sub-prev-text">' + esc(val.trim()) + '</span>';
+  } else if (prev) {
+    prev.textContent = val.trim();
+  } else {
+    var lab2 = wrap.querySelector('.stog-label');
+    if (lab2) lab2.textContent = 'Add handling note';
+  }
+}
+function collapseIfEmpty(id, val){
+  if (val && val.trim()) return;
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r || r.subOpen !== true) return;
+  r.sub = '';
+  r.subOpen = false;
+  renderItems();
+}
+function editNum(id, key, val){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var n = Number(val.replace(/,/g, ''));
+  r[key] = Number.isFinite(n) ? n : 0;
+  renderTotals();
+  var el = document.querySelector('[data-numin="' + id + ':' + key + '"]');
+  if (!el || document.activeElement !== el) return;
+  var raw = val.replace(/,/g, '');
+  var inProgress = raw === '' || raw === '.' || /\.$/.test(raw);
+  var hadSel = el.selectionStart !== el.value.length || el.selectionEnd !== el.value.length;
+  var start = el.selectionStart;
+  var digitsBefore = val.slice(0, start).replace(/[^0-9]/g, '').length;
+  var formatted = inProgress ? raw : fmtGroup(r[key]);
+  el.value = formatted;
+  if (hadSel) {
+    var pos = 0, seen = 0;
+    while (pos < formatted.length && seen < digitsBefore) { if (/[0-9]/.test(formatted[pos])) seen++; pos++; }
+    try { el.setSelectionRange(pos, pos); } catch (e) {}
+  }
+}
+var siblings = function(r){
+  return r.gid != null
+    ? rows.filter(function(x){ return x.type === 'item' && x.gid === r.gid; })
+    : rows.filter(function(x){ return x.type === 'group' || x.gid == null; });
+};
+var members = function(gid){ return rows.filter(function(x){ return x.type === 'item' && x.gid === gid; }); };
+function moveRow(id, dir){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  var sib = siblings(r);
+  var k = sib.indexOf(r);
+  var target = sib[k + dir];
+  if (!target) return;
+  rows.splice(rows.indexOf(r), 1);
+  var t = rows.indexOf(target);
+  rows.splice(dir > 0 ? t + 1 : t, 0, r);
+  render();
+}
+function dupRow(id){
+  var i = rows.findIndex(function(x){ return x.id === id; });
+  if (i < 0) return;
+  var src = rows[i];
+  var copy = {};
+  for (var key in src) copy[key] = src[key];
+  copy.id = ++seq;
+  copy.desc = (src.desc || '') + ' (copy)';
+  copy.subOpen = false;
+  rows.splice(i + 1, 0, copy);
+  render();
+  toast('Item duplicated');
+}
+function insertBelow(id){
+  var i = rows.findIndex(function(x){ return x.id === id; });
+  if (i < 0) return;
+  rows.splice(i + 1, 0, blank(rows[i].gid));
+  render();
+  toast('Row inserted');
+  var el = document.querySelector('[data-id="' + rows[i + 1].id + '"]');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function blank(gid){
+  return { id: ++seq, type: 'item', gid: gid == null ? null : gid, desc: '', sub: '', subOpen: false, qty: 1, unit: '', make: '', partNo: '', condition: 'good' };
+}
+function addItem(){ rows.push(blank(null)); render(); toast('Line item added'); }
+function addItemTo(gid){
+  var mem = members(gid);
+  var last = mem[mem.length - 1];
+  var at = last ? rows.indexOf(last) + 1 : rows.findIndex(function(x){ return x.type === 'group' && x.id === gid; }) + 1;
+  rows.splice(at >= 0 ? at : rows.length, 0, blank(gid));
+  render();
+  toast('Item added to group');
+}
+function addGroup(){ rows.push({ id: ++seq, type: 'group', title: 'New Group' }); render(); toast('Group added'); }
+function toggleSub(id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  r.subOpen = !r.subOpen;
+  renderItems();
+  if (r.subOpen) {
+    var ta = document.querySelector('[data-sub="' + id + '"] .subfield');
+    if (ta) ta.focus();
+  }
+}
+function removeRow(id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r) return;
+  if (r.type === 'group') {
+    rows.forEach(function(x){ if (x.type === 'item' && x.gid === id) x.gid = null; });
+    rows = rows.filter(function(x){ return x.id !== id; });
+    render();
+    toast('Group removed \u2014 its items kept');
+  } else {
+    rows = rows.filter(function(x){ return x.id !== id; });
+    render();
+    toast('Row removed');
+  }
+}
+function clearAll(){ openSheet('clear'); }
+function doClearAll(){ rows = []; closeSheet('clear'); render(); toast('Manifest cleared'); }
+
+/* ---------- pickers: client, invoice, signatory ---------- */
+var CLIENTS = [
+  { name: 'Acme Corp Plc', addr: 'Lagos Island Port Depot, Lagos' },
+  { name: 'Beta Industrial Solutions', addr: 'Trans-Amadi Layout, Port Harcourt' },
+  { name: 'Zenith Telecom Services', addr: 'Central Business District, Abuja' },
+  { name: 'Sterling Pharma Logistics', addr: 'Ikeja Cargo Terminal, Lagos' }
+];
+var INVOICES = [
+  { number: 'INV-2026-0042', client: 'Acme Corp Plc', po: 'PO-NG-9921' },
+  { number: 'INV-2026-0043', client: 'Acme Corp Plc', po: 'PO-NG-9924' },
+  { number: 'INV-2026-0088', client: 'Beta Industrial Solutions', po: 'PO-PH-1044' }
+];
+var SIGNATORIES = [
+  { name: 'Babatunde Adeleke', role: 'Head of Fleet & Dispatch' },
+  { name: 'Ngozi Okonjo', role: 'Senior Warehouse Officer' },
+  { name: 'Emeka Nwosu', role: 'Logistics Supervisor' }
+];
+var sigState = { sender: true, receiver: false, senderName: 'Babatunde Adeleke', receiverName: '' };
+function renderClientList(){
+  var q = (document.getElementById('clientSearch').value || '').toLowerCase();
+  var host = document.getElementById('clientList');
+  var hits = CLIENTS.filter(function(c){ return c.name.toLowerCase().indexOf(q) >= 0; });
+  host.innerHTML = hits.map(function(c, i){
+    return '<button class="clrow" onclick="pickClient(' + i + ')">'
+      + '<span class="cl-main"><b>' + esc(c.name) + '</b><small>' + esc(c.addr) + '</small></span>'
+      + '<span class="cl-go">' + svgs.chev + '</span></button>';
+  }).join('') || '<div class="empty">No client matches that search.</div>';
+}
+function pickClient(i){
+  var c = CLIENTS[i];
+  document.getElementById('cpName').textContent = c.name;
+  document.getElementById('cpAddr').textContent = c.addr;
+  document.getElementById('fLoc').value = c.addr;
+  var av = document.querySelector('#fClient .cp-av');
+  if (av) av.textContent = c.name.split(' ').map(function(w){ return w[0] || ''; }).join('').slice(0, 2).toUpperCase();
+  closeSheet('client');
+  toast('Assigned ' + c.name);
+}
+function renderInvList(){
+  var q = (document.getElementById('invSearch').value || '').toLowerCase();
+  var host = document.getElementById('invList');
+  var hits = INVOICES.filter(function(v){ return (v.number + ' ' + v.client + ' ' + v.po).toLowerCase().indexOf(q) >= 0; });
+  host.innerHTML = hits.map(function(v, i){
+    return '<button class="clrow" onclick="pickInvoice(' + i + ')">'
+      + '<span class="cl-main"><b>' + esc(v.number) + '</b><small>' + esc(v.client) + ' \u00B7 ' + esc(v.po) + '</small></span>'
+      + '<span class="cl-go">' + svgs.chev + '</span></button>';
+  }).join('') || '<div class="empty">No invoice matches that search.</div>';
+}
+function pickInvoice(i){
+  var v = INVOICES[i];
+  document.getElementById('fInv').value = v.number;
+  if (!document.getElementById('fPo').value) document.getElementById('fPo').value = v.po;
+  closeSheet('invoice');
+  toast('Linked ' + v.number);
+}
+function renderSigList(){
+  var host = document.getElementById('sigList');
+  host.innerHTML = SIGNATORIES.map(function(p, i){
+    return '<button class="clrow" onclick="pickSignatory(' + i + ')">'
+      + '<span class="cl-main"><b>' + esc(p.name) + '</b><small>' + esc(p.role) + '</small></span>'
+      + '<span class="cl-go">' + svgs.chev + '</span></button>';
+  }).join('');
+}
+function pickSignatory(i){
+  var p = SIGNATORIES[i];
+  sigState.sender = true;
+  sigState.senderName = p.name;
+  var slot = document.getElementById('sigSenderSlot');
+  if (slot) { slot.textContent = p.name + ' \u00B7 ' + p.role; slot.classList.add('captured'); }
+  var chip = document.getElementById('sigSenderChip');
+  if (chip) { chip.textContent = 'Captured'; chip.className = 'status good'; }
+  renderTotals();
+  closeSheet('signatory');
+  toast('Assigned ' + p.name);
+}
+function clearSig(side){
+  sigState[side] = false;
+  var slot = document.getElementById(side === 'sender' ? 'sigSenderSlot' : 'sigReceiverSlot');
+  if (slot) { slot.textContent = 'No signature attached \u2014 leave blank for physical sign'; slot.classList.remove('captured'); }
+  var chip = document.getElementById(side === 'sender' ? 'sigSenderChip' : 'sigReceiverChip');
+  if (chip) { chip.textContent = 'Empty'; chip.className = 'status warn'; }
+  renderTotals();
+  toast('Signature removed');
+}
+
+/* ---------- Column Manager (same architecture as BOQ V12) ---------- */
+function cmType(k){ return WB_TYPE[k] === 'num' ? 'NUM' : (WB_TYPE[k] === 'state' ? 'STATE' : 'TEXT'); }
+function renderCols(){
+  var desc = findCol('description');
+  var rest = docColumns.filter(function(c){ return c.key !== 'description'; });
+  var html = '<div class="cm-sec">Description</div>'
+    + '<div class="cm-list">'
+    + '<div class="cm-row" data-key="description">'
+    +   '<input class="cm-desc-in" value="' + esc(desc.label) + '" aria-label="Description label" onchange="cmUpdateLabel(\'description\',this.value)">'
+    +   '<span class="cm-badge">Fixed</span>'
+    + '</div>'
+    + '</div>'
+    + '<div class="cm-sec">Columns</div>'
+    + '<div class="cm-list">';
+  rest.forEach(function(c){
+    var i = docColumns.findIndex(function(x){ return x.key === c.key; });
+    html += '<div class="cm-row" data-key="' + c.key + '">'
+      + '<div class="cm-grip" draggable="true" data-key="' + c.key + '" title="Drag to reorder" aria-label="Drag to reorder">' + svgs.grip + '</div>'
+      + '<div class="cm-ord">'
+      +   '<button title="Move up" aria-label="Move ' + esc(c.label) + ' up"' + (i <= 1 ? ' disabled' : '') + ' onclick="cmMove(\'' + c.key + '\',' + (i - 1) + ')">' + svgs.up + '</button>'
+      +   '<button title="Move down" aria-label="Move ' + esc(c.label) + ' down"' + (i >= docColumns.length - 1 ? ' disabled' : '') + ' onclick="cmMove(\'' + c.key + '\',' + (i + 1) + ')">' + svgs.down + '</button>'
+      + '</div>'
+      + '<div class="cm-main">'
+      +   '<div class="cm-labrow"><input class="cm-lab" value="' + esc(c.label) + '" aria-label="' + esc(c.label) + ' label" onchange="cmUpdateLabel(\'' + c.key + '\',this.value)"><span class="cm-badge">' + cmType(c.key) + '</span></div>'
+      + '</div>'
+      + '<button class="cm-sw ' + (c.visible ? 'on' : '') + '" role="switch" aria-checked="' + c.visible + '" aria-label="' + (c.visible ? 'Hide ' : 'Show ') + esc(c.label) + '" onclick="cmToggle(\'' + c.key + '\')"></button>'
+      + '</div>';
+  });
+  html += '</div>'
+    + '<button class="cm-reset" onclick="openSheet(\'colreset\')">Reset to defaults</button>';
+  document.getElementById('colList').innerHTML = html;
+}
+function cmToggle(key){
+  var c = findCol(key);
+  if (!c || key === 'description') return;
+  c.visible = !c.visible;
+  renderCols();
+  renderItems();
+  toast(c.label + (c.visible ? ' shown on rows' : ' hidden from rows'));
+}
+function cmUpdateLabel(key, label){
+  var c = findCol(key);
+  if (!c) return;
+  var v = String(label || '').trim();
+  c.label = v || WB_LABELS[key];
+  renderCols();
+  renderItems();
+}
+function cmMove(key, targetIdx){
+  if (key === 'description') return;
+  var from = docColumns.findIndex(function(c){ return c.key === key; });
+  if (from < 0 || targetIdx === from) return;
+  if (targetIdx < 0 || targetIdx >= docColumns.length) return;
+  var next = docColumns.slice();
+  var moved = next.splice(from, 1)[0];
+  next.splice(Math.max(1, targetIdx), 0, moved);
+  docColumns = next;
+  renderCols();
+  renderItems();
+}
+function doResetCols(){
+  docColumns = WB_CANONICAL_ORDER.map(function(k){ return { key: k, label: WB_LABELS[k], visible: WB_DEFAULT_VISIBLE[k] }; });
+  closeSheet('colreset');
+  renderCols();
+  renderItems();
+  toast('Columns reset to defaults');
+}
+
+/* ---------- import (waybill contract) ---------- */
+function showImpErr(msg){
+  var el = document.getElementById('impErr');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+function doImport(){
+  var raw = document.getElementById('impTa').value.trim();
+  if (!raw) { showImpErr('Paste JSON first.'); return; }
+  var data;
+  try { data = JSON.parse(raw); } catch (e) { showImpErr('Invalid JSON: ' + e.message); toast('Import failed \u2014 invalid JSON', true); return; }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) { showImpErr('Root must be a JSON object with an "items" array.'); return; }
+  if (!Array.isArray(data.items)) { showImpErr('Missing required "items" array.'); return; }
+  var groups = data.groups == null ? [] : data.groups;
+  if (!Array.isArray(groups)) { showImpErr('"groups" must be an array when present.'); return; }
+  var errors = [];
+  var keyOf = function(v){ return v == null ? null : String(v); };
+  var groupRows = [], gidMap = {}, itemGidMap = {};
+  groups.forEach(function(g, i){
+    if (!g || typeof g !== 'object') { errors.push('groups[' + i + '] must be an object with a name.'); return; }
+    if (typeof g.name !== 'string' || !g.name.trim()) { errors.push('groups[' + i + '] needs a non-empty "name".'); return; }
+    var gid = ++seq;
+    gidMap[keyOf(g.id != null ? g.id : i)] = gid;
+    groupRows.push({ id: gid, type: 'group', title: g.name.trim() });
+    if (Array.isArray(g.itemIds)) g.itemIds.forEach(function(id){ itemGidMap[keyOf(id)] = gid; });
+  });
+  var payloadItemIds = new Set(data.items.filter(function(it){ return it && it.id != null; }).map(function(it){ return String(it.id); }));
+  Object.keys(itemGidMap).forEach(function(k){
+    if (!payloadItemIds.has(k)) errors.push('groups[].itemIds references unknown item "' + k + '".');
+  });
+  var itemRows = [];
+  data.items.forEach(function(it, i){
+    if (!it || typeof it !== 'object') { errors.push('items[' + i + '] must be an object.'); return; }
+    var gid = null;
+    var gidRaw = it.group_id != null ? it.group_id : it.gid;
+    if (gidRaw != null) {
+      var mapped = gidMap[keyOf(gidRaw)];
+      if (mapped == null) { errors.push('items[' + i + '] references unknown group_id "' + gidRaw + '".'); return; }
+      gid = mapped;
+    } else if (it.id != null && itemGidMap[keyOf(it.id)] != null) {
+      gid = itemGidMap[keyOf(it.id)];
+    }
+    var q = Number(it.quantity != null ? it.quantity : it.qty);
+    itemRows.push({
+      id: ++seq, type: 'item', gid: gid,
+      desc: typeof it.description === 'string' ? it.description : '',
+      sub: typeof it.handling_note === 'string' ? it.handling_note : (typeof it.sub_description === 'string' ? it.sub_description : ''),
+      subOpen: false,
+      make: typeof it.make === 'string' ? it.make : '',
+      partNo: typeof it.partNo === 'string' ? it.partNo : '',
+      condition: ['good', 'damaged', 'partial'].indexOf(it.condition) >= 0 ? it.condition : 'good',
+      qty: Number.isFinite(q) ? q : 0,
+      unit: typeof it.unit === 'string' ? it.unit : ''
+    });
+  });
+  if (errors.length) { showImpErr(errors.join('\n')); toast('Import failed \u2014 see errors', true); return; }
+  rows = groupRows.concat(itemRows);
+  var set = function(id, v){ if (typeof v === 'string' && v.trim()) { var el = document.getElementById(id); if (el) el.value = v; } };
+  set('fPlate', data.plate);
+  set('fDriver', data.driverName);
+  set('fLoc', data.location);
+  closeSheet('import');
+  render();
+  toast('Imported ' + itemRows.length + ' items \u00B7 ' + groupRows.length + ' groups');
+}
+
+/* ---------- save (waybill validation) ---------- */
+function save(){
+  var no = document.getElementById('fNo');
+  if (!no.value.trim()) { errFlash(no, 'Save blocked: waybill number is required'); return; }
+  if (!document.getElementById('fDate').value) { errFlash(document.getElementById('fDate'), 'Save blocked: dispatch date is required'); return; }
+  if (kind === 'external' && document.getElementById('cpName').textContent.indexOf('Select') === 0) {
+    errFlash(document.getElementById('fClient'), 'Save blocked: client account is required on external waybills');
+    return;
+  }
+  if (kind === 'internal' && !document.getElementById('fRecBy').value.trim()) {
+    errFlash(document.getElementById('fRecBy'), 'Save blocked: recipient name is required on internal waybills');
+    return;
+  }
+  var items = rows.filter(function(r){ return r.type === 'item'; });
+  if (!items.length) { toast('Save blocked: the manifest cannot be empty', true); return; }
+  var bad = items.find(function(r){ return !r.desc.trim() || Number(r.qty) <= 0; });
+  if (bad) {
+    errId = bad.id;
+    renderItems();
+    toast('Save blocked: an item is missing a description or qty', true);
+    var el = document.querySelector('[data-id="' + bad.id + '"]');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function(){ errId = null; renderItems(); }, 2600);
+    return;
+  }
+  document.getElementById('modeBadge').textContent = 'Saved';
+  toast('Waybill ' + no.value.trim() + ' saved \u2014 ' + items.length + ' line' + (items.length === 1 ? '' : 's') + ' recorded');
+}
+function errFlash(el, msg){
+  el.classList.add('err-ring');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  toast(msg, true);
+  setTimeout(function(){ el.classList.remove('err-ring'); }, 2600);
+}
+
+/* ---------- sheets ---------- */
+var ovOf = function(id){ return document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)); };
+var focusReturn = null;
+function openSheet(id){
+  if (id === 'columns') renderCols();
+  if (id === 'client') renderClientList();
+  if (id === 'invoice') renderInvList();
+  if (id === 'signatory') renderSigList();
+  if (id === 'import') showImpErr('');
+  var el = ovOf(id);
+  var active = document.activeElement;
+  if (active && active.focus && !(active.closest && active.closest('.ov'))) focusReturn = active;
+  el.classList.add('show');
+  var first = el.querySelector('input, textarea, button:not(.x):not(.linkbtn)');
+  if (first) first.focus();
+}
+function closeSheet(id){
+  var el = ovOf(id);
+  if (!el.classList.contains('show')) return;
+  el.classList.remove('show');
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+}
+function syncNo(){ document.getElementById('boqNoLabel').textContent = document.getElementById('fNo').value; }
+function syncLayout(){
+  var el = document.getElementById('layoutChip');
+  if (el) el.textContent = bp();
+}
+
+function toggleTheme(){
+  var root = document.documentElement;
+  var isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  var icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  }
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll('.ov').forEach(function(ov){
+  ov.addEventListener('click', function(e){
+    if (e.target !== ov) return;
+    ov.classList.remove('show');
+    if (focusReturn && focusReturn.focus) focusReturn.focus();
+  });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.ov.show').forEach(function(o){ o.classList.remove('show'); });
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+});
+window.addEventListener('resize', function(){
+  var b = bp();
+  syncLayout();
+  if (b !== lastBP) { lastBP = b; renderItems(); }
+});
+
+/* drag to reorder columns - same moveColumn semantics as the up/down buttons */
+(function(){
+  var list = document.getElementById('colList');
+  var dragKey = null;
+  list.addEventListener('dragstart', function(e){
+    var g = e.target.closest && e.target.closest('.cm-grip');
+    if (!g) return;
+    dragKey = g.getAttribute('data-key');
+    if (e.dataTransfer) e.dataTransfer.setData('text/plain', dragKey);
+  });
+  list.addEventListener('dragover', function(e){ if (dragKey) e.preventDefault(); });
+  list.addEventListener('drop', function(e){
+    e.preventDefault();
+    var key = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || dragKey;
+    var row = e.target.closest && e.target.closest('.cm-row[data-key]');
+    dragKey = null;
+    if (!key || !row) return;
+    var targetKey = row.getAttribute('data-key');
+    if (!targetKey || targetKey === key) return;
+    cmMove(key, docColumns.findIndex(function(c){ return c.key === targetKey; }));
+  });
+})();
+
+render();
+syncLayout();
+</script>
+</body>
+</html>
+

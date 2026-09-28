@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIGDROPS Mobile Row Composition V2</title>
+<style>
+:root{--bg:#edf2f8;--card:#fff;--line:#cbd4df;--ink:#172033;--muted:#8591a3;--navy:#183554;--accent:#244b78}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--ink)}
+.wrap{max-width:430px;margin:auto;padding:28px 18px 70px}
+.item{position:relative}
+.top{display:flex;gap:14px;align-items:flex-start}
+.rail{flex:0 0 40px;display:flex;flex-direction:column;align-items:center}
+.rbtn{z-index:1;width:40px;height:40px;border:1px solid #d6dde6;border-radius:13px;background:#fff;display:grid;place-items:center;margin-bottom:12px;font-weight:700}
+.rbtn.move{margin-top:28px}
+.content{position:relative;flex:1;min-width:0}
+.below{margin-top:6px}
+.description{min-height:70px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 44px 18px 18px;font-size:18px}
+.delete{position:absolute;right:-18px;top:-18px;width:38px;height:38px;border:1px solid #ccd5df;border-radius:50%;background:#fff;font-size:23px;color:#596678;display:grid;place-items:center;box-shadow:0 4px 12px #26364b20}
+.sub{margin:14px 0;padding:12px 10px;border-left:3px solid var(--accent);color:#566276}
+.helper{font-size:12px;color:#929baa;margin:8px 2px 17px;line-height:1.4}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field label{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;color:#8996a9;margin:0 0 7px}
+.box{height:58px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px;font-size:17px}
+.rate .box{border-left:4px solid var(--accent)}
+.condition{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;column-gap:10px;align-items:end}
+.condition label{grid-column:1/-1}
+.condition .box{min-width:0}
+.camera{width:58px;height:58px;border:1px solid #ccd5df;border-radius:15px;background:#fff;display:grid;place-items:center;font-size:20px;color:#667487}
+.total-wrap{position:relative;margin-top:15px}
+.total{min-height:72px;background:var(--navy);color:#fff;border-radius:15px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.total small{font-size:11px;letter-spacing:.08em;color:#fff;font-weight:700;opacity:.9}
+.total strong{font-size:28px;font-weight:900;font-style:italic;letter-spacing:-.02em;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+.thumb{width:64px;height:64px;border-radius:14px;margin:0 0 10px auto;background:linear-gradient(145deg,#254d70,#77b9d5);display:none;place-items:center;color:white;font-size:11px;font-weight:700;box-shadow:0 3px 9px #15263d30}
+.has-photo .camera{display:none}
+.has-photo .condition{grid-template-columns:1fr}
+.has-photo .thumb{display:grid}
+.insert{padding-left:2px}
+.insert{margin-top:18px;font-size:12px;font-weight:800;letter-spacing:.08em;color:#8994a5}
+.demo{margin-top:30px;border-top:1px solid #cbd4df;padding-top:16px}
+.demo button{border:1px solid #cbd4df;background:#fff;border-radius:12px;padding:10px 13px;color:#536174;font-weight:700}
+.note{margin-top:12px;color:#6f7b8c;font-size:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="item" id="item">
+ <div class="top">
+  <aside class="rail">
+    <button class="rbtn">01</button><button class="rbtn move">↑</button><button class="rbtn">↓</button><button class="rbtn">⧉</button>
+  </aside>
+
+  <main class="content">
+    <div class="description">Molded case circuit breaker 125A</div>
+    <button class="delete" aria-label="Delete">×</button>
+    <div class="sub">☷ &nbsp; 4 pole, adjustable thermal-magnetic trip unit</div>
+    <div class="helper">Last sold: ₦178,000 · INV-2026-0117 · 2026-08-24 · 9 uses</div>
+  </main>
+ </div>
+
+ <div class="below">
+
+    <div class="grid">
+      <!-- First: the single-row closer. Photo occupies only its compact icon width. -->
+      <div class="field condition">
+        <label>CONDITION</label>
+        <div class="box">New</div>
+        <button class="camera" aria-label="Add photo">▣</button>
+      </div>
+
+      <!-- Then the paired fields. -->
+      <div class="field"><label>QTY</label><div class="box">3</div></div>
+      <div class="field"><label>UNIT</label><div class="box">pcs</div></div>
+      <div class="field rate"><label>RATE</label><div class="box">184,000</div></div>
+      <div class="field"><label>PART NO.</label><div class="box">NSX160F</div></div>
+    </div>
+
+    <div class="total-wrap">
+      <div class="thumb">PHOTO</div>
+      <div class="total">
+        <small>AMOUNT · 3 × ₦184,000.00</small>
+        <strong>₦552,000.00</strong>
+      </div>
+    </div>
+    <div class="insert">＋ INSERT BELOW</div>
+ </div>
+</div>
+
+<div class="demo">
+  <button onclick="document.getElementById('item').classList.toggle('has-photo')">Toggle uploaded photo</button>
+  <div class="note">Empty: Condition + camera close the first row. Uploaded: camera disappears, Condition stretches across the full row, and the thumbnail takes its own row above the total, pushing it down. Condition and every field below run edge to edge with no left gutter or rail line. Amount is large, heavy and italic.</div>
+</div>
+</div>
+</body>
+</html>
