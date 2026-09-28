@@ -192,8 +192,8 @@ export function buildCleanupLocalAITask(params: {
   }
 }
 
-export function buildCleanupLocalAIPrompt(task: CleanupLocalAITask) {
-  return [
+export function buildCleanupLocalAIPrompt(task: CleanupLocalAITask, modelId: string) {
+  const body = [
     'You are reviewing one BIGDROPS Item Library Cleanup candidate.',
     'Return only strict JSON. Do not return markdown or prose outside JSON.',
     'Your result is read-only. It must not apply, approve, or mutate data.',
@@ -214,7 +214,7 @@ export function buildCleanupLocalAIPrompt(task: CleanupLocalAITask) {
         task_id: task.task_id,
         cleanup_snapshot_id: task.cleanup_snapshot_id,
         provider_id: 'local_android',
-        model_id: BIGDROPS_LOCAL_AI_POC_MODEL_ID,
+        model_id: modelId,
         proposals: [
           {
             group_id: task.groups[0]?.group_id || 'same-as-input',
@@ -234,7 +234,16 @@ export function buildCleanupLocalAIPrompt(task: CleanupLocalAITask) {
     '',
     'Task JSON:',
     JSON.stringify(task),
+    '',
+    // Qwen3 reasoning models think before answering. The grammar already
+    // forces JSON output, and /no_think skips the hidden reasoning pass so
+    // small on-device models spend their budget on the decision itself.
+    '/no_think',
   ].join('\n')
+
+  // Single Qwen3 ChatML user turn. The native runtime tokenizes raw text, so
+  // the prompt carries its own chat framing instead of relying on a template.
+  return `<|im_start|>user\n${body}\n<|im_end|>\n<|im_start|>assistant\n`
 }
 
 export function validateCleanupLocalAIResult(input: unknown, task: CleanupLocalAITask): CleanupLocalAIValidationResult {

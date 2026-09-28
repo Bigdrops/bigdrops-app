@@ -40,6 +40,7 @@ type ItemLibraryLocalAIReviewPanelProps = {
   exportPayload: FlaggedCleanupExportPayload
   group: DuplicateCandidateGroup
   reviewedSeparatePairs: ItemReviewedSeparatePair[]
+  modelId?: string
 }
 
 function decisionLabel(decision: string) {
@@ -53,6 +54,7 @@ export function ItemLibraryLocalAIReviewPanel({
   exportPayload,
   group,
   reviewedSeparatePairs,
+  modelId = BIGDROPS_LOCAL_AI_POC_MODEL_ID,
 }: ItemLibraryLocalAIReviewPanelProps) {
   const [runtimeInfo, setRuntimeInfo] = useState<LocalAIRuntimeInfo | null>(null)
   const [modelStatus, setModelStatus] = useState<LocalAIModelStatus | null>(null)
@@ -64,14 +66,14 @@ export function ItemLibraryLocalAIReviewPanel({
     () => buildCleanupLocalAITask({ group, exportPayload, aliases, reviewedSeparatePairs }),
     [aliases, exportPayload, group, reviewedSeparatePairs],
   )
-  const prompt = useMemo(() => buildCleanupLocalAIPrompt(task), [task])
+  const prompt = useMemo(() => buildCleanupLocalAIPrompt(task, modelId), [task, modelId])
   const modelReady = isLocalAIModelReady(modelStatus)
   const modelProgress = modelStatus ? getLocalAIModelProgress(modelStatus) : 0
 
   const refreshRuntimeAndModel = async () => {
     const [info, nextModelStatus] = await Promise.all([
       getLocalAIRuntimeInfo(),
-      getLocalAIModelStatus(BIGDROPS_LOCAL_AI_POC_MODEL_ID),
+      getLocalAIModelStatus(modelId),
     ])
     setRuntimeInfo(info)
     setModelStatus(nextModelStatus)
@@ -86,7 +88,7 @@ export function ItemLibraryLocalAIReviewPanel({
 
     let handle: { remove: () => Promise<void> } | null = null
     void addLocalAIModelDownloadListener((event: LocalAIModelProgressEvent) => {
-      if (event.modelId !== BIGDROPS_LOCAL_AI_POC_MODEL_ID) return
+      if (event.modelId !== modelId) return
       setModelStatus((current) => ({
         modelId: event.modelId,
         state: event.state,
@@ -113,13 +115,13 @@ export function ItemLibraryLocalAIReviewPanel({
       cancelled = true
       void handle?.remove()
     }
-  }, [])
+  }, [modelId])
 
   const handleDownloadModel = async () => {
     setStatus('downloading')
     setMessage(null)
     try {
-      const nextStatus = await downloadLocalAIModel(BIGDROPS_LOCAL_AI_POC_MODEL_ID)
+      const nextStatus = await downloadLocalAIModel(modelId)
       setModelStatus(nextStatus)
       setStatus('idle')
       setMessage(nextStatus.message || 'Local AI model is installed and verified.')
@@ -150,7 +152,7 @@ export function ItemLibraryLocalAIReviewPanel({
       }
 
       setStatus('running')
-      await loadLocalAIModel(BIGDROPS_LOCAL_AI_POC_MODEL_ID)
+      await loadLocalAIModel(modelId)
       const nativeResult = await analyzeCleanupTaskWithLocalAI({ task, prompt })
       const validation = validateCleanupLocalAIResult(nativeResult.rawText, task)
 
@@ -171,7 +173,7 @@ export function ItemLibraryLocalAIReviewPanel({
 
   const handleCancel = async () => {
     if (status === 'downloading') {
-      await cancelLocalAIModelDownload(BIGDROPS_LOCAL_AI_POC_MODEL_ID)
+      await cancelLocalAIModelDownload(modelId)
     } else {
       await cancelLocalAIGeneration()
     }
@@ -243,7 +245,7 @@ export function ItemLibraryLocalAIReviewPanel({
         <div className="rounded-lg border border-bd-border bg-bd-surface-muted p-3">
           <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Model</div>
           <div className="mt-1 text-[11px] font-semibold text-bd-text">{localAIModelStatusLabel(modelStatus)}</div>
-          <div className="mt-1 break-all font-mono text-[10px] text-bd-text-muted">{BIGDROPS_LOCAL_AI_POC_MODEL_ID}</div>
+          <div className="mt-1 break-all font-mono text-[10px] text-bd-text-muted">{modelId}</div>
         </div>
         <div className="rounded-lg border border-bd-border bg-bd-surface-muted p-3">
           <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Runtime</div>

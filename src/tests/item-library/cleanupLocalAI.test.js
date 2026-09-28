@@ -73,7 +73,7 @@ test('buildCleanupLocalAITask creates a bounded snapshot-linked cleanup task', (
 
 test('buildCleanupLocalAIPrompt includes strict JSON and no mutation instruction', () => {
   const task = makeTask()
-  const prompt = buildCleanupLocalAIPrompt(task)
+  const prompt = buildCleanupLocalAIPrompt(task, BIGDROPS_LOCAL_AI_POC_MODEL_ID)
 
   assert.match(prompt, /Return only strict JSON/i)
   assert.match(prompt, /read-only/i)
@@ -82,7 +82,7 @@ test('buildCleanupLocalAIPrompt includes strict JSON and no mutation instruction
 
 test('buildCleanupLocalAIPrompt example matches native constrained output field names', () => {
   const task = makeTask()
-  const prompt = buildCleanupLocalAIPrompt(task)
+  const prompt = buildCleanupLocalAIPrompt(task, BIGDROPS_LOCAL_AI_POC_MODEL_ID)
 
   assert.match(prompt, /"provider_id":\s*"local_android"/)
   assert.match(prompt, /"cleanup_snapshot_id":/)

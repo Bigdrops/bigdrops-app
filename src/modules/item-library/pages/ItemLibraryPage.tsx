@@ -8,7 +8,7 @@ import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
 import { ItemLibraryHistoricalReviewPanel } from '../components/ItemLibraryHistoricalReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
-import { ItemLibraryLocalAIReviewPanel } from '../components/ItemLibraryLocalAIReviewPanel'
+import { ItemLibraryLocalAIJobPanel } from '../components/ItemLibraryLocalAIJobPanel'
 import { ItemLibraryMergeHistoryPanel } from '../components/ItemLibraryMergeHistoryPanel'
 import { ItemLibraryStatusStrip } from '../components/ItemLibraryStatusStrip'
 import { getSyntheticCleanupItemIdFailure } from '../domain/cleanupApply'
@@ -709,7 +709,7 @@ export default function ItemLibraryPage() {
                           className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-6 text-center transition-all hover:border-bd-button-primary-bg hover:shadow-md group"
                         >
                           <div className="text-sm font-bold text-bd-text">Review with Local AI</div>
-                          <div className="text-[11px] text-bd-text-muted">Run one selected duplicate group through the on-device model. Read-only proposal.</div>
+                          <div className="text-[11px] text-bd-text-muted">Start one on-device review job across many duplicate groups. Read-only proposals.</div>
                         </button>
 
                         <button 
@@ -746,23 +746,16 @@ export default function ItemLibraryPage() {
                     isPairReviewedSeparate={isPairReviewedSeparate}
                     onMerge={handleMerge}
                   />
-                ) : viewMode === 'duplicates_local_ai' && selectedDuplicateGroup ? (
-                  <div className="flex h-full flex-col overflow-hidden bg-bd-app-bg">
-                    <div className="overflow-y-auto p-5 pb-20">
-                      <ItemLibraryLocalAIReviewPanel
-                        aliases={selectedGroupAliases}
-                        exportPayload={flaggedCleanupExport}
-                        group={selectedDuplicateGroup}
-                        reviewedSeparatePairs={reviewedSeparatePairs}
-                      />
-                    </div>
-                  </div>
                 ) : viewMode === 'duplicates_local_ai' ? (
-                  <div className="flex h-full items-center justify-center bg-bd-app-bg p-6">
-                    <div className="max-w-sm rounded-2xl border border-bd-border bg-bd-surface px-6 py-7 text-center shadow-lg">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Local AI duplicate review</div>
-                      <div className="mt-2 text-[18px] font-extrabold text-bd-text">No duplicate group selected</div>
-                      <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">Choose a duplicate group from the list to run a read-only Local AI proposal.</p>
+                  <div className="flex h-full flex-col overflow-hidden bg-bd-app-bg">
+                    <div className="min-h-0 flex-1 overflow-hidden">
+                      <ItemLibraryLocalAIJobPanel
+                        aliases={duplicateAliases}
+                        exportPayload={flaggedCleanupExport}
+                        groups={cleanupDuplicateGroups}
+                        reviewedSeparatePairs={reviewedSeparatePairs}
+                        selectedGroup={selectedDuplicateGroup}
+                      />
                     </div>
                   </div>
                 ) : (
