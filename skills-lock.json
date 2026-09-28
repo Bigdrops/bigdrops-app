@@ -533,6 +533,12 @@
       "skillPath": "skills/lesson-learned/SKILL.md",
       "computedHash": "58e2a4062f3f113177658ef822dfc52ca10997a41b71098a6ae809b8f5ab316c"
     },
+    "libraries-dev": {
+      "source": "Jakubantalik/Libraries.dev",
+      "sourceType": "github",
+      "skillPath": "skills/libraries-dev/SKILL.md",
+      "computedHash": "007578dd0c49905277bc099972ce9b0bdfb0bc01b70e82bd27a9019a3419a7c3"
+    },
     "marketing-council": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
