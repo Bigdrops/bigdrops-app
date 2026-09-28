@@ -1,7 +1,14 @@
 export type ItemSourceType = 'invoice' | 'quotation'
 
 export type ItemLibraryFilterType = 'all' | 'needs_cleanup' | ItemSourceType
-export type ItemLibraryViewMode = 'catalog' | 'duplicates' | 'duplicates_choice' | 'duplicates_outsourced' | 'advanced_cleanup' | 'merge_history'
+export type ItemLibraryViewMode =
+  | 'catalog'
+  | 'duplicates'
+  | 'duplicates_local_ai'
+  | 'duplicates_choice'
+  | 'duplicates_outsourced'
+  | 'advanced_cleanup'
+  | 'merge_history'
 
 export interface ItemFilterCounts {
   all: number

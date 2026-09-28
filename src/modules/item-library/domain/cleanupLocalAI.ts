@@ -5,9 +5,10 @@ import type {
   ItemAlias,
   ItemReviewedSeparatePair,
 } from '../types'
+import { BIGDROPS_LOCAL_AI_POC_MODEL_ID } from '@/lib/local-ai/modelManifest'
+export { BIGDROPS_LOCAL_AI_POC_MODEL_ID }
 
 export const CLEANUP_LOCAL_AI_SCHEMA_VERSION = 1 as const
-export const BIGDROPS_LOCAL_AI_POC_MODEL_ID = 'qwen3-0.6b-instruct-q4-k-m-gguf-poc'
 
 export type CleanupLocalAIDecision = 'SAME_ITEM' | 'DIFFERENT_ITEM' | 'UNSURE'
 

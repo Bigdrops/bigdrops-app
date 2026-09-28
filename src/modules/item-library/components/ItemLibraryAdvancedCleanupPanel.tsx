@@ -42,6 +42,7 @@ type ItemLibraryAdvancedCleanupPanelProps = {
   aliases: ItemAlias[]
   duplicateGroups: DuplicateCandidateGroup[]
   reviewedSeparatePairs?: ItemReviewedSeparatePair[]
+  onOpenLocalAIDuplicateReview?: () => void
   onApplyProposals: (
     exportPayload: CatalogCleanupBatchExportPayload | FlaggedCleanupBatchExportPayload,
     proposals: CleanupApplyProposal[],
@@ -174,6 +175,7 @@ export function ItemLibraryAdvancedCleanupPanel({
   aliases,
   duplicateGroups,
   reviewedSeparatePairs = [],
+  onOpenLocalAIDuplicateReview,
   onApplyProposals,
 }: ItemLibraryAdvancedCleanupPanelProps) {
   const [batchSizeOption, setBatchSizeOption] = useState<'25' | '50' | '100' | 'all' | 'custom'>('50')
@@ -521,7 +523,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                       <div>
                         <div className="text-[15px] font-extrabold text-bd-status-danger-text">Large catalog detected</div>
                         <p className="mt-1 text-[12px] leading-relaxed text-bd-status-danger-text opacity-90">
-                          This may be too large for one AI review. Consider 50 or 100 items per batch for better results.
+                          This may be too large for one external review. Consider 50 or 100 items per batch for better results.
                         </p>
                       </div>
                     </div>
@@ -545,6 +547,29 @@ export function ItemLibraryAdvancedCleanupPanel({
                 </div>
               </div>
             ) : null}
+          </section>
+
+          <section className="rounded-xl border border-bd-border bg-bd-surface p-5 shadow-lg md:p-6">
+            <SectionTitle
+              eyebrow="Local AI"
+              title="On-device help is limited to duplicate review"
+              description="The current Local AI contract reviews one flagged duplicate group at a time. Full-catalog standardization still uses the locked external export and import flow."
+            />
+            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-bd-border bg-bd-surface-muted px-4 py-4 md:flex-row md:items-center md:justify-between">
+              <div className="text-[12px] leading-relaxed text-bd-text-muted">
+                {duplicateGroups.length > 0
+                  ? `${duplicateGroups.length.toLocaleString()} duplicate group${duplicateGroups.length === 1 ? '' : 's'} can be reviewed with Local AI from the duplicate workflow.`
+                  : 'No duplicate groups are available for Local AI review right now.'}
+              </div>
+              <button
+                type="button"
+                onClick={onOpenLocalAIDuplicateReview}
+                disabled={!onOpenLocalAIDuplicateReview || duplicateGroups.length === 0}
+                className="inline-flex items-center justify-center rounded-md border border-bd-border bg-bd-surface px-3 py-2 text-[12px] font-bold text-bd-text transition hover:bg-bd-surface-muted disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Review duplicate groups with Local AI
+              </button>
+            </div>
           </section>
 
           <div className="sticky bottom-3 z-10">
@@ -575,8 +600,8 @@ export function ItemLibraryAdvancedCleanupPanel({
           <section className="rounded-xl border border-bd-border bg-bd-surface p-5 shadow-lg">
             <SectionTitle
               eyebrow="Cleanup Hub"
-              title="Outsource Duplicate Review"
-              description="Reviewing all flagged duplicate groups together. Export the JSON, review the AI output, and apply suggested merges."
+              title="External AI Duplicate Review"
+              description="Review all flagged duplicate groups together. Export the JSON, review it outside BIGDROPS, and paste the validated result."
             />
 
             <div className="mt-4 grid gap-3 md:grid-cols-4">
@@ -622,7 +647,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                 >
                   <div className="flex items-center gap-2">
                     {copyState === 'prompt' ? <ClipboardCheck className="h-4 w-4 text-bd-status-success-text" /> : <Copy className="h-4 w-4" />}
-                    {copyState === 'prompt' ? 'AI prompt copied' : 'Copy AI prompt'}
+                    {copyState === 'prompt' ? 'External prompt copied' : 'Copy external AI prompt'}
                   </div>
                   <Sparkles className="h-4 w-4 opacity-40" />
                 </button>
@@ -643,8 +668,8 @@ export function ItemLibraryAdvancedCleanupPanel({
             <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
               <SectionTitle
                 eyebrow="2. Import Review"
-                title="Paste AI result"
-                description="The result is validated against the full duplicate group scope. Use 'Final JSON' from the AI."
+                title="Paste external AI result"
+                description="The result is validated against the full duplicate group scope. Use the final JSON from the external review."
               />
 
               <textarea
@@ -661,7 +686,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                     },
                   }))
                 }}
-                placeholder="Paste AI result JSON here..."
+                placeholder="Paste external review result JSON here..."
                 spellCheck={false}
                 className="mt-4 min-h-[150px] w-full rounded-md border border-bd-input-border bg-bd-input-bg px-4 py-3 font-mono text-[11px] text-bd-text outline-none placeholder:text-bd-text-muted focus:border-bd-input-focus"
               />
@@ -680,8 +705,8 @@ export function ItemLibraryAdvancedCleanupPanel({
 
               {!importText.trim() ? (
                 <div className="rounded-md border border-dashed border-bd-border bg-bd-surface-muted px-4 py-8 text-center">
-                  <div className="text-[13px] font-semibold text-bd-text-muted">No AI result pasted yet</div>
-                  <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">Paste the AI output to preview decisions.</p>
+                  <div className="text-[13px] font-semibold text-bd-text-muted">No external result pasted yet</div>
+                  <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">Paste the external review output to preview decisions.</p>
                 </div>
               ) : validation.preview ? (
                 <div className="space-y-4">
@@ -850,7 +875,7 @@ export function ItemLibraryAdvancedCleanupPanel({
             <SectionTitle
               eyebrow="1. Export"
               title="Release only this batch"
-              description="The export contains the current batch only, with session and batch identifiers for strict import validation."
+              description="The export contains the current batch only, with session and batch identifiers for strict external-review import validation."
             />
 
             <div className="mt-4 grid gap-2">
@@ -872,7 +897,7 @@ export function ItemLibraryAdvancedCleanupPanel({
               >
                 <div className="flex items-center gap-2">
                   {copyState === 'prompt' ? <ClipboardCheck className="h-4 w-4 text-bd-status-success-text" /> : <Copy className="h-4 w-4" />}
-                  {copyState === 'prompt' ? 'AI prompt copied' : 'Copy AI prompt'}
+                  {copyState === 'prompt' ? 'External prompt copied' : 'Copy external AI prompt'}
                 </div>
                 <Sparkles className="h-4 w-4 opacity-40" />
               </button>
@@ -893,7 +918,7 @@ export function ItemLibraryAdvancedCleanupPanel({
           <section className="rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-sm">
             <SectionTitle
               eyebrow="2. Import Review"
-              title="Paste AI result"
+              title="Paste external AI result"
               description="The result is validated against the locked current batch. Wrong identifiers are rejected."
             />
 
@@ -911,7 +936,7 @@ export function ItemLibraryAdvancedCleanupPanel({
                   },
                 }))
               }}
-              placeholder="Paste AI result JSON here..."
+              placeholder="Paste external review result JSON here..."
               spellCheck={false}
               className="mt-4 min-h-[150px] w-full rounded-md border border-bd-input-border bg-bd-input-bg px-4 py-3 font-mono text-[11px] text-bd-text outline-none placeholder:text-bd-text-muted focus:border-bd-input-focus"
             />
@@ -930,8 +955,8 @@ export function ItemLibraryAdvancedCleanupPanel({
 
             {!importText.trim() ? (
               <div className="rounded-md border border-dashed border-bd-border bg-bd-surface-muted px-4 py-8 text-center">
-                <div className="text-[13px] font-semibold text-bd-text-muted">No AI result pasted yet</div>
-                <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">Paste the AI output to preview decisions for this batch.</p>
+                <div className="text-[13px] font-semibold text-bd-text-muted">No external result pasted yet</div>
+                <p className="mt-1 text-[11px] text-bd-text-muted opacity-80">Paste the external review output to preview decisions for this batch.</p>
               </div>
             ) : validation.preview ? (
               <div className="space-y-4">

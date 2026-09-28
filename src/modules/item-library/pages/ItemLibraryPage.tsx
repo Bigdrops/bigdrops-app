@@ -8,6 +8,7 @@ import { ItemLibraryDetailPanel } from '../components/ItemLibraryDetailPanel'
 import { ItemLibraryDuplicateReviewPanel } from '../components/ItemLibraryDuplicateReviewPanel'
 import { ItemLibraryHistoricalReviewPanel } from '../components/ItemLibraryHistoricalReviewPanel'
 import { ItemLibraryListPanel } from '../components/ItemLibraryListPanel'
+import { ItemLibraryLocalAIReviewPanel } from '../components/ItemLibraryLocalAIReviewPanel'
 import { ItemLibraryMergeHistoryPanel } from '../components/ItemLibraryMergeHistoryPanel'
 import { ItemLibraryStatusStrip } from '../components/ItemLibraryStatusStrip'
 import { getSyntheticCleanupItemIdFailure } from '../domain/cleanupApply'
@@ -214,7 +215,7 @@ export default function ItemLibraryPage() {
 
   useEffect(() => {
     if (workflowMode !== 'cleanup') return
-    if (viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') return
+    if (viewMode !== 'duplicates' && viewMode !== 'duplicates_local_ai' && viewMode !== 'advanced_cleanup') return
     if (!cleanupDuplicateGroups.length) {
       setSelectedDuplicateGroupId(null)
       return
@@ -228,7 +229,7 @@ export default function ItemLibraryPage() {
 
   useEffect(() => {
     if (workflowMode !== 'cleanup') return
-    if ((viewMode !== 'duplicates' && viewMode !== 'advanced_cleanup') || !selectedDuplicateGroupId) return
+    if ((viewMode !== 'duplicates' && viewMode !== 'duplicates_local_ai' && viewMode !== 'advanced_cleanup') || !selectedDuplicateGroupId) return
 
     const activeGroup = cleanupDuplicateGroups.find((group) => group.group_id === selectedDuplicateGroupId)
     if (!activeGroup || !activeGroup.members.length) return
@@ -270,7 +271,9 @@ export default function ItemLibraryPage() {
     () => buildFlaggedCleanupExportPayload({ duplicateGroups: allDuplicateGroups, aliases: duplicateAliases }),
     [allDuplicateGroups, duplicateAliases],
   )
-  const { data: allItemAliases } = useItemAliases(summaryItemIds, { enabled: workflowMode === 'cleanup' && viewMode === 'advanced_cleanup' })
+  const { data: allItemAliases } = useItemAliases(summaryItemIds, {
+    enabled: workflowMode === 'cleanup' && (viewMode === 'advanced_cleanup' || viewMode === 'duplicates_outsourced'),
+  })
   const { mergeItems, loading: mergeLoading } = useItemMerge()
 
   const {
@@ -478,8 +481,18 @@ export default function ItemLibraryPage() {
 
   const totalCount = filteredItems.length
   const showCleanupLauncher = workflowMode === 'cleanup' && viewMode === 'catalog'
-  const showCleanupSideList = workflowMode === 'cleanup' && viewMode === 'duplicates'
+  const showCleanupSideList = workflowMode === 'cleanup' && (viewMode === 'duplicates' || viewMode === 'duplicates_local_ai')
   const showLeftPanel = workflowMode === 'library' || showCleanupSideList
+
+  const handleMobileBack = () => {
+    if (workflowMode === 'cleanup' && viewMode !== 'catalog' && !showLeftPanel) {
+      setViewMode('catalog')
+      setMobileDetailOpen(false)
+      return
+    }
+
+    setMobileDetailOpen(false)
+  }
 
   useEffect(() => {
     if (viewMode === 'merge_history' && mergeHistoryCount === 0) {
@@ -638,7 +651,7 @@ export default function ItemLibraryPage() {
             <div className="flex-shrink-0 border-b border-bd-border bg-bd-surface-muted md:hidden">
               <button
                 type="button"
-                onClick={() => setMobileDetailOpen(false)}
+                onClick={handleMobileBack}
                 className="flex items-center gap-[6px] border-none bg-transparent px-4 py-3 text-[13px] font-semibold text-bd-text-muted transition-colors hover:text-bd-text"
               >
                 <BackArrow />
@@ -661,8 +674,10 @@ export default function ItemLibraryPage() {
                   <div className="text-[11px] font-semibold text-bd-text-muted">
                     {viewMode === 'duplicates'
                       ? 'Fix Duplicate Items (Manual)'
+                      : viewMode === 'duplicates_local_ai'
+                        ? 'Fix Duplicate Items (Local AI)'
                       : viewMode === 'duplicates_outsourced'
-                        ? 'Fix Duplicate Items (AI Outsource)'
+                        ? 'Fix Duplicate Items (External AI Export)'
                         : viewMode === 'duplicates_choice'
                         ? 'Choose Review Method'
                         : viewMode === 'advanced_cleanup'
@@ -680,8 +695,8 @@ export default function ItemLibraryPage() {
                         <p className="text-bd-text-muted text-[13px] leading-relaxed">Choose a review method for the {totalUnresolvedIssues} duplicate groups detected in your catalog.</p>
                       </div>
 
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <button 
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <button
                           onClick={() => setViewMode('duplicates')}
                           className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-6 text-center transition-all hover:border-bd-button-primary-bg hover:shadow-md group"
                         >
@@ -689,12 +704,20 @@ export default function ItemLibraryPage() {
                           <div className="text-[11px] text-bd-text-muted">Side-by-side comparison with full price and history audit.</div>
                         </button>
 
+                        <button
+                          onClick={() => setViewMode('duplicates_local_ai')}
+                          className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-6 text-center transition-all hover:border-bd-button-primary-bg hover:shadow-md group"
+                        >
+                          <div className="text-sm font-bold text-bd-text">Review with Local AI</div>
+                          <div className="text-[11px] text-bd-text-muted">Run one selected duplicate group through the on-device model. Read-only proposal.</div>
+                        </button>
+
                         <button 
                           onClick={() => setViewMode('duplicates_outsourced')}
                           className="flex flex-col items-center gap-2 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-6 text-center transition-all hover:border-bd-button-primary-bg hover:shadow-md group"
                         >
-                          <div className="text-sm font-bold text-bd-text">Use AI for Duplicate Review</div>
-                          <div className="text-[11px] text-bd-text-muted">Export all groups for AI review. Faster for large lists.</div>
+                          <div className="text-sm font-bold text-bd-text">Export for External AI Review</div>
+                          <div className="text-[11px] text-bd-text-muted">Export all groups for review outside BIGDROPS, then paste the validated JSON result.</div>
                         </button>
                       </div>
 
@@ -706,7 +729,7 @@ export default function ItemLibraryPage() {
                       </button>
                    </div>
                 </div>
-              ) : workflowMode === 'cleanup' && (viewMode === 'duplicates' || viewMode === 'duplicates_outsourced') ? (
+              ) : workflowMode === 'cleanup' && (viewMode === 'duplicates' || viewMode === 'duplicates_local_ai' || viewMode === 'duplicates_outsourced') ? (
                 viewMode === 'duplicates' ? (
                   <ItemLibraryDuplicateReviewPanel
                     aliases={selectedGroupAliases}
@@ -718,13 +741,30 @@ export default function ItemLibraryPage() {
                     loading={historyLoading}
                     error={historyError}
                     mergeLoading={mergeLoading || Boolean(reviewedSeparatePairsError)}
-                    flaggedCleanupExport={flaggedCleanupExport}
-                    reviewedSeparatePairs={reviewedSeparatePairs}
                     onInspectItem={(itemId) => setSelectedItemId(itemId)}
                     onKeepSeparate={handleKeepDuplicateGroupSeparate}
                     isPairReviewedSeparate={isPairReviewedSeparate}
                     onMerge={handleMerge}
                   />
+                ) : viewMode === 'duplicates_local_ai' && selectedDuplicateGroup ? (
+                  <div className="flex h-full flex-col overflow-hidden bg-bd-app-bg">
+                    <div className="overflow-y-auto p-5 pb-20">
+                      <ItemLibraryLocalAIReviewPanel
+                        aliases={selectedGroupAliases}
+                        exportPayload={flaggedCleanupExport}
+                        group={selectedDuplicateGroup}
+                        reviewedSeparatePairs={reviewedSeparatePairs}
+                      />
+                    </div>
+                  </div>
+                ) : viewMode === 'duplicates_local_ai' ? (
+                  <div className="flex h-full items-center justify-center bg-bd-app-bg p-6">
+                    <div className="max-w-sm rounded-2xl border border-bd-border bg-bd-surface px-6 py-7 text-center shadow-lg">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-bd-text-muted">Local AI duplicate review</div>
+                      <div className="mt-2 text-[18px] font-extrabold text-bd-text">No duplicate group selected</div>
+                      <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">Choose a duplicate group from the list to run a read-only Local AI proposal.</p>
+                    </div>
+                  </div>
                 ) : (
                   <ItemLibraryAdvancedCleanupPanel
                     workflow="duplicates"
@@ -744,6 +784,7 @@ export default function ItemLibraryPage() {
                   aliases={allItemAliases}
                   duplicateGroups={allDuplicateGroups}
                   reviewedSeparatePairs={reviewedSeparatePairs}
+                  onOpenLocalAIDuplicateReview={() => setViewMode('duplicates_local_ai')}
                   onApplyProposals={handleApplyCleanupProposals}
                 />
               ) : workflowMode === 'cleanup' && viewMode === 'merge_history' ? (
@@ -769,7 +810,7 @@ export default function ItemLibraryPage() {
                             <span className="text-sm font-bold text-bd-text">Fix Duplicate Items</span>
                             <span className="rounded-full bg-bd-surface-muted px-2.5 py-0.5 text-[10px] font-bold text-bd-text-muted group-hover:bg-bd-button-primary-bg group-hover:text-bd-button-primary-text transition-colors">{totalUnresolvedIssues} groups</span>
                           </div>
-                          <span className="text-[11px] text-bd-text-muted">Review detected duplicate groups, inspect history, and merge manually or via AI outsource.</span>
+                          <span className="text-[11px] text-bd-text-muted">Review detected duplicate groups manually, with Local AI, or by external export.</span>
                         </button>
 
                         <button 
@@ -777,7 +818,7 @@ export default function ItemLibraryPage() {
                           className="flex flex-col items-start gap-1 rounded-[var(--bd-radius-xl)] border border-bd-border bg-bd-card-bg p-5 text-left transition-all hover:border-bd-button-primary-bg hover:shadow-md group"
                         >
                           <span className="text-sm font-bold text-bd-text">Clean &amp; Standardize Catalog</span>
-                          <span className="text-[11px] text-bd-text-muted">Run a locked full-catalog cleanup session with numeric batches, AI review, and safe merge apply support.</span>
+                          <span className="text-[11px] text-bd-text-muted">Run a locked full-catalog cleanup session with numeric batches, external review, and safe merge apply support.</span>
                         </button>
 
                         {mergeHistoryCount > 0 ? (
