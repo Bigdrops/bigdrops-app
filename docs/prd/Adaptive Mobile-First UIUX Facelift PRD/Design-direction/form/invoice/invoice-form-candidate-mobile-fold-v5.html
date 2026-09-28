@@ -40,12 +40,28 @@
     the row header, so no decorative spine runs through empty row height.
   - Groups are permanently expanded. The group delete X occupies the first
     control slot, on the left. No collapse control exists anywhere.
+
+  V5 - refinement of V4. Four corrections. Nothing else changes.
+  - The horizontal item action toolbar of V4 is rejected. Item identity and
+    control return to the accepted BOQ vertical enumeration rail: number, then
+    the move pair, then duplicate, down the left edge of the row. The rail
+    spans the identity zone only, so no spine runs through empty row height.
+    A 26px right inset reserves the corner for the delete box, so the
+    Description never runs under it.
+  - The row amount readout becomes one compact right-aligned line in the
+    identity zone. It is still not a block, and it still adds no row height.
+  - Invoice/Quotation switching is removed. Invoice and Quotation share one
+    template-level form architecture, so this Invoice candidate spends no
+    control, state, or space on that equivalence.
+  - The selected Item Library history is demoted to muted helper metadata.
+    The "Use price" action is deleted. There is no outlined price CTA and no
+    accent treatment. The editable Rate field stays authoritative.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BIGDROPS - Invoice Authoring Workspace</title>
+<title>BIGDROPS - Invoice Authoring Workspace - V5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -171,33 +187,48 @@
   #items > .item:first-child,#items > .gwrap:first-child{margin-top:0}
 
   .item{position:relative;padding-top:12px}
-  .item::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--line)}
+  .item::before{content:'';position:absolute;top:0;left:0;right:26px;height:1px;background:var(--line)}
   #items > .item:first-child::before,.gbody > .item:first-child::before{display:none}
   .item.err{background:var(--red-soft);border-radius:12px}
   .item.err .idx{background:var(--red);border-color:var(--red);color:#fff}
   .item.err .desc{border-color:var(--red)}
 
-  /* Row header - identity, reorder, duplicate, amount and delete share one
-     28px line. The amount readout lives here instead of in its own full-width
-     block, so it costs no vertical space in the row. */
-  .irow{display:flex;align-items:center;gap:5px;margin-bottom:8px}
-  .irow .sp{flex:1;min-width:0}
-  .idx{width:28px;height:28px;border-radius:9px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em;flex-shrink:0}
+  /* Delete stays the item's own destructive action, as in the accepted BOQ
+     pattern: a box that the row's top hairline runs into, with a short stub
+     line out of its bottom. The ::before hit area gives a 44px touch target. */
+  .ear{position:absolute;top:0;right:0;width:26px;height:26px;border-radius:8px 3px 8px 8px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  .ear::before{content:'';position:absolute;inset:-9px}
+  .ear::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:12px;background:var(--line-strong);transform:translateX(-50%);transition:background .15s}
+  .ear svg{width:11px;height:11px}
+  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
+  .ear:hover::after{background:var(--red)}
+  .ear:active{transform:scale(.9)}
+
+  /* Enumeration rail - the accepted BOQ anatomy, adapted to the denser V4 item
+     body. Identity at the top, the move pair in the middle, duplicate at the
+     bottom. The rail stretches to the identity zone only, so the spine follows
+     real controls instead of running through empty row height.
+     The 26px right inset reserves the corner for the delete box, so the
+     Description never runs under it. */
+  .ihead{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:10px;align-items:stretch;padding-right:26px}
+  .rail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:5px;padding:1px 0}
+  .rail::before{content:'';position:absolute;left:50%;top:15px;bottom:15px;width:1px;background:var(--rail);transform:translateX(-50%);z-index:0}
+  .rail>*{position:relative;z-index:1;flex-shrink:0}
+  .idx{width:28px;height:28px;border-radius:9px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
+  .rmid{display:flex;flex-direction:column;gap:5px}
   .rbtn{position:relative;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
   /* the invisible hit area holds the real touch target at 38px */
   .rbtn::after{content:'';position:absolute;inset:-5px}
-  .rbtn svg{width:11px;height:11px}
+  .rbtn svg{width:12px;height:12px}
   .rbtn:hover{background:var(--soft);color:var(--ink);border-color:var(--line-strong)}
   .rbtn:active{transform:scale(.92)}
   .rbtn:disabled{opacity:.32;pointer-events:none}
-  .amt{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;min-width:0;padding-left:8px}
-  .amt small{font-family:var(--mono);font-size:7.5px;font-weight:500;color:var(--faint);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .amt b{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1.15;letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
-  .ear{position:relative;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
-  .ear::after{content:'';position:absolute;inset:-5px}
-  .ear svg{width:11px;height:11px}
-  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
-  .ear:active{transform:scale(.9)}
+
+  /* Row amount readout - one compact right-aligned line. No block, no bar, so
+     it adds no height to the row. */
+  .amtrow{display:flex;align-items:baseline;justify-content:flex-end;gap:7px;margin-top:7px}
+  .amtrow small{font-family:var(--mono);font-size:7.5px;font-weight:500;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .amtrow b{flex-shrink:0;font-family:var(--mono);font-size:13px;font-weight:600;line-height:1.15;letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
 
   .idesc{display:flex;flex-direction:column;gap:6px;min-width:0}
   .descwrap{position:relative}
@@ -220,15 +251,11 @@
   .sug-empty{padding:10px 12px;font-size:9.5px;font-weight:600;color:var(--sub)}
   .sug-load{padding:10px 12px;font-size:9.5px;font-weight:600;color:var(--faint)}
 
-  /* Item Library STATE B - item selected (live: priceContextText +
-     usableHistoryPrice). The library identity and its history collapse into
-     one contextual line under Description. No bordered card, no block. */
-  .libline{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px;padding-left:2px;font-size:9.5px;font-weight:600;line-height:1.45;color:var(--sub)}
-  .libline .dot{width:5px;height:5px;border-radius:50%;background:var(--sell);flex-shrink:0}
-  .libline span{min-width:0}
-  .libline b{font-family:var(--mono);font-weight:600;color:var(--ink)}
-  .libline .libuse{margin-left:auto;flex-shrink:0;height:22px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--card);font-family:var(--mono);font-size:9px;font-weight:600;color:var(--accent);transition:background .15s,border-color .15s}
-  .libline .libuse:hover{background:var(--accent-soft);border-color:var(--accent)}
+  /* Item Library STATE B - item selected. Passive helper metadata under the
+     Description. The same muted family as the other secondary form metadata:
+     no CTA, no accent, no green, no outlined price control. */
+  .libline{margin-top:5px;padding-left:1px;font-family:var(--mono);font-size:9px;font-weight:500;line-height:1.5;color:var(--faint)}
+  .libline .libtag{margin-right:5px;font-family:'Manrope',sans-serif;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);opacity:.85}
 
   /* Secondary detail row. Photo and Sub Description stay next to Description.
      When the Sub Description editor opens it takes its own full-width line. */
@@ -556,13 +583,14 @@
     /* The phone authoring model is recomposed, not replaced by a desktop
        table. Identity column on the left, data column on the right, both
        authored the same way they are on a phone. */
-    .item{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(310px,1fr);column-gap:22px}
-    .irow{grid-column:1/-1;grid-row:1;margin-bottom:10px}
-    .idesc{grid-column:1;grid-row:2}
-    .srow{grid-column:1;grid-row:3;margin-top:8px}
-    .idata{grid-column:2;grid-row:2/span 2;margin-top:0;padding-left:20px;border-left:1px solid var(--line);gap:10px}
+    .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr);column-gap:22px}
+    /* the delete box now lives inside the identity zone, so the row hairline
+       runs the full width again */
+    .item::before{right:0}
+    .ihead{grid-column:1;grid-row:1}
+    .idata{grid-column:2;grid-row:1;margin-top:0;padding-left:20px;border-left:1px solid var(--line);gap:10px}
     .mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .ins{grid-column:1/-1;grid-row:4}
+    .ins{grid-column:1/-1;grid-row:2}
     textarea.desc{min-height:60px}
     .cf-hint{display:inline}
     .totals-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
@@ -621,14 +649,9 @@
       <span class="cp-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
     </button>
 
+    <!-- No document-type switch. Invoice and Quotation share one template-level
+         form architecture, and this file is an Invoice candidate. -->
     <div class="dgrid" style="margin-top:10px">
-      <div class="full">
-        <label class="lb" for="fType">Document type</label>
-        <div class="seg" id="docTypeSeg">
-          <button class="on" id="dtInvoice" onclick="setDocType('invoice')">Invoice</button>
-          <button id="dtQuotation" onclick="setDocType('quotation')">Quotation</button>
-        </div>
-      </div>
       <div class="full">
         <label class="lb" for="fTitle" id="lbTitle">Invoice title</label>
         <input class="fld" id="fTitle" value="Quarterly equipment overhaul" placeholder="Invoice title / project reference">
@@ -689,7 +712,7 @@
 
     <div class="scaffold">
       <span><b>A &middot; Discovery</b> Type 2+ letters into a Description and the library suggestions open with item name, last price, use count and last reference. The last row below is in this state.</span>
-      <span><b>B &middot; Selected</b> After a library pick the suggestions close and the history collapses to one line under Description, with a small price action. Row 02 below is in this state.</span>
+      <span><b>B &middot; Selected</b> After a library pick the suggestions close and the history becomes one muted helper line under Description. It is context, not a recommendation. Row 02 below is in this state.</span>
     </div>
 
     <div id="items"></div>
@@ -1020,20 +1043,10 @@ var suggestionMeta = function(c, q){
   if (c.last_used_at) parts.push(c.last_used_at);
   return parts.join(' \u00B7 ');
 };
-var priceContextText = function(c){
-  var lines = [];
-  if (c.last_price_for_client != null) {
-    lines.push('Last sold to this client: ' + naira(c.last_price_for_client) + (c.last_source_document_number ? ' \u00B7 ' + c.last_source_document_number : '') + (c.last_used_at ? ' \u00B7 ' + c.last_used_at : ''));
-  } else if (c.last_price_global != null) {
-    lines.push('Last sold: ' + naira(c.last_price_global) + (c.last_source_document_number ? ' \u00B7 ' + c.last_source_document_number : '') + (c.last_used_at ? ' \u00B7 ' + c.last_used_at : ''));
-  }
-  return lines.join('\n');
-};
 
 /* ---------- document model (live Invoice contract) ---------- */
 var state = {
   saved: false,
-  docType: 'invoice',
   client: { id: 'c1', name: 'Adeyemi & Partners', person: 'Ijeoma Adeyemi', initials: 'A&', phone: '0803 555 0142', email: 'ijeoma@adeyemi.com' },
   clients: [
     { id: 'c1', name: 'Adeyemi & Partners', person: 'Ijeoma Adeyemi', initials: 'A&', phone: '0803 555 0142', email: 'ijeoma@adeyemi.com' },
@@ -1228,23 +1241,22 @@ function suggestionHTML(r){
   html += '</div>';
   return html;
 }
-/* Item Library STATE B - item selected. Library identity and history collapse
-   into one contextual line under Description. The old bordered history card
-   and its oversized "Use price" button are gone. */
+/* Item Library STATE B - item selected. The library history becomes passive
+   helper metadata under the Description: one muted line, no CTA, no price
+   action, no accent. It answers "what was this sold for, and where and when".
+   It does not suggest that the historical price is preferred. The editable
+   Rate field stays authoritative. */
 function libLineHTML(r){
   if (!r.item_id) return '';
   var c = findCatalog(r.item_id);
   if (!c) return '';
   var price = suggestionPrice(c);
   var bits = [];
-  if (price.value != null) bits.push('Last sold: <b>' + naira(price.value) + '</b>');
-  if (c.last_source_document_number) bits.push(esc(c.last_source_document_number));
-  if (c.last_used_at) bits.push(esc(c.last_used_at));
+  if (price.value != null) bits.push('Last sold: ' + naira(price.value));
+  if (c.last_source_document_number) bits.push(c.last_source_document_number);
+  if (c.last_used_at) bits.push(c.last_used_at);
   if (c.usage_count) bits.push(c.usage_count + (c.usage_count === 1 ? ' use' : ' uses'));
-  var useBtn = (price.value != null && price.value !== Number(r.rate))
-    ? '<button type="button" class="libuse" onmousedown="event.preventDefault(); usePrice(' + r.id + ',' + price.value + ')">Use ' + naira(price.value) + '</button>'
-    : '';
-  return '<div class="libline"><span class="dot"></span><span>' + esc(c.name) + ' &middot; ' + bits.join(' &middot; ') + '</span>' + useBtn + '</div>';
+  return '<div class="libline"><span class="libtag">Library</span>' + esc(bits.join(' \u00B7 ')) + '</div>';
 }
 function photoHTML(r){
   if (r.image) {
@@ -1299,23 +1311,26 @@ function itemHTML(r, sib){
     + (opt ? '<div class="mgrid">' + opt + '</div>' : '')
     + '</div>';
   return '<article class="item' + errCls + '" data-id="' + r.id + '">'
-    + '<div class="irow">'
-    +   '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
-    +   '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
-    +   '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
-    +   '<button class="rbtn" title="Duplicate item" aria-label="Duplicate item" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
-    +   '<span class="sp"></span>'
-    +   (vis('amount') ? '<span class="amt"><small>' + fmtQty(r.qty) + ' &times; ' + naira(r.rate) + '</small><b>' + naira(r.line || 0) + '</b></span>' : '')
+    + '<div class="ihead">'
     +   '<button class="ear" title="Remove item" aria-label="Remove item" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
-    + '</div>'
-    + '<div class="idesc">'
-    +   '<div class="descwrap">'
-    +     '<textarea class="fld desc" rows="1"' + (errId === r.id ? ' aria-invalid="true"' : '') + ' placeholder="Item description * \u2014 type 2+ letters for library suggestions" oninput="editDesc(' + r.id + ',this.value)" onfocus="focusDesc(' + r.id + ')" onblur="blurDesc(' + r.id + ')">' + esc(r.desc) + '</textarea>'
-    +     suggestionHTML(r)
-    +     libLineHTML(r)
+    +   '<div class="rail">'
+    +     '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
+    +     '<div class="rmid">'
+    +       '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
+    +       '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
+    +     '</div>'
+    +     '<button class="rbtn" title="Duplicate item" aria-label="Duplicate item" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
+    +   '</div>'
+    +   '<div class="idesc">'
+    +     '<div class="descwrap">'
+    +       '<textarea class="fld desc" rows="1"' + (errId === r.id ? ' aria-invalid="true"' : '') + ' placeholder="Item description * \u2014 type 2+ letters for library suggestions" oninput="editDesc(' + r.id + ',this.value)" onfocus="focusDesc(' + r.id + ')" onblur="blurDesc(' + r.id + ')">' + esc(r.desc) + '</textarea>'
+    +       suggestionHTML(r)
+    +       libLineHTML(r)
+    +     '</div>'
+    +     (vis('amount') ? '<div class="amtrow"><small>' + fmtQty(r.qty) + ' &times; ' + naira(r.rate) + '</small><b>' + naira(r.line || 0) + '</b></div>' : '')
+    +     '<div class="srow">' + photoHTML(r) + subHTML(r) + '</div>'
     +   '</div>'
     + '</div>'
-    + '<div class="srow">' + photoHTML(r) + subHTML(r) + '</div>'
     + idata
     + '<button class="ins" onclick="insertBelow(' + r.id + ')">+ Insert below</button>'
     + '</article>';
@@ -1401,12 +1416,11 @@ function renderTotals(){
   document.getElementById('tWords').style.display = state.pdf.showAmountInWords ? '' : 'none';
   var vq = document.getElementById('fVatQuick');
   if (vq && document.activeElement !== vq) vq.value = fmtQty(state.vat);
-  /* live amount readout. V4 moved it from a full-width amount bar into the
-     row header, so the update targets the row header readout instead. */
+  /* live amount readout in the identity zone (was: a full-width amount bar) */
   document.querySelectorAll('#items .item').forEach(function(el){
     var r = state.items.find(function(x){ return x.id === Number(el.getAttribute('data-id')); });
     if (!r) return;
-    var amt = el.querySelector('.irow .amt');
+    var amt = el.querySelector('.amtrow');
     if (!amt) return;
     var b = amt.querySelector('b');
     if (b) b.textContent = naira(r.line || 0);
@@ -1876,7 +1890,7 @@ function save(){
   state.saved = true;
   document.getElementById('modeBadge').textContent = 'Saved';
   render();
-  toast(state.docType === 'quotation' ? 'Quotation saved \u2014 status: Unpaid' : 'Invoice saved \u2014 status: Unpaid');
+  toast('Invoice saved \u2014 status: Unpaid');
 }
 
 /* ---------- edits ---------- */
@@ -1920,14 +1934,7 @@ function pickSuggestion(id, itemId){
   r.item_id = c.item_id;
   state.suggestFor = null;
   render();
-  toast('Library item applied \u2014 rate filled from standard price');
-}
-function usePrice(id, price){
-  var r = state.items.find(function(x){ return x.id === id; });
-  if (!r) return;
-  r.rate = price;
-  render();
-  toast('Rate updated from library price');
+  toast('Library item applied');
 }
 function addPhoto(id){
   var r = state.items.find(function(x){ return x.id === id; });
@@ -2109,20 +2116,6 @@ function clearAll(){ openSheet('clear'); }
 function doClearAll(){ state.items = []; closeSheet('clear'); render(); toast('All rows cleared'); }
 
 /* ---------- commercial terms edits ---------- */
-function setDocType(t){
-  state.docType = t;
-  var qi = document.getElementById('dtInvoice');
-  var qq = document.getElementById('dtQuotation');
-  if (qi) qi.classList.toggle('on', t === 'invoice');
-  if (qq) qq.classList.toggle('on', t === 'quotation');
-  var lbNo = document.getElementById('lbNo'); if (lbNo) lbNo.innerHTML = (t === 'quotation' ? 'Quotation no' : 'Invoice no') + ' <span class="req">*</span>';
-  var lbIssue = document.getElementById('lbIssue'); if (lbIssue) lbIssue.textContent = t === 'quotation' ? 'Quotation date' : 'Issue date';
-  var lbDue = document.getElementById('lbDue'); if (lbDue) lbDue.textContent = t === 'quotation' ? 'Valid until' : 'Due date';
-  var lbTitle = document.getElementById('lbTitle'); if (lbTitle) lbTitle.textContent = t === 'quotation' ? 'Quotation title' : 'Invoice title';
-  var fTitle = document.getElementById('fTitle'); if (fTitle) fTitle.placeholder = t === 'quotation' ? 'Quotation title / project reference' : 'Invoice title / project reference';
-  var h1 = document.querySelector('.tb-title h1'); if (h1) h1.textContent = t === 'quotation' ? 'Quotation' : 'Invoice';
-  render();
-}
 function setDiscType(t){ state.discountType = t; renderCommercialTerms(); renderTotals(); }
 function setDiscTiming(t){ state.discountTiming = t; renderCommercialTerms(); renderTotals(); }
 function setWhtType(t){ state.whtType = t; renderCommercialTerms(); renderTotals(); }

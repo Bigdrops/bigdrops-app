@@ -40,12 +40,29 @@
     the row header, so no decorative spine runs through empty row height.
   - Groups are permanently expanded. The group delete X occupies the first
     control slot, on the left. No collapse control exists anywhere.
+
+  DESKTOP V4 (>=1024px)
+  A separate composition from the mobile/fold candidate. The document stays
+  continuous: every section is present in the flow and reachable by ordinary
+  scrolling. There is no tab, wizard, section gate or click-to-reveal step.
+  - The top bar carries a section index. It is navigation only: each chip is
+    an anchor that scrolls to a section that is already present. It never
+    controls which sections exist or which one is visible.
+  - Two regions side by side: the main document column (document details,
+    line items, commercial terms, supporting info) and a sticky totals rail
+    that stays in view while the document is authored.
+  - Document metadata uses a four-column grid. Commercial terms become a
+    three-column board. Supporting info becomes two columns.
+  - Line item authoring stays horizontal: identity column plus a three-column
+    data grid.
+  - Column Manager and Import become centred desktop dialogs.
+  - Invoice semantics only. No CP, SP, profit, margin or vendor concepts.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BIGDROPS - Invoice Authoring Workspace</title>
+<title>BIGDROPS - Invoice Authoring Workspace - Desktop V4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -113,6 +130,8 @@
   .tb-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   .tb-meta .badge{color:var(--accent)}
   .tb-meta .sep{opacity:.55}
+  /* Desktop-only section index. Hidden below 1024px. */
+  .secnav{display:none}
 
   /* ============ SECTIONS ============ */
   .sec{margin-top:20px}
@@ -574,6 +593,49 @@
     #supportInfo > div{margin-top:0!important}
     .sheet{max-width:560px;border-radius:22px;margin-bottom:18px}
   }
+
+  /* ============ DESKTOP (>=1024) - continuous document, no section gating ===
+     Every section of the invoice is present at once and reachable by ordinary
+     scrolling. The section index in the top bar only scrolls to a section that
+     is already in the flow: it never hides a section and it never controls
+     which section exists. There is no tab, wizard, or click-to-reveal step. */
+  @media (min-width:1024px){
+    :root{--gutter:34px}
+    html{scroll-behavior:smooth}
+    .wrap{max-width:1320px;padding:16px var(--gutter) 44px}
+    .topbar{padding-bottom:10px}
+    .tb-title{flex:0 1 auto;padding-right:16px}
+    .secnav{display:flex;align-items:center;gap:4px;flex:1;justify-content:center;min-width:0;overflow:hidden}
+    .secnav a{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:9px;border:1px solid transparent;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);white-space:nowrap;text-decoration:none;transition:background .15s,color .15s,border-color .15s}
+    .secnav a:hover{background:var(--card);border-color:var(--line);color:var(--ink)}
+    /* two regions: the document column and the totals rail. Explicit placement
+       keeps every section in the DOM in document order; nothing is unmounted,
+       hidden or moved behind a control. */
+    .docgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr);column-gap:34px;align-items:start}
+    #sec1{grid-column:1;grid-row:2}
+    #sec2{grid-column:1;grid-row:3}
+    #sec3{grid-column:1;grid-row:4}
+    #sec5{grid-column:1;grid-row:5}
+    #sec4{grid-column:2;grid-row:2/span 6;align-self:start;position:sticky;top:72px;margin-top:0;padding-top:0;border-top:0}
+    .sec{scroll-margin-top:84px;margin-top:0}
+    .sec + .sec{margin-top:26px}
+    .sec-head{margin-bottom:14px}
+    /* document metadata uses the full desktop width */
+    .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .dgrid .full{grid-column:span 2}
+    /* line item authoring stays horizontal: identity column + data column */
+    .item{grid-template-columns:minmax(0,1.25fr) minmax(360px,1fr);column-gap:26px}
+    .mgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    /* commercial terms become a three-column board; supporting info two */
+    #commercialTerms{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    #supportInfo{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .totals{border-width:1px;box-shadow:var(--shadow-ear)}
+    /* sheets become centred desktop dialogs */
+    .ov{align-items:center;padding:24px}
+    .sheet{max-width:760px;width:100%;border-radius:20px;margin:0;max-height:calc(100vh - 48px);padding:16px 18px 18px}
+    .grab{display:none}
+    .createpair{margin-top:20px}
+  }
 </style>
 </head>
 <body>
@@ -592,6 +654,15 @@
         <span id="layoutChip">Phone</span>
       </div>
     </div>
+    <!-- Desktop section index. Navigation only: each chip scrolls to a section
+         that is already in the flow. It never hides or gates a section. -->
+    <nav class="secnav" aria-label="Document sections">
+      <a href="#sec1">1 Document</a>
+      <a href="#sec2">2 Line items</a>
+      <a href="#sec3">3 Commercial</a>
+      <a href="#sec4">4 Totals</a>
+      <a href="#sec5">5 Supporting</a>
+    </nav>
     <button class="tb-save" onclick="save()" title="Save Invoice" aria-label="Save Invoice">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
       Save Invoice
@@ -601,8 +672,12 @@
     </button>
   </header>
 
+  <!-- Desktop two-region workspace. The document column and the totals rail.
+       On a phone these sections simply stack in this same order. -->
+  <div class="docgrid">
+
   <!-- ================= 1. DOCUMENT DETAILS ================= -->
-  <section class="sec" style="margin-top:14px">
+  <section class="sec" id="sec1" style="margin-top:14px">
     <div class="sec-head">
       <span class="secno">1.</span>
       <h2>Document details</h2>
@@ -664,7 +739,7 @@
   </section>
 
   <!-- ================= 2. LINE ITEMS ================= -->
-  <section class="sec">
+  <section class="sec" id="sec2">
     <div class="sec-head">
       <span class="secno">2.</span>
       <h2>Line items</h2>
@@ -707,7 +782,7 @@
   </section>
 
   <!-- ================= 3. COMMERCIAL TERMS ================= -->
-  <section class="sec">
+  <section class="sec" id="sec3">
     <div class="sec-head">
       <span class="secno">3.</span>
       <h2>Commercial terms</h2>
@@ -732,7 +807,7 @@
   </section>
 
   <!-- ================= 4. TOTALS ================= -->
-  <section class="sec">
+  <section class="sec" id="sec4">
     <div class="sec-head">
       <span class="secno">4.</span>
       <h2>Totals</h2>
@@ -769,7 +844,7 @@
   </section>
 
   <!-- ================= 5. SUPPORTING INFO ================= -->
-  <section class="sec">
+  <section class="sec" id="sec5">
     <div class="sec-head">
       <span class="secno">5.</span>
       <h2>Supporting info</h2>
@@ -778,6 +853,8 @@
     </div>
     <div id="supportInfo"></div>
   </section>
+
+  </div>
 
 </div>
 
@@ -2211,7 +2288,7 @@ function syncLayout(){
   var el = document.getElementById('layoutChip');
   if (el) el.textContent = bp();
 }
-function bp(){ var w = window.innerWidth; return w < 430 ? 'Phone' : (w < 600 ? 'Large phone' : 'Fold'); }
+function bp(){ var w = window.innerWidth; return w < 430 ? 'Phone' : (w < 600 ? 'Large phone' : (w < 1024 ? 'Fold' : 'Desktop')); }
 var lastBP = bp();
 
 function toggleTheme(){

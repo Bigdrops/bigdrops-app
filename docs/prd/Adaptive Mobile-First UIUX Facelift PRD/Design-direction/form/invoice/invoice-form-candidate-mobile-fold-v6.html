@@ -40,12 +40,64 @@
     the row header, so no decorative spine runs through empty row height.
   - Groups are permanently expanded. The group delete X occupies the first
     control slot, on the left. No collapse control exists anywhere.
+
+  V5 - refinement of V4. Four corrections. Nothing else changes.
+  - The horizontal item action toolbar of V4 is rejected. Item identity and
+    control return to the accepted BOQ vertical enumeration rail: number, then
+    the move pair, then duplicate, down the left edge of the row. The rail
+    spans the identity zone only, so no spine runs through empty row height.
+    A 26px right inset reserves the corner for the delete box, so the
+    Description never runs under it.
+  - The row amount readout becomes one compact right-aligned line in the
+    identity zone. It is still not a block, and it still adds no row height.
+  - Invoice/Quotation switching is removed. Invoice and Quotation share one
+    template-level form architecture, so this Invoice candidate spends no
+    control, state, or space on that equivalence.
+  - The selected Item Library history is demoted to muted helper metadata.
+    The "Use price" action is deleted. There is no outlined price CTA and no
+    accent treatment. The editable Rate field stays authoritative.
+
+  V6 - convergence with the accepted BOQ V12 mobile item row. Four changes.
+
+  What the comparison found: invoice-form-inline.html (the accepted inline
+  baseline) already composes the item the way this V6 brief asks for. Its
+  amount bar (class .amountbar, the same dark result band kept here) is a
+  sibling AFTER the field zone and BEFORE Insert below. Its Make field sits in
+  the identity stack after Sub Description. Its fields use 2-up .fgrid groups,
+  which carry the same trailing-odd-cell rule kept here. V4 rejected the
+  baseline enumeration rail, V5 moved the amount up into the identity zone and
+  rebuilt the item fields as a three-across grid.
+  V6 therefore does not invent a new item composition: it restores the
+  baseline composition, keeps the V5
+  vertical rail, and applies the BOQ V12 field rhythm and result-band
+  placement to it.
+  - The row amount moves to the END of the item, after the editable fields, so
+    it concludes the item the way the BOQ line-profit band concludes a BOQ
+    row. Same band anatomy, Invoice amount semantics. Insert below follows it.
+  - Mobile fields adopt the BOQ V12 field rhythm: two fields per row at
+    comfortable width. The V5 three-across composition is rejected. Qty | Unit
+    is the fixed first pair, as in BOQ. The remaining visible columns fill the
+    same two-column grid.
+  - Odd field counts are handled the way BOQ handles them - the composition
+    adapts to the visible count instead of forcing a slot. When the count is
+    odd, Photo takes the companion cell beside the unpaired field; when it is
+    even, Photo stays a compact chip in the identity stack. The BOQ
+    full-row-trailing-odd-cell rule stays in the CSS as the fallback.
+  - Make moves into the identity stack after Sub Description, the position the
+    accepted BOQ V12 composition gives it. This also yields the five-field
+    default configuration (Qty, Unit, Rate, Part no., Condition) that the
+    odd-count rule is designed for.
+
+  Unchanged from V5: the vertical enumeration rail, the two Item Library
+  states, the muted selected-state history with no CTA, permanent group
+  expansion with the group delete X on the left, and continuous desktop
+  composition. No Invoice/Quotation switcher exists (V5 removed it).
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BIGDROPS - Invoice Authoring Workspace</title>
+<title>BIGDROPS - Invoice Authoring Workspace - V6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -129,6 +181,9 @@
   .fld{width:100%;min-height:42px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:600;transition:border-color .15s,box-shadow .15s,background .15s}
   .fld::placeholder{color:var(--faint);font-weight:600}
   .fld:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  /* WCAG 2.4.11 - the top bar is sticky and the save bar is fixed, so a
+     focused control must never come to rest underneath either one. */
+  .fld,.rbtn,.ear,.gbtn,.cbtn,.itbn,.tb-btn,.subtog,.gtitle,textarea,input,button,select{scroll-margin-top:72px;scroll-margin-bottom:150px}
   textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-size:12.5px;line-height:1.45}
   .dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .dgrid .full{grid-column:1/-1}
@@ -171,35 +226,54 @@
   #items > .item:first-child,#items > .gwrap:first-child{margin-top:0}
 
   .item{position:relative;padding-top:12px}
-  .item::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--line)}
+  .item::before{content:'';position:absolute;top:0;left:0;right:26px;height:1px;background:var(--line)}
   #items > .item:first-child::before,.gbody > .item:first-child::before{display:none}
   .item.err{background:var(--red-soft);border-radius:12px}
   .item.err .idx{background:var(--red);border-color:var(--red);color:#fff}
   .item.err .desc{border-color:var(--red)}
 
-  /* Row header - identity, reorder, duplicate, amount and delete share one
-     28px line. The amount readout lives here instead of in its own full-width
-     block, so it costs no vertical space in the row. */
-  .irow{display:flex;align-items:center;gap:5px;margin-bottom:8px}
-  .irow .sp{flex:1;min-width:0}
-  .idx{width:28px;height:28px;border-radius:9px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em;flex-shrink:0}
+  /* Delete stays the item's own destructive action, as in the accepted BOQ
+     pattern: a box that the row's top hairline runs into, with a short stub
+     line out of its bottom. The ::before hit area gives a 44px touch target. */
+  .ear{position:absolute;top:0;right:0;width:26px;height:26px;border-radius:8px 3px 8px 8px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
+  .ear::before{content:'';position:absolute;inset:-9px}
+  .ear::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:12px;background:var(--line-strong);transform:translateX(-50%);transition:background .15s}
+  .ear svg{width:11px;height:11px}
+  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
+  .ear:hover::after{background:var(--red)}
+  .ear:active{transform:scale(.9)}
+
+  /* Enumeration rail - the accepted BOQ anatomy, adapted to the denser V4 item
+     body. Identity at the top, the move pair in the middle, duplicate at the
+     bottom. The rail stretches to the identity zone only, so the spine follows
+     real controls instead of running through empty row height.
+     The 26px right inset reserves the corner for the delete box, so the
+     Description never runs under it. */
+  .ihead{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:10px;align-items:stretch;padding-right:26px}
+  .rail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:5px;padding:1px 0}
+  .rail::before{content:'';position:absolute;left:50%;top:15px;bottom:15px;width:1px;background:var(--rail);transform:translateX(-50%);z-index:0}
+  .rail>*{position:relative;z-index:1;flex-shrink:0}
+  .idx{width:28px;height:28px;border-radius:9px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
+  .rmid{display:flex;flex-direction:column;gap:5px}
   .rbtn{position:relative;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
   /* the invisible hit area holds the real touch target at 38px */
   .rbtn::after{content:'';position:absolute;inset:-5px}
-  .rbtn svg{width:11px;height:11px}
+  .rbtn svg{width:12px;height:12px}
   .rbtn:hover{background:var(--soft);color:var(--ink);border-color:var(--line-strong)}
   .rbtn:active{transform:scale(.92)}
   .rbtn:disabled{opacity:.32;pointer-events:none}
-  .amt{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;min-width:0;padding-left:8px}
-  .amt small{font-family:var(--mono);font-size:7.5px;font-weight:500;color:var(--faint);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .amt b{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1.15;letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
-  .ear{position:relative;width:28px;height:28px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,border-color .15s,transform .12s}
-  .ear::after{content:'';position:absolute;inset:-5px}
-  .ear svg{width:11px;height:11px}
-  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
-  .ear:active{transform:scale(.9)}
 
-  .idesc{display:flex;flex-direction:column;gap:6px;min-width:0}
+  /* Row amount - the item's CONCLUSION, placed after the editable fields so
+     the mobile read order ends where the accepted BOQ V12 order ends:
+     ... -> fields -> result -> insert. Same anatomy as the BOQ line-profit
+     band (label left, value right, dark result surface) with Invoice amount
+     semantics. It is one 40px band, not a block that inflates the row, and
+     its label and value are patched live in place while typing. */
+  .amountbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:8px 12px;border-radius:11px;background:var(--amount-bg);margin-top:10px;margin-right:26px}
+  .amountbar .pl{font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .amountbar b{flex-shrink:0;font-family:var(--mono);font-size:14.5px;font-weight:600;letter-spacing:-.02em;color:var(--on-dark);white-space:nowrap}
+
+  .idesc{display:flex;flex-direction:column;gap:8px;min-width:0}
   .descwrap{position:relative}
   /* Description keeps its dominance through width and type, not through
      height. It stays one row until the text needs more lines, then grows. */
@@ -220,24 +294,32 @@
   .sug-empty{padding:10px 12px;font-size:9.5px;font-weight:600;color:var(--sub)}
   .sug-load{padding:10px 12px;font-size:9.5px;font-weight:600;color:var(--faint)}
 
-  /* Item Library STATE B - item selected (live: priceContextText +
-     usableHistoryPrice). The library identity and its history collapse into
-     one contextual line under Description. No bordered card, no block. */
-  .libline{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px;padding-left:2px;font-size:9.5px;font-weight:600;line-height:1.45;color:var(--sub)}
-  .libline .dot{width:5px;height:5px;border-radius:50%;background:var(--sell);flex-shrink:0}
-  .libline span{min-width:0}
-  .libline b{font-family:var(--mono);font-weight:600;color:var(--ink)}
-  .libline .libuse{margin-left:auto;flex-shrink:0;height:22px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--card);font-family:var(--mono);font-size:9px;font-weight:600;color:var(--accent);transition:background .15s,border-color .15s}
-  .libline .libuse:hover{background:var(--accent-soft);border-color:var(--accent)}
+  /* Item Library STATE B - item selected. Passive helper metadata under the
+     Description. The same muted family as the other secondary form metadata:
+     no CTA, no accent, no green, no outlined price control. */
+  .libline{margin-top:5px;padding-left:1px;font-family:var(--mono);font-size:9px;font-weight:500;line-height:1.5;color:var(--faint)}
+  .libline .libtag{margin-right:5px;font-family:'Manrope',sans-serif;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);opacity:.85}
 
-  /* Secondary detail row. Photo and Sub Description stay next to Description.
-     When the Sub Description editor opens it takes its own full-width line. */
-  .srow{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-top:7px}
-  .photothumb{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:var(--soft);flex-shrink:0}
+  /* Photo. It has TWO home positions and only one is used per row:
+     - the companion slot beside an unpaired field, when the visible field
+       count is odd (see the odd/even rule in itemHTML);
+     - a compact chip in the identity stack when the field count is even, so
+       the grid stays balanced and nothing is forced into a stray slot.
+     Both are the same control, so neither reads as filler. */
+  .photothumb{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:var(--soft);flex-shrink:0;align-self:flex-start}
   .photothumb img{width:100%;height:100%;object-fit:cover}
   .photothumb .px{position:absolute;top:-4px;right:-4px;width:17px;height:17px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear)}
   .photothumb .px svg{width:8px;height:8px}
-  .photochip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:9px;border:1px dashed var(--line-strong);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);flex-shrink:0;transition:border-color .15s,color .15s}
+  .photochip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:9px;border:1px dashed var(--line-strong);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);flex-shrink:0;align-self:flex-start;transition:border-color .15s,color .15s}
+  /* the same control rendered as a full grid cell - label above, control
+     filling the cell height of the field beside it */
+  .photocell{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:40px;border-radius:11px;border:1px dashed var(--line-strong);background:var(--card);color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;transition:border-color .15s,color .15s}
+  .photocell:hover{border-color:var(--accent);color:var(--accent)}
+  .photocell svg{width:12px;height:12px}
+  .photocell.has{position:relative;padding:0;border-style:solid;border-color:var(--line);overflow:hidden;background:var(--soft)}
+  .photocell.has img{width:100%;height:40px;object-fit:cover}
+  .photocell.has .px{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center}
+  .photocell.has .px svg{width:8px;height:8px}
   .photochip:hover{border-color:var(--accent);color:var(--accent)}
   .photochip svg{width:11px;height:11px}
 
@@ -245,9 +327,8 @@
      empty + closed: compact add row; populated + closed: the actual text,
      2-line clamp, tap opens the editor; open: header + editor that pushes
      subsequent content down; closes itself again on empty blur. */
-  .subrow{flex:1 1 180px;min-width:0;display:flex;flex-direction:column;gap:6px;padding-left:9px;border-left:2px solid var(--line);transition:border-color .15s}
+  .subrow{display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid var(--line);transition:border-color .15s}
   .subrow.has{border-left-color:var(--accent)}
-  .subrow.open{flex-basis:100%}
   .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:28px;padding:5px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
   .subtog.sub-add{align-items:center}
   .subtog:hover,.subtog:focus-visible{color:var(--accent)}
@@ -259,13 +340,18 @@
   .sub-prev-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.45;color:var(--sub)}
   textarea.subfield{min-height:52px}
 
-  /* Data zone. One visible field costs one cell, not one full-width row, so
-     Qty / Unit / Rate stay on one scan line and the enabled optional columns
-     share the same grid instead of stacking. */
-  .idata{margin-top:10px;display:flex;flex-direction:column;gap:8px}
-  .mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-  .mgrid .fld{min-height:40px;padding:0 10px;font-size:12px}
-  .mgrid .cf-lab{margin:0 0 3px 1px}
+  /* Data zone. Field rhythm follows the accepted BOQ V12 mobile composition:
+     TWO fields per row at comfortable width, never three across a phone.
+     The first grid is the fixed Qty | Unit pair (BOQ keeps the same fixed
+     pair); the second carries Rate, the optional commercial columns and the
+     optional item columns. A trailing odd cell would sit alone, so the rule
+     below lets it claim the full row - and itemHTML instead hands that slot
+     to the Photo control when a photo companion is appropriate. */
+  .idata{margin-top:10px;display:flex;flex-direction:column;gap:8px;padding-right:26px}
+  .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .fgrid>*:last-child:nth-child(odd){grid-column:1/-1}
+  .fgrid .fld{min-height:40px;padding:0 10px;font-size:12px}
+  .fgrid .cf-lab{margin:0 0 3px 1px}
   .cfield{display:block;min-width:0}
   .cf-lab{display:flex;align-items:center;gap:4px;margin:0 0 5px 2px;font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   .cf-lab svg{width:10px;height:10px}
@@ -275,9 +361,6 @@
   .cfield.disc .fld{border-left:3px solid var(--disc)}
   .cfield.vat .fld:focus{border-color:var(--vat);box-shadow:0 0 0 3px var(--vat-soft)}
   .cfield.disc .fld:focus{border-color:var(--disc);box-shadow:0 0 0 3px var(--disc-soft)}
-
-  /* The row amount readout (live: visible_line_total) now lives in the row
-     header as .amt. It is no longer a full-width block, so it adds no height. */
 
   .ins{position:relative;display:flex;align-items:center;gap:6px;height:20px;margin-top:10px;color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:left;transition:color .15s}
   .ins::before{content:'';position:absolute;left:0;right:0;top:-10px;bottom:-10px}
@@ -556,13 +639,19 @@
     /* The phone authoring model is recomposed, not replaced by a desktop
        table. Identity column on the left, data column on the right, both
        authored the same way they are on a phone. */
-    .item{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(310px,1fr);column-gap:22px}
-    .irow{grid-column:1/-1;grid-row:1;margin-bottom:10px}
-    .idesc{grid-column:1;grid-row:2}
-    .srow{grid-column:1;grid-row:3;margin-top:8px}
-    .idata{grid-column:2;grid-row:2/span 2;margin-top:0;padding-left:20px;border-left:1px solid var(--line);gap:10px}
-    .mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .ins{grid-column:1/-1;grid-row:4}
+    .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr);column-gap:22px}
+    /* the delete box now lives inside the identity zone, so the row hairline
+       runs the full width again */
+    .item::before{right:0}
+    .ihead{grid-column:1;grid-row:1}
+    /* the fields move beside the identity stack, so the phone right inset (the
+       gutter the delete box lives in) is released back to the fields */
+    .idata{grid-column:2;grid-row:1;margin-top:0;padding-left:20px;padding-right:0;border-left:1px solid var(--line);gap:10px}
+    .fgrid{gap:10px}
+    /* the amount still concludes the item on fold: it spans both zones below
+       them rather than being pinned into either one */
+    .amountbar{margin-top:0;margin-right:0;grid-column:1/-1;grid-row:2}
+    .ins{grid-column:1/-1;grid-row:3}
     textarea.desc{min-height:60px}
     .cf-hint{display:inline}
     .totals-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
@@ -621,14 +710,9 @@
       <span class="cp-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
     </button>
 
+    <!-- No document-type switch. Invoice and Quotation share one template-level
+         form architecture, and this file is an Invoice candidate. -->
     <div class="dgrid" style="margin-top:10px">
-      <div class="full">
-        <label class="lb" for="fType">Document type</label>
-        <div class="seg" id="docTypeSeg">
-          <button class="on" id="dtInvoice" onclick="setDocType('invoice')">Invoice</button>
-          <button id="dtQuotation" onclick="setDocType('quotation')">Quotation</button>
-        </div>
-      </div>
       <div class="full">
         <label class="lb" for="fTitle" id="lbTitle">Invoice title</label>
         <input class="fld" id="fTitle" value="Quarterly equipment overhaul" placeholder="Invoice title / project reference">
@@ -689,7 +773,8 @@
 
     <div class="scaffold">
       <span><b>A &middot; Discovery</b> Type 2+ letters into a Description and the library suggestions open with item name, last price, use count and last reference. The last row below is in this state.</span>
-      <span><b>B &middot; Selected</b> After a library pick the suggestions close and the history collapses to one line under Description, with a small price action. Row 02 below is in this state.</span>
+      <span><b>B &middot; Selected</b> After a library pick the suggestions close and the history becomes one muted helper line under Description. It is context, not a recommendation. Row 02 below is in this state.</span>
+      <span><b>C &middot; Odd field count</b> Five columns are on by default (Qty, Unit, Rate, Part no., Condition), so the last field is unpaired and Photo takes the companion cell beside it. Hide Part no. in Columns to make the count even: the grid balances and Photo returns to a compact chip under Sub Description.</span>
     </div>
 
     <div id="items"></div>
@@ -1020,20 +1105,10 @@ var suggestionMeta = function(c, q){
   if (c.last_used_at) parts.push(c.last_used_at);
   return parts.join(' \u00B7 ');
 };
-var priceContextText = function(c){
-  var lines = [];
-  if (c.last_price_for_client != null) {
-    lines.push('Last sold to this client: ' + naira(c.last_price_for_client) + (c.last_source_document_number ? ' \u00B7 ' + c.last_source_document_number : '') + (c.last_used_at ? ' \u00B7 ' + c.last_used_at : ''));
-  } else if (c.last_price_global != null) {
-    lines.push('Last sold: ' + naira(c.last_price_global) + (c.last_source_document_number ? ' \u00B7 ' + c.last_source_document_number : '') + (c.last_used_at ? ' \u00B7 ' + c.last_used_at : ''));
-  }
-  return lines.join('\n');
-};
 
 /* ---------- document model (live Invoice contract) ---------- */
 var state = {
   saved: false,
-  docType: 'invoice',
   client: { id: 'c1', name: 'Adeyemi & Partners', person: 'Ijeoma Adeyemi', initials: 'A&', phone: '0803 555 0142', email: 'ijeoma@adeyemi.com' },
   clients: [
     { id: 'c1', name: 'Adeyemi & Partners', person: 'Ijeoma Adeyemi', initials: 'A&', phone: '0803 555 0142', email: 'ijeoma@adeyemi.com' },
@@ -1228,25 +1303,31 @@ function suggestionHTML(r){
   html += '</div>';
   return html;
 }
-/* Item Library STATE B - item selected. Library identity and history collapse
-   into one contextual line under Description. The old bordered history card
-   and its oversized "Use price" button are gone. */
+/* Item Library STATE B - item selected. The library history becomes passive
+   helper metadata under the Description: one muted line, no CTA, no price
+   action, no accent. It answers "what was this sold for, and where and when".
+   It does not suggest that the historical price is preferred. The editable
+   Rate field stays authoritative. */
 function libLineHTML(r){
   if (!r.item_id) return '';
   var c = findCatalog(r.item_id);
   if (!c) return '';
   var price = suggestionPrice(c);
   var bits = [];
-  if (price.value != null) bits.push('Last sold: <b>' + naira(price.value) + '</b>');
-  if (c.last_source_document_number) bits.push(esc(c.last_source_document_number));
-  if (c.last_used_at) bits.push(esc(c.last_used_at));
+  if (price.value != null) bits.push('Last sold: ' + naira(price.value));
+  if (c.last_source_document_number) bits.push(c.last_source_document_number);
+  if (c.last_used_at) bits.push(c.last_used_at);
   if (c.usage_count) bits.push(c.usage_count + (c.usage_count === 1 ? ' use' : ' uses'));
-  var useBtn = (price.value != null && price.value !== Number(r.rate))
-    ? '<button type="button" class="libuse" onmousedown="event.preventDefault(); usePrice(' + r.id + ',' + price.value + ')">Use ' + naira(price.value) + '</button>'
-    : '';
-  return '<div class="libline"><span class="dot"></span><span>' + esc(c.name) + ' &middot; ' + bits.join(' &middot; ') + '</span>' + useBtn + '</div>';
+  return '<div class="libline"><span class="libtag">Library</span>' + esc(bits.join(' \u00B7 ')) + '</div>';
 }
-function photoHTML(r){
+function photoCellHTML(r){
+  var inner = r.image
+    ? '<span class="photocell has"><img src="' + r.image + '" alt="Item photo"><button type="button" class="px" title="Remove photo" aria-label="Remove photo" onclick="removePhoto(' + r.id + ')">' + svgs.x + '</button></span>'
+    : '<button type="button" class="photocell" onclick="addPhoto(' + r.id + ')" title="Attach a photo">' + svgs.cam + 'Add photo</button>';
+  return '<div class="cfield"><span class="cf-lab">Photo</span>' + inner + '</div>';
+}
+/* Compact chip form - used when the field grid is already balanced. */
+function photoRowHTML(r){
   if (r.image) {
     return '<span class="photothumb"><img src="' + r.image + '" alt="Item photo"><button type="button" class="px" title="Remove photo" aria-label="Remove photo" onclick="removePhoto(' + r.id + ')">' + svgs.x + '</button></span>';
   }
@@ -1272,50 +1353,74 @@ function subHTML(r){
 function numFld(id, key, val, ph, cls){
   return '<input class="fld mono ' + (cls || '') + '" inputmode="decimal" placeholder="' + ph + '" value="' + esc(val) + '" oninput="editNum(' + id + ',\'' + key + '\',this.value)" data-numin="' + id + ':' + key + '">';
 }
+/* Optional and commercial field cells, in Invoice scan order: the money
+   fields first, then the optional item columns. Each visible field costs one
+   cell of the shared two-column grid, so enabling columns costs rows in
+   pairs rather than one full-width row per field. */
+function fieldCells(r){
+  var cd = r.custom_data || {};
+  var cells = [];
+  if (vis('unit_price')) cells.push('<label class="cfield money"><span class="cf-lab">Rate</span>' + numFld(r.id, 'rate', fmtMoney(r.rate), '0.00') + '</label>');
+  if (vis('vat_rate')) cells.push('<label class="cfield vat"><span class="cf-lab">VAT %</span>' + numFld(r.id, 'vatRate', r.vatRate === null || r.vatRate === undefined ? '' : fmtQty(r.vatRate), '0') + '</label>');
+  if (vis('discount_rate')) cells.push('<label class="cfield disc"><span class="cf-lab">Disc %</span>' + numFld(r.id, 'discRate', r.discRate === null || r.discRate === undefined ? '' : fmtQty(r.discRate), '0') + '</label>');
+  if (vis('install_rate')) cells.push('<label class="cfield"><span class="cf-lab">Install</span>' + numFld(r.id, 'install', r.install === null || r.install === undefined ? '' : fmtMoney(r.install), 'Auto') + '</label>');
+  if (vis('custom_partNo')) cells.push('<label class="cfield"><span class="cf-lab">Part no.</span><input class="fld" placeholder="Part no." value="' + esc(cd.partNo || '') + '" oninput="editCustom(' + r.id + ',\'partNo\',this.value)"></label>');
+  if (vis('custom_condition')) cells.push('<label class="cfield"><span class="cf-lab">Condition</span><input class="fld" placeholder="Condition" value="' + esc(cd.condition || '') + '" oninput="editCustom(' + r.id + ',\'condition\',this.value)"></label>');
+  docColumns.forEach(function(c){
+    if (!/^custom_/.test(c.key) || c.key === 'custom_partNo' || c.key === 'custom_condition' || !c.visible) return;
+    cells.push('<label class="cfield"><span class="cf-lab">' + esc(c.label) + '</span><input class="fld" placeholder="' + esc(c.label) + '" value="' + esc(cd[c.key] || '') + '" oninput="editCustom(' + r.id + ',\'' + c.key + '\',this.value)"></label>');
+  });
+  return cells;
+}
 function itemHTML(r, sib){
   var n = nums[r.id] || 0;
   var errCls = errId === r.id ? ' err' : '';
   var k = sib.indexOf(r);
-  var cd = r.custom_data || {};
-  /* Optional columns. Each visible one takes one cell of the shared grid, so
-     six enabled optional columns still cost two rows instead of six. */
-  var opt = '';
-  if (vis('make')) opt += '<label class="cfield"><span class="cf-lab">Make</span><input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)"></label>';
-  if (vis('custom_partNo')) opt += '<label class="cfield"><span class="cf-lab">Part no.</span><input class="fld" placeholder="Part no." value="' + esc(cd.partNo || '') + '" oninput="editCustom(' + r.id + ',\'partNo\',this.value)"></label>';
-  if (vis('custom_condition')) opt += '<label class="cfield"><span class="cf-lab">Condition</span><input class="fld" placeholder="Condition" value="' + esc(cd.condition || '') + '" oninput="editCustom(' + r.id + ',\'condition\',this.value)"></label>';
-  docColumns.forEach(function(c){
-    if (!/^custom_/.test(c.key) || c.key === 'custom_partNo' || c.key === 'custom_condition' || !c.visible) return;
-    opt += '<label class="cfield"><span class="cf-lab">' + esc(c.label) + '</span><input class="fld" placeholder="' + esc(c.label) + '" value="' + esc(cd[c.key] || '') + '" oninput="editCustom(' + r.id + ',\'' + c.key + '\',this.value)"></label>';
-  });
+  /* Field rhythm - the accepted BOQ V12 mobile composition. Qty | Unit is the
+     fixed first pair, exactly as BOQ keeps its own fixed pair; the remaining
+     visible columns then fill the same two-column grid. When that count is
+     ODD one field would sit alone, so Photo takes the companion slot beside
+     it - neither a half-empty row nor a third field forced across the phone.
+     When the count is EVEN the grid is already balanced, so Photo stays the
+     compact chip in the identity stack instead of being forced into a slot. */
+  var cells = fieldCells(r);
+  var photoInGrid = cells.length % 2 === 1;
+  if (photoInGrid) cells.push(photoCellHTML(r));
+  /* Make sits in the identity stack after Sub Description - the same position
+     the accepted BOQ V12 composition gives it. */
+  var make = vis('make')
+    ? '<label class="cfield"><span class="cf-lab">Make</span><input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)"></label>'
+    : '';
   var idata = '<div class="idata">'
-    + '<div class="mgrid">'
+    + '<div class="fgrid">'
     +   (vis('quantity') ? '<label class="cfield"><span class="cf-lab">Qty</span>' + numFld(r.id, 'qty', fmtQty(r.qty), 'Qty *') + '</label>' : '')
     +   (vis('unit') ? '<label class="cfield"><span class="cf-lab">Unit</span><input class="fld" placeholder="Unit" value="' + esc(r.unit) + '" oninput="editRow(' + r.id + ',\'unit\',this.value)"></label>' : '')
-    +   (vis('unit_price') ? '<label class="cfield money"><span class="cf-lab">Rate</span>' + numFld(r.id, 'rate', fmtMoney(r.rate), '0.00') + '</label>' : '')
-    +   (vis('vat_rate') ? '<label class="cfield vat"><span class="cf-lab">VAT %</span>' + numFld(r.id, 'vatRate', r.vatRate === null || r.vatRate === undefined ? '' : fmtQty(r.vatRate), '0') + '</label>' : '')
-    +   (vis('discount_rate') ? '<label class="cfield disc"><span class="cf-lab">Disc %</span>' + numFld(r.id, 'discRate', r.discRate === null || r.discRate === undefined ? '' : fmtQty(r.discRate), '0') + '</label>' : '')
-    +   (vis('install_rate') ? '<label class="cfield"><span class="cf-lab">Install</span>' + numFld(r.id, 'install', r.install === null || r.install === undefined ? '' : fmtMoney(r.install), 'Auto') + '</label>' : '')
     + '</div>'
-    + (opt ? '<div class="mgrid">' + opt + '</div>' : '')
+    + (cells.length ? '<div class="fgrid">' + cells.join('') + '</div>' : '')
+    + (vis('amount') ? '<div class="amountbar" data-amt="' + r.id + '"><span class="pl">Amount &middot; ' + fmtQty(r.qty) + ' &times; ' + naira(r.rate) + '</span><b>' + naira(r.line || 0) + '</b></div>' : '')
     + '</div>';
   return '<article class="item' + errCls + '" data-id="' + r.id + '">'
-    + '<div class="irow">'
-    +   '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
-    +   '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
-    +   '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
-    +   '<button class="rbtn" title="Duplicate item" aria-label="Duplicate item" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
-    +   '<span class="sp"></span>'
-    +   (vis('amount') ? '<span class="amt"><small>' + fmtQty(r.qty) + ' &times; ' + naira(r.rate) + '</small><b>' + naira(r.line || 0) + '</b></span>' : '')
+    + '<div class="ihead">'
     +   '<button class="ear" title="Remove item" aria-label="Remove item" onclick="removeRow(' + r.id + ')">' + svgs.x + '</button>'
-    + '</div>'
-    + '<div class="idesc">'
-    +   '<div class="descwrap">'
-    +     '<textarea class="fld desc" rows="1"' + (errId === r.id ? ' aria-invalid="true"' : '') + ' placeholder="Item description * \u2014 type 2+ letters for library suggestions" oninput="editDesc(' + r.id + ',this.value)" onfocus="focusDesc(' + r.id + ')" onblur="blurDesc(' + r.id + ')">' + esc(r.desc) + '</textarea>'
-    +     suggestionHTML(r)
-    +     libLineHTML(r)
+    +   '<div class="rail">'
+    +     '<span class="idx">' + String(n).padStart(2, '0') + '</span>'
+    +     '<div class="rmid">'
+    +       '<button class="rbtn" title="Move up" aria-label="Move up" ' + (k <= 0 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',-1)">' + svgs.up + '</button>'
+    +       '<button class="rbtn" title="Move down" aria-label="Move down" ' + (k >= sib.length - 1 ? 'disabled' : '') + ' onclick="moveRow(' + r.id + ',1)">' + svgs.down + '</button>'
+    +     '</div>'
+    +     '<button class="rbtn" title="Duplicate item" aria-label="Duplicate item" onclick="dupRow(' + r.id + ')">' + svgs.copy + '</button>'
+    +   '</div>'
+    +   '<div class="idesc">'
+    +     '<div class="descwrap">'
+    +       '<textarea class="fld desc" rows="1"' + (errId === r.id ? ' aria-invalid="true"' : '') + ' placeholder="Item description * \u2014 type 2+ letters for library suggestions" oninput="editDesc(' + r.id + ',this.value)" onfocus="focusDesc(' + r.id + ')" onblur="blurDesc(' + r.id + ')">' + esc(r.desc) + '</textarea>'
+    +       suggestionHTML(r)
+    +       libLineHTML(r)
+    +     '</div>'
+    +     subHTML(r)
+    +     (photoInGrid ? '' : photoRowHTML(r))
+    +     make
     +   '</div>'
     + '</div>'
-    + '<div class="srow">' + photoHTML(r) + subHTML(r) + '</div>'
     + idata
     + '<button class="ins" onclick="insertBelow(' + r.id + ')">+ Insert below</button>'
     + '</article>';
@@ -1401,17 +1506,14 @@ function renderTotals(){
   document.getElementById('tWords').style.display = state.pdf.showAmountInWords ? '' : 'none';
   var vq = document.getElementById('fVatQuick');
   if (vq && document.activeElement !== vq) vq.value = fmtQty(state.vat);
-  /* live amount readout. V4 moved it from a full-width amount bar into the
-     row header, so the update targets the row header readout instead. */
-  document.querySelectorAll('#items .item').forEach(function(el){
-    var r = state.items.find(function(x){ return x.id === Number(el.getAttribute('data-id')); });
+  /* live amount readout - the concluding band at the end of each item */
+  document.querySelectorAll('#items [data-amt]').forEach(function(el){
+    var r = state.items.find(function(x){ return x.id === Number(el.getAttribute('data-amt')); });
     if (!r) return;
-    var amt = el.querySelector('.irow .amt');
-    if (!amt) return;
-    var b = amt.querySelector('b');
+    var b = el.querySelector('b');
     if (b) b.textContent = naira(r.line || 0);
-    var s = amt.querySelector('small');
-    if (s) s.innerHTML = fmtQty(r.qty) + ' &times; ' + naira(r.rate);
+    var s = el.querySelector('.pl');
+    if (s) s.innerHTML = 'Amount &middot; ' + fmtQty(r.qty) + ' &times; ' + naira(r.rate);
   });
 }
 
@@ -1431,13 +1533,17 @@ function renderHeaderFields(){
 }
 
 function termCard(id, icon, title, summary, open, body){
-  return '<div class="ccard' + (open ? ' open' : '') + '" data-tcard="' + id + '">'
-    + '<button class="ccard-head" aria-expanded="' + open + '" onclick="toggleTerm(\'' + id + '\')">'
+  /* openTerms is a sparse map, so a card that has never been toggled arrives
+     here as undefined. Coerce once: the class and aria-expanded then always
+     agree, and aria-expanded is always a real boolean, never "undefined". */
+  var isOpen = !!open;
+  return '<div class="ccard' + (isOpen ? ' open' : '') + '" data-tcard="' + id + '">'
+    + '<button class="ccard-head" aria-expanded="' + isOpen + '" onclick="toggleTerm(\'' + id + '\')">'
     +   '<span class="ccard-ico" style="background:var(--soft);color:var(--sub)">' + icon + '</span>'
     +   '<span class="ccard-txt"><b>' + title + '</b><small>' + summary + '</small></span>'
     +   '<span class="ccard-chev">' + svgs.chev + '</span>'
     + '</button>'
-    + (open ? '<div class="ccard-body">' + body + '</div>' : '')
+    + (isOpen ? '<div class="ccard-body">' + body + '</div>' : '')
     + '</div>';
 }
 function renderCommercialTerms(){
@@ -1516,6 +1622,11 @@ function renderCommercialTerms(){
 }
 
 function renderSupportInfo(){
+  /* openTerms is the same map renderCommercialTerms reads. Without this the
+     five supporting cards below would read the global `open` (window.open in
+     a browser), so they would render collapsed forever and their
+     aria-expanded attribute would be the string "undefined". Fixed in V6. */
+  var open = state.openTerms;
   var notesBody =
     '<div style="margin-bottom:10px">'
     +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span class="lb" style="margin:0">' + esc(state.notesTitle) + '</span>'
@@ -1876,7 +1987,7 @@ function save(){
   state.saved = true;
   document.getElementById('modeBadge').textContent = 'Saved';
   render();
-  toast(state.docType === 'quotation' ? 'Quotation saved \u2014 status: Unpaid' : 'Invoice saved \u2014 status: Unpaid');
+  toast('Invoice saved \u2014 status: Unpaid');
 }
 
 /* ---------- edits ---------- */
@@ -1920,14 +2031,7 @@ function pickSuggestion(id, itemId){
   r.item_id = c.item_id;
   state.suggestFor = null;
   render();
-  toast('Library item applied \u2014 rate filled from standard price');
-}
-function usePrice(id, price){
-  var r = state.items.find(function(x){ return x.id === id; });
-  if (!r) return;
-  r.rate = price;
-  render();
-  toast('Rate updated from library price');
+  toast('Library item applied');
 }
 function addPhoto(id){
   var r = state.items.find(function(x){ return x.id === id; });
@@ -2109,24 +2213,15 @@ function clearAll(){ openSheet('clear'); }
 function doClearAll(){ state.items = []; closeSheet('clear'); render(); toast('All rows cleared'); }
 
 /* ---------- commercial terms edits ---------- */
-function setDocType(t){
-  state.docType = t;
-  var qi = document.getElementById('dtInvoice');
-  var qq = document.getElementById('dtQuotation');
-  if (qi) qi.classList.toggle('on', t === 'invoice');
-  if (qq) qq.classList.toggle('on', t === 'quotation');
-  var lbNo = document.getElementById('lbNo'); if (lbNo) lbNo.innerHTML = (t === 'quotation' ? 'Quotation no' : 'Invoice no') + ' <span class="req">*</span>';
-  var lbIssue = document.getElementById('lbIssue'); if (lbIssue) lbIssue.textContent = t === 'quotation' ? 'Quotation date' : 'Issue date';
-  var lbDue = document.getElementById('lbDue'); if (lbDue) lbDue.textContent = t === 'quotation' ? 'Valid until' : 'Due date';
-  var lbTitle = document.getElementById('lbTitle'); if (lbTitle) lbTitle.textContent = t === 'quotation' ? 'Quotation title' : 'Invoice title';
-  var fTitle = document.getElementById('fTitle'); if (fTitle) fTitle.placeholder = t === 'quotation' ? 'Quotation title / project reference' : 'Invoice title / project reference';
-  var h1 = document.querySelector('.tb-title h1'); if (h1) h1.textContent = t === 'quotation' ? 'Quotation' : 'Invoice';
-  render();
-}
 function setDiscType(t){ state.discountType = t; renderCommercialTerms(); renderTotals(); }
 function setDiscTiming(t){ state.discountTiming = t; renderCommercialTerms(); renderTotals(); }
 function setWhtType(t){ state.whtType = t; renderCommercialTerms(); renderTotals(); }
-function toggleTerm(id){ state.openTerms[id] = !state.openTerms[id]; renderCommercialTerms(); }
+function toggleTerm(id){
+  state.openTerms[id] = !state.openTerms[id];
+  /* term cards live in two regions, so both are refreshed */
+  renderCommercialTerms();
+  renderSupportInfo();
+}
 function toggleVatQuick(){
   state.vatQuickOpen = !state.vatQuickOpen;
   var pill = document.getElementById('vatPill');
