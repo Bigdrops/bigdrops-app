@@ -101,6 +101,40 @@ std::string error_json(const std::string & message) {
     return "{\"ok\":false,\"error\":\"" + escape_json(message) + "\"}";
 }
 
+// Stage-tagged native failure. The human message carries the stage so the
+// Java bridge can surface it without parsing free text. Counts stay in the
+// payload for logcat diagnostics. Never include prompt or model output here.
+std::string failure_json(
+    const std::string & stage,
+    const std::string & error_class,
+    const std::string & message,
+    int32_t prompt_tokens,
+    int32_t output_tokens,
+    int64_t elapsed_ms
+) {
+    std::ostringstream out;
+    out << "{\"ok\":false"
+        << ",\"error\":\"" << escape_json(message) << "\""
+        << ",\"stage\":\"" << escape_json(stage) << "\""
+        << ",\"errorClass\":\"" << escape_json(error_class) << "\""
+        << ",\"promptTokens\":" << prompt_tokens
+        << ",\"outputTokens\":" << output_tokens
+        << ",\"elapsedMs\":" << elapsed_ms;
+    out << "}";
+    return out.str();
+}
+
+// Exception text may name files or backends. Keep one line, capped length,
+// and never echo prompt or generated content.
+std::string sanitize_exception_text(const char * what) {
+    if (what == nullptr) return "";
+    std::string text(what);
+    const size_t newline = text.find_first_of("\r\n");
+    if (newline != std::string::npos) text.resize(newline);
+    if (text.size() > 200) text.resize(200);
+    return text;
+}
+
 bool abort_requested(void * user_data) {
     auto * state = static_cast<RuntimeState *>(user_data);
     return state != nullptr && state->cancel_requested.load();
@@ -304,11 +338,19 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
     int32_t output_token_count = 0;
     std::string output;
     std::string failure;
+    std::string failure_stage = "start";
+    std::string failure_class;
+
+    auto failure_elapsed_ms = [&started_at]() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - started_at).count();
+    };
 
     llama_context * ctx = nullptr;
     llama_sampler * sampler = nullptr;
 
     try {
+        failure_stage = "context_init";
         llama_context_params ctx_params = llama_context_default_params();
         ctx_params.n_ctx = CONTEXT_TOKENS;
         ctx_params.n_batch = BATCH_TOKENS;
@@ -324,6 +366,7 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
             failure = "llama.cpp could not initialize a generation context.";
         }
 
+        failure_stage = "vocab";
         const llama_vocab * vocab = failure.empty() ? llama_model_get_vocab(state->model) : nullptr;
         if (failure.empty() && vocab == nullptr) {
             failure = "llama.cpp model vocabulary is unavailable.";
@@ -331,6 +374,7 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
 
         std::vector<llama_token> prompt_tokens;
         if (failure.empty()) {
+            failure_stage = "tokenize";
             failure = tokenize_prompt(vocab, prompt, prompt_tokens);
             prompt_token_count = static_cast<int32_t>(prompt_tokens.size());
         }
@@ -340,10 +384,12 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
         }
 
         if (failure.empty()) {
+            failure_stage = "prompt_decode";
             failure = decode_prompt_tokens(state, ctx, prompt_tokens);
         }
 
         if (failure.empty()) {
+            failure_stage = "sampler_init";
             sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
             if (sampler == nullptr) {
                 failure = "llama.cpp could not initialize the sampler chain.";
@@ -351,6 +397,7 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
         }
 
         if (failure.empty()) {
+            failure_stage = "grammar_init";
             llama_sampler * grammar_sampler = llama_sampler_init_grammar(vocab, grammar.c_str(), "root");
             if (grammar_sampler == nullptr) {
                 failure = "llama.cpp could not initialize the JSON grammar.";
@@ -360,6 +407,7 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
             }
         }
 
+        failure_stage = "generate";
         while (failure.empty() && output_token_count < max_tokens) {
             if (state->cancel_requested.load()) {
                 failure = "cancelled";
@@ -388,8 +436,18 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
                 break;
             }
         }
+    } catch (const std::bad_alloc &) {
+        failure = "The device ran out of native memory during generation.";
+        failure_class = "out_of_memory";
+    } catch (const std::exception & error) {
+        const std::string detail = sanitize_exception_text(error.what());
+        failure = detail.empty()
+            ? "llama.cpp native generation failed."
+            : "llama.cpp native generation failed: " + detail;
+        failure_class = "native_exception";
     } catch (...) {
         failure = "llama.cpp native generation failed.";
+        failure_class = "unknown_native_error";
     }
 
     if (sampler != nullptr) {
@@ -407,7 +465,13 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
         return string_to_jstring(env, error_json("Local AI generation was cancelled."));
     }
     if (!failure.empty()) {
-        return string_to_jstring(env, error_json(failure));
+        return string_to_jstring(env, failure_json(
+            failure_stage,
+            failure_class.empty() ? "generation_error" : failure_class,
+            failure,
+            prompt_token_count,
+            output_token_count,
+            static_cast<int64_t>(failure_elapsed_ms())));
     }
 
     const double tokens_per_second = elapsed_ms > 0

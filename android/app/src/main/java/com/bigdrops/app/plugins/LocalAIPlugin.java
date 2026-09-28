@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.StatFs;
 import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,17 +32,23 @@ import java.security.NoSuchAlgorithmException;
 
 @CapacitorPlugin(name = "LocalAI")
 public class LocalAIPlugin extends Plugin {
+    private static final String TAG = "BigdropsLocalAI";
     private static final String PLUGIN_VERSION = "phase-2-poc-native";
     private static final String RUNTIME_NAME = "llama.cpp";
     private static final String LLAMA_CPP_COMMIT = "4da6337767f973e2b4d0797e5b323d77d8565e4a";
     private static final String MODEL_DIRECTORY = "local-ai/models";
     private static final String TEMP_DIRECTORY = "local-ai/tmp";
-    private static final String POC_MODEL_ID = "qwen3-0.6b-instruct-q4-k-m-gguf-poc";
-    private static final String POC_MODEL_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.gguf";
-    private static final String POC_MODEL_METADATA_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.json";
-    private static final String POC_MODEL_DOWNLOAD_URL = "https://huggingface.co/QuantFactory/Qwen3-0.6B-GGUF/resolve/e7e05d713acaa2baccdfb52e967eaba8ba562ba8/Qwen3-0.6B.Q4_K_M.gguf?download=1";
-    private static final String POC_MODEL_EXPECTED_SHA256 = "7af3fdf842f87b24672f8a7f1dd50404043f0bfb71093ff91c31d2b49df4631d";
-    private static final long POC_MODEL_EXPECTED_BYTES = 484_220_000L;
+    private static final String POC_MODEL_ID = "qwen3-1.7b-instruct-q4-k-m-gguf-poc";
+    private static final String POC_MODEL_FILENAME = "qwen3-1.7b-instruct-q4-k-m-gguf-poc.gguf";
+    private static final String POC_MODEL_METADATA_FILENAME = "qwen3-1.7b-instruct-q4-k-m-gguf-poc.json";
+    private static final String POC_MODEL_DOWNLOAD_URL = "https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/d7f544eead698dbd1f15126ef60b45a1e1933222/Qwen3-1.7B-Q4_K_M.gguf?download=1";
+    private static final String POC_MODEL_EXPECTED_SHA256 = "b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897";
+    private static final long POC_MODEL_EXPECTED_BYTES = 1_107_409_472L;
+    private static final String LEGACY_POC_MODEL_ID = "qwen3-0.6b-instruct-q4-k-m-gguf-poc";
+    private static final String LEGACY_POC_MODEL_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.gguf";
+    private static final String LEGACY_POC_MODEL_METADATA_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.json";
+    private static final String LEGACY_POC_MODEL_EXPECTED_SHA256 = "7af3fdf842f87b24672f8a7f1dd50404043f0bfb71093ff91c31d2b49df4631d";
+    private static final long LEGACY_POC_MODEL_EXPECTED_BYTES = 484_220_000L;
     private static final int MAX_OUTPUT_TOKENS = 384;
     private static final int DOWNLOAD_BUFFER_BYTES = 1024 * 1024;
 
@@ -166,7 +173,7 @@ public class LocalAIPlugin extends Plugin {
             cancelModelDownload = false;
         }
 
-        if (availableStorageBytes() < POC_MODEL_EXPECTED_BYTES + (64L * 1024L * 1024L)) {
+        if (availableStorageBytes() < expectedBytesFor(modelId) + (64L * 1024L * 1024L)) {
             call.reject("Not enough app-private storage is available for this Local AI model.");
             return;
         }
@@ -356,7 +363,7 @@ public class LocalAIPlugin extends Plugin {
         try {
             JSONObject nativeResult = parseNativeResult(nativeGenerate(nativeHandle, prompt, CLEANUP_RESULT_GRAMMAR, MAX_OUTPUT_TOKENS));
             if (!nativeResult.optBoolean("ok", false)) {
-                call.reject(nativeResult.optString("error", "Local AI generation failed."));
+                rejectNativeGeneration(call, modelId, nativeResult);
                 return;
             }
 
@@ -468,6 +475,7 @@ public class LocalAIPlugin extends Plugin {
         info.put("memoryBeforeLoadBytes", memoryBeforeLoadBytes);
         info.put("memoryAfterLoadBytes", memoryAfterLoadBytes);
         info.put("memoryAfterUnloadBytes", memoryAfterUnloadBytes);
+        info.put("totalMemoryBytes", totalMemoryBytes());
         info.put("message", linked
             ? "Local llama.cpp runtime is linked."
             : "LocalAI bridge is present. Add the pinned llama.cpp Android runtime before real inference can run.");
@@ -498,8 +506,31 @@ public class LocalAIPlugin extends Plugin {
     private String safeModelId(@Nullable String value) {
         if (value == null) return null;
         String trimmed = value.trim();
-        if (POC_MODEL_ID.equals(trimmed)) return trimmed;
+        if (POC_MODEL_ID.equals(trimmed) || LEGACY_POC_MODEL_ID.equals(trimmed)) return trimmed;
         return null;
+    }
+
+    private static boolean isLegacyModelId(@NonNull String modelId) {
+        return LEGACY_POC_MODEL_ID.equals(modelId);
+    }
+
+    @NonNull
+    private static String modelFilenameFor(@NonNull String modelId) {
+        return isLegacyModelId(modelId) ? LEGACY_POC_MODEL_FILENAME : POC_MODEL_FILENAME;
+    }
+
+    @NonNull
+    private static String metadataFilenameFor(@NonNull String modelId) {
+        return isLegacyModelId(modelId) ? LEGACY_POC_MODEL_METADATA_FILENAME : POC_MODEL_METADATA_FILENAME;
+    }
+
+    private static long expectedBytesFor(@NonNull String modelId) {
+        return isLegacyModelId(modelId) ? LEGACY_POC_MODEL_EXPECTED_BYTES : POC_MODEL_EXPECTED_BYTES;
+    }
+
+    @NonNull
+    private static String expectedSha256For(@NonNull String modelId) {
+        return isLegacyModelId(modelId) ? LEGACY_POC_MODEL_EXPECTED_SHA256 : POC_MODEL_EXPECTED_SHA256;
     }
 
     @NonNull
@@ -524,26 +555,26 @@ public class LocalAIPlugin extends Plugin {
 
     @NonNull
     private File resolveModelFile(@NonNull String modelId) {
-        if (!POC_MODEL_ID.equals(modelId)) {
+        if (!POC_MODEL_ID.equals(modelId) && !LEGACY_POC_MODEL_ID.equals(modelId)) {
             return new File(ensureModelDirectory(), "unsupported-model.gguf");
         }
-        return new File(ensureModelDirectory(), POC_MODEL_FILENAME);
+        return new File(ensureModelDirectory(), modelFilenameFor(modelId));
     }
 
     @NonNull
     private File resolveMetadataFile(@NonNull String modelId) {
-        if (!POC_MODEL_ID.equals(modelId)) {
+        if (!POC_MODEL_ID.equals(modelId) && !LEGACY_POC_MODEL_ID.equals(modelId)) {
             return new File(ensureModelDirectory(), "unsupported-model.json");
         }
-        return new File(ensureModelDirectory(), POC_MODEL_METADATA_FILENAME);
+        return new File(ensureModelDirectory(), metadataFilenameFor(modelId));
     }
 
     @NonNull
     private File resolveTempModelFile(@NonNull String modelId) {
-        if (!POC_MODEL_ID.equals(modelId)) {
+        if (!POC_MODEL_ID.equals(modelId) && !LEGACY_POC_MODEL_ID.equals(modelId)) {
             return new File(ensureTempDirectory(), "unsupported-model.gguf.download");
         }
-        return new File(ensureTempDirectory(), POC_MODEL_FILENAME + ".download");
+        return new File(ensureTempDirectory(), modelFilenameFor(modelId) + ".download");
     }
 
     @NonNull
@@ -571,11 +602,11 @@ public class LocalAIPlugin extends Plugin {
         status.put("modelId", modelId);
         status.put("state", state);
         status.put("verified", verified);
-        status.put("expectedBytes", POC_MODEL_EXPECTED_BYTES);
-        status.put("expectedSha256", POC_MODEL_EXPECTED_SHA256);
+        status.put("expectedBytes", expectedBytesFor(modelId));
+        status.put("expectedSha256", expectedSha256For(modelId));
         status.put("installedBytes", modelFile.isFile() ? modelFile.length() : 0L);
         status.put("downloadedBytes", downloading ? modelDownloadBytes : 0L);
-        status.put("totalBytes", POC_MODEL_EXPECTED_BYTES);
+        status.put("totalBytes", expectedBytesFor(modelId));
         status.put("message", message);
         return status;
     }
@@ -638,10 +669,10 @@ public class LocalAIPlugin extends Plugin {
             emitDownloadProgress(modelId, "verifying", downloaded, "Verifying checksum.");
 
             String actualSha256 = hexDigest(digest.digest());
-            if (downloaded != POC_MODEL_EXPECTED_BYTES) {
+            if (downloaded != expectedBytesFor(modelId)) {
                 throw new RuntimeException("Downloaded model size does not match the pinned manifest.");
             }
-            if (!POC_MODEL_EXPECTED_SHA256.equalsIgnoreCase(actualSha256)) {
+            if (!expectedSha256For(modelId).equalsIgnoreCase(actualSha256)) {
                 throw new RuntimeException("Downloaded model SHA-256 does not match the pinned manifest.");
             }
 
@@ -686,7 +717,7 @@ public class LocalAIPlugin extends Plugin {
         event.put("modelId", modelId);
         event.put("state", state);
         event.put("downloadedBytes", downloadedBytes);
-        event.put("totalBytes", POC_MODEL_EXPECTED_BYTES);
+        event.put("totalBytes", expectedBytesFor(modelId));
         event.put("message", message);
         notifyListeners("localAIModelDownloadProgress", event);
     }
@@ -702,10 +733,10 @@ public class LocalAIPlugin extends Plugin {
             int read = input.read(bytes);
             if (read <= 0) return false;
             JSONObject metadata = new JSONObject(new String(bytes, 0, read, java.nio.charset.StandardCharsets.UTF_8));
-            return POC_MODEL_ID.equals(metadata.optString("modelId"))
-                && POC_MODEL_EXPECTED_SHA256.equalsIgnoreCase(metadata.optString("sha256"))
-                && POC_MODEL_EXPECTED_BYTES == metadata.optLong("bytes", -1L)
-                && resolveModelFile(modelId).length() == POC_MODEL_EXPECTED_BYTES;
+            return modelId.equals(metadata.optString("modelId"))
+                && expectedSha256For(modelId).equalsIgnoreCase(metadata.optString("sha256"))
+                && expectedBytesFor(modelId) == metadata.optLong("bytes", -1L)
+                && resolveModelFile(modelId).length() == expectedBytesFor(modelId);
         } catch (Exception error) {
             return false;
         }
@@ -717,7 +748,7 @@ public class LocalAIPlugin extends Plugin {
         if (!modelFile.isFile() || !modelFile.canRead()) {
             return ModelVerification.failed("The requested GGUF model is not installed in app-private Local AI storage.");
         }
-        if (modelFile.length() != POC_MODEL_EXPECTED_BYTES) {
+        if (modelFile.length() != expectedBytesFor(modelId)) {
             return ModelVerification.failed("Model size does not match the pinned manifest.");
         }
 
@@ -731,7 +762,7 @@ public class LocalAIPlugin extends Plugin {
                 // Stream through the file so the digest sees every byte.
             }
             String sha256 = hexDigest(digestInput.getMessageDigest().digest());
-            if (!POC_MODEL_EXPECTED_SHA256.equalsIgnoreCase(sha256)) {
+            if (!expectedSha256For(modelId).equalsIgnoreCase(sha256)) {
                 return ModelVerification.failed("Model SHA-256 does not match the pinned manifest.");
             }
             return ModelVerification.ok(sha256, modelFile.length());
@@ -772,6 +803,16 @@ public class LocalAIPlugin extends Plugin {
         return 0L;
     }
 
+    private long totalMemoryBytes() {
+        ActivityManager activityManager = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        if (activityManager != null) {
+            activityManager.getMemoryInfo(memoryInfo);
+            return memoryInfo.totalMem;
+        }
+        return 0L;
+    }
+
     private long availableStorageBytes() {
         StatFs statFs = new StatFs(getContext().getFilesDir().getAbsolutePath());
         return statFs.getAvailableBytes();
@@ -800,6 +841,30 @@ public class LocalAIPlugin extends Plugin {
             throw new JSONException("Empty native result");
         }
         return new JSONObject(result);
+    }
+
+    private void rejectNativeGeneration(@NonNull PluginCall call, @NonNull String modelId, @NonNull JSONObject nativeResult) {
+        String stage = nativeResult.optString("stage", "unknown").trim();
+        if (stage.isEmpty()) stage = "unknown";
+        String message = nativeResult.optString("error", "Local AI generation failed.").trim();
+        if (message.isEmpty()) message = "Local AI generation failed.";
+
+        try {
+            JSONObject diagnostics = new JSONObject();
+            diagnostics.put("modelId", modelId);
+            diagnostics.put("stage", nativeResult.optString("stage", "unknown"));
+            diagnostics.put("errorClass", nativeResult.optString("errorClass", "generation_error"));
+            diagnostics.put("promptTokens", nativeResult.optInt("promptTokens", 0));
+            diagnostics.put("outputTokens", nativeResult.optInt("outputTokens", 0));
+            diagnostics.put("elapsedMs", nativeResult.optLong("elapsedMs", 0L));
+            diagnostics.put("loadedModelDescription", loadedModelDescription);
+            diagnostics.put("availableMemoryBytes", availableMemoryBytes());
+            Log.e(TAG, "LocalAI native generation failed: " + diagnostics.toString());
+        } catch (Exception ignored) {
+            // Diagnostics must never mask the user-facing rejection.
+        }
+
+        call.reject(message + " [stage=" + stage + "]");
     }
 
     private static final class ModelVerification {
