@@ -3,6 +3,7 @@ package com.bigdrops.app.plugins;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
+import android.os.StatFs;
 import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
@@ -19,6 +20,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 @CapacitorPlugin(name = "LocalAI")
 public class LocalAIPlugin extends Plugin {
@@ -26,9 +35,15 @@ public class LocalAIPlugin extends Plugin {
     private static final String RUNTIME_NAME = "llama.cpp";
     private static final String LLAMA_CPP_COMMIT = "4da6337767f973e2b4d0797e5b323d77d8565e4a";
     private static final String MODEL_DIRECTORY = "local-ai/models";
+    private static final String TEMP_DIRECTORY = "local-ai/tmp";
     private static final String POC_MODEL_ID = "qwen3-0.6b-instruct-q4-k-m-gguf-poc";
     private static final String POC_MODEL_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.gguf";
+    private static final String POC_MODEL_METADATA_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.json";
+    private static final String POC_MODEL_DOWNLOAD_URL = "https://huggingface.co/QuantFactory/Qwen3-0.6B-GGUF/resolve/e7e05d713acaa2baccdfb52e967eaba8ba562ba8/Qwen3-0.6B.Q4_K_M.gguf?download=1";
+    private static final String POC_MODEL_EXPECTED_SHA256 = "7af3fdf842f87b24672f8a7f1dd50404043f0bfb71093ff91c31d2b49df4631d";
+    private static final long POC_MODEL_EXPECTED_BYTES = 484_220_000L;
     private static final int MAX_OUTPUT_TOKENS = 384;
+    private static final int DOWNLOAD_BUFFER_BYTES = 1024 * 1024;
 
     private static final String CLEANUP_RESULT_GRAMMAR =
         "root ::= object\n" +
@@ -72,6 +87,11 @@ public class LocalAIPlugin extends Plugin {
     private long memoryAfterUnloadBytes = 0L;
     @Nullable
     private String loadedModelDescription;
+    @Nullable
+    private Thread modelDownloadThread;
+    private volatile boolean cancelModelDownload = false;
+    private volatile long modelDownloadBytes = 0L;
+    private volatile String modelDownloadMessage = null;
 
     static {
         // Loading is also guarded at runtime so unsupported builds fail closed.
@@ -114,6 +134,126 @@ public class LocalAIPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void getModelStatus(PluginCall call) {
+        String modelId = safeModelId(call.getString("modelId"));
+        if (modelId == null) {
+            call.reject("A supported modelId is required.");
+            return;
+        }
+
+        call.resolve(buildModelStatus(modelId));
+    }
+
+    @PluginMethod
+    public void downloadModel(PluginCall call) {
+        String modelId = safeModelId(call.getString("modelId"));
+        if (modelId == null) {
+            call.reject("A supported modelId is required.");
+            return;
+        }
+
+        synchronized (stateLock) {
+            if (modelDownloadThread != null && modelDownloadThread.isAlive()) {
+                call.reject("A Local AI model download is already running.");
+                return;
+            }
+            if (isModelInstalledAndVerified(modelId)) {
+                call.resolve(buildModelStatus(modelId));
+                return;
+            }
+            modelDownloadBytes = 0L;
+            modelDownloadMessage = "Download starting.";
+            cancelModelDownload = false;
+        }
+
+        if (availableStorageBytes() < POC_MODEL_EXPECTED_BYTES + (64L * 1024L * 1024L)) {
+            call.reject("Not enough app-private storage is available for this Local AI model.");
+            return;
+        }
+
+        modelDownloadThread = new Thread(() -> runModelDownload(call, modelId), "bigdrops-local-ai-model-download");
+        modelDownloadThread.start();
+    }
+
+    @PluginMethod
+    public void cancelModelDownload(PluginCall call) {
+        String modelId = safeModelId(call.getString("modelId"));
+        if (modelId == null) {
+            call.reject("A supported modelId is required.");
+            return;
+        }
+
+        boolean active = modelDownloadThread != null && modelDownloadThread.isAlive();
+        cancelModelDownload = true;
+        JSObject result = new JSObject();
+        result.put("cancelled", active);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void verifyModel(PluginCall call) {
+        String modelId = safeModelId(call.getString("modelId"));
+        if (modelId == null) {
+            call.reject("A supported modelId is required.");
+            return;
+        }
+
+        try {
+            ModelVerification verification = verifyModelFile(modelId);
+            if (!verification.ok) {
+                deleteMetadataFile(modelId);
+                call.reject(verification.message);
+                return;
+            }
+            writeModelMetadata(modelId, verification.sha256, verification.bytes);
+            call.resolve(buildModelStatus(modelId));
+        } catch (RuntimeException error) {
+            call.reject("Local AI model verification failed.");
+        }
+    }
+
+    @PluginMethod
+    public void deleteModel(PluginCall call) {
+        String modelId = safeModelId(call.getString("modelId"));
+        if (modelId == null) {
+            call.reject("A supported modelId is required.");
+            return;
+        }
+
+        synchronized (stateLock) {
+            if (isGenerating) {
+                if (isLlamaRuntimeLinked()) nativeCancel(nativeHandle);
+                call.reject("Local AI generation is being cancelled. Try deleting the model again after it stops.");
+                return;
+            }
+            if (loadedModelId != null && loadedModelId.equals(modelId) && isLlamaRuntimeLinked()) {
+                try {
+                    nativeUnload(nativeHandle);
+                } catch (RuntimeException ignored) {
+                    // Deletion is still fail-closed below if the file cannot be removed.
+                }
+                loadedModelId = null;
+                loadedModelDescription = null;
+                memoryAfterUnloadBytes = availableMemoryBytes();
+            }
+        }
+
+        cancelModelDownload = true;
+        File modelFile = resolveModelFile(modelId);
+        File tempFile = resolveTempModelFile(modelId);
+        if (modelFile.exists() && !modelFile.delete()) {
+            call.reject("The installed Local AI model could not be deleted.");
+            return;
+        }
+        if (tempFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            tempFile.delete();
+        }
+        deleteMetadataFile(modelId);
+        call.resolve(buildModelStatus(modelId));
+    }
+
+    @PluginMethod
     public void loadModel(PluginCall call) {
         String modelId = safeModelId(call.getString("modelId"));
         if (modelId == null) {
@@ -126,11 +266,12 @@ public class LocalAIPlugin extends Plugin {
             return;
         }
 
-        File modelFile = resolveModelFile(modelId);
-        if (!modelFile.isFile() || !modelFile.canRead()) {
-            call.reject("The requested GGUF model is not installed in app-private Local AI storage.");
+        if (!isModelInstalledAndVerified(modelId)) {
+            call.reject("The requested GGUF model is not installed and verified in app-private Local AI storage.");
             return;
         }
+
+        File modelFile = resolveModelFile(modelId);
 
         synchronized (stateLock) {
             if (isGenerating) {
@@ -372,11 +513,253 @@ public class LocalAIPlugin extends Plugin {
     }
 
     @NonNull
+    private File ensureTempDirectory() {
+        File directory = new File(getContext().getFilesDir(), TEMP_DIRECTORY);
+        if (!directory.isDirectory()) {
+            //noinspection ResultOfMethodCallIgnored
+            directory.mkdirs();
+        }
+        return directory;
+    }
+
+    @NonNull
     private File resolveModelFile(@NonNull String modelId) {
         if (!POC_MODEL_ID.equals(modelId)) {
             return new File(ensureModelDirectory(), "unsupported-model.gguf");
         }
         return new File(ensureModelDirectory(), POC_MODEL_FILENAME);
+    }
+
+    @NonNull
+    private File resolveMetadataFile(@NonNull String modelId) {
+        if (!POC_MODEL_ID.equals(modelId)) {
+            return new File(ensureModelDirectory(), "unsupported-model.json");
+        }
+        return new File(ensureModelDirectory(), POC_MODEL_METADATA_FILENAME);
+    }
+
+    @NonNull
+    private File resolveTempModelFile(@NonNull String modelId) {
+        if (!POC_MODEL_ID.equals(modelId)) {
+            return new File(ensureTempDirectory(), "unsupported-model.gguf.download");
+        }
+        return new File(ensureTempDirectory(), POC_MODEL_FILENAME + ".download");
+    }
+
+    @NonNull
+    private JSObject buildModelStatus(@NonNull String modelId) {
+        boolean downloading = modelDownloadThread != null && modelDownloadThread.isAlive();
+        File modelFile = resolveModelFile(modelId);
+        File metadataFile = resolveMetadataFile(modelId);
+        boolean verified = false;
+        String state = "not_installed";
+        String message = null;
+
+        if (downloading) {
+            state = "downloading";
+            message = modelDownloadMessage;
+        } else if (modelFile.isFile() && metadataFile.isFile() && isMetadataVerified(modelId)) {
+            verified = true;
+            state = "installed";
+            message = "Model is installed and verified.";
+        } else if (modelFile.exists() || metadataFile.exists()) {
+            state = "failed";
+            message = "Model file exists but has not passed pinned checksum verification.";
+        }
+
+        JSObject status = new JSObject();
+        status.put("modelId", modelId);
+        status.put("state", state);
+        status.put("verified", verified);
+        status.put("expectedBytes", POC_MODEL_EXPECTED_BYTES);
+        status.put("expectedSha256", POC_MODEL_EXPECTED_SHA256);
+        status.put("installedBytes", modelFile.isFile() ? modelFile.length() : 0L);
+        status.put("downloadedBytes", downloading ? modelDownloadBytes : 0L);
+        status.put("totalBytes", POC_MODEL_EXPECTED_BYTES);
+        status.put("message", message);
+        return status;
+    }
+
+    private void runModelDownload(@NonNull PluginCall call, @NonNull String modelId) {
+        File tempFile = resolveTempModelFile(modelId);
+        File modelFile = resolveModelFile(modelId);
+        HttpURLConnection connection = null;
+
+        try {
+            if (tempFile.exists() && !tempFile.delete()) {
+                throw new RuntimeException("Could not clear the previous partial model download.");
+            }
+
+            URL url = new URL(POC_MODEL_DOWNLOAD_URL);
+            if (!"https".equalsIgnoreCase(url.getProtocol())) {
+                throw new RuntimeException("Local AI model download must use HTTPS.");
+            }
+
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(20_000);
+            connection.setReadTimeout(30_000);
+            connection.setInstanceFollowRedirects(true);
+
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) {
+                throw new RuntimeException("Local AI model download failed with HTTP " + code + ".");
+            }
+
+            MessageDigest digest = sha256Digest();
+            long downloaded = 0L;
+            long lastProgressAt = 0L;
+            modelDownloadMessage = "Downloading model.";
+            emitDownloadProgress(modelId, "downloading", downloaded, "Downloading model.");
+
+            try (
+                InputStream input = connection.getInputStream();
+                DigestInputStream digestInput = new DigestInputStream(input, digest);
+                FileOutputStream output = new FileOutputStream(tempFile)
+            ) {
+                byte[] buffer = new byte[DOWNLOAD_BUFFER_BYTES];
+                int read;
+                while ((read = digestInput.read(buffer)) != -1) {
+                    if (cancelModelDownload) {
+                        throw new InterruptedException("Local AI model download was cancelled.");
+                    }
+                    output.write(buffer, 0, read);
+                    downloaded += read;
+                    modelDownloadBytes = downloaded;
+                    long now = SystemClock.elapsedRealtime();
+                    if (now - lastProgressAt > 500L) {
+                        lastProgressAt = now;
+                        emitDownloadProgress(modelId, "downloading", downloaded, "Downloading model.");
+                    }
+                }
+                output.getFD().sync();
+            }
+
+            modelDownloadMessage = "Verifying checksum.";
+            emitDownloadProgress(modelId, "verifying", downloaded, "Verifying checksum.");
+
+            String actualSha256 = hexDigest(digest.digest());
+            if (downloaded != POC_MODEL_EXPECTED_BYTES) {
+                throw new RuntimeException("Downloaded model size does not match the pinned manifest.");
+            }
+            if (!POC_MODEL_EXPECTED_SHA256.equalsIgnoreCase(actualSha256)) {
+                throw new RuntimeException("Downloaded model SHA-256 does not match the pinned manifest.");
+            }
+
+            if (modelFile.exists() && !modelFile.delete()) {
+                throw new RuntimeException("Could not replace the installed Local AI model.");
+            }
+            if (!tempFile.renameTo(modelFile)) {
+                throw new RuntimeException("Could not promote the verified Local AI model.");
+            }
+
+            writeModelMetadata(modelId, actualSha256, downloaded);
+            modelDownloadMessage = "Model installed and verified.";
+            emitDownloadProgress(modelId, "installed", downloaded, "Model installed and verified.");
+            call.resolve(buildModelStatus(modelId));
+        } catch (InterruptedException error) {
+            if (tempFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.delete();
+            }
+            modelDownloadMessage = "Download cancelled.";
+            emitDownloadProgress(modelId, "failed", modelDownloadBytes, "Download cancelled.");
+            call.reject("Local AI model download was cancelled.");
+        } catch (RuntimeException | java.io.IOException error) {
+            if (tempFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.delete();
+            }
+            modelDownloadMessage = error.getMessage();
+            emitDownloadProgress(modelId, "failed", modelDownloadBytes, modelDownloadMessage);
+            call.reject(modelDownloadMessage != null ? modelDownloadMessage : "Local AI model download failed.");
+        } finally {
+            if (connection != null) connection.disconnect();
+            synchronized (stateLock) {
+                modelDownloadThread = null;
+                cancelModelDownload = false;
+            }
+        }
+    }
+
+    private void emitDownloadProgress(@NonNull String modelId, @NonNull String state, long downloadedBytes, @Nullable String message) {
+        JSObject event = new JSObject();
+        event.put("modelId", modelId);
+        event.put("state", state);
+        event.put("downloadedBytes", downloadedBytes);
+        event.put("totalBytes", POC_MODEL_EXPECTED_BYTES);
+        event.put("message", message);
+        notifyListeners("localAIModelDownloadProgress", event);
+    }
+
+    private boolean isModelInstalledAndVerified(@NonNull String modelId) {
+        File modelFile = resolveModelFile(modelId);
+        return modelFile.isFile() && modelFile.canRead() && resolveMetadataFile(modelId).isFile() && isMetadataVerified(modelId);
+    }
+
+    private boolean isMetadataVerified(@NonNull String modelId) {
+        try (FileInputStream input = new FileInputStream(resolveMetadataFile(modelId))) {
+            byte[] bytes = new byte[(int) resolveMetadataFile(modelId).length()];
+            int read = input.read(bytes);
+            if (read <= 0) return false;
+            JSONObject metadata = new JSONObject(new String(bytes, 0, read, java.nio.charset.StandardCharsets.UTF_8));
+            return POC_MODEL_ID.equals(metadata.optString("modelId"))
+                && POC_MODEL_EXPECTED_SHA256.equalsIgnoreCase(metadata.optString("sha256"))
+                && POC_MODEL_EXPECTED_BYTES == metadata.optLong("bytes", -1L)
+                && resolveModelFile(modelId).length() == POC_MODEL_EXPECTED_BYTES;
+        } catch (Exception error) {
+            return false;
+        }
+    }
+
+    @NonNull
+    private ModelVerification verifyModelFile(@NonNull String modelId) {
+        File modelFile = resolveModelFile(modelId);
+        if (!modelFile.isFile() || !modelFile.canRead()) {
+            return ModelVerification.failed("The requested GGUF model is not installed in app-private Local AI storage.");
+        }
+        if (modelFile.length() != POC_MODEL_EXPECTED_BYTES) {
+            return ModelVerification.failed("Model size does not match the pinned manifest.");
+        }
+
+        try (
+            FileInputStream input = new FileInputStream(modelFile);
+            DigestInputStream digestInput = new DigestInputStream(input, sha256Digest())
+        ) {
+            byte[] buffer = new byte[DOWNLOAD_BUFFER_BYTES];
+            //noinspection StatementWithEmptyBody
+            while (digestInput.read(buffer) != -1) {
+                // Stream through the file so the digest sees every byte.
+            }
+            String sha256 = hexDigest(digestInput.getMessageDigest().digest());
+            if (!POC_MODEL_EXPECTED_SHA256.equalsIgnoreCase(sha256)) {
+                return ModelVerification.failed("Model SHA-256 does not match the pinned manifest.");
+            }
+            return ModelVerification.ok(sha256, modelFile.length());
+        } catch (Exception error) {
+            return ModelVerification.failed("Local AI model verification failed.");
+        }
+    }
+
+    private void writeModelMetadata(@NonNull String modelId, @NonNull String sha256, long bytes) {
+        try (FileOutputStream output = new FileOutputStream(resolveMetadataFile(modelId))) {
+            JSONObject metadata = new JSONObject();
+            metadata.put("modelId", modelId);
+            metadata.put("sha256", sha256);
+            metadata.put("bytes", bytes);
+            metadata.put("verifiedAt", System.currentTimeMillis());
+            output.write(metadata.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            output.getFD().sync();
+        } catch (Exception error) {
+            throw new RuntimeException("Could not write Local AI model metadata.");
+        }
+    }
+
+    private void deleteMetadataFile(@NonNull String modelId) {
+        File metadataFile = resolveMetadataFile(modelId);
+        if (metadataFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            metadataFile.delete();
+        }
     }
 
     private long availableMemoryBytes() {
@@ -389,10 +772,55 @@ public class LocalAIPlugin extends Plugin {
         return 0L;
     }
 
+    private long availableStorageBytes() {
+        StatFs statFs = new StatFs(getContext().getFilesDir().getAbsolutePath());
+        return statFs.getAvailableBytes();
+    }
+
+    @NonNull
+    private MessageDigest sha256Digest() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException error) {
+            throw new RuntimeException("SHA-256 is not available on this device.");
+        }
+    }
+
+    @NonNull
+    private String hexDigest(@NonNull byte[] digest) {
+        StringBuilder builder = new StringBuilder(digest.length * 2);
+        for (byte b : digest) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
+    }
+
     private JSONObject parseNativeResult(@Nullable String result) throws JSONException {
         if (result == null || result.trim().isEmpty()) {
             throw new JSONException("Empty native result");
         }
         return new JSONObject(result);
+    }
+
+    private static final class ModelVerification {
+        final boolean ok;
+        final String sha256;
+        final long bytes;
+        final String message;
+
+        private ModelVerification(boolean ok, @NonNull String sha256, long bytes, @NonNull String message) {
+            this.ok = ok;
+            this.sha256 = sha256;
+            this.bytes = bytes;
+            this.message = message;
+        }
+
+        static ModelVerification ok(@NonNull String sha256, long bytes) {
+            return new ModelVerification(true, sha256, bytes, "");
+        }
+
+        static ModelVerification failed(@NonNull String message) {
+            return new ModelVerification(false, "", 0L, message);
+        }
     }
 }
