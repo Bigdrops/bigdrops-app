@@ -1,6 +1,7 @@
 import { isAndroidNative } from '@/lib/native/capacitor'
 import {
   ArchiveRestore,
+  BrainCircuit,
   Building2,
   Hash,
   Info,
@@ -31,6 +32,7 @@ export type ActiveSectionId =
   | 'archives'
   | 'theme'
   | 'security'
+  | 'local-ai'
   | 'app-update'
   | 'tenant-debug'
 
@@ -108,6 +110,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     label: 'System',
     items: [
       { id: 'app-update', label: 'App Update', icon: Smartphone, desc: 'Check for updates and manage versions', androidOnly: true },
+      { id: 'local-ai', label: 'Local AI', icon: BrainCircuit, desc: 'Install and verify the on-device review model' },
       { id: 'tenant-debug', label: 'Tenant Debug', icon: Terminal, desc: 'Platform operator diagnostics', adminOnly: true, operatorOnly: true },
     ],
   },

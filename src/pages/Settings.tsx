@@ -25,6 +25,7 @@ import { ArchivesSettingsSection } from './settings/ArchivesSettingsSection'
 import { AppThemeSettingsSection } from './settings/AppThemeSettingsSection'
 import { SecuritySettingsSection } from './settings/SecuritySettingsSection'
 import { AppUpdateSettingsSection } from './settings/AppUpdateSettingsSection'
+import { LocalAISettingsSection } from './settings/LocalAISettingsSection'
 
 export default function Settings() {
   const [session, setSession] = useState<SettingsSession>(null)
@@ -89,6 +90,7 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
     {active === 'archives' && <ArchivesSettingsSection />}
     {active === 'theme' && <AppThemeSettingsSection userId={session?.user?.id} />}
     {active === 'security' && <SecuritySettingsSection />}
+    {active === 'local-ai' && <LocalAISettingsSection />}
     {active === 'app-update' && <AppUpdateSettingsSection />}
     {active === 'tenant-debug' && <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">Tenant Diagnostics Environment (Operator Only)</div>}
   </SettingsShell>

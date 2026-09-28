@@ -1,5 +1,7 @@
-import { Capacitor, registerPlugin } from '@capacitor/core'
+import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core'
 
+import { BIGDROPS_LOCAL_AI_POC_MODEL } from '@/lib/local-ai/modelManifest'
+import type { LocalAIModelProgressEvent, LocalAIModelStatus } from '@/lib/local-ai/modelStatus'
 import type { CleanupLocalAITask } from '@/modules/item-library/domain/cleanupLocalAI'
 
 export type LocalAIRuntimeInfo = {
@@ -49,10 +51,16 @@ export type LocalAIAnalyzeResult = {
 
 type LocalAIPlugin = {
   getRuntimeInfo(): Promise<LocalAIRuntimeInfo>
+  getModelStatus(options: { modelId: string }): Promise<LocalAIModelStatus>
+  downloadModel(options: { modelId: string }): Promise<LocalAIModelStatus>
+  cancelModelDownload(options: { modelId: string }): Promise<{ cancelled: boolean }>
+  verifyModel(options: { modelId: string }): Promise<LocalAIModelStatus>
+  deleteModel(options: { modelId: string }): Promise<LocalAIModelStatus>
   loadModel(options: { modelId: string }): Promise<LocalAILoadModelResult>
   analyzeCleanupTask(options: { task: CleanupLocalAITask; prompt: string }): Promise<LocalAIAnalyzeResult>
   cancelGeneration(): Promise<{ cancelled: boolean }>
   unloadModel(): Promise<{ unloaded: boolean }>
+  addListener(eventName: 'localAIModelDownloadProgress', listenerFunc: (event: LocalAIModelProgressEvent) => void): Promise<PluginListenerHandle>
 }
 
 const LocalAI = registerPlugin<LocalAIPlugin>('LocalAI')
@@ -79,6 +87,49 @@ export async function getLocalAIRuntimeInfo(): Promise<LocalAIRuntimeInfo> {
   }
 
   return LocalAI.getRuntimeInfo()
+}
+
+export async function getLocalAIModelStatus(modelId = BIGDROPS_LOCAL_AI_POC_MODEL.modelId): Promise<LocalAIModelStatus> {
+  if (!hasLocalAIPlugin()) {
+    return {
+      modelId,
+      state: 'unsupported',
+      verified: false,
+      expectedBytes: BIGDROPS_LOCAL_AI_POC_MODEL.expectedBytes,
+      expectedSha256: BIGDROPS_LOCAL_AI_POC_MODEL.expectedSha256,
+      message: 'Local AI model management is available only inside the Android native app.',
+    }
+  }
+
+  return LocalAI.getModelStatus({ modelId })
+}
+
+export async function downloadLocalAIModel(modelId = BIGDROPS_LOCAL_AI_POC_MODEL.modelId): Promise<LocalAIModelStatus> {
+  if (!hasLocalAIPlugin()) throw new Error('Local AI model download is available only inside the Android native app.')
+  return LocalAI.downloadModel({ modelId })
+}
+
+export async function cancelLocalAIModelDownload(modelId = BIGDROPS_LOCAL_AI_POC_MODEL.modelId): Promise<boolean> {
+  if (!hasLocalAIPlugin()) return false
+  const result = await LocalAI.cancelModelDownload({ modelId })
+  return result.cancelled === true
+}
+
+export async function verifyLocalAIModel(modelId = BIGDROPS_LOCAL_AI_POC_MODEL.modelId): Promise<LocalAIModelStatus> {
+  if (!hasLocalAIPlugin()) throw new Error('Local AI model verification is available only inside the Android native app.')
+  return LocalAI.verifyModel({ modelId })
+}
+
+export async function deleteLocalAIModel(modelId = BIGDROPS_LOCAL_AI_POC_MODEL.modelId): Promise<LocalAIModelStatus> {
+  if (!hasLocalAIPlugin()) throw new Error('Local AI model removal is available only inside the Android native app.')
+  return LocalAI.deleteModel({ modelId })
+}
+
+export async function addLocalAIModelDownloadListener(
+  listener: (event: LocalAIModelProgressEvent) => void,
+): Promise<PluginListenerHandle | null> {
+  if (!hasLocalAIPlugin()) return null
+  return LocalAI.addListener('localAIModelDownloadProgress', listener)
 }
 
 export async function loadLocalAIModel(modelId: string): Promise<LocalAILoadModelResult> {
