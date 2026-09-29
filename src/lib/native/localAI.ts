@@ -39,11 +39,16 @@ export type LocalAINativeStage =
   | 'sampler_init'
   | 'grammar_init'
   | 'generate'
+  | 'token_sample'
+  | 'token_decode'
+  | 'output_validate'
+  | 'cancelled'
   | 'unknown'
 
 export type LocalAINativeError = Error & { stage: LocalAINativeStage }
 
 const NATIVE_STAGE_PATTERN = /\[stage=([a-z_]+)\]/
+const NATIVE_ELAPSED_PATTERN = /\[elapsedMs=(\d+)\]/
 
 export function getLocalAINativeStage(error: unknown): LocalAINativeStage {
   const message = error instanceof Error ? error.message : String(error || '')
@@ -58,10 +63,22 @@ export function getLocalAINativeStage(error: unknown): LocalAINativeStage {
     case 'sampler_init':
     case 'grammar_init':
     case 'generate':
+    case 'token_sample':
+    case 'token_decode':
+    case 'output_validate':
+    case 'cancelled':
       return stage
     default:
       return 'unknown'
   }
+}
+
+export function getLocalAINativeElapsedMs(error: unknown): number | null {
+  const message = error instanceof Error ? error.message : String(error || '')
+  const match = NATIVE_ELAPSED_PATTERN.exec(message)
+  if (!match) return null
+  const elapsedMs = Number.parseInt(match[1], 10)
+  return Number.isFinite(elapsedMs) ? elapsedMs : null
 }
 
 export function withLocalAINativeStage(error: unknown): LocalAINativeError {
