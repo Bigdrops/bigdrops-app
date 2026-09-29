@@ -640,6 +640,13 @@ export default function ItemLibraryPage() {
                     exportPayload={flaggedCleanupExport}
                     groups={cleanupDuplicateGroups}
                     reviewedSeparatePairs={reviewedSeparatePairs}
+                    selectedGroup={selectedDuplicateGroup}
+                    onOpenGroup={(groupId) => {
+                      const nextGroup = cleanupDuplicateGroups.find((group) => group.group_id === groupId)
+                      setSelectedDuplicateGroupId(groupId)
+                      if (nextGroup?.members[0]) setSelectedItemId(nextGroup.members[0].item_id)
+                      if (window.innerWidth < 768) setMobileDetailOpen(true)
+                    }}
                     onResultsChange={setLocalAIResults}
                   />
                 }

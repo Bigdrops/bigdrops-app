@@ -28,6 +28,8 @@ type ItemLibraryDuplicateMergeCardProps = {
   onMerge: (request: ItemLibraryMergeRequest) => Promise<void>
 }
 
+type IdentityDecision = 'unresolved' | 'merge' | 'separate'
+
 function PreviewPill({ children }: { children: ReactNode }) {
   return (
     <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 text-[10px] font-semibold text-bd-text shadow-sm">
@@ -48,6 +50,7 @@ export function ItemLibraryDuplicateMergeCard({
   isPairReviewedSeparate,
   onMerge,
 }: ItemLibraryDuplicateMergeCardProps) {
+  const [identityDecision, setIdentityDecision] = useState<IdentityDecision>('unresolved')
   const [winnerItemId, setWinnerItemId] = useState<string | null>(suggestPrimaryItemId(group))
   const [selectedMergedIds, setSelectedMergedIds] = useState<string[]>(group.members.slice(1).map((member) => member.item_id))
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -61,6 +64,7 @@ export function ItemLibraryDuplicateMergeCard({
         .filter((member) => member.item_id !== nextWinnerId)
         .map((member) => member.item_id),
     )
+    setIdentityDecision('unresolved')
     setConfirmOpen(false)
     setSubmissionError(null)
   }, [group])
@@ -88,6 +92,7 @@ export function ItemLibraryDuplicateMergeCard({
   }, [isPairReviewedSeparate, selectedScopeIds])
 
   const disableMerge = !request || aliasesLoading || Boolean(aliasesError) || mergeLoading || hasReviewedSeparateSelection
+  const disableKeepSeparate = !request || request.mergedItemIds.length === 0 || mergeLoading
 
   const handleWinnerChange = (itemId: string) => {
     setWinnerItemId(itemId)
@@ -128,6 +133,7 @@ export function ItemLibraryDuplicateMergeCard({
       setSubmissionError(null)
       await onKeepSeparate(request)
       setSelectedMergedIds([])
+      setIdentityDecision('unresolved')
     } catch (error) {
       setSubmissionError(error instanceof Error ? error.message : 'Could not keep these items separate.')
     }
@@ -137,10 +143,10 @@ export function ItemLibraryDuplicateMergeCard({
     <section className="mt-4 rounded-xl border border-bd-border bg-bd-surface p-4 shadow-lg">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Manual merge</div>
-          <h3 className="mt-1 text-[16px] font-extrabold text-bd-text">Choose primary item</h3>
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Manual decision</div>
+          <h3 className="mt-1 text-[16px] font-extrabold text-bd-text">Are these actually the same item?</h3>
           <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-bd-text-muted">
-            Review the similar names below. Merge only true duplicates. Keep separate items when a rating, model,
+            Review the similar names below. Choose Merge only for true duplicates. Keep separate items when a rating, model,
             part number, size, material, or application makes the identity different.
           </p>
         </div>
@@ -150,9 +156,33 @@ export function ItemLibraryDuplicateMergeCard({
         </div>
       </div>
 
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        {([
+          ['merge', 'Merge', 'These names are the same reusable item.'] as const,
+          ['separate', 'Keep separate', 'A specification or use makes them different.'] as const,
+          ['unresolved', 'Leave unresolved', 'Keep reviewing before deciding.'] as const,
+        ]).map(([value, label, description]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setIdentityDecision(value)}
+            className={[
+              'min-h-[58px] rounded-lg border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bd-button-primary-bg',
+              identityDecision === value
+                ? 'border-bd-button-primary-bg bg-bd-surface-muted text-bd-text shadow-sm'
+                : 'border-bd-border bg-bd-surface text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text',
+            ].join(' ')}
+          >
+            <div className="text-[12px] font-extrabold">{label}</div>
+            <div className="mt-1 text-[10px] font-semibold leading-snug">{description}</div>
+          </button>
+        ))}
+      </div>
+
       <div className="mt-4 space-y-2">
         {group.members.map((member) => {
           const isWinner = winnerItemId === member.item_id
+          const showMergeSelection = identityDecision === 'merge'
           const isMerged = selectedMergedIds.includes(member.item_id)
           const isInspected = inspectedItemId === member.item_id
 
@@ -161,7 +191,7 @@ export function ItemLibraryDuplicateMergeCard({
               key={member.item_id}
               className={[
                 'rounded-lg border p-3 transition-all duration-150',
-                isWinner
+                showMergeSelection && isWinner
                   ? 'border-bd-border-strong bg-bd-surface-muted shadow-sm'
                   : isInspected
                     ? 'border-bd-border bg-bd-surface/50'
@@ -172,30 +202,32 @@ export function ItemLibraryDuplicateMergeCard({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleWinnerChange(member.item_id)}
-                        className={[
-                          'relative rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-all duration-200',
-                          isWinner
-                            ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm'
-                            : 'border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface',
-                        ].join(' ')}
-                      >
-                        {isWinner ? (
-                          <span className="flex items-center gap-1">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 6 9 17l-5-5" />
-                            </svg>
-                            Winner
-                          </span>
-                        ) : (
-                          'Set as primary'
-                        )}
-                      </button>
+                      {showMergeSelection ? (
+                        <button
+                          type="button"
+                          onClick={() => handleWinnerChange(member.item_id)}
+                          className={[
+                            'relative rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-all duration-200',
+                            isWinner
+                              ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm'
+                              : 'border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface',
+                          ].join(' ')}
+                        >
+                          {isWinner ? (
+                            <span className="flex items-center gap-1">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M20 6 9 17l-5-5" />
+                              </svg>
+                              Primary
+                            </span>
+                          ) : (
+                            'Set primary'
+                          )}
+                        </button>
+                      ) : null}
                       <div className={[
                         "truncate text-[13px] font-bold transition-colors",
-                        isWinner ? "text-bd-text" : "text-bd-text-muted"
+                        showMergeSelection && isWinner ? "text-bd-text" : "text-bd-text-muted"
                       ].join(' ')}>{member.name}</div>
                     </div>
 
@@ -208,16 +240,18 @@ export function ItemLibraryDuplicateMergeCard({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="inline-flex items-center gap-2 rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-semibold text-bd-text">
-                    <input
-                      type="checkbox"
-                      checked={isMerged}
-                      disabled={isWinner}
-                      onChange={() => handleToggleMerged(member.item_id)}
-                      className="h-3.5 w-3.5 rounded border-bd-input-border text-bd-button-primary-bg focus:ring-bd-input-focus"
-                    />
-                    Merge into primary
-                  </label>
+                  {showMergeSelection ? (
+                    <label className="inline-flex items-center gap-2 rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-semibold text-bd-text">
+                      <input
+                        type="checkbox"
+                        checked={isMerged}
+                        disabled={isWinner}
+                        onChange={() => handleToggleMerged(member.item_id)}
+                        className="h-3.5 w-3.5 rounded border-bd-input-border text-bd-button-primary-bg focus:ring-bd-input-focus"
+                      />
+                      Merge into primary
+                    </label>
+                  ) : null}
 
                   <button
                     type="button"
@@ -239,42 +273,50 @@ export function ItemLibraryDuplicateMergeCard({
       </div>
 
       <div className="mt-4 rounded-lg border border-bd-border bg-bd-surface-muted p-4 shadow-inner">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Consolidation Plan</div>
-            <div className="mt-1 flex items-center gap-2">
-              <span className="text-[14px] font-bold text-bd-text">
-                {preview?.winner.name || 'Choose a primary item'}
-              </span>
-              {preview && (
-                 <span className="rounded-full bg-bd-button-primary-bg px-2 py-0.5 text-[9px] font-bold text-bd-button-primary-text">PRIMARY</span>
-              )}
+        {identityDecision === 'merge' ? (
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Merge plan</div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-[14px] font-bold text-bd-text">
+                    {preview?.winner.name || 'Choose a primary item'}
+                  </span>
+                  {preview && (
+                    <span className="rounded-full bg-bd-button-primary-bg px-2 py-0.5 text-[9px] font-bold text-bd-button-primary-text">PRIMARY</span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={disableMerge}
+                onClick={() => setConfirmOpen(true)}
+                className="rounded-md border border-transparent bg-bd-button-primary-bg px-5 py-2.5 text-[12px] font-bold text-bd-button-primary-text shadow-sm transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Confirm merge
+              </button>
             </div>
+          </>
+        ) : identityDecision === 'separate' ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-bd-border bg-bd-surface px-3 py-3">
+            <p className="text-[11px] font-semibold text-bd-text-muted">
+              Save this as a reviewed Keep Separate decision. Future cleanup proposals will avoid this relationship.
+            </p>
+            <button
+              type="button"
+              disabled={disableKeepSeparate}
+              onClick={handleKeepSeparate}
+              className="rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-bold text-bd-text transition hover:bg-bd-surface disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Save Keep Separate
+            </button>
           </div>
-
-          <button
-            type="button"
-            disabled={disableMerge}
-            onClick={() => setConfirmOpen(true)}
-            className="rounded-md border border-transparent bg-bd-button-primary-bg px-5 py-2.5 text-[12px] font-bold text-bd-button-primary-text shadow-sm transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Confirm merge
-          </button>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-bd-border bg-bd-surface px-3 py-2">
-          <p className="text-[11px] font-semibold text-bd-text-muted">
-            Not duplicates? Keep the selected primary and merge candidates separate.
+        ) : (
+          <p className="rounded-md border border-dashed border-bd-border bg-bd-surface px-3 py-3 text-[11px] font-semibold text-bd-text-muted">
+            Choose whether these items are the same identity before selecting a primary item or saving Keep Separate.
           </p>
-          <button
-            type="button"
-            disabled={!request || request.mergedItemIds.length === 0 || mergeLoading}
-            onClick={handleKeepSeparate}
-            className="rounded-full border border-bd-border bg-bd-surface-muted px-3 py-1.5 text-[11px] font-bold text-bd-text transition hover:bg-bd-surface disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Keep separate
-          </button>
-        </div>
+        )}
 
         {hasReviewedSeparateSelection ? (
           <p className="mt-3 rounded-md border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] font-semibold text-bd-status-warning-text">
@@ -298,7 +340,7 @@ export function ItemLibraryDuplicateMergeCard({
           </p>
         ) : null}
 
-        {preview ? (
+        {identityDecision === 'merge' && preview ? (
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div className="rounded-md border border-bd-border bg-bd-surface p-3">
               <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Primary item</div>
@@ -345,11 +387,11 @@ export function ItemLibraryDuplicateMergeCard({
               </div>
             </div>
           </div>
-        ) : (
+        ) : identityDecision === 'merge' ? (
           <p className="mt-3 text-[11px] text-bd-text-muted">
             Select one primary item and at least one duplicate item to merge before confirming.
           </p>
-        )}
+        ) : null}
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
