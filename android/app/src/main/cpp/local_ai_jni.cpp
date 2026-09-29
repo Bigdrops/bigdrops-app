@@ -414,19 +414,24 @@ Java_com_bigdrops_app_plugins_LocalAIPlugin_nativeGenerate(
                 break;
             }
 
+            failure_stage = "token_sample";
             llama_token next_token = llama_sampler_sample(sampler, ctx, -1);
-            llama_sampler_accept(sampler, next_token);
+            // The pinned llama.cpp sampler API samples and accepts the token.
+            // Calling llama_sampler_accept() here would advance grammar state
+            // twice and can collapse the stack after the first "{" token.
 
             if (llama_vocab_is_eog(vocab, next_token)) {
                 break;
             }
 
+            failure_stage = "token_decode";
             if (!append_token_piece(vocab, next_token, output)) {
                 failure = "llama.cpp could not decode generated token text.";
                 break;
             }
             output_token_count += 1;
 
+            failure_stage = "generate";
             llama_batch batch = llama_batch_get_one(&next_token, 1);
             const int32_t decode_result = llama_decode(ctx, batch);
             if (decode_result != 0) {

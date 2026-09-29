@@ -864,7 +864,8 @@ public class LocalAIPlugin extends Plugin {
             // Diagnostics must never mask the user-facing rejection.
         }
 
-        call.reject(message + " [stage=" + stage + "]");
+        long elapsedMs = nativeResult.optLong("elapsedMs", 0L);
+        call.reject(message + " [stage=" + stage + "] [elapsedMs=" + elapsedMs + "]");
     }
 
     private static final class ModelVerification {
