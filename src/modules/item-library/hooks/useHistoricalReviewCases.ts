@@ -54,7 +54,7 @@ export function useHistoricalReviewCases() {
         if (!cancelled) setData(result)
       } catch (nextError) {
         if (!cancelled) {
-          setError(nextError instanceof Error ? nextError : new Error('Failed to load Historical Review cases.'))
+          setError(nextError instanceof Error ? nextError : new Error('Failed to load Unlinked Items.'))
           setData({
             ...EMPTY_RESULT,
             tenant_schema: schemaName || 'unknown',

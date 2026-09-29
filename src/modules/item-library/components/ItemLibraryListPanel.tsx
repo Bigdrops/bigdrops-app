@@ -1,9 +1,11 @@
+import type { ReactNode } from 'react'
 import type {
   DuplicateCandidateGroup,
   ItemCatalogItem,
   ItemLibraryFilterType,
   ItemLibraryViewMode,
 } from '../types'
+import type { CleanupLocalAIJobGroupStatus } from '../domain/cleanupLocalAIJob'
 import { ItemLibraryDuplicateGroupCard } from './ItemLibraryDuplicateGroupCard'
 import { ItemLibraryRow } from './ItemLibraryRow'
 import { ItemSearchBar } from './ItemSearchBar'
@@ -28,6 +30,8 @@ type ItemLibraryListPanelProps = {
   onNeedsCleanup?: (itemId: string) => void
   flaggedItemIds?: Set<string>
   totalUnresolvedIssues?: number
+  duplicateAssistant?: ReactNode
+  duplicateGroupStatuses?: Map<string, CleanupLocalAIJobGroupStatus>
 }
 
 function SkeletonRow({ wide }: { wide?: boolean }) {
@@ -83,6 +87,8 @@ export function ItemLibraryListPanel({
   onNeedsCleanup,
   flaggedItemIds,
   totalUnresolvedIssues = 0,
+  duplicateAssistant,
+  duplicateGroupStatuses,
 }: ItemLibraryListPanelProps) {
   const isLibrary = workflowMode === 'library'
 
@@ -134,7 +140,7 @@ export function ItemLibraryListPanel({
         </div>
       ) : null}
 
-      <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Item catalog">
+      <div className="flex-1 overflow-y-auto" role="listbox" aria-label={isLibrary ? 'Item catalog' : 'Duplicate groups'}>
         {loading ? (
           <>
             <SkeletonRow wide />
@@ -154,12 +160,14 @@ export function ItemLibraryListPanel({
             </div>
           ) : (
             <div className="space-y-3 p-3">
+              {duplicateAssistant ? <div>{duplicateAssistant}</div> : null}
               {duplicateGroups.map((group) => (
                 <ItemLibraryDuplicateGroupCard
                   key={group.group_id}
                   group={group}
                   selectedGroupId={selectedDuplicateGroupId}
                   selectedItemId={selectedItemId}
+                  aiStatus={duplicateGroupStatuses?.get(group.group_id) || null}
                   onSelectGroup={onSelectDuplicateGroup}
                   onInspectItem={onInspectDuplicateItem}
                 />

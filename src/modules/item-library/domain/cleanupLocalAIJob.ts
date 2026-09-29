@@ -5,6 +5,7 @@ import {
   type CleanupLocalAIProposal,
   type CleanupLocalAITask,
 } from './cleanupLocalAI'
+import { getLocalAINativeElapsedMs } from '@/lib/native/localAI'
 import type {
   DuplicateCandidateGroup,
   FlaggedCleanupExportPayload,
@@ -190,6 +191,7 @@ export async function runCleanupLocalAIJobPlan(
       elapsedMs = nativeResult.elapsedMs
     } catch (error) {
       analyzeError = readErrorMessage(error)
+      elapsedMs = getLocalAINativeElapsedMs(error) ?? elapsedMs
     }
 
     if (cancelled()) break

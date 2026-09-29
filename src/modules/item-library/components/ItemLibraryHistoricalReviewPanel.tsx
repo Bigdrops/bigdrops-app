@@ -89,9 +89,9 @@ function EmptyState() {
         <div className="mx-auto flex h-[58px] w-[58px] items-center justify-center rounded-lg bg-bd-surface-muted text-bd-button-primary-bg">
           <ClipboardList className="h-6 w-6" aria-hidden="true" />
         </div>
-        <h2 className="mt-4 text-[16px] font-extrabold text-bd-text">No unresolved historical cases</h2>
+        <h2 className="mt-4 text-[16px] font-extrabold text-bd-text">No unlinked items</h2>
         <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-          Item Library has no unresolved Tier C review cases for this tenant.
+          Old document items are already connected to the Item Library for this tenant.
         </p>
       </div>
     </div>
@@ -103,7 +103,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     <div className="flex min-h-[420px] items-center justify-center p-8 text-center">
       <div className="max-w-sm rounded-lg border border-bd-status-danger-border bg-bd-status-danger-bg p-5">
         <AlertTriangle className="mx-auto h-7 w-7 text-bd-status-danger-text" aria-hidden="true" />
-        <h2 className="mt-3 text-[15px] font-extrabold text-bd-status-danger-text">Historical Review could not load</h2>
+        <h2 className="mt-3 text-[15px] font-extrabold text-bd-status-danger-text">Unlinked Items could not load</h2>
         <p className="mt-2 text-[12px] leading-relaxed text-bd-status-danger-text">{message}</p>
         <button
           type="button"
@@ -163,8 +163,8 @@ function CaseQueueItem({
 }
 
 function getMutationMessage(result: HistoricalReviewMutationResult) {
-  if (result.status === 'applied') return 'Historical Review was updated.'
-  if (result.status === 'stale') return 'This review case changed. Reload and review the current evidence.'
+  if (result.status === 'applied') return 'Unlinked Items was updated.'
+  if (result.status === 'stale') return 'This unlinked item changed. Reload and review the current evidence.'
   if (result.status === 'conflict') return 'This action conflicts with current Item Library state.'
   return 'The action could not be completed.'
 }
@@ -276,7 +276,7 @@ function CaseDetail({
   if (!item) {
     return (
       <div className="rounded-lg border border-dashed border-bd-border bg-bd-card-bg p-6 text-center text-[12px] text-bd-text-muted">
-        Select a review case to inspect its historical evidence.
+        Select an unlinked item to inspect its document evidence.
       </div>
     )
   }
@@ -292,7 +292,7 @@ function CaseDetail({
 
   const handleLink = async (candidate: HistoricalReviewCandidate) => {
     const ok = window.confirm(
-      `Link ${item.occurrence_count} historical occurrence${item.occurrence_count === 1 ? '' : 's'} for "${item.display_description}" to "${candidate.name}"? Historical prices, quantities, units, taxes, and descriptions will not change.`,
+      `Link ${item.occurrence_count} old document row${item.occurrence_count === 1 ? '' : 's'} for "${item.display_description}" to "${candidate.name}"? Historical prices, quantities, units, taxes, and descriptions will not change.`,
     )
     if (!ok) return
     try {
@@ -305,7 +305,7 @@ function CaseDetail({
 
   const handleKeepSeparate = async (candidate: HistoricalReviewCandidate) => {
     const ok = window.confirm(
-      `Mark this historical review case as separate from "${candidate.name}"? This does not link rows or change catalog data.`,
+      `Keep this unlinked item separate from "${candidate.name}"? This does not link rows or change catalog data.`,
     )
     if (!ok) return
     try {
@@ -323,7 +323,7 @@ function CaseDetail({
       return
     }
     const ok = window.confirm(
-      `Create a separate Item Library entry named "${name}" and link ${item.occurrence_count} historical occurrence${item.occurrence_count === 1 ? '' : 's'} to it? Historical prices, quantities, units, taxes, and descriptions will not change.`,
+      `Create a separate Item Library entry named "${name}" and link ${item.occurrence_count} old document row${item.occurrence_count === 1 ? '' : 's'} to it? Historical prices, quantities, units, taxes, and descriptions will not change.`,
     )
     if (!ok) return
     try {
@@ -339,7 +339,7 @@ function CaseDetail({
       <div className="rounded-lg border border-bd-border bg-bd-card-bg p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Review case</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Unlinked item</div>
             <h2 id="historical-review-detail-title" className="mt-1 text-[19px] font-extrabold leading-tight text-bd-text">
               {item.display_description}
             </h2>
@@ -351,7 +351,7 @@ function CaseDetail({
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Occurrences" value={item.occurrence_count.toLocaleString()} meta={`${item.invoice_count} invoice · ${item.quotation_count} quote`} />
+          <StatCard label="Document rows" value={item.occurrence_count.toLocaleString()} meta={`${item.invoice_count} invoice · ${item.quotation_count} quote`} />
           <StatCard label="Latest use" value={formatDisplayDate(item.latest_used_at, { fallback: 'No date' })} meta={`First: ${formatDisplayDate(item.first_used_at, { fallback: 'No date' })}`} />
           <StatCard label="Price range" value={formatPriceRange(item)} meta="Historical unit prices only" />
           <StatCard label="Candidates" value={item.candidates.length.toLocaleString()} meta={item.candidate_reason_labels.join(', ') || 'No current candidates'} />
@@ -369,7 +369,7 @@ function CaseDetail({
           Evidence, not identity proof
         </div>
         <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-          Exact text evidence and similar text evidence help a person review the case. Link and create decisions update identity only. They do not merge catalog items or rewrite commercial history.
+          Exact text evidence and similar text evidence help a person review the item. Link and create decisions update identity only. They do not merge catalog items or rewrite commercial history.
         </p>
       </div>
 
@@ -403,7 +403,7 @@ function CaseDetail({
       <section className="rounded-lg border border-bd-border bg-bd-card-bg p-4" aria-labelledby="historical-review-occurrences">
         <div className="flex items-center justify-between gap-3">
           <h3 id="historical-review-occurrences" className="text-[13px] font-extrabold text-bd-text">
-            Historical occurrences
+            Old document rows
           </h3>
           <FileClock className="h-4 w-4 text-bd-text-muted" aria-hidden="true" />
         </div>
@@ -468,7 +468,7 @@ function CaseDetail({
           </div>
         </div>
         <div className="mt-3 rounded-lg border border-dashed border-bd-border p-3 text-[12px] text-bd-text-muted">
-          Leave unresolved stores no decision. The case remains available for later review.
+          Leave unresolved stores no decision. The item remains available for later review.
         </div>
       </section>
     </section>
@@ -531,7 +531,7 @@ export function ItemLibraryHistoricalReviewPanel() {
     })
 
   if (loading) return <LoadingState />
-  if (error) return <ErrorState message={error.message || 'Try again to load the current tenant review cases.'} onRetry={reload} />
+  if (error) return <ErrorState message={error.message || 'Try again to load the current unlinked items.'} onRetry={reload} />
   if (!data.cases.length) return <EmptyState />
 
   const filterOptions: Array<{ value: ReviewFilter; label: string; count: number }> = [
@@ -549,39 +549,39 @@ export function ItemLibraryHistoricalReviewPanel() {
           <div className="max-w-3xl">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Item Library</div>
             <h1 id="historical-review-title" className="mt-1 text-[22px] font-extrabold tracking-tight text-bd-text">
-              Historical Review
+              Unlinked Items
             </h1>
             <p className="mt-2 text-[12px] leading-relaxed text-bd-text-muted">
-              Review unresolved historical line-item descriptions and apply deliberate identity decisions. Historical commercial values are not changed.
+              Connect old document line items to reusable Item Library identities. Historical commercial values are not changed.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[430px]">
-            <StatCard label="Cases" value={data.summary.case_count.toLocaleString()} meta={formatCount(data.summary.occurrence_count, 'occurrence')} />
-            <StatCard label="Repeated" value={data.summary.repeated_case_count.toLocaleString()} meta={formatCount(data.summary.repeated_occurrence_count, 'occurrence')} />
+            <StatCard label="Items" value={data.summary.case_count.toLocaleString()} meta={formatCount(data.summary.occurrence_count, 'document row')} />
+            <StatCard label="Repeated" value={data.summary.repeated_case_count.toLocaleString()} meta={formatCount(data.summary.repeated_occurrence_count, 'document row')} />
             <StatCard label="Specs" value={data.summary.specification_sensitive_case_count.toLocaleString()} meta="Need careful review" />
-            <StatCard label="Excluded" value={data.summary.tier_d_excluded_count.toLocaleString()} meta="Tier D-style rows" />
+            <StatCard label="Excluded" value={data.summary.tier_d_excluded_count.toLocaleString()} meta="Rows not ready" />
           </div>
         </div>
         {data.summary.truncated ? (
           <div className="mt-3 rounded-md border border-bd-status-warning-border bg-bd-status-warning-bg p-3 text-[12px] font-semibold text-bd-status-warning-text">
-            Historical Review loaded a bounded sample because the source row count is high. Use Stage 2 planning before applying decisions.
+            Unlinked Items loaded a bounded sample because the source row count is high. Use Stage 2 planning before applying decisions.
           </div>
         ) : null}
       </section>
 
       <div className="grid min-h-0 flex-1 gap-0 overflow-hidden md:grid-cols-[minmax(280px,0.42fr)_minmax(0,1fr)]">
-        <aside className="min-h-0 overflow-y-auto border-b border-bd-border bg-bd-surface-muted p-3 md:border-b-0 md:border-r" aria-label="Historical Review queue">
+        <aside className="min-h-0 overflow-y-auto border-b border-bd-border bg-bd-surface-muted p-3 md:border-b-0 md:border-r" aria-label="Unlinked Items queue">
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-bd-text-muted" aria-hidden="true" />
-            <span className="sr-only">Search Historical Review cases</span>
+            <span className="sr-only">Search Unlinked Items</span>
             <input
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Search review cases"
+              placeholder="Search unlinked items"
               className="h-11 w-full rounded-md border border-bd-border bg-bd-card-bg pl-9 pr-3 text-[13px] font-semibold text-bd-text outline-none focus:border-bd-button-primary-bg focus:ring-2 focus:ring-bd-button-primary-bg/20"
             />
           </label>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Historical Review filters">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Unlinked Items filters">
             {filterOptions.map((option) => (
               <button
                 key={option.value}
@@ -601,7 +601,7 @@ export function ItemLibraryHistoricalReviewPanel() {
             ))}
           </div>
 
-          <div className="mt-3 space-y-2" role="list" aria-label="Historical Review cases">
+          <div className="mt-3 space-y-2" role="list" aria-label="Unlinked Items">
             {filteredCases.length ? (
               filteredCases.map((item) => (
                 <div key={item.case_id} role="listitem">
@@ -614,7 +614,7 @@ export function ItemLibraryHistoricalReviewPanel() {
               ))
             ) : (
               <div className="rounded-lg border border-dashed border-bd-border bg-bd-card-bg p-4 text-[12px] text-bd-text-muted">
-                No review cases match this filter.
+                No unlinked items match this filter.
               </div>
             )}
           </div>

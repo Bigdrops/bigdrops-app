@@ -121,6 +121,28 @@ test('runner classifies ready, unsure, conflict, and failed outcomes', async () 
   assert.equal(getLocalAINativeStage(new Error(byGroup.get('group-4').errors[0])), 'prompt_decode')
 })
 
+test('runner preserves elapsed timing from native failure diagnostics', async () => {
+  const { groups, exportPayload } = makePlanFixture(1)
+  const plan = buildCleanupLocalAIJobPlan({ groups, exportPayload, aliases: [], modelId: 'test-model', limit: null, now: 21 })
+
+  const results = await runCleanupLocalAIJobPlan(
+    plan,
+    'test-model',
+    {
+      loadModel: async () => ({ loaded: true }),
+      analyze: async () => {
+        throw new Error('llama.cpp native generation failed. [stage=token_sample] [elapsedMs=1432]')
+      },
+    },
+    {},
+  )
+
+  assert.equal(results.length, 1)
+  assert.equal(results[0].status, 'failed')
+  assert.equal(results[0].elapsedMs, 1432)
+  assert.equal(getLocalAINativeStage(new Error(results[0].errors[0])), 'token_sample')
+})
+
 test('runner keeps validated results when cancelled and unloads the model', async () => {
   const { groups, exportPayload } = makePlanFixture(3)
   const plan = buildCleanupLocalAIJobPlan({ groups, exportPayload, aliases: [], modelId: 'test-model', limit: null, now: 3 })

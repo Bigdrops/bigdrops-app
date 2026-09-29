@@ -7,6 +7,7 @@ import type {
   ItemHistoryRow,
   ItemLibraryMergeRequest,
 } from '../types'
+import type { CleanupLocalAIJobGroupResult } from '../domain/cleanupLocalAIJob'
 
 type ItemLibraryDuplicateReviewPanelProps = {
   aliases: ItemAlias[]
@@ -18,6 +19,7 @@ type ItemLibraryDuplicateReviewPanelProps = {
   loading: boolean
   error: Error | null
   mergeLoading: boolean
+  aiResult?: CleanupLocalAIJobGroupResult | null
   onInspectItem: (itemId: string) => void
   onKeepSeparate: (request: ItemLibraryMergeRequest) => Promise<void>
   isPairReviewedSeparate?: (leftItemId: string, rightItemId: string) => boolean
@@ -48,6 +50,7 @@ export function ItemLibraryDuplicateReviewPanel({
   loading,
   error,
   mergeLoading,
+  aiResult = null,
   onInspectItem,
   onKeepSeparate,
   isPairReviewedSeparate,
@@ -87,6 +90,40 @@ export function ItemLibraryDuplicateReviewPanel({
           isPairReviewedSeparate={isPairReviewedSeparate}
           onMerge={onMerge}
         />
+
+        {aiResult ? (
+          <section className="mt-4 rounded-xl border border-bd-border bg-bd-surface p-4 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">AI suggestion</div>
+                <h3 className="mt-1 text-[15px] font-extrabold text-bd-text">
+                  {aiResult.status === 'ready'
+                    ? 'Ready for human approval'
+                    : aiResult.status === 'unsure'
+                      ? 'Needs human attention'
+                      : aiResult.status === 'failed'
+                        ? 'AI review failed'
+                        : 'Review before action'}
+                </h3>
+              </div>
+              <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 text-[10px] font-bold capitalize text-bd-text-muted">
+                {aiResult.status}
+              </span>
+            </div>
+            {aiResult.proposals.map((proposal) => (
+              <div key={`${aiResult.group_id}-${proposal.decision}`} className="mt-3 rounded-lg border border-bd-border bg-bd-surface-muted p-3">
+                <div className="text-[12px] font-bold text-bd-text">{proposal.decision.replace('_', ' ')}</div>
+                <p className="mt-1 text-[12px] leading-relaxed text-bd-text-muted">{proposal.reason}</p>
+              </div>
+            ))}
+            {aiResult.errors.length ? (
+              <details className="mt-3 rounded-md border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] font-semibold text-bd-status-warning-text">
+                <summary className="cursor-pointer">Details</summary>
+                <div className="mt-1 font-mono">{aiResult.errors.join(' ')}</div>
+              </details>
+            ) : null}
+          </section>
+        ) : null}
 
       </div>
 

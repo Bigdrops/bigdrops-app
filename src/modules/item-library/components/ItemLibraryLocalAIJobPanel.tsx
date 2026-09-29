@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ThinkingOrb } from 'thinking-orbs'
+import { Check, ChevronDown, SlidersHorizontal } from 'lucide-react'
 
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { BIGDROPS_LOCAL_AI_POC_MODEL, LOCAL_AI_MODEL_CATALOG } from '@/lib/local-ai/modelManifest'
 import { type LocalAIModelStatus } from '@/lib/local-ai/modelStatus'
+import { formatLocalAIModelBytes, localAIModelStatusLabel } from '@/lib/local-ai/modelStatus'
 import {
   getSelectedLocalAIModelId,
   listLocalAIModelChoices,
@@ -22,7 +31,6 @@ import {
 import {
   buildCleanupLocalAIJobPlan,
   CLEANUP_LOCAL_AI_JOB_CHUNK_GROUPS,
-  parseCleanupLocalAICommand,
   runCleanupLocalAIJobPlan,
   summarizeCleanupLocalAIJobResults,
   type CleanupLocalAIJobGroupResult,
@@ -43,12 +51,14 @@ type ItemLibraryLocalAIJobPanelProps = {
   groups: DuplicateCandidateGroup[]
   reviewedSeparatePairs: ItemReviewedSeparatePair[]
   selectedGroup?: DuplicateCandidateGroup | null
+  onResultsChange?: (results: CleanupLocalAIJobGroupResult[]) => void
 }
 
 type JobStatus = 'idle' | 'running' | 'completed' | 'cancelled' | 'failed'
 type ResultFilter = 'all' | 'ready' | 'unsure' | 'conflict' | 'failed'
 
 const BATCH_CHOICES = [25, 50, 100] as const
+const DIRECT_REVIEW_GROUP_LIMIT = CLEANUP_LOCAL_AI_JOB_CHUNK_GROUPS
 
 function phaseLabel(phase: CleanupLocalAIJobPhase) {
   if (phase === 'preparing') return 'Preparing review'
@@ -77,16 +87,25 @@ function formatElapsed(ms: number) {
   return `${minutes}m ${seconds % 60}s`
 }
 
+function formatModelLabel(displayName: string, tier: string) {
+  const conciseName = displayName
+    .replace(/\s+Instruct/i, '')
+    .replace(/\s+Q4_K_M\s+GGUF/i, '')
+    .replace(/\s+GGUF/i, '')
+    .trim()
+  return `${conciseName} · ${tier === 'standard' ? 'Standard' : 'Lite'}`
+}
+
 export function ItemLibraryLocalAIJobPanel({
   aliases,
   exportPayload,
   groups,
   reviewedSeparatePairs,
   selectedGroup = null,
+  onResultsChange,
 }: ItemLibraryLocalAIJobPanelProps) {
-  const [batchSize, setBatchSize] = useState<number | null>(25)
-  const [commandText, setCommandText] = useState('')
-  const [commandNote, setCommandNote] = useState<string | null>(null)
+  const [batchSize, setBatchSize] = useState<number | null>(null)
+  const [modelSheetOpen, setModelSheetOpen] = useState(false)
   const [runtimeInfo, setRuntimeInfo] = useState<LocalAIRuntimeInfo | null>(null)
   const [modelStatuses, setModelStatuses] = useState<Record<string, LocalAIModelStatus | null>>({})
   const [selectedModelId, setSelectedModelId] = useState<string | null>(() => getSelectedLocalAIModelId())
@@ -125,6 +144,8 @@ export function ItemLibraryLocalAIJobPanel({
   const summary = useMemo(() => summarizeCleanupLocalAIJobResults(results), [results])
   const totalPlanned = plan?.tasks.length || 0
   const stoppedEarly = (jobStatus === 'completed' || jobStatus === 'cancelled') && results.length < totalPlanned
+  const showBatchControls = eligibleCount > DIRECT_REVIEW_GROUP_LIMIT
+  const selectedLimit = showBatchControls ? batchSize : null
 
   const groupNames = useMemo(() => {
     const names = new Map<string, string[]>()
@@ -138,6 +159,10 @@ export function ItemLibraryLocalAIJobPanel({
     () => (filter === 'all' ? results : results.filter((result) => result.status === filter)),
     [filter, results],
   )
+
+  useEffect(() => {
+    onResultsChange?.(results)
+  }, [onResultsChange, results])
 
   const refreshModelStatuses = async () => {
     const entries = await Promise.all(
@@ -183,6 +208,7 @@ export function ItemLibraryLocalAIJobPanel({
     if (jobStatus === 'running') return
     setSelectedModelId(modelId)
     setSelectedLocalAIModelId(modelId)
+    setModelSheetOpen(false)
     setMessage(null)
   }
 
@@ -278,10 +304,11 @@ export function ItemLibraryLocalAIJobPanel({
       if (jobRunId.current !== runId) return
       setResults(jobResults)
       setDoneGroups(jobResults.length)
-      setJobStatus(cancelRequested.current ? 'cancelled' : 'completed')
+      const stoppedByFailures = !cancelRequested.current && jobResults.length < jobPlan.tasks.length
+      setJobStatus(cancelRequested.current ? 'cancelled' : stoppedByFailures ? 'failed' : 'completed')
       if (cancelRequested.current && jobResults.length) {
         setMessage(`Cancelled after ${jobResults.length} of ${jobPlan.tasks.length} groups. Completed reviews are kept below.`)
-      } else if (jobResults.length < jobPlan.tasks.length) {
+      } else if (stoppedByFailures) {
         setMessage(`Stopped early after ${jobResults.length} of ${jobPlan.tasks.length} groups because repeated inference failed. Completed reviews are kept below.`)
       } else {
         setMessage(`Reviewed ${jobResults.length} groups. Results are read-only. Nothing was changed.`)
@@ -299,23 +326,6 @@ export function ItemLibraryLocalAIJobPanel({
     setMessage('Cancelling. The current inference stops and completed reviews are kept.')
   }
 
-  const handleCommand = () => {
-    const command = parseCleanupLocalAICommand(commandText)
-    if (command.action === 'start-job') {
-      setCommandNote(null)
-      setCommandText('')
-      void startJob(command.limit)
-      return
-    }
-    if (command.action === 'show-filter') {
-      setFilter(command.filter)
-      setCommandNote(command.filter === 'all' ? 'Showing all reviewed groups.' : `Showing ${command.filter} groups.`)
-      setCommandText('')
-      return
-    }
-    setCommandNote('Try "Review 25 items", "Review all duplicates", or "Show unsure".')
-  }
-
   const progressPercent = totalPlanned ? Math.round((doneGroups / totalPlanned) * 100) : 0
 
   return (
@@ -323,11 +333,11 @@ export function ItemLibraryLocalAIJobPanel({
       <div className="overflow-y-auto p-5 pb-20">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">Local AI Cleanup</div>
-            <h3 className="mt-1 text-[18px] font-extrabold text-bd-text">AI review job</h3>
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">AI assistance</div>
+            <h3 className="mt-1 text-[18px] font-extrabold text-bd-text">Review duplicates with AI</h3>
             <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-bd-text-muted">
-              Start one review job. BIGDROPS checks each duplicate group on this device, validates every answer, and
-              keeps the proposals read-only. Analysis never leaves this device.
+              BIGDROPS checks duplicate groups on this device, validates every answer, and keeps proposals read-only.
+              Manual cleanup stays available if AI fails.
             </p>
           </div>
           {jobStatus === 'running' ? (
@@ -346,47 +356,51 @@ export function ItemLibraryLocalAIJobPanel({
         <div className="mt-4 rounded-xl border border-bd-border bg-bd-card-bg p-4 shadow-sm">
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label htmlFor="local-ai-model" className="text-[11px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">
+              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">
                 Model
-              </label>
-              <select
-                id="local-ai-model"
-                value={selectedModelId || ''}
-                onChange={(event) => handleSelectModel(event.target.value)}
+              </div>
+              <button
+                type="button"
+                onClick={() => setModelSheetOpen(true)}
                 disabled={jobStatus === 'running'}
-                className="mt-1 block min-h-[42px] max-w-[220px] rounded-md border border-bd-border bg-bd-surface-muted px-3 text-[13px] font-bold text-bd-text outline-none focus:border-bd-button-primary-bg disabled:opacity-60"
+                className="mt-1 flex min-h-[44px] w-full min-w-[220px] items-center justify-between gap-3 rounded-md border border-bd-border bg-bd-surface-muted px-3 text-left text-[13px] font-bold text-bd-text outline-none transition hover:bg-bd-surface focus-visible:ring-2 focus-visible:ring-bd-button-primary-bg disabled:opacity-60"
               >
-                <option value="" disabled>
-                  Choose a model
-                </option>
-                {modelChoices.map((choice) => (
-                  <option key={choice.manifest.modelId} value={choice.manifest.modelId} disabled={!choice.installed}>
-                    {choice.manifest.displayName} · {choice.manifest.tier}
-                    {choice.installed ? '' : ' (not installed)'}
-                    {choice.selected ? ' · Selected' : ''}
-                  </option>
-                ))}
-              </select>
+                <span className="truncate">
+                  {jobModelName
+                    ? formatModelLabel(jobModelName, resolvedModel.kind === 'ready' ? resolvedModel.manifest.tier : '')
+                    : selectedModelId
+                      ? 'Selected model is not installed'
+                      : 'Choose AI model'}
+                </span>
+                <ChevronDown className="h-4 w-4 flex-shrink-0 text-bd-text-muted" aria-hidden="true" />
+              </button>
             </div>
-            <div>
-              <label htmlFor="local-ai-job-size" className="text-[11px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">
-                Job size
-              </label>
-              <select
-                id="local-ai-job-size"
-                value={batchSize === null ? 'all' : String(batchSize)}
-                onChange={(event) => setBatchSize(event.target.value === 'all' ? null : Number(event.target.value))}
-                disabled={jobStatus === 'running'}
-                className="mt-1 block min-h-[42px] rounded-md border border-bd-border bg-bd-surface-muted px-3 text-[13px] font-bold text-bd-text outline-none focus:border-bd-button-primary-bg disabled:opacity-60"
-              >
-                {BATCH_CHOICES.map((choice) => (
-                  <option key={choice} value={choice}>
-                    {choice} groups
-                  </option>
-                ))}
-                <option value="all">All ({eligibleCount})</option>
-              </select>
-            </div>
+            {showBatchControls ? (
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Review count</div>
+                <div className="mt-1 flex flex-wrap gap-2" role="group" aria-label="AI review count">
+                  {[...BATCH_CHOICES, null].map((choice) => {
+                    const selected = batchSize === choice
+                    return (
+                      <button
+                        key={choice ?? 'all'}
+                        type="button"
+                        onClick={() => setBatchSize(choice)}
+                        disabled={jobStatus === 'running'}
+                        className={[
+                          'min-h-[44px] min-w-[56px] rounded-md border px-3 text-[12px] font-bold transition focus-visible:ring-2 focus-visible:ring-bd-button-primary-bg disabled:opacity-60',
+                          selected
+                            ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text'
+                            : 'border-bd-border bg-bd-surface-muted text-bd-text-muted hover:bg-bd-surface hover:text-bd-text',
+                        ].join(' ')}
+                      >
+                        {choice ?? 'All'}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
             <div className="min-w-0 flex-1 text-[11px] font-semibold text-bd-text-muted">
               <div>
                 Eligible groups: <span className="font-extrabold text-bd-text">{eligibleCount}</span>
@@ -410,11 +424,11 @@ export function ItemLibraryLocalAIJobPanel({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => void startJob(batchSize)}
+                onClick={() => void startJob(selectedLimit)}
                 disabled={jobStatus === 'running' || !modelReady || !eligibleCount}
                 className="min-h-[42px] rounded-md border border-transparent bg-bd-button-primary-bg px-4 text-[12px] font-bold text-bd-button-primary-text shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {jobStatus === 'running' ? 'Reviewing…' : 'Start AI Review'}
+                {jobStatus === 'running' ? 'Reviewing...' : showBatchControls ? 'Review with AI' : `Review all ${eligibleCount} with AI`}
               </button>
               <button
                 type="button"
@@ -426,32 +440,6 @@ export function ItemLibraryLocalAIJobPanel({
               </button>
             </div>
           </div>
-
-          <div className="mt-3 flex gap-2">
-            <label htmlFor="local-ai-command" className="sr-only">
-              Local AI command
-            </label>
-            <input
-              id="local-ai-command"
-              value={commandText}
-              onChange={(event) => setCommandText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') handleCommand()
-              }}
-              placeholder='Try "Review 25 items" or "Show unsure"'
-              disabled={jobStatus === 'running'}
-              className="min-h-[42px] min-w-0 flex-1 rounded-md border border-bd-border bg-bd-card-bg px-3 text-[13px] text-bd-text outline-none focus:border-bd-button-primary-bg disabled:opacity-60"
-            />
-            <button
-              type="button"
-              onClick={handleCommand}
-              disabled={jobStatus === 'running'}
-              className="min-h-[42px] rounded-md border border-bd-border bg-bd-surface-muted px-4 text-[12px] font-bold text-bd-text transition hover:bg-bd-surface disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Run
-            </button>
-          </div>
-          {commandNote ? <p className="mt-2 text-[11px] font-semibold text-bd-text-muted">{commandNote}</p> : null}
 
           {jobStatus === 'running' ? (
             <div className="mt-3">
@@ -563,6 +551,77 @@ export function ItemLibraryLocalAIJobPanel({
           </details>
         ) : null}
       </div>
+
+      <Sheet open={modelSheetOpen} onOpenChange={setModelSheetOpen}>
+        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-[24px] border-bd-border bg-bd-card-bg px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
+          <SheetHeader className="text-left">
+            <SheetTitle className="text-[17px] font-black text-bd-text">Choose AI model</SheetTitle>
+            <SheetDescription className="text-[12px] text-bd-text-muted">
+              Installed models can run duplicate review on this device.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 space-y-3">
+            {modelChoices.map((choice) => (
+              <button
+                key={choice.manifest.modelId}
+                type="button"
+                onClick={() => choice.installed && handleSelectModel(choice.manifest.modelId)}
+                disabled={!choice.installed || jobStatus === 'running'}
+                className={[
+                  'w-full rounded-lg border p-4 text-left transition focus-visible:ring-2 focus-visible:ring-bd-button-primary-bg',
+                  choice.selected
+                    ? 'border-bd-button-primary-bg bg-bd-surface-muted'
+                    : 'border-bd-border bg-bd-surface hover:bg-bd-surface-muted',
+                  !choice.installed ? 'opacity-70' : '',
+                ].join(' ')}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-[14px] font-extrabold text-bd-text">
+                      {formatModelLabel(choice.manifest.displayName, choice.manifest.tier)}
+                    </div>
+                    <div className="mt-1 text-[12px] font-semibold text-bd-text-muted">
+                      {choice.manifest.tier === 'standard' ? 'Better reasoning candidate' : 'Lower memory / faster candidate'}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-bold text-bd-text-muted">
+                      <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2 py-0.5">
+                        {formatLocalAIModelBytes(choice.manifest.expectedBytes)}
+                      </span>
+                      <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2 py-0.5">
+                        {choice.installed ? localAIModelStatusLabel(choice.status) : 'Not installed'}
+                      </span>
+                      {choice.recommended ? (
+                        <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2 py-0.5">
+                          Recommended
+                        </span>
+                      ) : null}
+                    </div>
+                    <details className="mt-3 text-[10px] font-semibold text-bd-text-muted">
+                      <summary className="cursor-pointer">Advanced details</summary>
+                      <div className="mt-1 break-all font-mono">{choice.manifest.modelId}</div>
+                      <div className="mt-1">{choice.manifest.quantization} · {choice.manifest.sourceRevision}</div>
+                    </details>
+                  </div>
+                  <div className="flex min-w-[72px] justify-end">
+                    {choice.selected ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-bd-button-primary-bg px-2.5 py-1 text-[10px] font-bold text-bd-button-primary-text">
+                        <Check className="h-3 w-3" aria-hidden="true" />
+                        Selected
+                      </span>
+                    ) : choice.installed ? (
+                      <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 text-[10px] font-bold text-bd-text">
+                        Use model
+                      </span>
+                    ) : (
+                      <SlidersHorizontal className="h-4 w-4 text-bd-text-muted" aria-hidden="true" />
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </section>
   )
 }

@@ -248,7 +248,7 @@ test('identity-sensitive descriptions stay separate with visible specification e
   })
 })
 
-test('Historical Review surfaces loading, empty, and error states with retry', () => {
+test('Unlinked Items surfaces loading, empty, and error states with retry', () => {
   const panelSource = fs.readFileSync(
     path.resolve('src/modules/item-library/components/ItemLibraryHistoricalReviewPanel.tsx'),
     'utf8',
@@ -257,11 +257,11 @@ test('Historical Review surfaces loading, empty, and error states with retry', (
   assert.match(panelSource, /if \(loading\) return <LoadingState/)
   assert.match(panelSource, /Skeleton/)
   assert.match(panelSource, /if \(!data\.cases\.length\) return <EmptyState/)
-  assert.match(panelSource, /No unresolved historical cases/)
+  assert.match(panelSource, /No unlinked items/)
   assert.match(panelSource, /if \(error\) return <ErrorState/)
-  assert.match(panelSource, /Historical Review could not load/)
+  assert.match(panelSource, /Unlinked Items could not load/)
   assert.match(panelSource, /onRetry=\{reload\}/)
-  assert.match(panelSource, /No review cases match this filter/)
+  assert.match(panelSource, /No unlinked items match this filter/)
 
   const hookSource = fs.readFileSync(
     path.resolve('src/modules/item-library/hooks/useHistoricalReviewCases.ts'),
@@ -273,7 +273,7 @@ test('Historical Review surfaces loading, empty, and error states with retry', (
   assert.match(hookSource, /reload/)
 })
 
-test('Historical Review UI exposes explicit identity actions without catalog merge controls', () => {
+test('Unlinked Items UI exposes explicit identity actions without catalog merge controls', () => {
   const source = fs.readFileSync(
     path.resolve('src/modules/item-library/components/ItemLibraryHistoricalReviewPanel.tsx'),
     'utf8',

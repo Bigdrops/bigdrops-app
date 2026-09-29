@@ -1,10 +1,12 @@
 import type { DuplicateCandidateGroup } from '../types'
+import type { CleanupLocalAIJobGroupStatus } from '../domain/cleanupLocalAIJob'
 import { formatCompactUsageCount, formatItemPrice, formatLastUsedDate } from './itemLibraryFormatters'
 
 type ItemLibraryDuplicateGroupCardProps = {
   group: DuplicateCandidateGroup
   selectedGroupId: string | null
   selectedItemId: string | null
+  aiStatus?: CleanupLocalAIJobGroupStatus | null
   onSelectGroup: (groupId: string) => void
   onInspectItem: (groupId: string, itemId: string) => void
 }
@@ -23,10 +25,20 @@ function getGroupDifferenceSummary(group: DuplicateCandidateGroup) {
   return facts.join(' - ')
 }
 
+function aiStatusLabel(status?: CleanupLocalAIJobGroupStatus | null) {
+  if (status === 'ready') return 'AI ready'
+  if (status === 'unsure') return 'AI unsure'
+  if (status === 'conflict') return 'Needs attention'
+  if (status === 'failed') return 'AI failed'
+  if (status === 'skipped') return 'AI skipped'
+  return 'Needs review'
+}
+
 export function ItemLibraryDuplicateGroupCard({
   group,
   selectedGroupId,
   selectedItemId,
+  aiStatus,
   onSelectGroup,
   onInspectItem,
 }: ItemLibraryDuplicateGroupCardProps) {
@@ -55,8 +67,13 @@ export function ItemLibraryDuplicateGroupCard({
               Review only. Similar wording can still mean different specifications.
             </p>
           </div>
-          <div className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 font-mono text-[10px] font-bold text-bd-text">
-            {group.members.length} names
+          <div className="flex flex-col items-end gap-1">
+            <div className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 font-mono text-[10px] font-bold text-bd-text">
+              {group.members.length} names
+            </div>
+            <div className="rounded-full border border-bd-border bg-bd-surface px-2.5 py-1 text-[10px] font-bold text-bd-text-muted">
+              {aiStatusLabel(aiStatus)}
+            </div>
           </div>
         </div>
       </button>

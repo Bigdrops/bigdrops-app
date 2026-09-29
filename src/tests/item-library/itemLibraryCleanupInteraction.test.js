@@ -8,6 +8,8 @@ const groupCardPath = path.resolve('src/modules/item-library/components/ItemLibr
 const mergeCardPath = path.resolve('src/modules/item-library/components/ItemLibraryDuplicateMergeCard.tsx')
 const itemLibraryPagePath = path.resolve('src/modules/item-library/pages/ItemLibraryPage.tsx')
 const advancedCleanupPath = path.resolve('src/modules/item-library/components/ItemLibraryAdvancedCleanupPanel.tsx')
+const localAIJobPanelPath = path.resolve('src/modules/item-library/components/ItemLibraryLocalAIJobPanel.tsx')
+const listPanelPath = path.resolve('src/modules/item-library/components/ItemLibraryListPanel.tsx')
 
 test('cleanup duplicate review presents similarity as review evidence, not identity proof', () => {
   const reviewSource = fs.readFileSync(reviewPanelPath, 'utf8')
@@ -34,14 +36,64 @@ test('cleanup merge card supports durable Keep Separate and keeps merges deliber
   assert.match(source, /AlertDialog/)
 })
 
-test('cleanup duplicate review exposes manual, local AI, and external AI as separate methods', () => {
+test('cleanup duplicate review uses one resolver instead of separate method destinations', () => {
   const source = fs.readFileSync(itemLibraryPagePath, 'utf8')
 
-  assert.match(source, /Review Manually in App/)
-  assert.match(source, /Review with Local AI/)
-  assert.match(source, /Export for External AI Review/)
-  assert.match(source, /duplicates_local_ai/)
-  assert.doesNotMatch(source, /Use AI for Duplicate Review/)
+  assert.match(source, /Duplicate Items/)
+  assert.match(source, /Unlinked Items/)
+  assert.match(source, /Clean &amp; Standardize Catalog/)
+  assert.match(source, /Past Changes/)
+  assert.match(source, /setViewMode\('duplicates'\)/)
+  assert.match(source, /setViewMode\('duplicates_outsourced'\)/)
+  assert.doesNotMatch(source, /Review Manually in App/)
+  assert.doesNotMatch(source, /Review with Local AI/)
+  assert.doesNotMatch(source, /Export for External AI Review/)
+  assert.doesNotMatch(source, /duplicates_local_ai/)
+  assert.doesNotMatch(source, /duplicates_choice/)
+})
+
+test('duplicate items renders duplicate groups and integrated AI assistance, not the catalog rows', () => {
+  const pageSource = fs.readFileSync(itemLibraryPagePath, 'utf8')
+  const listSource = fs.readFileSync(listPanelPath, 'utf8')
+
+  assert.match(listSource, /viewMode === 'duplicates'/)
+  assert.match(listSource, /duplicateGroups\.map/)
+  assert.match(listSource, /ItemLibraryDuplicateGroupCard/)
+  assert.match(listSource, /duplicateAssistant/)
+  assert.match(listSource, /aria-label=\{isLibrary \? 'Item catalog' : 'Duplicate groups'\}/)
+  assert.match(pageSource, /onResultsChange=\{setLocalAIResults\}/)
+  assert.match(pageSource, /localAIStatusByGroupId/)
+  assert.match(pageSource, /aiResult=\{selectedDuplicateGroup/)
+})
+
+test('local AI controls use app surfaces and small workloads review all directly', () => {
+  const source = fs.readFileSync(localAIJobPanelPath, 'utf8')
+
+  assert.match(source, /DIRECT_REVIEW_GROUP_LIMIT = CLEANUP_LOCAL_AI_JOB_CHUNK_GROUPS/)
+  assert.match(source, /Review all \$\{eligibleCount\} with AI/)
+  assert.match(source, /showBatchControls/)
+  assert.match(source, /role="group" aria-label="AI review count"/)
+  assert.match(source, /Sheet open=\{modelSheetOpen\}/)
+  assert.match(source, /Choose AI model/)
+  assert.match(source, /formatModelLabel/)
+  assert.match(source, /Advanced details/)
+  assert.doesNotMatch(source, /<select/)
+  assert.doesNotMatch(source, /local-ai-job-size/)
+  assert.doesNotMatch(source, /local-ai-model/)
+  assert.doesNotMatch(source, /Local AI command/)
+})
+
+test('unlinked items is exposed in Cleanup Hub while backend naming remains internal', () => {
+  const pageSource = fs.readFileSync(itemLibraryPagePath, 'utf8')
+  const panelSource = fs.readFileSync(path.resolve('src/modules/item-library/components/ItemLibraryHistoricalReviewPanel.tsx'), 'utf8')
+
+  assert.match(pageSource, /Unlinked Items/)
+  assert.match(pageSource, /setWorkflowMode\('historical_review'\)/)
+  assert.match(pageSource, /Connect old document items to your Item Library/)
+  assert.match(panelSource, /Connect old document line items to reusable Item Library identities/)
+  assert.match(panelSource, /Historical commercial values are not changed/)
+  assert.doesNotMatch(panelSource, /Tier C/)
+  assert.doesNotMatch(panelSource, /Tier D/)
 })
 
 test('catalog cleanup describes Local AI as duplicate-only and keeps external review wording', () => {

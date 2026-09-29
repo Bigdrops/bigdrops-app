@@ -4,7 +4,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const appShellPath = path.resolve('src/components/app/AppShell.tsx')
-const layoutPath = path.resolve('src/components/Layout.jsx')
+const layoutPath = path.resolve('src/components/Layout.tsx')
+const navDataPath = path.resolve('src/components/layout/navData.ts')
 const itemLibraryPagePath = path.resolve('src/modules/item-library/pages/ItemLibraryPage.tsx')
 const itemLibraryListPanelPath = path.resolve('src/modules/item-library/components/ItemLibraryListPanel.tsx')
 const itemLibraryRowPath = path.resolve('src/modules/item-library/components/ItemLibraryRow.tsx')
@@ -14,6 +15,7 @@ const itemHistoryRowPath = path.resolve('src/modules/item-library/components/Ite
 test('item library is routed and exposed through app navigation', () => {
   const appShellSource = fs.readFileSync(appShellPath, 'utf8')
   const layoutSource = fs.readFileSync(layoutPath, 'utf8')
+  const navDataSource = fs.readFileSync(navDataPath, 'utf8')
   const pageSource = fs.readFileSync(itemLibraryPagePath, 'utf8')
   const listPanelSource = fs.readFileSync(itemLibraryListPanelPath, 'utf8')
   const rowSource = fs.readFileSync(itemLibraryRowPath, 'utf8')
@@ -22,11 +24,12 @@ test('item library is routed and exposed through app navigation', () => {
 
   assert.match(appShellSource, /const ItemLibraryPage = lazy\(\(\) => import\('@\/modules\/item-library\/pages\/ItemLibraryPage'\)\)/)
   assert.match(appShellSource, /<Route path="\/item-library" element=\{withBoundary\(<ItemLibraryPage \/>\)\} \/>/)
-  assert.match(layoutSource, /key: 'item-library'/)
-  assert.match(layoutSource, /label: 'Item Library'/)
-  assert.match(layoutSource, /path: '\/item-library'/)
-  assert.match(pageSource, /useItemHistoryList\(200\)/)
-  assert.match(pageSource, /useItemHistoryDetail\(selectedItem\?\.item_id, 50\)/)
+  assert.match(layoutSource, /'item-library': '\/item-library'/)
+  assert.match(navDataSource, /key: 'item-library'/)
+  assert.match(navDataSource, /label: 'Item Library'/)
+  assert.match(navDataSource, /path: '\/item-library'/)
+  assert.match(pageSource, /useItemHistoryList\(200,/)
+  assert.match(pageSource, /useItemHistoryDetail\(selectedItem\?\.item_id, 50,/)
   assert.match(pageSource, /ItemLibraryListPanel/)
   assert.match(listPanelSource, /role="listbox"/)
   assert.match(rowSource, /aria-pressed=\{isSelected\}/)
