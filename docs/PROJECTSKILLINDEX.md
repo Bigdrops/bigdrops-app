@@ -10,10 +10,10 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 155 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs + 38 from the marketing pack + 6 from `plannotator/effective-html` + 2 from `neondatabase/agent-skills`) |
+| `.agents/skills/` | 156 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs + 38 from the marketing pack + 6 from `plannotator/effective-html` + 2 from `neondatabase/agent-skills` + 1 from `Jakubantalik/Libraries.dev`) |
 | `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **156 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **157 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 > **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and were purged from `.commandcode/skills/` (not indexed because they already exist in `.agents`/`.claude`).
 
@@ -229,6 +229,13 @@ Installed by the user on 2026-09-14. 2 Neon / Lakebase Postgres skills. Recorded
 | 155 | neon | .agents/skills/neon/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\neon\SKILL.md | Neon platform overview — Lakebase Postgres, Auth, Object Storage, Functions, AI Gateway; branch-first dev flow, `neon.ts` infra-as-code, CLI/MCP setup, Claimable Neon, router to the other Neon skills |
 | 156 | neon-postgres | .agents/skills/neon-postgres/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\neon-postgres\SKILL.md | Lakebase Postgres — pooled vs direct connections, branching, migrations on branches, autoscaling, scale-to-zero, instant restore, read replicas, `neon inspect db` diagnostics, Lakebase Search (vector/BM25/hybrid) |
 
+### Added via `Jakubantalik/Libraries.dev` skill install
+Installed by the user on 2026-09-28 via `bunx skills add Jakubantalik/Libraries.dev`. UI effect libraries for AI-era interfaces (thinking-orbs, border-beam, liquid-gooey, voice-glow, bot-avatars, metal-fx, img-fx). Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, `.commandcode/skills/`, `.continue/skills/`, `.hermes/skills/`, `.kiro/skills/`, `.roo/skills/`, `.windsurf/skills/`; this index lists the canonical `.agents/skills/` copy.
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 157 | libraries-dev | .agents/skills/libraries-dev/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\libraries-dev\SKILL.md | Libraries.dev UI effects — ThinkingOrb states/sizes, BorderBeam, Liquid, VoiceBeam, BotAvatar, MetalFx, ImageGeneration; placement rules, `libraries reveal/review/apply` commands; read the per-library reference before coding |
+
 ---
 ## `.claude/skills/`
 Higher-order skills for design intelligence, testing, meta-skill creation, and coding discipline.
@@ -309,5 +316,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: September 14, 2026 — added 2 Neon skills (`neon`, `neon-postgres`) from `neondatabase/agent-skills`, mirrored across `.agents/skills/` and `.claude/skills/`. Total .agents/skills: 155.*
+*Last updated: September 28, 2026 — added `libraries-dev` (#157) from `Jakubantalik/Libraries.dev`, mirrored across `.agents/skills/` and 7 mirror dirs. Total .agents/skills: 156.*
 ```
