@@ -1,262 +1,302 @@
 You are working on the BIGDROPS business platform.
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel. 
 Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
 ====================================================================
 CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
 ====================================================================
-OpenCode has full repository access. Read AGENTS.md immediately.
-Follow it completely.
+OpenCode has full repository access. Read AGENTS.md immediately. 
+It strictly enforces project fundamentals, locked math/rules, audit-first workflow, skills registry, and standards conformity. Follow it completely.
 ====================================================================
 
-OBJECTIVE
+A. CONTEXT & OBJECTIVE
 
-Begin the FINAL multi-tenancy cutover.
+Refine the accepted BOQ View Page V4 design direction into V4.1.
 
-The final architecture is:
+V4's overall visual language and information hierarchy are accepted.
 
-- Business data is entity-scoped.
-- Every business aggregate must live in its entity schema.
-- Public-schema business tables are legacy only.
-- No business data is intentionally left globally public.
-- User-level preferences such as theme choice remain user-scoped and are not
-  company business data.
-- Do not preserve public business storage merely because existing code currently
-  uses it.
+DO NOT create another clean-sheet redesign.
 
-This pass is INVENTORY ONLY.
+The human visual review identified two specific structural problems:
 
-DO NOT MODIFY APPLICATION SOURCE.
-DO NOT MODIFY DATABASE SCHEMA.
-DO NOT CREATE OR RUN DATA MIGRATIONS.
-DO NOT DELETE PUBLIC TABLES.
-DO NOT DELETE PUBLIC DATA.
+1. The outer gutters plus individual rounded/shadowed item cards make the BOQ schedule feel like a feed of disconnected cards rather than one continuous professional document.
+2. Cost and margin information is hidden behind disclosure controls. This creates unnecessary interaction. Commercial information must be immediately readable without clicking.
 
-A. READ PROJECT RULES
+The objective is to preserve what works in V4 while transforming the schedule into a continuous, full-flowing BOQ document.
 
-Read:
-- AGENTS.md
-- docs/PROJECTSKILLINDEX.md
-- current multi-tenancy PRDs
-- existing multi-tenancy migration reports
-- existing invoice/quotation/waybill/CSR migration implementations
+B. TARGET COMPONENTS / FILES
 
-Load relevant skills from docs/PROJECTSKILLINDEX.md.
+Primary source:
+- docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/view/boq/boq-view-candidate-mobile-fold-v4.html
 
-B. DATABASE INVENTORY
+Create a V4.1 mobile/fold candidate beside the existing V4 file.
 
-Inspect the LIVE linked Supabase database.
+Also inspect the corresponding V4 desktop candidate and determine whether the same commercial-disclosure principle should be reflected there.
 
-Build an authoritative inventory of every business-domain object in public
-schema, including:
+Do not overwrite V4.
+Do not modify production application code.
+Do not modify form candidates.
+Do not modify V2 or V3.
 
-- tables
-- views
-- materialized views if any
-- functions/RPCs
-- triggers
-- indexes
-- policies
-- foreign keys
-- sequences
-- helper functions used by business operations
+C. CONSTRAINTS (EXECUTION-SAFE ONLY)
 
-For every public business table determine:
+Read AGENTS.md first.
 
-1. Does the corresponding tenant-schema table exist?
-2. Exact public row count.
-3. Exact tenant row count for the active entity.
-4. Schema/column compatibility.
-5. Primary key.
-6. Foreign keys.
-7. Important indexes.
-8. RLS policies.
-9. Triggers.
-10. Functions/RPCs that read or write it.
-11. Frontend files that access it.
-12. Whether data can be migrated without ambiguity.
+Load relevant skills from docs/PROJECTSKILLINDEX.md, particularly skills appropriate for HTML prototypes, design artifacts, responsive/mobile UI design, and visual hierarchy.
 
-Do not infer from old reports when live inspection can answer it.
+Preserve existing system behavior unless explicitly modified.
+Avoid unnecessary refactors and follow existing project conventions.
+No build execution responsibilities assigned to OpenCode.
 
-C. CLASSIFY EVERYTHING
+PRESERVE FROM V4:
+- overall typography and visual tone;
+- compact app bar;
+- BOQ number and status treatment;
+- dossier/document identity approach;
+- editorial chapter/group hierarchy;
+- description-first item hierarchy;
+- photo/reference-image concept and read-only lightbox;
+- Download FAB behavior and fab-standard compliance;
+- simulated MobileBottomNav;
+- fold-specific responsive behavior;
+- More sheet/action hierarchy;
+- dark mode;
+- locked BOQ mathematics.
 
-Every business object must receive exactly one status:
+CHANGE THE PAGE STRUCTURE:
 
-MIGRATE
-ALREADY TENANT
-GLOBAL INFRASTRUCTURE
-USER-SCOPED
-NEEDS DESIGN
+The BOQ schedule must become a continuous document surface.
 
-Do NOT use "INTENTIONALLY PUBLIC" merely because something happens to be
-public today.
+Remove the floating-card treatment from individual schedule items:
+- no rounded specimen cards;
+- no per-item shadows;
+- no visible card islands;
+- no large gaps that make entries appear detached.
 
-"Needs design" is only for something that genuinely cannot fit the
-entity-scoped architecture.
+Do not simply reduce border-radius.
 
-The expected direction is that business data becomes tenant-scoped.
+Actually change the composition from "cards in a gutter" to "one flowing document."
 
-D. DATA OWNERSHIP
+The schedule should use substantially more of the viewport width.
 
-For every public business table determine whether each row belongs to:
+Text may still have deliberate horizontal inset for readability, but the page must not look like a stack of narrow cards floating inside a grey background.
 
-- an entity
-- a workspace/company relationship
-- a user
-- global infrastructure
+Use editorial structure instead:
+- whitespace;
+- thin horizontal rules;
+- item numbering;
+- typographic hierarchy;
+- chapter boundaries;
+- alignment.
 
-Where ownership is not directly represented, inspect existing relationships,
-creation metadata, workspace/entity mappings, foreign keys, and migration
-history.
+Items should visually belong to the same BOQ.
 
-CRITICAL:
+PHOTO BEHAVIOR:
 
-Never guess ownership.
+Retain the successful reference-photo concept.
 
-If ownership cannot be proven, report the exact blocker and the evidence
-required to resolve it.
+A photo belonging to an item should integrate naturally into that item's document flow rather than forcing the whole item back into a card.
 
-E. DEPENDENCY GRAPH
+Photo remains tappable for the existing read-only preview/lightbox.
 
-Trace dependencies between public objects.
+Items without photos reserve no image space.
 
-Identify:
+COMMERCIAL INFORMATION — NO DISCLOSURE INTERACTION:
 
-- public RPC → public table
-- public view → public table
-- trigger → public table/function
-- frontend → public RPC
-- frontend → public table
-- tenant RPC → public table
-- tenant view → public table
+Remove the per-item "Cost & margin" toggle entirely.
 
-Pay particular attention to:
+Do not require any click/tap to inspect:
+- quantity;
+- unit;
+- cost price;
+- selling price;
+- line cost;
+- line selling total;
+- line gross profit;
+- margin.
 
-- invoice transaction RPCs
-- quotation/invoice conversion
-- document numbering
-- audit/activity recording
-- item library
-- financial views
-- project/document relationships
-- RFQ → quotation
-- BOQ → quotation
-- invoice → CSR/waybill
-- invoice → quotation revert
-- offline synchronization
+Design a compact permanently-visible commercial composition for every item.
 
-F. FRONTEND PUBLIC ACCESS MANIFEST
+Do not turn this into a spreadsheet/table.
 
-Search the actual repository.
+The commercial block should remain visually subordinate to the description/specification but instantly scannable.
 
-Find every business-domain:
+Use the existing commercial color semantics carefully:
+- cost information uses the established cost tone;
+- selling/profit information uses the established selling/profit tone.
 
-- supabase.from(...)
-- supabase.rpc(...)
-- client.from(...)
-- client.rpc(...)
-- fallback from tenantClient to supabase
-- repository/service that internally uses public supabase
+The overall BOQ commercial summary must also be permanently exposed.
 
-Do not rely on previous reports or stale line numbers.
+Remove the collapsed/expanded commercial capsule behavior.
 
-Classify every occurrence:
+Show the relevant overall values directly:
+- Total Cost
+- Selling Total
+- Gross Profit
+- Margin
 
-TENANT ALREADY
-MUST CUT OVER
-GLOBAL INFRASTRUCTURE
-USER-SCOPED
-NEEDS DESIGN
+Keep this summary compact and in normal document flow.
+Do not make it sticky.
+Do not create a dark commercial band.
+Do not resurrect V3's persistent commercial chrome.
 
-A business table being "public for now" is NOT an acceptable final state.
+The existing final close-out may still provide the formal concluding totals; intentional summary repetition at the document close is acceptable.
 
-G. MIGRATION ORDER
+GROUPS:
 
-Based on the live dependency graph, propose the safest aggregate migration
-order.
+Retain the V4 editorial chapter concept.
 
-For each batch specify:
+Groups remain static and in-flow.
+No horizontal group-chip rail.
+No group tabs.
+No sticky group navigation.
+No dark group envelopes.
 
-1. Database migration required.
-2. Data migration required.
-3. Permission/RLS work.
-4. RPC/view work.
-5. Frontend cutover.
-6. Verification gate.
-7. Public objects that can eventually be removed.
+MOBILE BOTTOM NAV + FAB:
 
-Prefer small dependency-safe batches over one giant migration.
+The candidate must continue to simulate the actual mobile/fold bottom navigation.
 
-H. PUBLIC PURGE PLAN
+Keep the standard Download FAB positioned correctly above the bottom navigation according to docs/standard/fab-standard.md.
 
-Produce a final deletion plan.
+Ensure schedule content can scroll completely clear of both FAB and bottom navigation.
 
-For every public business table/view/RPC that should disappear, state:
+The bottom nav must remain visible in the prototype so the human reviewer can judge the true available viewport.
 
-- what replaces it
-- what code currently depends on it
-- what must be migrated first
-- what verification proves it is safe to remove
+RESPONSIVE/FOLD:
 
-Do NOT delete anything in this pass.
+Phone and fold remain in the same mobile-fold candidate.
 
-I. REQUIRED VERIFICATION
+Do not treat fold as merely a wider phone.
 
-Run only safe read-only verification.
+At fold width, use the extra horizontal room intelligently for commercial alignment and image/text composition while retaining the continuous-document principle.
 
-Required:
+Do not reintroduce cards at fold width.
 
-- git status before and after
-- database object inventory
-- exact counts
-- dependency inventory
-- repository search
-- no source changes
-- no migration changes
+DESIGN INTENT:
 
-DO NOT run:
+The target feeling is:
 
-bun run build
-bun run typecheck
-bun run lint
+"One BOQ document flowing through the application"
 
-This is an inventory/audit pass and must not spend resources on application
-verification.
+not:
 
-J. REPORT
+"A collection of BOQ item cards"
 
-Create:
+and not:
 
-docs/reports/multi-tenancy/final-public-business-purge-inventory.md
+"A spreadsheet/ledger."
 
-The report must contain:
+D. REQUIRED VERIFICATION (HARD HARDWARE GATE)
 
-1. Executive summary
-2. Complete public business table inventory
-3. Complete tenant table inventory
-4. Public vs tenant row counts
-5. Ownership/provenance findings
-6. RPC/function inventory
-7. View inventory
-8. Dependency graph
-9. Frontend public-access manifest
-10. Classification of every object
-11. Recommended migration order
-12. Public purge plan
-13. Blockers
-14. Exact next migration batch
+DO NOT run bun run build. Permanently banned due to host 4GB RAM limits.
 
-CRITICAL FINAL RULE:
+This is a design-direction HTML task.
 
-Do not declare any business object "intentionally public" simply because
-the current implementation leaves it public.
+Do not run bun run typecheck or lint.
 
-The target architecture is entity-scoped business data.
+Perform:
+- git status immediately before work;
+- git status after work;
+- git diff --check;
+- static inspection of the resulting standalone HTML;
+- verify V4 remains untouched;
+- verify no production application source files changed;
+- verify no V2/V3/form candidate files changed;
+- verify all BOQ monetary values still derive from the locked formulas;
+- verify there are no per-item commercial disclosure/toggle controls;
+- verify overall commercial values are visible without interaction;
+- verify item commercial values are visible without interaction;
+- verify mobile bottom navigation remains simulated;
+- verify Download FAB remains compliant with the current FAB standard.
 
-This pass must establish the authoritative map needed to execute the final
-migration safely.
+Do not perform browser/runtime visual verification on behalf of the human reviewer.
 
-No application code changes.
-No schema changes.
-No data changes.
-No public-data deletion.
+E. REQUIRED BEHAVIOR
+
+Keep changes minimal and scoped to this design-direction iteration.
+
+Do not use this feedback as permission to redesign accepted V4 elements unrelated to the identified issues.
+
+The most important transformation is structural:
+
+V4 card feed
+→
+V4.1 continuous BOQ document.
+
+Commercial information must be readable immediately.
+
+No click-to-reveal cost or margin behavior.
+
+F. ACCEPTANCE CRITERIA
+
+- V4's accepted visual identity remains recognizable.
+- Individual BOQ items no longer appear as floating rounded cards.
+- The schedule reads as one continuous document.
+- Excessive schedule gutters are removed.
+- Items remain clearly distinguishable through editorial hierarchy and separators.
+- Cost and margin require zero interaction.
+- CP/SP and derived commercial values are immediately scannable.
+- Overall BOQ commercial figures require zero interaction.
+- The layout does not resemble a spreadsheet or ledger.
+- Photo behavior remains functional and integrated into the flow.
+- Chapter/group hierarchy remains clear.
+- Mobile bottom navigation is visibly simulated.
+- Download FAB clears the bottom navigation and follows the current standard.
+- Fold receives a deliberate responsive composition.
+- Locked BOQ math remains unchanged.
+- No unintended files are modified.
+
+DESKTOP WIDTH / LARGE-SCREEN COMPOSITION:
+
+The desktop candidate has another structural problem: it does not use enough of the available PC viewport width.
+
+Redesign the desktop composition so it feels intentionally desktop-native rather than like a constrained mobile/tablet document centered on a large screen.
+
+Do NOT use a narrow fixed max-width that leaves excessive dead space on both sides.
+
+The desktop view should make strong use of the available viewport:
+- use a fluid responsive shell;
+- expand meaningfully across normal laptop and desktop widths;
+- retain sensible outer margins rather than huge empty gutters;
+- allow the primary BOQ schedule to occupy the majority of the available width;
+- use the remaining horizontal space intentionally for document context/actions/commercial information where appropriate;
+- scale gracefully on 1366px, 1440px, 1920px and wider displays;
+- introduce a sensible maximum only at genuinely very large viewport sizes if necessary for readability.
+
+This does NOT mean stretching every text line from edge to edge.
+
+Use desktop width through composition:
+- wider schedule area;
+- deliberate columns where useful;
+- better commercial alignment;
+- appropriately sized image regions;
+- a useful supporting/context rail if retained;
+- whitespace inside the composition rather than wasting large areas outside the entire page.
+
+The continuous-document principle from mobile/fold also applies to desktop:
+- do not turn schedule items into floating cards;
+- do not create a narrow paper sheet surrounded by empty background;
+- do not reproduce a PDF-page preview metaphor;
+- do not make desktop look like an enlarged phone layout.
+
+Desktop should feel like a purpose-built BOQ workspace taking advantage of a PC screen.
+
+Inspect the existing V4 desktop candidate specifically for:
+- max-width constraints;
+- wrapper/container width;
+- schedule-to-rail ratio;
+- unnecessary outer margins;
+- unused viewport space.
+
+Replace those constraints where they are responsible for the narrow appearance.
+
+At desktop sizes, the human reviewer should immediately perceive that the application is using the screen rather than merely centering content within it.
+
+
+- Desktop uses the available PC viewport substantially better than V4.
+- No excessive empty margins caused by an unnecessarily restrictive max-width.
+- Desktop is a genuinely desktop-specific composition, not a centered tablet/mobile layout.
+- At 1366px, 1440px and 1920px widths, the BOQ workspace expands appropriately.
+- The main schedule receives the dominant share of desktop width.
+- Wider layout does not produce excessively long text lines; width is consumed through composition and alignment.
+- Desktop retains the same continuous-document philosophy as mobile/fold.
