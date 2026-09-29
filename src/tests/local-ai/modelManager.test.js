@@ -17,6 +17,7 @@ import {
   getSelectedLocalAIModelId,
   listLocalAIModelChoices,
   recommendLocalAIModel,
+  refreshLocalAIModelSelectionSnapshot,
   resolveLocalAIModelForJob,
   setSelectedLocalAIModelId,
 } from '../../lib/local-ai/modelSelection.ts'
@@ -158,6 +159,39 @@ test('job resolution falls back to the installed recommended model without persi
   assert.equal(resolved.kind, 'ready')
   assert.equal(resolved.selected, false)
   assert.equal(getSelectedLocalAIModelId(storage), null)
+})
+
+test('selection snapshot refreshes selected model status after remount or resume', async () => {
+  const storage = memoryStorage()
+  setSelectedLocalAIModelId(BIGDROPS_LOCAL_AI_POC_MODEL.modelId, storage)
+  const reads = []
+
+  const snapshot = await refreshLocalAIModelSelectionSnapshot({
+    readSelectedId: () => getSelectedLocalAIModelId(storage),
+    recommendedId: BIGDROPS_LOCAL_AI_LITE_MODEL.modelId,
+    readStatus: async (modelId) => {
+      reads.push(modelId)
+      return modelId === BIGDROPS_LOCAL_AI_POC_MODEL.modelId
+        ? installedStatus(BIGDROPS_LOCAL_AI_POC_MODEL)
+        : null
+    },
+  })
+
+  assert.equal(snapshot.selectedId, BIGDROPS_LOCAL_AI_POC_MODEL.modelId)
+  assert.equal(snapshot.resolved.kind, 'ready')
+  assert.equal(snapshot.resolved.manifest.modelId, BIGDROPS_LOCAL_AI_POC_MODEL.modelId)
+  assert.deepEqual(reads.sort(), LOCAL_AI_MODEL_CATALOG.map((entry) => entry.modelId).sort())
+})
+
+test('selection snapshot fails closed when selected native status is stale or missing', async () => {
+  const snapshot = await refreshLocalAIModelSelectionSnapshot({
+    selectedId: BIGDROPS_LOCAL_AI_POC_MODEL.modelId,
+    recommendedId: BIGDROPS_LOCAL_AI_POC_MODEL.modelId,
+    readStatus: async () => null,
+  })
+
+  assert.equal(snapshot.resolved.kind, 'selected-missing')
+  assert.equal(snapshot.resolved.manifest.modelId, BIGDROPS_LOCAL_AI_POC_MODEL.modelId)
 })
 
 test('device recommendation prefers Standard only with sufficient memory', () => {

@@ -109,3 +109,45 @@ export function resolveLocalAIModelForJob(params: {
   }
   return { kind: 'no-selection', recommended: recommended || null }
 }
+
+export type LocalAIModelSelectionSnapshot = {
+  selectedId: string | null
+  statusesById: Record<string, LocalAIModelStatus | null>
+  resolved: LocalAIResolvedModel
+}
+
+export async function refreshLocalAIModelSelectionSnapshot(params: {
+  readStatus: (modelId: string) => Promise<LocalAIModelStatus | null>
+  selectedId?: string | null
+  readSelectedId?: () => string | null
+  recommendedId?: string | null
+}): Promise<LocalAIModelSelectionSnapshot> {
+  const selectedId =
+    params.selectedId === undefined
+      ? params.readSelectedId?.() ?? getSelectedLocalAIModelId()
+      : params.selectedId
+  const enabledModels = LOCAL_AI_MODEL_CATALOG.filter((manifest) => manifest.enabled)
+  const statusEntries = await Promise.all(
+    enabledModels.map(async (manifest) => {
+      try {
+        return [manifest.modelId, await params.readStatus(manifest.modelId)] as const
+      } catch {
+        return [manifest.modelId, null] as const
+      }
+    }),
+  )
+  const statusesById: Record<string, LocalAIModelStatus | null> = {}
+  statusEntries.forEach(([modelId, status]) => {
+    statusesById[modelId] = status
+  })
+
+  return {
+    selectedId,
+    statusesById,
+    resolved: resolveLocalAIModelForJob({
+      selectedId,
+      statusesById,
+      recommendedId: params.recommendedId,
+    }),
+  }
+}
