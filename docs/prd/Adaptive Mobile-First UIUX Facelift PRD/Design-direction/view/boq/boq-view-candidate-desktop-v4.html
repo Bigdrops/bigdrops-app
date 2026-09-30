@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIGDROPS - BOQ View Desktop - BOQ-2026-0142</title>
+<style>
+  :root{
+    --ink:#101828; --body:#344054; --faint:#667085;
+    --line:rgba(16,24,40,.10); --line-strong:rgba(16,24,40,.22);
+    --bg:#f2f4f7; --card:#ffffff; --soft:#eef1f5;
+    --brand:#175cd3; --brand-ink:#ffffff; --brand-soft:rgba(23,92,211,.08);
+    --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+    --cost:#b54708; --cost-soft:rgba(181,71,8,.10);
+    --sell:#067647; --sell-soft:rgba(6,118,71,.10);
+    --danger:#b42318;
+    --ghost:rgba(16,24,40,.07);
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.06);
+  }
+  [data-theme="dark"]{
+    --ink:#f2f4f7; --body:#d0d5dd; --faint:#98a2b3;
+    --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24);
+    --bg:#0c111d; --card:#1d2939; --soft:#161f2e;
+    --brand:#84adff; --brand-ink:#0c111d; --brand-soft:rgba(132,173,255,.12);
+    --cost:#fdb022; --cost-soft:rgba(253,176,34,.13);
+    --sell:#6ce9a6; --sell-soft:rgba(108,233,166,.12);
+    --danger:#f97066;
+    --ghost:rgba(255,255,255,.06);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;text-align:left;-webkit-tap-highlight-color:transparent}
+  button:focus-visible,summary:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ======== TOP BAR ======== */
+  .topbar{position:sticky;top:0;z-index:40;background:var(--bg);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1240px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:10px}
+  .iconbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--card);
+    color:var(--body);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .iconbtn svg{width:17px;height:17px}
+  .tb-id{display:flex;align-items:center;gap:9px;min-width:0;margin-right:auto}
+  .tb-id .num{font-family:var(--mono);font-size:13.5px;font-weight:700}
+  .status{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:4px 10px;border-radius:99px;background:var(--sell-soft);color:var(--sell)}
+  .status[data-s="open"]{background:var(--cost-soft);color:var(--cost)}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:800;border-radius:11px;padding:10px 15px}
+  .btn svg{width:15px;height:15px}
+  .btn.primary{background:var(--brand);color:var(--brand-ink)}
+  .btn.ghost{border:1px solid var(--line-strong);background:var(--card);color:var(--body)}
+  .btn:active{transform:scale(.97)}
+
+  /* ======== READING ROOM ======== */
+  .room{max-width:1240px;margin:0 auto;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+  .dossier{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+    padding:20px 22px;display:flex;gap:14px;align-items:flex-start}
+  .monogram{width:52px;height:52px;border-radius:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    background:var(--brand);color:var(--brand-ink);font-weight:800;font-size:18px}
+  .dossier h1{font-size:21px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+  .dossier .client{margin-top:4px;font-size:13px;color:var(--faint);font-weight:600}
+  .dossier .ctx{margin-top:8px;font-size:12.5px;color:var(--faint);font-weight:600}
+  .dossier .ctx details{margin-top:6px}
+  .dossier .ctx summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:5px;color:var(--brand);font-weight:800}
+  .dossier .ctx summary::-webkit-details-marker{display:none}
+  .dossier dl{margin-top:8px;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:12.5px;max-width:420px}
+  .dossier dt{color:var(--faint);font-weight:600}
+  .dossier dd{color:var(--body);font-weight:700;text-align:right}
+
+  .chapter{display:flex;align-items:flex-end;gap:12px;margin:30px 0 12px;padding-top:20px;border-top:2px solid var(--ink)}
+  .chapter .ghost{font-size:52px;line-height:.9;font-weight:800;color:var(--ghost);letter-spacing:-.04em;user-select:none}
+  .chapter .ch-main{flex:1}
+  .chapter h2{font-size:15px;font-weight:800}
+  .chapter .count{font-size:12px;color:var(--faint);font-weight:700;margin-top:2px}
+  .chapter .sub{font-family:var(--mono);font-size:13.5px;font-weight:700;text-align:right}
+  .chapter .sub small{display:block;font-size:10.5px;font-weight:600;color:var(--faint)}
+
+  /* Specimen: desktop docks the photo right at a fixed column. */
+  .specimen{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+    margin-bottom:12px;overflow:hidden;display:flex}
+  .spec-main{flex:1;min-width:0;padding:16px 18px}
+  .spec-top{display:flex;gap:12px}
+  .idx{flex-shrink:0;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--faint);
+    border:1px solid var(--line-strong);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+  .spec-main h3{font-size:15.5px;font-weight:800;letter-spacing:-.01em;line-height:1.35}
+  .spec-main .spec{margin-top:5px;font-size:13px;line-height:1.6;color:var(--body)}
+  .spec-main .meta{margin-top:8px;font-size:12px;color:var(--faint);font-weight:600}
+  .spec-main .meta b{color:var(--body);font-weight:800}
+  .spec-foot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px}
+  .cost-toggle{font-size:12px;font-weight:800;color:var(--brand);padding:6px 0}
+  .costline{display:none;margin-top:6px;font-size:12.5px;max-width:460px}
+  .specimen[data-cost="open"] .costline{display:block}
+  .costline .crow{display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed var(--line)}
+  .costline .crow span:first-child{color:var(--faint);font-weight:600}
+  .costline .crow.cost .mono{color:var(--cost);font-weight:700}
+  .sellbox{text-align:right;flex-shrink:0}
+  .sellbox .amt{font-family:var(--mono);font-size:17px;font-weight:700}
+  .sellbox .delta{margin-top:3px;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--sell)}
+  .spec-photo{flex:0 0 260px;border-left:1px solid var(--line);line-height:0;display:flex;flex-direction:column}
+  .spec-photo button{flex:1;line-height:0}
+  .spec-photo svg{width:100%;height:100%;min-height:170px;object-fit:cover;display:block}
+  .spec-photo figcaption{font-size:10.5px;font-weight:700;color:var(--faint);padding:7px 12px;line-height:1.4}
+
+  /* Close-out */
+  .close{margin-top:30px;background:var(--card);border:1px solid var(--line-strong);border-radius:18px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .close-head{padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .close-head .eyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sell)}
+  .close-head h2{margin-top:4px;font-size:19px;font-weight:800;letter-spacing:-.015em}
+  .close-rows{padding:6px 22px 4px}
+  .close-rows .trow{display:flex;justify-content:space-between;padding:11px 0;font-size:14px}
+  .close-rows .trow+.trow{border-top:1px solid var(--line)}
+  .close-rows .trow span:first-child{color:var(--body);font-weight:600}
+  .close-rows .trow .mono{font-weight:700}
+  .close-rows .trow.cost .mono{color:var(--cost)}
+  .close-rows .trow.grand{font-size:16px}
+  .close-rows .trow.grand .mono,.close-rows .trow.profit .mono{color:var(--sell)}
+  .words{margin:10px 22px 0;background:var(--soft);border-radius:12px;padding:12px 14px;
+    font-size:13px;font-style:italic;line-height:1.6;color:var(--body)}
+  .notes{margin:12px 22px 0;font-size:13px;line-height:1.65;color:var(--body)}
+  .notes b{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+  .endrule{display:flex;align-items:center;gap:12px;margin:18px 22px;color:var(--faint);
+    font-family:var(--mono);font-size:11.5px;font-weight:600;padding-bottom:18px}
+  .endrule::before,.endrule::after{content:"";flex:1;border-top:1px solid var(--line-strong)}
+
+  /* ======== RAIL ======== */
+  .rail{position:sticky;top:76px;display:flex;flex-direction:column;gap:14px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:15px 16px}
+  .panel h3{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .facts{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12.5px}
+  .facts dt{color:var(--faint);font-weight:600}
+  .facts dd{color:var(--body);font-weight:700;text-align:right}
+  .position .sell{font-family:var(--mono);font-size:23px;font-weight:700;color:var(--sell);letter-spacing:-.01em}
+  .position .mgn{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:11.5px;font-weight:700;
+    color:var(--sell);background:var(--sell-soft);border-radius:99px;padding:3px 10px}
+  .position .prow{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-top:1px solid var(--line);margin-top:4px}
+  .position .prow span:first-child{color:var(--faint);font-weight:600}
+  .position .prow .mono{font-weight:700}
+  .position .prow.cost .mono{color:var(--cost)}
+  .position .prow.profit .mono{color:var(--sell)}
+  .rail .btn{width:100%;justify-content:center;margin-top:8px}
+  .toc a{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--body);
+    padding:8px 0;border-bottom:1px solid var(--line);text-decoration:none}
+  .toc a:last-child{border-bottom:0}
+  .toc a .mono{color:var(--faint);font-weight:600}
+  .toc a:hover{color:var(--brand)}
+  .railnotes{font-size:12.5px;line-height:1.65;color:var(--body)}
+
+  .scrim{position:fixed;inset:0;z-index:60;background:rgba(12,17,29,.5);display:none}
+  .scrim.show{display:block}
+  .sheet{position:fixed;z-index:61;left:50%;top:50%;transform:translate(-50%,-46%);width:min(440px,calc(100vw - 48px));
+    background:var(--card);border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,.35);
+    padding:18px 20px 20px;display:none}
+  .sheet.show{display:block}
+  .sheet h3{font-size:15px;font-weight:800}
+  .sheet .sec{margin-top:14px;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .arow{width:100%;display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:700}
+  .arow small{display:block;font-size:11.5px;color:var(--faint);font-weight:600}
+  .arow svg{width:17px;height:17px;color:var(--faint);flex-shrink:0}
+  .arow.danger{color:var(--danger)}
+  .arow.danger svg{color:var(--danger)}
+  .lightbox{position:fixed;inset:0;z-index:61;background:rgba(12,17,29,.88);display:none;align-items:center;justify-content:center;padding:32px}
+  .lightbox.show{display:flex}
+  .lightbox figure{max-width:720px;width:100%}
+  .lightbox svg{width:100%;height:auto;border-radius:14px}
+  .lightbox figcaption{margin-top:10px;color:#fff;font-size:13px;font-weight:600;text-align:center}
+  .toasts{position:fixed;z-index:70;right:24px;bottom:24px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+  .toast{background:#101828;color:#f2f4f7;font-size:13px;font-weight:700;border-radius:12px;padding:11px 15px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  [data-theme="dark"] .toast{background:#f2f4f7;color:#101828}
+  @media(max-width:960px){.room{grid-template-columns:1fr}.rail{position:static}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <button class="iconbtn" data-act="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+    </button>
+    <div class="tb-id">
+      <span class="num">BOQ-2026-0142</span>
+      <button class="status" id="statusPill" data-act="status" data-s="approved">Approved</button>
+    </div>
+    <button class="btn ghost" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Edit</button>
+    <button class="btn primary" data-act="download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download</button>
+    <button class="iconbtn" data-act="share" aria-label="Share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+    </button>
+    <button class="iconbtn" data-act="theme" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+    <button class="iconbtn" data-act="more" aria-label="More actions">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="room">
+  <main>
+    <div class="dossier">
+      <div class="monogram" aria-label="Company: Adekunle Kontracts Ltd">AK</div>
+      <div style="flex:1;min-width:0">
+        <h1>Lekki Duplex — Full Build BOQ</h1>
+        <div class="client">Adekunle Kontracts Ltd · for Mr. T. Bello</div>
+        <div class="ctx">12 Jun 2026 · Valid 30 days · <span id="ctxCount">5 items</span> · NGN (₦)
+          <details>
+            <summary>Document details</summary>
+            <dl>
+              <dt>Prepared by</dt><dd>A. Kontracts (QS)</dd>
+              <dt>Site</dt><dd>Lekki Phase 1, Lagos</dd>
+              <dt>Reference</dt><dd class="mono">BOQ-2026-0142</dd>
+            </dl>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <div id="schedule"></div>
+
+    <div class="close">
+      <div class="close-head">
+        <div class="eyebrow">Commercial close-out</div>
+        <h2>BOQ complete</h2>
+      </div>
+      <div class="close-rows">
+        <div class="trow cost"><span>Total cost</span><span class="mono" id="tCost">—</span></div>
+        <div class="trow grand"><span>Selling total</span><span class="mono" id="tSell">—</span></div>
+        <div class="trow profit"><span>Gross profit (<span id="tMargin">—</span>)</span><span class="mono" id="tProfit">—</span></div>
+      </div>
+      <p class="words">Seven million two hundred and thirty-seven thousand naira only.</p>
+      <div class="notes"><b>Notes</b>Rates include labour, plant and transport to site. Prices hold for 30 days. Variations are priced separately.</div>
+      <div class="endrule">END OF BOQ · BOQ-2026-0142</div>
+    </div>
+  </main>
+
+  <aside class="rail" aria-label="Document context">
+    <section class="panel position">
+      <h3>Commercial position</h3>
+      <div class="sell" id="rSell">—</div>
+      <span class="mgn" id="rMargin">—</span>
+      <div class="prow cost" style="margin-top:10px"><span>Total cost</span><span class="mono" id="rCost">—</span></div>
+      <div class="prow profit"><span>Gross profit</span><span class="mono" id="rProfit">—</span></div>
+    </section>
+    <section class="panel">
+      <h3>Document facts</h3>
+      <dl class="facts">
+        <dt>Date</dt><dd>12 Jun 2026</dd>
+        <dt>Validity</dt><dd>30 days</dd>
+        <dt>Items</dt><dd id="rItems">5</dd>
+        <dt>Currency</dt><dd>NGN (₦)</dd>
+        <dt>Site</dt><dd>Lekki Phase 1</dd>
+      </dl>
+    </section>
+    <section class="panel toc">
+      <h3>Chapters</h3>
+      <div id="toc"></div>
+    </section>
+    <section class="panel">
+      <h3>Actions</h3>
+      <button class="btn ghost" data-act="convert">Convert to Quotation</button>
+      <button class="btn ghost" data-act="duplicate">Duplicate</button>
+      <button class="btn ghost" data-act="csv">Export CSV</button>
+    </section>
+  </aside>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-label="More actions">
+  <h3>BOQ actions</h3>
+  <div class="sec">Status</div>
+  <button class="arow" data-act="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Toggle status<small>Open ↔ Approved</small></span></button>
+  <div class="sec">Danger zone</div>
+  <button class="arow danger" data-act="archive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></svg><span>Archive<small>Hide from active lists</small></span></button>
+  <button class="arow danger" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg><span>Delete<small>Permanent, with confirm</small></span></button>
+</section>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Item photo preview">
+  <figure><span id="lightboxArt"></span><figcaption id="lightboxCap"></figcaption></figure>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+var BOQ_GROUPS = [
+  { id: "A", title: "Civil Works" },
+  { id: "B", title: "Finishes & Openings" }
+];
+var BOQ_ITEMS = [
+  { n: 1, group: "A", photo: true, desc: "Reinforced concrete blinding under footings",
+    spec: "1:3:6 mix, 50mm thick on compacted hardcore base, including formwork to edges.",
+    make: "Dangote Cement", qty: 140, unit: "m³", cp: 17500, sp: 20500 },
+  { n: 2, group: "A", photo: false, desc: "Y12 high-yield reinforcement bars",
+    spec: "BS 4449 grade, cut, bent and fixed including laps, spacers and tying wire.",
+    make: "African Foundries", qty: 8, unit: "ton", cp: 160000, sp: 189000 },
+  { n: 3, group: "A", photo: false, desc: "Hardcore filling compacted in layers",
+    spec: "300mm approved hardcore, compacted in 150mm layers to engineer approval.",
+    make: "Lagos Quarry", qty: 50, unit: "m³", cp: 17200, sp: 19900 },
+  { n: 4, group: "B", photo: false, desc: "Porcelain floor tiles 600 × 600",
+    spec: "Non-slip grade, bedded on adhesive including grout, skirting and cutting.",
+    make: "Goodwill Ceramics", qty: 200, unit: "m²", cp: 4700, sp: 5500 },
+  { n: 5, group: "B", photo: false, desc: "Aluminium casement windows with burglar proof",
+    spec: "Powder-coated bronze frames, 5mm reflective glass, fly screens, ironmongery and silicone sealing; installed and glazed.",
+    make: "Tower Aluminium", qty: 10, unit: "set", cp: 62809, sp: 76000 }
+];
+function lineCost(it){ return it.cp * it.qty; }
+function lineSell(it){ return it.sp * it.qty; }
+function lineProfit(it){ return (it.sp - it.cp) * it.qty; }
+function fmt(n){ return "₦" + n.toLocaleString("en-NG"); }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function photoSVG(seed){
+  return '<svg viewBox="0 0 640 360" role="img" aria-label="Simulated site reference photo">'
+    + '<defs><linearGradient id="dk' + seed + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0" stop-color="#9fb3c8"/><stop offset=".55" stop-color="#c9b896"/><stop offset="1" stop-color="#8a7a63"/>'
+    + '</linearGradient></defs>'
+    + '<rect width="640" height="360" fill="url(#dk' + seed + ')"/>'
+    + '<rect y="238" width="640" height="122" fill="#6b6257"/>'
+    + '<rect y="238" width="640" height="10" fill="#575046"/>'
+    + '<g stroke="#3f3a33" stroke-width="7">'
+    + '<line x1="60" y1="238" x2="140" y2="90"/><line x1="200" y1="238" x2="280" y2="90"/>'
+    + '<line x1="340" y1="238" x2="420" y2="90"/><line x1="480" y1="238" x2="560" y2="90"/></g>'
+    + '<g stroke="#2f2b26" stroke-width="5"><line x1="40" y1="150" x2="560" y2="150"/><line x1="40" y1="195" x2="560" y2="195"/></g>'
+    + '<rect x="60" y="292" width="180" height="26" rx="4" fill="#7d7468"/>'
+    + '<rect x="260" y="292" width="120" height="26" rx="4" fill="#847b6e"/>'
+    + '<rect x="0" y="0" width="640" height="360" fill="#101828" opacity="0.08"/></svg>';
+}
+function renderSchedule(){
+  var host = document.getElementById("schedule"), toc = document.getElementById("toc"), html = "", th = "", idx = 0;
+  BOQ_GROUPS.forEach(function(g, gi){
+    var rows = BOQ_ITEMS.filter(function(it){ return it.group === g.id; });
+    var gSell = rows.reduce(function(a,it){ return a + lineSell(it); }, 0);
+    html += '<section class="chapter" id="ch-' + g.id + '"><span class="ghost" aria-hidden="true">' + g.id + '</span>'
+      + '<div class="ch-main"><h2>' + esc(g.title) + '</h2>'
+      + '<div class="count">' + rows.length + (rows.length === 1 ? " item" : " items") + '</div></div>'
+      + '<div class="sub">' + fmt(gSell) + '<small>chapter total</small></div></section>';
+    th += '<a href="#ch-' + g.id + '"><span>' + g.id + ' · ' + esc(g.title) + '</span><span class="mono">' + fmt(gSell) + '</span></a>';
+    rows.forEach(function(it){
+      idx++;
+      var profit = lineProfit(it), margin = (profit / lineSell(it) * 100).toFixed(1);
+      html += '<article class="specimen" data-cost="closed"><div class="spec-main"><div class="spec-top">'
+        + '<span class="idx">' + String(idx).padStart(2,"0") + '</span>'
+        + '<div><h3>' + esc(it.desc) + '</h3><p class="spec">' + esc(it.spec) + '</p>'
+        + '<p class="meta"><b>' + esc(it.make) + '</b> · ' + it.qty + " " + esc(it.unit) + '</p></div></div>'
+        + '<div class="spec-foot"><button class="cost-toggle" data-costbtn="' + idx + '" aria-expanded="false">Cost &amp; margin</button>'
+        + '<div class="sellbox"><div class="amt">' + fmt(lineSell(it)) + '</div>'
+        + '<div class="delta">+' + fmt(profit) + ' · ' + margin + '%</div></div></div>'
+        + '<div class="costline"><div class="crow cost"><span>Cost · ' + it.qty + " " + esc(it.unit) + " × " + fmt(it.cp)
+        + '</span><span class="mono">' + fmt(lineCost(it)) + '</span></div>'
+        + '<div class="crow"><span>Selling · ' + it.qty + " " + esc(it.unit) + " × " + fmt(it.sp)
+        + '</span><span class="mono">' + fmt(lineSell(it)) + '</span></div></div></div>';
+      if(it.photo){
+        html += '<figure class="spec-photo"><button data-photo="' + idx + '" aria-label="Preview photo for item ' + idx + '">'
+          + photoSVG(idx) + '</button><figcaption>Site reference · click to preview</figcaption></figure>';
+      }
+      html += '</article>';
+    });
+  });
+  host.innerHTML = html; toc.innerHTML = th;
+}
+function renderCommercial(){
+  var cost = BOQ_ITEMS.reduce(function(a,it){ return a + lineCost(it); }, 0);
+  var sell = BOQ_ITEMS.reduce(function(a,it){ return a + lineSell(it); }, 0);
+  var profit = sell - cost, margin = (profit / sell * 100).toFixed(1);
+  document.getElementById("rSell").textContent = fmt(sell);
+  document.getElementById("rMargin").textContent = margin + "% margin";
+  document.getElementById("rCost").textContent = fmt(cost);
+  document.getElementById("rProfit").textContent = "+" + fmt(profit);
+  document.getElementById("tCost").textContent = fmt(cost);
+  document.getElementById("tSell").textContent = fmt(sell);
+  document.getElementById("tProfit").textContent = "+" + fmt(profit);
+  document.getElementById("tMargin").textContent = margin + "%";
+  document.getElementById("ctxCount").textContent = BOQ_ITEMS.length + " items";
+  document.getElementById("rItems").textContent = BOQ_ITEMS.length;
+}
+function toast(msg){
+  var box = document.getElementById("toasts"), el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg; box.appendChild(el);
+  setTimeout(function(){ el.remove(); }, 2600);
+}
+renderSchedule();
+renderCommercial();
+document.getElementById("schedule").addEventListener("click", function(e){
+  var cb = e.target.closest("[data-costbtn]");
+  if(cb){
+    var card = cb.closest(".specimen"), open = card.getAttribute("data-cost") === "open";
+    card.setAttribute("data-cost", open ? "closed" : "open");
+    cb.setAttribute("aria-expanded", String(!open));
+    return;
+  }
+  var ph = e.target.closest("[data-photo]");
+  if(ph){
+    document.getElementById("lightboxArt").innerHTML = photoSVG(99);
+    document.getElementById("lightboxCap").textContent = "Item " + ph.getAttribute("data-photo") + " — site reference (read-only)";
+    document.getElementById("lightbox").classList.add("show");
+  }
+});
+document.getElementById("lightbox").addEventListener("click", function(){ this.classList.remove("show"); });
+var scrim = document.getElementById("scrim"), sheet = document.getElementById("moreSheet");
+function openSheet(){ scrim.classList.add("show"); sheet.classList.add("show"); }
+function closeSheet(){ scrim.classList.remove("show"); sheet.classList.remove("show"); }
+scrim.addEventListener("click", closeSheet);
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    if(document.getElementById("lightbox").classList.contains("show")) document.getElementById("lightbox").classList.remove("show");
+    else closeSheet();
+  }
+});
+function exportCSV(){
+  var rows = [["n","group","description","make","qty","unit","cp","sp","line_cost","line_sell","line_profit"]];
+  BOQ_ITEMS.forEach(function(it,i){
+    rows.push([i+1, it.group, '"' + it.desc + '"', '"' + it.make + '"', it.qty, it.unit, it.cp, it.sp, lineCost(it), lineSell(it), lineProfit(it)]);
+  });
+  var blob = new Blob([rows.map(function(r){ return r.join(","); }).join("\n")], {type:"text/csv"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "BOQ-2026-0142.csv"; a.click();
+  toast("CSV exported (BOQS schema)");
+}
+var pendingDanger = null;
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-act]");
+  if(!b) return;
+  var act = b.getAttribute("data-act");
+  if(act === "back") toast("Back to BOQs");
+  else if(act === "edit") toast("Edit BOQ (draft checkout)");
+  else if(act === "theme"){
+    var r = document.documentElement, cur = r.getAttribute("data-theme");
+    r.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  }
+  else if(act === "share"){
+    if(navigator.share) navigator.share({title:"BOQ-2026-0142"}).catch(function(){});
+    else toast("Link copied to clipboard");
+  }
+  else if(act === "more") openSheet();
+  else if(act === "download"){ toast("download:start — preparing PDF…"); setTimeout(function(){ toast("download:success — saved to Downloads"); }, 900); }
+  else if(act === "convert"){ closeSheet(); toast("Convert to Quotation"); }
+  else if(act === "duplicate"){ closeSheet(); toast("Duplicated as draft BOQ"); }
+  else if(act === "csv"){ closeSheet(); exportCSV(); }
+  else if(act === "status"){
+    var p = document.getElementById("statusPill"), approved = p.getAttribute("data-s") === "approved";
+    p.setAttribute("data-s", approved ? "open" : "approved");
+    p.textContent = approved ? "Open" : "Approved";
+    closeSheet(); toast("Status → " + (approved ? "Open" : "Approved"));
+  }
+  else if(act === "archive" || act === "delete"){
+    if(pendingDanger === act){ closeSheet(); toast(act === "archive" ? "BOQ archived" : "BOQ deleted"); pendingDanger = null; }
+    else { pendingDanger = act; toast("Click " + act + " again to confirm"); setTimeout(function(){ pendingDanger = null; }, 3000); }
+  }
+});
+</script>
+</body>
+</html>

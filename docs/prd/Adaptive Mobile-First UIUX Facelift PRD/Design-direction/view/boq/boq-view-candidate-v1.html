@@ -1,0 +1,903 @@
+<!doctype html>
+<!--
+  BIGDROPS - BOQ View Page - Phone + Fold + Desktop candidate.
+  Standalone design-direction prototype. Visual family: BOQ V12 form.
+
+  WHAT THIS IS
+  A document viewing and management surface for a completed Bill of
+  Quantities. It answers: "What should a completed BOQ feel like when I
+  open it to inspect, understand, manage, and act on it?"
+
+  It is NOT the form with disabled inputs. Form-only concepts are
+  removed: no editable inputs, no textarea affordances, no enumeration
+  editing controls, no move/duplicate/delete row controls, no Insert
+  Below, no Add Item, no Add Group, no validation presentation, no
+  Clear All, no Import, no Column Settings, no Save.
+
+  WHAT TRANSFERS FROM BOQ V12 (the visual family)
+  - Token system: ink/sub/faint/line/bg/card/soft/accent/red/rail/mono,
+    cost/sell/loss commercial tones, group envelope tokens, profit band
+    surface, shadows, button-primary tokens, gutter.
+  - Type pairing: DM Mono for numbers and labels, Manrope for prose.
+  - Top bar: back, title + status badge + layout chip, dark-mode toggle.
+  - Section headers: number + title + rule + meta cell.
+  - Group envelopes: permanently expanded, dark gradient header, left
+    spine, item count. Read-only: the group delete X is removed.
+  - Commercial treatment: CP in the cost tone, SP in the sell tone,
+    line profit on the dark profit band.
+  - Totals anatomy: sumlines, sumtotal pair, amount-in-words.
+  - Sheet/dialog system: role=dialog, aria-modal, Escape close, focus
+    return. Confirm dialogs for destructive actions.
+  - Responsive philosophy: phone 430, large phone 430-599, fold 600+,
+    desktop 1024+ with a document card and a sticky summary rail.
+
+  DOMAIN TRUTH (from the repository, not invented)
+  - src/domain/boq/types.ts: boq_number, title, vendor_name,
+    vendor_contact, issue_date, notes, status, template_id, palette
+    colors. Rows: row_type item|section, description, specification,
+    quantity, unit, notes, make_brand, cp, sp.
+  - src/domain/boq/calculateBoqTotals.ts: the locked commercial model.
+    Total cost = SUM(cp x qty). Total selling price = SUM(sp x qty).
+    Gross profit = selling - cost. No VAT, no WHT, no discount.
+  - src/pages/view-boq-actions.ts: the legitimate actions. Edit,
+    Convert to Quotation, Duplicate, update status, Archive, Delete.
+  - src/components/boq/BoqList.tsx: status 'open' (default) and
+    'approved' are the known status values.
+  - The BOQ PDF renderer was removed in the demolition phase, so no
+    PDF/export action is offered.
+
+  ENVIRONMENTAL ARTWORK
+  A faint blueprint grid with one oversized cropped line-art (a scale
+  ruler). A BOQ is an estimate schedule; the grid reads as graph paper.
+  The art sits behind the document, never intercepts input, and
+  disappears at desktop widths where the document card is the focus.
+
+  SAMPLE DATA
+  A realistic Nigerian construction BOQ with two groups, six items, a
+  long sub-description, and the locked commercial model applied.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS - BOQ View - BOQ-2026-0142</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a; --sub:#475569; --faint:#8b9ab0;
+    --line:rgba(15,23,42,.10); --line-strong:rgba(15,23,42,.20);
+    --bg:#eef2f7; --card:#ffffff; --soft:#f6f9fc;
+    --accent:#1e3a5f; --accent-soft:rgba(30,58,95,.13); --accent-ink:#ffffff;
+    --red:#dc2626; --red-soft:rgba(220,38,38,.09);
+    --rail:rgba(15,23,42,.22);
+    --mono:'DM Mono',monospace;
+    --cost:#b45309; --cost-soft:rgba(180,83,9,.10);
+    --sell:#15803d; --sell-soft:rgba(21,128,61,.10);
+    --loss:#b91c1c;
+    --group-line:rgba(30,58,95,.38); --group-spine:#1e3a5f; --group-soft:rgba(30,58,95,.07);
+    --group-head:linear-gradient(115deg,#0f172a,#1e3a5f 58%,#334155);
+    --group-on:#f8fafc;
+    --profit-bg:linear-gradient(120deg,#0f172a,#1e293b);
+    --on-dark:#f1f5f9; --pos-on-dark:#4ade80; --neg-on-dark:#fca5a5;
+    --shadow-ear:0 3px 9px rgba(15,23,42,.16);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.28);
+    --bg-bd-button-primary-bg:#1e3a5f;
+    --bd-button-primary-text:#f1f5f9;
+    --art:rgba(15,23,42,.06);
+    --gutter:14px;
+  }
+  [data-theme="dark"]{
+    --ink:#f1f5f9; --sub:#cbd5e1; --faint:#7d8da5;
+    --line:rgba(148,163,184,.18); --line-strong:rgba(148,163,184,.32);
+    --bg:#0b1220; --card:#16233a; --soft:#111d31;
+    --accent:#38bdf8; --accent-soft:rgba(56,189,248,.16); --accent-ink:#06131f;
+    --red:#f87171; --red-soft:rgba(248,113,113,.13);
+    --rail:rgba(148,163,184,.32);
+    --cost:#fbbf24; --cost-soft:rgba(251,191,36,.14);
+    --sell:#34d399; --sell-soft:rgba(52,211,153,.14);
+    --loss:#f87171;
+    --group-line:rgba(56,189,248,.34); --group-spine:#38bdf8; --group-soft:rgba(56,189,248,.10);
+    --group-head:linear-gradient(115deg,#16233a,#1c3550);
+    --group-on:#e2e8f0;
+    --profit-bg:linear-gradient(120deg,#0d1728,#1b2b45);
+    --art:rgba(148,163,184,.12);
+    --shadow-ear:0 3px 9px rgba(0,0,0,.45);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.5);
+    --bg-bd-button-primary-bg:#2563eb;
+    --bd-button-primary-text:#f8fafc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:0}
+  svg{display:block;flex-shrink:0}
+  .mono{font-family:var(--mono)}
+  .wrap{max-width:430px;margin:0 auto;padding:8px var(--gutter) calc(112px + env(safe-area-inset-bottom));position:relative}
+
+  /* ============ ENVIRONMENTAL ARTWORK - estimate-sheet identity ============
+     A faint blueprint grid with one oversized cropped line-art (a scale
+     ruler). Purely atmospheric: the layer never intercepts pointer
+     events, sits under all content, and disappears at desktop widths
+     where the document card is the focus. */
+  .doc{position:relative}
+  .art{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .art svg{width:100%;height:100%;display:block}
+  .art .ln{stroke:var(--art);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .art text{fill:var(--art);font-family:var(--mono);font-size:10px;letter-spacing:2px}
+  .doc>*:not(.art){position:relative;z-index:1}
+
+  /* ============ TOP BAR ============ */
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:6px;padding:6px 0 8px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .tb-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,transform .12s,border-color .15s}
+  .tb-btn:hover{color:var(--ink);border-color:var(--line-strong)}
+  .tb-btn:active{transform:scale(.93)}
+  .tb-btn svg{width:17px;height:17px}
+  .tb-title{flex:1;min-width:0;padding:0 2px}
+  .tb-title h1{font-size:13.5px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .tb-meta .badge{color:var(--accent)}
+  .tb-meta .sep{opacity:.55}
+
+  /* ============ SECTIONS - number + typography + rule, no dots ============ */
+  .sec{margin-top:20px}
+  .sec + .sec{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .secno{font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--accent);flex-shrink:0}
+  .sec-head h2{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+  .sec-head .rule{flex:1;height:1px;background:var(--line);min-width:12px}
+  .sec-head .meta{font-family:var(--mono);font-size:8.5px;font-weight:500;color:var(--faint);white-space:nowrap}
+
+  /* ============ STATUS CHIP ============ */
+  .status{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:4px 10px;border-radius:99px;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .status.good{background:var(--sell-soft);color:var(--sell)}
+  .status.warn{background:var(--cost-soft);color:var(--cost)}
+  .status.sel{background:var(--profit-bg);color:var(--on-dark)}
+  .status svg{width:10px;height:10px}
+
+  /* ============ 1. DOCUMENT IDENTITY ============ */
+  .hero{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:16px}
+  .hero-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .hero-top .status{margin-left:auto}
+  .hero-tag{padding:4px 9px;border-radius:99px;border:1px solid var(--line);font-size:7.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .hero-title{font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.25;margin-bottom:12px}
+  .hero-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
+  .hm{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .hm-lab{font-size:7.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .hm b{font-size:11.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hm b.mono{font-weight:500;letter-spacing:-.01em}
+
+  /* ============ 2. COMMERCIAL SUMMARY - the at-a-glance band ============
+     Same dark surface the form reserves for line profit. A BOQ is a
+     costing schedule: the four commercial numbers are the first thing
+     a reader needs. Phone: 2x2. Fold: one row of four. */
+  .sumband{border-radius:14px;background:var(--profit-bg);padding:12px}
+  .sb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
+  .sb-stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .sb-lab{font-size:7.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--on-dark);opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sb-val{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.02em;color:var(--on-dark);white-space:nowrap}
+  .sb-stat.hl .sb-val{color:var(--pos-on-dark)}
+
+  /* ============ 3. SCHEDULE ITEMS - read-only document body ============ */
+  #items{display:flex;flex-direction:column}
+  #items > .vitem,#items > .gwrap{margin-top:18px}
+  #items > .vitem:first-child,#items > .gwrap:first-child{margin-top:0}
+
+  .vitem{position:relative;padding-top:14px}
+  /* the row's own top hairline - a document boundary, not an editing
+     control. It spans the full width: nothing terminates into it. */
+  .vitem::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--line)}
+  #items > .vitem:first-child::before,.gbody > .vitem:first-child::before{display:none}
+
+  .vhead{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:start}
+  .vidx{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em;margin-top:2px}
+  .vdesc{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .vdesc-text{font-size:13px;font-weight:700;line-height:1.4;letter-spacing:-.01em}
+  /* sub description / specification: the ACTUAL text, clamped. Read-only:
+     no toggle, no editor, no add row. */
+  .vspec{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:10.5px;font-weight:600;line-height:1.5;color:var(--sub);padding-left:10px;border-left:2px solid var(--line)}
+  .vmake{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .vmake svg{width:10px;height:10px}
+  .vmake b{color:var(--sub);font-weight:700;text-transform:none;letter-spacing:0}
+
+  /* data zone - FULL item width, no rail indentation */
+  .vdata{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .vgrid>*:last-child:nth-child(odd){grid-column:1/-1}
+  .vcell{display:flex;flex-direction:column;gap:2px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:11px;background:var(--card)}
+  .vlab{display:flex;align-items:center;gap:4px;font-size:7.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .vlab svg{width:9px;height:9px}
+  .vcell.cost .vlab{color:var(--cost)}
+  .vcell.sell .vlab{color:var(--sell)}
+  .vval{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+
+  /* line profit - the form's result band, read-only */
+  .profit{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;padding:6px 11px;border-radius:11px;background:var(--profit-bg)}
+  .profit .pl{font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .profit b{font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:-.02em;color:var(--on-dark);white-space:nowrap}
+  .profit.pos b{color:var(--pos-on-dark)}
+  .profit.neg b{color:var(--neg-on-dark)}
+
+  /* ============ GROUPS - read-only envelopes ============
+     The V12 group anatomy, minus the delete X. The dark gradient header
+     and left spine carry the grouping; the count is a readout. */
+  .gwrap{display:flex;flex-direction:column}
+  .gwrap{
+    width:calc(100% + 2*var(--gutter));
+    margin-left:calc(-1*var(--gutter));
+    margin-right:calc(-1*var(--gutter));
+    border-top:1px solid var(--group-line);
+    border-bottom:1px solid var(--group-line);
+    border-left:6px solid var(--group-spine);
+    background:var(--card);
+  }
+  .ghdr{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px var(--gutter);background:var(--group-head)}
+  .gtitle{flex:1;min-width:0;color:var(--group-on);font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+  .gcount{font-family:var(--mono);font-size:8.5px;color:rgba(248,250,252,.75);white-space:nowrap;flex-shrink:0}
+  .gbody{display:flex;flex-direction:column;padding:0 var(--gutter)}
+  .gbody>.vitem{padding-top:14px;margin-top:6px}
+  .gbody>.vitem:first-child{margin-top:0;padding-top:14px}
+
+  /* ============ 4. NOTES ============ */
+  .notes{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--soft);font-size:11px;font-weight:600;line-height:1.6;color:var(--sub)}
+  .notes-lab{display:flex;align-items:center;gap:5px;margin-bottom:6px;font-size:7.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .notes-lab svg{width:10px;height:10px}
+
+  /* ============ 5. TOTALS - the formal close ============ */
+  .totals{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:12px}
+  .totals-grid{display:grid;grid-template-columns:1fr;gap:0}
+  .sumline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;font-size:11px;font-weight:600;color:var(--sub);border-bottom:1px solid var(--line)}
+  .sumline b{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--ink)}
+  .sumtotal{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px;padding-top:10px;border-top:2px solid var(--line-strong)}
+  .sumtotal small{display:block;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumtotal b{font-family:var(--mono);font-size:18px;font-weight:500;letter-spacing:-.03em;color:var(--accent)}
+  .sumtotal .right{text-align:right}
+  #tProfit.neg,#tMargin.neg{color:var(--loss)}
+  #tProfit.pos,#tMargin.pos{color:var(--sell)}
+  .words{margin-top:10px;padding:9px 11px;border:1px dashed var(--line);border-radius:10px;background:var(--soft);font-size:9.5px;font-style:italic;color:var(--sub);line-height:1.55}
+
+  /* ============ ACTIONS ============
+     Phone/fold: a persistent bottom bar with the two primary actions and
+     a More sheet for the rest. Desktop: the actions live in the sticky
+     rail. Both surfaces drive the same handlers. */
+  .actbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:8px;padding:10px var(--gutter) calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+  .abtn{min-height:46px;padding:0 14px;border-radius:12px;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .12s,color .15s;white-space:nowrap}
+  .abtn svg{width:12px;height:12px}
+  .abtn:active{transform:scale(.97)}
+  .abtn.primary{background:var(--bg-bd-button-primary-bg);border:1px solid var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text)}
+  .abtn.primary:hover{filter:brightness(1.15)}
+  .abtn.ghost{background:var(--card);border:1px solid var(--line-strong);color:var(--ink)}
+  .abtn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .abtn.icon{width:46px;padding:0;flex-shrink:0}
+  .abtn .spacer{flex:1}
+
+  /* rail actions (desktop) */
+  .sidecol{display:none}
+  .ra-list{display:flex;flex-direction:column;gap:8px}
+  .ra-sep{height:1px;background:var(--line);margin:4px 0}
+  .ra-note{font-size:9px;font-weight:600;line-height:1.55;color:var(--sub);padding:2px 2px 4px}
+
+  /* ============ SHEETS ============ */
+  .ov{position:fixed;inset:0;background:rgba(8,15,28,.62);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center;z-index:60}
+  .ov.show{display:flex}
+  .ov.center{align-items:center}
+  .sheet{width:100%;max-width:430px;background:var(--card);border-radius:22px 22px 0 0;max-height:82vh;display:flex;flex-direction:column;gap:10px;padding:12px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow-sheet);animation:up .2s ease-out}
+  @keyframes up{from{transform:translateY(44px);opacity:.6}to{transform:none;opacity:1}}
+  .grab{width:36px;height:3px;border-radius:99px;background:var(--line-strong);margin:2px auto 0}
+  .shd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .shd b{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+  .shd small{display:block;margin-top:2px;font-size:9px;font-weight:600;color:var(--sub);text-transform:none;letter-spacing:0}
+  .x{width:38px;height:38px;border-radius:11px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .x svg{width:12px;height:12px}
+  .x:hover{color:var(--ink);border-color:var(--line-strong)}
+  /* action rows in the More sheet */
+  .arow{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:var(--soft);text-align:left;transition:border-color .15s,background .15s}
+  .arow:hover{border-color:var(--accent);background:var(--card)}
+  .arow .ai{width:30px;height:30px;border-radius:9px;background:var(--card);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .arow .ai svg{width:13px;height:13px}
+  .arow .at{flex:1;min-width:0}
+  .arow .at b{display:block;font-size:11.5px;font-weight:700}
+  .arow .at small{display:block;margin-top:1px;font-size:9px;font-weight:600;color:var(--sub)}
+  .arow .chev{color:var(--faint);flex-shrink:0}
+  .arow .chev svg{width:12px;height:12px}
+  .arow.danger .ai{color:var(--red);border-color:var(--red)}
+  .arow.danger .at b{color:var(--red)}
+  .arow.danger:hover{background:var(--red-soft);border-color:var(--red)}
+
+  .dialog{width:min(88%,320px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-ear)}
+  .dialog b{font-size:12.5px;font-weight:800}
+  .dialog p{margin-top:6px;font-size:10px;font-weight:600;line-height:1.55;color:var(--sub)}
+  .dialog .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+  .dbtn{min-height:40px;padding:0 14px;border-radius:11px;border:1px solid var(--line);background:var(--soft);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)}
+  .dbtn.danger{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+
+  /* ============ TOAST ============ */
+  .toast{position:fixed;bottom:148px;left:50%;transform:translateX(-50%);z-index:70;max-width:86vw;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:9.5px;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.3);display:none}
+  .toast.show{display:block;animation:up .16s ease-out}
+  .toast.err{border:1px solid var(--red)}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .abtn:active,.tb-btn:active{transform:none}
+  }
+
+  /* ============ LARGE PHONE (430 - 599) ============ */
+  @media (min-width:430px){
+    :root{--gutter:18px}
+    .wrap{max-width:560px;padding:10px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+    .hero-title{font-size:21px}
+  }
+
+  /* ============ FOLD (>=600) - recomposed, not a centred phone ============ */
+  @media (min-width:600px){
+    :root{--gutter:24px}
+    .wrap{max-width:820px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
+    .tb-meta{font-size:8.5px}
+    /* hero: identity left, meta right */
+    .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);column-gap:20px;align-items:start}
+    .hero-top{grid-column:1/-1}
+    .hero-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
+    /* summary band: one row of four */
+    .sb-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .sb-val{font-size:12px}
+    /* item becomes identity column + data column, side by side */
+    .vitem{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);column-gap:20px}
+    .vhead{grid-column:1;grid-row:1}
+    .vdata{grid-column:2;grid-row:1;margin-top:2px;padding-left:18px;border-left:1px solid var(--line)}
+    .vdesc-text{font-size:13.5px}
+    .sheet{max-width:560px;border-radius:22px;margin-bottom:18px}
+  }
+
+  /* ============ DESKTOP (>=1024) - document card + sticky rail ============
+     The continuous document sits in a card. A sticky rail carries the
+     commercial close-out and the actions. The art disappears: the card
+     is the focus. */
+  @media (min-width:1024px){
+    :root{--gutter:28px}
+    .wrap{max-width:1280px;display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:34px;padding:18px var(--gutter) 48px}
+    .topbar{grid-column:1/-1;display:flex}
+    .sec{margin-top:0}
+    .sec + .sec{margin-top:0;padding-top:0;border-top:0}
+    .maincol{display:flex;flex-direction:column;gap:26px}
+    /* the document column reads like a printed schedule */
+    .doc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px 28px}
+    .doc .sec-head h2{font-size:11px}
+    .secno{font-size:12px}
+    .hero{padding:20px}
+    .hero-title{font-size:24px}
+    .hero-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 16px}
+    .sumband{padding:14px}
+    /* items: identity + data side by side, same as fold, wider */
+    .vitem{grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);column-gap:26px}
+    .vdata{padding-left:22px}
+    /* artwork disappears at desktop */
+    .art{display:none}
+    /* the phone action bar is replaced by the rail */
+    .actbar{display:none}
+    .sidecol{display:flex;flex-direction:column;gap:14px;position:sticky;top:64px;align-self:start}
+    .sidecol .sec-head{margin-bottom:8px}
+    .sidecol .totals{padding:14px}
+    .ra-list .abtn{width:100%}
+    /* sheets become centred dialogs */
+    .ov{align-items:center}
+    .ov:not(.center) .sheet{max-width:480px;border-radius:16px;margin-bottom:0}
+    .toast{bottom:28px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= MAIN DOCUMENT COLUMN ================= -->
+  <div class="maincol">
+  <div class="doc">
+
+  <!-- ================= ENVIRONMENTAL ARTWORK =================
+       Faint blueprint grid with one oversized cropped scale ruler.
+       Atmospheric only: the layer sits behind the document and never
+       intercepts input. Hidden at desktop widths. -->
+  <div class="art" aria-hidden="true">
+    <svg viewBox="0 0 430 1600" preserveAspectRatio="xMidYMin slice">
+      <defs>
+        <pattern id="bpg" width="34" height="34" patternUnits="userSpaceOnUse">
+          <path class="ln" d="M34 0 H0 V34"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="430" height="1600" fill="url(#bpg)"/>
+      <g class="art-ruler">
+        <rect class="ln" x="150" y="520" width="300" height="46"/>
+        <path class="ln" d="M170 520 v14 M190 520 v8 M210 520 v14 M230 520 v8 M250 520 v14 M270 520 v8 M290 520 v14 M310 520 v8 M330 520 v14 M350 520 v8 M370 520 v14 M390 520 v8 M410 520 v14 M430 520 v8 M450 520 v14 M470 520 v8 M490 520 v14 M510 520 v8"/>
+        <text x="170" y="590">0</text>
+        <text x="330" y="590">10</text>
+        <text x="490" y="590">20</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ================= TOP BAR ================= -->
+  <header class="topbar">
+    <button class="tb-btn" title="Back to BOQs" aria-label="Back to BOQs" onclick="toast('Back to BOQs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="tb-title">
+      <h1>Bill of Quantities</h1>
+      <div class="tb-meta">
+        <span class="badge" id="modeBadge">Approved</span>
+        <span class="sep">&middot;</span>
+        <span id="layoutChip">Phone</span>
+      </div>
+    </div>
+    <button class="tb-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="toggleTheme()">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </header>
+
+  <!-- ================= 1. DOCUMENT IDENTITY ================= -->
+  <section class="sec" style="margin-top:14px">
+    <div class="sec-head">
+      <span class="secno">1.</span>
+      <h2>Document identity</h2>
+      <span class="rule"></span>
+      <span class="meta" id="boqNoLabel">BOQ-2026-0142</span>
+    </div>
+    <div class="hero">
+      <div class="hero-top">
+        <span class="hero-tag" id="heroTag">Bordered Schedule</span>
+        <span class="status good" id="heroStatus">Approved</span>
+      </div>
+      <h3 class="hero-title" id="heroTitle">Renovation Materials Schedule</h3>
+      <div class="hero-grid">
+        <div class="hm"><span class="hm-lab">Vendor / Contractor</span><b id="hmVendor">Test Construction Vendor Ltd</b></div>
+        <div class="hm"><span class="hm-lab">Reference</span><b class="mono" id="hmContact">REF-D2-001</b></div>
+        <div class="hm"><span class="hm-lab">Issue date</span><b class="mono" id="hmDate">2026-09-17</b></div>
+        <div class="hm"><span class="hm-lab">Template</span><b id="hmTemplate">Bordered Schedule</b></div>
+        <div class="hm"><span class="hm-lab">Palette</span><b id="hmPalette">Clean Slate</b></div>
+        <div class="hm"><span class="hm-lab">Contents</span><b id="hmCount">6 items &middot; 2 groups</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. COMMERCIAL SUMMARY ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">2.</span>
+      <h2>Commercial summary</h2>
+      <span class="rule"></span>
+      <span class="meta">No VAT &middot; no WHT</span>
+    </div>
+    <div class="sumband">
+      <div class="sb-grid">
+        <div class="sb-stat"><span class="sb-lab">Total cost</span><b class="sb-val mono" id="sbCost">&nbsp;</b></div>
+        <div class="sb-stat"><span class="sb-lab">Total selling price</span><b class="sb-val mono" id="sbSell">&nbsp;</b></div>
+        <div class="sb-stat hl"><span class="sb-lab">Gross profit</span><b class="sb-val mono" id="sbProfit">&nbsp;</b></div>
+        <div class="sb-stat"><span class="sb-lab">Margin</span><b class="sb-val mono" id="sbMargin">&nbsp;</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. SCHEDULE ITEMS ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">3.</span>
+      <h2>Schedule items</h2>
+      <span class="rule"></span>
+      <span class="meta" id="countLabel"></span>
+    </div>
+    <div id="items"></div>
+  </section>
+
+  <!-- ================= 4. NOTES ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">4.</span>
+      <h2>Notes</h2>
+      <span class="rule"></span>
+      <span class="meta">reference notes</span>
+    </div>
+    <div class="notes">
+      <span class="notes-lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h7"/></svg>Vendor terms</span>
+      <span id="notesText">Prices are valid for 30 days from the issue date. Delivery to site is included for orders above &#8358;500,000. All materials must conform to NIS 444-1:2019 and COREN standards.</span>
+    </div>
+  </section>
+
+  <!-- ================= 5. TOTALS ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="secno">5.</span>
+      <h2>Totals</h2>
+      <span class="rule"></span>
+      <span class="meta">No VAT &middot; no WHT</span>
+    </div>
+    <div class="totals">
+      <div class="totals-grid">
+        <div class="t-lines">
+          <div class="sumline"><span>Total cost (CP &times; Qty)</span><b id="tCost">&nbsp;</b></div>
+          <div class="sumline"><span>Total selling price (SP &times; Qty)</span><b id="tSell">&nbsp;</b></div>
+        </div>
+        <div class="sumtotal">
+          <div><small>Gross profit</small><b id="tProfit">&nbsp;</b></div>
+          <div class="right"><small>Margin</small><b id="tMargin">&nbsp;</b></div>
+        </div>
+      </div>
+      <div class="words" id="tWords"></div>
+    </div>
+  </section>
+
+  </div><!-- /doc -->
+  </div><!-- /maincol -->
+
+  <!-- ================= STICKY SUMMARY RAIL (desktop) =================
+       Commercial close-out and the document actions. It hides no
+       section: every section above stays in the flow at every width.
+       Below 1024px this column is hidden and the phone action bar
+       carries the same actions. -->
+  <aside class="sidecol">
+    <div class="sec-head" style="margin-bottom:8px">
+      <span class="secno">&Sigma;</span>
+      <h2>Close-out</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="totals">
+      <div class="sumline"><span>Total cost</span><b id="rCost">&nbsp;</b></div>
+      <div class="sumline"><span>Total selling price</span><b id="rSell">&nbsp;</b></div>
+      <div class="sumline"><span>Gross profit</span><b id="rProfit">&nbsp;</b></div>
+      <div class="sumline"><span>Margin</span><b id="rMargin">&nbsp;</b></div>
+      <div class="sumtotal">
+        <div><small>Status</small><b id="rStatus" style="font-size:13px">&nbsp;</b></div>
+      </div>
+    </div>
+    <div class="ra-list">
+      <button class="abtn primary" onclick="toast('Edit ' + boq.number)" title="Open this BOQ in the editor">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        Edit BOQ
+      </button>
+      <button class="abtn ghost" onclick="toast('Convert ' + boq.number + ' to a quotation')" title="Create a quotation from this BOQ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        Convert to quotation
+      </button>
+      <div class="ra-sep"></div>
+      <button class="abtn ghost" onclick="toast('Duplicate ' + boq.number)" title="Duplicate this BOQ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        Duplicate
+      </button>
+      <button class="abtn ghost" id="raStatusBtn" onclick="toggleStatus()" title="Change the document status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span id="raStatusLabel">Mark as open</span>
+      </button>
+      <button class="abtn ghost" onclick="openSheet('archive')" title="Archive this BOQ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        Archive
+      </button>
+      <button class="abtn ghost" style="color:var(--red);border-color:var(--red)" onclick="openSheet('delete')" title="Delete this BOQ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>
+        Delete
+      </button>
+      <div class="ra-note">Archive hides the BOQ from active lists. Delete removes the document and its line items permanently.</div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- ================= PHONE / FOLD ACTION BAR =================
+     Persistent bottom bar: the two primary actions plus a More sheet
+     for the rest. Hidden at desktop, where the rail takes over. -->
+<div class="actbar">
+  <button class="abtn primary" style="flex:1" onclick="toast('Edit ' + boq.number)" title="Open this BOQ in the editor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+    Edit BOQ
+  </button>
+  <button class="abtn ghost" style="flex:1" onclick="toast('Convert ' + boq.number + ' to a quotation')" title="Create a quotation from this BOQ">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+    Convert
+  </button>
+  <button class="abtn icon" onclick="openSheet('more')" title="More actions" aria-label="More actions">
+    <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+  </button>
+</div>
+
+<!-- MORE ACTIONS SHEET -->
+<div class="ov" id="ovMore">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="More actions">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>More actions</b><span id="moreSub">BOQ-2026-0142</span></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('more')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <button class="arow" onclick="closeSheet('more');toast('Duplicate ' + boq.number)">
+      <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></span>
+      <span class="at"><b>Duplicate</b><small>Copy this BOQ with a new number</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <button class="arow" id="sheetStatusBtn" onclick="toggleStatus()">
+      <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
+      <span class="at"><b id="sheetStatusLabel">Mark as open</b><small>Change the document status</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <button class="arow" onclick="openSheet('archive')">
+      <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></span>
+      <span class="at"><b>Archive</b><small>Hide from active lists</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <button class="arow danger" onclick="openSheet('delete')">
+      <span class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg></span>
+      <span class="at"><b>Delete</b><small>Permanently remove this BOQ</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+  </div>
+</div>
+
+<!-- ARCHIVE CONFIRM -->
+<div class="ov center" id="ovArchive">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Archive BOQ">
+    <b>Archive this BOQ?</b>
+    <p>The BOQ is hidden from active lists. You can restore it later.</p>
+    <div class="acts">
+      <button class="dbtn" onclick="closeSheet('archive')">Cancel</button>
+      <button class="dbtn danger" onclick="doArchive()">Archive</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="ov center" id="ovDelete">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Delete BOQ">
+    <b>Delete this BOQ?</b>
+    <p>This permanently removes the BOQ and its line items.</p>
+    <div class="acts">
+      <button class="dbtn" onclick="closeSheet('delete')">Cancel</button>
+      <button class="dbtn danger" onclick="doDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- formatters (presentation only; the model keeps raw numbers) ---------- */
+var naira = function(n){ return '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var fmtGroup = function(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits: 20 }); };
+var fmtMoney = function(n){ return fmtGroup(Math.round((Number(n) || 0) * 100) / 100); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); };
+
+var svgs = {
+  chev:  '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>',
+  note:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h7"/></svg>',
+  tag:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5.586a1 1 0 01.707.293l7.414 7.414a1 1 0 010 1.414l-5.586 5.586a1 1 0 01-1.414 0L6.293 10.707A1 1 0 016 10V4a1 1 0 011-1z"/></svg>',
+  out:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>',
+  inn:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>'
+};
+
+/* ---------- BOQ document model ----------
+   Contract from src/domain/boq/types.ts and
+   src/domain/table-document/types.ts. Groups are part of the BOQ
+   contract (row_type 'section' / group rows). Commercial model from
+   src/domain/boq/calculateBoqTotals.ts: no VAT, no WHT, no discount. */
+var boq = {
+  number: 'BOQ-2026-0142',
+  title: 'Renovation Materials Schedule',
+  vendor: 'Test Construction Vendor Ltd',
+  contact: 'REF-D2-001',
+  date: '2026-09-17',
+  status: 'approved',
+  template: 'Bordered Schedule',
+  palette: 'Clean Slate',
+  notes: '',
+  rows: [
+    { type:'group', title:'Group A \u2014 Civil Works' },
+    { type:'item', id:'r1', desc:'Preliminaries, site supervision and setting out', sub:'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', make:'', qty:1, unit:'lot', cp:150000, sp:185000 },
+    { type:'item', id:'r2', desc:'Portland cement, grade 42.5R', sub:'', make:'Dangote 3X', qty:400, unit:'bags', cp:5200, sp:6100 },
+    { type:'item', id:'r3', desc:'Reinforcement steel, high yield T12', sub:'', make:'African Foundries', qty:120, unit:'lengths', cp:9800.75, sp:11500 },
+    { type:'item', id:'r4', desc:'Sharp sand, river dredged, washed and free of silt and organic matter', sub:'Delivered, tested and compacted in approved layers per engineer\u2019s instruction, including waste allowance, load testing and carting away of surplus material to a designated dump site approved by the client.', make:'Local', qty:30, unit:'trips', cp:28000, sp:33500 },
+    { type:'group', title:'Group B \u2014 Finishes' },
+    { type:'item', id:'r5', desc:'Emulsion paint, 20L pail', sub:'Two coats over prepared surface.', make:'Dulux', qty:18, unit:'pails', cp:41000, sp:48500 },
+    { type:'item', id:'r6', desc:'Ceramic floor tiles, 600\u00D7600 polished', sub:'', make:'Vitrex', qty:240, unit:'pcs', cp:3850, sp:4600 }
+  ]
+};
+
+var profit = function(r){ return (Number(r.sp || 0) - Number(r.cp || 0)) * Number(r.qty || 0); };
+var bp = function(){ var w = window.innerWidth; return w < 430 ? 'Phone' : (w < 600 ? 'Large phone' : 'Fold'); };
+var lastBP = bp();
+
+function toast(msg, isErr){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+/* ---------- status (src/pages/view-boq-actions.ts: updateBOQStatus) ---------- */
+function statusLabel(s){ return s === 'approved' ? 'Approved' : 'Open'; }
+function renderStatus(){
+  var good = boq.status === 'approved';
+  var chip = document.getElementById('heroStatus');
+  if (chip) { chip.textContent = statusLabel(boq.status); chip.className = 'status ' + (good ? 'good' : 'warn'); }
+  var badge = document.getElementById('modeBadge');
+  if (badge) badge.textContent = statusLabel(boq.status);
+  var rs = document.getElementById('rStatus');
+  if (rs) rs.textContent = statusLabel(boq.status);
+  var lbl = document.getElementById('raStatusLabel');
+  if (lbl) lbl.textContent = good ? 'Mark as open' : 'Mark as approved';
+  var slbl = document.getElementById('sheetStatusLabel');
+  if (slbl) slbl.textContent = good ? 'Mark as open' : 'Mark as approved';
+}
+function toggleStatus(){
+  boq.status = boq.status === 'approved' ? 'open' : 'approved';
+  renderStatus();
+  closeSheet('more');
+  toast('BOQ ' + boq.number + ' marked as ' + statusLabel(boq.status).toLowerCase());
+}
+
+/* ---------- item fragment builders (read-only) ---------- */
+function profitHTML(r){
+  var p = profit(r), pos = p > 0, neg = p < 0;
+  var cls = 'profit' + (neg ? ' neg' : '') + (pos ? ' pos' : '');
+  return '<div class="' + cls + '"><span class="pl">Line profit \u00B7 ' + fmtGroup(r.qty) + ' ' + esc(r.unit) + ' \u00D7 ' + naira(Number(r.sp || 0) - Number(r.cp || 0)) + '</span><b>' + naira(p) + '</b></div>';
+}
+function vitemHTML(r, n){
+  var make = r.make
+    ? '<p class="vmake">' + svgs.tag + '<b>' + esc(r.make) + '</b></p>'
+    : '';
+  var spec = r.sub && r.sub.trim()
+    ? '<p class="vspec">' + esc(r.sub.trim()) + '</p>'
+    : '';
+  return '<article class="vitem">'
+    + '<div class="vhead">'
+    +   '<span class="vidx">' + String(n).padStart(2, '0') + '</span>'
+    +   '<div class="vdesc">'
+    +     '<p class="vdesc-text">' + esc(r.desc) + '</p>'
+    +     spec
+    +     make
+    +   '</div>'
+    + '</div>'
+    + '<div class="vdata">'
+    +   '<div class="vgrid">'
+    +     '<div class="vcell"><span class="vlab">Quantity</span><b class="vval mono">' + fmtGroup(r.qty) + ' ' + esc(r.unit) + '</b></div>'
+    +     '<div class="vcell cost"><span class="vlab">' + svgs.out + 'CP \u00B7 Cost</span><b class="vval mono">' + naira(r.cp) + '</b></div>'
+    +     '<div class="vcell sell"><span class="vlab">' + svgs.inn + 'SP \u00B7 Selling</span><b class="vval mono">' + naira(r.sp) + '</b></div>'
+    +   '</div>'
+    +   profitHTML(r)
+    + '</div>'
+    + '</article>';
+}
+function groupHTML(r, mem, nums){
+  var label = mem.length + ' item' + (mem.length === 1 ? '' : 's');
+  return '<section class="gwrap">'
+    + '<header class="ghdr">'
+    +   '<span class="gtitle">' + esc(r.title) + '</span>'
+    +   '<span class="gcount">' + label + '</span>'
+    + '</header>'
+    + '<div class="gbody">' + mem.map(function(m){ return vitemHTML(m, nums[m.id]); }).join('') + '</div>'
+    + '</section>';
+}
+
+/* ---------- render ---------- */
+function renderItems(){
+  var host = document.getElementById('items');
+  var items = boq.rows.filter(function(r){ return r.type === 'item'; });
+  var groups = boq.rows.filter(function(r){ return r.type === 'group'; });
+  document.getElementById('countLabel').textContent = items.length + ' items \u00B7 ' + groups.length + ' groups';
+  document.getElementById('hmCount').textContent = items.length + ' items \u00B7 ' + groups.length + ' groups';
+  var nums = {}, n = 0, walk = [], i = 0;
+  /* one continuous walk: a group row owns every item row after it until
+     the next group row. Numbering is continuous across the document. */
+  while (i < boq.rows.length) {
+    var r = boq.rows[i];
+    if (r.type === 'group') {
+      var mem = [], j = i + 1;
+      while (j < boq.rows.length && boq.rows[j].type === 'item') { mem.push(boq.rows[j]); j++; }
+      mem.forEach(function(m){ nums[m.id] = ++n; });
+      walk.push(groupHTML(r, mem, nums));
+      i = j;
+    } else {
+      nums[r.id] = ++n;
+      walk.push(vitemHTML(r, n));
+      i++;
+    }
+  }
+  host.innerHTML = walk.join('');
+}
+
+/* Totals - the locked BOQ commercial model (calculateBoqTotals.ts):
+   Total cost = SUM(cp x qty). Total selling price = SUM(sp x qty).
+   Gross profit = selling - cost. No VAT, no WHT, no discount. */
+function renderTotals(){
+  var cost = 0, sell = 0;
+  boq.rows.forEach(function(r){
+    if (r.type === 'item') { cost += Number(r.cp || 0) * Number(r.qty || 0); sell += Number(r.sp || 0) * Number(r.qty || 0); }
+  });
+  var p = sell - cost;
+  var margin = sell ? Math.round(p / sell * 100) + '%' : '0%';
+  var set = function(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; };
+  set('sbCost', naira(cost)); set('sbSell', naira(sell));
+  set('sbProfit', naira(p)); set('sbMargin', margin);
+  set('tCost', naira(cost)); set('tSell', naira(sell));
+  var tP = document.getElementById('tProfit');
+  if (tP) { tP.textContent = naira(p); tP.className = p > 0 ? 'pos' : (p < 0 ? 'neg' : ''); }
+  var tM = document.getElementById('tMargin');
+  if (tM) { tM.textContent = margin; tM.className = p > 0 ? 'pos' : (p < 0 ? 'neg' : ''); }
+  var w = document.getElementById('tWords');
+  if (w) w.textContent = words(sell);
+  /* desktop rail mirrors the in-flow readout */
+  set('rCost', naira(cost)); set('rSell', naira(sell));
+  set('rProfit', naira(p)); set('rMargin', margin);
+}
+function words(num){
+  if (!num) return 'ZERO NAIRA ONLY';
+  var a = ['', 'ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'];
+  var b = ['', '', 'TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+  var c = function(x){
+    return x < 20 ? a[x]
+      : x < 100 ? b[Math.floor(x / 10)] + (x % 10 ? ' ' + a[x % 10] : '')
+      : x < 1000 ? a[Math.floor(x / 100)] + ' HUNDRED' + (x % 100 ? ' ' + c(x % 100) : '')
+      : x < 1e6 ? c(Math.floor(x / 1000)) + ' THOUSAND' + (x % 1000 ? ' ' + c(x % 1000) : '')
+      : x < 1e9 ? c(Math.floor(x / 1e6)) + ' MILLION' + (x % 1e6 ? ' ' + c(x % 1e6) : '')
+      : c(Math.floor(x / 1e9)) + ' BILLION' + (x % 1e9 ? ' ' + c(x % 1e9) : '');
+  };
+  var w = Math.floor(num), k = Math.round((num - w) * 100);
+  return c(w) + ' NAIRA' + (k ? ' AND ' + c(k) + ' KOBO' : '') + ' ONLY';
+}
+
+function render(){ renderItems(); renderTotals(); renderStatus(); }
+
+/* ---------- destructive actions (confirm first, then toast) ---------- */
+function doArchive(){ closeSheet('archive'); toast('BOQ ' + boq.number + ' archived'); }
+function doDelete(){ closeSheet('delete'); toast('BOQ ' + boq.number + ' deleted', true); }
+
+/* ---------- sheets ---------- */
+var ovOf = function(id){ return document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)); };
+var focusReturn = null;
+function openSheet(id){
+  var el = ovOf(id);
+  var active = document.activeElement;
+  if (active && active.focus && !(active.closest && active.closest('.ov'))) focusReturn = active;
+  el.classList.add('show');
+  var first = el.querySelector('button:not(.x)');
+  if (first) first.focus();
+}
+function closeSheet(id){
+  var el = ovOf(id);
+  if (!el.classList.contains('show')) return;
+  el.classList.remove('show');
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+}
+function syncLayout(){
+  var el = document.getElementById('layoutChip');
+  if (el) el.textContent = bp();
+}
+function toggleTheme(){
+  var root = document.documentElement;
+  var isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  var icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  }
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll('.ov').forEach(function(ov){
+  ov.addEventListener('click', function(e){
+    if (e.target !== ov) return;
+    ov.classList.remove('show');
+    if (focusReturn && focusReturn.focus) focusReturn.focus();
+  });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.ov.show').forEach(function(o){ o.classList.remove('show'); });
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+});
+window.addEventListener('resize', function(){
+  var b = bp();
+  syncLayout();
+  if (b !== lastBP) { lastBP = b; }
+});
+
+render();
+syncLayout();
+</script>
+</body>
+</html>

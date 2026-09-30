@@ -1,0 +1,687 @@
+<!doctype html>
+<!--
+  BIGDROPS - BOQ View Page - DESKTOP candidate (V3, clean sheet).
+  Standalone design-direction prototype. Composed for desktop widths.
+
+  V3 IS NOT V2 RESTYLED. V1/V2 are negative context. V2 desktop was
+  a document card plus a sticky summary rail. This file uses a
+  different architecture: a compact action header, a schedule-first
+  main column, and a sticky document rail carrying company identity,
+  commercial context, group navigation, and notes.
+
+  V3 CONCEPT (shared with the mobile/fold file, different composition)
+  "LEDGER SCHEDULE WITH PERSISTENT COMMERCIAL CONTEXT." The schedule
+  is the hero. Commercial context never scrolls away: on desktop it
+  lives in the sticky rail, not in a band. Groups are navigational
+  landmarks. Items are dense ledger rows, not cards.
+
+  ESTABLISHED BEHAVIOR (audited)
+  - Document anatomy from InvoiceDocumentCard: brand block with logo
+    or initials, status pill, title, meta chips, info cells, numbered
+    items with sub-detail, read-only thumbnails only when an image
+    exists, totals with grand emphasis, amount in words.
+  - Top nav set (back, title, share, more) from DocumentTopNav, with
+    Edit and Download as labelled desktop buttons (the action-row
+    pattern scaled up: InvoiceActionRow).
+  - Download uses the custom AB Download Manager SVG (fab-standard).
+  - No FAB on desktop: desktop-native placement in the sticky
+    header, always visible while scrolling.
+  - Download mirrors download:start / download:success (downloadPdf).
+  - More sheet: sectioned rows (DocumentMoreSheet + InvoiceMoreSheet).
+  - Share: generic Web Share with clipboard fallback (shareDocument).
+
+  DOMAIN TRUTH
+  - Contract: types.ts + table-document/types.ts. Locked math:
+    calculateBoqTotals.ts. Actions: view-boq-actions.ts + Download
+    + Export CSV (BOQS schema exists).
+
+  PROTOTYPE-LOCAL
+  - The item photo is an inline SVG placeholder; production renders
+    the stored imageUrl. One row carries a 64px thumbnail; the rest
+    carry an empty (collapsed) cell.
+  - Action toasts name real actions without persistence. Export CSV
+    builds a real client-side extract of the sample rows.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIGDROPS - BOQ View - BOQ-2026-0142</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f172a; --sub:#475569; --faint:#8b9ab0;
+    --line:rgba(15,23,42,.10); --line-strong:rgba(15,23,42,.20);
+    --bg:#eef2f7; --card:#ffffff; --soft:#f6f9fc;
+    --accent:#1e3a5f; --accent-soft:rgba(30,58,95,.13); --accent-ink:#ffffff;
+    --red:#dc2626; --red-soft:rgba(220,38,38,.09);
+    --mono:'DM Mono',monospace;
+    --cost:#b45309; --cost-soft:rgba(180,83,9,.10);
+    --sell:#15803d; --sell-soft:rgba(21,128,61,.10);
+    --loss:#b91c1c;
+    --shadow-ear:0 3px 9px rgba(15,23,42,.16);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.28);
+    --bg-bd-button-primary-bg:#1e3a5f;
+    --bd-button-primary-text:#f1f5f9;
+    --art:rgba(15,23,42,.05);
+  }
+  [data-theme="dark"]{
+    --ink:#f1f5f9; --sub:#cbd5e1; --faint:#7d8da5;
+    --line:rgba(148,163,184,.18); --line-strong:rgba(148,163,184,.32);
+    --bg:#0b1220; --card:#16233a; --soft:#111d31;
+    --accent:#38bdf8; --accent-soft:rgba(56,189,248,.16); --accent-ink:#06131f;
+    --red:#f87171; --red-soft:rgba(248,113,113,.13);
+    --cost:#fbbf24; --cost-soft:rgba(251,191,36,.14);
+    --sell:#34d399; --sell-soft:rgba(52,211,153,.14);
+    --loss:#f87171;
+    --art:rgba(148,163,184,.10);
+    --shadow-ear:0 3px 9px rgba(0,0,0,.45);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.5);
+    --bg-bd-button-primary-bg:#2563eb;
+    --bd-button-primary-text:#f8fafc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+  svg{display:block;flex-shrink:0}
+  .mono{font-family:var(--mono)}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 32px 64px;position:relative}
+
+  /* ============ ENVIRONMENTAL ARTWORK (page background, faint grid) ============ */
+  .art{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .art svg{width:100%;height:100%;display:block}
+  .art .ln{stroke:var(--art);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .art text{fill:var(--art);font-family:var(--mono);font-size:10px;letter-spacing:2px}
+  .wrap>*{position:relative;z-index:1}
+
+  /* ============ COMPACT ACTION HEADER (sticky) ============ */
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;margin:0 -32px;padding:10px 32px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .tb-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,transform .12s,border-color .15s}
+  .tb-btn:hover{color:var(--ink);border-color:var(--line-strong)}
+  .tb-btn:active{transform:scale(.93)}
+  .tb-btn svg{width:17px;height:17px}
+  .tb-id{flex:1;min-width:0}
+  .tb-id h1{font-size:14px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-id h1 .mono{font-weight:500;color:var(--accent)}
+  .tb-sub{margin-top:1px;font-size:10px;font-weight:600;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tb-sub .dot{display:inline-block;width:7px;height:7px;border-radius:99px;background:var(--sell);margin-right:6px}
+  .tb-acts{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .tbtn{min-height:40px;padding:0 16px;border-radius:11px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:7px;transition:background .15s,border-color .15s,filter .15s,transform .12s,color .15s;white-space:nowrap}
+  .tbtn svg{width:14px;height:14px}
+  .tbtn:active{transform:scale(.97)}
+  .tbtn.primary{background:var(--bg-bd-button-primary-bg);border:1px solid var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text)}
+  .tbtn.primary:hover{filter:brightness(1.15)}
+  .tbtn.secondary{background:var(--card);border:1px solid var(--accent);color:var(--accent)}
+  .tbtn.secondary:hover{background:var(--accent-soft)}
+
+  /* ============ STATUS CHIP ============ */
+  .status{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:3px 10px;border-radius:99px;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+  .status.good{background:var(--sell-soft);color:var(--sell)}
+  .status.warn{background:var(--cost-soft);color:var(--cost)}
+
+  /* ============ LAYOUT: schedule + sticky rail ============ */
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 288px;column-gap:28px;margin-top:20px;align-items:start}
+
+  /* ============ SCHEDULE COLUMN ============ */
+  .doctitle{font-size:24px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
+  .docmeta{margin-top:8px;font-size:11.5px;font-weight:600;color:var(--sub);line-height:1.7}
+  .docmeta .mono{color:var(--ink);font-weight:500}
+  /* jump nav */
+  .jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .jchip{display:flex;align-items:center;gap:7px;min-height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--line-strong);background:var(--card);font-size:9.5px;font-weight:700;color:var(--sub);white-space:nowrap}
+  .jchip .mono{font-size:9px;color:var(--faint)}
+  .jchip:hover{border-color:var(--accent);color:var(--accent)}
+  /* dense schedule table */
+  .sched{margin-top:14px;border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden;box-shadow:var(--shadow-ear)}
+  .colhead{display:grid;grid-template-columns:44px minmax(0,1fr) 104px 128px 128px 140px 72px;column-gap:14px;align-items:center;padding:9px 20px;font-size:7.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border-bottom:1px solid var(--line);background:var(--soft)}
+  .colhead span:nth-child(n+3){text-align:right}
+  .grow{display:grid;grid-template-columns:44px minmax(0,1fr) 104px 128px 128px 140px 72px;column-gap:14px;align-items:start;padding:13px 20px;border-bottom:1px solid var(--line);scroll-margin-top:90px}
+  .grow:last-child{border-bottom:0}
+  .gnum{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--faint);padding-top:2px}
+  .gbody{min-width:0}
+  .gdesc{font-size:13px;font-weight:700;line-height:1.4;letter-spacing:-.01em}
+  .gspec{margin-top:3px;font-size:10.5px;font-weight:600;line-height:1.55;color:var(--sub)}
+  .gspec::before{content:'\2014  '}
+  .gpills{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+  .gpill{font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:7px;background:var(--soft);color:var(--sub);border:1px solid var(--line)}
+  .gpill b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+  .gqty,.gcp,.gsp,.gprofit{font-family:var(--mono);font-size:12px;font-weight:500;text-align:right;white-space:nowrap;padding-top:2px}
+  .gcp{color:var(--cost)}
+  .gsp{color:var(--sell)}
+  .gprofit{font-weight:600}
+  .gprofit.pos{color:var(--sell)}
+  .gprofit.neg{color:var(--loss)}
+  .gprofit.zero{color:var(--faint)}
+  .gthumb{width:64px;height:64px;border-radius:10px;background:var(--soft);border:1px solid var(--line);display:block;padding:0;overflow:hidden;cursor:zoom-in}
+  .gthumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .gthumb:empty{display:none}
+  /* group landmark rows span the table */
+  .tgroup{border-bottom:1px solid var(--line);scroll-margin-top:90px}
+  .tgroup-in{display:flex;align-items:center;gap:10px;padding:10px 20px;background:var(--soft);border-left:4px solid var(--accent)}
+  .tgroup-in .tag{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:2px 6px;flex-shrink:0}
+  .tgroup-in b{flex:1;min-width:0;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tgroup-in span{font-family:var(--mono);font-size:9.5px;color:var(--faint);white-space:nowrap}
+
+  /* ============ CLOSE-OUT ============ */
+  .close{margin-top:16px;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:18px 20px;box-shadow:var(--shadow-ear)}
+  .trow{display:flex;justify-content:flex-end;gap:28px;padding:6px 0;font-size:12.5px;font-weight:600;color:var(--sub)}
+  .trow b{font-family:var(--mono);font-weight:500;color:var(--ink);min-width:140px;text-align:right;white-space:nowrap}
+  .tgrand{display:flex;justify-content:flex-end;gap:28px;margin-top:8px;padding-top:12px;border-top:2px solid var(--ink)}
+  .tgrand .gl{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);text-align:right}
+  .tgrand .gl small{display:block;margin-top:2px;font-family:var(--mono);font-size:10px;font-weight:500;color:var(--sell);letter-spacing:0;text-transform:none}
+  .tgrand b{font-family:var(--mono);font-size:24px;font-weight:500;letter-spacing:-.03em;color:var(--accent);min-width:140px;text-align:right;white-space:nowrap}
+  .words{margin-top:10px;font-size:10.5px;font-style:italic;color:var(--sub);line-height:1.6;text-align:right}
+
+  /* ============ RAIL ============ */
+  .rail{position:sticky;top:86px;display:flex;flex-direction:column;gap:14px}
+  .rcard{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:16px;box-shadow:var(--shadow-ear)}
+  .rcard h3{font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .rcard h3::after{content:'';flex:1;height:1px;background:var(--line)}
+  .brandrow{display:flex;align-items:center;gap:12px}
+  .brand-logo{width:52px;height:52px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;font-size:15px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--line)}
+  .brand-logo img{width:100%;height:100%;object-fit:contain;border-radius:13px;background:#fff}
+  .brand-txt{flex:1;min-width:0}
+  .brand-txt b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand-txt small{display:block;margin-top:2px;font-size:10px;font-weight:600;color:var(--sub)}
+  .crow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 0;font-size:11.5px;font-weight:600;color:var(--sub)}
+  .crow b{font-family:var(--mono);font-weight:500;color:var(--ink);white-space:nowrap}
+  .crow.hl b{color:var(--sell);font-weight:600}
+  .crow + .crow{border-top:1px solid var(--line)}
+  .rnav{display:flex;flex-direction:column;gap:2px}
+  .rnav button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px;border-radius:9px;font-size:11.5px;font-weight:700;color:var(--sub)}
+  .rnav button:hover{background:var(--soft);color:var(--ink)}
+  .rnav button .mono{font-size:10px;color:var(--faint)}
+  .rnav button .cnt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .rnotes{font-size:11px;font-weight:600;line-height:1.65;color:var(--sub)}
+
+  /* ============ SHEETS ============ */
+  .ov{position:fixed;inset:0;background:rgba(8,15,28,.62);display:none;align-items:center;justify-content:center;z-index:60}
+  .ov.show{display:flex}
+  .sheet{width:min(92%,480px);background:var(--card);border:1px solid var(--line);border-radius:16px;max-height:84vh;display:flex;flex-direction:column;gap:10px;padding:16px;box-shadow:var(--shadow-sheet);animation:up .2s ease-out;overflow-y:auto}
+  @keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+  .shd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .shd b{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+  .shd small{display:block;margin-top:2px;font-size:10px;font-weight:600;color:var(--sub);text-transform:none;letter-spacing:0}
+  .x{width:38px;height:38px;border-radius:11px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .x svg{width:12px;height:12px}
+  .x:hover{color:var(--ink);border-color:var(--line-strong)}
+  .msec{margin:4px 0 2px;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .msec.danger{color:var(--red)}
+  .mrow{display:flex;align-items:center;gap:11px;width:100%;min-height:52px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--soft);text-align:left;transition:border-color .15s,background .15s}
+  .mrow:hover{border-color:var(--accent);background:var(--card)}
+  .mrow .mi{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .mrow .mi svg{width:15px;height:15px}
+  .mrow .mt{flex:1;min-width:0}
+  .mrow .mt b{display:block;font-size:12px;font-weight:700}
+  .mrow .mt small{display:block;margin-top:1px;font-size:10px;font-weight:600;color:var(--sub)}
+  .mrow .chev{color:var(--faint);flex-shrink:0}
+  .mrow .chev svg{width:12px;height:12px}
+  .mrow .pill{flex-shrink:0;padding:3px 9px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
+  .mrow.danger .mi{color:var(--red);border-color:var(--red)}
+  .mrow.danger .mt b{color:var(--red)}
+  .mrow.danger:hover{background:var(--red-soft);border-color:var(--red)}
+  .dialog{width:min(88%,340px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow-ear)}
+  .dialog b{font-size:13px;font-weight:800}
+  .dialog p{margin-top:6px;font-size:11px;font-weight:600;line-height:1.55;color:var(--sub)}
+  .dialog .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  .dbtn{min-height:42px;padding:0 16px;border-radius:11px;border:1px solid var(--line);background:var(--soft);font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)}
+  .dbtn.danger{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+  .lb-img{width:min(92%,560px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow-ear)}
+  .lb-img img{width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:10px;background:var(--soft)}
+  .lb-cap{margin-top:10px;font-size:11px;font-weight:600;line-height:1.5;color:var(--sub)}
+
+  /* ============ TOAST ============ */
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:70;max-width:86vw;padding:10px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:10px;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.3);display:none;text-align:center}
+  .toast.show{display:block;animation:up .16s ease-out}
+  .toast.err{border:1px solid var(--red)}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .tbtn:active,.tb-btn:active{transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= ENVIRONMENTAL ARTWORK ================= -->
+  <div class="art" aria-hidden="true">
+    <svg viewBox="0 0 1200 900" preserveAspectRatio="xMidYMin slice">
+      <defs>
+        <pattern id="bpgd3" width="34" height="34" patternUnits="userSpaceOnUse">
+          <path class="ln" d="M34 0 H0 V34"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="1200" height="900" fill="url(#bpgd3)"/>
+      <g class="art-ruler">
+        <rect class="ln" x="880" y="80" width="340" height="46"/>
+        <path class="ln" d="M900 80 v14 M920 80 v8 M940 80 v14 M960 80 v8 M980 80 v14 M1000 80 v8 M1020 80 v14 M1040 80 v8 M1060 80 v14 M1080 80 v8 M1100 80 v14 M1120 80 v8 M1140 80 v14 M1160 80 v8 M1180 80 v14 M1200 80 v8"/>
+        <text x="896" y="150">0</text>
+        <text x="1056" y="150">10</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ================= COMPACT ACTION HEADER ================= -->
+  <header class="topbar">
+    <button class="tb-btn" title="Back to BOQs" aria-label="Back to BOQs" onclick="toast('Back to BOQs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="tb-id">
+      <h1>Bill of Quantities &mdash; <span class="mono">BOQ-2026-0142</span></h1>
+      <div class="tb-sub"><span class="dot" id="statusDot" style="display:inline-block;width:7px;height:7px;border-radius:99px;background:var(--sell);margin-right:6px"></span><span id="modeBadge">Approved</span> &middot; Renovation Materials Schedule &middot; 7 items &middot; 2 groups</div>
+    </div>
+    <div class="tb-acts">
+      <button class="tbtn secondary" onclick="toast('Edit ' + boq.number)" title="Open this BOQ in the editor">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        Edit
+      </button>
+      <button class="tbtn primary" onclick="doDownload()" title="Download PDF" aria-label="Download PDF">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:currentColor;width:14px;height:14px" aria-hidden="true"><path d="M10.98 0c-.235 0-.425.2-.425.446V8.92c0 .246-.19.446-.425.446h-.704c-.346 0-.547.41-.346.705l2.574 3.782c.17.25.522.25.692 0l2.574-3.782c.201-.295 0-.705-.346-.705h-.704a.436.436 0 0 1-.425-.446V.446A.436.436 0 0 0 13.02 0ZM7.387 1.562a.732.732 0 0 0-.405.161l-1.096.883a.77.77 0 0 0-.123 1.066.735.735 0 0 0 1.045.126l1.096-.882a.77.77 0 0 0 .123-1.067.738.738 0 0 0-.64-.287Zm9.346 0a.737.737 0 0 0-.64.287.77.77 0 0 0 .123 1.067l1.096.882c.323.26.79.204 1.045-.126a.77.77 0 0 0-.123-1.066l-1.096-.883a.733.733 0 0 0-.405-.16ZM3.039 6.036a.745.745 0 0 0-.675.48l-.512 1.326c-.15.39.037.831.42.985a.74.74 0 0 0 .965-.428l.512-1.325a.765.765 0 0 0-.419-.985.728.728 0 0 0-.291-.053Zm18.042 0a.738.738 0 0 0-.29.053.765.765 0 0 0-.42.985l.512 1.325a.74.74 0 0 0 .965.428.765.765 0 0 0 .42-.985l-.512-1.325a.745.745 0 0 0-.675-.481ZM0 12a12 12 0 0 0 .913 4.592 11.997 11.997 0 0 0 2.42 3.703c.684-.681 1.565-1 2.489-1.053.925-.055 1.893.156 2.745.532a8.497 8.497 0 0 0 6.866 0c1.702-.751 3.865-.843 5.234.52a11.997 11.997 0 0 0 2.42-3.702A12 12 0 0 0 24 12h-3.687c-1.301 0-2.315 1.094-2.813 2.296a6 6 0 0 1-11.087 0C5.915 13.094 4.902 12 3.601 12Zm5.875 7.769c-.727.04-1.407.275-1.957.727-.073.06-.14.119-.204.18a11.997 11.997 0 0 0 3.694 2.41 12 12 0 0 0 9.184 0 11.997 11.997 0 0 0 3.694-2.41 3.977 3.977 0 0 0-.204-.18c-1.173-.963-2.96-.892-4.436-.24a9.023 9.023 0 0 1-7.292 0c-.478-.211-1.418-.546-2.48-.487Z"/></svg>
+        Download
+      </button>
+      <button class="tb-btn" title="Share" aria-label="Share" onclick="doShare()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8l-4 4 4 4m0-8l4 4-4 4m4-12l8 4-8 4m0-8v16"/></svg>
+      </button>
+      <button class="tb-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="toggleTheme()">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button class="tb-btn" title="More actions" aria-label="More actions" onclick="openSheet('more')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ================= SCHEDULE COLUMN ================= -->
+    <main>
+      <h2 class="doctitle" id="heroTitle">Renovation Materials Schedule</h2>
+      <div class="docmeta"><span class="mono">BOQ-2026-0142</span> &middot; Issued 17 Sep 2026 &middot; Bordered Schedule &middot; Clean Slate<br>Vendor: Test Construction Vendor Ltd &middot; REF-D2-001</div>
+      <div class="jump" id="jump" role="navigation" aria-label="Schedule sections"></div>
+
+      <section class="sched">
+        <div class="colhead" aria-hidden="true">
+          <span>#</span><span>Item</span><span>Qty</span><span>CP</span><span>SP</span><span>Line profit</span><span></span>
+        </div>
+        <div id="rows"></div>
+      </section>
+
+      <section class="close">
+        <div class="trow"><span>Total cost (CP &times; Qty)</span><b id="tCost">&nbsp;</b></div>
+        <div class="trow"><span>Total selling price (SP &times; Qty)</span><b id="tSell">&nbsp;</b></div>
+        <div class="tgrand">
+          <div class="gl">Gross profit<small id="tMargin">&nbsp;</small></div>
+          <b id="tProfit">&nbsp;</b>
+        </div>
+        <div class="words" id="tWords"></div>
+      </section>
+    </main>
+
+    <!-- ================= STICKY DOCUMENT RAIL ================= -->
+    <aside class="rail">
+      <div class="rcard">
+        <h3>Company</h3>
+        <div class="brandrow">
+          <span class="brand-logo" id="brandLogo" title="Company logo">AB</span>
+          <span class="brand-txt"><b id="brandName">Acme Builders Ltd</b><small id="brandSub">General Construction &amp; Supplies</small></span>
+        </div>
+      </div>
+      <div class="rcard">
+        <h3>Commercial position</h3>
+        <div class="crow"><span>Total cost</span><b class="mono" id="sbCost">&nbsp;</b></div>
+        <div class="crow"><span>Total selling</span><b class="mono" id="sbSell">&nbsp;</b></div>
+        <div class="crow hl"><span>Gross profit</span><b class="mono" id="sbProfit">&nbsp;</b></div>
+        <div class="crow"><span>Margin</span><b class="mono" id="sbMargin">&nbsp;</b></div>
+        <div class="crow"><span>Status</span><b class="mono" id="rStatus">&nbsp;</b></div>
+      </div>
+      <div class="rcard">
+        <h3>Sections</h3>
+        <div class="rnav" id="rnav"></div>
+      </div>
+      <div class="rcard">
+        <h3>Notes</h3>
+        <p class="rnotes" id="notesText">Prices are valid for 30 days from the issue date. Delivery to site is included for orders above &#8358;500,000. All materials must conform to NIS 444-1:2019 and COREN standards.</p>
+      </div>
+    </aside>
+  </div>
+
+</div>
+
+<!-- MORE ACTIONS SHEET -->
+<div class="ov" id="ovMore">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="BOQ actions">
+    <div class="shd">
+      <div><b>BOQ actions</b><small id="moreSub">BOQ-2026-0142</small></div>
+      <button class="x" aria-label="Close" onclick="closeSheet('more')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="msec">Document</div>
+    <button class="mrow" onclick="closeSheet('more');toast('Convert ' + boq.number + ' to a quotation')">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg></span>
+      <span class="mt"><b>Convert to Quotation</b><small>Create a quotation from this BOQ</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <button class="mrow" onclick="closeSheet('more');toast('Duplicate ' + boq.number)">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></span>
+      <span class="mt"><b>Duplicate</b><small>Copy this BOQ with a new number</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <button class="mrow" onclick="copyNumber()">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="12" height="12" rx="2"/><path stroke-linecap="round" d="M5 15V5a2 2 0 012-2h10"/></svg></span>
+      <span class="mt"><b>Copy BOQ Number</b><small>Copy to clipboard</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <button class="mrow" onclick="exportCsv()">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v10m0 0l-3.5-3.5M12 14l3.5-3.5"/></svg></span>
+      <span class="mt"><b>Export as CSV</b><small>Download a CSV extract of this BOQ</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <div class="msec">Status</div>
+    <button class="mrow" id="sheetStatusBtn" onclick="toggleStatus()">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
+      <span class="mt"><b id="sheetStatusLabel">Mark as open</b><small>Change the document status</small></span>
+      <span class="pill" id="sheetStatusPill">Approved</span>
+    </button>
+    <div class="msec danger">Danger Zone</div>
+    <button class="mrow" onclick="openSheet('archive')">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></span>
+      <span class="mt"><b>Archive BOQ</b><small>Hide from active lists</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+    <button class="mrow danger" onclick="openSheet('delete')">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg></span>
+      <span class="mt"><b>Delete BOQ</b><small>Permanently remove this document</small></span>
+      <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+    </button>
+  </div>
+</div>
+
+<!-- ARCHIVE CONFIRM -->
+<div class="ov" id="ovArchive">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Archive BOQ">
+    <b>Archive this BOQ?</b>
+    <p>The BOQ is hidden from active lists. You can restore it later.</p>
+    <div class="acts">
+      <button class="dbtn" onclick="closeSheet('archive')">Cancel</button>
+      <button class="dbtn danger" onclick="doArchive()">Archive</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="ov" id="ovDelete">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Delete BOQ">
+    <b>Delete this BOQ?</b>
+    <p>This permanently removes the BOQ and its line items.</p>
+    <div class="acts">
+      <button class="dbtn" onclick="closeSheet('delete')">Cancel</button>
+      <button class="dbtn danger" onclick="doDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO LIGHTBOX -->
+<div class="ov" id="ovPhoto">
+  <div class="lb-img" role="dialog" aria-modal="true" aria-label="Item photo preview">
+    <img id="lbImg" src="" alt="Item photo">
+    <div class="lb-cap" id="lbCap"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+var naira = function(n){ return '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var fmtGroup = function(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits: 20 }); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); };
+
+var boq = {
+  number: 'BOQ-2026-0142',
+  title: 'Renovation Materials Schedule',
+  vendor: 'Test Construction Vendor Ltd',
+  contact: 'REF-D2-001',
+  date: '2026-09-17',
+  status: 'approved',
+  template: 'Bordered Schedule',
+  company: 'Acme Builders Ltd',
+  tagline: 'General Construction & Supplies',
+  notes: '',
+  rows: [
+    { type:'item', id:'u1', desc:'Preliminaries, site supervision and setting out', sub:'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', make:'', qty:1, unit:'lot', cp:150000, sp:185000 },
+    { type:'item', id:'u2', desc:'Contingency sum', sub:'Provisional sum held against unforeseen site conditions, expended only on engineer\u2019s instruction.', make:'', qty:1, unit:'lot', cp:250000, sp:250000 },
+    { type:'group', title:'Group A \u2014 Civil Works' },
+    { type:'item', id:'r2', desc:'Portland cement, grade 42.5R', sub:'', make:'Dangote 3X', qty:400, unit:'bags', cp:5200, sp:6100, photo:1 },
+    { type:'item', id:'r3', desc:'Reinforcement steel, high yield T12', sub:'', make:'African Foundries', qty:120, unit:'lengths', cp:9800.75, sp:11500 },
+    { type:'item', id:'r4', desc:'Sharp sand, river dredged, washed and free of silt and organic matter', sub:'Delivered, tested and compacted in approved layers per engineer\u2019s instruction, including waste allowance, load testing and carting away of surplus material to a designated dump site approved by the client.', make:'Local', qty:30, unit:'trips', cp:28000, sp:33500 },
+    { type:'group', title:'Group B \u2014 Finishes' },
+    { type:'item', id:'r5', desc:'Emulsion paint, 20L pail', sub:'Two coats over prepared surface.', make:'Dulux', qty:18, unit:'pails', cp:41000, sp:48500 },
+    { type:'item', id:'r6', desc:'Ceramic floor tiles, 600\u00D7600 polished', sub:'', make:'Vitrex', qty:240, unit:'pcs', cp:3850, sp:4600 }
+  ]
+};
+var PHOTO_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='120' viewBox='0 0 200 120'%3E%3Crect width='200' height='120' fill='%23d7e0ea'/%3E%3Crect x='30' y='28' width='58' height='72' rx='7' fill='%2394a3b8'/%3E%3Crect x='38' y='38' width='42' height='12' rx='3' fill='%23e8eef5'/%3E%3Crect x='38' y='56' width='42' height='6' rx='2' fill='%23c3cfdb'/%3E%3Crect x='96' y='36' width='58' height='64' rx='7' fill='%2364748b'/%3E%3Crect x='104' y='46' width='42' height='12' rx='3' fill='%23d7e0ea'/%3E%3Crect x='104' y='64' width='42' height='6' rx='2' fill='%23aebbcc'/%3E%3Crect x='158' y='48' width='34' height='52' rx='6' fill='%23b6c3d2'/%3E%3C/svg%3E";
+
+var profit = function(r){ return (Number(r.sp || 0) - Number(r.cp || 0)) * Number(r.qty || 0); };
+
+function toast(msg, isErr){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+function statusLabel(s){ return s === 'approved' ? 'Approved' : 'Open'; }
+function renderStatus(){
+  var good = boq.status === 'approved';
+  var dot = document.getElementById('statusDot');
+  if (dot) dot.style.background = good ? 'var(--sell)' : 'var(--cost)';
+  var badge = document.getElementById('modeBadge');
+  if (badge) badge.textContent = statusLabel(boq.status);
+  var lbl = document.getElementById('sheetStatusLabel');
+  if (lbl) lbl.textContent = good ? 'Mark as open' : 'Mark as approved';
+  var pill = document.getElementById('sheetStatusPill');
+  if (pill) pill.textContent = statusLabel(boq.status);
+}
+function toggleStatus(){
+  boq.status = boq.status === 'approved' ? 'open' : 'approved';
+  renderStatus();
+  closeSheet('more');
+  toast('BOQ ' + boq.number + ' marked as ' + statusLabel(boq.status).toLowerCase());
+}
+
+/* ---------- dense schedule rows ---------- */
+function rowHTML(r, n){
+  var pills = '';
+  if (r.make) pills += '<span class="gpill"><b>' + esc(r.make) + '</b></span>';
+  var spec = r.sub && r.sub.trim() ? '<p class="gspec">' + esc(r.sub.trim()) + '</p>' : '';
+  var thumb = r.photo
+    ? '<button class="gthumb" onclick="openPhoto(\'' + r.id + '\')" title="View item photo" aria-label="View photo of ' + esc(r.desc) + '"><img src="' + PHOTO_SVG + '" alt="Photo of ' + esc(r.desc) + '"></button>'
+    : '<span></span>';
+  var p = profit(r);
+  var pcls = p < 0 ? ' neg' : (p > 0 ? ' pos' : ' zero');
+  return '<div class="grow" id="row-' + r.id + '">'
+    + '<span class="gnum">' + String(n).padStart(2, '0') + '</span>'
+    + '<div class="gbody"><p class="gdesc">' + esc(r.desc) + '</p>' + spec + (pills ? '<div class="gpills">' + pills + '</div>' : '') + '</div>'
+    + '<span class="gqty">' + fmtGroup(r.qty) + ' ' + esc(r.unit) + '</span>'
+    + '<span class="gcp">' + naira(r.cp) + '</span>'
+    + '<span class="gsp">' + naira(r.sp) + '</span>'
+    + '<span class="gprofit' + pcls + '">' + naira(p) + '</span>'
+    + thumb
+    + '</div>';
+}
+function tgroupHTML(tag, title, mem, aid){
+  return '<div class="tgroup" id="' + aid + '"><div class="tgroup-in"><span class="tag">' + tag + '</span><b>' + esc(title) + '</b><span>' + mem.length + ' item' + (mem.length === 1 ? '' : 's') + '</span></div></div>';
+}
+function navHTML(blocks){
+  var h = blocks.map(function(b){
+    return '<button onclick="jumpTo(\'' + b.aid + '\')"><span class="mono">' + b.count + '</span>' + esc(b.label) + '<span class="cnt">' + b.count + ' items</span></button>';
+  }).join('');
+  return h;
+}
+function jumpTo(aid){
+  var t = document.getElementById(aid);
+  if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderSched(){
+  var host = document.getElementById('rows');
+  var items = boq.rows.filter(function(r){ return r.type === 'item'; });
+  var groups = boq.rows.filter(function(r){ return r.type === 'group'; });
+  var n = 0, out = [], blocks = [], i = 0;
+  var open = [], k = 0;
+  while (k < boq.rows.length && boq.rows[k].type === 'item') { open.push(boq.rows[k]); k++; }
+  if (open.length) {
+    blocks.push({ aid: 'g-open', label: 'Schedule', count: open.length });
+    out.push(tgroupHTML('\u00A7', 'Schedule', open, 'g-open'));
+    open.forEach(function(m){ out.push(rowHTML(m, ++n)); });
+  }
+  i = k;
+  var gi = 0, tags = ['A', 'B', 'C', 'D', 'E'];
+  while (i < boq.rows.length) {
+    var r = boq.rows[i];
+    if (r.type === 'group') {
+      var mem = [], j = i + 1;
+      while (j < boq.rows.length && boq.rows[j].type === 'item') { mem.push(boq.rows[j]); j++; }
+      var tag = tags[gi % tags.length]; gi++;
+      var title = r.title.replace(/^Group\s+[A-Z]\s*[\u2014\-:]\s*/i, '');
+      var aid = 'g-' + gi;
+      blocks.push({ aid: aid, label: tag + ' \u00B7 ' + title, count: mem.length });
+      out.push(tgroupHTML(tag, title, mem, aid));
+      mem.forEach(function(m){ out.push(rowHTML(m, ++n)); });
+      i = j;
+    } else {
+      out.push(rowHTML(r, ++n));
+      i++;
+    }
+  }
+  host.innerHTML = out.join('');
+  document.getElementById('jump').innerHTML = blocks.map(function(b){
+    return '<button class="jchip" onclick="jumpTo(\'' + b.aid + '\')"><span class="mono">' + b.count + '</span>' + esc(b.label) + '</button>';
+  }).join('');
+  document.getElementById('rnav').innerHTML = navHTML(blocks);
+}
+function renderTotals(){
+  var cost = 0, sell = 0;
+  boq.rows.forEach(function(r){
+    if (r.type === 'item') { cost += Number(r.cp || 0) * Number(r.qty || 0); sell += Number(r.sp || 0) * Number(r.qty || 0); }
+  });
+  var p = sell - cost;
+  var margin = sell ? Math.round(p / sell * 100) + '%' : '0%';
+  var set = function(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; };
+  set('sbCost', naira(cost)); set('sbSell', naira(sell));
+  set('sbProfit', naira(p)); set('sbMargin', margin);
+  set('tCost', naira(cost)); set('tSell', naira(sell));
+  var tP = document.getElementById('tProfit');
+  if (tP) tP.textContent = naira(p);
+  var tM = document.getElementById('tMargin');
+  if (tM) tM.textContent = 'Margin ' + margin;
+  var w = document.getElementById('tWords');
+  if (w) w.textContent = words(sell);
+}
+function words(num){
+  if (!num) return 'ZERO NAIRA ONLY';
+  var a = ['', 'ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'];
+  var b = ['', '', 'TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+  var c = function(x){
+    return x < 20 ? a[x]
+      : x < 100 ? b[Math.floor(x / 10)] + (x % 10 ? ' ' + a[x % 10] : '')
+      : x < 1000 ? a[Math.floor(x / 100)] + ' HUNDRED' + (x % 100 ? ' ' + c(x % 100) : '')
+      : x < 1e6 ? c(Math.floor(x / 1000)) + ' THOUSAND' + (x % 1000 ? ' ' + c(x % 1000) : '')
+      : x < 1e9 ? c(Math.floor(x / 1e6)) + ' MILLION' + (x % 1e6 ? ' ' + c(x % 1e6) : '')
+      : c(Math.floor(x / 1e9)) + ' BILLION' + (x % 1e9 ? ' ' + c(x % 1e9) : '');
+  };
+  var w = Math.floor(num), k = Math.round((num - w) * 100);
+  return c(w) + ' NAIRA' + (k ? ' AND ' + c(k) + ' KOBO' : '') + ' ONLY';
+}
+function render(){ renderSched(); renderTotals(); renderStatus(); }
+
+function doDownload(){
+  toast('Preparing ' + boq.number + '.pdf\u2026');
+  setTimeout(function(){ toast(boq.number + '.pdf saved to Downloads'); }, 900);
+}
+function doShare(){
+  var text = boq.number + ' \u2014 ' + boq.title;
+  if (navigator.share) { navigator.share({ title: text, text: text }).catch(function(){}); return; }
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(function(){ toast('BOQ details copied'); }, function(){ toast('Share is not available', true); }); return; }
+  toast('Share is not available', true);
+}
+function copyNumber(){
+  closeSheet('more');
+  if (navigator.clipboard) { navigator.clipboard.writeText(boq.number).then(function(){ toast('BOQ number copied'); }, function(){ toast('Copy failed', true); }); return; }
+  toast('Copy is not available', true);
+}
+function exportCsv(){
+  closeSheet('more');
+  var lines = ['Description,Specification,Make,Qty,Unit,CP,SP,Line Profit'];
+  boq.rows.forEach(function(r){
+    if (r.type !== 'item') return;
+    var q = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+    lines.push([r.desc, r.sub || '', r.make || '', r.qty, r.unit, r.cp, r.sp, profit(r)].map(q).join(','));
+  });
+  var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = boq.number + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast(boq.number + '.csv saved to Downloads');
+}
+function openPhoto(id){
+  var r = boq.rows.find(function(x){ return x.id === id; });
+  if (!r || !r.photo) return;
+  var img = document.getElementById('lbImg');
+  if (img) { img.src = PHOTO_SVG; img.alt = 'Photo of ' + r.desc; }
+  var cap = document.getElementById('lbCap');
+  if (cap) cap.textContent = r.desc;
+  openSheet('photo');
+}
+function doArchive(){ closeSheet('archive'); toast('BOQ ' + boq.number + ' archived'); }
+function doDelete(){ closeSheet('delete'); toast('BOQ ' + boq.number + ' deleted', true); }
+
+var ovOf = function(id){ return document.getElementById('ov' + id[0].toUpperCase() + id.slice(1)); };
+var focusReturn = null;
+function openSheet(id){
+  var el = ovOf(id);
+  var active = document.activeElement;
+  if (active && active.focus && !(active.closest && active.closest('.ov'))) focusReturn = active;
+  el.classList.add('show');
+  var first = el.querySelector('button:not(.x)');
+  if (first) first.focus();
+}
+function closeSheet(id){
+  var el = ovOf(id);
+  if (!el.classList.contains('show')) return;
+  el.classList.remove('show');
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+}
+function toggleTheme(){
+  var root = document.documentElement;
+  var isDark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  var icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  }
+}
+
+document.querySelectorAll('.ov').forEach(function(ov){
+  ov.addEventListener('click', function(e){
+    if (e.target !== ov) return;
+    ov.classList.remove('show');
+    if (focusReturn && focusReturn.focus) focusReturn.focus();
+  });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.ov.show').forEach(function(o){ o.classList.remove('show'); });
+  if (focusReturn && focusReturn.focus) focusReturn.focus();
+});
+
+render();
+</script>
+</body>
+</html>

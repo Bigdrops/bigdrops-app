@@ -1,0 +1,781 @@
+<!doctype html>
+<!--
+  BIGDROPS - Invoice View Page - MOBILE + FOLD candidate (V1).
+  Standalone design-direction prototype. Phone-first, fold recomposed.
+
+  SYNTHESIS
+  Live production Invoice View supplies behavior + content.
+  Accepted BOQ V4.1 supplies visual language + interaction philosophy.
+  Nothing here copies the live Invoice visual structure.
+  Nothing here copies BOQ domain semantics (no cost/profit tones,
+  no "chapter total", no "BOQ complete").
+
+  PRODUCTION TRUTH (audited, not invented)
+  - Shell: src/pages/ViewInvoice.tsx + InvoiceWorkspace.tsx —
+    top nav (back, number + title, share, customize, more),
+    action row (Record Payment unless paid, Edit, Download),
+    document card, bank card, options card, operational sections,
+    Download FAB.
+  - Card: InvoiceDocumentCard.tsx — brand block (logo or fallback +
+    company lines), status pill, title, meta chips (number, issue,
+    due, PO), client block + client lines, detail rows, item list
+    with GROUP rows, GROUP_FOOTER optional subtotals, numbered
+    lines with detail, fact pills, read-only imageUrl thumbnails,
+    right-aligned amounts, totals list with emphasized grand row,
+    amount in words, signatory (signature or fallback block).
+  - Money: Subtotal + extra charges (Workmanship, Transportation) +
+    VAT 7.5% = Total Due. Received (cash + WHT) and Balance
+    Remaining tracked separately. calculations.ts pipeline.
+  - Status: derived Unpaid / Partially Paid / Paid (+ OVERDUE
+    presentation-only). financialState.ts + resolveInvoiceStatus.ts.
+  - Payments: InvoicePaymentsSection — Cash Received, WHT Applied,
+    % settled progress, balance remaining, history entries
+    (method/reference/amount/date; kinds payment/wht/voided).
+    Record Payment via InvoiceRecordPaymentSheet; void supported.
+  - More sheet: InvoiceMoreSheet — Lifecycle (Revert to Quotation,
+    Generate Waybill), Payments & Advances (Record Payment, Advance
+    Invoice), Common (Link to Project, Duplicate, Copy Invoice
+    Number, Export CSV, Qty+Unit merge), Danger (Archive, Delete).
+  - Bank: BankDetailsCard with selectable accounts. Linked docs:
+    source document, related waybills/CSRs (operational sections).
+
+  V4.1 LANGUAGE (translated, not transplanted)
+  Flowing document surface, dossier identity, static summary,
+  bounded GROUP containers with explicit headers + subtotal closes,
+  ungrouped lines on the open surface, compact thumbnails +
+  lightbox, hairline-separated entries, signed close-out, bottom
+  nav, Download FAB, sectioned More sheet, dark mode.
+
+  CORRECTION (in place, accepted direction preserved)
+  - Group boxes removed. Groups read as hierarchy: explicit
+    "GROUP S" header, flat rows, "Group subtotal" close.
+    Standalone rows flow free: group, 03 (no photo),
+    04 (photo). One row language everywhere.
+  - Customize restored: top-bar palette button opens the
+    "Customize Invoice PDF" demo sheet (production entry point).
+  - Audit Trail restored: in-flow "Activity & History" disclosure
+    after linked documents (production placement).
+  - Download entry points: FAB + labeled action-row button +
+    More menu row. Qty+Unit merge restored to More. History rows
+    demo the void flow.
+
+  SAMPLE MODEL (internally consistent, fictional)
+  Lines sum to Subtotal 4,150,000. Charges + VAT bring Total Due to
+  4,720,000. Received 2,000,000 (1,650,000 cash + 350,000 WHT).
+  Balance 2,720,000. Settled 42%. All figures render from one
+  data array in script.
+
+  SHELL
+  Bottom nav replicates MobileBottomNav geometry. Download FAB per
+  fab-standard v1.1. End padding clears both. Download has three
+  paths: FAB + labeled action row button + More menu row.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS - Invoice View - INV-2026-0117</title>
+<style>
+  :root{
+    --ink:#101828; --body:#344054; --faint:#667085;
+    --line:rgba(16,24,40,.10); --line-strong:rgba(16,24,40,.22);
+    --bg:#f2f4f7; --card:#ffffff; --soft:#eef1f5;
+    --brand:#175cd3; --brand-ink:#ffffff; --brand-soft:rgba(23,92,211,.08);
+    --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+    --ok:#067647; --ok-soft:rgba(6,118,71,.10);
+    --warn:#b54708; --warn-soft:rgba(181,71,8,.10);
+    --danger:#b42318;
+    --ghost:rgba(16,24,40,.07);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.28);
+    --fab-bg:#175cd3; --fab-text:#ffffff;
+  }
+  [data-theme="dark"]{
+    --ink:#f2f4f7; --body:#d0d5dd; --faint:#98a2b3;
+    --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24);
+    --bg:#0c111d; --card:#1d2939; --soft:#161f2e;
+    --brand:#84adff; --brand-ink:#0c111d; --brand-soft:rgba(132,173,255,.12);
+    --ok:#6ce9a6; --ok-soft:rgba(108,233,166,.12);
+    --warn:#fdb022; --warn-soft:rgba(253,176,34,.13);
+    --danger:#f97066;
+    --ghost:rgba(255,255,255,.06);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.55);
+    --fab-bg:#1570ef; --fab-text:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:0;text-align:left}
+  button:focus-visible,summary:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .wrap{max-width:600px;margin:0 auto;padding:8px 0 calc(200px + env(safe-area-inset-bottom))}
+  @media(min-width:600px){.wrap{max-width:780px}}
+
+  .appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+    min-height:56px;padding:8px 20px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+    color:var(--body);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .iconbtn:active{transform:scale(.93)}
+  .iconbtn svg{width:18px;height:18px}
+  .appbar-id{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+  .appbar-id .num{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:-.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status{flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    padding:4px 9px;border-radius:99px;background:var(--warn-soft);color:var(--warn)}
+
+  .dossier{display:flex;gap:12px;align-items:flex-start;padding:16px 20px 4px}
+  .monogram{width:44px;height:44px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    background:var(--brand);color:var(--brand-ink);font-weight:800;font-size:15px}
+  .dossier-main{flex:1;min-width:0}
+  .dossier-main h2{font-size:17px;font-weight:800;letter-spacing:-.015em;line-height:1.25;text-wrap:balance}
+  .dossier-main .client{margin-top:3px;font-size:12.5px;color:var(--faint);font-weight:600}
+  .editbtn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;
+    color:var(--brand);background:var(--brand-soft);border-radius:11px;padding:9px 13px}
+  .editbtn:active{transform:scale(.96)}
+  .editbtn svg{width:14px;height:14px}
+  .context{padding:8px 20px 0;font-size:12px;color:var(--faint);font-weight:600}
+  .context details{margin-top:6px}
+  .context summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:5px;
+    color:var(--brand);font-weight:800;font-size:12px}
+  .context summary::-webkit-details-marker{display:none}
+  .context summary .chev{transition:transform .18s}
+  .context details[open] summary .chev{transform:rotate(180deg)}
+  .context dl{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:10px 12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px}
+  .context dt{color:var(--faint);font-weight:600}
+  .context dd{color:var(--body);font-weight:700;text-align:right}
+
+  /* Primary invoice actions: Record Payment + labeled Download. */
+  .actionrow{display:flex;gap:10px;padding:14px 20px 0}
+  .btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    font-size:13px;font-weight:800;border-radius:12px;padding:12px 14px}
+  .btn svg{width:15px;height:15px}
+  .btn.primary{background:var(--brand);color:var(--brand-ink)}
+  .btn.ghost{border:1px solid var(--line-strong);background:var(--card);color:var(--body)}
+  .btn:active{transform:scale(.98)}
+
+  /* Summary: permanently exposed, static. */
+  .summary{margin:14px 20px 0;background:var(--card);border:1px solid var(--line-strong);border-radius:16px;overflow:hidden}
+  .summary .sgrid{display:grid;grid-template-columns:1fr 1fr}
+  .stat{padding:12px 14px}
+  .stat:nth-child(odd){border-right:1px solid var(--line)}
+  .stat:nth-child(1),.stat:nth-child(2){border-bottom:1px solid var(--line)}
+  .stat .k{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .stat .v{margin-top:3px;font-family:var(--mono);font-size:16.5px;font-weight:700;letter-spacing:-.01em}
+  .stat.due .v{font-size:18px}
+  .stat.ok .v{color:var(--ok)}
+  .stat.warn .v{color:var(--warn)}
+  .stat .mgn{display:inline-block;margin-top:4px;font-family:var(--mono);font-size:11px;font-weight:700;
+    color:var(--ok);background:var(--ok-soft);border-radius:99px;padding:2px 9px}
+
+  .doc{margin-top:14px;background:var(--card);border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong)}
+  .doc-in{padding:4px 20px 0}
+
+  /* Groups read as hierarchy on the continuous surface. No boxes. */
+  .ghead{margin:10px 0 0;padding:18px 0 4px;border-top:2px solid var(--ink);display:flex;align-items:center;gap:10px}
+  .ghead .ghost{font-size:30px;line-height:1;font-weight:800;color:var(--ghost);letter-spacing:-.03em;user-select:none}
+  .ghead .gh-main{flex:1;min-width:0}
+  .ghead .kicker{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--brand)}
+  .ghead h3{font-size:14px;font-weight:800;letter-spacing:-.01em;margin-top:1px}
+  .ghead .count{font-size:11px;color:var(--faint);font-weight:700;margin-top:1px}
+  .gsub{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    padding:11px 0 4px;margin-bottom:2px;border-top:1px solid var(--line-strong)}
+  .gsub .k{font-size:10px;font-weight:800;letter-spacing:.07em;color:var(--faint)}
+  .gsub .mono{font-size:13px;font-weight:700}
+
+  .entry{padding:16px 0}
+  .entry+.entry{border-top:1px solid var(--line)}
+  .entry-top{display:flex;gap:10px}
+  .idx{flex-shrink:0;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--faint);
+    border:1px solid var(--line-strong);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+  .entry-text{flex:1;min-width:0}
+  .entry-text h4{font-size:14.5px;font-weight:800;letter-spacing:-.01em;line-height:1.35}
+  .entry-text .spec{margin-top:4px;font-size:12.5px;line-height:1.55;color:var(--body)}
+  .entry-text .meta{margin-top:7px;font-size:11.5px;color:var(--faint);font-weight:600}
+  .entry-text .meta b{color:var(--body);font-weight:800}
+  .thumbrow{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .thumb{width:64px;height:64px;border-radius:12px;overflow:hidden;flex-shrink:0;line-height:0;
+    border:1px solid var(--line-strong);padding:0}
+  .thumb svg{width:100%;height:100%;display:block}
+  .thumbcap{font-size:10.5px;font-weight:700;color:var(--faint);line-height:1.45}
+
+  /* Per-line commercial: always visible, invoice semantics only. */
+  .comm{margin-top:12px;border-top:1px dashed var(--line-strong);padding-top:2px}
+  .crow{display:flex;align-items:baseline;gap:8px;padding:5px 0}
+  .crow+.crow{border-top:1px solid var(--line)}
+  .crow .k{flex-shrink:0;width:46px;font-size:9.5px;font-weight:800;letter-spacing:.07em;color:var(--faint)}
+  .crow .basis{flex:1;min-width:0;font-family:var(--mono);font-size:11px;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow .amt{flex-shrink:0;font-family:var(--mono);font-size:12.5px;font-weight:700}
+  @media(min-width:600px){
+    .entry-cols{display:flex;gap:24px;align-items:flex-start}
+    .entry-main{flex:1;min-width:0}
+    .thumb{width:72px;height:72px}
+    .comm{flex:0 0 240px;margin-top:2px;border-top:0;padding-top:0;border-left:1px solid var(--line);padding-left:16px}
+    .crow .basis{white-space:normal}
+  }
+
+  /* Payments: production section translated into document flow. */
+  .paysec{margin-top:20px;border-top:2px solid var(--ink);padding-top:16px}
+  .paysec .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}
+  .paysec h3{margin-top:4px;font-size:16px;font-weight:800;letter-spacing:-.015em}
+  .paygrid{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .paycell{padding:11px 13px}
+  .paycell+.paycell{border-left:1px solid var(--line)}
+  .paycell .k{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .paycell .v{margin-top:2px;font-family:var(--mono);font-size:15px;font-weight:700}
+  .paycell.ok .v{color:var(--ok)}
+  .pbar{margin-top:12px;height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+  .pbar i{display:block;height:100%;width:42%;border-radius:99px;background:var(--ok)}
+  .pmeta{display:flex;justify-content:space-between;margin-top:6px;font-size:11.5px;font-weight:700;color:var(--faint)}
+  .pmeta .mono{color:var(--body)}
+  .hist{margin-top:6px}
+  .hrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .hrow:last-child{border-bottom:0}
+  .hico{width:30px;height:30px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    background:var(--ok-soft);color:var(--ok)}
+  .hico svg{width:14px;height:14px}
+  .hico.wht{background:var(--brand-soft);color:var(--brand)}
+  .hbody{flex:1;min-width:0}
+  .hbody .m{font-size:12.5px;font-weight:800}
+  .hbody .r{font-size:11px;color:var(--faint);font-weight:600;font-family:var(--mono)}
+  .hright{text-align:right;flex-shrink:0}
+  .hright .a{font-family:var(--mono);font-size:12.5px;font-weight:700}
+  .hright .d{font-size:11px;color:var(--faint);font-weight:600}
+
+  .close{margin-top:20px;border-top:2px solid var(--ink);padding:20px 0 0}
+  .close .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}
+  .close h3{margin-top:4px;font-size:17px;font-weight:800;letter-spacing:-.015em}
+  .close .trow{display:flex;align-items:baseline;justify-content:space-between;padding:10px 0;font-size:13.5px}
+  .close .trow+.trow{border-top:1px solid var(--line)}
+  .close .trow span:first-child{color:var(--body);font-weight:600}
+  .close .trow .mono{font-weight:700}
+  .close .trow.grand{font-size:15.5px}
+  .close .trow.grand .mono{color:var(--ink)}
+  .close .trow.received .mono{color:var(--ok)}
+  .close .trow.balance .mono{color:var(--warn)}
+  .words{margin-top:10px;background:var(--soft);border-radius:12px;padding:11px 13px;
+    font-size:12.5px;font-style:italic;line-height:1.6;color:var(--body)}
+  .bank{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:12.5px}
+  .bank b{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .bank .brow{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+  .bank .brow span:first-child{color:var(--faint);font-weight:600}
+  .bank .brow span:last-child{font-weight:700}
+  .bank .brow .mono{font-weight:700}
+  .notes{margin-top:10px;font-size:12.5px;line-height:1.6;color:var(--body)}
+  .notes b{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+  .sign{margin-top:12px;display:flex;gap:10px;align-items:center}
+  .sign .fallback{border:1px dashed var(--line-strong);border-radius:10px;padding:8px 14px;
+    font-size:11px;font-weight:700;color:var(--faint);font-style:italic}
+  .sign .who{font-size:12.5px;font-weight:800}
+  .sign .role{font-size:11.5px;color:var(--faint);font-weight:600}
+  .links{margin-top:12px;font-size:12.5px}
+  .links b{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .links .lrow{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line);font-weight:700}
+  .links .lrow .mono{color:var(--brand)}
+  /* Activity & History: production in-flow disclosure, translated. */
+  .audit{margin-top:12px;border-top:1px solid var(--line);padding-top:2px}
+  .ahead{width:100%;display:flex;align-items:center;gap:8px;padding:11px 0}
+  .ahead .t{flex:1;min-width:0}
+  .ahead .t b{font-size:13.5px;font-weight:800;display:block}
+  .ahead .t small{font-size:11px;color:var(--faint);font-weight:600}
+  .ahead .chev{color:var(--faint);transition:transform .18s;flex-shrink:0}
+  .audit[data-open="true"] .ahead .chev{transform:rotate(180deg)}
+  .abody{display:none;padding-bottom:8px}
+  .audit[data-open="true"] .abody{display:block}
+  .evrow{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .evrow .a{font-weight:700}
+  .evrow .t{font-family:var(--mono);font-size:11px;color:var(--faint);flex-shrink:0}
+  .evchg{margin:0 0 6px;background:var(--soft);border-radius:8px;padding:8px 10px;font-size:11.5px;color:var(--faint)}
+  .evchg b{color:var(--body)}
+  .endrule{display:flex;align-items:center;gap:10px;padding:18px 0 20px;color:var(--faint);
+    font-family:var(--mono);font-size:11px;font-weight:600}
+  .endrule::before,.endrule::after{content:"";flex:1;border-top:1px solid var(--line-strong)}
+
+  .bottomnav{position:fixed;z-index:40;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom,0px));
+    height:62px;padding:4px;display:grid;grid-template-columns:repeat(5,1fr);
+    border:1px solid var(--line-strong);border-radius:20px;background:var(--card);box-shadow:0 8px 24px rgba(16,24,40,.18)}
+  .bottomnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    border-radius:15px;font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--faint)}
+  .bottomnav button svg{width:17px;height:17px}
+  .bottomnav button.on{background:var(--brand);color:var(--brand-ink)}
+
+  .fab-float{position:fixed;z-index:50;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));
+    animation:fabfloat 4s ease-in-out infinite}
+  @keyframes fabfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  @media(prefers-reduced-motion:reduce){.fab-float{animation:none}}
+  .fab{width:50px;height:50px;border-radius:18px;background:var(--fab-bg);color:var(--fab-text);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(23,92,211,.4)}
+  .fab:hover{transform:scale(1.05)}
+  .fab:active{transform:scale(.95)}
+  .fab svg{width:22px;height:22px;fill:currentColor}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  .scrim{position:fixed;inset:0;z-index:60;background:rgba(12,17,29,.5);display:none}
+  .scrim.show{display:block}
+  .sheet{position:fixed;z-index:61;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;
+    background:var(--card);border-radius:20px 20px 0 0;box-shadow:var(--shadow-sheet);
+    padding:10px 16px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease}
+  .sheet.show{transform:translateY(0)}
+  @media(min-width:600px){.sheet{max-width:560px}}
+  @media(prefers-reduced-motion:reduce){.sheet{transition:none}}
+  .grab{width:40px;height:4px;border-radius:99px;background:var(--line-strong);margin:2px auto 12px}
+  .sheet h3{font-size:14px;font-weight:800}
+  .sheet .sec{margin-top:12px;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .arow{width:100%;display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:700}
+  .arow small{display:block;font-size:11.5px;color:var(--faint);font-weight:600}
+  .arow svg{width:17px;height:17px;color:var(--faint);flex-shrink:0}
+  .arow.danger{color:var(--danger)}
+  .arow.danger svg{color:var(--danger)}
+  .field{margin-top:12px}
+  .field label{display:block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .field .box{border:1px solid var(--line-strong);border-radius:12px;padding:12px 13px;font-size:14px;font-weight:700;
+    display:flex;justify-content:space-between;align-items:center}
+  .field .box .mono{font-weight:700}
+  .field .note{margin-top:5px;font-size:11px;color:var(--faint);font-weight:600}
+  .sheet .btn{margin-top:14px}
+  .lightbox{position:fixed;inset:0;z-index:61;background:rgba(12,17,29,.88);display:none;
+    align-items:center;justify-content:center;padding:24px}
+  .lightbox.show{display:flex}
+  .lightbox figure{max-width:560px;width:100%}
+  .lightbox svg{width:100%;height:auto;border-radius:14px}
+  .lightbox figcaption{margin-top:10px;color:#fff;font-size:12.5px;font-weight:600;text-align:center}
+  .toasts{position:fixed;z-index:70;left:16px;right:16px;bottom:calc(156px + env(safe-area-inset-bottom,0px));
+    display:flex;flex-direction:column;gap:8px;max-width:480px;margin:0 auto;pointer-events:none}
+  .toast{background:#101828;color:#f2f4f7;font-size:12.5px;font-weight:700;border-radius:12px;
+    padding:11px 14px;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:tin .2s ease}
+  [data-theme="dark"] .toast{background:#f2f4f7;color:#101828}
+  @keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="appbar">
+    <button class="iconbtn" data-act="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+    </button>
+    <div class="appbar-id">
+      <span class="num">INV-2026-0117</span>
+      <button class="status" id="statusPill" data-act="status-info" aria-label="Status: Partially Paid">Partially Paid</button>
+    </div>
+    <button class="iconbtn" data-act="share" aria-label="Share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+    </button>
+    <button class="iconbtn" data-act="customize" aria-label="Customize PDF template, fonts and colors" title="Customize PDF">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+    </button>
+    <button class="iconbtn" data-act="more" aria-label="More actions">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+    </button>
+  </div>
+
+  <div class="dossier">
+    <div class="monogram" aria-label="Company: Sun and Shield Power Solutions">SS</div>
+    <div class="dossier-main">
+      <h2>Tax Invoice</h2>
+      <div class="client">Sun &amp; Shield Power Solutions · for Pinnacle Towers Ltd</div>
+    </div>
+    <button class="editbtn" data-act="edit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      Edit
+    </button>
+  </div>
+  <div class="context">
+    Issued 12 Sep 2026 · Due 12 Oct 2026 · <span id="ctxCount">4 lines</span>
+    <details>
+      <summary>Document details
+        <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </summary>
+      <dl>
+        <dt>Client</dt><dd>Pinnacle Towers Ltd</dd>
+        <dt>PO Number</dt><dd class="mono">PTO/2026/0183</dd>
+        <dt>Currency</dt><dd>NGN (₦)</dd>
+        <dt>Reference</dt><dd class="mono">INV-2026-0117</dd>
+      </dl>
+    </details>
+  </div>
+
+  <div class="actionrow">
+    <button class="btn primary" data-act="pay">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2 2.6 5 3.2 5 1.4 5 3.3-2.2 3-5 3-5-1.1-5-3"/></svg>
+      Record Payment
+    </button>
+    <button class="btn ghost" data-act="download">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Download
+    </button>
+  </div>
+
+  <div class="summary" aria-label="Invoice summary">
+    <div class="sgrid">
+      <div class="stat due"><div class="k">Total due</div><div class="v" id="sTotal">—</div></div>
+      <div class="stat ok"><div class="k">Received</div><div class="v" id="sReceived">—</div></div>
+      <div class="stat warn"><div class="k">Balance</div><div class="v" id="sBalance">—</div></div>
+      <div class="stat"><div class="k">Settled</div><div class="v" id="sPct">—</div><span class="mgn" id="sPctNote">of total due</span></div>
+    </div>
+  </div>
+
+  <div class="doc">
+    <div class="doc-in">
+      <div id="schedule"></div>
+
+      <div class="paysec">
+        <div class="eyebrow">Payments</div>
+        <h3 id="payTitle">Part payment received</h3>
+        <div class="paygrid">
+          <div class="paycell ok"><div class="k">Cash received</div><div class="v" id="pCash">—</div></div>
+          <div class="paycell"><div class="k">WHT applied</div><div class="v" id="pWht">—</div></div>
+        </div>
+        <div class="pbar" role="progressbar" aria-label="Payment progress"><i id="pFill"></i></div>
+        <div class="pmeta"><span><span class="mono" id="pPct">—</span> settled</span><span><span class="mono" id="pBal">—</span> remaining</span></div>
+        <div class="hist" id="payHist"></div>
+      </div>
+
+      <div class="close">
+        <div class="eyebrow">Invoice totals</div>
+        <h3>Amount due</h3>
+        <div class="trow"><span>Subtotal</span><span class="mono" id="tSub">—</span></div>
+        <div class="trow"><span>Workmanship</span><span class="mono" id="tWork">—</span></div>
+        <div class="trow"><span>Transportation</span><span class="mono" id="tTrans">—</span></div>
+        <div class="trow"><span>VAT (7.5%)</span><span class="mono" id="tVat">—</span></div>
+        <div class="trow grand"><span>Total due</span><span class="mono" id="tTotal">—</span></div>
+        <div class="trow received"><span>Received</span><span class="mono" id="tReceived">—</span></div>
+        <div class="trow balance"><span>Balance remaining</span><span class="mono" id="tBalance">—</span></div>
+        <p class="words" id="tWords">Four million, seven hundred and twenty thousand naira only.</p>
+        <div class="bank"><b>Bank details</b>
+          <div class="brow"><span>Bank</span><span>Zenith Bank PLC</span></div>
+          <div class="brow"><span>Account name</span><span>Sun &amp; Shield Power Solutions</span></div>
+          <div class="brow"><span>Account number</span><span class="mono">2109384756</span></div>
+        </div>
+        <div class="notes"><b>Notes</b>All equipment carries a 12-month warranty from commissioning. WHT deductions must carry a valid WHT certificate. Payment within the stipulated period.</div>
+        <div class="sign">
+          <span class="fallback">Authorized Signature</span>
+          <span><span class="who">Engr. S. Adeyemi</span><br><span class="role">Project Manager</span></span>
+        </div>
+        <div class="links"><b>Linked documents</b>
+          <div class="lrow"><span>Source quotation</span><span class="mono" data-act="view-doc">QT-2026-0089</span></div>
+          <div class="lrow"><span>Delivery waybill</span><span class="mono" data-act="view-doc">WB-2026-0031</span></div>
+        </div>
+        <div class="audit" id="auditSec" data-open="false">
+          <button class="ahead" id="auditBtn" aria-expanded="false" aria-label="Activity and history. Activate to expand.">
+            <span class="t"><b>Activity &amp; History</b><small>3 events · from the audit trail</small></span>
+            <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="abody">
+            <div class="evrow"><span class="a">Site Engineer recorded a payment of ₦1,650,000</span><span class="t">14 Sep 2026</span></div>
+            <div class="evchg"><b>Status</b>: Unpaid → Partially Paid</div>
+            <div class="evrow"><span class="a">Accounts applied a WHT credit of ₦350,000</span><span class="t">12 Sep 2026</span></div>
+            <div class="evrow"><span class="a">You created this invoice</span><span class="t">12 Sep 2026</span></div>
+          </div>
+        </div>
+        <div class="endrule">END OF INVOICE · INV-2026-0117</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<nav class="bottomnav" aria-label="Primary">
+  <button data-nav="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg><span>Home</span></button>
+  <button data-nav="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span>Projects</span></button>
+  <button class="on" data-nav="Sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></svg><span>Sales</span></button>
+  <button data-nav="Clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Clients</span></button>
+  <button data-nav="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><span>More</span></button>
+</nav>
+
+<span class="fab-float">
+  <button class="fab" data-act="download" aria-label="Download PDF">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10.98 0c-.235 0-.425.2-.425.446V8.92c0 .246-.19.446-.425.446h-.704c-.346 0-.547.41-.346.705l2.574 3.782c.17.25.522.25.692 0l2.574-3.782c.201-.295 0-.705-.346-.705h-.704a.436.436 0 0 1-.425-.446V.446A.436.436 0 0 0 13.02 0ZM7.387 1.562a.732.732 0 0 0-.405.161l-1.096.883a.77.77 0 0 0-.123 1.066.735.735 0 0 0 1.045.126l1.096-.882a.77.77 0 0 0 .123-1.067.738.738 0 0 0-.64-.287Zm9.346 0a.737.737 0 0 0-.64.287.77.77 0 0 0 .123 1.067l1.096.882c.323.26.79.204 1.045-.126a.77.77 0 0 0-.123-1.066l-1.096-.883a.733.733 0 0 0-.405-.16ZM3.039 6.036a.745.745 0 0 0-.675.48l-.512 1.326c-.15.39.037.831.42.985a.74.74 0 0 0 .965-.428l.512-1.325a.765.765 0 0 0-.419-.985.728.728 0 0 0-.291-.053Zm18.042 0a.738.738 0 0 0-.29.053.765.765 0 0 0-.42.985l.512 1.325a.74.74 0 0 0 .965.428.765.765 0 0 0 .42-.985l-.512-1.325a.745.745 0 0 0-.675-.481ZM0 12a12 12 0 0 0 .913 4.592 11.997 11.997 0 0 0 2.42 3.703c.684-.681 1.565-1 2.489-1.053.925-.055 1.893.156 2.745.532a8.497 8.497 0 0 0 6.866 0c1.702-.751 3.865-.843 5.234.52a11.997 11.997 0 0 0 2.42-3.702A12 12 0 0 0 24 12h-3.687c-1.301 0-2.315 1.094-2.813 2.296a6 6 0 0 1-11.087 0C5.915 13.094 4.902 12 3.601 12Zm5.875 7.769c-.727.04-1.407.275-1.957.727-.073.06-.14.119-.204.18a11.997 11.997 0 0 0 3.694 2.41 12 12 0 0 0 9.184 0 11.997 11.997 0 0 0 3.694-2.41 3.977 3.977 0 0 0-.204-.18c-1.173-.963-2.96-.892-4.436-.24a9.023 9.023 0 0 1-7.292 0c-.478-.211-1.418-.546-2.48-.487Z"/></svg>
+    <span class="sr">Download PDF</span>
+  </button>
+</span>
+
+<div class="scrim" id="scrim"></div>
+
+<section class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-label="More actions">
+  <div class="grab"></div>
+  <h3>Invoice actions</h3>
+  <div class="sec">Document</div>
+  <button class="arow" data-act="download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Download PDF<small>Save a copy to Downloads</small></span></button>
+  <button class="arow" data-act="duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Duplicate<small>Copy as a new draft invoice</small></span></button>
+  <button class="arow" data-act="copy-number"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy invoice number<small>INV-2026-0117</small></span></button>
+  <button class="arow" data-act="csv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Export CSV<small>Invoice schema extract</small></span></button>
+  <button class="arow" data-act="merge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/></svg><span>Qty + Unit merge<small id="mergeState">Currently on for exports and print views</small></span></button>
+  <div class="sec">Lifecycle</div>
+  <button class="arow" data-act="revert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span>Revert to Quotation<small>Convert back to an open quotation</small></span></button>
+  <button class="arow" data-act="waybill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8h14v9H1zM15 11h4l4 4v2h-8z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg><span>Generate Waybill<small>Create a linked delivery waybill</small></span></button>
+  <button class="arow" data-act="link-project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Link to Project</span></button>
+  <div class="sec">Payments &amp; Advances</div>
+  <button class="arow" data-act="pay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2 2.6 5 3.2 5 1.4 5 3.3-2.2 3-5 3-5-1.1-5-3"/></svg><span>Record Payment<small>Add a payment against this invoice</small></span></button>
+  <button class="arow" data-act="advance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg><span>Advance Invoice<small>Create an advance invoice</small></span></button>
+  <div class="sec">Danger zone</div>
+  <button class="arow danger" data-act="archive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></svg><span>Archive<small>Hide from active lists</small></span></button>
+  <button class="arow danger" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg><span>Delete<small>Permanent, with confirm</small></span></button>
+</section>
+
+<section class="sheet" id="paySheet" role="dialog" aria-modal="true" aria-label="Record payment">
+  <div class="grab"></div>
+  <h3>Record Payment</h3>
+  <div class="field"><label>Amount</label><div class="box"><span>Balance payment</span><span class="mono" id="payAmt">—</span></div>
+    <div class="note">Demo sheet. Production posts to the payments ledger and issues a receipt.</div></div>
+  <div class="field"><label>Method</label><div class="box"><span>Bank Transfer</span><span class="mono">Zenith ····4756</span></div></div>
+  <div class="field"><label>Date</label><div class="box"><span>Value date</span><span class="mono">29 Sep 2026</span></div></div>
+  <button class="btn primary" data-act="pay-confirm" style="display:flex">Confirm Payment</button>
+</section>
+
+<section class="sheet" id="customSheet" role="dialog" aria-modal="true" aria-label="Customize invoice PDF">
+  <div class="grab"></div>
+  <h3>Customize Invoice PDF</h3>
+  <div class="field"><label>Colour theme</label><div class="box"><span>Accent</span><span class="mono">Default blue</span></div>
+    <div class="note">Demo. Production persists accent, template and fonts to the PDF output.</div></div>
+  <div class="field"><label>Template</label><div class="box"><span>Layout</span><span class="mono">Industry</span></div></div>
+  <div class="field"><label>Fonts</label><div class="box"><span>Document</span><span class="mono">System</span></div></div>
+  <button class="btn primary" data-act="custom-save" style="display:flex">Apply Customization</button>
+</section>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Item photo preview">
+  <figure>
+    <span id="lightboxArt"></span>
+    <figcaption id="lightboxCap"></figcaption>
+  </figure>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+/* Invoice sample model. Line amounts sum to the Subtotal; charges and
+   VAT bring the Total Due; received splits cash + WHT; balance is the
+   remainder. Mirrors the production pipeline shape (subtotal, extra
+   charges, VAT, grand total, received, balance). */
+var INV_GROUPS = [
+  { id: "S", title: "Supply of Equipment" }
+];
+var INV_LINES = [
+  { n: 1, group: "S", photo: true, desc: "40KVA Soundproof Generator (FG Wilson)",
+    spec: "3-phase, 415V output, with ATS panel and 12-month warranty.",
+    qty: 1, unit: "unit", rate: 3200000 },
+  { n: 2, group: "S", photo: false, desc: "ATS / Changeover Panel (100A)",
+    spec: "Automatic changeover with load-shedding contactors.",
+    qty: 1, unit: "set", rate: 180000 },
+  { n: 3, group: null, photo: false, desc: "Civil & Electrical Installation",
+    spec: "Concrete plinth, cabling, conduits, earthing, load testing.",
+    qty: 1, unit: "lot", rate: 650000 },
+  { n: 4, group: null, photo: true, desc: "Commissioning & Handover",
+    spec: "Test run, operator briefing, handover pack and warranty cards.",
+    qty: 1, unit: "job", rate: 120000 }
+];
+var INV_CHARGES = [
+  { label: "Workmanship", amount: 120000 },
+  { label: "Transportation", amount: 85000 }
+];
+var INV_VAT_LABEL = "VAT (7.5%)", INV_VAT = 365000;
+var INV_PAYMENTS = [
+  { method: "Bank Transfer", ref: "ZEN/2026/0041938", amount: 1650000, date: "14 Sep 2026", kind: "payment" },
+  { method: "WHT Credit", ref: "WHT/LAS/2026/1177", amount: 350000, date: "12 Sep 2026", kind: "wht", tag: "5% WHT rate" }
+];
+function lineTotal(l){ return l.qty * l.rate; }
+function fmt(n){ return "₦" + n.toLocaleString("en-NG"); }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+/* Compact simulated equipment photo: duotone generator study. */
+function photoSVG(seed){
+  return '<svg viewBox="0 0 360 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Simulated item photo">'
+    + '<defs><linearGradient id="i' + seed + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0" stop-color="#5b6b7f"/><stop offset=".6" stop-color="#8d9aa9"/><stop offset="1" stop-color="#4a5563"/>'
+    + '</linearGradient></defs>'
+    + '<rect width="360" height="360" fill="url(#i' + seed + ')"/>'
+    + '<rect x="60" y="120" width="240" height="150" rx="10" fill="#2f3a46"/>'
+    + '<rect x="60" y="120" width="240" height="34" rx="10" fill="#232c35"/>'
+    + '<rect x="84" y="170" width="120" height="12" rx="6" fill="#6ce9a6" opacity="0.85"/>'
+    + '<rect x="84" y="192" width="80" height="12" rx="6" fill="#c7d2de" opacity="0.7"/>'
+    + '<rect x="228" y="164" width="48" height="80" rx="8" fill="#1d242d"/>'
+    + '<circle cx="252" cy="184" r="7" fill="#fdb022"/>'
+    + '<rect x="84" y="222" width="192" height="10" rx="5" fill="#101828" opacity="0.5"/>'
+    + '<rect x="96" y="270" width="36" height="44" fill="#232c35"/><rect x="228" y="270" width="36" height="44" fill="#232c35"/>'
+    + '<rect x="0" y="0" width="360" height="360" fill="#101828" opacity="0.10"/></svg>';
+}
+function groupById(id){ for(var i = 0; i < INV_GROUPS.length; i++){ if(INV_GROUPS[i].id === id) return INV_GROUPS[i]; } return null; }
+function groupTotal(id){ return INV_LINES.filter(function(x){ return x.group === id; }).reduce(function(a,x){ return a + lineTotal(x); }, 0); }
+function groupCount(id){ return INV_LINES.filter(function(x){ return x.group === id; }).length; }
+function lineComm(l){
+  return '<div class="comm" aria-label="Line commercial, item ' + l.n + '">'
+    + '<div class="crow"><span class="k">Qty</span><span class="basis">'
+    + l.qty + " " + esc(l.unit) + '</span><span class="amt">' + l.qty + " " + esc(l.unit) + "</span></div>"
+    + '<div class="crow"><span class="k">Rate</span><span class="basis">per '
+    + esc(l.unit) + '</span><span class="amt">' + fmt(l.rate) + "</span></div>"
+    + '<div class="crow"><span class="k">Amount</span><span class="basis">'
+    + l.qty + " × " + fmt(l.rate) + '</span><span class="amt">' + fmt(lineTotal(l)) + "</span></div></div>";
+}
+function entryHTML(l, idx){
+  var h = '<article class="entry' + (l.photo ? "" : " no-photo") + '"><div class="entry-cols"><div class="entry-main">'
+    + '<div class="entry-top"><span class="idx">' + String(idx).padStart(2,"0") + '</span>'
+    + '<div class="entry-text"><h4>' + esc(l.desc) + '</h4>'
+    + '<p class="spec">' + esc(l.spec) + "</p></div></div>";
+  if(l.photo){
+    h += '<div class="thumbrow"><button class="thumb" data-photo="' + idx + '" aria-label="Preview photo for item ' + idx + '">'
+      + photoSVG(idx) + '</button>'
+      + '<span class="thumbcap">Item photo · tap to preview</span></div>';
+  }
+  return h + "</div>" + lineComm(l) + "</div></article>";
+}
+function invTotals(){
+  var sub = INV_LINES.reduce(function(a,l){ return a + lineTotal(l); }, 0);
+  var chg = INV_CHARGES.reduce(function(a,c){ return a + c.amount; }, 0);
+  var total = sub + chg + INV_VAT;
+  var cash = INV_PAYMENTS.filter(function(p){ return p.kind === "payment"; }).reduce(function(a,p){ return a + p.amount; }, 0);
+  var wht = INV_PAYMENTS.filter(function(p){ return p.kind === "wht"; }).reduce(function(a,p){ return a + p.amount; }, 0);
+  var received = cash + wht, balance = total - received;
+  var pct = Math.round(received / total * 100);
+  return { sub: sub, chg: chg, total: total, cash: cash, wht: wht, received: received, balance: balance, pct: pct };
+}
+function renderSchedule(){
+  var host = document.getElementById("schedule"), html = "", idx = 0, openGroup = null;
+  INV_LINES.forEach(function(l){
+    var g = l.group || null;
+    if(g !== openGroup){
+      if(openGroup){
+        html += '<div class="gsub"><span class="k">Group subtotal</span><span class="mono">'
+          + fmt(groupTotal(openGroup)) + "</span></div>";
+      }
+      if(g){
+        var meta = groupById(g);
+        html += '<div class="ghead" role="heading" aria-level="3" aria-label="Group ' + g + ": " + esc(meta.title) + '">'
+          + '<span class="ghost" aria-hidden="true">' + g + "</span>"
+          + '<div class="gh-main"><div class="kicker">Group ' + g + "</div><h3>" + esc(meta.title) + "</h3>"
+          + '<div class="count">' + groupCount(g) + (groupCount(g) === 1 ? " line" : " lines")
+          + "</div></div></div>";
+      }
+      openGroup = g;
+    }
+    idx++;
+    html += entryHTML(l, idx);
+  });
+  if(openGroup){
+    html += '<div class="gsub"><span class="k">Group subtotal</span><span class="mono">'
+      + fmt(groupTotal(openGroup)) + "</span></div>";
+  }
+  host.innerHTML = html;
+}
+function renderMoney(){
+  var t = invTotals();
+  document.getElementById("sTotal").textContent = fmt(t.total);
+  document.getElementById("sReceived").textContent = fmt(t.received);
+  document.getElementById("sBalance").textContent = fmt(t.balance);
+  document.getElementById("sPct").textContent = t.pct + "%";
+  document.getElementById("tSub").textContent = fmt(t.sub);
+  document.getElementById("tWork").textContent = fmt(INV_CHARGES[0].amount);
+  document.getElementById("tTrans").textContent = fmt(INV_CHARGES[1].amount);
+  document.getElementById("tVat").textContent = fmt(INV_VAT);
+  document.getElementById("tTotal").textContent = fmt(t.total);
+  document.getElementById("tReceived").textContent = fmt(t.received);
+  document.getElementById("tBalance").textContent = fmt(t.balance);
+  document.getElementById("pCash").textContent = fmt(t.cash);
+  document.getElementById("pWht").textContent = fmt(t.wht);
+  document.getElementById("pPct").textContent = t.pct + "%";
+  document.getElementById("pBal").textContent = fmt(t.balance);
+  document.getElementById("pFill").style.width = t.pct + "%";
+  document.getElementById("payAmt").textContent = fmt(t.balance);
+  document.getElementById("ctxCount").textContent = INV_LINES.length + " lines";
+  var hist = document.getElementById("payHist"), hh = "";
+  INV_PAYMENTS.forEach(function(p){
+    hh += '<div class="hrow" data-act="void-pay" role="button" tabindex="0" aria-label="Void this payment (demo)"><span class="hico' + (p.kind === "wht" ? " wht" : "") + '">'
+      + (p.kind === "wht"
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>')
+      + '</span><div class="hbody"><div class="m">' + esc(p.method) + "</div>"
+      + '<div class="r">' + esc(p.ref) + (p.tag ? " · " + esc(p.tag) : "") + "</div></div>"
+      + '<div class="hright"><div class="a">' + fmt(p.amount) + '</div><div class="d">' + esc(p.date) + "</div></div></div>";
+  });
+  hist.innerHTML = hh;
+}
+function toast(msg){
+  var box = document.getElementById("toasts"), el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg; box.appendChild(el);
+  setTimeout(function(){ el.remove(); }, 2600);
+}
+renderSchedule();
+renderMoney();
+document.getElementById("schedule").addEventListener("click", function(e){
+  var ph = e.target.closest("[data-photo]");
+  if(!ph) return;
+  var i = Number(ph.getAttribute("data-photo")) - 1, l = null, k = 0;
+  INV_LINES.forEach(function(x){ if(k === i) l = x; k++; });
+  document.getElementById("lightboxArt").innerHTML = photoSVG(99);
+  document.getElementById("lightboxCap").textContent = l ? l.desc + " — item photo (read-only)" : "";
+  document.getElementById("lightbox").classList.add("show");
+});
+document.getElementById("lightbox").addEventListener("click", function(){
+  this.classList.remove("show");
+});
+var scrim = document.getElementById("scrim"),
+    moreSheet = document.getElementById("moreSheet"),
+    paySheet = document.getElementById("paySheet"),
+    customSheet = document.getElementById("customSheet"),
+    lastFocus = null;
+function openSheet(s){ lastFocus = document.activeElement; scrim.classList.add("show"); s.classList.add("show"); }
+function closeSheets(){ scrim.classList.remove("show"); moreSheet.classList.remove("show"); paySheet.classList.remove("show"); customSheet.classList.remove("show"); if(lastFocus) lastFocus.focus(); }
+document.getElementById("auditBtn").addEventListener("click", function(){
+  var a = document.getElementById("auditSec"), open = a.getAttribute("data-open") === "true";
+  a.setAttribute("data-open", String(!open));
+  this.setAttribute("aria-expanded", String(!open));
+});
+scrim.addEventListener("click", closeSheets);
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    if(document.getElementById("lightbox").classList.contains("show")) document.getElementById("lightbox").classList.remove("show");
+    else closeSheets();
+  }
+});
+function exportCSV(){
+  var rows = [["n","group","description","qty","unit","rate","line_total"]];
+  INV_LINES.forEach(function(l,i){
+    rows.push([i+1, l.group || "UNGROUPED", '"' + l.desc + '"', l.qty, l.unit, l.rate, lineTotal(l)]);
+  });
+  var blob = new Blob([rows.map(function(r){ return r.join(","); }).join("\n")], {type:"text/csv"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "INV-2026-0117.csv"; a.click();
+  toast("CSV exported (invoice schema)");
+}
+var pendingDanger = null;
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-act],[data-nav]");
+  if(!b) return;
+  var act = b.getAttribute("data-act") || b.getAttribute("data-nav");
+  if(b.hasAttribute("data-nav")){ toast(b.getAttribute("data-nav") + " (app chrome demo)"); return; }
+  if(act === "back") toast("Back to Invoices");
+  else if(act === "edit") toast("Edit Invoice (draft checkout)");
+  else if(act === "status-info") toast("Status is derived from payments");
+  else if(act === "share"){
+    if(navigator.share) navigator.share({title:"INV-2026-0117"}).catch(function(){});
+    else toast("Link copied to clipboard");
+  }
+  else if(act === "more") openSheet(moreSheet);
+  else if(act === "customize") openSheet(customSheet);
+  else if(act === "custom-save"){ closeSheets(); toast("Customization saved (demo — no persistence)"); }
+  else if(act === "merge"){
+    var m = document.getElementById("mergeState"), on = m.textContent.indexOf("Currently on") === 0;
+    m.textContent = on ? "Currently off for exports and print views" : "Currently on for exports and print views";
+    toast("Qty + Unit merge " + (on ? "off" : "on") + " (demo)");
+  }
+  else if(act === "void-pay"){
+    if(pendingDanger === "void-pay"){ toast("Payment voided (demo — no persistence)"); pendingDanger = null; }
+    else { pendingDanger = "void-pay"; toast("Tap again to void this payment"); setTimeout(function(){ if(pendingDanger === "void-pay") pendingDanger = null; }, 3000); }
+  }
+  else if(act === "pay") openSheet(paySheet);
+  else if(act === "pay-confirm"){ closeSheets(); toast("Payment recorded (demo — no persistence)"); }
+  else if(act === "download"){ closeSheets(); toast("download:start — preparing PDF…"); setTimeout(function(){ toast("download:success — saved to Downloads"); }, 900); }
+  else if(act === "revert"){ closeSheets(); toast("Revert to Quotation"); }
+  else if(act === "waybill"){ closeSheets(); toast("Generate Waybill"); }
+  else if(act === "advance"){ closeSheets(); toast("Advance Invoice"); }
+  else if(act === "link-project"){ closeSheets(); toast("Link to Project"); }
+  else if(act === "duplicate"){ closeSheets(); toast("Duplicated as draft invoice"); }
+  else if(act === "copy-number"){ closeSheets(); toast("Invoice number copied"); }
+  else if(act === "csv"){ closeSheets(); exportCSV(); }
+  else if(act === "view-doc") toast("Linked document (demo)");
+  else if(act === "archive" || act === "delete"){
+    if(pendingDanger === act){ closeSheets(); toast(act === "archive" ? "Invoice archived" : "Invoice deleted"); pendingDanger = null; }
+    else { pendingDanger = act; toast("Tap " + act + " again to confirm"); setTimeout(function(){ pendingDanger = null; }, 3000); }
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cost & Pricing Sheet Reconstruction — Dependency Waterfall</title>
+<meta name="description" content="Dependency waterfall for the Cost & Pricing Sheet reconstruction PRD package: phases, gates, blockers, and readiness states.">
+<style>
+:root{
+  --paper:#f7f5f0; --ink:#1c1a16; --muted:#6b655a;
+  --line:#d8d2c4; --card:#fffdf8;
+  --accent:#1f4e5f; --accent-soft:#e3edf1;
+  --ready:#2e7d4f; --ready-soft:#e2f0e7;
+  --gated:#b3541e; --gated-soft:#f7e8da;
+  --blocked:#a63a3a; --blocked-soft:#f6e2e2;
+  --info:#3c5a99; --info-soft:#e4eaf6;
+  --radius:10px;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#16150f; --ink:#ece7d9; --muted:#a39c8b;
+    --line:#3a372c; --card:#201e17;
+    --accent:#7fb6c9; --accent-soft:#22333a;
+    --ready:#7cc79a; --ready-soft:#1e2f24;
+    --gated:#e09a5f; --gated-soft:#33241a;
+    --blocked:#e07c7c; --blocked-soft:#382020;
+    --info:#9db4e8; --info-soft:#232b40;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  line-height:1.55; font-size:16px;
+}
+.wrap{max-width:880px; margin:0 auto; padding:32px 20px 96px}
+header.doc{border-bottom:2px solid var(--ink); padding-bottom:20px; margin-bottom:8px}
+.eyebrow{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 8px}
+h1{font-size:clamp(26px,4.5vw,38px); line-height:1.15; margin:0 0 10px; letter-spacing:-.01em}
+.lede{font-size:17px; max-width:62ch; margin:0 0 6px}
+.meta{font-size:13px; color:var(--muted); margin:12px 0 0}
+.meta code{font-family:Consolas,"SF Mono",monospace; font-size:12.5px}
+.legend{display:flex; flex-wrap:wrap; gap:8px 16px; list-style:none; margin:20px 0 8px; padding:14px 16px;
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius); font-size:13.5px}
+.legend li{display:flex; align-items:center; gap:8px}
+.dot{width:12px; height:12px; border-radius:50%; flex:none; border:2px solid transparent}
+.dot.ready{background:var(--ready)} .dot.gated{background:var(--gated)}
+.dot.blocked{background:var(--blocked)} .dot.info{background:var(--info)}
+.flow{position:relative; margin:28px 0 0; padding:0; list-style:none}
+.flow::before{content:""; position:absolute; left:23px; top:12px; bottom:12px; width:2px;
+  background:var(--line); border-radius:2px}
+.flow-progress{position:absolute; left:23px; top:12px; width:2px; height:0; background:var(--accent);
+  border-radius:2px}
+.phase{position:relative; margin:0; padding:0 0 8px 64px}
+.phase:last-child{padding-bottom:0}
+.phase::before{content:attr(data-step); position:absolute; left:6px; top:20px; width:36px; height:36px;
+  border-radius:50%; background:var(--card); border:2px solid var(--accent); color:var(--accent);
+  font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; z-index:1}
+.phase[data-state="gated"]::before{border-color:var(--gated); color:var(--gated)}
+.phase[data-state="blocked"]::before{border-color:var(--blocked); color:var(--blocked)}
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:16px 18px; transition:opacity .25s var(--ease-out), transform .25s var(--ease-out), border-color .2s var(--ease-out)}
+.card:focus-within, .card.lit{border-color:var(--accent)}
+.card h2{font-size:18px; margin:0 0 4px}
+.card h2 .tag{font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  padding:3px 9px; border-radius:999px; margin-left:10px; vertical-align:2px; white-space:nowrap}
+.tag.ready{background:var(--ready-soft); color:var(--ready)}
+.tag.gated{background:var(--gated-soft); color:var(--gated)}
+.tag.blocked{background:var(--blocked-soft); color:var(--blocked)}
+.tag.info{background:var(--info-soft); color:var(--info)}
+.card p{margin:8px 0; font-size:14.5px}
+.card ul{margin:8px 0 2px; padding-left:20px; font-size:14px}
+.card li{margin:3px 0}
+.card li strong{font-weight:650}
+.dep{font-size:12.5px; color:var(--muted); margin-top:10px; border-top:1px dashed var(--line); padding-top:8px}
+.dep code{font-family:Consolas,"SF Mono",monospace; font-size:12px}
+button.phase-toggle{all:unset; display:block; width:100%; cursor:pointer; border-radius:var(--radius)}
+button.phase-toggle:focus-visible{outline:3px solid var(--accent); outline-offset:3px}
+.detail{margin-top:10px; border-top:1px solid var(--line); padding-top:10px; font-size:14px}
+.detail[hidden]{display:none}
+.hint{font-size:12.5px; color:var(--muted)}
+section.tail{margin-top:36px; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--radius); padding:18px 20px}
+section.tail h2{font-size:18px; margin:0 0 8px}
+table.gates{width:100%; border-collapse:collapse; font-size:14px; margin-top:8px}
+table.gates th, table.gates td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+table.gates th{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+footer.doc{margin-top:32px; font-size:13px; color:var(--muted); border-top:1px solid var(--line); padding-top:14px}
+/* staged reveal */
+.reveal{opacity:0; transform:translateY(14px)}
+.reveal.in{opacity:1; transform:none; transition:opacity .3s var(--ease-out), transform .3s var(--ease-out)}
+/* unresolved-gate pulse: opacity only */
+@keyframes gatepulse{0%,100%{opacity:1}50%{opacity:.45}}
+.pulse{animation:gatepulse 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1; transform:none}
+  .reveal.in{transition:none}
+  .pulse{animation:none}
+  .card{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="doc">
+    <p class="eyebrow">BIGDROPS &middot; Cost & Pricing Sheet PRD package &middot; visual companion</p>
+    <h1>Cost & Pricing Sheet Reconstruction — Dependency Waterfall</h1>
+    <p class="lede">Implementation order for the Cost & Pricing Sheet rebuild. Each phase unlocks the next.
+      Backend and domain work comes first; the V12 presentation transplant comes last.
+      Two gates stay closed: the View Page candidate and the Forme renderer readiness.</p>
+    <p class="meta">Companion to <code>docs/prd/cost-pricing-sheet/01</code>, <code>02</code>, <code>03</code>.
+      Informative only &mdash; File 03 governs on conflict. Package status: <strong>NOT READY</strong>.</p>
+  </header>
+
+  <ul class="legend" aria-label="Status legend">
+    <li><span class="dot ready" aria-hidden="true"></span>Specified — ready to implement</li>
+    <li><span class="dot gated" aria-hidden="true"></span>Gated — blocked until gate closes</li>
+    <li><span class="dot blocked" aria-hidden="true"></span>Unresolved decision</li>
+    <li><span class="dot info" aria-hidden="true"></span>Shared-system dependency</li>
+  </ul>
+  <p class="hint">Select any phase heading to expand its dependency detail. Keyboard: Tab to move, Enter to expand.</p>
+
+  <ol class="flow" id="flow">
+    <li class="phase reveal" data-step="A" data-state="ready" data-up="" data-down="B">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Architecture contract <span class="tag ready">Resolved</span></h2>
+        <p>Three-file PRD package. Identity invariants, CP/SP ownership, snapshot lineage, Forme renderer decision. The single source of truth for all phases below.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> Phase B (schema work).</li>
+          <li><strong>Depends on:</strong> nothing. The contract is the waterfall head.</li>
+          <li><strong>Shared risk:</strong> none. Documentation only.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="B" data-state="ready" data-up="A" data-down="C">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Schema and persistence preparation <span class="tag ready">Specified</span></h2>
+        <p>M1 unique <code>boqs.boq_number</code>, M2 <code>boq_rows</code> parity columns with backfill, M3 row consolidation and row-type rename. <code>boq_rows</code> becomes the single authoritative row store.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> Phase C (domain model).</li>
+          <li><strong>Depends on:</strong> A (ownership map). Duplicate pre-check before M1.</li>
+          <li><strong>Shared risk:</strong> public template plus every tenant schema. M4 cleanup needs separate authorization.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="C" data-state="ready" data-up="B" data-down="D">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Shared infrastructure extensions <span class="tag info">Shared risk</span></h2>
+        <p>Optional <code>builtins</code> params, <code>hideFullDenyList</code>, <code>cp</code>/<code>sp</code> import keys, group-support flag, shared photo uploader, <code>'boq'</code> trail union. Invoice/Quotation regression-guarded.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> Phase D (Cost & Pricing Sheet domain).</li>
+          <li><strong>Depends on:</strong> B. Defaults must stay unchanged for Invoice/Quotation.</li>
+          <li><strong>Regression protection:</strong> <code>columnVisibilityMode</code>, <code>jsonGroupImport</code>, <code>calculations</code> tests pass after each edit.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="D" data-state="ready" data-up="C" data-down="E">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Cost & Pricing Sheet domain model <span class="tag ready">Specified</span></h2>
+        <p>Parity row contract, <code>BOQ_BUILTIN_COLUMNS</code>, row helpers, normalization, factories, identity guard. RFQ isolation proven by grep before proceeding.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> Phase E (calculation adapter).</li>
+          <li><strong>Depends on:</strong> C (shared extensions) and B (columns exist).</li>
+          <li><strong>RFQ isolation:</strong> zero Cost & Pricing Sheet-owned <code>table-document</code> imports; RFQ files byte-identical.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="E" data-state="ready" data-up="D" data-down="F">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Cost & Pricing Sheet calculation adapter <span class="tag ready">Specified</span></h2>
+        <p>New <code>src/domain/boq/calculations.ts</code>: SP feeds <code>computeDocument()</code> as <code>unit_price</code>; costing delegates to locked <code>computeBoqTotals()</code>. No duplicated formula. Dead <code>calcTotals()</code> gains no callers.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> Phase F (columns, groups, import, photos on live totals).</li>
+          <li><strong>Depends on:</strong> D (row model). <code>src/lib/Calculations.ts</code> never takes a <code>cp</code> input.</li>
+          <li><strong>Regression protection:</strong> Invoice/Quotation totals byte-identical; one live engine only.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="F" data-state="ready" data-up="E" data-down="G">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Column, group, import, photo readiness <span class="tag ready">Specified</span></h2>
+        <p>Quotation-parity Column Settings with the Cost & Pricing Sheet deny list; first-class groups; JSON Import adapter (Add-mode groups); Cloudinary photo lifecycle into <code>boq_rows.image_url</code>.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> Phase G (save, numbering, audit, lineage, conversion).</li>
+          <li><strong>Depends on:</strong> E (totals), C (shared import and upload extensions).</li>
+          <li><strong>Shared risk:</strong> import prompt generator and photo uploader are shared edits with unchanged defaults.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="G" data-state="ready" data-up="F" data-down="H">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Save, numbering, audit, lineage <span class="tag ready">Specified</span></h2>
+        <p><code>BoqFormPage</code> orchestration, <code>useBoqSave</code> with retry-wrapped numbering, <code>recordBoq*</code> emitters (no migration), <code>conversionTrail</code> lineage. Quotation &rarr; Invoice boundary already verified snapshot-based.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> Phase H (conversion), then presentation phases.</li>
+          <li><strong>Depends on:</strong> F (rows, columns, groups) and B (M1 uniqueness).</li>
+          <li><strong>Rule:</strong> lineage is ancestry, never synchronization. Five implementation prohibitions apply.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="H" data-state="ready" data-up="G" data-down="I">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Cost & Pricing Sheet &rarr; Quotation conversion <span class="tag ready">Specified</span></h2>
+        <p>Explicit row whitelist, SP &rarr; <code>unit_price</code>, CP omitted, client-field correction, column-config strip rule, cursor advance, audit LINK. Daughter independent after creation.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> presentation phases (something correct exists to present).</li>
+          <li><strong>Depends on:</strong> G (lineage, audit, numbering).</li>
+          <li><strong>Fixes live defects:</strong> unknown-column spread, lost groups, parent-only duplicate, <code>boq_items</code> export name.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="I" data-state="gated" data-up="H" data-down="J">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>V12 form transplant <span class="tag gated">Gated</span></h2>
+        <p>Approved presentation direction, transplanted last. Wires prepared state and commands; invents no backend behavior. Nineteen-item readiness gate in File 03 &sect;6.1.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> view and PDF work (form proves the prepared state end to end).</li>
+          <li><strong>Depends on:</strong> all of A&ndash;H green. V12 reinterpretations applied (no <code>specification</code> column, no local data URLs, no prototype save).</li>
+          <li><strong>Blocker if rushed:</strong> architecture invented inside presentation (risk R13).</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="J" data-state="blocked" data-up="I" data-down="K">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>View Page implementation <span class="tag blocked pulse">Unresolved</span></h2>
+        <p>Four candidates (V1&ndash;V4), no recorded acceptance. Human visual selection required before any production view work. Shared shell, Download FAB, prepared totals.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> view&harr;PDF parity sign-off.</li>
+          <li><strong>Depends on:</strong> I (prepared state) plus the recorded human selection (File 02 &sect;4.1).</li>
+          <li><strong>Not a criterion:</strong> newest file, highest version number, modification time.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="K" data-state="gated" data-up="J" data-down="L">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>pdfcn Forme implementation <span class="tag gated">Gated</span></h2>
+        <p>Renderer decided: Forme. Cost & Pricing Sheet owns a dedicated template over prepared data; the migration track owns the renderer, orientation, pagination, and one-page mode. POC gaps (rich text, browser proof, density) gate the start.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> finishing integration and acceptance.</li>
+          <li><strong>Depends on:</strong> migration-track readiness plus <code>prepareBoqViewData</code>. Never React-PDF; no legacy Cost & Pricing Sheet path exists.</li>
+          <li><strong>Rule:</strong> Forme renders; the calculation architecture calculates.</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="L" data-state="gated" data-up="K" data-down="M">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Export, duplicate, finishing integration <span class="tag gated">Gated</span></h2>
+        <p><code>boq_rows</code> export fix, <code>boq_items</code> absence check, rewritten duplicate, group/photo/column transfer checks, RFQ regression proof.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Unlocks:</strong> final acceptance.</li>
+          <li><strong>Depends on:</strong> K (parity surfaces to verify against) and H (conversion behavior).</li>
+        </ul></div></div>
+      </button>
+    </li>
+    <li class="phase reveal" data-step="M" data-state="gated" data-up="L" data-down="">
+      <button class="phase-toggle" aria-expanded="false">
+        <div class="card"><h2>Static verification and acceptance <span class="tag gated">Gated</span></h2>
+        <p><code>git diff --check</code>, scoped status, link checks, standalone roadmap check, package acceptance lists (File 03 &sect;13, File 01 &sect;25, File 02 &sect;9). No build, typecheck, lint, tests, or database commands in documentation tasks.</p>
+        <div class="detail" hidden><ul>
+          <li><strong>Depends on:</strong> every phase above, both gates closed.</li>
+          <li><strong>Closes:</strong> the reconstruction. M4 legacy cleanup follows under separate authorization.</li>
+        </ul></div></div>
+      </button>
+    </li>
+  </ol>
+
+  <section class="tail" aria-labelledby="gates-h">
+    <h2 id="gates-h">Gate register</h2>
+    <table class="gates">
+      <thead><tr><th scope="col">Gate</th><th scope="col">State</th><th scope="col">Closes when</th></tr></thead>
+      <tbody>
+        <tr><td>V12 transplant</td><td>Gated</td><td>All nineteen File 03 &sect;6.1 items green; project-lead sign-off (Q5).</td></tr>
+        <tr><td>View candidate</td><td>Unresolved</td><td>Recorded human acceptance of one candidate plus structural extraction (File 02 &sect;4.1). No default.</td></tr>
+        <tr><td>Forme renderer</td><td>Gated</td><td>Migration-track foundation, reference template path, POC gaps closed or scoped, <code>prepareBoqViewData</code> live.</td></tr>
+        <tr><td>Scope questions Q1&ndash;Q4</td><td>Open</td><td>Product answers, or stated defaults stand (File 03 &sect;9).</td></tr>
+        <tr><td>Overall readiness</td><td>Not ready</td><td>All gates above closed.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="doc">
+    Cost & Pricing Sheet PRD package &middot; <code>docs/prd/cost-pricing-sheet/</code> &middot; 2026-09-29 &middot;
+    Companion to Files 01&ndash;03. Motion: staged reveal, progress connector, unresolved-gate pulse; all inert under <code>prefers-reduced-motion</code>.
+  </footer>
+</div>
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var items = Array.prototype.slice.call(document.querySelectorAll(".phase"));
+  /* Expandable dependency detail: one control per phase, keyboard-native via <button>. */
+  items.forEach(function(li){
+    var btn = li.querySelector(".phase-toggle");
+    var detail = li.querySelector(".detail");
+    btn.addEventListener("click", function(){
+      var open = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", String(!open));
+      detail.hidden = open;
+    });
+  });
+  /* Upstream/downstream emphasis on hover and focus: transform/opacity only. */
+  function rel(id){ return document.querySelector('.phase[data-step="'+id+'"] .card'); }
+  items.forEach(function(li){
+    var btn = li.querySelector(".phase-toggle");
+    var card = li.querySelector(".card");
+    function lit(on){
+      if(reduce) return;
+      card.classList.toggle("lit", on);
+      ["up","down"].forEach(function(k){
+        var id = li.getAttribute("data-"+k);
+        if(!id) return;
+        var c = rel(id);
+        if(c) c.classList.toggle("lit", on);
+      });
+    }
+    btn.addEventListener("mouseenter", function(){ lit(true); });
+    btn.addEventListener("mouseleave", function(){ lit(false); });
+    btn.addEventListener("focus", function(){ lit(true); });
+    btn.addEventListener("blur", function(){ lit(false); });
+  });
+  /* Staged reveal + progress connector. */
+  var bar = document.querySelector(".flow-progress");
+  var flow = document.getElementById("flow");
+  function paint(){
+    var r = flow.getBoundingClientRect();
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    var seen = 0;
+    items.forEach(function(li){
+      var b = li.getBoundingClientRect();
+      if(b.top < vh * 0.72) seen++;
+    });
+    if(bar){
+      var first = items[0].getBoundingClientRect();
+      var last = items[items.length-1].getBoundingClientRect();
+      var total = (last.top + last.height/2) - (first.top);
+      var done = Math.max(0, Math.min(1, ((vh*0.72) - first.top) / total));
+      var top = 12, bottom = 12;
+      bar.style.top = top + "px";
+      bar.style.height = Math.max(0, done * (flow.offsetHeight - top - bottom)) + "px";
+    }
+    return seen;
+  }
+  if(reduce || !("IntersectionObserver" in window)){
+    items.forEach(function(li){ li.classList.add("in"); });
+    if(bar) bar.style.display = "none";
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+    paint();
+  }, {threshold: 0.12, rootMargin: "0px 0px -8% 0px"});
+  items.forEach(function(li, i){
+    /* Stagger keeps order legible: 30-80ms per the animation skill. */
+    li.style.transitionDelay = Math.min(i * 40, 320) + "ms";
+    io.observe(li);
+  });
+  var tick = false;
+  window.addEventListener("scroll", function(){
+    if(tick) return; tick = true;
+    requestAnimationFrame(function(){ paint(); tick = false; });
+  }, {passive: true});
+  window.addEventListener("resize", paint);
+  paint();
+})();
+</script>
+</body>
+</html>

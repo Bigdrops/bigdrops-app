@@ -1,0 +1,635 @@
+<!doctype html>
+<!--
+  BIGDROPS - BOQ View Page - MOBILE + FOLD candidate (V4, clean sheet).
+  Standalone design-direction prototype. Phone-first, fold recomposed.
+
+  V4 CONCEPT: "COMPACT DOSSIER WITH INLINE COMMERCIAL DISCLOSURE"
+  V3 ("ledger schedule with sticky commercial chrome") is rejected in
+  full. V2 is the quality floor, not the template. V4 is a third
+  information architecture built from the reader's job:
+  recognise, orient, read the schedule, check the commercial outcome,
+  act.
+
+  ARCHITECTURE (10 decisions)
+  1. Document identity: one merged dossier head. The app bar carries
+     back + number + status + share + more. Directly beneath, a single
+     dossier row carries the company monogram, the BOQ title, the
+     client line and a compact Edit button. No separate company row,
+     no hero card, no metadata block grid.
+  2. Company identity: 44px monogram block with company initials
+     (production DocumentBrandBlock fallback footprint). No invented
+     logo artwork.
+  3. Action hierarchy: Edit inline in the dossier head (secondary);
+     Download on the standard FAB (primary, view role); Share in the
+     app bar; Convert/Duplicate/status/Archive/Delete inside a
+     sectioned More sheet with a danger zone. No action strip, no
+     duplicated surfaces.
+  4. BOQ context: one static context line (date, validity, item
+     count) plus a native disclosure for preparer, site and notes
+     pointer. No metadata cards.
+  5. Groups: editorial chapter dividers. Oversized ghost letter,
+     chapter title, item count, right-aligned chapter subtotal.
+     Static, in-flow. No envelopes, no chips, no second nav system.
+  6. Items: specimen entries. Marginal index, description-first type,
+     specification second, make/quantity caption third, one
+     right-aligned selling line-total with a small profit delta.
+     Cost and margin sit behind a per-item disclosure. Photo, when
+     present, is a full-bleed 16/9 figure at the top of the entry.
+     No-photo items emit zero photo markup and reserve zero space.
+  7. Commercial: one compact capsule in flow. Collapsed it shows the
+     selling total and margin on a single line. Expanded it reveals
+     total cost and gross profit. Never sticky, never a band, never
+     a black strip.
+  8. Close-out: a signed completion card. Totals rows, amount in
+     words, an explicit end-of-schedule rule, notes. The schedule
+     visibly concludes.
+  9. Photo behaviour: one item carries a deliberate simulated site
+     photo (inline SVG, captioned). Tap opens a read-only lightbox.
+     All other items carry no image footprint.
+  10. Responsive: below 600px the specimen entry stacks
+     (photo / text / commercial). At 600px+ (fold) the entry splits
+     into text and commercial columns with the photo docked beside
+     the text. One file, no desktop layout (desktop is separate).
+
+  WHAT V4 REJECTS (V3, in full)
+  Ledger/spreadsheet metaphor, graph-paper background, sticky
+  commercial bar, horizontal group-chip rail, stacked information
+  bands, ledger rows, cold worksheet aesthetic.
+
+  WHAT V4 KEEPS FROM V2 (qualities, not structure)
+  Visual calm, clear surfaces, strong document identity, easy
+  scanning, polished application feel, separation between chrome
+  and content. None of V2's structure returns: no hero card, no
+  metadata blocks, no commercial band, no field-grid item cards,
+  no action strip.
+
+  DOMAIN TRUTH (audited, not invented)
+  - Contract: src/domain/boq/types.ts + table-document/types.ts.
+  - Locked math: src/domain/boq/calculateBoqTotals.ts.
+    total_cost = SUM(cp x qty). total_selling = SUM(sp x qty).
+    gross_profit = selling - cost. No VAT, no WHT, no discount.
+    Line profit = (sp - cp) x qty. This file renders every money
+    figure from those formulas in script (single source) so the
+    sample cannot drift from the locked model.
+  - Actions: src/pages/view-boq-actions.ts (Edit, Convert to
+    Quotation, Duplicate, status change, Archive, Delete) plus
+    Download and Export CSV (BOQS schema exists).
+  - Invoice view conventions only: brand fallback, read-only
+    thumbnails, totals with words, sectioned More sheet,
+    download:start/success feedback, Web Share with fallback.
+
+  MOBILE SHELL (mandatory simulation)
+  Persistent bottom navigation replicates MobileBottomNav geometry:
+  fixed, left/right 10px, bottom max(8px, safe-area), 62px tall,
+  5 tabs, Sales active, z-40. Download FAB follows fab-standard
+  v1.1: 50x50 rounded-18, AB download icon, right 16px,
+  bottom calc(88px + safe-area), z-50, ambient float on a wrapper,
+  disabled under reduced motion. Document-end padding clears both.
+
+  PROTOTYPE-LOCAL
+  Sample company, client and item data is fictional. The photo is a
+  deliberate simulated site photo; production renders imageUrl.
+  Action toasts name real actions without persistence. Export CSV
+  builds a real client-side extract of the sample rows.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS - BOQ View - BOQ-2026-0142</title>
+<style>
+  :root{
+    --ink:#101828; --body:#344054; --faint:#667085;
+    --line:rgba(16,24,40,.10); --line-strong:rgba(16,24,40,.22);
+    --bg:#f2f4f7; --card:#ffffff; --soft:#eef1f5;
+    --brand:#175cd3; --brand-ink:#ffffff; --brand-soft:rgba(23,92,211,.08);
+    --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+    --cost:#b54708; --cost-soft:rgba(181,71,8,.10);
+    --sell:#067647; --sell-soft:rgba(6,118,71,.10);
+    --danger:#b42318; --danger-soft:rgba(180,35,24,.08);
+    --warn-soft:#fffaeb;
+    --ghost:rgba(16,24,40,.07);
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.06);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.28);
+    --fab-bg:#175cd3; --fab-text:#ffffff;
+    --gutter:16px;
+  }
+  [data-theme="dark"]{
+    --ink:#f2f4f7; --body:#d0d5dd; --faint:#98a2b3;
+    --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24);
+    --bg:#0c111d; --card:#1d2939; --soft:#161f2e;
+    --brand:#84adff; --brand-ink:#0c111d; --brand-soft:rgba(132,173,255,.12);
+    --cost:#fdb022; --cost-soft:rgba(253,176,34,.13);
+    --sell:#6ce9a6; --sell-soft:rgba(108,233,166,.12);
+    --danger:#f97066; --danger-soft:rgba(249,112,102,.12);
+    --warn-soft:#2a2305;
+    --ghost:rgba(255,255,255,.06);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);
+    --shadow-sheet:0 -18px 44px rgba(0,0,0,.55);
+    --fab-bg:#1570ef; --fab-text:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:0;text-align:left}
+  button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .wrap{max-width:480px;margin:0 auto;padding:8px var(--gutter) calc(200px + env(safe-area-inset-bottom))}
+  @media(min-width:600px){.wrap{max-width:720px}}
+
+  /* ======== APP BAR (sticky, single row) ======== */
+  .appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+    min-height:56px;padding:8px 0;background:var(--bg);border-bottom:1px solid var(--line)}
+  .iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+    color:var(--body);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .iconbtn:active{transform:scale(.93)}
+  .iconbtn svg{width:18px;height:18px}
+  .appbar-id{flex:1;min-width:0;display:flex;align-items:center;gap:8px}
+  .appbar-id .num{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:-.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status{flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    padding:4px 9px;border-radius:99px;background:var(--sell-soft);color:var(--sell);border:1px solid transparent}
+  .status[data-s="open"]{background:var(--cost-soft);color:var(--cost)}
+
+  /* ======== DOSSIER HEAD (one merged row, in flow) ======== */
+  .dossier{display:flex;gap:12px;align-items:flex-start;padding:16px 0 4px}
+  .monogram{width:44px;height:44px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    background:var(--brand);color:var(--brand-ink);font-weight:800;font-size:15px;letter-spacing:.02em}
+  .dossier-main{flex:1;min-width:0}
+  .dossier-main h2{font-size:17px;font-weight:800;letter-spacing:-.015em;line-height:1.25;text-wrap:balance}
+  .dossier-main .client{margin-top:3px;font-size:12.5px;color:var(--faint);font-weight:600}
+  .editbtn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;
+    color:var(--brand);background:var(--brand-soft);border:1px solid transparent;border-radius:11px;padding:9px 13px}
+  .editbtn:active{transform:scale(.96)}
+  .editbtn svg{width:14px;height:14px}
+  .context{padding:8px 0 0;font-size:12px;color:var(--faint);font-weight:600}
+  .context details{margin-top:6px}
+  .context summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:5px;
+    color:var(--brand);font-weight:800;font-size:12px}
+  .context summary::-webkit-details-marker{display:none}
+  .context summary .chev{transition:transform .18s}
+  .context details[open] summary .chev{transform:rotate(180deg)}
+  .context dl{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:10px 12px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px}
+  .context dt{color:var(--faint);font-weight:600}
+  .context dd{color:var(--body);font-weight:700;text-align:right}
+
+  /* ======== COMMERCIAL CAPSULE (in flow, collapsible, never sticky) ======== */
+  .capsule{margin:14px 0 4px;background:var(--card);border:1px solid var(--line-strong);border-radius:16px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .capsule>button{width:100%;display:flex;align-items:center;gap:10px;padding:13px 14px}
+  .capsule .cap-label{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .capsule .cap-value{margin-left:auto;font-family:var(--mono);font-size:16px;font-weight:700;color:var(--sell)}
+  .capsule .cap-margin{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--sell);
+    background:var(--sell-soft);border-radius:99px;padding:3px 9px;flex-shrink:0}
+  .capsule .chev{color:var(--faint);transition:transform .18s;flex-shrink:0}
+  .capsule[data-open="true"] .chev{transform:rotate(180deg)}
+  .capsule-detail{display:none;border-top:1px dashed var(--line-strong);padding:6px 14px 12px}
+  .capsule[data-open="true"] .capsule-detail{display:block}
+  .capsule-detail .crow{display:flex;align-items:baseline;justify-content:space-between;padding:7px 0;font-size:13px}
+  .capsule-detail .crow+.crow{border-top:1px solid var(--line)}
+  .capsule-detail .crow span:first-child{color:var(--body);font-weight:600}
+  .capsule-detail .crow .mono{font-weight:700}
+  .capsule-detail .crow.cost .mono{color:var(--cost)}
+  .capsule-detail .crow.profit .mono{color:var(--sell)}
+  .capsule-detail .hint{margin-top:6px;font-size:11px;color:var(--faint);font-weight:600}
+
+  /* ======== CHAPTER DIVIDER (editorial, static) ======== */
+  .chapter{display:flex;align-items:flex-end;gap:10px;margin:26px 0 10px;padding-top:18px;border-top:2px solid var(--ink)}
+  .chapter .ghost{font-size:44px;line-height:.9;font-weight:800;color:var(--ghost);letter-spacing:-.04em;user-select:none}
+  .chapter .ch-main{flex:1;min-width:0;padding-bottom:2px}
+  .chapter h3{font-size:14px;font-weight:800;letter-spacing:-.01em}
+  .chapter .count{font-size:11.5px;color:var(--faint);font-weight:700;margin-top:2px}
+  .chapter .sub{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--body);padding-bottom:4px;white-space:nowrap}
+  .chapter .sub small{display:block;font-family:inherit;font-size:10px;font-weight:600;color:var(--faint);text-align:right}
+
+  /* ======== SPECIMEN ENTRY (description-first) ======== */
+  .specimen{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+    margin-bottom:12px;overflow:hidden}
+  .specimen figure{margin:0;line-height:0}
+  .specimen figure svg{width:100%;height:auto;display:block;aspect-ratio:16/9}
+  .specimen figure figcaption{font-size:10.5px;font-weight:700;color:var(--faint);padding:6px 14px 0;line-height:1.4}
+  .spec-body{display:flex;gap:10px;padding:14px 14px 6px}
+  .idx{flex-shrink:0;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--faint);
+    border:1px solid var(--line-strong);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+  .spec-text{flex:1;min-width:0}
+  .spec-text h4{font-size:14.5px;font-weight:800;letter-spacing:-.01em;line-height:1.35}
+  .spec-text .spec{margin-top:4px;font-size:12.5px;line-height:1.55;color:var(--body)}
+  .spec-text .meta{margin-top:7px;font-size:11.5px;color:var(--faint);font-weight:600}
+  .spec-text .meta b{color:var(--body);font-weight:800}
+  .spec-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:8px 14px 12px}
+  .cost-toggle{font-size:11.5px;font-weight:800;color:var(--brand);padding:6px 0}
+  .costline{display:none;padding:0 14px 12px;font-size:12px}
+  .specimen[data-cost="open"] .costline{display:block}
+  .costline .crow{display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed var(--line)}
+  .costline .crow span:first-child{color:var(--faint);font-weight:600}
+  .costline .crow.cost .mono{color:var(--cost);font-weight:700}
+  .sellbox{text-align:right;flex-shrink:0}
+  .sellbox .amt{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .sellbox .delta{margin-top:2px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--sell)}
+  @media(min-width:600px){
+    .specimen .cols{display:flex;gap:0}
+    .specimen figure{flex:0 0 220px}
+    .specimen figure svg{height:100%;aspect-ratio:auto}
+    .specimen .rest{flex:1;min-width:0}
+  }
+
+  /* ======== CLOSE-OUT (signed completion card) ======== */
+  .close{margin:28px 0 0;background:var(--card);border:1px solid var(--line-strong);border-radius:18px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .close-head{padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+  .close-head .eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sell)}
+  .close-head h3{margin-top:4px;font-size:17px;font-weight:800;letter-spacing:-.015em}
+  .close-head p{margin-top:4px;font-size:12.5px;color:var(--faint);font-weight:600}
+  .close-rows{padding:6px 16px 4px}
+  .close-rows .trow{display:flex;align-items:baseline;justify-content:space-between;padding:10px 0;font-size:13.5px}
+  .close-rows .trow+.trow{border-top:1px solid var(--line)}
+  .close-rows .trow span:first-child{color:var(--body);font-weight:600}
+  .close-rows .trow .mono{font-weight:700}
+  .close-rows .trow.cost .mono{color:var(--cost)}
+  .close-rows .trow.grand{font-size:15px}
+  .close-rows .trow.grand .mono{color:var(--sell)}
+  .close-rows .trow.profit .mono{color:var(--sell)}
+  .words{margin:8px 16px 0;background:var(--soft);border-radius:12px;padding:11px 13px;
+    font-size:12.5px;font-style:italic;line-height:1.6;color:var(--body)}
+  .notes{margin:10px 16px 0;font-size:12.5px;line-height:1.6;color:var(--body)}
+  .notes b{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+  .endrule{display:flex;align-items:center;gap:10px;margin:16px 16px;padding:0 0 16px;color:var(--faint);
+    font-family:var(--mono);font-size:11px;font-weight:600}
+  .endrule::before,.endrule::after{content:"";flex:1;border-top:1px solid var(--line-strong)}
+
+  /* ======== BOTTOM NAV (MobileBottomNav geometry) ======== */
+  .bottomnav{position:fixed;z-index:40;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom,0px));
+    height:62px;padding:4px;display:grid;grid-template-columns:repeat(5,1fr);
+    border:1px solid var(--line-strong);border-radius:20px;background:var(--card);box-shadow:0 8px 24px rgba(16,24,40,.18)}
+  .bottomnav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    border-radius:15px;font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:var(--faint)}
+  .bottomnav button svg{width:17px;height:17px}
+  .bottomnav button.on{background:var(--brand);color:var(--brand-ink)}
+
+  /* ======== DOWNLOAD FAB (fab-standard v1.1) ======== */
+  .fab-float{position:fixed;z-index:50;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));
+    animation:fabfloat 4s ease-in-out infinite}
+  @keyframes fabfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  @media(prefers-reduced-motion:reduce){.fab-float{animation:none}}
+  .fab{width:50px;height:50px;border-radius:18px;background:var(--fab-bg);color:var(--fab-text);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(23,92,211,.4)}
+  .fab:hover{transform:scale(1.05)}
+  .fab:active{transform:scale(.95)}
+  .fab svg{width:22px;height:22px;fill:currentColor}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* ======== SHEETS / LIGHTBOX / TOASTS ======== */
+  .scrim{position:fixed;inset:0;z-index:60;background:rgba(12,17,29,.5);display:none}
+  .scrim.show{display:block}
+  .sheet{position:fixed;z-index:61;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;
+    background:var(--card);border-radius:20px 20px 0 0;box-shadow:var(--shadow-sheet);
+    padding:10px 16px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease}
+  .sheet.show{transform:translateY(0)}
+  @media(min-width:600px){.sheet{max-width:560px}}
+  @media(prefers-reduced-motion:reduce){.sheet{transition:none}}
+  .grab{width:40px;height:4px;border-radius:99px;background:var(--line-strong);margin:2px auto 12px}
+  .sheet h3{font-size:14px;font-weight:800}
+  .sheet .sec{margin-top:12px;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .arow{width:100%;display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:700}
+  .arow small{display:block;font-size:11.5px;color:var(--faint);font-weight:600}
+  .arow svg{width:17px;height:17px;color:var(--faint);flex-shrink:0}
+  .arow.danger{color:var(--danger)}
+  .arow.danger svg{color:var(--danger)}
+  .lightbox{position:fixed;inset:0;z-index:61;background:rgba(12,17,29,.88);display:none;
+    align-items:center;justify-content:center;padding:24px}
+  .lightbox.show{display:flex}
+  .lightbox figure{max-width:560px;width:100%}
+  .lightbox svg{width:100%;height:auto;border-radius:14px}
+  .lightbox figcaption{margin-top:10px;color:#fff;font-size:12.5px;font-weight:600;text-align:center}
+  .toasts{position:fixed;z-index:70;left:16px;right:16px;bottom:calc(156px + env(safe-area-inset-bottom,0px));
+    display:flex;flex-direction:column;gap:8px;max-width:480px;margin:0 auto;pointer-events:none}
+  .toast{background:#101828;color:#f2f4f7;font-size:12.5px;font-weight:700;border-radius:12px;
+    padding:11px 14px;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:tin .2s ease}
+  [data-theme="dark"] .toast{background:#f2f4f7;color:#101828}
+  @keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- APP BAR -->
+  <div class="appbar">
+    <button class="iconbtn" data-act="back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+    </button>
+    <div class="appbar-id">
+      <span class="num">BOQ-2026-0142</span>
+      <button class="status" id="statusPill" data-act="status" data-s="approved" aria-label="Status: Approved. Activate to change.">Approved</button>
+    </div>
+    <button class="iconbtn" data-act="share" aria-label="Share">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+    </button>
+    <button class="iconbtn" data-act="more" aria-label="More actions">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+    </button>
+  </div>
+
+  <!-- DOSSIER HEAD -->
+  <div class="dossier">
+    <div class="monogram" aria-label="Company: Adekunle Kontracts Ltd">AK</div>
+    <div class="dossier-main">
+      <h2>Lekki Duplex — Full Build BOQ</h2>
+      <div class="client">Adekunle Kontracts Ltd · for Mr. T. Bello</div>
+    </div>
+    <button class="editbtn" data-act="edit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      Edit
+    </button>
+  </div>
+  <div class="context">
+    12 Jun 2026 · Valid 30 days · <span id="ctxCount">5 items</span>
+    <details>
+      <summary>Document details
+        <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </summary>
+      <dl>
+        <dt>Prepared by</dt><dd>A. Kontracts (QS)</dd>
+        <dt>Site</dt><dd>Lekki Phase 1, Lagos</dd>
+        <dt>Currency</dt><dd>NGN (₦)</dd>
+        <dt>Reference</dt><dd class="mono">BOQ-2026-0142</dd>
+      </dl>
+    </details>
+  </div>
+
+  <!-- COMMERCIAL CAPSULE -->
+  <div class="capsule" id="capsule" data-open="false">
+    <button id="capsuleBtn" aria-expanded="false" aria-label="Commercial summary. Activate to expand.">
+      <span class="cap-label">Selling total</span>
+      <span class="cap-value" id="capSell">—</span>
+      <span class="cap-margin" id="capMargin">—</span>
+      <svg class="chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="capsule-detail">
+      <div class="crow cost"><span>Total cost</span><span class="mono" id="capCost">—</span></div>
+      <div class="crow profit"><span>Gross profit</span><span class="mono" id="capProfit">—</span></div>
+      <div class="hint">Cost = Σ(CP × qty) · Selling = Σ(SP × qty) · Profit = Selling − Cost</div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div id="schedule"></div>
+
+  <!-- CLOSE-OUT -->
+  <div class="close">
+    <div class="close-head">
+      <div class="eyebrow">Commercial close-out</div>
+      <h3>BOQ complete</h3>
+      <p>All <span id="closeCount">5</span> items priced. Figures follow the locked BOQ model.</p>
+    </div>
+    <div class="close-rows">
+      <div class="trow cost"><span>Total cost</span><span class="mono" id="tCost">—</span></div>
+      <div class="trow grand"><span>Selling total</span><span class="mono" id="tSell">—</span></div>
+      <div class="trow profit"><span>Gross profit (<span id="tMargin">—</span>)</span><span class="mono" id="tProfit">—</span></div>
+    </div>
+    <p class="words" id="tWords">Seven million two hundred and thirty-seven thousand naira only.</p>
+    <div class="notes"><b>Notes</b>Rates include labour, plant and transport to site. Prices hold for 30 days. Variations are priced separately.</div>
+    <div class="endrule">END OF BOQ · BOQ-2026-0142</div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottomnav" aria-label="Primary">
+  <button data-nav="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg><span>Home</span></button>
+  <button data-nav="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg><span>Projects</span></button>
+  <button class="on" data-nav="Sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></svg><span>Sales</span></button>
+  <button data-nav="Clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><span>Clients</span></button>
+  <button data-nav="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><span>More</span></button>
+</nav>
+
+<!-- DOWNLOAD FAB -->
+<span class="fab-float">
+  <button class="fab" data-act="download" aria-label="Download PDF">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10.98 0c-.235 0-.425.2-.425.446V8.92c0 .246-.19.446-.425.446h-.704c-.346 0-.547.41-.346.705l2.574 3.782c.17.25.522.25.692 0l2.574-3.782c.201-.295 0-.705-.346-.705h-.704a.436.436 0 0 1-.425-.446V.446A.436.436 0 0 0 13.02 0ZM7.387 1.562a.732.732 0 0 0-.405.161l-1.096.883a.77.77 0 0 0-.123 1.066.735.735 0 0 0 1.045.126l1.096-.882a.77.77 0 0 0 .123-1.067.738.738 0 0 0-.64-.287Zm9.346 0a.737.737 0 0 0-.64.287.77.77 0 0 0 .123 1.067l1.096.882c.323.26.79.204 1.045-.126a.77.77 0 0 0-.123-1.066l-1.096-.883a.733.733 0 0 0-.405-.16ZM3.039 6.036a.745.745 0 0 0-.675.48l-.512 1.326c-.15.39.037.831.42.985a.74.74 0 0 0 .965-.428l.512-1.325a.765.765 0 0 0-.419-.985.728.728 0 0 0-.291-.053Zm18.042 0a.738.738 0 0 0-.29.053.765.765 0 0 0-.42.985l.512 1.325a.74.74 0 0 0 .965.428.765.765 0 0 0 .42-.985l-.512-1.325a.745.745 0 0 0-.675-.481ZM0 12a12 12 0 0 0 .913 4.592 11.997 11.997 0 0 0 2.42 3.703c.684-.681 1.565-1 2.489-1.053.925-.055 1.893.156 2.745.532a8.497 8.497 0 0 0 6.866 0c1.702-.751 3.865-.843 5.234.52a11.997 11.997 0 0 0 2.42-3.702A12 12 0 0 0 24 12h-3.687c-1.301 0-2.315 1.094-2.813 2.296a6 6 0 0 1-11.087 0C5.915 13.094 4.902 12 3.601 12Zm5.875 7.769c-.727.04-1.407.275-1.957.727-.073.06-.14.119-.204.18a11.997 11.997 0 0 0 3.694 2.41 12 12 0 0 0 9.184 0 11.997 11.997 0 0 0 3.694-2.41 3.977 3.977 0 0 0-.204-.18c-1.173-.963-2.96-.892-4.436-.24a9.023 9.023 0 0 1-7.292 0c-.478-.211-1.418-.546-2.48-.487Z"/></svg>
+    <span class="sr">Download PDF</span>
+  </button>
+</span>
+
+<!-- MORE SHEET -->
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-label="More actions">
+  <div class="grab"></div>
+  <h3>BOQ actions</h3>
+  <div class="sec">Document</div>
+  <button class="arow" data-act="convert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg><span>Convert to Quotation<small>Create a quotation from this BOQ</small></span></button>
+  <button class="arow" data-act="duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Duplicate<small>Copy as a new draft BOQ</small></span></button>
+  <button class="arow" data-act="csv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Export CSV<small>BOQS schema extract</small></span></button>
+  <div class="sec">Status</div>
+  <button class="arow" data-act="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Toggle status<small>Open ↔ Approved</small></span></button>
+  <div class="sec">Danger zone</div>
+  <button class="arow danger" data-act="archive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></svg><span>Archive<small>Hide from active lists</small></span></button>
+  <button class="arow danger" data-act="delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg><span>Delete<small>Permanent, with confirm</small></span></button>
+</section>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Item photo preview">
+  <figure>
+    <span id="lightboxArt"></span>
+    <figcaption id="lightboxCap"></figcaption>
+  </figure>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+/* Locked BOQ model (src/domain/boq/calculateBoqTotals.ts):
+   lineCost = cp x qty | lineSell = sp x qty | lineProfit = (sp - cp) x qty
+   total_cost = SUM(lineCost) | total_selling = SUM(lineSell)
+   gross_profit = total_selling - total_cost | margin = profit / selling */
+var BOQ_GROUPS = [
+  { id: "A", title: "Civil Works" },
+  { id: "B", title: "Finishes & Openings" }
+];
+var BOQ_ITEMS = [
+  { n: 1, group: "A", photo: true, desc: "Reinforced concrete blinding under footings",
+    spec: "1:3:6 mix, 50mm thick on compacted hardcore base, including formwork to edges.",
+    make: "Dangote Cement", qty: 140, unit: "m³", cp: 17500, sp: 20500 },
+  { n: 2, group: "A", photo: false, desc: "Y12 high-yield reinforcement bars",
+    spec: "BS 4449 grade, cut, bent and fixed including laps, spacers and tying wire.",
+    make: "African Foundries", qty: 8, unit: "ton", cp: 160000, sp: 189000 },
+  { n: 3, group: "A", photo: false, desc: "Hardcore filling compacted in layers",
+    spec: "300mm approved hardcore, compacted in 150mm layers to engineer approval.",
+    make: "Lagos Quarry", qty: 50, unit: "m³", cp: 17200, sp: 19900 },
+  { n: 4, group: "B", photo: false, desc: "Porcelain floor tiles 600 × 600",
+    spec: "Non-slip grade, bedded on adhesive including grout, skirting and cutting.",
+    make: "Goodwill Ceramics", qty: 200, unit: "m²", cp: 4700, sp: 5500 },
+  { n: 5, group: "B", photo: false, desc: "Aluminium casement windows with burglar proof",
+    spec: "Powder-coated bronze frames, 5mm reflective glass, fly screens, ironmongery and silicone sealing; installed and glazed.",
+    make: "Tower Aluminium", qty: 10, unit: "set", cp: 62809, sp: 76000 }
+];
+function lineCost(it){ return it.cp * it.qty; }
+function lineSell(it){ return it.sp * it.qty; }
+function lineProfit(it){ return (it.sp - it.cp) * it.qty; }
+function fmt(n){ return "₦" + n.toLocaleString("en-NG"); }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+/* Deliberate simulated site photo: duotone concrete/rebar study, captioned. */
+function photoSVG(seed){
+  return '<svg viewBox="0 0 640 360" role="img" aria-label="Simulated site reference photo">'
+    + '<defs><linearGradient id="sk' + seed + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0" stop-color="#9fb3c8"/><stop offset=".55" stop-color="#c9b896"/><stop offset="1" stop-color="#8a7a63"/>'
+    + '</linearGradient></defs>'
+    + '<rect width="640" height="360" fill="url(#sk' + seed + ')"/>'
+    + '<rect y="238" width="640" height="122" fill="#6b6257"/>'
+    + '<rect y="238" width="640" height="10" fill="#575046"/>'
+    + '<g stroke="#3f3a33" stroke-width="7">'
+    + '<line x1="60" y1="238" x2="140" y2="90"/><line x1="130" y1="238" x2="210" y2="90"/>'
+    + '<line x1="200" y1="238" x2="280" y2="90"/><line x1="270" y1="238" x2="350" y2="90"/>'
+    + '<line x1="340" y1="238" x2="420" y2="90"/><line x1="410" y1="238" x2="490" y2="90"/></g>'
+    + '<g stroke="#2f2b26" stroke-width="5"><line x1="40" y1="150" x2="560" y2="150"/><line x1="40" y1="195" x2="560" y2="195"/></g>'
+    + '<rect x="60" y="292" width="180" height="26" rx="4" fill="#7d7468"/>'
+    + '<rect x="260" y="292" width="120" height="26" rx="4" fill="#847b6e"/>'
+    + '<rect x="400" y="292" width="170" height="26" rx="4" fill="#776e61"/>'
+    + '<rect x="0" y="0" width="640" height="360" fill="#101828" opacity="0.08"/></svg>';
+}
+function renderSchedule(){
+  var host = document.getElementById("schedule"), html = "", idx = 0;
+  BOQ_GROUPS.forEach(function(g){
+    var rows = BOQ_ITEMS.filter(function(it){ return it.group === g.id; });
+    var gSell = rows.reduce(function(a,it){ return a + lineSell(it); }, 0);
+    html += '<section class="chapter" aria-label="Group ' + g.id + ": " + esc(g.title) + '">'
+      + '<span class="ghost" aria-hidden="true">' + g.id + '</span>'
+      + '<div class="ch-main"><h3>' + esc(g.title) + '</h3>'
+      + '<div class="count">' + rows.length + (rows.length === 1 ? " item" : " items") + '</div></div>'
+      + '<div class="sub">' + fmt(gSell) + '<small>chapter total</small></div></section>';
+    rows.forEach(function(it){
+      idx++;
+      var profit = lineProfit(it), margin = (profit / lineSell(it) * 100).toFixed(1);
+      html += '<article class="specimen" data-cost="closed"><div class="cols">';
+      if(it.photo){
+        html += '<figure><button data-photo="' + idx + '" style="display:block;width:100%" aria-label="Preview photo for item ' + idx + '">'
+          + photoSVG(idx) + '</button>'
+          + '<figcaption>Site reference photo · tap to preview</figcaption></figure>';
+      }
+      html += '<div class="rest"><div class="spec-body"><span class="idx">' + String(idx).padStart(2,"0") + '</span>'
+        + '<div class="spec-text"><h4>' + esc(it.desc) + '</h4>'
+        + '<p class="spec">' + esc(it.spec) + '</p>'
+        + '<p class="meta"><b>' + esc(it.make) + '</b> · ' + it.qty + " " + esc(it.unit) + '</p></div></div>'
+        + '<div class="spec-foot"><button class="cost-toggle" data-costbtn="' + idx + '" aria-expanded="false">Cost &amp; margin</button>'
+        + '<div class="sellbox"><div class="amt">' + fmt(lineSell(it)) + '</div>'
+        + '<div class="delta">+' + fmt(profit) + ' · ' + margin + '%</div></div></div>'
+        + '<div class="costline"><div class="crow cost"><span>Cost · ' + it.qty + " " + esc(it.unit) + " × " + fmt(it.cp)
+        + '</span><span class="mono">' + fmt(lineCost(it)) + '</span></div>'
+        + '<div class="crow"><span>Selling · ' + it.qty + " " + esc(it.unit) + " × " + fmt(it.sp)
+        + '</span><span class="mono">' + fmt(lineSell(it)) + '</span></div></div>'
+        + '</div></div></article>';
+    });
+  });
+  host.innerHTML = html;
+}
+function renderCommercial(){
+  var cost = BOQ_ITEMS.reduce(function(a,it){ return a + lineCost(it); }, 0);
+  var sell = BOQ_ITEMS.reduce(function(a,it){ return a + lineSell(it); }, 0);
+  var profit = sell - cost, margin = (profit / sell * 100).toFixed(1);
+  document.getElementById("capSell").textContent = fmt(sell);
+  document.getElementById("capMargin").textContent = margin + "% margin";
+  document.getElementById("capCost").textContent = fmt(cost);
+  document.getElementById("capProfit").textContent = "+" + fmt(profit);
+  document.getElementById("tCost").textContent = fmt(cost);
+  document.getElementById("tSell").textContent = fmt(sell);
+  document.getElementById("tProfit").textContent = "+" + fmt(profit);
+  document.getElementById("tMargin").textContent = margin + "%";
+  document.getElementById("ctxCount").textContent = BOQ_ITEMS.length + " items";
+  document.getElementById("closeCount").textContent = BOQ_ITEMS.length;
+}
+function toast(msg){
+  var box = document.getElementById("toasts"), el = document.createElement("div");
+  el.className = "toast"; el.textContent = msg; box.appendChild(el);
+  setTimeout(function(){ el.remove(); }, 2600);
+}
+renderSchedule();
+renderCommercial();
+/* Capsule disclosure */
+document.getElementById("capsuleBtn").addEventListener("click", function(){
+  var c = document.getElementById("capsule"), open = c.getAttribute("data-open") === "true";
+  c.setAttribute("data-open", String(!open));
+  this.setAttribute("aria-expanded", String(!open));
+});
+/* Per-item cost disclosure + photo lightbox (delegated) */
+document.getElementById("schedule").addEventListener("click", function(e){
+  var cb = e.target.closest("[data-costbtn]");
+  if(cb){
+    var card = cb.closest(".specimen"), open = card.getAttribute("data-cost") === "open";
+    card.setAttribute("data-cost", open ? "closed" : "open");
+    cb.setAttribute("aria-expanded", String(!open));
+    return;
+  }
+  var ph = e.target.closest("[data-photo]");
+  if(ph){
+    var i = Number(ph.getAttribute("data-photo")) - 1, it = null, k = 0;
+    BOQ_GROUPS.forEach(function(g){
+      BOQ_ITEMS.filter(function(x){ return x.group === g.id; }).forEach(function(x){ if(k === i) it = x; k++; });
+    });
+    document.getElementById("lightboxArt").innerHTML = photoSVG(99);
+    document.getElementById("lightboxCap").textContent = it ? it.desc + " — site reference (read-only)" : "";
+    document.getElementById("lightbox").classList.add("show");
+  }
+});
+document.getElementById("lightbox").addEventListener("click", function(){
+  this.classList.remove("show");
+});
+/* Theme */
+function toggleTheme(){
+  var r = document.documentElement, cur = r.getAttribute("data-theme");
+  r.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  toast(cur === "dark" ? "Light mode" : "Dark mode");
+}
+/* More sheet */
+var scrim = document.getElementById("scrim"), sheet = document.getElementById("moreSheet"), lastFocus = null;
+function openSheet(){ lastFocus = document.activeElement; scrim.classList.add("show"); sheet.classList.add("show"); }
+function closeSheet(){ scrim.classList.remove("show"); sheet.classList.remove("show"); if(lastFocus) lastFocus.focus(); }
+scrim.addEventListener("click", closeSheet);
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    if(document.getElementById("lightbox").classList.contains("show")) document.getElementById("lightbox").classList.remove("show");
+    else if(sheet.classList.contains("show")) closeSheet();
+  }
+});
+function exportCSV(){
+  var rows = [["n","group","description","make","qty","unit","cp","sp","line_cost","line_sell","line_profit"]];
+  BOQ_ITEMS.forEach(function(it,i){
+    rows.push([i+1, it.group, '"' + it.desc + '"', '"' + it.make + '"', it.qty, it.unit, it.cp, it.sp, lineCost(it), lineSell(it), lineProfit(it)]);
+  });
+  var blob = new Blob([rows.map(function(r){ return r.join(","); }).join("\n")], {type:"text/csv"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "BOQ-2026-0142.csv"; a.click();
+  toast("CSV exported (BOQS schema)");
+}
+var pendingDanger = null;
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-act],[data-nav]");
+  if(!b) return;
+  var act = b.getAttribute("data-act") || b.getAttribute("data-nav");
+  if(b.hasAttribute("data-nav")){ toast(b.getAttribute("data-nav") + " (app chrome demo)"); return; }
+  if(act === "back") toast("Back to BOQs");
+  else if(act === "edit") toast("Edit BOQ (draft checkout)");
+  else if(act === "share"){
+    if(navigator.share) navigator.share({title:"BOQ-2026-0142"}).catch(function(){});
+    else toast("Link copied to clipboard");
+  }
+  else if(act === "more") openSheet();
+  else if(act === "download"){ toast("download:start — preparing PDF…"); setTimeout(function(){ toast("download:success — saved to Downloads"); }, 900); }
+  else if(act === "convert"){ closeSheet(); toast("Convert to Quotation"); }
+  else if(act === "duplicate"){ closeSheet(); toast("Duplicated as draft BOQ"); }
+  else if(act === "csv"){ closeSheet(); exportCSV(); }
+  else if(act === "status"){
+    var p = document.getElementById("statusPill"), approved = p.getAttribute("data-s") === "approved";
+    p.setAttribute("data-s", approved ? "open" : "approved");
+    p.textContent = approved ? "Open" : "Approved";
+    p.setAttribute("aria-label", "Status: " + (approved ? "Open" : "Approved") + ". Activate to change.");
+    closeSheet(); toast("Status → " + (approved ? "Open" : "Approved"));
+  }
+  else if(act === "archive" || act === "delete"){
+    if(pendingDanger === act){ closeSheet(); toast(act === "archive" ? "BOQ archived" : "BOQ deleted"); pendingDanger = null; }
+    else { pendingDanger = act; toast("Tap " + act + " again to confirm"); setTimeout(function(){ pendingDanger = null; }, 3000); }
+  }
+});
+</script>
+</body>
+</html>

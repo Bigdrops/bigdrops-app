@@ -1,54 +1,56 @@
 <!doctype html>
 <!--
-  BIGDROPS - BOQ Full-Page Live Form v11
-  Phone + fold document-authoring workspace. Standalone prototype.
+  BIGDROPS - BOQ Form V13 - MOBILE + FOLD candidate.
+  Standalone design-direction prototype. Phone-first, fold recomposed.
 
-  v11 is a structural synthesis of v9 and v10 - not a facelift of either.
+  V13 = V12 lineage + Instant Markup. V12
+  (boq-form-candidate-v12.html) is the authoritative design parent.
+  Information architecture, tokens, item-entry architecture, group
+  behavior, toolbar, sheets, totals, save surfaces, and responsive
+  behavior are preserved. The only structural addition is the
+  first-class Instant Markup workflow (toolbar entry + sheet
+  workspace + preview + apply + immediate undo).
 
-  Kept from v9:
-  - Line Items toolbar (Columns / Import / Clear All) is inline and permanently
-    visible in the workspace. There is no BOQ Tools sheet gating these actions.
-  - Below the identity zone, commercial/meta fields reclaim full item width -
-    no field sits behind a permanent rail column it doesn't need.
+  INSTANT MARKUP (new product behavior, no historical precedent)
+  - Purpose: derive SP from CP across rows. Cost-plus only.
+  - Modes: Percentage (SP = CP x (1 + p/100)) | Fixed value
+    (SP = CP + value per item unit).
+  - Participation: per item Included/Excluded (default Included);
+    group headers never participate; zero/missing CP rows are
+    ineligible ("Excluded - No cost price") and never counted.
+  - Basis is always CP. Re-apply derives from CP again, never
+    from current SP (no compounding).
+  - Preview before Apply. Cancel/Back mutates nothing. Apply
+    materializes SP on included eligible rows only, then
+    recomputes through the locked costing semantics. Immediate
+    Undo restores pre-apply SP values.
+  - Validation: value must be a finite number >= 0. Negatives,
+    NaN, and empty input block Apply with visible feedback.
+  - Locked formulas unchanged: lineCost = CP x qty,
+    lineSell = SP x qty, lineProfit = (SP - CP) x qty.
+  - PROTOTYPE MATH NOTE: demo JS uses float math rounded to 2dp
+    for display. Production MUST use the authoritative Decimal
+    path (computeDocument / computeBoqTotals). Do not port this
+    float math to production.
+  - Production intent: a successful Apply emits an audit UPDATE
+    with mode, entered value, affected row ids, and before/after
+    SP sets. No audit code in this prototype.
 
-  Kept from v10:
-  - Enumeration + row controls (number, move, duplicate) form a deliberate
-    structural node cluster, not an accidental gutter.
-  - Registry-driven field composition (META_OPTIONAL / COMM_OPTIONAL) so a
-    future optional column is one registry entry, not a redesign.
-  - Fold recomposes the item into an identity column + data column instead of
-    centering a phone layout.
+  SAMPLE MODEL (fictional, internally consistent)
+  V12 rows plus one zero-CP provisional row. Default exclusions:
+  Preliminaries and Emulsion paint (manually priced). Sand has no
+  meaningful SP yet, so applying markup visibly repairs it.
 
-  Rejected from v10:
-  - The continuous full-height rail line. Here the rail is SEGMENTED: the
-    connecting line only runs behind the identity zone (number -> move ->
-    duplicate, sized to that zone's own height via CSS grid stretch) and
-    stops before the metadata/commercial zone, which is full item width.
-  - The collapsed "Specification" preview that echoes existing text inline.
-    Refined after human review: collapsed Sub Description now shows the
-    ACTUAL text as a compact 2-line clamp preview; tapping it opens the
-    editor. Empty state is a compact "+ Add sub description" row.
-  - Delete as a button floating over the rail. Delete is now the structural
-    junction where the row's own top hairline meets its right edge - the line
-    runs into the box, a short stub runs out the bottom of it.
-  - The BOQ Tools bottom sheet. Columns / Import / Clear All are inline.
-  - Full white/page gutters around expanded groups. Expanded groups run
-    edge-to-edge at phone width.
-
-  V12 - ONE targeted group-control change against the accepted V11.
-  Nothing else about BOQ V11 changes.
-  - Group collapse/expand is removed entirely. Groups are permanently
-    expanded.
-  - The group delete X moves from the right side into the first control slot,
-    on the left, where the collapse chevron used to be. One X only.
-  - Group name, item count, group boundary, item membership and reorder are
-    unchanged. No dead collapse affordance remains.
+  SHELL (from V12, unchanged)
+  Phone Save FAB (hidden at fold widths, replaced by the sticky
+  top-bar Save). No bottom nav in the V12 form shell. Safe-area
+  end padding clears the FAB zone.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BIGDROPS - BOQ Authoring Workspace - V12</title>
+<title>BIGDROPS - BOQ Authoring Workspace - V13 Mobile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -59,6 +61,7 @@
     --bg:#eef2f7; --card:#ffffff; --soft:#f6f9fc;
     --accent:#1e3a5f; --accent-soft:rgba(30,58,95,.13); --accent-ink:#ffffff;
     --red:#dc2626; --red-soft:rgba(220,38,38,.09);
+    --green:#15803d; --green-soft:rgba(21,128,61,.10);
     --rail:rgba(15,23,42,.22);
     --mono:'DM Mono',monospace;
     --cost:#b45309; --cost-soft:rgba(180,83,9,.10);
@@ -81,6 +84,7 @@
     --bg:#0b1220; --card:#16233a; --soft:#111d31;
     --accent:#38bdf8; --accent-soft:rgba(56,189,248,.16); --accent-ink:#06131f;
     --red:#f87171; --red-soft:rgba(248,113,113,.13);
+    --green:#34d399; --green-soft:rgba(52,211,153,.14);
     --rail:rgba(148,163,184,.32);
     --cost:#fbbf24; --cost-soft:rgba(251,191,36,.14);
     --sell:#34d399; --sell-soft:rgba(52,211,153,.14);
@@ -102,11 +106,8 @@
   svg{display:block;flex-shrink:0}
   .mono{font-family:var(--mono)}
   .wrap{max-width:430px;margin:0 auto;padding:8px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
-
-  /* ============ TOP BAR ============ */
   .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:6px;padding:6px 0 8px;background:var(--bg);border-bottom:1px solid var(--line)}
-  .tb-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s,transform .12s,border-color .15s}
-  .tb-btn:hover{color:var(--ink);border-color:var(--line-strong)}
+  .tb-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .tb-btn:active{transform:scale(.93)}
   .tb-btn svg{width:17px;height:17px}
   .tb-title{flex:1;min-width:0;padding:0 2px}
@@ -114,8 +115,6 @@
   .tb-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
   .tb-meta .badge{color:var(--accent)}
   .tb-meta .sep{opacity:.55}
-
-  /* ============ SECTIONS - number + typography + rule, no dots ============ */
   .sec{margin-top:20px}
   .sec + .sec{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
   .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
@@ -123,108 +122,58 @@
   .sec-head h2{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
   .sec-head .rule{flex:1;height:1px;background:var(--line);min-width:12px}
   .sec-head .meta{font-family:var(--mono);font-size:8.5px;font-weight:500;color:var(--faint);white-space:nowrap}
-
-  /* ============ FIELDS ============ */
   .lb{display:block;font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
   .req{color:var(--red)}
-  .fld{width:100%;min-height:42px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:600;transition:border-color .15s,box-shadow .15s,background .15s}
+  .fld{width:100%;min-height:42px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:600}
   .fld::placeholder{color:var(--faint);font-weight:600}
   .fld:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
   textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-size:12.5px;line-height:1.45}
   .dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .dgrid .full{grid-column:1/-1}
   .dgrid .wide{grid-column:1/-1}
-
-  /* ============ LINE ITEMS TOOLBAR - Columns / Import / Clear All are here,
-     directly, permanently. No settings icon, no sheet gating them. ============ */
   .itemtools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;margin-bottom:14px}
-  .itbn{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;color:var(--sub);transition:border-color .15s,color .15s,background .15s,transform .12s}
+  .itbn{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;color:var(--sub)}
   .itbn svg{width:11px;height:11px}
-  .itbn:hover{border-color:var(--line-strong);color:var(--ink)}
   .itbn:active{transform:scale(.96)}
-  /* destructive, but visually subordinate - ghost, no fill, pushed to the end */
+  .itbn.hot{border-color:var(--accent);color:var(--accent)}
   .itbn.danger{margin-left:auto;border-color:transparent;background:none;color:var(--red);padding:0 8px}
-  .itbn.danger:hover{background:var(--red-soft)}
-
-  /* ============ LINE ITEMS - continuous document flow ============ */
   #items{display:flex;flex-direction:column}
   #items > .item,#items > .gwrap{margin-top:18px}
   #items > .item:first-child,#items > .gwrap:first-child{margin-top:0}
-
-  .item{position:relative;padding-top:14px;transition:background .15s}
-  /* the row's own top hairline - stops short of the delete box, which the
-     line visually runs into. Segmented rail, part 1: no line at all here
-     below the identity zone: this rule sits at y=0, the identity zone
-     starts after padding-top. */
+  .item{position:relative;padding-top:14px}
   .item::before{content:'';position:absolute;top:0;left:0;right:26px;height:1px;background:var(--line)}
   #items > .item:first-child::before,.gbody > .item:first-child::before{display:none}
   .item.err{background:var(--red-soft);border-radius:12px}
-  .item.err .idx{background:var(--red);border-color:var(--red);color:#fff}
-  .item.err .desc{border-color:var(--red)}
-
-  /* delete as structural junction: the top hairline runs into this box: its
-     top-right corner stays square so the line reads as terminating IN it,
-     and a short stub descends from its underside - the row's own right-side
-     vertical line, not a rail that runs the full item height. */
-  .ear{position:absolute;top:0;right:0;width:26px;height:26px;border-radius:8px 3px 8px 8px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6;transition:background .15s,color .15s,border-color .15s,transform .12s}
-  .ear::before{content:'';position:absolute;inset:-9px}
-  .ear::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:14px;background:var(--line-strong);transform:translateX(-50%);transition:background .15s}
+  .ear{position:absolute;top:0;right:0;width:26px;height:26px;border-radius:8px 3px 8px 8px;background:var(--card);border:1px solid var(--line-strong);color:var(--sub);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-ear);z-index:6}
   .ear svg{width:11px;height:11px}
-  .ear:hover,.ear:focus-visible{background:var(--red);border-color:var(--red);color:#fff}
-  .ear:hover::after{background:var(--red)}
   .ear:active{transform:scale(.9)}
-
-  /* identity zone: rail (number / move / duplicate) + description + sub
-     description. The rail's connecting line is scoped to THIS grid row's
-     height only - it cannot leak into the metadata/commercial zone below,
-     because that zone lives outside this grid entirely. */
   .ihead{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:stretch}
   .rail{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;padding:2px 0}
   .rail::before{content:'';position:absolute;left:50%;top:17px;bottom:17px;width:1px;background:var(--rail);transform:translateX(-50%);z-index:0}
   .rail>*{position:relative;z-index:1;flex-shrink:0}
-  .idx{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center;letter-spacing:-.02em}
+  .idx{width:34px;height:34px;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:10.5px;font-weight:500;display:flex;align-items:center;justify-content:center}
   .rmid{display:flex;flex-direction:column;gap:8px}
-  .rbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s,transform .12s}
-  .rbtn::after{content:'';position:absolute;inset:-4px}
+  .rbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:flex;align-items:center;justify-content:center}
   .rbtn svg{width:12px;height:12px}
-  .rbtn:hover{background:var(--soft);color:var(--ink);border-color:var(--line-strong)}
   .rbtn:active{transform:scale(.92)}
   .rbtn:disabled{opacity:.32;pointer-events:none}
-
   .idesc{display:flex;flex-direction:column;gap:8px;min-width:0}
   .desc{min-height:64px}
-
-  /* sub description - a compact field-style row inside the content stack
-     (reference composition). Closed + empty: "+ Add sub description".
-     Closed + populated: the ACTUAL text, clamped to 2 lines. Open: a "Sub
-     description" header row with the editor below it. Make / Brand follows
-     directly after - no dead region, no third column, no duplicate field. */
-  .subrow{display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid var(--line);transition:border-color .15s}
+  .subrow{display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid var(--line)}
   .subrow.has{border-left-color:var(--accent)}
-  .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:34px;padding:7px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
+  .subtog{display:flex;align-items:flex-start;gap:6px;width:100%;min-height:34px;padding:7px 0;text-align:left;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
   .subtog.sub-add{align-items:center}
-  .subtog:hover,.subtog:focus-visible{color:var(--accent);border-color:var(--line-strong)}
   .stog-icon{width:15px;height:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .stog-icon svg{width:12px;height:12px}
   .stog-label{flex:1;min-width:0;text-transform:none;letter-spacing:0}
-  .stog-chev{width:12px;height:12px;flex-shrink:0;color:var(--faint);transition:transform .15s}
+  .stog-chev{width:12px;height:12px;flex-shrink:0;color:var(--faint)}
   .subrow.open .stog-chev{transform:rotate(180deg)}
-  .sub-prev-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1.45;color:var(--sub)}
+  .sub-prev-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:10.5px;font-weight:600;line-height:1.45;color:var(--sub)}
   .subfield{min-height:58px}
-
-  /* metadata/commercial zone - FULL item width, no rail indentation. This is
-     where the fields reclaim the width the v10 rail used to reserve. */
   .idata{margin-top:12px;display:flex;flex-direction:column;gap:8px}
   .meta-stack{display:flex;flex-direction:column;gap:8px}
-  /* generic 2-col auto-wrap grid, shared by the Qty/Unit pair and any future
-     registry field group: an odd trailing cell claims the full row so there
-     is never an orphan half-width slot. */
   .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .fgrid>*:last-child:nth-child(odd){grid-column:1/-1}
-  .slot-off{display:flex;align-items:center;justify-content:center;color:var(--faint);border-style:dashed;background:var(--soft);font-size:9px;letter-spacing:.12em}
-
-  /* commercial grid - CP is money out, SP is money in. Same auto-wrap rule
-     as .fgrid, applied to whichever commercial fields are visible. */
   .comm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .comm-grid>*:last-child:nth-child(odd){grid-column:1/-1}
   .cfield{display:block;min-width:0}
@@ -235,34 +184,14 @@
   .cfield.sell .cf-lab{color:var(--sell)}
   .cfield.cost .fld{border-left:3px solid var(--cost)}
   .cfield.sell .fld{border-left:3px solid var(--sell)}
-  .cfield.cost .fld:focus{border-color:var(--cost);box-shadow:0 0 0 3px var(--cost-soft)}
-  .cfield.sell .fld:focus{border-color:var(--sell);box-shadow:0 0 0 3px var(--sell-soft)}
-
-  /* line profit result */
   .profit{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;padding:6px 11px;border-radius:11px;background:var(--profit-bg)}
   .profit .pl{font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .profit b{font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:-.02em;color:var(--on-dark);white-space:nowrap}
+  .profit b{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--on-dark);white-space:nowrap}
   .profit.pos b{color:var(--pos-on-dark)}
   .profit.neg b{color:var(--neg-on-dark)}
-  .profit.zero .pl{opacity:.5}
-
-  /* insert below - a compact affordance. It carries no trailing rule of its
-     own: the NEXT item supplies that boundary with its own top hairline, so
-     the document never shows two parallel rules between one row and the next. */
-  .ins{position:relative;display:flex;align-items:center;gap:6px;height:20px;margin-top:10px;color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:left;transition:color .15s}
-  .ins::before{content:'';position:absolute;left:0;right:0;top:-10px;bottom:-10px}
-  .ins:hover,.ins:focus-visible{color:var(--accent)}
-
-  /* ============ ITEM PHOTO (transplanted from the approved reference) ============
-     Empty: a compact Photo action closes the identity stack
-     (Description -> Sub Description -> Make / Brand -> Photo). Attached: the
-     empty action is removed, the phone shows a compact thumbnail as the last
-     block of the data zone, and the fold shows it at the end of the left
-     identity zone. State is per item. */
-  .cam{position:relative;align-self:flex-start;display:flex;align-items:center;gap:8px;height:40px;padding:0 12px 0 11px;border-radius:11px;border:1px dashed var(--line-strong);background:var(--card);color:var(--faint);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;transition:border-color .15s,color .15s}
-  .cam::after{content:'';position:absolute;inset:-2px}
+  .ins{position:relative;display:flex;align-items:center;gap:6px;height:20px;margin-top:10px;color:var(--faint);font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:left}
+  .cam{position:relative;align-self:flex-start;display:flex;align-items:center;gap:8px;height:40px;padding:0 12px 0 11px;border-radius:11px;border:1px dashed var(--line-strong);background:var(--card);color:var(--faint);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
   .cam svg{width:16px;height:16px}
-  .cam:hover,.cam:focus-visible{border-color:var(--accent);color:var(--accent)}
   .has-photo .cam{display:none}
   .thumb,.foldthumb{display:none}
   .has-photo .thumb{display:flex;position:relative;align-self:flex-end;width:60px;height:60px;border-radius:12px;overflow:hidden;background:var(--soft);border:1px solid var(--line)}
@@ -273,111 +202,70 @@
     .has-photo .thumb{display:none}
     .has-photo .foldthumb{display:flex;position:relative;width:64px;height:64px;margin-top:2px;border-radius:12px;overflow:hidden;background:var(--soft);border:1px solid var(--line)}
   }
-
-  /* ============ GROUPS - groups are always expanded ============ */
   .gwrap{display:flex;flex-direction:column}
-  /* Full-bleed outer envelope. Width/margin cancel the page gutter so the
-     group reaches both screen edges; inner padding is restored below at the
-     same gutter width, so content stays comfortably clear of it. */
-  .gwrap{
-    width:calc(100% + 2*var(--gutter));
-    margin-left:calc(-1*var(--gutter));
-    margin-right:calc(-1*var(--gutter));
-    border-top:1px solid var(--group-line);
-    border-bottom:1px solid var(--group-line);
-    border-left:6px solid var(--group-spine);
-    background:var(--card);
-  }
+  .gwrap{width:calc(100% + 2*var(--gutter));margin-left:calc(-1*var(--gutter));margin-right:calc(-1*var(--gutter));border-top:1px solid var(--group-line);border-bottom:1px solid var(--group-line);border-left:6px solid var(--group-spine);background:var(--card)}
   .ghdr{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px var(--gutter);background:var(--group-head)}
-  .gtitle{flex:1;min-width:0;background:none;border:0;padding:0;color:var(--group-on);font-size:12.5px;font-weight:700;letter-spacing:-.01em}
+  .gtitle{flex:1;min-width:0;background:none;border:0;padding:0;color:var(--group-on);font-size:12.5px;font-weight:700}
   .gtitle::placeholder{color:rgba(248,250,252,.55)}
   .gcount{font-family:var(--mono);font-size:8.5px;color:rgba(248,250,252,.75);white-space:nowrap;flex-shrink:0}
-  .gbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.12);color:var(--group-on);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s,color .15s,transform .12s}
+  .gbtn{position:relative;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.12);color:var(--group-on);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .gbtn svg{width:13px;height:13px}
-  .gbtn:hover{background:rgba(255,255,255,.24)}
   .gbtn:active{transform:scale(.94)}
-  .gbtn.danger:hover{background:rgba(239,68,68,.7);border-color:transparent}
   .gbody{display:flex;flex-direction:column;padding:0 var(--gutter)}
   .gbody>.item{padding-top:14px;margin-top:6px}
   .gbody>.item:first-child{margin-top:0;padding-top:14px}
   .gbody>.item:last-child .ins{display:none}
   .gempty{margin:14px 0 2px;padding:16px 12px;text-align:center;font-size:10px;font-weight:700;line-height:1.5;color:var(--faint);border:1px dashed var(--group-line);border-radius:11px}
   .gfoot{margin-top:8px;padding:8px var(--gutter) 12px;border-top:2px solid var(--group-soft)}
-  .gadd{width:100%;min-height:42px;border-radius:11px;border:1px dashed var(--group-line);background:transparent;color:var(--accent);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .12s}
+  .gadd{width:100%;min-height:42px;border-radius:11px;border:1px dashed var(--group-line);background:transparent;color:var(--accent);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px}
   .gadd svg{width:11px;height:11px}
-  .gadd:hover{background:var(--group-soft);border-color:var(--accent)}
-  .gadd:active{transform:scale(.98)}
-
-  /* No collapsed variant exists. Every group always renders its body and its
-     footer, so the group boundary and its contents are always visible. */
-
-  /* ============ GLOBAL CREATION PAIR ============ */
   .createpair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
-  .cbtn{min-height:46px;border-radius:12px;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,border-color .15s,transform .12s,color .15s}
+  .cbtn{min-height:46px;border-radius:12px;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px}
   .cbtn svg{width:12px;height:12px}
   .cbtn:active{transform:scale(.97)}
   .cbtn.primary{background:var(--accent);border:1px solid var(--accent);color:var(--accent-ink)}
-  .cbtn.primary:hover{filter:brightness(1.15)}
   .cbtn.ghost{background:var(--card);border:1px dashed var(--line-strong);color:var(--ink)}
-  .cbtn.ghost:hover{border-color:var(--accent);color:var(--accent)}
   .empty{margin-top:2px;padding:20px 16px;text-align:center;font-size:10px;font-weight:700;line-height:1.6;color:var(--faint);border:1px dashed var(--line);border-radius:12px}
-
-  /* ============ TOTALS ============ */
   .totals{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:12px}
   .totals-grid{display:grid;grid-template-columns:1fr;gap:0}
   .sumline{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;font-size:11px;font-weight:600;color:var(--sub);border-bottom:1px solid var(--line)}
   .sumline b{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--ink)}
   .sumtotal{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px;padding-top:10px;border-top:2px solid var(--line-strong)}
   .sumtotal small{display:block;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
-  .sumtotal b{font-family:var(--mono);font-size:18px;font-weight:500;letter-spacing:-.03em;color:var(--accent)}
+  .sumtotal b{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--accent)}
   .sumtotal .right{text-align:right}
   #tProfit.neg,#tMargin.neg{color:var(--loss)}
   #tProfit.pos,#tMargin.pos{color:var(--sell)}
   .words{margin-top:10px;padding:9px 11px;border:1px dashed var(--line);border-radius:10px;background:var(--soft);font-size:9.5px;font-style:italic;color:var(--sub);line-height:1.55}
-
-  /* ============ SAVE SURFACES - one save(), three surfaces ============
-     Phone: persistent FAB shortcut + labelled end-of-form completion action.
-     Fold: the FAB is replaced by a labelled sticky top-bar action (same
-     save()); the end-of-form action stays the completion step. The wrap
-     bottom padding clears the FAB zone so it never covers the bottom action. */
   .savebar{margin-top:18px}
   .save-cta{min-height:50px;font-size:10px}
-  .tb-save{display:none;height:36px;padding:0 14px;border-radius:11px;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;align-items:center;gap:6px;flex-shrink:0;transition:filter .15s,transform .12s}
+  .tb-save{display:none;height:36px;padding:0 14px;border-radius:11px;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;align-items:center;gap:6px;flex-shrink:0}
   .tb-save svg{width:13px;height:13px;stroke-width:2}
-  .tb-save:hover{filter:brightness(1.15)}
-  .tb-save:active{transform:scale(.96)}
-
-  /* ============ FAB - persistent phone Save shortcut (hidden at fold) ============ */
-  .fab{position:fixed;right:16px;bottom:calc(82px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);display:flex;align-items:center;justify-content:center;z-index:50;transition:transform .12s}
+  .fab{position:fixed;right:16px;bottom:calc(82px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);display:flex;align-items:center;justify-content:center;z-index:50}
   .fab svg{width:20px;height:20px;stroke-width:2}
-  .fab:hover{transform:scale(1.05)}
   .fab:active{transform:scale(.95)}
-
-  /* ============ SHEETS ============ */
   .ov{position:fixed;inset:0;background:rgba(8,15,28,.62);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center;z-index:60}
   .ov.show{display:flex}
   .ov.center{align-items:center}
-  .sheet{width:100%;max-width:430px;background:var(--card);border-radius:22px 22px 0 0;max-height:82vh;display:flex;flex-direction:column;gap:10px;padding:12px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow-sheet);animation:up .2s ease-out}
-  @keyframes up{from{transform:translateY(44px);opacity:.6}to{transform:none;opacity:1}}
+  .sheet{width:100%;max-width:430px;background:var(--card);border-radius:22px 22px 0 0;max-height:82vh;display:flex;flex-direction:column;gap:10px;padding:12px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow-sheet)}
   .grab{width:36px;height:3px;border-radius:99px;background:var(--line-strong);margin:2px auto 0}
   .shd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
   .shd b{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
   .shd small{display:block;margin-top:2px;font-size:9px;font-weight:600;color:var(--sub);text-transform:none;letter-spacing:0}
   .x{width:38px;height:38px;border-radius:11px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .x svg{width:12px;height:12px}
-  .x:hover{color:var(--ink);border-color:var(--line-strong)}
   .colrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:var(--soft)}
   .colrow b{display:block;font-size:11px;font-weight:700}
   .colrow small{display:block;margin-top:2px;font-size:9px;font-weight:600;line-height:1.45;color:var(--sub)}
   .tag{padding:2px 6px;border-radius:5px;background:var(--card);border:1px solid var(--line);font-size:7px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub)}
-  .sw{position:relative;width:48px;height:36px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0;transition:background .16s}
-  .sw::after{content:'';position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .16s}
+  .sw{position:relative;width:48px;height:36px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0}
+  .sw::after{content:'';position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28)}
   .sw.on{background:var(--accent)}
   .sw.on::after{transform:translateX(12px)}
   .sw:disabled{opacity:.45;cursor:not-allowed}
-  .cta{width:100%;min-height:46px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;transition:transform .12s,filter .15s}
-  .cta:hover{filter:brightness(1.15)}
+  .cta{width:100%;min-height:46px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
   .cta:active{transform:scale(.98)}
+  .cta:disabled{opacity:.45}
   .linkbtn{width:100%;min-height:44px;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
   .dialog{width:min(88%,320px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-ear)}
   .dialog b{font-size:12.5px;font-weight:800}
@@ -387,81 +275,98 @@
   .dbtn.danger{border-color:var(--red);background:var(--red-soft);color:var(--red)}
   .imperr{display:none;font-family:var(--mono);font-size:9px;line-height:1.55;white-space:pre-wrap;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:9px;padding:8px 10px}
   .imperr.show{display:block}
-  /* column manager rows - prototype port of the shared document Column
-     Manager (ColumnManager.tsx + useInvoiceColumns): grip + up/down order
-     controls, editable labels, TEXT/NUM badges, visibility switch, remove
-     for custom columns, reset-to-defaults with confirm. */
   .cm-list{border:1px solid var(--line);border-radius:11px;background:var(--soft);overflow:hidden}
   .cm-row{display:flex;align-items:center;gap:2px;min-height:44px;padding:5px 4px;border-bottom:1px solid var(--line)}
   .cm-row:last-child{border-bottom:0}
-  .cm-row.full-hidden{opacity:.4}
   .cm-grip{display:flex;align-items:center;justify-content:center;width:26px;height:100%;color:var(--faint);flex-shrink:0;touch-action:none}
   .cm-grip svg{width:13px;height:13px}
   .cm-ord{display:flex;flex-direction:column;flex-shrink:0}
-  .cm-ord button{display:flex;align-items:center;justify-content:center;width:26px;height:20px;color:var(--faint);transition:color .15s}
-  .cm-ord button:hover{color:var(--ink)}
+  .cm-ord button{display:flex;align-items:center;justify-content:center;width:26px;height:20px;color:var(--faint)}
   .cm-ord button:disabled{opacity:.2;pointer-events:none}
   .cm-ord svg{width:12px;height:12px}
   .cm-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:0 2px}
   .cm-labrow{display:flex;align-items:center;gap:5px;min-width:0}
-  .cm-lab{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;font-size:11.5px;font-weight:700;color:var(--ink);transition:border-color .15s,background .15s}
-  .cm-lab:hover{border-color:var(--line)}
-  .cm-lab:focus{border-color:var(--accent);background:var(--card)}
-  .cm-row.full-hidden .cm-lab{color:var(--faint);text-decoration:line-through}
-  .cm-desc-in{flex:1;min-width:0;height:30px;padding:0 8px;font-size:11.5px;font-weight:700;color:var(--ink);background:transparent;border:0}
+  .cm-lab{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;font-size:11.5px;font-weight:700;color:var(--ink)}
   .cm-badge{flex-shrink:0;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);font-size:7.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
   .cm-sub{display:flex;align-items:center;gap:6px;padding:0 2px 2px}
-  .cm-sub input{width:62px;height:24px;padding:0 6px;border:1px solid var(--line);border-radius:7px;background:var(--card);font-family:var(--mono);font-size:10px}
   .cm-sub span{font-size:9.5px;font-weight:600;color:var(--sub)}
-  .cm-sw{position:relative;width:40px;height:28px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0;transition:background .16s}
-  .cm-sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .16s}
+  .cm-sw{position:relative;width:40px;height:28px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0}
+  .cm-sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28)}
   .cm-sw.on{background:var(--accent)}
   .cm-sw.on::after{transform:translateX(12px)}
-  .cm-sw:disabled{opacity:.45;cursor:not-allowed}
-  .cm-act{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:var(--faint);transition:background .15s,color .15s}
+  .cm-act{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:var(--faint)}
   .cm-act svg{width:13px;height:13px}
-  .cm-act:hover{background:var(--soft);color:var(--ink)}
-  .cm-act.danger:hover{background:var(--red-soft);color:var(--red)}
   .cm-sec{margin:12px 0 6px;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-  .cm-add{width:100%;margin-top:8px;min-height:40px;border-radius:10px;border:0;background:none;color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
+  .cm-add{width:100%;margin-top:8px;min-height:40px;border-radius:10px;border:0;background:none;color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px}
   .cm-add svg{width:12px;height:12px}
-  .cm-add:hover{background:var(--accent-soft)}
-  .cm-reset{width:100%;margin-top:2px;padding:6px 0;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;transition:color .15s}
-  .cm-reset:hover{color:var(--ink)}
+  .cm-reset{width:100%;margin-top:2px;padding:6px 0;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
   .impnote{font-size:8.5px;line-height:1.65;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
   .impnote code{font-family:var(--mono);font-size:8px;color:var(--accent)}
-
-  /* ============ TOAST ============ */
+  /* ============ INSTANT MARKUP workspace ============ */
+  .mk-seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .mk-seg button{min-height:44px;border-radius:11px;border:1px solid var(--line);background:var(--soft);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:6px}
+  .mk-seg button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .mk-seg button svg{width:13px;height:13px}
+  .mk-valrow{display:flex;gap:8px}
+  .mk-valrow .fld{font-family:var(--mono);font-size:15px;font-weight:700}
+  .mk-err{display:none;font-size:9.5px;font-weight:700;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:9px;padding:8px 10px;line-height:1.5}
+  .mk-err.show{display:block}
+  .mk-tools{display:flex;align-items:center;gap:4px}
+  .mk-tools .linkbtn{width:auto;min-height:36px;padding:0 8px}
+  .mk-tools .cnt{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--faint)}
+  .mk-list{display:flex;flex-direction:column;min-height:0;overflow-y:auto;border:1px solid var(--line);border-radius:11px;background:var(--soft);max-height:30vh}
+  .mk-gcap{padding:8px 10px 4px;font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .mk-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--line);background:var(--card)}
+  .mk-row:first-child{border-top:0}
+  .mk-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--green)}
+  .mk-row.out .mk-dot{background:var(--line-strong)}
+  .mk-row.nope .mk-dot{background:var(--red)}
+  .mk-row .t{flex:1;min-width:0}
+  .mk-row .t b{display:block;font-size:10.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mk-row .t small{display:block;margin-top:1px;font-family:var(--mono);font-size:8.5px;color:var(--sub)}
+  .mk-row .t small.bad{color:var(--red);font-weight:700}
+  .mk-tog{flex-shrink:0;min-width:64px;min-height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--line-strong);font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub)}
+  .mk-tog.on{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+  .mk-tog:disabled{opacity:.4}
+  .mk-agg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .mk-cell{border:1px solid var(--line);border-radius:11px;background:var(--soft);padding:9px 10px}
+  .mk-cell small{display:block;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .mk-cell b{display:block;margin-top:3px;font-family:var(--mono);font-size:12px;font-weight:700}
+  .mk-cell b.up{color:var(--sell)}
+  .mk-prev{display:flex;flex-direction:column;min-height:0;overflow-y:auto;border:1px solid var(--line);border-radius:11px;max-height:32vh}
+  .mk-prow{padding:9px 10px;border-top:1px solid var(--line);background:var(--card)}
+  .mk-prow:first-child{border-top:0}
+  .mk-prow .d{font-size:10.5px;font-weight:700}
+  .mk-prow .ln{display:flex;justify-content:space-between;gap:8px;margin-top:3px;font-family:var(--mono);font-size:9.5px;color:var(--sub)}
+  .mk-prow .ln b{color:var(--ink)}
+  .mk-prow .ln .new{color:var(--sell);font-weight:700}
+  .mk-prow .ln .rep{color:var(--red);font-weight:700}
+  .mk-note{font-size:8.5px;line-height:1.6;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
+  .mk-undo{display:none;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--accent);background:var(--accent-soft);font-size:9.5px;font-weight:700}
+  .mk-undo.show{display:flex}
+  .mk-undo span{flex:1;min-width:0}
+  .mk-undo button{flex-shrink:0;min-height:36px;padding:0 14px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
   .toast{position:fixed;bottom:148px;left:50%;transform:translateX(-50%);z-index:70;max-width:86vw;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:9.5px;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.3);display:none}
-  .toast.show{display:block;animation:up .16s ease-out}
+  .toast.show{display:block}
   .toast.err{border:1px solid var(--red)}
-
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation:none!important;transition:none!important}
-    .fab:hover,.fab:active,.tb-btn:active,.rbtn:active,.ear:active,.gbtn:active,.cbtn:active,.gadd:active,.cta:active,.itbn:active,.tb-save:active{transform:none}
   }
-
-  /* ============ LARGE PHONE (430 - 599) ============ */
   @media (min-width:430px){
     :root{--gutter:18px}
     .wrap{max-width:560px;padding:10px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
     .desc{min-height:72px}
     .createpair{gap:12px}
   }
-
-  /* ============ FOLD (>=600) - recomposed, not a centred phone ============ */
   @media (min-width:600px){
     :root{--gutter:24px}
     .wrap{max-width:820px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
-    .tb-meta{font-size:8.5px}
     .tb-save{display:flex}
     .fab{display:none}
     .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
     .dgrid .wide{grid-column:span 1}
-    /* item becomes identity column + data column, side by side */
     .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);column-gap:20px}
     .ihead{grid-column:1;grid-row:1}
-
     .idata{grid-column:2;grid-row:1;margin-top:0;padding-left:18px;border-left:1px solid var(--line)}
     .ins{grid-column:1/-1;grid-row:2}
     .desc{min-height:92px}
@@ -469,13 +374,14 @@
     .totals-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
     .sumtotal{margin-top:0}
     .sheet{max-width:560px;border-radius:22px;margin-bottom:18px}
+    .mk-list{max-height:34vh}
+    .mk-prev{max-height:36vh}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- ================= TOP BAR ================= -->
   <header class="topbar">
     <button class="tb-btn" title="Back to BOQs" aria-label="Back to BOQs" onclick="toast('Back to BOQs')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -497,7 +403,6 @@
     </button>
   </header>
 
-  <!-- ================= 1. DOCUMENT DETAILS ================= -->
   <section class="sec" style="margin-top:14px">
     <div class="sec-head">
       <span class="secno">1.</span>
@@ -529,7 +434,6 @@
     </div>
   </section>
 
-  <!-- ================= 2. LINE ITEMS ================= -->
   <section class="sec">
     <div class="sec-head">
       <span class="secno">2.</span>
@@ -547,11 +451,16 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v10m0 0l-3.5-3.5M12 14l3.5-3.5"/></svg>
         Import
       </button>
+      <button class="itbn hot" id="markupBtn" onclick="openMarkup()" title="Derive selling prices from cost prices">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+        Markup
+      </button>
       <button class="itbn danger" onclick="clearAll()" title="Remove every group and item row">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13a1 1 0 001 1h8a1 1 0 001-1l1-13"/></svg>
         Clear all
       </button>
     </div>
+    <div class="mk-undo" id="mkUndo"><span id="mkUndoLabel"></span><button onclick="undoMarkup()">Undo</button></div>
 
     <div id="items"></div>
 
@@ -567,7 +476,6 @@
     </div>
   </section>
 
-  <!-- ================= 3. TOTALS ================= -->
   <section class="sec">
     <div class="sec-head">
       <span class="secno">3.</span>
@@ -579,7 +487,7 @@
       <div class="totals-grid">
         <div class="t-lines">
           <div class="sumline"><span>Total cost (CP &times; Qty)</span><b id="tCost">&nbsp;</b></div>
-          <div class="sumline"><span>Total selling price (SP &times; Qty)</span><b id="tSell">&nbsp;</b></div>
+          <div class="sumline"><span>Schedule selling total (SP &times; Qty)</span><b id="tSell">&nbsp;</b></div>
         </div>
         <div class="sumtotal">
           <div><small>Gross profit</small><b id="tProfit">&nbsp;</b></div>
@@ -589,7 +497,6 @@
       <div class="words" id="tWords"></div>
     </div>
 
-    <!-- end-of-form completion action. Same save() as every other surface. -->
     <div class="savebar">
       <button class="cbtn primary save-cta" onclick="save()" title="Save Bill of Quantities" aria-label="Save Bill of Quantities">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
@@ -604,12 +511,6 @@
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 2v3a1 1 0 0 0 1 1h5"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 18v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6"/><path stroke-linecap="round" stroke-linejoin="round" d="M18 22H4a2 2 0 0 1-2-2V6"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9.172a2 2 0 0 1 1.414.586l2.828 2.828A2 2 0 0 1 22 6.828V16a2 2 0 0 1-2.01 2z"/></svg>
 </button>
 
-<!-- COLUMN MANAGER SHEET - prototype port of the shared document Column
-     Manager (src/components/ColumnManager.tsx): fixed Description row,
-     ordered columns with drag + up/down ordering, editable labels,
-     TEXT/NUM badges, visibility switches, reset-to-defaults with confirm,
-     Done footer. Row Overrides and Add Custom Column stay absent: the BOQ
-     table contract has neither (see the docColumns comment). -->
 <div class="ov" id="ovColumns">
   <div class="sheet" role="dialog" aria-modal="true" aria-label="Column Settings">
     <div class="grab"></div>
@@ -622,7 +523,6 @@
   </div>
 </div>
 
-<!-- IMPORT SHEET -->
 <div class="ov" id="ovImport">
   <div class="sheet" role="dialog" aria-modal="true" aria-label="Import JSON">
     <div class="grab"></div>
@@ -638,7 +538,51 @@
   </div>
 </div>
 
-<!-- CLEAR CONFIRM -->
+<div class="ov" id="ovMarkup">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Instant Markup">
+    <div class="grab"></div>
+    <div class="shd">
+      <div><b>Instant Markup</b><small>Derive SP from CP &middot; preview before apply</small></div>
+      <button class="x" aria-label="Close" onclick="closeMarkup()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div id="mkSetup">
+      <div class="mk-seg" role="group" aria-label="Markup mode">
+        <button id="mkModePct" class="on" onclick="mkMode('pct')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M19 5L5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          Percentage
+        </button>
+        <button id="mkModeVal" onclick="mkMode('val')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2 2.6 5 3.2 5 1.4 5 3.3-2.2 3-5 3-5-1.1-5-3"/></svg>
+          Fixed value
+        </button>
+      </div>
+      <div style="margin-top:10px">
+        <label class="lb" for="mkVal" id="mkValLabel">Markup percentage (%)</label>
+        <div class="mk-valrow">
+          <input class="fld mono" id="mkVal" inputmode="decimal" placeholder="e.g. 20" value="20" oninput="mkValidate()">
+        </div>
+      </div>
+      <div class="mk-err" id="mkErr"></div>
+      <div class="impnote" id="mkHint" style="margin-top:10px">Cost-plus: SP = CP &times; (1 + %). Fixed mode adds a flat amount to unit CP.</div>
+      <div class="mk-tools" style="margin-top:6px">
+        <button class="linkbtn" onclick="mkAll(true)">Include all</button>
+        <button class="linkbtn" onclick="mkAll(false)">Exclude all</button>
+        <span class="cnt" id="mkCount"></span>
+      </div>
+      <div class="mk-list" id="mkList" style="margin-top:6px"></div>
+      <button class="cta" id="mkPreviewBtn" style="margin-top:10px" onclick="mkPreview()">Preview changes</button>
+      <button class="linkbtn" onclick="closeMarkup()">Cancel</button>
+    </div>
+    <div id="mkPreviewWrap" style="display:none">
+      <div class="mk-agg" id="mkAgg"></div>
+      <div class="mk-prev" id="mkPrevList" style="margin-top:10px"></div>
+      <div class="mk-note" style="margin-top:10px">Apply writes the proposed SP onto included rows only. Excluded rows, CP, quantities, groups, and specs stay untouched. Production Apply emits an audit UPDATE with mode, value, row ids, and before/after SP sets.</div>
+      <button class="cta" id="mkApplyBtn" style="margin-top:10px" onclick="mkApply()">Apply to form</button>
+      <button class="linkbtn" onclick="mkBack()">Back</button>
+    </div>
+  </div>
+</div>
+
 <div class="ov center" id="ovClear">
   <div class="dialog" role="dialog" aria-modal="true" aria-label="Clear all line items">
     <b>Clear all line items?</b>
@@ -650,7 +594,6 @@
   </div>
 </div>
 
-<!-- RESET COLUMNS CONFIRM - same confirm pattern as Clear all -->
 <div class="ov center" id="ovColreset">
   <div class="dialog" role="dialog" aria-modal="true" aria-label="Reset columns to defaults">
     <b>Reset columns to defaults?</b>
@@ -665,10 +608,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-var naira = function(n){ return '\u20A6' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
-/* Input-display formatters. PRESENTATION ONLY: the document model keeps raw
-   numbers (r.qty/r.cp/r.sp stay numeric). Calculations, import, validation,
-   and save never see the comma-grouped string. */
+var naira = function(n){ return '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var naira0 = function(n){ return '₦' + Number(n || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 }); };
 var fmtGroup = function(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits: 20 }); };
 var fmtMoney = function(n){ return fmtGroup(Math.round((Number(n) || 0) * 100) / 100); };
 var fmtQty = function(n){ return fmtGroup(Number(n)); };
@@ -689,29 +630,6 @@ var svgs = {
   cam:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8h3l2-3h6l2 3h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.5"/></svg>'
 };
 
-/* ---------- configurable row columns - document column standard ----------
-   Port of the shared document Column Manager architecture (ColumnManager.tsx
-   + useInvoiceColumns) onto the BOQ table-document contract. Seven BOQ keys
-   in canonical order, persisted contract {key,label,visible}, exactly as in
-   src/domain/table-document/types.ts (TableDocumentColumn) and
-   src/components/table-document/TableRowsEditor.tsx.
-
-   Business truth, carried over unchanged:
-   - description (the item description) is fixed - always rendered, always
-     first, never removable, never reordered.
-   - specification = Sub Description. A distinct field with its own column
-     visibility toggle. The production BOQ editor renders it conditionally
-     on its column being visible.
-   - Row overrides and formula columns do not exist in the BOQ table system,
-     so the shared Column Manager's Row Overrides section stays absent - it
-     only renders when a reset handler is passed (ColumnManager.tsx).
-   - Custom columns do not exist in the BOQ table contract (no custom_* keys,
-     no custom renderer in TableRowsEditor), so Add Custom Column is not
-     exposed.
-   - Visibility is boolean in the table contract; the switch toggles it.
-
-   Visibility of every field, including Make / Brand and the Sub Description
-   row, is controlled by the column config - never hard-coded content. */
 var BOQ_CANONICAL_ORDER = ['description', 'specification', 'unit', 'quantity', 'make', 'cp', 'sp'];
 var BOQ_DEFAULT_VISIBLE = { description: true, specification: false, unit: true, quantity: true, make: true, cp: true, sp: true };
 var BOQ_LABELS = { description: 'Description', specification: 'Sub Description', unit: 'Unit', quantity: 'Qty', make: 'Make / Brand', cp: 'CP (Cost Price)', sp: 'SP (Selling Price)' };
@@ -719,10 +637,6 @@ var BOQ_TYPE = { description: 'text', specification: 'text', unit: 'text', quant
 var docColumns = BOQ_CANONICAL_ORDER.map(function(k){ return { key: k, label: BOQ_LABELS[k], visible: BOQ_DEFAULT_VISIBLE[k] }; });
 var findCol = function(key){ return docColumns.find(function(x){ return x.key === key; }); };
 var resolveBoqColumns = function(saved){
-  /* Port of ensureColumnOrderIntegrity + getResetColumnConfigs: empty input
-     returns canonical defaults; description forced to index 0; dedupe by
-     key, first occurrence wins; unknown keys dropped; missing canonical
-     columns appended in canonical order. */
   if (!Array.isArray(saved) || !saved.length) return BOQ_CANONICAL_ORDER.map(function(k){ return { key: k, label: BOQ_LABELS[k], visible: BOQ_DEFAULT_VISIBLE[k] }; });
   var out = [], seen = {};
   saved.forEach(function(c){
@@ -738,19 +652,6 @@ var resolveBoqColumns = function(saved){
 };
 var vis = function(k){ var c = findCol(k); return !c || c.visible; };
 
-/* ---------- registry-driven item fields (V11 composition preserved) ----------
-   Field visibility resolves through docColumns (the column config), so the
-   column manager drives what renders; the registries stay the render shape
-   (pair / full row / auto-wrap), the config stays the data source.
-
-   META_OPTIONAL / COMM_OPTIONAL remain where a FUTURE field is added: one
-   entry, rendered through the shared .fgrid / .comm-grid auto-wrap (2
-   columns, an odd trailing field claims the full row - see autoGridHTML).
-   Architectural tests (NOT enabled): discount, tax, rate, material, labour,
-   location, phase, remarks.
-   COMM_OPTIONAL monetary entries set numeric: true - their input then gets
-   live thousands separators through the same pipeline as CP/SP (editNum +
-   fmtMoney). Future numeric fields are therefore formatted for free. */
 var META_OPTIONAL = [];
 var COMM_FIELDS = [
   { key: 'cp', tag: 'CP', hint: 'money out', tone: 'cost', icon: 'out', locked: true, numeric: true },
@@ -758,15 +659,18 @@ var COMM_FIELDS = [
 ];
 var COMM_OPTIONAL = [];
 
-/* ---------- document model (identical contract to v9/v10) ---------- */
+/* V13 sample: V12 rows plus one zero-CP provisional row. Default markup
+   exclusions: Preliminaries (id 8) and Emulsion paint (id 6) are manually
+   priced. Sand (id 4) carries no meaningful SP yet. */
 var rows = [
   { id: 8, type: 'item', gid: null, desc: 'Preliminaries, site supervision and setting out', sub: 'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', subOpen: false, qty: 1, unit: 'lot', make: '', cp: 150000, sp: 185000 },
-  { id: 1, type: 'group', title: 'Group A \u2014 Civil Works' },
+  { id: 1, type: 'group', title: 'Group A — Civil Works' },
   { id: 2, type: 'item', gid: 1, desc: 'Portland cement, grade 42.5R', sub: '', subOpen: false, qty: 400, unit: 'bags', make: 'Dangote 3X', cp: 5200, sp: 6100 },
   { id: 3, type: 'item', gid: 1, desc: 'Reinforcement steel, high yield T12', sub: '', subOpen: false, qty: 120, unit: 'lengths', make: 'African Foundries', cp: 9800.75, sp: 11500 },
-  { id: 4, type: 'item', gid: 1, desc: 'Sharp sand, river dredged', sub: 'Delivered, tested and compacted in approved layers per engineer\u2019s instruction, including waste allowance, load testing and carting away of surplus material to a designated dump site approved by the client.', subOpen: false, qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 33500 },
-  { id: 5, type: 'group', title: 'Group B \u2014 Finishes' },
-  { id: 6, type: 'item', gid: 5, desc: 'Emulsion paint, 20L pail', sub: 'Two coats over prepared surface.', subOpen: false, qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 }
+  { id: 4, type: 'item', gid: 1, desc: 'Sharp sand, river dredged', sub: 'Delivered, tested and compacted in approved layers per engineer’s instruction, including waste allowance, load testing and carting away of surplus material to a designated dump site approved by the client.', subOpen: false, qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 0 },
+  { id: 5, type: 'group', title: 'Group B — Finishes' },
+  { id: 6, type: 'item', gid: 5, desc: 'Emulsion paint, 20L pail', sub: 'Two coats over prepared surface.', subOpen: false, qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 },
+  { id: 7, type: 'item', gid: null, desc: 'Provisional sum — drainage works (rates pending)', sub: '', subOpen: false, qty: 1, unit: 'sum', make: '', cp: 0, sp: 0 }
 ];
 var seq = 100, errId = null, nums = {};
 
@@ -780,6 +684,7 @@ var siblings = function(r){
     : rows.filter(function(x){ return x.type === 'group' || x.gid == null; });
 };
 var members = function(gid){ return rows.filter(function(x){ return x.type === 'item' && x.gid === gid; }); };
+var groupTitle = function(gid){ var g = rows.find(function(x){ return x.type === 'group' && x.id === gid; }); return g ? g.title : ''; };
 
 function toast(msg, isErr){
   var t = document.getElementById('toast');
@@ -789,11 +694,6 @@ function toast(msg, isErr){
   t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
 }
 
-/* ---------- item photo (transplanted from the approved reference) ----------
-   Prototype-local only: choose a local image, downscale it to a small JPEG
-   data URL on the row's own `image` field, and render either the compact
-   Photo action or an attached thumbnail with a remove control. State is per
-   item. No production storage or persistence is implied. */
 var photoFor = null;
 function addPhoto(id){ photoFor = id; document.getElementById('photoIn').click(); }
 function removePhoto(id){
@@ -841,11 +741,10 @@ function thumbHTML(r){
   document.body.appendChild(inp);
 })();
 
-/* ---------- item fragment builders ---------- */
 function profitHTML(r){
   var p = profit(r), pos = p > 0, zero = p === 0, neg = p < 0;
   var cls = 'profit ' + (neg ? 'neg' : '') + (pos ? ' pos' : '') + (zero ? ' zero' : '');
-  return '<div class="' + cls + '" data-pid="' + r.id + '"><span class="pl">Line profit \u00B7 ' + r.qty + ' \u00D7 ' + naira(Number(r.sp || 0) - Number(r.cp || 0)) + '</span><b>' + naira(p) + '</b></div>';
+  return '<div class="' + cls + '" data-pid="' + r.id + '"><span class="pl">Line profit · ' + r.qty + ' × ' + naira(Number(r.sp || 0) - Number(r.cp || 0)) + '</span><b>' + naira(p) + '</b></div>';
 }
 function patchProfit(id){
   var r = rows.find(function(x){ return x.id === id; });
@@ -853,9 +752,6 @@ function patchProfit(id){
   if (r && el) el.outerHTML = profitHTML(r);
 }
 
-/* shared auto-wrap grid for registry-driven optional fields: 2 columns, a
-   trailing odd field spans the full row. Used for META_OPTIONAL cells and
-   again (with a different cell renderer) for COMM_OPTIONAL. */
 function autoGridHTML(fields, r){
   var cells = fields.map(function(f){
     var handler = f.numeric ? 'editNum' : 'editRow';
@@ -873,8 +769,6 @@ function commCellHTML(r, f){
 
 function metaHTML(r){
   var blocks = [];
-  /* fixed pair: Qty | Unit - first block of the full-width zone below the
-     identity stack (Description / Sub Description / Make) */
   blocks.push(
     '<div class="fgrid">'
     + '<input class="fld mono" inputmode="decimal" placeholder="Qty *" value="' + esc(fmtQty(r.qty)) + '" oninput="editNum(' + r.id + ',\'qty\',this.value)" data-numin="' + r.id + ':qty">'
@@ -892,14 +786,6 @@ function commHTML(r){
   return '<div class="comm-grid">' + cells.join('') + '</div>';
 }
 
-/* Sub Description - the content itself is the collapsed state. Populated:
-   the ACTUAL text as a compact 2-line clamp preview; tap opens the editor.
-   Empty: one compact add row. No status prose such as "Sub description
-   added" - the chevron alone communicates expanded/collapsed. */
-/* Sub Description row - reference composition. Closed + empty: "+ Add sub
-   description". Closed + populated: the ACTUAL text, clamped; tapping it
-   opens the editor directly - no "show more" state, no status prose. Open:
-   a "Sub description" header row with the editable field below it. */
 function subHTML(r){
   var hasSub = !!(r.sub && r.sub.trim());
   var open = !!r.subOpen;
@@ -914,7 +800,7 @@ function subHTML(r){
     +   label
     +   '<span class="stog-chev">' + svgs.chev + '</span>'
     + '</button>'
-    + (open ? '<textarea class="fld subfield" rows="2" placeholder="Sub description \u2014 extra detail under the main description..." oninput="editSub(' + r.id + ',this.value)" onblur="collapseIfEmpty(' + r.id + ',this.value)">' + esc(r.sub) + '</textarea>' : '')
+    + (open ? '<textarea class="fld subfield" rows="2" placeholder="Sub description — extra detail under the main description..." oninput="editSub(' + r.id + ',this.value)" onblur="collapseIfEmpty(' + r.id + ',this.value)">' + esc(r.sub) + '</textarea>' : '')
     + '</div>';
 }
 
@@ -922,11 +808,6 @@ function itemHTML(r, sib){
   var n = nums[r.id] || 0;
   var errCls = errId === r.id ? ' err' : '';
   var k = sib.indexOf(r);
-  /* compact vertical stack beside the rail (reference composition):
-     Description -> Sub Description row -> Make / Brand, then the full-width
-     zone continues with Qty | Unit, CP | SP, profit. When the Sub Description
-     editor is open it sits between Description and Make in the same flow, and
-     everything below moves down naturally. One instance of every field. */
   var make = vis('make')
     ? '<input class="fld" placeholder="Make / brand" value="' + esc(r.make) + '" oninput="editRow(' + r.id + ',\'make\',this.value)">'
     : '';
@@ -970,7 +851,6 @@ function groupHTML(r){
     + '</section>';
 }
 
-/* ---------- render ---------- */
 function renderItems(){
   var host = document.getElementById('items');
   rows.forEach(function(r){
@@ -978,9 +858,9 @@ function renderItems(){
   });
   var nItems = rows.filter(function(r){ return r.type === 'item'; }).length;
   var nGroups = rows.filter(function(r){ return r.type === 'group'; }).length;
-  document.getElementById('countLabel').textContent = nItems + ' items \u00B7 ' + nGroups + ' groups';
+  document.getElementById('countLabel').textContent = nItems + ' items · ' + nGroups + ' groups';
   if (!rows.length) {
-    host.innerHTML = '<div class="empty">No rows yet \u2014 add a line item or a group.</div>';
+    host.innerHTML = '<div class="empty">No rows yet — add a line item or a group.</div>';
     return;
   }
   nums = {};
@@ -1030,10 +910,164 @@ function words(num){
   return c(w) + ' NAIRA' + (k ? ' AND ' + c(k) + ' KOBO' : '') + ' ONLY';
 }
 
-/* ---------- Column Manager (prototype port of ColumnManager.tsx) ----------
-   Same row anatomy as the shared manager: grip + up/down ordering, editable
-   label, TEXT/NUM badge, visibility switch. Description is the fixed section
-   row. Reset opens the same confirm-dialog pattern as Clear all. */
+/* ---------- Instant Markup engine ----------
+   NEW in V13. Derives SP from CP. Locked costing formulas are never
+   redefined: totals keep consuming lineCost = CP x qty,
+   lineSell = SP x qty, lineProfit = (SP - CP) x qty. */
+var mkExcl = { 8: true, 6: true };
+var mkModeSel = 'pct';
+var mkUndoSnap = null;
+var mkLastSummary = '';
+var mkEligible = function(r){
+  if (!r || r.type !== 'item') return false;
+  var cp = Number(r.cp);
+  return Number.isFinite(cp) && cp > 0;
+};
+var mkIncluded = function(r){ return mkEligible(r) && !mkExcl[r.id]; };
+var mkProposed = function(r, mode, val){
+  var cp = Number(r.cp) || 0;
+  var raw = mode === 'pct' ? cp * (1 + val / 100) : cp + val;
+  return Math.round(raw * 100) / 100;
+};
+var mkReadVal = function(){
+  var raw = document.getElementById('mkVal').value.trim().replace(/,/g, '');
+  if (raw === '') return { ok: false, msg: 'Enter a markup value to continue.' };
+  var v = Number(raw);
+  if (!Number.isFinite(v)) return { ok: false, msg: 'That value is not a number. Enter 0 or more.' };
+  if (v < 0) return { ok: false, msg: 'Negative markup is not allowed. Markup adds to cost — it never discounts.' };
+  return { ok: true, val: v };
+};
+var mkErr = function(msg){
+  var el = document.getElementById('mkErr');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+  document.getElementById('mkPreviewBtn').disabled = !!msg;
+};
+function mkValidate(){ mkErr(mkReadVal().ok ? '' : mkReadVal().msg); }
+function mkMode(m){
+  mkModeSel = m;
+  document.getElementById('mkModePct').classList.toggle('on', m === 'pct');
+  document.getElementById('mkModeVal').classList.toggle('on', m === 'val');
+  document.getElementById('mkValLabel').textContent = m === 'pct' ? 'Markup percentage (%)' : 'Markup value per unit (₦)';
+  document.getElementById('mkHint').textContent = m === 'pct'
+    ? 'Cost-plus: SP = CP × (1 + %). Re-applying derives from CP again — never from the current SP.'
+    : 'Fixed: SP = CP + value, applied per item unit. Not a document total, not a distribution, not a direct SP set.';
+  mkValidate();
+}
+function mkAll(on){
+  rows.forEach(function(r){ if (r.type === 'item' && mkEligible(r)) { if (on) delete mkExcl[r.id]; else mkExcl[r.id] = true; } });
+  renderMkList();
+}
+function mkToggle(id){
+  var r = rows.find(function(x){ return x.id === id; });
+  if (!r || !mkEligible(r)) return;
+  if (mkExcl[id]) delete mkExcl[id]; else mkExcl[id] = true;
+  renderMkList();
+}
+function mkRowLine(r){
+  var elig = mkEligible(r), inc = mkIncluded(r);
+  var cls = elig ? (inc ? '' : ' out') : ' nope';
+  var sub;
+  if (!elig) sub = '<small class="bad">Excluded — No cost price</small>';
+  else sub = '<small>CP ' + naira0(Number(r.cp)) + ' · SP now ' + naira0(Number(r.sp || 0)) + (inc ? '' : ' · excluded, untouched') + '</small>';
+  var btn = elig
+    ? '<button class="mk-tog' + (inc ? ' on' : '') + '" aria-pressed="' + inc + '" onclick="mkToggle(' + r.id + ')">' + (inc ? 'Included' : 'Excluded') + '</button>'
+    : '<button class="mk-tog" disabled>No CP</button>';
+  return '<div class="mk-row' + cls + '"><span class="mk-dot"></span><span class="t"><b>' + esc(r.desc || '(untitled row)') + '</b>' + sub + '</span>' + btn + '</div>';
+}
+function renderMkList(){
+  var host = document.getElementById('mkList'), html = '', lastG = -1, aff = 0;
+  rows.forEach(function(r){
+    if (r.type === 'group') { html += '<div class="mk-gcap">' + esc(r.title) + ' — headers never participate</div>'; lastG = r.id; return; }
+    if (r.type !== 'item') return;
+    if (r.gid == null && lastG !== 0) { html += '<div class="mk-gcap">Ungrouped rows</div>'; lastG = 0; }
+    if (mkIncluded(r)) aff++;
+    html += mkRowLine(r);
+  });
+  host.innerHTML = html || '<div class="mk-gcap">No rows yet.</div>';
+  document.getElementById('mkCount').textContent = aff + ' included';
+}
+function mkCompute(){
+  var parsed = mkReadVal();
+  if (!parsed.ok) return null;
+  var val = parsed.val, aff = [], curSell = 0, newSell = 0, curP = 0, newP = 0;
+  rows.forEach(function(r){
+    if (r.type !== 'item') return;
+    var qty = Number(r.qty || 0), cp = Number(r.cp || 0), sp = Number(r.sp || 0);
+    curSell += sp * qty; curP += (sp - cp) * qty;
+    if (!mkIncluded(r)) { newSell += sp * qty; newP += (sp - cp) * qty; return; }
+    var prop = mkProposed(r, mkModeSel, val);
+    var lp = (prop - cp) * qty, m = (prop * qty) ? (lp / (prop * qty) * 100) : 0;
+    aff.push({ r: r, prop: prop, delta: prop - sp, lp: lp, m: m, replaces: sp });
+    newSell += prop * qty; newP += lp;
+  });
+  return { val: val, aff: aff, curSell: curSell, newSell: newSell, curP: curP, newP: newP };
+}
+function openMarkup(){
+  mkHideUndo();
+  document.getElementById('mkSetup').style.display = '';
+  document.getElementById('mkPreviewWrap').style.display = 'none';
+  mkValidate();
+  renderMkList();
+  openSheet('markup');
+}
+function closeMarkup(){ closeSheet('markup'); }
+function mkPreview(){
+  var c = mkCompute();
+  if (!c) { mkValidate(); return; }
+  var dSell = c.newSell - c.curSell, dP = c.newP - c.curP;
+  var agg = '<div class="mk-cell"><small>Affected items</small><b>' + c.aff.length + '</b></div>'
+    + '<div class="mk-cell"><small>Selling total</small><b>' + naira0(c.curSell) + ' → <span class="up">' + naira0(c.newSell) + '</span></b></div>'
+    + '<div class="mk-cell"><small>Gross profit</small><b>' + naira0(c.curP) + ' → <span class="up">' + naira0(c.newP) + '</span></b></div>'
+    + '<div class="mk-cell"><small>Aggregate change</small><b class="up">+' + naira0(dSell) + ' sell · +' + naira0(dP) + ' profit</b></div>';
+  document.getElementById('mkAgg').innerHTML = agg;
+  var unit = mkModeSel === 'pct' ? c.val + '%' : naira0(c.val) + ' /unit';
+  var list = c.aff.map(function(a){
+    var rep = Number(a.replaces) > 0
+      ? '<span class="rep">replaces ' + naira0(a.replaces) + '</span>'
+      : '<span class="rep">no meaningful SP yet</span>';
+    return '<div class="mk-prow"><div class="d">' + esc(a.r.desc || '(untitled row)') + '</div>'
+      + '<div class="ln"><span>CP ' + naira0(Number(a.r.cp)) + '</span><span>' + naira0(a.replaces) + ' → <span class="new">' + naira0(a.prop) + '</span></span></div>'
+      + '<div class="ln"><span>Δ ' + (a.delta >= 0 ? '+' : '−') + naira0(Math.abs(a.delta)) + ' /unit</span><span>profit <b>' + naira0(a.lp) + '</b> · margin ' + a.m.toFixed(1) + '%</span></div>'
+      + '<div class="ln"><span>' + rep + '</span><span>' + esc(unit) + ' from CP</span></div></div>';
+  }).join('');
+  document.getElementById('mkPrevList').innerHTML = list || '<div class="mk-prow"><div class="d">No included rows with a cost price. Nothing would change.</div></div>';
+  document.getElementById('mkApplyBtn').disabled = !c.aff.length;
+  document.getElementById('mkSetup').style.display = 'none';
+  document.getElementById('mkPreviewWrap').style.display = '';
+  mkLastSummary = c.aff.length + ' rows (' + unit + ')';
+}
+function mkBack(){
+  document.getElementById('mkPreviewWrap').style.display = 'none';
+  document.getElementById('mkSetup').style.display = '';
+  renderMkList();
+}
+function mkApply(){
+  var c = mkCompute();
+  if (!c || !c.aff.length) return;
+  mkUndoSnap = {};
+  c.aff.forEach(function(a){ mkUndoSnap[a.r.id] = Number(a.r.sp || 0); a.r.sp = a.prop; });
+  closeMarkup();
+  render();
+  var lab = document.getElementById('mkUndoLabel');
+  lab.textContent = 'Markup applied to ' + mkLastSummary + '. SP values materialized; CP, quantities, and groups untouched.';
+  document.getElementById('mkUndo').classList.add('show');
+  toast('Markup applied to ' + c.aff.length + ' rows — totals recomputed');
+}
+function mkHideUndo(){ document.getElementById('mkUndo').classList.remove('show'); }
+function undoMarkup(){
+  if (!mkUndoSnap) return;
+  Object.keys(mkUndoSnap).forEach(function(id){
+    var r = rows.find(function(x){ return x.id === Number(id); });
+    if (r) r.sp = mkUndoSnap[id];
+  });
+  mkUndoSnap = null;
+  mkHideUndo();
+  render();
+  toast('Markup undone — previous SP values restored');
+}
+
+/* ---------- Column Manager (prototype port of ColumnManager.tsx) ---------- */
 function cmType(k){ return BOQ_TYPE[k] === 'num' ? 'NUM' : 'TEXT'; }
 function renderCols(){
   var desc = findCol('description');
@@ -1082,8 +1116,6 @@ function cmUpdateLabel(key, label){
   renderItems();
 }
 function cmMove(key, targetIdx){
-  /* port of useInvoiceColumns.moveColumn: description locked, out-of-range
-     rejected, index 0 clamped to 1, no-op when already at the target. */
   if (key === 'description') return;
   var from = docColumns.findIndex(function(c){ return c.key === key; });
   if (from < 0 || targetIdx === from) return;
@@ -1105,16 +1137,11 @@ function doResetCols(){
 
 function render(){ renderItems(); renderTotals(); }
 
-/* ---------- edits ---------- */
 function editRow(id, key, val){
   var r = rows.find(function(x){ return x.id === id; });
   if (!r) return;
   r[key] = val;
 }
-/* Sub Description editor input - model update only. The open header label
-   stays "Sub description" (reference composition); the collapsed preview is
-   rebuilt from the model on the next render, so no live preview patching and
-   no caret concerns. Collapse-on-empty on blur is handled by collapseIfEmpty. */
 function editSub(id, val){
   var r = rows.find(function(x){ return x.id === id; });
   if (!r) return;
@@ -1138,8 +1165,6 @@ function editSub(id, val){
     if (lab2) lab2.textContent = 'Add sub description';
   }
 }
-/* Leaving an EMPTY editor collapses straight back to the compact add row -
-   never an empty textarea-sized region. Rows with text stay open for editing. */
 function collapseIfEmpty(id, val){
   if (val && val.trim()) return;
   var r = rows.find(function(x){ return x.id === id; });
@@ -1155,15 +1180,9 @@ function editNum(id, key, val){
   r[key] = Number.isFinite(n) ? n : 0;
   renderTotals();
   patchProfit(id);
-  /* live thousands separators. Formatting is display-only: the model keeps
-     the raw numeric value, calculations keep consuming it. The caret is
-     re-anchored to the digit it was on so typing, deleting, selecting, and
-     decimal entry stay usable - a naive value swap would jump it to the end. */
   var el = document.querySelector('[data-numin="' + id + ':' + key + '"]');
   if (!el || document.activeElement !== el) return;
   var raw = val.replace(/,/g, '');
-  /* in-progress decimal entry: keep '', '.', and trailing-dot input visible
-     exactly as typed so leading-dot entry (.5 -> 0.5) is not corrupted. */
   var inProgress = raw === '' || raw === '.' || /\.$/.test(raw);
   var hadSel = el.selectionStart !== el.value.length || el.selectionEnd !== el.value.length;
   var start = el.selectionStart;
@@ -1223,8 +1242,6 @@ function addItemTo(gid){
   toast('Item added to group');
 }
 function addGroup(){ rows.push({ id: ++seq, type: 'group', title: 'New Group' }); render(); toast('Group added'); }
-/* Empty + collapsed -> the compact add row, no reserved editor space.
-   Populated + collapsed -> the actual-text preview, edit mode on tap. */
 function toggleSub(id){
   var r = rows.find(function(x){ return x.id === id; });
   if (!r) return;
@@ -1242,7 +1259,7 @@ function removeRow(id){
     rows.forEach(function(x){ if (x.type === 'item' && x.gid === id) x.gid = null; });
     rows = rows.filter(function(x){ return x.id !== id; });
     render();
-    toast('Group removed \u2014 its items kept');
+    toast('Group removed — its items kept');
   } else {
     rows = rows.filter(function(x){ return x.id !== id; });
     render();
@@ -1276,7 +1293,6 @@ function syncLayout(){
   if (el) el.textContent = bp();
 }
 
-/* ---------- import (identical contract and validation to v9/v10) ---------- */
 function showImpErr(msg){
   var el = document.getElementById('impErr');
   el.textContent = msg || '';
@@ -1286,7 +1302,7 @@ function doImport(){
   var raw = document.getElementById('impTa').value.trim();
   if (!raw) { showImpErr('Paste JSON first.'); return; }
   var data;
-  try { data = JSON.parse(raw); } catch (e) { showImpErr('Invalid JSON: ' + e.message); toast('Import failed \u2014 invalid JSON', true); return; }
+  try { data = JSON.parse(raw); } catch (e) { showImpErr('Invalid JSON: ' + e.message); toast('Import failed — invalid JSON', true); return; }
   if (!data || typeof data !== 'object' || Array.isArray(data)) { showImpErr('Root must be a JSON object with an "items" array.'); return; }
   if (!Array.isArray(data.items)) { showImpErr('Missing required "items" array.'); return; }
   var groups = data.groups == null ? [] : data.groups;
@@ -1332,15 +1348,14 @@ function doImport(){
       sp: Number.isFinite(Number(it.unit_price)) ? Number(it.unit_price) : 0
     });
   });
-  if (errors.length) { showImpErr(errors.join('\n')); toast('Import failed \u2014 see errors', true); return; }
+  if (errors.length) { showImpErr(errors.join('\n')); toast('Import failed — see errors', true); return; }
   rows = groupRows.concat(itemRows);
   if (typeof data.title === 'string' && data.title.trim()) document.getElementById('fTitle').value = data.title;
   closeSheet('import');
   render();
-  toast('Imported ' + itemRows.length + ' items \u00B7 ' + groupRows.length + ' groups');
+  toast('Imported ' + itemRows.length + ' items · ' + groupRows.length + ' groups');
 }
 
-/* ---------- save (identical validation to v9/v10) ---------- */
 function save(){
   if (!document.getElementById('fNo').value.trim()) { toast('Save blocked: BOQ number is required', true); return; }
   var bad = rows.find(function(r){ return r.type === 'item' && (!r.desc.trim() || Number(r.qty) <= 0 || Number(r.sp) <= 0); });
@@ -1354,7 +1369,7 @@ function save(){
     return;
   }
   document.getElementById('modeBadge').textContent = 'Saved';
-  toast('BOQ saved \u2014 convert to Quotation from the View page');
+  toast('BOQ saved — convert to Quotation from the View page');
 }
 
 function toggleTheme(){
@@ -1369,7 +1384,6 @@ function toggleTheme(){
   }
 }
 
-/* ---------- wiring ---------- */
 document.querySelectorAll('.ov').forEach(function(ov){
   ov.addEventListener('click', function(e){
     if (e.target !== ov) return;
@@ -1388,7 +1402,6 @@ window.addEventListener('resize', function(){
   if (b !== lastBP) { lastBP = b; renderItems(); }
 });
 
-/* drag to reorder columns - same moveColumn semantics as the up/down buttons */
 (function(){
   var list = document.getElementById('colList');
   var dragKey = null;
