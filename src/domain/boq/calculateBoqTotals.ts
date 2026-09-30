@@ -5,6 +5,7 @@ export interface BoqTotals {
   total_cost: number
   total_selling_price: number
   gross_profit: number
+  margin_percent: number
 }
 
 /**
@@ -28,10 +29,16 @@ export function computeBoqTotals(rows: TableDocumentRow[]): BoqTotals {
     totalSellingPrice = totalSellingPrice.plus(sp.times(qty))
   }
 
+  const grossProfit = totalSellingPrice.minus(totalCost)
+  const marginPercent = totalSellingPrice.greaterThan(0)
+    ? grossProfit.dividedBy(totalSellingPrice).times(100)
+    : new Decimal(0)
+
   return {
     total_cost: totalCost.toNumber(),
     total_selling_price: totalSellingPrice.toNumber(),
-    gross_profit: totalSellingPrice.minus(totalCost).toNumber(),
+    gross_profit: grossProfit.toNumber(),
+    margin_percent: marginPercent.toNumber(),
   }
 }
 

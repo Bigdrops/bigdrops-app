@@ -35,6 +35,14 @@ function mapLegacyRowToRow(row: any, idx: number): TableDocumentRow {
     make_brand: cells.make_brand || '',
     cp: cells.cp ?? '',
     sp: cells.sp ?? '',
+    image_url: row.image_url || cells.image_url || null,
+    group_id: row.group_id || cells.group_id || null,
+    vat_rate: row.vat_rate ?? cells.vat_rate ?? null,
+    discount_rate: row.discount_rate ?? cells.discount_rate ?? null,
+    install_rate: row.install_rate ?? cells.install_rate ?? null,
+    install_rate_override: row.install_rate_override ?? cells.install_rate_override ?? null,
+    install_rate_taxable: row.install_rate_taxable ?? cells.install_rate_taxable ?? null,
+    custom_data: cells.custom_data || {},
   }
 }
 
@@ -124,6 +132,14 @@ export const denormalizeToDbBoqRow = (row: TableDocumentRow, boqId: string): DbB
     make_brand,
     cp,
     sp,
+    image_url,
+    group_id,
+    vat_rate,
+    discount_rate,
+    install_rate,
+    install_rate_override,
+    install_rate_taxable,
+    custom_data,
     ...rest
   } = row as TableDocumentRow & {
     created_at?: string
@@ -133,7 +149,20 @@ export const denormalizeToDbBoqRow = (row: TableDocumentRow, boqId: string): DbB
   return {
     ...rest,
     boq_id: boqId,
-    cells: { specification, make_brand, cp, sp },
+    cells: {
+      specification,
+      make_brand,
+      cp,
+      sp,
+      image_url,
+      group_id,
+      vat_rate,
+      discount_rate,
+      install_rate,
+      install_rate_override,
+      install_rate_taxable,
+      custom_data,
+    },
     quantity: Number(row.quantity || 0),
     sort_order: Number(row.sort_order || 0),
   }

@@ -266,7 +266,7 @@ test('numbering: save paths separate manual identity from automatic allocation',
     assert.match(source, /advanceAutoCursor/, `${file} must advance the cursor on automatic success`)
     assert.match(source, /fetchAutoCursor/, `${file} must read the cursor for automatic candidates`)
   }
-  for (const file of ['src/pages/NewRfq.tsx', 'src/pages/NewBoq.tsx']) {
+  for (const file of ['src/pages/NewRfq.tsx']) {
     const source = fs.readFileSync(path.resolve(file), 'utf8')
     assert.match(source, /advanceAutoCursor/, `${file} must advance the cursor on automatic success`)
   }

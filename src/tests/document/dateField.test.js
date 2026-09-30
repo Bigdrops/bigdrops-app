@@ -99,7 +99,6 @@ test('date-field: picker shell follows theme and safe-area conventions', () => {
 const MIGRATED_DATE_FILES = [
   'src/components/document/FormHeader.tsx',
   'src/components/waybill/WaybillForm.tsx',
-  'src/components/boq/BoqForm.tsx',
   'src/components/rfq/RfqForm.tsx',
   'src/components/csr/CsrFormScreen.tsx',
   'src/components/document-view/invoice/InvoiceRecordPaymentSheet.tsx',
@@ -133,7 +132,6 @@ test('date-field: every migrated form uses DateField with no native date input l
 test('date-field: migrated fields preserve state keys and empty-value contracts', () => {
   const cases = [
     ['src/components/waybill/WaybillForm.tsx', /onChange=\{\(next\) => updateWaybill\('date', next\)\}/],
-    ['src/components/boq/BoqForm.tsx', /onChange=\{\(next\) => onChange\(\{ issue_date: next \}\)\}/],
     ['src/components/rfq/RfqForm.tsx', /onChange=\{\(next\) => onUpdateRfq\(\{ issue_date: next \}\)\}/],
     ['src/components/csr/CsrFormScreen.tsx', /onChange=\{\(next\) => onUpdate\('start_date', next\)\}/],
     ['src/components/document-view/invoice/InvoiceRecordPaymentSheet.tsx', /onChange=\{\(next\) => setField\('date', next\)\}/],

@@ -19,6 +19,14 @@ export function createEmptyTableRow(sort_order: number, rowType: TableRowType = 
     make_brand: '',
     cp: '',
     sp: '',
+    image_url: null,
+    group_id: null,
+    vat_rate: null,
+    discount_rate: null,
+    install_rate: null,
+    install_rate_override: null,
+    install_rate_taxable: null,
+    custom_data: {},
   }
 }
 

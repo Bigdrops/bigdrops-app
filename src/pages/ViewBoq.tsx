@@ -1,384 +1,233 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Edit3, Palette, Printer, Share2 } from 'lucide-react'
 
-import { BoqPdfDocument } from '@/components/boq/BoqPdfDocument'
-import { BoqPreview } from '@/components/boq/BoqPreview'
-import BoqHeroMeta from '@/components/document-view/boq/BoqHeroMeta'
-import BoqMoreSheet from '@/components/document-view/boq/BoqMoreSheet'
-import BoqViewPage from '@/components/document-view/boq/BoqViewPage'
-import { useDocumentUIState } from '@/components/document-view/hooks/useDocumentUIState'
-import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
-import DocumentPage from '@/components/document-view/shared/DocumentPage'
-import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
-import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
-import DocumentHero from '@/components/document-view/shared/DocumentHero'
-import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
-import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
-import '@/components/document-view/shared/documentViewTheme.css'
-import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
-import type { BaseDocument } from '@/components/document-view/types/documentView'
-import { feedback } from '@/lib/feedback'
-import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
-import { useEntity } from '@/lib/tenant/contexts'
-import { shareDocument } from '@/components/document-view/shared/shareDocument'
-import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
-import { archiveBOQRecord, convertBOQToQuotation, deleteBOQRecord, duplicateBOQRecord, updateBOQStatus } from './view-boq-actions'
-import { computeBoqTotals } from '@/domain/boq/calculateBoqTotals'
-import { numberToWords } from '@/lib/formatters/money'
+import Layout from '@/components/Layout'
+import { Button } from '@/components/ui/button'
 import { normalizeDbBoq } from '@/domain/boq/normalize'
-import { useSettings } from '@/hooks/useSettings'
-import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
-import { BOQ_CAPABILITIES, BOQ_POLICY, BOQ_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/boq'
-import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
+import type { Boq } from '@/domain/boq/types'
+import { buildBoqViewData } from '@/domain/boq/viewData'
+import { feedback } from '@/lib/feedback'
+import { useEntity } from '@/lib/tenant/contexts'
+import { cn } from '@/lib/utils'
 
-const SHEET_MORE = 'more-actions'
-const SHEET_CUSTOMIZE = 'customize-output'
-const MODAL_GENERATE_QUOTE = 'generate-quote'
-const MODAL_DELETE = 'delete'
-const MODAL_ARCHIVE = 'archive'
+const moneyFormatter = new Intl.NumberFormat('en-NG', {
+  style: 'currency',
+  currency: 'NGN',
+  maximumFractionDigits: 2,
+})
+
+function formatMoney(value: number) {
+  return moneyFormatter.format(value || 0)
+}
+
+function formatPercent(value: number) {
+  return `${Number(value || 0).toFixed(1)}%`
+}
 
 export default function ViewBoq() {
+  const { id } = useParams()
   const navigate = useNavigate()
-  const { settings } = useSettings()
   const { tenantClient } = useEntity()
-  const { id } = useParams<{ id: string }>()
-  const ui = useDocumentUIState()
-
+  const [boq, setBoq] = useState<Boq | null>(null)
   const [loading, setLoading] = useState(true)
-  const [boq, setBoq] = useState<any>(null)
-  const [downloading, setDownloading] = useState(false)
-  const [projectLinkOpen, setProjectLinkOpen] = useState(false)
-  const [archiving, setArchiving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [duplicating, setDuplicating] = useState(false)
-  const [updatingStatus, setUpdatingStatus] = useState(false)
-  const [converting, setConverting] = useState(false)
-
-  // Engine: customization state + persistence
-  const {
-    customization,
-    setDocumentFont,
-  } = usePdfCustomization({
-    documentFamily: 'boq',
-    capabilities: BOQ_CAPABILITIES,
-    policy: BOQ_POLICY,
-    templateDefaults: BOQ_TEMPLATE_DEFAULTS,
-  })
 
   useEffect(() => {
-    const loadBoq = async () => {
-      if (!id) return
-      setLoading(true)
-      try {
-        const [boqRes, itemsRes] = await Promise.all([
-          tenantClient.from('boqs').select('*').eq('id', id).single(),
-          tenantClient.from('boq_rows').select('*').eq('boq_id', id).order('sort_order'),
-        ])
+    if (!tenantClient.isReady) return
+    let active = true
 
-        if (boqRes.error || !boqRes.data) {
-          navigate('/boqs')
-          return
-        }
-
-        setBoq(normalizeDbBoq(boqRes.data, itemsRes.data || []))
-      } catch (err) {
-        console.error('Failed to load BOQ', err)
-      } finally {
-        setLoading(false)
+    async function load() {
+      if (!id) {
+        navigate('/boqs')
+        return
       }
+
+      setLoading(true)
+      const [boqResult, rowsResult] = await Promise.all([
+        tenantClient.from('boqs').select('*').eq('id', id).single(),
+        tenantClient.from('boq_rows').select('*').eq('boq_id', id).order('sort_order'),
+      ])
+
+      if (!active) return
+      if (boqResult.error || !boqResult.data) {
+        feedback.error('Cost & Pricing Sheet not found')
+        navigate('/boqs')
+        return
+      }
+
+      setBoq(normalizeDbBoq(boqResult.data, rowsResult.data || []))
+      setLoading(false)
     }
 
-    void loadBoq()
-  }, [id, navigate])
+    void load()
 
-  const showToast = (title: string, description: string, tone: 'info' | 'success' = 'info') => {
-    const options = { description }
-
-    if (tone === 'success') {
-      feedback.success(title, options)
-      return
+    return () => {
+      active = false
     }
+  }, [id, navigate, tenantClient, tenantClient.isReady])
 
-    feedback.info(title, options)
-  }
+  const viewData = useMemo(() => (boq ? buildBoqViewData(boq) : null), [boq])
 
-  const handleCopyNumber = async () => {
-    if (!boq?.boq_number) return
-    try {
-      await navigator.clipboard.writeText(boq.boq_number)
-      showToast('BOQ number copied', boq.boq_number, 'success')
-    } catch {
-      showToast('Copy failed', 'Clipboard access denied.')
-    }
-  }
-
-  const handleShare = async () => {
-    try {
-      await shareDocument({
-        title: boq?.boq_number || 'BOQ',
-        text: 'Bill of Quantities',
-      })
-      showToast('Share successful', 'BOQ link handled.', 'success')
-    } catch (err) {
-      showToast('Share failed', 'Could not share this BOQ.')
-    }
-  }
-
-  const handleDownload = async () => {
-    if (!boq || downloading) return
-    setDownloading(true)
-    try {
-      await downloadPdfFromElement({
-        fileName: boq.boq_number || 'boq',
-        subdirectory: 'boq',
-        element: <BoqPdfDocument boq={boq} />,
-      })
-      showToast('Download ready', `${boq.boq_number || 'BOQ'} saved to ${userDownloadLocationLabel()}.`, 'success')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Could not generate the BOQ PDF.'
-      showToast('Download failed', message)
-    } finally {
-      setDownloading(false)
-    }
-  }
-
-  const handleUpdateStatus = async (status: string, successLabel: string) => {
-    if (!id || updatingStatus) return
-    setUpdatingStatus(true)
-    try {
-      await updateBOQStatus(id, status, tenantClient)
-      setBoq((curr: any) => ({ ...curr, status }))
-      showToast(successLabel, `BOQ marked as ${status}.`, 'success')
-      ui.closeModal()
-    } catch (error) {
-      showToast('Update failed', error instanceof Error ? error.message : 'Could not update status.')
-    } finally {
-      setUpdatingStatus(false)
-    }
-  }
-
-  const handleDuplicate = async () => {
-    if (!id || duplicating) return
-    setDuplicating(true)
-    try {
-      const created = await duplicateBOQRecord(id, tenantClient)
-      navigate(`/boqs/${created.id}`)
-      showToast('BOQ Cloned', 'A new BOQ copy has been created.', 'success')
-    } catch (error) {
-      showToast('Clone failed', error instanceof Error ? error.message : 'Could not duplicate.')
-    } finally {
-      setDuplicating(false)
-    }
-  }
-
-  const handleArchive = async () => {
-    if (!id || archiving) return
-    setArchiving(true)
-    try {
-      await archiveBOQRecord(id, tenantClient)
-      navigate('/boqs')
-    } catch (error) {
-      showToast('Archive failed', error instanceof Error ? error.message : 'Could not archive.')
-    } finally {
-      setArchiving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!id || deleting) return
-    setDeleting(true)
-    try {
-      await deleteBOQRecord(id, tenantClient)
-      navigate('/boqs')
-    } catch (error) {
-      showToast('Delete failed', error instanceof Error ? error.message : 'Could not delete.')
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  const handleConvertToQuotation = async () => {
-    if (!boq || converting) return
-    setConverting(true)
-    try {
-      const created = await convertBOQToQuotation({ boq, items: boq.table_rows, prefixes: settings?.document_prefixes, tenantClient })
-      navigate(`/quotations/${created.id}`)
-      showToast('Quotation Created', 'Linked quotation is ready.', 'success')
-    } catch (error) {
-      showToast('Conversion failed', error instanceof Error ? error.message : 'Could not generate quotation.')
-    } finally {
-      ui.closeModal()
-      setConverting(false)
-    }
-  }
-
-  if (loading) {
+  if (loading || !boq || !viewData) {
     return (
-      <DocumentPage topNav={<DocumentTopNav title="Opening BOQ..." backLabel="BOQs" onBack={() => navigate('/boqs')} />}>
-        <CenteredSpinner />
-      </DocumentPage>
+      <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader immersive>
+        <div className="min-h-[60vh] p-12 text-center text-sm text-bd-text-muted">Loading Cost & Pricing Sheet...</div>
+      </Layout>
     )
   }
 
-  if (!boq) return null
-
-  const docProps: BaseDocument = {
-    id: boq.id,
-    number: boq.boq_number,
-    title: 'Bill of Quantities',
-    status: (boq.status || 'open') as any,
-  }
-
-  const rowCount = Array.isArray(boq.table_rows) ? boq.table_rows.length : 0
-  const totals = useMemo(() => computeBoqTotals(boq.table_rows || []), [boq.table_rows])
-  const fmt = (n: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(n)
-
-  const metrics = [
-    { label: 'Lines', value: `${rowCount} items` },
-    { label: 'Total Cost', value: fmt(totals.total_cost), tone: 'blue' as const },
-    { label: 'Total Selling Price', value: fmt(totals.total_selling_price) },
-    { label: 'Gross Profit', value: fmt(totals.gross_profit), tone: 'green' as const },
-    { label: 'Status', value: boq.status || 'open', tone: boq.status === 'approved' ? 'green' as const : 'amber' as const },
-  ]
-
-  const amountInWords = numberToWords(totals.total_selling_price)
+  const status = String((boq as any).status || 'Draft')
 
   return (
-    <>
-      <DocumentPage
-        topNav={
-          <DocumentTopNav
-            title={docProps.number}
-            subtitle={docProps.title}
-            backLabel="BOQs"
-            onBack={() => navigate('/boqs')}
-            onShare={() => void handleShare()}
-            onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
-            onMore={() => ui.openSheet(SHEET_MORE)}
-            customizeIcon={
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
-              </svg>
-            }
-          />
-        }
-        hero={
-          <DocumentHero
-            eyebrow={docProps.title}
-            title={docProps.number}
-            subtitle={boq.client_name || 'No client specified'}
-            status={docProps.status}
-            meta={<BoqHeroMeta threadTag={boq.project_title || 'Material Schedule'} />}
-          />
-        }
-        floating={<FloatingDownloadButton onClick={() => void handleDownload()} disabled={downloading} />}
-        overlays={
-          <>
-            <DocumentSheet
-              open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
-              onClose={ui.closeSheet}
-              title="Customize BOQ PDF"
-              subtitle="Adjust the document font for BOQ PDF exports."
-            >
-              <DocumentCustomizeCard
-                customization={customization}
-                setDocumentFont={setDocumentFont}
-                setInkFont={() => {}}
-                setInkColour={() => {}}
-                templatePicker={
-                  <div className="py-2 text-center text-xs text-bd-text-muted">
-                    BOQ uses a single default template.
+    <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader immersive>
+      <div className="min-h-screen bg-bd-surface-muted text-bd-text">
+        <header className="sticky top-0 z-30 border-b border-bd-border bg-bd-surface/95 backdrop-blur">
+          <div className="mx-auto flex max-w-[1600px] flex-col gap-3 px-3 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/boqs')} aria-label="Back to Cost & Pricing Sheets">
+                <ArrowLeft />
+              </Button>
+              <div className="min-w-0">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-bd-text-muted">Cost & Pricing Sheet</p>
+                <h1 className="truncate text-lg font-semibold">{boq.title || boq.boq_number}</h1>
+              </div>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
+              <Button type="button" variant="outline" onClick={() => navigate(`/boqs/edit/${boq.id}`)} className="shrink-0">
+                <Edit3 />
+                Edit
+              </Button>
+              <Button type="button" variant="outline" disabled className="shrink-0">
+                <Palette />
+                Customize
+              </Button>
+              <Button type="button" variant="outline" disabled className="shrink-0">
+                <Printer />
+                Export
+              </Button>
+              <Button type="button" variant="outline" disabled className="shrink-0">
+                <Share2 />
+                Share
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="mx-auto grid max-w-[1600px] gap-4 px-3 py-4 pb-24 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-4">
+          <section className="space-y-4">
+            <div className="rounded-lg border border-bd-border bg-bd-surface p-4 shadow-sm">
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-bd-border bg-bd-surface-muted px-2.5 py-1 text-xs font-semibold text-bd-text-muted">
+                      {boq.boq_number}
+                    </span>
+                    <span className="rounded-full border border-bd-status-info-border bg-bd-status-info-bg px-2.5 py-1 text-xs font-semibold text-bd-status-info-text">
+                      {status}
+                    </span>
                   </div>
-                }
-                colorSwatches={[]}
-                customColor="auto"
-                onCustomColorChange={() => {}}
-                handwritingFonts={[]}
-                customFont="auto"
-                onCustomFontChange={() => {}}
-                showDocumentFont
-                onSave={() => {
-                  ui.closeSheet()
-                  showToast('Customization saved', 'BOQ PDF design updated.', 'success')
-                }}
-              />
-            </DocumentSheet>
+                  <h2 className="mt-3 text-xl font-semibold">{boq.title || 'Untitled Cost & Pricing Sheet'}</h2>
+                  <div className="mt-3 grid gap-2 text-sm text-bd-text-muted sm:grid-cols-3">
+                    <Meta label="Client / project" value={boq.vendor_name || '-'} />
+                    <Meta label="Site / reference" value={boq.vendor_contact || '-'} />
+                    <Meta label="Issue date" value={boq.issue_date || '-'} />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <BoqMoreSheet
-              open={ui.isSheetOpen(SHEET_MORE)}
-              onClose={ui.closeSheet}
-              onMarkAsIssued={() => void handleUpdateStatus('approved', 'Marked as Approved')}
-              onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
-              onCreateRevision={() => void handleDuplicate()}
-              onLinkProject={() => setProjectLinkOpen(true)}
-              onDuplicate={() => void handleDuplicate()}
-              onCopyNumber={handleCopyNumber}
-              onExport={() => void handleDownload()}
-              onArchive={() => ui.openModal(MODAL_ARCHIVE)}
-              onDelete={() => ui.openModal(MODAL_DELETE)}
-            />
+            <div className="rounded-lg border border-bd-border bg-bd-surface shadow-sm">
+              <div className="border-b border-bd-border p-3">
+                <h2 className="text-sm font-semibold">Pricing schedule</h2>
+                <p className="text-xs text-bd-text-muted">CP remains internal to this Cost & Pricing Sheet. SP is the selling rate.</p>
+              </div>
+              <div className="divide-y divide-bd-border">
+                {viewData.rows.map((row) => {
+                  if (row.type === 'group') {
+                    return (
+                      <div key={row.key} className="bg-bd-surface-muted px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bd-text-muted">
+                        {row.title}
+                      </div>
+                    )
+                  }
 
-            <DocumentConfirmDialog
-              open={ui.isModalOpen(MODAL_GENERATE_QUOTE)}
-              title="Generate Quotation?"
-              description="This will lock the current quantities and generate a new open quotation."
-              cancelLabel="Cancel"
-              confirmLabel={converting ? "Converting..." : "Generate Quote"}
-              loading={converting}
-              onConfirm={() => void handleConvertToQuotation()}
-              onCancel={ui.closeModal}
-            />
+                  return (
+                    <article key={row.key} className="grid gap-3 p-3 xl:grid-cols-[48px_minmax(220px,1.5fr)_repeat(7,minmax(84px,0.6fr))] xl:items-start">
+                      <div className="rounded-md bg-bd-surface-muted px-2 py-1 text-center font-mono text-xs font-semibold text-bd-text-muted">{row.number}</div>
+                      <div className="min-w-0">
+                        <div className="font-medium">{row.description || '-'}</div>
+                        {row.specification ? <div className="mt-1 text-sm text-bd-text-muted">{row.specification}</div> : null}
+                        {row.makeBrand ? <div className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-bd-text-muted">{row.makeBrand}</div> : null}
+                        {row.notes ? <div className="mt-2 text-xs text-bd-text-muted">{row.notes}</div> : null}
+                        {row.imageUrl ? (
+                          <img src={row.imageUrl} alt="" className="mt-3 h-20 w-20 rounded-lg border border-bd-border object-cover" />
+                        ) : null}
+                      </div>
+                      <ViewCell label="Qty" value={`${row.quantity} ${row.unit}`.trim()} />
+                      <ViewCell label="CP" value={formatMoney(row.cp)} mono />
+                      <ViewCell label="SP" value={formatMoney(row.sp)} mono />
+                      <ViewCell label="Cost" value={formatMoney(row.cost)} mono />
+                      <ViewCell label="Selling" value={formatMoney(row.selling)} mono />
+                      <ViewCell label="Profit" value={formatMoney(row.profit)} mono tone={row.profit >= 0 ? 'good' : 'bad'} />
+                      <ViewCell label="Margin" value={formatPercent(row.marginPercent)} mono tone={row.marginPercent >= 0 ? 'good' : 'bad'} />
+                    </article>
+                  )
+                })}
+              </div>
+            </div>
 
-            <DocumentConfirmDialog
-              open={ui.isModalOpen(MODAL_ARCHIVE)}
-              title="Archive BOQ?"
-              description={`${docProps.number} will be moved to your archive. It won't appear in your active lists.`}
-              cancelLabel="Cancel"
-              confirmLabel={archiving ? "Archiving..." : "Archive"}
-              loading={archiving}
-              onConfirm={() => void handleArchive()}
-              onCancel={ui.closeModal}
-            />
+            {boq.notes ? (
+              <div className="rounded-lg border border-bd-border bg-bd-surface p-4 shadow-sm">
+                <h2 className="text-sm font-semibold">Notes</h2>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-bd-text-muted">{boq.notes}</p>
+              </div>
+            ) : null}
+          </section>
 
-            <DocumentConfirmDialog
-              open={ui.isModalOpen(MODAL_DELETE)}
-              title="Delete BOQ?"
-              description={`${docProps.number} will be permanently deleted. This cannot be undone.`}
-              cancelLabel="Cancel"
-              confirmLabel={deleting ? "Deleting..." : "Delete"}
-              loading={deleting}
-              destructive
-              onConfirm={() => void handleDelete()}
-              onCancel={ui.closeModal}
-            />
+          <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+            <div className="rounded-lg border border-bd-border bg-bd-surface p-4 shadow-sm">
+              <h2 className="text-sm font-semibold">Totals</h2>
+              <div className="mt-3 space-y-2 text-sm">
+                <SummaryLine label="Total Cost" value={formatMoney(viewData.totals.total_cost)} />
+                <SummaryLine label="Total Selling" value={formatMoney(viewData.totals.total_selling_price)} />
+                <SummaryLine label="Gross Profit" value={formatMoney(viewData.totals.gross_profit)} tone={viewData.totals.gross_profit >= 0 ? 'good' : 'bad'} />
+                <SummaryLine label="Margin" value={formatPercent(viewData.totals.margin_percent)} tone={viewData.totals.margin_percent >= 0 ? 'good' : 'bad'} />
+              </div>
+            </div>
+          </aside>
+        </main>
+      </div>
+    </Layout>
+  )
+}
 
-            <ProjectLinkDialog
-              open={projectLinkOpen}
-              onOpenChange={setProjectLinkOpen}
-              tableName="boqs"
-              recordId={String(id || '')}
-              documentLabel={docProps.number || 'BOQ'}
-              onLinked={() => {}}
-            />
-          </>
-        }
-      >
-        <BoqViewPage
-          document={docProps}
-          metrics={metrics}
-          amountInWords={amountInWords}
-          preview={<BoqPreview boq={boq} />}
-          onGenerateQuotation={() => ui.openModal(MODAL_GENERATE_QUOTE)}
-          onEdit={() => navigate(`/boqs/edit/${id}`)}
-          onDuplicate={() => void handleDuplicate()}
-          onCopyNumber={handleCopyNumber}
-        />
-      </DocumentPage>
+function Meta({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-bd-text-muted">{label}</div>
+      <div className="mt-1 font-medium text-bd-text">{value}</div>
+    </div>
+  )
+}
 
-    </>
+function ViewCell({ label, value, mono, tone }: { label: string; value: string; mono?: boolean; tone?: 'good' | 'bad' }) {
+  return (
+    <div>
+      <div className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-bd-text-muted xl:hidden">{label}</div>
+      <div className={cn('text-sm font-semibold', mono && 'font-mono', tone === 'good' && 'text-bd-status-success-text', tone === 'bad' && 'text-destructive')}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function SummaryLine({ label, value, tone }: { label: string; value: string; tone?: 'good' | 'bad' }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-bd-border/60 py-2 last:border-0">
+      <span className="text-bd-text-muted">{label}</span>
+      <span className={cn('font-mono font-semibold', tone === 'good' && 'text-bd-status-success-text', tone === 'bad' && 'text-destructive')}>
+        {value}
+      </span>
+    </div>
   )
 }

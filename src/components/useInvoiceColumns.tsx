@@ -68,9 +68,9 @@ export interface InvoiceColumn extends ColumnConfig {
   [key: string]: any
 }
 
-export function useInvoiceColumns(initial?: InvoiceColumn[]) {
+export function useInvoiceColumns(initial?: InvoiceColumn[], builtins: InvoiceColumn[] = BUILTIN_COLUMNS) {
   const [columns, setColumns] = useState<InvoiceColumn[]>(
-    (initial || BUILTIN_COLUMNS).map((column) => normalizeColumnConfig({ ...column }) as InvoiceColumn),
+    (initial || builtins).map((column) => normalizeColumnConfig({ ...column }) as InvoiceColumn),
   )
   
   const getColumn = useCallback((key: string) => columns.find(c => c.key === key), [columns])
@@ -141,7 +141,10 @@ export function useInvoiceColumns(initial?: InvoiceColumn[]) {
     setColumns(cols => cols.filter(c => c.key !== key))
     
   const resetColumns = () => 
-    setColumns(getResetColumnConfigs().map(c => normalizeColumnConfig({ ...c }) as InvoiceColumn))
+    setColumns(
+      (builtins === BUILTIN_COLUMNS ? getResetColumnConfigs() : builtins)
+        .map(c => normalizeColumnConfig({ ...c }) as InvoiceColumn),
+    )
     
   const moveColumn = (key: string, targetIdx: number) => setColumns(cols => {
     const idx = cols.findIndex(c => c.key === key)
