@@ -1,302 +1,458 @@
 You are working on the BIGDROPS business platform.
-Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel. 
+Stack: React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase, Vercel.
 Runtime Environment: Bun only. Never use npm, yarn, or pnpm.
 
 ====================================================================
 CRITICAL: READ AGENTS.md BEFORE MODIFYING ANY CODE
 ====================================================================
-OpenCode has full repository access. Read AGENTS.md immediately. 
-It strictly enforces project fundamentals, locked math/rules, audit-first workflow, skills registry, and standards conformity. Follow it completely.
+OpenCode has full repository access. Read AGENTS.md immediately.
+Follow its audit-first workflow, locked rules, skills registry, and standards completely.
 ====================================================================
 
 A. CONTEXT & OBJECTIVE
 
-Refine the accepted BOQ View Page V4 design direction into V4.1.
+This is a TARGETED VISUAL FIDELITY CORRECTION.
 
-V4's overall visual language and information hierarchy are accepted.
+DO NOT demolish or rebuild the Cost & Pricing Sheet implementation again.
 
-DO NOT create another clean-sheet redesign.
+The latest transplant is substantially closer to the accepted V13 design, and its working business architecture must be preserved.
 
-The human visual review identified two specific structural problems:
+I have attached two screenshots:
 
-1. The outer gutters plus individual rounded/shadowed item cards make the BOQ schedule feel like a feed of disconnected cards rather than one continuous professional document.
-2. Cost and margin information is hidden behind disclosure controls. This creates unnecessary interaction. Commercial information must be immediately readable without clicking.
+1. ACCEPTED V13 DESKTOP CANDIDATE
+2. CURRENT PRODUCTION IMPLEMENTATION
 
-The objective is to preserve what works in V4 while transforming the schedule into a continuous, full-flowing BOQ document.
+Use the screenshots together with the authoritative HTML candidate:
 
-B. TARGET COMPONENTS / FILES
+docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/form/boq/boq-form-candidate-v13-desktop.html
 
-Primary source:
-- docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/view/boq/boq-view-candidate-mobile-fold-v4.html
+The accepted candidate is the source of truth.
 
-Create a V4.1 mobile/fold candidate beside the existing V4 file.
+The current production screenshot is evidence of remaining visual drift.
 
-Also inspect the corresponding V4 desktop candidate and determine whether the same commercial-disclosure principle should be reflected there.
+Your job is to close that drift.
 
-Do not overwrite V4.
-Do not modify production application code.
-Do not modify form candidates.
-Do not modify V2 or V3.
+DO NOT perform another feature interpretation.
+DO NOT redesign.
+DO NOT introduce another generic document-form system.
+DO NOT change the underlying CPS business architecture.
 
-C. CONSTRAINTS (EXECUTION-SAFE ONLY)
+This task is primarily CSS, composition, typography, sizing, spacing, and exact candidate-structure correction.
 
-Read AGENTS.md first.
+====================================================================
+CRITICAL: DO NOT COMPARE DIFFERENT DATA STATES AS DESIGN DIFFERENCES
+====================================================================
 
-Load relevant skills from docs/PROJECTSKILLINDEX.md, particularly skills appropriate for HTML prototypes, design artifacts, responsive/mobile UI design, and visual hierarchy.
+The candidate screenshot contains populated sample rows.
 
-Preserve existing system behavior unless explicitly modified.
-Avoid unnecessary refactors and follow existing project conventions.
-No build execution responsibilities assigned to OpenCode.
+The production screenshot is currently an empty/new document.
 
-PRESERVE FROM V4:
-- overall typography and visual tone;
-- compact app bar;
-- BOQ number and status treatment;
-- dossier/document identity approach;
-- editorial chapter/group hierarchy;
-- description-first item hierarchy;
-- photo/reference-image concept and read-only lightbox;
-- Download FAB behavior and fab-standard compliance;
-- simulated MobileBottomNav;
-- fold-specific responsive behavior;
-- More sheet/action hierarchy;
-- dark mode;
-- locked BOQ mathematics.
+Do not mistake the absence of rows in the production screenshot for a structural design defect.
 
-CHANGE THE PAGE STRUCTURE:
+Compare equivalent regions independently.
 
-The BOQ schedule must become a continuous document surface.
+When rows exist, their production rendering must still follow the V13 candidate HTML exactly.
 
-Remove the floating-card treatment from individual schedule items:
-- no rounded specimen cards;
-- no per-item shadows;
-- no visible card islands;
-- no large gaps that make entries appear detached.
+Do not inject fake production rows merely to make the page resemble the screenshot.
 
-Do not simply reduce border-radius.
+B. OBSERVED VISUAL DRIFT TO CORRECT
 
-Actually change the composition from "cards in a gutter" to "one flowing document."
+The implementation is CLOSE, but it is not there yet.
 
-The schedule should use substantially more of the viewport width.
+Use direct inspection of the HTML/CSS to determine exact values. Do not rely only on this prose.
 
-Text may still have deliberate horizontal inset for readability, but the page must not look like a stack of narrow cards floating inside a grey background.
+### 1. Overall scale and density
 
-Use editorial structure instead:
-- whitespace;
-- thin horizontal rules;
-- item numbering;
-- typographic hierarchy;
-- chapter boundaries;
-- alignment.
+The production implementation feels substantially more enlarged and loose than the candidate.
 
-Items should visually belong to the same BOQ.
+The candidate has:
+- tighter overall density;
+- smaller, more disciplined typography;
+- more compact controls;
+- less oversized whitespace;
+- a stronger technical/workspace character;
+- a wider usable information density.
 
-PHOTO BEHAVIOR:
+Production currently feels zoomed-in and simplified.
 
-Retain the successful reference-photo concept.
+Match the candidate's actual:
+- max widths;
+- column proportions;
+- vertical rhythm;
+- field heights;
+- gaps;
+- section spacing;
+- typography sizes;
+- button heights;
+- rail width;
+- content density.
 
-A photo belonging to an item should integrate naturally into that item's document flow rather than forcing the whole item back into a card.
+Do NOT solve this with browser zoom or transform: scale().
 
-Photo remains tappable for the existing read-only preview/lightbox.
+Correct the actual CSS dimensions.
 
-Items without photos reserve no image space.
+### 2. Header fidelity
 
-COMMERCIAL INFORMATION — NO DISCLOSURE INTERACTION:
+Candidate:
+- compact back control;
+- restrained document title;
+- small secondary DRAFT / workspace identity line;
+- compact Save BOQ-style candidate button geometry;
+- candidate header proportions and spacing.
 
-Remove the per-item "Cost & margin" toggle entirely.
+Production:
+- title is much larger and heavier;
+- header occupies a different visual hierarchy;
+- Save treatment is too lightweight/different;
+- spacing does not match.
 
-Do not require any click/tap to inspect:
-- quantity;
-- unit;
-- cost price;
-- selling price;
-- line cost;
-- line selling total;
-- line gross profit;
-- margin.
+Reproduce the candidate header structure and sizing faithfully.
 
-Design a compact permanently-visible commercial composition for every item.
+User-facing terminology must remain:
 
-Do not turn this into a spreadsheet/table.
+Cost & Pricing Sheet
 
-The commercial block should remain visually subordinate to the description/specification but instantly scannable.
+Do NOT restore Bill of Quantities or BOQ user-facing terminology just because it appears in the historical candidate screenshot.
 
-Use the existing commercial color semantics carefully:
-- cost information uses the established cost tone;
-- selling/profit information uses the established selling/profit tone.
+Translate terminology only.
+Preserve candidate geometry.
 
-The overall BOQ commercial summary must also be permanently exposed.
+### 3. Section heading treatment
 
-Remove the collapsed/expanded commercial capsule behavior.
+The candidate section headers have a specific technical-document treatment:
+- numbered prefix;
+- compact uppercase heading;
+- horizontal rule;
+- small trailing context/identifier.
 
-Show the relevant overall values directly:
-- Total Cost
-- Selling Total
-- Gross Profit
-- Margin
+Production is similar but not sufficiently faithful in scale, spacing, and weight.
 
-Keep this summary compact and in normal document flow.
-Do not make it sticky.
-Do not create a dark commercial band.
-Do not resurrect V3's persistent commercial chrome.
+Match the candidate precisely.
 
-The existing final close-out may still provide the formal concluding totals; intentional summary repetition at the document close is acceptable.
+### 4. Metadata grid
 
-GROUPS:
+The candidate metadata block is denser and has different:
+- label sizing;
+- input height;
+- border treatment;
+- spacing;
+- grid proportions;
+- title-field placement.
 
-Retain the V4 editorial chapter concept.
+Production currently makes these controls too large and spacious.
 
-Groups remain static and in-flow.
-No horizontal group-chip rail.
-No group tabs.
-No sticky group navigation.
-No dark group envelopes.
+Use the candidate HTML values.
 
-MOBILE BOTTOM NAV + FAB:
+Do not substitute generic application input sizing.
 
-The candidate must continue to simulate the actual mobile/fold bottom navigation.
+### 5. Main workspace proportions
 
-Keep the standard Download FAB positioned correctly above the bottom navigation according to docs/standard/fab-standard.md.
+Candidate desktop has a deliberate left authoring workspace + right commercial rail relationship.
 
-Ensure schedule content can scroll completely clear of both FAB and bottom navigation.
+Production has the concept, but the proportions and whitespace differ.
 
-The bottom nav must remain visible in the prototype so the human reviewer can judge the true available viewport.
+Match:
+- candidate main-column width;
+- rail width;
+- gutter;
+- top alignment;
+- sticky behavior where candidate defines it;
+- vertical spacing between rail panels.
 
-RESPONSIVE/FOLD:
+Do not let the rail become a generic dashboard sidebar.
 
-Phone and fold remain in the same mobile-fold candidate.
+### 6. Commercial rail
 
-Do not treat fold as merely a wider phone.
+The candidate rail is visually stronger and more intentional.
 
-At fold width, use the extra horizontal room intelligently for commercial alignment and image/text composition while retaining the continuous-document principle.
+Production currently looks like generic white cards.
 
-Do not reintroduce cards at fold width.
+Match the candidate:
+- card geometry;
+- internal padding;
+- heading treatment;
+- large selling-total typography;
+- handwritten/technical number treatment where the candidate specifies it;
+- separators;
+- row spacing;
+- Instant Markup card;
+- Save card;
+- button geometry.
 
-DESIGN INTENT:
+Do not reinterpret these through generic shared Card components if those components prevent fidelity.
 
-The target feeling is:
+### 7. Action toolbar
 
-"One BOQ document flowing through the application"
+Candidate actions are compact, deliberate controls.
 
-not:
+Production actions currently look like large text actions spread across excessive space.
 
-"A collection of BOQ item cards"
+Match the candidate:
+- button sizing;
+- icon sizing;
+- borders;
+- gaps;
+- grouping;
+- Clear All positioning;
+- active/hover treatment.
 
-and not:
+Preserve functionality:
+- Add Item;
+- Add Group;
+- Import;
+- Columns;
+- Instant Markup;
+- Clear.
 
-"A spreadsheet/ledger."
+### 8. Empty state
 
-D. REQUIRED VERIFICATION (HARD HARDWARE GATE)
+Production currently has a large dashed empty-state area and large Add Item / Add Group buttons.
 
-DO NOT run bun run build. Permanently banned due to host 4GB RAM limits.
+Verify this against the V13 HTML.
 
-This is a design-direction HTML task.
+If this exact empty-state composition is NOT defined by V13, do not let an invented empty state dominate the page.
 
-Do not run bun run typecheck or lint.
+An empty CPS should still look like the same V13 pricing workspace waiting for its first row.
 
-Perform:
-- git status immediately before work;
-- git status after work;
-- git diff --check;
-- static inspection of the resulting standalone HTML;
-- verify V4 remains untouched;
-- verify no production application source files changed;
-- verify no V2/V3/form candidate files changed;
-- verify all BOQ monetary values still derive from the locked formulas;
-- verify there are no per-item commercial disclosure/toggle controls;
-- verify overall commercial values are visible without interaction;
-- verify item commercial values are visible without interaction;
-- verify mobile bottom navigation remains simulated;
-- verify Download FAB remains compliant with the current FAB standard.
+Keep Add Item / Add Group discoverable without turning the empty document into a generic onboarding panel.
 
-Do not perform browser/runtime visual verification on behalf of the human reviewer.
+### 9. Row fidelity
 
-E. REQUIRED BEHAVIOR
+DO NOT damage the row implementation while correcting the empty state.
 
-Keep changes minimal and scoped to this design-direction iteration.
+When rows are present, reproduce the candidate row exactly enough that the candidate screenshot and production are recognizably the same composition.
 
-Do not use this feedback as permission to redesign accepted V4 elements unrelated to the identified issues.
+Pay special attention to:
+- narrow numbering rail;
+- reorder controls;
+- description field;
+- secondary description treatment;
+- make/brand;
+- photo control;
+- quantity/unit;
+- CP;
+- SP;
+- CP MONEY OUT / SP MONEY IN labels;
+- line-profit strip;
+- remove control;
+- Insert Below;
+- group boundaries.
 
-The most important transformation is structural:
+Do not turn rows into generic cards.
 
-V4 card feed
-→
-V4.1 continuous BOQ document.
+### 10. Group fidelity
 
-Commercial information must be readable immediately.
+Groups must retain the V13 candidate treatment.
 
-No click-to-reveal cost or margin behavior.
+Do not create large independent card islands.
 
-F. ACCEPTANCE CRITERIA
+Group boundaries organize the schedule; individual rows must remain visually legible inside them.
 
-- V4's accepted visual identity remains recognizable.
-- Individual BOQ items no longer appear as floating rounded cards.
-- The schedule reads as one continuous document.
-- Excessive schedule gutters are removed.
-- Items remain clearly distinguishable through editorial hierarchy and separators.
-- Cost and margin require zero interaction.
-- CP/SP and derived commercial values are immediately scannable.
-- Overall BOQ commercial figures require zero interaction.
-- The layout does not resemble a spreadsheet or ledger.
-- Photo behavior remains functional and integrated into the flow.
-- Chapter/group hierarchy remains clear.
-- Mobile bottom navigation is visibly simulated.
-- Download FAB clears the bottom navigation and follows the current standard.
-- Fold receives a deliberate responsive composition.
-- Locked BOQ math remains unchanged.
-- No unintended files are modified.
+### 11. Candidate typography
 
-DESKTOP WIDTH / LARGE-SCREEN COMPOSITION:
+Audit the candidate's complete typography hierarchy.
 
-The desktop candidate has another structural problem: it does not use enough of the available PC viewport width.
+Production currently appears too large in several places.
 
-Redesign the desktop composition so it feels intentionally desktop-native rather than like a constrained mobile/tablet document centered on a large screen.
+Match:
+- title;
+- section heading;
+- labels;
+- input text;
+- toolbar text;
+- totals;
+- helper text;
+- rail headings;
+- row financial labels;
+- group headings.
 
-Do NOT use a narrow fixed max-width that leaves excessive dead space on both sides.
+Do not globally shrink the page blindly.
 
-The desktop view should make strong use of the available viewport:
-- use a fluid responsive shell;
-- expand meaningfully across normal laptop and desktop widths;
-- retain sensible outer margins rather than huge empty gutters;
-- allow the primary BOQ schedule to occupy the majority of the available width;
-- use the remaining horizontal space intentionally for document context/actions/commercial information where appropriate;
-- scale gracefully on 1366px, 1440px, 1920px and wider displays;
-- introduce a sensible maximum only at genuinely very large viewport sizes if necessary for readability.
+Reproduce the candidate hierarchy intentionally.
 
-This does NOT mean stretching every text line from edge to edge.
+### 12. Hardcoded styling remains authorized
 
-Use desktop width through composition:
-- wider schedule area;
-- deliberate columns where useful;
-- better commercial alignment;
-- appropriately sized image regions;
-- a useful supporting/context rail if retained;
-- whitespace inside the composition rather than wasting large areas outside the entire page.
+For these CPS presentation surfaces, hardcoded candidate styling remains explicitly authorized.
 
-The continuous-document principle from mobile/fold also applies to desktop:
-- do not turn schedule items into floating cards;
-- do not create a narrow paper sheet surrounded by empty background;
-- do not reproduce a PDF-page preview metaphor;
-- do not make desktop look like an enlarged phone layout.
+Do NOT translate candidate values back into generic BIGDROPS theme tokens merely for consistency.
 
-Desktop should feel like a purpose-built BOQ workspace taking advantage of a PC screen.
+Candidate CSS is the visual contract.
 
-Inspect the existing V4 desktop candidate specifically for:
-- max-width constraints;
-- wrapper/container width;
-- schedule-to-rail ratio;
-- unnecessary outer margins;
-- unused viewport space.
+C. PRESERVE THE CURRENT ARCHITECTURE
 
-Replace those constraints where they are responsible for the narrow appearance.
+Do NOT undo the successful transplant architecture.
 
-At desktop sizes, the human reviewer should immediately perceive that the application is using the screen rather than merely centering content within it.
+Preserve:
 
+- BoqFormPage orchestration;
+- BoqEditor controller;
+- BoqV13DesktopFormPresentation;
+- BoqV13MobileFoldFormPresentation;
+- separate V4.1 View presentations;
+- useBoqSave;
+- useDocumentSave;
+- JSON Import;
+- Instant Markup;
+- Cloudinary item photos;
+- column management;
+- normalization;
+- persistence;
+- calculation adapters;
+- computeBoqTotals();
+- computeDocument() separation;
+- viewData;
+- Create → Save → View → Edit → Save → View lifecycle.
 
-- Desktop uses the available PC viewport substantially better than V4.
-- No excessive empty margins caused by an unnecessarily restrictive max-width.
-- Desktop is a genuinely desktop-specific composition, not a centered tablet/mobile layout.
-- At 1366px, 1440px and 1920px widths, the BOQ workspace expands appropriately.
-- The main schedule receives the dominant share of desktop width.
-- Wider layout does not produce excessively long text lines; width is consumed through composition and alignment.
-- Desktop retains the same continuous-document philosophy as mobile/fold.
+This is not an architecture rewrite.
+
+D. MOBILE/FOLD WARNING
+
+Although the screenshots supplied for this correction show desktop, DO NOT fix desktop by introducing CSS that damages the accepted mobile/fold presentation.
+
+The mobile/fold source remains:
+
+docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/form/boq/boq-form-candidate-v13-mobile-fold.html
+
+Any shared CSS modification must be checked against the mobile/fold presentation.
+
+Desktop-specific corrections should remain desktop-scoped where appropriate.
+
+Do not merge desktop and mobile/fold DOM compositions.
+
+Do not alter stable presentation selection.
+
+Do not introduce keyboard-sensitive breakpoint logic.
+
+E. VIEW PAGE PROTECTION
+
+Do not casually modify V4.1 View while correcting V13 Form fidelity.
+
+The current screenshots concern the FORM.
+
+Only modify shared styling that affects View if necessary and proven safe.
+
+Do not start another View redesign in this task.
+
+We will visually inspect V4.1 separately.
+
+F. TARGET FILES
+
+Inspect before editing.
+
+Expected relevant files include:
+
+src/components/boq/BoqEditor.tsx
+src/components/boq/BoqV13FormPresentations.tsx
+src/components/boq/boq-v13-form.css
+
+Inspect other files only where necessary.
+
+Do not resurrect:
+- BoqEditorParts.tsx
+- BoqFormPresentations.tsx
+
+Do not invent another abstraction layer.
+
+G. IMPLEMENTATION METHOD
+
+Before changing CSS, perform a region-by-region comparison between:
+
+AUTHORITATIVE:
+boq-form-candidate-v13-desktop.html
+
+and:
+
+CURRENT:
+BoqV13DesktopFormPresentation + boq-v13-form.css
+
+Create a private implementation checklist covering:
+
+- shell;
+- top bar;
+- title hierarchy;
+- document details heading;
+- metadata grid;
+- pricing schedule heading;
+- toolbar;
+- individual row;
+- group;
+- commercial rail;
+- totals;
+- Instant Markup rail entry;
+- Save rail entry;
+- close-out;
+- empty state.
+
+Then correct the actual production implementation.
+
+Do not merely eyeball a few colors.
+
+H. REQUIRED VERIFICATION
+
+DO NOT run bun run build.
+
+Run:
+- bun run typecheck
+- focused CPS tests
+- Instant Markup regression tests
+- import/View regression tests
+- git diff --check
+- git status
+
+Do not run audit:load unless query/data-layer logic changes.
+
+No database work should be necessary.
+
+I. ACCEPTANCE CRITERIA
+
+This correction succeeds only if:
+
+- production desktop V13 is visually much closer to the accepted screenshot;
+- page scale matches;
+- density matches;
+- typography hierarchy matches;
+- header geometry matches;
+- metadata geometry matches;
+- toolbar geometry matches;
+- right rail matches;
+- populated rows retain candidate structure;
+- empty state does not introduce a foreign generic design;
+- candidate hardcoded styling is preserved;
+- Cost & Pricing Sheet terminology remains user-facing;
+- no BOQ/Bill of Quantities user-facing regression occurs;
+- no business behavior changes;
+- JSON Import still works;
+- Instant Markup still works;
+- Cloudinary photo behavior still works;
+- Save/Edit lifecycle still works;
+- mobile/fold is not regressed;
+- keyboard-safety mechanics are not regressed;
+- typecheck passes;
+- focused tests pass;
+- git diff --check passes.
+
+J. FINAL REPORT
+
+Do not give me a generic "fidelity improved" statement.
+
+Report the actual visual corrections made.
+
+Include:
+
+1. shell/max-width before → after;
+2. desktop column/rail proportions before → after;
+3. header typography before → after;
+4. metadata input geometry before → after;
+5. toolbar control geometry before → after;
+6. row geometry changes;
+7. commercial rail geometry changes;
+8. empty-state changes;
+9. CSS selectors/media queries changed;
+10. confirmation that mobile/fold presentation remains separate;
+11. confirmation that no business/domain behavior changed;
+12. exact files changed;
+13. any remaining known visual mismatch.
+
+If any region remains an approximation, say so explicitly.
+
+Do not mark visual fidelity PASS merely because typecheck passes.
