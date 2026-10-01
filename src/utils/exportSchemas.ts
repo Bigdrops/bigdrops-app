@@ -11,7 +11,7 @@ export type Domain =
   | 'CSR'
   | 'QUOTATIONS'
   | 'RFQS'
-  | 'BOQS';
+  | 'CPS_SHEETS';
 
 export interface FieldMap {
   [dbField: string]: string;
@@ -73,8 +73,8 @@ export const domainSchemas: Record<Domain, FieldMap> = {
     status: 'Status',
     expiry_date: 'Expiry Date',
   },
-  BOQS: {
-    boq_number: 'BOQ Number',
+  CPS_SHEETS: {
+    cps_number: 'Cost & Pricing Sheet Number',
     project_name: 'Project Name',
     client_name: 'Client Name',
     status: 'Status',

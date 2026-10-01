@@ -6,7 +6,7 @@ export const ROLE_RESOURCES = [
   ['*', 'All company resources'],
   ['project', 'Projects'], ['project_document', 'Project documents'],
   ['invoice', 'Invoices'], ['quotation', 'Quotations'], ['client', 'Clients'],
-  ['rfq', 'RFQs'], ['boq', 'BOQs'], ['waybill', 'Waybills'], ['csr', 'CSR'],
+  ['rfq', 'RFQs'], ['cps_sheets', 'Cost & Pricing Sheets'], ['waybill', 'Waybills'], ['csr', 'CSR'],
   ['item', 'Items'], ['payment', 'Payments'], ['receipt', 'Receipts'],
   ['letter', 'Letters'], ['setting', 'Company settings'], ['signatory', 'Signatories'],
   ['bank_account', 'Bank accounts'], ['tax_setting', 'Tax settings'],

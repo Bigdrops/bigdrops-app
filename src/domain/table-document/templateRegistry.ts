@@ -21,7 +21,7 @@ const RFQ_COLUMNS: TableDocumentColumn[] = [
   { key: 'sp', label: 'SP', visible: false },
 ]
 
-const BOQ_COLUMNS: TableDocumentColumn[] = [
+const CPS_SHEETS_COLUMNS: TableDocumentColumn[] = [
   { key: 'description', label: 'Material Description', visible: true },
   { key: 'specification', label: 'Specification', visible: false },
   { key: 'quantity', label: 'Required Qty.', visible: true },
@@ -32,7 +32,7 @@ const BOQ_COLUMNS: TableDocumentColumn[] = [
 ]
 
 export function getDefaultColumnsForDocument(documentType: TableDocumentType): TableDocumentColumn[] {
-  const source = documentType === 'boq' ? BOQ_COLUMNS : RFQ_COLUMNS
+  const source = documentType === 'cps_sheets' ? CPS_SHEETS_COLUMNS : RFQ_COLUMNS
   return source.map((column) => ({ ...column }))
 }
 

@@ -99,4 +99,4 @@ export interface ResolvedPdfCustomization {
 
 // ── Document Family ───────────────────────────────────────────────
 
-export type PdfCustomizationDocumentFamily = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'boq'
+export type PdfCustomizationDocumentFamily = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'cps_sheets'

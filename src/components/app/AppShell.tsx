@@ -57,10 +57,10 @@ const Rfqs = lazy(() => import('@/pages/Rfqs'))
 const NewRfq = lazy(() => import('@/pages/NewRfq'))
 const EditRfq = lazy(() => import('@/pages/EditRfq'))
 const ViewRfq = lazy(() => import('@/pages/ViewRfq'))
-const Boqs = lazy(() => import('@/pages/Boqs'))
-const NewBoq = lazy(() => import('@/pages/NewBoq'))
-const EditBoq = lazy(() => import('@/pages/EditBoq'))
-const ViewBoq = lazy(() => import('@/pages/ViewBoq'))
+const CostPricingSheets = lazy(() => import('@/pages/CostPricingSheets'))
+const NewCps = lazy(() => import('@/pages/NewCps'))
+const EditCps = lazy(() => import('@/pages/EditCps'))
+const ViewCps = lazy(() => import('@/pages/ViewCps'))
 const Receipts = lazy(() => import('@/pages/Receipts'))
 const ViewReceipt = lazy(() => import('@/pages/ViewReceipt'))
 const Letters = lazy(() => import('@/pages/Letters'))
@@ -321,10 +321,10 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/rfqs/new" element={withBoundary(<NewRfq />)} />
           <Route path="/rfqs/edit/:id" element={withBoundary(<EditRfq />)} />
           <Route path="/rfqs/:id" element={withBoundary(<ViewRfq />)} />
-          <Route path="/boqs" element={withBoundary(<Boqs />)} />
-          <Route path="/boqs/new" element={withBoundary(<NewBoq />)} />
-          <Route path="/boqs/edit/:id" element={withBoundary(<EditBoq />)} />
-          <Route path="/boqs/:id" element={withBoundary(<ViewBoq />)} />
+          <Route path="/cost-pricing-sheets" element={withBoundary(<CostPricingSheets />)} />
+          <Route path="/cost-pricing-sheets/new" element={withBoundary(<NewCps />)} />
+          <Route path="/cost-pricing-sheets/edit/:id" element={withBoundary(<EditCps />)} />
+          <Route path="/cost-pricing-sheets/:id" element={withBoundary(<ViewCps />)} />
           <Route path="/receipts" element={withBoundary(<Receipts />)} />
           <Route path="/receipts/:id" element={withBoundary(<ViewReceipt />)} />
           <Route path="/letters" element={withBoundary(<Letters />)} />

@@ -42,7 +42,7 @@ export const Icons = {
   waybill: Truck,
   letter: Mail,
   rfq: FileText,
-  boq: ClipboardList,
+  cps_sheets: ClipboardList,
   report: BarChart3,
   compliance: ClipboardCheck,
   receipts: Receipt,

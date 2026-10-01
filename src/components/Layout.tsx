@@ -99,7 +99,7 @@ export default function Layout({
   const activeTab = getActiveTab(location.pathname)
   const isHome = location.pathname === '/' || props['data-bd-page'] === 'dashboard'
   const salesRouteActive = activeTab === 'sales'
-  const presalesRouteActive = isPathActive(location.pathname, '/rfqs') || isPathActive(location.pathname, '/boqs')
+  const presalesRouteActive = isPathActive(location.pathname, '/rfqs') || isPathActive(location.pathname, '/cost-pricing-sheets')
   
   const openSidebar = React.useCallback(() => setSidebarOpen(true), [])
 
@@ -107,6 +107,12 @@ export default function Layout({
     setSalesOpen(false)
     setSidebarOpen(false)
     navigate(getSalesPath(key))
+  }
+
+  const handlePreSalesPick = (key: string) => {
+    setSalesOpen(false)
+    setSidebarOpen(false)
+    navigate(getPreSalesPath(key))
   }
 
   const handleMorePick = async (key: string) => {
@@ -120,7 +126,7 @@ export default function Layout({
     const pathByKey: Record<string, string> = {
       letters: '/letters',
       rfqs: '/rfqs',
-      boqs: '/boqs',
+      cps_sheets: '/cost-pricing-sheets',
       reports: '/reports',
       compliance: '/compliance',
       receipts: '/receipts',
@@ -193,6 +199,8 @@ export default function Layout({
           onTabClick={onTabClick}
           handleSalesPick={handleSalesPick}
           handleMorePick={handleMorePick}
+          handlePreSalesPick={handlePreSalesPick}
+          pathname={location.pathname}
         />
       )}
 

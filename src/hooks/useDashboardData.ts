@@ -13,7 +13,7 @@ import { isPastDue as isPastDueUtil } from '@/components/reports/reportUtils'
 
 export type RecentDoc = {
   id: string
-  type: 'Invoice' | 'Quotation' | 'CSR' | 'Waybill' | 'RFQ' | 'BOQ'
+  type: 'Invoice' | 'Quotation' | 'CSR' | 'Waybill' | 'RFQ' | 'Cost & Pricing Sheet'
   number: string
   client: string
   date: string

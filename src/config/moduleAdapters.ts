@@ -644,28 +644,28 @@ const receiptsAdapter: DocumentAdapter<FinancialQueryState, any> = {
   },
 };
 
-// --- BOQs Adapter ---
+// --- Cost & Pricing Sheets Adapter ---
 
-const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
+const cpsSheetsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   initialSortBy: "created_at",
   statusOptions: [],
-  cacheKey: "bd:list:boqs:v1:all",
+  cacheKey: "bd:list:cps_sheets:v1:all",
   cacheTtlMs: 5 * 60 * 1000,
 
   async fetcher(query, ctx) {
-    const cached = readListCache<any>(boqsAdapter.cacheKey);
-    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, boqsAdapter.cacheTtlMs)) {
+    const cached = readListCache<any>(cpsSheetsAdapter.cacheKey);
+    if (!hasActiveFilters(query) && cached && isListCacheFresh(cached, cpsSheetsAdapter.cacheTtlMs)) {
       return cached.rows;
     }
 
     let q = requireFetchClient(ctx)
-      .from("boqs")
-      .select("id, boq_number, client_name, created_at, status, project_id, title, total")
+      .from("cps_sheets")
+      .select("id, cps_number, client_name, created_at, status, project_id, title, total")
       .is("archived_at", null);
 
     if (query.search.trim()) {
       const term = query.search.trim().replace(/,/g, " ");
-      q = q.or(`boq_number.ilike.%${term}%,client_name.ilike.%${term}%,title.ilike.%${term}%`);
+      q = q.or(`cps_number.ilike.%${term}%,client_name.ilike.%${term}%,title.ilike.%${term}%`);
     }
 
     if (query.statuses.length > 0 && !query.statuses.includes("All")) {
@@ -684,7 +684,7 @@ const boqsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
     const rows = (data as any[]) || [];
     if (!hasActiveFilters(query)) {
-      writeListCache(boqsAdapter.cacheKey, rows);
+      writeListCache(cpsSheetsAdapter.cacheKey, rows);
     }
     return rows;
   },
@@ -772,7 +772,7 @@ const adapterRegistry: Record<ModuleScope, DocumentAdapter<any, any>> = {
   projects: projectsAdapter,
   csr: csrAdapter,
   rfqs: rfqsAdapter,
-  boqs: boqsAdapter,
+  cps_sheets: cpsSheetsAdapter,
   receipts: receiptsAdapter,
 };
 

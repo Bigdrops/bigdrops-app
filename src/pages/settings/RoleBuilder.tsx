@@ -17,7 +17,7 @@ export function resolveRoleSurface(selected: boolean, editing: boolean): RoleSur
 
 const LABELS: Record<string, string> = Object.fromEntries(ROLE_RESOURCES)
 const GROUPS = [
-  { name: 'Documents', icon: FileText, resources: ['invoice', 'quotation', 'waybill', 'boq', 'rfq', 'csr', 'letter'] },
+  { name: 'Documents', icon: FileText, resources: ['invoice', 'quotation', 'waybill', 'cps_sheets', 'rfq', 'csr', 'letter'] },
   { name: 'Operations', icon: BriefcaseBusiness, resources: ['project', 'project_document', 'client', 'item', 'payment', 'receipt'] },
   { name: 'Company', icon: Building2, resources: ['setting', 'signatory', 'bank_account', 'tax_setting', 'account', 'period', 'journal', 'source_transaction', 'audit', 'device'] },
 ] as const

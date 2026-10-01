@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { pageFormLabelClassName } from '@/components/ui/form-page-styles'
 import { createEmptyTableRow } from '@/domain/table-document/rows'
 import type { TableDocumentColumn, TableDocumentRow } from '@/domain/table-document/types'
-import { computeRowProfit } from '@/domain/boq/calculateBoqTotals'
+import { computeRowProfit } from '@/domain/cps/calculateCpsTotals'
 
 type Props = {
   rows: TableDocumentRow[]

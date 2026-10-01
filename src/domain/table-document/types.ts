@@ -1,4 +1,4 @@
-export type TableDocumentType = 'rfq' | 'boq'
+export type TableDocumentType = 'rfq' | 'cps_sheets'
 
 export type TableTemplateId = 'modern' | 'bordered_schedule'
 

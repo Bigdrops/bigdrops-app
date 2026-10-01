@@ -9,7 +9,10 @@ import {
   APP_NAME,
   desktopNav,
   salesPicker,
+  presalesPicker,
   moreGroups,
+  getPreSalesPath,
+  isPathActive,
   activeNavItemClassName,
   activeNavIconClassName,
   inactiveNavItemClassName,
@@ -23,6 +26,8 @@ interface DesktopSidebarProps {
   onTabClick: (key: string) => void
   handleSalesPick: (key: string) => void
   handleMorePick: (key: string) => void
+  handlePreSalesPick: (key: string) => void
+  pathname: string
 }
 
 /**
@@ -58,6 +63,8 @@ export function DesktopSidebar({
   onTabClick,
   handleSalesPick,
   handleMorePick,
+  handlePreSalesPick,
+  pathname,
 }: DesktopSidebarProps) {
   return (
     <aside className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-bd-layout-sidebar md:flex">
@@ -127,6 +134,40 @@ export function DesktopSidebar({
                     onClick={() => handleSalesPick(item.key)}
                     className={cn(
                       'flex w-full items-center justify-between rounded-[var(--bd-radius-lg)] border border-bd-surface-action-border bg-bd-surface-action px-2.5 py-2 text-left text-xs shadow-sm transition-all hover:bg-bd-surface-action-hover active:scale-[0.985]',
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={cn('grid h-7 w-7 place-items-center rounded-[var(--bd-radius-md)] shadow-sm ring-1 ring-black/5', item.iconBg)}>
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="font-semibold text-bd-text">{item.label}</span>
+                    </div>
+                    <Icons.chevronRight className="h-4 w-4 text-bd-text-muted" />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div>
+            <Separator className="my-4 bg-bd-border/60" />
+            <div className="mb-2 px-2 text-[9px] font-extrabold uppercase tracking-[0.2em] text-bd-text-muted">
+              Pre-Sales
+            </div>
+            <div className="space-y-1.5">
+              {presalesPicker.map((item) => {
+                const Icon = item.icon
+                const isActive = isPathActive(pathname, getPreSalesPath(item.key))
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => handlePreSalesPick(item.key)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-[var(--bd-radius-lg)] border px-2.5 py-2 text-left text-xs shadow-sm transition-all active:scale-[0.985]',
+                      isActive
+                        ? cn('border-transparent', activeNavItemClassName)
+                        : 'border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover'
                     )}
                   >
                     <div className="flex items-center gap-2.5">

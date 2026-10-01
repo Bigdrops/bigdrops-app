@@ -123,7 +123,7 @@ export function hasLineItems(data: Record<string, unknown>[]): boolean {
 
   // Check first few records for common line-item property names
   const sample = data.slice(0, 5);
-  const possibleItemProps = ['items', 'line_items', 'invoice_items', 'quotation_items', 'boq_items', 'lineItems'];
+  const possibleItemProps = ['items', 'line_items', 'invoice_items', 'quotation_items', 'cps_rows', 'lineItems'];
 
   for (const record of sample) {
     for (const prop of possibleItemProps) {
@@ -151,7 +151,7 @@ export function hasLineItems(data: Record<string, unknown>[]): boolean {
  * Parents with zero line items are omitted entirely (no placeholder rows).
  *
  * @param records - Array of parent documents with nested line items
- * @param domain - Export domain (INVOICES, QUOTATIONS, BOQS)
+ * @param domain - Export domain (INVOICES, QUOTATIONS, CPS_SHEETS)
  * @returns Flattened array where each row represents one line item
  */
 export function flattenLineItems(
@@ -172,8 +172,8 @@ export function flattenLineItems(
       ? 'invoice_items'
       : domain === 'QUOTATIONS'
         ? 'quotation_items'
-        : domain === 'BOQS'
-          ? 'boq_items'
+        : domain === 'CPS_SHEETS'
+          ? 'cps_rows'
           : 'items';
 
   for (const record of records) {

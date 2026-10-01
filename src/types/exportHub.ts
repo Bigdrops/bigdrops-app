@@ -24,7 +24,7 @@ export type ExportModuleDomain =
   | 'WAYBILLS'
   | 'PROJECTS'
   | 'RFQS'
-  | 'BOQS'
+  | 'CPS_SHEETS'
   | 'PRICE_HISTORY'
   | 'CLIENTS'
   | 'CSR';

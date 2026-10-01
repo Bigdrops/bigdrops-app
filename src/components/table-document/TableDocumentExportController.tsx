@@ -14,7 +14,7 @@ type DocumentLike = {
   notes?: string
   issue_date?: string
   rfq_number?: string
-  boq_number?: string
+  cps_number?: string
   vendor_name?: string
   vendor_contact?: string
   show_vendor_identity?: boolean

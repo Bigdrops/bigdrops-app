@@ -3,7 +3,7 @@ import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import { PdfCurrencyText } from '@/components/pdf/pdfCurrency'
 
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
-import { computeBoqTotals, computeRowProfit } from '@/domain/boq/calculateBoqTotals'
+import { computeCpsTotals, computeRowProfit } from '@/domain/cps/calculateCpsTotals'
 import { numberToWords } from '@/lib/formatters/money'
 
 type DocumentLike = {
@@ -11,7 +11,7 @@ type DocumentLike = {
   notes?: string
   issue_date?: string
   rfq_number?: string
-  boq_number?: string
+  cps_number?: string
   vendor_name?: string
   vendor_contact?: string
   show_vendor_identity?: boolean
@@ -47,11 +47,11 @@ const styles = StyleSheet.create({
 })
 
 function numberFor(documentType: TableDocumentType, document: DocumentLike) {
-  return documentType === 'boq' ? document.boq_number || 'BOQ' : document.rfq_number || 'RFQ'
+  return documentType === 'cps_sheets' ? document.cps_number || 'Cost & Pricing Sheet' : document.rfq_number || 'RFQ'
 }
 
 function titleFor(documentType: TableDocumentType, document: DocumentLike) {
-  return document.title || (documentType === 'boq' ? 'BILL OF QUANTITIES' : 'REQUEST FOR QUOTE')
+  return document.title || (documentType === 'cps_sheets' ? 'COST & PRICING SHEET' : 'REQUEST FOR QUOTE')
 }
 
 const RIGHT_ALIGNED_KEYS = new Set(['cp', 'sp', 'profit'])
@@ -70,7 +70,7 @@ const widthsByKey: Record<string, number> = {
 
 export function TableDocumentPdfDocument({ documentType, templateId, document, rows, columns }: Props) {
   const visibleColumns = columns.filter((column) => column.visible)
-  const totals = documentType === 'boq' ? computeBoqTotals(rows) : null
+  const totals = documentType === 'cps_sheets' ? computeCpsTotals(rows) : null
   const displayRows = rows.filter((row) => row.row_type === 'section' ? row.section_title.trim() : row.description.trim() || row.specification.trim() || row.notes.trim())
   const backgroundColor = templateId === 'modern' ? (document.background_color || '#ffffff') : '#ffffff'
   const textColor = templateId === 'modern' ? (document.text_color || '#1F2937') : '#111827'

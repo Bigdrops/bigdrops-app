@@ -1,7 +1,7 @@
 export const DEFAULT_PREFIXES = {
   waybill: 'WBL',
   invoice: 'INV',
-  boq: 'BOQ',
+  cps_sheets: 'BOQ',
   rfq: 'RFQ',
   quotation: 'QTN',
   project: 'PRJ',

@@ -1,7 +1,7 @@
 import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily } from '@/lib/pdfFillableFonts'
 import { getRegisteredSharedFontConfig, getRegisteredSharedWebFontFamily, isRegisteredSharedFontChoice } from '@/lib/pdfSharedFonts'
 
-export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'boq' | 'receipt'
+export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'cps_sheets' | 'receipt'
 export type PdfFontChoice =
   | 'Inter'
   | 'Roboto'
@@ -45,8 +45,25 @@ const DESIGN_PRESET_KEYS: Record<PdfDesignPresetDocument, string> = {
   quotation: 'quotation_pdf_design_preset',
   csr: 'csr_pdf_design_preset',
   waybill: 'waybill_pdf_design_preset',
-  boq: 'boq_pdf_design_preset',
+  cps_sheets: 'cps_sheets_pdf_design_preset',
   receipt: 'receipt_pdf_design_preset',
+}
+
+/**
+ * Legacy storage keys. The Cost & Pricing Sheet preset was stored under the BOQ
+ * key before the rename. Readers fall back to these keys, so an existing saved
+ * preset is not lost.
+ */
+const LEGACY_DESIGN_PRESET_KEYS: Partial<Record<PdfDesignPresetDocument, string>> = {
+  cps_sheets: 'boq_pdf_design_preset',
+}
+
+function readStoredPreset(documentType: PdfDesignPresetDocument): string | null {
+  if (typeof window === 'undefined') return null
+  const current = window.localStorage.getItem(DESIGN_PRESET_KEYS[documentType])
+  if (current) return current
+  const legacyKey = LEGACY_DESIGN_PRESET_KEYS[documentType]
+  return legacyKey ? window.localStorage.getItem(legacyKey) : null
 }
 
 const PDF_FONT_VALUES: PdfFontChoice[] = [
@@ -154,7 +171,7 @@ const DEFAULT_PRESETS: Record<PdfDesignPresetDocument, PdfDesignPreset> = {
     fillableFontMode: 'custom',
     fillableColor: '#0f172a',
   },
-  boq: {
+  cps_sheets: {
     useCustomColors: false,
     useCustomFonts: false,
     accentColor: '#0f172a',
@@ -247,7 +264,7 @@ export function getPdfDesignPreset(documentType: PdfDesignPresetDocument): PdfDe
   if (typeof window === 'undefined') return getDefaultPdfDesignPreset(documentType)
 
   try {
-    const raw = window.localStorage.getItem(DESIGN_PRESET_KEYS[documentType])
+    const raw = readStoredPreset(documentType)
     if (!raw) return getDefaultPdfDesignPreset(documentType)
     return sanitizePdfDesignPreset(JSON.parse(raw) as Partial<PdfDesignPreset>, documentType)
   } catch {
@@ -273,7 +290,7 @@ export function setPdfDesignPreset(documentType: PdfDesignPresetDocument, preset
 export function hasSavedPdfDesignPreset(documentType: PdfDesignPresetDocument): boolean {
   if (typeof window === 'undefined') return false
   try {
-    return Boolean(window.localStorage.getItem(DESIGN_PRESET_KEYS[documentType]))
+    return Boolean(readStoredPreset(documentType))
   } catch {
     return false
   }

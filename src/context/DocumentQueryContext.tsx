@@ -33,7 +33,7 @@ const MODULE_TYPE_MAP: Record<ModuleScope, DocumentQueryState["type"]> = {
   projects: "project",
   csr: "project",
   rfqs: "project",
-  boqs: "project",
+  cps_sheets: "project",
   receipts: "financial",
 };
 

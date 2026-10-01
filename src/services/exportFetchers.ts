@@ -26,7 +26,7 @@ const TABLE_MAP: Record<ExportModuleDomain, string> = {
   WAYBILLS: 'waybills',
   PROJECTS: 'projects',
   RFQS: 'rfqs',
-  BOQS: 'boqs',
+  CPS_SHEETS: 'cps_sheets',
   PRICE_HISTORY: 'price_history',
   CLIENTS: 'clients',
   CSR: 'client_service_records',
@@ -39,7 +39,7 @@ const TABLE_MAP: Record<ExportModuleDomain, string> = {
 const DOMAINS_WITH_ITEMS: Set<ExportModuleDomain> = new Set([
   'INVOICES',
   'QUOTATIONS',
-  'BOQS',
+  'CPS_SHEETS',
 ]);
 
 /**
@@ -48,7 +48,7 @@ const DOMAINS_WITH_ITEMS: Set<ExportModuleDomain> = new Set([
 const ITEMS_TABLE_MAP: Record<string, string> = {
   INVOICES: 'invoice_items',
   QUOTATIONS: 'quotation_items',
-  BOQS: 'boq_items',
+  CPS_SHEETS: 'cps_rows',
 };
 
 /**

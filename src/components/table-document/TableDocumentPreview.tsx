@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 
 import type { TableDocumentColumn, TableDocumentRow, TableDocumentType, TableTemplateId } from '@/domain/table-document/types'
-import { computeRowProfit } from '@/domain/boq/calculateBoqTotals'
+import { computeRowProfit } from '@/domain/cps/calculateCpsTotals'
 import { formatCurrency } from '@/lib/formatters/money'
 
 type DocumentLike = {
@@ -9,7 +9,7 @@ type DocumentLike = {
   notes?: string
   issue_date?: string
   rfq_number?: string
-  boq_number?: string
+  cps_number?: string
   vendor_name?: string
   vendor_contact?: string
   show_vendor_identity?: boolean
@@ -34,12 +34,12 @@ function getDisplayRows(rows: TableDocumentRow[]) {
 }
 
 function getDocumentNumber(documentType: TableDocumentType, document: DocumentLike) {
-  return documentType === 'boq' ? document.boq_number || 'BOQ' : document.rfq_number || 'RFQ'
+  return documentType === 'cps_sheets' ? document.cps_number || 'Cost & Pricing Sheet' : document.rfq_number || 'RFQ'
 }
 
 function getDocumentTitle(documentType: TableDocumentType, document: DocumentLike) {
   if (document.title?.trim()) return document.title
-  return documentType === 'boq' ? 'BILL OF QUANTITIES' : 'REQUEST FOR QUOTE'
+  return documentType === 'cps_sheets' ? 'COST & PRICING SHEET' : 'REQUEST FOR QUOTE'
 }
 
 function ModernPreview({ documentType, document, rows }: Omit<Props, 'templateId' | 'columns'>) {
@@ -74,7 +74,7 @@ function ModernPreview({ documentType, document, rows }: Omit<Props, 'templateId
         {document.show_vendor_identity ? (
           <div className="text-right">
             <div className="text-[10px] font-bold opacity-40 uppercase mb-1 tracking-widest">
-              {documentType === 'boq' ? 'Project / Vendor' : 'To Vendor'}
+              {documentType === 'cps_sheets' ? 'Project / Client' : 'To Vendor'}
             </div>
             <div className="text-base font-black uppercase tracking-tight">{document.vendor_name || 'GUEST VENDOR'}</div>
             <div className="text-xs font-medium opacity-60">{document.vendor_contact}</div>

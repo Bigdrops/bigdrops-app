@@ -20,7 +20,7 @@ import { DateField } from '@/components/ui/date-field'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-type ArchiveDocType = 'invoices' | 'quotations' | 'projects' | 'rfqs' | 'csrs' | 'waybills' | 'boqs'
+type ArchiveDocType = 'invoices' | 'quotations' | 'projects' | 'rfqs' | 'csrs' | 'waybills' | 'cps_sheets'
 
 type ArchiveItem = {
   id: string
@@ -38,7 +38,7 @@ type RawProject = { id: string; name?: string | null; client_name?: string | nul
 type RawRFQ = { id: string; rfq_number?: string | null; vendor_name?: string | null; title?: string | null; expiry_date?: string | null; archived_at?: string | null }
 type RawCSR = { id: string; csr_number?: string | null; client_name?: string | null; date?: string | null; archived_at?: string | null }
 type RawWaybill = { id: string; waybill_number?: string | null; client_name?: string | null; date?: string | null; archived_at?: string | null }
-type RawBOQ = { id: string; boq_number?: string | null; client_name?: string | null; title?: string | null; issue_date?: string | null; archived_at?: string | null }
+type RawCostPricingSheet = { id: string; cps_number?: string | null; client_name?: string | null; title?: string | null; issue_date?: string | null; archived_at?: string | null }
 
 const docTypeConfig: Record<ArchiveDocType, { label: string; icon: typeof FileText; color: string }> = {
   invoices: { label: 'Invoice', icon: FileText, color: 'text-blue-600 dark:text-blue-400' },
@@ -47,7 +47,7 @@ const docTypeConfig: Record<ArchiveDocType, { label: string; icon: typeof FileTe
   rfqs: { label: 'RFQ', icon: FileText, color: 'text-amber-600 dark:text-amber-400' },
   csrs: { label: 'CSR', icon: FileCheck, color: 'text-rose-600 dark:text-rose-400' },
   waybills: { label: 'Waybill', icon: Truck, color: 'text-cyan-600 dark:text-cyan-400' },
-  boqs: { label: 'BOQ', icon: ClipboardList, color: 'text-orange-600 dark:text-orange-400' },
+  cps_sheets: { label: 'Cost & Pricing Sheet', icon: ClipboardList, color: 'text-orange-600 dark:text-orange-400' },
 }
 
 const allTypes = Object.keys(docTypeConfig) as ArchiveDocType[]
@@ -68,10 +68,10 @@ export function ArchivesSettingsSection() {
     rfqs: RawRFQ[]
     csrs: RawCSR[]
     waybills: RawWaybill[]
-    boqs: RawBOQ[]
+    cps_sheets: RawCostPricingSheet[]
   }>({
     invoices: [], quotations: [], projects: [],
-    rfqs: [], csrs: [], waybills: [], boqs: [],
+    rfqs: [], csrs: [], waybills: [], cps_sheets: [],
   })
 
   const loadArchives = useCallback(async () => {
@@ -84,7 +84,7 @@ export function ArchivesSettingsSection() {
       { data: rfqs },
       { data: csrs },
       { data: waybills },
-      { data: boqs },
+      { data: cps_sheets },
     ] = await Promise.all([
       // Phase 3: invoices are part of the invoice aggregate → tenant.
       tenantClient.from('invoices').select('id, invoice_number, client_name, total, status, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
@@ -93,7 +93,7 @@ export function ArchivesSettingsSection() {
       tenantClient.from('rfqs').select('id, rfq_number, vendor_name, title, expiry_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       tenantClient.from('csrs').select('id, csr_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
       tenantClient.from('waybills').select('id, waybill_number, client_name, date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
-      tenantClient.from('boqs').select('id, boq_number, client_name, title, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
+      tenantClient.from('cps_sheets').select('id, cps_number, client_name, title, issue_date, archived_at').not('archived_at', 'is', null).order('archived_at', { ascending: false }),
     ])
 
     setRawData({
@@ -103,7 +103,7 @@ export function ArchivesSettingsSection() {
       rfqs: (rfqs as RawRFQ[]) || [],
       csrs: (csrs as RawCSR[]) || [],
       waybills: (waybills as RawWaybill[]) || [],
-      boqs: (boqs as RawBOQ[]) || [],
+      cps_sheets: (cps_sheets as RawCostPricingSheet[]) || [],
     })
 
     setLoading(false)
@@ -120,7 +120,7 @@ export function ArchivesSettingsSection() {
     for (const r of rawData.rfqs) items.push({ id: r.id, type: 'rfqs', docNumber: r.rfq_number || r.title || '—', entityName: r.vendor_name || 'No vendor', archivedAt: r.archived_at || '' })
     for (const r of rawData.csrs) items.push({ id: r.id, type: 'csrs', docNumber: r.csr_number || '—', entityName: r.client_name || 'No client', archivedAt: r.archived_at || '', date: r.date })
     for (const r of rawData.waybills) items.push({ id: r.id, type: 'waybills', docNumber: r.waybill_number || '—', entityName: r.client_name || 'No client', archivedAt: r.archived_at || '', date: r.date })
-    for (const r of rawData.boqs) items.push({ id: r.id, type: 'boqs', docNumber: r.boq_number || r.title || '—', entityName: r.client_name || 'No client', archivedAt: r.archived_at || '', date: r.issue_date })
+    for (const r of rawData.cps_sheets) items.push({ id: r.id, type: 'cps_sheets', docNumber: r.cps_number || r.title || '—', entityName: r.client_name || 'No client', archivedAt: r.archived_at || '', date: r.issue_date })
 
     return items.sort((a, b) => b.archivedAt.localeCompare(a.archivedAt))
   }, [rawData])

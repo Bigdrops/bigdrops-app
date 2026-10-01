@@ -59,7 +59,7 @@ export default function DashboardRedesign({ session, preference, saveThemePref }
         CSR: '/csr',
         Waybill: '/waybills',
         RFQ: '/rfqs',
-        BOQ: '/boqs',
+        'Cost & Pricing Sheet': '/cost-pricing-sheets',
       } as const
 
       navigate(`${pathByType[doc.type]}/${doc.id}`)

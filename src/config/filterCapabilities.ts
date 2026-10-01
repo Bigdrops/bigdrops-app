@@ -49,7 +49,7 @@ export const FILTER_CAPABILITIES: Record<string, ModuleFilterCapabilities> = {
     client: false,
     sort: true,
   },
-  boqs: {
+  cps_sheets: {
     status: false,
     dateRange: true,
     amountRange: false,

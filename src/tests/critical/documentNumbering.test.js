@@ -19,7 +19,7 @@ import {
 import { getNextInvoiceNumber } from '../../domain/documentConversion.ts'
 import { getNextQuotationNumber } from '../../domain/quotation/normalize.ts'
 import { getNextRfqNumber } from '../../domain/rfq/normalize.ts'
-import { getNextBoqNumber } from '../../domain/boq/normalize.ts'
+import { getNextCpsNumber } from '../../domain/cps/normalize.ts'
 import { getNextCsrNumber } from '../../domain/csr/csrNumbering.ts'
 import { getNextWaybillNumber } from '../../components/waybill/waybillUtils.ts'
 import { withUniqueRetry } from '../../lib/withUniqueRetry.ts'
@@ -48,13 +48,13 @@ test('numbering: invoice auto generation follows the configured format', () => {
   assert.equal(getNextInvoiceNumber([{ invoice_number: 'SASINV-000009' }], 'SASINV'), 'SASINV-000010')
 })
 
-test('numbering: quotation, rfq, boq generators follow the canonical format', () => {
+test('numbering: quotation, rfq, cps_sheets generators follow the canonical format', () => {
   assert.equal(getNextQuotationNumber([], 'SASQ'), 'SASQ-000001')
   assert.equal(getNextQuotationNumber([{ quotation_number: 'SASQ-0042' }], 'SASQ'), 'SASQ-000043')
   assert.equal(getNextRfqNumber([], 'RFQ'), 'RFQ-000001')
   assert.equal(getNextRfqNumber([{ rfq_number: 'RFQ-0012' }], 'RFQ'), 'RFQ-000013')
-  assert.equal(getNextBoqNumber([], 'BOQ'), 'BOQ-000001')
-  assert.equal(getNextBoqNumber([{ boq_number: 'BOQ-0099' }], 'BOQ'), 'BOQ-000100')
+  assert.equal(getNextCpsNumber([], 'BOQ'), 'BOQ-000001')
+  assert.equal(getNextCpsNumber([{ cps_number: 'BOQ-0099' }], 'BOQ'), 'BOQ-000100')
 })
 
 test('numbering: csr and waybill generators follow the canonical serial width', () => {
@@ -66,7 +66,7 @@ test('numbering: csr and waybill generators follow the canonical serial width', 
 
 test('numbering: Settings preview templates cannot silently diverge from the canonical format', () => {
   const source = fs.readFileSync(path.resolve('src/pages/settings/DocumentPrefixesSettingsSection.tsx'), 'utf8')
-  for (const key of ['invoice', 'quotation', 'rfq', 'boq', 'csr', 'receipt', 'letter', 'project']) {
+  for (const key of ['invoice', 'quotation', 'rfq', 'cps_sheets', 'csr', 'receipt', 'letter', 'project']) {
     assert.match(source, new RegExp(`${key}: \\(p\\) => \\[`), `preview template for ${key} must exist`)
   }
   // Every preview example uses the 6-digit serial the canonical formatter emits.

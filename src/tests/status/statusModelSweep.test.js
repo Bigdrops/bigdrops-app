@@ -33,13 +33,13 @@ test('legacy invoice and quotation UI actions are removed from primary surfaces'
 
 test('other document clones do not silently create new draft records', () => {
   const rfqActionsSource = read('src/pages/view-rfq-actions.ts')
-  const boqActionsSource = read('src/pages/view-boq-actions.ts')
+  const cpsActionsSource = read('src/pages/view-cps-actions.ts')
   const csrActionsSource = read('src/pages/view-csr-actions.ts')
   const waybillActionsSource = read('src/pages/view-waybill-actions.ts')
   const advanceChildFlowSource = read('src/domain/invoice/advanceChildFlow.ts')
 
   assert.doesNotMatch(rfqActionsSource, /status:\s*'draft'/)
-  assert.doesNotMatch(boqActionsSource, /status:\s*'draft'/)
+  assert.doesNotMatch(cpsActionsSource, /status:\s*'draft'/)
   assert.doesNotMatch(csrActionsSource, /status:\s*'draft'/)
   assert.doesNotMatch(waybillActionsSource, /status:\s*'draft'/)
   assert.match(advanceChildFlowSource, /status:\s*'unpaid'/)

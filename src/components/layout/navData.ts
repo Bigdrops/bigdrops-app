@@ -85,10 +85,10 @@ export const presalesPicker: PickerItem[] = [
     iconBg: QUICK_TILE_REGISTRY.new_rfq.iconBg,
   },
   {
-    key: 'boqs',
-    label: 'BOQ',
-    subtitle: 'Build and review pre-sales bills of quantities.',
-    icon: Icons.boq as LucideIcon,
+    key: 'cps_sheets',
+    label: 'Cost & Pricing Sheets',
+    subtitle: 'Build and review pre-sales cost and pricing sheets.',
+    icon: Icons.cps_sheets as LucideIcon,
     tint: 'bg-slate-50 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30',
     iconBg: 'bg-slate-700 text-white dark:bg-slate-500 dark:text-white',
   },
@@ -211,7 +211,7 @@ export function getSalesPath(key: string): string {
 export function getPreSalesPath(key: string): string {
   const pathByKey: Record<string, string> = {
     rfqs: '/rfqs',
-    boqs: '/boqs',
+    cps_sheets: '/cost-pricing-sheets',
   }
 
   return pathByKey[key] || '/'
@@ -234,7 +234,7 @@ export function getActiveTab(pathname: string): TabKey {
   ) return 'sales'
   if (
     pathname.startsWith('/rfqs') ||
-    pathname.startsWith('/boqs') ||
+    pathname.startsWith('/cost-pricing-sheets') ||
     pathname.startsWith('/receipts') ||
     pathname.startsWith('/reports') ||
     pathname.startsWith('/compliance') ||
