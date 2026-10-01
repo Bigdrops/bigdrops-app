@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, GripVertical, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 
 import ClientSelector from '@/components/ClientSelector'
-import ColumnManager from '@/components/ColumnManager'
 import { CpsImportSheet } from '@/components/cps/CpsImportSheet'
 import {
   CostPricingSheetDesktopForm,
@@ -23,10 +22,10 @@ import {
   type InstantMarkupSelection,
 } from '@/domain/cps/instant-markup'
 import type { Cps } from '@/domain/cps/types'
-import { createEmptyTableRow } from '@/domain/table-document/rows'
+import { appendCpsRow, insertCpsRow, normalizeCpsRowOrder, removeCpsRow } from '@/domain/cps/row-operations'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 import type { ClientRecord } from '@/domain/clientWorkspace'
-import { useInvoiceColumns } from '@/components/useInvoiceColumns'
+import { useInvoiceColumns, type InvoiceColumn } from '@/components/useInvoiceColumns'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { getUnsupportedImageErrorMessage, isSupportedImageFile } from '@/lib/documentImageUploadPolicy'
 import { feedback } from '@/lib/feedback'
@@ -55,10 +54,6 @@ function formatPercent(value: number) {
   return `${Number(value || 0).toFixed(1)}%`
 }
 
-function normalizeRows(rows: TableDocumentRow[]) {
-  return rows.map((row, index) => ({ ...row, sort_order: index }))
-}
-
 function renumber(rows: TableDocumentRow[]) {
   let item = 0
   return rows.map((row) => {
@@ -73,17 +68,6 @@ function buildDefaultSelection(rows: TableDocumentRow[]): InstantMarkupSelection
     selection[getCpsRowKey(row, index)] = isInstantMarkupEligible(row)
     return selection
   }, {})
-}
-
-function createRow(rowType: 'item' | 'section', sortOrder: number) {
-  const row = createEmptyTableRow(sortOrder, rowType)
-  if (rowType === 'section') {
-    row.section_title = 'New Group'
-    row.group_id = row._uiKey || null
-  } else {
-    row.quantity = 1
-  }
-  return row
 }
 
 export function CostPricingSheetEditor({
@@ -110,7 +94,6 @@ export function CostPricingSheetEditor({
     columns,
     setColumns,
     getColumn,
-    toggleVisible,
     toggleDisabled,
     updateColumn,
     addCustomColumn,
@@ -171,7 +154,7 @@ export function CostPricingSheetEditor({
   }, [columns])
 
   const updateRows = (nextRows: TableDocumentRow[]) => {
-    const normalized = normalizeRows(nextRows)
+    const normalized = normalizeCpsRowOrder(nextRows)
     patchCps({ table_rows: normalized })
     setIncluded((current) => {
       const next: InstantMarkupSelection = {}
@@ -190,17 +173,15 @@ export function CostPricingSheetEditor({
   }
 
   const addRow = (rowType: 'item' | 'section') => {
-    updateRows([...rows, createRow(rowType, rows.length)])
+    updateRows(appendCpsRow(rows, rowType))
   }
 
-  const insertRow = (index: number, rowType: 'item' | 'section') => {
-    const next = [...rows]
-    next.splice(Math.max(0, Math.min(index, next.length)), 0, createRow(rowType, index))
-    updateRows(next)
+  const insertRow = (index: number, rowType: 'item' | 'section', groupId?: string | null) => {
+    updateRows(insertCpsRow(rows, index, rowType, { groupId: groupId ?? null }))
   }
 
   const removeRow = (index: number) => {
-    updateRows(rows.filter((_, rowIndex) => rowIndex !== index))
+    updateRows(removeCpsRow(rows, index))
   }
 
   const moveRow = (index: number, direction: -1 | 1) => {
@@ -353,24 +334,15 @@ export function CostPricingSheetEditor({
       />
 
       {showColumnManager ? (
-        <ColumnManager
+        <CpsColumnSheet
           columns={columns}
           onUpdate={updateColumn}
-          onToggle={toggleVisible}
           onToggleFull={toggleColumnFull}
           onAddCustom={addCustomColumn}
           onRemoveCustom={removeCustomColumn}
           onReset={resetColumns}
           onMove={moveColumn}
           onClose={() => setShowColumnManager(false)}
-          items={rows.map((row) => ({
-            row_type: row.row_type === 'section' ? 'group_header' : 'standard',
-            description: row.description,
-            vat_rate: row.vat_rate == null ? null : Number(row.vat_rate),
-            discount_rate: row.discount_rate == null ? null : Number(row.discount_rate),
-            install_rate: row.install_rate == null ? null : Number(row.install_rate),
-            install_rate_override: Boolean(row.install_rate_override),
-          }))}
         />
       ) : null}
 
@@ -407,6 +379,107 @@ export function CostPricingSheetEditor({
         onApply={handleApplyMarkup}
       />
     </>
+  )
+}
+
+function CpsColumnSheet({
+  columns,
+  onUpdate,
+  onToggleFull,
+  onAddCustom,
+  onRemoveCustom,
+  onReset,
+  onMove,
+  onClose,
+}: {
+  columns: InvoiceColumn[]
+  onUpdate: (key: string, field: string, value: string | boolean) => void
+  onToggleFull: (key: string) => void
+  onAddCustom: () => void
+  onRemoveCustom: (key: string) => void
+  onReset: () => void
+  onMove: (key: string, targetIdx: number) => void
+  onClose: () => void
+}) {
+  const description = columns.find((column) => column.key === 'description')
+  const ordered = columns.filter((column) => column.key !== 'description')
+
+  return (
+    <div className="cps-form">
+      <div className="cps-overlay" onClick={onClose}>
+        <div className="cps-sheet" role="dialog" aria-modal="true" aria-labelledby="cps-column-sheet-title" onClick={(event) => event.stopPropagation()}>
+          <div className="cps-grab" />
+          <div className="cps-sheet-head">
+            <div>
+              <b id="cps-column-sheet-title">Column Settings</b>
+              <small>Row fields, order, and labels</small>
+            </div>
+            <button type="button" className="cps-x" onClick={onClose} aria-label="Close column settings"><X size={12} /></button>
+          </div>
+          <div className="cps-column-scroll">
+            {description ? (
+              <>
+                <div className="cps-cm-sec">Description</div>
+                <div className="cps-cm-list">
+                  <div className="cps-cm-row">
+                    <input
+                      className="cps-cm-lab"
+                      value={description.label || 'Description'}
+                      onChange={(event) => onUpdate(description.key, 'label', event.target.value)}
+                      aria-label="Description column label"
+                    />
+                    <span className="cps-cm-badge">Fixed</span>
+                  </div>
+                </div>
+              </>
+            ) : null}
+
+            <div className="cps-cm-sec">Columns</div>
+            <div className="cps-cm-list">
+              {ordered.map((column) => {
+                const absIndex = columns.findIndex((entry) => entry.key === column.key)
+                const visible = (column.visibilityMode || 'show') !== 'hide_full'
+                const isCustom = column.key.startsWith('custom_')
+                return (
+                  <div className="cps-cm-row" key={column.key}>
+                    <div className="cps-cm-grip"><GripVertical size={13} /></div>
+                    <div className="cps-cm-ord">
+                      <button type="button" disabled={absIndex <= 1} onClick={() => onMove(column.key, absIndex - 1)} aria-label={`Move ${column.label} up`}><ChevronUp size={12} /></button>
+                      <button type="button" disabled={absIndex >= columns.length - 1} onClick={() => onMove(column.key, absIndex + 1)} aria-label={`Move ${column.label} down`}><ChevronDown size={12} /></button>
+                    </div>
+                    <div className="cps-cm-main">
+                      <div className="cps-cm-labrow">
+                        <input
+                          className="cps-cm-lab"
+                          value={column.label || ''}
+                          onChange={(event) => onUpdate(column.key, 'label', event.target.value)}
+                          aria-label={`${column.label || column.key} column label`}
+                        />
+                      </div>
+                    </div>
+                    {isCustom ? (
+                      <button type="button" className="cps-cm-icon" onClick={() => onRemoveCustom(column.key)} aria-label={`Remove ${column.label}`}>
+                        <Trash2 size={13} />
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={cn('cps-cm-sw', visible && 'on')}
+                      onClick={() => onToggleFull(column.key)}
+                      aria-pressed={visible}
+                      aria-label={`${visible ? 'Hide' : 'Show'} ${column.label}`}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+            <button type="button" className="cps-cm-reset" onClick={onAddCustom}><Plus size={12} /> Add custom column</button>
+            <button type="button" className="cps-cm-reset" onClick={onReset}><RotateCcw size={12} /> Reset to defaults</button>
+          </div>
+          <button type="button" className="cps-cta" onClick={onClose}>Done</button>
+        </div>
+      </div>
+    </div>
   )
 }
 

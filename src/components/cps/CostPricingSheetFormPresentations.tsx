@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from 'react'
 import {
   ArrowDown,
   ArrowLeft,
@@ -21,6 +22,7 @@ import {
 import type { Cps } from '@/domain/cps/types'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 import type { CpsRowEconomics, CpsTotals } from '@/domain/cps/calculateCpsTotals'
+import { findCpsGroupInsertIndex, getCpsSectionGroupId } from '@/domain/cps/row-operations'
 import { IMAGE_ACCEPT_ATTRIBUTE } from '@/lib/documentImageUploadPolicy'
 
 import './cost-pricing-sheet-form.css'
@@ -51,7 +53,7 @@ export type CostPricingSheetFormProps = {
   onPatchCps: (patch: Partial<Cps>) => void
   onUpdateRow: (index: number, patch: Partial<TableDocumentRow>) => void
   onAddRow: (rowType: 'item' | 'section') => void
-  onInsertRow: (index: number, rowType: 'item' | 'section') => void
+  onInsertRow: (index: number, rowType: 'item' | 'section', groupId?: string | null) => void
   onRemoveRow: (index: number) => void
   onMoveRow: (index: number, direction: -1 | 1) => void
   onOpenImport: () => void
@@ -69,35 +71,24 @@ export type CostPricingSheetFormProps = {
 
 type Segment =
   | { type: 'item'; row: TableDocumentRow; index: number }
-  | { type: 'group'; row: TableDocumentRow; index: number; items: Array<{ row: TableDocumentRow; index: number }> }
+  | { type: 'group'; row: TableDocumentRow; index: number; groupId: string | null; itemCount: number }
 
 function groupSegments(rows: TableDocumentRow[]): Segment[] {
-  const segments: Segment[] = []
-  let currentGroup: Extract<Segment, { type: 'group' }> | null = null
+  const itemCounts = new Map<string, number>()
 
-  rows.forEach((row, index) => {
-    if (row.row_type === 'section') {
-      currentGroup = { type: 'group', row, index, items: [] }
-      segments.push(currentGroup)
-      return
+  rows.forEach((row) => {
+    if (row.row_type === 'item' && row.group_id) {
+      itemCounts.set(row.group_id, (itemCounts.get(row.group_id) || 0) + 1)
     }
-    if (currentGroup) {
-      currentGroup.items.push({ row, index })
-      return
-    }
-    segments.push({ type: 'item', row, index })
   })
 
-  return segments
-}
-
-function groupInsertIndex(rows: TableDocumentRow[], groupIndex: number) {
-  let insertAt = groupIndex + 1
-  for (let index = groupIndex + 1; index < rows.length; index += 1) {
-    if (rows[index].row_type === 'section') break
-    insertAt = index + 1
-  }
-  return insertAt
+  return rows.map((row, index) => {
+    if (row.row_type === 'section') {
+      const groupId = getCpsSectionGroupId(row)
+      return { type: 'group', row, index, groupId, itemCount: groupId ? itemCounts.get(groupId) || 0 : 0 }
+    }
+    return { type: 'item', row, index }
+  })
 }
 
 function SectionHead({ number, title, meta }: { number: string; title: string; meta?: string }) {
@@ -117,7 +108,7 @@ function Field({
   className = '',
 }: {
   label: string
-  children: React.ReactNode
+  children: ReactNode
   className?: string
 }) {
   return (
@@ -266,14 +257,21 @@ function RowActions({
   index,
   max,
   onMoveRow,
-  onRemoveRow,
-}: Pick<CostPricingSheetFormProps, 'onMoveRow' | 'onRemoveRow'> & { index: number; max: number }) {
+}: Pick<CostPricingSheetFormProps, 'onMoveRow'> & { index: number; max: number }) {
   return (
     <div className="cps-rmid">
       <button type="button" className="cps-rbtn" onClick={() => onMoveRow(index, -1)} disabled={index <= 0} aria-label="Move row up"><ArrowUp size={12} /></button>
       <button type="button" className="cps-rbtn" onClick={() => onMoveRow(index, 1)} disabled={index >= max - 1} aria-label="Move row down"><ArrowDown size={12} /></button>
-      <button type="button" className="cps-rbtn" onClick={() => onRemoveRow(index)} aria-label="Remove row"><Trash2 size={12} /></button>
+      <button type="button" className="cps-rbtn" disabled aria-label="Duplicate row placeholder"><Copy size={12} /></button>
     </div>
+  )
+}
+
+function NoteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h7" />
+    </svg>
   )
 }
 
@@ -316,14 +314,16 @@ function ItemRow(props: CostPricingSheetFormProps & { row: TableDocumentRow; ind
   const { row, index, itemNumber, rows, onUpdateRow, isColumnVisible, formatters, customColumns } = props
   const line = props.rowEconomics[index]
   const marginText = line.total_selling_price > 0 ? formatters.percent(line.margin_percent) : '—'
+  const [subOpen, setSubOpen] = useState(Boolean(row.specification))
+  const hasSpecification = Boolean(row.specification?.trim())
 
   return (
-    <article className="cps-item">
-      <button type="button" className="cps-ear" onClick={() => props.onInsertRow(index + 1, 'item')} aria-label="Insert row below"><Plus size={11} /></button>
+    <article className={`cps-item ${row.image_url ? 'has-photo' : ''}`}>
+      <button type="button" className="cps-ear" onClick={() => props.onRemoveRow(index)} aria-label={`Remove item ${itemNumber}`}><X size={11} /></button>
       <div className="cps-ihead">
         <div className="cps-row-rail">
           <span className="cps-idx">{itemNumber}</span>
-          <RowActions index={index} max={rows.length} onMoveRow={props.onMoveRow} onRemoveRow={props.onRemoveRow} />
+          <RowActions index={index} max={rows.length} onMoveRow={props.onMoveRow} />
         </div>
         <div>
           <textarea
@@ -333,28 +333,59 @@ function ItemRow(props: CostPricingSheetFormProps & { row: TableDocumentRow; ind
             placeholder="Description"
             aria-label={`Description for item ${itemNumber}`}
           />
-          <div className={`cps-subrow ${row.specification ? 'has' : ''}`}>
-            <textarea
-              className="cps-field"
-              value={row.specification || ''}
-              onChange={(event) => onUpdateRow(index, { specification: event.target.value })}
-              placeholder="Add sub description / specification"
-              aria-label={`Specification for item ${itemNumber}`}
-            />
+          <div className={`cps-subrow ${hasSpecification ? 'has' : ''} ${subOpen ? 'open' : ''}`}>
+            <button
+              type="button"
+              className={`cps-subtog ${!hasSpecification ? 'sub-add' : ''}`}
+              onClick={() => setSubOpen((open) => !open)}
+              aria-expanded={subOpen}
+            >
+              <span className="stog-icon">{hasSpecification ? <NoteIcon /> : <Plus size={12} />}</span>
+              <span className="stog-label">
+                {hasSpecification ? <span className="sub-prev-text">{row.specification?.trim()}</span> : 'Add sub description'}
+              </span>
+              <span className="stog-chev"><ChevronDown size={12} /></span>
+            </button>
+            {subOpen ? (
+              <textarea
+                className="cps-field cps-subfield"
+                value={row.specification || ''}
+                onChange={(event) => onUpdateRow(index, { specification: event.target.value })}
+                placeholder="Sub description - extra detail..."
+                aria-label={`Specification for item ${itemNumber}`}
+              />
+            ) : null}
           </div>
+          {isColumnVisible('make_brand') ? (
+            <input
+              className="cps-field"
+              placeholder="Make / brand"
+              value={row.make_brand || ''}
+              onChange={(event) => onUpdateRow(index, { make_brand: event.target.value })}
+              aria-label={`Make or brand for item ${itemNumber}`}
+            />
+          ) : null}
           <PhotoControl {...props} row={row} index={index} />
         </div>
       </div>
       <div className="cps-idata">
         <div className="cps-fgrid">
-          {isColumnVisible('quantity') ? <Field label="Qty"><input className="cps-field mono" inputMode="decimal" value={String(row.quantity ?? '')} onChange={(event) => onUpdateRow(index, { quantity: Number(event.target.value || 0) })} /></Field> : null}
-          {isColumnVisible('unit') ? <Field label="Unit"><input className="cps-field" value={row.unit || ''} onChange={(event) => onUpdateRow(index, { unit: event.target.value })} /></Field> : null}
-          {isColumnVisible('make_brand') ? <Field label="Make / Brand"><input className="cps-field" value={row.make_brand || ''} onChange={(event) => onUpdateRow(index, { make_brand: event.target.value })} /></Field> : null}
-          <Field label="Row note"><input className="cps-field" value={row.notes || ''} onChange={(event) => onUpdateRow(index, { notes: event.target.value })} /></Field>
+          {isColumnVisible('quantity') ? <input aria-label={`Quantity for item ${itemNumber}`} placeholder="Qty *" className="cps-field mono" inputMode="decimal" value={String(row.quantity ?? '')} onChange={(event) => onUpdateRow(index, { quantity: Number(event.target.value || 0) })} /> : null}
+          {isColumnVisible('unit') ? <input aria-label={`Unit for item ${itemNumber}`} placeholder="Unit" className="cps-field" value={row.unit || ''} onChange={(event) => onUpdateRow(index, { unit: event.target.value })} /> : null}
         </div>
         <div className="cps-comm-grid">
-          {isColumnVisible('cp') ? <Field label="CP Money Out" className="cps-cfield cost"><input className="cps-field mono" inputMode="decimal" value={String(row.cp ?? '')} onChange={(event) => onUpdateRow(index, { cp: event.target.value })} /></Field> : null}
-          {isColumnVisible('sp') ? <Field label="SP Money In" className="cps-cfield sell"><input className="cps-field mono" inputMode="decimal" value={String(row.sp ?? '')} onChange={(event) => onUpdateRow(index, { sp: event.target.value })} /></Field> : null}
+          {isColumnVisible('cp') ? (
+            <label className="cps-cfield cost">
+              <span className="cf-lab"><ArrowDown size={10} /> CP</span>
+              <input aria-label={`Cost price for item ${itemNumber}`} className="cps-field mono" inputMode="decimal" value={String(row.cp ?? '')} onChange={(event) => onUpdateRow(index, { cp: event.target.value })} />
+            </label>
+          ) : null}
+          {isColumnVisible('sp') ? (
+            <label className="cps-cfield sell">
+              <span className="cf-lab"><ArrowUp size={10} /> SP</span>
+              <input aria-label={`Selling price for item ${itemNumber}`} className="cps-field mono" inputMode="decimal" value={String(row.sp ?? '')} onChange={(event) => onUpdateRow(index, { sp: event.target.value })} />
+            </label>
+          ) : null}
         </div>
         <div className="cps-fin3">
           <div className="cps-fcell tcp"><small>Total cost · TCP</small><b>{formatters.money(line.total_cost_price)}</b></div>
@@ -377,49 +408,57 @@ function ItemRow(props: CostPricingSheetFormProps & { row: TableDocumentRow; ind
           </div>
         ) : null}
       </div>
-      <div className="cps-ins">Insert row below</div>
+      <button type="button" className="cps-ins" onClick={() => props.onInsertRow(index + 1, 'item', row.group_id ?? null)}>+ Insert below</button>
     </article>
   )
 }
 
 function GroupSegment(props: CostPricingSheetFormProps & { segment: Extract<Segment, { type: 'group' }> }) {
   const { segment, rows, onUpdateRow, onInsertRow, onRemoveRow } = props
-  const insertAt = groupInsertIndex(rows, segment.index)
+  const insertAt = findCpsGroupInsertIndex(rows, segment.groupId, segment.index)
   return (
     <section className="cps-gwrap">
       <div className="cps-ghdr">
+        <button type="button" className="cps-gbtn danger" onClick={() => onRemoveRow(segment.index)} aria-label="Remove group"><X size={13} /></button>
         <input
+          className="cps-gtitle"
           value={segment.row.section_title || ''}
           onChange={(event) => onUpdateRow(segment.index, { section_title: event.target.value })}
           placeholder="Group title"
           aria-label="Group title"
         />
-        <span className="cps-gcount">{segment.items.length} items</span>
-        <button type="button" className="cps-gbtn" onClick={() => onInsertRow(insertAt, 'item')} aria-label="Add item to group"><Plus size={13} /></button>
-        <button type="button" className="cps-gbtn" onClick={() => onRemoveRow(segment.index)} aria-label="Remove group"><Trash2 size={13} /></button>
+        <span className="cps-gcount">{segment.itemCount} items</span>
       </div>
       <div className="cps-gbody">
-        {segment.items.length > 0 ? segment.items.map(({ row, index }) => (
-          <ItemRow key={row._uiKey || row.id || index} {...props} row={row} index={index} itemNumber={props.itemNumbers[index]} />
-        )) : <div className="cps-empty">This group has no item rows yet.</div>}
+        {segment.itemCount === 0 ? (
+          <div className="cps-gempty">
+            No items in this group yet.<br />
+            Use the button below to add the first one.
+          </div>
+        ) : null}
       </div>
       <div className="cps-gfoot">
-        <button type="button" className="cps-gadd" onClick={() => onInsertRow(insertAt, 'item')}><Plus size={11} /> Add item to group</button>
+        <button type="button" className="cps-gadd" onClick={() => onInsertRow(insertAt, 'item', segment.groupId)}><Plus size={11} /> Add item to this group</button>
       </div>
     </section>
   )
 }
 
 function ItemsSection(props: CostPricingSheetFormProps) {
+  const [clearOpen, setClearOpen] = useState(false)
   const segments = groupSegments(props.rows)
   return (
     <section className="cps-sec">
-      <SectionHead number="2." title="Line items" meta={`${props.rows.filter((row) => row.row_type === 'item').length} items`} />
+      <SectionHead
+        number="2."
+        title="Line items"
+        meta={`${props.rows.filter((row) => row.row_type === 'item').length} items · ${props.rows.filter((row) => row.row_type === 'section').length} groups`}
+      />
       <ItemTools
         onOpenImport={props.onOpenImport}
         onOpenColumns={props.onOpenColumns}
         onOpenMarkup={props.onOpenMarkup}
-        onClear={() => props.onPatchCps({ table_rows: [] })}
+        onClear={() => setClearOpen(true)}
       />
       <div className="cps-items">
         {segments.length > 0 ? segments.map((segment) => {
@@ -433,6 +472,27 @@ function ItemsSection(props: CostPricingSheetFormProps) {
         <button type="button" className="cps-cbtn primary" onClick={() => props.onAddRow('item')}><Plus size={12} /> Add line item</button>
         <button type="button" className="cps-cbtn ghost" onClick={() => props.onAddRow('section')}><Plus size={12} /> Add group</button>
       </div>
+      {clearOpen ? (
+        <div className="cps-overlay center" onClick={() => setClearOpen(false)}>
+          <div className="cps-dialog" role="dialog" aria-modal="true" aria-labelledby="cps-clear-dialog-title" onClick={(event) => event.stopPropagation()}>
+            <b id="cps-clear-dialog-title">Clear all line items?</b>
+            <p>This removes every group and item row from this sheet.</p>
+            <div className="acts">
+              <button type="button" className="cps-dbtn" onClick={() => setClearOpen(false)}>Cancel</button>
+              <button
+                type="button"
+                className="cps-dbtn danger"
+                onClick={() => {
+                  props.onPatchCps({ table_rows: [] })
+                  setClearOpen(false)
+                }}
+              >
+                Clear all
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

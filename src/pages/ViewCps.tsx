@@ -13,6 +13,14 @@ import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
 
+import {
+  archiveCpsRecord,
+  convertCpsToQuotation,
+  deleteCpsRecord,
+  duplicateCpsRecord,
+  updateCpsStatus,
+} from './view-cps-actions'
+
 const moneyFormatter = new Intl.NumberFormat('en-NG', {
   style: 'currency',
   currency: 'NGN',
@@ -80,12 +88,51 @@ export default function ViewCps() {
   }
 
   const status = String((cps as any).status || 'Draft')
+  const cpsId = cps.id
+
+  // Production View actions. Each reuses the established CPS record helpers;
+  // no new persistence, numbering, or conversion semantics are introduced here.
+  const actions = useMemo(() => ({
+    onConvertToQuotation: async () => {
+      const items = (cps.table_rows || []).map((row) =>
+        row.row_type === 'section'
+          ? { ...row, row_type: 'group_header', group_name: row.section_title || row.description || 'Group' }
+          : row,
+      )
+      const created = await convertCpsToQuotation({ cps, items: items as any[], tenantClient })
+      feedback.success('Quotation created from Cost & Pricing Sheet')
+      navigate(`/quotations/${(created as { id: string }).id}`)
+    },
+    onDuplicate: async () => {
+      const created = await duplicateCpsRecord(cpsId, tenantClient)
+      feedback.success('Cost & Pricing Sheet duplicated')
+      navigate(`/cost-pricing-sheets/${(created as { id: string }).id}`)
+    },
+    onToggleStatus: async () => {
+      const next = status.toLowerCase() === 'approved' ? 'open' : 'approved'
+      await updateCpsStatus(cpsId, next, tenantClient)
+      setCps({ ...cps, status: next } as Cps)
+      feedback.success(next === 'approved' ? 'Cost & Pricing Sheet approved' : 'Cost & Pricing Sheet reopened')
+    },
+    onArchive: async () => {
+      await archiveCpsRecord(cpsId, tenantClient)
+      feedback.success('Cost & Pricing Sheet archived')
+      navigate('/cost-pricing-sheets')
+    },
+    onDelete: async () => {
+      await deleteCpsRecord(cpsId, tenantClient)
+      feedback.success('Cost & Pricing Sheet deleted')
+      navigate('/cost-pricing-sheets')
+    },
+  }), [cps, cpsId, navigate, status, tenantClient])
+
   const props = {
     data: viewData,
     status,
     formatters: { money: formatMoney, percent: formatPercent },
     onBack: () => navigate('/cost-pricing-sheets'),
     onEdit: () => navigate(`/cost-pricing-sheets/edit/${cps.id}`),
+    actions,
   }
   const useDesktopComposition = isDesktop && !hasFold && !isTablet
 

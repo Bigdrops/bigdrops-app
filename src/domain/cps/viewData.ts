@@ -7,11 +7,13 @@ export type CpsViewRow =
       type: 'group'
       key: string
       title: string
+      groupId: string | null
     }
   | {
       type: 'item'
       key: string
       number: string
+      groupId: string | null
       description: string
       specification: string
       makeBrand: string
@@ -52,6 +54,9 @@ export function buildCpsViewData(cps: Cps): CpsViewData {
         type: 'group',
         key: rowKey(row, index),
         title: row.section_title || row.description || 'Group',
+        // Group identity mirrors the form layer: a section owns the
+        // group_id that member items reference. View only; no math change.
+        groupId: row.group_id || row.id || row._uiKey || null,
       }
     }
 
@@ -68,6 +73,7 @@ export function buildCpsViewData(cps: Cps): CpsViewData {
       type: 'item',
       key: rowKey(row, index),
       number: String(itemNumber).padStart(2, '0'),
+      groupId: row.group_id || null,
       description: row.description || '',
       specification: row.specification || '',
       makeBrand: row.make_brand || '',

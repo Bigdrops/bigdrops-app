@@ -18,9 +18,6 @@
   --danger: #b42318;
   --ghost: rgba(16, 24, 40, .07);
   --shadow-sheet: 0 -18px 44px rgba(0, 0, 0, .28);
-  --fab-bg: #175cd3;
-  --fab-text: #ffffff;
-  --pipe: #101828;
   min-height: 100dvh;
   background: var(--bg);
   color: var(--ink);
@@ -48,9 +45,6 @@
   --danger: #f97066;
   --ghost: rgba(255, 255, 255, .06);
   --shadow-sheet: 0 -18px 44px rgba(0, 0, 0, .55);
-  --fab-bg: #1570ef;
-  --fab-text: #ffffff;
-  --pipe: #020617;
 }
 .cps-view * { box-sizing: border-box; }
 .cps-view button {
@@ -357,60 +351,42 @@
 .cps-doc-in { padding: 2px 24px 0; }
 .cps-view-wrap .cps-doc-in { padding: 4px 20px 0; }
 
+/* ── Group section ─────────────────────────────────────────────
+   A group reads as a document chapter: a full-width header band,
+   member rows joined by a restrained inset rail, and an explicit
+   end/subtotal bar. No enclosing frame. Member rows keep the normal
+   CPS item-row language. ─────────────────────────────────────────── */
+
 .cps-grp {
-  position: relative;
-  margin: 16px -12px 0;
-  padding: 8px 22px 10px;
-  background: transparent;
+  margin: 20px 0 0;
+  padding: 0;
+  scroll-margin-top: 76px;
 }
 .cps-view-wrap .cps-grp {
-  margin: 14px -10px 0;
-  padding: 8px 18px 10px;
-}
-.cps-pipe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-.cps-pipe rect { fill: none; x: 3px; y: 3px; width: calc(100% - 6px); height: calc(100% - 6px); rx: 5px; }
-.cps-pipe .tube { stroke: var(--pipe); stroke-width: 6; }
-.cps-pipe .chan { stroke: #39445a; stroke-width: 3; }
-.cps-pipe .halo {
-  stroke: var(--brand);
-  stroke-width: 7;
-  opacity: .45;
-  animation: cps-pipemove 12s linear infinite;
-  stroke-dasharray: 96 2000;
-}
-.cps-pipe .core {
-  stroke: #ffffff;
-  stroke-width: 3;
-  filter: drop-shadow(0 0 5px var(--brand));
-  animation: cps-pipemove 12s linear infinite;
-  stroke-dasharray: 96 2000;
-}
-@keyframes cps-pipemove { to { stroke-dashoffset: -2000; } }
-@media (prefers-reduced-motion: reduce) {
-  .cps-pipe .halo,
-  .cps-pipe .core { display: none; }
+  margin-top: 18px;
 }
 .cps-ghead {
-  position: relative;
-  margin: 0;
-  padding: 16px 0 4px;
   display: flex;
   align-items: center;
   gap: 12px;
+  background: var(--brand-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  padding: 12px 14px;
 }
 .cps-ghead .ghost {
-  font-size: 32px;
+  font-size: 30px;
   line-height: 1;
   font-weight: 800;
-  color: var(--ghost);
+  color: var(--brand);
+  opacity: .38;
   letter-spacing: -.03em;
   user-select: none;
+  flex-shrink: 0;
+}
+.cps-ghead .ghead-main {
+  min-width: 0;
+  flex: 1;
 }
 .cps-ghead .kicker {
   font-size: 9.5px;
@@ -423,27 +399,61 @@
   font-size: 14.5px;
   font-weight: 800;
   margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cps-ghead .count {
   font-size: 11.5px;
   color: var(--faint);
   font-weight: 700;
-  margin-top: 1px;
+  margin-top: 2px;
+  font-family: var(--mono);
 }
+
+/* Membership rail: a 3px inset bar that runs down every member row.
+   Consecutive members read as one continuous rail; it costs no layout
+   width and never boxes items into cards. */
+.cps-entry.in-group {
+  box-shadow: inset 3px 0 0 var(--brand);
+  padding-left: 12px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.cps-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Group end: a deliberate termination with subtotal. The reader can see
+   where a group stops and standalone content (or the next group) starts. */
 .cps-gsub {
-  position: relative;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  padding: 11px 0 8px;
-  border-top: 1px solid var(--line-strong);
+  margin-top: 2px;
+  padding: 10px 2px 4px 15px;
+  border-top: 2px solid var(--brand);
 }
 .cps-gsub .k {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .07em;
+  text-transform: uppercase;
   color: var(--faint);
+}
+.cps-gsub .mono {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--sell);
 }
 
 .cps-entry {
@@ -714,20 +724,14 @@
   text-decoration: none;
 }
 
-.cps-view-fab {
+/* FAB slot. The canonical FloatingDownloadButton owns geometry, icon,
+   motion, and interaction states. This wrapper only carries the CPS
+   contextual offset that clears the mobile bottom navigation. */
+.cps-fab-slot {
   position: fixed;
   right: 16px;
   bottom: calc(88px + env(safe-area-inset-bottom));
   z-index: 50;
-  width: 50px;
-  height: 50px;
-  border-radius: 18px;
-  background: var(--fab-bg);
-  color: var(--fab-text);
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .cps-bottom-nav {
   position: fixed;
@@ -792,17 +796,6 @@
   border-bottom: 1px solid var(--line);
 }
 .cps-sheet-head b {
-  font-size: 13px;
-  font-weight: 800;
-}
-.cps-sheet-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 13px 0;
-  border-bottom: 1px solid var(--line);
   font-size: 13px;
   font-weight: 800;
 }
