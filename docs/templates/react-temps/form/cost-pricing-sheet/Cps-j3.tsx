@@ -1,23 +1,49 @@
 /*
  * BIGDROPS - Cost & Pricing Sheet - mobile/fold form template.
- * SINGLE-FILE EDITION (cp2.tsx): column contract, types, formatters,
- * row helpers, sample model, SVG icons, overlay sheets, form component,
- * and the prototype CSS all live in this one file.
+ * SINGLE-FILE EDITION (Cps-j3.tsx): column contract, types, formatters,
+ * row helpers, sample model, SVG icons, overlay sheets, presentation
+ * components, prototype state, callbacks, JSX, and the prototype CSS
+ * all live in this one file. There is no separate CSS, component,
+ * helper, type, utility, or asset file.
  *
  * Converted 1:1 from cost-price-sheet-form-candidate-v1-mobile-fold.html
  * (design-direction prototype). This is a fidelity conversion:
- * layout, spacing, typography, controls, field order, group/row
- * presentation, CP/SP, TCP/TSP/Profit, sub-descriptions, toolbar,
- * header, and responsive behavior match the source.
+ * layout, spacing, gutters, widths, heights, typography hierarchy,
+ * controls, field order, group/row presentation, CP/SP, TCP/TSP/Profit,
+ * sub-descriptions, toolbar, header, and responsive behavior match the
+ * source. The prototype CSS is preserved verbatim as CPS_J3_CSS and
+ * renders from the <style> element at the top of the component tree.
+ * The only external dependency is react.
  *
- * Application logic (save/persistence, JSON import, client picker
- * backend, photo upload, routing) is exposed through typed callback
- * props on CostPricingSheetFormProps. Prototype-only demo behaviors
- * (toasts, badge flip) run when a callback is absent.
+ * Application logic stays in the host application. The table below maps
+ * each prototype control to the callback prop or local state that
+ * replaces it.
  *
- * The only external dependency is react. The prototype CSS is embedded
- * as CPS2_CSS and renders from the <style> element that the component
- * puts at the top of its tree.
+ *   Prototype control                         TSX surface
+ *   ----------------------------------------  ------------------------------------------
+ *   Back button (toast "Back to sheets")      onBack?: () => void
+ *   Save (top bar, section CTA, phone FAB)    onSave?: (payload: CpsSavePayload) => void
+ *   save() checks (no, client, desc/qty/sp)   local state: doc, rowsRaw, client, errId,
+ *                                             badge (demo badge + toasts run without a
+ *                                             callback)
+ *   Theme toggle (data-theme on <html>)       theme? / defaultTheme? / onToggleTheme?
+ *   Client picker trigger + client sheet      clients? / initialClient? / onClientChange?
+ *                                             / onAddNewClient?; local state: client
+ *   Column Settings sheet (label, show,       initialColumns? / onColumnsChange?;
+ *   order, reset)                             local state: columns
+ *   Import JSON sheet (doImport parse +       onImport?: (jsonText) => CpsImportResult;
+ *   replace)                                  local state: impText, impErr
+ *   Instant Markup sheet (preview, apply,     initialMarkupExcluded?; MarkupSheet
+ *   undo bar)                                 onApply(changes, summary); local state: undo
+ *   Photo attach (addPhoto / removePhoto)     onRequestPhoto?: (rowId) => image URL;
+ *                                             the prototype local file-to-dataURL path
+ *                                             runs when the callback is absent
+ *   Row ops (add line item, add group, move,  local state handlers on rowsRaw. Purely
+ *   duplicate, insert, remove, clear all)     presentational. No persistence.
+ *   Field edits (title, number, date, site,   local state: doc and rowsRaw. NumField
+ *   notes, desc, sub, make, unit, qty, cp, sp) keeps the prototype live reformat.
+ *   Toast, Draft/Saved badge, layout chip     local state: toast, badge (modeLabel?
+ *                                             override), bp
  *
  * PROTOTYPE MATH NOTE: row and total displays use float math rounded
  * to 2dp, exactly like the source. Production MUST use the
@@ -31,7 +57,7 @@ import type { ChangeEvent, ReactNode } from 'react';
 /* Prototype CSS (verbatim from the source <style> block).            */
 /* ------------------------------------------------------------------ */
 
-const CPS2_CSS = `
+const CPS_J3_CSS = `
 /*
  * BIGDROPS - Cost & Pricing Sheet - mobile/fold form template.
  * Verbatim CSS extracted from cost-price-sheet-form-candidate-v1-mobile-fold.html.
@@ -39,7 +65,7 @@ const CPS2_CSS = `
  * The Google Fonts @import mirrors the prototype's <link> tags.
  *
  * Note: class names are kept exactly as the prototype (generic names
- * such as .item, .sec, .fld). This copy is embedded as CPS2_CSS and
+ * such as .item, .sec, .fld). This copy is embedded as CPS_J3_CSS and
  * renders once with the form; isolate it if your app has colliding
  * global class names.
  */
@@ -770,7 +796,9 @@ export interface CostPricingSheetFormProps {
   onImport?: (jsonText: string) => CpsImportResult;
   /**
    * Photo attach callback (Cloudinary/upload logic lives in the host).
-   * Resolve with an image URL to attach it to the row.
+   * Resolve with an image URL to attach it to the row. When omitted,
+   * the prototype's local file-to-dataURL path runs instead, so the
+   * photo control keeps its source behavior in a standalone preview.
    */
   onRequestPhoto?: (rowId: number) => void | Promise<string | null | undefined>;
   /**
@@ -2318,15 +2346,56 @@ export function CostPricingSheetForm({
     showToast('All rows cleared');
   };
 
-  /* --- photo ------------------------------------------------------- */
+  /* --- photo (prototype local path when no callback) ---------------- */
+  const photoFileRef = useRef<HTMLInputElement | null>(null);
+  const photoRowRef = useRef<number | null>(null);
+
   const attachPhoto = (id: number) => {
-    if (!onRequestPhoto) return;
-    void Promise.resolve(onRequestPhoto(id)).then((url) => {
-      if (url) {
-        editItem(id, 'image', url);
+    if (onRequestPhoto) {
+      void Promise.resolve(onRequestPhoto(id)).then((url) => {
+        if (url) {
+          editItem(id, 'image', url);
+          showToast('Photo attached');
+        }
+      });
+      return;
+    }
+    photoRowRef.current = id;
+    photoFileRef.current?.click();
+  };
+
+  /* Port of the prototype file-input + canvas resize handler. */
+  const onPhotoFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files && e.target.files[0];
+    const id = photoRowRef.current;
+    e.target.value = '';
+    if (!f || id == null) return;
+    if (!/^image\//.test(f.type)) {
+      showToast('Choose an image file', true);
+      return;
+    }
+    const fr = new FileReader();
+    fr.onerror = () => showToast('Could not read that image', true);
+    fr.onload = () => {
+      const im = new Image();
+      im.onerror = () => showToast('Could not read that image', true);
+      im.onload = () => {
+        const max = 720;
+        const k = Math.min(1, max / Math.max(im.width, im.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(im.width * k);
+        cv.height = Math.round(im.height * k);
+        const cx = cv.getContext('2d');
+        if (!cx) return;
+        cx.fillStyle = '#fff';
+        cx.fillRect(0, 0, cv.width, cv.height);
+        cx.drawImage(im, 0, 0, cv.width, cv.height);
+        editItem(id, 'image', cv.toDataURL('image/jpeg', 0.8));
         showToast('Photo attached');
-      }
-    });
+      };
+      im.src = fr.result as string;
+    };
+    fr.readAsDataURL(f);
   };
 
   /* --- client picker ------------------------------------------------ */
@@ -2583,7 +2652,7 @@ export function CostPricingSheetForm({
   /* --- render ---------------------------------------------------------- */
   return (
     <>
-      <style data-cps2="true">{CPS2_CSS}</style>
+      <style data-cps-j3="true">{CPS_J3_CSS}</style>
       <div className="wrap">
         <header className="topbar">
           <button className="tb-btn" title="Back to sheets" aria-label="Back to sheets" onClick={handleBack}>
@@ -2825,6 +2894,14 @@ export function CostPricingSheetForm({
       >
         <IconSave />
       </button>
+
+      <input
+        ref={photoFileRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={onPhotoFile}
+      />
 
       <ColumnsSheet
         open={openIds.includes('columns')}
