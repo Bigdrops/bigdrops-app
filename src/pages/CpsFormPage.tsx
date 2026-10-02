@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '@/components/Layout'
-import { CostPricingSheetForm } from '@/components/cps/supplied-form/CostPricingSheetForm'
-import type {
-  CpsClient,
-  CpsDocumentFields,
-  CpsRow,
-} from '@/components/cps/supplied-form/cost-pricing-sheet-shared'
+import { CostPricingSheetForm } from '@/components/cps/CpsJ3Form'
+import type { CpsClient, CpsDocumentFields, CpsRow } from '@/components/cps/CpsJ3Form'
 import { createEmptyCps } from '@/domain/cps/factories'
 import type { Cps } from '@/domain/cps/types'
 import { getNextCpsNumber, normalizeDbCps } from '@/domain/cps/normalize'
@@ -20,12 +16,12 @@ type CpsFormPageProps = {
   mode: 'create' | 'edit'
 }
 
-function toPrototypeNumber(value: unknown) {
+function toCpsJ3Number(value: unknown) {
   const numeric = Number(String(value ?? '').replace(/,/g, ''))
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function toPrototypeDocument(cps: Cps): Partial<CpsDocumentFields> {
+function toCpsJ3Document(cps: Cps): Partial<CpsDocumentFields> {
   return {
     title: cps.title || '',
     sheetNumber: cps.cps_number || '',
@@ -35,7 +31,7 @@ function toPrototypeDocument(cps: Cps): Partial<CpsDocumentFields> {
   }
 }
 
-function toPrototypeClient(cps: Cps): CpsClient | null {
+function toCpsJ3Client(cps: Cps): CpsClient | null {
   const snapshot = cps.custom_fields?.client_snapshot as Partial<CpsClient> | null | undefined
   const name = cps.client_name || snapshot?.name || ''
   if (!name) return null
@@ -50,7 +46,7 @@ function toPrototypeClient(cps: Cps): CpsClient | null {
   }
 }
 
-function toPrototypeRows(cps: Cps): CpsRow[] {
+function toCpsJ3Rows(cps: Cps): CpsRow[] {
   const groupIds = new Map<string, number>()
 
   return (cps.table_rows || []).map((row, index) => {
@@ -73,11 +69,11 @@ function toPrototypeRows(cps: Cps): CpsRow[] {
       desc: row.description || '',
       sub: row.specification || '',
       subOpen: false,
-      qty: toPrototypeNumber(row.quantity),
+      qty: toCpsJ3Number(row.quantity),
       unit: row.unit || '',
       make: row.make_brand || '',
-      cp: toPrototypeNumber(row.cp),
-      sp: toPrototypeNumber(row.sp),
+      cp: toCpsJ3Number(row.cp),
+      sp: toCpsJ3Number(row.sp),
       image: row.image_url || null,
     }
   })
@@ -105,8 +101,7 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
         fetchAutoCursor(tenantClient, family),
       ])
       if (!active) return
-      const number = getNextCpsNumber(rows || [], prefix, cursor)
-      next.cps_number = number
+      next.cps_number = getNextCpsNumber(rows || [], prefix, cursor)
       setInitialCps(next)
       setLoading(false)
     }
@@ -129,8 +124,7 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
         return
       }
 
-      const normalized = normalizeDbCps(cpsResult.data, rowsResult.data || [])
-      setInitialCps(normalized)
+      setInitialCps(normalizeDbCps(cpsResult.data, rowsResult.data || []))
       setLoading(false)
     }
 
@@ -152,18 +146,18 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
     )
   }
 
-  const prototypeClient = toPrototypeClient(initialCps)
+  const client = toCpsJ3Client(initialCps)
 
   return (
     <Layout title={isCreate ? 'New Cost & Pricing Sheet' : 'Edit Cost & Pricing Sheet'} hidePageHeader immersive>
       <CostPricingSheetForm
-        key={`${mode}-${initialCps.id || initialCps.cps_number || 'new'}`}
+        key={`cps-j3-${mode}-${initialCps.id || initialCps.cps_number || 'new'}`}
         modeLabel={isCreate ? 'Draft' : 'Editing'}
         onBack={handleCancel}
-        initialDocument={toPrototypeDocument(initialCps)}
-        initialRows={toPrototypeRows(initialCps)}
-        clients={prototypeClient ? [prototypeClient] : []}
-        initialClient={prototypeClient}
+        initialDocument={toCpsJ3Document(initialCps)}
+        initialRows={toCpsJ3Rows(initialCps)}
+        clients={client ? [client] : []}
+        initialClient={client}
       />
     </Layout>
   )
