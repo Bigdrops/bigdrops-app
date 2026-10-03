@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '@/components/Layout'
-import { CostPricingSheetForm } from '@/components/cps/CpsJ3Form'
-import type { CpsClient, CpsDocumentFields, CpsRow } from '@/components/cps/CpsJ3Form'
+import { CostPricingSheetForm } from '@/components/cps/CostPricingSheetForm'
+import type { CpsClient, CpsDocumentFields, CpsRow } from '@/components/cps/CostPricingSheetForm'
 import { createEmptyCps } from '@/domain/cps/factories'
 import type { Cps } from '@/domain/cps/types'
 import { getNextCpsNumber, normalizeDbCps } from '@/domain/cps/normalize'
@@ -16,12 +16,12 @@ type CpsFormPageProps = {
   mode: 'create' | 'edit'
 }
 
-function toCpsJ3Number(value: unknown) {
+function toCpsNumber(value: unknown) {
   const numeric = Number(String(value ?? '').replace(/,/g, ''))
   return Number.isFinite(numeric) ? numeric : 0
 }
 
-function toCpsJ3Document(cps: Cps): Partial<CpsDocumentFields> {
+function toCpsDocument(cps: Cps): Partial<CpsDocumentFields> {
   return {
     title: cps.title || '',
     sheetNumber: cps.cps_number || '',
@@ -31,7 +31,7 @@ function toCpsJ3Document(cps: Cps): Partial<CpsDocumentFields> {
   }
 }
 
-function toCpsJ3Client(cps: Cps): CpsClient | null {
+function toCpsClient(cps: Cps): CpsClient | null {
   const snapshot = cps.custom_fields?.client_snapshot as Partial<CpsClient> | null | undefined
   const name = cps.client_name || snapshot?.name || ''
   if (!name) return null
@@ -46,7 +46,7 @@ function toCpsJ3Client(cps: Cps): CpsClient | null {
   }
 }
 
-function toCpsJ3Rows(cps: Cps): CpsRow[] {
+function toCpsRows(cps: Cps): CpsRow[] {
   const groupIds = new Map<string, number>()
 
   return (cps.table_rows || []).map((row, index) => {
@@ -69,11 +69,11 @@ function toCpsJ3Rows(cps: Cps): CpsRow[] {
       desc: row.description || '',
       sub: row.specification || '',
       subOpen: false,
-      qty: toCpsJ3Number(row.quantity),
+      qty: toCpsNumber(row.quantity),
       unit: row.unit || '',
       make: row.make_brand || '',
-      cp: toCpsJ3Number(row.cp),
-      sp: toCpsJ3Number(row.sp),
+      cp: toCpsNumber(row.cp),
+      sp: toCpsNumber(row.sp),
       image: row.image_url || null,
     }
   })
@@ -146,16 +146,16 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
     )
   }
 
-  const client = toCpsJ3Client(initialCps)
+  const client = toCpsClient(initialCps)
 
   return (
     <Layout title={isCreate ? 'New Cost & Pricing Sheet' : 'Edit Cost & Pricing Sheet'} hidePageHeader immersive>
       <CostPricingSheetForm
-        key={`cps-j3-${mode}-${initialCps.id || initialCps.cps_number || 'new'}`}
+        key={`cps-form-${mode}-${initialCps.id || initialCps.cps_number || 'new'}`}
         modeLabel={isCreate ? 'Draft' : 'Editing'}
         onBack={handleCancel}
-        initialDocument={toCpsJ3Document(initialCps)}
-        initialRows={toCpsJ3Rows(initialCps)}
+        initialDocument={toCpsDocument(initialCps)}
+        initialRows={toCpsRows(initialCps)}
         clients={client ? [client] : []}
         initialClient={client}
       />

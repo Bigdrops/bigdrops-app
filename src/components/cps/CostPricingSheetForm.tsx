@@ -1,25 +1,28 @@
 /*
- * BIGDROPS - Cost & Pricing Sheet - mobile/fold form template.
- * SINGLE-FILE EDITION (Cps-j3.tsx): column contract, types, formatters,
- * row helpers, sample model, SVG icons, overlay sheets, presentation
- * components, prototype state, callbacks, JSX, and the prototype CSS
- * all live in this one file. There is no separate CSS, component,
- * helper, type, utility, or asset file.
+ * BIGDROPS - Cost & Pricing Sheet - mobile/fold form.
+ * SINGLE-FILE EDITION: column contract, types, formatters, row helpers,
+ * sample model, SVG icons, presentation components, local state,
+ * callbacks, JSX, and the form CSS all live in this one file. There is
+ * no separate CSS, component, helper, type, utility, or asset file.
  *
  * Converted 1:1 from cost-price-sheet-form-candidate-v1-mobile-fold.html
  * (design-direction prototype). This is a fidelity conversion:
  * layout, spacing, gutters, widths, heights, typography hierarchy,
  * controls, field order, group/row presentation, CP/SP, TCP/TSP/Profit,
  * sub-descriptions, toolbar, header, and responsive behavior match the
- * source. The prototype CSS is preserved verbatim as CPS_J3_CSS and
- * renders from the <style> element at the top of the component tree.
- * The only external dependency is react.
+ * source. The form CSS is preserved as CPS_FORM_CSS and renders from the
+ * <style> element at the top of the component tree. The only external
+ * dependency is react.
+ *
+ * Prototype popup/overlay UI (client picker sheet, column settings,
+ * JSON import, instant markup, confirm dialogs) has been removed. The
+ * toolbar triggers remain in place but are inert. Do not build a
+ * replacement popup until the real workflow is designed.
  *
  * Application logic stays in the host application. The table below maps
- * each prototype control to the callback prop or local state that
- * replaces it.
+ * each form control to the callback prop or local state that replaces it.
  *
- *   Prototype control                         TSX surface
+ *   Form control                              TSX surface
  *   ----------------------------------------  ------------------------------------------
  *   Back button (toast "Back to sheets")      onBack?: () => void
  *   Save (top bar, section CTA, phone FAB)    onSave?: (payload: CpsSavePayload) => void
@@ -27,21 +30,17 @@
  *                                             badge (demo badge + toasts run without a
  *                                             callback)
  *   Theme toggle (data-theme on <html>)       theme? / defaultTheme? / onToggleTheme?
- *   Client picker trigger + client sheet      clients? / initialClient? / onClientChange?
- *                                             / onAddNewClient?; local state: client
- *   Column Settings sheet (label, show,       initialColumns? / onColumnsChange?;
- *   order, reset)                             local state: columns
- *   Import JSON sheet (doImport parse +       onImport?: (jsonText) => CpsImportResult;
- *   replace)                                  local state: impText, impErr
- *   Instant Markup sheet (preview, apply,     initialMarkupExcluded?; MarkupSheet
- *   undo bar)                                 onApply(changes, summary); local state: undo
+ *   Client field + clear                      clients? / initialClient? / onClientChange?;
+ *                                             local state: client
+ *   Column visibility (label, show, order)    initialColumns? / onColumnsChange?;
+ *                                             local state: columns
  *   Photo attach (addPhoto / removePhoto)     onRequestPhoto?: (rowId) => image URL;
- *                                             the prototype local file-to-dataURL path
- *                                             runs when the callback is absent
+ *                                             the local file-to-dataURL path runs when
+ *                                             the callback is absent
  *   Row ops (add line item, add group, move,  local state handlers on rowsRaw. Purely
- *   duplicate, insert, remove, clear all)     presentational. No persistence.
+ *   duplicate, insert, remove)                presentational. No persistence.
  *   Field edits (title, number, date, site,   local state: doc and rowsRaw. NumField
- *   notes, desc, sub, make, unit, qty, cp, sp) keeps the prototype live reformat.
+ *   notes, desc, sub, make, unit, qty, cp, sp) keeps the live reformat.
  *   Toast, Draft/Saved badge, layout chip     local state: toast, badge (modeLabel?
  *                                             override), bp
  *
@@ -57,7 +56,7 @@ import type { ChangeEvent, ReactNode } from 'react';
 /* Prototype CSS (verbatim from the source <style> block).            */
 /* ------------------------------------------------------------------ */
 
-const CPS_J3_CSS = `
+const CPS_FORM_CSS = `
 /*
  * BIGDROPS - Cost & Pricing Sheet - mobile/fold form template.
  * Verbatim CSS extracted from cost-price-sheet-form-candidate-v1-mobile-fold.html.
@@ -65,12 +64,12 @@ const CPS_J3_CSS = `
  * The Google Fonts @import mirrors the prototype's <link> tags.
  *
  * Note: class names are kept exactly as the prototype (generic names
- * such as .item, .sec, .fld). This copy is embedded as CPS_J3_CSS and
+ * such as .item, .sec, .fld). This copy is embedded as CPS_FORM_CSS and
  * renders once with the form; isolate it if your app has colliding
  * global class names.
  */
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap');
-:root{
+.cps-form-root{
   --ink:#0f172a; --sub:#475569; --faint:#8b9ab0;
   --line:rgba(15,23,42,.10); --line-strong:rgba(15,23,42,.20);
   --bg:#eef2f7; --card:#ffffff; --soft:#f6f9fc;
@@ -86,12 +85,11 @@ const CPS_J3_CSS = `
   --group-head:linear-gradient(115deg,#0f172a,#1e3a5f 58%,#334155);
   --group-on:#f8fafc;
   --shadow-ear:0 3px 9px rgba(15,23,42,.16);
-  --shadow-sheet:0 -18px 44px rgba(0,0,0,.28);
   --bg-bd-button-primary-bg:#1e3a5f;
   --bd-button-primary-text:#f1f5f9;
   --gutter:14px;
 }
-[data-theme="dark"]{
+.cps-form-root[data-theme="dark"]{
   --ink:#f1f5f9; --sub:#cbd5e1; --faint:#7d8da5;
   --line:rgba(148,163,184,.18); --line-strong:rgba(148,163,184,.32);
   --bg:#0b1220; --card:#16233a; --soft:#111d31;
@@ -106,16 +104,15 @@ const CPS_J3_CSS = `
   --group-head:linear-gradient(115deg,#16233a,#1c3550);
   --group-on:#e2e8f0;
   --shadow-ear:0 3px 9px rgba(0,0,0,.45);
-  --shadow-sheet:0 -18px 44px rgba(0,0,0,.5);
   --bg-bd-button-primary-bg:#2563eb;
   --bd-button-primary-text:#f8fafc;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
-button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:0}
-input,select,textarea{outline:none}
-svg{display:block;flex-shrink:0}
+:where(.cps-form-root),:where(.cps-form-root) *{box-sizing:border-box;margin:0;padding:0}
+.cps-form-root{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;font-size:16px;line-height:normal;text-size-adjust:auto;-webkit-text-size-adjust:auto;-webkit-font-smoothing:antialiased}
+:where(.cps-form-root) :where(button,input,select,textarea){font:inherit;color:inherit}
+:where(.cps-form-root) :where(button){cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:0}
+:where(.cps-form-root) :where(input,select,textarea){outline:none}
+:where(.cps-form-root) :where(svg){display:block;flex-shrink:0}
 .mono{font-family:var(--mono)}
 .wrap{max-width:430px;margin:0 auto;padding:8px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
 .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:6px;padding:6px 0 8px;background:var(--bg);border-bottom:1px solid var(--line)}
@@ -123,7 +120,7 @@ svg{display:block;flex-shrink:0}
 .tb-btn:active{transform:scale(.93)}
 .tb-btn svg{width:17px;height:17px}
 .tb-title{flex:1;min-width:0;padding:0 2px}
-.tb-title h1{font-size:13.5px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-title h1{font-family:'Manrope',sans-serif!important;font-size:13.5px!important;font-weight:800!important;letter-spacing:-.02em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
 .tb-meta .badge{color:var(--accent)}
 .tb-meta .sep{opacity:.55}
@@ -134,7 +131,7 @@ svg{display:block;flex-shrink:0}
 .sec-head h2{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
 .sec-head .rule{flex:1;height:1px;background:var(--line);min-width:12px}
 .sec-head .meta{font-family:var(--mono);font-size:8.5px;font-weight:500;color:var(--faint);white-space:nowrap}
-.lb{display:block;font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.lb{display:block;font-family:'Manrope',sans-serif!important;font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
 .req{color:var(--red)}
 .fld{width:100%;min-height:42px;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:600}
 .fld::placeholder{color:var(--faint);font-weight:600}
@@ -156,17 +153,6 @@ textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-
 .clientpick .cx svg{width:13px;height:13px}
 .clientpick .chev{flex-shrink:0;color:var(--faint);display:flex}
 .clientpick .chev svg{width:15px;height:15px}
-.cl-list{display:flex;flex-direction:column;min-height:0;overflow-y:auto;max-height:34vh}
-.crow{display:flex;align-items:center;gap:10px;width:100%;padding:10px;border:1px solid var(--line);border-radius:11px;background:var(--card);text-align:left;margin-top:8px}
-.crow:first-child{margin-top:0}
-.crow .ci{width:34px;height:34px;border-radius:9px;background:var(--soft);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--line);font-size:11px;font-weight:800}
-.crow .ct{flex:1;min-width:0}
-.crow .ct b{display:block;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.crow .ct small{display:block;margin-top:1px;font-size:9px;color:var(--sub)}
-.crow .tick{flex-shrink:0;width:22px;height:22px;border-radius:50%;border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;color:transparent}
-.crow .tick svg{width:12px;height:12px}
-.crow.sel .tick{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.cmnote{font-size:9px;color:var(--faint);font-weight:600;text-align:center;padding:8px 0 0}
 .itemtools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;margin-bottom:14px}
 .itbn{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;color:var(--sub)}
 .itbn svg{width:11px;height:11px}
@@ -313,120 +299,20 @@ textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-
 .fab{position:fixed;right:16px;bottom:calc(82px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);display:flex;align-items:center;justify-content:center;z-index:50}
 .fab svg{width:20px;height:20px;stroke-width:2}
 .fab:active{transform:scale(.95)}
-.ov{position:fixed;inset:0;background:rgba(8,15,28,.62);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center;z-index:60}
-.ov.show{display:flex}
-.ov.center{align-items:center}
-.sheet{width:100%;max-width:430px;background:var(--card);border-radius:22px 22px 0 0;max-height:82vh;display:flex;flex-direction:column;gap:10px;padding:12px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--shadow-sheet)}
-.grab{width:36px;height:3px;border-radius:99px;background:var(--line-strong);margin:2px auto 0}
-.shd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-.shd b{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
-.shd small{display:block;margin-top:2px;font-size:9px;font-weight:600;color:var(--sub);text-transform:none;letter-spacing:0}
-.x{width:38px;height:38px;border-radius:11px;background:var(--soft);border:1px solid var(--line);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.x svg{width:12px;height:12px}
-.colrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:11px;background:var(--soft)}
-.colrow b{display:block;font-size:11px;font-weight:700}
-.colrow small{display:block;margin-top:2px;font-size:9px;font-weight:600;line-height:1.45;color:var(--sub)}
-.tag{padding:2px 6px;border-radius:5px;background:var(--card);border:1px solid var(--line);font-size:7px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub)}
-.sw{position:relative;width:48px;height:36px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0}
-.sw::after{content:'';position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28)}
-.sw.on{background:var(--accent)}
-.sw.on::after{transform:translateX(12px)}
-.cta{width:100%;min-height:46px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
-.cta:active{transform:scale(.98)}
-.cta:disabled{opacity:.45}
-.linkbtn{width:100%;min-height:44px;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
-.dialog{width:min(88%,320px);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-ear)}
-.dialog b{font-size:12.5px;font-weight:800}
-.dialog p{margin-top:6px;font-size:10px;font-weight:600;line-height:1.55;color:var(--sub)}
-.dialog .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
-.dbtn{min-height:40px;padding:0 14px;border-radius:11px;border:1px solid var(--line);background:var(--soft);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)}
-.dbtn.danger{border-color:var(--red);background:var(--red-soft);color:var(--red)}
-.imperr{display:none;font-family:var(--mono);font-size:9px;line-height:1.55;white-space:pre-wrap;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:9px;padding:8px 10px}
-.imperr.show{display:block}
-.cm-list{border:1px solid var(--line);border-radius:11px;background:var(--soft);overflow:hidden}
-.cm-row{display:flex;align-items:center;gap:2px;min-height:44px;padding:5px 4px;border-bottom:1px solid var(--line)}
-.cm-row:last-child{border-bottom:0}
-.cm-grip{display:flex;align-items:center;justify-content:center;width:26px;height:100%;color:var(--faint);flex-shrink:0;touch-action:none}
-.cm-grip svg{width:13px;height:13px}
-.cm-ord{display:flex;flex-direction:column;flex-shrink:0}
-.cm-ord button{display:flex;align-items:center;justify-content:center;width:26px;height:20px;color:var(--faint)}
-.cm-ord button:disabled{opacity:.2;pointer-events:none}
-.cm-ord svg{width:12px;height:12px}
-.cm-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:0 2px}
-.cm-labrow{display:flex;align-items:center;gap:5px;min-width:0}
-.cm-lab{flex:1;min-width:0;height:30px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;font-size:11.5px;font-weight:700;color:var(--ink)}
-.cm-badge{flex-shrink:0;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);font-size:7.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
-.cm-sub{display:flex;align-items:center;gap:6px;padding:0 2px 2px}
-.cm-sub span{font-size:9.5px;font-weight:600;color:var(--sub)}
-.cm-sw{position:relative;width:40px;height:28px;border-radius:99px;border:0;background:var(--line-strong);flex-shrink:0}
-.cm-sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28)}
-.cm-sw.on{background:var(--accent)}
-.cm-sw.on::after{transform:translateX(12px)}
-.cm-act{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:var(--faint)}
-.cm-act svg{width:13px;height:13px}
-.cm-sec{margin:12px 0 6px;font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-.cm-add{width:100%;margin-top:8px;min-height:40px;border-radius:10px;border:0;background:none;color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px}
-.cm-add svg{width:12px;height:12px}
-.cm-reset{width:100%;margin-top:2px;padding:6px 0;border:0;background:none;color:var(--sub);font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.impnote{font-size:8.5px;line-height:1.65;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
-.impnote code{font-family:var(--mono);font-size:8px;color:var(--accent)}
-.mk-seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mk-seg button{min-height:44px;border-radius:11px;border:1px solid var(--line);background:var(--soft);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:6px}
-.mk-seg button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-.mk-seg button svg{width:13px;height:13px}
-.mk-valrow{display:flex;gap:8px}
-.mk-valrow .fld{font-family:var(--mono);font-size:15px;font-weight:700}
-.mk-err{display:none;font-size:9.5px;font-weight:700;color:var(--red);background:var(--red-soft);border:1px solid var(--red);border-radius:9px;padding:8px 10px;line-height:1.5}
-.mk-err.show{display:block}
-.mk-tools{display:flex;align-items:center;gap:4px}
-.mk-tools .linkbtn{width:auto;min-height:36px;padding:0 8px}
-.mk-tools .cnt{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--faint)}
-.mk-list{display:flex;flex-direction:column;min-height:0;overflow-y:auto;border:1px solid var(--line);border-radius:11px;background:var(--soft);max-height:30vh}
-.mk-gcap{padding:8px 10px 4px;font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
-.mk-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--line);background:var(--card)}
-.mk-row:first-child{border-top:0}
-.mk-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--green)}
-.mk-row.out .mk-dot{background:var(--line-strong)}
-.mk-row.nope .mk-dot{background:var(--red)}
-.mk-row .t{flex:1;min-width:0}
-.mk-row .t b{display:block;font-size:10.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mk-row .t small{display:block;margin-top:1px;font-family:var(--mono);font-size:8.5px;color:var(--sub)}
-.mk-row .t small.bad{color:var(--red);font-weight:700}
-.mk-tog{flex-shrink:0;min-width:64px;min-height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--line-strong);font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sub)}
-.mk-tog.on{border-color:var(--green);color:var(--green);background:var(--green-soft)}
-.mk-tog:disabled{opacity:.4}
-.mk-agg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mk-cell{border:1px solid var(--line);border-radius:11px;background:var(--soft);padding:9px 10px}
-.mk-cell small{display:block;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
-.mk-cell b{display:block;margin-top:3px;font-family:var(--mono);font-size:12px;font-weight:700}
-.mk-cell b.up{color:var(--sell)}
-.mk-prev{display:flex;flex-direction:column;min-height:0;overflow-y:auto;border:1px solid var(--line);border-radius:11px;max-height:32vh}
-.mk-prow{padding:9px 10px;border-top:1px solid var(--line);background:var(--card)}
-.mk-prow:first-child{border-top:0}
-.mk-prow .d{font-size:10.5px;font-weight:700}
-.mk-prow .ln{display:flex;justify-content:space-between;gap:8px;margin-top:3px;font-family:var(--mono);font-size:9.5px;color:var(--sub)}
-.mk-prow .ln b{color:var(--ink)}
-.mk-prow .ln .new{color:var(--sell);font-weight:700}
-.mk-prow .ln .rep{color:var(--red);font-weight:700}
-.mk-note{font-size:8.5px;line-height:1.6;color:var(--sub);background:var(--soft);border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
-.mk-undo{display:none;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;border:1px solid var(--accent);background:var(--accent-soft);font-size:9.5px;font-weight:700}
-.mk-undo.show{display:flex}
-.mk-undo span{flex:1;min-width:0}
-.mk-undo button{flex-shrink:0;min-height:36px;padding:0 14px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
 .toast{position:fixed;bottom:148px;left:50%;transform:translateX(-50%);z-index:70;max-width:86vw;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:9.5px;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.3);display:none}
 .toast.show{display:block}
 .toast.err{border:1px solid var(--red)}
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
+  .cps-form-root,.cps-form-root *,.cps-form-root *::before,.cps-form-root *::after{animation:none!important;transition:none!important}
 }
 @media (min-width:430px){
-  :root{--gutter:18px}
+  .cps-form-root{--gutter:18px}
   .wrap{max-width:560px;padding:10px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
   .desc{min-height:72px}
   .createpair{gap:12px}
 }
 @media (min-width:600px){
-  :root{--gutter:24px}
+  .cps-form-root{--gutter:24px}
   .wrap{max-width:820px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
   .tb-save{display:flex}
   .fab{display:none}
@@ -440,9 +326,6 @@ textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-
   .cf-hint{display:inline}
   .totals-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
   .sumtotal{margin-top:0}
-  .sheet{max-width:560px;border-radius:22px;margin-bottom:18px}
-  .mk-list{max-height:34vh}
-  .mk-prev{max-height:36vh}
 }
 `;
 
@@ -507,16 +390,6 @@ export const CPS_LABELS: Record<CpsColumnKey, string> = {
   make: 'Make / Brand',
   cp: 'CP (Cost Price)',
   sp: 'SP (Selling Price)',
-};
-
-export const CPS_TYPE: Record<CpsColumnKey, 'text' | 'num'> = {
-  description: 'text',
-  specification: 'text',
-  unit: 'text',
-  quantity: 'num',
-  make: 'text',
-  cp: 'num',
-  sp: 'num',
 };
 
 export function defaultCpsColumns(): CpsColumn[] {
@@ -615,29 +488,12 @@ export interface CpsSavePayload extends CpsDocumentFields {
   columns: CpsColumn[];
 }
 
-/** Result contract for the JSON import callback (logic stays in the host). */
-export type CpsImportResult =
-  | { ok: true; rows: CpsRow[]; title?: string }
-  | { ok: false; error: string };
-
-export type CpsSheetId = 'columns' | 'import' | 'client' | 'markup' | 'clear' | 'colreset';
-
-export type CpsMarkupMode = 'pct' | 'val';
-
-export interface CpsMarkupChange {
-  id: number;
-  sp: number;
-}
-
 /* ------------------------------------------------------------------ */
 /* Formatters (prototype float math, rounded to 2dp)                   */
 /* ------------------------------------------------------------------ */
 
 export const naira = (n: number | null | undefined): string =>
   '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-export const naira0 = (n: number | null | undefined): string =>
-  '₦' + Number(n || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 });
 
 export const fmtGroup = (n: number): string =>
   Number(n).toLocaleString('en-US', { maximumFractionDigits: 20 });
@@ -746,9 +602,6 @@ export const SAMPLE_ROWS: CpsRow[] = [
   { id: 7, type: 'item', gid: null, desc: 'Provisional sum — drainage works (rates pending)', sub: '', subOpen: false, qty: 1, unit: 'sum', make: '', cp: 0, sp: 0 },
 ];
 
-/** Default Instant Markup exclusions, matching the prototype demo rows. */
-export const SAMPLE_MARKUP_EXCLUDED: number[] = [6, 8];
-
 /* ------------------------------------------------------------------ */
 /* Component props contract                                            */
 /* ------------------------------------------------------------------ */
@@ -782,18 +635,10 @@ export interface CostPricingSheetFormProps {
   initialClient?: CpsClient | null;
   /** Fires whenever the selected client changes (including clear). */
   onClientChange?: (client: CpsClient | null) => void;
-  /** "+ Add new client" affordance in the client sheet. */
-  onAddNewClient?: () => void;
   /** Initial column configuration. Defaults to prototype defaults. */
   initialColumns?: CpsColumn[];
   /** Fires after any column toggle, label edit, move, or reset. */
   onColumnsChange?: (columns: CpsColumn[]) => void;
-  /**
-   * JSON import callback. The host parses and validates the raw text.
-   * Return rows on success or an inline error message on failure.
-   * The Import CTA is inert without this callback.
-   */
-  onImport?: (jsonText: string) => CpsImportResult;
   /**
    * Photo attach callback (Cloudinary/upload logic lives in the host).
    * Resolve with an image URL to attach it to the row. When omitted,
@@ -801,11 +646,6 @@ export interface CostPricingSheetFormProps {
    * photo control keeps its source behavior in a standalone preview.
    */
   onRequestPhoto?: (rowId: number) => void | Promise<string | null | undefined>;
-  /**
-   * Row ids excluded from Instant Markup on first open.
-   * Defaults to [6, 8], matching the prototype sample rows.
-   */
-  initialMarkupExcluded?: number[];
 }
 
 /*
@@ -891,14 +731,6 @@ export function IconMarkup({ strokeWidth = 2 }: CpsIconProps) {
   );
 }
 
-export function IconNaira({ strokeWidth = 2.4 }: CpsIconProps) {
-  return (
-    <svg {...base(strokeWidth)}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2 2.6 5 3.2 5 1.4 5 3.3-2.2 3-5 3-5-1.1-5-3" />
-    </svg>
-  );
-}
-
 export function IconTrash({ strokeWidth = 2.2 }: CpsIconProps) {
   return (
     <svg {...base(strokeWidth)}>
@@ -973,27 +805,6 @@ export function IconChevronDownSmall({ strokeWidth = 2.2 }: CpsIconProps) {
   );
 }
 
-export function IconGrip() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <circle cx="9" cy="6" r="1.6" />
-      <circle cx="15" cy="6" r="1.6" />
-      <circle cx="9" cy="12" r="1.6" />
-      <circle cx="15" cy="12" r="1.6" />
-      <circle cx="9" cy="18" r="1.6" />
-      <circle cx="15" cy="18" r="1.6" />
-    </svg>
-  );
-}
-
-export function IconCheck({ strokeWidth = 3 }: CpsIconProps) {
-  return (
-    <svg {...base(strokeWidth)}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
-
 export function IconUser({ strokeWidth = 2 }: CpsIconProps) {
   return (
     <svg {...base(strokeWidth)}>
@@ -1029,23 +840,8 @@ export function IconCamera({ strokeWidth = 2 }: CpsIconProps) {
   );
 }
 
-/*
- * BIGDROPS - Cost & Pricing Sheet - mobile/fold form template.
- * Overlay presentation components converted 1:1 from the prototype
- * (cost-price-sheet-form-candidate-v1-mobile-fold.html).
- *
- * Every overlay stays mounted in the DOM and toggles the prototype
- * .show class, exactly like the source. Sheet visibility, focus
- * return, and Escape handling are owned by CostPricingSheetForm.
- *
- * The Instant Markup sheet keeps its presentational workflow and the
- * prototype's float math. Production must route derived SP values
- * through the authoritative Decimal path before ship.
- */
-
-
 /* ------------------------------------------------------------------ */
-/* Generic bits                                                        */
+/* Toast                                                               */
 /* ------------------------------------------------------------------ */
 
 export interface ToastViewProps {
@@ -1057,680 +853,6 @@ export interface ToastViewProps {
 export function ToastView({ show, message, isError }: ToastViewProps) {
   return <div className={`toast${show ? ' show' : ''}${isError ? ' err' : ''}`}>{message}</div>;
 }
-
-export interface ConfirmDialogProps {
-  open: boolean;
-  /** Matches the CpsSheetId so the form can focus the first control. */
-  sheetId: string;
-  ariaLabel: string;
-  title: string;
-  body: string;
-  confirmLabel: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-}
-
-export function ConfirmDialog({ open, sheetId, ariaLabel, title, body, confirmLabel, onCancel, onConfirm }: ConfirmDialogProps) {
-  return (
-    <div
-      className={`ov center${open ? ' show' : ''}`}
-      data-ov={sheetId}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div className="dialog" role="dialog" aria-modal="true" aria-label={ariaLabel}>
-        <b>{title}</b>
-        <p>{body}</p>
-        <div className="acts">
-          <button className="dbtn" onClick={onCancel}>Cancel</button>
-          <button className="dbtn danger" onClick={onConfirm}>{confirmLabel}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Client picker sheet                                                 */
-/* ------------------------------------------------------------------ */
-
-export interface ClientSheetProps {
-  open: boolean;
-  clients: CpsClient[];
-  selectedId: string | null;
-  onChoose: (clientId: string) => void;
-  onAddNew: () => void;
-  onClose: () => void;
-}
-
-export function ClientSheet({ open, clients, selectedId, onChoose, onAddNew, onClose }: ClientSheetProps) {
-  const [query, setQuery] = useState('');
-  const prevOpen = useRef(open);
-  if (prevOpen.current !== open) {
-    prevOpen.current = open;
-    if (open) setQuery('');
-  }
-
-  const q = query.toLowerCase();
-  const list = clients.filter(
-    (c) => !q || c.name.toLowerCase().indexOf(q) >= 0 || (c.person || '').toLowerCase().indexOf(q) >= 0,
-  );
-
-  return (
-    <div
-      className={`ov${open ? ' show' : ''}`}
-      data-ov="client"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="sheet" role="dialog" aria-modal="true" aria-label="Select client">
-        <div className="grab" />
-        <div className="shd">
-          <div>
-            <b>Select client</b>
-            <small>Bill-to party for this sheet</small>
-          </div>
-          <button className="x" aria-label="Close" onClick={onClose}><IconClose /></button>
-        </div>
-        <input
-          className="fld"
-          placeholder="Search by name or contact..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <div className="cl-list">
-          {list.length ? (
-            list.map((c) => {
-              const active = selectedId === c.id;
-              const initials = c.name
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((w) => w[0])
-                .join('')
-                .toUpperCase();
-              return (
-                <button key={c.id} className={`crow${active ? ' sel' : ''}`} onClick={() => onChoose(c.id)}>
-                  <span className="ci">{initials}</span>
-                  <span className="ct">
-                    <b>{c.name}</b>
-                    <small>{[c.person, c.phone].filter(Boolean).join(' · ')}</small>
-                  </span>
-                  <span className="tick"><IconCheck /></span>
-                </button>
-              );
-            })
-          ) : (
-            <p className="cmnote">No client matches this search.</p>
-          )}
-        </div>
-        <button className="linkbtn" onClick={onAddNew}>+ Add new client</button>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Import JSON sheet                                                   */
-/* ------------------------------------------------------------------ */
-
-export interface ImportSheetProps {
-  open: boolean;
-  value: string;
-  error: string;
-  onValueChange: (value: string) => void;
-  onSubmit: () => void;
-  onClose: () => void;
-}
-
-export function ImportSheet({ open, value, error, onValueChange, onSubmit, onClose }: ImportSheetProps) {
-  return (
-    <div
-      className={`ov${open ? ' show' : ''}`}
-      data-ov="import"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="sheet" role="dialog" aria-modal="true" aria-label="Import JSON">
-        <div className="grab" />
-        <div className="shd">
-          <div>
-            <b>Import JSON</b>
-            <small>Replaces current groups and line items</small>
-          </div>
-          <button className="x" aria-label="Close" onClick={onClose}><IconClose /></button>
-        </div>
-        <textarea
-          className="fld mono"
-          rows={7}
-          style={{ fontSize: '10.5px' }}
-          placeholder={'{"items":[],"groups":[],"title":"Cost & Pricing Sheet"}'}
-          value={value}
-          onChange={(e) => onValueChange(e.target.value)}
-        />
-        <div className={`imperr${error ? ' show' : ''}`}>{error}</div>
-        <div className="impnote">Contract keys — items: <code>description</code> <code>sub_description</code> <code>quantity</code> <code>unit</code> <code>unit_price</code> <code>cost_price</code> <code>cp</code> <code>make</code> <code>group_id</code> · groups: <code>id</code> <code>name</code> <code>itemIds</code> · top level: <code>items</code> (required), <code>groups</code>, <code>title</code></div>
-        <button className="cta" onClick={onSubmit}>Import &amp; replace</button>
-        <button className="linkbtn" onClick={onClose}>Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Column settings sheet                                               */
-/* ------------------------------------------------------------------ */
-
-/** Label field that commits on blur/Enter, like the prototype's onchange. */
-function LabelInput({
-  value,
-  className,
-  ariaLabel,
-  onCommit,
-}: {
-  value: string;
-  className?: string;
-  ariaLabel: string;
-  onCommit: (value: string) => void;
-}) {
-  const [text, setText] = useState(value);
-  useEffect(() => {
-    setText(value);
-  }, [value]);
-  const commit = () => {
-    if (text !== value) onCommit(text);
-  };
-  return (
-    <input
-      className={className}
-      value={text}
-      aria-label={ariaLabel}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') commit();
-      }}
-    />
-  );
-}
-
-export interface ColumnsSheetProps {
-  open: boolean;
-  columns: CpsColumn[];
-  onLabelChange: (key: CpsColumnKey, label: string) => void;
-  onToggle: (key: CpsColumnKey) => void;
-  onMove: (key: CpsColumnKey, targetIdx: number) => void;
-  onRequestReset: () => void;
-  onClose: () => void;
-}
-
-export function ColumnsSheet({ open, columns, onLabelChange, onToggle, onMove, onRequestReset, onClose }: ColumnsSheetProps) {
-  const dragKeyRef = useRef<string | null>(null);
-  const desc = columns.find((c) => c.key === 'description');
-  const rest = columns.filter((c) => c.key !== 'description');
-
-  return (
-    <div
-      className={`ov${open ? ' show' : ''}`}
-      data-ov="columns"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="sheet" role="dialog" aria-modal="true" aria-label="Column Settings">
-        <div className="grab" />
-        <div className="shd">
-          <div>
-            <b>Column Settings</b>
-            <small>Row fields, order, and labels</small>
-          </div>
-          <button className="x" aria-label="Close" onClick={onClose}><IconClose /></button>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
-          <div className="cm-sec">Description</div>
-          <div className="cm-list">
-            <div className="cm-row" data-key="description">
-              <LabelInput
-                className="cm-desc-in"
-                value={desc ? desc.label : ''}
-                ariaLabel="Description label"
-                onCommit={(v) => onLabelChange('description', v)}
-              />
-              <span className="cm-badge">Fixed</span>
-            </div>
-          </div>
-          <div className="cm-sec">Columns</div>
-          <div className="cm-list">
-            {rest.map((c) => {
-              const i = columns.findIndex((x) => x.key === c.key);
-              const type = CPS_TYPE[c.key] === 'num' ? 'NUM' : 'TEXT';
-              return (
-                <div className="cm-row" data-key={c.key} key={c.key}
-                  onDragOver={(e) => {
-                    if (dragKeyRef.current) e.preventDefault();
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const key = e.dataTransfer.getData('text/plain') || dragKeyRef.current;
-                    dragKeyRef.current = null;
-                    if (!key || key === c.key) return;
-                    onMove(key as CpsColumnKey, columns.findIndex((x) => x.key === c.key));
-                  }}
-                >
-                  <div
-                    className="cm-grip"
-                    draggable
-                    title="Drag to reorder"
-                    aria-label="Drag to reorder"
-                    onDragStart={(e) => {
-                      dragKeyRef.current = c.key;
-                      e.dataTransfer.setData('text/plain', c.key);
-                    }}
-                  >
-                    <IconGrip />
-                  </div>
-                  <div className="cm-ord">
-                    <button
-                      title="Move up"
-                      aria-label={`Move ${c.label} up`}
-                      disabled={i <= 1}
-                      onClick={() => onMove(c.key, i - 1)}
-                    >
-                      <IconUp />
-                    </button>
-                    <button
-                      title="Move down"
-                      aria-label={`Move ${c.label} down`}
-                      disabled={i >= columns.length - 1}
-                      onClick={() => onMove(c.key, i + 1)}
-                    >
-                      <IconDown />
-                    </button>
-                  </div>
-                  <div className="cm-main">
-                    <div className="cm-labrow">
-                      <LabelInput className="cm-lab" value={c.label} ariaLabel={`${c.label} label`} onCommit={(v) => onLabelChange(c.key, v)} />
-                      <span className="cm-badge">{type}</span>
-                    </div>
-                  </div>
-                  <button
-                    className={`cm-sw${c.visible ? ' on' : ''}`}
-                    role="switch"
-                    aria-checked={c.visible}
-                    aria-label={`${c.visible ? 'Hide' : 'Show'} ${c.label}`}
-                    onClick={() => onToggle(c.key)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <button className="cm-reset" onClick={onRequestReset}>Reset to defaults</button>
-        </div>
-        <button className="cta" onClick={onClose}>Done</button>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Instant Markup sheet                                                */
-/* ------------------------------------------------------------------ */
-
-interface MkAff {
-  row: CpsItemRow;
-  prop: number;
-  tsp: number;
-  delta: number;
-  lp: number;
-  m: number | null;
-  replaces: number;
-}
-
-interface MkCompute {
-  val: number;
-  aff: MkAff[];
-  curSell: number;
-  newSell: number;
-  curP: number;
-  newP: number;
-}
-
-const MK_HINT_STATIC = 'Cost-plus: SP = CP × (1 + %). Fixed mode adds a flat amount to unit CP.';
-const MK_HINT_PCT = 'Cost-plus: SP = CP × (1 + %). Re-applying derives from CP again — never from the current SP.';
-const MK_HINT_VAL = 'Fixed: SP = CP + value, applied per item unit. Not a document total, not a distribution, not a direct SP set.';
-
-export interface MarkupSheetProps {
-  open: boolean;
-  rows: CpsRow[];
-  /** Row ids excluded from markup. Defaults to the prototype sample [6, 8]. */
-  initialExcluded?: number[];
-  /** Fires with the proposed SP writes and the prototype undo summary. */
-  onApply: (changes: CpsMarkupChange[], summary: string) => void;
-  onClose: () => void;
-}
-
-export function MarkupSheet({ open, rows, initialExcluded, onApply, onClose }: MarkupSheetProps) {
-  const [mode, setMode] = useState<CpsMarkupMode>('pct');
-  const [modeTouched, setModeTouched] = useState(false);
-  const [valText, setValText] = useState('20');
-  const [view, setView] = useState<'setup' | 'preview'>('setup');
-  const [preview, setPreview] = useState<MkCompute | null>(null);
-  const [excluded, setExcluded] = useState<Record<number, true>>(() => {
-    const init: Record<number, true> = {};
-    (initialExcluded ?? [6, 8]).forEach((id) => {
-      init[id] = true;
-    });
-    return init;
-  });
-
-  // Prototype openMarkup(): always reopen on the setup view.
-  const prevOpen = useRef(open);
-  if (prevOpen.current !== open) {
-    prevOpen.current = open;
-    if (open) {
-      setView('setup');
-      setPreview(null);
-    }
-  }
-
-  const eligible = (r: CpsItemRow): boolean => {
-    const cp = Number(r.cp);
-    return Number.isFinite(cp) && cp > 0;
-  };
-  const included = (r: CpsItemRow): boolean => eligible(r) && !excluded[r.id];
-
-  const readVal = (): { ok: true; val: number } | { ok: false; msg: string } => {
-    const raw = valText.trim().replace(/,/g, '');
-    if (raw === '') return { ok: false, msg: 'Enter a markup value to continue.' };
-    const v = Number(raw);
-    if (!Number.isFinite(v)) return { ok: false, msg: 'That value is not a number. Enter 0 or more.' };
-    if (v < 0) return { ok: false, msg: 'Negative markup is not allowed. Markup adds to cost — it never discounts.' };
-    return { ok: true, val: v };
-  };
-  const parsed = readVal();
-  const errMsg = parsed.ok === false ? parsed.msg : '';
-
-  const proposed = (r: CpsItemRow, m: CpsMarkupMode, val: number): number => {
-    const cp = Number(r.cp) || 0;
-    const raw = m === 'pct' ? cp * (1 + val / 100) : cp + val;
-    return Math.round(raw * 100) / 100;
-  };
-
-  const compute = (): MkCompute | null => {
-    const p = readVal();
-    if (!p.ok) return null;
-    const val = p.val;
-    const aff: MkAff[] = [];
-    let curSell = 0;
-    let newSell = 0;
-    let curP = 0;
-    let newP = 0;
-    rows.forEach((r) => {
-      if (!isItemRow(r)) return;
-      const qty = Number(r.qty || 0);
-      const cp = Number(r.cp || 0);
-      const sp = Number(r.sp || 0);
-      curSell += sp * qty;
-      curP += (sp - cp) * qty;
-      if (!included(r)) {
-        newSell += sp * qty;
-        newP += (sp - cp) * qty;
-        return;
-      }
-      const prop = proposed(r, mode, val);
-      const tsp = prop * qty;
-      const tcp = cp * qty;
-      const lp = tsp - tcp;
-      const m = tsp ? (lp / tsp) * 100 : null;
-      aff.push({ row: r, prop, tsp, delta: prop - sp, lp, m, replaces: sp });
-      newSell += tsp;
-      newP += lp;
-    });
-    return { val, aff, curSell, newSell, curP, newP };
-  };
-
-  const setAllIncluded = (on: boolean) => {
-    setExcluded((prev) => {
-      const next: Record<number, true> = { ...prev };
-      rows.forEach((r) => {
-        if (isItemRow(r) && eligible(r)) {
-          if (on) delete next[r.id];
-          else next[r.id] = true;
-        }
-      });
-      return next;
-    });
-  };
-
-  const toggleIncluded = (id: number) => {
-    const r = rows.find((x) => x.id === id);
-    if (!r || !isItemRow(r) || !eligible(r)) return;
-    setExcluded((prev) => {
-      const next: Record<number, true> = { ...prev };
-      if (next[id]) delete next[id];
-      else next[id] = true;
-      return next;
-    });
-  };
-
-  const runPreview = () => {
-    const c = compute();
-    if (!c) return;
-    setPreview(c);
-    setView('preview');
-  };
-
-  const runApply = () => {
-    const c = compute();
-    if (!c || !c.aff.length) return;
-    const changes: CpsMarkupChange[] = c.aff.map((a) => ({ id: a.row.id, sp: a.prop }));
-    const unit = mode === 'pct' ? `${c.val}%` : `${naira0(c.val)} /unit`;
-    onApply(changes, `${c.aff.length} rows (${unit})`);
-  };
-
-  /* --- prototype renderMkList() walk --- */
-  const listNodes: ReactNode[] = [];
-  let lastG = -1;
-  let capSeq = 0;
-  let affCount = 0;
-  rows.forEach((r) => {
-    if (r.type === 'group') {
-      listNodes.push(<div className="mk-gcap" key={`cap-${capSeq++}`}>{r.title} — headers never participate</div>);
-      lastG = r.id;
-      return;
-    }
-    if (r.type !== 'item') return;
-    if (r.gid == null && lastG !== 0) {
-      listNodes.push(<div className="mk-gcap" key={`cap-${capSeq++}`}>Ungrouped rows</div>);
-      lastG = 0;
-    }
-    const elig = eligible(r);
-    const inc = included(r);
-    if (inc) affCount++;
-    const cls = elig ? (inc ? 'mk-row' : 'mk-row out') : 'mk-row nope';
-    listNodes.push(
-      <div className={cls} key={`row-${r.id}`}>
-        <span className="mk-dot" />
-        <span className="t">
-          <b>{r.desc || '(untitled row)'}</b>
-          {elig ? (
-            <small>
-              CP {naira0(Number(r.cp))} · SP now {naira0(Number(r.sp || 0))}
-              {inc ? '' : ' · excluded, untouched'}
-            </small>
-          ) : (
-            <small className="bad">Excluded — No cost price</small>
-          )}
-        </span>
-        {elig ? (
-          <button
-            className={`mk-tog${inc ? ' on' : ''}`}
-            aria-pressed={inc}
-            onClick={() => toggleIncluded(r.id)}
-          >
-            {inc ? 'Included' : 'Excluded'}
-          </button>
-        ) : (
-          <button className="mk-tog" disabled>No CP</button>
-        )}
-      </div>,
-    );
-  });
-  const listContent: ReactNode = listNodes.length ? listNodes : <div className="mk-gcap">No rows yet.</div>;
-
-  const hint = !modeTouched ? MK_HINT_STATIC : mode === 'pct' ? MK_HINT_PCT : MK_HINT_VAL;
-  const valLabel = mode === 'pct' ? 'Markup percentage (%)' : 'Markup value per unit (₦)';
-
-  return (
-    <div
-      className={`ov${open ? ' show' : ''}`}
-      data-ov="markup"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="sheet" role="dialog" aria-modal="true" aria-label="Instant Markup">
-        <div className="grab" />
-        <div className="shd">
-          <div>
-            <b>Instant Markup</b>
-            <small>Derive SP from CP · preview before apply</small>
-          </div>
-          <button className="x" aria-label="Close" onClick={onClose}><IconClose /></button>
-        </div>
-
-        <div style={{ display: view === 'setup' ? undefined : 'none' }}>
-          <div className="mk-seg" role="group" aria-label="Markup mode">
-            <button
-              className={mode === 'pct' ? 'on' : undefined}
-              onClick={() => {
-                setMode('pct');
-                setModeTouched(true);
-              }}
-            >
-              <IconMarkup strokeWidth={2.4} />
-              Percentage
-            </button>
-            <button
-              className={mode === 'val' ? 'on' : undefined}
-              onClick={() => {
-                setMode('val');
-                setModeTouched(true);
-              }}
-            >
-              <IconNaira strokeWidth={2.4} />
-              Fixed value
-            </button>
-          </div>
-          <div style={{ marginTop: 10 }}>
-            <label className="lb" htmlFor="mkVal" id="mkValLabel">{valLabel}</label>
-            <div className="mk-valrow">
-              <input
-                className="fld mono"
-                id="mkVal"
-                inputMode="decimal"
-                placeholder="e.g. 20"
-                value={valText}
-                onChange={(e) => setValText(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className={`mk-err${errMsg ? ' show' : ''}`}>{errMsg}</div>
-          <div className="impnote" id="mkHint" style={{ marginTop: 10 }}>{hint}</div>
-          <div className="mk-tools" style={{ marginTop: 6 }}>
-            <button className="linkbtn" onClick={() => setAllIncluded(true)}>Include all</button>
-            <button className="linkbtn" onClick={() => setAllIncluded(false)}>Exclude all</button>
-            <span className="cnt">{affCount} included</span>
-          </div>
-          <div className="mk-list" style={{ marginTop: 6 }}>{listContent}</div>
-          <button className="cta" id="mkPreviewBtn" style={{ marginTop: 10 }} disabled={!!errMsg} onClick={runPreview}>
-            Preview changes
-          </button>
-          <button className="linkbtn" onClick={onClose}>Cancel</button>
-        </div>
-
-        <div style={{ display: view === 'preview' ? undefined : 'none' }}>
-          <div className="mk-agg">
-            <div className="mk-cell">
-              <small>Affected items</small>
-              <b>{preview ? preview.aff.length : 0}</b>
-            </div>
-            <div className="mk-cell">
-              <small>Selling total</small>
-              <b>
-                {naira0(preview ? preview.curSell : 0)} → <span className="up">{naira0(preview ? preview.newSell : 0)}</span>
-              </b>
-            </div>
-            <div className="mk-cell">
-              <small>Gross profit</small>
-              <b>
-                {naira0(preview ? preview.curP : 0)} → <span className="up">{naira0(preview ? preview.newP : 0)}</span>
-              </b>
-            </div>
-            <div className="mk-cell">
-              <small>Aggregate change</small>
-              <b className="up">
-                +{naira0(preview ? preview.newSell - preview.curSell : 0)} sell · +
-                {naira0(preview ? preview.newP - preview.curP : 0)} profit
-              </b>
-            </div>
-          </div>
-          <div className="mk-prev" style={{ marginTop: 10 }}>
-            {preview && preview.aff.length ? (
-              preview.aff.map((a) => (
-                <div className="mk-prow" key={a.row.id}>
-                  <div className="d">{a.row.desc || '(untitled row)'}</div>
-                  <div className="ln">
-                    <span>CP {naira0(Number(a.row.cp))}</span>
-                    <span>
-                      {naira0(a.replaces)} → <span className="new">{naira0(a.prop)}</span>
-                    </span>
-                  </div>
-                  <div className="ln">
-                    <span>TSP <b>{naira0(a.tsp)}</b></span>
-                    <span>
-                      profit <b>{naira0(a.lp)}</b> · margin {a.m === null ? '—' : a.m.toFixed(1) + '%'}
-                    </span>
-                  </div>
-                  <div className="ln">
-                    <span>Δ {a.delta >= 0 ? '+' : '−'}{naira0(Math.abs(a.delta))} /unit</span>
-                    <span>
-                      {Number(a.replaces) > 0 ? (
-                        <span className="rep">replaces {naira0(a.replaces)}</span>
-                      ) : (
-                        <span className="rep">no meaningful SP yet</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="mk-prow">
-                <div className="d">No included rows with a cost price. Nothing would change.</div>
-              </div>
-            )}
-          </div>
-          <div className="mk-note" style={{ marginTop: 10 }}>
-            Apply writes the proposed SP onto included rows only. Excluded rows, CP, quantities, groups, and specs stay untouched. Production Apply emits an audit UPDATE with mode, value, row ids, and before/after SP sets.
-          </div>
-          <button
-            className="cta"
-            id="mkApplyBtn"
-            style={{ marginTop: 10 }}
-            disabled={!preview || !preview.aff.length}
-            onClick={runApply}
-          >
-            Apply to form
-          </button>
-          <button className="linkbtn" onClick={() => setView('setup')}>Back</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 
 /* ------------------------------------------------------------------ */
 /* Numeric input with the prototype's live reformat + caret restore    */
@@ -2110,12 +1232,9 @@ export function CostPricingSheetForm({
   clients = SAMPLE_CLIENTS,
   initialClient,
   onClientChange,
-  onAddNewClient,
   initialColumns,
   onColumnsChange,
-  onImport,
   onRequestPhoto,
-  initialMarkupExcluded,
 }: CostPricingSheetFormProps) {
   /* --- document state ------------------------------------------- */
   const [rowsRaw, setRowsRaw] = useState<CpsRow[]>(() => sanitizeRows(initialRows ?? SAMPLE_ROWS));
@@ -2137,21 +1256,15 @@ export function CostPricingSheetForm({
   const [badge, setBadge] = useState('Draft');
   const [errId, setErrId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ msg: string; isErr: boolean } | null>(null);
-  const [openIds, setOpenIds] = useState<CpsSheetId[]>([]);
-  const [undo, setUndo] = useState<{ label: string; snap: Record<number, number> } | null>(null);
   const [bp, setBp] = useState<'Phone' | 'Large phone' | 'Fold'>(() => layoutBreakpoint());
   const [internalTheme, setInternalTheme] = useState<'light' | 'dark'>(defaultTheme);
   const [themeIcon, setThemeIcon] = useState<'sun' | 'moon'>('sun');
-  const [impText, setImpText] = useState('');
-  const [impErr, setImpErr] = useState('');
   const [pendingScroll, setPendingScroll] = useState<{ id: number; key: number } | null>(null);
 
   const theme = controlledTheme ?? internalTheme;
   const badgeText = modeLabel ?? badge;
 
   /* --- refs and timers ------------------------------------------ */
-  const focusReturnRef = useRef<HTMLElement | null>(null);
-  const prevOpenRef = useRef<CpsSheetId[]>([]);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollKeyRef = useRef(0);
@@ -2170,11 +1283,6 @@ export function CostPricingSheetForm({
     [],
   );
 
-  /* --- theme ----------------------------------------------------- */
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
   const toggleTheme = () => {
     const wasDark = theme === 'dark';
     const next = wasDark ? 'light' : 'dark';
@@ -2189,47 +1297,6 @@ export function CostPricingSheetForm({
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-
-  /* --- sheet open/close + focus management (prototype openSheet) --- */
-  const openSheet = useCallback((id: CpsSheetId) => {
-    if (id === 'import') setImpErr('');
-    const active = document.activeElement as HTMLElement | null;
-    if (active && typeof active.focus === 'function' && !(active.closest && active.closest('.ov'))) {
-      focusReturnRef.current = active;
-    }
-    setOpenIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-  }, []);
-
-  const closeSheet = useCallback((id: CpsSheetId) => {
-    setOpenIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : prev));
-  }, []);
-
-  useLayoutEffect(() => {
-    const prev = prevOpenRef.current;
-    const added = openIds.filter((id) => !prev.includes(id));
-    const removed = prev.filter((id) => !openIds.includes(id));
-    prevOpenRef.current = openIds;
-    added.forEach((id) => {
-      const root = document.querySelector(`[data-ov="${id}"]`);
-      const first = root
-        ? root.querySelector('input, textarea, button:not(.x):not(.linkbtn)')
-        : null;
-      if (first instanceof HTMLElement) first.focus();
-    });
-    if (removed.length && focusReturnRef.current && document.contains(focusReturnRef.current)) {
-      focusReturnRef.current.focus();
-    }
-  }, [openIds]);
-
-  useEffect(() => {
-    if (!openIds.length) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setOpenIds([]);
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [openIds.length]);
 
   /* --- row operations (prototype ports) --------------------------- */
   const editItem = <K extends keyof CpsItemRow>(id: number, key: K, value: CpsItemRow[K]) => {
@@ -2340,11 +1407,6 @@ export function CostPricingSheetForm({
     }
   };
 
-  const doClearAll = () => {
-    setRows([]);
-    closeSheet('clear');
-    showToast('All rows cleared');
-  };
 
   /* --- photo (prototype local path when no callback) ---------------- */
   const photoFileRef = useRef<HTMLInputElement | null>(null);
@@ -2399,119 +1461,10 @@ export function CostPricingSheetForm({
   };
 
   /* --- client picker ------------------------------------------------ */
-  const chooseClient = (id: string) => {
-    const c = clients.find((x) => x.id === id) ?? null;
-    setClient(c);
-    closeSheet('client');
-    if (c) showToast('Client set to ' + c.name);
-    onClientChange?.(c);
-  };
-
   const clearClient = () => {
     setClient(null);
     showToast('Client cleared');
     onClientChange?.(null);
-  };
-
-  const addNewClient = () => {
-    if (onAddNewClient) onAddNewClient();
-    else showToast('New-client form opens in the live app');
-  };
-
-  /* --- columns ------------------------------------------------------ */
-  const commitColumns = (next: CpsColumn[]) => {
-    setColumns(next);
-    onColumnsChange?.(next);
-  };
-
-  const toggleColumn = (key: CpsColumnKey) => {
-    const c = columns.find((x) => x.key === key);
-    if (!c || key === 'description') return;
-    commitColumns(columns.map((x) => (x.key === key ? { ...x, visible: !x.visible } : x)));
-    showToast(c.label + (c.visible ? ' shown on rows' : ' hidden from rows'));
-  };
-
-  const changeColumnLabel = (key: CpsColumnKey, label: string) => {
-    const v = String(label || '').trim();
-    commitColumns(columns.map((x) => (x.key === key ? { ...x, label: v || CPS_LABELS[key] } : x)));
-  };
-
-  // Port of cmMove() from the prototype.
-  const moveColumn = (key: CpsColumnKey, targetIdx: number) => {
-    if (key === 'description') return;
-    const from = columns.findIndex((c) => c.key === key);
-    if (from < 0 || targetIdx === from) return;
-    if (targetIdx < 0 || targetIdx >= columns.length) return;
-    const next = columns.slice();
-    const moved = next.splice(from, 1)[0];
-    next.splice(Math.max(1, targetIdx), 0, moved);
-    commitColumns(next);
-  };
-
-  const resetColumns = () => {
-    commitColumns(resolveCpsColumns(null));
-    closeSheet('colreset');
-    showToast('Columns reset to defaults');
-  };
-
-  /* --- import ------------------------------------------------------- */
-  const doImport = () => {
-    const raw = impText.trim();
-    if (!raw) {
-      setImpErr('Paste JSON first.');
-      return;
-    }
-    if (!onImport) return;
-    const res = onImport(raw);
-    if (res.ok === false) {
-      setImpErr(res.error);
-      showToast('Import failed — see errors', true);
-      return;
-    }
-    setRows(res.rows);
-    if (typeof res.title === 'string' && res.title.trim()) setDocField('title', res.title);
-    closeSheet('import');
-    const nItems = res.rows.filter((r) => r.type === 'item').length;
-    const nGroups = res.rows.filter((r) => r.type === 'group').length;
-    showToast(`Imported ${nItems} items · ${nGroups} groups`);
-  };
-
-  /* --- markup ------------------------------------------------------- */
-  const openMarkup = () => {
-    setUndo(null);
-    openSheet('markup');
-  };
-
-  const handleMarkupApply = (changes: { id: number; sp: number }[], summary: string) => {
-    const snap: Record<number, number> = {};
-    changes.forEach((ch) => {
-      const r = rowsRaw.find((x) => x.id === ch.id);
-      if (r && isItemRow(r)) snap[ch.id] = Number(r.sp || 0);
-    });
-    setRows((prev) =>
-      prev.map((r) => {
-        const ch = changes.find((c) => c.id === r.id);
-        return ch && isItemRow(r) ? { ...r, sp: ch.sp } : r;
-      }),
-    );
-    closeSheet('markup');
-    setUndo({
-      label: `Markup applied to ${summary}. SP values materialized; CP, quantities, and groups untouched.`,
-      snap,
-    });
-    showToast(`Markup applied to ${changes.length} rows — totals recomputed`);
-  };
-
-  const undoMarkup = () => {
-    if (!undo) return;
-    setRows((prev) =>
-      prev.map((r) => {
-        const s = undo.snap[r.id];
-        return isItemRow(r) && s !== undefined ? { ...r, sp: s } : r;
-      }),
-    );
-    setUndo(null);
-    showToast('Markup undone — previous SP values restored');
   };
 
   /* --- save (prototype validation, host persistence) --------------- */
@@ -2522,7 +1475,6 @@ export function CostPricingSheetForm({
     }
     if (!client) {
       showToast('Save blocked: pick a client before saving', true);
-      openSheet('client');
       return;
     }
     const bad = rowsRaw.find(
@@ -2652,8 +1604,8 @@ export function CostPricingSheetForm({
   /* --- render ---------------------------------------------------------- */
   return (
     <>
-      <style data-cps-j3="true">{CPS_J3_CSS}</style>
-      <div className="wrap">
+      <style data-cps-form="true">{CPS_FORM_CSS}</style>
+      <div className="cps-form-root wrap" data-theme={theme}>
         <header className="topbar">
           <button className="tb-btn" title="Back to sheets" aria-label="Back to sheets" onClick={handleBack}>
             <IconChevronLeft />
@@ -2718,20 +1670,7 @@ export function CostPricingSheetForm({
               <label className="lb" id="fClientLabel">
                 Client <span className="req">*</span>
               </label>
-              <div
-                className={`clientpick${client ? ' filled' : ''}`}
-                role="button"
-                tabIndex={0}
-                title={client ? `Change client (currently ${client.name})` : 'Select a client'}
-                aria-labelledby="fClientLabel clientName"
-                onClick={() => openSheet('client')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openSheet('client');
-                  }
-                }}
-              >
+              <div className={`clientpick${client ? ' filled' : ''}`}>
                 <span className="ci" id="clientIcon"><IconUser /></span>
                 <span className="ct">
                   <b id="clientName">{client ? client.name : 'Select a client'}</b>
@@ -2785,7 +1724,6 @@ export function CostPricingSheetForm({
             <button
               className="itbn"
               title="Choose which fields show on rows and the PDF"
-              onClick={() => openSheet('columns')}
             >
               <IconColumns />
               Columns
@@ -2793,7 +1731,6 @@ export function CostPricingSheetForm({
             <button
               className="itbn"
               title="Replace groups and line items from JSON"
-              onClick={() => openSheet('import')}
             >
               <IconImport />
               Import
@@ -2802,7 +1739,6 @@ export function CostPricingSheetForm({
               className="itbn hot"
               id="markupBtn"
               title="Derive selling prices from cost prices"
-              onClick={openMarkup}
             >
               <IconMarkup />
               Markup
@@ -2810,16 +1746,10 @@ export function CostPricingSheetForm({
             <button
               className="itbn danger"
               title="Remove every group and item row"
-              onClick={() => openSheet('clear')}
             >
               <IconTrash />
               Clear all
             </button>
-          </div>
-
-          <div className={`mk-undo${undo ? ' show' : ''}`}>
-            <span>{undo ? undo.label : ''}</span>
-            <button onClick={undoMarkup}>Undo</button>
           </div>
 
           <div id="items">
@@ -2901,64 +1831,6 @@ export function CostPricingSheetForm({
         accept="image/*"
         style={{ display: 'none' }}
         onChange={onPhotoFile}
-      />
-
-      <ColumnsSheet
-        open={openIds.includes('columns')}
-        columns={columns}
-        onLabelChange={changeColumnLabel}
-        onToggle={toggleColumn}
-        onMove={moveColumn}
-        onRequestReset={() => openSheet('colreset')}
-        onClose={() => closeSheet('columns')}
-      />
-
-      <ImportSheet
-        open={openIds.includes('import')}
-        value={impText}
-        error={impErr}
-        onValueChange={setImpText}
-        onSubmit={doImport}
-        onClose={() => closeSheet('import')}
-      />
-
-      <ClientSheet
-        open={openIds.includes('client')}
-        clients={clients}
-        selectedId={client ? client.id : null}
-        onChoose={chooseClient}
-        onAddNew={addNewClient}
-        onClose={() => closeSheet('client')}
-      />
-
-      <MarkupSheet
-        open={openIds.includes('markup')}
-        rows={rowsRaw}
-        initialExcluded={initialMarkupExcluded ?? SAMPLE_MARKUP_EXCLUDED}
-        onApply={handleMarkupApply}
-        onClose={() => closeSheet('markup')}
-      />
-
-      <ConfirmDialog
-        open={openIds.includes('clear')}
-        sheetId="clear"
-        ariaLabel="Clear all line items"
-        title="Clear all line items?"
-        body="This removes every group and item row from this sheet."
-        confirmLabel="Clear all"
-        onCancel={() => closeSheet('clear')}
-        onConfirm={doClearAll}
-      />
-
-      <ConfirmDialog
-        open={openIds.includes('colreset')}
-        sheetId="colreset"
-        ariaLabel="Reset columns to defaults"
-        title="Reset columns to defaults?"
-        body="This restores the default column order, labels, and visibility. Items are not removed."
-        confirmLabel="Reset"
-        onCancel={() => closeSheet('colreset')}
-        onConfirm={resetColumns}
       />
 
       <ToastView show={!!toast} message={toast ? toast.msg : ''} isError={toast ? toast.isErr : false} />
