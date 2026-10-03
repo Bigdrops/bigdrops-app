@@ -79,21 +79,17 @@ export default function ViewCps() {
 
   const viewData = useMemo(() => (cps ? buildCpsViewData(cps) : null), [cps])
 
-  if (loading || !cps || !viewData) {
-    return (
-      <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader immersive>
-        <div className="min-h-[60vh] p-12 text-center text-sm text-bd-text-muted">Loading Cost & Pricing Sheet...</div>
-      </Layout>
-    )
-  }
+  const status = String((cps as any)?.status || 'Draft')
+  const cpsId = cps?.id
 
-  const status = String((cps as any).status || 'Draft')
-  const cpsId = cps.id
-
-  // Production View actions. Each reuses the established CPS record helpers;
-  // no new persistence, numbering, or conversion semantics are introduced here.
+  // Hooks must all run above the loading early return. A hook below that
+  // guard executes only after data loads, which changes the hook count
+  // across renders and throws React #310 on the loading-to-loaded
+  // transition. The in-callback guards below are unreachable in practice
+  // (actions render only after load) and exist for type narrowing.
   const actions = useMemo(() => ({
     onConvertToQuotation: async () => {
+      if (!cps) return
       const items = (cps.table_rows || []).map((row) =>
         row.row_type === 'section'
           ? { ...row, row_type: 'group_header', group_name: row.section_title || row.description || 'Group' }
@@ -104,27 +100,39 @@ export default function ViewCps() {
       navigate(`/quotations/${(created as { id: string }).id}`)
     },
     onDuplicate: async () => {
+      if (!cpsId) return
       const created = await duplicateCpsRecord(cpsId, tenantClient)
       feedback.success('Cost & Pricing Sheet duplicated')
       navigate(`/cost-pricing-sheets/${(created as { id: string }).id}`)
     },
     onToggleStatus: async () => {
+      if (!cps || !cpsId) return
       const next = status.toLowerCase() === 'approved' ? 'open' : 'approved'
       await updateCpsStatus(cpsId, next, tenantClient)
       setCps({ ...cps, status: next } as Cps)
       feedback.success(next === 'approved' ? 'Cost & Pricing Sheet approved' : 'Cost & Pricing Sheet reopened')
     },
     onArchive: async () => {
+      if (!cpsId) return
       await archiveCpsRecord(cpsId, tenantClient)
       feedback.success('Cost & Pricing Sheet archived')
       navigate('/cost-pricing-sheets')
     },
     onDelete: async () => {
+      if (!cpsId) return
       await deleteCpsRecord(cpsId, tenantClient)
       feedback.success('Cost & Pricing Sheet deleted')
       navigate('/cost-pricing-sheets')
     },
   }), [cps, cpsId, navigate, status, tenantClient])
+
+  if (loading || !cps || !viewData) {
+    return (
+      <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader immersive>
+        <div className="min-h-[60vh] p-12 text-center text-sm text-bd-text-muted">Loading Cost & Pricing Sheet...</div>
+      </Layout>
+    )
+  }
 
   const props = {
     data: viewData,
