@@ -11,8 +11,10 @@
  * controls, field order, group/row presentation, CP/SP, TCP/TSP/Profit,
  * sub-descriptions, toolbar, header, and responsive behavior match the
  * source. The form CSS is preserved as CPS_FORM_CSS and renders from the
- * <style> element at the top of the component tree. The only external
- * dependency is react.
+  * <style> element at the top of the component tree. External
+  * dependencies: react, the CPS Decimal calculation module, the
+  * table-document row factory, and the production image upload
+  * policy/service. No persistence lives here.
  *
  * Prototype popup/overlay UI (client picker sheet, column settings,
  * JSON import, instant markup, confirm dialogs) has been removed. The
@@ -30,13 +32,16 @@
  *                                             badge (demo badge + toasts run without a
  *                                             callback)
  *   Theme toggle (data-theme on <html>)       theme? / defaultTheme? / onToggleTheme?
- *   Client field + clear                      clients? / initialClient? / onClientChange?;
- *                                             local state: client
+  *   Client field + clear                      clients? / initialClient? / client? /
+  *                                             onClientChange? /
+  *                                             onRequestClientSelection?;
+  *                                             local state mirrors the
+  *                                             controlled client when provided
  *   Column visibility (label, show, order)    initialColumns? / onColumnsChange?;
  *                                             local state: columns
- *   Photo attach (addPhoto / removePhoto)     onRequestPhoto?: (rowId) => image URL;
- *                                             the local file-to-dataURL path runs when
- *                                             the callback is absent
+  *   Photo attach (addPhoto / removePhoto)     production upload path (upload policy
+  *                                             + uploadItemPhoto); onRequestPhoto?
+  *                                             may still override per row
  *   Row ops (add line item, add group, move,  local state handlers on rowsRaw. Purely
  *   duplicate, insert, remove)                presentational. No persistence.
  *   Field edits (title, number, date, site,   local state: doc and rowsRaw. NumField
@@ -44,13 +49,25 @@
  *   Toast, Draft/Saved badge, layout chip     local state: toast, badge (modeLabel?
  *                                             override), bp
  *
- * PROTOTYPE MATH NOTE: row and total displays use float math rounded
- * to 2dp, exactly like the source. Production MUST use the
- * authoritative Decimal path before ship.
+  * MATH NOTE: row and total displays use the authoritative CPS Decimal
+  * path (calculateCpsTotals) through a domain view of the buffer rows.
+  * Formatting (naira, words) stays presentation-owned.
+  * Row/group identity is production-native: string ids, groupId holds
+  * the domain group_id, membership never derives from array position.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
+
+import { computeCpsRowEconomics, computeCpsTotals } from '@/domain/cps/calculateCpsTotals';
+import { createEmptyTableRow } from '@/domain/table-document/rows';
+import type { TableDocumentRow } from '@/domain/table-document/types';
+import {
+  IMAGE_ACCEPT_ATTRIBUTE,
+  getUnsupportedImageErrorMessage,
+  isSupportedImageFile,
+} from '@/lib/documentImageUploadPolicy';
+import { uploadItemPhoto } from '@/lib/itemPhotoUpload';
 
 /* ------------------------------------------------------------------ */
 /* Prototype CSS (verbatim from the source <style> block).            */
@@ -70,42 +87,75 @@ const CPS_FORM_CSS = `
  */
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap');
 .cps-form-root{
-  --ink:#0f172a; --sub:#475569; --faint:#8b9ab0;
-  --line:rgba(15,23,42,.10); --line-strong:rgba(15,23,42,.20);
-  --bg:#eef2f7; --card:#ffffff; --soft:#f6f9fc;
-  --accent:#1e3a5f; --accent-soft:rgba(30,58,95,.13); --accent-ink:#ffffff;
-  --red:#dc2626; --red-soft:rgba(220,38,38,.09);
-  --green:#15803d; --green-soft:rgba(21,128,61,.10);
-  --rail:rgba(15,23,42,.22);
+  /* ── Theme Manager color bridge (color-only) ──────────────────────
+     Each CPS color role maps to a BIGDROPS theme token. The theme
+     manager applies those tokens as HSL triplets on documentElement.
+     Fallback triplets keep the standalone render when no theme is
+     active. Geometry tokens (--gutter, --mono) stay CPS-local. */
+  --ink:hsl(var(--bd-text,222 47% 11%));
+  --sub:hsl(var(--bd-text-muted,215 16% 47%));
+  --faint:hsl(var(--bd-text-soft,215 16% 65%));
+  --line:hsl(var(--bd-border,214 30% 88%));
+  --line-strong:hsl(var(--bd-border-strong,214 25% 75%));
+  --bg:hsl(var(--bd-app-bg,210 32% 95.5%));
+  --card:hsl(var(--bd-surface,0 0% 100%));
+  --soft:hsl(var(--bd-surface-muted,210 32% 95.5%));
+  --accent:hsl(var(--bd-brand,214 17% 25%));
+  --accent-soft:color-mix(in oklab, hsl(var(--bd-brand,214 17% 25%)) 13%, transparent);
+  --accent-ink:hsl(var(--bd-brand-foreground,0 0% 100%));
+  --red:hsl(var(--bd-status-danger-text,0 72% 51%));
+  --red-soft:color-mix(in oklab, hsl(var(--bd-status-danger-text,0 72% 51%)) 12%, transparent);
+  --green:hsl(var(--bd-status-success-text,142 71% 45%));
+  --green-soft:color-mix(in oklab, hsl(var(--bd-status-success-text,142 71% 45%)) 12%, transparent);
+  --rail:hsl(var(--bd-border-strong,214 25% 75%));
   --mono:'DM Mono',monospace;
-  --cost:#b45309; --cost-soft:rgba(180,83,9,.10);
-  --sell:#15803d; --sell-soft:rgba(21,128,61,.10);
-  --loss:#b91c1c;
-  --group-line:rgba(30,58,95,.38); --group-spine:#1e3a5f; --group-soft:rgba(30,58,95,.07);
-  --group-head:linear-gradient(115deg,#0f172a,#1e3a5f 58%,#334155);
+  --cost:hsl(var(--bd-status-warning-text,32 95% 44%));
+  --cost-soft:color-mix(in oklab, hsl(var(--bd-status-warning-text,32 95% 44%)) 12%, transparent);
+  --sell:hsl(var(--bd-status-success-text,142 71% 45%));
+  --sell-soft:color-mix(in oklab, hsl(var(--bd-status-success-text,142 71% 45%)) 12%, transparent);
+  --loss:hsl(var(--bd-status-danger-text,0 72% 51%));
+  --group-line:color-mix(in oklab, hsl(var(--bd-brand,214 17% 25%)) 38%, transparent);
+  --group-spine:hsl(var(--bd-brand,214 17% 25%));
+  --group-soft:color-mix(in oklab, hsl(var(--bd-brand,214 17% 25%)) 7%, transparent);
+  --group-head:linear-gradient(115deg,hsl(var(--bd-text,222 47% 11%)),hsl(var(--bd-brand,214 17% 25%)) 58%,hsl(var(--bd-surface-strong,214 25% 75%)));
   --group-on:#f8fafc;
   --shadow-ear:0 3px 9px rgba(15,23,42,.16);
-  --bg-bd-button-primary-bg:#1e3a5f;
-  --bd-button-primary-text:#f1f5f9;
+  --bg-bd-button-primary-bg:hsl(var(--bd-button-primary-bg,214 17% 25%));
+  --bd-button-primary-text:hsl(var(--bd-brand-foreground,0 0% 100%));
   --gutter:14px;
 }
 .cps-form-root[data-theme="dark"]{
-  --ink:#f1f5f9; --sub:#cbd5e1; --faint:#7d8da5;
-  --line:rgba(148,163,184,.18); --line-strong:rgba(148,163,184,.32);
-  --bg:#0b1220; --card:#16233a; --soft:#111d31;
-  --accent:#38bdf8; --accent-soft:rgba(56,189,248,.16); --accent-ink:#06131f;
-  --red:#f87171; --red-soft:rgba(248,113,113,.13);
-  --green:#34d399; --green-soft:rgba(52,211,153,.14);
-  --rail:rgba(148,163,184,.32);
-  --cost:#fbbf24; --cost-soft:rgba(251,191,36,.14);
-  --sell:#34d399; --sell-soft:rgba(52,211,153,.14);
-  --loss:#f87171;
-  --group-line:rgba(56,189,248,.34); --group-spine:#38bdf8; --group-soft:rgba(56,189,248,.10);
-  --group-head:linear-gradient(115deg,#16233a,#1c3550);
+  /* Same Theme Manager bridge. In dark mode the theme manager sets dark
+     HSL triplets on documentElement, so these roles resolve dark. */
+  --ink:hsl(var(--bd-text,210 40% 96%));
+  --sub:hsl(var(--bd-text-muted,213 27% 84%));
+  --faint:hsl(var(--bd-text-soft,215 16% 55%));
+  --line:hsl(var(--bd-border,215 25% 27%));
+  --line-strong:hsl(var(--bd-border-strong,215 25% 38%));
+  --bg:hsl(var(--bd-app-bg,222 47% 11%));
+  --card:hsl(var(--bd-surface,217 33% 17%));
+  --soft:hsl(var(--bd-surface-muted,217 33% 17%));
+  --accent:hsl(var(--bd-brand,213 94% 68%));
+  --accent-soft:color-mix(in oklab, hsl(var(--bd-brand,213 94% 68%)) 16%, transparent);
+  --accent-ink:hsl(var(--bd-brand-foreground,210 40% 8%));
+  --red:hsl(var(--bd-status-danger-text,0 84% 65%));
+  --red-soft:color-mix(in oklab, hsl(var(--bd-status-danger-text,0 84% 65%)) 13%, transparent);
+  --green:hsl(var(--bd-status-success-text,142 71% 55%));
+  --green-soft:color-mix(in oklab, hsl(var(--bd-status-success-text,142 71% 55%)) 14%, transparent);
+  --rail:hsl(var(--bd-border-strong,215 25% 38%));
+  --cost:hsl(var(--bd-status-warning-text,38 92% 60%));
+  --cost-soft:color-mix(in oklab, hsl(var(--bd-status-warning-text,38 92% 60%)) 14%, transparent);
+  --sell:hsl(var(--bd-status-success-text,142 71% 55%));
+  --sell-soft:color-mix(in oklab, hsl(var(--bd-status-success-text,142 71% 55%)) 14%, transparent);
+  --loss:hsl(var(--bd-status-danger-text,0 84% 65%));
+  --group-line:color-mix(in oklab, hsl(var(--bd-brand,213 94% 68%)) 34%, transparent);
+  --group-spine:hsl(var(--bd-brand,213 94% 68%));
+  --group-soft:color-mix(in oklab, hsl(var(--bd-brand,213 94% 68%)) 10%, transparent);
+  --group-head:linear-gradient(115deg,hsl(var(--bd-surface,217 33% 17%)),hsl(var(--bd-surface-strong,215 25% 38%)));
   --group-on:#e2e8f0;
   --shadow-ear:0 3px 9px rgba(0,0,0,.45);
-  --bg-bd-button-primary-bg:#2563eb;
-  --bd-button-primary-text:#f8fafc;
+  --bg-bd-button-primary-bg:hsl(var(--bd-button-primary-bg,217 91% 60%));
+  --bd-button-primary-text:hsl(var(--bd-brand-foreground,210 40% 96%));
 }
 :where(.cps-form-root),:where(.cps-form-root) *{box-sizing:border-box;margin:0;padding:0}
 .cps-form-root{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;font-size:16px;line-height:normal;text-size-adjust:auto;-webkit-text-size-adjust:auto;-webkit-font-smoothing:antialiased}
@@ -444,9 +494,9 @@ export interface CpsClient {
 /* ------------------------------------------------------------------ */
 
 export interface CpsItemRow {
-  id: number;
+  id: string;
   type: 'item';
-  gid: number | null;
+  groupId: string | null;
   desc: string;
   sub: string;
   subOpen: boolean;
@@ -459,7 +509,7 @@ export interface CpsItemRow {
 }
 
 export interface CpsGroupRow {
-  id: number;
+  id: string;
   type: 'group';
   title: string;
 }
@@ -528,18 +578,34 @@ export function words(num: number): string {
 /* Row financial helpers (row display math)                           */
 /* ------------------------------------------------------------------ */
 
-export const tcpOf = (r: CpsItemRow): number => Number(r.cp || 0) * Number(r.qty || 0);
-export const tspOf = (r: CpsItemRow): number => Number(r.sp || 0) * Number(r.qty || 0);
-export const profitOf = (r: CpsItemRow): number => tspOf(r) - tcpOf(r);
+/* ------------------------------------------------------------------ */
+/* Domain view: presentation rows as production table-document rows.   */
+/* Display math always runs through the authoritative CPS Decimal      */
+/* functions. This view carries no persistence semantics.              */
+/* ------------------------------------------------------------------ */
 
-export const marginOf = (r: CpsItemRow): number | null => {
-  const tsp = tspOf(r);
-  return tsp ? (profitOf(r) / tsp) * 100 : null;
-};
+export function toDomainRowView(r: CpsRow, index = 0): TableDocumentRow {
+  if (r.type === 'group') {
+    return { ...createEmptyTableRow(index, 'section'), section_title: r.title, group_id: r.id };
+  }
+  return {
+    ...createEmptyTableRow(index, 'item'),
+    description: r.desc,
+    specification: r.sub,
+    quantity: r.qty,
+    unit: r.unit,
+    make_brand: r.make,
+    cp: String(r.cp ?? ''),
+    sp: String(r.sp ?? ''),
+    image_url: r.image ?? null,
+    group_id: r.groupId,
+  };
+}
 
-/** Items that belong to a group, in rows order. */
-export const membersOf = (rows: CpsRow[], gid: number): CpsItemRow[] =>
-  rows.filter((r): r is CpsItemRow => r.type === 'item' && r.gid === gid);
+/** Items that belong to a group, in rows order. Membership derives from
+ * groupId only. Visual order never confers membership. */
+export const membersOf = (rows: CpsRow[], groupId: string): CpsItemRow[] =>
+  rows.filter((r): r is CpsItemRow => r.type === 'item' && r.groupId === groupId);
 
 /**
  * Sibling set used by move up/down and the disabled rail states.
@@ -547,23 +613,29 @@ export const membersOf = (rows: CpsRow[], gid: number): CpsItemRow[] =>
  * list with groups).
  */
 export const siblingsOf = (rows: CpsRow[], r: CpsItemRow): CpsRow[] =>
-  r.gid != null
-    ? rows.filter((x): x is CpsItemRow => x.type === 'item' && x.gid === r.gid)
-    : rows.filter((x) => x.type === 'group' || x.gid == null);
+  r.groupId != null
+    ? rows.filter((x): x is CpsItemRow => x.type === 'item' && x.groupId === r.groupId)
+    : rows.filter((x) => x.type === 'group' || x.groupId == null);
 
 /** Items whose group no longer exists become ungrouped. */
 export function sanitizeRows(rs: CpsRow[]): CpsRow[] {
   return rs.map((r) => {
-    if (r.type === 'item' && r.gid != null && !rs.some((g) => g.type === 'group' && g.id === r.gid)) {
-      return { ...r, gid: null };
+    if (r.type === 'item' && r.groupId != null && !rs.some((g) => g.type === 'group' && g.id === r.groupId)) {
+      return { ...r, groupId: null };
     }
     return r;
   });
 }
 
+/** Stable identity for rows and groups created inside the form. */
+export function newRowId() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `row-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+}
+
 /** Port of blank() from the prototype. */
-export function makeBlankRow(seq: number, gid: number | null): CpsItemRow {
-  return { id: seq, type: 'item', gid, desc: '', sub: '', subOpen: false, qty: 1, unit: '', make: '', cp: 0, sp: 0 };
+export function makeBlankRow(id: string, groupId: string | null): CpsItemRow {
+  return { id, type: 'item', groupId, desc: '', sub: '', subOpen: false, qty: 1, unit: '', make: '', cp: 0, sp: 0 };
 }
 
 /** Port of bp() from the prototype: Phone / Large phone / Fold. */
@@ -592,14 +664,14 @@ export const SAMPLE_DOCUMENT: CpsDocumentFields = {
 };
 
 export const SAMPLE_ROWS: CpsRow[] = [
-  { id: 8, type: 'item', gid: null, desc: 'Preliminaries, site supervision and setting out', sub: 'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', subOpen: false, qty: 1, unit: 'lot', make: '', cp: 150000, sp: 185000 },
-  { id: 1, type: 'group', title: 'Group A — Civil Works' },
-  { id: 2, type: 'item', gid: 1, desc: 'Portland cement, grade 42.5R', sub: '', subOpen: false, qty: 400, unit: 'bags', make: 'Dangote 3X', cp: 5200, sp: 6100 },
-  { id: 3, type: 'item', gid: 1, desc: 'Reinforcement steel, high yield T12', sub: '', subOpen: false, qty: 120, unit: 'lengths', make: 'African Foundries', cp: 9800.75, sp: 11500 },
-  { id: 4, type: 'item', gid: 1, desc: 'Sharp sand, river dredged', sub: 'Delivered, tested and compacted in approved layers per engineer’s instruction, including waste allowance and carting away of surplus material.', subOpen: false, qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 0 },
-  { id: 5, type: 'group', title: 'Group B — Finishes' },
-  { id: 6, type: 'item', gid: 5, desc: 'Emulsion paint, 20L pail', sub: 'Two coats over prepared surface.', subOpen: false, qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 },
-  { id: 7, type: 'item', gid: null, desc: 'Provisional sum — drainage works (rates pending)', sub: '', subOpen: false, qty: 1, unit: 'sum', make: '', cp: 0, sp: 0 },
+  { id: 'sample-prelim', type: 'item', groupId: null, desc: 'Preliminaries, site supervision and setting out', sub: 'Site establishment, setting out of works, site supervision and general preliminaries for the duration of the works.', subOpen: false, qty: 1, unit: 'lot', make: '', cp: 150000, sp: 185000 },
+  { id: 'sample-group-a', type: 'group', title: 'Group A — Civil Works' },
+  { id: 'sample-cement', type: 'item', groupId: 'sample-group-a', desc: 'Portland cement, grade 42.5R', sub: '', subOpen: false, qty: 400, unit: 'bags', make: 'Dangote 3X', cp: 5200, sp: 6100 },
+  { id: 'sample-steel', type: 'item', groupId: 'sample-group-a', desc: 'Reinforcement steel, high yield T12', sub: '', subOpen: false, qty: 120, unit: 'lengths', make: 'African Foundries', cp: 9800.75, sp: 11500 },
+  { id: 'sample-sand', type: 'item', groupId: 'sample-group-a', desc: 'Sharp sand, river dredged', sub: 'Delivered, tested and compacted in approved layers per engineer’s instruction, including waste allowance and carting away of surplus material.', subOpen: false, qty: 30, unit: 'trips', make: 'Local', cp: 28000, sp: 0 },
+  { id: 'sample-group-b', type: 'group', title: 'Group B — Finishes' },
+  { id: 'sample-paint', type: 'item', groupId: 'sample-group-b', desc: 'Emulsion paint, 20L pail', sub: 'Two coats over prepared surface.', subOpen: false, qty: 18, unit: 'pails', make: 'Dulux', cp: 41000, sp: 48500 },
+  { id: 'sample-provisional', type: 'item', groupId: null, desc: 'Provisional sum — drainage works (rates pending)', sub: '', subOpen: false, qty: 1, unit: 'sum', make: '', cp: 0, sp: 0 },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -625,6 +697,8 @@ export interface CostPricingSheetFormProps {
   onBack?: () => void;
   /** Save CTA (top bar, section CTA, FAB). Runs prototype validation first. */
   onSave?: (payload: CpsSavePayload) => void;
+  /** Authoritative saving state from the production save path. Save is disabled and guarded while true. */
+  saving?: boolean;
   /** Initial document fields. Defaults to the prototype sample. */
   initialDocument?: Partial<CpsDocumentFields>;
   /** Initial rows. Defaults to the prototype sample. */
@@ -635,8 +709,28 @@ export interface CostPricingSheetFormProps {
   initialClient?: CpsClient | null;
   /** Fires whenever the selected client changes (including clear). */
   onClientChange?: (client: CpsClient | null) => void;
+  /** Controlled client mirror of production editor state. When provided, the form reflects it. */
+  client?: CpsClient | null;
+  /** Request the host production client workflow (existing ClientSelector). */
+  onRequestClientSelection?: () => void;
   /** Initial column configuration. Defaults to prototype defaults. */
   initialColumns?: CpsColumn[];
+  /** Controlled column mirror of production editor state. When provided, the form reflects it. */
+  columns?: CpsColumn[];
+  /** Request the host production column workflow (existing column sheet). */
+  onRequestColumns?: () => void;
+  /** Request the host production JSON import workflow (existing CpsImportSheet). */
+  onRequestImport?: () => void;
+  /** Request the host production markup workflow (existing instant-markup dialog). */
+  onRequestMarkup?: () => void;
+  /** Request the host production clear-all confirmation workflow. */
+  onRequestClearAll?: () => void;
+  /** Live production rows for post-import sync. Applied only when rowsRevision advances. */
+  rows?: CpsRow[];
+  /** Revision token bumped by the host when authoritative rows change outside the form. */
+  rowsRevision?: number;
+  /** Live production document title for post-import sync. Applied only when rowsRevision advances. */
+  syncedTitle?: string;
   /** Fires after any column toggle, label edit, move, or reset. */
   onColumnsChange?: (columns: CpsColumn[]) => void;
   /**
@@ -645,7 +739,7 @@ export interface CostPricingSheetFormProps {
    * the prototype's local file-to-dataURL path runs instead, so the
    * photo control keeps its source behavior in a standalone preview.
    */
-  onRequestPhoto?: (rowId: number) => void | Promise<string | null | undefined>;
+  onRequestPhoto?: (rowId: string) => void | Promise<string | null | undefined>;
 }
 
 /*
@@ -962,10 +1056,11 @@ interface ItemRowProps {
 function ItemRow(props: ItemRowProps) {
   const { row, num } = props;
   const hasSub = !!(row.sub && row.sub.trim());
-  const tcp = tcpOf(row);
-  const tsp = tspOf(row);
-  const profit = profitOf(row);
-  const margin = marginOf(row);
+  const econ = computeCpsRowEconomics(toDomainRowView(row));
+  const tcp = econ.total_cost_price;
+  const tsp = econ.total_selling_price;
+  const profit = econ.profit;
+  const margin = econ.total_selling_price > 0 ? econ.margin_percent : null;
   const pfCls = `fcell pf ${profit > 0 ? 'pos' : profit === 0 ? '' : 'neg'}`;
 
   return (
@@ -1142,7 +1237,7 @@ function ItemRow(props: ItemRowProps) {
           </div>
         </div>
         <div className="finm" data-finm={row.id}>
-          Margin {margin === null ? '—' : margin.toFixed(1) + '%'} on TSP · {row.qty} × {naira(Number(row.sp || 0) - Number(row.cp || 0))} /unit
+          Margin {margin === null ? '—' : margin.toFixed(1) + '%'} on TSP · {row.qty} × {naira(econ.unit_profit)} /unit
         </div>
       </div>
 
@@ -1227,13 +1322,24 @@ export function CostPricingSheetForm({
   onToggleTheme,
   onBack,
   onSave,
+  saving = false,
   initialDocument,
   initialRows,
   clients = SAMPLE_CLIENTS,
   initialClient,
   onClientChange,
+  client: externalClient,
+  onRequestClientSelection,
   initialColumns,
   onColumnsChange,
+  columns: externalColumns,
+  onRequestColumns,
+  onRequestImport,
+  onRequestMarkup,
+  onRequestClearAll,
+  rows: externalRows,
+  rowsRevision,
+  syncedTitle,
   onRequestPhoto,
 }: CostPricingSheetFormProps) {
   /* --- document state ------------------------------------------- */
@@ -1241,25 +1347,55 @@ export function CostPricingSheetForm({
   const setRows = useCallback((next: CpsRow[] | ((prev: CpsRow[]) => CpsRow[])) => {
     setRowsRaw((prev) => sanitizeRows(typeof next === 'function' ? next(prev) : next));
   }, []);
-  const seqRef = useRef<number>(Math.max(100, ...(initialRows ?? SAMPLE_ROWS).map((r) => r.id)));
 
   const [doc, setDoc] = useState<CpsDocumentFields>(() => ({ ...SAMPLE_DOCUMENT, ...initialDocument }));
   const setDocField = <K extends keyof CpsDocumentFields>(key: K, value: CpsDocumentFields[K]) =>
     setDoc((prev) => ({ ...prev, [key]: value }));
 
   const [columns, setColumns] = useState<CpsColumn[]>(() => resolveCpsColumns(initialColumns ?? null));
+  const columnsControlled = externalColumns !== undefined;
+  useEffect(() => {
+    if (!columnsControlled) return;
+    setColumns((prev) => {
+      const next = externalColumns ?? [];
+      if (
+        prev.length === next.length &&
+        prev.every((c, i) => c.key === next[i].key && c.visible === next[i].visible && c.label === next[i].label)
+      ) {
+        return prev;
+      }
+      return [...next];
+    });
+  }, [externalColumns, columnsControlled]);
   const [client, setClient] = useState<CpsClient | null>(() =>
-    propsInitialClient(initialClient, clients),
+    propsInitialClient(externalClient ?? initialClient, clients),
   );
+  const clientControlled = externalClient !== undefined;
+  useEffect(() => {
+    if (!clientControlled) return;
+    setClient((prev) => {
+      const next = externalClient ?? null;
+      if (prev?.id === next?.id && prev?.name === next?.name) return prev;
+      return next;
+    });
+  }, [externalClient, clientControlled]);
+
+  const [rowsRevisionSeen, setRowsRevisionSeen] = useState(rowsRevision ?? 0);
+  useEffect(() => {
+    if (rowsRevision === undefined || rowsRevision === rowsRevisionSeen) return;
+    setRowsRevisionSeen(rowsRevision);
+    if (externalRows) setRows(externalRows);
+    if (syncedTitle !== undefined) setDocField('title', syncedTitle);
+  }, [rowsRevision, rowsRevisionSeen, externalRows, syncedTitle]);
 
   /* --- chrome state --------------------------------------------- */
   const [badge, setBadge] = useState('Draft');
-  const [errId, setErrId] = useState<number | null>(null);
+  const [errId, setErrId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; isErr: boolean } | null>(null);
   const [bp, setBp] = useState<'Phone' | 'Large phone' | 'Fold'>(() => layoutBreakpoint());
   const [internalTheme, setInternalTheme] = useState<'light' | 'dark'>(defaultTheme);
   const [themeIcon, setThemeIcon] = useState<'sun' | 'moon'>('sun');
-  const [pendingScroll, setPendingScroll] = useState<{ id: number; key: number } | null>(null);
+  const [pendingScroll, setPendingScroll] = useState<{ id: string; key: number } | null>(null);
 
   const theme = controlledTheme ?? internalTheme;
   const badgeText = modeLabel ?? badge;
@@ -1298,27 +1434,27 @@ export function CostPricingSheetForm({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  /* --- row operations (prototype ports) --------------------------- */
-  const editItem = <K extends keyof CpsItemRow>(id: number, key: K, value: CpsItemRow[K]) => {
+  /* --- row operations (stable string identity) ---------------------- */
+  const editItem = <K extends keyof CpsItemRow>(id: string, key: K, value: CpsItemRow[K]) => {
     setRows((prev) => prev.map((r) => (isItemRow(r) && r.id === id ? { ...r, [key]: value } : r)));
   };
 
-  const editGroupTitle = (id: number, value: string) => {
+  const editGroupTitle = (id: string, value: string) => {
     setRows((prev) => prev.map((r) => (r.type === 'group' && r.id === id ? { ...r, title: value } : r)));
   };
 
-  const collapseSubIfEmpty = (id: number, value: string) => {
+  const collapseSubIfEmpty = (id: string, value: string) => {
     if (value && value.trim()) return;
     const r = rowsRaw.find((x) => x.id === id);
     if (!r || !isItemRow(r) || r.subOpen !== true) return;
     setRows((prev) => prev.map((x) => (isItemRow(x) && x.id === id ? { ...x, sub: '', subOpen: false } : x)));
   };
 
-  const toggleSub = (id: number) => {
+  const toggleSub = (id: string) => {
     setRows((prev) => prev.map((r) => (isItemRow(r) && r.id === id ? { ...r, subOpen: !r.subOpen } : r)));
   };
 
-  const moveRow = (id: number, dir: -1 | 1) => {
+  const moveRow = (id: string, dir: -1 | 1) => {
     const r = rowsRaw.find((x) => x.id === id);
     if (!r || !isItemRow(r)) return;
     const sib = siblingsOf(rowsRaw, r);
@@ -1335,25 +1471,23 @@ export function CostPricingSheetForm({
     setRows(next);
   };
 
-  const dupRow = (id: number) => {
+  const dupRow = (id: string) => {
     const i = rowsRaw.findIndex((x) => x.id === id);
     if (i < 0) return;
     const src = rowsRaw[i];
     if (!isItemRow(src)) return;
-    seqRef.current += 1;
-    const copy: CpsItemRow = { ...src, id: seqRef.current, desc: (src.desc || '') + ' (copy)', subOpen: false };
+    const copy: CpsItemRow = { ...src, id: newRowId(), desc: (src.desc || '') + ' (copy)', subOpen: false };
     const next = rowsRaw.slice();
     next.splice(i + 1, 0, copy);
     setRows(next);
     showToast('Item duplicated');
   };
 
-  const insertBelow = (id: number) => {
+  const insertBelow = (id: string) => {
     const i = rowsRaw.findIndex((x) => x.id === id);
     if (i < 0) return;
     const src = rowsRaw[i];
-    seqRef.current += 1;
-    const row = makeBlankRow(seqRef.current, isItemRow(src) ? src.gid : null);
+    const row = makeBlankRow(newRowId(), isItemRow(src) ? src.groupId : null);
     const next = rowsRaw.slice();
     next.splice(i + 1, 0, row);
     setRows(next);
@@ -1363,21 +1497,19 @@ export function CostPricingSheetForm({
   };
 
   const addItem = () => {
-    seqRef.current += 1;
-    const row = makeBlankRow(seqRef.current, null);
+    const row = makeBlankRow(newRowId(), null);
     setRows((prev) => [...prev, row]);
     showToast('Line item added');
   };
 
-  const addItemTo = (gid: number) => {
-    const mem = membersOf(rowsRaw, gid);
+  const addItemTo = (groupId: string) => {
+    const mem = membersOf(rowsRaw, groupId);
     const last = mem[mem.length - 1];
     let at = last
       ? rowsRaw.findIndex((x) => x.id === last.id) + 1
-      : rowsRaw.findIndex((x) => x.type === 'group' && x.id === gid) + 1;
+      : rowsRaw.findIndex((x) => x.type === 'group' && x.id === groupId) + 1;
     if (at < 0) at = rowsRaw.length;
-    seqRef.current += 1;
-    const row = makeBlankRow(seqRef.current, gid);
+    const row = makeBlankRow(newRowId(), groupId);
     const next = rowsRaw.slice();
     next.splice(at, 0, row);
     setRows(next);
@@ -1385,19 +1517,18 @@ export function CostPricingSheetForm({
   };
 
   const addGroup = () => {
-    seqRef.current += 1;
-    const row: CpsGroupRow = { id: seqRef.current, type: 'group', title: 'New Group' };
+    const row: CpsGroupRow = { id: newRowId(), type: 'group', title: 'New Group' };
     setRows((prev) => [...prev, row]);
     showToast('Group added');
   };
 
-  const removeRow = (id: number) => {
+  const removeRow = (id: string) => {
     const r = rowsRaw.find((x) => x.id === id);
     if (!r) return;
     if (r.type === 'group') {
       setRows((prev) =>
         prev
-          .map((x) => (x.type === 'item' && x.gid === id ? { ...x, gid: null } : x))
+          .map((x) => (x.type === 'item' && x.groupId === id ? { ...x, groupId: null } : x))
           .filter((x) => x.id !== id),
       );
       showToast('Group removed — its items kept');
@@ -1408,11 +1539,12 @@ export function CostPricingSheetForm({
   };
 
 
-  /* --- photo (prototype local path when no callback) ---------------- */
+  /* --- photo (production upload path) -------------------------------- */
   const photoFileRef = useRef<HTMLInputElement | null>(null);
-  const photoRowRef = useRef<number | null>(null);
+  const photoRowRef = useRef<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
 
-  const attachPhoto = (id: number) => {
+  const attachPhoto = (id: string) => {
     if (onRequestPhoto) {
       void Promise.resolve(onRequestPhoto(id)).then((url) => {
         if (url) {
@@ -1422,42 +1554,38 @@ export function CostPricingSheetForm({
       });
       return;
     }
+    if (uploadingPhoto != null) {
+      showToast('Photo upload in progress');
+      return;
+    }
     photoRowRef.current = id;
     photoFileRef.current?.click();
   };
 
-  /* Port of the prototype file-input + canvas resize handler. */
+  /* Production photo path: upload policy check, then uploadItemPhoto.
+   * The prototype file-to-dataURL fallback is removed. dataURL values
+   * can no longer reach image_url through this control. */
   const onPhotoFile = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files && e.target.files[0];
     const id = photoRowRef.current;
     e.target.value = '';
     if (!f || id == null) return;
-    if (!/^image\//.test(f.type)) {
-      showToast('Choose an image file', true);
+    if (!isSupportedImageFile(f)) {
+      showToast(getUnsupportedImageErrorMessage(f.name), true);
       return;
     }
-    const fr = new FileReader();
-    fr.onerror = () => showToast('Could not read that image', true);
-    fr.onload = () => {
-      const im = new Image();
-      im.onerror = () => showToast('Could not read that image', true);
-      im.onload = () => {
-        const max = 720;
-        const k = Math.min(1, max / Math.max(im.width, im.height));
-        const cv = document.createElement('canvas');
-        cv.width = Math.round(im.width * k);
-        cv.height = Math.round(im.height * k);
-        const cx = cv.getContext('2d');
-        if (!cx) return;
-        cx.fillStyle = '#fff';
-        cx.fillRect(0, 0, cv.width, cv.height);
-        cx.drawImage(im, 0, 0, cv.width, cv.height);
-        editItem(id, 'image', cv.toDataURL('image/jpeg', 0.8));
+    setUploadingPhoto(id);
+    uploadItemPhoto(f).then(
+      (url) => {
+        editItem(id, 'image', url);
         showToast('Photo attached');
-      };
-      im.src = fr.result as string;
-    };
-    fr.readAsDataURL(f);
+      },
+      (error) => {
+        showToast(error instanceof Error ? error.message : 'Photo upload failed', true);
+      },
+    ).finally(() => {
+      setUploadingPhoto(null);
+    });
   };
 
   /* --- client picker ------------------------------------------------ */
@@ -1469,6 +1597,7 @@ export function CostPricingSheetForm({
 
   /* --- save (prototype validation, host persistence) --------------- */
   const save = () => {
+    if (saving) return;
     if (!doc.sheetNumber.trim()) {
       showToast('Save blocked: sheet number is required', true);
       return;
@@ -1515,22 +1644,15 @@ export function CostPricingSheetForm({
   };
 
   const totals = useMemo(() => {
-    let cost = 0;
-    let sell = 0;
-    rowsRaw.forEach((r) => {
-      if (isItemRow(r)) {
-        cost += tcpOf(r);
-        sell += tspOf(r);
-      }
-    });
-    const profit = sell - cost;
+    const t = computeCpsTotals(rowsRaw.map((r, index) => toDomainRowView(r, index)));
+    const profit = t.gross_profit;
     return {
-      cost,
-      sell,
+      cost: t.total_cost,
+      sell: t.total_selling_price,
       profit,
       tone: profit > 0 ? 'pos' : profit === 0 ? 'zero' : 'neg',
-      margin: sell ? Math.round((profit / sell) * 100) + '%' : '0%',
-      words: words(sell),
+      margin: t.total_selling_price > 0 ? Math.round(t.margin_percent) + '%' : '0%',
+      words: words(t.total_selling_price),
     };
   }, [rowsRaw]);
 
@@ -1538,11 +1660,11 @@ export function CostPricingSheetForm({
   const nGroups = rowsRaw.filter((r) => r.type === 'group').length;
   const countLabel = `${nItems} items · ${nGroups} groups`;
 
-  const nums: Record<number, number> = {};
+  const nums: Record<string, number> = {};
   let numSeq = 0;
   rowsRaw.forEach((r) => {
     if (r.type === 'group') membersOf(rowsRaw, r.id).forEach((m) => { nums[m.id] = ++numSeq; });
-    else if (r.gid == null) nums[r.id] = ++numSeq;
+    else if (r.groupId == null) nums[r.id] = ++numSeq;
   });
 
   const itemNode = (r: CpsItemRow, sib: CpsRow[]): ReactNode => {
@@ -1592,7 +1714,7 @@ export function CostPricingSheetForm({
           onAddItem={() => addItemTo(r.id)}
         />,
       );
-    } else if (r.gid == null) {
+    } else if (r.groupId == null) {
       walk.push(itemNode(r, siblingsOf(rowsRaw, r)));
     }
   });
@@ -1622,6 +1744,7 @@ export function CostPricingSheetForm({
             className="tb-save"
             title="Save Cost & Pricing Sheet"
             aria-label="Save Cost & Pricing Sheet"
+            disabled={saving}
             onClick={save}
           >
             <IconSave />
@@ -1670,7 +1793,19 @@ export function CostPricingSheetForm({
               <label className="lb" id="fClientLabel">
                 Client <span className="req">*</span>
               </label>
-              <div className={`clientpick${client ? ' filled' : ''}`}>
+              <div
+                className={`clientpick${client ? ' filled' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-labelledby="fClientLabel clientName"
+                onClick={() => onRequestClientSelection?.()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onRequestClientSelection?.();
+                  }
+                }}
+              >
                 <span className="ci" id="clientIcon"><IconUser /></span>
                 <span className="ct">
                   <b id="clientName">{client ? client.name : 'Select a client'}</b>
@@ -1724,6 +1859,7 @@ export function CostPricingSheetForm({
             <button
               className="itbn"
               title="Choose which fields show on rows and the PDF"
+              onClick={() => onRequestColumns?.()}
             >
               <IconColumns />
               Columns
@@ -1731,6 +1867,7 @@ export function CostPricingSheetForm({
             <button
               className="itbn"
               title="Replace groups and line items from JSON"
+              onClick={() => onRequestImport?.()}
             >
               <IconImport />
               Import
@@ -1739,6 +1876,7 @@ export function CostPricingSheetForm({
               className="itbn hot"
               id="markupBtn"
               title="Derive selling prices from cost prices"
+              onClick={() => onRequestMarkup?.()}
             >
               <IconMarkup />
               Markup
@@ -1746,6 +1884,7 @@ export function CostPricingSheetForm({
             <button
               className="itbn danger"
               title="Remove every group and item row"
+              onClick={() => onRequestClearAll?.()}
             >
               <IconTrash />
               Clear all
@@ -1807,6 +1946,7 @@ export function CostPricingSheetForm({
               className="cbtn primary save-cta"
               title="Save Cost & Pricing Sheet"
               aria-label="Save Cost & Pricing Sheet"
+              disabled={saving}
               onClick={save}
             >
               <IconSave />
@@ -1820,6 +1960,7 @@ export function CostPricingSheetForm({
         className="fab"
         title="Save Cost & Pricing Sheet"
         aria-label="Save Cost & Pricing Sheet"
+        disabled={saving}
         onClick={save}
       >
         <IconSave />
@@ -1828,7 +1969,7 @@ export function CostPricingSheetForm({
       <input
         ref={photoFileRef}
         type="file"
-        accept="image/*"
+        accept={IMAGE_ACCEPT_ATTRIBUTE}
         style={{ display: 'none' }}
         onChange={onPhotoFile}
       />

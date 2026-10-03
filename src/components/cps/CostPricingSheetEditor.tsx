@@ -1,11 +1,22 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check, ChevronDown, ChevronUp, GripVertical, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 
 import ClientSelector from '@/components/ClientSelector'
 import { CpsImportSheet } from '@/components/cps/CpsImportSheet'
+import { CostPricingSheetForm } from '@/components/cps/CostPricingSheetForm'
+import { newRowId } from '@/components/cps/CostPricingSheetForm'
+import type {
+  CpsClient as MobileCpsClient,
+  CpsColumn as MobileCpsColumn,
+  CpsColumnKey as MobileCpsColumnKey,
+  CpsDocumentFields as MobileCpsDocument,
+  CpsRow as MobileCpsRow,
+  CpsSavePayload as MobileCpsSavePayload,
+} from '@/components/cps/CostPricingSheetForm'
+import { CPS_LABELS as MOBILE_COLUMN_LABELS } from '@/components/cps/CostPricingSheetForm'
 import {
+  CpsClearAllDialog,
   CostPricingSheetDesktopForm,
-  CostPricingSheetMobileFoldForm,
 } from '@/components/cps/CostPricingSheetFormPresentations'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -23,6 +34,7 @@ import {
 } from '@/domain/cps/instant-markup'
 import type { Cps } from '@/domain/cps/types'
 import { appendCpsRow, insertCpsRow, normalizeCpsRowOrder, removeCpsRow } from '@/domain/cps/row-operations'
+import { createEmptyTableRow } from '@/domain/table-document/rows'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 import type { ClientRecord } from '@/domain/clientWorkspace'
 import { useInvoiceColumns, type InvoiceColumn } from '@/components/useInvoiceColumns'
@@ -70,6 +82,306 @@ function buildDefaultSelection(rows: TableDocumentRow[]): InstantMarkupSelection
   }, {})
 }
 
+/* ------------------------------------------------------------------ */
+/* Mobile/Fold branch: approved CostPricingSheetForm behind the editor  */
+/*                                                                     */
+/* The editor owns production state. The approved form owns Mobile/Fold */
+/* presentation only. Domain-native string group_id stays authoritative */
+/* at this boundary. Numeric gid values never persist.                 */
+/* ------------------------------------------------------------------ */
+
+function toMobileNumber(value: unknown) {
+  const numeric = Number(String(value ?? '').replace(/,/g, ''))
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function toMobileDocument(cps: Cps): MobileCpsDocument {
+  return {
+    title: cps.title || '',
+    sheetNumber: cps.cps_number || '',
+    issueDate: cps.issue_date || '',
+    site: cps.project_name || '',
+    notes: cps.notes || '',
+  }
+}
+
+function toMobileClient(cps: Cps): MobileCpsClient | null {
+  const snapshot = cps.custom_fields?.client_snapshot as {
+    id?: unknown
+    name?: unknown
+    person?: unknown
+    contact_person?: unknown
+    phone?: unknown
+    email?: unknown
+    addr?: unknown
+  } | null | undefined
+  const name = String(cps.client_name || snapshot?.name || '')
+  if (!name) return null
+
+  return {
+    id: String(cps.custom_fields?.client_id || snapshot?.id || 'current-cps-client'),
+    name,
+    person: String(snapshot?.person || snapshot?.contact_person || ''),
+    phone: String(snapshot?.phone || ''),
+    email: String(snapshot?.email || ''),
+    addr: String(snapshot?.addr || ''),
+  }
+}
+
+const MOBILE_COLUMN_KEYS: Record<string, MobileCpsColumnKey> = {
+  description: 'description',
+  quantity: 'quantity',
+  unit: 'unit',
+  make_brand: 'make',
+  cp: 'cp',
+  sp: 'sp',
+}
+
+function toMobileColumnList(
+  configs: Array<{ key: string; label?: string; visibilityMode?: string }>,
+): MobileCpsColumn[] {
+  const seen = new Set<MobileCpsColumnKey>()
+  const out: MobileCpsColumn[] = []
+  for (const column of configs) {
+    const key = MOBILE_COLUMN_KEYS[column.key]
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push({
+      key,
+      label: column.label || MOBILE_COLUMN_LABELS[key],
+      visible: (column.visibilityMode || 'show') !== 'hide_full',
+    })
+  }
+  if (!seen.has('specification')) {
+    const descriptionVisible = out.find((column) => column.key === 'description')?.visible !== false
+    out.push({
+      key: 'specification',
+      label: MOBILE_COLUMN_LABELS.specification,
+      visible: descriptionVisible,
+    })
+  }
+  return out
+}
+
+function toMobileColumns(cps: Cps): MobileCpsColumn[] {
+  return toMobileColumnList(normalizeCpsColumns(cps.custom_fields?.columnConfig))
+}
+
+interface MobileSeed {
+  document: MobileCpsDocument
+  rows: MobileCpsRow[]
+  client: MobileCpsClient | null
+  clients: MobileCpsClient[]
+  columns: MobileCpsColumn[]
+}
+
+function toMobileRows(source: TableDocumentRow[]): MobileCpsRow[] {
+  const usedIds = new Set<string>()
+  const claimId = (candidates: Array<string | undefined>) => {
+    for (const candidate of candidates) {
+      if (candidate && !usedIds.has(candidate)) {
+        usedIds.add(candidate)
+        return candidate
+      }
+    }
+    const id = newRowId()
+    usedIds.add(id)
+    return id
+  }
+  const sectionIdByIndex = new Map<number, string>()
+  const sectionIds = new Set<string>()
+  source.forEach((row, index) => {
+    if (row.row_type !== 'section') return
+    const id = claimId([row.group_id || undefined, row.id || undefined, row._uiKey || undefined])
+    sectionIdByIndex.set(index, id)
+    sectionIds.add(id)
+  })
+  return source.map((row, index): MobileCpsRow => {
+    if (row.row_type === 'section') {
+      return {
+        id: sectionIdByIndex.get(index) ?? claimId([]),
+        type: 'group',
+        title: row.section_title || row.description || 'Group',
+      }
+    }
+    return {
+      id: claimId([row._uiKey || undefined, row.id || undefined]),
+      type: 'item',
+      groupId: row.group_id && sectionIds.has(row.group_id) ? row.group_id : null,
+      desc: row.description || '',
+      sub: row.specification || '',
+      subOpen: false,
+      qty: toMobileNumber(row.quantity),
+      unit: row.unit || '',
+      make: row.make_brand || '',
+      cp: toMobileNumber(row.cp),
+      sp: toMobileNumber(row.sp),
+      image: row.image_url || null,
+    }
+  })
+}
+
+function buildMobileSeed(cps: Cps): MobileSeed {
+  const client = toMobileClient(cps)
+  return {
+    document: toMobileDocument(cps),
+    rows: toMobileRows(cps.table_rows || []),
+    client,
+    clients: client ? [client] : [],
+    columns: toMobileColumns(cps),
+  }
+}
+
+function applyMobileClientSnapshot(current: Cps, snapshot: MobileCpsClient | null): Cps {
+  return {
+    ...current,
+    client_name: snapshot?.name || '',
+    custom_fields: {
+      ...(current.custom_fields || {}),
+      client_id: snapshot?.id || '',
+      client_snapshot: snapshot
+        ? {
+            id: snapshot.id,
+            name: snapshot.name,
+            contact_person: snapshot.person || '',
+            phone: snapshot.phone || '',
+            email: snapshot.email || '',
+            city: snapshot.addr || '',
+            state: '',
+          }
+        : null,
+    },
+  }
+}
+
+function mergeMobilePayload(current: Cps, payload: MobileCpsSavePayload): Cps {
+  const live = current.table_rows || []
+  const matchLive = (pid: string, section: boolean) =>
+    live.find((row) =>
+      section
+        ? row.row_type === 'section' &&
+          ((row.group_id && row.group_id === pid) || (row.id && row.id === pid) || (row._uiKey && row._uiKey === pid))
+        : row.row_type === 'item' &&
+          ((row._uiKey && row._uiKey === pid) || (row.id && row.id === pid)),
+    )
+  const sectionGroupId = new Map<string, string>()
+  for (const mrow of payload.rows) {
+    if (mrow.type !== 'group' || sectionGroupId.has(mrow.id)) continue
+    sectionGroupId.set(mrow.id, matchLive(mrow.id, true)?.group_id || mrow.id)
+  }
+  const nextRows: TableDocumentRow[] = payload.rows.map((mrow, index) => {
+    if (mrow.type === 'group') {
+      const groupId = sectionGroupId.get(mrow.id) ?? mrow.id
+      const base = matchLive(mrow.id, true)
+      if (base) {
+        return { ...base, sort_order: index, section_title: mrow.title, group_id: groupId }
+      }
+      return {
+        ...createEmptyTableRow(index, 'section'),
+        section_title: mrow.title,
+        group_id: groupId,
+      }
+    }
+    const base = matchLive(mrow.id, false)
+    const row = base ? { ...base } : { ...createEmptyTableRow(index, 'item') }
+    const resolvedGroup = mrow.groupId == null ? undefined : sectionGroupId.get(mrow.groupId)
+    return {
+      ...row,
+      row_type: 'item',
+      sort_order: index,
+      description: mrow.desc,
+      specification: mrow.sub,
+      quantity: Number(mrow.qty) || 0,
+      unit: mrow.unit,
+      make_brand: mrow.make,
+      cp: String(mrow.cp ?? ''),
+      sp: String(mrow.sp ?? ''),
+      image_url: mrow.image ?? null,
+      group_id: resolvedGroup ?? null,
+    }
+  })
+  const snapshot = payload.client
+  return applyMobileClientSnapshot(
+    {
+      ...current,
+      title: payload.title,
+      cps_number: payload.sheetNumber,
+      issue_date: payload.issueDate,
+      project_name: payload.site,
+      notes: payload.notes,
+      table_rows: normalizeCpsRowOrder(nextRows),
+    },
+    snapshot,
+  )
+}
+
+function CostPricingSheetMobileHost({
+  cps,
+  mode,
+  onCancel,
+  saving,
+  liveClient,
+  liveColumns,
+  importedRows,
+  rowsRevision,
+  syncedTitle,
+  onRequestClientSelection,
+  onRequestColumns,
+  onRequestImport,
+  onRequestMarkup,
+  onRequestClearAll,
+  onClientChange,
+  onCommit,
+}: {
+  cps: Cps
+  mode: 'create' | 'edit'
+  onCancel?: () => void
+  saving: boolean
+  liveClient: MobileCpsClient | null
+  liveColumns: MobileCpsColumn[]
+  importedRows: MobileCpsRow[]
+  rowsRevision: number
+  syncedTitle: string
+  onRequestClientSelection: () => void
+  onRequestColumns: () => void
+  onRequestImport: () => void
+  onRequestMarkup: () => void
+  onRequestClearAll: () => void
+  onClientChange: (client: MobileCpsClient | null) => void
+  onCommit: (cps: Cps) => void
+}) {
+  const [seed] = useState(() => buildMobileSeed(cps))
+  const cpsRef = useRef(cps)
+  useEffect(() => {
+    cpsRef.current = cps
+  })
+  return (
+    <CostPricingSheetForm
+      key={`cps-mobile-${cps.id}`}
+      modeLabel={mode === 'create' ? 'Draft' : 'Editing'}
+      onBack={onCancel}
+      onSave={(payload) => onCommit(mergeMobilePayload(cpsRef.current, payload))}
+      saving={saving}
+      initialDocument={seed.document}
+      initialRows={seed.rows}
+      clients={seed.clients}
+      initialClient={seed.client}
+      client={liveClient}
+      onClientChange={onClientChange}
+      onRequestClientSelection={onRequestClientSelection}
+      initialColumns={seed.columns}
+      columns={liveColumns}
+      onRequestColumns={onRequestColumns}
+      onRequestImport={onRequestImport}
+      onRequestMarkup={onRequestMarkup}
+      onRequestClearAll={onRequestClearAll}
+      rows={importedRows}
+      rowsRevision={rowsRevision}
+      syncedTitle={syncedTitle}
+    />
+  )
+}
+
 export function CostPricingSheetEditor({
   initialCps,
   onSave,
@@ -88,6 +400,9 @@ export function CostPricingSheetEditor({
   const [importOpen, setImportOpen] = useState(false)
   const [showColumnManager, setShowColumnManager] = useState(false)
   const [clientPickerOpen, setClientPickerOpen] = useState(false)
+  const [productionRowsRevision, setProductionRowsRevision] = useState(0)
+  const notifyProductionRowsChanged = () => setProductionRowsRevision((revision) => revision + 1)
+  const [mobileClearOpen, setMobileClearOpen] = useState(false)
   const [uploadingRow, setUploadingRow] = useState<number | null>(null)
   const { isDesktop, hasFold, isTablet } = useLayoutMode()
   const {
@@ -221,12 +536,14 @@ export function CostPricingSheetEditor({
     updateRows(result.nextRows)
     setPreview(null)
     setMarkupOpen(false)
+    notifyProductionRowsChanged()
   }
 
   const undoMarkup = () => {
     if (!undoRows) return
     updateRows(undoRows)
     setUndoRows(null)
+    notifyProductionRowsChanged()
   }
 
   const includeAll = (include: boolean) => {
@@ -304,7 +621,30 @@ export function CostPricingSheetEditor({
       {useDesktopComposition ? (
         <CostPricingSheetDesktopForm {...presentationProps} />
       ) : (
-        <CostPricingSheetMobileFoldForm {...presentationProps} />
+        <CostPricingSheetMobileHost
+          cps={cps}
+          mode={mode}
+          onCancel={onCancel}
+          saving={saving}
+          liveClient={toMobileClient(cps)}
+          liveColumns={toMobileColumnList(columns)}
+          importedRows={toMobileRows(cps.table_rows || [])}
+          rowsRevision={productionRowsRevision}
+          syncedTitle={cps.title || ''}
+          onRequestClientSelection={() => setClientPickerOpen(true)}
+          onRequestColumns={() => setShowColumnManager(true)}
+          onRequestImport={() => setImportOpen(true)}
+          onRequestMarkup={openMarkup}
+          onRequestClearAll={() => setMobileClearOpen(true)}
+          onClientChange={(next) => {
+            setCps((current) => applyMobileClientSnapshot(current, next))
+          }}
+          onCommit={(next) => {
+            setCps(next)
+            setIncluded(buildDefaultSelection(next.table_rows || []))
+            void onSave(next)
+          }}
+        />
       )}
 
       <CpsImportSheet
@@ -317,6 +657,7 @@ export function CostPricingSheetEditor({
           if (nextCps.custom_fields?.columnConfig) {
             setColumns(normalizeCpsColumns(nextCps.custom_fields.columnConfig))
           }
+          notifyProductionRowsChanged()
         }}
       />
 
@@ -345,6 +686,16 @@ export function CostPricingSheetEditor({
           onClose={() => setShowColumnManager(false)}
         />
       ) : null}
+
+      <CpsClearAllDialog
+        open={mobileClearOpen}
+        onCancel={() => setMobileClearOpen(false)}
+        onConfirm={() => {
+          updateRows([])
+          setMobileClearOpen(false)
+          notifyProductionRowsChanged()
+        }}
+      />
 
       <InstantMarkupDialog
         open={markupOpen}

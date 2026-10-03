@@ -444,6 +444,36 @@ function GroupSegment(props: CostPricingSheetFormProps & { segment: Extract<Segm
   )
 }
 
+export function CpsClearAllDialog({
+  open,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  if (!open) return null
+  return (
+    <div className="cps-overlay center" onClick={onCancel}>
+      <div className="cps-dialog" role="dialog" aria-modal="true" aria-labelledby="cps-clear-dialog-title" onClick={(event) => event.stopPropagation()}>
+        <b id="cps-clear-dialog-title">Clear all line items?</b>
+        <p>This removes every group and item row from this sheet.</p>
+        <div className="acts">
+          <button type="button" className="cps-dbtn" onClick={onCancel}>Cancel</button>
+          <button
+            type="button"
+            className="cps-dbtn danger"
+            onClick={onConfirm}
+          >
+            Clear all
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ItemsSection(props: CostPricingSheetFormProps) {
   const [clearOpen, setClearOpen] = useState(false)
   const segments = groupSegments(props.rows)
@@ -472,27 +502,14 @@ function ItemsSection(props: CostPricingSheetFormProps) {
         <button type="button" className="cps-cbtn primary" onClick={() => props.onAddRow('item')}><Plus size={12} /> Add line item</button>
         <button type="button" className="cps-cbtn ghost" onClick={() => props.onAddRow('section')}><Plus size={12} /> Add group</button>
       </div>
-      {clearOpen ? (
-        <div className="cps-overlay center" onClick={() => setClearOpen(false)}>
-          <div className="cps-dialog" role="dialog" aria-modal="true" aria-labelledby="cps-clear-dialog-title" onClick={(event) => event.stopPropagation()}>
-            <b id="cps-clear-dialog-title">Clear all line items?</b>
-            <p>This removes every group and item row from this sheet.</p>
-            <div className="acts">
-              <button type="button" className="cps-dbtn" onClick={() => setClearOpen(false)}>Cancel</button>
-              <button
-                type="button"
-                className="cps-dbtn danger"
-                onClick={() => {
-                  props.onPatchCps({ table_rows: [] })
-                  setClearOpen(false)
-                }}
-              >
-                Clear all
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <CpsClearAllDialog
+        open={clearOpen}
+        onCancel={() => setClearOpen(false)}
+        onConfirm={() => {
+          props.onPatchCps({ table_rows: [] })
+          setClearOpen(false)
+        }}
+      />
     </section>
   )
 }

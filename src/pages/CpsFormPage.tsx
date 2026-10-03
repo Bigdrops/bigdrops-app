@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Layout from '@/components/Layout'
-import { CostPricingSheetForm } from '@/components/cps/CostPricingSheetForm'
-import type { CpsClient, CpsDocumentFields, CpsRow } from '@/components/cps/CostPricingSheetForm'
+import { CostPricingSheetEditor } from '@/components/cps/CostPricingSheetEditor'
 import { createEmptyCps } from '@/domain/cps/factories'
 import type { Cps } from '@/domain/cps/types'
 import { getNextCpsNumber, normalizeDbCps } from '@/domain/cps/normalize'
 import { fetchAutoCursor } from '@/domain/documentNumbering'
 import { resolvePrefix } from '@/domain/prefixConstants'
+import { useCpsSave } from '@/hooks/useCpsSave'
 import { useSettings } from '@/hooks/useSettings'
 import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
@@ -16,77 +16,18 @@ type CpsFormPageProps = {
   mode: 'create' | 'edit'
 }
 
-function toCpsNumber(value: unknown) {
-  const numeric = Number(String(value ?? '').replace(/,/g, ''))
-  return Number.isFinite(numeric) ? numeric : 0
-}
-
-function toCpsDocument(cps: Cps): Partial<CpsDocumentFields> {
-  return {
-    title: cps.title || '',
-    sheetNumber: cps.cps_number || '',
-    issueDate: cps.issue_date || '',
-    site: cps.project_name || '',
-    notes: cps.notes || '',
-  }
-}
-
-function toCpsClient(cps: Cps): CpsClient | null {
-  const snapshot = cps.custom_fields?.client_snapshot as Partial<CpsClient> | null | undefined
-  const name = cps.client_name || snapshot?.name || ''
-  if (!name) return null
-
-  return {
-    id: String(cps.custom_fields?.client_id || snapshot?.id || 'current-cps-client'),
-    name,
-    person: String(snapshot?.person || (snapshot as any)?.contact_person || ''),
-    phone: String(snapshot?.phone || ''),
-    email: String(snapshot?.email || ''),
-    addr: String(snapshot?.addr || ''),
-  }
-}
-
-function toCpsRows(cps: Cps): CpsRow[] {
-  const groupIds = new Map<string, number>()
-
-  return (cps.table_rows || []).map((row, index) => {
-    const id = index + 1
-    if (row.row_type === 'section') {
-      const sourceGroupId = row.group_id || row.id || row._uiKey || `section-${index}`
-      groupIds.set(sourceGroupId, id)
-      return {
-        id,
-        type: 'group',
-        title: row.section_title || row.description || 'Group',
-      }
-    }
-
-    const gid = row.group_id ? groupIds.get(row.group_id) ?? null : null
-    return {
-      id,
-      type: 'item',
-      gid,
-      desc: row.description || '',
-      sub: row.specification || '',
-      subOpen: false,
-      qty: toCpsNumber(row.quantity),
-      unit: row.unit || '',
-      make: row.make_brand || '',
-      cp: toCpsNumber(row.cp),
-      sp: toCpsNumber(row.sp),
-      image: row.image_url || null,
-    }
-  })
-}
-
 export default function CpsFormPage({ mode }: CpsFormPageProps) {
   const { id } = useParams()
   const navigate = useNavigate()
   const { tenantClient } = useEntity()
   const { settings } = useSettings()
   const isCreate = mode === 'create'
+  const isEdit = mode === 'edit'
   const [initialCps, setInitialCps] = useState<Cps | null>(null)
+  const [initialSnapshot, setInitialSnapshot] = useState<Cps | null>(null)
   const [loading, setLoading] = useState(true)
+  const currentCpsRef = useRef<Cps>(createEmptyCps())
+  const autoNumberRef = useRef('')
 
   useEffect(() => {
     if (!tenantClient.isReady) return
@@ -101,8 +42,12 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
         fetchAutoCursor(tenantClient, family),
       ])
       if (!active) return
-      next.cps_number = getNextCpsNumber(rows || [], prefix, cursor)
+      const number = getNextCpsNumber(rows || [], prefix, cursor)
+      next.cps_number = number
+      autoNumberRef.current = number
+      currentCpsRef.current = next
       setInitialCps(next)
+      setInitialSnapshot(null)
       setLoading(false)
     }
 
@@ -124,7 +69,10 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
         return
       }
 
-      setInitialCps(normalizeDbCps(cpsResult.data, rowsResult.data || []))
+      const normalized = normalizeDbCps(cpsResult.data, rowsResult.data || [])
+      currentCpsRef.current = normalized
+      setInitialCps(normalized)
+      setInitialSnapshot(normalized)
       setLoading(false)
     }
 
@@ -136,6 +84,25 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
     }
   }, [id, isCreate, navigate, settings?.document_prefixes, tenantClient, tenantClient.isReady])
 
+  const { save, saving } = useCpsSave({
+    getCps: () => currentCpsRef.current,
+    initialSnapshot,
+    documentPrefixes: settings?.document_prefixes,
+    isCreate,
+    isEdit,
+    id,
+    numberIsManual:
+      isCreate &&
+      Boolean(currentCpsRef.current.cps_number?.trim()) &&
+      currentCpsRef.current.cps_number !== autoNumberRef.current,
+    navigate,
+  })
+
+  const handleSave = async (cps: Cps) => {
+    currentCpsRef.current = cps
+    await save('open')
+  }
+
   const handleCancel = () => navigate(isCreate ? '/cost-pricing-sheets' : `/cost-pricing-sheets/${id}`)
 
   if (loading || !initialCps) {
@@ -146,18 +113,14 @@ export default function CpsFormPage({ mode }: CpsFormPageProps) {
     )
   }
 
-  const client = toCpsClient(initialCps)
-
   return (
     <Layout title={isCreate ? 'New Cost & Pricing Sheet' : 'Edit Cost & Pricing Sheet'} hidePageHeader immersive>
-      <CostPricingSheetForm
-        key={`cps-form-${mode}-${initialCps.id || initialCps.cps_number || 'new'}`}
-        modeLabel={isCreate ? 'Draft' : 'Editing'}
-        onBack={handleCancel}
-        initialDocument={toCpsDocument(initialCps)}
-        initialRows={toCpsRows(initialCps)}
-        clients={client ? [client] : []}
-        initialClient={client}
+      <CostPricingSheetEditor
+        initialCps={initialCps}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        saving={saving}
+        mode={mode}
       />
     </Layout>
   )
