@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronUp, GripVertical, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 
 import ClientSelector from '@/components/ClientSelector'
 import { CpsImportSheet } from '@/components/cps/CpsImportSheet'
@@ -19,7 +19,10 @@ import {
   CostPricingSheetDesktopForm,
 } from '@/components/cps/CostPricingSheetFormPresentations'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Switch } from '@/components/ui/switch'
 import { CPS_BUILTIN_COLUMNS, CPS_HIDE_FULL_DENY_LIST, normalizeCpsColumns } from '@/domain/cps/columns'
 import { computeCpsCommercialView } from '@/domain/cps/calculations'
 import { computeCpsRowEconomics } from '@/domain/cps/calculateCpsTotals'
@@ -756,81 +759,177 @@ function CpsColumnSheet({
   const ordered = columns.filter((column) => column.key !== 'description')
 
   return (
-    <div className="cps-form">
-      <div className="cps-overlay" onClick={onClose}>
-        <div className="cps-sheet" role="dialog" aria-modal="true" aria-labelledby="cps-column-sheet-title" onClick={(event) => event.stopPropagation()}>
-          <div className="cps-grab" />
-          <div className="cps-sheet-head">
-            <div>
-              <b id="cps-column-sheet-title">Column Settings</b>
-              <small>Row fields, order, and labels</small>
-            </div>
-            <button type="button" className="cps-x" onClick={onClose} aria-label="Close column settings"><X size={12} /></button>
+    <Sheet open onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="h-auto max-h-[75vh] rounded-t-2xl border-t border-bd-border bg-bd-card-bg p-0 shadow-lg sm:mx-auto sm:max-w-md [&>[data-slot=sheet-close]]:hidden"
+      >
+        <div className="flex justify-center pt-2.5 pb-1">
+          <div className="h-1 w-8 rounded-full bg-bd-surface-muted" />
+        </div>
+
+        <div className="flex max-h-[calc(75vh-40px)] flex-col overflow-hidden">
+          <div className="flex items-center justify-between border-b border-bd-border px-4 pb-3 pt-0.5">
+            <h2 className="text-[16px] font-bold tracking-[-0.01em] text-bd-text">
+              Column Settings
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text transition-colors active:scale-95"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <div className="cps-column-scroll">
+
+          <div className="flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-3 sm:px-4">
             {description ? (
-              <>
-                <div className="cps-cm-sec">Description</div>
-                <div className="cps-cm-list">
-                  <div className="cps-cm-row">
-                    <input
-                      className="cps-cm-lab"
-                      value={description.label || 'Description'}
-                      onChange={(event) => onUpdate(description.key, 'label', event.target.value)}
-                      aria-label="Description column label"
-                    />
-                    <span className="cps-cm-badge">Fixed</span>
+              <section>
+                <div className="mb-2 px-0.5">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">
+                    Description
                   </div>
                 </div>
-              </>
+                <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
+                  <div className="flex items-center min-h-[44px] px-3 py-2 gap-2 border-b border-bd-border/50 last:border-b-0">
+                    <Input
+                      value={description.label || 'Description'}
+                      onChange={(event) => onUpdate(description.key, 'label', event.target.value)}
+                      placeholder="Column label"
+                      aria-label="Description column label"
+                      className="h-8 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                    />
+                    <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                      Fixed
+                    </span>
+                  </div>
+                </div>
+              </section>
             ) : null}
 
-            <div className="cps-cm-sec">Columns</div>
-            <div className="cps-cm-list">
-              {ordered.map((column) => {
-                const absIndex = columns.findIndex((entry) => entry.key === column.key)
-                const visible = (column.visibilityMode || 'show') !== 'hide_full'
-                const isCustom = column.key.startsWith('custom_')
-                return (
-                  <div className="cps-cm-row" key={column.key}>
-                    <div className="cps-cm-grip"><GripVertical size={13} /></div>
-                    <div className="cps-cm-ord">
-                      <button type="button" disabled={absIndex <= 1} onClick={() => onMove(column.key, absIndex - 1)} aria-label={`Move ${column.label} up`}><ChevronUp size={12} /></button>
-                      <button type="button" disabled={absIndex >= columns.length - 1} onClick={() => onMove(column.key, absIndex + 1)} aria-label={`Move ${column.label} down`}><ChevronDown size={12} /></button>
-                    </div>
-                    <div className="cps-cm-main">
-                      <div className="cps-cm-labrow">
-                        <input
-                          className="cps-cm-lab"
+            <section className="mt-3">
+              <div className="mb-2 px-0.5">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">
+                  Columns
+                </div>
+              </div>
+              <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
+                {ordered.map((column) => {
+                  const absIndex = columns.findIndex((entry) => entry.key === column.key)
+                  const visible = (column.visibilityMode || 'show') !== 'hide_full'
+                  const isCustom = column.key.startsWith('custom_')
+                  const locked = !isCustom && CPS_HIDE_FULL_DENY_LIST.has(column.key)
+                  if (locked) {
+                    return (
+                      <div key={column.key} className="flex items-center min-h-[44px] px-3 py-2 gap-2 border-b border-bd-border/50 last:border-b-0">
+                        <Input
                           value={column.label || ''}
                           onChange={(event) => onUpdate(column.key, 'label', event.target.value)}
+                          placeholder="Column label"
                           aria-label={`${column.label || column.key} column label`}
+                          className="h-8 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
                         />
+                        <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                          Fixed
+                        </span>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div
+                      key={column.key}
+                      className={cn(
+                        'flex items-center min-h-[44px] px-2 py-1.5 gap-0.5 border-b border-bd-border/50 last:border-b-0 transition-opacity',
+                        !visible && 'opacity-40',
+                      )}
+                    >
+                      <div className="flex flex-col shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => onMove(column.key, absIndex - 1)}
+                          disabled={absIndex <= 1}
+                          className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
+                          aria-label={`Move ${column.label} up`}
+                        >
+                          <ChevronUp size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onMove(column.key, absIndex + 1)}
+                          disabled={absIndex >= columns.length - 1}
+                          className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
+                          aria-label={`Move ${column.label} down`}
+                        >
+                          <ChevronDown size={12} />
+                        </button>
+                      </div>
+                      <div className="min-w-0 flex-1 px-1 flex items-center gap-1.5">
+                        <Input
+                          value={column.label || ''}
+                          onChange={(event) => onUpdate(column.key, 'label', event.target.value)}
+                          placeholder="Column label"
+                          aria-label={`${column.label || column.key} column label`}
+                          className="h-8 rounded-lg border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                        />
+                        {isCustom ? (
+                          <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                            Custom
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 pl-1 pr-0.5">
+                        <Switch
+                          size="sm"
+                          checked={visible}
+                          onCheckedChange={() => onToggleFull(column.key)}
+                          aria-label={`${visible ? 'Hide' : 'Show'} ${column.label}`}
+                        />
+                        {isCustom ? (
+                          <button
+                            type="button"
+                            onClick={() => onRemoveCustom(column.key)}
+                            className="flex items-center justify-center w-7 h-7 rounded-md text-bd-text-muted hover:text-bd-status-danger-text hover:bg-bd-status-danger-bg transition-colors"
+                            title="Delete custom column"
+                            aria-label={`Remove ${column.label}`}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        ) : null}
                       </div>
                     </div>
-                    {isCustom ? (
-                      <button type="button" className="cps-cm-icon" onClick={() => onRemoveCustom(column.key)} aria-label={`Remove ${column.label}`}>
-                        <Trash2 size={13} />
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={cn('cps-cm-sw', visible && 'on')}
-                      onClick={() => onToggleFull(column.key)}
-                      aria-pressed={visible}
-                      aria-label={`${visible ? 'Hide' : 'Show'} ${column.label}`}
-                    />
-                  </div>
-                )
-              })}
-            </div>
-            <button type="button" className="cps-cm-reset" onClick={onAddCustom}><Plus size={12} /> Add custom column</button>
-            <button type="button" className="cps-cm-reset" onClick={onReset}><RotateCcw size={12} /> Reset to defaults</button>
+                  )
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={onAddCustom}
+                className="mt-2 flex w-full items-center gap-2 px-2 py-2 text-[13px] font-semibold text-bd-button-primary-bg rounded-lg hover:bg-bd-surface-muted transition-colors"
+              >
+                <Plus size={12} /> Add custom column
+              </button>
+              <button
+                type="button"
+                onClick={onReset}
+                className="px-2 py-1 text-[12px] text-bd-text-muted hover:text-bd-text transition-colors"
+              >
+                <RotateCcw size={12} className="mr-1 inline" /> Reset to defaults
+              </button>
+            </section>
           </div>
-          <button type="button" className="cps-cta" onClick={onClose}>Done</button>
+
+          <div className="border-t border-bd-border bg-bd-card-bg px-4 py-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
+            <Button
+              type="button"
+              onClick={onClose}
+              className="h-11 w-full rounded-xl text-[15px] font-bold"
+            >
+              Done
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 

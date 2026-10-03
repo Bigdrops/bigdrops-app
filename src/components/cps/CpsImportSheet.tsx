@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { X } from 'lucide-react'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { applyCpsImport, cpsImportSchema } from '@/domain/cps/importAdapter'
+import { JsonImportLayout } from '@/components/import/JsonImportLayout'
+import { applyCpsImport, cpsImportPrompt, cpsImportSchema } from '@/domain/cps/importAdapter'
 import type { Cps } from '@/domain/cps/types'
 
 type CpsImportSheetProps = {
@@ -35,63 +34,53 @@ export function CpsImportSheet({ open, cps, onOpenChange, onApply }: CpsImportSh
     onOpenChange(false)
   }
 
-  const close = () => onOpenChange(false)
+  const itemCount = parsedCps
+    ? parsedCps.table_rows.filter((row) => row.row_type === 'item').length
+    : 0
+  const groupCount = parsedCps
+    ? parsedCps.table_rows.filter((row) => row.row_type === 'section').length
+    : 0
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="cps-import-dialog border-0 bg-transparent p-0 shadow-none sm:max-w-none" showCloseButton={false}>
-        <DialogTitle className="sr-only">Import Cost & Pricing Sheet</DialogTitle>
-        <div className="cps-form">
-          <div className="cps-overlay" onClick={close}>
-            <div className="cps-sheet" onClick={(event) => event.stopPropagation()}>
-              <div className="cps-grab" />
-              <div className="cps-sheet-head">
-                <div>
-                  <b>Import JSON</b>
-                  <small>Populate groups and line items</small>
-                </div>
-                <button type="button" className="cps-x" onClick={close} aria-label="Close import sheet">
-                  <X size={13} />
-                </button>
-              </div>
-
-              <div className="cps-impnote">
-                Use the production CPS JSON schema. Client, site, photos, and calculated totals are not imported.
-              </div>
-
-              <textarea
-                className="cps-field mono cps-import-input"
-                value={rawInput}
-                onChange={(event) => {
-                  setRawInput(event.target.value)
-                  setParsedCps(null)
-                  setError(null)
-                }}
-                placeholder='{"title":"Cost & Pricing Sheet","items":[],"groups":[]}'
-                aria-label="Cost and Pricing Sheet JSON"
-              />
-
-              {error ? <div className="cps-mk-err show">{error}</div> : null}
-
-              {parsedCps ? (
-                <div className="cps-preview">
-                  <b>{parsedCps.table_rows.filter((row) => row.row_type === 'item').length} items ready</b>
-                  <span>{parsedCps.table_rows.filter((row) => row.row_type === 'section').length} groups. Existing CPS import rules remain active.</span>
-                </div>
-              ) : null}
-
-              <button type="button" className="cps-cta" onClick={parsedCps ? save : preview}>
-                {parsedCps ? 'Apply import' : 'Preview import'}
-              </button>
-              {parsedCps ? (
-                <button type="button" className="cps-linkbtn" onClick={() => setParsedCps(null)}>
-                  Edit JSON
-                </button>
-              ) : null}
+    <JsonImportLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Import Cost & Pricing Items"
+      description="Add groups and line items from extracted JSON."
+      promptText={cpsImportPrompt}
+      rawInput={rawInput}
+      onRawInputChange={(value) => {
+        setRawInput(value)
+        setParsedCps(null)
+        setError(null)
+      }}
+      onPreview={preview}
+      onSave={save}
+      isParsed={parsedCps !== null}
+      error={error}
+      saveLabel="Apply Import"
+      tutorial={{
+        title: 'How CPS import works',
+        description: 'Turn a priced source document into CPS groups and line items.',
+        steps: [
+          'Copy the AI prompt below',
+          'Run it on your source document with any AI tool',
+          'Paste the returned JSON here',
+          'Preview the groups and items, then apply',
+        ],
+      }}
+      previewContent={
+        parsedCps ? (
+          <div className="rounded-xl border border-bd-overlay-border bg-bd-overlay-section-bg p-4 text-center">
+            <div className="text-lg font-black text-bd-overlay-text">
+              {itemCount} item{itemCount === 1 ? '' : 's'} ready
+            </div>
+            <div className="mt-1 text-xs font-medium text-bd-overlay-muted">
+              {groupCount} group{groupCount === 1 ? '' : 's'} will be created
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        ) : null
+      }
+    />
   )
 }

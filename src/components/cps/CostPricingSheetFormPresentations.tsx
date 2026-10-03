@@ -25,6 +25,17 @@ import type { CpsRowEconomics, CpsTotals } from '@/domain/cps/calculateCpsTotals
 import { findCpsGroupInsertIndex, getCpsSectionGroupId } from '@/domain/cps/row-operations'
 import { IMAGE_ACCEPT_ATTRIBUTE } from '@/lib/documentImageUploadPolicy'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+
 import './cost-pricing-sheet-form.css'
 
 type Formatters = {
@@ -453,24 +464,26 @@ export function CpsClearAllDialog({
   onCancel: () => void
   onConfirm: () => void
 }) {
-  if (!open) return null
   return (
-    <div className="cps-overlay center" onClick={onCancel}>
-      <div className="cps-dialog" role="dialog" aria-modal="true" aria-labelledby="cps-clear-dialog-title" onClick={(event) => event.stopPropagation()}>
-        <b id="cps-clear-dialog-title">Clear all line items?</b>
-        <p>This removes every group and item row from this sheet.</p>
-        <div className="acts">
-          <button type="button" className="cps-dbtn" onClick={onCancel}>Cancel</button>
-          <button
-            type="button"
-            className="cps-dbtn danger"
+    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Clear all line items?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This removes every group and item row from this sheet.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
             onClick={onConfirm}
+            className="bg-bd-status-danger-text text-white hover:brightness-95"
           >
             Clear all
-          </button>
-        </div>
-      </div>
-    </div>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 

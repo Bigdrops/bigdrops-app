@@ -58,6 +58,9 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
+import { Loader2, SaveAll } from 'lucide-react';
+
+import '@/components/layout/fabFloat.css';
 
 import { computeCpsRowEconomics, computeCpsTotals } from '@/domain/cps/calculateCpsTotals';
 import { createEmptyTableRow } from '@/domain/table-document/rows';
@@ -171,9 +174,6 @@ const CPS_FORM_CSS = `
 .tb-btn svg{width:17px;height:17px}
 .tb-title{flex:1;min-width:0;padding:0 2px}
 .tb-title h1{font-family:'Manrope',sans-serif!important;font-size:13.5px!important;font-weight:800!important;letter-spacing:-.02em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tb-meta{display:flex;align-items:center;gap:5px;margin-top:2px;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
-.tb-meta .badge{color:var(--accent)}
-.tb-meta .sep{opacity:.55}
 .sec{margin-top:20px}
 .sec + .sec{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
 .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
@@ -346,9 +346,6 @@ textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-
 .save-cta{min-height:50px;font-size:10px}
 .tb-save{display:none;height:36px;padding:0 14px;border-radius:11px;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;align-items:center;gap:6px;flex-shrink:0}
 .tb-save svg{width:13px;height:13px;stroke-width:2}
-.fab{position:fixed;right:16px;bottom:calc(82px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:18px;border:0;background:var(--bg-bd-button-primary-bg);color:var(--bd-button-primary-text);box-shadow:0 10px 15px -3px rgb(0 0 0/.1),0 4px 6px -4px rgb(0 0 0/.1);display:flex;align-items:center;justify-content:center;z-index:50}
-.fab svg{width:20px;height:20px;stroke-width:2}
-.fab:active{transform:scale(.95)}
 .toast{position:fixed;bottom:148px;left:50%;transform:translateX(-50%);z-index:70;max-width:86vw;padding:9px 14px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:9.5px;font-weight:700;box-shadow:0 18px 40px rgba(0,0,0,.3);display:none}
 .toast.show{display:block}
 .toast.err{border:1px solid var(--red)}
@@ -365,7 +362,7 @@ textarea.fld{min-height:60px;padding:10px 12px;resize:none;font-weight:600;font-
   .cps-form-root{--gutter:24px}
   .wrap{max-width:820px;padding:14px var(--gutter) calc(112px + env(safe-area-inset-bottom))}
   .tb-save{display:flex}
-  .fab{display:none}
+  .cps-save-fab{display:none}
   .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
   .dgrid .wide{grid-column:span 1}
   .item{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);column-gap:20px}
@@ -681,11 +678,7 @@ export const SAMPLE_ROWS: CpsRow[] = [
 export interface CostPricingSheetFormProps {
   /** Header title. Prototype default: "Cost & Pricing Sheet". */
   title?: string;
-  /**
-   * Draft badge text. When omitted, the prototype demo behavior applies:
-   * the badge reads "Draft" and flips to "Saved" on a passing save.
-   * Pass a value to control the badge from the host application.
-   */
+  /** Retained for host compatibility. The header no longer displays a status badge. */
   modeLabel?: string;
   /** Controlled light/dark theme. Sets data-theme on documentElement. */
   theme?: 'light' | 'dark';
@@ -1316,7 +1309,6 @@ function SectionHead({ no, title, meta }: { no: string; title: string; meta?: Re
 
 export function CostPricingSheetForm({
   title = 'Cost & Pricing Sheet',
-  modeLabel,
   theme: controlledTheme,
   defaultTheme = 'light',
   onToggleTheme,
@@ -1389,16 +1381,13 @@ export function CostPricingSheetForm({
   }, [rowsRevision, rowsRevisionSeen, externalRows, syncedTitle]);
 
   /* --- chrome state --------------------------------------------- */
-  const [badge, setBadge] = useState('Draft');
   const [errId, setErrId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; isErr: boolean } | null>(null);
-  const [bp, setBp] = useState<'Phone' | 'Large phone' | 'Fold'>(() => layoutBreakpoint());
   const [internalTheme, setInternalTheme] = useState<'light' | 'dark'>(defaultTheme);
   const [themeIcon, setThemeIcon] = useState<'sun' | 'moon'>('sun');
   const [pendingScroll, setPendingScroll] = useState<{ id: string; key: number } | null>(null);
 
   const theme = controlledTheme ?? internalTheme;
-  const badgeText = modeLabel ?? badge;
 
   /* --- refs and timers ------------------------------------------ */
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1426,13 +1415,6 @@ export function CostPricingSheetForm({
     setThemeIcon(wasDark ? 'moon' : 'sun');
     onToggleTheme?.(next);
   };
-
-  /* --- layout chip ------------------------------------------------ */
-  useEffect(() => {
-    const onResize = () => setBp(layoutBreakpoint());
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
 
   /* --- row operations (stable string identity) ---------------------- */
   const editItem = <K extends keyof CpsItemRow>(id: string, key: K, value: CpsItemRow[K]) => {
@@ -1618,7 +1600,6 @@ export function CostPricingSheetForm({
       errTimer.current = setTimeout(() => setErrId(null), 2600);
       return;
     }
-    setBadge('Saved');
     showToast('Cost & Pricing Sheet saved');
     const payload: CpsSavePayload = { ...doc, client, rows: rowsRaw, columns };
     onSave?.(payload);
@@ -1734,11 +1715,6 @@ export function CostPricingSheetForm({
           </button>
           <div className="tb-title">
             <h1>{title}</h1>
-            <div className="tb-meta">
-              <span className="badge" id="modeBadge">{badgeText}</span>
-              <span className="sep">·</span>
-              <span id="layoutChip">{bp}</span>
-            </div>
           </div>
           <button
             className="tb-save"
@@ -1836,17 +1812,6 @@ export function CostPricingSheetForm({
                 value={doc.site}
                 placeholder="Site or project"
                 onChange={(e) => setDocField('site', e.target.value)}
-              />
-            </div>
-            <div className="full">
-              <label className="lb" htmlFor="fNotes">Notes</label>
-              <textarea
-                className="fld"
-                id="fNotes"
-                rows={2}
-                placeholder="Optional sheet notes"
-                value={doc.notes}
-                onChange={(e) => setDocField('notes', e.target.value)}
               />
             </div>
           </div>
@@ -1954,17 +1919,33 @@ export function CostPricingSheetForm({
             </button>
           </div>
         </section>
+
+        <section className="sec">
+          <SectionHead no="4." title="Notes" />
+          <label className="lb" htmlFor="fNotes">Sheet notes</label>
+          <textarea
+            className="fld"
+            id="fNotes"
+            rows={2}
+            placeholder="Optional sheet notes"
+            value={doc.notes}
+            onChange={(e) => setDocField('notes', e.target.value)}
+          />
+        </section>
       </div>
 
-      <button
-        className="fab"
-        title="Save Cost & Pricing Sheet"
-        aria-label="Save Cost & Pricing Sheet"
-        disabled={saving}
-        onClick={save}
-      >
-        <IconSave />
-      </button>
+      <span className="cps-save-fab csr-fab-float fixed bottom-[calc(var(--bd-app-bottom-nav-offset,72px)+env(safe-area-inset-bottom,0px)+16px)] right-4 z-50 inline-flex sm:right-8">
+        <button
+          type="button"
+          title="Save Cost & Pricing Sheet"
+          aria-label="Save Cost & Pricing Sheet"
+          disabled={saving}
+          onClick={save}
+          className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] border border-transparent bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100"
+        >
+          {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <SaveAll className="h-5 w-5" />}
+        </button>
+      </span>
 
       <input
         ref={photoFileRef}
