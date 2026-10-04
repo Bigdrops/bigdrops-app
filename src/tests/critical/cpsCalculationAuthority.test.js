@@ -125,17 +125,17 @@ test('M: zero total selling forces zero margin at row and document level', () =>
   assert.equal(computeCpsTotals([]).margin_percent, 0)
 })
 
-test('N/O: markup percentage and fixed value derive SP from CP only', () => {
+test('N/O: markup percentage and fixed value stack from current SP only', () => {
   const rows = [itemRow(0, { quantity: 2, cp: 100, sp: 10 })]
   const byKey = { [rows[0].id || rows[0]._uiKey]: true }
 
   const pct = applyInstantMarkup(rows, { mode: 'percentage', value: '25', included: byKey })
   assert.equal(pct.ok, true)
-  if (pct.ok) assert.equal(String(pct.nextRows[0].sp), '125.00')
+  if (pct.ok) assert.equal(String(pct.nextRows[0].sp), '12.50')
 
   const fixed = applyInstantMarkup(rows, { mode: 'value', value: '15', included: byKey })
   assert.equal(fixed.ok, true)
-  if (fixed.ok) assert.equal(String(fixed.nextRows[0].sp), '115.00')
+  if (fixed.ok) assert.equal(String(fixed.nextRows[0].sp), '25.00')
 })
 
 test('P/Q: excluded and no-CP rows survive markup unchanged', () => {

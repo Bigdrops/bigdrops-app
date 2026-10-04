@@ -4,6 +4,9 @@ import assert from 'node:assert/strict'
 import { mapCpsToQuotation } from '../../domain/cps/conversion.ts'
 import { computeDocument } from '../../lib/Calculations.ts'
 import { BUILTIN_COLUMNS } from '../../domain/invoice/columns.ts'
+import { getNextQuotationNumber } from '../../domain/quotation/normalize.ts'
+import { resolvePrefix } from '../../domain/prefixConstants.ts'
+import { readFileSync } from 'node:fs'
 
 // Regression fixture mirroring the failed production payload shape:
 // populated title, selected client snapshot, grouped and ungrouped items,
@@ -205,4 +208,119 @@ test('populated source rows never collapse to Untitled defaults', () => {
   }
   const cement = items.find((item) => item.description === 'Portland cement 42.5R')
   assert.ok(cement && cement.unit_price > 0 && cement.quantity > 0)
+})
+
+test('conversion numbering uses the tenant quotation prefix authority', () => {
+  const prefixes = { quotation: 'SASQUO' }
+  const prefix = resolvePrefix(prefixes, 'quotation')
+  assert.equal(prefix, 'SASQUO')
+  const next = getNextQuotationNumber(
+    [{ quotation_number: 'SASQUO-000411' }],
+    prefix,
+    412,
+  )
+  assert.equal(next, 'SASQUO-000412')
+  assert.equal(resolvePrefix(null, 'quotation'), 'QTN')
+})
+
+test('ViewCps threads tenant prefixes into conversion', () => {
+  const viewSource = readFileSync(
+    new URL('../../pages/ViewCps.tsx', import.meta.url),
+    'utf8',
+  )
+  assert.ok(
+    viewSource.includes('prefixes: settings?.document_prefixes'),
+    'conversion must receive tenant prefixes so it shares normal quotation numbering',
+  )
+})
+
+test('conversion defaults apply no commercial adjustment', () => {
+  const plain = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411')
+  const explicit = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411', {
+    vatRate: 0,
+    discountValue: 0,
+    discountType: 'fixed',
+    discountTiming: 'after',
+    extraCharges: [],
+  })
+  assert.equal(explicit.payload.vat, 0)
+  assert.equal(explicit.payload.discount, 0)
+  assert.equal(explicit.payload.subtotal, plain.payload.subtotal)
+  assert.equal(explicit.payload.total, plain.payload.total)
+})
+
+test('conversion VAT option raises the quotation total', () => {
+  const plain = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411')
+  const withVat = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411', {
+    vatRate: 7.5,
+    discountValue: 0,
+    discountType: 'fixed',
+    discountTiming: 'after',
+    extraCharges: [],
+  })
+  assert.equal(withVat.payload.vat, 7.5)
+  assert.ok(withVat.payload.total > plain.payload.total)
+})
+
+test('conversion discount fixed and percent options reduce the total', () => {
+  const plainTotal = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411').payload.total
+  const fixed = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411', {
+    vatRate: 0,
+    discountValue: 1000,
+    discountType: 'fixed',
+    discountTiming: 'after',
+    extraCharges: [],
+  })
+  const percent = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411', {
+    vatRate: 0,
+    discountValue: 10,
+    discountType: 'percent',
+    discountTiming: 'after',
+    extraCharges: [],
+  })
+  assert.equal(fixed.payload.discount, 1000)
+  assert.ok(fixed.payload.total < plainTotal)
+  assert.ok(percent.payload.total < plainTotal)
+  assert.notEqual(fixed.payload.total, percent.payload.total)
+})
+
+test('conversion extra charges persist through the quotation contract', () => {
+  const { payload } = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411', {
+    vatRate: 0,
+    discountValue: 0,
+    discountType: 'fixed',
+    discountTiming: 'after',
+    extraCharges: [{ label: 'Delivery', value: 5000, withTax: false }],
+  })
+  const custom = JSON.parse(payload.custom_fields)
+  assert.ok(Array.isArray(custom.extraCharges))
+  assert.equal(custom.extraCharges[0].label, 'Delivery')
+  assert.equal(Number(custom.extraCharges[0].value), 5000)
+})
+
+test('conversion mapping never allocates numbers or touch CPS state', () => {
+  const cps = buildFixtureCps()
+  const before = JSON.stringify(cps.table_rows)
+  mapCpsToQuotation(cps, 'SASQUO-000411', {
+    vatRate: 7.5,
+    discountValue: 5,
+    discountType: 'percent',
+    discountTiming: 'before',
+    extraCharges: [{ label: 'Haulage', value: 2000, withTax: true }],
+  })
+  assert.equal(JSON.stringify(cps.table_rows), before)
+})
+
+test('conversion options keep CP, notes, and site excluded', () => {
+  const { payload, items } = mapCpsToQuotation(buildFixtureCps(), 'SASQUO-000411', {
+    vatRate: 7.5,
+    discountValue: 5,
+    discountType: 'percent',
+    discountTiming: 'before',
+    extraCharges: [{ label: 'Haulage', value: 2000, withTax: true }],
+  })
+  assert.equal(payload.notes, null)
+  assert.equal(payload.project_id, null)
+  const serialized = JSON.stringify({ payload, items })
+  assert.doesNotMatch(serialized, /"cp":/)
 })

@@ -8,9 +8,8 @@ import {
 } from '@/components/cps/CostPricingSheetViewPresentations'
 import { normalizeDbCps } from '@/domain/cps/normalize'
 import { handleDownloadCpsPdf } from '@/domain/cps/pdfDownloadHandler'
-import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
-import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
 import type { Cps } from '@/domain/cps/types'
+import type { CpsConversionOptions } from '@/domain/cps/conversion'
 import { buildCpsViewData } from '@/domain/cps/viewData'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { useSettings } from '@/hooks/useSettings'
@@ -44,12 +43,6 @@ export default function ViewCps() {
   const navigate = useNavigate()
   const { tenantClient } = useEntity()
   const { settings } = useSettings()
-  const { customization } = usePdfCustomization({
-    documentFamily: 'cps_sheets',
-    capabilities: CPS_CAPABILITIES,
-    policy: CPS_POLICY,
-    templateDefaults: CPS_TEMPLATE_DEFAULTS,
-  })
   const { isDesktop, hasFold, isTablet } = useLayoutMode()
   const [cps, setCps] = useState<Cps | null>(null)
   const [loading, setLoading] = useState(true)
@@ -100,9 +93,9 @@ export default function ViewCps() {
   // transition. The in-callback guards below are unreachable in practice
   // (actions render only after load) and exist for type narrowing.
   const actions = useMemo(() => ({
-    onConvertToQuotation: async () => {
+    onConvertToQuotation: async (options?: CpsConversionOptions) => {
       if (!cps) return
-      const created = await convertCpsToQuotation({ cps, tenantClient })
+      const created = await convertCpsToQuotation({ cps, tenantClient, prefixes: settings?.document_prefixes, options })
       feedback.success('Quotation created from Cost & Pricing Sheet')
       navigate(`/quotations/${(created as { id: string }).id}`)
     },
@@ -136,11 +129,10 @@ export default function ViewCps() {
       await handleDownloadCpsPdf({
         cps,
         settings,
-        documentFont: customization.documentFont,
         setDownloading,
       })
     },
-  }), [cps, cpsId, navigate, status, tenantClient, settings, customization.documentFont, downloading])
+  }), [cps, cpsId, navigate, status, tenantClient, settings, downloading])
 
   if (loading || !cps || !viewData) {
     return (

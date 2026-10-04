@@ -7,7 +7,7 @@ import {
 } from '@/lib/pdf'
 import { adaptCommercialDocumentData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
-import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel, CpsPdfModel } from './types'
+import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
 
 export type PdfGenerationResult = {
   status: 'generated'
@@ -133,33 +133,24 @@ export async function generateQuotationPdf(request: PdfGenerationRequest<Quotati
   return generatePdf(request)
 }
 
-export async function generateCpsPdf(request: {
-  model: CpsPdfModel
-  documentNumber?: string | null
-  compact?: boolean
+export async function generateCpsFormePdf(request: {
+  element: React.ReactElement
+  filename: string
 }): Promise<PdfGenerationResult> {
-  const CpsScheduleModule = await import('./templates/CpsSchedule')
-  const CpsSchedule = CpsScheduleModule.default
+  const { renderDocument } = await import('@formepdf/core')
 
-  registerPdfFonts()
+  const bytes = await renderDocument(request.element)
 
-  const rawName =
-    `${request.model.identity.number} ${request.model.identity.title}`.trim() ||
-    request.documentNumber ||
-    'cps'
-  const filename = `${sanitizeFilename(rawName)}.pdf`
-
-  const generator = new DefaultPdfGenerator(
-    (model) => React.createElement(CpsSchedule, { data: model as unknown as CpsPdfModel }) as any,
-  )
-
-  const asset = await generator.generate({
-    template: 'cps-schedule',
-    model: request.model,
+  const filename = request.filename
+  const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
+  const asset = {
+    blob,
     filename,
-    documentType: 'cps_sheets',
-    options: { compact: request.compact },
-  })
+    mimeType: 'application/pdf',
+    sizeBytes: blob.size,
+    documentType: 'cps_sheets' as const,
+    metadata: {},
+  }
 
   const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
   const result = await delivery.deliver({ asset, mode: 'download' })
@@ -188,9 +179,6 @@ export type {
 
 export type {
   InvoicePdfModel,
-  CpsPdfGroup,
-  CpsPdfModel,
-  CpsPdfRow,
   PdfAdvanceSummary,
   PdfAttachmentReference,
   PdfBankDetails,

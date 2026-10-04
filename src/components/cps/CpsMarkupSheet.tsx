@@ -1,8 +1,19 @@
-import { DollarSign, Percent, X } from 'lucide-react'
+import { useState } from 'react'
+import { DollarSign, Percent, RotateCcw, Undo2, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   getCpsRowKey,
   isInstantMarkupEligible,
@@ -27,8 +38,12 @@ export interface CpsMarkupSheetProps {
   onIncludedChange: (rowKey: string, included: boolean) => void
   onIncludeAll: (included: boolean) => void
   onPreview: () => void
+  onStack: () => void
+  onReset: () => void
+  onUndoReset: () => void
   onBack: () => void
   onApply: () => void
+  canUndoReset: boolean
 }
 
 function naira0(value: unknown): string {
@@ -42,31 +57,39 @@ function rowLabel(row: TableDocumentRow, index: number): string {
 function SetupRow({
   row,
   index,
+  itemNumber,
   included,
   onIncludedChange,
 }: {
   row: TableDocumentRow
   index: number
+  itemNumber: number
   included: boolean
   onIncludedChange: (rowKey: string, included: boolean) => void
 }) {
   const rowKey = getCpsRowKey(row, index)
   const eligible = isInstantMarkupEligible(row)
+  const excluded = eligible && !included
   return (
-    <div className="flex items-center gap-2.5 border-b border-bd-border/50 px-3 py-2 last:border-b-0">
+    <div
+      className={cn(
+        'flex items-center gap-2.5 border-b border-bd-border/50 px-3 py-2 transition-colors last:border-b-0',
+        excluded && 'bg-bd-surface-muted/70 text-bd-text-muted',
+      )}
+      data-markup-excluded={excluded ? 'true' : undefined}
+    >
       <span
-        aria-hidden="true"
+        aria-label={`Item ${String(itemNumber).padStart(2, '0')}`}
         className={cn(
-          'h-2.5 w-2.5 shrink-0 rounded-full',
-          !eligible
-            ? 'bg-bd-status-danger-text'
-            : included
-              ? 'bg-bd-status-success-text'
-              : 'bg-bd-text-muted/40',
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-bd-card-bg font-mono text-[12px] font-black',
+          excluded ? 'border-bd-border text-bd-text-muted' : 'border-bd-border text-bd-text',
+          !eligible && 'border-bd-status-danger-border text-bd-status-danger-text',
         )}
-      />
+      >
+        {String(itemNumber).padStart(2, '0')}
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-semibold text-bd-text">
+        <div className={cn('truncate text-[13px] font-semibold', excluded ? 'text-bd-text-muted' : 'text-bd-text')}>
           {rowLabel(row, index)}
         </div>
         {eligible ? (
@@ -89,7 +112,7 @@ function SetupRow({
             'shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors',
             included
               ? 'border-bd-status-success-text text-bd-status-success-text'
-              : 'border-bd-border text-bd-text-muted',
+            : 'border-bd-border bg-bd-surface-muted text-bd-text-muted',
           )}
         >
           {included ? 'Included' : 'Excluded'}
@@ -117,9 +140,14 @@ export function CpsMarkupSheet({
   onIncludedChange,
   onIncludeAll,
   onPreview,
+  onStack,
+  onReset,
+  onUndoReset,
   onBack,
   onApply,
+  canUndoReset,
 }: CpsMarkupSheetProps) {
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
   const eligibleCount = rows.filter(isInstantMarkupEligible).length
   const includedCount = rows.filter(
     (row, index) => isInstantMarkupEligible(row) && included[getCpsRowKey(row, index)],
@@ -128,6 +156,7 @@ export function CpsMarkupSheet({
   const list: React.ReactNode[] = []
   let seenGroup = false
   let ungroupedBandEmitted = false
+  let itemNumber = 0
   rows.forEach((row, index) => {
     const key = getCpsRowKey(row, index)
     if (row.row_type === 'section') {
@@ -154,11 +183,13 @@ export function CpsMarkupSheet({
         </div>,
       )
     }
+    itemNumber += 1
     list.push(
       <SetupRow
         key={key}
         row={row}
         index={index}
+        itemNumber={itemNumber}
         included={Boolean(included[key])}
         onIncludedChange={onIncludedChange}
       />,
@@ -181,7 +212,7 @@ export function CpsMarkupSheet({
               Instant Markup
             </h2>
             <p className="mt-0.5 text-xs text-bd-text-muted">
-              Derive SP from CP · preview before apply
+              Stack from current SP · preview before apply
             </p>
           </div>
           <button
@@ -247,8 +278,8 @@ export function CpsMarkupSheet({
 
               <p className="rounded-xl border border-dashed border-bd-border bg-bd-surface px-3 py-2 text-[11px] leading-relaxed text-bd-text-muted">
                 {mode === 'percentage'
-                  ? 'Cost-plus: SP = CP × (1 + %). Re-applying derives from CP again — never from the current SP.'
-                  : 'Fixed: SP = CP + value, applied per item unit. Not a document total, not a distribution, not a direct SP set.'}
+                  ? 'Stacked: next SP = current working SP × (1 + %). CP stays unchanged.'
+                  : 'Stacked: next SP = current working SP + value, applied per item unit. CP stays unchanged.'}
               </p>
 
               {error ? (
@@ -297,14 +328,41 @@ export function CpsMarkupSheet({
               ) : null}
             </div>
 
-            <div className="shrink-0 space-y-1 border-t border-bd-border bg-bd-card-bg px-4 py-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
+            <div className="shrink-0 space-y-2 border-t border-bd-border bg-bd-card-bg px-4 py-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
               <Button
                 type="button"
                 onClick={onPreview}
                 disabled={!value.trim()}
                 className="h-11 w-full rounded-xl text-[14px] font-black uppercase tracking-[0.06em]"
               >
-                Preview Changes
+                Preview Next Stack
+              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setResetConfirmOpen(true)}
+                  className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-bd-status-danger-border bg-bd-status-danger-bg px-3 text-[11px] font-extrabold uppercase tracking-[0.08em] text-bd-status-danger-text"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={onUndoReset}
+                  disabled={!canUndoReset}
+                  className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-bd-border bg-bd-surface px-3 text-[11px] font-extrabold uppercase tracking-[0.08em] text-bd-text disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-70"
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                  Undo Reset
+                </button>
+              </div>
+              <Button
+                type="button"
+                onClick={onApply}
+                variant="outline"
+                className="h-10 w-full rounded-xl text-[12px] font-black uppercase tracking-[0.06em]"
+              >
+                Apply Working SP
               </Button>
               <button
                 type="button"
@@ -378,15 +436,23 @@ export function CpsMarkupSheet({
               </div>
 
               <p className="rounded-xl border border-bd-border bg-bd-surface px-3 py-2 text-[11px] leading-relaxed text-bd-text-muted">
-                Apply writes the proposed SP onto included rows only. Excluded rows, CP, quantities, groups, and specs stay untouched.
+                Stack writes the proposed SP into this sheet workspace. Apply to Form commits the cumulative working SP values. CP, quantities, groups, and specs stay untouched.
               </p>
             </div>
 
             <div className="shrink-0 space-y-1 border-t border-bd-border bg-bd-card-bg px-4 py-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
               <Button
                 type="button"
-                onClick={onApply}
+                onClick={onStack}
                 disabled={preview.affectedCount === 0}
+                variant="outline"
+                className="h-10 w-full rounded-xl text-[12px] font-black uppercase tracking-[0.06em]"
+              >
+                Stack Operation
+              </Button>
+              <Button
+                type="button"
+                onClick={onApply}
                 className="h-11 w-full rounded-xl text-[14px] font-black uppercase tracking-[0.06em]"
               >
                 Apply to Form
@@ -402,6 +468,28 @@ export function CpsMarkupSheet({
           </>
         )}
       </SheetContent>
+      <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset markup?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will set the current working selling prices to zero. You can undo this reset immediately afterward.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onReset()
+                setResetConfirmOpen(false)
+              }}
+              variant="destructive"
+            >
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   )
 }

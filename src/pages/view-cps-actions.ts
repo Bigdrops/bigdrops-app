@@ -1,6 +1,6 @@
 import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
-import { mapCpsToQuotation } from '@/domain/cps/conversion'
+import { mapCpsToQuotation, type CpsConversionOptions } from '@/domain/cps/conversion'
 import type { Cps } from '@/domain/cps/types'
 
 export async function archiveCpsRecord(id: string, tenantClient: TenantClient) {
@@ -57,10 +57,12 @@ export async function convertCpsToQuotation({
   cps,
   prefixes,
   tenantClient,
+  options,
 }: {
   cps: Cps
   prefixes?: DocumentPrefixes | null
   tenantClient: TenantClient
+  options?: CpsConversionOptions
 }) {
   const [{ data: quotationRows }] = await Promise.all([
     tenantClient.from('quotations').select('quotation_number'),
@@ -79,7 +81,7 @@ export async function convertCpsToQuotation({
     cursor,
   )
 
-  const { payload, items } = mapCpsToQuotation(cps, nextQuotationNumber)
+  const { payload, items } = mapCpsToQuotation(cps, nextQuotationNumber, options)
 
   const { data: createdQuotation, error } = await tenantClient.from('quotations').insert([payload]).select().single()
   if (error || !createdQuotation) throw new Error(error?.message || 'Failed to create quotation')

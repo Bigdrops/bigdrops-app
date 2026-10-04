@@ -27,7 +27,7 @@ function storageKey(documentFamily: PdfCustomizationDocumentFamily): string {
   return `${STORAGE_PREFIX}${documentFamily}`
 }
 
-function loadSettings(documentFamily: PdfCustomizationDocumentFamily): PdfCustomizationSettings | undefined {
+export function loadSettings(documentFamily: PdfCustomizationDocumentFamily): PdfCustomizationSettings | undefined {
   if (typeof window === 'undefined') return undefined
   try {
     const raw = localStorage.getItem(storageKey(documentFamily))

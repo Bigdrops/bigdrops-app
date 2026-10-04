@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js'
 import type { TableDocumentRow } from '@/domain/table-document/types'
+import { computeCpsRowEconomics } from './calculateCpsTotals'
 import { computeCpsCommercialView } from './calculations'
 
 export type InstantMarkupMode = 'percentage' | 'value'
@@ -65,13 +66,13 @@ export function parseInstantMarkupValue(value: string | number): Decimal | null 
   }
 }
 
-function deriveSp(cp: Decimal, input: InstantMarkupInput): Decimal | null {
+function deriveSp(currentSp: Decimal, input: InstantMarkupInput): Decimal | null {
   const value = parseInstantMarkupValue(input.value)
   if (!value) return null
   if (input.mode === 'percentage') {
-    return cp.times(new Decimal(1).plus(value.dividedBy(100))).toDecimalPlaces(MONEY_DP)
+    return currentSp.times(new Decimal(1).plus(value.dividedBy(100))).toDecimalPlaces(MONEY_DP)
   }
-  return cp.plus(value).toDecimalPlaces(MONEY_DP)
+  return currentSp.plus(value).toDecimalPlaces(MONEY_DP)
 }
 
 export function previewInstantMarkup(
@@ -85,7 +86,7 @@ export function previewInstantMarkup(
   const nextRows = rows.map((row, index) => {
     const rowKey = getCpsRowKey(row, index)
     if (!input.included[rowKey] || !isInstantMarkupEligible(row)) return row
-    const proposedSp = deriveSp(new Decimal(row.cp || 0), input)
+    const proposedSp = deriveSp(new Decimal(row.sp || 0), input)
     return proposedSp ? { ...row, sp: proposedSp.toFixed(MONEY_DP) } : row
   })
   const after = computeCpsCommercialView({ table_rows: nextRows, table_columns: [], custom_fields: {} }).costing
@@ -94,15 +95,10 @@ export function previewInstantMarkup(
   rows.forEach((row, index) => {
     const rowKey = getCpsRowKey(row, index)
     if (!input.included[rowKey] || !isInstantMarkupEligible(row)) return
-    const proposedSp = deriveSp(new Decimal(row.cp || 0), input)
+    const proposedSp = deriveSp(new Decimal(row.sp || 0), input)
     if (!proposedSp) return
-    const quantity = Number(row.quantity || 0)
-    const cp = new Decimal(row.cp || 0)
-    const profit = proposedSp.minus(cp).times(quantity)
-    const sell = proposedSp.times(quantity)
-    const marginPercent = sell.greaterThan(0)
-      ? profit.dividedBy(sell).times(100).toNumber()
-      : 0
+    const proposedRow = { ...row, sp: proposedSp.toFixed(MONEY_DP) }
+    const economics = computeCpsRowEconomics(proposedRow)
     previewRows.push({
       rowKey,
       index,
@@ -110,9 +106,9 @@ export function previewInstantMarkup(
       currentSp: String(row.sp ?? ''),
       proposedSp: proposedSp.toFixed(MONEY_DP),
       cp: String(row.cp ?? ''),
-      quantity,
-      profit: profit.toNumber(),
-      marginPercent,
+      quantity: Number(row.quantity || 0),
+      profit: economics.profit,
+      marginPercent: economics.margin_percent,
     })
   })
 
@@ -134,4 +130,8 @@ export function applyInstantMarkup(
   input: InstantMarkupInput,
 ): InstantMarkupResult {
   return previewInstantMarkup(rows, input)
+}
+
+export function resetInstantMarkupSellingPrices(rows: TableDocumentRow[]): TableDocumentRow[] {
+  return rows.map((row) => (row.row_type === 'item' ? { ...row, sp: '0.00' } : row))
 }

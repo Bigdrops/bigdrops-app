@@ -75,3 +75,31 @@ test('mobile form exposes the production undo affordance without its own stack',
     'form must not own an undo stack',
   )
 })
+
+test('markup sheet uses item enumeration instead of status dots', () => {
+  assert.ok(sheetSource.includes('itemNumber'), 'sheet rows must receive presentation item numbers')
+  assert.ok(sheetSource.includes("String(itemNumber).padStart(2, '0')"), 'item numbers must render as 01, 02, 03')
+  assert.ok(!sheetSource.includes('h-2.5 w-2.5 shrink-0 rounded-full'), 'old colored status dot must not return')
+})
+
+test('excluded rows are muted as whole rows, not only tiny markers', () => {
+  assert.ok(sheetSource.includes('data-markup-excluded'), 'excluded row state must be visible on the row')
+  assert.ok(sheetSource.includes('bg-bd-surface-muted/70'), 'excluded rows must use muted Theme Manager surface tokens')
+  assert.ok(sheetSource.includes('text-bd-text-muted'), 'excluded rows must de-emphasize text with semantic muted tokens')
+})
+
+test('reset and undo reset are separate sheet-session controls', () => {
+  assert.ok(sheetSource.includes('Reset markup?'), 'reset must require confirmation')
+  assert.ok(sheetSource.includes('onUndoReset'), 'sheet must expose a separate undo reset callback')
+  assert.ok(sheetSource.includes('Undo Reset'), 'sheet must render a Ctrl+Z-style undo reset action')
+  assert.ok(editorSource.includes('resetUndoRows'), 'reset snapshot must be separate from post-apply undoRows')
+  assert.ok(editorSource.includes('setUndoRows(rows)'), 'post-apply undo snapshot must remain form-level')
+})
+
+test('stack workspace commits through existing editor row update authority', () => {
+  assert.ok(editorSource.includes('markupWorkingRows'), 'editor must own a sheet-session working row state')
+  assert.ok(editorSource.includes('handleStackMarkup'), 'editor must support stacking without closing the sheet')
+  assert.ok(editorSource.includes('updateRows(finalRows)'), 'final apply must use the existing row update authority')
+  assert.ok(sheetSource.includes('Stack Operation'), 'sheet must expose stack operation separate from final apply')
+  assert.ok(sheetSource.includes('Apply Working SP'), 'sheet must expose final working-state apply')
+})

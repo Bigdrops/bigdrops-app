@@ -4,9 +4,10 @@
  * Declares the Cost & Pricing Sheet capabilities, policy, and template defaults
  * for the shared PDF Customization Engine.
  *
- * The Cost & Pricing Sheet has minimal customization:
- * - Document Font only
- * - No accent color, no handwriting font, no handwriting color
+ * The Cost & Pricing Sheet supports:
+ * - Document Font
+ * - Accent color (applied to document headings, group bands, and rules)
+ * - No handwriting font, no handwriting color
  */
 
 import type {
@@ -16,14 +17,14 @@ import type {
 } from './types'
 
 export const CPS_CAPABILITIES: PdfCustomizationCapabilities = {
-  accentColor: false,
+  accentColor: true,
   documentFont: true,
   handwritingFont: false,
   handwritingColor: false,
 }
 
 export const CPS_POLICY: PdfCustomizationPolicy = {
-  accentColor: false,
+  accentColor: true,
   documentFont: true,
   handwritingFont: false,
   handwritingColor: false,

@@ -2,6 +2,9 @@ import type { Cps } from './types'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 import { computeDocument } from '@/lib/Calculations'
 import { BUILTIN_COLUMNS } from '@/domain/invoice/columns'
+import { buildCalculationInputs } from '@/domain/invoice/calculations'
+import { normalizeExtraCharges } from '@/domain/invoice/factories'
+import type { ExtraCharge } from '@/domain/invoice/types'
 import { withSourceTrail, buildTrailLink } from '@/domain/documentConversion'
 
 export interface ConvertedQuotationItem {
@@ -34,6 +37,8 @@ export interface ConvertedQuotationPayload {
   client_name: string
   issue_date: string
   status: 'open'
+  vat: number
+  discount: number
   subtotal: number
   total: number
   source_cps_id: string
@@ -46,6 +51,22 @@ export interface ConvertedQuotationPayload {
 export interface CpsToQuotationMappingResult {
   payload: ConvertedQuotationPayload
   items: ConvertedQuotationItem[]
+}
+
+export interface CpsConversionOptions {
+  vatRate: number
+  discountValue: number
+  discountType: 'fixed' | 'percent'
+  discountTiming: 'before' | 'after'
+  extraCharges: ExtraCharge[]
+}
+
+export const DEFAULT_CONVERSION_OPTIONS: CpsConversionOptions = {
+  vatRate: 0,
+  discountValue: 0,
+  discountType: 'fixed',
+  discountTiming: 'after',
+  extraCharges: [],
 }
 
 function cleanCustomData(raw: unknown): Record<string, unknown> {
@@ -122,6 +143,7 @@ function toStandardItem(
 export function mapCpsToQuotation(
   cps: Cps,
   nextQuotationNumber: string,
+  options: CpsConversionOptions = DEFAULT_CONVERSION_OPTIONS,
 ): CpsToQuotationMappingResult {
   const tableRows = cps.table_rows || []
 
@@ -185,11 +207,24 @@ export function mapCpsToQuotation(
     install_rate_override: item.install_rate_override,
   }))
 
+  // Destination commercial options (VAT, discount, extra charges) apply here
+  // through the existing quotation calculation contract.
+  const vatRate = Number(options.vatRate || 0)
+  const discountValue = Number(options.discountValue || 0)
+  const discountType = options.discountType === 'percent' ? 'percent' : 'fixed'
+  const discountTiming = options.discountTiming === 'before' ? 'before' : 'after'
+  const extraCharges = normalizeExtraCharges(options.extraCharges || [])
+  const calculationInputs = buildCalculationInputs({
+    invoice: { vat: vatRate, discount: discountValue },
+    discountType,
+    discountTiming,
+    whtType: 'percent',
+  })
   const calculationResult = computeDocument({
     items: computeItems,
     columns: BUILTIN_COLUMNS,
     document: { status: 'open' },
-    cf: {},
+    cf: { calculationInputs, extraCharges },
   })
 
   const clientId =
@@ -214,6 +249,10 @@ export function mapCpsToQuotation(
   const customFieldsObj = withSourceTrail(
     {
       groupMeta: Object.keys(groupMeta).length > 0 ? groupMeta : undefined,
+      calculationInputs,
+      discountType,
+      discountTiming,
+      extraCharges,
     },
     buildTrailLink({
       id: cps.id,
@@ -230,6 +269,8 @@ export function mapCpsToQuotation(
     client_name: clientName,
     issue_date: new Date().toISOString().split('T')[0],
     status: 'open',
+    vat: vatRate,
+    discount: discountValue,
     subtotal: Number(calculationResult.subtotal || 0),
     total: Number(calculationResult.totalPayable || 0),
     source_cps_id: cps.id,

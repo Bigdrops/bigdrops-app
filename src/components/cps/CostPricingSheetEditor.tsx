@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, Undo2, X } from 'lucide-react'
 
 import ClientSelector from '@/components/ClientSelector'
 import { CpsImportSheet } from '@/components/cps/CpsImportSheet'
@@ -24,14 +24,24 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { CPS_BUILTIN_COLUMNS, CPS_HIDE_FULL_DENY_LIST, normalizeCpsColumns } from '@/domain/cps/columns'
 import { computeCpsCommercialView } from '@/domain/cps/calculations'
 import { computeCpsRowEconomics } from '@/domain/cps/calculateCpsTotals'
 import {
-  applyInstantMarkup,
   getCpsRowKey,
   isInstantMarkupEligible,
   previewInstantMarkup,
+  resetInstantMarkupSellingPrices,
   type InstantMarkupMode,
   type InstantMarkupPreview,
   type InstantMarkupSelection,
@@ -406,6 +416,8 @@ export function CostPricingSheetEditor({
   const [included, setIncluded] = useState<InstantMarkupSelection>(() => buildDefaultSelection(initialCps.table_rows || []))
   const [preview, setPreview] = useState<InstantMarkupPreview | null>(null)
   const [markupError, setMarkupError] = useState('')
+  const [markupWorkingRows, setMarkupWorkingRows] = useState<TableDocumentRow[] | null>(null)
+  const [resetUndoRows, setResetUndoRows] = useState<TableDocumentRow[] | null>(null)
   const [undoRows, setUndoRows] = useState<TableDocumentRow[] | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [showColumnManager, setShowColumnManager] = useState(false)
@@ -432,6 +444,7 @@ export function CostPricingSheetEditor({
   )
 
   const rows = cps.table_rows || []
+  const activeMarkupRows = markupWorkingRows || rows
   const itemNumbers = useMemo(() => renumber(rows), [rows])
   const computed = useMemo(() => computeCpsCommercialView(cps), [cps])
   const totals = computed.costing
@@ -522,11 +535,13 @@ export function CostPricingSheetEditor({
     setMarkupOpen(true)
     setPreview(null)
     setMarkupError('')
+    setMarkupWorkingRows(rows.map((row) => ({ ...row })))
+    setResetUndoRows(null)
     setIncluded(buildDefaultSelection(rows))
   }
 
   const handlePreview = () => {
-    const result = previewInstantMarkup(rows, { mode: markupMode, value: markupValue, included })
+    const result = previewInstantMarkup(activeMarkupRows, { mode: markupMode, value: markupValue, included })
     if (result.ok === false) {
       setMarkupError(result.error)
       setPreview(null)
@@ -536,14 +551,36 @@ export function CostPricingSheetEditor({
     setPreview(result)
   }
 
+  const handleStackMarkup = () => {
+    if (!preview) return
+    setMarkupWorkingRows(preview.nextRows)
+    setPreview(null)
+    setMarkupError('')
+    setResetUndoRows(null)
+  }
+
+  const resetMarkupWorkingRows = () => {
+    setResetUndoRows(activeMarkupRows.map((row) => ({ ...row })))
+    setMarkupWorkingRows(resetInstantMarkupSellingPrices(activeMarkupRows))
+    setPreview(null)
+    setMarkupError('')
+  }
+
+  const undoResetMarkup = () => {
+    if (!resetUndoRows) return
+    setMarkupWorkingRows(resetUndoRows.map((row) => ({ ...row })))
+    setResetUndoRows(null)
+    setPreview(null)
+    setMarkupError('')
+  }
+
   const handleApplyMarkup = () => {
-    const result = applyInstantMarkup(rows, { mode: markupMode, value: markupValue, included })
-    if (result.ok === false) {
-      setMarkupError(result.error)
-      return
-    }
+    const finalRows = preview?.nextRows || markupWorkingRows
+    if (!finalRows) return
     setUndoRows(rows)
-    updateRows(result.nextRows)
+    updateRows(finalRows)
+    setMarkupWorkingRows(null)
+    setResetUndoRows(null)
     setPreview(null)
     setMarkupOpen(false)
     notifyProductionRowsChanged()
@@ -557,7 +594,7 @@ export function CostPricingSheetEditor({
   }
 
   const includeAll = (include: boolean) => {
-    setIncluded(rows.reduce<InstantMarkupSelection>((selection, row, index) => {
+    setIncluded(activeMarkupRows.reduce<InstantMarkupSelection>((selection, row, index) => {
       selection[getCpsRowKey(row, index)] = include && isInstantMarkupEligible(row)
       return selection
     }, {}))
@@ -712,7 +749,7 @@ export function CostPricingSheetEditor({
       {useDesktopComposition ? (
         <InstantMarkupDialog
           open={markupOpen}
-          rows={rows}
+          rows={activeMarkupRows}
           included={included}
           mode={markupMode}
           value={markupValue}
@@ -723,6 +760,8 @@ export function CostPricingSheetEditor({
             if (!open) {
               setPreview(null)
               setMarkupError('')
+              setMarkupWorkingRows(null)
+              setResetUndoRows(null)
             }
           }}
           onModeChange={(nextMode) => {
@@ -738,8 +777,12 @@ export function CostPricingSheetEditor({
           onIncludedChange={(rowKey, nextIncluded) => setIncluded((current) => ({ ...current, [rowKey]: nextIncluded }))}
           onIncludeAll={includeAll}
           onPreview={handlePreview}
+          onStack={handleStackMarkup}
+          onReset={resetMarkupWorkingRows}
+          onUndoReset={undoResetMarkup}
           onBack={() => setPreview(null)}
           onApply={handleApplyMarkup}
+          canUndoReset={Boolean(resetUndoRows)}
         />
       ) : (
         <CpsMarkupSheet
@@ -749,9 +792,11 @@ export function CostPricingSheetEditor({
             if (!open) {
               setPreview(null)
               setMarkupError('')
+              setMarkupWorkingRows(null)
+              setResetUndoRows(null)
             }
           }}
-          rows={rows}
+          rows={activeMarkupRows}
           included={included}
           mode={markupMode}
           value={markupValue}
@@ -770,8 +815,12 @@ export function CostPricingSheetEditor({
           onIncludedChange={(rowKey, nextIncluded) => setIncluded((current) => ({ ...current, [rowKey]: nextIncluded }))}
           onIncludeAll={includeAll}
           onPreview={handlePreview}
+          onStack={handleStackMarkup}
+          onReset={resetMarkupWorkingRows}
+          onUndoReset={undoResetMarkup}
           onBack={() => setPreview(null)}
           onApply={handleApplyMarkup}
+          canUndoReset={Boolean(resetUndoRows)}
         />
       )}
     </>
@@ -989,8 +1038,12 @@ function InstantMarkupDialog({
   onIncludedChange,
   onIncludeAll,
   onPreview,
+  onStack,
+  onReset,
+  onUndoReset,
   onBack,
   onApply,
+  canUndoReset,
 }: {
   open: boolean
   rows: TableDocumentRow[]
@@ -1005,9 +1058,15 @@ function InstantMarkupDialog({
   onIncludedChange: (rowKey: string, included: boolean) => void
   onIncludeAll: (included: boolean) => void
   onPreview: () => void
+  onStack: () => void
+  onReset: () => void
+  onUndoReset: () => void
   onBack: () => void
   onApply: () => void
+  canUndoReset: boolean
 }) {
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+  let itemNumber = 0
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -1020,7 +1079,7 @@ function InstantMarkupDialog({
               <div>
                 <DialogTitle asChild><b>Instant Markup</b></DialogTitle>
                 <DialogDescription asChild>
-                  <small>Derive SP from CP. CP and excluded rows stay unchanged.</small>
+                  <small>Stack from current SP. CP and excluded rows stay unchanged.</small>
                 </DialogDescription>
               </div>
               <button type="button" className="cps-x" onClick={() => onOpenChange(false)} aria-label="Close Instant Markup"><X size={12} /></button>
@@ -1044,12 +1103,16 @@ function InstantMarkupDialog({
                 </label>
                 <p className="text-[11px] font-semibold leading-relaxed" style={{ color: 'var(--sub)' }}>
                   {mode === 'percentage'
-                    ? 'SP = CP x (1 + percentage / 100). Reapply derives from CP again.'
-                    : 'SP = CP + value. Value is per item unit, not a document total.'}
+                    ? 'Next SP = current working SP x (1 + percentage / 100).'
+                    : 'Next SP = current working SP + value. Value is per item unit.'}
                 </p>
                 <div className="cps-sheet-actions">
                   <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(true)}>Include All</button>
                   <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(false)}>Exclude All</button>
+                </div>
+                <div className="cps-sheet-actions">
+                  <button type="button" className="cps-cbtn danger" onClick={() => setResetConfirmOpen(true)}><RotateCcw size={12} /> Reset</button>
+                  <button type="button" className="cps-cbtn ghost" onClick={onUndoReset} disabled={!canUndoReset}><Undo2 size={12} /> Undo Reset</button>
                 </div>
                 {error ? <p className="text-xs font-bold" style={{ color: 'var(--red)' }} role="alert">{error}</p> : null}
                 <div>
@@ -1059,8 +1122,13 @@ function InstantMarkupDialog({
                       return <div key={rowKey} className="cps-mk-gcap">{row.section_title || 'Group'} - headers never participate</div>
                     }
                     const eligible = isInstantMarkupEligible(row)
+                    if (row.row_type === 'item') itemNumber += 1
+                    const excluded = eligible && !included[rowKey]
                     return (
-                      <div key={rowKey} className="cps-mk-row">
+                      <div key={rowKey} className={cn('cps-mk-row', excluded && 'opacity-60')}>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-bd-border bg-bd-card-bg font-mono text-xs font-black">
+                          {String(itemNumber).padStart(2, '0')}
+                        </span>
                         <span className="min-w-0 flex-1">
                           <b className="block text-xs">{row.description || `(row ${index + 1})`}</b>
                           <small style={{ color: 'var(--faint)' }}>
@@ -1105,11 +1173,35 @@ function InstantMarkupDialog({
             <DialogFooter className="cps-sheet-actions sm:justify-stretch">
               <button type="button" className="cps-cbtn ghost" onClick={() => onOpenChange(false)}><X size={12} /> Cancel</button>
               {preview ? <button type="button" className="cps-cbtn ghost" onClick={onBack}>Back</button> : null}
+              {preview ? <button type="button" className="cps-cbtn ghost" onClick={onStack} disabled={preview.affectedCount === 0}><Plus size={12} /> Stack</button> : null}
+              {!preview ? <button type="button" className="cps-cbtn ghost" onClick={onApply}>Apply Working SP</button> : null}
               <button type="button" className="cps-cbtn primary" onClick={onApply} disabled={!preview || preview.affectedCount === 0}><Check size={12} /> Apply</button>
             </DialogFooter>
           </div>
         </div>
       </DialogContent>
+      <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset markup?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will set the current working selling prices to zero. You can undo this reset immediately afterward.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                onReset()
+                setResetConfirmOpen(false)
+              }}
+            >
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

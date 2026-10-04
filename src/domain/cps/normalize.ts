@@ -174,7 +174,7 @@ export const denormalizeToDbCpsRow = (row: TableDocumentRow, cpsId: string): DbC
 
 export function getNextCpsNumber(
   rows: Array<{ cps_number: string }>,
-  prefix = 'BOQ',
+  prefix = 'CPS',
   cursor?: number,
 ): string {
   const family = `${prefix}-`

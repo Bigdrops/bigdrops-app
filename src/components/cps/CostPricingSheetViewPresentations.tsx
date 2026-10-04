@@ -20,9 +20,18 @@ import DocumentMoreSheet from '@/components/document-view/shared/DocumentMoreShe
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import { buildCpsViewSegments, type CpsViewData, type CpsViewRow } from '@/domain/cps/viewData'
+import { CpsConversionOptionsSheet } from '@/components/cps/CpsConversionOptionsSheet'
+import { DEFAULT_CONVERSION_OPTIONS, type CpsConversionOptions } from '@/domain/cps/conversion'
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
 import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
+import { PDF_ACCENT_SWATCHES } from '@/lib/pdfDesignPreset'
+import {
+  CPS_PDF_TEMPLATES,
+  readCpsPdfDisplayPreferences,
+  writeCpsPdfDisplayPreferences,
+  type CpsPdfTemplateId,
+} from '@/domain/cps/pdfPreferences'
 import { useSettings } from '@/hooks/useSettings'
 import { feedback } from '@/lib/feedback'
 
@@ -36,7 +45,7 @@ type ViewActions = {
 }
 
 type CpsDocActions = {
-  onConvertToQuotation: () => Promise<void>
+  onConvertToQuotation: (options?: CpsConversionOptions) => Promise<void>
   onDuplicate: () => Promise<void>
   onArchive: () => Promise<void>
   onDelete: () => Promise<void>
@@ -367,12 +376,27 @@ function CpsCustomizeSheet({
     setDocumentFont,
     setInkFont,
     setInkColour,
+    setAccentColor,
+    setAccentEnabled,
   } = usePdfCustomization({
     documentFamily: 'cps_sheets',
     capabilities: CPS_CAPABILITIES,
     policy: CPS_POLICY,
     templateDefaults: CPS_TEMPLATE_DEFAULTS,
   })
+  const [prefs, setPrefs] = useState(() => readCpsPdfDisplayPreferences())
+
+  const handleTemplateChange = (templateId: CpsPdfTemplateId) => {
+    const next = { ...prefs, templateId }
+    setPrefs(next)
+    writeCpsPdfDisplayPreferences(next)
+  }
+
+  const handleLandscapeChange = (landscape: boolean) => {
+    const next = { ...prefs, orientation: landscape ? 'landscape' : 'portrait' } as typeof prefs
+    setPrefs(next)
+    writeCpsPdfDisplayPreferences(next)
+  }
 
   return (
     <DocumentSheet
@@ -387,8 +411,23 @@ function CpsCustomizeSheet({
         setInkFont={setInkFont}
         setInkColour={setInkColour}
         templatePicker={
-          <div className="rounded-[18px] border border-bd-border bg-bd-card-bg px-4 py-3 text-sm font-bold text-bd-text">
-            Modern Minimal
+          <div className="grid grid-cols-2 gap-2">
+            {CPS_PDF_TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => handleTemplateChange(template.id)}
+                aria-pressed={prefs.templateId === template.id}
+                className={`rounded-[18px] border px-4 py-3 text-left ${
+                  prefs.templateId === template.id
+                    ? 'border-bd-accent bg-bd-accent/10'
+                    : 'border-bd-border bg-bd-card-bg'
+                }`}
+              >
+                <span className="block text-sm font-bold text-bd-text">{template.label}</span>
+                <span className="block text-xs font-normal text-bd-muted">{template.description}</span>
+              </button>
+            ))}
           </div>
         }
         colorSwatches={[]}
@@ -397,6 +436,15 @@ function CpsCustomizeSheet({
         handwritingFonts={[]}
         customFont="auto"
         onCustomFontChange={() => {}}
+        showAccentColor
+        accentColor={customization.accentColor}
+        accentEnabled={customization.accentEnabled}
+        onAccentColorChange={setAccentColor}
+        onAccentEnabledChange={setAccentEnabled}
+        accentColorSwatches={[...PDF_ACCENT_SWATCHES]}
+        showLandscape
+        landscape={prefs.orientation === 'landscape'}
+        onLandscapeChange={handleLandscapeChange}
         onSave={() => {
           onClose()
           feedback.success('Customization saved', { description: 'CPS PDF appearance settings updated.' })
@@ -567,12 +615,14 @@ export function CostPricingSheetDesktopView(props: ViewProps) {
   const [customizeOpen, setCustomizeOpen] = useState(false)
   const [convertOpen, setConvertOpen] = useState(false)
   const [convertBusy, setConvertBusy] = useState(false)
+  const [optionsOpen, setOptionsOpen] = useState(false)
+  const [conversionOptions, setConversionOptions] = useState<CpsConversionOptions>(DEFAULT_CONVERSION_OPTIONS)
 
   async function runConvert() {
     if (convertBusy) return
     setConvertBusy(true)
     try {
-      await props.actions.onConvertToQuotation()
+      await props.actions.onConvertToQuotation(conversionOptions)
     } catch (error) {
       feedback.error('Action failed', { description: error instanceof Error ? error.message : 'Could not complete this action.' })
     } finally {
@@ -594,7 +644,7 @@ export function CostPricingSheetDesktopView(props: ViewProps) {
       </header>
       <main className="cps-view-room">
         <section>
-          <DocumentActionRow onEdit={props.onEdit} onConvert={() => setConvertOpen(true)} onDownload={props.onDownload} downloading={props.downloading} />
+          <DocumentActionRow onEdit={props.onEdit} onConvert={() => setOptionsOpen(true)} onDownload={props.onDownload} downloading={props.downloading} />
           <Dossier {...props} />
           <Summary data={props.data} formatters={props.formatters} />
           <DocumentSurface data={props.data} formatters={props.formatters} />
@@ -602,7 +652,16 @@ export function CostPricingSheetDesktopView(props: ViewProps) {
         <DesktopRail data={props.data} formatters={props.formatters} />
       </main>
       <CpsCustomizeSheet open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
-      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} actions={props.actions} onRequestConvert={() => setConvertOpen(true)} />
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} actions={props.actions} onRequestConvert={() => setOptionsOpen(true)} />
+      <CpsConversionOptionsSheet
+        open={optionsOpen}
+        onOpenChange={setOptionsOpen}
+        onContinue={(options) => {
+          setConversionOptions(options)
+          setOptionsOpen(false)
+          setConvertOpen(true)
+        }}
+      />
       <ConvertConfirm open={convertOpen} busy={convertBusy} onConfirm={() => void runConvert()} onCancel={() => setConvertOpen(false)} />
     </div>
   )
@@ -613,12 +672,14 @@ export function CostPricingSheetMobileFoldView(props: ViewProps) {
   const [customizeOpen, setCustomizeOpen] = useState(false)
   const [convertOpen, setConvertOpen] = useState(false)
   const [convertBusy, setConvertBusy] = useState(false)
+  const [optionsOpen, setOptionsOpen] = useState(false)
+  const [conversionOptions, setConversionOptions] = useState<CpsConversionOptions>(DEFAULT_CONVERSION_OPTIONS)
 
   async function runConvert() {
     if (convertBusy) return
     setConvertBusy(true)
     try {
-      await props.actions.onConvertToQuotation()
+      await props.actions.onConvertToQuotation(conversionOptions)
     } catch (error) {
       feedback.error('Action failed', { description: error instanceof Error ? error.message : 'Could not complete this action.' })
     } finally {
@@ -637,7 +698,7 @@ export function CostPricingSheetMobileFoldView(props: ViewProps) {
           <button type="button" className="cps-view-iconbtn" aria-label="Customize PDF" onClick={() => setCustomizeOpen(true)}><Palette size={18} /></button>
           <button type="button" className="cps-view-iconbtn" aria-label="More actions" onClick={() => setMoreOpen(true)}><MoreHorizontal size={18} /></button>
         </header>
-        <DocumentActionRow onEdit={props.onEdit} onConvert={() => setConvertOpen(true)} onDownload={props.onDownload} downloading={props.downloading} />
+        <DocumentActionRow onEdit={props.onEdit} onConvert={() => setOptionsOpen(true)} onDownload={props.onDownload} downloading={props.downloading} />
         <Dossier {...props} mobile />
         <Summary data={props.data} formatters={props.formatters} mobile />
         <DocumentSurface data={props.data} formatters={props.formatters} mobile />
@@ -649,7 +710,16 @@ export function CostPricingSheetMobileFoldView(props: ViewProps) {
         <FloatingDownloadButton label="Download Cost & Pricing Sheet" onClick={props.onDownload} disabled={props.downloading} />
       </div>
       <CpsCustomizeSheet open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
-      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} actions={props.actions} onRequestConvert={() => setConvertOpen(true)} />
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} actions={props.actions} onRequestConvert={() => setOptionsOpen(true)} />
+      <CpsConversionOptionsSheet
+        open={optionsOpen}
+        onOpenChange={setOptionsOpen}
+        onContinue={(options) => {
+          setConversionOptions(options)
+          setOptionsOpen(false)
+          setConvertOpen(true)
+        }}
+      />
       <ConvertConfirm open={convertOpen} busy={convertBusy} onConfirm={() => void runConvert()} onCancel={() => setConvertOpen(false)} />
     </div>
   )
