@@ -1,4 +1,5 @@
 import { computeCpsCommercialView } from './calculations'
+import { computeCpsRowEconomics } from './calculateCpsTotals'
 import type { Cps } from './types'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 
@@ -35,13 +36,78 @@ export type CpsViewData = {
   totals: ReturnType<typeof computeCpsCommercialView>['costing']
 }
 
+export type CpsViewItemRow = Extract<CpsViewRow, { type: 'item' }>
+export type CpsViewGroupRow = Extract<CpsViewRow, { type: 'group' }>
+
+export type CpsViewSegment =
+  | { type: 'item'; row: CpsViewItemRow; membership: string | null | undefined }
+  | {
+      type: 'group'
+      row: CpsViewGroupRow
+      membership: string
+      items: CpsViewItemRow[]
+      total: number
+      count: number
+    }
+
 function rowKey(row: TableDocumentRow, index: number) {
   return row.id || row._uiKey || `${row.row_type}-${index}`
 }
 
-function asNumber(value: unknown) {
-  const numeric = Number(value || 0)
-  return Number.isFinite(numeric) ? numeric : 0
+function resolveGroupMembership(rows: CpsViewRow[]) {
+  const groups = new Map<string, string>()
+  rows.forEach((row) => {
+    if (row.type !== 'group') return
+    const membership = row.groupId || row.key
+    groups.set(row.key, membership)
+    if (row.groupId) groups.set(row.groupId, membership)
+  })
+  return groups
+}
+
+function membershipOf(row: CpsViewItemRow, groups: Map<string, string>): string | null | undefined {
+  if (!row.groupId) return undefined
+  const membership = groups.get(row.groupId)
+  return membership === undefined ? null : membership
+}
+
+export function buildCpsViewSegments(rows: CpsViewRow[]): CpsViewSegment[] {
+  const groups = resolveGroupMembership(rows)
+  const memberships = new Map<string, { items: CpsViewItemRow[]; total: number; count: number }>()
+
+  rows.forEach((row) => {
+    if (row.type !== 'item') return
+    const membership = membershipOf(row, groups)
+    if (typeof membership !== 'string') return
+    const entry = memberships.get(membership) || { items: [], total: 0, count: 0 }
+    entry.items.push(row)
+    entry.total += row.selling
+    entry.count += 1
+    memberships.set(membership, entry)
+  })
+
+  const segments: CpsViewSegment[] = []
+  rows.forEach((row) => {
+    if (row.type === 'group') {
+      const membership = groups.get(row.key) || row.groupId || row.key
+      const entry = memberships.get(membership) || { items: [], total: 0, count: 0 }
+      segments.push({
+        type: 'group',
+        row,
+        membership,
+        items: entry.items,
+        total: entry.total,
+        count: entry.count,
+      })
+      return
+    }
+
+    const membership = membershipOf(row, groups)
+    if (typeof membership === 'string') return
+    segments.push({ type: 'item', row, membership })
+  })
+
+  return segments
 }
 
 export function buildCpsViewData(cps: Cps): CpsViewData {
@@ -61,13 +127,7 @@ export function buildCpsViewData(cps: Cps): CpsViewData {
     }
 
     itemNumber += 1
-    const quantity = asNumber(row.quantity)
-    const cp = asNumber(row.cp)
-    const sp = asNumber(row.sp)
-    const cost = cp * quantity
-    const selling = sp * quantity
-    const profit = selling - cost
-    const marginPercent = selling > 0 ? (profit / selling) * 100 : 0
+    const econ = computeCpsRowEconomics(row)
 
     return {
       type: 'item',
@@ -77,14 +137,14 @@ export function buildCpsViewData(cps: Cps): CpsViewData {
       description: row.description || '',
       specification: row.specification || '',
       makeBrand: row.make_brand || '',
-      quantity,
+      quantity: econ.quantity,
       unit: row.unit || '',
-      cp,
-      sp,
-      cost,
-      selling,
-      profit,
-      marginPercent,
+      cp: econ.cp,
+      sp: econ.sp,
+      cost: econ.total_cost_price,
+      selling: econ.total_selling_price,
+      profit: econ.profit,
+      marginPercent: econ.margin_percent,
       notes: row.notes || '',
       imageUrl: row.image_url || null,
     }

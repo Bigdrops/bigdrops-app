@@ -8,6 +8,7 @@ import MobileFab from '@/components/layout/MobileFab'
 import ModuleShell from '@/components/layout/ModuleShell'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { feedback } from '@/lib/feedback'
+import { formatDisplayDate } from '@/lib/formatters/date'
 import { SkeletonRow } from '@/components/loading/AppLoadingStates'
 import { useEntity } from '@/lib/tenant/contexts'
 import { readListCache, writeListCache, isListCacheFresh, invalidateListCache } from '@/lib/cache/listCache'
@@ -15,8 +16,13 @@ import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 
-const CPS_CACHE_KEY = 'bd:list:cps_sheets:v1:all'
+const CPS_CACHE_KEY = 'bd:list:cps_sheets:v2:all'
 const CPS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+const formatCpsDate = (value: string | null | undefined) => formatDisplayDate(value, {
+  fallback: "", invalidFallback: "", locale: "en-GB",
+  dateOptions: { day: "2-digit", month: "short", year: "numeric" },
+})
 
 export function CpsList() {
   const navigate = useNavigate()
@@ -101,7 +107,7 @@ export function CpsList() {
           key={cps.id}
           title={cps.client_name || cps.title || 'Untitled Cost & Pricing Sheet'}
           subtitle={cps.cps_number || 'Cost & Pricing Sheet'}
-          tertiary={cps.status || 'open'}
+          tertiary={formatCpsDate(cps.issue_date) || 'No date'}
           statusLabel={cps.status || 'open'}
           statusClassName={cps.status === 'approved' ? 'bg-bd-status-success-bg text-bd-status-success-text' : 'bg-bd-status-warning-bg text-bd-status-warning-text'}
           onClick={() => navigate(`/cost-pricing-sheets/${cps.id}`)}

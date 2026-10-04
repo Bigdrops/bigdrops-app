@@ -7,7 +7,7 @@ import {
 } from '@/lib/pdf'
 import { adaptCommercialDocumentData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
-import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
+import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel, CpsPdfModel } from './types'
 
 export type PdfGenerationResult = {
   status: 'generated'
@@ -133,6 +133,48 @@ export async function generateQuotationPdf(request: PdfGenerationRequest<Quotati
   return generatePdf(request)
 }
 
+export async function generateCpsPdf(request: {
+  model: CpsPdfModel
+  documentNumber?: string | null
+  compact?: boolean
+}): Promise<PdfGenerationResult> {
+  const CpsScheduleModule = await import('./templates/CpsSchedule')
+  const CpsSchedule = CpsScheduleModule.default
+
+  registerPdfFonts()
+
+  const rawName =
+    `${request.model.identity.number} ${request.model.identity.title}`.trim() ||
+    request.documentNumber ||
+    'cps'
+  const filename = `${sanitizeFilename(rawName)}.pdf`
+
+  const generator = new DefaultPdfGenerator(
+    (model) => React.createElement(CpsSchedule, { data: model as unknown as CpsPdfModel }) as any,
+  )
+
+  const asset = await generator.generate({
+    template: 'cps-schedule',
+    model: request.model,
+    filename,
+    documentType: 'cps_sheets',
+    options: { compact: request.compact },
+  })
+
+  const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
+  const result = await delivery.deliver({ asset, mode: 'download' })
+
+  const feedbackBus = new DefaultFeedbackBus()
+  if (!result.success) {
+    feedbackBus.emit({ kind: 'failed', documentType: 'cps_sheets', timestamp: Date.now(), fileName: filename, error: result.error })
+    throw new Error(result.error ?? 'PDF delivery failed')
+  }
+
+  feedbackBus.emit({ kind: 'downloaded', documentType: 'cps_sheets', timestamp: Date.now(), fileName: filename })
+
+  return { status: 'generated', filename, uri: result.uri }
+}
+
 export {
   buildPdfRowCells,
   buildPdfTableColumns,
@@ -146,6 +188,9 @@ export type {
 
 export type {
   InvoicePdfModel,
+  CpsPdfGroup,
+  CpsPdfModel,
+  CpsPdfRow,
   PdfAdvanceSummary,
   PdfAttachmentReference,
   PdfBankDetails,

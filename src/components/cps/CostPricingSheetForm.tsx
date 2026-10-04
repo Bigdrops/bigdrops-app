@@ -718,6 +718,10 @@ export interface CostPricingSheetFormProps {
   onRequestMarkup?: () => void;
   /** Request the host production clear-all confirmation workflow. */
   onRequestClearAll?: () => void;
+  /** Whether a production markup undo snapshot exists. Shows the approved undo affordance. */
+  hasUndo?: boolean;
+  /** Restore pre-markup SP values through the production undo machinery. */
+  onUndoMarkup?: () => void;
   /** Live production rows for post-import sync. Applied only when rowsRevision advances. */
   rows?: CpsRow[];
   /** Revision token bumped by the host when authoritative rows change outside the form. */
@@ -1329,6 +1333,8 @@ export function CostPricingSheetForm({
   onRequestImport,
   onRequestMarkup,
   onRequestClearAll,
+  hasUndo = false,
+  onUndoMarkup,
   rows: externalRows,
   rowsRevision,
   syncedTitle,
@@ -1855,6 +1861,21 @@ export function CostPricingSheetForm({
               Clear all
             </button>
           </div>
+
+          {hasUndo ? (
+            <div className="mt-2 flex items-center gap-2 rounded-xl border border-bd-border bg-bd-surface px-3 py-2">
+              <span className="min-w-0 flex-1 text-[11px] font-medium leading-snug text-bd-text-muted">
+                Markup applied. SP values materialized; CP, quantities, and groups untouched.
+              </span>
+              <button
+                type="button"
+                onClick={() => onUndoMarkup?.()}
+                className="shrink-0 rounded-lg bg-bd-button-primary-bg px-3 py-1.5 text-[11px] font-bold text-bd-button-primary-text transition-transform active:scale-95"
+              >
+                Undo
+              </button>
+            </div>
+          ) : null}
 
           <div id="items">
             {rowsRaw.length ? walk : <div className="empty">No rows yet — add a line item or a group.</div>}

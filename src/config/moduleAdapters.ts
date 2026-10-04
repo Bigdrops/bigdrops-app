@@ -649,7 +649,7 @@ const receiptsAdapter: DocumentAdapter<FinancialQueryState, any> = {
 const cpsSheetsAdapter: DocumentAdapter<ProjectQueryState, any> = {
   initialSortBy: "created_at",
   statusOptions: [],
-  cacheKey: "bd:list:cps_sheets:v1:all",
+  cacheKey: "bd:list:cps_sheets:v2:all",
   cacheTtlMs: 5 * 60 * 1000,
 
   async fetcher(query, ctx) {
@@ -660,7 +660,7 @@ const cpsSheetsAdapter: DocumentAdapter<ProjectQueryState, any> = {
 
     let q = requireFetchClient(ctx)
       .from("cps_sheets")
-      .select("id, cps_number, client_name, created_at, status, project_id, title, total")
+      .select("id, cps_number, client_name, created_at, issue_date, status, project_id, title, total")
       .is("archived_at", null);
 
     if (query.search.trim()) {

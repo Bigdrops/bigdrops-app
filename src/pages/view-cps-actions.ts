@@ -1,5 +1,7 @@
 import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
+import { mapCpsToQuotation } from '@/domain/cps/conversion'
+import type { Cps } from '@/domain/cps/types'
 
 export async function archiveCpsRecord(id: string, tenantClient: TenantClient) {
   const { error } = await tenantClient.from('cps_sheets').update({ archived_at: new Date().toISOString() }).eq('id', id)
@@ -53,21 +55,18 @@ export async function duplicateCpsRecord(id: string, tenantClient: TenantClient)
 
 export async function convertCpsToQuotation({
   cps,
-  items,
   prefixes,
   tenantClient,
 }: {
-  cps: any
-  items: any[]
+  cps: Cps
   prefixes?: DocumentPrefixes | null
   tenantClient: TenantClient
 }) {
   const [{ data: quotationRows }] = await Promise.all([
     tenantClient.from('quotations').select('quotation_number'),
   ])
-  
+
   const { getNextQuotationNumber } = await import('@/domain/quotation')
-  const { buildTrailLink, withSourceTrail, toQuotationItemRow } = await import('@/domain/documentConversion')
   const { fetchAutoCursor, advanceAutoCursor } = await import('@/domain/documentNumbering')
   const { parseTrailingSequence } = await import('@/domain/prefixConstants')
 
@@ -79,29 +78,8 @@ export async function convertCpsToQuotation({
     quotationPrefix,
     cursor,
   )
-  
-  const payload = {
-    quotation_number: nextQuotationNumber,
-    po_number: cps.po_number || null,
-    quotation_title: cps.title || 'Quotation from Cost & Pricing Sheet',
-    client_id: null,
-    client_name: cps.client_name || '',
-    issue_date: new Date().toISOString().split('T')[0],
-    status: 'open',
-    subtotal: 0,
-    total: 0,
-    source_cps_id: cps.id,
-    custom_fields: JSON.stringify(
-      withSourceTrail(
-        {},
-        buildTrailLink({
-          id: cps.id,
-          type: 'quotation',
-          number: cps.cps_number,
-        })
-      )
-    ),
-  }
+
+  const { payload, items } = mapCpsToQuotation(cps, nextQuotationNumber)
 
   const { data: createdQuotation, error } = await tenantClient.from('quotations').insert([payload]).select().single()
   if (error || !createdQuotation) throw new Error(error?.message || 'Failed to create quotation')
@@ -110,17 +88,15 @@ export async function convertCpsToQuotation({
   const convertedSeq = parseTrailingSequence((createdQuotation as { quotation_number?: string | null })?.quotation_number)
   if (convertedSeq !== null) await advanceAutoCursor(tenantClient, quotationFamily, convertedSeq)
 
-  const itemRows = items
-    .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-    .map((item, index) => toQuotationItemRow({
-      ...item,
-      unit_price: item.sp || item.unit_price || 0,
-      amount: (item.quantity || 0) * (item.sp || item.unit_price || 0),
-    } as any, String(createdQuotation.id), index))
+  const itemRows = items.map((item, index) => ({ ...item, quotation_id: createdQuotation.id, sort_order: index }))
 
   if (itemRows.length > 0) {
     const { error: itemError } = await tenantClient.from('quotation_items').insert(itemRows)
-    if (itemError) throw itemError
+    if (itemError) {
+      // Compensate: never leave an orphan parent behind a failed row write.
+      await tenantClient.from('quotations').delete().eq('id', createdQuotation.id)
+      throw itemError
+    }
   }
 
   return createdQuotation

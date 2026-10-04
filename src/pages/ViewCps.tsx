@@ -7,9 +7,13 @@ import {
   CostPricingSheetMobileFoldView,
 } from '@/components/cps/CostPricingSheetViewPresentations'
 import { normalizeDbCps } from '@/domain/cps/normalize'
+import { handleDownloadCpsPdf } from '@/domain/cps/pdfDownloadHandler'
+import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
+import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
 import type { Cps } from '@/domain/cps/types'
 import { buildCpsViewData } from '@/domain/cps/viewData'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
+import { useSettings } from '@/hooks/useSettings'
 import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
 
@@ -39,9 +43,17 @@ export default function ViewCps() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { tenantClient } = useEntity()
+  const { settings } = useSettings()
+  const { customization } = usePdfCustomization({
+    documentFamily: 'cps_sheets',
+    capabilities: CPS_CAPABILITIES,
+    policy: CPS_POLICY,
+    templateDefaults: CPS_TEMPLATE_DEFAULTS,
+  })
   const { isDesktop, hasFold, isTablet } = useLayoutMode()
   const [cps, setCps] = useState<Cps | null>(null)
   const [loading, setLoading] = useState(true)
+  const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
     if (!tenantClient.isReady) return
@@ -90,12 +102,7 @@ export default function ViewCps() {
   const actions = useMemo(() => ({
     onConvertToQuotation: async () => {
       if (!cps) return
-      const items = (cps.table_rows || []).map((row) =>
-        row.row_type === 'section'
-          ? { ...row, row_type: 'group_header', group_name: row.section_title || row.description || 'Group' }
-          : row,
-      )
-      const created = await convertCpsToQuotation({ cps, items: items as any[], tenantClient })
+      const created = await convertCpsToQuotation({ cps, tenantClient })
       feedback.success('Quotation created from Cost & Pricing Sheet')
       navigate(`/quotations/${(created as { id: string }).id}`)
     },
@@ -124,11 +131,20 @@ export default function ViewCps() {
       feedback.success('Cost & Pricing Sheet deleted')
       navigate('/cost-pricing-sheets')
     },
-  }), [cps, cpsId, navigate, status, tenantClient])
+    onDownload: async () => {
+      if (!cps || downloading) return
+      await handleDownloadCpsPdf({
+        cps,
+        settings,
+        documentFont: customization.documentFont,
+        setDownloading,
+      })
+    },
+  }), [cps, cpsId, navigate, status, tenantClient, settings, customization.documentFont, downloading])
 
   if (loading || !cps || !viewData) {
     return (
-      <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader immersive>
+      <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader contentClassName="!max-w-none md:!px-0 md:!py-0">
         <div className="min-h-[60vh] p-12 text-center text-sm text-bd-text-muted">Loading Cost & Pricing Sheet...</div>
       </Layout>
     )
@@ -140,12 +156,14 @@ export default function ViewCps() {
     formatters: { money: formatMoney, percent: formatPercent },
     onBack: () => navigate('/cost-pricing-sheets'),
     onEdit: () => navigate(`/cost-pricing-sheets/edit/${cps.id}`),
+    onDownload: () => void actions.onDownload(),
+    downloading,
     actions,
   }
   const useDesktopComposition = isDesktop && !hasFold && !isTablet
 
   return (
-    <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader immersive>
+    <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader contentClassName="!max-w-none md:!px-0 md:!py-0">
       {useDesktopComposition ? (
         <CostPricingSheetDesktopView {...props} />
       ) : (

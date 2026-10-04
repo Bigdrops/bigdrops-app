@@ -2,24 +2,28 @@ import { useState } from 'react'
 import {
   Archive,
   ArrowLeft,
-  Briefcase,
-  CheckCircle2,
   Copy,
   Download,
-  Edit3,
-  Home,
+  FileOutput,
   MoreHorizontal,
   Palette,
+  Pencil,
+  Package,
   Share2,
   Trash2,
-  Users,
   Zap,
 } from 'lucide-react'
 
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
+import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
 import DocumentMoreSheet from '@/components/document-view/shared/DocumentMoreSheet'
+import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
-import type { CpsViewData, CpsViewRow } from '@/domain/cps/viewData'
+import { buildCpsViewSegments, type CpsViewData, type CpsViewRow } from '@/domain/cps/viewData'
+import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
+import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
+import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
+import { useSettings } from '@/hooks/useSettings'
 import { feedback } from '@/lib/feedback'
 
 import './cost-pricing-sheet-view.css'
@@ -27,12 +31,13 @@ import './cost-pricing-sheet-view.css'
 type ViewActions = {
   onBack: () => void
   onEdit: () => void
+  onDownload: () => void
+  downloading: boolean
 }
 
 type CpsDocActions = {
   onConvertToQuotation: () => Promise<void>
   onDuplicate: () => Promise<void>
-  onToggleStatus: () => Promise<void>
   onArchive: () => Promise<void>
   onDelete: () => Promise<void>
 }
@@ -50,10 +55,6 @@ type ViewProps = {
 } & ViewActions
 
 type ItemViewRow = Extract<CpsViewRow, { type: 'item' }>
-type GroupViewRow = Extract<CpsViewRow, { type: 'group' }>
-type ViewSegment =
-  | { type: 'item'; row: ItemViewRow; membership: string | null | undefined }
-  | { type: 'group'; row: GroupViewRow; letter: string; items: ItemViewRow[]; total: number; count: number }
 
 function monogram(name: string) {
   return (name || 'Cost & Pricing Sheet')
@@ -64,68 +65,45 @@ function monogram(name: string) {
     .join('') || 'CP'
 }
 
-// Group identity derives from row.group_id, never from physical adjacency.
-// Sections own the group_id that member items reference, so members stay
-// attached to their group even when rows are not contiguous. Row order is
-// never changed to satisfy presentation.
-function groupLetter(index: number) {
-  return String.fromCharCode(65 + index)
+// Brand mark authority: the configured tenant/company logo, else company
+// initials, else the neutral module mark. Client identity must never
+// stand in for company branding.
+function BrandMark({ logoUrl, companyName }: { logoUrl: string | null; companyName: string }) {
+  if (logoUrl) {
+    return <img className="cps-brandlogo" src={logoUrl} alt={companyName || 'Company logo'} />
+  }
+  return <div className="cps-monogram">{monogram(companyName)}</div>
 }
 
-function resolveGroupLetters(rows: CpsViewRow[]) {
-  const letters = new Map<string, string>()
-  let index = 0
-  rows.forEach((row) => {
-    if (row.type !== 'group') return
-    const letter = groupLetter(index)
-    index += 1
-    letters.set(row.key, letter)
-    if (row.groupId) letters.set(row.groupId, letter)
-  })
-  return letters
+type CpsClientSnapshot = {
+  name?: unknown
+  contact_person?: unknown
+} | null | undefined
+
+function clientSnapshot(document: CpsViewData['document']): CpsClientSnapshot {
+  const customFields = (document as { custom_fields?: Record<string, unknown> }).custom_fields
+  const snapshot = customFields?.client_snapshot
+  return (snapshot && typeof snapshot === 'object' ? snapshot : null) as CpsClientSnapshot
 }
 
-// Standalone items return undefined. Members of a known group return its
-// letter. Items that carry a group_id with no matching section return null.
-function membershipOf(row: ItemViewRow, letters: Map<string, string>): string | null | undefined {
-  if (!row.groupId) return undefined
-  const letter = letters.get(row.groupId)
-  return letter === undefined ? null : letter
+// Saved snapshot first (document-time context), then the display name,
+// then the established empty fallback. Never fetched live: history must
+// not rewrite itself when the master client record changes.
+function clientDisplayName(document: CpsViewData['document']): string {
+  const snapshot = clientSnapshot(document)
+  const snapshotName = snapshot && typeof snapshot.name === 'string' ? snapshot.name.trim() : ''
+  const displayName = document.client_name?.trim() ? document.client_name.trim() : ''
+  return snapshotName || displayName || 'No client'
 }
 
-function buildSegments(rows: CpsViewRow[]) {
-  const letters = resolveGroupLetters(rows)
-  const aggregates = new Map<string, { total: number; count: number }>()
-  rows.forEach((row) => {
-    if (row.type !== 'item') return
-    const membership = membershipOf(row, letters)
-    if (typeof membership !== 'string') return
-    const entry = aggregates.get(membership) || { total: 0, count: 0 }
-    entry.total += row.selling
-    entry.count += 1
-    aggregates.set(membership, entry)
-  })
-
-  const segments: ViewSegment[] = []
-  let open: Extract<ViewSegment, { type: 'group' }> | null = null
-  rows.forEach((row) => {
-    if (row.type === 'group') {
-      const letter = letters.get(row.key) || groupLetter(segments.length)
-      const aggregate = aggregates.get(letter) || { total: 0, count: 0 }
-      open = { type: 'group', row, letter, items: [], total: aggregate.total, count: aggregate.count }
-      segments.push(open)
-      return
-    }
-    const membership = membershipOf(row, letters)
-    if (open && typeof membership === 'string' && membership === open.letter) {
-      open.items.push(row)
-      return
-    }
-    open = null
-    segments.push({ type: 'item', row, membership })
-  })
-
-  return segments
+// Optional second line from saved context only. Absent parts vanish;
+// absence is never announced with placeholder noise.
+function clientContextLine(document: CpsViewData['document']): string {
+  const snapshot = clientSnapshot(document)
+  const contact =
+    snapshot && typeof snapshot.contact_person === 'string' ? snapshot.contact_person.trim() : ''
+  const site = document.project_name?.trim() ? document.project_name.trim() : ''
+  return [contact, site].filter(Boolean).join(' · ')
 }
 
 function CommercialColumn({ row, formatters }: { row: Extract<CpsViewRow, { type: 'item' }>; formatters: Formatters }) {
@@ -163,7 +141,7 @@ function MemberNote({ membership }: { membership?: string | null }) {
   if (membership === undefined) return null
   return (
     <span className="cps-sr">
-      {membership ? `Member of Group ${membership}` : 'Grouped item'}
+      {membership ? 'Grouped item' : 'Grouped item without matching header'}
     </span>
   )
 }
@@ -228,7 +206,7 @@ function DocumentSurface({
   formatters: Formatters
   mobile?: boolean
 }) {
-  const segments = buildSegments(data.rows)
+  const segments = buildCpsViewSegments(data.rows)
   const Entry = mobile ? MobileEntry : DesktopEntry
   return (
     <section className="cps-doc" aria-label="Cost and pricing schedule">
@@ -238,18 +216,19 @@ function DocumentSurface({
             return <Entry key={segment.row.key} row={segment.row} formatters={formatters} membership={segment.membership} />
           }
           return (
-            <section key={segment.row.key} id={`grp-${segment.letter}`} className="cps-grp" aria-label={`Group ${segment.letter}: ${segment.row.title}`}>
+            <section key={segment.row.key} id={`grp-${segment.row.key}`} className="cps-grp" aria-label={segment.row.title || 'Cost and pricing group'}>
               <div className="cps-ghead" role="heading" aria-level={mobile ? 3 : 2}>
-                <span className="ghost" aria-hidden="true">{segment.letter}</span>
+                <span className="cps-gicon" aria-hidden="true"><Package size={22} /></span>
                 <div className="ghead-main">
-                  <div className="kicker">Group {segment.letter}</div>
                   {mobile ? <h3>{segment.row.title}</h3> : <h2>{segment.row.title}</h2>}
                   <div className="count">{segment.count} {segment.count === 1 ? 'item' : 'items'} · {formatters.money(segment.total)}</div>
                 </div>
               </div>
-              {segment.items.map((item) => <Entry key={item.key} row={item} formatters={formatters} membership={segment.letter} />)}
-              <div className="cps-gsub" aria-label={`End of Group ${segment.letter}, subtotal ${formatters.money(segment.total)}`}>
-                <span className="k">End of Group {segment.letter}</span>
+              <div className="cps-gitems">
+                {segment.items.map((item) => <Entry key={item.key} row={item} formatters={formatters} membership={segment.membership} />)}
+              </div>
+              <div className="cps-gsub" aria-label={`${segment.row.title || 'Group'} subtotal ${formatters.money(segment.total)}`}>
+                <span className="k">Group Subtotal <span>({segment.count} {segment.count === 1 ? 'item' : 'items'})</span></span>
                 <span className="mono">{formatters.money(segment.total)}</span>
               </div>
             </section>
@@ -275,49 +254,56 @@ function Summary({ data, formatters, mobile }: { data: CpsViewData; formatters: 
   )
 }
 
-function Dossier({ data, status, onEdit, formatters, mobile }: ViewProps & { mobile?: boolean }) {
+function Dossier({ data, status, formatters, mobile }: ViewProps & { mobile?: boolean }) {
   const document = data.document
+  const { settings } = useSettings()
+  const companyName = settings?.company_name?.trim() ? String(settings.company_name).trim() : ''
+  const logoUrl = resolveCanonicalLogoUrl(settings)
+  const contextLine = clientContextLine(document)
+  const clientName = clientDisplayName(document)
+  const title = document.title?.trim() ? document.title.trim() : ''
   return (
     <>
-      <section className="cps-dossier">
-        <div className="cps-monogram">{monogram(document.client_name)}</div>
-        <div className="min-w-0 flex-1">
-          {mobile ? <h2>{document.title || 'Untitled Cost & Pricing Sheet'}</h2> : <h1>{document.title || 'Untitled Cost & Pricing Sheet'}</h1>}
-          <div className="client">{document.client_name || 'No client'} · {document.project_name || 'No site'}</div>
-          {!mobile ? (
-            <div className="cps-context">
-              <details>
-                <summary>Document context</summary>
-                <dl>
-                  <dt>Number</dt><dd>{document.cps_number}</dd>
-                  <dt>Status</dt><dd>{status}</dd>
-                  <dt>Issue Date</dt><dd>{document.issue_date || '-'}</dd>
-                  <dt>Items</dt><dd>{data.rows.filter((row) => row.type === 'item').length}</dd>
-                </dl>
-              </details>
+      <section className="cps-dossier" aria-label="Cost and pricing sheet identity">
+        <div className="cps-issuer">
+          <BrandMark logoUrl={logoUrl} companyName={companyName} />
+          <div className="min-w-0">
+            <div className="cps-id-label">Company</div>
+            {companyName ? <div className="company">{companyName}</div> : null}
+          </div>
+        </div>
+      </section>
+      <section className="cps-context" aria-label="Document context">
+        <div className="cps-context-title">Document context</div>
+        <div className="cps-context-strip">
+          <div className="cps-context-chip">
+            <span>Client</span>
+            <b>{clientName}</b>
+          </div>
+          {title ? (
+            <div className="cps-context-chip">
+              <span>Title</span>
+              <b>{title}</b>
+            </div>
+          ) : null}
+          {contextLine ? (
+            <div className="cps-context-chip">
+              <span>Context</span>
+              <b>{contextLine}</b>
             </div>
           ) : null}
         </div>
-        {mobile ? (
-          <div className="dossier-actions">
-            <button type="button" className="cps-view-btn ghost" onClick={onEdit}><Edit3 size={14} /> Edit</button>
-            <button type="button" className="cps-view-btn primary"><Download size={14} /> Download</button>
-          </div>
-        ) : null}
+        <details>
+          <summary>More details</summary>
+          <dl>
+            <dt>Number</dt><dd>{document.cps_number}</dd>
+            <dt>Status</dt><dd>{status}</dd>
+            <dt>Issue Date</dt><dd>{document.issue_date || '-'}</dd>
+            <dt>{mobile ? 'Selling' : 'Items'}</dt>
+            <dd>{mobile ? formatters.money(data.totals.total_selling_price) : data.rows.filter((row) => row.type === 'item').length}</dd>
+          </dl>
+        </details>
       </section>
-      {mobile ? (
-        <div className="cps-context">
-          <details>
-            <summary>Document context</summary>
-            <dl>
-              <dt>Number</dt><dd>{document.cps_number}</dd>
-              <dt>Status</dt><dd>{status}</dd>
-              <dt>Issue Date</dt><dd>{document.issue_date || '-'}</dd>
-              <dt>Selling</dt><dd>{formatters.money(data.totals.total_selling_price)}</dd>
-            </dl>
-          </details>
-        </div>
-      ) : null}
     </>
   )
 }
@@ -340,13 +326,125 @@ function CloseOut({ data, formatters, mobile }: { data: CpsViewData; formatters:
 
 type SheetConfirm = 'convert' | 'archive' | 'delete' | null
 
-function MoreSheet({ open, onClose, status, actions }: { open: boolean; onClose: () => void; status: string; actions: CpsDocActions }) {
-  const [customOpen, setCustomOpen] = useState(false)
+function DocumentActionRow({
+  onEdit,
+  onConvert,
+  onDownload,
+  downloading,
+}: {
+  onEdit: () => void
+  onConvert: () => void
+  onDownload: () => void
+  downloading: boolean
+}) {
+  return (
+    <section className="cps-doc-actions" aria-label="Cost and pricing sheet actions">
+      <button type="button" className="cps-view-btn convert" onClick={onConvert}>
+        <span className="cps-action-icon" aria-hidden="true"><FileOutput size={15} /></span>
+        <span>Convert to Quote</span>
+      </button>
+      <button type="button" className="cps-view-btn soft" onClick={onEdit}>
+        <span className="cps-action-icon" aria-hidden="true"><Pencil size={15} /></span>
+        <span>Edit</span>
+      </button>
+      <button type="button" className="cps-view-btn soft" onClick={onDownload} disabled={downloading}>
+        <span className="cps-action-icon" aria-hidden="true"><Download size={15} /></span>
+        <span>Download</span>
+      </button>
+    </section>
+  )
+}
+
+function CpsCustomizeSheet({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  const {
+    customization,
+    setDocumentFont,
+    setInkFont,
+    setInkColour,
+  } = usePdfCustomization({
+    documentFamily: 'cps_sheets',
+    capabilities: CPS_CAPABILITIES,
+    policy: CPS_POLICY,
+    templateDefaults: CPS_TEMPLATE_DEFAULTS,
+  })
+
+  return (
+    <DocumentSheet
+      open={open}
+      onClose={onClose}
+      title="Customize CPS PDF"
+      subtitle="Adjust output appearance for Cost & Pricing Sheet exports."
+    >
+      <DocumentCustomizeCard
+        customization={customization}
+        setDocumentFont={setDocumentFont}
+        setInkFont={setInkFont}
+        setInkColour={setInkColour}
+        templatePicker={
+          <div className="rounded-[18px] border border-bd-border bg-bd-card-bg px-4 py-3 text-sm font-bold text-bd-text">
+            Modern Minimal
+          </div>
+        }
+        colorSwatches={[]}
+        customColor="auto"
+        onCustomColorChange={() => {}}
+        handwritingFonts={[]}
+        customFont="auto"
+        onCustomFontChange={() => {}}
+        onSave={() => {
+          onClose()
+          feedback.success('Customization saved', { description: 'CPS PDF appearance settings updated.' })
+        }}
+      />
+    </DocumentSheet>
+  )
+}
+
+function ConvertConfirm({
+  open,
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean
+  busy: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <DocumentConfirmDialog
+      open={open}
+      title="Convert to Quotation?"
+      description="This will create a new open quotation from this Cost & Pricing Sheet. Selling rates carry over as quotation prices."
+      cancelLabel="Cancel"
+      confirmLabel={busy ? 'Converting...' : 'Convert to Quotation'}
+      loading={busy}
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
+  )
+}
+
+function MoreSheet({
+  open,
+  onClose,
+  actions,
+  onRequestConvert,
+}: {
+  open: boolean
+  onClose: () => void
+  actions: CpsDocActions
+  onRequestConvert: () => void
+}) {
   const [confirm, setConfirm] = useState<SheetConfirm>(null)
   const [busy, setBusy] = useState<string | null>(null)
-  if (!open && !customOpen && !confirm) return null
-
-  const approved = status.toLowerCase() === 'approved'
+  if (!open && !confirm) return null
 
   async function run(id: string, fn: () => Promise<void>) {
     if (busy) return
@@ -372,7 +470,7 @@ function MoreSheet({ open, onClose, status, actions }: { open: boolean; onClose:
           icon: <Zap size={18} />,
           disabled: busy !== null,
           closeOnClick: false,
-          onClick: () => setConfirm('convert'),
+          onClick: onRequestConvert,
         },
         {
           id: 'duplicate',
@@ -381,29 +479,6 @@ function MoreSheet({ open, onClose, status, actions }: { open: boolean; onClose:
           icon: <Copy size={18} />,
           disabled: busy !== null,
           onClick: () => void run('duplicate', actions.onDuplicate),
-        },
-        {
-          id: 'customize',
-          label: 'Customize PDF',
-          description: 'Template, font and text colour',
-          icon: <Palette size={18} />,
-          disabled: busy !== null,
-          onClick: () => setCustomOpen(true),
-        },
-      ],
-    },
-    {
-      title: 'Status',
-      items: [
-        {
-          id: 'status',
-          label: approved ? 'Reopen sheet' : 'Approve sheet',
-          description: approved ? 'Move back to open' : 'Mark this sheet as approved',
-          icon: <CheckCircle2 size={18} />,
-          disabled: busy !== null,
-          selected: approved,
-          statusLabel: status,
-          onClick: () => void run('status', actions.onToggleStatus),
         },
       ],
     },
@@ -437,16 +512,6 @@ function MoreSheet({ open, onClose, status, actions }: { open: boolean; onClose:
     <>
       <DocumentMoreSheet open={open} onClose={onClose} title="Cost & Pricing Sheet actions" sections={sections} />
       <DocumentConfirmDialog
-        open={confirm === 'convert'}
-        title="Convert to Quotation?"
-        description="This will create a new open quotation from this Cost & Pricing Sheet. Selling rates carry over as quotation prices."
-        cancelLabel="Cancel"
-        confirmLabel={busy === 'convert' ? 'Converting…' : 'Convert to Quotation'}
-        loading={busy === 'convert'}
-        onConfirm={() => void run('convert', actions.onConvertToQuotation)}
-        onCancel={() => setConfirm(null)}
-      />
-      <DocumentConfirmDialog
         open={confirm === 'archive'}
         title="Archive this Cost & Pricing Sheet?"
         description="This will move the sheet to the archive. You can restore it later from Settings."
@@ -467,36 +532,11 @@ function MoreSheet({ open, onClose, status, actions }: { open: boolean; onClose:
         onConfirm={() => void run('delete', actions.onDelete)}
         onCancel={() => setConfirm(null)}
       />
-      {customOpen ? (
-        <>
-          <div className="cps-sheet-backdrop" onClick={() => setCustomOpen(false)} />
-          <section className="cps-view-sheet" role="dialog" aria-modal="true" aria-label="Customize PDF">
-            <div className="cps-sheet-head">
-              <b>Customize PDF</b>
-              <button type="button" onClick={() => setCustomOpen(false)} aria-label="Close customization">Close</button>
-            </div>
-          <p className="mt-3 text-xs font-semibold" style={{ color: 'var(--faint)' }}>Active template: <b style={{ color: 'var(--body)' }}>Modern Minimal</b>. Choices apply to generated PDF only.</p>
-          <div className="cps-tz-sec">
-            <h4>Template</h4>
-            <div className="cps-tz-rail">
-              {['Classic Ledger', 'Modern Minimal', 'Bold Commercial', 'Compact Schedule'].map((name, index) => (
-                <button key={name} type="button" className={`cps-tz-card ${index === 1 ? 'on' : ''}`}>
-                  <span className="cps-mini"><h6>Cost & Pricing Sheet</h6><i><span>Reinforced concrete</span><em>₦2,870,000</em></i><i><span>Y12 bars</span><em>₦1,512,000</em></i><b>₦8,597,500</b></span>
-                  <span className="mt-2 block text-xs font-bold">{name} {index === 1 ? '· Active' : ''}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="cps-tz-sec"><h4>Font</h4><div className="cps-tz-fonts"><button className="cps-tz-font on">Ag System Sans</button><button className="cps-tz-font">Ag Georgia Serif</button><button className="cps-tz-font">Ag Mono</button></div></div>
-          <div className="cps-tz-sec"><h4>Text colour</h4><div className="cps-tz-swatches"><button className="cps-tz-sw on" style={{ background: '#101828' }} aria-label="Text colour ink" /><button className="cps-tz-sw" style={{ background: '#1e3a5f' }} aria-label="Text colour navy" /><button className="cps-tz-sw" style={{ background: '#475569' }} aria-label="Text colour slate" /></div></div>
-        </section>
-        </>
-      ) : null}
     </>
   )
 }
 
-function DesktopRail({ data, formatters, onEdit }: Pick<ViewProps, 'data' | 'formatters' | 'onEdit'>) {
+function DesktopRail({ data, formatters }: Pick<ViewProps, 'data' | 'formatters'>) {
   const groups = data.rows.filter((row) => row.type === 'group') as Array<Extract<CpsViewRow, { type: 'group' }>>
   return (
     <aside className="cps-view-rail">
@@ -506,7 +546,6 @@ function DesktopRail({ data, formatters, onEdit }: Pick<ViewProps, 'data' | 'for
         <span className="mgn">{formatters.percent(data.totals.margin_percent)} margin</span>
         <div className="prow cost"><span>Total cost</span><span className="mono">{formatters.money(data.totals.total_cost)}</span></div>
         <div className="prow profit"><span>Profit</span><span className="mono">{formatters.money(data.totals.gross_profit)}</span></div>
-        <button type="button" className="cps-view-btn primary w-full justify-center" onClick={onEdit}><Edit3 size={15} /> Edit</button>
       </div>
       <div className="cps-view-panel">
         <h3>Document Facts</h3>
@@ -516,7 +555,7 @@ function DesktopRail({ data, formatters, onEdit }: Pick<ViewProps, 'data' | 'for
       {groups.length > 0 ? (
         <div className="cps-view-panel cps-toc">
           <h3>Groups</h3>
-          {groups.map((group, index) => <a key={group.key} href={`#grp-${String.fromCharCode(65 + index)}`}><span>{String.fromCharCode(65 + index)} · {group.title}</span><span className="mono">View</span></a>)}
+          {groups.map((group) => <a key={group.key} href={`#grp-${group.key}`}><span>{group.title}</span><span className="mono">View</span></a>)}
         </div>
       ) : null}
     </aside>
@@ -525,34 +564,69 @@ function DesktopRail({ data, formatters, onEdit }: Pick<ViewProps, 'data' | 'for
 
 export function CostPricingSheetDesktopView(props: ViewProps) {
   const [moreOpen, setMoreOpen] = useState(false)
+  const [customizeOpen, setCustomizeOpen] = useState(false)
+  const [convertOpen, setConvertOpen] = useState(false)
+  const [convertBusy, setConvertBusy] = useState(false)
+
+  async function runConvert() {
+    if (convertBusy) return
+    setConvertBusy(true)
+    try {
+      await props.actions.onConvertToQuotation()
+    } catch (error) {
+      feedback.error('Action failed', { description: error instanceof Error ? error.message : 'Could not complete this action.' })
+    } finally {
+      setConvertBusy(false)
+      setConvertOpen(false)
+    }
+  }
+
   return (
     <div className="cps-view">
       <header className="cps-view-topbar">
         <div className="cps-view-topbar-inner">
           <button type="button" className="cps-view-iconbtn" onClick={props.onBack} aria-label="Back to Cost & Pricing Sheets"><ArrowLeft size={17} /></button>
           <div className="cps-tb-id"><span className="num">{props.data.document.cps_number}</span><span className="cps-status" data-s={props.status.toLowerCase()}>{props.status}</span></div>
-          <button type="button" className="cps-view-btn primary"><Download size={15} /> Download</button>
-          <button type="button" className="cps-view-btn ghost" onClick={props.onEdit}><Edit3 size={15} /> Edit</button>
           <button type="button" className="cps-view-iconbtn" aria-label="Share"><Share2 size={17} /></button>
-          <button type="button" className="cps-view-iconbtn" aria-label="Customize PDF" onClick={() => setMoreOpen(true)}><Palette size={17} /></button>
+          <button type="button" className="cps-view-iconbtn" aria-label="Customize PDF" onClick={() => setCustomizeOpen(true)}><Palette size={17} /></button>
           <button type="button" className="cps-view-iconbtn" aria-label="More actions" onClick={() => setMoreOpen(true)}><MoreHorizontal size={17} /></button>
         </div>
       </header>
       <main className="cps-view-room">
         <section>
+          <DocumentActionRow onEdit={props.onEdit} onConvert={() => setConvertOpen(true)} onDownload={props.onDownload} downloading={props.downloading} />
           <Dossier {...props} />
           <Summary data={props.data} formatters={props.formatters} />
           <DocumentSurface data={props.data} formatters={props.formatters} />
         </section>
-        <DesktopRail data={props.data} formatters={props.formatters} onEdit={props.onEdit} />
+        <DesktopRail data={props.data} formatters={props.formatters} />
       </main>
-      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} status={props.status} actions={props.actions} />
+      <CpsCustomizeSheet open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} actions={props.actions} onRequestConvert={() => setConvertOpen(true)} />
+      <ConvertConfirm open={convertOpen} busy={convertBusy} onConfirm={() => void runConvert()} onCancel={() => setConvertOpen(false)} />
     </div>
   )
 }
 
 export function CostPricingSheetMobileFoldView(props: ViewProps) {
   const [moreOpen, setMoreOpen] = useState(false)
+  const [customizeOpen, setCustomizeOpen] = useState(false)
+  const [convertOpen, setConvertOpen] = useState(false)
+  const [convertBusy, setConvertBusy] = useState(false)
+
+  async function runConvert() {
+    if (convertBusy) return
+    setConvertBusy(true)
+    try {
+      await props.actions.onConvertToQuotation()
+    } catch (error) {
+      feedback.error('Action failed', { description: error instanceof Error ? error.message : 'Could not complete this action.' })
+    } finally {
+      setConvertBusy(false)
+      setConvertOpen(false)
+    }
+  }
+
   return (
     <div className="cps-view">
       <div className="cps-view-wrap">
@@ -560,27 +634,23 @@ export function CostPricingSheetMobileFoldView(props: ViewProps) {
           <button type="button" className="cps-view-iconbtn" onClick={props.onBack} aria-label="Back to Cost & Pricing Sheets"><ArrowLeft size={18} /></button>
           <div className="cps-appbar-id"><span className="num">{props.data.document.cps_number}</span><span className="cps-status" data-s={props.status.toLowerCase()}>{props.status}</span></div>
           <button type="button" className="cps-view-iconbtn" aria-label="Share"><Share2 size={18} /></button>
-          <button type="button" className="cps-view-iconbtn" aria-label="Customize PDF" onClick={() => setMoreOpen(true)}><Palette size={18} /></button>
+          <button type="button" className="cps-view-iconbtn" aria-label="Customize PDF" onClick={() => setCustomizeOpen(true)}><Palette size={18} /></button>
           <button type="button" className="cps-view-iconbtn" aria-label="More actions" onClick={() => setMoreOpen(true)}><MoreHorizontal size={18} /></button>
         </header>
+        <DocumentActionRow onEdit={props.onEdit} onConvert={() => setConvertOpen(true)} onDownload={props.onDownload} downloading={props.downloading} />
         <Dossier {...props} mobile />
         <Summary data={props.data} formatters={props.formatters} mobile />
         <DocumentSurface data={props.data} formatters={props.formatters} mobile />
       </div>
       {/* Download FAB. Geometry, icon, motion, and interaction states are owned
           by the canonical FloatingDownloadButton. This wrapper only carries the
-          CPS contextual offset that clears the mobile bottom navigation. */}
+          app bottom-nav token offset. */}
       <div className="cps-fab-slot">
-        <FloatingDownloadButton label="Download Cost & Pricing Sheet" />
+        <FloatingDownloadButton label="Download Cost & Pricing Sheet" onClick={props.onDownload} disabled={props.downloading} />
       </div>
-      <nav className="cps-bottom-nav" aria-label="Mobile navigation">
-        <button type="button"><Home size={16} /> Home</button>
-        <button type="button"><Briefcase size={16} /> Jobs</button>
-        <button type="button" className="active"><Download size={16} /> Sales</button>
-        <button type="button"><Users size={16} /> Clients</button>
-        <button type="button"><MoreHorizontal size={16} /> More</button>
-      </nav>
-      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} status={props.status} actions={props.actions} />
+      <CpsCustomizeSheet open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} actions={props.actions} onRequestConvert={() => setConvertOpen(true)} />
+      <ConvertConfirm open={convertOpen} busy={convertBusy} onConfirm={() => void runConvert()} onCancel={() => setConvertOpen(false)} />
     </div>
   )
 }

@@ -211,4 +211,66 @@ export type QuotationPdfModel = PdfBaseDocumentModel & {
   }
 }
 
+export interface CpsPdfRow {
+  key: string
+  kind: 'group' | 'item'
+  number: string
+  groupId: string | null
+  title: string
+  description: string
+  specification: string
+  make: string
+  quantity: number
+  unit: string
+  cp: number
+  sp: number
+  totalCost: number
+  totalSelling: number
+  profit: number
+  marginPercent: number
+  imageUrl: string | null
+}
+
+export interface CpsPdfGroup {
+  id: string
+  title: string
+  itemCount: number
+  subtotal: number
+}
+
+export interface CpsPdfModel {
+  identity: {
+    kind: 'cps'
+    number: string
+    title: string
+    issueDate: string
+    status: string
+  }
+  company: {
+    name: string
+    logoUrl: string | null
+    addressLines: string[]
+    phone: string
+    email: string
+  }
+  client: {
+    name: string
+    contactPerson: string
+    phone: string
+    email: string
+    city: string
+  }
+  site: string
+  notes: string
+  documentFont: string | null
+  rows: CpsPdfRow[]
+  groups: CpsPdfGroup[]
+  totals: {
+    total_cost: number
+    total_selling_price: number
+    gross_profit: number
+    margin_percent: number
+  }
+}
+
 export type PdfDocumentModel = InvoicePdfModel | QuotationPdfModel

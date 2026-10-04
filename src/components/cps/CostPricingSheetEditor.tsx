@@ -3,6 +3,7 @@ import { Check, ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, X } from 'lucid
 
 import ClientSelector from '@/components/ClientSelector'
 import { CpsImportSheet } from '@/components/cps/CpsImportSheet'
+import { CpsMarkupSheet } from '@/components/cps/CpsMarkupSheet'
 import { CostPricingSheetForm } from '@/components/cps/CostPricingSheetForm'
 import { newRowId } from '@/components/cps/CostPricingSheetForm'
 import type {
@@ -333,6 +334,8 @@ function CostPricingSheetMobileHost({
   onRequestImport,
   onRequestMarkup,
   onRequestClearAll,
+  hasUndo,
+  onUndoMarkup,
   onClientChange,
   onCommit,
 }: {
@@ -350,6 +353,8 @@ function CostPricingSheetMobileHost({
   onRequestImport: () => void
   onRequestMarkup: () => void
   onRequestClearAll: () => void
+  hasUndo: boolean
+  onUndoMarkup: () => void
   onClientChange: (client: MobileCpsClient | null) => void
   onCommit: (cps: Cps) => void
 }) {
@@ -378,6 +383,8 @@ function CostPricingSheetMobileHost({
       onRequestImport={onRequestImport}
       onRequestMarkup={onRequestMarkup}
       onRequestClearAll={onRequestClearAll}
+      hasUndo={hasUndo}
+      onUndoMarkup={onUndoMarkup}
       rows={importedRows}
       rowsRevision={rowsRevision}
       syncedTitle={syncedTitle}
@@ -639,6 +646,8 @@ export function CostPricingSheetEditor({
           onRequestImport={() => setImportOpen(true)}
           onRequestMarkup={openMarkup}
           onRequestClearAll={() => setMobileClearOpen(true)}
+          hasUndo={Boolean(undoRows)}
+          onUndoMarkup={undoMarkup}
           onClientChange={(next) => {
             setCps((current) => applyMobileClientSnapshot(current, next))
           }}
@@ -700,38 +709,71 @@ export function CostPricingSheetEditor({
         }}
       />
 
-      <InstantMarkupDialog
-        open={markupOpen}
-        dock={useDesktopComposition}
-        rows={rows}
-        included={included}
-        mode={markupMode}
-        value={markupValue}
-        preview={preview}
-        error={markupError}
-        onOpenChange={(open) => {
-          setMarkupOpen(open)
-          if (!open) {
+      {useDesktopComposition ? (
+        <InstantMarkupDialog
+          open={markupOpen}
+          rows={rows}
+          included={included}
+          mode={markupMode}
+          value={markupValue}
+          preview={preview}
+          error={markupError}
+          onOpenChange={(open) => {
+            setMarkupOpen(open)
+            if (!open) {
+              setPreview(null)
+              setMarkupError('')
+            }
+          }}
+          onModeChange={(nextMode) => {
+            setMarkupMode(nextMode)
             setPreview(null)
             setMarkupError('')
-          }
-        }}
-        onModeChange={(nextMode) => {
-          setMarkupMode(nextMode)
-          setPreview(null)
-          setMarkupError('')
-        }}
-        onValueChange={(nextValue) => {
-          setMarkupValue(nextValue)
-          setPreview(null)
-          setMarkupError('')
-        }}
-        onIncludedChange={(rowKey, nextIncluded) => setIncluded((current) => ({ ...current, [rowKey]: nextIncluded }))}
-        onIncludeAll={includeAll}
-        onPreview={handlePreview}
-        onBack={() => setPreview(null)}
-        onApply={handleApplyMarkup}
-      />
+          }}
+          onValueChange={(nextValue) => {
+            setMarkupValue(nextValue)
+            setPreview(null)
+            setMarkupError('')
+          }}
+          onIncludedChange={(rowKey, nextIncluded) => setIncluded((current) => ({ ...current, [rowKey]: nextIncluded }))}
+          onIncludeAll={includeAll}
+          onPreview={handlePreview}
+          onBack={() => setPreview(null)}
+          onApply={handleApplyMarkup}
+        />
+      ) : (
+        <CpsMarkupSheet
+          open={markupOpen}
+          onOpenChange={(open) => {
+            setMarkupOpen(open)
+            if (!open) {
+              setPreview(null)
+              setMarkupError('')
+            }
+          }}
+          rows={rows}
+          included={included}
+          mode={markupMode}
+          value={markupValue}
+          preview={preview}
+          error={markupError}
+          onModeChange={(nextMode) => {
+            setMarkupMode(nextMode)
+            setPreview(null)
+            setMarkupError('')
+          }}
+          onValueChange={(nextValue) => {
+            setMarkupValue(nextValue)
+            setPreview(null)
+            setMarkupError('')
+          }}
+          onIncludedChange={(rowKey, nextIncluded) => setIncluded((current) => ({ ...current, [rowKey]: nextIncluded }))}
+          onIncludeAll={includeAll}
+          onPreview={handlePreview}
+          onBack={() => setPreview(null)}
+          onApply={handleApplyMarkup}
+        />
+      )}
     </>
   )
 }
@@ -935,7 +977,6 @@ function CpsColumnSheet({
 
 function InstantMarkupDialog({
   open,
-  dock,
   rows,
   included,
   mode,
@@ -952,7 +993,6 @@ function InstantMarkupDialog({
   onApply,
 }: {
   open: boolean
-  dock: boolean
   rows: TableDocumentRow[]
   included: InstantMarkupSelection
   mode: InstantMarkupMode
@@ -971,12 +1011,9 @@ function InstantMarkupDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={cn(
-          'cps-form border-0 bg-transparent p-0 shadow-none sm:max-w-none',
-          dock ? 'h-dvh max-h-dvh w-[440px] translate-x-0 translate-y-0 right-0 left-auto top-0' : 'w-full max-w-[560px]',
-        )}
+        className="cps-form border-0 bg-transparent p-0 shadow-none sm:max-w-none h-dvh max-h-dvh w-[440px] translate-x-0 translate-y-0 right-0 left-auto top-0"
       >
-        <div className={cn('cps-overlay', dock && 'dock')}>
+        <div className="cps-overlay dock">
           <div className="cps-sheet">
             <div className="cps-grab" />
             <DialogHeader className="cps-sheet-head text-left">
