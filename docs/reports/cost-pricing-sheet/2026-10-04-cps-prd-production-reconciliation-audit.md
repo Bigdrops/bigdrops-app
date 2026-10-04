@@ -632,38 +632,12 @@ Commands run:
 Post-audit status:
 
 ```text
- M docs/standard/prefix-engine-settings-standard.md
- M src/components/cps/CostPricingSheetEditor.tsx
- M src/components/cps/CostPricingSheetViewPresentations.tsx
- M src/components/cps/CpsMarkupSheet.tsx
- M src/components/pdf/index.ts
- D src/components/pdf/templates/CpsSchedule.tsx
- M src/components/pdf/types.ts
- M src/domain/cps/conversion.ts
- M src/domain/cps/instant-markup.ts
- M src/domain/cps/normalize.ts
- M src/domain/cps/pdfDownloadHandler.ts
- M src/domain/pdf/customization/cps.ts
- M src/domain/pdf/customization/hooks.ts
- M src/domain/prefixConstants.ts
- M src/pages/ViewCps.tsx
- M src/pages/view-cps-actions.ts
- M src/tests/critical/cpsCalculationAuthority.test.js
- M src/tests/critical/cpsConversion.test.js
- M src/tests/critical/cpsInstantMarkup.test.js
- M src/tests/critical/cpsMarkupPresentation.test.js
- M src/tests/critical/cpsPdf.test.js
-?? docs/reports/cost-pricing-sheet/2026-10-04-cps-conversion-options-pdf-prefix-production-pass.md
-?? docs/reports/cost-pricing-sheet/2026-10-04-cps-instant-markup-stackable-pricing-pass.md
-?? docs/reports/cost-pricing-sheet/2026-10-04-cps-pdf-customization-completion-pass.md
-?? docs/reports/cost-pricing-sheet/2026-10-04-cps-prd-production-reconciliation-audit.md
-?? src/components/cps/CpsConversionOptionsSheet.tsx
-?? src/components/pdf/forme/
-?? src/domain/cps/pdfPreferences.ts
-?? src/tests/critical/cpsPrefix.test.js
+ M docs/reports/cost-pricing-sheet/2026-10-04-cps-prd-production-reconciliation-audit.md
 ```
 
-Only `docs/reports/cost-pricing-sheet/2026-10-04-cps-prd-production-reconciliation-audit.md` was created by this audit. The other modified and untracked paths are pre-existing or concurrent work and were not changed by this audit.
+Only `docs/reports/cost-pricing-sheet/2026-10-04-cps-prd-production-reconciliation-audit.md` was modified by this audit.
+
+Note: The final `git status --short` output is smaller than the pre-audit output. Those source-file state changes happened outside this audit. This audit did not edit or revert them.
 
 Commands not run by requirement:
 
