@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — Live Type</title>
+<style>
+  :root{
+    --paper:#FBFBFA;
+    --ink:#0B1B33;
+    --ink-2:#41526B;
+    --line:#DDE2EA;
+    --accent:#2F6BFF;
+    --font:"Inter","Helvetica Neue",Arial,"Segoe UI",system-ui,sans-serif;
+    --e-spring:cubic-bezier(.2,.9,.25,1);
+    --e-lock:cubic-bezier(.2,1.35,.35,1);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+    -webkit-font-smoothing:antialiased;overflow:hidden;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .frame{position:fixed;inset:0;display:flex}
+
+  /* vertical identity rail — phone: the left edge; fold: stays, widens the margin */
+  .rail{
+    flex:0 0 44px;border-right:1px solid var(--line);
+    display:flex;align-items:flex-end;justify-content:center;padding:0 0 22px;
+  }
+  .rail span{
+    writing-mode:vertical-rl;transform:rotate(180deg);
+    font-size:10px;font-weight:600;letter-spacing:.42em;text-transform:uppercase;
+    color:var(--ink-2);white-space:nowrap;
+  }
+
+  .stage{
+    flex:1;position:relative;display:grid;grid-template-columns:1fr;min-width:0;
+  }
+  .page{min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .page-a{padding:0 clamp(18px,6vw,60px)}
+  .page-b{display:none;padding:0 clamp(18px,4vw,48px)}
+
+  .live{margin:0;font-weight:800;letter-spacing:-.04em;line-height:.92;text-wrap:balance}
+  .live .tok{display:inline-block}
+  .live span{display:inline-block;will-change:transform,opacity}
+  .animWord span{animation:ltIn .72s var(--e-lock) both;animation-delay:calc(var(--i)*26ms)}
+  @keyframes ltIn{
+    0%{opacity:0;transform:translateY(-72%) rotate(-2.5deg)}
+    68%{opacity:1;transform:translateY(7%) rotate(0deg)}
+    100%{opacity:1;transform:translateY(0)}
+  }
+  /* word beat */
+  .live:not(.tipmode){font-size:clamp(50px,17vw,124px);text-transform:uppercase}
+  /* tip interlude — the type system itself carries the tip */
+  .live.tipmode{
+    font-weight:500;font-size:clamp(21px,5.8vw,31px);line-height:1.36;
+    letter-spacing:-.012em;max-width:24ch;text-wrap:pretty;color:var(--ink);
+  }
+  .live.tipmode .tok .tw{display:inline-block;white-space:pre}
+  .animTip .tw{animation:ltTipIn .5s var(--e-spring) both;animation-delay:calc(var(--i)*22ms)}
+  @keyframes ltTipIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+  .rule{position:relative;height:1px;background:var(--line);margin-top:clamp(18px,4vw,30px)}
+  .rule i{
+    position:absolute;left:0;top:-1px;height:3px;width:100%;background:var(--accent);
+    transform-origin:left center;transform:scaleX(var(--s,0));
+    transition:transform .58s var(--e-spring);
+  }
+
+  .meta{
+    margin-top:clamp(14px,3vw,22px);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-2);font-weight:600;
+  }
+  .meta b{color:var(--ink)}
+
+  /* fold-only editorial index */
+  .index{margin:0;padding:0;list-style:none;display:grid;gap:14px;border-left:1px solid var(--line);padding-left:clamp(18px,3vw,34px)}
+  .index li{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;font-size:14px;color:var(--ink)}
+  .index li u{text-decoration:none;font-size:11px;letter-spacing:.1em;color:var(--accent);font-weight:700}
+  .index li em{font-style:normal;color:var(--ink-2);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+  .crease{display:none;position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--line);z-index:5}
+  .crease::after{content:"";position:absolute;top:8%;bottom:8%;left:-14px;width:28px;background:linear-gradient(90deg,rgba(11,27,51,.05),transparent);pointer-events:none}
+
+  .rest{display:none;margin-top:clamp(20px,5vw,34px);border-top:1px solid var(--line);padding-top:14px}
+  .rest b{display:block;font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .rest p{margin:0;font-size:15px;line-height:1.5;color:var(--ink);max-width:34ch}
+
+  /* ---- FOLD: one column becomes a two-page editorial spread ---- */
+  @media (min-width:640px){
+    .rail{flex-basis:60px}
+    .stage{grid-template-columns:1.08fr .92fr}
+    .page-b{display:flex}
+    .crease{display:block}
+    .page-a{padding:0 clamp(26px,4vw,64px)}
+    .live:not(.tipmode){font-size:clamp(64px,10vw,150px)}
+    .live.tipmode{font-size:clamp(26px,3.1vw,38px);max-width:34ch}
+    /* the tip closes the spread and becomes a pull-quote across both pages */
+    .stage.tipmode .page-a{grid-column:1 / -1}
+    .stage.tipmode .page-b{opacity:0;pointer-events:none;transition:opacity .5s var(--e-spring)}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .live span,.live .tw{opacity:1!important;transform:none!important}
+    .rule i{transform:scaleX(var(--s,0))!important}
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="rail" aria-hidden="true"><span>BIGDROPS · BUSINESS OPERATING PLATFORM</span></div>
+    <div class="stage" id="stage">
+      <section class="page page-a">
+        <h1 class="live" id="live" role="status"><span class="tok">BIGDROPS</span></h1>
+        <div class="rule" aria-hidden="true"><i id="rulebar"></i></div>
+        <p class="meta" id="meta"><b>Returning session</b> — opening your workspace</p>
+        <div class="rest" id="rest" aria-live="polite">
+          <b>BIGDROPS Tip</b>
+          <p id="restTip"></p>
+        </div>
+      </section>
+      <section class="page page-b" aria-hidden="true">
+        <ul class="index" id="index"></ul>
+      </section>
+    </div>
+    <div class="crease" aria-hidden="true"></div>
+  </div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var WORDS = ["BIGDROPS","QUOTATIONS","INVOICES","PAYMENTS","PROJECTS","CLIENTS","RECORDS","REPORTS","STOCK","TAX"];
+  var TIPS = [
+    "Every recorded payment automatically generates a receipt. View and download it from the Receipts page.",
+    "Set an expiry date on quotations to automatically flag overdue responses.",
+    "Tap the search icon to find any document across all modules. Search by document number, client name, or project name."
+  ];
+  var INDEX = [
+    ["01","Quotations","win the job"],["02","Invoices","bill it"],["03","Payments","get paid"],
+    ["04","Receipts","filed automatically"],["05","Projects","track the work"],["06","Clients","the relationship"],
+    ["07","Records","the audit trail"],["08","Tax","from real transactions"],["09","Reports","see the picture"]
+  ];
+
+  var live=document.getElementById("live"),
+      bar=document.getElementById("rulebar"),
+      stage=document.getElementById("stage"),
+      index=document.getElementById("index"),
+      rest=document.getElementById("rest"),
+      restTip=document.getElementById("restTip"),
+      meta=document.getElementById("meta");
+
+  index.innerHTML = INDEX.map(function(r){
+    return '<li><u>'+r[0]+'</u><span>'+r[1]+' <em>'+r[2]+'</em></span></li>';
+  }).join("");
+
+  var raf = window.requestAnimationFrame || function(f){f()};
+
+  function paint(kind,text){
+    live.className = "live" + (kind==="tip" ? " tipmode" : "");
+    var html="";
+    if(kind==="word"){
+      for(var i=0;i<text.length;i++){
+        var ch=text.charAt(i);
+        html += '<span style="--i:'+i+'">'+(ch===" " ? "&nbsp;" : ch)+'</span>';
+      }
+    } else {
+      var words=text.split(" ");
+      for(var j=0;j<words.length;j++){
+        html += '<span class="tw" style="--i:'+j+'">'+words[j]+(j<words.length-1?" ":"")+'</span>';
+      }
+    }
+    live.innerHTML = '<span class="tok">'+html+'</span>';
+    void live.offsetWidth; /* restart the entrance */
+    live.classList.add(kind==="tip" ? "animTip" : "animWord");
+    stage.classList.toggle("tipmode", kind==="tip");
+    raf(function(){
+      var tok=live.querySelector(".tok");
+      var rw=bar.parentNode.getBoundingClientRect().width;
+      if(kind==="word" && tok){
+        var w=tok.getBoundingClientRect().width;
+        bar.style.setProperty("--s", Math.min(1, rw ? w/rw : 1).toFixed(3));
+      } else {
+        bar.style.setProperty("--s","1");
+      }
+    });
+  }
+
+  function run(){
+    var phase=0, wi=0, ti=0;
+    (function loop(){
+      if(phase===0){
+        paint("word", WORDS[wi % WORDS.length]); wi++;
+        phase=1; setTimeout(loop,1300);
+      } else {
+        paint("tip", TIPS[ti % TIPS.length]); ti++;
+        phase=0; setTimeout(loop,4400);
+      }
+    })();
+  }
+
+  if(reduce){
+    /* intentional static state: settled identity + readable tip, no motion */
+    live.className="live"; live.innerHTML='<span class="tok">BIGDROPS</span>';
+    bar.style.setProperty("--s","0.62");
+    rest.style.display="block";
+    restTip.textContent=TIPS[0];
+  } else {
+    run();
+  }
+})();
+</script>
+</body>
+</html>

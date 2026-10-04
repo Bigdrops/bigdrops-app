@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — Constellation</title>
+<style>
+  :root{
+    --ivory:#F7F4EC;
+    --ivory-2:#EFEBE0;
+    --ink:#101B36;
+    --indigo:#4B5FA8;
+    --rule:rgba(16,27,54,.22);
+    --serif:Georgia,"Times New Roman",Times,serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:"Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+    --e-grav:cubic-bezier(.16,1.05,.3,1);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:radial-gradient(120% 120% at 50% 30%, var(--ivory) 30%, var(--ivory-2) 100%);
+    color:var(--ink);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased;
+  }
+  .chart{position:fixed;inset:0}
+  .ground{position:absolute;inset:0;opacity:.5;
+    background-image:radial-gradient(var(--rule) .6px, transparent .7px);
+    background-size:34px 34px}
+
+  /* chart frame with coordinate ticks */
+  .frame{position:absolute;inset:clamp(20px,4vh,54px) clamp(20px,4vw,64px);border:1px solid var(--rule);pointer-events:none}
+  .frame i{position:absolute;background:var(--rule)}
+  .frame i.h{left:0;width:100%;height:1px}
+  .frame i.v{top:0;height:100%;width:1px}
+  .frame b{position:absolute;font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--ink);opacity:.5}
+
+  .title{position:absolute;left:clamp(20px,4vw,64px);top:clamp(20px,4vh,54px);z-index:6;padding:8px 14px 10px;background:var(--ivory);border-bottom:1px solid var(--ink)}
+  .title .k{font-family:var(--mono);font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--indigo)}
+  .title .n{margin-top:6px;font-family:var(--serif);font-size:clamp(20px,2.1vw,30px);letter-spacing:.02em}
+  .title .state{margin-top:7px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(16,27,54,.6)}
+
+  .field{position:absolute;inset:0}
+  .lines{position:absolute;inset:0;width:100%;height:100%}
+  .lines polyline{fill:none;stroke:var(--indigo);stroke-width:.22;vector-effect:non-scaling-stroke;opacity:.5}
+  .lines .pulse{stroke:var(--ink);stroke-width:.5;opacity:.9;stroke-linecap:round;
+    stroke-dasharray:3 40;animation:travel 3.4s linear infinite}
+  @keyframes travel{to{stroke-dashoffset:-43}}
+
+  .pt{position:absolute;width:0;height:0}
+  .pt .dot{position:absolute;left:0;top:0;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;
+    background:var(--ink);animation:twinkle 4.6s ease-in-out infinite}
+  .pt.anchor .dot{width:7px;height:7px;margin:-3.5px 0 0 -3.5px;box-shadow:0 0 0 4px rgba(75,95,168,.14)}
+  @keyframes twinkle{0%,100%{opacity:.55}50%{opacity:1}}
+
+  .lab{position:absolute;transform:translate(-50%,-50%);font-family:var(--serif);font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink);white-space:nowrap;padding:2px 7px;background:var(--ivory);
+    border:1px solid var(--rule);z-index:4}
+  .lab em{font-style:normal;font-family:var(--mono);font-size:8.5px;color:var(--indigo);margin-right:7px;letter-spacing:.1em}
+
+  /* chart caption — the tip */
+  .caption{position:absolute;left:clamp(20px,4vw,64px);bottom:clamp(20px,5vh,58px);z-index:6;width:min(46ch,520px);
+    border-top:1px solid var(--ink);padding-top:12px}
+  .caption .coord{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--indigo);margin-bottom:9px;display:block}
+  .caption p{margin:0;font-family:var(--serif);font-size:16px;line-height:1.55;color:var(--ink);
+    animation:captionIn 5.5s var(--e-grav) infinite}
+  @keyframes captionIn{0%{opacity:0;transform:translateY(6px)}9%{opacity:1;transform:none}90%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-4px)}}
+  .caption .note{margin-top:9px;font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:rgba(16,27,54,.5)}
+
+  @media (max-width:1023px){
+    .lab{font-size:10px;letter-spacing:.1em}
+    .caption{width:auto;right:clamp(20px,4vw,64px)}
+    .caption p{font-size:15px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important}
+    .pt .dot{opacity:.9}
+    .caption p{opacity:1;transform:none}
+    .lines .pulse{opacity:0}
+  }
+</style>
+</head>
+<body>
+  <main class="chart">
+    <div class="ground" aria-hidden="true"></div>
+    <div class="frame" aria-hidden="true">
+      <i class="h" style="top:25%"></i><i class="h" style="top:50%"></i><i class="h" style="top:75%"></i>
+      <i class="v" style="left:25%"></i><i class="v" style="left:50%"></i><i class="v" style="left:75%"></i>
+      <b style="left:4px;top:6px">00</b><b style="right:4px;top:6px">E 100</b><b style="left:4px;bottom:6px">N 100</b>
+    </div>
+
+    <div class="field" id="field">
+      <svg class="lines" id="lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+    </div>
+
+    <header class="title">
+      <div class="k">Chart 001</div>
+      <div class="n">BIGDROPS</div>
+      <div class="state">Returning session — opening your workspace</div>
+    </header>
+
+    <aside class="caption">
+      <span class="coord">RA 04h 51m · DEC +21°</span>
+      <p role="status" id="tipText">Every recorded payment automatically generates a receipt. View and download it from the Receipts page.</p>
+      <div class="note">Fig. 1 — your business, plotted</div>
+    </aside>
+  </main>
+
+<script>
+(function(){
+  var CLUSTERS = [
+    {n:"QUOTATIONS", x:17, y:32, r:6.5, c:13},
+    {n:"INVOICES",   x:35, y:58, r:7.0, c:15},
+    {n:"PAYMENTS",   x:49, y:25, r:6.0, c:12},
+    {n:"PROJECTS",   x:65, y:55, r:7.2, c:15},
+    {n:"CLIENTS",    x:80, y:29, r:6.4, c:13},
+    {n:"RECORDS",    x:88, y:63, r:5.8, c:11}
+  ];
+  var field = document.getElementById("field");
+  var lines = document.getElementById("lines");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var seed = 20261004;
+  function rnd(){ seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+
+  function build(){
+    /* a hidden or zero-size first paint would otherwise make the aspect ratio NaN */
+    var w = window.innerWidth || document.documentElement.clientWidth || 1024;
+    var h = window.innerHeight || document.documentElement.clientHeight || 768;
+    var aspect = h / w;
+    if(!isFinite(aspect) || aspect <= 0){ aspect = 1; }
+    var parts = [];
+    var svg = "";
+
+    CLUSTERS.forEach(function(cl){
+      var pts = [], rx = cl.r * aspect;
+      for(var i=0;i<cl.c;i++){
+        var a = (i / cl.c) * Math.PI * 2 + rnd() * .5;
+        var rr = cl.r * (.5 + rnd() * .55);
+        pts.push([ cl.x + Math.cos(a) * rr * aspect, cl.y + Math.sin(a) * rr ]);
+      }
+      var d = pts.map(function(p){ return (Math.round(p[0]*100)/100) + "," + (Math.round(p[1]*100)/100); }).join(" ");
+      svg += '<polyline points="'+d+'" style="animation-delay:'+(rnd()*-3).toFixed(2)+'s"/>';
+      svg += '<polyline class="pulse" points="'+d+'" style="animation-delay:'+(rnd()*-3.4).toFixed(2)+'s"/>';
+
+      pts.forEach(function(p, idx){
+        var anchor = idx === 0;
+        parts.push('<div class="pt'+(anchor?" anchor":"")+'" style="left:'+p[0].toFixed(2)+'%;top:'+p[1].toFixed(2)+'%">'+
+                   '<span class="dot" style="animation-delay:'+(rnd()*-4.6).toFixed(2)+'s"></span></div>');
+      });
+      parts.push('<div class="lab" style="left:'+cl.x+'%;top:'+(cl.y - cl.r - 2.4)+'%"><em>'+cl.n.slice(0,3)+'</em>'+cl.n+'</div>');
+    });
+
+    /* a faint outer field of unattributed points */
+    for(var k=0;k<44;k++){
+      var x = 4 + rnd()*92, y = 8 + rnd()*84;
+      parts.push('<div class="pt" style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%"><span class="dot" style="opacity:.28;animation-delay:'+(rnd()*-4.6).toFixed(2)+'s"></span></div>');
+    }
+
+    lines.innerHTML = svg;
+    var existing = field.querySelectorAll(".pt,.lab");
+    for(var j=0;j<existing.length;j++){ existing[j].parentNode.removeChild(existing[j]); }
+    field.insertAdjacentHTML("beforeend", parts.join(""));
+
+    /* first 800ms: every point bursts from the middle and snaps into its constellation */
+    var pts = field.querySelectorAll(".pt");
+    for(var i2=0;i2<pts.length;i2++){
+      var el = pts[i2];
+      if(reduce){ continue; }
+      var r = el.getBoundingClientRect();
+      var dx = (window.innerWidth/2) - (r.left) - 60 + rnd()*120;
+      var dy = (window.innerHeight/2) - (r.top) - 60 + rnd()*120;
+      el.style.transform = "translate("+dx+"px,"+dy+"px) scale(.35)";
+      el.style.opacity = "0";
+    }
+    if(!reduce){
+      requestAnimationFrame(function(){
+        for(var i3=0;i3<pts.length;i3++){
+          var e2 = pts[i3];
+          e2.style.transition = "transform .9s "+ "cubic-bezier(.16,1.05,.3,1) "+(i3%17)*22+"ms, opacity .5s ease "+(i3%17)*22+"ms";
+          e2.style.transform = "translate(0,0) scale(1)";
+          e2.style.opacity = "1";
+        }
+      });
+    }
+  }
+
+  var t;
+  window.addEventListener("resize", function(){ clearTimeout(t); t = setTimeout(build, 260); });
+  build();
+
+  var TIPS = [
+    "Every recorded payment automatically generates a receipt. View and download it from the Receipts page.",
+    "Set an expiry date on quotations to automatically flag overdue responses.",
+    "Tap the search icon to find any document across all modules. Search by document number, client name, or project name."
+  ];
+  var el = document.getElementById("tipText");
+  var ti = 0;
+  function swap(){
+    el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
+    ti = (ti + 1) % TIPS.length;
+    el.textContent = TIPS[ti];
+  }
+  if(!reduce){
+    setInterval(swap, 5500);
+    /* the chart stays alive: clusters migrate every nine seconds and a pulse runs the lines */
+    setInterval(function(){
+      var pts = document.querySelectorAll(".pt.anchor");
+      for(var i=0;i<pts.length;i++){
+        var el = pts[i];
+        el.style.transition = "transform 1.6s cubic-bezier(.16,1.05,.3,1)";
+        el.style.transform = "translate("+(rnd()*10-5).toFixed(1)+"px,"+(rnd()*10-5).toFixed(1)+"px)";
+      }
+    }, 9000);
+  }
+})();
+</script>
+</body>
+</html>

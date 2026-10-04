@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — The Switchboard</title>
+<style>
+  :root{
+    --room:#070E1C;
+    --room-2:#0C1830;
+    --panel:rgba(233,240,250,.06);
+    --edge:rgba(233,240,250,.2);
+    --glow:#7FB2FF;
+    --warm:#E0A85C;
+    --text:#E9F0FA;
+    --mute:rgba(233,240,250,.55);
+    --cycle:6s;
+    --e-rise:cubic-bezier(.2,.9,.3,1);
+    --sans:"Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;overflow:hidden;background:
+    radial-gradient(90% 70% at 32% 50%, rgba(127,178,255,.12), transparent 60%),
+    linear-gradient(180deg,var(--room-2),var(--room));
+    color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .room{position:fixed;inset:0;overflow:hidden}
+  .grain{position:absolute;inset:0;opacity:.16;pointer-events:none;
+    background-image:linear-gradient(rgba(233,240,250,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(233,240,250,.14) 1px,transparent 1px);
+    background-size:56px 56px;
+    mask-image:radial-gradient(70% 70% at 45% 50%,#000 30%,transparent 78%)}
+
+  .head{position:absolute;left:clamp(22px,3.4vw,58px);top:clamp(18px,3.4vh,34px);z-index:9}
+  .head .word{font-size:13px;font-weight:800;letter-spacing:.44em;text-indent:.44em}
+  .head .state{margin-top:7px;font-family:var(--mono);font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--mute)}
+
+  .routes{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+  .routes path{fill:none;stroke:var(--edge);stroke-width:1;vector-effect:non-scaling-stroke}
+  .routes path.hot{stroke:rgba(127,178,255,.5)}
+
+  .node{position:absolute;z-index:4;transform:translate(-50%,-50%);border:1px solid var(--edge);
+    background:var(--panel);backdrop-filter:blur(2px);display:grid;align-content:center;gap:5px;padding:12px 14px}
+  .node .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--mute)}
+  .node .n{font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+  .node::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--glow);opacity:.5}
+
+  .intake{left:7%;top:50%;width:132px}
+  .hub{left:31%;top:50%;width:150px;border-color:rgba(127,178,255,.54);background:rgba(127,178,255,.1)}
+  .record{left:93%;top:84%;width:150px;border-color:rgba(224,168,92,.5)}
+  .record::after{background:var(--warm)}
+
+  .desk{width:138px;animation:deskLight var(--cycle) linear infinite}
+  @keyframes deskLight{
+    0%,12%{border-color:var(--edge);box-shadow:none}
+    18%{border-color:rgba(127,178,255,.85);box-shadow:0 0 26px -6px rgba(127,178,255,.55)}
+    34%{border-color:rgba(127,178,255,.6);box-shadow:0 0 18px -8px rgba(127,178,255,.4)}
+    50%,100%{border-color:var(--edge);box-shadow:none}
+  }
+  .desk .bar{height:3px;background:rgba(233,240,250,.18);position:relative;overflow:hidden}
+  .desk .bar i{position:absolute;inset:0;background:var(--glow);transform-origin:left;animation:barFill var(--cycle) linear infinite;opacity:.8}
+  @keyframes barFill{0%,14%{transform:scaleX(0)}30%,100%{transform:scaleX(1)}}
+
+  /* the routed work: one trigger from the hub, many responders */
+  .pulse{position:absolute;left:0;top:0;width:9px;height:9px;border-radius:50%;background:var(--glow);
+    box-shadow:0 0 16px var(--glow);opacity:0;z-index:3;animation:fly var(--cycle) linear infinite}
+  .pulse.warm{background:var(--warm);box-shadow:0 0 16px var(--warm)}
+  @keyframes fly{
+    0%{opacity:0;transform:translate(var(--x0),var(--y0)) scale(.5)}
+    3%{opacity:1;transform:translate(var(--x0),var(--y0)) scale(1)}
+    19%{opacity:1;transform:translate(var(--x1),var(--y1)) scale(1)}
+    23%{opacity:0;transform:translate(var(--x1),var(--y1)) scale(1.6)}
+    100%{opacity:0;transform:translate(var(--x0),var(--y0)) scale(.5)}
+  }
+
+  .ring{position:absolute;left:93%;top:84%;width:12px;height:12px;margin:-6px 0 0 -6px;border:1px solid var(--warm);border-radius:50%;
+    opacity:0;z-index:5;animation:emit var(--cycle) var(--e-rise) infinite}
+  @keyframes emit{0%,66%{opacity:0;transform:scale(.4)}70%{opacity:.9;transform:scale(1)}84%{opacity:0;transform:scale(4.4)}100%{opacity:0;transform:scale(.4)}}
+
+  /* the console directive — the tip */
+  .directive{position:absolute;left:clamp(22px,3.4vw,58px);bottom:clamp(20px,4vh,42px);z-index:9;width:min(52ch,520px);
+    border:1px solid rgba(127,178,255,.5);background:linear-gradient(180deg,rgba(18,32,58,.94),rgba(10,20,38,.9));
+    box-shadow:0 20px 40px -30px #000;overflow:hidden;
+    animation:directiveIn 5.2s var(--e-rise) infinite}
+  @keyframes directiveIn{0%{opacity:0;transform:translateX(-26px)}10%{opacity:1;transform:none}
+    88%{opacity:1;transform:none}100%{opacity:0;transform:translateX(14px)}}
+  .directive .top{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid rgba(233,240,250,.14)}
+  .directive .top b{font-family:var(--mono);font-size:8.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--glow)}
+  .directive .top em{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:8.5px;letter-spacing:.22em;color:var(--warm)}
+  .directive p{margin:0;padding:13px 16px;font-size:16px;line-height:1.5;color:var(--text)}
+
+  @media (max-width:1100px){
+    .node{transform:translate(-50%,-50%) scale(.86)}
+    .directive{width:min(46ch,440px)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important}
+    .desk{border-color:rgba(127,178,255,.6)}
+    .desk .bar i{transform:scaleX(1)}
+    .pulse{opacity:1;transform:translate(var(--x1),var(--y1))}
+    .ring{opacity:.6;transform:scale(1.8)}
+    .directive{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+  <div class="room">
+    <div class="grain" aria-hidden="true"></div>
+    <header class="head">
+      <div class="word">BIGDROPS</div>
+      <div class="state">Returning session — work is already being assigned</div>
+    </header>
+
+    <svg class="routes" id="routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+
+    <div class="node intake" aria-hidden="true">
+      <span class="k">Intake</span><span class="n">New work</span>
+    </div>
+    <div class="node hub" aria-hidden="true">
+      <span class="k">Coordinator</span><span class="n">Routes every item</span>
+    </div>
+    <div class="node record" aria-hidden="true">
+      <span class="k">Result</span><span class="n">Filed as one record</span>
+    </div>
+
+    <div class="ring" aria-hidden="true"></div>
+
+    <aside class="directive">
+      <div class="top"><b>Directive — BIGDROPS Tip</b><em>Priority: normal</em></div>
+      <p role="status" id="tipText">Every recorded payment automatically generates a receipt. View and download it from the Receipts page.</p>
+    </aside>
+  </div>
+
+<script>
+(function(){
+  /* pulse travel is measured in viewport units: a translate length would resolve
+     against the pulse's own 9px box, not the room */
+  var HUB = {x:31, y:50};
+  var IN  = {x:7,  y:50};
+  var REC = {x:93, y:84};
+  /* five desks, deliberately not on one line — the width carries the routing */
+  var DESKS = [
+    {x:52, y:20, n:"Quotations", t:0},
+    {x:66, y:38, n:"Invoices",   t:.6},
+    {x:80, y:58, n:"Payments",   t:1.2},
+    {x:60, y:78, n:"Records",    t:3.0},
+    {x:86, y:18, n:"Tax",        t:3.6}
+  ];
+  function px(v){ return v + "vw"; }
+  function py(v){ return v + "vh"; }
+
+  var room = document.querySelector(".room");
+  var routes = document.getElementById("routes");
+  var svg = "";
+  DESKS.forEach(function(d){
+    svg += '<path d="M31,50 C '+(31+(d.x-31)*0.4)+',50 '+(d.x-12)+','+d.y+' '+d.x+','+d.y+'" class="hot"/>';
+    svg += '<path d="M'+d.x+','+d.y+' C '+(d.x+6)+','+d.y+' 86,'+((d.y+84)/2)+' 93,84"/>';
+  });
+  svg += '<path d="M7,50 C 16,50 22,50 31,50" class="hot"/>';
+  routes.innerHTML = svg;
+
+  /* the nodes and their pulses */
+  var deskHTML = "", pulseHTML = "";
+  DESKS.forEach(function(d){
+    deskHTML += '<div class="node desk" style="left:'+d.x+'%;top:'+d.y+'%;animation-delay:'+d.t+'s">'+
+      '<span class="k">Station</span><span class="n">'+d.n+'</span><span class="bar"><i style="animation-delay:'+d.t+'s"></i></span></div>';
+    /* hub → desk: one trigger, many responders */
+    pulseHTML += '<span class="pulse" style="--x0:'+px(HUB.x)+';--y0:'+py(HUB.y)+';--x1:'+px(d.x)+';--y1:'+py(d.y)+';animation-delay:'+d.t+'s"></span>';
+    /* desk → result: the finished piece returns to the record */
+    pulseHTML += '<span class="pulse warm" style="--x0:'+px(d.x)+';--y0:'+py(d.y)+';--x1:'+px(REC.x)+';--y1:'+py(REC.y)+';animation-delay:'+(d.t+1.8)+'s"></span>';
+  });
+  /* intake → coordinator */
+  pulseHTML += '<span class="pulse" style="--x0:'+px(IN.x)+';--y0:'+py(IN.y)+';--x1:'+px(HUB.x)+';--y1:'+py(HUB.y)+';animation-delay:0s"></span>';
+  pulseHTML += '<span class="pulse" style="--x0:'+px(IN.x)+';--y0:'+py(IN.y)+';--x1:'+px(HUB.x)+';--y1:'+py(HUB.y)+';animation-delay:3s"></span>';
+
+  room.insertAdjacentHTML("beforeend", deskHTML + pulseHTML);
+
+  var TIPS = [
+    "Every recorded payment automatically generates a receipt. View and download it from the Receipts page.",
+    "Set an expiry date on quotations to automatically flag overdue responses.",
+    "Tap the search icon to find any document across all modules. Search by document number, client name, or project name."
+  ];
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var el = document.getElementById("tipText");
+  var dir = document.querySelector(".directive");
+  var i = 0;
+  function swap(){
+    dir.style.animation = "none"; void dir.offsetWidth; dir.style.animation = "";
+    i = (i + 1) % TIPS.length;
+    el.textContent = TIPS[i];
+  }
+  if(!reduce){ setInterval(swap, 5200); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — Clockwork Line</title>
+<style>
+  :root{
+    --paper:#F6F7F9;
+    --paper-2:#E9ECF1;
+    --ink:#0C1B33;
+    --steel:#8D99AC;
+    --line:rgba(12,27,51,.16);
+    --amber:#B5772A;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --cond:"Arial Narrow","Helvetica Neue",Arial,system-ui,sans-serif;
+    --sans:"Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+    --e-clack:cubic-bezier(.35,1.4,.4,1);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:linear-gradient(180deg,var(--paper),var(--paper-2));color:var(--ink);
+    font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased;
+  }
+  .floor{position:fixed;inset:0;display:flex;flex-direction:column}
+  .floor::before{content:"";position:absolute;inset:0;opacity:.5;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:44px 44px;mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent)}
+
+  .head{position:relative;z-index:5;display:flex;align-items:baseline;gap:20px;padding:clamp(18px,4vh,44px) clamp(22px,4vw,70px) 0}
+  .head .word{font-family:var(--cond);font-weight:700;font-size:clamp(20px,2.5vw,34px);letter-spacing:.42em;text-indent:.42em}
+  .head .state{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:rgba(12,27,51,.55)}
+
+  .bench{position:relative;flex:1;display:grid;align-content:center;gap:0;min-height:0}
+
+  /* the gear train — a single long linkage across the full width */
+  .train{position:relative;display:flex;align-items:center;justify-content:space-between;
+    padding:0 clamp(22px,4vw,70px);animation:engage 1.1s var(--e-clack) both}
+  @keyframes engage{0%{transform:translateX(-10px)}55%{transform:translateX(3px)}100%{transform:none}}
+  .station{position:relative;display:grid;justify-items:center;gap:12px;flex:0 0 auto}
+  .gear{width:var(--size);height:var(--size);overflow:visible;display:block;
+    animation:spin var(--dur) linear infinite;animation-delay:var(--lag,0s);
+    transform-box:fill-box;transform-origin:center}
+  .station:nth-child(even) .gear{animation-direction:reverse}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .station .tag{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:rgba(12,27,51,.68);white-space:nowrap}
+  .station .tag b{color:var(--ink)}
+  .station .lamp{width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px rgba(181,119,42,.6);
+    animation:lamp 5s steps(1,end) infinite;animation-delay:var(--lag,0s)}
+  @keyframes lamp{0%,48%{opacity:1}49%,100%{opacity:.18}}
+
+  /* conveyor — plates travel the length of the machine */
+  .rail{position:relative;height:86px;margin-top:clamp(10px,3vh,30px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .rail .belt{position:absolute;left:0;right:0;top:50%;height:1px;background:repeating-linear-gradient(90deg,var(--ink) 0 8px,transparent 8px 16px);opacity:.32;
+    animation:belt 1.1s linear infinite}
+  @keyframes belt{to{background-position:16px 0}}
+  .plate{position:absolute;top:50%;left:0;transform:translateY(-50%);will-change:transform;
+    background:#fff;border:1px solid var(--ink);padding:8px 14px;display:grid;gap:3px;min-width:118px;
+    box-shadow:0 8px 16px -12px rgba(12,27,51,.4);animation:ride 5.5s linear infinite;animation-delay:var(--lag,0s)}
+  .plate b{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--amber)}
+  .plate span{font-family:var(--cond);font-size:15px;letter-spacing:.06em;font-weight:700}
+  .plate.brand span{font-weight:700;letter-spacing:.3em}
+  @keyframes ride{0%{transform:translate(-140px,-50%)}22%{transform:translate(6vw,-50%)}100%{transform:translate(calc(100vw + 20px),-50%)}}
+
+  /* the engraved data plate — the tip, riveted to the frame */
+  .platenook{position:relative;z-index:6;padding:0 clamp(22px,4vw,70px) clamp(20px,5vh,52px)}
+  .dataplate{position:relative;max-width:560px;border:1px solid var(--ink);background:linear-gradient(180deg,#fff,#EDF0F4);
+    padding:14px 22px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+  /* the readout rolls like an instrument drum; the plate itself stays riveted in place */
+  .dataplate p{animation:roll 5.4s var(--e-clack) infinite}
+  @keyframes roll{0%{opacity:0;transform:translateY(58%)}13%{opacity:1;transform:none}87%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-58%)}}
+  .dataplate::before,.dataplate::after,
+  .dataplate .r1,.dataplate .r2{content:"";position:absolute;width:7px;height:7px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#fff,var(--steel));border:1px solid rgba(12,27,51,.35)}
+  .dataplate::before{left:7px;top:7px}.dataplate::after{left:7px;bottom:7px}
+  .dataplate .r1{right:7px;top:7px}.dataplate .r2{right:7px;bottom:7px}
+  .dataplate .k{font-family:var(--mono);font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber)}
+  .dataplate p{margin:7px 0 0;font-family:var(--mono);font-size:15px;line-height:1.5;color:var(--ink);max-width:44ch}
+  .dataplate .eng{font-family:var(--cond);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(12,27,51,.55);white-space:nowrap}
+
+  @media (max-width:1023px){
+    .train{gap:6px}
+    .gear{--size:58px!important}
+    .station .tag{font-size:8px;letter-spacing:.1em}
+    .dataplate p{font-size:13px}
+    .dataplate{max-width:none}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important}
+    .gear{transform:rotate(24deg)}
+    .plate{transform:translate(30vw,-50%)}
+    .plate:nth-child(2){transform:translate(52vw,-50%)}
+    .plate:nth-child(3){transform:translate(74vw,-50%)}
+    .dataplate p{opacity:1;transform:none}
+    .rail .belt{opacity:.2}
+  }
+</style>
+</head>
+<body>
+  <div class="floor">
+    <header class="head">
+      <div class="word">BIGDROPS</div>
+      <div class="state">Returning session — opening your workspace</div>
+    </header>
+
+    <div class="bench">
+      <div class="train" id="train" aria-hidden="true"></div>
+      <div class="rail" id="rail" aria-hidden="true"><span class="belt"></span></div>
+    </div>
+
+    <div class="platenook">
+      <div class="dataplate">
+        <div>
+          <div class="k">BIGDROPS Tip</div>
+          <p role="status" id="tipText">Every recorded payment automatically generates a receipt. View and download it from the Receipts page.</p>
+        </div>
+        <div class="eng" aria-hidden="true">Fig. 04</div>
+        <span class="r1"></span><span class="r2"></span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var STATIONS = [
+    {label:"01 QUOTE",  size:132, dur:9.5,  lag:0,    lamp:0},
+    {label:"02 INVOICE",size:96,  dur:7.2,  lag:.12,  lamp:1.1},
+    {label:"03 PAY",    size:104, dur:7.8,  lag:.24,  lamp:2.2},
+    {label:"04 RECORD", size:88,  dur:6.6,  lag:.36,  lamp:3.3},
+    {label:"05 TAX",    size:112, dur:8.4,  lag:.48,  lamp:4.4},
+    {label:"06 REPORT", size:92,  dur:6.9,  lag:.6,   lamp:2.8}
+  ];
+  var belt = ["QUOTATION","INVOICE","PAYMENT","RECEIPT","PROJECT","BIGDROPS"];
+
+  function gearSVG(r){
+    var teeth = 'stroke-dasharray="3.6 5"';
+    return '<svg class="gear" viewBox="0 0 100 100" style="--size:'+ (r.size) +'px;--dur:'+r.dur+'s;--lag:'+r.lag+'s">'+
+      '<circle cx="50" cy="50" r="34" fill="none" stroke="#0C1B33" stroke-width="7" '+teeth+'/>'+
+      '<circle cx="50" cy="50" r="28" fill="none" stroke="#0C1B33" stroke-width="1.7"/>'+
+      '<circle cx="50" cy="50" r="24" fill="none" stroke="rgba(12,27,51,.28)" stroke-width=".9"/>'+
+      '<g stroke="#0C1B33" stroke-width="1.5">'+
+        '<line x1="50" y1="50" x2="50" y2="22"/>'+
+        '<line x1="50" y1="50" x2="74" y2="64"/>'+
+        '<line x1="50" y1="50" x2="26" y2="64"/>'+
+      '</g>'+
+      '<circle cx="50" cy="50" r="4.4" fill="#0C1B33"/>'+
+    '</svg>';
+  }
+
+  document.getElementById("train").innerHTML = STATIONS.map(function(s){
+    return '<div class="station">'+ gearSVG(s) +
+      '<span class="lamp" style="--lag:'+s.lamp+'s"></span>'+
+      '<span class="tag"><b>'+s.label.split(" ")[0]+'</b> '+s.label.split(" ").slice(1).join(" ")+'</span></div>';
+  }).join("");
+
+  document.getElementById("rail").insertAdjacentHTML("beforeend", belt.map(function(n,i){
+    var brand = n === "BIGDROPS";
+    return '<div class="plate'+(brand?" brand":"")+'" style="--lag:'+(i*1.15)+'s"><b>'+(brand?"IDENTITY":"DOC")+'</b><span>'+n+'</span></div>';
+  }).join(""));
+
+  var TIPS = [
+    "Every recorded payment automatically generates a receipt. View and download it from the Receipts page.",
+    "Set an expiry date on quotations to automatically flag overdue responses.",
+    "Tap the search icon to find any document across all modules. Search by document number, client name, or project name."
+  ];
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var el = document.getElementById("tipText");
+  var plate = document.querySelector(".dataplate");
+  var i = 0;
+  function swap(){
+    plate.style.animation = "none"; void plate.offsetWidth; plate.style.animation = "";
+    i = (i + 1) % TIPS.length;
+    el.textContent = TIPS[i];
+  }
+  if(!reduce){ setInterval(swap, 5400); }
+})();
+</script>
+</body>
+</html>

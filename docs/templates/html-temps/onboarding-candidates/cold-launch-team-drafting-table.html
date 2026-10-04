@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — Drafting Table</title>
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --desk:#EDEFF3;
+    --desk-2:#DFE3EA;
+    --slate:#5A6678;
+    --ink:#0C1B33;
+    --ink-soft:#39465C;
+    --line:rgba(12,27,51,.14);
+    --line-2:rgba(12,27,51,.28);
+    --press:#B5772A;
+    --cycle:6.6s;
+    --e-impact:cubic-bezier(.2,.9,.3,1);
+    --e-slide:cubic-bezier(.4,.05,.2,1);
+    --sans:"Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;overflow:hidden;color:var(--ink);font-family:var(--sans);
+    background:radial-gradient(120% 90% at 50% 0%, var(--desk) 20%, var(--desk-2) 100%);
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .room{position:fixed;inset:0;display:grid;grid-template-columns:1fr;align-items:stretch}
+
+  /* the paper on the desk, seen from directly above */
+  .table{position:relative;margin:clamp(10px,3vh,26px) clamp(10px,4vw,26px);background:var(--paper);
+    border:1px solid var(--line);box-shadow:0 30px 60px -40px rgba(12,27,51,.5);overflow:hidden;min-width:0}
+  .table::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% 46px;opacity:.5}
+  .table.second{display:none}
+
+  .band{position:relative;z-index:3;display:flex;align-items:baseline;gap:12px;padding:14px 18px 12px;border-bottom:1px solid var(--line-2)}
+  .band .word{font-size:13px;font-weight:800;letter-spacing:.4em;text-indent:.4em}
+  .band .state{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--slate)}
+
+  .work{position:absolute;inset:52px 0 0;z-index:2}
+  .lane{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none}
+  .lane i{position:absolute;left:22px;right:22px;height:1px;background:var(--line)}
+  .lane i.a{top:26%} .lane i.b{top:52%} .lane i.c{top:78%}
+  .lane b{position:absolute;left:22px;font-family:var(--mono);font-size:8.5px;letter-spacing:.22em;color:var(--slate);transform:translateY(-14px)}
+
+  /* the document that arrives, is approved, and is filed */
+  .doc{position:absolute;left:34%;top:14%;width:clamp(96px,34%,180px);aspect-ratio:3/4;background:#fff;
+    border:1px solid var(--line-2);box-shadow:0 10px 22px -16px rgba(12,27,51,.55);z-index:4;
+    animation:docCycle var(--cycle) var(--e-slide) infinite}
+  .doc .rule{position:absolute;left:12%;right:12%;height:1px;background:var(--line)}
+  .doc .rule:nth-of-type(1){top:22%}.doc .rule:nth-of-type(2){top:34%}.doc .rule:nth-of-type(3){top:46%}
+  .doc .hd{position:absolute;left:12%;top:10%;width:44%;height:5px;background:var(--ink);opacity:.8}
+  @keyframes docCycle{
+    0%{transform:translate(-50%,-160%)}
+    9%{transform:translate(-50%,0)}
+    44%{transform:translate(-50%,0)}
+    64%{transform:translate(calc(-50% + 78px),46%)}
+    78%{transform:translate(calc(-50% + 78px),46%) scale(.94)}
+    82%{opacity:1}
+    86%{opacity:0}
+    100%{opacity:0;transform:translate(-50%,-160%)}
+  }
+
+  /* the mark left by the press */
+  .mark{position:absolute;left:34%;top:26%;width:clamp(74px,26%,132px);aspect-ratio:1;transform:translateX(-50%);
+    border:3px solid var(--press);border-radius:6px;display:grid;place-items:center;color:var(--press);
+    font-size:clamp(11px,3.1vw,15px);font-weight:800;letter-spacing:.14em;text-align:center;line-height:1.05;
+    z-index:5;opacity:0;animation:markCycle var(--cycle) infinite}
+  .mark::after{content:"";position:absolute;inset:4px;border:1px solid var(--press);opacity:.45;border-radius:3px}
+  @keyframes markCycle{
+    0%,25%{opacity:0;transform:translateX(-50%) scale(.55) rotate(-7deg)}
+    27.5%{opacity:1;transform:translateX(-50%) scale(1.07) rotate(2deg)}
+    30%{opacity:1;transform:translateX(-50%) scale(1) rotate(-1deg)}
+    31%{transform:translateX(-50%) scale(1) rotate(0deg)}
+    84%{opacity:1}
+    92%{opacity:0}
+    100%{opacity:0}
+  }
+
+  /* the press: anticipation, impact, settle */
+  .press{position:absolute;left:34%;top:0;width:clamp(84px,30%,150px);transform:translateX(-50%);z-index:6;
+    animation:pressCycle var(--cycle) infinite}
+  .press .head{height:22px;border-radius:5px 5px 3px 3px;background:linear-gradient(180deg,var(--ink-soft),var(--ink))}
+  .press .shaft{width:16px;height:26px;margin:0 auto;background:var(--slate)}
+  .press .base{height:12px;border-radius:3px;background:var(--ink);opacity:.92}
+  .press .knob{width:58px;height:14px;margin:0 auto 3px;border-radius:7px;background:var(--slate);opacity:.85}
+  @keyframes pressCycle{
+    0%,6%{transform:translate(-50%,-46px)}
+    16%{transform:translate(-50%,-56px)}
+    24%{transform:translate(-50%,6px);animation-timing-function:var(--e-impact)}
+    27%{transform:translate(-50%,-6px)}
+    30%{transform:translate(-50%,-2px)}
+    34%,100%{transform:translate(-50%,-46px)}
+  }
+
+  /* a stub torn from the approved sheet and sent to the near tray */
+  .stub{position:absolute;left:34%;top:52%;width:clamp(64px,22%,108px);height:34px;background:#fff;
+    border:1px solid var(--line-2);z-index:4;opacity:0;animation:stubCycle var(--cycle) var(--e-slide) infinite}
+  .stub i{position:absolute;left:12%;right:12%;top:44%;height:1px;background:var(--line-2)}
+  @keyframes stubCycle{
+    0%,40%{opacity:0;transform:translate(-50%,0)}
+    44%{opacity:1;transform:translate(-50%,0)}
+    62%{transform:translate(calc(-50% - 76px),96%)}
+    78%{opacity:1;transform:translate(calc(-50% - 76px),96%)}
+    84%{opacity:0}
+    100%{opacity:0;transform:translate(-50%,0)}
+  }
+
+  /* trays */
+  .tray{position:absolute;bottom:8%;width:clamp(84px,28%,140px);height:46px;border:1px solid var(--line-2);
+    background:linear-gradient(180deg,#fff,var(--desk));box-shadow:inset 0 6px 10px -8px rgba(12,27,51,.5);z-index:3}
+  .tray.near{left:8%} .tray.far{right:8%}
+  .tray span{position:absolute;left:8px;bottom:5px;font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:var(--slate)}
+  .tray b{position:absolute;right:8px;top:6px;width:6px;height:6px;border-radius:50%;background:var(--ink);opacity:.25}
+  .tray.near b{animation:tick var(--cycle) infinite}
+  .tray.far b{animation:tick var(--cycle) infinite;animation-delay:2.6s}
+  @keyframes tick{0%,78%{opacity:.2;transform:scale(1)}82%{opacity:1;transform:scale(1.8)}88%{opacity:.6;transform:scale(1)}100%{opacity:.2}}
+
+  /* an abstract hand, present twice in the cycle */
+  .hand{position:absolute;left:-6px;top:16%;width:clamp(84px,30%,150px);fill:var(--ink);opacity:0;z-index:7;
+    animation:handCycle var(--cycle) var(--e-slide) infinite}
+  .hand.right{left:auto;right:-6px;top:56%;--mir:-1;animation-delay:3.1s}
+  @keyframes handCycle{
+    0%{opacity:0;transform:translate(-26px,14px) scaleX(var(--mir,1))}
+    9%{opacity:.9;transform:translate(2px,0) scaleX(var(--mir,1))}
+    32%{opacity:.9;transform:translate(2px,0) scaleX(var(--mir,1))}
+    42%{opacity:0;transform:translate(-20px,10px) scaleX(var(--mir,1))}
+    55%{opacity:0;transform:translate(-26px,14px) scaleX(var(--mir,1))}
+    100%{opacity:0;transform:translate(-26px,14px) scaleX(var(--mir,1))}
+  }
+
+  /* a second, smaller chain working in parallel */
+  .slip{position:absolute;right:9%;top:9%;width:74px;height:26px;background:#fff;border:1px solid var(--line-2);z-index:4;
+    animation:slipCycle var(--cycle) var(--e-slide) infinite;animation-delay:1.9s}
+  .slip i{position:absolute;left:8px;top:10px;width:34px;height:1px;background:var(--line-2)}
+  @keyframes slipCycle{
+    0%{opacity:0;transform:translate(20px,-14px)}
+    8%{opacity:1;transform:translate(0,0)}
+    40%{opacity:1;transform:translate(0,0)}
+    58%{opacity:1;transform:translate(-96px,74%)}
+    70%{opacity:1;transform:translate(-96px,74%)}
+    76%{opacity:0}
+    100%{opacity:0;transform:translate(20px,-14px)}
+  }
+
+  /* the desk memo — the tip, clipped to the table edge */
+  .memo{position:absolute;left:6%;right:6%;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:9;
+    background:#fff;border:1px solid var(--line-2);box-shadow:0 14px 26px -20px rgba(12,27,51,.7);padding:12px 16px 14px}
+  .memo .clip{position:absolute;left:18px;top:-9px;width:26px;height:16px;border:2px solid var(--slate);border-bottom:none;border-radius:8px 8px 0 0;background:transparent}
+  .memo .k{font-family:var(--mono);font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--press);margin-bottom:7px}
+  .memo p{margin:0;font-size:15px;line-height:1.5;color:var(--ink);max-width:44ch;
+    animation:memoShow 5.2s var(--e-slide) infinite}
+  @keyframes memoShow{0%{opacity:0;transform:translateY(8px)}9%{opacity:1;transform:none}90%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-6px)}}
+
+  /* ---- FOLD: a second table joins, and the filed sheet crosses between them ---- */
+  .join{display:none;position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--line-2);z-index:8}
+  .cross{display:none}
+  @media (min-width:640px){
+    .room{grid-template-columns:1fr 1fr;gap:0}
+    .table{margin:clamp(14px,4vh,34px) 0}
+    .table:first-of-type{margin-left:clamp(14px,3vw,30px)}
+    .table.second{display:block;border-left:none;margin-right:clamp(14px,3vw,30px)}
+    .join{display:block}
+    .band .word{letter-spacing:.34em;text-indent:.34em}
+    .memo{left:clamp(20px,4vw,40px);right:auto;width:min(52ch,440px)}
+    /* the fold-only cross-table handoff */
+    .cross{display:block;position:absolute;z-index:9;width:96px;height:124px;background:#fff;border:1px solid var(--line-2);
+      box-shadow:0 12px 24px -18px rgba(12,27,51,.6);left:50%;top:52%;
+      animation:crossCycle var(--cycle) var(--e-slide) infinite;animation-delay:2.2s}
+    .cross i{position:absolute;left:10px;right:10px;top:16px;height:1px;background:var(--line)}
+    @keyframes crossCycle{
+      0%,6%{opacity:0;transform:translate(-78%,0) rotate(-4deg)}
+      14%{opacity:1;transform:translate(-56%,0) rotate(-1deg)}
+      52%{opacity:1;transform:translate(-56%,0) rotate(0)}
+      78%{opacity:1;transform:translate(28%,72%) rotate(2deg)}
+      88%{opacity:0}
+      100%{opacity:0;transform:translate(-78%,0) rotate(-4deg)}
+    }
+    .table.second .stack{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:96px;height:9px;
+      background:var(--ink);opacity:.14}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important}
+    .doc{transform:translate(-50%,0)}
+    .mark{opacity:1;transform:translateX(-50%) scale(1) rotate(-1deg)}
+    .press{transform:translate(-50%,-46px)}
+    .stub{opacity:1;transform:translate(-50%,0)}
+    .hand{opacity:.85;transform:none}
+    .hand.right{opacity:.85}
+    .slip{opacity:1;transform:none}
+    .cross{opacity:1;transform:translate(-56%,0)}
+    .tray b{opacity:.4}
+    .memo p{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+  <div class="room">
+    <section class="table" aria-label="Drafting table">
+      <div class="band">
+        <div class="word">BIGDROPS</div>
+        <div class="state">Returning session — the desk is already working</div>
+      </div>
+      <div class="work">
+        <div class="lane" aria-hidden="true">
+          <i class="a"></i><i class="b"></i><i class="c"></i>
+          <b style="top:26%">PREPARE</b><b style="top:52%">APPROVE</b><b style="top:78%">FILE</b>
+        </div>
+
+        <div class="press" aria-hidden="true">
+          <div class="knob"></div><div class="head"></div><div class="shaft"></div><div class="base"></div>
+        </div>
+
+        <div class="doc" aria-hidden="true">
+          <span class="hd"></span><span class="rule"></span><span class="rule"></span><span class="rule"></span>
+        </div>
+        <div class="mark" aria-hidden="true">OK</div>
+        <div class="stub" aria-hidden="true"><i></i></div>
+        <div class="slip" aria-hidden="true"><i></i></div>
+
+        <div class="tray near" aria-hidden="true"><b></b><span>FILED</span></div>
+        <div class="tray far" aria-hidden="true"><b></b><span>CLIENT COPY</span></div>
+
+        <svg class="hand" viewBox="0 0 150 90" aria-hidden="true">
+          <rect x="0" y="32" width="76" height="26" rx="9"/>
+          <path d="M70 24 h28 a22 22 0 0 1 22 22 a22 22 0 0 1 -22 22 h-28 z"/>
+          <path d="M96 24 q9 0 12 -13 q4 11 -1 15 z"/>
+        </svg>
+        <svg class="hand right" viewBox="0 0 150 90" aria-hidden="true">
+          <rect x="0" y="32" width="76" height="26" rx="9"/>
+          <path d="M70 24 h28 a22 22 0 0 1 22 22 a22 22 0 0 1 -22 22 h-28 z"/>
+          <path d="M96 24 q9 0 12 -13 q4 11 -1 15 z"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="table second" aria-label="Records table">
+      <div class="band">
+        <div class="word">RECORDS</div>
+        <div class="state">Second table — receives the filed copy</div>
+      </div>
+      <div class="work">
+        <div class="lane" aria-hidden="true">
+          <i class="a"></i><i class="b"></i><i class="c"></i>
+          <b style="top:26%">SORT</b><b style="top:52%">INDEX</b><b style="top:78%">ARCHIVE</b>
+        </div>
+        <div class="stack" aria-hidden="true"></div>
+        <div class="tray near" aria-hidden="true"><b></b><span>INDEXED</span></div>
+      </div>
+    </section>
+
+    <div class="join" aria-hidden="true"></div>
+    <div class="cross" aria-hidden="true"><i></i><i style="top:26px"></i></div>
+  </div>
+
+  <aside class="memo">
+    <span class="clip" aria-hidden="true"></span>
+    <div class="k">Desk Memo — BIGDROPS Tip</div>
+    <p role="status" id="tipText">Every recorded payment automatically generates a receipt. View and download it from the Receipts page.</p>
+  </aside>
+
+<script>
+(function(){
+  var TIPS = [
+    "Every recorded payment automatically generates a receipt. View and download it from the Receipts page.",
+    "Set an expiry date on quotations to automatically flag overdue responses.",
+    "Tap the search icon to find any document across all modules. Search by document number, client name, or project name."
+  ];
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var el = document.getElementById("tipText");
+  var i = 0;
+  function swap(){
+    el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
+    i = (i + 1) % TIPS.length;
+    el.textContent = TIPS[i];
+  }
+  if(!reduce){ setInterval(swap, 5200); }
+})();
+</script>
+</body>
+</html>

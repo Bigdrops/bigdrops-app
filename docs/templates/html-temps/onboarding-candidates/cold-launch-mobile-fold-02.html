@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BIGDROPS — Ink Bloom</title>
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --paper-2:#F2F5FA;
+    --ink:#0A1A2F;
+    --ink-soft:#213B5E;
+    --ink-faint:rgba(10,26,47,.55);
+    --line:rgba(10,26,47,.14);
+    --accent:#1E4DD8;
+    --font:"Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --e-viscous:cubic-bezier(.65,.03,.36,1);
+    --e-bleed:cubic-bezier(.16,.84,.3,1);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .paper{
+    position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;
+    background:
+      radial-gradient(120% 60% at 50% -10%, #FFFFFF 40%, var(--paper-2) 100%);
+  }
+
+  /* ink source well at the top */
+  .well{position:relative;height:clamp(58px,15vh,92px);background:linear-gradient(180deg,var(--ink) 62%,var(--ink-soft));overflow:hidden}
+  .well::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:22px;background:radial-gradient(60% 100% at 50% 0, #FFFFFF 40%, transparent 70%)}
+  .drop{position:absolute;left:50%;top:-6px;width:16px;height:16px;margin-left:-8px;border-radius:50% 50% 46% 46%;background:var(--ink);animation:dropHit 1.15s var(--e-bleed) both}
+  @keyframes dropHit{
+    0%{opacity:0;transform:translateY(-420%) scale(1.5,.85)}
+    40%{opacity:1}
+    58%{transform:translateY(6px) scale(1.6,.6)}
+    76%{transform:translateY(0) scale(1,1)}
+    100%{opacity:0;transform:translateY(0) scale(.2)}
+  }
+  .splat{position:absolute;left:50%;top:34px;width:30px;height:14px;margin-left:-15px;border-radius:50%;background:rgba(10,26,47,.35);filter:blur(3px);animation:splat 1.35s .2s var(--e-bleed) both}
+  @keyframes splat{0%{opacity:.85;transform:scale(.3)}100%{opacity:0;transform:scale(3.4)}}
+
+  /* the living ink field */
+  .field{position:relative;min-height:0}
+  .vessel{position:absolute;inset:0}
+  .v2{display:none}
+
+  .mass{position:absolute;left:50%;top:38%;width:min(78%,360px);aspect-ratio:1;transform:translate(-50%,-50%)}
+  .blob{position:absolute;background:radial-gradient(60% 60% at 42% 36%, var(--ink-soft), var(--ink) 70%);}
+  .blob.b1{inset:6%;border-radius:58% 42% 51% 49% / 44% 57% 43% 56%;animation:drift1 9.4s var(--e-viscous) infinite}
+  .blob.b2{inset:16%;border-radius:41% 59% 62% 38% / 57% 41% 59% 43%;filter:blur(9px);animation:drift2 12.6s var(--e-viscous) infinite}
+  .blob.b3{left:-14%;top:34%;width:52%;aspect-ratio:1;border-radius:66% 34% 45% 55% / 52% 63% 37% 48%;filter:blur(16px);animation:drift3 15.2s var(--e-viscous) infinite}
+  .blob.b4{right:-16%;top:26%;width:46%;aspect-ratio:1;border-radius:38% 62% 57% 43% / 49% 38% 62% 51%;filter:blur(13px);animation:drift4 13.8s var(--e-viscous) infinite}
+  @keyframes drift1{0%,100%{transform:rotate(0deg) scale(1)}35%{transform:rotate(24deg) scale(1.06)}70%{transform:rotate(-16deg) scale(.97)}}
+  @keyframes drift2{0%,100%{transform:rotate(0deg) translate(0,0)}50%{transform:rotate(-32deg) translate(2%,3%)}}
+  @keyframes drift3{0%,100%{transform:rotate(0deg) scale(1)}45%{transform:rotate(38deg) scale(1.18)}}
+  @keyframes drift4{0%,100%{transform:rotate(0deg) scale(1)}40%{transform:rotate(-44deg) scale(1.22)}}
+
+  /* white letterforms carved out of the ink */
+  .carve{
+    position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);
+    font-weight:800;font-size:clamp(30px,11vw,72px);letter-spacing:-.03em;color:#FFFFFF;
+    text-align:center;line-height:1;white-space:nowrap;pointer-events:none;
+    text-shadow:0 0 0 #fff;mix-blend-mode:normal;
+  }
+  .carve small{display:block;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.34em;color:rgba(255,255,255,.72);margin-top:10px;text-transform:uppercase}
+
+  /* capillary lines */
+  .cap{position:absolute;inset:0;pointer-events:none}
+  .cap path{fill:none;stroke:var(--ink);stroke-width:.7;stroke-dasharray:var(--len,120);stroke-dashoffset:var(--len,120);opacity:.55;animation:draw 7.6s var(--e-viscous) infinite}
+  .cap path:nth-child(2){animation-delay:-1.9s;opacity:.4}
+  .cap path:nth-child(3){animation-delay:-3.4s;opacity:.32}
+  .cap path:nth-child(4){animation-delay:-5.1s;opacity:.26}
+  @keyframes draw{0%{stroke-dashoffset:var(--len,120)}26%,64%{stroke-dashoffset:0}92%,100%{stroke-dashoffset:var(--len,120)}}
+
+  /* the pool the rivulets feed */
+  .pool{position:absolute;left:0;right:0;bottom:0;height:clamp(74px,16vh,120px);background:linear-gradient(180deg,var(--ink-soft),var(--ink));border-radius:50% 50% 0 0 / 26px 26px 0 0;transform-origin:bottom;animation:poolPulse 6.8s var(--e-viscous) infinite}
+  @keyframes poolPulse{0%,100%{transform:scaleY(.86)}50%{transform:scaleY(1.03)}}
+  .pool::before{content:"";position:absolute;left:6%;right:6%;top:-8px;height:16px;background:radial-gradient(50% 100% at 50% 100%, rgba(255,255,255,.9), transparent 70%)}
+
+  /* siphon channel — fold only */
+  .siphon{display:none}
+
+  /* ink-written margin note: the tip */
+  .note{
+    position:relative;z-index:4;margin:0;padding:16px clamp(16px,5vw,40px) calc(14px + env(safe-area-inset-bottom,0px));
+    background:var(--paper);
+  }
+  .note .stroke{position:relative;display:inline-block;overflow:hidden}
+  .note .label{font-family:var(--mono);font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;display:block}
+  .note p{margin:0;font-family:var(--mono);font-size:15px;line-height:1.55;color:var(--ink);max-width:42ch;position:relative}
+  .note p .wipe{position:absolute;inset:0;background:var(--paper);transform-origin:right center;animation:wipe 5s var(--e-viscous) infinite}
+  @keyframes wipe{0%{transform:scaleX(1)}12%{transform:scaleX(0)}86%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+  .note .underline{display:block;height:2px;margin-top:12px;background:var(--ink);transform-origin:left center;transform:scaleX(1);animation:ul 5s var(--e-viscous) infinite;opacity:.85}
+  @keyframes ul{0%{transform:scaleX(0)}14%{transform:scaleX(1)}86%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important}
+    .cap path{stroke-dashoffset:0;opacity:.4}
+    .drop,.splat{opacity:0}
+    .note p .wipe{transform:scaleX(0)}
+  }
+
+  /* ---- FOLD: one vessel becomes two communicating vessels joined by a siphon ---- */
+  @media (min-width:640px){
+    .field{display:grid;grid-template-columns:1fr 1fr;gap:clamp(22px,4vw,52px);padding:0 clamp(20px,4vw,48px)}
+    .vessel{position:relative;inset:auto;border:1px solid var(--line);border-radius:14px 14px 0 0;overflow:hidden;background:linear-gradient(180deg,#fff, var(--paper-2))}
+    .v2{display:block}
+    .mass{top:34%;width:min(60%,260px)}
+    .v2 .mass{top:52%}
+    .carve{top:34%;font-size:clamp(38px,5.4vw,76px)}
+    .pool{height:clamp(60px,12vh,96px)}
+    .siphon{
+      display:block;position:absolute;left:16%;right:16%;top:11%;height:34px;z-index:3;
+      border-bottom:2px solid var(--ink);border-radius:0 0 40px 40px;
+    }
+    .siphon::after{
+      content:"";position:absolute;left:0;right:0;bottom:0;height:100%;
+      background:linear-gradient(90deg,transparent, var(--ink), transparent);
+      transform-origin:left center;animation:siphon 9s var(--e-viscous) infinite;opacity:.9;
+    }
+    @keyframes siphon{0%{transform:scaleX(.05)}48%{transform:scaleX(1)}100%{transform:scaleX(.05)}}
+    .note{padding-bottom:24px}
+    .note p{font-size:16px}
+  }
+</style>
+</head>
+<body>
+  <main class="paper">
+    <div class="well" aria-hidden="true">
+      <span class="drop"></span>
+      <span class="splat"></span>
+    </div>
+
+    <div class="field">
+      <div class="vessel v1">
+        <div class="mass" aria-hidden="true">
+          <i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="blob b4"></i>
+        </div>
+        <svg class="cap" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path style="--len:150" d="M22 2 C 20 24, 30 40, 34 62"/>
+          <path style="--len:160" d="M78 2 C 82 22, 70 42, 66 60"/>
+          <path style="--len:170" d="M50 2 C 50 26, 44 44, 46 66"/>
+          <path style="--len:180" d="M8 2 C 12 30, 26 48, 22 72"/>
+        </svg>
+        <div class="pool" aria-hidden="true"></div>
+        <div class="carve" aria-hidden="true">BIGDROPS<small>business operating platform</small></div>
+      </div>
+
+      <div class="vessel v2" aria-hidden="true"></div>
+
+      <div class="siphon" aria-hidden="true"></div>
+    </div>
+
+    <aside class="note">
+      <span class="label">Filed with your records — tip</span>
+      <p role="status"><span id="tipText">Every recorded payment automatically generates a receipt.</span><span class="wipe" aria-hidden="true"></span></p>
+      <span class="underline" aria-hidden="true"></span>
+    </aside>
+  </main>
+
+<script>
+(function(){
+  var TIPS = [
+    "Every recorded payment automatically generates a receipt. View and download it from the Receipts page.",
+    "Set an expiry date on quotations to automatically flag overdue responses.",
+    "Tap the search icon to find any document across all modules. Search by document number, client name, or project name."
+  ];
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var el = document.getElementById("tipText");
+  var i = 0;
+  function swap(){
+    i = (i + 1) % TIPS.length;
+    el.textContent = TIPS[i];
+    var p = el.parentNode;
+    var w = p.querySelector(".wipe");
+    if(w){ w.style.animation = "none"; void w.offsetWidth; w.style.animation = ""; }
+  }
+  if(!reduce){ setInterval(swap, 5000); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BIGDROPS — Cold Launch Concept</title>
+<style>
+:root{
+  --bg:#07111f;--paper:#f8fafc;--amber:#60a5fa;--orange:#38bdf8;
+  --ink:#f8fafc;--muted:#94a3b8;--green:#5eead4;--line:rgba(148,163,184,.18);
+  --ease:cubic-bezier(.2,.85,.25,1);--snap:cubic-bezier(.22,1.45,.35,1);
+}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,Manrope,system-ui,sans-serif}
+body{min-height:100dvh;overflow:hidden}
+.boot{position:relative;min-height:100dvh;isolation:isolate;overflow:hidden;background:
+ radial-gradient(circle at 50% 45%,rgba(56,189,248,.15),transparent 34%),
+ linear-gradient(160deg,#0f1d33,#07111f 58%,#050b14)}
+.grid{position:absolute;inset:-20%;opacity:.12;transform:perspective(700px) rotateX(64deg) translateY(18%);
+ background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+ background-size:54px 54px;animation:grid 9s linear infinite}
+@keyframes grid{to{background-position:0 54px,54px 0}}
+.brand{position:absolute;z-index:20;left:20px;top:calc(env(safe-area-inset-top) + 18px);display:flex;gap:10px;align-items:center}
+.mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--amber),var(--orange));display:grid;place-items:center;font-weight:900;color:#04111f;box-shadow:0 0 42px rgba(56,189,248,.24)}
+.word{font-size:13px;font-weight:900;letter-spacing:.18em}
+.scene{position:absolute;inset:0;display:grid;place-items:center}
+.core{position:relative;width:min(82vw,360px);aspect-ratio:1}
+.ring{position:absolute;inset:15%;border:1px solid rgba(96,165,250,.34);border-radius:34%;transform:rotate(45deg);animation:core 5.2s var(--ease) infinite}
+.ring.r2{inset:27%;border-color:rgba(226,232,240,.22);animation-delay:-1.7s;animation-direction:reverse}
+@keyframes core{0%,100%{transform:rotate(45deg) scale(.82);border-radius:34%}42%{transform:rotate(135deg) scale(1.08);border-radius:12%}70%{transform:rotate(225deg) scale(.92);border-radius:48%}}
+.logo{position:absolute;inset:34%;border-radius:26px;background:linear-gradient(145deg,var(--amber),var(--orange));display:grid;place-items:center;color:#04111f;font-weight:1000;font-size:clamp(42px,14vw,68px);box-shadow:0 22px 80px rgba(56,189,248,.22);animation:logo 5.2s var(--snap) infinite}
+@keyframes logo{0%,100%{transform:scale(.72) rotate(-8deg)}16%{transform:scale(1.08) rotate(2deg)}26%,70%{transform:scale(1) rotate(0)}84%{transform:scale(.86) rotate(5deg)}}
+.shard{position:absolute;left:50%;top:50%;width:120px;height:54px;margin:-27px -60px;border-radius:12px;border:1px solid rgba(148,163,184,.20);background:rgba(15,23,42,.68);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font:700 10px/1 ui-monospace,monospace;letter-spacing:.08em;color:#cbd5e1;opacity:0}
+.s1{animation:fly1 5.2s var(--ease) infinite}.s2{animation:fly2 5.2s var(--ease) infinite}.s3{animation:fly3 5.2s var(--ease) infinite}.s4{animation:fly4 5.2s var(--ease) infinite}
+@keyframes fly1{0%,8%{opacity:0;transform:translate(0,0) scale(.2)}22%,65%{opacity:1;transform:translate(-138px,-150px) rotate(-8deg)}82%,100%{opacity:0;transform:translate(-230px,-230px) scale(.7)}}
+@keyframes fly2{0%,12%{opacity:0;transform:translate(0,0) scale(.2)}28%,68%{opacity:1;transform:translate(132px,-102px) rotate(7deg)}86%,100%{opacity:0;transform:translate(220px,-170px) scale(.7)}}
+@keyframes fly3{0%,16%{opacity:0;transform:translate(0,0) scale(.2)}32%,72%{opacity:1;transform:translate(-126px,128px) rotate(6deg)}90%,100%{opacity:0;transform:translate(-210px,210px) scale(.7)}}
+@keyframes fly4{0%,20%{opacity:0;transform:translate(0,0) scale(.2)}36%,74%{opacity:1;transform:translate(135px,145px) rotate(-6deg)}92%,100%{opacity:0;transform:translate(220px,225px) scale(.7)}}
+.trace{position:absolute;inset:0;pointer-events:none}
+.trace i{position:absolute;height:1px;width:42%;left:29%;top:50%;background:linear-gradient(90deg,transparent,var(--amber),transparent);transform-origin:center;opacity:.5}
+.trace i:nth-child(1){transform:rotate(0deg)}.trace i:nth-child(2){transform:rotate(45deg)}.trace i:nth-child(3){transform:rotate(90deg)}.trace i:nth-child(4){transform:rotate(135deg)}
+.flash{position:absolute;inset:0;background:radial-gradient(circle,rgba(56,189,248,.18),transparent 28%);opacity:0;animation:flash 5.2s ease infinite}
+@keyframes flash{0%,13%,100%{opacity:0}18%{opacity:1}30%{opacity:.12}75%{opacity:.06}}
+.copy{position:absolute;z-index:20;left:22px;right:22px;bottom:calc(env(safe-area-inset-bottom) + 24px)}
+.kicker{font:700 10px/1 ui-monospace,monospace;letter-spacing:.2em;color:var(--amber);margin-bottom:10px}
+.headline{font-size:clamp(30px,9vw,54px);font-weight:850;line-height:.94;letter-spacing:-.05em;max-width:560px}
+.status{margin-top:14px;color:var(--muted);font-size:12px}
+.tip{margin-top:20px;max-width:560px;padding:15px 16px 16px;border:1px solid rgba(96,165,250,.30);border-radius:16px;background:linear-gradient(135deg,rgba(30,41,59,.92),rgba(15,23,42,.78));box-shadow:0 14px 40px rgba(2,8,23,.30);font-size:13px;line-height:1.5;color:#e2e8f0;position:relative;overflow:hidden}
+.tip::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--amber),var(--orange))}
+.tip b{display:block;color:#7dd3fc;font:800 10px/1 ui-monospace,monospace;letter-spacing:.18em;margin-bottom:8px}
+@media(min-width:600px){
+ .brand{left:34px;top:30px}.core{width:min(48vw,480px)}
+ .copy{left:42px;bottom:38px;right:auto;width:46%}
+ .scene{transform:translateX(18%)}
+ .shard{width:150px}
+ @keyframes fly1{0%,8%{opacity:0;transform:translate(0,0) scale(.2)}22%,65%{opacity:1;transform:translate(-220px,-170px) rotate(-8deg)}82%,100%{opacity:0;transform:translate(-330px,-250px) scale(.7)}}
+ @keyframes fly2{0%,12%{opacity:0;transform:translate(0,0) scale(.2)}28%,68%{opacity:1;transform:translate(220px,-125px) rotate(7deg)}86%,100%{opacity:0;transform:translate(340px,-200px) scale(.7)}}
+ @keyframes fly3{0%,16%{opacity:0;transform:translate(0,0) scale(.2)}32%,72%{opacity:1;transform:translate(-210px,160px) rotate(6deg)}90%,100%{opacity:0;transform:translate(-330px,240px) scale(.7)}}
+ @keyframes fly4{0%,20%{opacity:0;transform:translate(0,0) scale(.2)}36%,74%{opacity:1;transform:translate(225px,175px) rotate(-6deg)}92%,100%{opacity:0;transform:translate(350px,250px) scale(.7)}}
+}
+@media(min-width:1000px){.scene{transform:translateX(22%)}.copy{left:7vw;bottom:9vh;width:36%}.headline{font-size:58px}.core{width:460px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}.shard{opacity:1}.s1{transform:translate(-138px,-150px)}.s2{transform:translate(132px,-102px)}.s3{transform:translate(-126px,128px)}.s4{transform:translate(135px,145px)}}
+</style>
+</head>
+<body>
+<main class="boot">
+ <div class="grid" aria-hidden="true"></div><div class="flash" aria-hidden="true"></div>
+ <header class="brand"><div class="mark">B</div><div class="word">BIGDROPS</div></header>
+ <section class="scene" aria-label="BIGDROPS startup motion">
+  <div class="core">
+   <div class="trace"><i></i><i></i><i></i><i></i></div>
+   <div class="ring"></div><div class="ring r2"></div>
+   <div class="shard s1">QUOTES · CPS · RFQ</div>
+   <div class="shard s2">INVOICES · PAYMENTS</div>
+   <div class="shard s3">PROJECTS · CLIENTS</div>
+   <div class="shard s4">RECORDS · TAX · REPORTS</div>
+   <div class="logo">B</div>
+  </div>
+ </section>
+ <section class="copy">
+  <div class="kicker">YOUR BUSINESS · IN MOTION</div>
+  <div class="headline">Everything<br>comes together.</div>
+  <div class="status">Opening your workspace…</div>
+  <div class="tip"><b>BIGDROPS TIP</b>Recording a payment automatically creates its receipt.</div>
+ </section>
+</main>
+</body>
+</html>
