@@ -2,7 +2,7 @@ import FloatingDocumentButton from './FloatingDocumentButton'
 import styles from './FloatingDownloadButton.module.css'
 import '@/components/layout/fabFloat.css'
 
-function DownloadIcon({ size = 22 }: { size?: number }) {
+function DownloadIcon({ size = 20 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -28,18 +28,7 @@ export default function FloatingDownloadButton({
 }: FloatingDownloadButtonProps) {
   const accessibleLabel = 'Download PDF'
 
-  // DIAGNOSTIC LOGGING
   const handleClick = () => {
-    const el = document.querySelector(`.${styles.button}`) as HTMLElement | null
-    if (el) {
-      console.group('🔍 FAB Download clicked')
-      console.log('Classes:', el.className)
-      console.log('Computed bg:', getComputedStyle(el).backgroundColor)
-      console.log('--bd-brand:', getComputedStyle(el).getPropertyValue('--bd-brand'))
-      console.log('--bd-fab-bg:', getComputedStyle(el).getPropertyValue('--bd-fab-bg'))
-      console.log('data-theme:', document.documentElement.getAttribute('data-theme'))
-      console.groupEnd()
-    }
     onClick?.()
   }
 
@@ -52,7 +41,7 @@ export default function FloatingDownloadButton({
         label={accessibleLabel}
         icon={
           <>
-            <DownloadIcon size={22} />
+            <DownloadIcon size={20} />
             <span className={styles.srOnly}>{label}</span>
           </>
         }
