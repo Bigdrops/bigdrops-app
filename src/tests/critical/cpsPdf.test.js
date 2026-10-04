@@ -2,7 +2,17 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
+import React from 'react'
+import { serialize } from '@formepdf/react'
 import { computeCpsRowEconomics, computeCpsTotals } from '../../domain/cps/calculateCpsTotals.ts'
+import {
+  ensureFormeFontFamily,
+  resetFormeFontCache,
+} from '../../components/pdf/forme/fonts.ts'
+import {
+  CpsCompactDocument,
+  CpsScheduleDocument,
+} from '../../components/pdf/forme/CpsFormeDocument.tsx'
 import {
   buildCpsFormeModel,
   resolveCpsFormeVisibleColumns,
@@ -14,6 +24,7 @@ import {
   CPS_PDF_TEMPLATES,
   readCpsPdfDisplayPreferences,
 } from '../../domain/cps/pdfPreferences.ts'
+import { extractDiagnostic } from '../../lib/errorMessages.ts'
 
 function buildFixtureCps() {
   const row = (patch) => ({
@@ -70,6 +81,129 @@ function buildFixtureCps() {
   }
 }
 
+function buildGroupedFixtureCps() {
+  const row = (patch) => ({
+    id: patch._key,
+    _uiKey: patch._key,
+    row_type: 'item',
+    sort_order: 0,
+    section_title: '',
+    description: '',
+    specification: '',
+    quantity: 1,
+    unit: 'pcs',
+    notes: '',
+    make_brand: '',
+    cp: 0,
+    sp: 0,
+    image_url: null,
+    group_id: null,
+    vat_rate: null,
+    discount_rate: null,
+    install_rate: null,
+    install_rate_override: null,
+    install_rate_taxable: null,
+    custom_data: {},
+    ...patch,
+  })
+
+  return {
+    ...buildFixtureCps(),
+    title: 'CPS Form Test',
+    table_rows: [
+      { ...row({ _key: 'electrical-section' }), row_type: 'section', section_title: 'Electrical Materials', group_id: 'grp-electrical', quantity: 0 },
+      { ...row({ _key: 'generator-section' }), row_type: 'section', section_title: 'Generator Parts', group_id: 'grp-generator', quantity: 0 },
+      row({
+        _key: 'cable',
+        description: '16mm single core cable',
+        specification: 'Pure copper cable in conduit',
+        quantity: 12,
+        unit: 'rolls',
+        make_brand: 'Coleman',
+        cp: 85000,
+        sp: 100000,
+        group_id: 'grp-electrical',
+      }),
+      row({
+        _key: 'breaker',
+        description: '125A MCCB breaker',
+        specification: 'Three-phase protection',
+        quantity: 4,
+        unit: 'pcs',
+        make_brand: 'Schneider',
+        cp: 95000,
+        sp: 120000,
+        group_id: 'grp-electrical',
+      }),
+      row({
+        _key: 'labour',
+        description: 'Installation labour',
+        quantity: 1,
+        unit: 'lot',
+        cp: 200000,
+        sp: 260000,
+        group_id: null,
+      }),
+      row({
+        _key: 'avr',
+        description: 'Automatic voltage regulator',
+        quantity: 2,
+        unit: 'pcs',
+        make_brand: 'Leroy-Somer',
+        cp: 180000,
+        sp: 220000,
+        group_id: 'grp-generator',
+        image_url: 'https://example.com/optional-missing-image.jpg',
+      }),
+    ],
+  }
+}
+
+function extractFormeText(node, output = []) {
+  if (node === null || node === undefined) return output
+  if (typeof node === 'string') {
+    output.push(node)
+    return output
+  }
+  if (Array.isArray(node)) {
+    node.forEach((entry) => extractFormeText(entry, output))
+    return output
+  }
+  if (typeof node !== 'object') return output
+
+  const kind = node.kind
+  if (kind && typeof kind === 'object') {
+    if (typeof kind.content === 'string' && kind.content) output.push(kind.content)
+    if (Array.isArray(kind.runs)) {
+      kind.runs.forEach((run) => {
+        if (run && typeof run.content === 'string' && run.content) output.push(run.content)
+      })
+    }
+  }
+
+  for (const value of Object.values(node)) {
+    if (value !== kind) extractFormeText(value, output)
+  }
+  return output
+}
+
+function renderFormeText(Component, model) {
+  return extractFormeText(serialize(React.createElement(Component, { model })))
+}
+
+function indexesOf(texts, value) {
+  const indexes = []
+  texts.forEach((text, index) => {
+    if (text === value) indexes.push(index)
+  })
+  return indexes
+}
+
+function assertExactlyOnce(texts, value) {
+  const indexes = indexesOf(texts, value)
+  assert.equal(indexes.length, 1, `${value} should appear exactly once`)
+}
+
 const settings = {
   company_name: 'Bigdrops Ltd',
   company_logo_url: 'https://example.com/logo.png',
@@ -107,6 +241,122 @@ test('CPS Forme rows and groups use authoritative engine economics', () => {
   assert.equal(model.groups[0].itemCount, '1')
 })
 
+test('CPS Forme model renders each eligible item exactly once in group sections', () => {
+  const cps = buildGroupedFixtureCps()
+  const model = buildCpsFormeModel({ cps, settings })
+  const itemRows = model.rows.filter((row) => row.kind === 'item')
+
+  assert.deepEqual(itemRows.map((row) => row.description), [
+    '16mm single core cable',
+    '125A MCCB breaker',
+    'Automatic voltage regulator',
+    'Installation labour',
+  ])
+  assert.equal(new Set(itemRows.map((row) => row.key)).size, itemRows.length)
+
+  const sequence = model.rows.map((row) => {
+    if (row.kind === 'group') return `group:${row.title}`
+    if (row.kind === 'group-subtotal') return `subtotal:${row.title}`
+    return `item:${row.description}`
+  })
+
+  assert.deepEqual(sequence, [
+    'group:Electrical Materials',
+    'item:16mm single core cable',
+    'item:125A MCCB breaker',
+    'subtotal:Electrical Materials subtotal',
+    'group:Generator Parts',
+    'item:Automatic voltage regulator',
+    'subtotal:Generator Parts subtotal',
+    'item:Installation labour',
+  ])
+})
+
+test('CPS Forme serialized schedule tree contains grouped members between heading and subtotal', () => {
+  const model = buildCpsFormeModel({ cps: buildGroupedFixtureCps(), settings })
+  const texts = renderFormeText(CpsScheduleDocument, model)
+
+  assertExactlyOnce(texts, '16mm single core cable')
+  assertExactlyOnce(texts, '125A MCCB breaker')
+  assertExactlyOnce(texts, 'Automatic voltage regulator')
+  assertExactlyOnce(texts, 'Installation labour')
+  assert.ok(texts.includes('SASBOQ-000007'))
+
+  const electrical = texts.indexOf('Electrical Materials')
+  const cable = texts.indexOf('16mm single core cable')
+  const breaker = texts.indexOf('125A MCCB breaker')
+  const electricalSubtotal = texts.indexOf('Electrical Materials subtotal')
+  assert.ok(electrical < cable)
+  assert.ok(cable < breaker)
+  assert.ok(breaker < electricalSubtotal)
+
+  const generator = texts.indexOf('Generator Parts')
+  const avr = texts.indexOf('Automatic voltage regulator')
+  const generatorSubtotal = texts.indexOf('Generator Parts subtotal')
+  assert.ok(generator < avr)
+  assert.ok(avr < generatorSubtotal)
+})
+
+test('CPS Forme totals and group subtotals remain tied to calculation authority', () => {
+  const cps = buildGroupedFixtureCps()
+  const model = buildCpsFormeModel({ cps, settings })
+  const expectedTotals = computeCpsTotals(cps.table_rows)
+  const electricalRows = cps.table_rows.filter((row) => row.row_type === 'item' && row.group_id === 'grp-electrical')
+  const electricalSubtotal = electricalRows.reduce(
+    (sum, row) => sum + computeCpsRowEconomics(row).total_selling_price,
+    0,
+  )
+  const generatorSubtotal = computeCpsRowEconomics(cps.table_rows.find((row) => row.id === 'avr')).total_selling_price
+
+  assert.equal(model.groups.find((group) => group.id === 'grp-electrical')?.subtotalText, `₦${electricalSubtotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+  assert.equal(model.groups.find((group) => group.id === 'grp-generator')?.subtotalText, `₦${generatorSubtotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+  assert.equal(model.totals[0].display, `₦${expectedTotals.total_cost.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+  assert.equal(model.totals[1].display, `₦${expectedTotals.total_selling_price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+  assert.equal(model.totals[2].display, `₦${expectedTotals.gross_profit.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+  assert.equal(model.totals[3].display, `${Number(expectedTotals.margin_percent || 0).toFixed(1)}%`)
+})
+
+test('CPS Forme schedule and compact serialize from the same prepared data authority', () => {
+  const model = buildCpsFormeModel({
+    cps: buildGroupedFixtureCps(),
+    settings,
+    orientation: 'landscape',
+    columnVisibility: { showMake: false, showUnit: false, showCp: false, showSpec: false },
+  })
+
+  assert.equal(model.orientation, 'landscape')
+  assert.deepEqual(model.visibleColumns, ['no', 'description', 'qty', 'sp', 'total'])
+  assert.equal(model.number, 'SASBOQ-000007')
+  assert.equal(model.rows.find((row) => row.description === '16mm single core cable')?.make, '')
+  assert.equal(model.rows.find((row) => row.description === '16mm single core cable')?.quantityText, '12')
+
+  const scheduleTexts = renderFormeText(CpsScheduleDocument, model)
+  const compactTexts = renderFormeText(CpsCompactDocument, model)
+  for (const description of [
+    '16mm single core cable',
+    '125A MCCB breaker',
+    'Installation labour',
+    'Automatic voltage regulator',
+  ]) {
+    assertExactlyOnce(scheduleTexts, description)
+    assertExactlyOnce(compactTexts, description)
+  }
+})
+
+test('CPS Forme portrait serialization tolerates missing optional images', () => {
+  const model = buildCpsFormeModel({
+    cps: buildGroupedFixtureCps(),
+    settings,
+    orientation: 'portrait',
+    photoDataUris: {},
+  })
+  const texts = renderFormeText(CpsScheduleDocument, model)
+
+  assert.equal(model.orientation, 'portrait')
+  assert.equal(model.rows.find((row) => row.description === 'Automatic voltage regulator')?.imageDataUri, null)
+  assertExactlyOnce(texts, 'Automatic voltage regulator')
+})
+
 test('CPS Forme template implements no calculations', () => {
   const templateSource = readFileSync(
     new URL('../../components/pdf/forme/CpsFormeDocument.tsx', import.meta.url),
@@ -136,6 +386,7 @@ test('exactly one CPS PDF architecture is active', async () => {
     new URL('../../components/pdf/index.ts', import.meta.url),
     'utf8',
   )
+  assert.ok(indexSource.includes('@formepdf/core/browser'), 'browser runtime must use the Forme browser entry')
   assert.ok(!indexSource.includes('templates/CpsSchedule'), 'rejected react-pdf template must stay removed')
 })
 
@@ -231,6 +482,23 @@ test('CPS Forme model defaults to Helvetica with no accent in portrait', () => {
 test('CPS customization capabilities enable accent color', () => {
   assert.equal(CPS_CAPABILITIES.accentColor, true)
   assert.equal(CPS_CAPABILITIES.documentFont, true)
+})
+
+test('CPS Forme font resolver falls back instead of registering WOFF shared fonts', async () => {
+  resetFormeFontCache()
+  const fontFamily = await ensureFormeFontFamily('Inter')
+  assert.equal(fontFamily, 'Helvetica')
+})
+
+test('CPS PDF diagnostics preserve pipeline stage and cause', () => {
+  const underlying = new Error('unknown magic')
+  const staged = new Error('CPS PDF render failed: unknown magic', { cause: underlying })
+  const diagnostic = extractDiagnostic(new Error('Download failed', { cause: staged }))
+
+  assert.ok(diagnostic.includes('Download failed'))
+  assert.ok(diagnostic.includes('CPS PDF render failed: unknown magic'))
+  assert.ok(diagnostic.includes('unknown magic'))
+  assert.ok(diagnostic.includes('Caused by:'))
 })
 
 test('CPS Forme templates expose schedule and compact with shared column model', () => {

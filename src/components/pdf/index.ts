@@ -8,6 +8,7 @@ import {
 import { adaptCommercialDocumentData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
+import type { PdfTemplateRenderer } from './renderers/PdfRenderer'
 
 export type PdfGenerationResult = {
   status: 'generated'
@@ -21,6 +22,29 @@ type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
   documentNumber?: string | null
   templateId?: string | null
   compact?: boolean
+}
+
+type CpsPdfStage = 'forme-init' | 'render' | 'bytes' | 'delivery'
+type ErrorWithCause = Error & { cause?: unknown }
+
+class CpsPdfStageError extends Error {
+  readonly stage: CpsPdfStage
+
+  constructor(stage: CpsPdfStage, cause: unknown) {
+    const causeMessage = cause instanceof Error ? cause.message : String(cause)
+    super(`CPS PDF ${stage} failed: ${causeMessage}`)
+    this.name = 'CpsPdfStageError'
+    this.stage = stage
+    ;(this as ErrorWithCause).cause = cause
+  }
+}
+
+async function cpsPdfStage<T>(stage: CpsPdfStage, operation: () => Promise<T> | T): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    throw new CpsPdfStageError(stage, error)
+  }
 }
 
 function sanitizeFilename(value: string) {
@@ -65,7 +89,7 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
 
   const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
 
-  let Template: React.ComponentType<any> = Industry as React.ComponentType<any>
+  let Template: PdfTemplateRenderer = Industry as PdfTemplateRenderer
 
   switch (activeTemplateId) {
     case 'ledger':
@@ -100,7 +124,7 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
       data: adaptCommercialDocumentData(model as PdfDocumentModel),
       Template,
       compact: request.compact,
-    }) as any,
+    }),
   )
 
   const asset = await generator.generate({
@@ -137,12 +161,17 @@ export async function generateCpsFormePdf(request: {
   element: React.ReactElement
   filename: string
 }): Promise<PdfGenerationResult> {
-  const { renderDocument } = await import('@formepdf/core')
+  const { renderDocument } = await cpsPdfStage('forme-init', () => import('@formepdf/core/browser'))
 
-  const bytes = await renderDocument(request.element)
+  const bytes = await cpsPdfStage('render', () => renderDocument(request.element))
 
   const filename = request.filename
-  const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
+  const blob = await cpsPdfStage('bytes', () => {
+    if (!(bytes instanceof Uint8Array) || bytes.length === 0) {
+      throw new Error('Forme returned empty or invalid PDF bytes.')
+    }
+    return new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
+  })
   const asset = {
     blob,
     filename,
@@ -153,7 +182,7 @@ export async function generateCpsFormePdf(request: {
   }
 
   const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
-  const result = await delivery.deliver({ asset, mode: 'download' })
+  const result = await cpsPdfStage('delivery', () => delivery.deliver({ asset, mode: 'download' }))
 
   const feedbackBus = new DefaultFeedbackBus()
   if (!result.success) {

@@ -11,6 +11,8 @@ const STATUS_CODE_MAP: Record<number, string> = {
   503: 'The service is temporarily unavailable',
 }
 
+type ErrorWithCause = Error & { cause?: unknown }
+
 function isResponse(value: unknown): value is { status: number; statusText?: string; url?: string } {
   if (value instanceof Response) return true
   if (value && typeof value === 'object' && 'status' in value && typeof (value as Record<string, unknown>).status === 'number') return true
@@ -38,6 +40,20 @@ export function extractDiagnostic(error: unknown): string {
   if (error instanceof Error) {
     const parts = [`${error.name}: ${error.message}`]
     if (error.stack) parts.push(`\n${error.stack}`)
+    let cause = (error as ErrorWithCause).cause
+    let depth = 0
+    while (cause && depth < 4) {
+      parts.push('\n\nCaused by:')
+      if (cause instanceof Error) {
+        parts.push(`\n${cause.name}: ${cause.message}`)
+        if (cause.stack) parts.push(`\n${cause.stack}`)
+        cause = (cause as ErrorWithCause).cause
+      } else {
+        parts.push(`\n${extractDiagnostic(cause)}`)
+        cause = null
+      }
+      depth += 1
+    }
     return parts.join('')
   }
 

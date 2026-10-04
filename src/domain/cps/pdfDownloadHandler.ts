@@ -1,14 +1,37 @@
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
-import { computeCpsRowEconomics, computeCpsTotals } from '@/domain/cps/calculateCpsTotals'
+import { computeCpsTotals } from '@/domain/cps/calculateCpsTotals'
 import { normalizeCpsColumns } from '@/domain/cps/columns'
 import type { Cps } from '@/domain/cps/types'
-import type { TableDocumentRow } from '@/domain/table-document/types'
+import { buildCpsViewData, buildCpsViewSegments, type CpsViewItemRow } from '@/domain/cps/viewData'
 import type { CpsFormeColumnKey, CpsFormeModel } from '@/components/pdf/forme/CpsFormeDocument'
 import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
 import { loadSettings } from '@/domain/pdf/customization/hooks'
 import { resolveFull } from '@/domain/pdf/customization/resolver'
 import { readCpsPdfDisplayPreferences, type CpsPdfOrientation, type CpsPdfTemplateId } from '@/domain/cps/pdfPreferences'
 import { feedback } from '@/lib/feedback'
+
+type CpsPdfPipelineStage = 'prepare' | 'customization' | 'font' | 'template'
+type ErrorWithCause = Error & { cause?: unknown }
+
+class CpsPdfPipelineError extends Error {
+  readonly stage: CpsPdfPipelineStage
+
+  constructor(stage: CpsPdfPipelineStage, cause: unknown) {
+    const causeMessage = cause instanceof Error ? cause.message : String(cause)
+    super(`CPS PDF ${stage} failed: ${causeMessage}`)
+    this.name = 'CpsPdfPipelineError'
+    this.stage = stage
+    ;(this as ErrorWithCause).cause = cause
+  }
+}
+
+async function cpsStage<T>(stage: CpsPdfPipelineStage, operation: () => Promise<T> | T): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    throw new CpsPdfPipelineError(stage, error)
+  }
+}
 
 function asText(value: unknown): string {
   return value === null || value === undefined ? '' : String(value)
@@ -98,71 +121,75 @@ export function buildCpsFormeModel(input: {
   const orientation: CpsPdfOrientation = input.orientation || 'portrait'
   const tableRows = cps.table_rows || []
   const totals = computeCpsTotals(tableRows)
+  const viewData = buildCpsViewData(cps)
+  const segments = buildCpsViewSegments(viewData.rows)
 
-  const titlesByGroupKey = new Map<string, string>()
-  for (const row of tableRows) {
-    if (row.row_type !== 'section') continue
-    const key = row.group_id || row.id || row._uiKey || ''
-    if (key && !titlesByGroupKey.has(key)) {
-      titlesByGroupKey.set(key, row.section_title || row.description || 'Group')
-    }
-  }
-
-  const subtotals = new Map<string, { total: number; count: number }>()
-  for (const row of tableRows) {
-    if (row.row_type !== 'item' || !row.group_id) continue
-    const entry = subtotals.get(row.group_id) || { total: 0, count: 0 }
-    entry.total += computeCpsRowEconomics(row).total_selling_price
-    entry.count += 1
-    subtotals.set(row.group_id, entry)
-  }
-
-  let itemNumber = 0
-  const rows = tableRows.map((row: TableDocumentRow, index: number) => {
-    const key = row.id || row._uiKey || `${row.row_type}-${index}`
-    if (row.row_type === 'section') {
-      const groupId = row.group_id || row.id || row._uiKey || null
-      return {
-        key,
-        kind: 'group' as const,
-        number: '',
-        groupId,
-        title: (groupId && titlesByGroupKey.get(groupId)) || row.section_title || row.description || 'Group',
-        description: '',
-        specification: '',
-        make: '',
-        quantityText: '',
-        cpText: '',
-        spText: '',
-        totalText: '',
-        imageDataUri: null,
-      }
-    }
-    itemNumber += 1
-    const econ = computeCpsRowEconomics(row)
-    const photoKey = row.id || row._uiKey || ''
+  const toItemRow = (row: CpsViewItemRow) => {
     const unit = visibility.showUnit ? row.unit || '' : ''
     return {
-      key,
+      key: row.key,
       kind: 'item' as const,
-      number: String(itemNumber).padStart(2, '0'),
-      groupId: row.group_id || null,
+      number: row.number,
+      groupId: row.groupId || null,
       title: '',
       description: row.description || '',
       specification: visibility.showSpec ? row.specification || '' : '',
-      make: visibility.showMake ? row.make_brand || '' : '',
-      quantityText: `${econ.quantity} ${unit}`.trim(),
-      cpText: money(econ.cp),
-      spText: money(econ.sp),
-      totalText: money(econ.total_selling_price),
-      imageDataUri: (photoKey && photoDataUris?.[photoKey]) || null,
+      make: visibility.showMake ? row.makeBrand || '' : '',
+      quantityText: `${row.quantity} ${unit}`.trim(),
+      cpText: money(row.cp),
+      spText: money(row.sp),
+      totalText: money(row.selling),
+      imageDataUri: (row.key && photoDataUris?.[row.key]) || null,
     }
+  }
+
+  const rows: CpsFormeModel['rows'] = []
+  const groups: CpsFormeModel['groups'] = []
+  segments.forEach((segment) => {
+    if (segment.type === 'item') {
+      rows.push(toItemRow(segment.row))
+      return
+    }
+
+    rows.push({
+      key: `${segment.row.key}-heading`,
+      kind: 'group',
+      number: '',
+      groupId: segment.membership,
+      title: segment.row.title,
+      description: '',
+      specification: '',
+      make: '',
+      quantityText: '',
+      cpText: '',
+      spText: '',
+      totalText: '',
+      imageDataUri: null,
+    })
+    segment.items.forEach((row) => rows.push(toItemRow(row)))
+    rows.push({
+      key: `${segment.row.key}-subtotal`,
+      kind: 'group-subtotal',
+      number: '',
+      groupId: segment.membership,
+      title: `${segment.row.title} subtotal`,
+      description: '',
+      specification: '',
+      make: '',
+      quantityText: '',
+      cpText: '',
+      spText: '',
+      totalText: money(segment.total),
+      imageDataUri: null,
+    })
+    groups.push({
+      id: segment.membership,
+      title: segment.row.title,
+      itemCount: String(segment.count),
+      subtotalText: money(segment.total),
+    })
   })
 
-  const groups = [...titlesByGroupKey].map(([id, title]) => {
-    const subtotal = subtotals.get(id) || { total: 0, count: 0 }
-    return { id, title, itemCount: String(subtotal.count), subtotalText: money(subtotal.total) }
-  })
 
   const snapshot = (cps.custom_fields?.client_snapshot || {}) as Record<string, unknown>
   const text = (value: unknown) => (typeof value === 'string' ? value.trim() : asText(value).trim())
@@ -208,14 +235,14 @@ export async function handleDownloadCpsPdf(input: {
 
   setDownloading(true)
   try {
-    const { generateCpsFormePdf } = await import('@/components/pdf')
-    const { CpsCompactDocument, CpsScheduleDocument } = await import('@/components/pdf/forme/CpsFormeDocument')
-    const { ensureFormeFontFamily } = await import('@/components/pdf/forme/fonts')
-    const React = await import('react')
+    const { generateCpsFormePdf } = await cpsStage('prepare', () => import('@/components/pdf'))
+    const { CpsCompactDocument, CpsScheduleDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsFormeDocument'))
+    const { ensureFormeFontFamily } = await cpsStage('prepare', () => import('@/components/pdf/forme/fonts'))
+    const React = await cpsStage('prepare', () => import('react'))
 
-    const prefs = readCpsPdfDisplayPreferences()
-    const { customization } = resolveFull(CPS_TEMPLATE_DEFAULTS, CPS_CAPABILITIES, CPS_POLICY, loadSettings('cps_sheets'))
-    const fontFamily = await ensureFormeFontFamily(customization.documentFont)
+    const prefs = await cpsStage('customization', () => readCpsPdfDisplayPreferences())
+    const { customization } = await cpsStage('customization', () => resolveFull(CPS_TEMPLATE_DEFAULTS, CPS_CAPABILITIES, CPS_POLICY, loadSettings('cps_sheets')))
+    const fontFamily = await cpsStage('font', () => ensureFormeFontFamily(customization.documentFont))
     const accent = customization.accentEnabled ? customization.accentColor : null
     const columnVisibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
 
@@ -235,7 +262,7 @@ export async function handleDownloadCpsPdf(input: {
       if (dataUri) photoDataUris[key] = dataUri
     }
 
-    const model = buildCpsFormeModel({
+    const model = await cpsStage('template', () => buildCpsFormeModel({
       cps,
       settings,
       logoDataUri,
@@ -244,18 +271,20 @@ export async function handleDownloadCpsPdf(input: {
       accent,
       orientation: prefs.orientation,
       columnVisibility,
-    })
+    }))
     const rawName = `${model.number} ${model.title}`.trim() || 'cps'
     const filename = `${sanitizeFilename(rawName)}.pdf`
-    const SelectedDocument = selectCpsFormeDocument(prefs.templateId) === 'compact' ? CpsCompactDocument : CpsScheduleDocument
+    const SelectedDocument = await cpsStage('template', () => selectCpsFormeDocument(prefs.templateId) === 'compact' ? CpsCompactDocument : CpsScheduleDocument)
     await generateCpsFormePdf({
       element: React.createElement(SelectedDocument, { model }),
       filename,
     })
     feedback.success('Download ready', { description: `${filename} saved.` })
   } catch (error) {
-    feedback.error('Download failed', {
-      description: error instanceof Error ? error.message : 'Could not generate the CPS PDF.',
+    const downloadError = new Error('Download failed') as ErrorWithCause
+    downloadError.cause = error
+    feedback.error(downloadError, {
+      description: 'Could not generate the CPS PDF.',
     })
     throw error
   } finally {
