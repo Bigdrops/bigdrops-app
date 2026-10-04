@@ -1,9 +1,12 @@
 import path from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import wasm from 'vite-plugin-wasm'
 
 export default defineConfig({
-  plugins: [react()],
+  // ponytail: wasm() exists only for @formepdf/core's wasm-pack ESM
+  // output; remove it if the Forme dependency goes.
+  plugins: [wasm(), react()],
   base: './',
   build: {
     outDir: 'dist',
