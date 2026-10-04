@@ -18,7 +18,7 @@ Every document generator MUST resolve its prefix at runtime through `resolvePref
 export const DEFAULT_PREFIXES = {
   waybill: 'WBL',
   invoice: 'INV',
-  boq: 'BOQ',
+  cps_sheets: 'CPS',
   rfq: 'RFQ',
   quotation: 'QTN',
   project: 'PRJ',
