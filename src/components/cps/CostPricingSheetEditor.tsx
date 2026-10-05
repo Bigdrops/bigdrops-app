@@ -47,7 +47,7 @@ import {
   type InstantMarkupSelection,
 } from '@/domain/cps/instant-markup'
 import type { Cps } from '@/domain/cps/types'
-import { appendCpsRow, insertCpsRow, normalizeCpsRowOrder, removeCpsRow } from '@/domain/cps/row-operations'
+import { appendCpsRow, insertCpsRow, moveCpsRow, normalizeCpsRowOrder, removeCpsRow } from '@/domain/cps/row-operations'
 import { createEmptyTableRow } from '@/domain/table-document/rows'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 import type { ClientRecord } from '@/domain/clientWorkspace'
@@ -525,10 +525,7 @@ export function CostPricingSheetEditor({
   const moveRow = (index: number, direction: -1 | 1) => {
     const target = index + direction
     if (target < 0 || target >= rows.length) return
-    const next = [...rows]
-    const [moved] = next.splice(index, 1)
-    next.splice(target, 0, moved)
-    updateRows(next)
+    updateRows(moveCpsRow(rows, index, target))
   }
 
   const openMarkup = () => {

@@ -63,6 +63,7 @@ import { Loader2, SaveAll } from 'lucide-react';
 import '@/components/layout/fabFloat.css';
 
 import { computeCpsRowEconomics, computeCpsTotals } from '@/domain/cps/calculateCpsTotals';
+import { validateContiguousGroupSequence } from '@/domain/cps/group-structure';
 import { createEmptyTableRow } from '@/domain/table-document/rows';
 import type { TableDocumentRow } from '@/domain/table-document/types';
 import {
@@ -622,6 +623,15 @@ export function sanitizeRows(rs: CpsRow[]): CpsRow[] {
     }
     return r;
   });
+}
+
+function hasContiguousMobileGroups(rows: CpsRow[]): boolean {
+  return validateContiguousGroupSequence(
+    rows.map((row) => ({
+      groupId: row.type === 'group' ? row.id : row.groupId,
+      label: row.type === 'group' ? row.title : undefined,
+    })),
+  ) === null;
 }
 
 /** Stable identity for rows and groups created inside the form. */
@@ -1456,6 +1466,7 @@ export function CostPricingSheetForm({
     );
     const t = next.findIndex((x) => x.id === target.id);
     next.splice(dir > 0 ? t + 1 : t, 0, r);
+    if (!hasContiguousMobileGroups(next)) return;
     setRows(next);
   };
 

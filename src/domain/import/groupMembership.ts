@@ -1,3 +1,5 @@
+import { validateContiguousGroupSequence } from '@/domain/cps/group-structure'
+
 export type ImportGroupMembershipGroup = {
   id?: unknown
   name?: unknown
@@ -115,23 +117,16 @@ export function validateImportGroupMembership(input: ImportGroupMembershipInput)
     }
   }
 
-  let activeGroup: string | null = null
-  const closedGroups = new Set<string>()
-  for (const item of items) {
-    const groupId = text(item.groupId)
-    if (!groupId) {
-      if (activeGroup) closedGroups.add(activeGroup)
-      activeGroup = null
-      continue
-    }
-
-    if (groupId === activeGroup) continue
-    if (closedGroups.has(groupId)) {
-      return `Invalid CPS group structure: "${groupLabel(groupById.get(groupId), groupId)}" is split into multiple sections. Group items must be contiguous.`
-    }
-    if (activeGroup) closedGroups.add(activeGroup)
-    activeGroup = groupId
-  }
+  const contiguityError = validateContiguousGroupSequence(
+    items.map((item) => {
+      const groupId = text(item.groupId) || null
+      return {
+        groupId,
+        label: groupId ? groupLabel(groupById.get(groupId), groupId) : undefined,
+      }
+    }),
+  )
+  if (contiguityError) return contiguityError
 
   return null
 }

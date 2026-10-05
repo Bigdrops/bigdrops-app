@@ -1,50 +1,5 @@
 import { Cell, Document, Fixed, Image, Page, Row, Table, Text, View } from '@formepdf/react'
-
-export type CpsFormeColumnKey = 'no' | 'description' | 'qty' | 'cp' | 'sp' | 'total'
-
-export interface CpsFormeRow {
-  key: string
-  kind: 'group' | 'item' | 'group-subtotal'
-  number: string
-  groupId: string | null
-  title: string
-  description: string
-  specification: string
-  make: string
-  quantityText: string
-  cpText: string
-  spText: string
-  totalText: string
-  imageDataUri: string | null
-}
-
-export interface CpsFormeGroup {
-  id: string
-  title: string
-  itemCount: string
-  subtotalText: string
-}
-
-export interface CpsFormeModel {
-  title: string
-  number: string
-  issueDate: string
-  status: string
-  companyName: string
-  logoDataUri: string | null
-  companyLines: string[]
-  clientName: string
-  clientLines: string[]
-  site: string
-  notes: string
-  fontFamily: string
-  accent: string | null
-  orientation: 'portrait' | 'landscape'
-  visibleColumns: CpsFormeColumnKey[]
-  rows: CpsFormeRow[]
-  groups: CpsFormeGroup[]
-  totals: Array<{ label: string; display: string; emphasis?: boolean }>
-}
+import type { CpsPdfColumnKey, CpsPdfGroup, CpsPdfModel, CpsPdfRow } from '../cpsPreparedModel'
 
 const INK = '#101828'
 const MUTED = '#667085'
@@ -53,7 +8,7 @@ const BRAND = '#175cd3'
 const COST = '#b54708'
 const SELL = '#067647'
 
-const COLUMN_WIDTHS: Record<CpsFormeColumnKey, { fixed: number } | { fraction: number }> = {
+const COLUMN_WIDTHS: Record<CpsPdfColumnKey, { fixed: number } | { fraction: number }> = {
   no: { fixed: 34 },
   description: { fraction: 0.5 },
   qty: { fixed: 58 },
@@ -67,7 +22,7 @@ function pageSize(orientation: 'portrait' | 'landscape'): 'A4' | { width: number
   return 'A4'
 }
 
-const COLUMN_LABELS: Record<CpsFormeColumnKey, string> = {
+const COLUMN_LABELS: Record<CpsPdfColumnKey, string> = {
   no: 'No',
   description: 'Description',
   qty: 'Qty',
@@ -76,7 +31,7 @@ const COLUMN_LABELS: Record<CpsFormeColumnKey, string> = {
   total: 'Total',
 }
 
-function DocHeader({ model, font }: { model: CpsFormeModel; font: string }) {
+function DocHeader({ model, font }: { model: CpsPdfModel; font: string }) {
   const accent = model.accent || BRAND
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 12, borderBottomWidth: 1.5, borderBottomColor: '#d0d5dd' }}>
@@ -112,7 +67,7 @@ function DocHeader({ model, font }: { model: CpsFormeModel; font: string }) {
   )
 }
 
-function DocParties({ model, font }: { model: CpsFormeModel; font: string }) {
+function DocParties({ model, font }: { model: CpsPdfModel; font: string }) {
   return (
     <View style={{ flexDirection: 'row', marginBottom: 14, paddingTop: 10, paddingBottom: 10, borderTopWidth: 1, borderTopColor: '#eaecf0', borderBottomWidth: 1, borderBottomColor: '#eaecf0' }}>
       <View style={{ flex: 1, paddingRight: 12 }}>
@@ -140,7 +95,7 @@ function DocParties({ model, font }: { model: CpsFormeModel; font: string }) {
   )
 }
 
-function DocTotals({ model, font }: { model: CpsFormeModel; font: string }) {
+function DocTotals({ model, font }: { model: CpsPdfModel; font: string }) {
   const accent = model.accent || BRAND
   return (
     <View wrap={false} style={{ alignItems: 'flex-end', marginTop: 14 }}>
@@ -156,7 +111,7 @@ function DocTotals({ model, font }: { model: CpsFormeModel; font: string }) {
   )
 }
 
-function DocNotes({ model, font }: { model: CpsFormeModel; font: string }) {
+function DocNotes({ model, font }: { model: CpsPdfModel; font: string }) {
   if (!model.notes) return null
   return (
     <View wrap={false} style={{ marginTop: 10 }}>
@@ -166,7 +121,7 @@ function DocNotes({ model, font }: { model: CpsFormeModel; font: string }) {
   )
 }
 
-function DocFooter({ model, font }: { model: CpsFormeModel; font: string }) {
+function DocFooter({ model, font }: { model: CpsPdfModel; font: string }) {
   return (
     <Fixed position="footer">
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -179,11 +134,11 @@ function DocFooter({ model, font }: { model: CpsFormeModel; font: string }) {
   )
 }
 
-function tableColumns(visible: CpsFormeColumnKey[]) {
+function tableColumns(visible: CpsPdfColumnKey[]) {
   return visible.map((key) => ({ width: COLUMN_WIDTHS[key] }))
 }
 
-function HeaderRow({ model, font }: { model: CpsFormeModel; font: string }) {
+function HeaderRow({ model, font }: { model: CpsPdfModel; font: string }) {
   return (
     <Row header style={{ backgroundColor: INK }}>
       {model.visibleColumns.map((key) => (
@@ -205,7 +160,7 @@ function HeaderRow({ model, font }: { model: CpsFormeModel; font: string }) {
   )
 }
 
-function GroupHeaderRow({ model, font, row }: { model: CpsFormeModel; font: string; row: CpsFormeRow }) {
+function GroupHeaderRow({ model, font, row }: { model: CpsPdfModel; font: string; row: CpsPdfRow }) {
   const accent = model.accent || BRAND
   const group = row.groupId ? model.groups.find((entry) => entry.id === row.groupId) : undefined
   return (
@@ -220,7 +175,7 @@ function GroupHeaderRow({ model, font, row }: { model: CpsFormeModel; font: stri
   )
 }
 
-function GroupSubtotalRow({ model, font, row }: { model: CpsFormeModel; font: string; row: CpsFormeRow }) {
+function GroupSubtotalRow({ model, font, row }: { model: CpsPdfModel; font: string; row: CpsPdfRow }) {
   const group = row.groupId ? model.groups.find((entry) => entry.id === row.groupId) : undefined
   return (
     <Row key={row.key}>
@@ -236,11 +191,11 @@ function GroupSubtotalRow({ model, font, row }: { model: CpsFormeModel; font: st
   )
 }
 
-function hasColumn(model: CpsFormeModel, key: CpsFormeColumnKey): boolean {
+function hasColumn(model: CpsPdfModel, key: CpsPdfColumnKey): boolean {
   return model.visibleColumns.includes(key)
 }
 
-function itemCells(model: CpsFormeModel, font: string, row: CpsFormeModel['rows'][number]) {
+function itemCells(model: CpsPdfModel, font: string, row: CpsPdfModel['rows'][number]) {
   const cells = []
   if (hasColumn(model, 'no')) {
     cells.push(
@@ -296,7 +251,7 @@ function itemCells(model: CpsFormeModel, font: string, row: CpsFormeModel['rows'
   return cells
 }
 
-export function CpsScheduleDocument({ model }: { model: CpsFormeModel }) {
+export function CpsScheduleDocument({ model }: { model: CpsPdfModel }) {
   const font = model.fontFamily || 'Helvetica'
   return (
     <Document title={`${model.number} ${model.title}`.trim()}>
@@ -327,7 +282,7 @@ export function CpsScheduleDocument({ model }: { model: CpsFormeModel }) {
   )
 }
 
-export function CpsCompactDocument({ model }: { model: CpsFormeModel }) {
+export function CpsCompactDocument({ model }: { model: CpsPdfModel }) {
   const font = model.fontFamily || 'Helvetica'
   const accent = model.accent || BRAND
   return (

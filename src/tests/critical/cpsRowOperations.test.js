@@ -3,13 +3,18 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 import {
+  assignCpsRowToGroup,
   appendCpsRow,
   createCpsRow,
   findCpsGroupInsertIndex,
   getCpsSectionGroupId,
   insertCpsRow,
+  moveCpsGroupBlock,
+  moveCpsRow,
+  removeCpsRowFromGroup,
   removeCpsRow,
 } from '../../domain/cps/row-operations.ts'
+import { validateCpsGroupStructure } from '../../domain/cps/group-structure.ts'
 
 function group(title, sortOrder = 0) {
   const row = createCpsRow('section', sortOrder)
@@ -21,6 +26,14 @@ function item(description, sortOrder = 0, groupId = null) {
   const row = createCpsRow('item', sortOrder, { groupId })
   row.description = description
   return row
+}
+
+function labels(rows) {
+  return rows.map((row) => row.description || row.section_title)
+}
+
+function assertContiguous(rows) {
+  assert.equal(validateCpsGroupStructure(rows), null)
 }
 
 test('CPS Add Line Item with zero groups creates an ungrouped item', () => {
@@ -104,37 +117,27 @@ test('CPS ungrouped item creation does not mutate existing groups or grouped ite
   assert.equal(rows[2].group_id, null)
 })
 
-test('CPS non-contiguous group membership exists without row reordering', () => {
+test('CPS contiguous group structure validator rejects A standalone A', () => {
   const groupA = group('Group A')
-  const groupB = group('Group B')
   const groupAId = getCpsSectionGroupId(groupA)
-  const groupBId = getCpsSectionGroupId(groupB)
   const rows = [
     groupA,
     item('A1', 1, groupAId),
     item('Ungrouped', 2, null),
     item('A2', 3, groupAId),
-    groupB,
-    item('B1', 5, groupBId),
-    item('Tail ungrouped', 6, null),
   ]
 
-  assert.deepEqual(rows.map((row) => row.description || row.section_title), [
-    'Group A',
-    'A1',
-    'Ungrouped',
-    'A2',
-    'Group B',
-    'B1',
-    'Tail ungrouped',
-  ])
-  assert.deepEqual(rows.filter((row) => row.row_type === 'item').map((row) => row.group_id ?? null), [
-    groupAId,
-    null,
-    groupAId,
-    groupBId,
-    null,
-  ])
+  assert.match(validateCpsGroupStructure(rows), /Group A|contiguous|split|reopen/i)
+})
+
+test('CPS contiguous group structure validator rejects A B A', () => {
+  const groupA = group('Group A')
+  const groupB = group('Group B')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const groupBId = getCpsSectionGroupId(groupB)
+  const rows = [groupA, item('A1', 1, groupAId), groupB, item('B1', 3, groupBId), item('A2', 4, groupAId)]
+
+  assert.match(validateCpsGroupStructure(rows), /Group A|contiguous|split|reopen/i)
 })
 
 test('CPS Add Group does not absorb unrelated rows', () => {
@@ -167,7 +170,7 @@ test('CPS duplicate placeholder does not delete or mutate rows', () => {
   assert.doesNotMatch(source, /Duplicate row placeholder"[^>]*onClick=/)
 })
 
-test('CPS group insert index targets the explicit group without using adjacency', () => {
+test('CPS group insert index targets the explicit contiguous group block', () => {
   const groupA = group('Group A')
   const groupB = group('Group B')
   const groupAId = getCpsSectionGroupId(groupA)
@@ -175,12 +178,155 @@ test('CPS group insert index targets the explicit group without using adjacency'
   const rows = [
     groupA,
     item('A1', 1, groupAId),
-    item('Ungrouped', 2, null),
-    item('A2', 3, groupAId),
+    item('A2', 2, groupAId),
+    item('Ungrouped', 3, null),
     groupB,
     item('B1', 5, groupBId),
   ]
 
-  assert.equal(findCpsGroupInsertIndex(rows, groupAId, 0), 4)
+  assert.equal(findCpsGroupInsertIndex(rows, groupAId, 0), 3)
   assert.equal(findCpsGroupInsertIndex(rows, groupBId, 4), 6)
+  assertContiguous(rows)
+})
+
+test('CPS create contiguous group and add item to existing group preserve the invariant', () => {
+  const groupA = group('Group A')
+  const groupAId = getCpsSectionGroupId(groupA)
+  let rows = [item('Intro', 0, null), groupA, item('A1', 2, groupAId), item('Tail', 3, null)]
+
+  rows = insertCpsRow(rows, 99, 'item', { groupId: groupAId })
+
+  assert.deepEqual(labels(rows), ['Intro', 'Group A', 'A1', '', 'Tail'])
+  assert.equal(rows[3].group_id, groupAId)
+  assertContiguous(rows)
+})
+
+test('CPS assign standalone item to group moves it into the group block', () => {
+  const groupA = group('Group A')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const rows = [groupA, item('A1', 1, groupAId), item('Standalone', 2, null), item('Tail', 3, null)]
+
+  const next = assignCpsRowToGroup(rows, 2, groupAId)
+
+  assert.deepEqual(labels(next), ['Group A', 'A1', 'Standalone', 'Tail'])
+  assert.equal(next[2].group_id, groupAId)
+  assertContiguous(next)
+})
+
+test('CPS remove first, middle, and last members from a group preserves one remaining block', () => {
+  const groupA = group('Group A')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const base = [
+    groupA,
+    item('A1', 1, groupAId),
+    item('A2', 2, groupAId),
+    item('A3', 3, groupAId),
+    item('Tail', 4, null),
+  ]
+
+  const firstRemoved = removeCpsRowFromGroup(base, 1)
+  assert.deepEqual(firstRemoved.map((row) => row.group_id ?? null), [groupAId, groupAId, groupAId, null, null])
+  assertContiguous(firstRemoved)
+
+  const middleRemoved = removeCpsRowFromGroup(base, 2)
+  assert.deepEqual(labels(middleRemoved), ['Group A', 'A1', 'A3', 'A2', 'Tail'])
+  assert.equal(middleRemoved[3].group_id, null)
+  assertContiguous(middleRemoved)
+
+  const lastRemoved = removeCpsRowFromGroup(base, 3)
+  assert.deepEqual(lastRemoved.map((row) => row.group_id ?? null), [groupAId, groupAId, groupAId, null, null])
+  assertContiguous(lastRemoved)
+})
+
+test('CPS reorder item inside same group is allowed but moving grouped item outside is refused', () => {
+  const groupA = group('Group A')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const rows = [groupA, item('A1', 1, groupAId), item('A2', 2, groupAId), item('Tail', 3, null)]
+
+  const withinGroup = moveCpsRow(rows, 2, 1)
+  assert.deepEqual(labels(withinGroup), ['Group A', 'A2', 'A1', 'Tail'])
+  assertContiguous(withinGroup)
+
+  const refused = moveCpsRow(rows, 1, 4)
+  assert.deepEqual(labels(refused), labels(rows))
+  assertContiguous(refused)
+})
+
+test('CPS moving standalone item into a group block is refused', () => {
+  const groupA = group('Group A')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const rows = [groupA, item('A1', 1, groupAId), item('A2', 2, groupAId), item('Standalone', 3, null)]
+
+  const refused = moveCpsRow(rows, 3, 2)
+
+  assert.deepEqual(labels(refused), labels(rows))
+  assertContiguous(refused)
+})
+
+test('CPS moving a complete group block preserves contiguous groups', () => {
+  const groupA = group('Group A')
+  const groupB = group('Group B')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const groupBId = getCpsSectionGroupId(groupB)
+  const rows = [
+    item('Intro', 0, null),
+    groupA,
+    item('A1', 2, groupAId),
+    item('A2', 3, groupAId),
+    groupB,
+    item('B1', 5, groupBId),
+    item('Tail', 6, null),
+  ]
+
+  const movedAfterB = moveCpsGroupBlock(rows, groupAId, 6)
+  assert.deepEqual(labels(movedAfterB), ['Intro', 'Group B', 'B1', 'Group A', 'A1', 'A2', 'Tail'])
+  assertContiguous(movedAfterB)
+
+  const movedBeforeA = moveCpsGroupBlock(movedAfterB, groupBId, 3)
+  assert.deepEqual(labels(movedBeforeA), ['Intro', 'Group B', 'B1', 'Group A', 'A1', 'A2', 'Tail'])
+  assertContiguous(movedBeforeA)
+})
+
+test('CPS duplicate grouped item remains inside its group block', () => {
+  const groupA = group('Group A')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const rows = [groupA, item('A1', 1, groupAId), item('Tail', 2, null)]
+
+  const next = insertCpsRow(rows, 2, 'item', { groupId: groupAId })
+
+  assert.equal(next[2].group_id, groupAId)
+  assertContiguous(next)
+})
+
+test('CPS delete grouped item and delete group preserve the invariant', () => {
+  const groupA = group('Group A')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const rows = [groupA, item('A1', 1, groupAId), item('A2', 2, groupAId), item('Tail', 3, null)]
+
+  const deletedItem = removeCpsRow(rows, 1)
+  assert.deepEqual(labels(deletedItem), ['Group A', 'A2', 'Tail'])
+  assertContiguous(deletedItem)
+
+  const deletedGroup = removeCpsRow(rows, 0)
+  assert.deepEqual(deletedGroup.map((row) => row.group_id ?? null), [null, null, null])
+  assertContiguous(deletedGroup)
+})
+
+test('CPS valid standalone-only, grouped-only, and mixed documents are accepted', () => {
+  const groupA = group('Group A')
+  const groupB = group('Group B')
+  const groupAId = getCpsSectionGroupId(groupA)
+  const groupBId = getCpsSectionGroupId(groupB)
+
+  assertContiguous([item('One', 0, null), item('Two', 1, null)])
+  assertContiguous([groupA, item('A1', 1, groupAId), item('A2', 2, groupAId)])
+  assertContiguous([
+    item('Intro', 0, null),
+    groupA,
+    item('A1', 2, groupAId),
+    item('Between', 3, null),
+    groupB,
+    item('B1', 5, groupBId),
+    item('Tail', 6, null),
+  ])
 })

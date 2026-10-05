@@ -7,6 +7,7 @@ import {
   getNextCpsNumber,
   normalizeDbCps,
 } from '../../domain/cps/normalize.ts'
+import { validateCpsGroupStructure } from '../../domain/cps/group-structure.ts'
 
 test('CPS normalize round-trip preserves fields and colors', () => {
   const dbCps = {
@@ -131,4 +132,39 @@ test('CPS legacy record without client identity hydrates safely', () => {
   assert.equal(restored.notes, 'Legacy note')
   assert.equal(restored.custom_fields.client_id, undefined)
   assert.ok(restored.table_columns.length > 0)
+})
+
+test('CPS normalization detects but does not rewrite persisted non-contiguous groups', () => {
+  const groupId = 'grp-a'
+  const row = (sortOrder, description, group_id) => ({
+    id: `row-${sortOrder}`,
+    cps_sheet_id: 'b3',
+    sort_order: sortOrder,
+    row_type: sortOrder === 0 ? 'section' : 'item',
+    section_title: sortOrder === 0 ? 'Group A' : '',
+    description,
+    quantity: 1,
+    unit: '',
+    notes: '',
+    group_id,
+    cells: JSON.stringify({ group_id }),
+  })
+
+  const restored = normalizeDbCps(
+    { id: 'b3', custom_fields: {} },
+    [
+      row(0, 'Group A', groupId),
+      row(1, 'A1', groupId),
+      row(2, 'Standalone', null),
+      row(3, 'A2', groupId),
+    ],
+  )
+
+  assert.deepEqual(restored.table_rows.map((entry) => entry.description || entry.section_title), [
+    'Group A',
+    'A1',
+    'Standalone',
+    'A2',
+  ])
+  assert.match(validateCpsGroupStructure(restored.table_rows), /Group A|contiguous|split/i)
 })

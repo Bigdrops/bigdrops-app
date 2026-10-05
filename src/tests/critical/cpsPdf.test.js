@@ -411,7 +411,7 @@ test('CPS PDF display preferences default to schedule portrait', () => {
   assert.equal(prefs.orientation, 'portrait')
   assert.deepEqual(
     CPS_PDF_TEMPLATES.map((template) => template.id).sort(),
-    ['compact', 'schedule'],
+    ['compact', 'industry', 'ledger', 'schedule'],
   )
 })
 
@@ -530,7 +530,7 @@ test('CPS customize sheet wires template, accent, and orientation controls', () 
     new URL('../../components/cps/CostPricingSheetViewPresentations.tsx', import.meta.url),
     'utf8',
   )
-  assert.ok(viewSource.includes('CPS_PDF_TEMPLATES'), 'sheet must offer both templates')
+  assert.ok(viewSource.includes('CPS_PDF_TEMPLATES'), 'sheet must offer all registered templates')
   assert.ok(viewSource.includes('showAccentColor'), 'sheet must expose accent color')
   assert.ok(viewSource.includes('showLandscape'), 'sheet must expose orientation')
 })

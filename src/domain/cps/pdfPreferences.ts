@@ -1,4 +1,4 @@
-export type CpsPdfTemplateId = 'schedule' | 'compact'
+export type CpsPdfTemplateId = 'schedule' | 'compact' | 'ledger' | 'industry'
 export type CpsPdfOrientation = 'portrait' | 'landscape'
 
 export interface CpsPdfTemplateMeta {
@@ -10,6 +10,8 @@ export interface CpsPdfTemplateMeta {
 export const CPS_PDF_TEMPLATES: CpsPdfTemplateMeta[] = [
   { id: 'schedule', label: 'Schedule', description: 'Full detail with photos, spec, and make.' },
   { id: 'compact', label: 'Compact', description: 'Condensed rows, no photos, tighter fit.' },
+  { id: 'ledger', label: 'Ledger', description: 'Portrait cost-sheet presentation with grouped walls.' },
+  { id: 'industry', label: 'Industry', description: 'Industry-family presentation of the same cost schedule.' },
 ]
 
 export interface CpsPdfDisplayPreferences {
@@ -25,7 +27,7 @@ const DEFAULTS: CpsPdfDisplayPreferences = {
 }
 
 function isTemplateId(value: unknown): value is CpsPdfTemplateId {
-  return value === 'schedule' || value === 'compact'
+  return value === 'schedule' || value === 'compact' || value === 'ledger' || value === 'industry'
 }
 
 function isOrientation(value: unknown): value is CpsPdfOrientation {

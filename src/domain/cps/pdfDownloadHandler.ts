@@ -3,7 +3,7 @@ import { computeCpsTotals } from '@/domain/cps/calculateCpsTotals'
 import { normalizeCpsColumns } from '@/domain/cps/columns'
 import type { Cps } from '@/domain/cps/types'
 import { buildCpsViewData, buildCpsViewSegments, type CpsViewItemRow } from '@/domain/cps/viewData'
-import type { CpsFormeColumnKey, CpsFormeModel } from '@/components/pdf/forme/CpsFormeDocument'
+import type { CpsPdfColumnKey, CpsPdfModel } from '@/components/pdf/cpsPreparedModel'
 import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
 import { loadSettings } from '@/domain/pdf/customization/hooks'
 import { resolveFull } from '@/domain/pdf/customization/resolver'
@@ -89,15 +89,32 @@ export function resolveCpsPdfColumns(columnConfig: unknown): CpsPdfColumnVisibil
   }
 }
 
-export function resolveCpsFormeVisibleColumns(visibility: CpsPdfColumnVisibility): CpsFormeColumnKey[] {
-  const columns: CpsFormeColumnKey[] = ['no', 'description', 'qty']
+export function resolveCpsFormeVisibleColumns(visibility: CpsPdfColumnVisibility): CpsPdfColumnKey[] {
+  const columns: CpsPdfColumnKey[] = ['no', 'description', 'qty']
   if (visibility.showCp) columns.push('cp')
   columns.push('sp', 'total')
   return columns
 }
 
-export function selectCpsFormeDocument(templateId: CpsPdfTemplateId): 'schedule' | 'compact' {
-  return templateId === 'compact' ? 'compact' : 'schedule'
+export function selectCpsFormeDocument(templateId: CpsPdfTemplateId): 'schedule' | 'compact' | 'ledger' | 'industry' {
+  if (templateId === 'compact') return 'compact'
+  if (templateId === 'ledger') return 'ledger'
+  if (templateId === 'industry') return 'industry'
+  return 'schedule'
+}
+
+export function resolveExternalImageHref(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const candidate = value.trim()
+  if (!candidate) return null
+  let url: URL
+  try {
+    url = new URL(candidate)
+  } catch {
+    return null
+  }
+  if (url.protocol !== 'https:') return null
+  return url.href
 }
 
 function sanitizeFilename(value: string): string {
@@ -113,7 +130,7 @@ export function buildCpsFormeModel(input: {
   accent?: string | null
   orientation?: CpsPdfOrientation
   columnVisibility?: CpsPdfColumnVisibility
-}): CpsFormeModel {
+}): CpsPdfModel {
   const { cps, settings, logoDataUri, photoDataUris } = input
   const visibility = input.columnVisibility || resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
   const fontFamily = input.fontFamily || 'Helvetica'
@@ -136,15 +153,19 @@ export function buildCpsFormeModel(input: {
       specification: visibility.showSpec ? row.specification || '' : '',
       make: visibility.showMake ? row.makeBrand || '' : '',
       quantityText: `${row.quantity} ${unit}`.trim(),
+      quantityValue: Number(row.quantity) || 0,
+      unitText: unit,
       cpText: money(row.cp),
       spText: money(row.sp),
       totalText: money(row.selling),
+      totalCostText: money(row.cost),
       imageDataUri: (row.key && photoDataUris?.[row.key]) || null,
+      imageHref: resolveExternalImageHref(row.imageUrl),
     }
   }
 
-  const rows: CpsFormeModel['rows'] = []
-  const groups: CpsFormeModel['groups'] = []
+  const rows: CpsPdfModel['rows'] = []
+  const groups: CpsPdfModel['groups'] = []
   segments.forEach((segment) => {
     if (segment.type === 'item') {
       rows.push(toItemRow(segment.row))
@@ -161,12 +182,17 @@ export function buildCpsFormeModel(input: {
       specification: '',
       make: '',
       quantityText: '',
+      quantityValue: 0,
+      unitText: '',
       cpText: '',
       spText: '',
       totalText: '',
+      totalCostText: '',
       imageDataUri: null,
+      imageHref: null,
     })
     segment.items.forEach((row) => rows.push(toItemRow(row)))
+    const groupCost = segment.items.reduce((sum, row) => sum + (Number(row.cost) || 0), 0)
     rows.push({
       key: `${segment.row.key}-subtotal`,
       kind: 'group-subtotal',
@@ -177,34 +203,39 @@ export function buildCpsFormeModel(input: {
       specification: '',
       make: '',
       quantityText: '',
+      quantityValue: 0,
+      unitText: '',
       cpText: '',
       spText: '',
       totalText: money(segment.total),
+      totalCostText: money(groupCost),
       imageDataUri: null,
+      imageHref: null,
     })
     groups.push({
       id: segment.membership,
       title: segment.row.title,
       itemCount: String(segment.count),
       subtotalText: money(segment.total),
+      costSubtotalText: money(groupCost),
     })
   })
 
 
   const snapshot = (cps.custom_fields?.client_snapshot || {}) as Record<string, unknown>
   const text = (value: unknown) => (typeof value === 'string' ? value.trim() : asText(value).trim())
-  const contactLines = [text(snapshot.phone), text(snapshot.email)].filter(Boolean).join(' · ')
 
   return {
     title: cps.title?.trim() || 'Cost & Pricing Sheet',
     number: cps.cps_number || '',
     issueDate: cps.issue_date || '',
     status: String((cps as { status?: unknown }).status || 'open').toUpperCase(),
+    currency: 'NGN',
     companyName: text(settings?.company_name),
     logoDataUri: logoDataUri || null,
-    companyLines: [text(settings?.company_address), contactLines].filter(Boolean),
+    companyLines: [text(settings?.company_address)].filter(Boolean),
     clientName: text(snapshot.name) || text(cps.client_name),
-    clientLines: [text(snapshot.contact_person), text(snapshot.city)].filter(Boolean),
+    clientLines: [text(snapshot.contact_person), text(snapshot.city), text(snapshot.phone), text(snapshot.email)].filter(Boolean),
     site: text(cps.project_name),
     notes: text(cps.notes),
     fontFamily,
@@ -237,6 +268,8 @@ export async function handleDownloadCpsPdf(input: {
   try {
     const { generateCpsFormePdf } = await cpsStage('prepare', () => import('@/components/pdf'))
     const { CpsCompactDocument, CpsScheduleDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsFormeDocument'))
+    const { LedgerCpsDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/LedgerCpsDocument'))
+    const { CpsIndustryDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsIndustryDocument'))
     const { ensureFormeFontFamily } = await cpsStage('prepare', () => import('@/components/pdf/forme/fonts'))
     const React = await cpsStage('prepare', () => import('react'))
 
@@ -274,7 +307,13 @@ export async function handleDownloadCpsPdf(input: {
     }))
     const rawName = `${model.number} ${model.title}`.trim() || 'cps'
     const filename = `${sanitizeFilename(rawName)}.pdf`
-    const SelectedDocument = await cpsStage('template', () => selectCpsFormeDocument(prefs.templateId) === 'compact' ? CpsCompactDocument : CpsScheduleDocument)
+    const SelectedDocument = await cpsStage('template', () => {
+      const selected = selectCpsFormeDocument(prefs.templateId)
+      if (selected === 'compact') return CpsCompactDocument
+      if (selected === 'ledger') return LedgerCpsDocument
+      if (selected === 'industry') return CpsIndustryDocument
+      return CpsScheduleDocument
+    })
     await generateCpsFormePdf({
       element: React.createElement(SelectedDocument, { model }),
       filename,
