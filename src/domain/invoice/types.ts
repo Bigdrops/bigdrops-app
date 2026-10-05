@@ -165,6 +165,14 @@ export interface DbInvoiceItem {
   id?: string | null
   invoice_id?: string | null
   item_id?: string | null
+  /** Phase 2 lineage: originating Cost & Pricing Sheet. */
+  source_cps_id?: string | null
+  /** Phase 2 lineage: originating `cps_rows.id` (item rows only). */
+  source_cps_row_id?: string | null
+  /** Phase 2 lineage: originating Quotation document. */
+  source_quotation_id?: string | null
+  /** Phase 2 lineage: originating Quotation item row. */
+  source_quotation_item_id?: string | null
   description?: string | null
   sub_description?: string | null
   make?: string | null
@@ -191,6 +199,16 @@ export interface InvoiceItem {
   _uiKey?: string
   invoice_id?: string | null
   item_id?: string | null
+  /**
+   * Phase 2 system-owned lineage. Explicit stored identity only — never
+   * inferred from description, position, price, group, image, or catalog id.
+   * Always null for rows created directly in a Quotation or Invoice, and for
+   * imported rows.
+   */
+  source_cps_id?: string | null
+  source_cps_row_id?: string | null
+  source_quotation_id?: string | null
+  source_quotation_item_id?: string | null
   description?: string
   sub_description?: string
   make?: string

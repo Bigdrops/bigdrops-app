@@ -2,6 +2,7 @@ import type { TenantClient } from "@/lib/tenantClient"
 import type { DuplicateInvoicePrefill } from "../types/invoiceTypes"
 import { syncInvoiceStatusFromFinancials as repositorySyncStatus } from "../repositories/paymentRepository"
 import { attachChildDocument } from "./invoiceChildDocService"
+import { withoutLineage } from "@/domain/cps/lineage"
 
 export interface ChangeInvoiceStatusInput {
   invoiceId: string
@@ -261,7 +262,9 @@ export async function duplicateInvoice(
     },
     prefillItems: items.map((item) => {
       const clonedItem = JSON.parse(JSON.stringify(item))
-      return { ...clonedItem, id: null }
+      // Law 2: a duplicate is a clean draft. Phase 2 lineage is stripped so a
+      // duplicated row can never claim CPS ancestry or feedback authority.
+      return { ...withoutLineage(clonedItem as Record<string, unknown>), id: null }
     }),
   }
 }

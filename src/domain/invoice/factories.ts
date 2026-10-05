@@ -5,11 +5,17 @@ import type {
   InvoiceItem,
 } from './types'
 import { resolveCanonicalItemImageUrl } from '../documentMedia.js'
+import { normalizeLineageId } from '@/domain/cps/lineage'
 
 export function makeEmptyItem(): InvoiceItem {
   return {
     _uiKey: 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     item_id: null,
+    // A row created directly in a document never claims ancestry.
+    source_cps_id: null,
+    source_cps_row_id: null,
+    source_quotation_id: null,
+    source_quotation_item_id: null,
     description: '',
     sub_description: '',
     make: '',
@@ -98,6 +104,13 @@ export function toDbItem(
     ...rest,
     invoice_id: invoiceId,
     item_id: item.item_id ?? null,
+    // Phase 2 lineage is system-owned metadata. It is normalised here so a
+    // non-persisted identity (a `_uiKey`, a blank string) can never reach the
+    // database, and so every write path round-trips it unchanged.
+    source_cps_id: normalizeLineageId(item.source_cps_id),
+    source_cps_row_id: normalizeLineageId(item.source_cps_row_id),
+    source_quotation_id: normalizeLineageId(item.source_quotation_id),
+    source_quotation_item_id: normalizeLineageId(item.source_quotation_item_id),
     sort_order: sortOrder,
     amount: Number(item.quantity || 1) * Number(item.unit_price || 0),
     custom_data: JSON.stringify(item.custom_data || {}),

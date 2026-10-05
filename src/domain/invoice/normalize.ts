@@ -11,6 +11,7 @@ import type {
 } from './types'
 import { resolveCanonicalItemImageUrl } from '../documentMedia.js'
 import { normalizeExtraCharges } from './factories'
+import { normalizeLineageId } from '@/domain/cps/lineage'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 
 type CompanyCustomInfoEntry = { label: string; value: string }
@@ -297,6 +298,11 @@ export function mapDbInvoiceItem(row: DbInvoiceItem): InvoiceItem {
     id: row.id ?? null,
     invoice_id: row.invoice_id ?? null,
     item_id: row.item_id ?? null,
+    // Phase 2 lineage: read as stored, never inferred.
+    source_cps_id: normalizeLineageId(row.source_cps_id),
+    source_cps_row_id: normalizeLineageId(row.source_cps_row_id),
+    source_quotation_id: normalizeLineageId(row.source_quotation_id),
+    source_quotation_item_id: normalizeLineageId(row.source_quotation_item_id),
     description: row.description || '',
     sub_description: row.sub_description || '',
     make: row.make || '',
