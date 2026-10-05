@@ -96,8 +96,26 @@ export const LETTER_TRACKED_FIELDS = [
   'status',
 ]
 
-type AuditEntityType = 'invoice' | 'quotation' | 'project' | 'csr' | 'waybill' | 'receipt' | 'letter'
-type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'ARCHIVE' | 'STATUS_CHANGE' | 'LINK' | 'UNLINK'
+export type AuditEntityType =
+  | 'invoice'
+  | 'quotation'
+  | 'project'
+  | 'csr'
+  | 'waybill'
+  | 'receipt'
+  | 'letter'
+  | 'cps_sheets'
+export type AuditAction =
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'ARCHIVE'
+  | 'UNARCHIVE'
+  | 'STATUS_CHANGE'
+  | 'LINK'
+  | 'UNLINK'
+  | 'CONVERT'
+  | 'DUPLICATE'
 
 function pick(obj: Record<string, any> | null | undefined, fields: string[]) {
   if (!obj) return null
@@ -131,6 +149,16 @@ async function getActor() {
   const actor = { id: user?.id ?? null, label: user?.email ?? 'web' }
   _actorCache = { sessionKey, actor }
   return actor
+}
+
+/**
+ * Resolve the authenticated actor for an audit record. Returns the stable
+ * user id when a session exists, and a null id for an unauthenticated
+ * system context. Reuses the same cached lookup as recordAuditLog so a
+ * caller can classify the actor before the audit write.
+ */
+export async function resolveAuditActor(): Promise<{ id: string | null; label: string }> {
+  return getActor()
 }
 
 export async function recordAuditLog(

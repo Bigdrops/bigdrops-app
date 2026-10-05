@@ -1,7 +1,15 @@
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 
-import type { AuditEntityType, AuditLogRecord, AuditTrailChange, AuditTrailEntry } from './auditTypes'
+import type {
+  AuditEntityType,
+  AuditLogRecord,
+  AuditTrailChange,
+  AuditTrailChangeGroup,
+  AuditTrailEntry,
+  CpsAuditMeta,
+} from './auditTypes'
+import { CPS_AUDIT_META_KEY } from './auditTypes'
 
 const EMPTY_VALUE = '—'
 
@@ -24,11 +32,25 @@ const FIELD_LABELS: Record<string, string> = {
   subject: 'Subject',
   recipient_name: 'Recipient',
   recipient_address: 'Address',
+  cps_number: 'CPS Number',
+  title: 'Title',
+  project_name: 'Site / Project',
+  description: 'Description',
+  specification: 'Specification',
+  quantity: 'Quantity',
+  unit: 'Unit',
+  make_brand: 'Make / Brand',
+  cp: 'CP',
+  sp: 'SP',
+  image_url: 'Image',
+  section_title: 'Group name',
+  group_id: 'Group',
+  notes: 'Notes',
 }
 
 const PAYMENT_FIELDS = new Set(['amount'])
 
-const CURRENCY_FIELDS = new Set(['subtotal', 'discount', 'vat', 'wht', 'total', 'amount'])
+const CURRENCY_FIELDS = new Set(['subtotal', 'discount', 'vat', 'wht', 'total', 'amount', 'cp', 'sp'])
 const DATE_FIELDS = new Set(['issue_date', 'due_date', 'valid_until', 'start_date', 'created_at', 'updated_at'])
 
 const ACTION_LABELS: Record<string, Record<string, string>> = {
@@ -81,6 +103,18 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     STATUS_CHANGE: 'updated this letter',
     LINK: 'linked this letter',
     UNLINK: 'unlinked this letter',
+  },
+  cps_sheets: {
+    CREATE: 'Created CPS',
+    UPDATE: 'Updated CPS',
+    DELETE: 'Deleted CPS',
+    ARCHIVE: 'Archived CPS',
+    UNARCHIVE: 'Restored CPS',
+    STATUS_CHANGE: 'Status changed',
+    CONVERT: 'Converted to Quotation',
+    DUPLICATE: 'Duplicated CPS',
+    LINK: 'Linked CPS',
+    UNLINK: 'Unlinked CPS',
   },
 }
 
@@ -266,11 +300,170 @@ function buildPaymentChanges(row: AuditLogRecord): AuditTrailChange[] {
   return []
 }
 
+function formatAuditTimestamp(value: string | null | undefined): string {
+  return formatDisplayDate(value, {
+    fallback: EMPTY_VALUE,
+    dateOptions: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    },
+  })
+}
+
+/**
+ * Read the structured CPS payload from a CPS audit record. Returns null for
+ * any record that is not a CPS record with a readable payload, so callers can
+ * fall back to the generic mapping. Never throws on malformed data.
+ */
+export function extractCpsAuditMeta(row: AuditLogRecord): CpsAuditMeta | null {
+  if (String(row.entity_type) !== 'cps_sheets') return null
+
+  const entries = row.changes || []
+  const entry = entries.find((change) => change.field === CPS_AUDIT_META_KEY)
+  if (!entry) return null
+
+  const raw = hasMeaningfulAuditValue(entry.new) ? entry.new : entry.old
+  if (!raw || typeof raw !== 'object') return null
+
+  const candidate = raw as Partial<CpsAuditMeta>
+  if (typeof candidate.event !== 'string') return null
+
+  return {
+    event: candidate.event,
+    actorType: candidate.actorType || 'user',
+    rootId: candidate.rootId || row.entity_id,
+    parentEventId: candidate.parentEventId ?? null,
+    sourceContext: candidate.sourceContext || 'cps',
+    related: candidate.related ?? null,
+    summary: typeof candidate.summary === 'string' ? candidate.summary : '',
+    detail: typeof candidate.detail === 'string' && candidate.detail.trim() ? candidate.detail : null,
+    changes: Array.isArray(candidate.changes) ? candidate.changes : [],
+  }
+}
+
+function formatCpsChange(change: CpsAuditMeta['changes'][number]): AuditTrailChange {
+  const label = change.label || getAuditFieldLabel(change.field)
+
+  if (change.kind === 'image') {
+    const oldUrl = hasMeaningfulAuditValue(change.old) ? String(change.old) : null
+    const newUrl = hasMeaningfulAuditValue(change.new) ? String(change.new) : null
+    return {
+      field: change.field,
+      label,
+      kind: 'image',
+      oldValue: oldUrl ? 'Previous image' : null,
+      newValue: newUrl ? 'New image' : null,
+      oldImageUrl: oldUrl,
+      newImageUrl: newUrl,
+    }
+  }
+
+  if (change.kind === 'money') {
+    return {
+      field: change.field,
+      label,
+      kind: 'money',
+      oldValue: hasMeaningfulAuditValue(change.old) ? formatNaira(change.old as string | number, { preserveFraction: true }) : null,
+      newValue: hasMeaningfulAuditValue(change.new) ? formatNaira(change.new as string | number, { preserveFraction: true }) : null,
+    }
+  }
+
+  if (change.kind === 'date') {
+    return {
+      field: change.field,
+      label,
+      kind: 'date',
+      oldValue: hasMeaningfulAuditValue(change.old) ? formatDisplayDate(change.old as string, { fallback: EMPTY_VALUE }) : null,
+      newValue: hasMeaningfulAuditValue(change.new) ? formatDisplayDate(change.new as string, { fallback: EMPTY_VALUE }) : null,
+    }
+  }
+
+  if (change.kind === 'number') {
+    return {
+      field: change.field,
+      label,
+      kind: 'number',
+      oldValue: hasMeaningfulAuditValue(change.old) ? String(change.old) : null,
+      newValue: hasMeaningfulAuditValue(change.new) ? String(change.new) : null,
+    }
+  }
+
+  const oldFormatted = formatAuditValue(change.field, change.old)
+  const newFormatted = formatAuditValue(change.field, change.new)
+  return {
+    field: change.field,
+    label,
+    kind: 'default',
+    oldValue: oldFormatted.preview,
+    newValue: newFormatted.preview,
+    oldValueFull: oldFormatted.full,
+    newValueFull: newFormatted.full,
+  }
+}
+
+/**
+ * Group one event's field changes by row (or by document). One user save that
+ * changes several fields on one row becomes one block.
+ */
+export function buildCpsChangeGroups(changes: CpsAuditMeta['changes']): AuditTrailChangeGroup[] {
+  const order: string[] = []
+  const groups = new Map<string, AuditTrailChangeGroup>()
+
+  changes.forEach((change) => {
+    const key = change.scope === 'document' ? 'document' : `row:${change.rowId ?? 'unknown'}`
+    let group = groups.get(key)
+    if (!group) {
+      group = {
+        key,
+        label: change.scope === 'document' ? 'Document' : change.rowLabel || 'Item',
+        scope: change.scope,
+        changes: [],
+      }
+      groups.set(key, group)
+      order.push(key)
+    }
+    group.changes.push(formatCpsChange(change))
+  })
+
+  return order.map((key) => groups.get(key) as AuditTrailChangeGroup)
+}
+
+function buildCpsAuditEntry(row: AuditLogRecord, meta: CpsAuditMeta): AuditTrailEntry {
+  const changeGroups = buildCpsChangeGroups(meta.changes)
+  const changes = changeGroups.flatMap((group) => group.changes)
+
+  return {
+    id: String(row.id),
+    action: row.action,
+    actionLabel: meta.summary || getAuditActionLabel('cps_sheets', row.action),
+    actorLabel: String(row.actor_label || 'Unknown user'),
+    timestamp: formatAuditTimestamp(row.created_at),
+    rawTimestamp: row.created_at || null,
+    changes,
+    changeGroups,
+    eventType: meta.event,
+    actorType: meta.actorType,
+    rootId: meta.rootId,
+    parentEventId: meta.parentEventId,
+    relatedDocument: meta.related,
+    summary: meta.summary,
+    detail: meta.detail,
+  }
+}
+
 export function buildAuditTrailItems(rows: AuditLogRecord[]): AuditTrailEntry[] {
   return rows.map((row) => {
+    const cpsMeta = extractCpsAuditMeta(row)
+    if (cpsMeta) return buildCpsAuditEntry(row, cpsMeta)
+
     const isAdvanceCreate = row.action === 'CREATE'
       && typeof row.reason === 'string'
       && row.reason.includes('Advance invoice metadata created')
+
+    const genericChanges = buildAuditTrailChanges(row)
 
     return {
       id: String(row.id),
@@ -279,18 +472,9 @@ export function buildAuditTrailItems(rows: AuditLogRecord[]): AuditTrailEntry[] 
         ? 'created an advance invoice'
         : getAuditActionLabel(row.entity_type, row.action),
       actorLabel: String(row.actor_label || 'Unknown user'),
-      timestamp: formatDisplayDate(row.created_at, {
-        fallback: EMPTY_VALUE,
-        dateOptions: {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-        },
-      }),
+      timestamp: formatAuditTimestamp(row.created_at),
       rawTimestamp: row.created_at || null,
-      changes: buildAuditTrailChanges(row).length > 0 ? buildAuditTrailChanges(row) : buildPaymentChanges(row),
+      changes: genericChanges.length > 0 ? genericChanges : buildPaymentChanges(row),
     }
   })
 }
