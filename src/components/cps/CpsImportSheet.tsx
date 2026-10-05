@@ -17,8 +17,24 @@ export function CpsImportSheet({ open, cps, onOpenChange, onApply }: CpsImportSh
 
   const preview = () => {
     setError(null)
+    let parsedJson: unknown
     try {
-      const parsed = cpsImportSchema.parse(JSON.parse(rawInput))
+      parsedJson = JSON.parse(rawInput)
+    } catch {
+      setParsedCps(null)
+      setError('Invalid JSON.')
+      return
+    }
+
+    const result = cpsImportSchema.safeParse(parsedJson)
+    if (!result.success) {
+      setParsedCps(null)
+      setError(result.error.issues[0]?.message || 'Invalid CPS import data.')
+      return
+    }
+
+    try {
+      const parsed = result.data
       setParsedCps(applyCpsImport(parsed, cps))
     } catch (err) {
       setParsedCps(null)

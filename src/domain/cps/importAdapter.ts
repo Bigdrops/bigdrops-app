@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type { Cps } from './types'
 import { createEmptyTableRow } from '@/domain/table-document/rows'
 import type { TableDocumentRow } from '@/domain/table-document/types'
+import { validateImportGroupMembership } from '@/domain/import/groupMembership'
 
 /**
  * Cost & Pricing Sheet JSON extraction contract.
@@ -49,13 +50,13 @@ const itemSchema = z.object({
   notes: z.string().optional().nullable(),
 }).strict()
 
-export const cpsImportSchema = z.object({
+const cpsImportBaseSchema = z.object({
   title: z.string().optional().nullable(),
   groups: z.array(groupSchema).optional(),
   items: z.array(itemSchema),
 }).strict()
 
-export type CpsImportPayload = z.infer<typeof cpsImportSchema>
+type CpsImportPayloadBase = z.infer<typeof cpsImportBaseSchema>
 
 function asNumber(value: unknown, fallback = 0) {
   const number = Number(value)
@@ -130,11 +131,37 @@ Rules:
 - Do not add a "custom_fields" object and do not invent fields outside the shape above.
 - Groups are allowed ONLY when the source has explicit section headings or category labels. If the source has no explicit groups, omit "groups" and omit "temp_ref" and "group_id" from every item. Do not create a default group.
 - When groups exist, assign each group id in order: "grp_1", "grp_2", "grp_3". Add a unique "temp_ref" to every item in order: "item_1", "item_2", "item_3". Set "group_id" on each item to its group id. List the item temp_refs in that group "itemIds" array.
+- A group is one contiguous section in items[]. Once a standalone item or another group appears, the previous group is closed and must not appear again later.
 - Preserve the exact global item order from the source document. Do not reorder items to cluster them by group.
 - The app applies the sheet's active column configuration. Only produce the fields above.
 - Output JSON only. Wrap the JSON in a code block. Paste it back into the app.`
 
+function validateCpsImportStructure(payload: CpsImportPayloadBase): string | null {
+  return validateImportGroupMembership({
+    groups: payload.groups || [],
+    items: payload.items.map((item, index) => ({
+      tempRef: item.temp_ref,
+      groupId: item.group_id,
+      sourceIndex: index,
+    })),
+  })
+}
+
+export const cpsImportSchema = cpsImportBaseSchema.superRefine((payload, ctx) => {
+  const message = validateCpsImportStructure(payload)
+  if (!message) return
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message,
+  })
+})
+
+export type CpsImportPayload = z.infer<typeof cpsImportSchema>
+
 export function applyCpsImport(payload: CpsImportPayload, current: Cps): Cps {
+  const structureError = validateCpsImportStructure(payload)
+  if (structureError) throw new Error(structureError)
+
   const groups = payload.groups || []
   const visible = getVisibleColumnKeys(current)
   const sectionRows: TableDocumentRow[] = []

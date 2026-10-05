@@ -147,6 +147,25 @@ function runCustomPipeline(payload, existingItems = [], existingGroups = []) {
   return { normalized, validated, existingItems, existingGroups }
 }
 
+function assertPayloadAccepted(payload) {
+  const { validated } = runCustomPipeline(payload)
+  assert.equal(validated.ok, true, validated.message)
+}
+
+function assertPayloadRejected(payload, pattern) {
+  const { validated } = runCustomPipeline(payload)
+  assert.equal(validated.ok, false)
+  assert.match(validated.message, pattern)
+}
+
+function groupedItem(ref, groupId, description = ref) {
+  return { temp_ref: ref, group_id: groupId, description }
+}
+
+function standaloneItem(ref, description = ref) {
+  return { temp_ref: ref, description }
+}
+
 test('json-group-import: duplicate temp_ref is rejected', () => {
   const { validated } = runCustomPipeline({
     groups: [{ id: 'grp_1', name: 'Civil', itemIds: ['item_1'] }],
@@ -234,4 +253,177 @@ test('json-group-import: colliding group id with different name is remapped, nev
   assert.ok(String(newRow?.group_id).startsWith('grp_1_imported'))
   const oldRow = result.items.find((i) => i.description === 'Old item')
   assert.equal(oldRow?.group_id, 'grp_1')
+})
+
+test('json-group-import: contiguous group blocks are accepted', () => {
+  assertPayloadAccepted({
+    groups: [
+      { id: 'grp_1', name: 'Group A', itemIds: ['item_2', 'item_3'] },
+      { id: 'grp_2', name: 'Group B', itemIds: ['item_5', 'item_6', 'item_7'] },
+      { id: 'grp_3', name: 'Group C', itemIds: ['item_9', 'item_10'] },
+    ],
+    items: [
+      standaloneItem('item_1'),
+      groupedItem('item_2', 'grp_1'),
+      groupedItem('item_3', 'grp_1'),
+      standaloneItem('item_4'),
+      groupedItem('item_5', 'grp_2'),
+      groupedItem('item_6', 'grp_2'),
+      groupedItem('item_7', 'grp_2'),
+      standaloneItem('item_8'),
+      groupedItem('item_9', 'grp_3'),
+      groupedItem('item_10', 'grp_3'),
+      standaloneItem('item_11'),
+    ],
+  })
+})
+
+test('json-group-import: standalone rows between different groups are accepted', () => {
+  assertPayloadAccepted({
+    groups: [
+      { id: 'grp_a', name: 'A', itemIds: ['a1', 'a2'] },
+      { id: 'grp_b', name: 'B', itemIds: ['b1', 'b2'] },
+    ],
+    items: [
+      groupedItem('a1', 'grp_a'),
+      groupedItem('a2', 'grp_a'),
+      standaloneItem('loose_1'),
+      standaloneItem('loose_2'),
+      groupedItem('b1', 'grp_b'),
+      groupedItem('b2', 'grp_b'),
+    ],
+  })
+})
+
+test('json-group-import: grouped-only document is accepted', () => {
+  assertPayloadAccepted({
+    groups: [{ id: 'grp_a', name: 'A', itemIds: ['a1', 'a2', 'a3'] }],
+    items: [
+      groupedItem('a1', 'grp_a'),
+      groupedItem('a2', 'grp_a'),
+      groupedItem('a3', 'grp_a'),
+    ],
+  })
+})
+
+test('json-group-import: same group reopened after standalone row is rejected', () => {
+  assertPayloadRejected(
+    {
+      groups: [{ id: 'grp_a', name: 'Electrical Materials', itemIds: ['a1', 'a2'] }],
+      items: [
+        groupedItem('a1', 'grp_a'),
+        standaloneItem('loose_1'),
+        groupedItem('a2', 'grp_a'),
+      ],
+    },
+    /Electrical Materials|grp_a|contiguous|reopened|split/i,
+  )
+})
+
+test('json-group-import: same group reopened after another group is rejected', () => {
+  assertPayloadRejected(
+    {
+      groups: [
+        { id: 'grp_a', name: 'Group A', itemIds: ['a1', 'a2'] },
+        { id: 'grp_b', name: 'Group B', itemIds: ['b1'] },
+      ],
+      items: [
+        groupedItem('a1', 'grp_a'),
+        groupedItem('b1', 'grp_b'),
+        groupedItem('a2', 'grp_a'),
+      ],
+    },
+    /Group A|grp_a|contiguous|reopened|split/i,
+  )
+})
+
+test('json-group-import: repeatedly interleaved groups are rejected', () => {
+  assertPayloadRejected(
+    {
+      groups: [
+        { id: 'grp_a', name: 'Group A', itemIds: ['a1', 'a2'] },
+        { id: 'grp_b', name: 'Group B', itemIds: ['b1', 'b2'] },
+      ],
+      items: [
+        groupedItem('a1', 'grp_a'),
+        groupedItem('b1', 'grp_b'),
+        groupedItem('a2', 'grp_a'),
+        groupedItem('b2', 'grp_b'),
+      ],
+    },
+    /contiguous|reopened|split/i,
+  )
+})
+
+test('json-group-import: item assigned to multiple groups is rejected', () => {
+  assertPayloadRejected(
+    {
+      groups: [
+        { id: 'grp_a', name: 'Group A', itemIds: ['item_1'] },
+        { id: 'grp_b', name: 'Group B', itemIds: ['item_1'] },
+      ],
+      items: [groupedItem('item_1', 'grp_a')],
+    },
+    /multiple groups/i,
+  )
+})
+
+test('json-group-import: group_id versus itemIds disagreement is rejected', () => {
+  assertPayloadRejected(
+    {
+      groups: [
+        { id: 'grp_a', name: 'Group A', itemIds: ['item_1'] },
+        { id: 'grp_b', name: 'Group B', itemIds: ['item_2'] },
+      ],
+      items: [
+        groupedItem('item_1', 'grp_b'),
+        groupedItem('item_2', 'grp_b'),
+      ],
+    },
+    /item_1|grp_a|grp_b|multiple groups|does not match/i,
+  )
+})
+
+test('json-group-import: group itemIds order must match source item order', () => {
+  assertPayloadRejected(
+    {
+      groups: [{ id: 'grp_a', name: 'Group A', itemIds: ['item_3', 'item_1', 'item_2'] }],
+      items: [
+        groupedItem('item_1', 'grp_a'),
+        groupedItem('item_2', 'grp_a'),
+        groupedItem('item_3', 'grp_a'),
+      ],
+    },
+    /order|itemIds|source/i,
+  )
+})
+
+test('json-group-import: supplied scattered CPS group pattern is rejected before apply', () => {
+  assertPayloadRejected(
+    {
+      groups: [
+        { id: 'grp_1', name: 'Electrical Materials', itemIds: ['item_2', 'item_6'] },
+        { id: 'grp_2', name: 'Generator Parts', itemIds: ['item_4', 'item_9', 'item_13'] },
+        { id: 'grp_3', name: 'Tools and Accessories', itemIds: ['item_8', 'item_12', 'item_15'] },
+      ],
+      items: [
+        standaloneItem('item_1'),
+        groupedItem('item_2', 'grp_1'),
+        standaloneItem('item_3'),
+        groupedItem('item_4', 'grp_2'),
+        standaloneItem('item_5'),
+        groupedItem('item_6', 'grp_1'),
+        standaloneItem('item_7'),
+        groupedItem('item_8', 'grp_3'),
+        groupedItem('item_9', 'grp_2'),
+        standaloneItem('item_10'),
+        standaloneItem('item_11'),
+        groupedItem('item_12', 'grp_3'),
+        groupedItem('item_13', 'grp_2'),
+        standaloneItem('item_14'),
+        groupedItem('item_15', 'grp_3'),
+      ],
+    },
+    /Electrical Materials|grp_1|contiguous|reopened|split/i,
+  )
 })

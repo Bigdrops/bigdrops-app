@@ -16,6 +16,26 @@ function sectionRows(cps) {
   return cps.table_rows.filter((row) => row.row_type === 'section')
 }
 
+function cpsGroupedItem(ref, groupId, description = ref) {
+  return {
+    temp_ref: ref,
+    group_id: groupId,
+    description,
+    cost_price: 1,
+    selling_price: 2,
+  }
+}
+
+function cpsStandaloneItem(ref, description = ref) {
+  return {
+    temp_ref: ref,
+    group_id: '',
+    description,
+    cost_price: 1,
+    selling_price: 2,
+  }
+}
+
 test('cost_price maps only to CPS cp', () => {
   const cps = applyCpsImport(
     cpsImportSchema.parse({ items: [{ description: 'Cement', quantity: 10, cost_price: 100 }] }),
@@ -141,17 +161,17 @@ test('custom_fields are not ingested into CPS row custom data', () => {
   assert.deepEqual(itemRows(next)[0].custom_data ?? {}, {})
 })
 
-test('explicit source groups produce deterministic grp_N and item_N references', () => {
+test('explicit contiguous source groups produce deterministic grp_N and item_N references', () => {
   const cps = applyCpsImport(
     cpsImportSchema.parse({
       groups: [
-        { id: 'grp_1', name: 'Electrical Works', itemIds: ['item_1', 'item_3'] },
-        { id: 'grp_2', name: 'Mechanical Works', itemIds: ['item_2'] },
+        { id: 'grp_1', name: 'Electrical Works', itemIds: ['item_1', 'item_2'] },
+        { id: 'grp_2', name: 'Mechanical Works', itemIds: ['item_3'] },
       ],
       items: [
         { temp_ref: 'item_1', group_id: 'grp_1', description: 'Cable', quantity: 1, cost_price: 10, selling_price: 14 },
-        { temp_ref: 'item_2', group_id: 'grp_2', description: 'Pump', quantity: 1, cost_price: 200, selling_price: 260 },
-        { temp_ref: 'item_3', group_id: 'grp_1', description: 'Panel', quantity: 1, cost_price: 300, selling_price: 380 },
+        { temp_ref: 'item_2', group_id: 'grp_1', description: 'Panel', quantity: 1, cost_price: 300, selling_price: 380 },
+        { temp_ref: 'item_3', group_id: 'grp_2', description: 'Pump', quantity: 1, cost_price: 200, selling_price: 260 },
       ],
     }),
     createEmptyCps(),
@@ -164,8 +184,8 @@ test('explicit source groups produce deterministic grp_N and item_N references',
 
   const items = itemRows(cps)
   assert.equal(items.find((row) => row.description === 'Cable').group_id, 'grp_1')
-  assert.equal(items.find((row) => row.description === 'Pump').group_id, 'grp_2')
   assert.equal(items.find((row) => row.description === 'Panel').group_id, 'grp_1')
+  assert.equal(items.find((row) => row.description === 'Pump').group_id, 'grp_2')
 })
 
 test('source or database identifiers do not determine synthetic relationship ids', () => {
@@ -209,24 +229,71 @@ test('an ungrouped source does not infer or manufacture a group', () => {
   assert.deepEqual(itemRows(cps).map((row) => row.group_id ?? null), [null, null])
 })
 
-test('global item order survives grouped import unchanged', () => {
+test('CPS import rejects scattered source group membership before application', () => {
+  const result = cpsImportSchema.safeParse({
+    groups: [
+      { id: 'grp_1', name: 'Electrical Materials', itemIds: ['item_2', 'item_6'] },
+      { id: 'grp_2', name: 'Generator Parts', itemIds: ['item_4', 'item_9', 'item_13'] },
+      { id: 'grp_3', name: 'Tools and Accessories', itemIds: ['item_8', 'item_12', 'item_15'] },
+    ],
+    items: [
+      cpsStandaloneItem('item_1'),
+      cpsGroupedItem('item_2', 'grp_1'),
+      cpsStandaloneItem('item_3'),
+      cpsGroupedItem('item_4', 'grp_2'),
+      cpsStandaloneItem('item_5'),
+      cpsGroupedItem('item_6', 'grp_1'),
+      cpsStandaloneItem('item_7'),
+      cpsGroupedItem('item_8', 'grp_3'),
+      cpsGroupedItem('item_9', 'grp_2'),
+      cpsStandaloneItem('item_10'),
+      cpsStandaloneItem('item_11'),
+      cpsGroupedItem('item_12', 'grp_3'),
+      cpsGroupedItem('item_13', 'grp_2'),
+      cpsStandaloneItem('item_14'),
+      cpsGroupedItem('item_15', 'grp_3'),
+    ],
+  })
+
+  assert.equal(result.success, false)
+  assert.match(result.error.issues[0].message, /Electrical Materials|grp_1|contiguous|reopened|split/i)
+})
+
+test('CPS import accepts valid mixed standalone and grouped blocks without reordering items', () => {
   const cps = applyCpsImport(
     cpsImportSchema.parse({
       groups: [
-        { id: 'grp_1', name: 'Electrical', itemIds: ['item_1', 'item_3'] },
-        { id: 'grp_2', name: 'Mechanical', itemIds: ['item_2', 'item_4'] },
+        { id: 'grp_1', name: 'Electrical', itemIds: ['item_2', 'item_3'] },
+        { id: 'grp_2', name: 'Mechanical', itemIds: ['item_5', 'item_6'] },
       ],
       items: [
-        { temp_ref: 'item_1', group_id: 'grp_1', description: 'A', cost_price: 1, selling_price: 2 },
-        { temp_ref: 'item_2', group_id: 'grp_2', description: 'B', cost_price: 1, selling_price: 2 },
-        { temp_ref: 'item_3', group_id: 'grp_1', description: 'C', cost_price: 1, selling_price: 2 },
-        { temp_ref: 'item_4', group_id: 'grp_2', description: 'D', cost_price: 1, selling_price: 2 },
+        cpsStandaloneItem('item_1', 'A'),
+        cpsGroupedItem('item_2', 'grp_1', 'B'),
+        cpsGroupedItem('item_3', 'grp_1', 'C'),
+        cpsStandaloneItem('item_4', 'D'),
+        cpsGroupedItem('item_5', 'grp_2', 'E'),
+        cpsGroupedItem('item_6', 'grp_2', 'F'),
+        cpsStandaloneItem('item_7', 'G'),
       ],
     }),
     createEmptyCps(),
   )
 
-  assert.deepEqual(itemRows(cps).map((row) => row.description), ['A', 'B', 'C', 'D'])
+  assert.deepEqual(itemRows(cps).map((row) => row.description), ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+})
+
+test('CPS import rejects group itemIds order that contradicts source item order', () => {
+  const result = cpsImportSchema.safeParse({
+    groups: [{ id: 'grp_1', name: 'Electrical', itemIds: ['item_3', 'item_1', 'item_2'] }],
+    items: [
+      cpsGroupedItem('item_1', 'grp_1'),
+      cpsGroupedItem('item_2', 'grp_1'),
+      cpsGroupedItem('item_3', 'grp_1'),
+    ],
+  })
+
+  assert.equal(result.success, false)
+  assert.match(result.error.issues[0].message, /order|itemIds|source/i)
 })
 
 test('inactive CPS columns are not populated through import', () => {
