@@ -7,6 +7,8 @@ import { normalizeExtraCharges, buildCalculationInputs, BUILTIN_COLUMNS } from '
 import { resolveDocumentSignatory } from '@/domain/invoice/previewModel'
 import { computeDocument } from '@/lib/Calculations'
 import { toDbItem } from '@/domain/invoice/factories'
+import { authorityTransitionSummary, normalizeLineageId, withoutLineage } from '@/domain/cps/lineage'
+import { applyInvoiceItemLineage, persistFeedbackAuthority } from '@/domain/cps/lineageStore'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function loadQuotationViewData(id: string, tenantClient: TenantClient) {
@@ -130,10 +132,13 @@ export async function duplicateQuotationRecord({
     }),
   }
 
+  // Law 2: a duplicate is a clean draft. Phase 2 lineage is stripped so a
+  // duplicated row can never claim ancestry (or later feedback authority)
+  // over a Cost & Pricing Sheet it did not come from.
   const prefillItems = items
     .filter((item: any) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
     .map((item: any) => ({
-      ...JSON.parse(JSON.stringify(item)),
+      ...withoutLineage(JSON.parse(JSON.stringify(item)) as Record<string, unknown>),
       id: null,
     }))
 
@@ -204,16 +209,22 @@ export async function convertQuotationToInvoice(
     amount_in_words: quotation.amount_in_words || '',
     custom_fields: JSON.stringify(withSourceTrail(quotationCustomFields, sourceLink)),
   }
+  // Phase 2: the exact serialized rows handed to the write. They carry the
+  // persisted CPS/Quotation lineage and the sort order they are written with,
+  // so lineage can be stamped and verified deterministically afterwards.
+  const persistedItems = items
+    .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
+    .map((item, index) => toDbItem(item, null, index) as Record<string, unknown>)
+
   // Phase 3: composite create (invoice + items) is atomic via the tenant RPC
   // when the entity id is available; otherwise sequential tenant writes.
   let createdInvoice: any = null
+  let lineageAppliedInline = false
   if (entityId) {
     const { data, error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
       p_entity_id: entityId,
       p_invoice_payload: invoicePayload,
-      p_items: items
-        .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-        .map((item, index) => toDbItem(item, null, index)),
+      p_items: persistedItems,
       p_mode: 'create',
     })
     if (error || !data) throw new Error(error?.message || 'Failed to create invoice')
@@ -234,12 +245,25 @@ export async function convertQuotationToInvoice(
     if (error || !data) throw new Error(error?.message || 'Failed to create invoice')
     createdInvoice = data
 
-    const itemRows = items
-      .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
-      .map((item, index) => toDbItem(item, createdInvoice.id, index))
+    // Lineage is part of the same insert that creates these rows.
+    const itemRows = persistedItems.map((row) => ({ ...row, invoice_id: createdInvoice.id }))
     if (itemRows.length > 0) {
       const { error: itemError } = await tenantClient.from('invoice_items').insert(itemRows)
       if (itemError) throw itemError
+    }
+    lineageAppliedInline = true
+  }
+
+  // The composite RPC writes a fixed invoice_items column list and therefore
+  // drops lineage. Stamp it immediately after, keyed by the row's stable
+  // (invoice_id, sort_order) pair. Verified per row so a partial failure is
+  // reported instead of silently accepted.
+  let lineageFailures: Array<{ sortOrder: number; reason: string }> = []
+  if (!lineageAppliedInline && createdInvoice?.id) {
+    const applied = await applyInvoiceItemLineage(tenantClient, createdInvoice.id, persistedItems)
+    lineageFailures = applied.failures
+    if (lineageFailures.length > 0) {
+      console.error('CPS lineage stamp failed for converted rows:', lineageFailures)
     }
   }
   const derivedLink = buildTrailLink({
@@ -262,6 +286,13 @@ export async function convertQuotationToInvoice(
     .update({ status: 'converted', custom_fields: JSON.stringify(updatedQuotationFields) })
     .eq('id', id)
   if (trailError) throw trailError
+
+  await recordInvoiceAuthorityHandoff({
+    tenantClient,
+    quotation,
+    invoice: createdInvoice,
+    lineageFailures,
+  })
 
   try {
     const { recordQuotationLinked, recordInvoiceCreated, recordAuditLog, INVOICE_TRACKED_FIELDS, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
@@ -291,6 +322,83 @@ export async function convertQuotationToInvoice(
     console.error('Audit trail failed:', auditErr)
   }
   return createdInvoice
+}
+
+/**
+ * Phase 2 authority handoff.
+ *
+ * A Quotation that descends from a Cost & Pricing Sheet owns downstream
+ * feedback authority while it is the newest document in the chain. When that
+ * Quotation becomes an Invoice, authority moves to the Invoice and the
+ * Quotation's authority ends. The move is written to persisted state (never
+ * derived from edit recency) and is idempotent, so a retried conversion cannot
+ * produce contradictory authority.
+ *
+ * Quotations with no CPS ancestry have no chain to hand off, so nothing is
+ * recorded. This function never mutates CPS content: it records provenance
+ * only.
+ */
+async function recordInvoiceAuthorityHandoff({
+  tenantClient,
+  quotation,
+  invoice,
+  lineageFailures,
+}: {
+  tenantClient: TenantClient
+  quotation: any
+  invoice: any
+  lineageFailures: Array<{ sortOrder: number; reason: string }>
+}) {
+  const sourceCpsId = normalizeLineageId(quotation?.source_cps_id)
+  if (!sourceCpsId || !invoice?.id) return
+
+  const authority = await persistFeedbackAuthority(tenantClient, quotation.id, 'invoice', invoice.id)
+  if (!authority.ok) {
+    console.error('CPS feedback authority handoff failed:', authority.error)
+  }
+
+  try {
+    const { data: cpsRow } = await tenantClient
+      .from('cps_sheets')
+      .select('cps_number')
+      .eq('id', sourceCpsId)
+      .single()
+    const cpsNumber = String((cpsRow as { cps_number?: string | null } | null)?.cps_number || '')
+
+    const { CPS_AUDIT_SOURCE, buildCpsAuditMeta, recordCpsAuditEvent } = await import('@/domain/cps/audit')
+
+    await recordCpsAuditEvent(tenantClient, {
+      recordId: sourceCpsId,
+      entityLabel: cpsNumber || null,
+      meta: buildCpsAuditMeta({
+        event: 'CONVERTED_TO_INVOICE',
+        rootId: sourceCpsId,
+        sourceContext: CPS_AUDIT_SOURCE.view,
+        related: { type: 'invoice', id: invoice.id, number: String(invoice.invoice_number || '') },
+        summary: 'Quotation converted to Invoice',
+        detail: authorityTransitionSummary(quotation?.quotation_number, invoice?.invoice_number),
+      }),
+    })
+
+    if (lineageFailures.length > 0) {
+      await recordCpsAuditEvent(tenantClient, {
+        recordId: sourceCpsId,
+        entityLabel: cpsNumber || null,
+        meta: buildCpsAuditMeta({
+          event: 'LINEAGE_WARNING',
+          rootId: sourceCpsId,
+          sourceContext: CPS_AUDIT_SOURCE.view,
+          related: { type: 'invoice', id: invoice.id, number: String(invoice.invoice_number || '') },
+          summary: `Row ancestry could not be carried for ${lineageFailures.length} item${lineageFailures.length === 1 ? '' : 's'}`,
+          detail: lineageFailures.map((failure) => `#${failure.sortOrder}: ${failure.reason}`).join('; '),
+          actorType: 'system',
+        }),
+      })
+    }
+  } catch (auditError) {
+    // Audit is evidence, not a control path: it must never fail the conversion.
+    console.error('CPS authority audit failed:', auditError)
+  }
 }
 
 export async function deleteQuotationRecord(id: string, tenantClient: TenantClient) {

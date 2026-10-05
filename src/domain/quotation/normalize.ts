@@ -10,6 +10,7 @@ import {
   toNullableDate,
 } from '@/domain/invoice'
 import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColumns'
+import { normalizeLineageId } from '@/domain/cps/lineage'
 import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 import { nextAutomaticNumber } from '@/domain/prefixConstants'
@@ -61,6 +62,10 @@ export function mapDbQuotation(row: DbQuotation): Quotation {
     issue_date: row.issue_date ?? null,
     valid_until: toNullableDate(row.valid_until),
     status: (row.status as Quotation['status']) || 'open',
+    source_cps_id: row.source_cps_id ?? null,
+    feedback_authority: row.feedback_authority ?? null,
+    feedback_authority_document_id: row.feedback_authority_document_id ?? null,
+    feedback_authority_updated_at: row.feedback_authority_updated_at ?? null,
     notes: row.notes || customFields.notesHtml || '',
     terms: row.terms || customFields.termsHtml || '',
     workmanship: toNumber(row.workmanship),
@@ -96,6 +101,11 @@ export function mapDbQuotationItem(row: DbQuotationItem): InvoiceItem {
   return ensureUiKey({
     id: row.id ?? null,
     item_id: row.item_id ?? null,
+    // Phase 2 lineage: read as stored, never inferred.
+    source_cps_id: normalizeLineageId(row.source_cps_id),
+    source_cps_row_id: normalizeLineageId(row.source_cps_row_id),
+    source_quotation_id: normalizeLineageId(row.source_quotation_id),
+    source_quotation_item_id: normalizeLineageId(row.source_quotation_item_id),
     description: row.description || '',
     sub_description: row.sub_description || '',
     make: row.make || '',

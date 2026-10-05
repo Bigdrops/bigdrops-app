@@ -17,6 +17,16 @@ export interface DbQuotation {
   client_id?: string | null
   client_name?: string | null
   project_id?: string | null
+  /** Phase 2: CPS document this quotation was converted from. */
+  source_cps_id?: string | null
+  /**
+   * Phase 2: active downstream feedback authority for this CPS conversion
+   * chain ('quotation' | 'invoice'), or null when the quotation has no CPS
+   * ancestry.
+   */
+  feedback_authority?: 'quotation' | 'invoice' | string | null
+  feedback_authority_document_id?: string | null
+  feedback_authority_updated_at?: string | null
   issue_date?: string | null
   valid_until?: string | null
   status?: QuotationStatus | string | null
@@ -43,6 +53,14 @@ export interface DbQuotationItem {
   id?: string | null
   quotation_id?: string | null
   item_id?: string | null
+  /** Phase 2 lineage: originating Cost & Pricing Sheet. */
+  source_cps_id?: string | null
+  /** Phase 2 lineage: originating `cps_rows.id` (item rows only). */
+  source_cps_row_id?: string | null
+  /** Phase 2 lineage: originating Quotation document (reserved, NULL here). */
+  source_quotation_id?: string | null
+  /** Phase 2 lineage: originating Quotation item row (reserved, NULL here). */
+  source_quotation_item_id?: string | null
   description?: string | null
   sub_description?: string | null
   make?: string | null
@@ -84,6 +102,12 @@ export interface Quotation extends InvoiceTotalsSource {
   client_id?: string | null
   client_name?: string
   project_id?: string | null
+  /** Phase 2: CPS document this quotation was converted from. */
+  source_cps_id?: string | null
+  /** Phase 2 persisted authority state. Never inferred from edit recency. */
+  feedback_authority?: 'quotation' | 'invoice' | string | null
+  feedback_authority_document_id?: string | null
+  feedback_authority_updated_at?: string | null
   issue_date?: string | null
   valid_until?: string | null
   status?: QuotationStatus
