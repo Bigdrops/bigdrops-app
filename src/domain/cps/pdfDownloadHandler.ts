@@ -96,11 +96,9 @@ export function resolveCpsFormeVisibleColumns(visibility: CpsPdfColumnVisibility
   return columns
 }
 
-export function selectCpsFormeDocument(templateId: CpsPdfTemplateId): 'schedule' | 'compact' | 'ledger' | 'industry' {
-  if (templateId === 'compact') return 'compact'
-  if (templateId === 'ledger') return 'ledger'
+export function selectCpsFormeDocument(templateId: CpsPdfTemplateId): 'ledger' | 'industry' {
   if (templateId === 'industry') return 'industry'
-  return 'schedule'
+  return 'ledger'
 }
 
 export function resolveExternalImageHref(value: unknown): string | null {
@@ -267,7 +265,6 @@ export async function handleDownloadCpsPdf(input: {
   setDownloading(true)
   try {
     const { generateCpsFormePdf } = await cpsStage('prepare', () => import('@/components/pdf'))
-    const { CpsCompactDocument, CpsScheduleDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsFormeDocument'))
     const { LedgerCpsDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/LedgerCpsDocument'))
     const { CpsIndustryDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsIndustryDocument'))
     const { ensureFormeFontFamily } = await cpsStage('prepare', () => import('@/components/pdf/forme/fonts'))
@@ -309,10 +306,8 @@ export async function handleDownloadCpsPdf(input: {
     const filename = `${sanitizeFilename(rawName)}.pdf`
     const SelectedDocument = await cpsStage('template', () => {
       const selected = selectCpsFormeDocument(prefs.templateId)
-      if (selected === 'compact') return CpsCompactDocument
-      if (selected === 'ledger') return LedgerCpsDocument
       if (selected === 'industry') return CpsIndustryDocument
-      return CpsScheduleDocument
+      return LedgerCpsDocument
     })
     await generateCpsFormePdf({
       element: React.createElement(SelectedDocument, { model }),

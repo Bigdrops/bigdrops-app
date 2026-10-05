@@ -107,6 +107,12 @@ const QUOTATION_ITEM_COLUMNS = new Set([
   'install_rate_taxable',
   'show_install_rate',
   'item_id',
+  // Phase 2 CPS row-level lineage columns
+  // (migration 20261005130000_cps_row_lineage_and_authority.sql).
+  'source_cps_id',
+  'source_cps_row_id',
+  'source_quotation_id',
+  'source_quotation_item_id',
 ])
 
 test('conversion maps a populated CPS into populated quotation rows', () => {

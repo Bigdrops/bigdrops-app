@@ -1,4 +1,7 @@
-export type CpsPdfTemplateId = 'schedule' | 'compact' | 'ledger' | 'industry'
+export type CpsPdfTemplateId = 'ledger' | 'industry'
+
+/** Retired ids. Persisted prefs may still carry these; they fall back to ledger. */
+export type RetiredCpsPdfTemplateId = 'schedule' | 'compact'
 export type CpsPdfOrientation = 'portrait' | 'landscape'
 
 export interface CpsPdfTemplateMeta {
@@ -8,8 +11,6 @@ export interface CpsPdfTemplateMeta {
 }
 
 export const CPS_PDF_TEMPLATES: CpsPdfTemplateMeta[] = [
-  { id: 'schedule', label: 'Schedule', description: 'Full detail with photos, spec, and make.' },
-  { id: 'compact', label: 'Compact', description: 'Condensed rows, no photos, tighter fit.' },
   { id: 'ledger', label: 'Ledger', description: 'Portrait cost-sheet presentation with grouped walls.' },
   { id: 'industry', label: 'Industry', description: 'Industry-family presentation of the same cost schedule.' },
 ]
@@ -22,12 +23,25 @@ export interface CpsPdfDisplayPreferences {
 const STORAGE_KEY = 'cps_pdf_display_prefs'
 
 const DEFAULTS: CpsPdfDisplayPreferences = {
-  templateId: 'schedule',
+  templateId: 'ledger',
   orientation: 'portrait',
 }
 
+const RETIRED_TEMPLATE_IDS: ReadonlySet<string> = new Set(['schedule', 'compact'])
+
 function isTemplateId(value: unknown): value is CpsPdfTemplateId {
-  return value === 'schedule' || value === 'compact' || value === 'ledger' || value === 'industry'
+  return value === 'ledger' || value === 'industry'
+}
+
+/** Retired ids stay readable so old saved prefs migrate instead of breaking. */
+export function isRetiredTemplateId(value: unknown): value is RetiredCpsPdfTemplateId {
+  return typeof value === 'string' && RETIRED_TEMPLATE_IDS.has(value)
+}
+
+/** Map any stored id to a renderable template. Retired ids fall back to ledger. */
+export function resolveActiveTemplateId(value: unknown): CpsPdfTemplateId {
+  if (isTemplateId(value)) return value
+  return DEFAULTS.templateId
 }
 
 function isOrientation(value: unknown): value is CpsPdfOrientation {
@@ -41,7 +55,7 @@ export function readCpsPdfDisplayPreferences(): CpsPdfDisplayPreferences {
     if (!raw) return { ...DEFAULTS }
     const parsed = JSON.parse(raw) as Partial<CpsPdfDisplayPreferences>
     return {
-      templateId: isTemplateId(parsed.templateId) ? parsed.templateId : DEFAULTS.templateId,
+      templateId: resolveActiveTemplateId(parsed.templateId),
       orientation: isOrientation(parsed.orientation) ? parsed.orientation : DEFAULTS.orientation,
     }
   } catch {
@@ -54,7 +68,7 @@ export function writeCpsPdfDisplayPreferences(prefs: CpsPdfDisplayPreferences): 
   window.localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
-      templateId: isTemplateId(prefs.templateId) ? prefs.templateId : DEFAULTS.templateId,
+      templateId: resolveActiveTemplateId(prefs.templateId),
       orientation: isOrientation(prefs.orientation) ? prefs.orientation : DEFAULTS.orientation,
     }),
   )

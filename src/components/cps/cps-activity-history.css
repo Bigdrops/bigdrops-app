@@ -1,0 +1,259 @@
+/* CPS Activity & History — document provenance timeline.
+   Rendered inside .cps-view, so it reuses the CPS view design tokens
+   (--ink, --body, --faint, --line, --card, --soft, --brand, --mono).
+   This is a distinct surface. It does not reuse Invoice audit styling. */
+
+.cps-ah {
+  margin-top: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cps-ah-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  min-height: 48px;
+}
+.cps-ah-head-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.cps-ah-head .cps-ah-chevron {
+  margin-left: auto;
+  color: var(--faint);
+  transition: transform .18s ease;
+  flex-shrink: 0;
+}
+.cps-ah-head .cps-ah-chevron.open { transform: rotate(180deg); }
+
+.cps-ah-body {
+  border-top: 1px solid var(--line);
+  padding: 8px 16px 14px;
+}
+
+.cps-ah-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cps-ah-item {
+  position: relative;
+  padding: 12px 0 12px 22px;
+  border-top: 1px solid var(--line);
+}
+.cps-ah-item:first-child { border-top: 0; }
+.cps-ah-item::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 18px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.cps-ah-item::after {
+  content: "";
+  position: absolute;
+  left: 7.5px;
+  top: 26px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--line);
+}
+.cps-ah-item:last-child::after { display: none; }
+
+.cps-ah-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.cps-ah-detail {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--body);
+}
+.cps-ah-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--faint);
+}
+.cps-ah-actor { font-weight: 600; color: var(--body); }
+.cps-ah-meta .cps-ah-actor[data-actor="system"],
+.cps-ah-meta .cps-ah-actor[data-actor="automated-feedback"] {
+  color: var(--faint);
+  font-style: italic;
+  font-weight: 500;
+}
+.cps-ah-time { font-family: var(--mono); font-size: 11px; }
+
+.cps-ah-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--body);
+}
+.cps-ah-context .num { font-family: var(--mono); }
+
+.cps-ah-toggle {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  color: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 32px;
+}
+
+.cps-ah-groups { margin-top: 9px; display: grid; gap: 8px; }
+.cps-ah-group {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 8px 10px;
+}
+.cps-ah-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--body);
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+
+.cps-ah-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.cps-ah-change + .cps-ah-change { border-top: 1px dashed var(--line); }
+.cps-ah-field {
+  font-weight: 600;
+  color: var(--faint);
+  min-width: 76px;
+}
+.cps-ah-old { color: var(--faint); text-decoration: line-through; overflow-wrap: anywhere; }
+.cps-ah-new { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+.cps-ah-arrow { color: var(--faint); }
+
+.cps-ah-imgbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--body);
+  font-weight: 600;
+}
+.cps-ah-imgrefs { margin-top: 4px; width: 100%; }
+.cps-ah-imgrefs summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--faint);
+  list-style: none;
+}
+.cps-ah-imgrefs summary::-webkit-details-marker { display: none; }
+.cps-ah-imgrefs summary::before { content: "▸ "; }
+.cps-ah-imgrefs[open] summary::before { content: "▾ "; }
+.cps-ah-imgrefs .cps-ah-imglist {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+  padding-left: 12px;
+}
+.cps-ah-imgrefs a,
+.cps-ah-imgrefs span {
+  font-size: 11px;
+  color: var(--brand);
+  overflow-wrap: anywhere;
+}
+.cps-ah-imgrefs span { color: var(--faint); }
+
+.cps-ah-empty,
+.cps-ah-error {
+  padding: 20px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--faint);
+}
+.cps-ah-error { display: grid; gap: 10px; justify-items: center; }
+.cps-ah-error .cps-ah-error-msg { color: var(--danger); font-weight: 600; }
+.cps-ah-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 34px;
+}
+
+.cps-ah-skel { display: grid; gap: 14px; padding: 14px 4px; }
+.cps-ah-skel-row {
+  position: relative;
+  padding-left: 22px;
+  height: 30px;
+}
+.cps-ah-skel-row::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+.cps-ah-skel-line {
+  height: 9px;
+  border-radius: 6px;
+  background: var(--line);
+  animation: cps-ah-pulse 1.4s ease-in-out infinite;
+}
+.cps-ah-skel-line.short { width: 40%; margin-top: 7px; }
+@keyframes cps-ah-pulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cps-ah-skel-line { animation: none; }
+}
+
+/* Desktop: give field changes more horizontal room. */
+@media (min-width: 900px) {
+  .cps-ah-head { padding: 16px 20px; }
+  .cps-ah-body { padding: 10px 20px 18px; }
+  .cps-ah-field { min-width: 96px; }
+}

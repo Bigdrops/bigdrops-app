@@ -11,6 +11,7 @@ import {
   selectCpsFormeDocument,
 } from '../../domain/cps/pdfDownloadHandler.ts'
 import { LedgerCpsDocument } from '../../components/pdf/forme/LedgerCpsDocument.tsx'
+import { LEDGER_SCHEDULE_GEOMETRY, resolveScheduleWidths, scheduleContentWidth } from '../../components/pdf/forme/cpsScheduleGeometry.ts'
 import { CpsScheduleDocument } from '../../components/pdf/forme/CpsFormeDocument.tsx'
 import {
   CPS_PDF_TEMPLATES,
@@ -114,15 +115,15 @@ function naira(value) {
   return `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-test('Ledger is registered as a selectable template; schedule stays default', () => {
+test('Ledger is registered as a selectable template; ledger is default', () => {
   assert.deepEqual(
     CPS_PDF_TEMPLATES.map((template) => template.id).sort(),
-    ['compact', 'industry', 'ledger', 'schedule'],
+    ['industry', 'ledger'],
   )
   assert.equal(CPS_PDF_TEMPLATES.find((template) => template.id === 'ledger')?.label, 'Ledger')
-  assert.equal(readCpsPdfDisplayPreferences().templateId, 'schedule')
+  assert.equal(readCpsPdfDisplayPreferences().templateId, 'ledger')
   assert.equal(selectCpsFormeDocument('ledger'), 'ledger')
-  assert.equal(selectCpsFormeDocument('unknown-template'), 'schedule')
+  assert.equal(selectCpsFormeDocument('unknown-template'), 'ledger')
 })
 
 test('shared model carries authoritative extended cost, split qty/unit, currency, image href, group cost', () => {
@@ -262,4 +263,60 @@ test('existing schedule template ignores Ledger-only fields', () => {
   const texts = extractFormeText(serialize(React.createElement(CpsScheduleDocument, { model })))
   assert.ok(!texts.includes('Total Cost'), 'schedule must not gain Ledger columns')
   assert.ok(!texts.includes('Total Sell'), 'schedule must not gain Ledger labels')
+})
+
+test('Ledger column budget fits portrait content width exactly', () => {
+  const content = scheduleContentWidth(LEDGER_SCHEDULE_GEOMETRY)
+  assert.ok(content > 500, 'portrait content must leave room for the schedule')
+  const full = ['no', 'description', 'qty', 'unitCp', 'unitSp', 'totalCost', 'totalSell']
+  const slim = ['no', 'description', 'qty', 'unitSp', 'totalSell']
+  for (const columns of [full, slim]) {
+    const widths = resolveScheduleWidths(LEDGER_SCHEDULE_GEOMETRY, columns)
+    assert.equal(widths.length, columns.length)
+    const sum = widths.reduce((total, column) => total + column.width.fixed, 0)
+    assert.ok(Math.abs(sum - content) < 0.01, `columns must fill content exactly, got ${sum}`)
+    const description = widths[columns.indexOf('description')].width.fixed
+    assert.ok(description >= 120, `description must stay usable, got ${description}`)
+    for (const key of ['unitCp', 'unitSp', 'totalCost', 'totalSell']) {
+      if (!columns.includes(key)) continue
+      const money = widths[columns.indexOf(key)].width.fixed
+      assert.ok(money >= 60, `${key} must stay readable, got ${money}`)
+    }
+  }
+})
+
+test('Ledger wall shares schedule geometry and paginates freely', () => {
+  const source = readFileSync(
+    new URL('../../components/pdf/forme/LedgerCpsDocument.tsx', import.meta.url),
+    'utf8',
+  )
+  assert.ok(source.includes('colSpan={columns.length}'), 'group header must span schedule geometry')
+  assert.ok(!source.includes('wrap='), 'groups must paginate without keep-together flags')
+})
+
+test('picker offers Ledger and Industry as a miniature carousel', () => {
+  const viewSource = readFileSync(
+    new URL('../../components/cps/CostPricingSheetViewPresentations.tsx', import.meta.url),
+    'utf8',
+  )
+  assert.ok(viewSource.includes('TemplatePickerCarousel'), 'picker must use the shared carousel shell')
+  assert.ok(viewSource.includes('CPS_TEMPLATE_OPTIONS'), 'picker must offer CPS template options')
+  assert.ok(viewSource.includes("id: 'ledger'"), 'picker must offer Ledger')
+  assert.ok(viewSource.includes("id: 'industry'"), 'picker must offer Industry')
+  assert.ok(!viewSource.includes("id: 'schedule'"), 'picker must not offer retired Schedule')
+  assert.ok(!viewSource.includes("id: 'compact'"), 'picker must not offer retired Compact')
+})
+
+test('Ledger page frame pins the footer and repeats only the schedule header', () => {
+  const source = readFileSync(
+    new URL('../../components/pdf/forme/LedgerCpsDocument.tsx', import.meta.url),
+    'utf8',
+  )
+  const fixedCount = source.split('<Fixed').length - 1
+  assert.equal(fixedCount, 1, 'exactly one Fixed region (the footer) may exist')
+  assert.ok(source.includes('position="footer"'), 'footer must use the Forme footer primitive')
+  assert.ok(source.includes('{{pageNumber}}'), 'footer must render the page number')
+  assert.ok(source.includes('{{totalPages}}'), 'footer must render total pages')
+  assert.ok(source.includes('<Row header>'), 'schedule header must repeat on continuation pages')
+  assert.ok(source.includes('bottom: 52'), 'page must reserve footer space in the bottom margin')
 })

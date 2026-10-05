@@ -405,20 +405,22 @@ test('CPS download surfaces converge on the Forme handler', () => {
   assert.ok(!pageSource.includes('generateCpsPdf'), 'rejected react-pdf generator must stay unwired')
 })
 
-test('CPS PDF display preferences default to schedule portrait', () => {
+test('CPS PDF display preferences default to ledger portrait', () => {
   const prefs = readCpsPdfDisplayPreferences()
-  assert.equal(prefs.templateId, 'schedule')
+  assert.equal(prefs.templateId, 'ledger')
   assert.equal(prefs.orientation, 'portrait')
   assert.deepEqual(
     CPS_PDF_TEMPLATES.map((template) => template.id).sort(),
-    ['compact', 'industry', 'ledger', 'schedule'],
+    ['industry', 'ledger'],
   )
 })
 
-test('CPS Forme document selection falls back to schedule', () => {
-  assert.equal(selectCpsFormeDocument('compact'), 'compact')
-  assert.equal(selectCpsFormeDocument('schedule'), 'schedule')
-  assert.equal(selectCpsFormeDocument('unknown-template'), 'schedule')
+test('CPS Forme document selection covers ledger and industry with safe fallback', () => {
+  assert.equal(selectCpsFormeDocument('ledger'), 'ledger')
+  assert.equal(selectCpsFormeDocument('industry'), 'industry')
+  assert.equal(selectCpsFormeDocument('schedule'), 'ledger')
+  assert.equal(selectCpsFormeDocument('compact'), 'ledger')
+  assert.equal(selectCpsFormeDocument('unknown-template'), 'ledger')
 })
 
 test('CPS PDF columns default to fully visible, SP and description never hide', () => {
@@ -530,7 +532,8 @@ test('CPS customize sheet wires template, accent, and orientation controls', () 
     new URL('../../components/cps/CostPricingSheetViewPresentations.tsx', import.meta.url),
     'utf8',
   )
-  assert.ok(viewSource.includes('CPS_PDF_TEMPLATES'), 'sheet must offer all registered templates')
+  assert.ok(viewSource.includes('CPS_TEMPLATE_OPTIONS'), 'sheet must offer CPS template options')
+  assert.ok(viewSource.includes('TemplatePickerCarousel'), 'sheet must use the shared carousel shell')
   assert.ok(viewSource.includes('showAccentColor'), 'sheet must expose accent color')
   assert.ok(viewSource.includes('showLandscape'), 'sheet must expose orientation')
 })

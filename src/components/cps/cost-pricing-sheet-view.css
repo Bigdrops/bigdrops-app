@@ -1,13 +1,13 @@
 .cps-view {
   --cps-content-inset: 20px;
-  --ink: #101828;
-  --body: #344054;
-  --faint: #667085;
-  --line: rgba(16, 24, 40, .10);
-  --line-strong: rgba(16, 24, 40, .22);
-  --bg: #f2f4f7;
-  --card: #ffffff;
-  --soft: #eef1f5;
+  --ink: hsl(var(--bd-text));
+  --body: color-mix(in oklab, hsl(var(--bd-text)) 62%, hsl(var(--bd-text-muted)));
+  --faint: hsl(var(--bd-text-muted));
+  --line: hsl(var(--bd-border));
+  --line-strong: hsl(var(--bd-border-strong));
+  --bg: hsl(var(--bd-app-bg));
+  --card: hsl(var(--bd-card-bg));
+  --soft: hsl(var(--bd-surface-muted));
   --brand: hsl(var(--bd-button-primary-bg));
   --brand-ink: hsl(var(--bd-button-primary-text));
   --brand-soft: hsl(var(--bd-button-primary-bg) / .08);
@@ -15,40 +15,17 @@
   --action-soft-border: hsl(var(--bd-surface-action-border));
   --action-soft-text: hsl(var(--bd-action-icon-bg));
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
-  --cost: #b54708;
-  --cost-soft: rgba(181, 71, 8, .10);
-  --sell: #067647;
-  --sell-soft: rgba(6, 118, 71, .10);
-  --danger: #b42318;
-  --ghost: rgba(16, 24, 40, .07);
+  --cost: hsl(var(--bd-status-warning-text));
+  --cost-soft: hsl(var(--bd-status-warning-bg));
+  --sell: hsl(var(--bd-status-success-text));
+  --sell-soft: hsl(var(--bd-status-success-bg));
+  --danger: hsl(var(--bd-status-danger-text));
+  --ghost: hsl(var(--bd-surface-muted));
   --shadow-sheet: 0 -18px 44px rgba(0, 0, 0, .28);
   min-height: 100%;
   background: var(--bg);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-.dark .cps-view,
-[data-theme="dark"] .cps-view,
-.cps-view[data-theme="dark"] {
-  --ink: #f2f4f7;
-  --body: #d0d5dd;
-  --faint: #98a2b3;
-  --line: rgba(255, 255, 255, .12);
-  --line-strong: rgba(255, 255, 255, .24);
-  --bg: #0c111d;
-  --card: #1d2939;
-  --soft: #161f2e;
-  --brand: hsl(var(--bd-button-primary-bg));
-  --brand-ink: hsl(var(--bd-button-primary-text));
-  --brand-soft: hsl(var(--bd-button-primary-bg) / .12);
-  --cost: #fdb022;
-  --cost-soft: rgba(253, 176, 34, .13);
-  --sell: #6ce9a6;
-  --sell-soft: rgba(108, 233, 166, .12);
-  --danger: #f97066;
-  --ghost: rgba(255, 255, 255, .06);
-  --shadow-sheet: 0 -18px 44px rgba(0, 0, 0, .55);
 }
 .cps-view * { box-sizing: border-box; }
 .cps-view button {
@@ -318,7 +295,7 @@
   border-radius: 15px;
   flex-shrink: 0;
   object-fit: contain;
-  background: #ffffff;
+  background: var(--card);
   border: 1px solid var(--line);
 }
 .cps-view-wrap .cps-brandlogo {
@@ -912,7 +889,7 @@
   color: hsl(var(--bd-fab-text));
   box-shadow:
     0 16px 32px hsl(var(--bd-fab-bg) / .35),
-    0 4px 10px rgba(15, 23, 42, .18);
+    var(--bd-shadow-lg);
   text-align: center;
 }
 .cps-fab-slot button svg,

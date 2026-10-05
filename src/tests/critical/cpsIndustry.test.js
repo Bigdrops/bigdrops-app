@@ -13,6 +13,7 @@ import '../../components/pdf/cpsPreparedModel.ts'
 import { CpsScheduleDocument } from '../../components/pdf/forme/CpsFormeDocument.tsx'
 import { LedgerCpsDocument } from '../../components/pdf/forme/LedgerCpsDocument.tsx'
 import { CpsIndustryDocument } from '../../components/pdf/forme/CpsIndustryDocument.tsx'
+import { INDUSTRY_SCHEDULE_GEOMETRY, resolveScheduleWidths, scheduleContentWidth } from '../../components/pdf/forme/cpsScheduleGeometry.ts'
 import {
   CPS_PDF_TEMPLATES,
   readCpsPdfDisplayPreferences,
@@ -157,7 +158,7 @@ test('shared CPS prepared model lives outside template ownership', () => {
 
 test('no active Lorem identity remains', () => {
   assert.ok(!CPS_PDF_TEMPLATES.some((template) => template.id === 'lorem'), 'registry must not list lorem')
-  assert.equal(selectCpsFormeDocument('lorem'), 'schedule', 'retired lorem id must fall back safely')
+  assert.equal(selectCpsFormeDocument('lorem'), 'ledger', 'retired lorem id must fall back safely')
 
   const ledgerSource = readFileSync(
     new URL('../../components/pdf/forme/LedgerCpsDocument.tsx', import.meta.url),
@@ -178,19 +179,31 @@ test('no active Lorem identity remains', () => {
   )
 })
 
-test('registry exposes Schedule, Compact, Ledger, Industry with Schedule default', () => {
+test('registry exposes Ledger and Industry with Ledger default', () => {
   assert.deepEqual(
     CPS_PDF_TEMPLATES.map((template) => template.id),
-    ['schedule', 'compact', 'ledger', 'industry'],
+    ['ledger', 'industry'],
   )
   assert.deepEqual(
     CPS_PDF_TEMPLATES.map((template) => template.label),
-    ['Schedule', 'Compact', 'Ledger', 'Industry'],
+    ['Ledger', 'Industry'],
   )
-  assert.equal(readCpsPdfDisplayPreferences().templateId, 'schedule')
+  assert.equal(readCpsPdfDisplayPreferences().templateId, 'ledger')
   assert.equal(selectCpsFormeDocument('ledger'), 'ledger')
   assert.equal(selectCpsFormeDocument('industry'), 'industry')
-  assert.equal(selectCpsFormeDocument('unknown-template'), 'schedule')
+  assert.equal(selectCpsFormeDocument('unknown-template'), 'ledger')
+})
+
+test('retired schedule and compact ids migrate safely to ledger', async () => {
+  const prefs = await import('../../domain/cps/pdfPreferences.ts')
+  assert.equal(prefs.resolveActiveTemplateId('schedule'), 'ledger')
+  assert.equal(prefs.resolveActiveTemplateId('compact'), 'ledger')
+  assert.equal(prefs.resolveActiveTemplateId('ledger'), 'ledger')
+  assert.equal(prefs.resolveActiveTemplateId('industry'), 'industry')
+  assert.equal(prefs.resolveActiveTemplateId('garbage'), 'ledger')
+  assert.equal(prefs.isRetiredTemplateId('schedule'), true)
+  assert.equal(prefs.isRetiredTemplateId('compact'), true)
+  assert.equal(prefs.isRetiredTemplateId('ledger'), false)
 })
 
 test('Industry renders CPS hierarchy without foreign document concepts', () => {
@@ -274,4 +287,51 @@ test('schedule and compact render unchanged from the shared model', () => {
   assert.ok(scheduleTexts.includes('COST & PRICING SHEET'), 'schedule identity intact')
   assert.ok(!scheduleTexts.includes('Total Cost'), 'schedule keeps its own columns')
   assert.ok(!scheduleTexts.some((text) => /industry/i.test(text)), 'schedule stays out of industry semantics')
+})
+
+test('Industry column budget fits portrait content width exactly', () => {
+  const content = scheduleContentWidth(INDUSTRY_SCHEDULE_GEOMETRY)
+  assert.ok(content > 500, 'portrait content must leave room for the schedule')
+  const full = ['no', 'description', 'qty', 'unitCp', 'unitSp', 'totalCost', 'totalSell']
+  const slim = ['no', 'description', 'qty', 'unitSp', 'totalSell']
+  for (const columns of [full, slim]) {
+    const widths = resolveScheduleWidths(INDUSTRY_SCHEDULE_GEOMETRY, columns)
+    assert.equal(widths.length, columns.length)
+    const sum = widths.reduce((total, column) => total + column.width.fixed, 0)
+    assert.ok(Math.abs(sum - content) < 0.01, `columns must fill content exactly, got ${sum}`)
+    const description = widths[columns.indexOf('description')].width.fixed
+    assert.ok(description >= 120, `description must stay usable, got ${description}`)
+    for (const key of ['unitCp', 'unitSp', 'totalCost', 'totalSell']) {
+      if (!columns.includes(key)) continue
+      const money = widths[columns.indexOf(key)].width.fixed
+      assert.ok(money >= 60, `${key} must stay readable, got ${money}`)
+    }
+  }
+})
+
+test('Industry groups stay contained with counters and free pagination', () => {
+  const source = readFileSync(
+    new URL('../../components/pdf/forme/CpsIndustryDocument.tsx', import.meta.url),
+    'utf8',
+  )
+  assert.ok(source.includes('colSpan={industryColumns(model).length}'), 'group header must span schedule geometry')
+  assert.ok(!source.includes('wrap='), 'groups must paginate without keep-together flags')
+
+  const model = buildCpsFormeModel({ cps: buildFixtureCps(), settings })
+  const texts = renderIndustry(model)
+  assert.ok(texts.some((text) => text.includes('1 Item')), 'group member counter must render')
+})
+
+test('Industry page frame pins the footer and repeats only the schedule header', () => {
+  const source = readFileSync(
+    new URL('../../components/pdf/forme/CpsIndustryDocument.tsx', import.meta.url),
+    'utf8',
+  )
+  const fixedCount = source.split('<Fixed').length - 1
+  assert.equal(fixedCount, 1, 'exactly one Fixed region (the footer) may exist')
+  assert.ok(source.includes('position="footer"'), 'footer must use the Forme footer primitive')
+  assert.ok(source.includes('{{pageNumber}}'), 'footer must render the page number')
+  assert.ok(source.includes('{{totalPages}}'), 'footer must render total pages')
+  assert.ok(source.includes('<Row header>'), 'schedule header must repeat on continuation pages')
+  assert.ok(source.includes('bottom: 56'), 'page must reserve footer space in the bottom margin')
 })

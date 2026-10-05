@@ -138,17 +138,38 @@ const cpsSaveStrategy: DocumentSaveStrategy<CpsSaveInput> = {
       }
     }
 
+    // Field-level, readable audit. The form supplies the pre-edit snapshot,
+    // so the diff is a real before/after comparison of the document and its
+    // item rows. A derived-total change is never recorded here.
     try {
-      const { recordAuditLog } = await import('@/lib/audit')
-      await recordAuditLog(tenantClient, {
-        entityType: 'cps_sheets' as any,
-        recordId: effectiveId,
-        entityLabel: cps.cps_number,
-        action: isCreate ? 'CREATE' : 'UPDATE',
-        oldData: input.initialSnapshot || null,
-        newData: cps,
-        trackedFields: ['cps_number', 'title', 'client_name', 'project_name', 'notes', 'custom_fields'],
-      })
+      const {
+        CPS_AUDIT_SOURCE,
+        buildCpsAuditMeta,
+        buildCpsEditMeta,
+        recordCpsAuditEvent,
+      } = await import('@/domain/cps/audit')
+
+      if (isCreate || !input.initialSnapshot) {
+        await recordCpsAuditEvent(tenantClient, {
+          recordId: effectiveId,
+          entityLabel: cps.cps_number,
+          meta: buildCpsAuditMeta({
+            event: 'CREATED',
+            rootId: effectiveId,
+            sourceContext: CPS_AUDIT_SOURCE.form,
+            summary: 'Created CPS',
+          }),
+        })
+      } else {
+        const meta = buildCpsEditMeta(input.initialSnapshot, cps, CPS_AUDIT_SOURCE.form)
+        if (meta) {
+          await recordCpsAuditEvent(tenantClient, {
+            recordId: effectiveId,
+            entityLabel: cps.cps_number,
+            meta: { ...meta, rootId: effectiveId },
+          })
+        }
+      }
     } catch (auditErr) {
       console.error('Cost & Pricing Sheet audit failed:', auditErr)
     }

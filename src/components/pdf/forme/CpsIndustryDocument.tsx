@@ -1,6 +1,7 @@
 import { Cell, Document, Fixed, Image, Page, Row, Table, Text, View } from '@formepdf/react'
 import type { CpsPdfModel, CpsPdfRow } from '../cpsPreparedModel'
 import { formatQuantityValue, groupedItemKeys } from '../cpsPreparedModel'
+import { INDUSTRY_SCHEDULE_GEOMETRY, resolveScheduleWidths } from './cpsScheduleGeometry'
 
 const INK = '#1f2937'
 const BODY = '#333333'
@@ -16,16 +17,6 @@ const WALL = '#d1d5db'
 const TOTALS_LABELS = ['Total Cost', 'Selling Total', 'Gross Profit', 'Margin']
 
 type IndustryColumnKey = 'no' | 'description' | 'qty' | 'unitCp' | 'unitSp' | 'totalCost' | 'totalSell'
-
-const INDUSTRY_WIDTHS: Record<IndustryColumnKey, { fixed: number } | { fraction: number }> = {
-  no: { fixed: 30 },
-  description: { fraction: 1 },
-  qty: { fixed: 48 },
-  unitCp: { fixed: 72 },
-  unitSp: { fixed: 72 },
-  totalCost: { fixed: 84 },
-  totalSell: { fixed: 84 },
-}
 
 const INDUSTRY_LABELS: Record<IndustryColumnKey, string> = {
   no: 'No.',
@@ -52,33 +43,38 @@ function pluralize(count: number, singular: string): string {
 
 function IndustryHeader({ model, font }: { model: CpsPdfModel; font: string }) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-      <View style={{ flex: 1, paddingRight: 18 }}>
-        <Text style={{ fontFamily: font, fontSize: 25, color: INK, letterSpacing: 1 }}>COST &amp; PRICING SHEET</Text>
-        <Text style={{ fontFamily: font, fontSize: 14, color: MUTED, marginTop: 2, marginBottom: 16 }}>{model.title}</Text>
-        <View>
+    <View style={{ marginBottom: 8 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 18 }}>
+          {model.logoDataUri ? (
+            <Image src={model.logoDataUri} style={{ width: 64, height: 64, marginRight: 12 }} />
+          ) : null}
+          <View style={{ flex: 1 }}>
+            {model.companyName ? (
+              <Text style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: INK }}>{model.companyName}</Text>
+            ) : null}
+            {model.companyLines.map((line, index) => (
+              <Text key={index} style={{ fontFamily: font, fontSize: 9, color: MUTED, marginTop: index === 0 ? 3 : 1 }}>{line}</Text>
+            ))}
+          </View>
+        </View>
+        <View style={{ width: 190 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
-            <Text style={{ fontFamily: font, fontSize: 10, fontWeight: 700, color: MUTED, width: 70 }}>Number</Text>
-            <Text style={{ fontFamily: font, fontSize: 10, color: BODY }}>{model.number}</Text>
+            <Text style={{ fontFamily: font, fontSize: 9.5, fontWeight: 700, color: MUTED, width: 64 }}>Number</Text>
+            <Text style={{ fontFamily: font, fontSize: 10, fontWeight: 700, color: INK, flex: 1, textAlign: 'right' }}>{model.number}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
-            <Text style={{ fontFamily: font, fontSize: 10, fontWeight: 700, color: MUTED, width: 70 }}>Issued</Text>
-            <Text style={{ fontFamily: font, fontSize: 10, color: BODY }}>{model.issueDate || '-'}</Text>
+            <Text style={{ fontFamily: font, fontSize: 9.5, fontWeight: 700, color: MUTED, width: 64 }}>Issued</Text>
+            <Text style={{ fontFamily: font, fontSize: 10, color: BODY, flex: 1, textAlign: 'right' }}>{model.issueDate || '-'}</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}>
-            <Text style={{ fontFamily: font, fontSize: 10, fontWeight: 700, color: MUTED, width: 70 }}>Currency</Text>
-            <Text style={{ fontFamily: font, fontSize: 10, color: BODY }}>{model.currency || 'NGN'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+            <Text style={{ fontFamily: font, fontSize: 9.5, fontWeight: 700, color: MUTED, width: 64 }}>Currency</Text>
+            <Text style={{ fontFamily: font, fontSize: 10, color: BODY, flex: 1, textAlign: 'right' }}>{model.currency || 'NGN'}</Text>
           </View>
         </View>
       </View>
-      <View style={{ width: 120, alignItems: 'flex-end' }}>
-        {model.logoDataUri ? (
-          <Image src={model.logoDataUri} style={{ width: 86, height: 86 }} />
-        ) : null}
-        {model.companyName ? (
-          <Text style={{ fontFamily: font, fontSize: 10, fontWeight: 700, color: INK, textAlign: 'right', marginTop: 6 }}>{model.companyName}</Text>
-        ) : null}
-      </View>
+      <Text style={{ fontFamily: font, fontSize: 26, color: INK, letterSpacing: 1, marginTop: 12 }}>COST &amp; PRICING SHEET</Text>
+      <Text style={{ fontFamily: font, fontSize: 14, color: MUTED, marginTop: 2 }}>{model.title}</Text>
     </View>
   )
 }
@@ -139,10 +135,10 @@ function IndustryGroupHeader({ model, font, row }: { model: CpsPdfModel; font: s
   const count = Number(group?.itemCount) || 0
   return (
     <Row key={row.key}>
-      <Cell colSpan={industryColumns(model).length} style={{ backgroundColor: '#ffffff', borderTopWidth: 1, borderTopColor: HAIR, borderBottomWidth: 1, borderBottomColor: HAIR, paddingTop: 6, paddingBottom: 6, paddingLeft: 6, paddingRight: 6 }}>
+      <Cell colSpan={industryColumns(model).length} style={{ backgroundColor: BAND, paddingTop: 7, paddingBottom: 7, paddingLeft: 8, paddingRight: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-          <Text style={{ fontFamily: font, fontSize: 10.75, fontWeight: 700, color: INK }}>{row.title}</Text>
-          <Text style={{ fontFamily: font, fontSize: 9, color: MUTED, marginLeft: 8 }}>· {pluralize(count, 'Item')}</Text>
+          <Text style={{ fontFamily: font, fontSize: 10.75, fontWeight: 700, color: '#ffffff' }}>{row.title}</Text>
+          <Text style={{ fontFamily: font, fontSize: 9, color: '#e4e9e7', marginLeft: 8 }}>· {pluralize(count, 'Item')}</Text>
         </View>
       </Cell>
     </Row>
@@ -270,7 +266,7 @@ export function CpsIndustryDocument({ model }: { model: CpsPdfModel }) {
   const font = model.fontFamily || 'Helvetica'
   const accent = model.accent || BAND
   const columns = industryColumns(model)
-  const tableColumns = columns.map((key) => ({ width: INDUSTRY_WIDTHS[key] }))
+  const tableColumns = resolveScheduleWidths(INDUSTRY_SCHEDULE_GEOMETRY, columns)
   const inWall = groupedItemKeys(model.rows)
   return (
     <Document title={`${model.number} ${model.title}`.trim()}>

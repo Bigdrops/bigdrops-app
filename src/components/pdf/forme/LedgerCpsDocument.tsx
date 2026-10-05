@@ -1,6 +1,7 @@
 import { Cell, Document, Fixed, Image, Page, Row, Table, Text, View } from '@formepdf/react'
 import type { CpsPdfModel, CpsPdfRow } from '../cpsPreparedModel'
 import { formatQuantityValue, groupedItemKeys } from '../cpsPreparedModel'
+import { LEDGER_SCHEDULE_GEOMETRY, resolveScheduleWidths } from './cpsScheduleGeometry'
 
 const NAVY = '#183b52'
 const INK = '#17232d'
@@ -16,16 +17,6 @@ const STRIP_LABELS = ['Total Cost', 'Selling Total', 'Gross Profit', 'Margin']
 const CLOSEOUT_LABELS = ['Total Cost', 'Selling Total', 'Gross Profit', 'Profit Margin']
 
 type LedgerColumnKey = 'no' | 'description' | 'qty' | 'unitCp' | 'unitSp' | 'totalCost' | 'totalSell'
-
-const LEDGER_WIDTHS: Record<LedgerColumnKey, { fixed: number } | { fraction: number }> = {
-  no: { fixed: 28 },
-  description: { fraction: 1 },
-  qty: { fixed: 42 },
-  unitCp: { fixed: 68 },
-  unitSp: { fixed: 68 },
-  totalCost: { fixed: 79 },
-  totalSell: { fixed: 79 },
-}
 
 const LEDGER_LABELS: Record<LedgerColumnKey, string> = {
   no: 'No.',
@@ -309,7 +300,7 @@ function LedgerFooter({ model, font }: { model: CpsPdfModel; font: string }) {
 export function LedgerCpsDocument({ model }: { model: CpsPdfModel }) {
   const font = model.fontFamily || 'Helvetica'
   const columns = ledgerColumns(model)
-  const tableColumns = columns.map((key) => ({ width: LEDGER_WIDTHS[key] }))
+  const tableColumns = resolveScheduleWidths(LEDGER_SCHEDULE_GEOMETRY, columns)
   const itemCount = model.rows.filter((row) => row.kind === 'item').length
   const inWall = groupedItemKeys(model.rows)
   return (

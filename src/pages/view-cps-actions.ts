@@ -2,22 +2,98 @@ import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 import { mapCpsToQuotation, type CpsConversionOptions } from '@/domain/cps/conversion'
 import type { Cps } from '@/domain/cps/types'
+import {
+  CPS_AUDIT_SOURCE,
+  buildCpsAuditMeta,
+  recordCpsAuditEvent,
+  type CpsAuditMeta,
+} from '@/domain/cps/audit'
+import { persistFeedbackAuthority } from '@/domain/cps/lineageStore'
 
-export async function archiveCpsRecord(id: string, tenantClient: TenantClient) {
-  const { error } = await tenantClient.from('cps_sheets').update({ archived_at: new Date().toISOString() }).eq('id', id)
-  if (error) throw error
+// Audit is evidence, not a control path. An audit write must never fail the
+// user action, so failures are logged and swallowed here.
+async function safeRecordCpsAudit(
+  tenantClient: TenantClient,
+  input: { recordId: string; entityLabel?: string | null; meta: CpsAuditMeta },
+) {
+  try {
+    await recordCpsAuditEvent(tenantClient, input)
+  } catch (auditError) {
+    console.error('CPS audit failed:', auditError)
+  }
 }
 
-export async function deleteCpsRecord(id: string, tenantClient: TenantClient) {
+export async function archiveCpsRecord(id: string, tenantClient: TenantClient, entityLabel?: string | null) {
+  const { error } = await tenantClient.from('cps_sheets').update({ archived_at: new Date().toISOString() }).eq('id', id)
+  if (error) throw error
+
+  await safeRecordCpsAudit(tenantClient, {
+    recordId: id,
+    entityLabel,
+    meta: buildCpsAuditMeta({
+      event: 'ARCHIVED',
+      rootId: id,
+      sourceContext: CPS_AUDIT_SOURCE.view,
+      summary: 'Archived CPS',
+    }),
+  })
+}
+
+export async function deleteCpsRecord(id: string, tenantClient: TenantClient, entityLabel?: string | null) {
   const { error: itemError } = await tenantClient.from('cps_rows').delete().eq('cps_sheet_id', id)
   if (itemError) throw itemError
+
+  // Record before the parent row is removed so the label is still meaningful.
+  await safeRecordCpsAudit(tenantClient, {
+    recordId: id,
+    entityLabel,
+    meta: buildCpsAuditMeta({
+      event: 'DELETED',
+      rootId: id,
+      sourceContext: CPS_AUDIT_SOURCE.view,
+      summary: 'Deleted CPS',
+    }),
+  })
+
   const { error } = await tenantClient.from('cps_sheets').delete().eq('id', id)
   if (error) throw error
 }
 
-export async function updateCpsStatus(id: string, status: string, tenantClient: TenantClient) {
+export async function updateCpsStatus(
+  id: string,
+  status: string,
+  tenantClient: TenantClient,
+  previousStatus?: string | null,
+  entityLabel?: string | null,
+) {
   const { error } = await tenantClient.from('cps_sheets').update({ status }).eq('id', id)
   if (error) throw error
+
+  const hasStatusChange = String(previousStatus ?? '').trim() !== '' && String(previousStatus) !== String(status)
+  await safeRecordCpsAudit(tenantClient, {
+    recordId: id,
+    entityLabel,
+    meta: buildCpsAuditMeta({
+      event: 'STATUS_CHANGED',
+      rootId: id,
+      sourceContext: CPS_AUDIT_SOURCE.view,
+      changes: hasStatusChange
+        ? [
+            {
+              rowId: null,
+              rowLabel: null,
+              scope: 'document',
+              field: 'status',
+              label: 'Status',
+              old: previousStatus,
+              new: status,
+              kind: 'default',
+            },
+          ]
+        : [],
+      summary: `Status changed to ${status}`,
+    }),
+  })
 }
 
 export async function duplicateCpsRecord(id: string, tenantClient: TenantClient) {
@@ -50,6 +126,35 @@ export async function duplicateCpsRecord(id: string, tenantClient: TenantClient)
   if (insertError) throw insertError
   const duplicatedSeq = parseTrailingSequence((created as { cps_number?: string | null })?.cps_number)
   if (duplicatedSeq !== null) await advanceAutoCursor(tenantClient, cpsFamily, duplicatedSeq)
+
+  // Record both directions so each document shows its duplicate relationship.
+  const duplicated = created as { id: string; cps_number: string }
+  const sourceNumber = String((original as { cps_number?: string | null }).cps_number || '')
+
+  await safeRecordCpsAudit(tenantClient, {
+    recordId: duplicated.id,
+    entityLabel: duplicated.cps_number,
+    meta: buildCpsAuditMeta({
+      event: 'DUPLICATED',
+      rootId: duplicated.id,
+      sourceContext: CPS_AUDIT_SOURCE.view,
+      related: { type: 'cps', id: id, number: sourceNumber },
+      summary: `Created from ${sourceNumber}`,
+    }),
+  })
+
+  await safeRecordCpsAudit(tenantClient, {
+    recordId: id,
+    entityLabel: sourceNumber,
+    meta: buildCpsAuditMeta({
+      event: 'DUPLICATED',
+      rootId: id,
+      sourceContext: CPS_AUDIT_SOURCE.view,
+      related: { type: 'cps', id: duplicated.id, number: duplicated.cps_number },
+      summary: `Duplicated to ${duplicated.cps_number}`,
+    }),
+  })
+
   return created
 }
 
@@ -81,7 +186,7 @@ export async function convertCpsToQuotation({
     cursor,
   )
 
-  const { payload, items } = mapCpsToQuotation(cps, nextQuotationNumber, options)
+  const { payload, items, lineage } = mapCpsToQuotation(cps, nextQuotationNumber, options)
 
   const { data: createdQuotation, error } = await tenantClient.from('quotations').insert([payload]).select().single()
   if (error || !createdQuotation) throw new Error(error?.message || 'Failed to create quotation')
@@ -90,6 +195,8 @@ export async function convertCpsToQuotation({
   const convertedSeq = parseTrailingSequence((createdQuotation as { quotation_number?: string | null })?.quotation_number)
   if (convertedSeq !== null) await advanceAutoCursor(tenantClient, quotationFamily, convertedSeq)
 
+  // Lineage is written with the same insert that creates the rows, so a
+  // converted quotation is never persisted with partially unlineaged items.
   const itemRows = items.map((item, index) => ({ ...item, quotation_id: createdQuotation.id, sort_order: index }))
 
   if (itemRows.length > 0) {
@@ -99,6 +206,47 @@ export async function convertCpsToQuotation({
       await tenantClient.from('quotations').delete().eq('id', createdQuotation.id)
       throw itemError
     }
+  }
+
+  const quotation = createdQuotation as { id: string; quotation_number: string }
+
+  // Stamp which document currently owns downstream feedback authority. The
+  // stage was seeded at insert time, so authority stays determinate even if
+  // this follow-up write fails.
+  const authority = await persistFeedbackAuthority(tenantClient, quotation.id, 'quotation', quotation.id)
+  if (!authority.ok) {
+    console.error('CPS feedback authority seed failed:', authority.error)
+  }
+
+  await safeRecordCpsAudit(tenantClient, {
+    recordId: cps.id,
+    entityLabel: cps.cps_number,
+    meta: buildCpsAuditMeta({
+      event: 'CONVERTED_TO_QUOTATION',
+      rootId: cps.id,
+      sourceContext: CPS_AUDIT_SOURCE.view,
+      related: { type: 'quotation', id: quotation.id, number: quotation.quotation_number },
+      summary: `Converted to ${quotation.quotation_number}`,
+      detail: lineage.summary,
+    }),
+  })
+
+  // A converted row that could not carry its origin is a real anomaly: record
+  // it instead of silently accepting an unlineaged document.
+  if (lineage.unlineagedRowLabels.length > 0) {
+    await safeRecordCpsAudit(tenantClient, {
+      recordId: cps.id,
+      entityLabel: cps.cps_number,
+      meta: buildCpsAuditMeta({
+        event: 'LINEAGE_WARNING',
+        rootId: cps.id,
+        sourceContext: CPS_AUDIT_SOURCE.view,
+        related: { type: 'quotation', id: quotation.id, number: quotation.quotation_number },
+        summary: lineage.unlineagedSummary || 'Lineage unavailable',
+        detail: lineage.unlineagedRowLabels.join(', '),
+        actorType: 'system',
+      }),
+    })
   }
 
   return createdQuotation

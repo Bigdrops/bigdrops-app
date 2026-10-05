@@ -6,8 +6,20 @@ import { buildCalculationInputs } from '@/domain/invoice/calculations'
 import { normalizeExtraCharges } from '@/domain/invoice/factories'
 import type { ExtraCharge } from '@/domain/invoice/types'
 import { withSourceTrail, buildTrailLink } from '@/domain/documentConversion'
+import {
+  buildCpsRowLineage,
+  isPersistableLineageId,
+  summarizeQuotationLineage,
+  summarizeUnlineagedRows,
+} from './lineage'
+import type { ItemLineage, FeedbackAuthorityStage } from './lineage'
 
-export interface ConvertedQuotationItem {
+/**
+ * ConvertedQuotationItem carries the Phase 2 lineage contract on top of the
+ * existing commercial mapping. Lineage is additive system metadata: it never
+ * changes what the conversion charges, groups, or orders.
+ */
+export interface ConvertedQuotationItem extends ItemLineage {
   quotation_id?: string
   sort_order: number
   row_type: 'standard' | 'group_header'
@@ -46,11 +58,32 @@ export interface ConvertedQuotationPayload {
   terms: null
   project_id: null
   custom_fields: string
+  /**
+   * Phase 2 authority seed. 'quotation' is set at insert time so a
+   * successfully created conversion always has a determinate authority; the
+   * document id is stamped immediately afterwards.
+   */
+  feedback_authority: FeedbackAuthorityStage
+  feedback_authority_document_id: string | null
+  feedback_authority_updated_at: string
+}
+
+/** Lineage outcome of the CPS → Quotation conversion, for audit reporting. */
+export interface CpsConversionLineageReport {
+  /** Item rows that received an explicit CPS row id. */
+  linkedRowCount: number
+  /** Human sentence for the audit event, or null when nothing was linked. */
+  summary: string | null
+  /** Rows that should have carried a row id but could not (diagnostic). */
+  unlineagedRowLabels: string[]
+  /** Human diagnostic sentence, or null. */
+  unlineagedSummary: string | null
 }
 
 export interface CpsToQuotationMappingResult {
   payload: ConvertedQuotationPayload
   items: ConvertedQuotationItem[]
+  lineage: CpsConversionLineageReport
 }
 
 export interface CpsConversionOptions {
@@ -99,6 +132,7 @@ function sectionKey(row: TableDocumentRow): string {
 }
 
 function toStandardItem(
+  cpsId: string,
   row: TableDocumentRow,
   sortOrder: number,
   groupId: string | null,
@@ -107,6 +141,7 @@ function toStandardItem(
   const sp = Number(row.sp || 0)
   const qty = Number(row.quantity || 0)
   return {
+    ...buildCpsRowLineage(cpsId, row),
     sort_order: sortOrder,
     row_type: 'standard',
     description: row.description || '',
@@ -139,6 +174,10 @@ function toStandardItem(
  * - CPS project/site context is excluded.
  * - Header rows use row_type 'group_header' with quantity 0, unit_price 0.
  * - Totals derive through computeDocument over the transferred selling prices.
+ * - Phase 2: every converted row carries explicit CPS document/row lineage.
+ *   Group/section header rows carry document ancestry only, so a structural
+ *   row can never be mistaken for commercial item ancestry. Lineage is read
+ *   from the persisted CPS row id and never from description or position.
  */
 export function mapCpsToQuotation(
   cps: Cps,
@@ -157,6 +196,8 @@ export function mapCpsToQuotation(
   }
 
   const itemRows: ConvertedQuotationItem[] = []
+  const unlineagedRowLabels: string[] = []
+  const cpsLineageAvailable = isPersistableLineageId(cps.id)
   let sortOrder = 0
 
   for (const row of tableRows) {
@@ -164,6 +205,7 @@ export function mapCpsToQuotation(
       const key = sectionKey(row)
       const groupTitle = (key && titlesByGroupKey.get(key)) || row.section_title || row.description || 'Group'
       itemRows.push({
+        ...buildCpsRowLineage(cps.id, row),
         sort_order: sortOrder++,
         row_type: 'group_header',
         description: groupTitle,
@@ -188,7 +230,13 @@ export function mapCpsToQuotation(
 
     const groupId = row.group_id || null
     const groupName = groupId ? titlesByGroupKey.get(groupId) || '' : null
-    itemRows.push(toStandardItem(row, sortOrder++, groupId, groupName))
+    const converted = toStandardItem(cps.id, row, sortOrder++, groupId, groupName)
+    if (!cpsLineageAvailable || !converted.source_cps_row_id) {
+      // Never guess ancestry. The row is converted (commercial mapping is
+      // unchanged) and reported as lineage-unavailable instead.
+      unlineagedRowLabels.push(converted.description || 'Untitled item')
+    }
+    itemRows.push(converted)
   }
 
   // Calculate quotation totals through computeDocument over transferred items
@@ -278,7 +326,25 @@ export function mapCpsToQuotation(
     terms: null,
     project_id: null,
     custom_fields: JSON.stringify(customFieldsObj),
+    // Authority is determinate from the moment the conversion succeeds. The
+    // document id is stamped by the caller once the quotation row exists.
+    feedback_authority: 'quotation',
+    feedback_authority_document_id: null,
+    feedback_authority_updated_at: new Date().toISOString(),
   }
 
-  return { payload, items: itemRows }
+  const linkedRowCount = itemRows.filter(
+    (item) => item.row_type === 'standard' && isPersistableLineageId(item.source_cps_row_id),
+  ).length
+
+  return {
+    payload,
+    items: itemRows,
+    lineage: {
+      linkedRowCount,
+      summary: summarizeQuotationLineage({ items: itemRows, unlineagedRowLabels }),
+      unlineagedRowLabels,
+      unlineagedSummary: summarizeUnlineagedRows(unlineagedRowLabels),
+    },
+  }
 }

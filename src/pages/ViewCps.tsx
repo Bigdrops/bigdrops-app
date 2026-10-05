@@ -108,19 +108,19 @@ export default function ViewCps() {
     onToggleStatus: async () => {
       if (!cps || !cpsId) return
       const next = status.toLowerCase() === 'approved' ? 'open' : 'approved'
-      await updateCpsStatus(cpsId, next, tenantClient)
+      await updateCpsStatus(cpsId, next, tenantClient, status, cps.cps_number)
       setCps({ ...cps, status: next } as Cps)
       feedback.success(next === 'approved' ? 'Cost & Pricing Sheet approved' : 'Cost & Pricing Sheet reopened')
     },
     onArchive: async () => {
       if (!cpsId) return
-      await archiveCpsRecord(cpsId, tenantClient)
+      await archiveCpsRecord(cpsId, tenantClient, cps?.cps_number)
       feedback.success('Cost & Pricing Sheet archived')
       navigate('/cost-pricing-sheets')
     },
     onDelete: async () => {
       if (!cpsId) return
-      await deleteCpsRecord(cpsId, tenantClient)
+      await deleteCpsRecord(cpsId, tenantClient, cps?.cps_number)
       feedback.success('Cost & Pricing Sheet deleted')
       navigate('/cost-pricing-sheets')
     },

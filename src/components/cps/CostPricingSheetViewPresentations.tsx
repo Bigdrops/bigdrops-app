@@ -18,16 +18,17 @@ import DocumentConfirmDialog from '@/components/document-view/shared/DocumentCon
 import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
 import DocumentMoreSheet from '@/components/document-view/shared/DocumentMoreSheet'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
+import TemplatePickerCarousel, { type TemplatePickerOption } from '@/components/document-view/shared/TemplatePickerCarousel'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import { buildCpsViewSegments, type CpsViewData, type CpsViewRow } from '@/domain/cps/viewData'
 import { CpsConversionOptionsSheet } from '@/components/cps/CpsConversionOptionsSheet'
+import { CpsActivityHistory } from '@/components/cps/CpsActivityHistory'
 import { DEFAULT_CONVERSION_OPTIONS, type CpsConversionOptions } from '@/domain/cps/conversion'
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
 import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
 import { PDF_ACCENT_SWATCHES } from '@/lib/pdfDesignPreset'
 import {
-  CPS_PDF_TEMPLATES,
   readCpsPdfDisplayPreferences,
   writeCpsPdfDisplayPreferences,
   type CpsPdfTemplateId,
@@ -364,6 +365,37 @@ function DocumentActionRow({
   )
 }
 
+const CPS_TEMPLATE_OPTIONS: TemplatePickerOption[] = [
+  {
+    id: 'ledger',
+    label: 'Ledger',
+    blurb: 'Grouped cost schedule',
+    layout: 'commercial',
+    theme: {
+      pageBg: '#ffffff',
+      headerBg: '#183b52',
+      headerFg: '#ffffff',
+      accent: '#183b52',
+      border: '#dce2e6',
+      mutedBg: '#edf0f2',
+    },
+  },
+  {
+    id: 'industry',
+    label: 'Industry',
+    blurb: 'Industrial schedule',
+    layout: 'commercial',
+    theme: {
+      pageBg: '#ffffff',
+      headerBg: '#7d8a88',
+      headerFg: '#ffffff',
+      accent: '#7d8a88',
+      border: '#e5e7eb',
+      mutedBg: '#e8e8e8',
+    },
+  },
+]
+
 function CpsCustomizeSheet({
   open,
   onClose,
@@ -411,24 +443,11 @@ function CpsCustomizeSheet({
         setInkFont={setInkFont}
         setInkColour={setInkColour}
         templatePicker={
-          <div className="grid grid-cols-2 gap-2">
-            {CPS_PDF_TEMPLATES.map((template) => (
-              <button
-                key={template.id}
-                type="button"
-                onClick={() => handleTemplateChange(template.id)}
-                aria-pressed={prefs.templateId === template.id}
-                className={`rounded-[18px] border px-4 py-3 text-left ${
-                  prefs.templateId === template.id
-                    ? 'border-bd-accent bg-bd-accent/10'
-                    : 'border-bd-border bg-bd-card-bg'
-                }`}
-              >
-                <span className="block text-sm font-bold text-bd-text">{template.label}</span>
-                <span className="block text-xs font-normal text-bd-muted">{template.description}</span>
-              </button>
-            ))}
-          </div>
+          <TemplatePickerCarousel
+            value={prefs.templateId}
+            onChange={(id) => handleTemplateChange(id as CpsPdfTemplateId)}
+            options={CPS_TEMPLATE_OPTIONS}
+          />
         }
         colorSwatches={[]}
         customColor="auto"
@@ -648,6 +667,7 @@ export function CostPricingSheetDesktopView(props: ViewProps) {
           <Dossier {...props} />
           <Summary data={props.data} formatters={props.formatters} />
           <DocumentSurface data={props.data} formatters={props.formatters} />
+          <CpsActivityHistory documentId={props.data.document.id} />
         </section>
         <DesktopRail data={props.data} formatters={props.formatters} />
       </main>
@@ -702,6 +722,7 @@ export function CostPricingSheetMobileFoldView(props: ViewProps) {
         <Dossier {...props} mobile />
         <Summary data={props.data} formatters={props.formatters} mobile />
         <DocumentSurface data={props.data} formatters={props.formatters} mobile />
+        <CpsActivityHistory documentId={props.data.document.id} />
       </div>
       {/* Download FAB. Geometry, icon, motion, and interaction states are owned
           by the canonical FloatingDownloadButton. This wrapper only carries the
