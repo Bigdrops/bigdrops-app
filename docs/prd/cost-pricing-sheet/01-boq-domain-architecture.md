@@ -1,5 +1,11 @@
 # 01 — BOQ Domain Architecture
 
+> **Historical reference.** This file is a BOQ-era migration document. It is
+> not the current CPS product contract. Use
+> [01-cost-pricing-sheet-product-domain-architecture.md](01-cost-pricing-sheet-product-domain-architecture.md)
+> for active CPS requirements. BOQ terminology in this file is historical
+> context only.
+
 **Part of the BOQ PRD package.** Entry point: [README.md](README.md).
 
 **Date:** 2026-09-29

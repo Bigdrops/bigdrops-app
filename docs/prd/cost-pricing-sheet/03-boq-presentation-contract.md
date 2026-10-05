@@ -1,5 +1,11 @@
 # 03 — BOQ Presentation Contract
 
+> **Historical reference.** This file is a BOQ-era migration document. It is
+> not the current CPS presentation, View, or PDF contract. Use
+> [02-cost-pricing-sheet-presentation-pdf-view-contract.md](02-cost-pricing-sheet-presentation-pdf-view-contract.md)
+> for active CPS requirements. BOQ terminology, old View gates, and old Forme
+> readiness gates in this file are historical context only.
+
 **Part of the BOQ PRD package.** Entry point: [README.md](README.md).
 
 **Date:** 2026-09-29
