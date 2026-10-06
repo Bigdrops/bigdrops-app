@@ -7,8 +7,15 @@ import { normalizeExtraCharges, buildCalculationInputs, BUILTIN_COLUMNS } from '
 import { resolveDocumentSignatory } from '@/domain/invoice/previewModel'
 import { computeDocument } from '@/lib/Calculations'
 import { toDbItem } from '@/domain/invoice/factories'
-import { authorityTransitionSummary, normalizeLineageId, withoutLineage } from '@/domain/cps/lineage'
-import { applyInvoiceItemLineage, persistFeedbackAuthority } from '@/domain/cps/lineageStore'
+import {
+  authorityTransitionSummary,
+  newConversionChainId,
+  normalizeChainId,
+  normalizeLineageId,
+  resolveActiveFeedbackAuthority,
+  withoutLineage,
+} from '@/domain/cps/lineage'
+import { persistChainAuthority } from '@/domain/cps/lineageStore'
 import { resolvePrefix, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function loadQuotationViewData(id: string, tenantClient: TenantClient) {
@@ -164,8 +171,32 @@ export async function convertQuotationToInvoice(
   // read/write also routes through the tenant schema.
   const [{ data: invoiceRows }, { data: latestQuotation }] = await Promise.all([
     tenantClient.from('invoices').select('invoice_number'),
-    tenantClient.from('quotations').select('custom_fields').eq('id', id).single(),
+    tenantClient
+      .from('quotations')
+      .select(
+        'custom_fields, quotation_number, source_cps_id, conversion_chain_id, feedback_authority, feedback_authority_document_id',
+      )
+      .eq('id', id)
+      .single(),
   ])
+
+  // ── Idempotency gate ──────────────────────────────────────────────────────
+  // One Quotation conversion owns at most one active Invoice. A retry must
+  // resolve to the Invoice that already exists instead of minting a competing
+  // one, so authority can never be silently moved to a second document. The
+  // guard reads persisted state and is backed by a UNIQUE index on
+  // invoices.source_quotation_id, so it also holds under concurrent clicks.
+  const existingInvoice = await resolveConvertedInvoice(tenantClient, id, latestQuotation as any)
+  if (existingInvoice) {
+    await recordConversionRetry({
+      tenantClient,
+      quotation: quotation,
+      quotationRow: latestQuotation as any,
+      existingInvoice,
+    })
+    return existingInvoice
+  }
+
   const { fetchAutoCursor, advanceAutoCursor } = await import('@/domain/documentNumbering')
   const { parseTrailingSequence } = await import('@/domain/prefixConstants')
   const invoicePrefix = resolvePrefix(prefixes, 'invoice')
@@ -176,6 +207,9 @@ export async function convertQuotationToInvoice(
     await fetchAutoCursor(tenantClient, invoiceFamily),
   )
   const quotationCustomFields = parseDocumentCustomFields(latestQuotation?.custom_fields || quotation.custom_fields)
+  const chainId =
+    normalizeChainId((latestQuotation as { conversion_chain_id?: string | null } | null)?.conversion_chain_id) ??
+    newConversionChainId()
   const sourceLink = buildTrailLink({
     id: quotation.id,
     type: 'quotation',
@@ -208,18 +242,22 @@ export async function convertQuotationToInvoice(
     total: Number(quotation.total || 0),
     amount_in_words: quotation.amount_in_words || '',
     custom_fields: JSON.stringify(withSourceTrail(quotationCustomFields, sourceLink)),
+    // Explicit document-level ancestry + chain identity. The UNIQUE index on
+    // source_quotation_id is what makes the conversion retry-safe.
+    source_quotation_id: id,
+    conversion_chain_id: chainId,
   }
-  // Phase 2: the exact serialized rows handed to the write. They carry the
-  // persisted CPS/Quotation lineage and the sort order they are written with,
-  // so lineage can be stamped and verified deterministically afterwards.
+  // The exact serialized rows handed to the write. They carry the persisted
+  // CPS/Quotation lineage and the sort order they are written with.
   const persistedItems = items
     .filter((item) => (item.row_type === 'group_header' ? item.group_name?.trim() : item.description?.trim()))
     .map((item, index) => toDbItem(item, null, index) as Record<string, unknown>)
 
   // Phase 3: composite create (invoice + items) is atomic via the tenant RPC
   // when the entity id is available; otherwise sequential tenant writes.
+  // Phase 2.5: the RPC writes all four lineage columns in the same INSERT as
+  // the item rows, so no post-write stamp is required on either path.
   let createdInvoice: any = null
-  let lineageAppliedInline = false
   if (entityId) {
     const { data, error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
       p_entity_id: entityId,
@@ -227,7 +265,23 @@ export async function convertQuotationToInvoice(
       p_items: persistedItems,
       p_mode: 'create',
     })
-    if (error || !data) throw new Error(error?.message || 'Failed to create invoice')
+    if (error) {
+      // A concurrent conversion won the race: the UNIQUE index on
+      // source_quotation_id rejected this insert. Resolve to the winner
+      // instead of creating a competing Invoice.
+      const raced = await resolveConvertedInvoice(tenantClient, id, latestQuotation as any)
+      if (raced) {
+        await recordConversionRetry({
+          tenantClient,
+          quotation,
+          quotationRow: latestQuotation as any,
+          existingInvoice: raced,
+        })
+        return raced
+      }
+      throw new Error(error.message || 'Failed to create invoice')
+    }
+    if (!data) throw new Error('Failed to create invoice')
     // PostgREST wraps jsonb function returns in an array.
     const rpcResult = Array.isArray(data) ? data[0] : data
     createdInvoice = rpcResult?.invoice ?? rpcResult
@@ -242,7 +296,20 @@ export async function convertQuotationToInvoice(
     }
   } else {
     const { data, error } = await tenantClient.from('invoices').insert([invoicePayload]).select().single()
-    if (error || !data) throw new Error(error?.message || 'Failed to create invoice')
+    if (error) {
+      const raced = await resolveConvertedInvoice(tenantClient, id, latestQuotation as any)
+      if (raced) {
+        await recordConversionRetry({
+          tenantClient,
+          quotation,
+          quotationRow: latestQuotation as any,
+          existingInvoice: raced,
+        })
+        return raced
+      }
+      throw new Error(error.message || 'Failed to create invoice')
+    }
+    if (!data) throw new Error('Failed to create invoice')
     createdInvoice = data
 
     // Lineage is part of the same insert that creates these rows.
@@ -251,21 +318,8 @@ export async function convertQuotationToInvoice(
       const { error: itemError } = await tenantClient.from('invoice_items').insert(itemRows)
       if (itemError) throw itemError
     }
-    lineageAppliedInline = true
   }
 
-  // The composite RPC writes a fixed invoice_items column list and therefore
-  // drops lineage. Stamp it immediately after, keyed by the row's stable
-  // (invoice_id, sort_order) pair. Verified per row so a partial failure is
-  // reported instead of silently accepted.
-  let lineageFailures: Array<{ sortOrder: number; reason: string }> = []
-  if (!lineageAppliedInline && createdInvoice?.id) {
-    const applied = await applyInvoiceItemLineage(tenantClient, createdInvoice.id, persistedItems)
-    lineageFailures = applied.failures
-    if (lineageFailures.length > 0) {
-      console.error('CPS lineage stamp failed for converted rows:', lineageFailures)
-    }
-  }
   const derivedLink = buildTrailLink({
     id: createdInvoice.id,
     type: 'invoice',
@@ -291,7 +345,7 @@ export async function convertQuotationToInvoice(
     tenantClient,
     quotation,
     invoice: createdInvoice,
-    lineageFailures,
+    chainId,
   })
 
   try {
@@ -325,14 +379,95 @@ export async function convertQuotationToInvoice(
 }
 
 /**
- * Phase 2 authority handoff.
+ * Resolve the Invoice that already owns this Quotation conversion, if any.
+ *
+ * Two explicit stored links are consulted, never a heuristic:
+ *   1. the quotation's persisted authority pointer (the chain owner), and
+ *   2. `invoices.source_quotation_id`, which is UNIQUE per tenant.
+ *
+ * Returns null when the conversion has not happened yet.
+ */
+async function resolveConvertedInvoice(
+  tenantClient: TenantClient,
+  quotationId: string,
+  quotationRow:
+    | {
+        feedback_authority?: string | null
+        feedback_authority_document_id?: string | null
+      }
+    | null
+    | undefined,
+): Promise<any | null> {
+  const authority = resolveActiveFeedbackAuthority(quotationRow ?? undefined)
+  if (authority?.stage === 'invoice' && authority.documentId) {
+    const { data } = await tenantClient.from('invoices').select('*').eq('id', authority.documentId).limit(1)
+    const found = (data as any[] | null)?.[0]
+    if (found?.id) return found
+  }
+
+  const { data } = await tenantClient
+    .from('invoices')
+    .select('*')
+    .eq('source_quotation_id', quotationId)
+    .limit(1)
+  return (data as any[] | null)?.[0] ?? null
+}
+
+/**
+ * Record that a conversion request resolved to an Invoice that already exists.
+ * This is a deterministic "already converted" outcome, not a silent retry, so
+ * it is written to the chain's CPS history.
+ */
+async function recordConversionRetry({
+  tenantClient,
+  quotation,
+  quotationRow,
+  existingInvoice,
+}: {
+  tenantClient: TenantClient
+  quotation: any
+  quotationRow: { source_cps_id?: string | null; conversion_chain_id?: string | null } | null | undefined
+  existingInvoice: any
+}) {
+  const sourceCpsId = normalizeLineageId(quotationRow?.source_cps_id)
+  if (!sourceCpsId) return
+
+  try {
+    const { CPS_AUDIT_SOURCE, buildCpsAuditMeta, recordCpsAuditEvent } = await import('@/domain/cps/audit')
+    await recordCpsAuditEvent(tenantClient, {
+      recordId: sourceCpsId,
+      entityLabel: null,
+      meta: buildCpsAuditMeta({
+        event: 'CONVERSION_RETRY',
+        rootId: sourceCpsId,
+        chainId: normalizeChainId(quotationRow?.conversion_chain_id),
+        sourceContext: CPS_AUDIT_SOURCE.view,
+        related: {
+          type: 'invoice',
+          id: existingInvoice.id,
+          number: String(existingInvoice.invoice_number || ''),
+        },
+        summary: 'Conversion already completed',
+        detail: `${String(existingInvoice.invoice_number || 'The Invoice')} already owns this conversion. Feedback authority was not moved.`,
+      }),
+    })
+  } catch (auditError) {
+    console.error('CPS conversion retry audit failed:', auditError)
+  }
+}
+
+/**
+ * Phase 2 / 2.5 authority handoff.
  *
  * A Quotation that descends from a Cost & Pricing Sheet owns downstream
- * feedback authority while it is the newest document in the chain. When that
- * Quotation becomes an Invoice, authority moves to the Invoice and the
- * Quotation's authority ends. The move is written to persisted state (never
- * derived from edit recency) and is idempotent, so a retried conversion cannot
- * produce contradictory authority.
+ * feedback authority while it is the newest document in its conversion chain.
+ * When that Quotation becomes an Invoice, authority moves to the Invoice and
+ * the Quotation's authority ends.
+ *
+ * The move is written to persisted state — never derived from edit recency —
+ * and targets the quotation row that owns the chain, so a chain keeps exactly
+ * one authority row across a conversion, a retry, or a revert. It is
+ * idempotent: repeating it converges on the same state.
  *
  * Quotations with no CPS ancestry have no chain to hand off, so nothing is
  * recorded. This function never mutates CPS content: it records provenance
@@ -342,17 +477,24 @@ async function recordInvoiceAuthorityHandoff({
   tenantClient,
   quotation,
   invoice,
-  lineageFailures,
+  chainId,
 }: {
   tenantClient: TenantClient
   quotation: any
   invoice: any
-  lineageFailures: Array<{ sortOrder: number; reason: string }>
+  chainId: string
 }) {
   const sourceCpsId = normalizeLineageId(quotation?.source_cps_id)
   if (!sourceCpsId || !invoice?.id) return
 
-  const authority = await persistFeedbackAuthority(tenantClient, quotation.id, 'invoice', invoice.id)
+  const authority = await persistChainAuthority(tenantClient, {
+    chainId,
+    quotationId: quotation.id,
+    stage: 'invoice',
+    documentId: invoice.id,
+  })
+
+  // A failed authority write must never be reported as a successful handoff.
   if (!authority.ok) {
     console.error('CPS feedback authority handoff failed:', authority.error)
   }
@@ -367,34 +509,25 @@ async function recordInvoiceAuthorityHandoff({
 
     const { CPS_AUDIT_SOURCE, buildCpsAuditMeta, recordCpsAuditEvent } = await import('@/domain/cps/audit')
 
+    const transition = authorityTransitionSummary(quotation?.quotation_number, invoice?.invoice_number)
+    const applied = authority.ok
+      ? transition
+      : `${transition} (authority write failed: ${authority.error})`
+
     await recordCpsAuditEvent(tenantClient, {
       recordId: sourceCpsId,
       entityLabel: cpsNumber || null,
       meta: buildCpsAuditMeta({
         event: 'CONVERTED_TO_INVOICE',
         rootId: sourceCpsId,
+        chainId,
         sourceContext: CPS_AUDIT_SOURCE.view,
         related: { type: 'invoice', id: invoice.id, number: String(invoice.invoice_number || '') },
         summary: 'Quotation converted to Invoice',
-        detail: authorityTransitionSummary(quotation?.quotation_number, invoice?.invoice_number),
+        detail: applied,
+        actorType: authority.ok ? 'user' : 'system',
       }),
     })
-
-    if (lineageFailures.length > 0) {
-      await recordCpsAuditEvent(tenantClient, {
-        recordId: sourceCpsId,
-        entityLabel: cpsNumber || null,
-        meta: buildCpsAuditMeta({
-          event: 'LINEAGE_WARNING',
-          rootId: sourceCpsId,
-          sourceContext: CPS_AUDIT_SOURCE.view,
-          related: { type: 'invoice', id: invoice.id, number: String(invoice.invoice_number || '') },
-          summary: `Row ancestry could not be carried for ${lineageFailures.length} item${lineageFailures.length === 1 ? '' : 's'}`,
-          detail: lineageFailures.map((failure) => `#${failure.sortOrder}: ${failure.reason}`).join('; '),
-          actorType: 'system',
-        }),
-      })
-    }
   } catch (auditError) {
     // Audit is evidence, not a control path: it must never fail the conversion.
     console.error('CPS authority audit failed:', auditError)
