@@ -9,6 +9,7 @@ import { withSourceTrail, buildTrailLink } from '@/domain/documentConversion'
 import {
   buildCpsRowLineage,
   isPersistableLineageId,
+  newConversionChainId,
   summarizeQuotationLineage,
   summarizeUnlineagedRows,
 } from './lineage'
@@ -54,6 +55,8 @@ export interface ConvertedQuotationPayload {
   subtotal: number
   total: number
   source_cps_id: string
+  /** Phase 2.5: stable identity for this CPS -> Quotation conversion chain. */
+  conversion_chain_id: string
   notes: null
   terms: null
   project_id: null
@@ -70,6 +73,8 @@ export interface ConvertedQuotationPayload {
 
 /** Lineage outcome of the CPS → Quotation conversion, for audit reporting. */
 export interface CpsConversionLineageReport {
+  /** The conversion chain this document starts. */
+  chainId: string
   /** Item rows that received an explicit CPS row id. */
   linkedRowCount: number
   /** Human sentence for the audit event, or null when nothing was linked. */
@@ -322,6 +327,9 @@ export function mapCpsToQuotation(
     subtotal: Number(calculationResult.subtotal || 0),
     total: Number(calculationResult.totalPayable || 0),
     source_cps_id: cps.id,
+    // One CPS document can be converted repeatedly; each conversion is its own
+    // chain and gets its own identity.
+    conversion_chain_id: newConversionChainId(),
     notes: null,
     terms: null,
     project_id: null,
@@ -341,6 +349,7 @@ export function mapCpsToQuotation(
     payload,
     items: itemRows,
     lineage: {
+      chainId: payload.conversion_chain_id,
       linkedRowCount,
       summary: summarizeQuotationLineage({ items: itemRows, unlineagedRowLabels }),
       unlineagedRowLabels,

@@ -1,6 +1,5 @@
-import { recordAuditLog, resolveAuditActor, type AuditAction } from '@/lib/audit'
+import { resolveAuditActor, type AuditAction } from '@/lib/audit'
 import type { TenantClient } from '@/lib/tenantClient'
-import { CPS_AUDIT_META_KEY } from '@/domain/audit/auditTypes'
 import type { CpsAuditMeta } from '@/domain/audit/auditTypes'
 import { cpsAuditActionForEvent } from './auditDiff'
 
@@ -17,10 +16,15 @@ export interface RecordCpsAuditInput {
 /**
  * Persist one CPS audit event through the shared audit authority.
  *
- * The structured payload travels as a single reserved change entry. An
- * unauthenticated actor is classified as a system actor so it stays
- * distinguishable from a real user action. Callers decide whether to surface
- * a write failure. Document actions must not fail only because audit failed.
+ * Phase 2.5: the structured payload is written to `audit_logs.metadata` by the
+ * dedicated `record_cps_audit_event` RPC, instead of being hidden inside
+ * `audit_logs.changes` under the reserved key `_cps`. Readers still fall back
+ * to the legacy location for rows written before the promotion, so nothing
+ * historical is lost. The same payload therefore never lives in two places.
+ *
+ * An unauthenticated actor is classified as a system actor so it stays
+ * distinguishable from a real user action. Callers decide whether to surface a
+ * write failure: document actions must not fail only because audit failed.
  */
 export async function recordCpsAuditEvent(
   tenantClient: TenantClient,
@@ -30,13 +34,16 @@ export async function recordCpsAuditEvent(
   const meta: CpsAuditMeta = actor.id ? input.meta : { ...input.meta, actorType: 'system' }
   const action = cpsAuditActionForEvent(meta.event) as AuditAction
 
-  await recordAuditLog(tenantClient, {
-    entityType: 'cps_sheets',
-    recordId: input.recordId,
-    entityLabel: input.entityLabel ?? null,
-    action,
-    oldData: {},
-    newData: { [CPS_AUDIT_META_KEY]: meta },
-    trackedFields: [CPS_AUDIT_META_KEY],
+  const { error } = await tenantClient.rpc('record_cps_audit_event', {
+    p_entity_id: input.recordId,
+    p_entity_label: input.entityLabel ?? null,
+    p_action: action,
+    p_metadata: meta,
+    p_actor_id: actor.id,
+    p_actor_label: actor.label,
+    p_source: 'web',
+    p_scope_type: 'app',
   })
+
+  if (error) throw new Error(error.message || 'CPS audit write failed.')
 }

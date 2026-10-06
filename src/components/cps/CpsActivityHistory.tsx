@@ -109,6 +109,25 @@ function ActivityEvent({ entry }: { entry: AuditTrailEntry }) {
           <span className="num">{relatedLabel(entry.relatedDocument)}</span>
         </div>
       ) : null}
+      {/* The chain id identifies which conversion this event belongs to when a
+          CPS has been converted more than once, and the parent event id links
+          an automatic CPS update to the downstream edit that caused it.
+          Technical detail only: it stays behind a disclosure and is never
+          primary content. */}
+      {entry.chainId || entry.parentEventId ? (
+        <details className="cps-ah-chain">
+          <summary>Conversion chain</summary>
+          {entry.chainId ? (
+            <span className="cps-ah-chain-id">{entry.chainId}</span>
+          ) : null}
+          {entry.parentEventId ? (
+            <span className="cps-ah-chain-id">
+              <span className="cps-ah-chain-label">Triggered by event</span>
+              {entry.parentEventId}
+            </span>
+          ) : null}
+        </details>
+      ) : null}
       {groups.length > 0 && canExpand ? (
         <button
           type="button"

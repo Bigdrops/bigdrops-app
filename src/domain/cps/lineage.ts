@@ -258,6 +258,51 @@ export function feedbackStageOwnsAuthority(
   return resolveActiveFeedbackAuthority(quotation)?.stage === stage
 }
 
+/**
+ * Phase 2.5 — conversion chain identity.
+ *
+ * One CPS document may be converted more than once. Each conversion is a
+ * separate chain, so downstream lifecycle events must correlate to the chain
+ * rather than to the CPS document as a whole:
+ *
+ *   CPS document
+ *     |-- chain A -> QTN-A -> INV-A
+ *     `-- chain B -> QTN-B -> INV-B
+ *
+ * The chain id is generated once, when the CPS -> Quotation conversion
+ * succeeds, and is then carried onto the derived Invoice. It is never derived
+ * from a document number and never inferred.
+ */
+export type ConversionChainId = string
+
+/** Mint a new conversion chain id. Falls back only when no CSPRNG exists. */
+export function newConversionChainId(): ConversionChainId {
+  const cryptoApi = typeof globalThis !== 'undefined' ? (globalThis.crypto as Crypto | undefined) : undefined
+  if (cryptoApi?.randomUUID) return cryptoApi.randomUUID()
+
+  // RFC 4122 v4 fallback. Only reachable in a runtime without crypto.randomUUID.
+  let out = ''
+  for (let i = 0; i < 32; i += 1) out += Math.floor(Math.random() * 16).toString(16)
+  return `${out.slice(0, 8)}-${out.slice(8, 12)}-4${out.slice(13, 16)}-a${out.slice(17, 20)}-${out.slice(20, 32)}`
+}
+
+/** A persisted chain id, or null. Never guesses. */
+export function normalizeChainId(value: unknown): ConversionChainId | null {
+  return normalizeLineageId(value)
+}
+
+/**
+ * Which document currently owns downstream feedback authority for a chain.
+ * `authorityRowId` is the quotation row that carries the authority columns —
+ * for a revert or a re-conversion inside the same chain this is the original
+ * conversion target, not the newly created document.
+ */
+export interface ChainAuthorityTarget {
+  authorityRowId: string
+  stage: FeedbackAuthorityStage
+  documentId: string | null
+}
+
 /** Audit sentence for the Quotation → Invoice authority handoff. */
 export function authorityTransitionSummary(
   quotationNumber: string | null | undefined,

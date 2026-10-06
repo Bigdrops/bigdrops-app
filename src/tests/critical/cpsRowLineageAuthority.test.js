@@ -23,7 +23,7 @@ import {
   summarizeUnlineagedRows,
   withoutLineage,
 } from '@/domain/cps/lineage'
-import { applyInvoiceItemLineage, persistFeedbackAuthority } from '@/domain/cps/lineageStore'
+import { repairInvoiceItemLineage as applyInvoiceItemLineage, persistChainAuthority } from '@/domain/cps/lineageStore'
 import { mapCpsToQuotation } from '@/domain/cps/conversion'
 import { toDbItem, makeEmptyItem, normalizeExtraCharges } from '@/domain/invoice/factories'
 import { mapDbInvoiceItem } from '@/domain/invoice/normalize'
@@ -35,6 +35,7 @@ import { CPS_AUDIT_META_KEY } from '@/domain/audit/auditTypes'
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
 const CPS_ID = '11111111-1111-4111-8111-111111111111'
+const CHAIN_ID = '99999999-9999-4999-8999-999999999999'
 const ROW_A = 'aaaaaaaa-1111-4111-8111-111111111111'
 const ROW_B = 'bbbbbbbb-1111-4111-8111-111111111111'
 const QUOTATION_ID = '22222222-2222-4222-8222-222222222222'
@@ -76,37 +77,70 @@ function cpsSheet(overrides = {}) {
   }
 }
 
-/** Minimal thenable PostgREST stand-in for the lineage writers. */
+/**
+ * Minimal thenable PostgREST stand-in for the lineage writers.
+ *
+ * Supports both `update(payload).eq(...)` and `select(cols).eq(...).not(...).limit(n)`
+ * chains, which is what the chain-authority resolver uses.
+ */
 function createFakeTenantClient(resolveResponse) {
   const calls = []
   const client = {
     from(table) {
+      const make = (op, payload) => {
+        const record = { table, op, payload, filters: {}, notFilters: [], limit: null, select: null }
+        calls.push(record)
+        const respond = () => resolveResponse(record)
+        const builder = {
+          eq(column, value) {
+            record.filters[column] = value
+            return builder
+          },
+          not(column, operator, value) {
+            record.notFilters.push([column, operator, value])
+            return builder
+          },
+          limit(value) {
+            record.limit = value
+            return builder
+          },
+          order() {
+            return builder
+          },
+          select(columns) {
+            record.select = columns
+            return builder
+          },
+          then(onFulfilled, onRejected) {
+            return Promise.resolve().then(respond).then(onFulfilled, onRejected)
+          },
+          catch(onRejected) {
+            return Promise.resolve().then(respond).catch(onRejected)
+          },
+        }
+        return builder
+      }
       return {
         update(payload) {
-          const record = { table, payload, filters: {} }
-          calls.push(record)
-          const respond = () => resolveResponse(record)
-          const builder = {
-            eq(column, value) {
-              record.filters[column] = value
-              return builder
-            },
-            select() {
-              return Promise.resolve(respond())
-            },
-            then(onFulfilled, onRejected) {
-              return Promise.resolve().then(respond).then(onFulfilled, onRejected)
-            },
-            catch(onRejected) {
-              return Promise.resolve().then(respond).catch(onRejected)
-            },
-          }
-          return builder
+          return make('update', payload)
+        },
+        select(columns) {
+          return make('select', null).select(columns)
         },
       }
     },
   }
   return { client, calls }
+}
+
+/** Responder that behaves like a quotation row carrying authority state. */
+function authorityResponder(row) {
+  return (record) => {
+    if (record.op === 'update') return { data: null, error: null }
+    if (record.filters.id) return { data: row ? [row] : [], error: null }
+    // chain lookup (conversion_chain_id + feedback_authority not null)
+    return { data: row && row.feedback_authority ? [{ id: row.id }] : [], error: null }
+  }
 }
 
 // ── A-D: CPS → Quotation row identity ──────────────────────────────────────
@@ -485,32 +519,114 @@ test('R: a chain with no persisted authority resolves to no authority', () => {
 })
 
 test('S/T: the handoff is idempotent and a retried conversion cannot contradict itself', async () => {
-  const { client, calls } = createFakeTenantClient(() => ({ data: null, error: null }))
+  const row = {
+    id: QUOTATION_ID,
+    feedback_authority: 'quotation',
+    feedback_authority_document_id: null,
+  }
+  const { client, calls } = createFakeTenantClient(authorityResponder(row))
 
-  const first = await persistFeedbackAuthority(client, QUOTATION_ID, 'invoice', INVOICE_ID)
-  const second = await persistFeedbackAuthority(client, QUOTATION_ID, 'invoice', INVOICE_ID)
+  const first = await persistChainAuthority(client, {
+    chainId: CHAIN_ID,
+    quotationId: QUOTATION_ID,
+    stage: 'invoice',
+    documentId: INVOICE_ID,
+  })
+  const second = await persistChainAuthority(client, {
+    chainId: CHAIN_ID,
+    quotationId: QUOTATION_ID,
+    stage: 'invoice',
+    documentId: INVOICE_ID,
+  })
 
   assert.equal(first.ok, true)
   assert.equal(second.ok, true)
-  assert.equal(calls.length, 2)
-  for (const call of calls) {
+  assert.equal(first.authorityRowId, QUOTATION_ID)
+  assert.equal(second.authorityRowId, QUOTATION_ID)
+  assert.deepEqual(first.previous, { stage: 'quotation', documentId: null })
+
+  const updates = calls.filter((call) => call.op === 'update')
+  assert.equal(updates.length, 2)
+  for (const call of updates) {
     assert.equal(call.table, 'quotations')
     assert.equal(call.filters.id, QUOTATION_ID)
     assert.equal(call.payload.feedback_authority, 'invoice')
     assert.equal(call.payload.feedback_authority_document_id, INVOICE_ID)
+    assert.equal(call.payload.conversion_chain_id, CHAIN_ID)
   }
   assert.deepEqual(
-    { ...calls[0].payload, feedback_authority_updated_at: null },
-    { ...calls[1].payload, feedback_authority_updated_at: null },
+    { ...updates[0].payload, feedback_authority_updated_at: null },
+    { ...updates[1].payload, feedback_authority_updated_at: null },
   )
 })
 
+test('authority always targets the row that owns the chain, not the newest document', async () => {
+  const row = {
+    id: QUOTATION_ID,
+    feedback_authority: 'invoice',
+    feedback_authority_document_id: INVOICE_ID,
+  }
+  const { client, calls } = createFakeTenantClient(authorityResponder(row))
+
+  // A revert inside the same chain: the reverted quotation is a new document,
+  // but authority must stay on the chain's existing authority row.
+  const result = await persistChainAuthority(client, {
+    chainId: CHAIN_ID,
+    quotationId: '55555555-5555-4555-8555-555555555555',
+    stage: 'quotation',
+    documentId: '55555555-5555-4555-8555-555555555555',
+  })
+
+  assert.equal(result.authorityRowId, QUOTATION_ID)
+  assert.deepEqual(result.previous, { stage: 'invoice', documentId: INVOICE_ID })
+  const update = calls.find((call) => call.op === 'update')
+  assert.equal(update.filters.id, QUOTATION_ID)
+  assert.equal(update.payload.feedback_authority, 'quotation')
+})
+
+test('authority uses an explicitly supplied row when the caller knows it', async () => {
+  const { client, calls } = createFakeTenantClient(authorityResponder(null))
+  const result = await persistChainAuthority(client, {
+    chainId: null,
+    quotationId: '66666666-6666-4666-8666-666666666666',
+    authorityRowId: QUOTATION_ID,
+    stage: 'quotation',
+    documentId: '66666666-6666-4666-8666-666666666666',
+  })
+
+  assert.equal(result.ok, true)
+  assert.equal(result.authorityRowId, QUOTATION_ID)
+  assert.equal(calls.find((call) => call.op === 'update').filters.id, QUOTATION_ID)
+})
+
 test('S: a failed authority write is reported instead of claiming success', async () => {
-  const { client } = createFakeTenantClient(() => ({ data: null, error: { message: 'permission denied' } }))
-  const result = await persistFeedbackAuthority(client, QUOTATION_ID, 'invoice', INVOICE_ID)
+  const { client } = createFakeTenantClient((record) =>
+    record.op === 'update'
+      ? { data: null, error: { message: 'permission denied' } }
+      : { data: [{ id: QUOTATION_ID, feedback_authority: 'quotation' }], error: null },
+  )
+  const result = await persistChainAuthority(client, {
+    chainId: CHAIN_ID,
+    quotationId: QUOTATION_ID,
+    stage: 'invoice',
+    documentId: INVOICE_ID,
+  })
 
   assert.equal(result.ok, false)
   assert.equal(result.error, 'permission denied')
+})
+
+test('S: a chain with no owner row reports failure instead of silently succeeding', async () => {
+  const { client } = createFakeTenantClient(() => ({ data: [], error: null }))
+  const result = await persistChainAuthority(client, {
+    chainId: CHAIN_ID,
+    quotationId: '',
+    stage: 'invoice',
+    documentId: INVOICE_ID,
+  })
+
+  assert.equal(result.ok, false)
+  assert.match(result.error, /No quotation row owns downstream feedback authority/)
 })
 
 // ── U/V: audit events and Activity History ─────────────────────────────────
@@ -750,7 +866,7 @@ test('X/Y/Z: no downstream → CPS feedback is implemented', () => {
 
   // The only new write in the quotation → invoice conversion is the authority
   // handoff on the source quotation.
-  const authorityWrites = code('src/pages/view-quotation-actions.ts').match(/persistFeedbackAuthority\(/g) || []
+  const authorityWrites = code('src/pages/view-quotation-actions.ts').match(/persistChainAuthority\(/g) || []
   assert.equal(authorityWrites.length, 1)
 })
 
@@ -781,16 +897,19 @@ test('migration adds uniform item lineage plus persisted authority without FKs o
   assert.doesNotMatch(migration, /create table/i)
 })
 
-test('save paths stamp and preserve lineage through the shared serializers', () => {
-  const invoiceSave = read('src/hooks/useInvoiceSave.ts')
-  assert.match(invoiceSave, /applyInvoiceItemLineage\(/)
+test('save paths preserve lineage without a post-write stamp', () => {
+  const invoiceSave = code('src/hooks/useInvoiceSave.ts')
   assert.match(invoiceSave, /itemsToSave/)
+  // Phase 2.5: lineage commits inside the invoice save transaction, so no
+  // compensating stamp may run on the success path.
+  assert.doesNotMatch(invoiceSave, /repairInvoiceItemLineage\(/)
+  assert.doesNotMatch(invoiceSave, /applyInvoiceItemLineage\(/)
 
   const invoiceFactories = read('src/domain/invoice/factories.ts')
   assert.match(invoiceFactories, /source_cps_id: normalizeLineageId/)
 
-  const quotationActions = read('src/pages/view-quotation-actions.ts')
-  assert.match(quotationActions, /applyInvoiceItemLineage\(/)
+  const quotationActions = code('src/pages/view-quotation-actions.ts')
+  assert.doesNotMatch(quotationActions, /repairInvoiceItemLineage\(/)
   assert.match(quotationActions, /toDbItem\(item, null, index\)/)
 
   // A quotation edit re-inserts its rows through the shared serializer, which

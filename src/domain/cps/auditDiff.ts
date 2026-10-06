@@ -24,6 +24,8 @@ export type { CpsAuditFieldChange, CpsAuditMeta }
 export const CPS_AUDIT_SOURCE = {
   form: 'cps_form',
   view: 'cps_view',
+  /** Phase 3 events written by the downstream-feedback transaction. */
+  downstreamFeedback: 'downstream_feedback',
 } as const
 
 export type CpsAuditSource = (typeof CPS_AUDIT_SOURCE)[keyof typeof CPS_AUDIT_SOURCE]
@@ -36,6 +38,13 @@ const ACTION_FOR_EVENT: Record<CpsAuditEventType, string> = {
   // Phase 2: the downstream Quotation became an Invoice. The transition is a
   // conversion of the descendant document, recorded on the CPS chain root.
   CONVERTED_TO_INVOICE: 'CONVERT',
+  CONVERSION_RETRY: 'CONVERT',
+  REVERTED_TO_QUOTATION: 'CONVERT',
+  // Phase 3: a downstream item edit, the automatic CPS update it causes, and a
+  // skipped-feedback diagnostic are all audit-log UPDATE actions on the chain.
+  DOWNSTREAM_ITEM_UPDATED: 'UPDATE',
+  CPS_FEEDBACK_APPLIED: 'UPDATE',
+  FEEDBACK_SKIPPED: 'UPDATE',
   LINEAGE_WARNING: 'UPDATE',
   DUPLICATED: 'DUPLICATE',
   ARCHIVED: 'ARCHIVE',
@@ -272,6 +281,9 @@ export interface BuildCpsMetaInput {
   sourceContext: string
   changes?: CpsAuditFieldChange[]
   related?: AuditRelatedDocument | null
+  /** Phase 2.5 conversion chain this event belongs to. */
+  chainId?: string | null
+  /** Causal parent event. Operational from Phase 2.5 on. */
   parentEventId?: string | null
   summary?: string
   detail?: string | null
@@ -284,6 +296,7 @@ export function buildCpsAuditMeta(input: BuildCpsMetaInput): CpsAuditMeta {
     event: input.event,
     actorType: input.actorType || 'user',
     rootId: input.rootId,
+    chainId: input.chainId ?? null,
     parentEventId: input.parentEventId ?? null,
     sourceContext: input.sourceContext,
     related: input.related ?? null,

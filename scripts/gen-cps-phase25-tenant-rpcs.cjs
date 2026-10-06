@@ -7,13 +7,13 @@
 // the lineage/metadata-aware tenant RPCs:
 //
 //   1. save_invoice_with_items_transaction writes the four Phase 2 lineage
-//      columns in the same INSERT as the invoice items.
+//      columns in the same INSERT as the invoice items, so lineage commits with
+//      the invoice save transaction and no compensating stamp is needed.
 //   2. a new record_cps_audit_event() writes the structured CPS payload into
-//      audit_logs.metadata. record_audit_log() itself is NOT touched: several
-//      tenant functions depend on its exact 11-argument signature, and adding
-//      a defaulted parameter would either break them (DROP) or make their
-//      calls ambiguous (overload with a default). A dedicated writer keeps one
-//      authoritative payload location with zero risk to existing audit paths.
+//      audit_logs.metadata. record_audit_log() is deliberately NOT modified:
+//      several tenant functions depend on its exact 11-argument signature, so a
+//      changed signature would either be rejected by DROP or make their calls
+//      ambiguous as an overload with a defaulted parameter.
 //   3. revert_invoice_to_quotation_transaction carries CPS/Quotation lineage
 //      and the conversion chain id into the reverted quotation.
 //
@@ -46,6 +46,9 @@ function edit(label, find, replace, { all = false } = {}) {
   console.log(`ok  ${label}  (x${count})`)
 }
 
+const EXEC_LINE =
+  "    EXECUTE replace(replace(v_body, '__SCHEMA_TEXT__', p_schema_name), '__SCHEMA__', v_schema_ident);"
+
 // ── Edit 1: save_invoice_with_items_transaction carries lineage ────────────
 edit(
   'b1 insert columns',
@@ -75,46 +78,67 @@ edit(
     "            NULLIF(v_item->>'source_quotation_item_id', '')::uuid;",
 )
 
-// ── Edit 2: record_audit_log stores structured metadata ────────────────────
-edit(
-  'b25 signature',
-  'CREATE OR REPLACE FUNCTION __SCHEMA__.record_audit_log(p_entity_type text, p_entity_id uuid, p_entity_label text, p_action text, p_old_data jsonb, p_new_data jsonb, p_actor_id uuid DEFAULT NULL::uuid, p_actor_label text DEFAULT NULL::text, p_source text DEFAULT \'web\'::text, p_scope_type text DEFAULT \'app\'::text, p_reason text DEFAULT NULL::text)',
-  // The legacy 11-argument signature is dropped so an 11-argument call cannot
-  // become ambiguous once the defaulted p_metadata parameter exists.
-  'DROP FUNCTION IF EXISTS __SCHEMA__.record_audit_log(text, uuid, text, text, jsonb, jsonb, uuid, text, text, text, text);\r\n' +
-    'CREATE OR REPLACE FUNCTION __SCHEMA__.record_audit_log(p_entity_type text, p_entity_id uuid, p_entity_label text, p_action text, p_old_data jsonb, p_new_data jsonb, p_actor_id uuid DEFAULT NULL::uuid, p_actor_label text DEFAULT NULL::text, p_source text DEFAULT \'web\'::text, p_scope_type text DEFAULT \'app\'::text, p_reason text DEFAULT NULL::text, p_metadata jsonb DEFAULT NULL::jsonb)',
-)
+// ── Edit 2: add the dedicated CPS audit writer ────────────────────────────
+// The quoted body below is intentionally plain SQL text (no JS escapes inside
+// the dollar-quoted section) so the generated file stays byte-stable.
+const CPS_AUDIT_RPC = [
+  '',
+  '    -- 28. record_cps_audit_event  [Phase 2.5: structured CPS payload]',
+  '    -- The CPS payload now lives in audit_logs.metadata. New CPS events do',
+  "    -- not hide it inside `changes` under the reserved key '_cps'; readers",
+  '    -- fall back to that legacy location only for older rows.',
+  '    v_body := $b28$',
+  'CREATE OR REPLACE FUNCTION __SCHEMA__.record_cps_audit_event(',
+  '    p_entity_id uuid,',
+  '    p_entity_label text,',
+  '    p_action text,',
+  '    p_metadata jsonb,',
+  '    p_actor_id uuid DEFAULT NULL::uuid,',
+  '    p_actor_label text DEFAULT NULL::text,',
+  "    p_source text DEFAULT 'web'::text,",
+  "    p_scope_type text DEFAULT 'app'::text",
+  ')',
+  ' RETURNS __SCHEMA__.audit_logs',
+  ' LANGUAGE plpgsql',
+  ' SECURITY DEFINER',
+  " SET search_path TO 'public'",
+  'AS $function$',
+  'declare',
+  '  v_actor_id uuid;',
+  '  v_row __SCHEMA__.audit_logs;',
+  'begin',
+  '  v_actor_id := coalesce(p_actor_id, auth.uid());',
+  '',
+  '  -- A CPS event is meaningful through its structured payload: unlike',
+  '  -- record_audit_log, an empty metadata object is the only reason to skip.',
+  "  if p_metadata is null or p_metadata = '{}'::jsonb then",
+  '    return null;',
+  '  end if;',
+  '',
+  '  insert into __SCHEMA__.audit_logs (',
+  '    entity_type, entity_id, entity_label, action,',
+  '    actor_id, actor_label, source, scope_type, changes, metadata',
+  '  )',
+  '  values (',
+  "    'cps_sheets', p_entity_id, p_entity_label, p_action,",
+  "    v_actor_id, p_actor_label, coalesce(p_source, 'web'),",
+  "    coalesce(p_scope_type, 'app'), '[]'::jsonb, p_metadata",
+  '  )',
+  '  returning * into v_row;',
+  '',
+  '  return v_row;',
+  'end;',
+  '$function$',
+  ';',
+  '$b28$;',
+  EXEC_LINE,
+  '',
+].join('\r\n')
 
 edit(
-  'b25 empty-diff guard',
-  '  if jsonb_array_length(v_changes) = 0 then\r\n    return null;\r\n  end if;',
-  '  if jsonb_array_length(v_changes) = 0\r\n' +
-    "     and (p_metadata is null or p_metadata = '{}'::jsonb) then\r\n" +
-    '    return null;\r\n' +
-    '  end if;',
-)
-
-edit(
-  'b25 insert',
-  '  insert into __SCHEMA__.audit_logs (\r\n' +
-    '    entity_type, entity_id, entity_label, action,\r\n' +
-    '    actor_id, actor_label, source, scope_type, changes, reason\r\n' +
-    '  )\r\n' +
-    '  values (\r\n' +
-    '    p_entity_type, p_entity_id, p_entity_label, p_action,\r\n' +
-    '    v_actor_id, p_actor_label, coalesce(p_source, \'web\'),\r\n' +
-    '    coalesce(p_scope_type, \'app\'), v_changes, p_reason\r\n' +
-    '  )',
-  '  insert into __SCHEMA__.audit_logs (\r\n' +
-    '    entity_type, entity_id, entity_label, action,\r\n' +
-    '    actor_id, actor_label, source, scope_type, changes, reason, metadata\r\n' +
-    '  )\r\n' +
-    '  values (\r\n' +
-    '    p_entity_type, p_entity_id, p_entity_label, p_action,\r\n' +
-    '    v_actor_id, p_actor_label, coalesce(p_source, \'web\'),\r\n' +
-    '    coalesce(p_scope_type, \'app\'), v_changes, p_reason,\r\n' +
-    "    coalesce(p_metadata, '{}'::jsonb)\r\n" +
-    '  )',
+  'b28 append (record_cps_audit_event)',
+  EXEC_LINE + '\r\nEND;\r\n$install$;',
+  EXEC_LINE + '\r\n' + CPS_AUDIT_RPC + 'END;\r\n$install$;',
 )
 
 // ── Edit 3: revert keeps lineage + chain ──────────────────────────────────
@@ -153,72 +177,91 @@ edit(
 )
 
 // ── Assemble the migration ────────────────────────────────────────────────
-const header = `-- ============================================================
--- TENANT RPCs: TRANSACTIONAL CPS LINEAGE + AUDIT METADATA
--- ============================================================
--- Phase 2.5. Regenerates public._prov_install_tenant_rpcs() so every tenant
--- schema (existing and future) installs the lineage/metadata-aware RPCs.
---
--- Generated from the authoritative body text in
--- 20260902120000_provisioning_engine_repair.sql with exactly three edits, so
--- all other tenant RPC bodies stay byte-identical:
---
---  1. save_invoice_with_items_transaction now writes source_cps_id,
---     source_cps_row_id, source_quotation_id and source_quotation_item_id in
---     the SAME insert as the invoice item rows. Lineage is therefore committed
---     by the invoice save transaction itself and no post-write compensating
---     stamp is required on the successful path. Lineage-null rows stay valid
---     (all four expressions are NULLIF-guarded).
---
---  2. record_audit_log gains p_metadata jsonb and stores it in
---     audit_logs.metadata. The legacy 11-argument signature is dropped in the
---     same statement so an 11-argument call cannot become ambiguous; with
---     p_metadata defaulted, older callers keep working. Events that carry only
---     metadata (no field diff) are no longer discarded.
---
---  3. revert_invoice_to_quotation_transaction carries source_cps_id,
---     conversion_chain_id and the four item lineage columns into the reverted
---     quotation, so a revert is not a lineage reset.
---
--- Then backfills every existing entity schema through the installer, so the
--- hosted database converges with the new definition (and any tenant that was
--- provisioned while the old installer was live is repaired).
--- ============================================================
+const header = [
+  '-- ============================================================',
+  '-- TENANT RPCs: TRANSACTIONAL CPS LINEAGE + AUDIT METADATA',
+  '-- ============================================================',
+  '-- Phase 2.5. Regenerates public._prov_install_tenant_rpcs() so every tenant',
+  '-- schema (existing and future) installs the lineage/metadata-aware RPCs.',
+  '--',
+  '-- Generated from the authoritative body text in',
+  '-- 20260902120000_provisioning_engine_repair.sql with exactly three edits, so',
+  '-- every other tenant RPC body stays byte-identical:',
+  '--',
+  '--  1. save_invoice_with_items_transaction now writes source_cps_id,',
+  '--     source_cps_row_id, source_quotation_id and source_quotation_item_id in',
+  '--     the SAME insert as the invoice item rows. Lineage is therefore',
+  '--     committed by the invoice save transaction itself, so the successful',
+  '--     path needs no post-write compensating stamp. Lineage-null rows stay',
+  '--     valid (all four expressions are NULLIF-guarded).',
+  '--',
+  '--  2. record_cps_audit_event() is added: a dedicated CPS audit writer that',
+  '--     stores the structured CPS payload in audit_logs.metadata. New CPS',
+  '--     events therefore no longer hide their payload inside',
+  '--     audit_logs.changes under the reserved key _cps. record_audit_log() is',
+  '--     deliberately NOT modified: several tenant functions depend on its exact',
+  '--     11-argument signature, so a changed signature would either be rejected',
+  '--     (DROP ... would fail on those dependents) or make their calls',
+  '--     ambiguous (an overload with a defaulted parameter).',
+  '--',
+  '--  3. revert_invoice_to_quotation_transaction carries source_cps_id,',
+  '--     conversion_chain_id and the four item lineage columns into the',
+  '--     reverted quotation, so a revert is not a lineage reset.',
+  '--',
+  '-- Then backfills every fully provisioned entity schema through the',
+  '-- installer, so the hosted database converges and any tenant provisioned',
+  '-- while the old installer was live is repaired. Schemas missing the tenant',
+  '-- tables (a failed or in-progress provisioning) are skipped: installing',
+  '-- RPCs whose RETURN types live in absent tables would abort the migration.',
+  '-- ============================================================',
+  '',
+  '',
+].join('\r\n')
 
-`
-
-const footer = `
--- ============================================================
--- BACKFILL — reinstall tenant RPCs in every existing entity schema
--- ============================================================
-DO $do$
-DECLARE
-  v_schema record;
-BEGIN
-  FOR v_schema IN
-    SELECT n.nspname AS schemaname
-    FROM pg_namespace n
-    WHERE n.nspname LIKE 'entity\\_%'
-    ORDER BY n.nspname
-  LOOP
-    PERFORM public._prov_install_tenant_rpcs(v_schema.schemaname);
-  END LOOP;
-END
-$do$;
-
-NOTIFY pgrst, 'reload schema';
-`
+const footer = [
+  '',
+  '-- ============================================================',
+  '-- BACKFILL — reinstall tenant RPCs in every existing entity schema',
+  '-- ============================================================',
+  'DO $do$',
+  'DECLARE',
+  '  v_schema record;',
+  'BEGIN',
+  '  FOR v_schema IN',
+  '    SELECT n.nspname AS schemaname',
+  '    FROM pg_namespace n',
+  '    WHERE n.nspname LIKE \'entity\\_%\'',
+  '      -- Only fully provisioned tenants: the installer creates functions',
+  '      -- whose RETURN types are tenant tables, so a schema that is missing',
+  '      -- them (a failed or in-progress provisioning) is skipped.',
+  "      AND to_regclass(format('%I.activity_events', n.nspname)) IS NOT NULL",
+  "      AND to_regclass(format('%I.audit_logs', n.nspname)) IS NOT NULL",
+  "      AND to_regclass(format('%I.invoices', n.nspname)) IS NOT NULL",
+  "      AND to_regclass(format('%I.invoice_items', n.nspname)) IS NOT NULL",
+  "      AND to_regclass(format('%I.quotations', n.nspname)) IS NOT NULL",
+  "      AND to_regclass(format('%I.quotation_items', n.nspname)) IS NOT NULL",
+  '    ORDER BY n.nspname',
+  '  LOOP',
+  '    PERFORM public._prov_install_tenant_rpcs(v_schema.schemaname);',
+  '  END LOOP;',
+  'END',
+  '$do$;',
+  '',
+  "NOTIFY pgrst, 'reload schema';",
+  '',
+].join('\r\n')
 
 fs.writeFileSync(OUT, header + block + footer)
 
 console.log(`\nedits applied: ${edits}`)
 console.log(`written: ${path.relative(root, OUT)} (${fs.statSync(OUT).size} bytes)`)
+const out = fs.readFileSync(OUT, 'utf8')
 for (const probe of [
   'source_quotation_item_id',
   'record_cps_audit_event',
-  'audit_logs.metadata',
+  'p_metadata jsonb,',
   'conversion_chain_id',
+  "changes, metadata",
 ]) {
-  const n = fs.readFileSync(OUT, 'utf8').split(probe).length - 1
-  console.log(`probe "${probe.replace(/\r\n/g, '/')}" -> ${n}`)
+  console.log(`probe "${probe}" -> ${out.split(probe).length - 1}`)
 }

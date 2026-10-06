@@ -8,7 +8,7 @@ import {
   recordCpsAuditEvent,
   type CpsAuditMeta,
 } from '@/domain/cps/audit'
-import { persistFeedbackAuthority } from '@/domain/cps/lineageStore'
+import { persistChainAuthority } from '@/domain/cps/lineageStore'
 
 // Audit is evidence, not a control path. An audit write must never fail the
 // user action, so failures are logged and swallowed here.
@@ -213,7 +213,12 @@ export async function convertCpsToQuotation({
   // Stamp which document currently owns downstream feedback authority. The
   // stage was seeded at insert time, so authority stays determinate even if
   // this follow-up write fails.
-  const authority = await persistFeedbackAuthority(tenantClient, quotation.id, 'quotation', quotation.id)
+  const authority = await persistChainAuthority(tenantClient, {
+    chainId: lineage.chainId,
+    quotationId: quotation.id,
+    stage: 'quotation',
+    documentId: quotation.id,
+  })
   if (!authority.ok) {
     console.error('CPS feedback authority seed failed:', authority.error)
   }
@@ -224,10 +229,11 @@ export async function convertCpsToQuotation({
     meta: buildCpsAuditMeta({
       event: 'CONVERTED_TO_QUOTATION',
       rootId: cps.id,
+      chainId: lineage.chainId,
       sourceContext: CPS_AUDIT_SOURCE.view,
       related: { type: 'quotation', id: quotation.id, number: quotation.quotation_number },
       summary: `Converted to ${quotation.quotation_number}`,
-      detail: lineage.summary,
+      detail: [lineage.summary, 'Conversion chain created.'].filter(Boolean).join(' '),
     }),
   })
 
@@ -240,6 +246,7 @@ export async function convertCpsToQuotation({
       meta: buildCpsAuditMeta({
         event: 'LINEAGE_WARNING',
         rootId: cps.id,
+        chainId: lineage.chainId,
         sourceContext: CPS_AUDIT_SOURCE.view,
         related: { type: 'quotation', id: quotation.id, number: quotation.quotation_number },
         summary: lineage.unlineagedSummary || 'Lineage unavailable',

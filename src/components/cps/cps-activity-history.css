@@ -85,6 +85,27 @@
   line-height: 1.45;
   color: var(--body);
 }
+.cps-ah-chain {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--faint);
+}
+.cps-ah-chain summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.cps-ah-chain-id {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--mono);
+  word-break: break-all;
+}
+.cps-ah-chain-label {
+  display: block;
+  font-family: var(--sans, inherit);
+  font-weight: 600;
+  margin-bottom: 1px;
+}
 .cps-ah-meta {
   display: flex;
   flex-wrap: wrap;
