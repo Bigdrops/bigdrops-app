@@ -85,7 +85,6 @@ When adding a new document type (e.g., `WaybillFormPage`):
 6. If the module already has separate `New`/`Edit` pages, consolidate them into the above pattern
 
 ## 5. Conformance
-
 This standard is normative. All existing document form pages MUST conform. Any new document form page that does not follow this pattern will be rejected during code review. A current implementation violation does not become an allowed architecture.
 
 Current implementation status (as of 2026-09-29):
@@ -101,3 +100,7 @@ Current implementation status (as of 2026-09-29):
 | BOQ | Under active rebuild. Temporary state, not a permanent exception. |
 
 RFQ's non-conformance is tracked for future consolidation. It does not weaken the normative requirement above.
+
+## 6. CPS Presentation Authority
+
+Active CPS form presentation authority is `CostPricingSheetForm` / `.cps-form-root` (`src/components/cps/CostPricingSheetForm.tsx`). The older `.cps-form` grammar (`CostPricingSheetMobileFoldForm`, removed 2026-10-06) is RETIRED and must not be used as a design reference. Invoice/Quotation document presentation ports the live `.cps-form-root` values through `document-cps-overrides.css`, scoped to `.bd-document-form`.
