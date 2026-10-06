@@ -63,6 +63,28 @@ export type CpsAuditEventType =
   | 'CONVERTED_TO_INVOICE'
   /** Phase 2 diagnostic: a converted row could not carry its CPS origin. */
   | 'LINEAGE_WARNING'
+  /** Phase 2.5: a conversion request resolved to an Invoice that already
+   *  exists for this chain instead of creating a competing one. */
+  | 'CONVERSION_RETRY'
+  /** Phase 2.5: a derived Invoice was reverted back to a Quotation and the
+   *  authority for the chain returned to the Quotation stage. */
+  | 'REVERTED_TO_QUOTATION'
+  /**
+   * Phase 3: a user changed approved fields on a CPS-linked downstream item
+   * row while that document owned feedback authority. This is the causal
+   * parent event of the automatic CPS update that follows it.
+   */
+  | 'DOWNSTREAM_ITEM_UPDATED'
+  /**
+   * Phase 3: the system applied approved downstream values to the CPS row.
+   * `parentEventId` points at the DOWNSTREAM_ITEM_UPDATED event that caused it.
+   */
+  | 'CPS_FEEDBACK_APPLIED'
+  /**
+   * Phase 3 diagnostic: feedback was skipped because the originating CPS row
+   * or its lineage was unavailable. The downstream save still succeeded.
+   */
+  | 'FEEDBACK_SKIPPED'
   | 'DUPLICATED'
   | 'ARCHIVED'
   | 'DELETED'
@@ -131,8 +153,16 @@ export interface CpsAuditFieldChange {
 export interface CpsAuditMeta {
   event: CpsAuditEventType
   actorType: AuditActorType
-  /** Correlation root. Always the CPS document id for direct CPS events. */
+  /** CPS document provenance. Always the CPS document id. */
   rootId: string
+  /**
+   * Phase 2.5 conversion chain this event belongs to, when the event is part
+   * of a CPS -> Quotation -> Invoice chain. Distinct from `rootId`: the CPS
+   * document id stays the source document identity, while the chain id
+   * identifies one specific conversion. Kept separate so one CPS that was
+   * converted several times is still aggregatable per chain.
+   */
+  chainId: string | null
   /** Causal parent event id. Reserved for Phase 3 feedback chains. */
   parentEventId: string | null
   sourceContext: string
@@ -160,6 +190,8 @@ export interface AuditTrailEntry {
   eventType?: CpsAuditEventType | string
   actorType?: AuditActorType
   rootId?: string
+  /** Phase 2.5 conversion chain this lifecycle event belongs to. */
+  chainId?: string | null
   parentEventId?: string | null
   relatedDocument?: AuditRelatedDocument | null
   summary?: string

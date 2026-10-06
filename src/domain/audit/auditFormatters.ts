@@ -318,8 +318,41 @@ function formatAuditTimestamp(value: string | null | undefined): string {
  * any record that is not a CPS record with a readable payload, so callers can
  * fall back to the generic mapping. Never throws on malformed data.
  */
+function normalizeCpsAuditMeta(
+  candidate: Partial<CpsAuditMeta>,
+  row: AuditLogRecord,
+): CpsAuditMeta {
+  return {
+    event: candidate.event as CpsAuditMeta['event'],
+    actorType: candidate.actorType || 'user',
+    rootId: candidate.rootId || row.entity_id,
+    chainId: typeof candidate.chainId === 'string' && candidate.chainId.trim() ? candidate.chainId : null,
+    parentEventId: candidate.parentEventId ?? null,
+    sourceContext: candidate.sourceContext || 'cps',
+    related: candidate.related ?? null,
+    summary: typeof candidate.summary === 'string' ? candidate.summary : '',
+    detail: typeof candidate.detail === 'string' && candidate.detail.trim() ? candidate.detail : null,
+    changes: Array.isArray(candidate.changes) ? candidate.changes : [],
+  }
+}
+
+/**
+ * Read the structured CPS payload from a CPS audit record.
+ *
+ * Phase 2.5 reads `audit_logs.metadata` first. Records written before the
+ * promotion kept the same payload inside `audit_logs.changes` under the
+ * reserved key `_cps`, so that location stays supported as a read-only legacy
+ * fallback. Returns null for any record that is not a readable CPS record, so
+ * callers fall back to the generic mapping. Never throws on malformed data.
+ */
 export function extractCpsAuditMeta(row: AuditLogRecord): CpsAuditMeta | null {
   if (String(row.entity_type) !== 'cps_sheets') return null
+
+  const fromMetadata = row.metadata
+  if (fromMetadata && typeof fromMetadata === 'object' && !Array.isArray(fromMetadata)) {
+    const candidate = fromMetadata as Partial<CpsAuditMeta>
+    if (typeof candidate.event === 'string') return normalizeCpsAuditMeta(candidate, row)
+  }
 
   const entries = row.changes || []
   const entry = entries.find((change) => change.field === CPS_AUDIT_META_KEY)
@@ -331,17 +364,7 @@ export function extractCpsAuditMeta(row: AuditLogRecord): CpsAuditMeta | null {
   const candidate = raw as Partial<CpsAuditMeta>
   if (typeof candidate.event !== 'string') return null
 
-  return {
-    event: candidate.event,
-    actorType: candidate.actorType || 'user',
-    rootId: candidate.rootId || row.entity_id,
-    parentEventId: candidate.parentEventId ?? null,
-    sourceContext: candidate.sourceContext || 'cps',
-    related: candidate.related ?? null,
-    summary: typeof candidate.summary === 'string' ? candidate.summary : '',
-    detail: typeof candidate.detail === 'string' && candidate.detail.trim() ? candidate.detail : null,
-    changes: Array.isArray(candidate.changes) ? candidate.changes : [],
-  }
+  return normalizeCpsAuditMeta(candidate, row)
 }
 
 function formatCpsChange(change: CpsAuditMeta['changes'][number]): AuditTrailChange {
@@ -447,6 +470,7 @@ function buildCpsAuditEntry(row: AuditLogRecord, meta: CpsAuditMeta): AuditTrail
     eventType: meta.event,
     actorType: meta.actorType,
     rootId: meta.rootId,
+    chainId: meta.chainId,
     parentEventId: meta.parentEventId,
     relatedDocument: meta.related,
     summary: meta.summary,

@@ -19,8 +19,11 @@ interface UseAuditTrailResult {
   loadOlder: (before: string) => Promise<void>
 }
 
+// `metadata` carries the structured CPS payload (Phase 2.5). Records written
+// before the promotion keep theirs inside `changes` under the reserved key
+// '_cps', which the formatter reads as a fallback.
 const AUDIT_LOG_SELECT =
-  'id, entity_type, entity_id, entity_label, action, actor_id, actor_label, source, scope_type, created_at, changes, reason'
+  'id, entity_type, entity_id, entity_label, action, actor_id, actor_label, source, scope_type, created_at, changes, metadata, reason'
 
 const ACTIVITY_EVENT_SELECT =
   'id, entity_type, entity_id, entity_label, event_type, actor_id, actor_label, source, scope_type, created_at, metadata, reason'
