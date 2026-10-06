@@ -109,21 +109,28 @@ function ActivityEvent({ entry }: { entry: AuditTrailEntry }) {
           <span className="num">{relatedLabel(entry.relatedDocument)}</span>
         </div>
       ) : null}
-      {/* The chain id identifies which conversion this event belongs to when a
-          CPS has been converted more than once, and the parent event id links
-          an automatic CPS update to the downstream edit that caused it.
-          Technical detail only: it stays behind a disclosure and is never
-          primary content. */}
+      {/* This identifies which conversion an event belongs to, and links an
+          automatic CPS update to the downstream edit that caused it. It is
+          technical detail behind a disclosure: it is never primary content,
+          and a raw id is never shown as the label — the id stays in the
+          tooltip, and the reader sees the document it came from. */}
       {entry.chainId || entry.parentEventId ? (
         <details className="cps-ah-chain">
           <summary>Conversion chain</summary>
           {entry.chainId ? (
-            <span className="cps-ah-chain-id">{entry.chainId}</span>
+            <span className="cps-ah-chain-id" title={entry.chainId}>
+              <span className="cps-ah-chain-label">Chain reference</span>
+              {entry.relatedDocument
+                ? relatedLabel(entry.relatedDocument)
+                : 'This CPS conversion'}
+            </span>
           ) : null}
           {entry.parentEventId ? (
-            <span className="cps-ah-chain-id">
+            <span className="cps-ah-chain-id" title={entry.parentEventId}>
               <span className="cps-ah-chain-label">Triggered by event</span>
-              {entry.parentEventId}
+              {entry.relatedDocument
+                ? relatedLabel(entry.relatedDocument)
+                : 'An earlier event in this chain'}
             </span>
           ) : null}
         </details>

@@ -432,40 +432,77 @@ test('a duplicated invoice cannot inherit a conversion chain', () => {
   assert.match(service, /conversion_chain_id: null/)
 })
 
-test('no Phase 3 feedback is implemented by any Phase 2.5 file', () => {
-  const files = [
+// Phase 3 replaces the Phase 2.5 "no feedback anywhere" guard. Controlled
+// downstream feedback now exists deliberately, but only at ONE boundary: the
+// pure planner, its persistence layer, and the two document save hooks that
+// call it. Every module that owns lineage, conversion, or the CPS view must
+// stay feedback-free, and no client module may write CPS rows directly — the
+// tenant RPC is the only writer of CPS commercial fields.
+const FEEDBACK_REFERENCE =
+  /apply_cps_item_feedback_transaction|runCpsDownstreamFeedback|prepareCpsFeedbackPayload|planCpsFeedback|buildCpsFeedbackPayload|loadCpsFeedbackRows|CPS_FEEDBACK_FIELDS/
+
+test('Phase 3 feedback is confined to the controlled boundary', () => {
+  const feedbackModules = [
+    'src/domain/cps/feedback.ts',
+    'src/domain/cps/feedbackStore.ts',
+    'src/hooks/useInvoiceSave.ts',
+    'src/hooks/useQuotationSave.ts',
+  ]
+  const nonFeedbackModules = [
     'src/domain/cps/lineage.ts',
     'src/domain/cps/lineageStore.ts',
     'src/domain/cps/conversion.ts',
     'src/domain/cps/audit.ts',
+    'src/domain/cps/auditDiff.ts',
     'src/pages/view-cps-actions.ts',
     'src/pages/view-quotation-actions.ts',
     'src/modules/invoices/services/invoiceConversionService.ts',
-    'src/hooks/useInvoiceSave.ts',
+    'src/modules/invoices/services/invoiceLifecycleService.ts',
   ]
 
-  for (const file of files) {
-    const source = code(file)
+  for (const file of nonFeedbackModules) {
     assert.doesNotMatch(
-      source,
-      /syncToCps|applyDownstreamFeedback|pushToCps|feedbackToCps|updateCpsFrom(Invoice|Quotation)/i,
-      `${file} must not implement feedback`,
+      code(file),
+      FEEDBACK_REFERENCE,
+      `${file} must not implement downstream feedback`,
     )
-    // cps_rows are only ever removed (Phase 1 delete cleanup); no Phase 2.5
-    // file rewrites them from downstream values.
+  }
+
+  for (const file of [...feedbackModules, ...nonFeedbackModules]) {
+    // cps_rows are only ever removed or inserted by the CPS editor; no module
+    // rewrites them from downstream values at the client.
     assert.doesNotMatch(
-      source,
+      code(file),
       /from\('cps_rows'\)[\s\S]{0,120}?\.update\(/,
-      `${file} must not rewrite CPS rows`,
+      `${file} must not rewrite CPS rows directly`,
     )
-    // cps_sheets keeps only the pre-existing Phase 1 archive/status updates;
-    // no Phase 2.5 file writes CPS commercial fields into the document.
+    // cps_sheets keeps only the pre-existing archive/status updates; no module
+    // writes CPS commercial fields into the document.
     assert.doesNotMatch(
-      source,
+      code(file),
       /from\('cps_sheets'\)[\s\S]{0,120}?\.update\(\{[^}]*\b(sp|cp|image_url|specification|description)\s*:/,
       `${file} must not write CPS commercial fields`,
     )
   }
+})
+
+// The approved feedback contract is exactly three fields. The downstream
+// commercial price is a selling price, so `cp` is never a feedback target.
+test('feedback writes only sp, description and image_url, and never cp', () => {
+  const planner = read('src/domain/cps/feedback.ts')
+  assert.match(planner, /CPS_FEEDBACK_FIELDS = \['sp', 'description', 'image_url'\] as const/)
+
+  const migration = read(
+    'supabase/migrations/20261005160000_tenant_rpc_cps_downstream_feedback.sql',
+  )
+  // The RPC refuses any other field whatever a caller sends.
+  assert.match(migration, /IF v_field NOT IN \('sp', 'description', 'image_url'\) THEN/)
+  // The writer touches exactly the description column and the cells payload.
+  assert.match(
+    migration,
+    /UPDATE __SCHEMA__\.cps_rows[\s\S]{0,80}?SET description = v_new_description,[\s\S]{0,40}?cells = v_new_cells/,
+  )
+  assert.doesNotMatch(migration, /'cp'/, 'cp must never be a feedback field')
 })
 
 test('the one-off RPC generator stays reproducible and guarded', () => {

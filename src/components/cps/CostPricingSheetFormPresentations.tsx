@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   ArrowUp,
   Camera,
-  Check,
   ChevronDown,
   Columns3,
   Copy,
@@ -603,39 +602,4 @@ export function CostPricingSheetDesktopForm(props: CostPricingSheetFormProps) {
       </main>
     </div>
   )
-}
-
-export function CostPricingSheetMobileFoldForm(props: CostPricingSheetFormProps) {
-  return (
-    <div className="cps-form">
-      <div className="cps-mobile-wrap">
-        <TopBar {...props} mobile />
-        <MetadataSection cps={props.cps} onPatchCps={props.onPatchCps} onOpenClientPicker={props.onOpenClientPicker} onClearClient={props.onClearClient} />
-        <ItemsSection {...props} />
-        {props.hasUndo ? (
-          <div className="cps-undo">
-            <span>Markup applied. SP values materialized; CP, quantities, and groups untouched.</span>
-            <button type="button" className="cps-cbtn primary" onClick={props.onUndoMarkup}>Undo Markup</button>
-          </div>
-        ) : null}
-        <TotalsBlock totals={props.totals} formatters={props.formatters} />
-        <NotesSection cps={props.cps} onPatchCps={props.onPatchCps} />
-      </div>
-      <button type="button" className="cps-phone-fab" onClick={props.onSave} disabled={props.saving} aria-label="Save Cost & Pricing Sheet">
-        {props.saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-      </button>
-    </div>
-  )
-}
-
-export function CopySummaryButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button type="button" className="cps-tool" onClick={onClick}>
-      <Copy size={12} /> Duplicate Row
-    </button>
-  )
-}
-
-export function CheckIcon() {
-  return <Check size={12} />
 }

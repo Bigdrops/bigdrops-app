@@ -1,4 +1,3 @@
-import { resolveAuditActor } from '@/lib/audit'
 import type { TenantClient } from '@/lib/tenantClient'
 import { normalizeChainId, normalizeLineageId } from './lineage'
 import { readChainAuthority } from './lineageStore'
@@ -48,6 +47,12 @@ function documentColumnFor(documentType: CpsFeedbackDocumentType): string {
 /**
  * Read the persisted downstream item rows. This is the before-state for change
  * detection and it is read from the database, not from mutable editor state.
+ *
+ * A read failure THROWS. It must never be flattened into an empty before-state:
+ * an empty baseline would classify every linked row as "added downstream",
+ * which is indistinguishable from a genuinely changed row and would silently
+ * suppress the feedback the user believes they performed. Callers decide how to
+ * report the failure; they never treat it as "nothing changed".
  */
 export async function loadCpsFeedbackRows(
   tenantClient: TenantClient,
@@ -65,7 +70,9 @@ export async function loadCpsFeedbackRows(
     .eq(documentColumnFor(documentType), id)
     .order('sort_order')
 
-  if (error) return []
+  if (error) {
+    throw new Error(error.message || 'Unable to read the downstream item baseline.')
+  }
   return (data as Record<string, unknown>[] | null) ?? []
 }
 
@@ -122,6 +129,17 @@ export async function resolveCpsFeedbackContext(
 export interface CpsFeedbackActor {
   id: string | null
   label: string
+}
+
+/**
+ * Resolve the audit actor lazily. The audit module reaches the Supabase
+ * browser client, so it is imported only when the caller does not supply an
+ * actor. This keeps the planner and its persistence layer loadable — and
+ * testable — without a browser environment.
+ */
+async function resolveDefaultActor(): Promise<CpsFeedbackActor> {
+  const { resolveAuditActor } = await import('@/lib/audit')
+  return resolveAuditActor()
 }
 
 export interface CpsFeedbackPayload {
@@ -206,30 +224,53 @@ export interface CpsFeedbackOutcome {
 
 const NOT_APPLICABLE: CpsFeedbackOutcome = { status: 'not-applicable', applied: 0, skipped: 0 }
 
+export interface CpsFeedbackSaveInput {
+  documentType: CpsFeedbackDocumentType
+  documentId: string | null | undefined
+  documentNumber?: string | null
+  /** The document's persisted CPS root, when the document carries one. */
+  sourceCpsId?: string | null
+  chainId: string | null | undefined
+  beforeRows: readonly Record<string, unknown>[] | null | undefined
+  afterRows: readonly Record<string, unknown>[] | null | undefined
+  actor?: CpsFeedbackActor
+}
+
+export interface PreparedCpsFeedback {
+  /**
+   * True when the authority gate passed: the chain exists and the saving
+   * document is the document that currently owns it. A `true` gate with a null
+   * payload is an ordinary save that changed nothing approved.
+   */
+  allowed: boolean
+  /** Serialized RPC payload, or null when there is nothing to apply. */
+  payload: CpsFeedbackPayload | null
+  /** Rows the planner could not use. Diagnostic only; never a retarget. */
+  skipped: number
+}
+
 /**
- * Plan and apply controlled downstream feedback for one document save.
+ * Plan one save and serialize the result for the tenant RPC.
  *
- * Never throws: the caller decides how to surface a failure. A failure is
- * always reported through `status` and `error`, so it can never be mistaken
- * for a successful synchronization.
+ * Both feedback paths share this exact planning step:
+ *  - the Invoice path passes `payload` as `p_cps_feedback` into the composite
+ *    invoice save RPC, so the mutation commits inside that transaction;
+ *  - the Quotation path passes it to `apply_cps_item_feedback_transaction`
+ *    after its item rows persist.
+ *
+ * Reading before-state from the database (never from mutable editor state) and
+ * re-validating authority in SQL mean a stale or forged plan cannot retarget a
+ * CPS row.
  */
-export async function runCpsDownstreamFeedback(
+export async function prepareCpsFeedbackPayload(
   tenantClient: TenantClient,
-  input: {
-    entityId: string | null
-    documentType: CpsFeedbackDocumentType
-    documentId: string | null | undefined
-    documentNumber?: string | null
-    sourceCpsId?: string | null
-    chainId: string | null | undefined
-    beforeRows: readonly Record<string, unknown>[] | null | undefined
-    afterRows: readonly Record<string, unknown>[] | null | undefined
-    actor?: CpsFeedbackActor
-  },
-): Promise<CpsFeedbackOutcome> {
+  input: CpsFeedbackSaveInput,
+): Promise<PreparedCpsFeedback> {
   const chainId = normalizeChainId(input.chainId)
   const sourceCpsId = normalizeLineageId(input.sourceCpsId)
-  if (!chainId && !sourceCpsId) return NOT_APPLICABLE
+  if (!chainId && !sourceCpsId) {
+    return { allowed: false, payload: null, skipped: 0 }
+  }
 
   const context = await resolveCpsFeedbackContext(tenantClient, {
     documentType: input.documentType,
@@ -249,20 +290,44 @@ export async function runCpsDownstreamFeedback(
     afterRows: input.afterRows,
   })
 
-  if (!plan.ok) return NOT_APPLICABLE
+  if (!plan.ok) return { allowed: false, payload: null, skipped: plan.skipped.length }
 
-  const actor = input.actor ?? (await resolveAuditActor())
-  const payload = buildCpsFeedbackPayload(plan, actor)
-  if (!payload) return { status: 'no-change', applied: 0, skipped: plan.skipped.length }
+  const actor = input.actor ?? (await resolveDefaultActor())
+  return {
+    allowed: true,
+    payload: buildCpsFeedbackPayload(plan, actor),
+    skipped: plan.skipped.length,
+  }
+}
 
-  return applyCpsFeedbackPayload(tenantClient, input.entityId, payload, plan)
+/**
+ * Plan and apply controlled downstream feedback for one document save.
+ *
+ * Used by the Quotation compatibility path, where the item rows are written by
+ * the client and the feedback is applied by a follow-up transactional RPC.
+ *
+ * Never throws: the caller decides how to surface a failure. A failure is
+ * always reported through `status` and `error`, so it can never be mistaken
+ * for a successful synchronization.
+ */
+export async function runCpsDownstreamFeedback(
+  tenantClient: TenantClient,
+  input: CpsFeedbackSaveInput & { entityId: string | null },
+): Promise<CpsFeedbackOutcome> {
+  const prepared = await prepareCpsFeedbackPayload(tenantClient, input)
+  if (!prepared.allowed) return NOT_APPLICABLE
+  if (!prepared.payload) {
+    return { status: 'no-change', applied: 0, skipped: prepared.skipped }
+  }
+
+  return applyCpsFeedbackPayload(tenantClient, input.entityId, prepared.payload, prepared.skipped)
 }
 
 async function applyCpsFeedbackPayload(
   tenantClient: TenantClient,
   entityId: string | null,
   payload: CpsFeedbackPayload,
-  plan: CpsFeedbackPlan,
+  skippedDiagnostics: number,
 ): Promise<CpsFeedbackOutcome> {
   const { data, error } = await tenantClient.rpc('apply_cps_item_feedback_transaction', {
     p_entity_id: entityId,
@@ -273,7 +338,7 @@ async function applyCpsFeedbackPayload(
     return {
       status: 'failed',
       applied: 0,
-      skipped: plan.skipped.length,
+      skipped: skippedDiagnostics,
       error: error.message || 'CPS feedback transaction failed.',
     }
   }
@@ -285,10 +350,19 @@ async function applyCpsFeedbackPayload(
 
   const status = String(result?.status ?? '')
   if (status === 'authority-mismatch') {
-    return { status: 'authority-mismatch', applied: 0, skipped: plan.skipped.length }
+    return { status: 'authority-mismatch', applied: 0, skipped: skippedDiagnostics }
   }
   if (status === 'no-op') {
     return { status: 'no-op', applied: 0, skipped: Number(result?.skipped ?? 0) }
+  }
+  if (status !== 'applied') {
+    // Any unexpected status is a failure, never a silent success.
+    return {
+      status: 'failed',
+      applied: 0,
+      skipped: skippedDiagnostics,
+      error: `Unexpected feedback status: ${status || 'unknown'}`,
+    }
   }
 
   return {
