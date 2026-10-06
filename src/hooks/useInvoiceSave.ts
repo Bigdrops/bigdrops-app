@@ -24,6 +24,12 @@ import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { assertIdentityImmutable } from '@/domain/invoice/assertIdentityImmutable'
+import { normalizeChainId } from '@/domain/cps/lineage'
+import {
+  loadCpsFeedbackRows,
+  prepareCpsFeedbackPayload,
+  type CpsFeedbackPayload,
+} from '@/domain/cps/feedbackStore'
 import type { ComputedItem, ComputedGroup } from '@/lib/Calculations'
 import { useDocumentSave } from './useDocumentSave'
 import type { DocumentSaveStrategy } from './useDocumentSave'
@@ -111,6 +117,49 @@ interface UseInvoiceSaveParams {
 
 let _validatedProject: any = null
 let _updatedInvoice: any = null
+
+/**
+ * Phase 3 — plan the approved downstream feedback for this Invoice save.
+ *
+ * An Invoice only carries feedback authority when it descends from a Cost &
+ * Pricing Sheet through a conversion chain. An Invoice with no chain returns
+ * null here, so no extra read and no extra RPC argument is ever issued for the
+ * common (non-CPS) case.
+ *
+ * The plan is returned to `persist`, which hands it to the composite save RPC
+ * as `p_cps_feedback`. The mutation therefore commits inside the invoice save
+ * transaction, and the tenant RPC re-validates authority and lineage before it
+ * writes anything.
+ *
+ * A before-state read failure is logged and refuses feedback: an unverified
+ * diff never writes to a CPS row, and it is never reported as a success.
+ */
+async function buildInvoiceFeedbackPayload(
+  input: UseInvoiceSaveParams,
+  afterRows: Array<Record<string, unknown>>,
+  invoiceId: string | null | undefined,
+): Promise<CpsFeedbackPayload | null> {
+  const chainId = normalizeChainId(input.initialInvoiceSnapshot?.conversion_chain_id)
+  if (!chainId) return null
+
+  try {
+    const beforeRows = await loadCpsFeedbackRows(input.tenantClient, 'invoice', invoiceId as string)
+    const prepared = await prepareCpsFeedbackPayload(input.tenantClient, {
+      documentType: 'invoice',
+      documentId: invoiceId,
+      documentNumber:
+        input.initialInvoiceSnapshot?.invoice_number ?? input.invoice?.invoice_number ?? null,
+      sourceCpsId: input.initialInvoiceSnapshot?.source_cps_id ?? null,
+      chainId,
+      beforeRows,
+      afterRows,
+    })
+    return prepared.payload
+  } catch (feedbackErr) {
+    console.error('CPS downstream feedback skipped (baseline read failed):', feedbackErr)
+    return null
+  }
+}
 
 const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
   async validate(input) {
@@ -351,11 +400,16 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
 
     if (entityId && !isCreate) {
       payload.id = id
+      // Phase 3: the approved downstream feedback plan travels with the save,
+      // so the CPS mutation and both causal audit events commit in the SAME
+      // transaction as the invoice and its item rows.
+      const p_cps_feedback = await buildInvoiceFeedbackPayload(input, itemsToSave, id)
       const { error } = await tenantClient.rpc('save_invoice_with_items_transaction', {
         p_entity_id: entityId,
         p_invoice_payload: payload,
         p_items: itemsToSave,
         p_mode: 'update',
+        ...(p_cps_feedback ? { p_cps_feedback } : {}),
       })
       return { data: null, error }
     }

@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { memo, useEffect, useId, useRef, useState } from 'react'
 import {
+  AlignLeft,
   Camera,
   ChevronDown,
   ChevronUp,
   Copy,
-  GripVertical,
-  ImageIcon,
+  Loader2,
   Plus,
   X,
 } from 'lucide-react'
@@ -17,7 +17,6 @@ import { feedback } from '@/lib/feedback'
 import UnitInput from '@/components/UnitInput'
 import { useItemSuggestionEngine } from '@/modules/item-library/hooks/useItemSuggestionEngine'
 import { getRecognizedHistoryPriceActionValue } from '@/modules/item-library/domain/invoiceSuggestionPriceContext'
-import { fieldCls, labelCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { normalizeQuantity } from '@/domain/invoice'
 import { formatNaira } from '@/lib/formatters/money'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
@@ -27,22 +26,6 @@ import type { ItemSuggestion } from '@/modules/item-library/types'
 
 const CLOUD_NAME = 'ddhqvv77g'
 const UPLOAD_PRESET = 'ml_default'
-
-interface ItemMiniBtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode
-}
-
-function ItemMiniBtn({ children, className = '', ...props }: ItemMiniBtnProps) {
-  return (
-    <button
-      type="button"
-      className={`flex h-8 w-8 items-center justify-center rounded-[8px] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)] transition hover:bg-[var(--bd-bg3)] hover:text-[var(--bd-text2)] ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-}
 
 function getSuggestionPriceLabel(suggestion: ItemSuggestion) {
   const clientPrice = suggestion.last_price_for_client
@@ -135,7 +118,6 @@ function MobileItemCard({
   const [uploading, setUploading] = useState(false)
   const [descriptionFocused, setDescriptionFocused] = useState(false)
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const suggestionRootRef = useRef<HTMLDivElement>(null)
   const suggestionListId = useId()
 
@@ -344,21 +326,59 @@ function MobileItemCard({
     }
   }
 
+  const hasSub = Boolean(item.sub_description?.trim())
+
   return (
-    <div className="relative border-b border-[var(--bd-border-soft)] bg-[var(--bd-surface)] px-0 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50">
-      <div className="grid grid-cols-[16px_minmax(0,1fr)_30px] items-start gap-2">
-        {/* Row Number & Enumeration */}
-        <div className="flex w-4 flex-col items-center gap-0.5 pt-2">
-          <div className="text-[10px] font-bold leading-none text-[var(--bd-text3)]">{number}</div>
-          <div
-            {...(dragHandleProps || {})}
-            className="cursor-grab text-[var(--bd-text4)] transition-colors hover:text-[var(--bd-text2)] active:cursor-grabbing"
-          >
-            <GripVertical className="h-3.5 w-3.5" />
+    <article className={`cps-item${item.image_url ? ' has-photo' : ''}`}>
+      <button
+        type="button"
+        className="cps-ear"
+        title="Remove item"
+        aria-label={`Remove item ${number}`}
+        onClick={() => onRemove(index)}
+      >
+        <X />
+      </button>
+
+      <div className="cps-ihead">
+        <div className="cps-row-rail">
+          <span className="cps-idx" {...(dragHandleProps || {})}>{number}</span>
+          <div className="cps-rmid">
+            <button
+              type="button"
+              className="cps-rbtn"
+              title="Move up"
+              aria-label="Move up"
+              disabled={isFirst}
+              onClick={() => onMoveUp(index)}
+            >
+              <ChevronUp />
+            </button>
+            <button
+              type="button"
+              className="cps-rbtn"
+              title="Move down"
+              aria-label="Move down"
+              disabled={isLast}
+              onClick={() => onMoveDown(index)}
+            >
+              <ChevronDown />
+            </button>
           </div>
+          {onDuplicate && (
+            <button
+              type="button"
+              className="cps-rbtn"
+              title="Duplicate item"
+              aria-label="Duplicate item"
+              onClick={() => onDuplicate(index)}
+            >
+              <Copy />
+            </button>
+          )}
         </div>
 
-        <div className="min-w-0 flex-1 space-y-3">
+        <div className="cps-idesc">
           {/* Main Description */}
           <div className="relative">
             <div ref={suggestionRootRef}>
@@ -375,7 +395,7 @@ function MobileItemCard({
                 aria-expanded={hasSuggestionPanel}
                 aria-controls={hasSuggestionPanel ? suggestionListId : undefined}
                 aria-activedescendant={activeSuggestion ? `${suggestionListId}-${activeSuggestionIndex}` : undefined}
-                className="min-h-[38px] w-full resize-none rounded-[8px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] p-2.5 text-[13px] font-medium text-[var(--bd-text)] shadow-none focus:border-[var(--bd-indigo-border)] focus:bg-[var(--bd-surface)] focus-visible:ring-0"
+                className="cps-field cps-desc"
               />
             {hasSuggestionPanel && (
               <div
@@ -444,126 +464,148 @@ function MobileItemCard({
             ) : null}
           </div>
 
-          {/* Sub-description Collapse */}
-          {showDetails && (
-            <div className="rounded-[var(--bd-radius)] border border-[var(--bd-border-soft)] bg-[var(--bd-bg2)] p-2">
+          <div className={`cps-subrow${hasSub ? ' has' : ''}${showDetails ? ' open' : ''}`}>
+            <button
+              type="button"
+              className={`cps-subtog${hasSub ? '' : ' sub-add'}`}
+              aria-expanded={showDetails}
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              <span className="stog-icon">{hasSub ? <AlignLeft /> : <Plus />}</span>
+              {hasSub ? (
+                <span className="stog-label">
+                  <span className="sub-prev-text">{item.sub_description?.trim()}</span>
+                </span>
+              ) : (
+                <span className="stog-label">Add sub description</span>
+              )}
+              <span className="stog-chev"><ChevronDown /></span>
+            </button>
+            {showDetails ? (
               <Textarea
-                placeholder="Product sub-description, specs, or notes..."
+                placeholder="Sub description — extra detail under the main description..."
                 value={item.sub_description || ''}
                 onChange={(e) => onUpdate(index, 'sub_description', e.target.value)}
-                className="min-h-[32px] w-full resize-none border-0 bg-transparent p-0 text-[12px] font-medium text-[var(--bd-text2)] shadow-none focus-visible:ring-0"
+                className="cps-field cps-subfield"
               />
-            </div>
+            ) : null}
+          </div>
+
+          {isVisible('make') && (
+            <input
+              className="cps-field"
+              placeholder="Make / brand"
+              value={(item.make as string) || ''}
+              onChange={(e) => onUpdate(index, 'make', e.target.value)}
+              aria-label={`Make or brand for item ${number}`}
+            />
           )}
 
-          {/* Image Preview */}
-          {item.image_url && (
-            <div className="group relative w-fit">
-              <img src={item.image_url} alt="" className="h-20 w-20 rounded-[var(--bd-radius)] border border-[var(--bd-border)] object-cover shadow-sm" />
+          {item.image_url ? (
+            <span className="cps-thumb">
+              <img src={item.image_url} alt="Item photo" />
               <button
                 type="button"
+                className="cps-photo-x"
+                title="Remove photo"
+                aria-label="Remove photo"
                 onClick={() => onUpdate(index, 'image_url', null)}
-                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--bd-rose)] text-white shadow-sm"
               >
-                <X className="h-3.5 w-3.5" />
+                <X />
               </button>
-            </div>
-          )}
-
-          {/* Form Actions (Sub-desc, Photo) */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setShowDetails(!showDetails)}
-              className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold transition ${showDetails ? 'border-[var(--bd-indigo)] bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)] hover:bg-[var(--bd-bg2)]'}`}
-            >
-              {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-              Sub-desc
-            </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold transition ${item.image_url ? 'border-[var(--bd-emerald)] bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)]' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)] hover:bg-[var(--bd-bg2)]'}`}
-            >
-              <Camera className="h-3 w-3" />
+            </span>
+          ) : (
+            <label className="cps-cam">
+              {uploading ? <Loader2 className="animate-spin" /> : <Camera />}
               Photo
-            </button>
-            <input ref={fileInputRef} type="file" accept={IMAGE_ACCEPT_ATTRIBUTE} className="hidden" onChange={handleImageUpload} />
-          </div>          {/* Compact Inputs Row */}
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2 pt-1 sm:grid-cols-5">
-            {isVisible('make') && (
-              <div className="min-w-0">
-                <label className={labelCls}>Make</label>
-                <Input value={(item.make as string) || ''} onChange={(e) => onUpdate(index, 'make', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
-              </div>
-            )}
+              <input
+                type="file"
+                accept={IMAGE_ACCEPT_ATTRIBUTE}
+                className="sr-only"
+                onChange={handleImageUpload}
+              />
+            </label>
+          )}
+        </div>
+      </div>
+
+      <div className="cps-idata">
+          <div className="cps-fgrid">
             {isVisible('quantity') && (
-            <div className="min-w-0">
-              <label className={labelCls}>Qty</label>
-              <NumericInput min={1} value={(item.quantity as number) ?? 1} onChange={(val) => onUpdate(index, 'quantity', normalizeQuantity(val, 1))} className="h-9 px-2 text-center text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
-            </div>
+            <NumericInput min={1} value={(item.quantity as number) ?? 1} onChange={(val) => onUpdate(index, 'quantity', normalizeQuantity(val, 1))} placeholder="Qty *" aria-label={`Quantity for item ${number}`} className="cps-field mono" />
             )}
             {isVisible('unit') && (
-              <div className="min-w-0">
-                <label className={labelCls}>Unit</label>
-                <UnitInput value={(item.unit as string) || ''} onChange={(val: string) => onUpdate(index, 'unit', val)} />
-              </div>
+              <UnitInput value={(item.unit as string) || ''} onChange={(val: string) => onUpdate(index, 'unit', val)} />
             )}
+          </div>
+
+          <div className="cps-comm-grid">
             {isVisible('unit_price') && (
-            <div className="min-w-0">
-              <label className={labelCls}>Rate</label>
-              <NumericInput value={(item.unit_price as number) ?? 0} onChange={(val) => onUpdate(index, 'unit_price', val)} className="h-9 px-2.5 text-right font-mono text-[13px] font-bold rounded-lg border-[var(--bd-border-soft)]" />
+            <label className="cps-cfield sell">
+              <span className="cf-lab">Rate</span>
+              <NumericInput value={(item.unit_price as number) ?? 0} onChange={(val) => onUpdate(index, 'unit_price', val)} aria-label={`Rate for item ${number}`} className="cps-field mono" />
+            </label>
+            )}
+            {isVisible('amount') && (
+            <div className="cps-cfield sell">
+              <span className="cf-lab">Subtotal</span>
+              <div className="cps-fcell tsp bd-result" aria-label={`Subtotal for item ${number}`}>
+                <b>{formatNaira(computedAmount)}</b>
+              </div>
             </div>
             )}
+          </div>
+
+          <div className="cps-fgrid">
             {isVisible('partNo') && (
-              <div className="min-w-0">
-                <label className={labelCls}>Part No.</label>
-                <Input value={(item.partNo as string) || ''} onChange={(e) => onUpdate(index, 'partNo', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
-              </div>
+              <label className="cps-cfield">
+                <span className="cf-lab">Part No.</span>
+                <Input value={(item.partNo as string) || ''} onChange={(e) => onUpdate(index, 'partNo', e.target.value)} className="cps-field" />
+              </label>
             )}
             {isVisible('condition') && (
-              <div className="min-w-0">
-                <label className={labelCls}>Condition</label>
-                <Input value={(item.condition as string) || ''} onChange={(e) => onUpdate(index, 'condition', e.target.value)} className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]" />
-              </div>
+              <label className="cps-cfield">
+                <span className="cf-lab">Condition</span>
+                <Input value={(item.condition as string) || ''} onChange={(e) => onUpdate(index, 'condition', e.target.value)} className="cps-field" />
+              </label>
             )}
 
             {isVisible('install_rate') && (
-              <div className="min-w-0">
-                <label className={labelCls}>{getColumn('install_rate')?.label || 'Install'}</label>
+              <label className="cps-cfield">
+                <span className="cf-lab">{getColumn('install_rate')?.label || 'Install'}</span>
                 <NumericInput
                   value={item.install_rate_override ? (item.install_rate as number) ?? '' : ''}
                   placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto'}
                   onChange={(val) => {
                     onUpdate(index, '__install_rate_override', val === 0 ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: val })
                   }}
-                  className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                  className="cps-field"
                 />
-              </div>
+              </label>
             )}
 
             {isVisible('vat_rate') && (
-              <div className="min-w-0">
-                <label className={labelCls}>{getColumn('vat_rate')?.label || 'VAT %'}</label>
+              <label className="cps-cfield">
+                <span className="cf-lab">{getColumn('vat_rate')?.label || 'VAT %'}</span>
                 <NumericInput
                   value={(item.vat_rate as number) ?? ''}
                   placeholder="0"
                   onChange={(val) => onUpdate(index, 'vat_rate', val === 0 ? null : val)}
-                  className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                  className="cps-field"
                 />
-              </div>
+              </label>
             )}
 
             {isVisible('discount_rate') && (
-              <div className="min-w-0">
-                <label className={labelCls}>{getColumn('discount_rate')?.label || 'Disc %'}</label>
+              <label className="cps-cfield">
+                <span className="cf-lab">{getColumn('discount_rate')?.label || 'Disc %'}</span>
                 <NumericInput
                   value={(item.discount_rate as number) ?? ''}
                   placeholder="0"
                   onChange={(val) => onUpdate(index, 'discount_rate', val === 0 ? null : val)}
-                  className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                  className="cps-field"
                 />
-              </div>
+              </label>
             )}
 
             {/* Custom Columns */}
@@ -571,15 +613,15 @@ function MobileItemCard({
               if (!isVisible(col.key)) return null
               const val = (item.custom_data || {})[col.key] ?? ''
               return (
-                <div key={col.key} className="min-w-0">
-                  <label className={labelCls}>{col.label}</label>
+                <label key={col.key} className="cps-cfield">
+                  <span className="cf-lab">{col.label}</span>
                   {col.type === 'number' ? (
                     <NumericInput
                       value={val}
                       onChange={(nextVal) => {
                         onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: nextVal })
                       }}
-                      className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                      className="cps-field"
                     />
                   ) : (
                     <Input
@@ -587,64 +629,32 @@ function MobileItemCard({
                       onChange={(e) => {
                         onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: e.target.value })
                       }}
-                      className="h-9 px-2.5 text-[13px] rounded-lg border-[var(--bd-border-soft)]"
+                      className="cps-field"
                     />
                   )}
-                </div>
+                </label>
               )
             })}
           </div>
-
-          {isVisible('amount') && (
-          <div className="flex items-end justify-between gap-3 rounded-[12px] border border-[var(--bd-border-soft)] bg-[var(--bd-bg)] px-3 py-2.5">
-            <div className="min-w-0">
-              <div className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--bd-text3)]">Subtotal</div>
-            </div>
-            <div className="min-w-0 text-right">
-              <div className="font-mono text-[18px] font-extrabold tracking-[-0.03em] text-[var(--bd-text)]">
-                {formatNaira(computedAmount).replace('₦', '').trim()}
-              </div>
-            </div>
-          </div>
-          )}
-        </div>
-
-        {/* Vertical Actions */}
-        <div className="flex w-[30px] flex-col gap-1 py-1">
-          <button onClick={() => onMoveUp(index)} disabled={isFirst} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border transition ${isFirst ? 'cursor-not-allowed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)] opacity-50' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] hover:bg-[var(--bd-bg2)]'}`}>
-            <ChevronUp className="h-3.5 w-3.5" />
-          </button>
-          <button onClick={() => onMoveDown(index)} disabled={isLast} className={`flex h-7 w-7 items-center justify-center rounded-[8px] border transition ${isLast ? 'cursor-not-allowed border-[var(--bd-border-soft)] bg-[var(--bd-bg)] text-[var(--bd-text4)] opacity-50' : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text2)] hover:bg-[var(--bd-bg2)]'}`}>
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-          {onUngroup && item.group_id && (
-            <button onClick={() => onUngroup(index)} title="Remove from group" className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)] transition hover:brightness-95">
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-          <button onClick={() => onRemove(index)} className="flex h-7 w-7 items-center justify-center rounded-[8px] border border-[var(--bd-rose-border)] bg-[var(--bd-rose-bg)] text-[var(--bd-rose)] transition hover:brightness-95">
-            <X className="h-3.5 w-3.5" />
-          </button>
-          {onDuplicate && (
-            <button onClick={() => onDuplicate(index)} title="Duplicate Row" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text3)] transition hover:bg-[var(--bd-bg2)]">
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
       </div>
 
-      {/* Insert Below Trigger */}
-      <div className="ml-6 mt-1">
+      {onUngroup && item.group_id && (
         <button
           type="button"
-          onClick={() => onInsertBelow(index)}
-          className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--bd-text4)] transition hover:text-[var(--bd-indigo)]"
+          onClick={() => onUngroup(index)}
+          className="cps-ins"
         >
-          <Plus className="h-3 w-3" />
-          Insert below
+          − Remove from group
         </button>
-      </div>
-    </div>
+      )}
+      <button
+        type="button"
+        onClick={() => onInsertBelow(index)}
+        className="cps-ins"
+      >
+        + Insert below
+      </button>
+    </article>
   )
 }
 

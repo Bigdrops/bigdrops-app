@@ -4,8 +4,6 @@ import {
   ChevronRight,
   FileText,
   ScrollText,
-  Truck,
-  Users,
   X,
 } from 'lucide-react'
 import ColumnManager from '@/components/ColumnManager'
@@ -39,11 +37,13 @@ import {
   CompactSelectField,
   MobileField,
   MobileTextField,
-  SectionLabel,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { FormLineItems } from '@/components/document/FormLineItems'
 import { FormFooter } from '@/components/document/FormFooter'
+import { DocumentSectionHead, DocumentTopBar } from '@/components/document/DocumentFormPresentation'
 import { DateField } from '@/components/ui/date-field'
+import '@/components/cps/cost-pricing-sheet-form.css'
+import '@/components/document/document-cps-overrides.css'
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 const WaybillImportSheet = lazy(() => import('./WaybillImportSheet').then(m => ({ default: m.WaybillImportSheet })))
@@ -398,16 +398,23 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   }, [dirty])
 
   return (
-    <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-2">
-      <div className="mx-auto w-full max-w-[780px] px-3 sm:px-4">
-        <div className="space-y-6 pb-24">
+    <div className="cps-form bd-document-form bd-form-shell bd-custom-scrollbar overflow-x-hidden bg-[var(--bg)] text-[var(--ink)]">
+      <DocumentTopBar
+        title="Waybill"
+        subtitle={waybill.waybill_number || (type === 'external' ? 'External delivery' : 'Internal transfer')}
+        saveLabel="Save Waybill"
+        onBack={onClose}
+        onSave={handleSave}
+        disabled={saving}
+      />
+      <div className="bd-document-room">
+        <div className="bd-document-grid grid gap-7 pb-24 lg:items-start lg:pb-10">
+          <main className="space-y-6">
 
           {/* Waybill Header */}
-          <div>
-            <SectionLabel color="indigo">
-              <span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> Waybill Header</span>
-            </SectionLabel>
-            <div className="mt-4 rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-6">
+          <section className="cps-sec">
+            <DocumentSectionHead number="1." title="Document details" meta={waybill.waybill_number || 'New waybill'} />
+            <div className="mt-4 cps-panel">
               <div className="space-y-5">
                 <div className="flex items-center gap-2">
                   <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] ${type === 'external' ? 'border-[var(--bd-primary)]/20 bg-[var(--bd-primary)]/10 text-[var(--bd-primary)]' : 'border-[var(--bd-warning)]/20 bg-[var(--bd-warning)]/10 text-[var(--bd-warning)]'}`}>
@@ -421,18 +428,16 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                     <button
                       type="button"
                       onClick={() => setClientPickerOpen(true)}
-                      className="flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3 text-left transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]"
+                      className={`cps-clientpick full ${waybill.client_name ? 'filled' : ''}`}
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
+                      <span className="ci">
                         <BriefcaseBusiness className="h-4.5 w-4.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="overflow-hidden text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Client</div>
-                        <div className="mt-0.5 truncate text-[14px] font-bold text-[var(--bd-text)]">
-                          {waybill.client_name || 'Select a client'}
-                        </div>
-                      </div>
-                      <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />
+                      </span>
+                      <span className="ct">
+                        <b>{waybill.client_name || 'Select a client'}</b>
+                        <small>Delivery account · Client</small>
+                      </span>
+                      <ChevronRight className="chev" />
                     </button>
                   </div>
                 )}
@@ -497,31 +502,27 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                   <button
                     type="button"
                     onClick={waybill.client_id ? () => setInvoiceSheetOpen(true) : undefined}
-                    className={`flex w-full items-center gap-3 rounded-[var(--bd-radius-lg)] border border-dashed px-4 py-3 text-left transition ${waybill.client_id ? 'border-[var(--bd-border)] bg-[var(--bd-surface)] hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)]' : 'cursor-not-allowed border-[var(--bd-border)]/60 bg-[var(--bd-surface)]/60 opacity-50'}`}
+                    className={`cps-clientpick full ${customFields.references?.linkedInvoiceNumber ? 'filled' : ''} ${waybill.client_id ? '' : 'cursor-not-allowed opacity-50'}`}
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bd-bg2)] text-[var(--bd-text3)]">
+                    <span className="ci">
                       <FileText className="h-4.5 w-4.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="overflow-hidden text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--bd-text3)]">Linked Invoice</div>
-                      <div className="mt-0.5 text-[14px] font-bold text-[var(--bd-text-muted)]">
-                        {waybill.client_id ? 'Tap to link an invoice' : 'Select a client first'}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4.5 w-4.5 text-[var(--bd-text4)]" />
+                    </span>
+                    <span className="ct">
+                      <b>{waybill.client_id ? 'Tap to link an invoice' : 'Select a client first'}</b>
+                      <small>Linked Invoice</small>
+                    </span>
+                    <ChevronRight className="chev" />
                   </button>
                 )}
               </div>
             )}
-          </div>
+          </section>
 
           {/* Transport Details */}
-          <div>
-            <SectionLabel color="amber">
-              <span className="flex items-center gap-1.5"><Truck className="h-3.5 w-3.5" /> Transport Details</span>
-            </SectionLabel>
-            <div className="mt-4 rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-6">
-              <div className="space-y-4">
+          <section className="cps-sec">
+            <DocumentSectionHead number="2." title="Transport details" meta={waybill.transport_mode || 'Mode not set'} />
+            <div className="mt-4">
+              <div className="cps-dgrid">
                 <MobileField label="Transport Mode">
                   <CompactSelectField
                     value={waybill.transport_mode || 'Blank'}
@@ -570,7 +571,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
           <FormLineItems
             items={items}
@@ -597,13 +598,50 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             onClearAll={handleClearAll}
             invalidRowIndex={invalidRowIndex}
             onClearInvalidRow={() => setInvalidRowIndex(null)}
+            sectionNumber="3."
+            sectionTitle="Waybill items"
           />
+          </main>
+
+          <aside className="space-y-6 lg:sticky lg:top-6">
+            <div className="hidden rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4 shadow-sm lg:block">
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">Waybill workspace</div>
+              <div className="mt-2 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="truncate text-[18px] font-black tracking-tight text-bd-text">
+                    {type === 'external' ? 'External delivery' : 'Internal transfer'}
+                  </h2>
+                  <p className="mt-1 truncate font-mono text-[12px] font-bold text-bd-text-muted">
+                    {waybill.waybill_number || 'Draft waybill'}
+                  </p>
+                </div>
+                <span className="rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface-muted px-2 py-1 font-mono text-[11px] font-bold text-bd-text">
+                  {items.length} {items.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
+              <div className="mt-4 grid gap-2">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="h-11 rounded-[var(--bd-radius)] border border-transparent bg-bd-button-primary-bg text-[13px] font-black text-bd-button-primary-text transition active:scale-[0.98] disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted"
+                >
+                  {saving ? 'Saving...' : 'Save Waybill'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={saving}
+                  className="h-10 rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface text-[12px] font-bold text-bd-text transition hover:bg-bd-surface-muted disabled:text-bd-text-muted"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
 
           {/* Custody Details */}
-          <div>
-            <SectionLabel color="indigo">
-              <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /> Custody Details</span>
-            </SectionLabel>
+          <section className="cps-sec">
+            <DocumentSectionHead number="4." title="Custody details" meta={type === 'external' ? 'Delivery' : 'Transfer'} />
             <div className="grid grid-cols-2 gap-4">
               <MobileTextField label="DELIVERED BY" value={waybill.sender_name} onChange={(e) => updateWaybill('sender_name', e.target.value)} />
               <MobileTextField label="RECEIVED BY" value={waybill.receiver_name} onChange={(e) => updateWaybill('receiver_name', e.target.value)} />
@@ -616,38 +654,43 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                 />
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Signatures */}
-          <SignaturesSection
-            customFields={customFields}
-            updateCustomFields={updateCustomFields}
-          />
+          <section className="cps-sec">
+            <DocumentSectionHead number="5." title="Acknowledgement" meta="Sender and receiver" />
+            <SignaturesSection
+              customFields={customFields}
+              updateCustomFields={updateCustomFields}
+            />
+          </section>
 
           {/* Notes */}
-          <CollapseCard
-            icon={ScrollText}
-            title={notesTitle}
-            open={showNotes}
-            onToggle={() => setShowNotes(!showNotes)}
-            sectionColor="#6366f1"
-          >
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={notesTitle}
-                onChange={(e) => setNotesTitle(e.target.value)}
-                className="w-full rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-2 text-[13px] font-bold text-[var(--bd-text)] outline-none focus:border-[var(--bd-primary)]"
-                placeholder="Notes title"
-              />
-              <Suspense fallback={<div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-10 text-center text-[12px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
-                <RichTextEditor value={waybill.notes ?? ''} onChange={(v) => updateWaybill('notes', v)} placeholder="Add notes..." />
-              </Suspense>
-            </div>
-          </CollapseCard>
+          <section className="cps-sec">
+            <DocumentSectionHead number="6." title="Supporting information" meta="Notes and terms" />
+            <CollapseCard
+              icon={ScrollText}
+              title={notesTitle}
+              open={showNotes}
+              onToggle={() => setShowNotes(!showNotes)}
+              sectionColor="#6366f1"
+            >
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={notesTitle}
+                  onChange={(e) => setNotesTitle(e.target.value)}
+                  className="cps-field w-full"
+                  placeholder="Notes title"
+                />
+                <Suspense fallback={<div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-10 text-center text-[12px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
+                  <RichTextEditor value={waybill.notes ?? ''} onChange={(v) => updateWaybill('notes', v)} placeholder="Add notes..." />
+                </Suspense>
+              </div>
+            </CollapseCard>
 
-          {/* Terms & Conditions */}
-          {showTermsInTableSettings && (
+            {/* Terms & Conditions */}
+            {showTermsInTableSettings && (
             <CollapseCard
               icon={ScrollText}
               title="Terms & Conditions"
@@ -659,8 +702,10 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                 <RichTextEditor value={terms} onChange={setTerms} placeholder="Add terms and conditions..." />
               </Suspense>
             </CollapseCard>
-          )}
+            )}
+          </section>
 
+          </aside>
         </div>
       </div>
 

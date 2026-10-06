@@ -8,6 +8,7 @@ import {
   fieldCls,
   type LinkAttachment,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
+import { DocumentSectionHead } from './DocumentFormPresentation'
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
 
@@ -70,7 +71,8 @@ export function FormNotesTerms({
       : `${referenceLinks.length} ${referenceLinks.length === 1 ? 'link attached' : 'links attached'}`
 
   return (
-    <div className="space-y-0 border-t border-[var(--bd-border-soft)] pt-1">
+    <section className="cps-sec space-y-0">
+      <DocumentSectionHead number="5." title="Supporting information" meta="Notes, signatory, links" />
       {/* Notes & Terms */}
       <CollapseCard
         icon={NotebookText}
@@ -180,6 +182,6 @@ export function FormNotesTerms({
           </div>
         </CollapseCard>
       </div>
-    </div>
+    </section>
   )
 }

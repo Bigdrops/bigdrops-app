@@ -12,12 +12,17 @@ test('mobile item card treats row duplication as optional in shared form flows',
   assert.match(source, /\{onDuplicate\s*&&\s*\(/)
 })
 
-test('mobile item card keeps a tight utility rail and a clean subtotal endpoint', () => {
+test('mobile item card follows CPS rail geometry with no invoice-only action gutter', () => {
   const source = fs.readFileSync(mobileItemCardPath, 'utf8')
 
-  assert.match(source, /grid-cols-\[16px_minmax\(0,1fr\)_30px\]/)
-  assert.match(source, /className="flex w-4 flex-col items-center gap-0\.5 pt-2"/)
+  assert.match(source, /className="cps-ihead"/)
+  assert.match(source, /className="cps-row-rail"/)
+  assert.match(source, /className="cps-idx"/)
+  assert.match(source, /className="cps-rmid"/)
+  assert.match(source, /className="cps-ear"/)
+  assert.match(source, /className="cps-ins"/)
   assert.match(source, />Subtotal</)
+  assert.doesNotMatch(source, /grid-cols-\[36px_minmax\(0,1fr\)_34px\]/)
   assert.doesNotMatch(source, /Quantity × unit rate summary/)
 })
 

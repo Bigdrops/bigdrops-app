@@ -1,14 +1,11 @@
 import { FileInput, FolderPlus, Plus, Settings2, Trash2 } from 'lucide-react'
-import {
-  SectionLabel,
-  ToolbarButton,
-} from '@/components/invoice/mobile/mobileFormPrimitives'
 import MobileItemCard from '@/components/invoice/MobileItemCard'
 import MobileGroupCard from '@/components/invoice/MobileGroupCard'
 import SortableLineItem from '@/components/document/SortableLineItem'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { normalizeQuantity } from '@/domain/invoice'
 import type { ItemContext } from '@/components/shared/itemFieldPolicy'
+import { DocumentSectionHead } from './DocumentFormPresentation'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +56,8 @@ interface FormLineItemsProps {
   onClearAll?: () => void
   invalidRowIndex?: number | null
   onClearInvalidRow?: () => void
+  sectionNumber?: string
+  sectionTitle?: string
 }
 
 export const FormLineItems = React.memo(function FormLineItems({
@@ -66,7 +65,6 @@ export const FormLineItems = React.memo(function FormLineItems({
   groups,
   invoice,
   context: ctx,
-  isQuotation,
   customColumns,
   computedItems,
   computedGroups,
@@ -87,6 +85,8 @@ export const FormLineItems = React.memo(function FormLineItems({
   onClearAll,
   invalidRowIndex,
   onClearInvalidRow,
+  sectionNumber = '2.',
+  sectionTitle = 'Line items',
 }: FormLineItemsProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const lineItemsCount = useMemo(() => items.filter((item) => item.row_type === 'standard').length, [items])
@@ -236,36 +236,31 @@ export const FormLineItems = React.memo(function FormLineItems({
   )
 
   return (
-    <div className="border-b border-[var(--bd-border-soft)] pb-4">
-      <SectionLabel
-        color="#059669"
-        trailing={
-          <span className="inline-flex h-6 items-center font-mono text-[11px] font-bold text-[var(--bd-text3)]">
-            {lineItemsCount} {lineItemsCount === 1 ? 'item' : 'items'}
-          </span>
-        }
-      >
-        Line Items
-      </SectionLabel>
+    <section className="cps-sec">
+      <DocumentSectionHead
+        number={sectionNumber}
+        title={sectionTitle}
+        meta={`${lineItemsCount} ${lineItemsCount === 1 ? 'item' : 'items'}`}
+      />
 
-      <div className="mb-3 flex items-center gap-2 border-b border-[var(--bd-border-soft)] py-2">
-          <ToolbarButton onClick={onOpenImport} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
-            <FileInput className="h-3.5 w-3.5" />
-            <span className="text-[12px]">Import</span>
-          </ToolbarButton>
-          <ToolbarButton onClick={onOpenTableSettings} className="border-[var(--bd-border)] hover:bg-[var(--bd-bg)]">
-            <Settings2 className="h-3.5 w-3.5" />
-            <span className="text-[12px]">Settings</span>
-          </ToolbarButton>
+      <div className="cps-tools">
+          <button type="button" onClick={onOpenImport} className="cps-tool">
+            <FileInput />
+            Import
+          </button>
+          <button type="button" onClick={onOpenTableSettings} className="cps-tool">
+            <Settings2 />
+            Settings
+          </button>
           {onClearAll && lineItemsCount > 0 && (
-            <ToolbarButton onClick={() => setShowClearConfirm(true)} className="ml-auto border-[var(--bd-border)] hover:bg-[var(--bd-rose-bg)] hover:text-[var(--bd-rose)]">
-              <Trash2 className="h-3.5 w-3.5" />
-              <span className="text-[12px]">Clear</span>
-            </ToolbarButton>
+            <button type="button" onClick={() => setShowClearConfirm(true)} className="cps-tool danger">
+              <Trash2 />
+              Clear
+            </button>
           )}
       </div>
 
-      <div className="space-y-0">
+      <div className="cps-items">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={ungroupedItemIds} strategy={verticalListSortingStrategy}>
             {lineItemRows.map((row: any) => {
@@ -320,22 +315,22 @@ export const FormLineItems = React.memo(function FormLineItems({
         </DndContext>
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <div className="cps-createpair">
         <button
           type="button"
           onClick={onAddItem}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] transition hover:border-[var(--bd-amber-border)] hover:bg-[var(--bd-amber-bg)] hover:text-[var(--bd-amber-dark)]"
+          className="cps-cbtn primary"
         >
-          <Plus className="h-4.5 w-4.5" />
+          <Plus />
           Add item
         </button>
         {onAddGroup && (
           <button
             type="button"
             onClick={onAddGroup}
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[var(--bd-radius)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-bold text-[var(--bd-text2)] transition hover:border-[var(--bd-indigo-border)] hover:bg-[var(--bd-indigo-bg)] hover:text-[var(--bd-indigo)]"
+            className="cps-cbtn ghost"
           >
-            <FolderPlus className="h-4.5 w-4.5" />
+            <FolderPlus />
             Add group
           </button>
         )}
@@ -363,6 +358,6 @@ export const FormLineItems = React.memo(function FormLineItems({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </section>
   )
 })

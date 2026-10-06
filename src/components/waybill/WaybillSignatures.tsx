@@ -508,8 +508,8 @@ export function SignaturesSection({
   const totalCaptured = (senderFilled ? 1 : 0) + (receiverFilled ? 1 : 0)
 
   return (
-    <section className="rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--bd-border)] bg-[var(--bd-surface)]">
+    <section className="cps-panel overflow-hidden">
+      <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
         <div className="flex items-center gap-2.5">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)] text-[11px] font-bold uppercase tracking-wider">
             <SignatureIcon className="h-3.5 w-3.5" />

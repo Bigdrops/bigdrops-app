@@ -98,7 +98,7 @@ export default function UnitInput({ value, onChange }: UnitInputProps) {
         onFocus={() => setOpen(true)}
         onKeyDown={handleKeyDown}
         placeholder="Unit"
-        className="w-full"
+        className="cps-field h-10 w-full"
       />
       {open && (
         <Card className="absolute left-0 top-full z-[100] mt-1 min-w-40 max-h-[220px] overflow-y-auto rounded-md border border-zinc-300 bg-bd-card-bg py-0 shadow-xl">

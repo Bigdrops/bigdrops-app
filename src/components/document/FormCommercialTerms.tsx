@@ -6,11 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Percent, Plus, X } from 'lucide-react'
 import {
   fieldCls,
-  SectionLabel,
   labelCls,
   CollapseCard,
   SegmentedControl,
 } from '@/components/invoice/mobile/mobileFormPrimitives'
+import { DocumentSectionHead } from './DocumentFormPresentation'
 
 type CommercialTermsSectionProps = {
   invoice: Record<string, any>
@@ -81,17 +81,17 @@ export function FormCommercialTerms({
     setOpenSections((current) => ({ ...current, [key]: !current[key] }))
 
   return (
-    <div className="border-b border-[var(--bd-border-soft)] pb-4">
+    <section className="cps-sec">
       <div>
-        <SectionLabel color="amber">Commercial Terms</SectionLabel>
-        <div className="grid grid-cols-2 gap-4 border-b border-bd-border pb-4">
+        <DocumentSectionHead number="3." title="Commercial terms" meta={isQuotation ? 'Validity and pricing' : 'Payment and tax'} />
+        <div className="cps-dgrid border-b border-[var(--line)] pb-4">
             <div>
-              <label className={labelCls}>Payment Terms</label>
+              <label className="cps-label">Payment Terms</label>
               <Select 
                 value={String(invoice.payment_terms || 'Custom')} 
                 onValueChange={(value) => updateInvoice('payment_terms', value)}
               >
-                <SelectTrigger className={fieldCls}>
+                <SelectTrigger className="cps-field">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -104,12 +104,12 @@ export function FormCommercialTerms({
               </Select>
             </div>
             <div>
-              <label className={labelCls}>Due / Validity</label>
+              <label className="cps-label">Due / Validity</label>
               <Input
                 value={String(invoice.custom_payment_terms || '')}
                 onChange={(event) => updateInvoice('custom_payment_terms', event.target.value)}
                 placeholder={isQuotation ? 'e.g. 14 days validity' : 'e.g. Due in 14 days'}
-                className={fieldCls}
+                className="cps-field"
               />
             </div>
         </div>
@@ -128,7 +128,7 @@ export function FormCommercialTerms({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>Value</label>
+              <label className={labelCls}>Value</label>
                 <NumericInput
                   min={0}
                   value={Number(invoice.discount || 0)}
@@ -321,6 +321,6 @@ export function FormCommercialTerms({
           </div>
         </CollapseCard>
       </div>
-    </div>
+    </section>
   )
 }

@@ -24,6 +24,12 @@ import type { DocumentSaveStrategy } from './useDocumentSave'
 import { toQuotationItem } from '@/components/quotation/quotationFormUtils'
 import { buildCustomFields } from '@/components/quotation/quotationFormUtils'
 import { assertQuotationIdentityImmutable } from '@/domain/quotation/assertIdentityImmutable'
+import { normalizeChainId } from '@/domain/cps/lineage'
+import {
+  loadCpsFeedbackRows,
+  runCpsDownstreamFeedback,
+} from '@/domain/cps/feedbackStore'
+import { persistQuotationTransaction } from '@/domain/quotation/quotationSaveTransaction'
 import {
   canUseOfflineQuotationDrafts,
 } from '@/components/quotation/quotationFormConstants'
@@ -54,6 +60,7 @@ interface DocumentTotals {
 
 interface UseQuotationSaveParams {
   tenantClient: TenantClient
+  entityId: string | null
   quotation: QuotationEditorState
   quotationTitle: string
   items: InvoiceItem[]
@@ -93,6 +100,16 @@ interface UseQuotationSaveParams {
 
 let _validatedProject: any = null
 let _savedQuotation: any = null
+
+/**
+ * Which persistence path produced the last save. A module-level holder in the
+ * same style as the other holders in this file.
+ *
+ *  - `rpc`     the Phase 3.5 composite transaction (authoritative).
+ *  - `legacy`  sequential client writes (pre-cutover compatibility fallback).
+ *  - `offline` a native offline draft.
+ */
+let _quotationPersistMode: 'rpc' | 'legacy' | 'offline' = 'legacy'
 
 // ponytail: an RLS-denied quotation write returns zero rows, so the trailing
 // .single() surfaces PostgREST PGRST116 ("Cannot coerce...") instead of an
@@ -221,9 +238,10 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   },
 
   async persist(input, payload, { isCreate, id }) {
-    const { documentPrefixes, setQuotationNumber, tenantClient } = input
+    const { documentPrefixes, setQuotationNumber, tenantClient, entityId } = input
 
     if (isCreate && canUseOfflineQuotationDrafts()) {
+      _quotationPersistMode = 'offline'
       const offlineItems = input.normalizedItems.map((item, index) => ({
         ...item,
         sort_order: index,
@@ -245,6 +263,34 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
         return { data: null, error: error as any }
       }
     }
+
+    // Phase 3.5 — AUTHORITATIVE COMPOSITE TRANSACTION.
+    //
+    // The parent row, the exact item set, the approved CPS feedback plan and
+    // the causal feedback audit commit in ONE tenant transaction. The previous
+    // flow (save the Quotation, then call the feedback RPC separately) is no
+    // longer used when the tenant entity id is available.
+    if (entityId) {
+      _quotationPersistMode = 'rpc'
+      const result = await persistQuotationTransaction({
+        tenantClient,
+        entityId,
+        payload,
+        items: input.normalizedItems,
+        isCreate,
+        id,
+        numberIsManual: input.numberIsManual,
+        documentPrefixes,
+        initialQuotationSnapshot: input.initialQuotationSnapshot,
+      })
+      if (!result.error) _savedQuotation = result.data
+      return result
+    }
+
+    // COMPATIBILITY FALLBACK ONLY — pre-cutover, no tenant entity id. This path
+    // keeps the pre-Phase-3.5 behaviour: sequential writes, then a second
+    // feedback transaction. It is never reached when the composite RPC can run.
+    _quotationPersistMode = 'legacy'
 
     if (isCreate) {
       // Manual numbers go first and stay authoritative; untouched pre-fills
@@ -292,28 +338,78 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   async afterSave(input, { effectiveId, isCreate, createResult }) {
     const { normalizedItems, isEdit, initialQuotationSnapshot, tenantClient } = input
 
+    // Phase 3.5: when the composite transaction persisted the rows, the CPS
+    // mutation and the causal feedback audit, there is nothing left to write
+    // here. Writing the item rows again would be a second, non-transactional
+    // write, and applying the feedback again would duplicate audit events.
+    const compositePersisted = _quotationPersistMode === 'rpc'
+
     const itemRows = normalizedItems.map((item, index) => toQuotationItem(item, effectiveId, index))
 
-    if (isEdit) {
-      const { error: deleteError } = await tenantClient.from('quotation_items').delete().eq('quotation_id', effectiveId)
-      if (deleteError) {
-        feedback.error('Save failed', {
-          description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
+    if (!compositePersisted) {
+      // COMPATIBILITY FALLBACK ONLY — reached only when no tenant entity id is
+      // available (pre-cutover) or on a native offline draft. The composite RPC
+      // is not used on those paths, so the items are written sequentially and
+      // the feedback is applied by a SECOND transaction. This is the
+      // pre-Phase-3.5 behaviour, kept isolated and never entered when the
+      // composite RPC was available.
+      const feedbackChainId = normalizeChainId(initialQuotationSnapshot?.conversion_chain_id)
+      let feedbackBeforeRows: Record<string, unknown>[] | null = null
+      if (isEdit && feedbackChainId) {
+        try {
+          feedbackBeforeRows = await loadCpsFeedbackRows(tenantClient, 'quotation', effectiveId)
+        } catch (baselineErr) {
+          console.error('CPS downstream feedback skipped (baseline read failed):', baselineErr)
+        }
+      }
+
+      if (isEdit) {
+        const { error: deleteError } = await tenantClient.from('quotation_items').delete().eq('quotation_id', effectiveId)
+        if (deleteError) {
+          feedback.error('Save failed', {
+            description: getUserFacingMutationMessage(deleteError, { action: 'save' }),
+          })
+          throw deleteError
+        }
+      }
+
+      if (itemRows.length > 0) {
+        const { error: insertError } = await tenantClient.from('quotation_items').insert(itemRows)
+        if (insertError) {
+          feedback.error('Save failed', {
+            description: getUserFacingMutationMessage(insertError, { action: 'save' }),
+          })
+          throw insertError
+        }
+      }
+
+      if (isEdit && feedbackChainId && feedbackBeforeRows) {
+        const outcome = await runCpsDownstreamFeedback(tenantClient, {
+          entityId: input.entityId ?? null,
+          documentType: 'quotation',
+          documentId: effectiveId,
+          documentNumber: String(initialQuotationSnapshot?.quotation_number || '') || null,
+          sourceCpsId: (initialQuotationSnapshot?.source_cps_id as string | null) ?? null,
+          chainId: feedbackChainId,
+          beforeRows: feedbackBeforeRows,
+          afterRows: itemRows,
         })
-        throw deleteError
+
+        // A failure is never silent: the rest of the save succeeded, so the user
+        // must learn that the pricing sheet was not synchronized.
+        if (outcome.status === 'failed') {
+          console.error('CPS downstream feedback failed:', outcome.error)
+          feedback.warning('Saved, but the pricing sheet was not updated', {
+            description:
+              outcome.error || 'The approved pricing-sheet fields could not be synchronized.',
+          })
+        }
       }
     }
 
-    if (itemRows.length > 0) {
-      const { error: insertError } = await tenantClient.from('quotation_items').insert(itemRows)
-      if (insertError) {
-        feedback.error('Save failed', {
-          description: getUserFacingMutationMessage(insertError, { action: 'save' }),
-        })
-        throw insertError
-      }
-    }
-
+    // The document audit trail runs on both paths and is unchanged. The
+    // feedback causal audit is written INSIDE the composite transaction, not
+    // here, so it is never duplicated after a successful save.
     try {
       const { recordAuditLog, QUOTATION_TRACKED_FIELDS } = await import('@/lib/audit')
       if (isCreate) {
@@ -349,11 +445,12 @@ const quotationStrategy: DocumentSaveStrategy<UseQuotationSaveParams> = {
   },
 }
 
-export function useQuotationSave(params: Omit<UseQuotationSaveParams, 'tenantClient'>) {
-  const { tenantClient } = useEntity()
+export function useQuotationSave(params: Omit<UseQuotationSaveParams, 'tenantClient' | 'entityId'>) {
+  const { tenantClient, entity } = useEntity()
   const input = {
     ...params,
     tenantClient,
+    entityId: entity?.id ?? null,
   } satisfies UseQuotationSaveParams
 
   return useDocumentSave({

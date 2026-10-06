@@ -21,7 +21,7 @@ export function FormFooter({
 }: FormFooterProps) {
   return (
     <>
-      <div className="sticky bottom-0 z-10 border-t border-bd-border bg-bd-card-bg/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm">
+      <div className="sticky bottom-0 z-10 border-t border-bd-border bg-bd-card-bg/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm lg:hidden">
         <div className="mx-auto max-w-[760px]">
           <div className={`${pageCardCls} p-2`}>
             <div className="grid grid-cols-[1fr_1fr_1.35fr] gap-2">
@@ -54,7 +54,7 @@ export function FormFooter({
         </div>
       </div>
 
-      <span className="csr-fab-float fixed bottom-[calc(var(--bd-app-bottom-nav-offset,72px)+env(safe-area-inset-bottom,0px)+16px)] right-4 z-[60] inline-flex sm:right-8">
+      <span className="csr-fab-float fixed bottom-[calc(var(--bd-app-bottom-nav-offset,72px)+env(safe-area-inset-bottom,0px)+16px)] right-4 z-[60] inline-flex sm:right-8 lg:hidden">
         <button
           type="button"
           onClick={onFloatingSave}

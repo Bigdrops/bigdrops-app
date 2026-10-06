@@ -114,7 +114,9 @@ export function useInvoiceEditableState({
 
   const [groups, setGroups] = useState<InvoiceGroup[]>([])
   const itemsRef = useRef(items)
+  const groupsRef = useRef(groups)
   useEffect(() => { itemsRef.current = items }, [items])
+  useEffect(() => { groupsRef.current = groups }, [groups])
   useEffect(() => { setGroups((current) => syncGroupsFromItems(items, current)) }, [items, setGroups])
 
   const [customFields, setCustomFields] = useState<InvoiceFieldEntry[]>([])
@@ -281,33 +283,35 @@ export function useInvoiceEditableState({
     })
   }, [groups, items.length])
 
+  // StrictMode contract: state updaters must be pure. Never call a state
+  // setter inside another setter's updater — React double-invokes updaters
+  // in development, which would append the header/member rows twice and
+  // render duplicate group cards for the same group id.
   const addGroup = useCallback(() => {
     const baseGroup = makeEmptyGroup()
-    setGroups((current) => {
-      const group: InvoiceGroup = {
-        ...baseGroup,
-        name: baseGroup.name || `Group ${current.length + 1}`,
-        showSubtotal: !!baseGroup.showSubtotal,
-      }
-      setItems((prev) => [
-        ...prev,
-        {
-          ...makeEmptyItem(),
-          row_type: 'group_header',
-          group_id: group.id,
-          group_name: group.name,
-          sort_order: prev.length,
-        } as InvoiceItem,
-        {
-          ...makeEmptyItem(),
-          row_type: 'standard',
-          group_id: group.id,
-          group_name: group.name,
-          sort_order: prev.length + 1,
-        } as InvoiceItem,
-      ])
-      return [...current, group]
-    })
+    const group: InvoiceGroup = {
+      ...baseGroup,
+      name: baseGroup.name || `Group ${groupsRef.current.length + 1}`,
+      showSubtotal: !!baseGroup.showSubtotal,
+    }
+    setGroups((current) => [...current, group])
+    setItems((prev) => [
+      ...prev,
+      {
+        ...makeEmptyItem(),
+        row_type: 'group_header',
+        group_id: group.id,
+        group_name: group.name,
+        sort_order: prev.length,
+      } as InvoiceItem,
+      {
+        ...makeEmptyItem(),
+        row_type: 'standard',
+        group_id: group.id,
+        group_name: group.name,
+        sort_order: prev.length + 1,
+      } as InvoiceItem,
+    ])
   }, [])
 
   const updateGroupName = useCallback((groupId: string, name: string) => {

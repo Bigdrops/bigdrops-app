@@ -7,7 +7,9 @@ import { FormCommercialTerms } from './FormCommercialTerms'
 import { FormTotals } from './FormTotals'
 import { FormNotesTerms } from './FormNotesTerms'
 import { FormFooter } from './FormFooter'
-import { pageCardCls } from '@/components/invoice/mobile/mobileFormPrimitives'
+import { DocumentTopBar } from './DocumentFormPresentation'
+import { formatCurrency, pageCardCls } from '@/components/invoice/mobile/mobileFormPrimitives'
+import './document-cps-overrides.css'
 
 const ColumnManager = lazy(() => import('@/components/ColumnManager'))
 const JsonItemsImportSheet = lazy(() => import('@/components/items/JsonItemsImportSheet'))
@@ -17,6 +19,106 @@ function SheetLoadingState({ label }: { label: string }) {
     <div className={`${pageCardCls} mx-auto p-4 text-sm text-[var(--bd-text3)] md:max-w-3xl`}>
       Loading {label}...
     </div>
+  )
+}
+
+function DesktopActionRail({
+  title,
+  documentNumber,
+  clientName,
+  itemCount,
+  totalPayable,
+  summaryRows,
+  saving,
+  primaryLabel,
+  onCancel,
+  onSaveDraft,
+  onSaveSent,
+}: {
+  title: string
+  documentNumber: string
+  clientName: string
+  itemCount: number
+  totalPayable: number
+  summaryRows: any[]
+  saving: boolean
+  primaryLabel: string
+  onCancel: () => void
+  onSaveDraft: () => void
+  onSaveSent: () => void
+}) {
+  return (
+    <aside className="hidden lg:sticky lg:top-6 lg:flex lg:flex-col lg:gap-4">
+      <section className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4 shadow-sm">
+        <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">Document</div>
+        <h2 className="mt-1 truncate text-[18px] font-black tracking-tight text-bd-text">{title}</h2>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-semibold text-bd-text-muted">
+          <div className="rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface-muted p-2">
+            <span className="block uppercase tracking-[0.12em]">Number</span>
+            <b className="mt-1 block truncate font-mono text-[12px] text-bd-text">{documentNumber || 'Draft'}</b>
+          </div>
+          <div className="rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface-muted p-2">
+            <span className="block uppercase tracking-[0.12em]">Items</span>
+            <b className="mt-1 block font-mono text-[12px] text-bd-text">{itemCount}</b>
+          </div>
+        </div>
+        <div className="mt-3 rounded-[var(--bd-radius)] border border-dashed border-bd-border bg-bd-surface px-3 py-2">
+          <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-bd-text-muted">Client</span>
+          <b className="mt-1 block truncate text-[13px] text-bd-text">{clientName || 'No client selected'}</b>
+        </div>
+      </section>
+
+      <section className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4 shadow-sm">
+        <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">Commercial close-out</div>
+        <div className="mt-3 space-y-2">
+          {summaryRows.slice(0, 5).map((row) => (
+            <div key={row.label} className="flex items-center justify-between gap-3 border-b border-bd-border/70 pb-2 text-[12px] last:border-0 last:pb-0">
+              <span className="min-w-0 truncate font-semibold text-bd-text-muted">{row.label}</span>
+              <b className={`shrink-0 font-mono text-[12px] ${row.negative ? 'text-bd-status-danger-text' : 'text-bd-text'}`}>
+                {row.negative ? '-' : ''}{formatCurrency(Math.abs(Number(row.value || 0)))}
+              </b>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 border-t border-bd-border pt-4">
+          <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-bd-text-muted">Total payable</span>
+          <b className="mt-1 block font-mono text-[24px] font-semibold tracking-tight text-bd-button-primary-bg">
+            {formatCurrency(totalPayable)}
+          </b>
+        </div>
+      </section>
+
+      <section className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-3 shadow-sm">
+        <div className="grid gap-2">
+          <button
+            type="button"
+            onClick={onSaveSent}
+            disabled={saving}
+            className="h-11 rounded-[var(--bd-radius)] border border-transparent bg-bd-button-primary-bg text-[13px] font-black text-bd-button-primary-text transition active:scale-[0.98] disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted"
+          >
+            {saving ? 'Saving...' : primaryLabel}
+          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={onSaveDraft}
+              disabled={saving}
+              className="h-10 rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface-muted text-[12px] font-bold text-bd-text transition hover:bg-bd-surface disabled:text-bd-text-muted"
+            >
+              Draft
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={saving}
+              className="h-10 rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface text-[12px] font-bold text-bd-text transition hover:bg-bd-surface-muted disabled:text-bd-text-muted"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </section>
+    </aside>
   )
 }
 
@@ -180,10 +282,24 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
     ...(whtAmount > 0 ? [{ label: 'WHT', value: -whtAmount, negative: true }] : []),
   ]
 
+  const documentNumber = String(invoice.invoice_number || '')
+  const clientName = String(invoice.client_name || '')
+  const itemCount = items.filter((item: any) => item.row_type === 'standard').length
+
   return (
-    <div className="bd-form-shell bd-custom-scrollbar overflow-x-hidden px-0 pt-1 sm:pt-2">
-      <div className="mx-auto w-full max-w-[780px] px-3 sm:px-4">
-        <div className="space-y-4 pb-6">
+    <div className="bd-document-form bd-form-shell bd-custom-scrollbar overflow-x-hidden bg-[var(--bg)] text-[var(--ink)]">
+      <DocumentTopBar
+        title={isQuotation ? 'Quotation' : 'Invoice'}
+        subtitle={documentNumber || modeLabel}
+        saveLabel={primaryLabel}
+        onBack={onCancel}
+        onSave={onSaveSent}
+        onOpenActions={() => setShowActionsSheet(true)}
+        disabled={saving}
+      />
+      <div className="bd-document-room">
+        <div className="bd-document-grid grid gap-7 pb-6 lg:items-start">
+          <main className="space-y-4 lg:space-y-5">
           <FormHeader
             modeLabel={modeLabel}
             title={title}
@@ -229,34 +345,38 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
             onClearInvalidRow={onClearInvalidRow}
           />
 
-          <FormCommercialTerms
-            invoice={invoice}
-            isQuotation={isQuotation}
-            updateInvoice={updateInvoice}
-            discountType={discountType}
-            setDiscountType={setDiscountType}
-            discountTiming={discountTiming}
-            setDiscountTiming={setDiscountTiming}
-            whtType={whtType}
-            setWhtType={setWhtType}
-            extraCharges={extraCharges}
-            onAddExtraCharge={onAddExtraCharge}
-            onUpdateExtraCharge={onUpdateExtraCharge}
-            onRemoveExtraCharge={onRemoveExtraCharge}
-            additionalFields={additionalFields}
-            onAddAdditionalField={onAddAdditionalField}
-            onUpdateAdditionalField={onUpdateAdditionalField}
-            onRemoveAdditionalField={onRemoveAdditionalField}
-          />
+          <div className="lg:hidden">
+            <FormCommercialTerms
+              invoice={invoice}
+              isQuotation={isQuotation}
+              updateInvoice={updateInvoice}
+              discountType={discountType}
+              setDiscountType={setDiscountType}
+              discountTiming={discountTiming}
+              setDiscountTiming={setDiscountTiming}
+              whtType={whtType}
+              setWhtType={setWhtType}
+              extraCharges={extraCharges}
+              onAddExtraCharge={onAddExtraCharge}
+              onUpdateExtraCharge={onUpdateExtraCharge}
+              onRemoveExtraCharge={onRemoveExtraCharge}
+              additionalFields={additionalFields}
+              onAddAdditionalField={onAddAdditionalField}
+              onUpdateAdditionalField={onUpdateAdditionalField}
+              onRemoveAdditionalField={onRemoveAdditionalField}
+            />
+          </div>
 
-          <FormTotals
-            invoice={invoice}
-            updateInvoice={updateInvoice}
-            summaryRows={summaryRows}
-            totalPayable={totalPayable}
-            amountInWords={amountInWords}
-            finalLabel="Grand Total"
-          />
+          <div className="lg:hidden">
+            <FormTotals
+              invoice={invoice}
+              updateInvoice={updateInvoice}
+              summaryRows={summaryRows}
+              totalPayable={totalPayable}
+              amountInWords={amountInWords}
+              finalLabel="Grand Total"
+            />
+          </div>
 
           <div ref={notesTermsRef}>
             <FormNotesTerms
@@ -282,6 +402,54 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
               setShowLinks={setShowLinks}
               linksSectionRef={linksRef}
             />
+          </div>
+          </main>
+
+          <div className="hidden lg:flex lg:flex-col lg:gap-5">
+            <DesktopActionRail
+              title={isQuotation ? 'Quotation' : 'Invoice'}
+              documentNumber={documentNumber}
+              clientName={clientName}
+              itemCount={itemCount}
+              totalPayable={totalPayable}
+              summaryRows={summaryRows}
+              saving={saving}
+              primaryLabel={primaryLabel}
+              onCancel={onCancel}
+              onSaveDraft={onSaveDraft}
+              onSaveSent={onSaveSent}
+            />
+            <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4 shadow-sm">
+              <FormCommercialTerms
+                invoice={invoice}
+                isQuotation={isQuotation}
+                updateInvoice={updateInvoice}
+                discountType={discountType}
+                setDiscountType={setDiscountType}
+                discountTiming={discountTiming}
+                setDiscountTiming={setDiscountTiming}
+                whtType={whtType}
+                setWhtType={setWhtType}
+                extraCharges={extraCharges}
+                onAddExtraCharge={onAddExtraCharge}
+                onUpdateExtraCharge={onUpdateExtraCharge}
+                onRemoveExtraCharge={onRemoveExtraCharge}
+                additionalFields={additionalFields}
+                onAddAdditionalField={onAddAdditionalField}
+                onUpdateAdditionalField={onUpdateAdditionalField}
+                onRemoveAdditionalField={onRemoveAdditionalField}
+              />
+            </div>
+            <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4 shadow-sm">
+              <FormTotals
+                invoice={invoice}
+                updateInvoice={updateInvoice}
+                summaryRows={summaryRows}
+                totalPayable={totalPayable}
+                amountInWords={amountInWords}
+                finalLabel="Grand Total"
+              />
+            </div>
           </div>
         </div>
       </div>

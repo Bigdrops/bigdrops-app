@@ -39,7 +39,10 @@ test('shared form sections stay flat and totals use soft document styling', () =
 
   assert.doesNotMatch(headerSource, /pageCardCls/)
   assert.doesNotMatch(commercialTermsSource, /pageCardCls/)
-  assert.match(totalsSource, /border-\[var\(--bd-border-soft\)\]/)
+  assert.match(totalsSource, /className="cps-totals"/)
+  assert.match(totalsSource, /cps-sumline/)
+  assert.match(totalsSource, /cps-sumtotal/)
+  assert.match(totalsSource, /cps-words/)
   assert.doesNotMatch(totalsSource, /border-\[var\(--bd-text\)\]/)
 })
 
