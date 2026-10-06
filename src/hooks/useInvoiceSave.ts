@@ -1,7 +1,6 @@
 import { useEntity } from '@/lib/tenant/contexts'
 import type { TenantClient } from '@/lib/tenantClient'
 import { toDbItem } from '@/domain/invoice'
-import { applyInvoiceItemLineage } from '@/domain/cps/lineageStore'
 import type {
   InvoiceAttachment,
   InvoiceCustomFields,
@@ -386,20 +385,15 @@ const invoiceStrategy: DocumentSaveStrategy<UseInvoiceSaveParams> = {
   async afterSave(input, { effectiveId, isCreate, createResult }) {
     const { items, isEdit, initialInvoiceSnapshot, tenantClient, entityId } = input
 
-    // The exact rows written this save. They carry Phase 2 lineage and the
-    // sort order they are stored with.
+    // The exact rows written this save. They carry CPS/Quotation lineage and
+    // the sort order they are stored with.
+    //
+    // Phase 2.5: both paths persist lineage atomically. The composite RPC
+    // (`save_invoice_with_items_transaction`) writes all four lineage columns
+    // in the same INSERT as the item rows, and the pre-cutover fallback below
+    // inserts through the same serializer — so no post-write stamp is needed on
+    // the success path and no two-write window exists.
     const itemsToSave = items.map((item, index) => toDbItem(item, effectiveId, index) as Record<string, unknown>)
-
-    if (entityId) {
-      // The composite RPC replaces rows through a fixed column list, so it
-      // does not carry lineage. Stamp it back for rows that have a CPS or
-      // Quotation origin. Rows added directly in the Invoice have none and are
-      // skipped, so they stay lineage-null.
-      const applied = await applyInvoiceItemLineage(tenantClient, effectiveId, itemsToSave)
-      if (applied.failures.length > 0) {
-        console.error('CPS lineage stamp failed after invoice save:', applied.failures)
-      }
-    }
 
     // When the composite RPC persisted items, skip the separate item writes.
     if (!entityId) {

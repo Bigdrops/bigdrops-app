@@ -156,6 +156,10 @@ export interface DbInvoice {
   custom_fields?: string | Record<string, unknown> | null
   archived_at?: string | null
   project_id?: string | null
+  /** Phase 2.5: Quotation this invoice was converted from (unique per tenant). */
+  source_quotation_id?: string | null
+  /** Phase 2.5: conversion chain identity, carried from the source quotation. */
+  conversion_chain_id?: string | null
   created_at?: string | null
   updated_at?: string | null
   [key: string]: unknown
@@ -264,6 +268,9 @@ export interface Invoice extends InvoiceTotalsSource {
   attachments?: InvoiceAttachment[]
   archived_at?: string | null
   project_id?: string | null
+  /** Phase 2.5 conversion ancestry. System-owned; never written by the form. */
+  source_quotation_id?: string | null
+  conversion_chain_id?: string | null
   created_at?: string | null
   updated_at?: string | null
 }

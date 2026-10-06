@@ -248,6 +248,10 @@ export async function duplicateInvoice(
       client_id: null,
       client_name: "",
       project_id: null,
+      // Law 2: a clone is a new document, not a conversion. It must not claim
+      // the source invoice's document ancestry or conversion chain.
+      source_quotation_id: null,
+      conversion_chain_id: null,
       status: "unpaid",
       issue_date: new Date().toISOString().split("T")[0],
       due_date: null,
