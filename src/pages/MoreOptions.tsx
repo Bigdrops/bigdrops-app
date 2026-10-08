@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 import { useAuthorization } from '@/lib/tenant/contexts'
 import { supabase } from '@/supabase'
 
@@ -139,6 +140,9 @@ export default function MoreOptions() {
           <h1 className="min-w-0 flex-1 truncate text-[20px] font-bold tracking-[-0.02em] text-bd-text">
             More Options
           </h1>
+          {/* Shared theme toggle — same control as the Dashboard, without
+              leaving More Options or routing through Settings. */}
+          <ThemeToggleButton className="h-11 w-11 rounded-xl" />
           <button
             type="button"
             onClick={() => navigate('/settings')}

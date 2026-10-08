@@ -201,6 +201,13 @@ export interface DbInvoiceItem {
 export interface InvoiceItem {
   id?: string | null
   _uiKey?: string
+  /**
+   * Transient provenance flag for the disposable starter row a New form seeds.
+   * It is never persisted (stripped by `toDbItem`) and never set on user-authored
+   * rows. Import uses it to retire only the initial placeholder, never arbitrary
+   * empty rows.
+   */
+  _isStarter?: boolean
   invoice_id?: string | null
   item_id?: string | null
   /**

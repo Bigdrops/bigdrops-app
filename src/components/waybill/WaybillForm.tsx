@@ -12,7 +12,7 @@ import type { ColumnConfig, ColumnVisibilityMode } from '@/domain/invoice/types'
 import ClientSelector from '@/components/ClientSelector'
 import AttachExistingDocumentSheet from '@/components/document/AttachExistingDocumentSheet'
 import { feedback } from '@/lib/feedback'
-import { SignaturesSection } from './WaybillSignatures'
+import { SignaturesSection, countCapturedWaybillSignatures } from './WaybillSignatures'
 import {
   WAYBILL_COLUMN_LIMIT,
   buildWaybillCustomFields,
@@ -42,7 +42,6 @@ import { FormLineItems } from '@/components/document/FormLineItems'
 import { FormFooter } from '@/components/document/FormFooter'
 import { DocumentSectionHead, DocumentTopBar } from '@/components/document/DocumentFormPresentation'
 import { DateField } from '@/components/ui/date-field'
-import '@/components/cps/cost-pricing-sheet-form.css'
 import '@/components/document/document-cps-overrides.css'
 
 const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
@@ -75,6 +74,68 @@ function createInitialState(type: WaybillType, initial?: Partial<WaybillFormData
   const customColumns = initial?.customColumns ?? []
   const customFields = initial?.customFields ?? parseWaybillCustomFields(wb.custom_fields)
   return { waybill: wb, items, customColumns, customFields }
+}
+
+function hasMeaningfulCustomData(customData: WaybillItem['custom_data'] | undefined) {
+  if (!customData || typeof customData !== 'object') return false
+  return Object.values(customData).some((value) => {
+    if (value === null || value === undefined) return false
+    if (typeof value === 'string') return value.trim() !== ''
+    if (typeof value === 'number') return Number.isFinite(value) && value !== 0
+    return Boolean(value)
+  })
+}
+
+function isEmptyStarterItem(item: WaybillItem) {
+  const candidate = item as WaybillItem & Record<string, unknown>
+  return (
+    String(item.description || '').trim() === '' &&
+    String(item.unit || '').trim() === '' &&
+    Number(item.quantity || 1) === 1 &&
+    (!item.condition || item.condition === 'good') &&
+    (!item.row_type || item.row_type === 'standard') &&
+    !hasMeaningfulCustomData(item.custom_data) &&
+    String(candidate.sub_description || '').trim() === '' &&
+    String(candidate.image_url || '').trim() === '' &&
+    String(candidate.make || '').trim() === '' &&
+    String(candidate.partNo || '').trim() === ''
+  )
+}
+
+function isMeaningfulImportedItem(item: WaybillItem) {
+  return !isEmptyStarterItem(item)
+}
+
+function mergeImportedWaybillItems(existingItems: WaybillItem[], importedItems: WaybillItem[]) {
+  const meaningfulImports = importedItems.filter(isMeaningfulImportedItem)
+  if (meaningfulImports.length === 0) return existingItems.length ? existingItems : [createDefaultItem()]
+
+  const nextItems = existingItems.length ? [...existingItems] : [createDefaultItem()]
+  let importIndex = 0
+
+  for (let index = 0; index < nextItems.length && importIndex < meaningfulImports.length; index += 1) {
+    if (!isEmptyStarterItem(nextItems[index])) continue
+    nextItems[index] = {
+      ...meaningfulImports[importIndex],
+      row_type: 'standard',
+    }
+    importIndex += 1
+  }
+
+  if (importIndex < meaningfulImports.length) {
+    nextItems.push(...meaningfulImports.slice(importIndex).map((item) => ({ ...item, row_type: 'standard' as const })))
+  }
+
+  return nextItems
+}
+
+function mergeWaybillCustomColumns(existingColumns: WaybillCustomColumn[], importedColumns: WaybillCustomColumn[]) {
+  const columnsByKey = new Map<string, WaybillCustomColumn>()
+  for (const column of [...existingColumns, ...importedColumns]) {
+    if (!column?.key || columnsByKey.has(column.key)) continue
+    columnsByKey.set(column.key, column)
+  }
+  return Array.from(columnsByKey.values()).slice(0, WAYBILL_COLUMN_LIMIT)
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -116,6 +177,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   }, [waybillNumber, state.waybill.waybill_number])
 
   const { waybill, items, customColumns, customFields } = state
+  const capturedSignatureCount = countCapturedWaybillSignatures(customFields.signatures)
 
   const markDirty = useCallback(() => {
     if (!dirty) setDirty(true)
@@ -326,14 +388,22 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
     const parsed = JSON.parse(text)
     const adapter = type === 'external' ? externalWaybillImportAdapter : internalWaybillImportAdapter
     const result = adapter.applyResult(parsed)
+    const importedColumns = result.customColumns.slice(0, WAYBILL_COLUMN_LIMIT)
+    if (importedColumns.length) {
+      setColumnVisibility((prev) => ({
+        ...prev,
+        ...Object.fromEntries(importedColumns.map((column) => [column.key, prev[column.key] ?? true])),
+      }))
+    }
     setState((prev) => ({
       ...prev,
       waybill: { ...prev.waybill, ...result.fields } as Waybill,
-      items: result.items,
-      customColumns: result.customColumns,
+      items: mergeImportedWaybillItems(prev.items, result.items),
+      customColumns: mergeWaybillCustomColumns(prev.customColumns, importedColumns),
       customFields: {
         ...prev.customFields,
         ...result.customFields,
+        customColumns: mergeWaybillCustomColumns(prev.customColumns, importedColumns),
       },
     }))
     markDirty()
@@ -398,7 +468,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
   }, [dirty])
 
   return (
-    <div className="cps-form bd-document-form bd-form-shell bd-custom-scrollbar overflow-x-hidden bg-[var(--bg)] text-[var(--ink)]">
+    <div className="bd-document-form bd-waybill-form bd-form-shell bd-custom-scrollbar overflow-x-hidden bg-[var(--bg)] text-[var(--ink)]">
       <DocumentTopBar
         title="Waybill"
         subtitle={waybill.waybill_number || (type === 'external' ? 'External delivery' : 'Internal transfer')}
@@ -408,14 +478,14 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
         disabled={saving}
       />
       <div className="bd-document-room">
-        <div className="bd-document-grid grid gap-7 pb-24 lg:items-start lg:pb-10">
-          <main className="space-y-6">
+        <div className="bd-document-grid grid gap-7 pb-6 lg:items-start lg:pb-10">
+          <main className="space-y-4 lg:space-y-6">
 
           {/* Waybill Header */}
-          <section className="cps-sec">
+          <section className="cps-sec bd-waybill-identity">
             <DocumentSectionHead number="1." title="Document details" meta={waybill.waybill_number || 'New waybill'} />
-            <div className="mt-4 cps-panel">
-              <div className="space-y-5">
+            <div className="mt-3 bd-waybill-panel">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.08em] ${type === 'external' ? 'border-[var(--bd-primary)]/20 bg-[var(--bd-primary)]/10 text-[var(--bd-primary)]' : 'border-[var(--bd-warning)]/20 bg-[var(--bd-warning)]/10 text-[var(--bd-warning)]'}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${type === 'external' ? 'bg-[var(--bd-primary)]' : 'bg-[var(--bd-warning)]'}`} />
@@ -442,7 +512,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="bd-waybill-fieldgrid">
                   <MobileTextField
                     label="WAYBILL NO"
                     value={waybill.waybill_number}
@@ -460,7 +530,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="bd-waybill-fieldgrid">
                   <MobileField label="DATE">
                     <DateField
                       label="Date"
@@ -479,7 +549,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             </div>
 
             {type === 'external' && (
-              <div className="mt-4">
+              <div className="mt-3">
                 {customFields.references?.linkedInvoiceNumber ? (
                   <div className="flex items-center gap-2 rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-4 py-3">
                     <FileText className="h-4 w-4 text-[var(--bd-text-muted)]" />
@@ -519,10 +589,10 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
           </section>
 
           {/* Transport Details */}
-          <section className="cps-sec">
+          <section className="cps-sec bd-waybill-transport">
             <DocumentSectionHead number="2." title="Transport details" meta={waybill.transport_mode || 'Mode not set'} />
-            <div className="mt-4">
-              <div className="cps-dgrid">
+            <div className="mt-3 bd-waybill-panel">
+              <div className="bd-waybill-logistics-grid">
                 <MobileField label="Transport Mode">
                   <CompactSelectField
                     value={waybill.transport_mode || 'Blank'}
@@ -537,6 +607,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                       { value: 'By Vehicle', label: 'By Vehicle' },
                       { value: 'By Hand', label: 'By Hand' },
                       { value: 'Courier', label: 'Courier' },
+                      { value: 'Self Pick-Up', label: 'Self Pick-Up' },
                       { value: 'Blank', label: 'Blank' }
                     ]}
                   />
@@ -554,7 +625,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                     ]}
                   />
                 </MobileField>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="bd-waybill-driver-grid">
                   {waybill.transport_mode !== 'By Hand' && waybill.transport_mode !== 'Courier' && (
                     <MobileTextField
                       label="Vehicle Plate"
@@ -640,12 +711,14 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
             </div>
 
           {/* Custody Details */}
-          <section className="cps-sec">
+          <section className="cps-sec bd-waybill-custody">
             <DocumentSectionHead number="4." title="Custody details" meta={type === 'external' ? 'Delivery' : 'Transfer'} />
-            <div className="grid grid-cols-2 gap-4">
-              <MobileTextField label="DELIVERED BY" value={waybill.sender_name} onChange={(e) => updateWaybill('sender_name', e.target.value)} />
-              <MobileTextField label="RECEIVED BY" value={waybill.receiver_name} onChange={(e) => updateWaybill('receiver_name', e.target.value)} />
-              <div className="col-span-2">
+            <div className="bd-waybill-panel">
+              <div className="bd-waybill-custody-grid">
+                <MobileTextField label="DELIVERED BY" value={waybill.sender_name} onChange={(e) => updateWaybill('sender_name', e.target.value)} />
+                <MobileTextField label="RECEIVED BY" value={waybill.receiver_name} onChange={(e) => updateWaybill('receiver_name', e.target.value)} />
+              </div>
+              <div className="mt-3">
                 <MobileTextField
                   label={type === 'external' ? 'DELIVERY LOCATION' : 'MOVEMENT ROUTE / DESTINATION'}
                   value={waybill.delivery_location}
@@ -658,7 +731,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
 
           {/* Signatures */}
           <section className="cps-sec">
-            <DocumentSectionHead number="5." title="Acknowledgement" meta="Sender and receiver" />
+            <DocumentSectionHead number="5." title="Acknowledgement" meta={`${capturedSignatureCount} of 2 captured`} />
             <SignaturesSection
               customFields={customFields}
               updateCustomFields={updateCustomFields}
@@ -716,6 +789,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
         onFloatingSave={handleSave}
         saving={saving}
         primaryLabel="Save Waybill"
+        showDraft={false}
       />
 
       {/* Client Selector */}
@@ -729,6 +803,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
           updateWaybill('client_name', name)
         }}
         compact
+        hideHeader
         hideTrigger
       />
 

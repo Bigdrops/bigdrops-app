@@ -36,6 +36,14 @@
   --group-head: linear-gradient(115deg, hsl(var(--bd-text, 222 47% 11%)), hsl(var(--bd-brand, 214 17% 25%)) 58%, hsl(var(--bd-surface-strong, 214 25% 75%)));
   --group-on: #f8fafc;
   --shadow-ear: 0 3px 9px rgba(15, 23, 42, .16);
+  --vat: var(--bd-emerald);
+  --vat-soft: var(--bd-emerald-bg);
+  --disc: var(--bd-amber-dark);
+  --disc-soft: var(--bd-amber-bg);
+  --wht: var(--bd-violet);
+  --wht-soft: var(--bd-violet-bg);
+  --amount-bg: linear-gradient(120deg, #0f172a, #1e293b);
+  --on-dark: #f1f5f9;
   --gutter: 14px;
   background: var(--bg);
   color: var(--ink);
@@ -765,7 +773,48 @@
   margin-top: 8px;
   padding: 8px var(--gutter) 12px;
   border-top: 2px solid var(--group-soft);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.bd-document-form .cps-gfoot .subtgl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 99px;
+  border: 1px solid var(--group-line);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--sub);
+  background: var(--card);
+  flex-shrink: 0;
+}
+
+.bd-document-form .cps-gfoot .subtgl.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.bd-document-form .cps-gfoot .cps-gadd { width: auto; flex: 1; }
+
+.bd-document-form .gsum { text-align: right; flex-shrink: 0; }
+
+.bd-document-form .gsum small {
+  display: block;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(248, 250, 252, .65);
+}
+
+.bd-document-form .gsum b { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--group-on); }
 
 .bd-document-form .cps-gadd {
   width: 100%;
@@ -785,44 +834,6 @@
 }
 
 .bd-document-form .cps-gadd svg { width: 11px; height: 11px; }
-
-/* Invoice-only group subtotal row: CPS tokens, slim grammar inside the foot. */
-.bd-document-form .bd-gsub {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.bd-document-form .bd-gsub-toggle {
-  min-height: 30px;
-  padding: 0 10px;
-  border-radius: 9px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--sub);
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-}
-
-.bd-document-form .bd-gsub-toggle.on {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
-.bd-document-form .bd-gsub-total {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* Add item / Add group */
 .bd-document-form .cps-createpair {
@@ -1051,6 +1062,896 @@
   .bd-document-form .cps-desc { min-height: 92px; }
   .bd-document-form .cps-totals-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 22px; }
   .bd-document-form .cps-form-topbar-inner { gap: 8px; }
+
+  /* Final-form fold recomposition: amount concludes full-width below both
+     zones; phone thumb hides; fold thumbnail sits in the identity zone. */
+  .bd-document-form .cps-item.has-photo .bd-thumb { display: none; }
+  .bd-document-form .cps-item.has-photo .bd-foldthumb {
+    display: flex;
+    position: relative;
+    width: 64px;
+    height: 64px;
+    margin-top: 2px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--soft);
+    border: 1px solid var(--line);
+  }
+  .bd-document-form .bd-amountbar { margin-top: 0; grid-column: 1 / -1; grid-row: 2; }
+  .bd-document-form .bd-total-wrap { margin-top: 0; grid-column: 1 / -1; grid-row: 2; }
+  .bd-document-form .cps-item .cps-ins { grid-row: 3; }
+
+  /* Section 3 folds into payment/tax side-by-side instead of one stack. */
+  .bd-document-form .bd-payment-stage .cps-dgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bd-document-form .bd-commercial-split {
+    display: grid;
+    grid-template-columns: minmax(0, .92fr) minmax(0, 1.18fr);
+    gap: 10px;
+    align-items: start;
+  }
+  .bd-document-form .bd-charge-inputs { grid-template-columns: minmax(0, 1fr) 124px 30px; }
+}
+
+/* ================================================================
+   Invoice final-form.html port — line-item authoring row + Section 3.
+   Reference: Design-direction/form/invoice/final-form.html (V10).
+   Values ported 1:1, scoped to .bd-document-form. Production state,
+   handlers and calculations are untouched; only composition changes.
+   ================================================================ */
+
+/* Rate + Photo first-class row: Rate takes the wide area, Photo is a
+   compact icon-scale action. With a photo the camera hides and Rate
+   stretches full width. */
+.bd-document-form .bd-raterow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.bd-document-form .bd-raterow > .cf-lab { grid-column: 1 / -1; }
+
+.bd-document-form .bd-raterow .cps-field { border-left: 3px solid var(--accent); }
+
+.bd-document-form .bd-raterow .cps-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.bd-document-form .bd-cam {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  border: 1px dashed var(--line-strong);
+  background: var(--card);
+  color: var(--faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.bd-document-form .bd-cam svg { width: 16px; height: 16px; }
+
+.bd-document-form .cps-item.has-photo .bd-cam { display: none; }
+
+.bd-document-form .cps-item.has-photo .bd-raterow { grid-template-columns: minmax(0, 1fr); }
+
+/* Rate-hidden fallback: lone compact camera in the identity stack. */
+.bd-document-form .bd-photochip { margin-top: 2px; }
+
+/* Uploaded thumbnail, phone: compact evidence beside the terminal total. */
+.bd-document-form .bd-total-wrap { margin-top: 10px; }
+
+.bd-document-form .bd-thumb { display: none; }
+
+.bd-document-form .cps-item.has-photo .bd-thumb {
+  display: flex;
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 0 8px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--soft);
+  border: 1px solid var(--line);
+}
+
+.bd-document-form .bd-thumb img,
+.bd-document-form .bd-foldthumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.bd-document-form .bd-thumb .px,
+.bd-document-form .bd-foldthumb .px {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bd-document-form .bd-thumb .px svg,
+.bd-document-form .bd-foldthumb .px svg { width: 8px; height: 8px; }
+
+/* Fold thumbnail: end of the identity zone, phone thumb hidden on fold. */
+.bd-document-form .bd-foldthumb { display: none; }
+
+/* Terminal Amount band: the item conclusion, full row width. */
+.bd-document-form .bd-amountbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: var(--amount-bg);
+}
+
+.bd-document-form .bd-amountbar .pl {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--on-dark);
+  opacity: .8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.bd-document-form .bd-amountbar b {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--on-dark);
+  white-space: nowrap;
+}
+
+/* Packed authoring fields: two per row; trailing lone field spans full
+   width via the :last-child:nth-child(odd) rule, so hidden columns never
+   leave a blank companion cell. */
+.bd-document-form .bd-apack { display: flex; flex-direction: column; gap: 8px; }
+
+.bd-document-form .cps-fgrid .cps-field { min-height: 40px; padding: 0 10px; font-size: 12px; }
+.bd-document-form .cps-fgrid .cf-lab { margin: 0 0 3px 1px; }
+
+.bd-document-form .cps-cfield.vat .cf-lab { color: var(--vat); }
+.bd-document-form .cps-cfield.disc .cf-lab { color: var(--disc); }
+.bd-document-form .cps-cfield.vat .cps-field { border-left: 3px solid var(--vat); }
+.bd-document-form .cps-cfield.disc .cps-field { border-left: 3px solid var(--disc); }
+.bd-document-form .cps-cfield.vat .cps-field:focus { border-color: var(--vat); box-shadow: 0 0 0 3px var(--vat-soft); }
+.bd-document-form .cps-cfield.disc .cps-field:focus { border-color: var(--disc); box-shadow: 0 0 0 3px var(--disc-soft); }
+
+/* Retire the previous peer-style subtotal cell (replaced by amountbar). */
+.bd-document-form .cps-fcell.bd-result { display: none; }
+
+/* ---------- Section 3: payment stage ---------- */
+.bd-document-form .bd-ux-shell { display: flex; flex-direction: column; gap: 10px; }
+
+.bd-document-form .bd-payment-stage {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.bd-document-form .bd-payment-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bd-document-form .bd-payment-stage-head .copy small {
+  display: block;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.bd-document-form .bd-payment-stage-head .copy b { display: block; margin-top: 2px; font-size: 12px; font-weight: 800; }
+
+.bd-document-form .bd-payment-current {
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ---------- Section 3: blocks + setting rows ---------- */
+.bd-document-form .bd-ux-block {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.bd-document-form .bd-ux-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bd-document-form .bd-ux-block-title { min-width: 0; }
+
+.bd-document-form .bd-ux-block-title small {
+  display: block;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 2px;
+}
+
+.bd-document-form .bd-ux-block-title b { display: block; font-size: 11.5px; font-weight: 800; }
+
+.bd-document-form .bd-ux-block-title span {
+  display: block;
+  margin-top: 2px;
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--sub);
+}
+
+.bd-document-form .bd-ux-count {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--faint);
+}
+
+.bd-document-form .bd-setting-row { border-bottom: 1px solid var(--line); }
+.bd-document-form .bd-setting-row:last-child { border-bottom: 0; }
+
+.bd-document-form .bd-setting-hit {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto 16px;
+  gap: 9px;
+  align-items: center;
+  min-height: 58px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.bd-document-form .bd-setting-ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bd-document-form .bd-setting-ico svg { width: 14px; height: 14px; }
+
+.bd-document-form .bd-setting-copy { min-width: 0; }
+.bd-document-form .bd-setting-copy b { display: block; font-size: 11.5px; font-weight: 750; }
+
+.bd-document-form .bd-setting-copy small {
+  display: block;
+  margin-top: 2px;
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--sub);
+  white-space: normal;
+}
+
+.bd-document-form .bd-setting-value { text-align: right; min-width: 66px; }
+
+.bd-document-form .bd-setting-value b {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bd-document-form .bd-setting-value small {
+  display: block;
+  margin-top: 2px;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.bd-document-form .bd-setting-value.tax small { color: var(--vat); }
+.bd-document-form .bd-setting-value.disc small { color: var(--disc); }
+.bd-document-form .bd-setting-value.wht small { color: var(--wht); }
+
+.bd-document-form .bd-setting-chev { color: var(--faint); display: flex; }
+.bd-document-form .bd-setting-chev svg { width: 12px; height: 12px; }
+.bd-document-form .bd-setting-row.open .bd-setting-chev { transform: rotate(180deg); }
+
+.bd-document-form .bd-setting-editor {
+  padding: 2px 12px 12px 53px;
+  background: linear-gradient(to bottom, transparent, var(--soft));
+}
+
+.bd-document-form .bd-setting-help {
+  display: block;
+  margin-top: 7px;
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+.bd-document-form .bd-seg {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.bd-document-form .bd-seg button {
+  flex: 1;
+  min-height: 32px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sub);
+}
+
+.bd-document-form .bd-seg button.on { background: var(--accent); color: var(--accent-ink); }
+
+/* ---------- Section 3: charge ledger ---------- */
+.bd-document-form .bd-charge-ledger { padding: 10px 10px 11px; }
+
+.bd-document-form .bd-charge-entry {
+  position: relative;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--soft);
+}
+
+.bd-document-form .bd-charge-entry + .bd-charge-entry { margin-top: 8px; }
+.bd-document-form .bd-charge-entry.taxable { border-left: 3px solid var(--vat); }
+.bd-document-form .bd-charge-entry.untaxed { border-left: 3px solid var(--line-strong); }
+
+.bd-document-form .bd-charge-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 105px 30px;
+  gap: 7px;
+  align-items: center;
+}
+
+.bd-document-form .bd-charge-inputs .cps-field { background: var(--card); }
+
+.bd-document-form .bd-charge-inputs .cdel {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+  background: var(--red-soft);
+}
+
+.bd-document-form .bd-charge-inputs .cdel svg { width: 11px; height: 11px; }
+
+.bd-document-form .bd-charge-effect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.bd-document-form .bd-effect-copy { min-width: 0; }
+
+.bd-document-form .bd-effect-copy b { display: block; font-size: 8.5px; font-weight: 800; color: var(--vat); }
+.bd-document-form .bd-charge-entry.untaxed .bd-effect-copy b { color: var(--sub); }
+
+.bd-document-form .bd-effect-copy small { display: block; margin-top: 1px; font-size: 7.5px; font-weight: 600; color: var(--faint); }
+
+.bd-document-form .bd-tax-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card);
+}
+
+.bd-document-form .bd-tax-choice button {
+  min-width: 60px;
+  min-height: 28px;
+  padding: 0 7px;
+  border-radius: 7px;
+  font-size: 7.5px;
+  font-weight: 800;
+  color: var(--faint);
+}
+
+.bd-document-form .bd-tax-choice .on.taxed { background: var(--vat-soft); color: var(--vat); }
+.bd-document-form .bd-tax-choice .on.untaxed { background: var(--soft); color: var(--ink); }
+
+.bd-document-form .bd-ledger-add {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 9px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+/* ---------- Section 3: secondary rows ---------- */
+.bd-document-form .bd-mini-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+
+.bd-document-form .bd-afield-row { display: flex; align-items: center; gap: 8px; }
+.bd-document-form .bd-afield-row + .bd-afield-row { margin-top: 8px; }
+.bd-document-form .bd-afield-row .cps-field { flex: 1; min-width: 0; }
+
+.bd-document-form .bd-afield-row .adel {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint);
+  background: var(--soft);
+  flex-shrink: 0;
+}
+
+.bd-document-form .bd-afield-row .adel svg { width: 12px; height: 12px; }
+
+.bd-document-form .bd-addrowbtn {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 9px;
+  border: 1px dashed var(--line-strong);
+  background: transparent;
+  color: var(--accent);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+/* ---------- Waybill Mobile x Fold form ---------- */
+.bd-waybill-form .bd-document-room {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+}
+
+.bd-waybill-form .bd-waybill-panel {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+}
+
+.bd-waybill-form .bd-waybill-fieldgrid,
+.bd-waybill-form .bd-waybill-driver-grid,
+.bd-waybill-form .bd-waybill-custody-grid,
+.bd-waybill-form .bd-waybill-logistics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bd-waybill-form .bd-waybill-logistics-grid > .bd-waybill-driver-grid {
+  grid-column: 1 / -1;
+}
+
+.bd-waybill-form .bd-waybill-driver-grid {
+  align-items: end;
+}
+
+.bd-waybill-form .bd-waybill-driver-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
+.bd-waybill-form .bd-waybill-identity .cps-clientpick {
+  min-height: 50px;
+}
+
+.bd-waybill-form .bd-waybill-identity .cps-clientpick .ci,
+.bd-waybill-form .bd-waybill-transport .cps-clientpick .ci {
+  width: 32px;
+  height: 32px;
+}
+
+.bd-waybill-form .waybill-item {
+  padding-top: 12px;
+}
+
+.bd-waybill-form .waybill-item::before {
+  right: 24px;
+}
+
+.bd-waybill-form .waybill-item .cps-ear {
+  width: 24px;
+  height: 24px;
+}
+
+.bd-waybill-form .waybill-item .cps-ihead {
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 8px;
+}
+
+.bd-waybill-form .waybill-item .cps-idx,
+.bd-waybill-form .waybill-item .cps-rbtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.bd-waybill-form .waybill-item .cps-row-rail {
+  gap: 6px;
+}
+
+.bd-waybill-form .waybill-item .cps-rmid {
+  gap: 6px;
+}
+
+.bd-waybill-form .waybill-item .cps-idesc {
+  gap: 7px;
+}
+
+.bd-waybill-form .waybill-item .cps-desc {
+  min-height: 52px;
+}
+
+.bd-waybill-form .waybill-item .cps-subrow {
+  gap: 4px;
+  padding-left: 8px;
+}
+
+.bd-waybill-form .waybill-item .cps-subtog {
+  min-height: 30px;
+  padding: 5px 0;
+}
+
+.bd-waybill-form .waybill-item .cps-subfield {
+  min-height: 48px;
+}
+
+.bd-waybill-form .waybill-item .cps-idata {
+  margin-top: 9px;
+  gap: 7px;
+}
+
+.bd-waybill-form .waybill-item .bd-apack {
+  gap: 7px;
+}
+
+.bd-waybill-form .waybill-item .cps-fgrid {
+  gap: 7px;
+}
+
+.bd-waybill-form .waybill-item .cps-fgrid:first-child {
+  grid-template-columns: minmax(86px, .8fr) minmax(0, 1fr);
+}
+
+.bd-waybill-form .waybill-item .cps-fgrid .cps-field {
+  min-height: 38px;
+}
+
+.bd-waybill-form .waybill-item .bd-photochip {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.bd-waybill-form .waybill-item .bd-photochip::after {
+  content: 'Photo';
+  margin-left: 6px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.bd-waybill-form .waybill-item.has-photo .bd-thumb {
+  width: 52px;
+  height: 52px;
+  margin: 0 0 6px auto;
+  border-radius: 10px;
+}
+
+.bd-waybill-form .waybill-item .cps-ins {
+  height: 22px;
+  margin-top: 8px;
+}
+
+.bd-waybill-form .cps-createpair {
+  margin-top: 14px;
+  grid-template-columns: 1fr;
+}
+
+/* Waybill quantity + camera row: quantity takes the remaining width with a
+   compact camera action beside it, mirroring the Invoice Rate + Camera row. */
+.bd-waybill-form .waybill-item .bd-waybill-qtyrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.bd-waybill-form .waybill-item .bd-waybill-qtyrow > .cf-lab {
+  grid-column: 1 / -1;
+}
+
+.bd-waybill-form .bd-waybill-signatures {
+  display: grid;
+  gap: 10px;
+}
+
+.bd-waybill-form .bd-waybill-signature-surface {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+  overflow: hidden;
+}
+
+.bd-waybill-form .bd-waybill-signature-eye {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bd-waybill-form .bd-waybill-signature-eye[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.bd-waybill-form .bd-waybill-signature-top {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 11px 44px 11px 11px;
+}
+
+.bd-waybill-form .bd-waybill-signature-thumb,
+.bd-waybill-form .bd-waybill-signature-empty {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+}
+
+.bd-waybill-form .bd-waybill-signature-thumb {
+  object-fit: contain;
+}
+
+.bd-waybill-form .bd-waybill-signature-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint);
+}
+
+.bd-waybill-form .bd-waybill-signature-copy {
+  min-width: 0;
+}
+
+.bd-waybill-form .bd-waybill-signature-copy h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.bd-waybill-form .bd-waybill-signature-copy p,
+.bd-waybill-form .bd-waybill-signature-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bd-waybill-form .bd-waybill-signature-copy p {
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--sub);
+}
+
+.bd-waybill-form .bd-waybill-signature-copy small {
+  margin-top: 2px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--faint);
+}
+
+.bd-waybill-form .bd-waybill-signature-surface.is-captured .bd-waybill-signature-copy p {
+  color: var(--green);
+}
+
+.bd-waybill-form .bd-waybill-signature-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 7px;
+  padding: 0 11px 11px;
+}
+
+.bd-waybill-form .bd-waybill-signature-action {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bd-waybill-form .bd-waybill-signature-action.danger {
+  color: var(--red);
+}
+
+.bd-waybill-form .bd-waybill-signature-action.primary {
+  grid-column: 1 / -1;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.bd-waybill-form .bd-waybill-signature-draw {
+  padding: 0 11px 11px;
+}
+
+.bd-waybill-form .bd-waybill-signature-draw canvas {
+  height: 128px;
+}
+
+@media (max-width: 390px) {
+  .bd-waybill-form .bd-waybill-fieldgrid,
+  .bd-waybill-form .bd-waybill-driver-grid,
+  .bd-waybill-form .bd-waybill-custody-grid,
+  .bd-waybill-form .bd-waybill-logistics-grid {
+    grid-template-columns: 1fr;
+  }
+  .bd-waybill-form .bd-waybill-logistics-grid > .bd-waybill-driver-grid {
+    grid-column: auto;
+  }
+}
+
+@media (min-width: 600px) {
+  .bd-waybill-form .bd-waybill-panel {
+    padding: 14px;
+  }
+
+  .bd-waybill-form .bd-waybill-identity .bd-waybill-fieldgrid,
+  .bd-waybill-form .bd-waybill-custody-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bd-waybill-form .bd-waybill-logistics-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+  }
+
+  .bd-waybill-form .bd-waybill-logistics-grid > :nth-child(1),
+  .bd-waybill-form .bd-waybill-logistics-grid > :nth-child(2) {
+    grid-column: span 2;
+  }
+
+  .bd-waybill-form .bd-waybill-driver-grid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .bd-waybill-form .waybill-item {
+    grid-template-columns: minmax(0, 1.35fr) minmax(240px, .9fr);
+    column-gap: 16px;
+  }
+
+  .bd-waybill-form .waybill-item .cps-desc {
+    min-height: 60px;
+  }
+
+  .bd-waybill-form .waybill-item .cps-idata {
+    padding-left: 14px;
+  }
+
+  .bd-waybill-form .waybill-item.has-photo .bd-foldthumb {
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
+  }
+
+  .bd-waybill-form .bd-waybill-signatures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .bd-waybill-form .bd-waybill-signature-top {
+    grid-template-columns: 42px minmax(0, 1fr);
+    padding: 12px 46px 12px 12px;
+  }
+
+  .bd-waybill-form .bd-waybill-signature-thumb,
+  .bd-waybill-form .bd-waybill-signature-empty {
+    width: 42px;
+    height: 42px;
+  }
+
+  .bd-waybill-form .bd-waybill-signature-actions {
+    padding: 0 12px 12px;
+  }
+
+  .bd-waybill-form .bd-waybill-signature-draw {
+    padding: 0 12px 12px;
+  }
+}
+
+@media (max-width: 370px) {
+  .bd-document-form .bd-charge-inputs { grid-template-columns: minmax(0, 1fr) 90px 30px; }
+  .bd-document-form .bd-charge-effect { align-items: flex-start; flex-direction: column; }
+  .bd-document-form .bd-tax-choice { width: 100%; }
+  .bd-document-form .bd-tax-choice button { min-width: 0; }
 }
 
 /* Desktop is out of scope for this pass: keep existing composition. */

@@ -84,6 +84,9 @@ function MobileGroupCard({
           aria-label="Group title"
         />
         <span className="cps-gcount">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
+        {subtotalOn && (
+          <span className="gsum"><small>Group total</small><b>{formatNaira(groupSubtotal)}</b></span>
+        )}
       </div>
 
       <div className="cps-gbody">
@@ -121,19 +124,14 @@ function MobileGroupCard({
       </div>
 
       <div className="cps-gfoot">
-        <div className="bd-gsub">
-          <button
-            type="button"
-            onClick={() => onToggleGroupSubtotal(groupId)}
-            className={`bd-gsub-toggle${subtotalOn ? ' on' : ''}`}
-            aria-pressed={subtotalOn}
-          >
-            Subtotal
-          </button>
-          {subtotalOn && (
-            <span className="bd-gsub-total">{formatNaira(groupSubtotal)}</span>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => onToggleGroupSubtotal(groupId)}
+          className={`subtgl${subtotalOn ? ' on' : ''}`}
+          aria-pressed={subtotalOn}
+        >
+          Subtotal
+        </button>
         <button
           type="button"
           onClick={() => onAddItemToGroup(groupId)}

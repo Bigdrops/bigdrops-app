@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import MobilePageHeader from './MobilePageHeader'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 import { MobileChromeContext } from '@/components/Layout'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Combobox } from '@/components/ui/combobox'
@@ -271,7 +272,9 @@ export default function ModuleShell<T>({
 
   return (
     <div className={cn('flex flex-col min-h-full w-full', toneStyle.glow, className)}>
-      {/* Mobile Header (Integrated) */}
+      {/* Mobile Header (Integrated) — every ModuleShell surface is a top-level
+          list destination, so it leads with the production sidebar toggle
+          (via isHome) rather than history Back. */}
       <div className="md:hidden relative">
         <MobilePageHeader
           eyebrow={eyebrow}
@@ -280,7 +283,7 @@ export default function ModuleShell<T>({
           accentClassName={toneStyle.accent}
           eyebrowClassName={toneStyle.foreground}
           onMenuClick={mobileChrome.openSidebar}
-          isHome={mobileChrome.dashboard}
+          isHome
           isOpen={mobileChrome.sidebarOpen}
           hideGlobalSearch
           className="rounded-none border-x-0 border-t-0 shadow-none"
@@ -370,6 +373,9 @@ export default function ModuleShell<T>({
                   className="h-9 pl-9 pr-3 rounded-xl border-bd-border bg-bd-surface-muted shadow-none text-[11px] font-bold text-bd-text"
                 />
              </div>
+             {/* Desktop list header keeps the sidebar toggle (in the app chrome)
+                 AND exposes the shared theme toggle alongside the list actions. */}
+             <ThemeToggleButton />
              {(filters || onFilterClick || filterPanel) && (
                 <Button
                   type="button"

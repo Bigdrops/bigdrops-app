@@ -119,7 +119,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
   const [initialNotes, setInitialNotes] = useState('')
   const [initialTerms, setInitialTerms] = useState('')
   const [items, setItems] = useState<InvoiceItem[]>([
-    { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' },
+    { ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', ...(isCreate ? { _isStarter: true } : {}) },
   ])
   const {
     columns,
@@ -428,7 +428,7 @@ export default function QuotationFormPage({ mode }: { mode: 'create' | 'edit' })
 
   const handleClearAll = useCallback(() => {
     lineItemsHandlers.commitGrouping(
-      [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' }],
+      [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', _isStarter: true }],
       [],
     )
   }, [lineItemsHandlers])

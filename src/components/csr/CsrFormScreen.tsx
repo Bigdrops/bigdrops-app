@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChevronDown, ChevronUp, Download, Hash, Lock, Loader2, MoreHorizontal, SaveAll, X } from 'lucide-react'
 
 import { useEntity } from '@/lib/tenant/contexts'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 import ClientSelector from '@/components/ClientSelector'
 import UnitInput from '@/components/UnitInput'
 import CsrImportSheet from '@/components/csr/CsrImportSheet'
@@ -289,6 +290,9 @@ export default function CsrFormScreen({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Shared theme toggle — same control as the Dashboard, rendered in
+              the CSR form toolbar so users need not leave the editor. */}
+          <ThemeToggleButton className="h-11 w-11 rounded-[8px]" />
           {onToggleFieldMode && (
             <button
               type="button"

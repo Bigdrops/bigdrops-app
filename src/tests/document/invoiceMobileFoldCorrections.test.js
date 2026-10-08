@@ -8,6 +8,7 @@ import { syncGroupsFromItems } from '../../domain/invoice/normalize.ts'
 const hookPath = path.resolve('src/hooks/useInvoiceEditableState.ts')
 const totalsPath = path.resolve('src/components/document/FormTotals.tsx')
 const itemCardPath = path.resolve('src/components/invoice/MobileItemCard.tsx')
+const commercialPath = path.resolve('src/components/document/FormCommercialTerms.tsx')
 
 // Builds the exact row pair invoice addGroup appends: one header plus one
 // member sharing a single group id.
@@ -88,11 +89,51 @@ test('invoice totals reports VAT instead of editing it', () => {
   assert.match(source, /cps-sumtotal/)
 })
 
-test('invoice line-item subtotal renders as a calculated result', () => {
+test('invoice line-item amount renders as a terminal calculated result', () => {
   const source = fs.readFileSync(itemCardPath, 'utf8')
 
-  // Subtotal is computed, never typed: it must not look like an input.
-  assert.match(source, /cps-fcell tsp bd-result/)
-  assert.match(source, />Subtotal</)
-  assert.doesNotMatch(source, /Subtotal<\/span>\s*<div className="cps-field mono"/)
+  // Amount is computed, never typed: a dark terminal band, not an input.
+  assert.match(source, /bd-amountbar/)
+  assert.match(source, /bd-total-wrap/)
+  assert.match(source, />Amount/)
+  assert.match(source, /formatNaira\(computedAmount\)/)
+  assert.doesNotMatch(source, /cps-fcell tsp bd-result/)
+  assert.doesNotMatch(source, /cps-comm-grid/)
+})
+
+test('invoice commercial terms follows the reference information architecture', () => {
+  const source = fs.readFileSync(commercialPath, 'utf8')
+
+  // Payment stage, pricing-logic block, charge ledger, secondary block.
+  assert.match(source, /bd-payment-stage/)
+  assert.match(source, /bd-payment-current/)
+  assert.match(source, /bd-ux-block/)
+  assert.match(source, /bd-setting-row/)
+  assert.match(source, /bd-charge-entry/)
+  assert.match(source, /bd-tax-choice/)
+  assert.match(source, /bd-effect-copy/)
+  assert.match(source, /bd-ledger-add/)
+  // Per-charge VAT applicability writes the production withTax model.
+  assert.match(source, /onUpdateExtraCharge\(charge\.id, 'withTax', true\)/)
+  assert.match(source, /onUpdateExtraCharge\(charge\.id, 'withTax', false\)/)
+  // Collapsed rows expose value and effect from production state.
+  assert.match(source, /Tax & adjustments|Tax &amp; adjustments/)
+  // No flat legacy collapse cards remain in Section 3.
+  assert.doesNotMatch(source, /CollapseCard/)
+})
+
+test('invoice rate owns the first-class row and fields pack in authoring order', () => {
+  const source = fs.readFileSync(itemCardPath, 'utf8')
+
+  assert.match(source, /bd-raterow/)
+  assert.match(source, /bd-cam/)
+  assert.match(source, /bd-foldthumb/)
+  // Authoring order: Qty, Make, Unit, Part no., Condition, VAT %, Disc %,
+  // Install — asserted by position, not by styling.
+  const qtyAt = source.indexOf("key=\"quantity\"")
+  const makeAt = source.indexOf("key=\"make\"")
+  const unitAt = source.indexOf("key=\"unit\"")
+  const partNoAt = source.indexOf("key=\"partNo\"")
+  assert.ok(qtyAt !== -1 && makeAt !== -1 && unitAt !== -1 && partNoAt !== -1)
+  assert.ok(qtyAt < makeAt && makeAt < unitAt && unitAt < partNoAt)
 })

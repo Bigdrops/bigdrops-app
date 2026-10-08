@@ -5,6 +5,7 @@ import { RfqForm } from './RfqForm'
 import { RfqPreview } from './RfqPreview'
 import { RfqImportSheet } from './RfqImportSheet'
 import { Button } from '@/components/ui/button'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 import { Wand2, Save, Eye, EyeOff, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -61,6 +62,9 @@ export const RfqEditor: React.FC<RfqEditorProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Shared theme toggle — same control as the Dashboard, rendered in
+              the RFQ form header so users need not leave the editor. */}
+          <ThemeToggleButton className="h-9 w-9 rounded-xl" />
           <Button
             variant="outline"
             size="sm"

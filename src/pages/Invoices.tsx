@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Archive, Copy, DollarSign, Eye, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
+import { Archive, Copy, DollarSign, FileOutput, FolderOpen, FolderPlus, GitBranchPlus, Pencil, Trash2, Truck, Wrench, Workflow } from "lucide-react"
 import { useEntity } from "@/lib/tenant/contexts"
 import { feedback } from "@/lib/feedback"
 import { getUserFacingMutationMessage } from "@/lib/userFacingMutationErrors"
@@ -80,7 +80,6 @@ function InvoicesContent() {
     setActiveInvoiceCustomFields(null)
   }
 
-  const handleView  = () => { if (activeInvoice?.id) { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) } }
   const handleEdit  = () => { if (activeInvoice?.id) { closeSheet(); navigate(`/invoices/edit/${activeInvoice.id}`) } }
   const handleAdvance = () => {
     const invoiceId = activeInvoice?.id
@@ -330,13 +329,13 @@ function InvoicesContent() {
             isPaid: paymentState === "paid", isStandalone,
           })
           const iconMap: Record<string, React.ReactNode> = {
-            eye: <Eye className="h-6 w-6" />, pencil: <Pencil className="h-6 w-6" />, folderOpen: <FolderOpen className="h-6 w-6" />,
+            pencil: <Pencil className="h-6 w-6" />, folderOpen: <FolderOpen className="h-6 w-6" />,
             folderPlus: <FolderPlus className="h-6 w-6" />, workflow: <Workflow className="h-6 w-6" />, gitBranchPlus: <GitBranchPlus className="h-6 w-6" />,
             dollarSign: <DollarSign className="h-6 w-6" />, copy: <Copy className="h-6 w-6" />, fileOutput: <FileOutput className="h-6 w-6" />,
             wrench: <Wrench className="h-6 w-6" />, truck: <Truck className="h-6 w-6" />, archive: <Archive className="h-6 w-6" />, trash: <Trash2 className="h-6 w-6" />,
           }
           const handlers: Record<string, () => void> = {
-            view: handleView, edit: handleEdit,
+            edit: handleEdit,
             project: () => { activeInvoice.project_id ? navigate(`/projects/${activeInvoice.project_id}`) : setShowProjectLinkDialog(true) },
             documents: () => setShowLinkedDocuments(true),
             payment: () => { closeSheet(); navigate(`/invoices/${activeInvoice.id}`) },

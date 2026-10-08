@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { ChevronLeft, Share2, MoreHorizontal } from 'lucide-react'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 import styles from './DocumentTopNav.module.css'
 
 interface DocumentTopNavProps {
@@ -39,6 +40,10 @@ export default function DocumentTopNav({
       </div>
 
       <div className={styles.actions}>
+        {/* Shared theme toggle — exposed in every document view header. It
+            toggles the same user preference as the Dashboard without closing
+            the document, navigating, or touching PDF/export output. */}
+        <ThemeToggleButton className="h-10 w-10 rounded-[10px]" />
         {onShare && (
           <button
             type="button"

@@ -326,10 +326,134 @@ function MobileItemCard({
     }
   }
 
+  /* Remaining authoring fields in the reference's deliberate Invoice order:
+     Qty, Make, Unit, Part no., Condition, then VAT %, Disc %, Install, then
+     custom columns. Visibility filters first, so a disabled field never
+     enters a grid; pairs pack two per row and a trailing lone field spans
+     full width via CSS. Rate owns its first-class row above and is never
+     listed here. */
+  const authorCells: React.ReactNode[] = []
+  if (isVisible('quantity') && ctx !== 'waybill') {
+    authorCells.push(
+      <label key="quantity" className="cps-cfield">
+        <span className="cf-lab">Qty</span>
+        <NumericInput min={1} value={(item.quantity as number) ?? 1} onChange={(val) => onUpdate(index, 'quantity', normalizeQuantity(val, 1))} placeholder="Qty *" aria-label={`Quantity for item ${number}`} className="cps-field mono" />
+      </label>,
+    )
+  }
+  if (isVisible('make')) {
+    authorCells.push(
+      <label key="make" className="cps-cfield">
+        <span className="cf-lab">Make</span>
+        <Input value={(item.make as string) || ''} onChange={(e) => onUpdate(index, 'make', e.target.value)} placeholder="Make / brand" aria-label={`Make or brand for item ${number}`} className="cps-field" />
+      </label>,
+    )
+  }
+  if (isVisible('unit')) {
+    authorCells.push(
+      <label key="unit" className="cps-cfield">
+        <span className="cf-lab">Unit</span>
+        <UnitInput value={(item.unit as string) || ''} onChange={(val: string) => onUpdate(index, 'unit', val)} />
+      </label>,
+    )
+  }
+  if (isVisible('partNo')) {
+    authorCells.push(
+      <label key="partNo" className="cps-cfield">
+        <span className="cf-lab">Part No.</span>
+        <Input value={(item.partNo as string) || ''} onChange={(e) => onUpdate(index, 'partNo', e.target.value)} className="cps-field" />
+      </label>,
+    )
+  }
+  if (isVisible('condition')) {
+    authorCells.push(
+      <label key="condition" className="cps-cfield">
+        <span className="cf-lab">Condition</span>
+        <Input value={(item.condition as string) || ''} onChange={(e) => onUpdate(index, 'condition', e.target.value)} className="cps-field" />
+      </label>,
+    )
+  }
+  if (isVisible('vat_rate')) {
+    authorCells.push(
+      <label key="vat_rate" className="cps-cfield vat">
+        <span className="cf-lab">{getColumn('vat_rate')?.label || 'VAT %'}</span>
+        <NumericInput
+          value={(item.vat_rate as number) ?? ''}
+          placeholder="0"
+          onChange={(val) => onUpdate(index, 'vat_rate', val === 0 ? null : val)}
+          className="cps-field"
+        />
+      </label>,
+    )
+  }
+  if (isVisible('discount_rate')) {
+    authorCells.push(
+      <label key="discount_rate" className="cps-cfield disc">
+        <span className="cf-lab">{getColumn('discount_rate')?.label || 'Disc %'}</span>
+        <NumericInput
+          value={(item.discount_rate as number) ?? ''}
+          placeholder="0"
+          onChange={(val) => onUpdate(index, 'discount_rate', val === 0 ? null : val)}
+          className="cps-field"
+        />
+      </label>,
+    )
+  }
+  if (isVisible('install_rate')) {
+    authorCells.push(
+      <label key="install_rate" className="cps-cfield">
+        <span className="cf-lab">{getColumn('install_rate')?.label || 'Install'}</span>
+        <NumericInput
+          value={item.install_rate_override ? (item.install_rate as number) ?? '' : ''}
+          placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto'}
+          onChange={(val) => {
+            onUpdate(index, '__install_rate_override', val === 0 ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: val })
+          }}
+          className="cps-field"
+        />
+      </label>,
+    )
+  }
+  ;(customColumns || []).forEach((col: any) => {
+    if (!col || !isVisible(col.key)) return
+    const val = (item.custom_data || {})[col.key] ?? ''
+    authorCells.push(
+      <label key={col.key} className="cps-cfield">
+        <span className="cf-lab">{col.label}</span>
+        {col.type === 'number' ? (
+          <NumericInput
+            value={val}
+            onChange={(nextVal) => {
+              onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: nextVal })
+            }}
+            className="cps-field"
+          />
+        ) : (
+          <Input
+            value={val}
+            onChange={(e) => {
+              onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: e.target.value })
+            }}
+            className="cps-field"
+          />
+        )}
+      </label>,
+    )
+  })
+  const pairGrids: React.ReactNode[] = []
+  for (let pairIndex = 0; pairIndex < authorCells.length; pairIndex += 2) {
+    pairGrids.push(
+      <div key={pairIndex} className="cps-fgrid">
+        {authorCells[pairIndex]}
+        {authorCells[pairIndex + 1] || null}
+      </div>,
+    )
+  }
+
   const hasSub = Boolean(item.sub_description?.trim())
 
   return (
-    <article className={`cps-item${item.image_url ? ' has-photo' : ''}`}>
+    <article className={`cps-item${ctx === 'waybill' ? ' waybill-item' : ''}${item.image_url ? ' has-photo' : ''}`}>
       <button
         type="button"
         className="cps-ear"
@@ -491,33 +615,50 @@ function MobileItemCard({
             ) : null}
           </div>
 
-          {isVisible('make') && (
-            <input
-              className="cps-field"
-              placeholder="Make / brand"
-              value={(item.make as string) || ''}
-              onChange={(e) => onUpdate(index, 'make', e.target.value)}
-              aria-label={`Make or brand for item ${number}`}
-            />
-          )}
-
-          {item.image_url ? (
-            <span className="cps-thumb">
-              <img src={item.image_url} alt="Item photo" />
-              <button
-                type="button"
-                className="cps-photo-x"
-                title="Remove photo"
-                aria-label="Remove photo"
-                onClick={() => onUpdate(index, 'image_url', null)}
-              >
-                <X />
-              </button>
-            </span>
+          {/* Waybill quantity + camera row: Quantity takes the remaining width
+              with a compact camera action beside it, analogous to the
+              Invoice Rate + Camera row. No pricing fields on waybills. */}
+          {ctx === 'waybill' ? (
+            <div className="bd-waybill-qtyrow">
+              <span className="cf-lab">Qty</span>
+              <NumericInput min={1} value={(item.quantity as number) ?? 1} onChange={(val) => onUpdate(index, 'quantity', normalizeQuantity(val, 1))} placeholder="Qty *" aria-label={`Quantity for item ${number}`} className="cps-field mono" />
+              {!item.image_url && (
+                <label className="bd-cam" title="Attach a photo" aria-label="Attach a photo">
+                  {uploading ? <Loader2 className="animate-spin" /> : <Camera />}
+                  <input
+                    type="file"
+                    accept={IMAGE_ACCEPT_ATTRIBUTE}
+                    className="sr-only"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              )}
+            </div>
+          ) : isVisible('unit_price') ? (
+            <div className="bd-raterow">
+              <span className="cf-lab">Rate</span>
+              <NumericInput
+                value={(item.unit_price as number) ?? 0}
+                onChange={(val) => onUpdate(index, 'unit_price', val)}
+                placeholder="0.00"
+                aria-label={`Rate for item ${number}`}
+                className="cps-field mono"
+              />
+              {!item.image_url && (
+                <label className="bd-cam" title="Attach a photo" aria-label="Attach a photo">
+                  {uploading ? <Loader2 className="animate-spin" /> : <Camera />}
+                  <input
+                    type="file"
+                    accept={IMAGE_ACCEPT_ATTRIBUTE}
+                    className="sr-only"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              )}
+            </div>
           ) : (
-            <label className="cps-cam">
+            <label className="bd-cam bd-photochip" title="Attach a photo" aria-label="Attach a photo">
               {uploading ? <Loader2 className="animate-spin" /> : <Camera />}
-              Photo
               <input
                 type="file"
                 accept={IMAGE_ACCEPT_ATTRIBUTE}
@@ -526,116 +667,67 @@ function MobileItemCard({
               />
             </label>
           )}
+
+          {item.image_url && (
+            <span className="bd-foldthumb">
+              <img src={item.image_url} alt="Item photo" />
+              <button
+                type="button"
+                className="px"
+                title="Remove photo"
+                aria-label="Remove photo"
+                onClick={() => onUpdate(index, 'image_url', null)}
+              >
+                <X />
+              </button>
+            </span>
+          )}
         </div>
       </div>
 
       <div className="cps-idata">
-          <div className="cps-fgrid">
-            {isVisible('quantity') && (
-            <NumericInput min={1} value={(item.quantity as number) ?? 1} onChange={(val) => onUpdate(index, 'quantity', normalizeQuantity(val, 1))} placeholder="Qty *" aria-label={`Quantity for item ${number}`} className="cps-field mono" />
-            )}
-            {isVisible('unit') && (
-              <UnitInput value={(item.unit as string) || ''} onChange={(val: string) => onUpdate(index, 'unit', val)} />
-            )}
-          </div>
+          {pairGrids.length > 0 && (
+            <div className="bd-apack">
+              {pairGrids}
+            </div>
+          )}
 
-          <div className="cps-comm-grid">
-            {isVisible('unit_price') && (
-            <label className="cps-cfield sell">
-              <span className="cf-lab">Rate</span>
-              <NumericInput value={(item.unit_price as number) ?? 0} onChange={(val) => onUpdate(index, 'unit_price', val)} aria-label={`Rate for item ${number}`} className="cps-field mono" />
-            </label>
-            )}
-            {isVisible('amount') && (
-            <div className="cps-cfield sell">
-              <span className="cf-lab">Subtotal</span>
-              <div className="cps-fcell tsp bd-result" aria-label={`Subtotal for item ${number}`}>
+          {isVisible('amount') && (
+            <div className="bd-total-wrap">
+              {item.image_url && (
+                <span className="bd-thumb">
+                  <img src={item.image_url} alt="Item photo" />
+                  <button
+                    type="button"
+                    className="px"
+                    title="Remove photo"
+                    aria-label="Remove photo"
+                    onClick={() => onUpdate(index, 'image_url', null)}
+                  >
+                    <X />
+                  </button>
+                </span>
+              )}
+              <div className="bd-amountbar" aria-label={`Amount for item ${number}`}>
+                <span className="pl">Amount &middot; {normalizeQuantity(item.quantity, 1)} &times; {formatNaira(item.unit_price)}</span>
                 <b>{formatNaira(computedAmount)}</b>
               </div>
             </div>
-            )}
-          </div>
-
-          <div className="cps-fgrid">
-            {isVisible('partNo') && (
-              <label className="cps-cfield">
-                <span className="cf-lab">Part No.</span>
-                <Input value={(item.partNo as string) || ''} onChange={(e) => onUpdate(index, 'partNo', e.target.value)} className="cps-field" />
-              </label>
-            )}
-            {isVisible('condition') && (
-              <label className="cps-cfield">
-                <span className="cf-lab">Condition</span>
-                <Input value={(item.condition as string) || ''} onChange={(e) => onUpdate(index, 'condition', e.target.value)} className="cps-field" />
-              </label>
-            )}
-
-            {isVisible('install_rate') && (
-              <label className="cps-cfield">
-                <span className="cf-lab">{getColumn('install_rate')?.label || 'Install'}</span>
-                <NumericInput
-                  value={item.install_rate_override ? (item.install_rate as number) ?? '' : ''}
-                  placeholder={autoInstall !== null ? String(Number(autoInstall.toFixed(2))) : 'Auto'}
-                  onChange={(val) => {
-                    onUpdate(index, '__install_rate_override', val === 0 ? { install_rate_override: false, install_rate: null } : { install_rate_override: true, install_rate: val })
-                  }}
-                  className="cps-field"
-                />
-              </label>
-            )}
-
-            {isVisible('vat_rate') && (
-              <label className="cps-cfield">
-                <span className="cf-lab">{getColumn('vat_rate')?.label || 'VAT %'}</span>
-                <NumericInput
-                  value={(item.vat_rate as number) ?? ''}
-                  placeholder="0"
-                  onChange={(val) => onUpdate(index, 'vat_rate', val === 0 ? null : val)}
-                  className="cps-field"
-                />
-              </label>
-            )}
-
-            {isVisible('discount_rate') && (
-              <label className="cps-cfield">
-                <span className="cf-lab">{getColumn('discount_rate')?.label || 'Disc %'}</span>
-                <NumericInput
-                  value={(item.discount_rate as number) ?? ''}
-                  placeholder="0"
-                  onChange={(val) => onUpdate(index, 'discount_rate', val === 0 ? null : val)}
-                  className="cps-field"
-                />
-              </label>
-            )}
-
-            {/* Custom Columns */}
-            {customColumns?.map((col: any) => {
-              if (!isVisible(col.key)) return null
-              const val = (item.custom_data || {})[col.key] ?? ''
-              return (
-                <label key={col.key} className="cps-cfield">
-                  <span className="cf-lab">{col.label}</span>
-                  {col.type === 'number' ? (
-                    <NumericInput
-                      value={val}
-                      onChange={(nextVal) => {
-                        onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: nextVal })
-                      }}
-                      className="cps-field"
-                    />
-                  ) : (
-                    <Input
-                      value={val}
-                      onChange={(e) => {
-                        onUpdate(index, 'custom_data', { ...(item.custom_data || {}), [col.key]: e.target.value })
-                      }}
-                      className="cps-field"
-                    />
-                  )}
-                </label>
-              )
-            })}
-          </div>
+          )}
+          {item.image_url && !isVisible('amount') && (
+            <span className="bd-thumb">
+              <img src={item.image_url} alt="Item photo" />
+              <button
+                type="button"
+                className="px"
+                title="Remove photo"
+                aria-label="Remove photo"
+                onClick={() => onUpdate(index, 'image_url', null)}
+              >
+                <X />
+              </button>
+            </span>
+          )}
       </div>
 
       {onUngroup && item.group_id && (

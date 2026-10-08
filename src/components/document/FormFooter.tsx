@@ -9,6 +9,7 @@ interface FormFooterProps {
   onFloatingSave: () => void
   saving: boolean
   primaryLabel: string
+  showDraft?: boolean
 }
 
 export function FormFooter({
@@ -18,13 +19,16 @@ export function FormFooter({
   onFloatingSave,
   saving,
   primaryLabel,
+  showDraft = true,
 }: FormFooterProps) {
+  const mobileGridClass = showDraft ? 'grid-cols-[1fr_1fr_1.35fr]' : 'grid-cols-[1fr_1.35fr]'
+
   return (
     <>
       <div className="sticky bottom-0 z-10 border-t border-bd-border bg-bd-card-bg/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3 backdrop-blur-sm lg:hidden">
         <div className="mx-auto max-w-[760px]">
           <div className={`${pageCardCls} p-2`}>
-            <div className="grid grid-cols-[1fr_1fr_1.35fr] gap-2">
+            <div className={`grid ${mobileGridClass} gap-2`}>
               <button
                 type="button"
                 onClick={onCancel}
@@ -33,14 +37,16 @@ export function FormFooter({
               >
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={onSaveDraft}
-                disabled={saving}
-                className="h-11 rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface-muted text-[13px] font-bold text-bd-text transition hover:bg-bd-surface disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100"
-              >
-                Draft
-              </button>
+              {showDraft ? (
+                <button
+                  type="button"
+                  onClick={onSaveDraft}
+                  disabled={saving}
+                  className="h-11 rounded-[var(--bd-radius)] border border-bd-border bg-bd-surface-muted text-[13px] font-bold text-bd-text transition hover:bg-bd-surface disabled:border-bd-border disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-100"
+                >
+                  Draft
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={onSaveSent}

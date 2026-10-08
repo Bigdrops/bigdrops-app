@@ -12,7 +12,7 @@ test('mobile item card treats row duplication as optional in shared form flows',
   assert.match(source, /\{onDuplicate\s*&&\s*\(/)
 })
 
-test('mobile item card follows CPS rail geometry with no invoice-only action gutter', () => {
+test('mobile item card follows reference authoring hierarchy with terminal amount', () => {
   const source = fs.readFileSync(mobileItemCardPath, 'utf8')
 
   assert.match(source, /className="cps-ihead"/)
@@ -21,7 +21,11 @@ test('mobile item card follows CPS rail geometry with no invoice-only action gut
   assert.match(source, /className="cps-rmid"/)
   assert.match(source, /className="cps-ear"/)
   assert.match(source, /className="cps-ins"/)
-  assert.match(source, />Subtotal</)
+  assert.match(source, /className="bd-raterow"/)
+  assert.match(source, /className="bd-amountbar"/)
+  assert.match(source, />Amount/)
+  // Rate must not sit beside the result as an equal half-width peer.
+  assert.doesNotMatch(source, /cps-comm-grid/)
   assert.doesNotMatch(source, /grid-cols-\[36px_minmax\(0,1fr\)_34px\]/)
   assert.doesNotMatch(source, /Quantity × unit rate summary/)
 })

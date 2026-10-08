@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 
 type MobilePageHeaderProps = {
   title: string
@@ -97,6 +98,10 @@ export default function MobilePageHeader({
               ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-1">
+              {/* Theme toggle is a permanent header control so it survives the
+                  compact list/search header variants. It sits alongside (never
+                  replaces) the sidebar toggle above and the page actions. */}
+              <ThemeToggleButton />
               {actions}
               {!hideGlobalSearch && <GlobalSearch />}
             </div>

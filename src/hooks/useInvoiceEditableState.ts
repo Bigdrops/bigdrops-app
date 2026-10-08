@@ -109,7 +109,7 @@ export function useInvoiceEditableState({
           group_id: item.group_id || null,
           group_name: item.group_name || '',
         }))
-      : [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' } as InvoiceItem],
+      : [{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', ...(isCreate ? { _isStarter: true } : {}) } as InvoiceItem],
   )
 
   const [groups, setGroups] = useState<InvoiceGroup[]>([])
@@ -388,7 +388,7 @@ export function useInvoiceEditableState({
     setExtraCharges((current) => current.filter((charge) => charge.id !== chargeId)), [])
 
   const handleClearAll = useCallback(() => {
-    setItems([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '' } as InvoiceItem])
+    setItems([{ ...makeEmptyItem(), row_type: 'standard', group_id: null, group_name: '', _isStarter: true } as InvoiceItem])
     setGroups([])
   }, [])
 

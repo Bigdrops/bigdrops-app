@@ -6,7 +6,6 @@ import {
   ImageOff,
   PenLine,
   Search,
-  Signature as SignatureIcon,
   Trash2,
   Upload,
   UserSearch,
@@ -38,6 +37,7 @@ type SignatureEvidence = {
 }
 
 type SignatureRole = 'sender' | 'receiver'
+type CaptureMode = 'upload' | 'draw' | 'pick'
 
 const emptySignature: SignatureEvidence = {
   image_url: '',
@@ -45,6 +45,14 @@ const emptySignature: SignatureEvidence = {
   present: null,
   confidence: '',
   description: '',
+}
+
+function signatureHasEvidence(signature: SignatureEvidence | undefined) {
+  return Boolean(signature?.image_url || signature?.drawn_data_url)
+}
+
+export function countCapturedWaybillSignatures(signatures: WaybillCustomFields['signatures'] | undefined) {
+  return (signatureHasEvidence(signatures?.sender) ? 1 : 0) + (signatureHasEvidence(signatures?.receiver) ? 1 : 0)
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -299,7 +307,7 @@ function DrawPad({
 /*  Signature card (used for both sender and receiver)                        */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-function SignatureCard({
+function SignatureSurface({
   title,
   role,
   value,
@@ -312,14 +320,27 @@ function SignatureCard({
   onChange: (next: SignatureEvidence) => void
   showPickButton?: boolean
 }) {
-  const [showDraw, setShowDraw] = useState(false)
+  const [captureMode, setCaptureMode] = useState<CaptureMode | null>(null)
   const [pickOpen, setPickOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [shown, setShown] = useState(true)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const previewUrl = value?.image_url || value?.drawn_data_url || ''
-  const hasEvidence = !!(value?.image_url || value?.drawn_data_url)
+  const hasEvidence = signatureHasEvidence(value)
+  const statusLabel = hasEvidence ? 'Captured' : 'No signature captured'
+
+  const openMode = (mode: CaptureMode) => {
+    if (mode === 'pick') {
+      setPickOpen(true)
+      return
+    }
+    if (mode === 'upload') {
+      window.setTimeout(() => fileInputRef.current?.click(), 0)
+      return
+    }
+    setCaptureMode(mode)
+  }
 
   const handleUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -348,137 +369,120 @@ function SignatureCard({
     }
   }, [role, value, onChange])
 
-  const clear = () => onChange({ ...value, image_url: '', drawn_data_url: '', present: false })
+  const clear = () => {
+    onChange({ ...value, image_url: '', drawn_data_url: '', present: false })
+    setCaptureMode(null)
+  }
 
   return (
-    <div className="rounded-[var(--bd-radius-lg)] border border-[var(--bd-border)] bg-[var(--bd-surface)] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--bd-border)]">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[13px] font-semibold text-[var(--bd-text)]">{title}</span>
-          {hasEvidence ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)] border border-[var(--bd-emerald-border)] text-[10px] font-semibold uppercase tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--bd-emerald)]" />
-              Captured
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bd-bg2)] text-[var(--bd-text-muted)] border border-[var(--bd-border)] text-[10px] font-semibold uppercase tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--bd-text3)]" />
-              Empty
-            </span>
-          )}
+    <div className={`bd-waybill-signature-surface${hasEvidence ? ' is-captured' : ''}`}>
+      <button
+        type="button"
+        onClick={() => setShown((v) => !v)}
+        className="bd-waybill-signature-eye"
+        aria-pressed={shown}
+        aria-label={shown ? `Hide ${title} signature` : `Show ${title} signature`}
+      >
+        {shown ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+      </button>
+
+      <div className="bd-waybill-signature-top">
+        {shown && hasEvidence ? (
+          <img
+            src={previewUrl}
+            alt={`${title} signature preview`}
+            className="bd-waybill-signature-thumb"
+          />
+        ) : (
+          <span className="bd-waybill-signature-empty" aria-hidden="true">
+            <ImageOff className="h-4 w-4" />
+          </span>
+        )}
+
+        <div className="bd-waybill-signature-copy">
+          <h3>{title}</h3>
+          <p>{statusLabel}</p>
+          {value.description ? <small>{value.description}</small> : null}
         </div>
-        <button
-          type="button"
-          onClick={() => setShown((v) => !v)}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--bd-radius-md)] text-[11px] font-semibold border transition ${
-            shown
-              ? 'border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] text-[var(--bd-indigo)]'
-              : 'border-[var(--bd-border)] bg-[var(--bd-surface)] text-[var(--bd-text-muted)] hover:bg-[var(--bd-bg2)]'
-          }`}
-          title={shown ? 'Hide' : 'Show'}
-        >
-          {shown ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-          {shown ? 'Shown' : 'Hidden'}
-        </button>
       </div>
 
       {shown && (
-        <div className="p-4 space-y-3">
-          {hasEvidence ? (
-            <div className="relative rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] p-1.5">
-              <img
-                src={previewUrl}
-                alt={`${title} signature`}
-                className="h-24 w-full object-contain rounded-[var(--bd-radius-md)]"
-              />
-              <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bd-text)]/70 text-[var(--bd-button-primary-text)] text-[10px] font-medium">
-                <span className="w-1 h-1 rounded-full bg-[var(--bd-emerald)]" />
-                Stored
-              </span>
-            </div>
-          ) : (
-            <div className="rounded-[var(--bd-radius-md)] border border-dashed border-[var(--bd-border)] bg-[var(--bd-surface)] p-5 text-center">
-              <ImageOff className="h-5 w-5 mx-auto text-[var(--bd-text3)] mb-1" />
-              <p className="text-xs text-[var(--bd-text-muted)]">No signature captured yet</p>
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-semibold text-[var(--bd-text)] hover:bg-[var(--bd-bg2)] transition disabled:opacity-50"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {uploading ? 'Uploading…' : 'Upload'}
-            </button>
-            <input ref={fileInputRef} type="file" accept={IMAGE_ACCEPT_ATTRIBUTE} className="hidden" onChange={handleUpload} />
-
-            <button
-              type="button"
-              onClick={() => setShowDraw((v) => !v)}
-              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] text-[13px] font-semibold text-[var(--bd-text)] hover:bg-[var(--bd-bg2)] transition"
-            >
-              <PenLine className="h-3.5 w-3.5" />
-              {showDraw ? 'Hide pad' : 'Draw'}
-            </button>
-
-            {showPickButton && (
-              <button
-                type="button"
-                onClick={() => setPickOpen(true)}
-                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[var(--bd-radius-md)] border border-[var(--bd-indigo-border)] bg-[var(--bd-indigo-bg)] text-[13px] font-semibold text-[var(--bd-indigo)] transition"
-              >
-                <UserSearch className="h-3.5 w-3.5" />
-                Pick
-              </button>
-            )}
-
-            {hasEvidence && (
-              <button
-                type="button"
-                onClick={clear}
-                className="ml-auto inline-flex items-center justify-center h-9 w-9 rounded-[var(--bd-radius-md)] text-[var(--bd-rose)] hover:bg-[var(--bd-rose-bg)] transition"
-                title="Clear"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {showDraw && (
-            <DrawPad
-              onCancel={() => setShowDraw(false)}
-              onSave={(url) => {
-                onChange({ ...value, drawn_data_url: url, image_url: '', present: true })
-                setShowDraw(false)
-              }}
-            />
-          )}
-
+        <div className="bd-waybill-signature-actions" aria-label={`${title} signature actions`}>
           {showPickButton && (
-            <PickSignatorySheet
-              open={pickOpen}
-              onOpenChange={setPickOpen}
-              onPick={(sig) => {
-                if (!sig.signature_url) {
-                  feedback.warning('No signature image', {
-                    description: `${sig.name || 'This signatory'} has no signature on file.`,
-                  })
-                  return
-                }
-                onChange({
-                  ...value,
-                  image_url: sig.signature_url,
-                  drawn_data_url: '',
-                  present: true,
-                  description: sig.name ? `Picked: ${sig.name}${sig.role ? ` · ${sig.role}` : ''}` : value.description,
-                })
-              }}
-            />
+            <button
+              type="button"
+              onClick={() => openMode('pick')}
+              className="bd-waybill-signature-action primary"
+            >
+              <UserSearch className="h-3.5 w-3.5" />
+              Pick
+            </button>
           )}
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => openMode('upload')}
+            className="bd-waybill-signature-action"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
+          <button
+            type="button"
+            onClick={() => openMode('draw')}
+            className="bd-waybill-signature-action"
+          >
+            <PenLine className="h-3.5 w-3.5" />
+            Draw
+          </button>
+          {hasEvidence && (
+            <button
+              type="button"
+              onClick={clear}
+              className="bd-waybill-signature-action danger"
+              aria-label={`Remove ${title} signature`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Remove
+            </button>
+          )}
+          <input ref={fileInputRef} type="file" accept={IMAGE_ACCEPT_ATTRIBUTE} className="hidden" onChange={handleUpload} />
         </div>
+      )}
+
+      {shown && captureMode === 'draw' && (
+        <div className="bd-waybill-signature-draw">
+          <DrawPad
+            onCancel={() => setCaptureMode(null)}
+            onSave={(url) => {
+              onChange({ ...value, drawn_data_url: url, image_url: '', present: true })
+              setCaptureMode(null)
+            }}
+          />
+        </div>
+      )}
+
+      {showPickButton && (
+        <PickSignatorySheet
+          open={pickOpen}
+          onOpenChange={setPickOpen}
+          onPick={(sig) => {
+            if (!sig.signature_url) {
+              feedback.warning('No signature image', {
+                description: `${sig.name || 'This signatory'} has no signature on file.`,
+              })
+              return
+            }
+            onChange({
+              ...value,
+              image_url: sig.signature_url,
+              drawn_data_url: '',
+              present: true,
+              description: sig.name ? `Picked: ${sig.name}${sig.role ? ` · ${sig.role}` : ''}` : value.description,
+            })
+            setCaptureMode(null)
+          }}
+        />
       )}
     </div>
   )
@@ -503,39 +507,21 @@ export function SignaturesSection({
   const setReceiver = (next: SignatureEvidence) =>
     updateCustomFields({ signatures: { ...customFields.signatures, receiver: next } })
 
-  const senderFilled = !!(sender.image_url || sender.drawn_data_url)
-  const receiverFilled = !!(receiver.image_url || receiver.drawn_data_url)
-  const totalCaptured = (senderFilled ? 1 : 0) + (receiverFilled ? 1 : 0)
-
   return (
-    <section className="cps-panel overflow-hidden">
-      <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bd-emerald-bg)] text-[var(--bd-emerald)] text-[11px] font-bold uppercase tracking-wider">
-            <SignatureIcon className="h-3.5 w-3.5" />
-            Signatures
-          </div>
-          <span className="text-xs text-[var(--bd-text-muted)]">
-            {totalCaptured} of 2 captured
-          </span>
-        </div>
-      </div>
-
-      <div className="p-4 space-y-3">
-        <SignatureCard
+    <div className="bd-waybill-signatures">
+        <SignatureSurface
           title="Delivered By"
           role="sender"
           value={sender}
           onChange={setSender}
           showPickButton
         />
-        <SignatureCard
+        <SignatureSurface
           title="Collected By"
           role="receiver"
           value={receiver}
           onChange={setReceiver}
         />
-      </div>
-    </section>
+    </div>
   )
 }

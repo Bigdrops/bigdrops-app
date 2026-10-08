@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Archive,
   ClipboardList,
   Copy,
+  FileOutput,
   FolderOpen,
   FolderPlus,
   GitBranchPlus,
@@ -26,7 +27,9 @@ import LinkedDocumentsSheet from '@/components/document/LinkedDocumentsSheet'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { feedback } from '@/lib/feedback'
 import type { DbQuotation } from '@/domain/quotation'
-import { getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
+import { buildQuotationFormState, getNextQuotationNumber, mapDbQuotation } from '@/domain/quotation'
+import { getQuotationListActionDefs } from '@/domain/quotation/listActions'
+import { convertQuotationToInvoice } from '@/pages/view-quotation-actions'
 import { getDocumentActionState, getProjectActionState } from '@/domain/document/documentActionState'
 import { fetchProjectSummary, getQuotationDocumentRelations } from '@/domain/documentRelationships'
 import { formatQuotationStatus, quotationStatusTone } from './quotationStatus'
@@ -51,7 +54,8 @@ import ModuleRowCard from '@/components/layout/ModuleRowCard'
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
 export default function QuotationList() {
-  const { tenantClient } = useEntity()
+  const { tenantClient, entity } = useEntity()
+  const entityId = entity?.id ?? null
   const navigate = useNavigate()
   const { settings } = useSettings()
   const { state, patchUpdate, reset, results: quotations, loading } = useDocumentQuery()
@@ -59,6 +63,7 @@ export default function QuotationList() {
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const [archiveId, setArchiveId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [convertId, setConvertId] = useState<string | null>(null)
   const [activeQuotation, setActiveQuotation] = useState<ReturnType<typeof mapDbQuotation> | null>(null)
   const [activeQuotationProject, setActiveQuotationProject] = useState<{ id: string; name?: string | null } | null>(null)
   const [showProjectLinkDialog, setShowProjectLinkDialog] = useState(false)
@@ -147,6 +152,44 @@ export default function QuotationList() {
     }
   }
 
+  const handleConvert = async (id: string) => {
+    setBusyAction(`convert:${id}`)
+    try {
+      // Reuse the production conversion entry point: load the exact selected
+      // quotation, build the same form state the view builds, then convert.
+      const [quotationRow, itemRows] = await Promise.all([
+        loadQuotationById(id, tenantClient),
+        loadQuotationItems(id, tenantClient),
+      ])
+      if (!quotationRow) throw new Error('Quotation not found')
+      // Preserve persisted row order exactly as the view flow does, so the
+      // generated invoice lines keep the quotation's sort order.
+      const orderedItems = [...(itemRows || [])].sort(
+        (a: { sort_order?: number | null }, b: { sort_order?: number | null }) =>
+          (a?.sort_order ?? 0) - (b?.sort_order ?? 0),
+      )
+      const state = buildQuotationFormState(quotationRow, orderedItems)
+      const createdInvoice = await convertQuotationToInvoice(
+        { id, quotation: state.quotation, items: state.items, prefixes: settings?.document_prefixes },
+        tenantClient,
+        entityId,
+      )
+      if (!createdInvoice?.id) {
+        throw new Error('Conversion succeeded but the invoice ID was not returned.')
+      }
+      invalidateListCache(QUOTATION_CACHE_KEY)
+      setActiveQuotation(null)
+      navigate(`/invoices/${createdInvoice.id}`)
+    } catch (error: unknown) {
+      feedback.error('Conversion failed', {
+        description: error instanceof Error ? error.message : 'Unable to convert this quotation.',
+      })
+    } finally {
+      setConvertId(null)
+      setBusyAction(null)
+    }
+  }
+
   const handleRetryQueueItem = async (queueItemId: string) => {
     setRetryingQueueItemId(queueItemId)
 
@@ -187,6 +230,7 @@ export default function QuotationList() {
 
   const activeQuotationIsArchiving = activeQuotation ? busyAction === `archive:${activeQuotation.id}` : false
   const activeQuotationIsDeleting = activeQuotation ? busyAction === `delete:${activeQuotation.id}` : false
+  const activeQuotationIsConverting = activeQuotation ? busyAction === `convert:${activeQuotation.id}` : false
   const hasActiveFilters = Boolean(
     state.statuses.length > 0 ||
     state.dateRange.from ||
@@ -459,61 +503,79 @@ export default function QuotationList() {
           if (deleteId) void handleDelete(deleteId)
         }}
       />
+      <ConfirmActionDialog
+        open={convertId !== null}
+        onOpenChange={(open) => {
+          if (!open) setConvertId(null)
+        }}
+        title="Convert this quotation?"
+        description="This will generate a new unpaid invoice based on this quotation. The quotation will be marked as converted."
+        confirmLabel={activeQuotationIsConverting ? "Converting..." : "Convert to Invoice"}
+        variant="default"
+        loading={activeQuotationIsConverting}
+        onConfirm={() => {
+          if (convertId) void handleConvert(convertId)
+        }}
+      />
       <InvoiceListActionSheet
-        open={Boolean(activeQuotation) && !archiveId && !deleteId}
+        open={Boolean(activeQuotation) && !archiveId && !deleteId && !convertId}
         onOpenChange={(open) => {
           if (!open) setActiveQuotation(null)
         }}
         eyebrow="Quotation"
         title={activeQuotation ? `${activeQuotation.client_name || 'No client selected'} · ${activeQuotation.quotation_number || 'Quotation'}` : 'Quotation'}
         subtitle={activeQuotation ? `${formatMoney(activeQuotation.total || 0)} · Fast access actions from list context` : null}
-        actions={activeQuotation ? [
-          {
-            key: "view",
-            label: "View",
-            icon: <ClipboardList className="h-6 w-6" />,
-            onClick: () => navigate(`/quotations/${activeQuotation.id}`),
-          },
-          {
-            key: "edit",
-            label: "Edit",
-            icon: <Pencil className="h-6 w-6" />,
-            onClick: () => navigate(`/quotations/edit/${activeQuotation.id}`),
-          },
-          {
-            key: 'project',
-            label: quotationProjectState.label,
-            icon: quotationProjectState.hasProject ? <FolderOpen className="h-6 w-6" /> : <FolderPlus className="h-6 w-6" />,
-            onClick: () => {
+        actions={activeQuotation ? (() => {
+          const defs = getQuotationListActionDefs({
+            projectActionLabel: quotationProjectState.label,
+            hasProject: quotationProjectState.hasProject,
+            documentActionLabel: quotationDocumentState.label,
+            hasLinkedDocuments: activeQuotationHasLinkedDocuments,
+          })
+          const isCloning = busyAction === `clone:${activeQuotation.id}`
+          const iconMap: Record<string, ReactNode> = {
+            convert: <FileOutput className="h-6 w-6" />,
+            pencil: <Pencil className="h-6 w-6" />,
+            folderOpen: <FolderOpen className="h-6 w-6" />,
+            folderPlus: <FolderPlus className="h-6 w-6" />,
+            workflow: <Workflow className="h-6 w-6" />,
+            gitBranchPlus: <GitBranchPlus className="h-6 w-6" />,
+            copy: <Copy className="h-6 w-6" />,
+            archive: <Archive className="h-6 w-6" />,
+          }
+          const handlers: Record<string, () => void> = {
+            convert: () => setConvertId(activeQuotation.id),
+            edit: () => navigate(`/quotations/edit/${activeQuotation.id}`),
+            project: () => {
               if (activeQuotation.project_id) {
                 navigate(`/projects/${activeQuotation.project_id}`)
                 return
               }
               setShowProjectLinkDialog(true)
             },
-            closeOnClick: quotationProjectState.hasProject,
-          },
-          {
-            key: 'documents',
-            label: quotationDocumentState.label,
-            icon: activeQuotationHasLinkedDocuments ? <Workflow className="h-6 w-6" /> : <GitBranchPlus className="h-6 w-6" />,
-            onClick: () => setShowLinkedDocuments(true),
-            closeOnClick: false,
-          },
-          {
-            key: "clone",
-            label: busyAction === `clone:${activeQuotation.id}` ? "Working..." : "Clone",
-            icon: busyAction === `clone:${activeQuotation.id}` ? <Loader2 className="h-6 w-6 animate-spin" /> : <Copy className="h-6 w-6" />,
-            onClick: () => void handleClone(activeQuotation.id),
-          },
-          {
-            key: 'archive',
-            label: activeQuotationIsArchiving ? 'Archiving...' : 'Archive',
-            icon: activeQuotationIsArchiving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Archive className="h-6 w-6" />,
-            onClick: () => setArchiveId(activeQuotation.id),
-            closeOnClick: false,
-          },
-        ] : []}
+            documents: () => setShowLinkedDocuments(true),
+            clone: () => void handleClone(activeQuotation.id),
+            archive: () => setArchiveId(activeQuotation.id),
+          }
+          return defs.map((def) => {
+            const busy =
+              (def.key === 'clone' && isCloning) ||
+              (def.key === 'archive' && activeQuotationIsArchiving)
+            const label =
+              def.key === 'clone' && isCloning
+                ? 'Working...'
+                : def.key === 'archive' && activeQuotationIsArchiving
+                  ? 'Archiving...'
+                  : def.label
+            return {
+              key: def.key,
+              label,
+              icon: busy ? <Loader2 className="h-6 w-6 animate-spin" /> : iconMap[def.iconKey],
+              onClick: handlers[def.key],
+              closeOnClick: def.closeOnClick,
+            }
+          })
+        })() : []}
         deleteAction={activeQuotation ? {
           key: 'delete',
           label: activeQuotationIsDeleting ? "Deleting..." : "Delete Quotation",

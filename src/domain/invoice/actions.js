@@ -111,7 +111,6 @@ export function getInvoiceListActionDefs({
   isStandalone,
 }) {
   const actions = [
-    { key: 'view', label: 'View', iconKey: 'eye', visible: true },
     { key: 'edit', label: 'Edit', iconKey: 'pencil', visible: true },
     {
       key: 'project',

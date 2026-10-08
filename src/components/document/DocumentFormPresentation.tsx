@@ -1,5 +1,6 @@
 import { ArrowLeft, MoreHorizontal, Save } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 
 type DocumentSectionHeadProps = {
   number: string
@@ -56,6 +57,10 @@ export function DocumentTopBar({
             <MoreHorizontal className="h-[18px] w-[18px]" />
           </button>
         ) : null}
+        {/* Shared theme toggle — exposed in every form using this header.
+            It reuses the Dashboard preference; `type="button"` means it can
+            neither submit nor save the form. Geometry matches `.cps-tb-btn`. */}
+        <ThemeToggleButton className="h-10 w-10 rounded-[11px]" />
         <button type="button" className="cps-save" onClick={onSave} disabled={disabled}>
           <Save className="h-[16px] w-[16px]" />
           <span>{saveLabel}</span>
