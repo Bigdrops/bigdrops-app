@@ -10,6 +10,7 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
+  Sparkles,
   LogOut,
 } from 'lucide-react'
 import Layout, { MobileChromeContext } from '@/components/Layout'
@@ -115,6 +116,8 @@ export default function MoreOptions() {
       group: 'Workspace',
       items: [
         { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
+        { key: 'cold-launch-preview', label: 'Cold Launch Preview', icon: Sparkles, path: '/cold-launch-preview' },
+        { key: 'photohero-preview', label: 'Onboarding Preview', icon: Sparkles, path: '/photohero-preview' },
         {
           key: 'signout',
           label: 'Sign Out',
