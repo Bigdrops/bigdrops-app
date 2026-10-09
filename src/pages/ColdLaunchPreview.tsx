@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RotateCw, X } from 'lucide-react'
-import LoadingTips from '@/components/loading/LoadingTips'
+import { useLoadingTip } from '@/hooks/useLoadingTip'
 import {
   PreviewTree,
   type PreviewNetworkState,
@@ -16,6 +16,27 @@ const VARIANTS: Array<{ key: Variant; label: string }> = [
 ]
 
 /**
+ * Preview-local tip presentation. Reads the shared BIGDROPS guidance engine
+ * through the same hook as production loaders, so rotation, history, and
+ * exposure tracking are unchanged. Only the visual treatment is borderless.
+ * Stays mounted and visible through error/retry transitions so the engine
+ * slot and rotation cadence are never reset by preview network state.
+ */
+function PreviewTips() {
+  const { tip } = useLoadingTip({ pathname: '/cold-launch-preview', active: true })
+  return (
+    <div className="clp-comm-tips">
+      <div role="status" aria-live="polite" className="clp-tip-body">
+        <span className="clp-tip-label">Quick tip</span>
+        <p key={tip ? tip.id : 'none'} className="clp-tip-text">
+          {tip ? tip.message : 'Loading guidance…'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/**
  * Isolated cold-launch design preview. Preview only: it never reads startup
  * readiness state and never renders production startup components.
  *
@@ -28,6 +49,7 @@ export default function ColdLaunchPreview() {
   const [variant, setVariant] = React.useState<Variant>('original')
   const [networkState, setNetworkState] = React.useState<PreviewNetworkState>('normal')
   const [isRunning, setIsRunning] = React.useState(true)
+  const [brandTop, setBrandTop] = React.useState(0.44)
   const retryTimer = React.useRef<number | null>(null)
   const replayFrame = React.useRef<number | null>(null)
 
@@ -84,6 +106,10 @@ export default function ColdLaunchPreview() {
 
   const hasConnectionIssue = networkState === 'error' || networkState === 'retrying'
 
+  const setBrandRatio = React.useCallback((ratio: number) => {
+    setBrandTop((prev) => (Math.abs(prev - ratio) < 0.002 ? prev : ratio))
+  }, [])
+
   return (
     <main
       className={`clp ${isRunning ? 'clp-run' : ''}`}
@@ -92,21 +118,29 @@ export default function ColdLaunchPreview() {
     >
       <style>{`
         .clp{
-          --clp-bg:#14100c;
-          --clp-surface:#221b14;
-          --clp-surface-raised:#2a2118;
-          --clp-surface-muted:#33291c;
-          --clp-ink:#f5efe4;
-          --clp-ink-2:#c9bda9;
-          --clp-ink-3:#8a7d68;
-          --clp-on-dark:#14100c;
+          --clp-top:76px;
+          --clp-comm:224px;
+          --clp-bg:hsl(var(--bg, 222 47% 11%));
+          --clp-surface:hsl(var(--surface, 217 33% 17%));
+          --clp-surface-raised:hsl(var(--surface-raised, 215 32% 22%));
+          --clp-surface-muted:hsl(var(--surface-muted, 215 25% 27%));
+          --clp-ink:hsl(var(--ink, 210 40% 96%));
+          --clp-ink-2:hsl(var(--ink-2, 213 27% 84%));
+          --clp-ink-3:hsl(var(--ink-3, 215 16% 47%));
+          --clp-on-dark:hsl(var(--bg, 222 47% 11%));
           --clp-accent:hsl(var(--primary, 36 93% 51%));
           --clp-hot:hsl(var(--primary-bright, 45 96% 56%));
           --clp-secondary:hsl(var(--secondary, 24 96% 60%));
           --clp-attention:color-mix(in oklab, hsl(var(--attention, 0 84% 63%)) 82%, #ffffff);
           --clp-line:rgba(245,239,228,.09);
           --clp-line-strong:rgba(245,239,228,.17);
-          --clp-dark:color-mix(in oklab,var(--clp-bg) 42%,#090807 58%);
+          --clp-dark:color-mix(in oklab,var(--clp-bg) 70%,#05070b 30%);
+          --clp-field-a:color-mix(in oklab,var(--clp-accent) 62%,transparent);
+          --clp-field-b:color-mix(in oklab,var(--clp-hot) 44%,transparent);
+          --clp-field-c:color-mix(in oklab,var(--clp-secondary) 38%,transparent);
+          --clp-glass:color-mix(in oklab,var(--clp-surface) 56%,transparent);
+          --clp-glass-line:color-mix(in oklab,var(--clp-hot) 20%,var(--clp-ink) 8%);
+          --clp-glass-shadow:color-mix(in oklab,var(--clp-bg) 62%,#000 38%);
           position:fixed;
           inset:0;
           overflow:hidden;
@@ -120,22 +154,24 @@ export default function ColdLaunchPreview() {
           position:absolute;
           inset:-22vh -22vw;
           background:
-            radial-gradient(circle at 50% 44%,color-mix(in oklab,var(--clp-hot) 15%,transparent),transparent 24%),
-            radial-gradient(circle at 16% 18%,color-mix(in oklab,var(--clp-secondary) 11%,transparent),transparent 27%),
-            radial-gradient(circle at 82% 28%,color-mix(in oklab,var(--clp-accent) 9%,transparent),transparent 25%),
-            linear-gradient(180deg,color-mix(in oklab,var(--clp-bg) 52%,#12100e),#090807 72%,color-mix(in oklab,var(--clp-surface) 36%,#0d0b09));
+            radial-gradient(ellipse at 50% 43%,color-mix(in oklab,var(--clp-field-b) 38%,transparent),transparent 25%),
+            radial-gradient(ellipse at 16% 18%,color-mix(in oklab,var(--clp-field-c) 44%,transparent),transparent 30%),
+            radial-gradient(ellipse at 82% 25%,color-mix(in oklab,var(--clp-field-a) 36%,transparent),transparent 28%),
+            radial-gradient(ellipse at 48% 104%,color-mix(in oklab,var(--clp-accent) 16%,transparent),transparent 38%),
+            linear-gradient(168deg,color-mix(in oklab,var(--clp-bg) 90%,#000 10%) 0%,color-mix(in oklab,var(--clp-surface) 50%,#05070b 50%) 48%,#05070b 100%);
           z-index:0;
         }
         .clp::after{
           content:"";
           position:absolute;
-          inset:0 0 auto;
-          height:min(26vh,160px);
-          background:linear-gradient(180deg,rgba(8,7,6,.4),transparent);
+          inset:0;
+          background:
+            linear-gradient(180deg,rgba(0,0,0,.36),transparent 18%,transparent 66%,rgba(0,0,0,.72)),
+            radial-gradient(ellipse at center,transparent 18%,rgba(0,0,0,.28) 72%,rgba(0,0,0,.58));
           pointer-events:none;
           z-index:3;
         }
-        .clp .clp-tree-wrap{position:absolute;inset:0;z-index:1;pointer-events:none}
+        .clp .clp-tree-wrap{position:absolute;left:0;right:0;top:var(--clp-top);bottom:var(--clp-comm);z-index:1;pointer-events:none}
         .clp .clp-tree{display:block;width:100%;height:100%;overflow:visible}
         .clp .clp-ring{fill:none;stroke:var(--clp-line-strong);stroke-width:1.2;stroke-dasharray:3 9;opacity:0}
         .clp .clp-ring-soft{stroke:color-mix(in oklab,var(--clp-accent) 30%,transparent)}
@@ -224,47 +260,59 @@ export default function ColdLaunchPreview() {
         @keyframes clp-signal-fail{0%{stroke-dashoffset:.74;opacity:0}20%{opacity:.5}54%{stroke-dashoffset:.5;opacity:.4}76%,100%{stroke-dashoffset:.44;opacity:0}}
         @keyframes clp-recovery-wave{0%{stroke-dashoffset:1;opacity:0}10%{opacity:1}72%{opacity:1}100%{stroke-dashoffset:-1;opacity:0}}
         @keyframes clp-recover-node{0%,45%{stroke-opacity:.4;filter:none}62%{stroke-opacity:1;filter:drop-shadow(0 0 12px color-mix(in oklab,var(--clp-hot) 64%,transparent))}100%{stroke-opacity:.9;filter:none}}
-        .clp-brand{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:20;display:grid;place-items:center;pointer-events:none}
+        .clp-brand{position:absolute;left:0;right:0;top:var(--clp-top);bottom:var(--clp-comm);z-index:20;pointer-events:none}
+        .clp-brand-inner{position:absolute;left:50%;transform:translate(-50%,-50%);display:grid;place-items:center}
         .clp-brand::before{content:"";position:absolute;left:50%;top:50%;width:clamp(210px,52vmin,320px);height:clamp(150px,34vmin,230px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,color-mix(in oklab,var(--clp-bg) 78%,transparent) 42%,transparent);z-index:-1}
         .clp-logo{width:clamp(58px,8.4vmin,92px);height:clamp(58px,8.4vmin,92px);border-radius:28%;box-shadow:0 0 0 1px color-mix(in oklab,var(--clp-ink) 17%,transparent),0 20px 68px color-mix(in oklab,var(--clp-secondary) 27%,transparent);animation:clp-idle 3.4s cubic-bezier(.77,0,.175,1) 6s infinite}
         .clp-logo img{width:100%;height:100%;border-radius:inherit;object-fit:cover}
         .clp-word{margin-top:10px;text-align:center;font-weight:850;font-size:clamp(17px,2.7vmin,28px);letter-spacing:.04em;color:var(--clp-ink);text-shadow:0 14px 42px rgba(0,0,0,.7)}
         @keyframes clp-idle{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
-        .clp-controls{position:absolute;left:10px;right:64px;top:10px;z-index:40;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-        .clp-control-group{display:flex;gap:4px;align-items:center;border:1px solid color-mix(in oklab,var(--clp-ink) 13%,transparent);background:color-mix(in oklab,var(--clp-surface) 62%,transparent);backdrop-filter:blur(16px);border-radius:14px;padding:4px;max-width:100%}
+        .clp-controls{position:absolute;left:10px;right:64px;top:10px;z-index:40;display:flex;flex-wrap:wrap;row-gap:6px;column-gap:6px;align-items:center;max-width:calc(100% - 74px)}
+        .clp-control-group{display:flex;gap:4px;align-items:center;border:1px solid var(--clp-glass-line);background:var(--clp-glass);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);box-shadow:0 18px 44px color-mix(in oklab,var(--clp-glass-shadow) 56%,transparent);border-radius:14px;padding:4px;max-width:100%}
         .clp-ctrl{min-height:44px;min-width:44px;border-radius:10px;padding:0 10px;color:var(--clp-ink-2);font:750 10px/1 var(--bd-font-family,Manrope,system-ui,sans-serif);letter-spacing:.03em;white-space:nowrap}
-        .clp-ctrl[aria-selected="true"],.clp-ctrl[aria-pressed="true"]{background:var(--clp-ink);color:#11100e}
+        .clp-ctrl[aria-selected="true"],.clp-ctrl[aria-pressed="true"]{background:var(--clp-ink);color:var(--clp-on-dark)}
         .clp-ctrl:focus-visible,.clp-close:focus-visible,.clp-retry:focus-visible{outline:2px solid var(--clp-hot);outline-offset:2px}
-        .clp-close{position:absolute;right:10px;top:10px;z-index:45;display:grid;width:44px;height:44px;place-items:center;border-radius:14px;border:1px solid color-mix(in oklab,var(--clp-ink) 14%,transparent);background:color-mix(in oklab,var(--clp-surface) 70%,transparent);color:var(--clp-ink);backdrop-filter:blur(16px)}
+        .clp-close{position:absolute;right:10px;top:10px;z-index:45;display:grid;width:44px;height:44px;place-items:center;border-radius:14px;border:1px solid var(--clp-glass-line);background:var(--clp-glass);color:var(--clp-ink);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);box-shadow:0 18px 44px color-mix(in oklab,var(--clp-glass-shadow) 56%,transparent)}
         .clp-preview-label{position:absolute;left:14px;bottom:12px;z-index:30;max-width:min(360px,calc(100vw - 28px));color:var(--clp-ink-3);font-size:9.5px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
-        .clp-lower{position:absolute;left:50%;bottom:clamp(38px,7vh,78px);z-index:30;width:min(560px,calc(100vw - 28px));transform:translateX(-50%);display:grid;gap:10px;justify-items:center}
-        .clp-error-card{width:min(460px,100%);margin-inline:auto;border-radius:18px;border:1px solid color-mix(in oklab,var(--clp-attention) 52%,transparent);background:color-mix(in oklab,var(--clp-surface-raised) 97%,#000);padding:13px 16px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.5)}
-        .clp-error-card .eyebrow{color:color-mix(in oklab,var(--clp-attention) 74%,#fff);font-size:10px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
-        .clp-error-card h2{margin:5px 0 0;color:var(--clp-ink);font-size:16.5px;font-weight:850;letter-spacing:0;line-height:1.3}
-        .clp-error-card p{margin:5px auto 0;max-width:420px;color:var(--clp-ink);opacity:.86;font-size:13px;font-weight:600;line-height:1.45}
-        .clp-retry{margin:10px auto 0;display:inline-flex;min-height:44px;align-items:center;gap:8px;border-radius:999px;background:var(--clp-ink);color:#11100e;padding:0 20px;font-size:13px;font-weight:850}
+        /* Shared communication zone: one reserved band at the bottom holds
+           persistent guidance and, when needed, compact connection feedback. */
+        .clp-lower{position:absolute;left:0;right:0;bottom:0;height:var(--clp-comm);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,color-mix(in oklab,var(--clp-bg) 46%,transparent) 32%,color-mix(in oklab,#000 68%,transparent));pointer-events:none}
+        .clp-lower>*{pointer-events:auto}
+        .clp-comm-tips{width:100%;display:grid;justify-items:center;order:2}
+        .clp-tip-body{display:grid;gap:5px;justify-items:center;max-width:560px}
+        .clp-tip-label{color:var(--clp-ink-3);font-size:9px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;font-family:var(--bd-font-family,Manrope,system-ui,sans-serif)}
+        .clp-tip-text{margin:0;color:var(--clp-ink);font-size:13px;font-weight:650;line-height:1.5;max-width:52ch;text-wrap:balance}
+        .clp-tip-text{animation:clp-tip-fade .45s cubic-bezier(.23,1,.32,1) both}
+        @keyframes clp-tip-fade{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+        .clp-comm-error{width:min(480px,100%);display:grid;gap:6px;justify-items:center;text-align:center;order:1}
+        .clp-comm-eyebrow{color:var(--clp-attention);font-size:9.5px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
+        .clp-comm-text{margin:0;max-width:52ch;color:var(--clp-ink);font-size:13.5px;font-weight:700;line-height:1.45;text-wrap:balance}
+        .clp-retry{margin:4px auto 0;display:inline-flex;min-height:44px;align-items:center;gap:8px;border-radius:999px;background:var(--clp-ink);color:var(--clp-on-dark);padding:0 20px;font-size:13px;font-weight:850}
         .clp-retry:disabled{opacity:.75}
         .clp[data-network-state="retrying"] .clp-retry svg{animation:clp-retry-spin .9s linear infinite}
         @keyframes clp-retry-spin{to{transform:rotate(360deg)}}
-        .clp .clp-tips{width:100%;display:grid;justify-items:center}
-        .clp .clp-tips>div{width:100%!important;max-width:560px!important;border:1px solid color-mix(in oklab,var(--clp-ink) 14%,transparent)!important;background:color-mix(in oklab,var(--clp-surface-raised) 88%,transparent)!important;backdrop-filter:blur(14px)}
-        .clp .clp-tips p{color:var(--clp-ink-2)!important}
-        .clp .clp-tips p:first-child{color:var(--clp-ink-2)!important}
+        @media (min-width: 560px){.clp{--clp-top:84px;--clp-comm:204px}.clp-lower{gap:9px}}
+        @media (min-width: 900px){.clp{--clp-comm:194px}.clp-lower{gap:8px}}
         @media (max-width:560px),(max-height:740px){
-          .clp[data-network-state="error"] .clp-tips,
-          .clp[data-network-state="retrying"] .clp-tips{display:none}
           .clp-controls{right:58px;gap:4px}
           .clp-control-group{padding:3px;border-radius:12px}
           .clp-ctrl{min-height:44px;padding:0 8px;font-size:9px}
-          .clp-error-card h2{font-size:16px}
-          .clp-lower{bottom:32px}
+          .clp-lower{gap:7px;padding-top:8px}
+          .clp-comm-error{gap:4px}
+          .clp-comm-text{font-size:12.5px;line-height:1.38}
+          .clp-tip-body{gap:3px}
+          .clp-tip-text{font-size:12px;line-height:1.38;max-width:44ch}
+          .clp-retry{min-height:42px;padding:0 16px}
           .clp-preview-label{display:none}
         }
-        @media (max-width: 360px){.clp-word{font-size:16px}.clp-lower{bottom:28px}}
+        @media (max-width: 360px){.clp-word{font-size:16px}}
         @media (min-width: 560px){.clp-controls{left:18px;top:16px;right:76px}.clp-close{right:18px;top:16px}}
-        @media (min-width: 900px){.clp-lower{bottom:54px}.clp-preview-label{left:22px;bottom:18px}}
+        @media (min-width: 900px){.clp-preview-label{left:22px;bottom:18px}}
         @media (prefers-reduced-motion: reduce){
           .clp *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+          .clp .clp-ring,.clp .clp-edge,.clp .clp-node,.clp .clp-pill,.clp .clp-dot{opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
+          .clp .clp-signal,.clp .clp-pulse{display:none!important}
+          .clp .clp-tip-text{animation:none!important}
           .clp .clp-ring,.clp .clp-edge,.clp .clp-node,.clp .clp-pill,.clp .clp-dot{opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
           .clp .clp-signal,.clp .clp-pulse{display:none!important}
           .clp[data-network-state="error"] .clp-affected-edge{opacity:.4!important;stroke:color-mix(in oklab,var(--clp-attention) 48%,var(--clp-secondary))!important;stroke-dasharray:.009 .015!important}
@@ -277,13 +325,16 @@ export default function ColdLaunchPreview() {
       <PreviewTree
         enhanced={variant === 'enhanced'}
         state={networkState}
+        onBrandRatio={setBrandRatio}
       />
 
       <div className="clp-brand" aria-hidden="true">
+        <div className="clp-brand-inner" style={{ top: `${(brandTop * 100).toFixed(2)}%` }}>
         <div className="clp-logo">
           <img src={bigdropsLogo} alt="" />
         </div>
         <div className="clp-word">BIGDROPS</div>
+        </div>
       </div>
 
       <div className="clp-controls" aria-label="Preview controls">
@@ -338,19 +389,14 @@ export default function ColdLaunchPreview() {
         <X className="h-5 w-5" strokeWidth={2} />
       </button>
 
-      <section className="clp-lower" aria-live="polite">
+      <section className="clp-lower" aria-label="Launch guidance and connection feedback">
         {hasConnectionIssue ? (
-          <div className="clp-error-card">
-            <span className="eyebrow">Preview connection state</span>
-            <h2>
+          <div className="clp-comm-error" role="status" aria-live="polite">
+            <span className="clp-comm-eyebrow">Connection issue</span>
+            <p className="clp-comm-text">
               {networkState === 'retrying'
-                ? 'Retrying connection…'
-                : "Some connections couldn't be reached."}
-            </h2>
-            <p>
-              {networkState === 'retrying'
-                ? 'Sending a recovery wave through the affected branches.'
-                : 'Check your internet connection and try again.'}
+                ? 'Retrying connection — sending a recovery wave through the affected branches.'
+                : "Some connections couldn't be reached. Check your internet connection and try again."}
             </p>
             <button
               type="button"
@@ -363,12 +409,8 @@ export default function ColdLaunchPreview() {
             </button>
           </div>
         ) : null}
-        <div className="clp-tips">
-          <LoadingTips
-            pathname="/cold-launch-preview"
-            active
-            className="clp-tip-inline"
-          />
+        <div className="clp-tips-holder">
+          <PreviewTips />
         </div>
       </section>
 
