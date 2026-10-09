@@ -16,6 +16,10 @@ const editorSource = readFileSync(
   new URL('../../components/cps/CostPricingSheetEditor.tsx', import.meta.url),
   'utf8',
 )
+const priceFlowSource = readFileSync(
+  new URL('../../components/cps/CpsMarkupPriceFlow.tsx', import.meta.url),
+  'utf8',
+)
 const formSource = readFileSync(
   new URL('../../components/cps/CostPricingSheetForm.tsx', import.meta.url),
   'utf8',
@@ -100,6 +104,14 @@ test('reset and undo reset are separate sheet-session controls', () => {
   assert.ok(sheetSource.includes('Reset markup?'), 'reset must require confirmation')
   assert.ok(sheetSource.includes('onUndoReset'), 'sheet must expose a separate undo reset callback')
   assert.ok(sheetSource.includes('Undo Reset'), 'sheet must render a Ctrl+Z-style undo reset action')
+  assert.ok(
+    /canUndoReset\s*\?\s*\(/.test(sheetSource),
+    'Undo Reset must be conditional, not visible in the initial sheet state',
+  )
+  assert.ok(
+    /canUndoReset\s*\?\s*\(/.test(editorSource),
+    'Undo Reset must be conditional, not visible in the initial desktop dialog state',
+  )
   assert.ok(editorSource.includes('markupOpeningRows'), 'reset must restore from the session-opening snapshot')
   assert.ok(editorSource.includes('resetInstantMarkupWorkingRows(markupOpeningRows)'), 'reset must not zero current working SP values')
   assert.ok(!editorSource.includes('resetInstantMarkupSellingPrices'), 'old destructive zero-SP reset helper must not be used')
@@ -145,13 +157,29 @@ test('typing, mode, and inclusion changes commit nothing by themselves', () => {
 test('live summary sits near the controls with polite live-region semantics', () => {
   assert.ok(sheetSource.includes('aria-live="polite"'), 'sheet summary must announce reactive updates')
   assert.ok(sheetSource.includes('Aggregate change'), 'sheet summary must show aggregate change')
+  assert.ok(sheetSource.includes('Selling total'), 'sheet summary must retain selling total')
+  assert.ok(sheetSource.includes('Gross profit'), 'sheet summary must retain gross profit')
   assert.ok(editorSource.includes('aria-live="polite"'), 'dialog summary must announce reactive updates')
+  assert.ok(editorSource.includes('Selling total'), 'dialog summary must retain selling total')
+  assert.ok(editorSource.includes('Gross profit'), 'dialog summary must retain gross profit')
 })
 
-test('markup rows show the live proposed price with cost, current, and proposed hierarchy', () => {
-  assert.ok(sheetSource.includes('proposedSp'), 'sheet rows must receive the live proposed price')
-  assert.ok(sheetSource.includes('Proposed'), 'sheet rows must label the proposed price')
-  assert.ok(editorSource.includes('proposedSp'), 'dialog rows must receive the live proposed price')
+test('markup rows show the live price transition with CP, SP, arrow, and result hierarchy', () => {
+  assert.ok(sheetSource.includes('proposedSp'), 'sheet rows must receive the live calculated price')
+  assert.ok(sheetSource.includes('CpsMarkupPriceFlow'), 'sheet rows must use the shared price transition')
+  assert.ok(editorSource.includes('proposedSp'), 'dialog rows must receive the live calculated price')
+  assert.ok(editorSource.includes('CpsMarkupPriceFlow'), 'dialog rows must use the shared price transition')
+  assert.ok(priceFlowSource.includes('CP{'), 'price flow must expose immutable cost context')
+  assert.ok(priceFlowSource.includes('SP{'), 'price flow must expose current working selling price')
+  assert.ok(priceFlowSource.includes('data-price-arrow'), 'price flow must expose a visual transition arrow')
+  assert.ok(priceFlowSource.includes('data-price="next"'), 'price flow must structurally distinguish the result price')
+  assert.ok(priceFlowSource.includes('const hasDestination = !excluded'), 'excluded rows must not show an active calculated destination')
+  assert.ok(!sheetSource.includes('Proposed'), 'sheet must not render rejected Proposed terminology')
+  assert.ok(!editorSource.includes('Proposed'), 'dialog must not render rejected Proposed terminology')
+  assert.ok(!priceFlowSource.includes('Proposed'), 'price flow must not label the result as proposed')
+  assert.ok(!/>\s*Current\s*</.test(sheetSource), 'sheet must not render verbose Current terminology')
+  assert.ok(!/>\s*Current\s*</.test(editorSource), 'dialog must not render verbose Current terminology')
+  assert.ok(!priceFlowSource.includes('Current'), 'price flow must not use verbose current-row copy')
 })
 
 test('markup copy states the CP fallback accurately', () => {
@@ -193,4 +221,11 @@ test('desktop dialog bounds the workspace with one scroll region and a persisten
   assert.ok(editorSource.includes('cps-mk-dialog'), 'dialog sheet must not scroll as a whole')
   assert.ok(editorSource.includes('cps-mk-list'), 'dialog list must own long-list scrolling')
   assert.ok(editorSource.includes('cps-mk-foot'), 'dialog footer must persist outside the scroll region')
+})
+
+test('reset confirmation is not trapped inside the markup sheet or desktop dock layer', () => {
+  assert.ok(!sheetSource.includes('container={confirmHost}'), 'sheet reset confirmation must use the shared alert dialog layer')
+  assert.ok(!editorSource.includes('container={confirmHost}'), 'desktop reset confirmation must use the shared alert dialog layer')
+  assert.ok(!sheetSource.includes('setConfirmHost'), 'sheet must not own a local confirmation portal host')
+  assert.ok(!editorSource.includes('setConfirmHost'), 'desktop dialog must not own a local confirmation portal host')
 })

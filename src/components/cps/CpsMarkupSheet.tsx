@@ -146,9 +146,6 @@ export function CpsMarkupSheet({
   canUndoReset,
 }: CpsMarkupSheetProps) {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
-  // The reset confirmation is portaled into this sheet, so it renders inside
-  // the sheet's own layer instead of below it.
-  const [confirmHost, setConfirmHost] = useState<HTMLDivElement | null>(null)
   const eligibleCount = rows.filter(isInstantMarkupEligible).length
   const includedCount = rows.filter(
     (row, index) => isInstantMarkupEligible(row) && included[getCpsRowKey(row, index)],
@@ -406,10 +403,9 @@ export function CpsMarkupSheet({
           </div>
         </div>
 
-        <div ref={setConfirmHost} className="contents" />
       </SheetContent>
       <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <AlertDialogContent container={confirmHost}>
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reset markup?</AlertDialogTitle>
             <AlertDialogDescription>
