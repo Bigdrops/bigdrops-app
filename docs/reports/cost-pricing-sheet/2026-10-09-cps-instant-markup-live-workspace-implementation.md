@@ -27,6 +27,26 @@ Verified examples: CP 270 / SP 0 / 20% gives 324.00. CP 285 / SP 0 / 20% gives 3
 
 ## Changes Made
 
+## 2026-10-09 Presentation And Layering Refinement
+
+This follow-up was a presentation and interaction rescue. It did not change the Instant Markup pricing contract, live-calculation contract, editor commit authority, persistence authority, import behavior, column behavior, PDF behavior, conversion behavior, numbering, or group behavior.
+
+Additional changes:
+
+- Repaired `CostPricingSheetEditor.tsx` after a corrupted duplicate `CpsColumnSheet` / markup JSX tail caused 115 TypeScript parse errors.
+- Kept the active desktop Instant Markup dialog and added a valid `MarkupRowList` helper for the desktop row list.
+- Kept the Mobile/Fold `CpsMarkupSheet` as the compact presentation path.
+- Removed the failed local confirmation-host approach and used the shared `AlertDialog` body portal with a higher alert layer than the dialog and sheet layers.
+- Updated the focused presentation test so it now protects the accepted row language: CP, SP, arrow, and result price. The test now rejects visible `Proposed` and verbose `Current` copy in the shared price-flow component.
+
+Pricing math stayed unchanged:
+
+- Base = current working SP when positive, else CP.
+- Percentage = `base × (1 + percentage / 100)`.
+- Fixed = `base + fixed value`.
+- No intermediate Supabase write.
+- One final Apply Markup commit through editor state.
+
 ### Editor session state (`CostPricingSheetEditor.tsx`)
 
 - Removed the `preview` and `markupError` states.
@@ -42,7 +62,7 @@ Verified examples: CP 270 / SP 0 / 20% gives 324.00. CP 285 / SP 0 / 20% gives 3
 
 - Removed the two-screen setup/preview branch. One screen always shows controls, live summary, item list, and footer.
 - Removed the Preview Markup button, the Apply-to-Form stage, and Back navigation. One Apply Markup primary button remains.
-- Each included row shows CP, current SP, and a dominant proposed SP line. Excluded rows show no proposed price.
+- Each included row shows CP, SP, an arrow, and a dominant calculated destination price. Excluded rows show no active destination price.
 - Live summary sits directly under the controls with `aria-live="polite"`. It shows affected count, aggregate change, selling before/after, and profit before/after from the same proposal object.
 - Include All and Exclude All stay compact text buttons. The count reads `N / M included`.
 - Footer stays persistent with safe-area padding. Reset and Undo Reset stay secondary below Apply Markup. Cancel closes without persisting.
@@ -64,17 +84,15 @@ Verified examples: CP 270 / SP 0 / 20% gives 324.00. CP 285 / SP 0 / 20% gives 3
 ### Tests
 
 - `cpsInstantMarkup.test.js`: added supplied runtime examples (270→324, 285→342), recomputation on value change, mode-switch recomputation, exclusion/include-all/exclude-all aggregate updates, and source-row immutability.
-- `cpsMarkupPresentation.test.js`: replaced the two-stage commit test with single-commit assertions. Added live-derivation wiring, no-persistence wiring, live-region summary, proposed-price hierarchy, copy correction, safe-area footer, and desktop bounded-workspace assertions.
+- `cpsMarkupPresentation.test.js`: replaced the two-stage commit test with single-commit assertions. Added live-derivation wiring, no-persistence wiring, live-region summary, CP/SP/arrow/result hierarchy, copy correction, safe-area footer, desktop bounded-workspace assertions, conditional Undo Reset checks, and reset-confirmation layering checks.
 - `cpsCalculationAuthority.test.js`: updated P/Q to the corrected contract. The old test encoded the superseded `cp > 0` eligibility gate. Zero-base rows now process to a value-identical zero and count as processed. Excluded-row behavior is unchanged.
 
 ## Verification Result
 
-- New structural tests failed before the change for the expected reason (feature missing, not typos). They pass after.
-- Focused suites: 41 pass, 0 fail (`cpsInstantMarkup`, `cpsMarkupPresentation`).
-- Related suites: 51 pass, 0 fail (`cpsCalculationAuthority`, `cpsNormalize`, `cpsThemeToggleIntegration`, `cpsViewIdentity`).
+- Focused suites: 42 pass, 0 fail (`cpsInstantMarkup`, `cpsMarkupPresentation`).
 - `bun run typecheck`: passed with no errors.
-- `git diff --check`: clean for task files. Two unrelated settings files carry trailing whitespace from another agent's work. They were left untouched.
-- Full critical suite: unrelated files fail (`cpsViewProductionRedesign` CSS/action assertions, accounting, remediation, source-transaction, item-cleanup). None reference the markup sheet, dialog, editor markup flow, or domain file. They are pre-existing failures outside this scope and were not modified.
+- `git diff --check`: passed. Git reported line-ending normalization warnings only.
+- Browser geometry was not run in this pass. Runtime Mobile/Fold and Desktop screenshots remain the final visual check.
 - `bun run build`: not run per task instruction.
 
 ## Supabase Push Status
