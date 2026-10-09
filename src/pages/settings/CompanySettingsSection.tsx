@@ -260,7 +260,7 @@ export function CompanySettingsSection() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setCustomInfo(curr => curr.filter((_, i) => i !== index))}
-                      className="h-9 w-9 text-red-500 hover:bg-red-50 hover:text-red-600"
+                      className="h-9 w-9 text-bd-status-danger-text hover:bg-bd-status-danger-bg"
                     >
                       <Trash2 size={14} />
                     </Button>

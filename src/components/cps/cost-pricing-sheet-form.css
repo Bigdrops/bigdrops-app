@@ -129,6 +129,17 @@
   justify-content: center;
   flex-shrink: 0;
 }
+/* Adapter for the shared ThemeToggleButton: keep the CPS top-bar button
+   geometry. Higher specificity than `.cps-form button`, so it also wins over
+   the shared button's own utility background/colour. Palette is untouched. */
+.cps-form .cps-tb-theme {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--sub);
+}
 .cps-tb-title {
   flex: 1;
   min-width: 0;
@@ -1340,6 +1351,18 @@ textarea.cps-field {
 }
 .cps-sheet-actions button {
   flex: 1;
+}
+.cps-sheet.cps-mk-dialog {
+  overflow: visible;
+}
+.cps-mk-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.cps-mk-foot {
+  flex-shrink: 0;
 }
 .cps-cta {
   min-height: 42px;

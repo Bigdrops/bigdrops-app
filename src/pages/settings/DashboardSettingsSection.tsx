@@ -90,7 +90,7 @@ export function DashboardSettingsSection() {
                   key={metricId}
                   className="flex flex-col items-center gap-2 p-3 rounded-[var(--bd-radius-lg)] border border-[hsl(var(--bd-border)/0.3)] bg-[hsl(var(--bd-surface-muted)/0.1)] transition-all hover:bg-[hsl(var(--bd-surface-muted)/0.2)]"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-bd-button-primary-bg text-bd-button-primary-text shadow-sm">
                     <BarChart3 size={18} />
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-bd-text">

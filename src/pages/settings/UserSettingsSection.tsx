@@ -54,10 +54,10 @@ export function UserSettingsSection({
 
   const strengthClass =
     strength === 'Strong'
-      ? 'bg-emerald-500'
+      ? 'bg-bd-status-success-text'
       : strength === 'Fair'
-      ? 'bg-amber-500'
-      : 'bg-red-500'
+      ? 'bg-bd-status-warning-text'
+      : 'bg-bd-status-danger-text'
 
   const resetModal = () => {
     setOpen(false)
@@ -138,14 +138,14 @@ export function UserSettingsSection({
   return (
     <div className="space-y-4">
       <div className="px-1">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
           User Settings
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
-        <div className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3.5">
-          <div className="text-sm font-bold text-slate-900">Profile & Security</div>
+      <div className="overflow-hidden rounded-2xl border border-bd-border bg-card shadow-sm">
+        <div className="border-b border-bd-border bg-bd-surface-muted px-4 py-3.5">
+          <div className="text-sm font-bold text-bd-text">Profile & Security</div>
           <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
             Review your signed-in account details and security actions.
           </div>
@@ -156,13 +156,13 @@ export function UserSettingsSection({
           <SettingsSummaryField label="Password" value="••••••••" />
         </div>
 
-        <div className="border-t border-slate-200/80 px-4 py-4">
+        <div className="border-t border-bd-border px-4 py-4">
           <button
             onClick={() => {
               setError('')
               setOpen(true)
             }}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-bd-surface px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-bd-border bg-bd-surface px-4 py-2.5 text-sm font-bold text-bd-text transition-colors hover:bg-bd-surface-muted"
           >
             <LockKeyhole size={14} />
             Change Password
@@ -171,9 +171,9 @@ export function UserSettingsSection({
       </div>
 
       {canUseAndroidNativeSqlite() ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
-          <div className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3.5">
-            <div className="text-sm font-bold text-slate-900">Device Assignment</div>
+        <div className="overflow-hidden rounded-2xl border border-bd-border bg-card shadow-sm">
+          <div className="border-b border-bd-border bg-bd-surface-muted px-4 py-3.5">
+            <div className="text-sm font-bold text-bd-text">Device Assignment</div>
             <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
               Retry offline device registration for this device.
             </div>
@@ -183,7 +183,7 @@ export function UserSettingsSection({
             <button
               onClick={retryDeviceHydration}
               disabled={hydrating}
-              className="rounded-xl border border-slate-200/80 bg-bd-surface px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-xl border border-bd-border bg-bd-surface px-4 py-2.5 text-sm font-bold text-bd-text transition-colors hover:bg-bd-surface-muted disabled:opacity-50"
             >
               {hydrating ? 'Registering...' : 'Retry Registration'}
             </button>
@@ -192,19 +192,19 @@ export function UserSettingsSection({
       ) : null}
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-xl">
-            <div className="flex items-start gap-3 border-b border-slate-200/80 bg-slate-50/50 px-4 py-3.5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--bd-overlay-scrim))] px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-bd-border bg-card shadow-xl">
+            <div className="flex items-start gap-3 border-b border-bd-border bg-bd-surface-muted px-4 py-3.5">
               <button
                 onClick={resetModal}
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200/80 bg-bd-surface text-slate-500 transition-colors hover:bg-slate-50"
+                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-bd-border bg-bd-surface text-bd-text-muted transition-colors hover:bg-bd-surface-muted"
                 aria-label="Close password modal"
               >
                 <ChevronLeft size={16} />
               </button>
 
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold text-slate-900">Change Password</div>
+                <div className="text-sm font-bold text-bd-text">Change Password</div>
                 <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
                   Verify your current password before saving a new one.
                 </div>
@@ -212,7 +212,7 @@ export function UserSettingsSection({
 
               <button
                 onClick={resetModal}
-                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-1 text-bd-text-muted transition-colors hover:bg-bd-surface-muted hover:text-bd-text"
                 aria-label="Close password modal"
               >
                 <X size={16} />
@@ -231,7 +231,7 @@ export function UserSettingsSection({
                     }))
                   }
                   placeholder="Enter current password"
-                  className="w-full rounded-xl border border-slate-200/80 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/10"
+                  className="w-full rounded-xl border border-bd-border px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                 />
               </SettingsField>
 
@@ -246,28 +246,28 @@ export function UserSettingsSection({
                     }))
                   }
                   placeholder="8+ chars, 1 uppercase, 1 number"
-                  className="w-full rounded-xl border border-slate-200/80 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/10"
+                  className="w-full rounded-xl border border-bd-border px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                 />
 
-                <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-3">
+                <div className="mt-3 rounded-xl border border-bd-border bg-bd-surface-muted px-3 py-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <span className="text-xs font-bold uppercase tracking-wider text-bd-text-muted">
                       Strength
                     </span>
                     <span
                       className={`text-xs font-bold ${
                         strength === 'Strong'
-                          ? 'text-emerald-600'
+                          ? 'text-bd-status-success-text'
                           : strength === 'Fair'
-                          ? 'text-amber-600'
-                          : 'text-red-600'
+                          ? 'text-bd-status-warning-text'
+                          : 'text-bd-status-danger-text'
                       }`}
                     >
                       {strength}
                     </span>
                   </div>
 
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-bd-surface-muted">
                     <div
                       className={`h-full rounded-full transition-all ${strengthClass}`}
                       style={{ width: `${(strengthScore / 3) * 100}%` }}
@@ -275,13 +275,13 @@ export function UserSettingsSection({
                   </div>
 
                   <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                    <div className={requirements.length ? 'text-emerald-600' : ''}>
+                    <div className={requirements.length ? 'text-bd-status-success-text' : ''}>
                       8+ characters
                     </div>
-                    <div className={requirements.uppercase ? 'text-emerald-600' : ''}>
+                    <div className={requirements.uppercase ? 'text-bd-status-success-text' : ''}>
                       At least 1 uppercase letter
                     </div>
-                    <div className={requirements.number ? 'text-emerald-600' : ''}>
+                    <div className={requirements.number ? 'text-bd-status-success-text' : ''}>
                       At least 1 number
                     </div>
                   </div>
@@ -299,12 +299,12 @@ export function UserSettingsSection({
                     }))
                   }
                   placeholder="Repeat new password"
-                  className="w-full rounded-xl border border-slate-200/80 px-3 py-2.5 text-sm transition-colors focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/10"
+                  className="w-full rounded-xl border border-bd-border px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                 />
               </SettingsField>
 
               {error ? (
-                <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600">
+                <p className="rounded-xl bg-bd-status-danger-bg px-3 py-2 text-xs text-bd-status-danger-text">
                   {error}
                 </p>
               ) : null}
@@ -312,7 +312,7 @@ export function UserSettingsSection({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={resetModal}
-                  className="flex-1 rounded-xl border border-slate-200/80 bg-bd-surface px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                  className="flex-1 rounded-xl border border-bd-border bg-bd-surface px-4 py-3 text-sm font-bold text-bd-text transition-colors hover:bg-bd-surface-muted"
                 >
                   Cancel
                 </button>

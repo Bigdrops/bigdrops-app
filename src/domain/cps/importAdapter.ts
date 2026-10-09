@@ -3,6 +3,20 @@ import type { Cps } from './types'
 import { createEmptyTableRow } from '@/domain/table-document/rows'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 import { validateImportGroupMembership } from '@/domain/import/groupMembership'
+import { CPS_BUILTIN_COLUMNS, normalizeCpsColumns } from './columns'
+import type { ColumnConfig } from '@/domain/invoice/types'
+import {
+  MAX_NEW_COLUMNS,
+  inferColumnType,
+  isDangerousKey,
+  normalizeScalar,
+  normalizeText,
+} from '@/domain/import/utils'
+import {
+  createUniqueCustomColumnKey,
+  findColumnByLogicalIdentity,
+  normalizeColumnLabelIdentity,
+} from '@/domain/financial/columnIdentity'
 
 /**
  * Cost & Pricing Sheet JSON extraction contract.
@@ -27,7 +41,7 @@ import { validateImportGroupMembership } from '@/domain/import/groupMembership'
  *   client display (client_name),
  *   Site / Project (project_name),
  *   item photos (image_url),
- *   CPS column configuration (custom_fields.columnConfig),
+ *   existing CPS metadata outside CPS column configuration,
  *   calculated financial values (TCP, TSP, profit, margin, totals).
  */
 
@@ -48,6 +62,7 @@ const itemSchema = z.object({
   cost_price: z.union([z.number(), z.string()]).optional().nullable(),
   selling_price: z.union([z.number(), z.string()]).optional().nullable(),
   notes: z.string().optional().nullable(),
+  custom_fields: z.record(z.string(), z.unknown()).optional().nullable(),
 }).strict()
 
 const cpsImportBaseSchema = z.object({
@@ -90,7 +105,33 @@ function getVisibleColumnKeys(current: Cps): Set<string> {
   return keys
 }
 
-export const cpsImportPrompt = `You are a strict JSON data extractor. Follow these rules without exception:
+function getCpsVisibleCustomColumns(columns: ColumnConfig[]): ColumnConfig[] {
+  const seen = new Set<string>()
+  const out: ColumnConfig[] = []
+  for (const column of columns) {
+    if (!column.key?.startsWith('custom_')) continue
+    if ((column.visibilityMode || 'show') !== 'show') continue
+    const identity = normalizeColumnLabelIdentity(column.label || column.key)
+    if (!identity || seen.has(identity)) continue
+    seen.add(identity)
+    out.push(column)
+  }
+  return out
+}
+
+export function buildCpsImportPrompt(columnsOrCps?: ColumnConfig[] | Cps): string {
+  const columns = Array.isArray(columnsOrCps)
+    ? normalizeCpsColumns(columnsOrCps)
+    : normalizeCpsColumns(columnsOrCps?.custom_fields?.columnConfig)
+  const customColumns = getCpsVisibleCustomColumns(columns)
+  const customSchema = customColumns.length > 0
+    ? `,\n    "custom_fields": { ${customColumns.map((column) => `"${column.label || column.key}": string | number | null`).join(', ')} }`
+    : ''
+  const customRules = customColumns.length > 0
+    ? `\n- Put only configured extra item attributes inside "custom_fields". Use these custom field keys exactly: ${customColumns.map((column) => `"${column.label || column.key}"`).join(', ')}.`
+    : '\n- Do not add a "custom_fields" object unless the prompt lists configured custom fields.'
+
+  return `You are a strict JSON data extractor. Follow these rules without exception:
 
 · Return ONLY data explicitly present in the source document.
 · Never infer, guess, or fabricate values.
@@ -116,7 +157,7 @@ This is a Cost & Pricing Sheet import. Return one JSON object:
     "unit": string | null,
     "cost_price": number | null,
     "selling_price": number | null,
-    "notes": string | null
+    "notes": string | null${customSchema}
   }]
 }
 
@@ -128,13 +169,16 @@ Rules:
 - Do not extract a site or a project.
 - Do not extract photos or image URLs.
 - Do not extract calculated values: no line totals, no TCP, no TSP, no profit, no margin, and no document totals.
-- Do not add a "custom_fields" object and do not invent fields outside the shape above.
+- Do not invent fields outside the shape above.${customRules}
 - Groups are allowed ONLY when the source has explicit section headings or category labels. If the source has no explicit groups, omit "groups" and omit "temp_ref" and "group_id" from every item. Do not create a default group.
 - When groups exist, assign each group id in order: "grp_1", "grp_2", "grp_3". Add a unique "temp_ref" to every item in order: "item_1", "item_2", "item_3". Set "group_id" on each item to its group id. List the item temp_refs in that group "itemIds" array.
 - A group is one contiguous section in items[]. Once a standalone item or another group appears, the previous group is closed and must not appear again later.
 - Preserve the exact global item order from the source document. Do not reorder items to cluster them by group.
 - The app applies the sheet's active column configuration. Only produce the fields above.
 - Output JSON only. Wrap the JSON in a code block. Paste it back into the app.`
+}
+
+export const cpsImportPrompt = buildCpsImportPrompt()
 
 function validateCpsImportStructure(payload: CpsImportPayloadBase): string | null {
   return validateImportGroupMembership({
@@ -158,12 +202,122 @@ export const cpsImportSchema = cpsImportBaseSchema.superRefine((payload, ctx) =>
 
 export type CpsImportPayload = z.infer<typeof cpsImportSchema>
 
+type ImportCustomFieldResolution =
+  | { kind: 'custom'; columnKey: string }
+  | { kind: 'builtin'; columnKey: string }
+  | { kind: 'drop' }
+
+function buildCpsBuiltInImportAliases() {
+  const aliases = new Map<string, string>()
+  for (const column of CPS_BUILTIN_COLUMNS) {
+    aliases.set(normalizeColumnLabelIdentity(column.key), column.key)
+    aliases.set(normalizeColumnLabelIdentity(column.label), column.key)
+  }
+  aliases.set('make', 'make_brand')
+  aliases.set('brand', 'make_brand')
+  aliases.set('sub_description', 'specification')
+  aliases.set('specification', 'specification')
+  aliases.set('cost_price', 'cp')
+  aliases.set('selling_price', 'sp')
+  aliases.set('qty', 'quantity')
+  return aliases
+}
+
+function applyCpsBuiltInCustomField(
+  row: TableDocumentRow,
+  columnKey: string,
+  rawValue: unknown,
+  visible: Set<string>,
+) {
+  if (columnKey !== 'specification' && !visible.has(columnKey)) return
+
+  if (columnKey === 'description') row.description = normalizeText(rawValue) || ''
+  else if (columnKey === 'specification') row.specification = normalizeText(rawValue) || ''
+  else if (columnKey === 'make_brand') row.make_brand = normalizeText(rawValue) || ''
+  else if (columnKey === 'quantity') row.quantity = asNumber(rawValue)
+  else if (columnKey === 'unit') row.unit = normalizeText(rawValue) || ''
+  else if (columnKey === 'cp') row.cp = String(rawValue ?? '')
+  else if (columnKey === 'sp') row.sp = String(rawValue ?? '')
+}
+
+function resolveCpsCustomFieldColumns(
+  items: CpsImportPayload['items'],
+  current: Cps,
+): {
+  columns: ColumnConfig[]
+  resolutions: Map<string, ImportCustomFieldResolution>
+} {
+  const columns = normalizeCpsColumns(current.custom_fields?.columnConfig)
+  const nextColumns = columns.map((column) => ({ ...column }))
+  const builtinAliases = buildCpsBuiltInImportAliases()
+  const resolutions = new Map<string, ImportCustomFieldResolution>()
+  const valuesByIdentity = new Map<string, unknown[]>()
+  const labelsByIdentity = new Map<string, string>()
+
+  for (const item of items) {
+    if (!item.custom_fields || typeof item.custom_fields !== 'object') continue
+    for (const [rawLabel, rawValue] of Object.entries(item.custom_fields)) {
+      if (isDangerousKey(rawLabel)) throw new Error(`Import blocked: dangerous custom field "${rawLabel}" is not allowed.`)
+      const identity = normalizeColumnLabelIdentity(rawLabel)
+      if (!identity) continue
+      const values = valuesByIdentity.get(identity) || []
+      values.push(rawValue)
+      valuesByIdentity.set(identity, values)
+      if (!labelsByIdentity.has(identity)) labelsByIdentity.set(identity, normalizeText(rawLabel) || rawLabel)
+    }
+  }
+
+  let createdCount = 0
+  for (const [identity, values] of valuesByIdentity.entries()) {
+    const builtinKey = builtinAliases.get(identity)
+    if (builtinKey) {
+      resolutions.set(identity, { kind: 'builtin', columnKey: builtinKey })
+      continue
+    }
+
+    const label = labelsByIdentity.get(identity) || identity
+    const existing = findColumnByLogicalIdentity(
+      nextColumns.filter((column) => column.key.startsWith('custom_')),
+      label,
+    )
+    if (existing) {
+      resolutions.set(identity, { kind: 'custom', columnKey: existing.key })
+      continue
+    }
+
+    if (createdCount >= MAX_NEW_COLUMNS) {
+      resolutions.set(identity, { kind: 'drop' })
+      continue
+    }
+
+    const column = {
+      key: createUniqueCustomColumnKey(label, nextColumns),
+      label,
+      type: inferColumnType(values),
+      visible: true,
+      visibilityMode: 'show',
+      removable: true,
+      includeInTotal: false,
+    } satisfies ColumnConfig
+    nextColumns.push(column)
+    resolutions.set(identity, { kind: 'custom', columnKey: column.key })
+    createdCount += 1
+  }
+
+  return { columns: nextColumns, resolutions }
+}
+
 export function applyCpsImport(payload: CpsImportPayload, current: Cps): Cps {
   const structureError = validateCpsImportStructure(payload)
   if (structureError) throw new Error(structureError)
 
   const groups = payload.groups || []
   const visible = getVisibleColumnKeys(current)
+  const customFieldColumns = resolveCpsCustomFieldColumns(payload.items, current)
+  const hasExistingColumnConfig = Array.isArray(current.custom_fields?.columnConfig)
+  const hasImportedCustomFields = payload.items.some(
+    (item) => item.custom_fields && Object.keys(item.custom_fields).length > 0,
+  )
   const sectionRows: TableDocumentRow[] = []
   const sectionByGroupId = new Map<string, TableDocumentRow>()
   const groupIdByRef = new Map<string, string>()
@@ -201,6 +355,23 @@ export function applyCpsImport(payload: CpsImportPayload, current: Cps): Cps {
     if (visible.has('cp')) row.cp = String(item.cost_price ?? '')
     if (visible.has('sp')) row.sp = String(item.selling_price ?? '')
     row.notes = item.notes || ''
+    if (item.custom_fields && typeof item.custom_fields === 'object') {
+      Object.entries(item.custom_fields).forEach(([rawLabel, rawValue]) => {
+        const identity = normalizeColumnLabelIdentity(rawLabel)
+        const resolution = customFieldColumns.resolutions.get(identity)
+        if (!resolution || resolution.kind === 'drop') return
+        if (resolution.kind === 'builtin') {
+          applyCpsBuiltInCustomField(row, resolution.columnKey, rawValue, visible)
+          return
+        }
+        const value = normalizeScalar(rawValue)
+        if (value === undefined) return
+        row.custom_data = {
+          ...(row.custom_data || {}),
+          [resolution.columnKey]: value,
+        }
+      })
+    }
 
     return row
   })
@@ -229,5 +400,9 @@ export function applyCpsImport(payload: CpsImportPayload, current: Cps): Cps {
     ...current,
     title: payload.title?.trim() || current.title,
     table_rows: rows.map((row, index) => ({ ...row, sort_order: index })),
+    custom_fields: {
+      ...(current.custom_fields || {}),
+      ...(hasExistingColumnConfig || hasImportedCustomFields ? { columnConfig: customFieldColumns.columns } : {}),
+    },
   }
 }

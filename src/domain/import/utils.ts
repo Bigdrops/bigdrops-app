@@ -1,4 +1,8 @@
 import type { ColumnConfig, InvoiceItem } from '@/domain/invoice'
+import {
+  createUniqueCustomColumnKey,
+  normalizeColumnLabelIdentity,
+} from '@/domain/financial/columnIdentity'
 
 export const MAX_IMPORT_BYTES = 200_000
 export const MAX_IMPORTED_ROWS = 200
@@ -38,12 +42,7 @@ export const UNIT_ALIASES: Record<string, string> = {
 }
 
 export function toSnakeCase(value: string) {
-  return String(value || '')
-    .trim()
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .replace(/[^a-zA-Z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .toLowerCase()
+  return normalizeColumnLabelIdentity(value)
 }
 
 export function normalizeObjectKeys<T>(value: T): T {
@@ -134,18 +133,9 @@ export function makeCustomColumn(
   type: 'text' | 'number',
 ) {
   const preferredLabel = normalizeText(rawLabel) || 'Custom Column'
-  const keyBase = toSnakeCase(preferredLabel) || 'custom_column'
-  const existingKeys = new Set(existingColumns.map((column) => column.key))
-  let nextKey = `custom_${keyBase}`
-  let suffix = 2
-
-  while (existingKeys.has(nextKey)) {
-    nextKey = `custom_${keyBase}_${suffix}`
-    suffix += 1
-  }
 
   return {
-    key: nextKey,
+    key: createUniqueCustomColumnKey(preferredLabel, existingColumns),
     label: preferredLabel,
     type,
     visible: true,

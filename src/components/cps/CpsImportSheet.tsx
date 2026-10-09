@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { JsonImportLayout } from '@/components/import/JsonImportLayout'
-import { applyCpsImport, cpsImportPrompt, cpsImportSchema } from '@/domain/cps/importAdapter'
+import { applyCpsImport, buildCpsImportPrompt, cpsImportSchema } from '@/domain/cps/importAdapter'
 import type { Cps } from '@/domain/cps/types'
 
 type CpsImportSheetProps = {
@@ -63,7 +63,7 @@ export function CpsImportSheet({ open, cps, onOpenChange, onApply }: CpsImportSh
       onOpenChange={onOpenChange}
       title="Import Cost & Pricing Items"
       description="Add groups and line items from extracted JSON."
-      promptText={cpsImportPrompt}
+      promptText={buildCpsImportPrompt(cps)}
       rawInput={rawInput}
       onRawInputChange={(value) => {
         setRawInput(value)

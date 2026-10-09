@@ -1,5 +1,10 @@
 import type { ColumnConfig } from '@/domain/invoice/types'
 import { normalizeColumnConfig } from '@/domain/invoice/columns'
+import {
+  createUniqueCustomColumnKey,
+  findColumnByLogicalIdentity,
+  normalizeColumnLabelIdentity,
+} from '@/domain/financial/columnIdentity'
 
 export const CPS_BUILTIN_COLUMNS: ColumnConfig[] = [
   { key: 'description', label: 'Description', visible: true, visibilityMode: 'show', removable: false },
@@ -51,11 +56,7 @@ export function normalizeCpsColumns(saved: unknown): ColumnConfig[] {
 }
 
 function toCustomKey(label: string) {
-  const base = label
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
+  const base = normalizeColumnLabelIdentity(label)
   return `custom_${base || 'field'}`
 }
 
@@ -64,7 +65,8 @@ export function ensureCpsCustomColumns(columns: ColumnConfig[], labels: string[]
   const existing = new Set(next.map((column) => column.key))
 
   labels.slice(0, 10).forEach((label) => {
-    const key = toCustomKey(label)
+    if (findColumnByLogicalIdentity(next, label)) return
+    const key = createUniqueCustomColumnKey(label, next)
     if (existing.has(key)) return
     existing.add(key)
     next.push(normalizeColumnConfig({

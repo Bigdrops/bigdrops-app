@@ -337,7 +337,7 @@ export function BankingSettingsSection() {
                       size="icon"
                       onClick={() => removeAccount(account.id)}
                       disabled={actionId === `delete:${account.id}`}
-                      className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
+                      className="h-8 w-8 text-bd-status-danger-text hover:bg-bd-status-danger-bg"
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -356,8 +356,8 @@ export function BankingSettingsSection() {
                   icon={<Landmark size={16} />}
                 />
                 {account.is_default && (
-                  <div className="px-5 py-2 bg-emerald-50/50 border-t border-[hsl(var(--bd-border)/0.3)]">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Primary Account</span>
+                  <div className="px-5 py-2 bg-bd-status-success-bg border-t border-[hsl(var(--bd-border)/0.3)]">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-bd-status-success-text">Primary Account</span>
                   </div>
                 )}
               </SettingsSummaryCard>

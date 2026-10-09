@@ -249,7 +249,7 @@ export function SignatoriesSettingsSection() {
                         setUploadError(null)
                         updateForm('signature_url', '')
                       }}
-                      className="rounded-full text-xs font-bold text-red-500 hover:bg-red-50"
+                      className="rounded-full text-xs font-bold text-bd-status-danger-text hover:bg-bd-status-danger-bg"
                     >
                       Remove
                     </Button>
@@ -282,7 +282,7 @@ export function SignatoriesSettingsSection() {
             )}
 
             {uploadError && (
-              <p className="mt-2 text-xs font-medium text-red-500">{uploadError}</p>
+              <p className="mt-2 text-xs font-medium text-bd-status-danger-text">{uploadError}</p>
             )}
           </SettingsField>
 
@@ -336,7 +336,7 @@ export function SignatoriesSettingsSection() {
                       size="sm"
                       onClick={() => removeSignatory(item.id)}
                       disabled={deletingId === item.id}
-                      className="h-8 rounded-full text-xs font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
+                      className="h-8 rounded-full text-xs font-bold text-bd-status-danger-text hover:bg-bd-status-danger-bg"
                     >
                       {deletingId === item.id ? '...' : 'Delete'}
                     </Button>

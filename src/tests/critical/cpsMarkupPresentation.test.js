@@ -67,12 +67,20 @@ test('mobile toolbar still opens markup through the existing intent', () => {
   )
 })
 
-test('mobile form exposes the production undo affordance without its own stack', () => {
+test('mobile CPS form carries custom columns and custom row data', () => {
+  assert.ok(formSource.includes("String(k).startsWith('custom_')"), 'mobile column resolver must keep custom columns')
+  assert.ok(formSource.includes('customData'), 'mobile rows must carry custom data')
+  assert.ok(formSource.includes("column.key.startsWith('custom_')"), 'mobile form must render visible custom columns')
+  assert.ok(editorSource.includes('customData: toMobileCustomData(row.custom_data)'), 'editor must map domain custom_data into mobile rows')
+  assert.ok(editorSource.includes('custom_data: { ...(row.custom_data || {}), ...(mrow.customData || {}) }'), 'editor must return mobile custom data to domain rows')
+})
+
+test('mobile form exposes the production undo affordance without local markup history', () => {
   assert.ok(formSource.includes('hasUndo'), 'form must accept production undo state')
   assert.ok(formSource.includes('onUndoMarkup'), 'form must call the production undo callback')
   assert.ok(
     !formSource.includes('setUndoRows') && !formSource.includes('undoRows'),
-    'form must not own an undo stack',
+    'form must not own undo history',
   )
 })
 
@@ -92,14 +100,97 @@ test('reset and undo reset are separate sheet-session controls', () => {
   assert.ok(sheetSource.includes('Reset markup?'), 'reset must require confirmation')
   assert.ok(sheetSource.includes('onUndoReset'), 'sheet must expose a separate undo reset callback')
   assert.ok(sheetSource.includes('Undo Reset'), 'sheet must render a Ctrl+Z-style undo reset action')
+  assert.ok(editorSource.includes('markupOpeningRows'), 'reset must restore from the session-opening snapshot')
+  assert.ok(editorSource.includes('resetInstantMarkupWorkingRows(markupOpeningRows)'), 'reset must not zero current working SP values')
+  assert.ok(!editorSource.includes('resetInstantMarkupSellingPrices'), 'old destructive zero-SP reset helper must not be used')
   assert.ok(editorSource.includes('resetUndoRows'), 'reset snapshot must be separate from post-apply undoRows')
   assert.ok(editorSource.includes('setUndoRows(rows)'), 'post-apply undo snapshot must remain form-level')
 })
 
-test('stack workspace commits through existing editor row update authority', () => {
+test('markup workspace commits the live proposal through existing editor row update authority', () => {
   assert.ok(editorSource.includes('markupWorkingRows'), 'editor must own a sheet-session working row state')
-  assert.ok(editorSource.includes('handleStackMarkup'), 'editor must support stacking without closing the sheet')
+  assert.ok(!editorSource.includes('handlePreview'), 'no explicit preview step may remain')
+  assert.ok(!editorSource.includes('handleApplyPreviewMarkup'), 'no intermediate preview-to-workspace commit may remain')
+  assert.ok(!editorSource.includes('onPreview'), 'no preview callback may be wired')
+  assert.ok(!editorSource.includes('onApplyPreview'), 'no second commit stage may be wired')
+  assert.ok(!editorSource.includes('onBack={() => setPreview'), 'no preview back-navigation may remain')
+  assert.ok(!sheetSource.includes('onBack'), 'sheet must not expose back-navigation')
   assert.ok(editorSource.includes('updateRows(finalRows)'), 'final apply must use the existing row update authority')
-  assert.ok(sheetSource.includes('Stack Operation'), 'sheet must expose stack operation separate from final apply')
-  assert.ok(sheetSource.includes('Apply Working SP'), 'sheet must expose final working-state apply')
+  assert.ok(sheetSource.includes('Apply Markup'), 'sheet must expose the single apply action')
+  assert.ok(!/\bStack(?:ed|ing)?\b|Next Stack|Apply Working SP/i.test(sheetSource), 'sheet must not expose stack terminology')
+  assert.ok(!/\bStack(?:ed|ing)?\b|Next Stack|Apply Working SP/i.test(editorSource), 'editor markup UI must not expose stack terminology')
+})
+
+test('live proposal derives from mode, value, and inclusion without a preview action', () => {
+  assert.ok(
+    /useMemo\(\(\) => \{[\s\S]*?previewInstantMarkup\(activeMarkupRows/.test(editorSource),
+    'editor must derive the live proposal from working rows, mode, value, and inclusion',
+  )
+  assert.ok(!sheetSource.includes('Preview Markup'), 'sheet must not render a preview button')
+  assert.ok(!sheetSource.includes('Apply to Form'), 'sheet must not render a second commit stage')
+  assert.ok(!editorSource.includes('Apply to Form'), 'dialog must not render a second commit stage')
+  const sheetApplyCount = sheetSource.split('Apply Markup').length - 1
+  assert.equal(sheetApplyCount, 1, 'sheet must expose exactly one apply action')
+})
+
+test('typing, mode, and inclusion changes commit nothing by themselves', () => {
+  assert.ok(editorSource.includes('onValueChange={setMarkupValue}'), 'value input must only update local state')
+  assert.ok(editorSource.includes('onModeChange={setMarkupMode}'), 'mode toggle must only update local state')
+  assert.ok(
+    !/setMarkupValue\([^)]*\)[\s\S]{0,200}?updateRows/.test(editorSource.replace(/handleApplyMarkup[\s\S]*$/, '')),
+    'keystroke handlers must not reach the row update authority',
+  )
+})
+
+test('live summary sits near the controls with polite live-region semantics', () => {
+  assert.ok(sheetSource.includes('aria-live="polite"'), 'sheet summary must announce reactive updates')
+  assert.ok(sheetSource.includes('Aggregate change'), 'sheet summary must show aggregate change')
+  assert.ok(editorSource.includes('aria-live="polite"'), 'dialog summary must announce reactive updates')
+})
+
+test('markup rows show the live proposed price with cost, current, and proposed hierarchy', () => {
+  assert.ok(sheetSource.includes('proposedSp'), 'sheet rows must receive the live proposed price')
+  assert.ok(sheetSource.includes('Proposed'), 'sheet rows must label the proposed price')
+  assert.ok(editorSource.includes('proposedSp'), 'dialog rows must receive the live proposed price')
+})
+
+test('markup copy states the CP fallback accurately', () => {
+  for (const [source, name] of [[sheetSource, 'sheet'], [editorSource, 'dialog']]) {
+    assert.ok(
+      source.includes('or CP when SP is empty'),
+      `${name} helper must state the CP fallback`,
+    )
+    assert.ok(
+      !source.includes('Mark up from current SP. CP and excluded rows stay unchanged.'),
+      `${name} must not keep the incomplete copy`,
+    )
+    assert.ok(
+      !source.includes('Next SP = current working SP'),
+      `${name} must not claim SP-only base math`,
+    )
+  }
+  assert.ok(
+    !sheetSource.includes('set the current working selling prices to zero'),
+    'sheet reset copy must not claim zeroing',
+  )
+  assert.ok(
+    !editorSource.includes('set the current working selling prices to zero'),
+    'dialog reset copy must not claim zeroing',
+  )
+  assert.ok(sheetSource.includes('when you opened Instant Markup'), 'sheet reset copy must describe snapshot restore')
+  assert.ok(editorSource.includes('when you opened Instant Markup'), 'dialog reset copy must describe snapshot restore')
+})
+
+test('mobile final apply stays reachable with a persistent safe-area footer', () => {
+  assert.ok(
+    sheetSource.includes("paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))'"),
+    'sheet footer must keep safe-area padding',
+  )
+})
+
+test('desktop dialog bounds the workspace with one scroll region and a persistent footer', () => {
+  assert.ok(editorSource.includes('cps-overlay dock'), 'dialog keeps the bounded viewport dock shell')
+  assert.ok(editorSource.includes('cps-mk-dialog'), 'dialog sheet must not scroll as a whole')
+  assert.ok(editorSource.includes('cps-mk-list'), 'dialog list must own long-list scrolling')
+  assert.ok(editorSource.includes('cps-mk-foot'), 'dialog footer must persist outside the scroll region')
 })

@@ -1,7 +1,7 @@
 import { Icons } from '@/lib/iconRegistry'
 import { QUICK_TILE_REGISTRY } from '@/config/quickTiles'
 import type { LucideIcon } from 'lucide-react'
-import { Calculator } from 'lucide-react'
+import { Calculator, Sparkles } from 'lucide-react'
 
 export const APP_NAME = 'BIGDROPS'
 
@@ -161,6 +161,13 @@ export const moreGroups: NavGroup[] = [
         iconBg: 'bg-muted text-foreground',
       },
       {
+        key: 'cold-launch-preview',
+        label: 'Cold Launch Preview',
+        subtitle: 'Preview the new cold-launch design.',
+        icon: Sparkles as LucideIcon,
+        iconBg: 'bg-muted text-foreground',
+      },
+      {
         key: 'signout',
         label: 'Sign Out',
         subtitle: 'Exit this workspace securely.',
@@ -188,6 +195,7 @@ export const mobileDrawerUtilityNav: NavItem[] = [
   { key: 'reports', label: 'Reports', icon: Icons.report as LucideIcon, path: '/reports' },
   { key: 'compliance', label: 'Compliance Hub', icon: Icons.compliance as LucideIcon, path: '/compliance' },
   { key: 'item-library', label: 'Item Library', icon: Icons.itemLibrary as LucideIcon, path: '/item-library' },
+  { key: 'cold-launch-preview', label: 'Cold Launch Preview', icon: Sparkles as LucideIcon, path: '/cold-launch-preview' },
   { key: 'settings', label: 'Settings', icon: Icons.settings as LucideIcon, path: '/settings' },
 ]
 
@@ -241,6 +249,7 @@ export function getActiveTab(pathname: string): TabKey {
     pathname.startsWith('/item-library') ||
     pathname.startsWith('/settings') ||
     pathname.startsWith('/letters') ||
+    pathname === '/cold-launch-preview' ||
     pathname === '/more' ||
     pathname.startsWith('/more/') ||
     pathname.startsWith('/accounting')

@@ -31,7 +31,7 @@
  *   save() checks (no, client, desc/qty/sp)   local state: doc, rowsRaw, client, errId,
  *                                             badge (demo badge + toasts run without a
  *                                             callback)
- *   Theme toggle (data-theme on <html>)       theme? / defaultTheme? / onToggleTheme?
+ *   Theme toggle (data-theme on the CPS root) theme? / defaultTheme? / onToggleTheme?
   *   Client field + clear                      clients? / initialClient? / client? /
   *                                             onClientChange? /
   *                                             onRequestClientSelection?;
@@ -72,6 +72,7 @@ import {
   isSupportedImageFile,
 } from '@/lib/documentImageUploadPolicy';
 import { uploadItemPhoto } from '@/lib/itemPhotoUpload';
+import { themeToggleAriaLabel, themeToggleIcon } from '@/lib/themeToggle';
 
 /* ------------------------------------------------------------------ */
 /* Prototype CSS (verbatim from the source <style> block).            */
@@ -405,7 +406,7 @@ export type CpsColumnKey =
   | 'sp';
 
 export interface CpsColumn {
-  key: CpsColumnKey;
+  key: string;
   label: string;
   visible: boolean;
 }
@@ -452,14 +453,15 @@ export function defaultCpsColumns(): CpsColumn[] {
 export function resolveCpsColumns(saved: Array<CpsColumn | null | undefined> | null | undefined): CpsColumn[] {
   if (!Array.isArray(saved) || !saved.length) return defaultCpsColumns();
   const out: CpsColumn[] = [];
-  const seen = new Set<CpsColumnKey>();
+  const seen = new Set<string>();
   saved.forEach((c) => {
     const k = c && c.key;
-    if (!k || CPS_CANONICAL_ORDER.indexOf(k) < 0 || seen.has(k)) return;
+    if (!k || seen.has(k)) return;
+    if (CPS_CANONICAL_ORDER.indexOf(k as CpsColumnKey) < 0 && !String(k).startsWith('custom_')) return;
     seen.add(k);
     out.push({
       key: k,
-      label: typeof c!.label === 'string' && c!.label.trim() ? c!.label : CPS_LABELS[k],
+      label: typeof c!.label === 'string' && c!.label.trim() ? c!.label : (CPS_LABELS[k as CpsColumnKey] || k),
       visible: c!.visible !== false,
     });
   });
@@ -504,6 +506,7 @@ export interface CpsItemRow {
   cp: number;
   sp: number;
   image?: string | null;
+  customData?: Record<string, string | number | boolean | null>;
 }
 
 export interface CpsGroupRow {
@@ -597,6 +600,7 @@ export function toDomainRowView(r: CpsRow, index = 0): TableDocumentRow {
     sp: String(r.sp ?? ''),
     image_url: r.image ?? null,
     group_id: r.groupId,
+    custom_data: r.customData || {},
   };
 }
 
@@ -690,11 +694,15 @@ export interface CostPricingSheetFormProps {
   title?: string;
   /** Retained for host compatibility. The header no longer displays a status badge. */
   modeLabel?: string;
-  /** Controlled light/dark theme. Sets data-theme on documentElement. */
+  /**
+   * Controlled light/dark theme, mirrored from the global theme preference.
+   * Sets data-theme on the CPS root and drives the header toggle icon and label.
+   * No local theme state is kept; the host is the single theme authority.
+   */
   theme?: 'light' | 'dark';
-  /** Initial theme when the theme prop is omitted. Default: light. */
+  /** Fallback theme used only when the theme prop is omitted. Default: light. */
   defaultTheme?: 'light' | 'dark';
-  /** Notified on every theme tap with the resulting theme. */
+  /** Notified on every theme tap with the requested next theme. The host resolves it against the global preference. */
   onToggleTheme?: (theme: 'light' | 'dark') => void;
   /** Top-bar Back button. Without it, the prototype demo toast shows. */
   onBack?: () => void;
@@ -1043,12 +1051,14 @@ interface ItemRowProps {
   showMake: boolean;
   showCp: boolean;
   showSp: boolean;
+  customColumns: CpsColumn[];
   onDesc: (value: string) => void;
   onUnit: (value: string) => void;
   onMake: (value: string) => void;
   onQty: (value: number) => void;
   onCp: (value: number) => void;
   onSp: (value: number) => void;
+  onCustomData: (key: string, value: string) => void;
   onSubInput: (value: string) => void;
   onSubBlur: (value: string) => void;
   onToggleSub: () => void;
@@ -1211,6 +1221,21 @@ function ItemRow(props: ItemRowProps) {
                 <NumField className="fld mono" value={row.sp} format={fmtMoney} onCommit={props.onSp} />
               </label>
             ) : null}
+          </div>
+        ) : null}
+
+        {props.customColumns.length > 0 ? (
+          <div className="fgrid">
+            {props.customColumns.map((column) => (
+              <label key={column.key} className="cfield">
+                <span className="cf-lab">{column.label || 'Custom'}</span>
+                <input
+                  className="fld"
+                  value={String(row.customData?.[column.key] ?? '')}
+                  onChange={(e) => props.onCustomData(column.key, e.target.value)}
+                />
+              </label>
+            ))}
           </div>
         ) : null}
 
@@ -1399,11 +1424,10 @@ export function CostPricingSheetForm({
   /* --- chrome state --------------------------------------------- */
   const [errId, setErrId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; isErr: boolean } | null>(null);
-  const [internalTheme, setInternalTheme] = useState<'light' | 'dark'>(defaultTheme);
-  const [themeIcon, setThemeIcon] = useState<'sun' | 'moon'>('sun');
   const [pendingScroll, setPendingScroll] = useState<{ id: string; key: number } | null>(null);
 
-  const theme = controlledTheme ?? internalTheme;
+  const theme = controlledTheme ?? defaultTheme;
+  const isDarkTheme = theme === 'dark';
 
   /* --- refs and timers ------------------------------------------ */
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1425,11 +1449,9 @@ export function CostPricingSheetForm({
   );
 
   const toggleTheme = () => {
-    const wasDark = theme === 'dark';
-    const next = wasDark ? 'light' : 'dark';
-    setInternalTheme(next);
-    setThemeIcon(wasDark ? 'moon' : 'sun');
-    onToggleTheme?.(next);
+    // The global preference owns the mode. This form only reports the requested
+    // next mode; the host persists it through the single shared save handler.
+    onToggleTheme?.(isDarkTheme ? 'light' : 'dark');
   };
 
   /* --- row operations (stable string identity) ---------------------- */
@@ -1636,10 +1658,11 @@ export function CostPricingSheetForm({
   }, [pendingScroll, rowsRaw]);
 
   /* --- derived display data ----------------------------------------- */
-  const vis = (k: CpsColumnKey): boolean => {
+  const vis = (k: string): boolean => {
     const c = columns.find((x) => x.key === k);
     return !c || c.visible;
   };
+  const visibleCustomColumns = columns.filter((column) => column.key.startsWith('custom_') && column.visible !== false);
 
   const totals = useMemo(() => {
     const t = computeCpsTotals(rowsRaw.map((r, index) => toDomainRowView(r, index)));
@@ -1678,12 +1701,14 @@ export function CostPricingSheetForm({
         showMake={vis('make')}
         showCp={vis('cp')}
         showSp={vis('sp')}
+        customColumns={visibleCustomColumns}
         onDesc={(v) => editItem(r.id, 'desc', v)}
         onUnit={(v) => editItem(r.id, 'unit', v)}
         onMake={(v) => editItem(r.id, 'make', v)}
         onQty={(v) => editItem(r.id, 'qty', v)}
         onCp={(v) => editItem(r.id, 'cp', v)}
         onSp={(v) => editItem(r.id, 'sp', v)}
+        onCustomData={(key, value) => editItem(r.id, 'customData', { ...(r.customData || {}), [key]: value })}
         onSubInput={(v) => editItem(r.id, 'sub', v)}
         onSubBlur={(v) => collapseSubIfEmpty(r.id, v)}
         onToggleSub={() => toggleSub(r.id)}
@@ -1743,8 +1768,15 @@ export function CostPricingSheetForm({
             <IconSave />
             Save CPS
           </button>
-          <button className="tb-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onClick={toggleTheme}>
-            {themeIcon === 'sun' ? <IconSun /> : <IconMoon />}
+          <button
+            type="button"
+            className="tb-btn"
+            id="themeBtn"
+            title={themeToggleAriaLabel(isDarkTheme)}
+            aria-label={themeToggleAriaLabel(isDarkTheme)}
+            onClick={toggleTheme}
+          >
+            {themeToggleIcon(isDarkTheme) === 'sun' ? <IconSun /> : <IconMoon />}
           </button>
         </header>
 

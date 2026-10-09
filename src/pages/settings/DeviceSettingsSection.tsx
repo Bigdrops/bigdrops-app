@@ -87,7 +87,7 @@ export function DeviceSettingsSection() {
             value={
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold">{devices.length} Handsets</span>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 h-5 px-1.5 text-[9px] font-black uppercase">
+                <Badge variant="outline" className="bg-bd-status-info-bg text-bd-status-info-text border-bd-status-info-border h-5 px-1.5 text-[9px] font-black uppercase">
                   {activeDevices} Online
                 </Badge>
               </div>
@@ -120,7 +120,7 @@ export function DeviceSettingsSection() {
                     <p className="text-sm font-black text-bd-text">{device.device_name || 'Android Device'}</p>
                     <p className="truncate text-[11px] text-bd-text-muted">{device.profiles?.email || 'Unassigned'}</p>
                   </div>
-                  <span className={cn('ml-auto rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wider', device.active ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500')}>
+                  <span className={cn('ml-auto rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wider', device.active ? 'bg-bd-status-info-bg text-bd-status-info-text' : 'bg-bd-surface-muted text-bd-text-muted')}>
                     {device.active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
@@ -147,7 +147,7 @@ export function DeviceSettingsSection() {
                       maxLength={2}
                     />
                   </div>
-                  <Button onClick={() => void updateDeviceCode(device)} disabled={actionId === device.id || !hasChanged} className="rounded-xl px-6 h-10 text-[11px] font-bold uppercase tracking-wider bg-bd-button-primary-bg text-white disabled:opacity-50">
+                  <Button onClick={() => void updateDeviceCode(device)} disabled={actionId === device.id || !hasChanged} className="rounded-xl px-6 h-10 text-[11px] font-bold uppercase tracking-wider bg-bd-button-primary-bg text-bd-button-primary-text disabled:opacity-50">
                     {actionId === device.id ? <Loader2 size={12} className="animate-spin" /> : 'Update Code'}
                   </Button>
                 </div>

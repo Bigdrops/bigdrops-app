@@ -76,15 +76,15 @@ export function AppUpdateSettingsSection() {
                 <RefreshCw className="size-3.5 animate-spin" /> Checking…
               </span>
             ) : display === 'up_to_date' ? (
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+              <span className="flex items-center gap-1.5 text-bd-status-success-text">
                 <CheckCircle2 className="size-3.5" /> Up to date
               </span>
             ) : display === 'available' ? (
-              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+              <span className="flex items-center gap-1.5 text-bd-status-warning-text">
                 <AlertTriangle className="size-3.5" /> Update available{targetLabel ? ` (${targetLabel})` : ''}
               </span>
             ) : display === 'grace' ? (
-              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+              <span className="flex items-center gap-1.5 text-bd-status-warning-text">
                 <AlertTriangle className="size-3.5" /> Mandatory update available
                 {targetLabel ? ` (${targetLabel})` : ''}
                 {graceRemaining && !graceRemaining.expired
@@ -92,7 +92,7 @@ export function AppUpdateSettingsSection() {
                   : ''}
               </span>
             ) : display === 'blocked' ? (
-              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+              <span className="flex items-center gap-1.5 text-bd-status-warning-text">
                 <AlertTriangle className="size-3.5" /> Update required
                 {targetLabel ? ` (${targetLabel})` : ''}
               </span>

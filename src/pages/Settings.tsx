@@ -92,6 +92,6 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
     {active === 'security' && <SecuritySettingsSection />}
     {active === 'local-ai' && <LocalAISettingsSection />}
     {active === 'app-update' && <AppUpdateSettingsSection />}
-    {active === 'tenant-debug' && <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">Tenant Diagnostics Environment (Operator Only)</div>}
+    {active === 'tenant-debug' && <div className="p-8 text-center text-sm text-bd-text-muted">Tenant Diagnostics Environment (Operator Only)</div>}
   </SettingsShell>
 }

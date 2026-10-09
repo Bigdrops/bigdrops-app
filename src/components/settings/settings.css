@@ -1,69 +1,39 @@
-/* Scoped presentation from settings-unified-candidate.html. */
+/* Settings color authority: aliases resolved from the global BIGDROPS
+     semantic theme tokens (--bd-*). The theme engine (AppThemeManager) owns
+     --bd-* values per preset and light/dark mode, so Settings follows the
+     selected theme with no Settings-specific palette or mode branching. */
   .bd-settings-surface {
-    --su-bg: #f0f4f8;
-    --su-surface: #ffffff;
-    --su-surface-raised: #f8fafc;
-    --su-surface-muted: #e2e8f0;
-    --su-surface-strong: #cbd5e1;
-    --su-ink: #0f172a;
-    --su-ink-2: #475569;
-    --su-ink-3: #94a3b8;
-    --su-primary: #1e3a5f;
-    --su-primary-bright: #3b82f6;
+    --su-bg: hsl(var(--bd-app-bg));
+    --su-surface: hsl(var(--bd-surface));
+    --su-surface-raised: hsl(var(--bd-surface-raised));
+    --su-surface-muted: hsl(var(--bd-surface-muted));
+    --su-surface-strong: hsl(var(--bd-surface-strong));
+    --su-ink: hsl(var(--bd-text));
+    --su-ink-2: hsl(var(--bd-text-muted));
+    --su-ink-3: hsl(var(--bd-text-soft));
+    --su-primary: hsl(var(--bd-brand));
+    --su-primary-bright: hsl(var(--accent));
     --su-primary-soft: color-mix(in srgb, var(--su-primary) 14%, transparent);
-    --su-secondary: #0f172a;
+    --su-secondary: hsl(var(--secondary));
     --su-secondary-soft: color-mix(in srgb, var(--su-secondary) 13%, transparent);
-    --su-caution: #b45309;
+    --su-caution: hsl(var(--bd-status-warning-text));
     --su-caution-soft: color-mix(in srgb, var(--su-caution) 13%, transparent);
-    --su-accent: #2563eb;
+    --su-accent: hsl(var(--bd-brand));
     --su-accent-soft: color-mix(in srgb, var(--su-accent) 10%, transparent);
     --su-chev: var(--su-accent);
     --su-chip-bg: var(--su-accent-soft);
     --su-chip-ink: var(--su-accent);
     --su-you-bg: var(--su-accent-soft);
     --su-you-ink: var(--su-accent);
-    --su-line: rgba(15, 23, 42, .07);
-    --su-line-strong: rgba(15, 23, 42, .14);
-    --su-nav: rgba(255, 255, 255, .88);
-    --su-scrim: rgba(14, 12, 10, .38);
+    --su-line: hsl(var(--bd-border));
+    --su-line-strong: hsl(var(--bd-border-strong));
     --su-gradient: linear-gradient(135deg, var(--su-primary), var(--su-secondary));
-    --su-shadow: 0 12px 28px color-mix(in srgb, var(--su-primary) 8%, transparent), 0 2px 6px rgba(15,23,42,.04);
-    --su-shadow-float: 0 18px 40px color-mix(in srgb, var(--su-primary) 18%, transparent), 0 3px 9px rgba(15,23,42,.07);
+    --su-shadow: 0 12px 28px color-mix(in srgb, var(--su-primary) 8%, transparent), 0 2px 6px hsl(var(--bd-border-strong));
+    --su-shadow-float: 0 18px 40px color-mix(in srgb, var(--su-primary) 18%, transparent), 0 3px 9px hsl(var(--bd-border-strong));
     --su-font: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
     --su-number: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     --su-safe-top: env(safe-area-inset-top, 0px);
     --su-safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .dark .bd-settings-surface {
-    --su-bg: #0f172a;
-    --su-surface: #1e293b;
-    --su-surface-raised: #253448;
-    --su-surface-muted: #334155;
-    --su-surface-strong: #475569;
-    --su-ink: #f1f5f9;
-    --su-ink-2: #cbd5e1;
-    --su-ink-3: #64748b;
-    --su-primary: #60a5fa;
-    --su-primary-bright: #93c5fd;
-    --su-primary-soft: color-mix(in srgb, var(--su-primary) 20%, transparent);
-    --su-secondary: #94a3b8;
-    --su-secondary-soft: color-mix(in srgb, var(--su-secondary) 18%, transparent);
-    --su-caution: #fbbf24;
-    --su-caution-soft: color-mix(in srgb, var(--su-caution) 16%, transparent);
-    --su-accent: #93c5fd;
-    --su-accent-soft: color-mix(in srgb, var(--su-accent) 13%, transparent);
-    --su-chev: var(--su-ink-3);
-    --su-chip-bg: var(--su-surface-muted);
-    --su-chip-ink: var(--su-ink-2);
-    --su-you-bg: var(--su-surface-muted);
-    --su-you-ink: var(--su-ink-2);
-    --su-gradient: linear-gradient(135deg, #3b4a63, #0b1220);
-    --su-line: rgba(241, 245, 249, .08);
-    --su-line-strong: rgba(241, 245, 249, .15);
-    --su-nav: rgba(15, 23, 42, .88);
-    --su-shadow: 0 12px 28px rgba(0,0,0,.32), 0 2px 6px rgba(0,0,0,.24);
-    --su-shadow-float: 0 18px 40px rgba(0,0,0,.4), 0 3px 9px rgba(0,0,0,.28);
   }
 
   .su-topbar {
@@ -221,7 +191,7 @@
   .su-fab {
     position: absolute; bottom: calc(20px + var(--su-safe-bottom)); right: 20px; z-index: 30;
     width: 48px; height: 48px; border-radius: 50%;
-    background: var(--su-gradient); color: #fff;
+    background: var(--su-gradient); color: hsl(var(--bd-button-primary-text));
     display: grid; place-items: center;
     box-shadow: var(--su-shadow-float);
     animation: suFabBounce 2.6s infinite cubic-bezier(0.28, 0.84, 0.42, 1);
@@ -291,7 +261,7 @@
 
   .su-primarybtn {
     width: 100%; height: 44px; border-radius: 10px;
-    background: var(--su-gradient); color: #fff;
+    background: var(--su-gradient); color: hsl(var(--bd-button-primary-text));
     font-size: 11px; font-weight: 800;
     display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 10px;
     box-shadow: 0 8px 20px color-mix(in srgb, var(--su-primary) 30%, transparent);
@@ -506,10 +476,11 @@
 .su-role-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--su-accent); }
 .su-role-action-counts { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 7px; }
 .su-role-action-count { display: inline-flex; border-radius: 99px; padding: 2px 5px; font-size: 7px; font-weight: 800; text-transform: capitalize; }
-.su-role-action-count.view, .su-perm-action-item.active[data-action='view'] { color: #1d4ed8; background: #dbeafe; border-color: #93c5fd; }
-.su-role-action-count.create, .su-perm-action-item.active[data-action='create'] { color: #15803d; background: #dcfce7; border-color: #86efac; }
-.su-role-action-count.edit, .su-perm-action-item.active[data-action='edit'] { color: #b45309; background: #fef3c7; border-color: #fcd34d; }
-.su-role-action-count.delete, .su-perm-action-item.active[data-action='delete'] { color: #b91c1c; background: #fee2e2; border-color: #fca5a5; }
+/* Permission scope colors follow the global semantic status tokens. */
+.su-role-action-count.view, .su-perm-action-item.active[data-action='view'] { color: hsl(var(--bd-status-info-text)); background: hsl(var(--bd-status-info-bg)); border-color: hsl(var(--bd-status-info-border)); }
+.su-role-action-count.create, .su-perm-action-item.active[data-action='create'] { color: hsl(var(--bd-status-success-text)); background: hsl(var(--bd-status-success-bg)); border-color: hsl(var(--bd-status-success-border)); }
+.su-role-action-count.edit, .su-perm-action-item.active[data-action='edit'] { color: hsl(var(--bd-status-warning-text)); background: hsl(var(--bd-status-warning-bg)); border-color: hsl(var(--bd-status-warning-border)); }
+.su-role-action-count.delete, .su-perm-action-item.active[data-action='delete'] { color: hsl(var(--bd-status-danger-text)); background: hsl(var(--bd-status-danger-bg)); border-color: hsl(var(--bd-status-danger-border)); }
 .su-role-exact-details { margin-top: 14px; }
 .su-perm-details-body ul { margin: 8px 0 0; padding: 0; list-style: none; }
 .su-perm-details-body li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; font-family: var(--su-number); font-size: 9px; }
@@ -675,7 +646,7 @@
   bottom: calc(20px + var(--su-safe-bottom));
   margin: 16px 6px 0 auto; z-index: 30;
   width: 50px; height: 50px; border-radius: 18px;
-  background: var(--su-accent); color: #fff;
+  background: var(--su-accent); color: hsl(var(--bd-button-primary-text));
   display: grid; place-items: center;
   box-shadow: 0 6px 20px color-mix(in srgb, var(--su-accent) 30%, transparent), 0 2px 6px rgba(0,0,0,.12);
   animation: suFabBounce 2.6s infinite cubic-bezier(0.28, 0.84, 0.42, 1);

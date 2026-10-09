@@ -34,14 +34,14 @@ export default function DashboardKpiCardsSettings({
   return (
     <div className="space-y-4">
       <div className="px-1">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-violet-700/80">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
           Dashboard KPIs
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
-        <div className="border-b border-slate-200/80 bg-violet-50/40 px-4 py-3.5">
-          <div className="text-sm font-bold text-slate-900">KPI Cards</div>
+      <div className="overflow-hidden rounded-2xl border border-bd-border bg-card shadow-sm">
+        <div className="border-b border-bd-border bg-bd-surface-muted px-4 py-3.5">
+          <div className="text-sm font-bold text-bd-text">KPI Cards</div>
           <div className="mt-0 text-[12px] leading-5 text-muted-foreground">
             Choose the metrics shown on your dashboard and reorder them.
           </div>
@@ -52,7 +52,7 @@ export default function DashboardKpiCardsSettings({
             No KPI metrics configured.
           </div>
         ) : (
-          <div className="divide-y divide-slate-200/80">
+          <div className="divide-y divide-bd-border">
             {activeMetrics.map((metricId, index) => {
               const metric = KPI_METRIC_REGISTRY[metricId]
               if (!metric) return null
@@ -62,7 +62,7 @@ export default function DashboardKpiCardsSettings({
                   key={`${metricId}-${index}`}
                   className={cn(
                     'px-4 py-4 transition-colors',
-                    flashMetric === metricId && 'bg-emerald-50/60',
+                    flashMetric === metricId && 'bg-bd-status-success-bg',
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -77,8 +77,8 @@ export default function DashboardKpiCardsSettings({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
-                        <h4 className="truncate text-sm font-bold text-slate-900">{metric.label}</h4>
-                        <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700">
+                        <h4 className="truncate text-sm font-bold text-bd-text">{metric.label}</h4>
+                        <span className="shrink-0 rounded-full bg-bd-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">
                           Card {index + 1}
                         </span>
                       </div>
@@ -91,10 +91,10 @@ export default function DashboardKpiCardsSettings({
                         <button
                           type="button"
                           onClick={() => setPickerIndex(index)}
-                          className="group inline-flex min-w-0 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-bd-surface px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-violet-50/50"
+                          className="group inline-flex min-w-0 items-center gap-1.5 rounded-xl border border-bd-border bg-bd-surface px-3 py-2 text-xs font-bold text-bd-text transition-colors hover:bg-bd-surface-muted"
                         >
                           <span className="truncate">Change Metric</span>
-                          <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-400" />
+                          <ChevronRight className="h-3.5 w-3.5 text-bd-text-muted" />
                         </button>
 
                         <div className="ml-auto flex items-center gap-2">
@@ -104,7 +104,7 @@ export default function DashboardKpiCardsSettings({
                             onClick={() => onMoveMetric(index, 'up')}
                             disabled={index === 0}
                             aria-label={`Move card ${index + 1} up`}
-                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 text-slate-600 shadow-none hover:bg-slate-50"
+                            className="h-9 w-9 rounded-xl border-bd-border bg-bd-surface p-0 text-bd-text-muted shadow-none hover:bg-bd-surface-muted"
                           >
                             <ArrowUp className="h-4 w-4" />
                           </Button>
@@ -115,7 +115,7 @@ export default function DashboardKpiCardsSettings({
                             onClick={() => onMoveMetric(index, 'down')}
                             disabled={index === activeMetrics.length - 1}
                             aria-label={`Move card ${index + 1} down`}
-                            className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 text-slate-600 shadow-none hover:bg-slate-50"
+                            className="h-9 w-9 rounded-xl border-bd-border bg-bd-surface p-0 text-bd-text-muted shadow-none hover:bg-bd-surface-muted"
                           >
                             <ArrowDown className="h-4 w-4" />
                           </Button>
@@ -136,7 +136,7 @@ export default function DashboardKpiCardsSettings({
           showCloseButton={false}
           className="rounded-t-[24px] border-border bg-card px-0 pb-6 pt-0"
         >
-          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-slate-200" />
+          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-bd-surface-muted" />
 
           <SheetHeader className="flex-row items-start justify-between gap-4 px-4 pb-4 pt-5 text-left">
             <div className="min-w-0 flex-1">
@@ -154,7 +154,7 @@ export default function DashboardKpiCardsSettings({
               type="button"
               variant="outline"
               onClick={closePicker}
-              className="h-9 w-9 rounded-xl border-slate-200/80 bg-bd-surface p-0 shadow-none"
+              className="h-9 w-9 rounded-xl border-bd-border bg-bd-surface p-0 shadow-none"
               aria-label="Close metric picker"
             >
               <X className="h-4 w-4" />
@@ -177,8 +177,8 @@ export default function DashboardKpiCardsSettings({
                       closePicker()
                     }}
                     className={cn(
-                      'grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-2xl border border-slate-200/80 bg-bd-surface px-3 py-3 text-left transition-colors hover:bg-violet-50/40',
-                      isSelected && 'border-violet-200 bg-violet-50/50',
+                      'grid w-full grid-cols-[44px,minmax(0,1fr),auto] items-center gap-3 rounded-2xl border border-bd-border bg-bd-surface px-3 py-3 text-left transition-colors hover:bg-bd-surface-muted',
+                      isSelected && 'border-bd-button-primary-bg bg-[hsl(var(--bd-button-primary-bg)/0.05)]',
                     )}
                   >
                     <span
@@ -191,7 +191,7 @@ export default function DashboardKpiCardsSettings({
                     </span>
 
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-slate-900">
+                      <span className="block truncate text-sm font-bold text-bd-text">
                         {option.label}
                       </span>
                       <span className="mt-0 block text-[12px] leading-5 text-muted-foreground">
@@ -203,8 +203,8 @@ export default function DashboardKpiCardsSettings({
                       className={cn(
                         'flex h-5 w-5 items-center justify-center rounded-md border transition-colors',
                         isSelected
-                          ? 'border-violet-600 bg-violet-600 text-white'
-                          : 'border-slate-300 bg-bd-surface text-transparent',
+                          ? 'border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text'
+                          : 'border-bd-border bg-bd-surface text-transparent',
                       )}
                     >
                       <Check className="h-3.5 w-3.5" />

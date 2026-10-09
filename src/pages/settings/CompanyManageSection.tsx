@@ -84,7 +84,7 @@ export function CompanyManageSection() {
           Workspace
         </p>
         <div className="mt-2 flex items-center gap-3 rounded-xl border border-bd-border bg-bd-card-bg px-4 py-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[11px] font-[800]">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--bd-brand)/0.12)] text-[hsl(var(--bd-brand))] text-[11px] font-[800]">
             {wsName.charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
@@ -120,16 +120,16 @@ export function CompanyManageSection() {
                     className={cn(
                       'flex flex-1 items-center gap-3 rounded-xl px-3 py-3 text-left transition active:scale-[0.985]',
                       isActive
-                        ? 'bg-[hsl(var(--primary-soft))]'
-                        : 'hover:bg-[hsl(var(--surface-muted))]/50',
+                        ? 'bg-[hsl(var(--bd-brand)/0.12)]'
+                        : 'hover:bg-[hsl(var(--bd-surface-muted))]/50',
                     )}
                   >
                     <span
                       className={cn(
                         'grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[11px] font-[800]',
                         isActive
-                          ? 'bg-[hsl(var(--primary))] text-white'
-                          : 'bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))]',
+                          ? 'bg-[hsl(var(--bd-brand))] text-bd-button-primary-text'
+                          : 'bg-[hsl(var(--bd-brand)/0.12)] text-[hsl(var(--bd-brand))]',
                       )}
                     >
                       {initials}
@@ -137,13 +137,13 @@ export function CompanyManageSection() {
                     <span
                       className={cn(
                         'flex-1 truncate text-[12px] font-[800]',
-                        isActive ? 'text-[hsl(var(--primary))]' : 'text-bd-text',
+                        isActive ? 'text-[hsl(var(--bd-brand))]' : 'text-bd-text',
                       )}
                     >
                       {ent.name || 'Unnamed'}
                     </span>
                     {isActive ? (
-                      <Check className="h-4 w-4 shrink-0 text-[hsl(var(--primary))]" />
+                      <Check className="h-4 w-4 shrink-0 text-[hsl(var(--bd-brand))]" />
                     ) : (
                       <ChevronRight className="h-4 w-4 shrink-0 text-bd-text-muted" />
                     )}
@@ -167,9 +167,9 @@ export function CompanyManageSection() {
       <button
         type="button"
         onClick={() => setShowArchived((v) => !v)}
-        className="flex w-full items-center gap-3 rounded-xl border border-bd-border bg-bd-card-bg px-4 py-3 text-left transition hover:bg-[hsl(var(--surface-muted))]/50 active:scale-[0.985]"
+        className="flex w-full items-center gap-3 rounded-xl border border-bd-border bg-bd-card-bg px-4 py-3 text-left transition hover:bg-[hsl(var(--bd-surface-muted))]/50 active:scale-[0.985]"
       >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--surface-muted))] text-bd-text-muted">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--bd-surface-muted))] text-bd-text-muted">
           {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </span>
         <div className="min-w-0 flex-1">
@@ -200,7 +200,7 @@ export function CompanyManageSection() {
                 const initials = (ent.name || '?').charAt(0).toUpperCase()
                 return (
                   <div key={ent.id} className="flex items-center gap-3 rounded-xl px-3 py-3 opacity-60">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--surface-muted))] text-[11px] font-[800] text-bd-text-muted">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[hsl(var(--bd-surface-muted))] text-[11px] font-[800] text-bd-text-muted">
                       {initials}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -214,7 +214,7 @@ export function CompanyManageSection() {
                     <button
                       type="button"
                       onClick={() => setRestoreTarget(ent)}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-bd-text-muted transition hover:bg-green-50 hover:text-green-600"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-bd-text-muted transition hover:bg-bd-status-success-bg hover:text-bd-status-success-text"
                       title="Restore company"
                     >
                       <RotateCcw className="h-4 w-4" />

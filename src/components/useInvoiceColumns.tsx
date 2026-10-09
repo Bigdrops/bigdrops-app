@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { ColumnConfig } from '../domain/invoice/types'
+import { canUseColumnLabel, createUniqueColumnLabel } from '@/domain/financial/columnIdentity'
 
 import {
   BUILTIN_COLUMNS,
@@ -60,9 +61,6 @@ export {
   calcTotals,
 } from '../domain/invoice'
 
-const normalizeTitle = (title: string) => 
-  title.trim().toLowerCase().replace(/\s+/g, ' ')
-
 export interface InvoiceColumn extends ColumnConfig {
   width?: string
   [key: string]: any
@@ -108,23 +106,15 @@ export function useInvoiceColumns(initial?: InvoiceColumn[], builtins: InvoiceCo
       )
     })
     
-  const updateColumn = (key: string, field: string, value: any) => 
-    setColumns(cols => cols.map(c => c.key === key ? normalizeColumnConfig({ ...c, [field]: value }) as InvoiceColumn : c))
+  const updateColumn = (key: string, field: string, value: any) =>
+    setColumns(cols => {
+      if (field === 'label' && !canUseColumnLabel(cols, key, value)) return cols
+      return cols.map(c => c.key === key ? normalizeColumnConfig({ ...c, [field]: value }) as InvoiceColumn : c)
+    })
     
   const addCustomColumn = () => 
     setColumns(cols => {
-      const activeTitles = cols
-        .filter(c => (c.visibilityMode || 'show') !== 'hide_full')
-        .map(c => normalizeTitle(c.label || ''))
-      
-      const base = 'New Column'
-      let title = base
-      let counter = 2
-      
-      while (activeTitles.includes(normalizeTitle(title))) {
-        title = `${base} ${counter}`
-        counter++
-      }
+      const title = createUniqueColumnLabel('New Column', cols)
 
       return [...cols, normalizeColumnConfig({ 
         key: 'custom_' + Date.now(), 

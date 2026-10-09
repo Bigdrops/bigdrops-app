@@ -58,7 +58,7 @@ function PresetCard({ title, description, preview, selected, onSelect }: PresetC
           </div>
           <div className={cn(
             "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
-            selected ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
+            selected ? "border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text" : "border-bd-border bg-transparent text-transparent"
           )}>
             <Check size={12} strokeWidth={3} />
           </div>
@@ -248,7 +248,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
               <span className="text-sm font-bold">{themeLabel}</span>
               <span className="text-[10px] text-bd-text-muted">{currentModeLabel}</span>
               {isCustom && (
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 h-5 px-1.5 text-[9px] font-black uppercase">
+                <Badge variant="outline" className="bg-bd-status-warning-bg text-bd-status-warning-text border-bd-status-warning-border h-5 px-1.5 text-[9px] font-black uppercase">
                   Manual
                 </Badge>
               )}
@@ -274,7 +274,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
       <div className="rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)] bg-bd-card-bg p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h5 className="text-[11px] font-black uppercase tracking-widest text-bd-text-muted">Theme Family</h5>
-          <Badge variant="outline" className="gap-1 border-emerald-100 bg-emerald-50 text-emerald-700 font-bold text-[9px] uppercase">
+          <Badge variant="outline" className="gap-1 border-bd-status-success-border bg-bd-status-success-bg text-bd-status-success-text font-bold text-[9px] uppercase">
             <Sparkles className="h-2.5 w-2.5" />
             Recommended
           </Badge>
@@ -308,7 +308,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
                 <h4 className="text-sm font-bold">Custom Build</h4>
                 <div className={cn(
                   "flex h-5 w-5 items-center justify-center rounded-full border transition-all",
-                  isCustom ? "border-emerald-500 bg-emerald-500 text-white" : "border-bd-border bg-transparent text-transparent"
+                  isCustom ? "border-bd-button-primary-bg bg-bd-button-primary-bg text-bd-button-primary-text" : "border-bd-border bg-transparent text-transparent"
                 )}>
                   <Check size={12} strokeWidth={3} />
                 </div>
@@ -409,7 +409,7 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
             variant="outline"
             size="lg"
             onClick={handleReset}
-            className="w-full h-12 rounded-xl border-bd-border bg-bd-card-bg text-xs font-black uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
+            className="w-full h-12 rounded-xl border-bd-border bg-bd-card-bg text-xs font-black uppercase tracking-widest shadow-sm hover:bg-bd-status-danger-bg hover:text-bd-status-danger-text hover:border-bd-status-danger-border transition-all"
           >
             <RotateCcw className="mr-2 h-4 w-4" />
             Restore Factory Defaults

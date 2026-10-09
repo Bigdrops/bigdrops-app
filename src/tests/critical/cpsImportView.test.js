@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import { createEmptyCps } from '../../domain/cps/factories.ts'
-import { applyCpsImport, cpsImportSchema } from '../../domain/cps/importAdapter.ts'
+import { applyCpsImport, buildCpsImportPrompt, cpsImportSchema } from '../../domain/cps/importAdapter.ts'
 import { createEmptyTableRow } from '../../domain/table-document/rows.ts'
 import { denormalizeToDbCpsRow, normalizeDbCps } from '../../domain/cps/normalize.ts'
 import { buildCpsViewData } from '../../domain/cps/viewData.ts'
@@ -77,7 +77,6 @@ test('the canonical schema rejects non-canonical extraction fields', () => {
     'id',
     'gid',
     'image_url',
-    'custom_fields',
     'specification',
     'qty',
     'make_brand',
@@ -148,17 +147,76 @@ test('image_url does not create or replace an item photo through JSON import', (
   assert.equal(itemRows(next)[0].image_url ?? null, null)
 })
 
-test('custom_fields are not ingested into CPS row custom data', () => {
+test('custom_fields reuse existing CPS custom columns and populate row custom data', () => {
   const cps = createEmptyCps()
   cps.custom_fields = { columnConfig: [{ key: 'custom_warranty', label: 'Warranty' }] }
 
   const next = applyCpsImport(
-    cpsImportSchema.parse({ items: [{ description: 'Cement', cost_price: 100, selling_price: 150 }] }),
+    cpsImportSchema.parse({
+      items: [{
+        description: 'Cement',
+        cost_price: 100,
+        selling_price: 150,
+        custom_fields: { Warranty: '12 months' },
+      }],
+    }),
     cps,
   )
 
-  assert.deepEqual(next.custom_fields.columnConfig, [{ key: 'custom_warranty', label: 'Warranty' }])
-  assert.deepEqual(itemRows(next)[0].custom_data ?? {}, {})
+  const customColumns = next.custom_fields.columnConfig.filter((column) => column.key.startsWith('custom_'))
+  assert.equal(customColumns.length, 1)
+  assert.equal(customColumns[0].key, 'custom_warranty')
+  assert.deepEqual(itemRows(next)[0].custom_data ?? {}, { custom_warranty: '12 months' })
+})
+
+test('custom_fields create one CPS custom column for superficial label variants', () => {
+  const cps = createEmptyCps()
+  const next = applyCpsImport(
+    cpsImportSchema.parse({
+      items: [
+        { description: 'A', custom_fields: { 'Part no ': 'DT04-2P' } },
+        { description: 'B', custom_fields: { 'PART NO': 'DT04-3P' } },
+      ],
+    }),
+    cps,
+  )
+
+  const customColumns = next.custom_fields.columnConfig.filter((column) => column.key.startsWith('custom_'))
+  assert.equal(customColumns.length, 1)
+  assert.equal(customColumns[0].label, 'Part no')
+  assert.equal(itemRows(next)[0].custom_data[customColumns[0].key], 'DT04-2P')
+  assert.equal(itemRows(next)[1].custom_data[customColumns[0].key], 'DT04-3P')
+})
+
+test('custom_fields matching built-in CPS columns do not create custom duplicates', () => {
+  const cps = createEmptyCps()
+  const next = applyCpsImport(
+    cpsImportSchema.parse({
+      items: [{ description: 'Cable', custom_fields: { Unit: 'pcs', CP: 50, SP: 80 } }],
+    }),
+    cps,
+  )
+
+  const row = itemRows(next)[0]
+  assert.equal(row.unit, 'pcs')
+  assert.equal(row.cp, '50')
+  assert.equal(row.sp, '80')
+  assert.equal(next.custom_fields.columnConfig.some((column) => column.key.startsWith('custom_')), false)
+})
+
+test('CPS import prompt reflects visible custom columns through custom_fields', () => {
+  const cps = createEmptyCps()
+  cps.custom_fields = {
+    columnConfig: [
+      { key: 'custom_part_no', label: 'Part no', visible: true, visibilityMode: 'show' },
+      { key: 'custom_hidden', label: 'Hidden', visible: false, visibilityMode: 'hide_full' },
+    ],
+  }
+
+  const prompt = buildCpsImportPrompt(cps)
+  assert.match(prompt, /custom_fields/)
+  assert.match(prompt, /Part no/)
+  assert.doesNotMatch(prompt, /Hidden/)
 })
 
 test('explicit contiguous source groups produce deterministic grp_N and item_N references', () => {

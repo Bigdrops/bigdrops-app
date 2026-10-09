@@ -138,7 +138,7 @@ test('N/O: markup percentage and fixed value stack from current SP only', () => 
   if (fixed.ok) assert.equal(String(fixed.nextRows[0].sp), '25.00')
 })
 
-test('P/Q: excluded and no-CP rows survive markup unchanged', () => {
+test('P/Q: excluded rows survive markup unchanged; zero-base rows process to an identical zero', () => {
   const rows = [
     itemRow(0, { quantity: 1, cp: 100, sp: 100 }),
     itemRow(1, { quantity: 1, cp: 0, sp: 0 }),
@@ -149,8 +149,8 @@ test('P/Q: excluded and no-CP rows survive markup unchanged', () => {
   assert.equal(result.ok, true)
   if (result.ok) {
     assert.equal(result.nextRows[0].sp, rows[0].sp)
-    assert.equal(result.nextRows[1].sp, rows[1].sp)
-    assert.equal(result.affectedCount, 0)
+    assert.equal(result.nextRows[1].sp, '0.00')
+    assert.equal(result.affectedCount, 1)
   }
 })
 

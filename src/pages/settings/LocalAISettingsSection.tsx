@@ -161,11 +161,11 @@ export function LocalAISettingsSection() {
           <span className="font-semibold text-bd-text-muted">Runtime</span>
           {runtimeInfo ? (
             runtimeLinked ? (
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+              <span className="flex items-center gap-1.5 text-bd-status-success-text">
                 <CheckCircle2 className="size-3.5" /> llama.cpp linked
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+              <span className="flex items-center gap-1.5 text-bd-status-warning-text">
                 <AlertCircle className="size-3.5" /> Native runtime unavailable
               </span>
             )

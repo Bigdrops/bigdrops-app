@@ -133,6 +133,7 @@ export default function Layout({
       'item-library': '/item-library',
       tax: '/tax',
       settings: '/settings',
+      'cold-launch-preview': '/cold-launch-preview',
     }
     setMoreOpen(false)
     setSidebarOpen(false)

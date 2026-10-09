@@ -23,6 +23,7 @@ import type { TableDocumentRow } from '@/domain/table-document/types'
 import type { CpsRowEconomics, CpsTotals } from '@/domain/cps/calculateCpsTotals'
 import { findCpsGroupInsertIndex, getCpsSectionGroupId } from '@/domain/cps/row-operations'
 import { IMAGE_ACCEPT_ATTRIBUTE } from '@/lib/documentImageUploadPolicy'
+import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 
 import {
   AlertDialog,
@@ -148,6 +149,9 @@ function TopBar({
         {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
         Save
       </button>
+      {/* One global theme control on desktop. Reuses the shared toggle, which
+          reads and writes the same user theme preference as the Dashboard. */}
+      <ThemeToggleButton className="cps-tb-theme" />
     </>
   )
 

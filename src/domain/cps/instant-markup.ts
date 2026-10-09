@@ -20,6 +20,7 @@ export interface InstantMarkupRowPreview {
   index: number
   description: string
   currentSp: string
+  baseSp: string
   proposedSp: string
   cp: string
   quantity: number
@@ -50,9 +51,7 @@ export function getCpsRowKey(row: TableDocumentRow, index: number): string {
 }
 
 export function isInstantMarkupEligible(row: TableDocumentRow): boolean {
-  if (row.row_type !== 'item') return false
-  const cp = new Decimal(row.cp || 0)
-  return cp.greaterThan(0)
+  return row.row_type === 'item'
 }
 
 export function parseInstantMarkupValue(value: string | number): Decimal | null {
@@ -66,13 +65,30 @@ export function parseInstantMarkupValue(value: string | number): Decimal | null 
   }
 }
 
-function deriveSp(currentSp: Decimal, input: InstantMarkupInput): Decimal | null {
+function parseMoneyDecimal(value: unknown): Decimal {
+  try {
+    const normalized = value === null || value === undefined || value === '' ? 0 : String(value)
+    const parsed = new Decimal(normalized)
+    return parsed.isFinite() ? parsed : new Decimal(0)
+  } catch {
+    return new Decimal(0)
+  }
+}
+
+export function resolveInstantMarkupBase(row: TableDocumentRow): Decimal {
+  const currentSp = parseMoneyDecimal(row.sp)
+  if (currentSp.greaterThan(0)) return currentSp
+  return parseMoneyDecimal(row.cp)
+}
+
+function deriveSp(row: TableDocumentRow, input: InstantMarkupInput): Decimal | null {
   const value = parseInstantMarkupValue(input.value)
   if (!value) return null
+  const base = resolveInstantMarkupBase(row)
   if (input.mode === 'percentage') {
-    return currentSp.times(new Decimal(1).plus(value.dividedBy(100))).toDecimalPlaces(MONEY_DP)
+    return base.times(new Decimal(1).plus(value.dividedBy(100))).toDecimalPlaces(MONEY_DP)
   }
-  return currentSp.plus(value).toDecimalPlaces(MONEY_DP)
+  return base.plus(value).toDecimalPlaces(MONEY_DP)
 }
 
 export function previewInstantMarkup(
@@ -86,7 +102,7 @@ export function previewInstantMarkup(
   const nextRows = rows.map((row, index) => {
     const rowKey = getCpsRowKey(row, index)
     if (!input.included[rowKey] || !isInstantMarkupEligible(row)) return row
-    const proposedSp = deriveSp(new Decimal(row.sp || 0), input)
+    const proposedSp = deriveSp(row, input)
     return proposedSp ? { ...row, sp: proposedSp.toFixed(MONEY_DP) } : row
   })
   const after = computeCpsCommercialView({ table_rows: nextRows, table_columns: [], custom_fields: {} }).costing
@@ -95,7 +111,7 @@ export function previewInstantMarkup(
   rows.forEach((row, index) => {
     const rowKey = getCpsRowKey(row, index)
     if (!input.included[rowKey] || !isInstantMarkupEligible(row)) return
-    const proposedSp = deriveSp(new Decimal(row.sp || 0), input)
+    const proposedSp = deriveSp(row, input)
     if (!proposedSp) return
     const proposedRow = { ...row, sp: proposedSp.toFixed(MONEY_DP) }
     const economics = computeCpsRowEconomics(proposedRow)
@@ -104,6 +120,7 @@ export function previewInstantMarkup(
       index,
       description: row.description || `Row ${index + 1}`,
       currentSp: String(row.sp ?? ''),
+      baseSp: resolveInstantMarkupBase(row).toFixed(MONEY_DP),
       proposedSp: proposedSp.toFixed(MONEY_DP),
       cp: String(row.cp ?? ''),
       quantity: Number(row.quantity || 0),
@@ -132,6 +149,13 @@ export function applyInstantMarkup(
   return previewInstantMarkup(rows, input)
 }
 
-export function resetInstantMarkupSellingPrices(rows: TableDocumentRow[]): TableDocumentRow[] {
-  return rows.map((row) => (row.row_type === 'item' ? { ...row, sp: '0.00' } : row))
+export function cloneInstantMarkupRows(rows: TableDocumentRow[]): TableDocumentRow[] {
+  return rows.map((row) => ({
+    ...row,
+    custom_data: row.custom_data ? { ...row.custom_data } : row.custom_data,
+  }))
+}
+
+export function resetInstantMarkupWorkingRows(openingRows: TableDocumentRow[]): TableDocumentRow[] {
+  return cloneInstantMarkupRows(openingRows)
 }

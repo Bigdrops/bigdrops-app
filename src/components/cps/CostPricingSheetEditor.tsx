@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, Undo2, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, Undo2, X } from 'lucide-react'
 
 import ClientSelector from '@/components/ClientSelector'
 import { CpsImportSheet } from '@/components/cps/CpsImportSheet'
@@ -40,8 +40,9 @@ import { computeCpsRowEconomics } from '@/domain/cps/calculateCpsTotals'
 import {
   getCpsRowKey,
   isInstantMarkupEligible,
+  cloneInstantMarkupRows,
   previewInstantMarkup,
-  resetInstantMarkupSellingPrices,
+  resetInstantMarkupWorkingRows,
   type InstantMarkupMode,
   type InstantMarkupPreview,
   type InstantMarkupSelection,
@@ -53,6 +54,8 @@ import type { TableDocumentRow } from '@/domain/table-document/types'
 import type { ClientRecord } from '@/domain/clientWorkspace'
 import { useInvoiceColumns, type InvoiceColumn } from '@/components/useInvoiceColumns'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
+import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
+import { nextThemeMode, resolveIsDark } from '@/lib/themeToggle'
 import { getUnsupportedImageErrorMessage, isSupportedImageFile } from '@/lib/documentImageUploadPolicy'
 import { feedback } from '@/lib/feedback'
 import { uploadItemPhoto } from '@/lib/itemPhotoUpload'
@@ -109,6 +112,17 @@ function toMobileNumber(value: unknown) {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
+function toMobileCustomData(value: unknown): Record<string, string | number | boolean> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, entry]) => {
+      if (typeof entry === 'string' || typeof entry === 'number' || typeof entry === 'boolean') return [key, entry]
+      if (entry === null || entry === undefined) return [key, '']
+      return [key, String(entry)]
+    }),
+  )
+}
+
 function toMobileDocument(cps: Cps): MobileCpsDocument {
   return {
     title: cps.title || '',
@@ -154,15 +168,15 @@ const MOBILE_COLUMN_KEYS: Record<string, MobileCpsColumnKey> = {
 function toMobileColumnList(
   configs: Array<{ key: string; label?: string; visibilityMode?: string }>,
 ): MobileCpsColumn[] {
-  const seen = new Set<MobileCpsColumnKey>()
+  const seen = new Set<string>()
   const out: MobileCpsColumn[] = []
   for (const column of configs) {
-    const key = MOBILE_COLUMN_KEYS[column.key]
+    const key = MOBILE_COLUMN_KEYS[column.key] || (column.key.startsWith('custom_') ? column.key : null)
     if (!key || seen.has(key)) continue
     seen.add(key)
     out.push({
       key,
-      label: column.label || MOBILE_COLUMN_LABELS[key],
+      label: column.label || MOBILE_COLUMN_LABELS[key as MobileCpsColumnKey] || key,
       visible: (column.visibilityMode || 'show') !== 'hide_full',
     })
   }
@@ -231,6 +245,7 @@ function toMobileRows(source: TableDocumentRow[]): MobileCpsRow[] {
       cp: toMobileNumber(row.cp),
       sp: toMobileNumber(row.sp),
       image: row.image_url || null,
+      customData: toMobileCustomData(row.custom_data),
     }
   })
 }
@@ -312,6 +327,7 @@ function mergeMobilePayload(current: Cps, payload: MobileCpsSavePayload): Cps {
       sp: String(mrow.sp ?? ''),
       image_url: mrow.image ?? null,
       group_id: resolvedGroup ?? null,
+      custom_data: { ...(row.custom_data || {}), ...(mrow.customData || {}) },
     }
   })
   const snapshot = payload.client
@@ -339,6 +355,8 @@ function CostPricingSheetMobileHost({
   importedRows,
   rowsRevision,
   syncedTitle,
+  resolvedTheme,
+  onToggleTheme,
   onRequestClientSelection,
   onRequestColumns,
   onRequestImport,
@@ -353,6 +371,10 @@ function CostPricingSheetMobileHost({
   mode: 'create' | 'edit'
   onCancel?: () => void
   saving: boolean
+  /** Resolved global light/dark mode. The single CPS theme authority. */
+  resolvedTheme: 'light' | 'dark'
+  /** Global theme toggle. Persists through the shared preference save handler. */
+  onToggleTheme: () => void
   liveClient: MobileCpsClient | null
   liveColumns: MobileCpsColumn[]
   importedRows: MobileCpsRow[]
@@ -377,6 +399,8 @@ function CostPricingSheetMobileHost({
     <CostPricingSheetForm
       key={`cps-mobile-${cps.id}`}
       modeLabel={mode === 'create' ? 'Draft' : 'Editing'}
+      theme={resolvedTheme}
+      onToggleTheme={onToggleTheme}
       onBack={onCancel}
       onSave={(payload) => onCommit(mergeMobilePayload(cpsRef.current, payload))}
       saving={saving}
@@ -414,9 +438,8 @@ export function CostPricingSheetEditor({
   const [markupMode, setMarkupMode] = useState<InstantMarkupMode>('percentage')
   const [markupValue, setMarkupValue] = useState('20')
   const [included, setIncluded] = useState<InstantMarkupSelection>(() => buildDefaultSelection(initialCps.table_rows || []))
-  const [preview, setPreview] = useState<InstantMarkupPreview | null>(null)
-  const [markupError, setMarkupError] = useState('')
   const [markupWorkingRows, setMarkupWorkingRows] = useState<TableDocumentRow[] | null>(null)
+  const [markupOpeningRows, setMarkupOpeningRows] = useState<TableDocumentRow[] | null>(null)
   const [resetUndoRows, setResetUndoRows] = useState<TableDocumentRow[] | null>(null)
   const [undoRows, setUndoRows] = useState<TableDocumentRow[] | null>(null)
   const [importOpen, setImportOpen] = useState(false)
@@ -427,6 +450,19 @@ export function CostPricingSheetEditor({
   const [mobileClearOpen, setMobileClearOpen] = useState(false)
   const [uploadingRow, setUploadingRow] = useState<number | null>(null)
   const { isDesktop, hasFold, isTablet } = useLayoutMode()
+  const { preference: themePreference, save: saveThemePreference } = useThemePreferenceContext()
+  const isDarkTheme = resolveIsDark(
+    themePreference.themeMode,
+    typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches,
+  )
+  const resolvedTheme: 'light' | 'dark' = isDarkTheme ? 'dark' : 'light'
+  const handleToggleTheme = () => {
+    void saveThemePreference({
+      themeMode: nextThemeMode(isDarkTheme),
+      themePresetId: themePreference.themePresetId,
+    })
+  }
   const {
     columns,
     setColumns,
@@ -445,6 +481,15 @@ export function CostPricingSheetEditor({
 
   const rows = cps.table_rows || []
   const activeMarkupRows = markupWorkingRows || rows
+  const liveProposal = useMemo(() => {
+    if (!markupValue.trim()) return { preview: null as InstantMarkupPreview | null, error: '' }
+    const result = previewInstantMarkup(activeMarkupRows, { mode: markupMode, value: markupValue, included })
+    if (result.ok === false) return { preview: null as InstantMarkupPreview | null, error: result.error }
+    return {
+      preview: result,
+      error: result.affectedCount > 0 ? '' : 'No included eligible row will change.',
+    }
+  }, [activeMarkupRows, markupMode, markupValue, included])
   const itemNumbers = useMemo(() => renumber(rows), [rows])
   const computed = useMemo(() => computeCpsCommercialView(cps), [cps])
   const totals = computed.costing
@@ -530,55 +575,33 @@ export function CostPricingSheetEditor({
 
   const openMarkup = () => {
     setMarkupOpen(true)
-    setPreview(null)
-    setMarkupError('')
-    setMarkupWorkingRows(rows.map((row) => ({ ...row })))
+    const openingRows = cloneInstantMarkupRows(rows)
+    setMarkupOpeningRows(openingRows)
+    setMarkupWorkingRows(cloneInstantMarkupRows(openingRows))
     setResetUndoRows(null)
     setIncluded(buildDefaultSelection(rows))
   }
 
-  const handlePreview = () => {
-    const result = previewInstantMarkup(activeMarkupRows, { mode: markupMode, value: markupValue, included })
-    if (result.ok === false) {
-      setMarkupError(result.error)
-      setPreview(null)
-      return
-    }
-    setMarkupError(result.affectedCount > 0 ? '' : 'No included eligible row will change.')
-    setPreview(result)
-  }
-
-  const handleStackMarkup = () => {
-    if (!preview) return
-    setMarkupWorkingRows(preview.nextRows)
-    setPreview(null)
-    setMarkupError('')
-    setResetUndoRows(null)
-  }
-
   const resetMarkupWorkingRows = () => {
-    setResetUndoRows(activeMarkupRows.map((row) => ({ ...row })))
-    setMarkupWorkingRows(resetInstantMarkupSellingPrices(activeMarkupRows))
-    setPreview(null)
-    setMarkupError('')
+    if (!markupOpeningRows) return
+    setResetUndoRows(cloneInstantMarkupRows(activeMarkupRows))
+    setMarkupWorkingRows(resetInstantMarkupWorkingRows(markupOpeningRows))
   }
 
   const undoResetMarkup = () => {
     if (!resetUndoRows) return
-    setMarkupWorkingRows(resetUndoRows.map((row) => ({ ...row })))
+    setMarkupWorkingRows(cloneInstantMarkupRows(resetUndoRows))
     setResetUndoRows(null)
-    setPreview(null)
-    setMarkupError('')
   }
 
   const handleApplyMarkup = () => {
-    const finalRows = preview?.nextRows || markupWorkingRows
+    const finalRows = liveProposal.preview?.nextRows || markupWorkingRows
     if (!finalRows) return
     setUndoRows(rows)
     updateRows(finalRows)
     setMarkupWorkingRows(null)
+    setMarkupOpeningRows(null)
     setResetUndoRows(null)
-    setPreview(null)
     setMarkupOpen(false)
     notifyProductionRowsChanged()
   }
@@ -670,6 +693,8 @@ export function CostPricingSheetEditor({
           mode={mode}
           onCancel={onCancel}
           saving={saving}
+          resolvedTheme={resolvedTheme}
+          onToggleTheme={handleToggleTheme}
           liveClient={toMobileClient(cps)}
           liveColumns={toMobileColumnList(columns)}
           importedRows={toMobileRows(cps.table_rows || [])}
@@ -750,34 +775,22 @@ export function CostPricingSheetEditor({
           included={included}
           mode={markupMode}
           value={markupValue}
-          preview={preview}
-          error={markupError}
+          preview={liveProposal.preview}
+          error={liveProposal.error}
           onOpenChange={(open) => {
             setMarkupOpen(open)
             if (!open) {
-              setPreview(null)
-              setMarkupError('')
               setMarkupWorkingRows(null)
+              setMarkupOpeningRows(null)
               setResetUndoRows(null)
             }
           }}
-          onModeChange={(nextMode) => {
-            setMarkupMode(nextMode)
-            setPreview(null)
-            setMarkupError('')
-          }}
-          onValueChange={(nextValue) => {
-            setMarkupValue(nextValue)
-            setPreview(null)
-            setMarkupError('')
-          }}
+          onModeChange={setMarkupMode}
+          onValueChange={setMarkupValue}
           onIncludedChange={(rowKey, nextIncluded) => setIncluded((current) => ({ ...current, [rowKey]: nextIncluded }))}
           onIncludeAll={includeAll}
-          onPreview={handlePreview}
-          onStack={handleStackMarkup}
           onReset={resetMarkupWorkingRows}
           onUndoReset={undoResetMarkup}
-          onBack={() => setPreview(null)}
           onApply={handleApplyMarkup}
           canUndoReset={Boolean(resetUndoRows)}
         />
@@ -787,9 +800,8 @@ export function CostPricingSheetEditor({
           onOpenChange={(open) => {
             setMarkupOpen(open)
             if (!open) {
-              setPreview(null)
-              setMarkupError('')
               setMarkupWorkingRows(null)
+              setMarkupOpeningRows(null)
               setResetUndoRows(null)
             }
           }}
@@ -797,25 +809,14 @@ export function CostPricingSheetEditor({
           included={included}
           mode={markupMode}
           value={markupValue}
-          preview={preview}
-          error={markupError}
-          onModeChange={(nextMode) => {
-            setMarkupMode(nextMode)
-            setPreview(null)
-            setMarkupError('')
-          }}
-          onValueChange={(nextValue) => {
-            setMarkupValue(nextValue)
-            setPreview(null)
-            setMarkupError('')
-          }}
+          preview={liveProposal.preview}
+          error={liveProposal.error}
+          onModeChange={setMarkupMode}
+          onValueChange={setMarkupValue}
           onIncludedChange={(rowKey, nextIncluded) => setIncluded((current) => ({ ...current, [rowKey]: nextIncluded }))}
           onIncludeAll={includeAll}
-          onPreview={handlePreview}
-          onStack={handleStackMarkup}
           onReset={resetMarkupWorkingRows}
           onUndoReset={undoResetMarkup}
-          onBack={() => setPreview(null)}
           onApply={handleApplyMarkup}
           canUndoReset={Boolean(resetUndoRows)}
         />
@@ -1034,11 +1035,8 @@ function InstantMarkupDialog({
   onValueChange,
   onIncludedChange,
   onIncludeAll,
-  onPreview,
-  onStack,
   onReset,
   onUndoReset,
-  onBack,
   onApply,
   canUndoReset,
 }: {
@@ -1054,135 +1052,135 @@ function InstantMarkupDialog({
   onValueChange: (value: string) => void
   onIncludedChange: (rowKey: string, included: boolean) => void
   onIncludeAll: (included: boolean) => void
-  onPreview: () => void
-  onStack: () => void
   onReset: () => void
   onUndoReset: () => void
-  onBack: () => void
   onApply: () => void
   canUndoReset: boolean
 }) {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+  const eligibleCount = rows.filter(isInstantMarkupEligible).length
+  const includedCount = rows.filter(
+    (row, index) => isInstantMarkupEligible(row) && included[getCpsRowKey(row, index)],
+  ).length
+  const proposedByKey = new Map((preview?.rows || []).map((item) => [item.rowKey, item.proposedSp]))
+  const canApply = Boolean(preview) && (preview?.affectedCount || 0) > 0
   let itemNumber = 0
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="cps-form border-0 bg-transparent p-0 shadow-none sm:max-w-none h-dvh max-h-dvh w-[440px] translate-x-0 translate-y-0 right-0 left-auto top-0"
       >
-        <div className="cps-overlay dock">
-          <div className="cps-sheet">
-            <div className="cps-grab" />
-            <DialogHeader className="cps-sheet-head text-left">
-              <div>
-                <DialogTitle asChild><b>Instant Markup</b></DialogTitle>
-                <DialogDescription asChild>
-                  <small>Stack from current SP. CP and excluded rows stay unchanged.</small>
-                </DialogDescription>
+      <div className="cps-overlay dock">
+        <div className="cps-sheet cps-mk-dialog">
+          <div className="cps-grab" />
+          <DialogHeader className="cps-sheet-head shrink-0 text-left">
+            <div>
+              <DialogTitle asChild><b>Instant Markup</b></DialogTitle>
+              <DialogDescription asChild>
+                <small>Mark up from current SP, or CP when SP is empty.</small>
+              </DialogDescription>
+            </div>
+            <button type="button" className="cps-x" onClick={() => onOpenChange(false)} aria-label="Close Instant Markup"><X size={12} /></button>
+          </DialogHeader>
+
+          <div className="shrink-0">
+            <div className="cps-modegrid" role="group" aria-label="Markup mode">
+              <button type="button" className={cn('cps-mode', mode === 'percentage' && 'on')} onClick={() => onModeChange('percentage')}>Percentage</button>
+              <button type="button" className={cn('cps-mode', mode === 'value' && 'on')} onClick={() => onModeChange('value')}>Value</button>
+            </div>
+            <label>
+              <span className="cps-label">{mode === 'percentage' ? 'Percentage' : 'Value per unit'}</span>
+              <Input
+                className="cps-field"
+                inputMode="decimal"
+                value={value}
+                onChange={(event) => onValueChange(event.target.value)}
+                aria-invalid={Boolean(error)}
+              />
+            </label>
+            <p className="text-[11px] font-semibold leading-relaxed" style={{ color: 'var(--sub)' }}>
+              {mode === 'percentage'
+                ? 'Uses current SP as the base, or CP when SP is empty. Next SP = base × (1 + %).'
+                : 'Uses current SP as the base, or CP when SP is empty. Next SP = base + value per unit.'}
+            </p>
+            {error ? <p className="text-xs font-bold" style={{ color: 'var(--red)' }} role="alert">{error}</p> : null}
+            {preview ? (
+              <div aria-live="polite" className="cps-mk-agg">
+                <PreviewMetric label="Affected items" value={`${preview.affectedCount}`} />
+                <PreviewMetric label="Selling total" value={`${formatMoney(preview.sellingBefore)} -> ${formatMoney(preview.sellingAfter)}`} />
+                <PreviewMetric label="Gross profit" value={`${formatMoney(preview.grossProfitBefore)} -> ${formatMoney(preview.grossProfitAfter)}`} />
+                <PreviewMetric label="Aggregate change" value={formatMoney(preview.aggregateChange)} />
               </div>
-              <button type="button" className="cps-x" onClick={() => onOpenChange(false)} aria-label="Close Instant Markup"><X size={12} /></button>
-            </DialogHeader>
-
-            {!preview ? (
-              <>
-                <div className="cps-modegrid" role="group" aria-label="Markup mode">
-                  <button type="button" className={cn('cps-mode', mode === 'percentage' && 'on')} onClick={() => onModeChange('percentage')}>Percentage</button>
-                  <button type="button" className={cn('cps-mode', mode === 'value' && 'on')} onClick={() => onModeChange('value')}>Value</button>
-                </div>
-                <label>
-                  <span className="cps-label">{mode === 'percentage' ? 'Percentage' : 'Value per unit'}</span>
-                  <Input
-                    className="cps-field"
-                    inputMode="decimal"
-                    value={value}
-                    onChange={(event) => onValueChange(event.target.value)}
-                    aria-invalid={Boolean(error)}
-                  />
-                </label>
-                <p className="text-[11px] font-semibold leading-relaxed" style={{ color: 'var(--sub)' }}>
-                  {mode === 'percentage'
-                    ? 'Next SP = current working SP x (1 + percentage / 100).'
-                    : 'Next SP = current working SP + value. Value is per item unit.'}
-                </p>
-                <div className="cps-sheet-actions">
-                  <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(true)}>Include All</button>
-                  <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(false)}>Exclude All</button>
-                </div>
-                <div className="cps-sheet-actions">
-                  <button type="button" className="cps-cbtn danger" onClick={() => setResetConfirmOpen(true)}><RotateCcw size={12} /> Reset</button>
-                  <button type="button" className="cps-cbtn ghost" onClick={onUndoReset} disabled={!canUndoReset}><Undo2 size={12} /> Undo Reset</button>
-                </div>
-                {error ? <p className="text-xs font-bold" style={{ color: 'var(--red)' }} role="alert">{error}</p> : null}
-                <div>
-                  {rows.map((row, index) => {
-                    const rowKey = getCpsRowKey(row, index)
-                    if (row.row_type === 'section') {
-                      return <div key={rowKey} className="cps-mk-gcap">{row.section_title || 'Group'} - headers never participate</div>
-                    }
-                    const eligible = isInstantMarkupEligible(row)
-                    if (row.row_type === 'item') itemNumber += 1
-                    const excluded = eligible && !included[rowKey]
-                    return (
-                      <div key={rowKey} className={cn('cps-mk-row', excluded && 'opacity-60')}>
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-bd-border bg-bd-card-bg font-mono text-xs font-black">
-                          {String(itemNumber).padStart(2, '0')}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <b className="block text-xs">{row.description || `(row ${index + 1})`}</b>
-                          <small style={{ color: 'var(--faint)' }}>
-                            {eligible ? `CP ${row.cp || 0} · current SP ${row.sp || 0}` : 'Excluded - No cost price'}
-                          </small>
-                        </span>
-                        <button
-                          type="button"
-                          className={cn('cps-mk-tog', included[rowKey] ? 'on' : 'off')}
-                          disabled={!eligible}
-                          onClick={() => onIncludedChange(rowKey, !included[rowKey])}
-                          aria-pressed={Boolean(included[rowKey])}
-                        >
-                          {eligible ? (included[rowKey] ? 'Included' : 'Excluded') : 'No CP'}
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-                <button type="button" className="cps-cbtn primary" onClick={onPreview}>Preview</button>
-              </>
             ) : (
-              <>
-                <div className="cps-mk-agg">
-                  <PreviewMetric label="Affected items" value={`${preview.affectedCount}`} />
-                  <PreviewMetric label="Selling total" value={`${formatMoney(preview.sellingBefore)} -> ${formatMoney(preview.sellingAfter)}`} />
-                  <PreviewMetric label="Gross profit" value={`${formatMoney(preview.grossProfitBefore)} -> ${formatMoney(preview.grossProfitAfter)}`} />
-                  <PreviewMetric label="Aggregate change" value={formatMoney(preview.aggregateChange)} />
-                </div>
-                <div>
-                  {preview.rows.length > 0 ? preview.rows.map((row) => (
-                    <div key={row.rowKey} className="cps-mk-prow">
-                      <div className="d">{row.description}</div>
-                      <div className="ln"><span>CP {row.cp}</span><span>{row.currentSp || '0'} -&gt; <b>{row.proposedSp}</b></span></div>
-                      <div className="ln"><span>Profit {formatMoney(row.profit)}</span><span>Margin {formatPercent(row.marginPercent)}</span></div>
-                    </div>
-                  )) : <div className="cps-mk-prow"><div className="d">No included rows with a cost price. Nothing would change.</div></div>}
-                </div>
-              </>
+              <p className="text-[11px] font-semibold leading-relaxed" style={{ color: 'var(--sub)' }}>
+                Enter a markup value to see live results for every included item.
+              </p>
             )}
-
-            <DialogFooter className="cps-sheet-actions sm:justify-stretch">
-              <button type="button" className="cps-cbtn ghost" onClick={() => onOpenChange(false)}><X size={12} /> Cancel</button>
-              {preview ? <button type="button" className="cps-cbtn ghost" onClick={onBack}>Back</button> : null}
-              {preview ? <button type="button" className="cps-cbtn ghost" onClick={onStack} disabled={preview.affectedCount === 0}><Plus size={12} /> Stack</button> : null}
-              {!preview ? <button type="button" className="cps-cbtn ghost" onClick={onApply}>Apply Working SP</button> : null}
-              <button type="button" className="cps-cbtn primary" onClick={onApply} disabled={!preview || preview.affectedCount === 0}><Check size={12} /> Apply</button>
-            </DialogFooter>
+            <div className="cps-sheet-actions">
+              <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(true)}>Include All</button>
+              <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(false)}>Exclude All</button>
+              <span className="font-mono text-[11px]" style={{ color: 'var(--faint)' }}>
+                {includedCount} / {eligibleCount} included
+              </span>
+            </div>
           </div>
+
+          <div className="cps-mk-list">
+            {rows.map((row, index) => {
+              const rowKey = getCpsRowKey(row, index)
+              if (row.row_type === 'section') {
+                return <div key={rowKey} className="cps-mk-gcap">{row.section_title || 'Group'} - headers never participate</div>
+              }
+              const eligible = isInstantMarkupEligible(row)
+              if (row.row_type === 'item') itemNumber += 1
+              const excluded = eligible && !included[rowKey]
+              const proposedSp = eligible && included[rowKey] ? proposedByKey.get(rowKey) ?? null : null
+              return (
+                <div key={rowKey} className={cn('cps-mk-row', excluded && 'opacity-60')}>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-bd-border bg-bd-card-bg font-mono text-xs font-black">
+                    {String(itemNumber).padStart(2, '0')}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <b className="block text-xs">{row.description || `(row ${index + 1})`}</b>
+                    <small style={{ color: 'var(--faint)' }}>
+                      {eligible ? `CP ${row.cp || 0} · Current ${row.sp || 0}` : 'Excluded - not an item row'}
+                      {excluded ? ' · excluded, untouched' : ''}
+                    </small>
+                    {proposedSp ? (
+                      <small style={{ color: 'var(--faint)' }}>
+                        Proposed <b>{proposedSp}</b>
+                      </small>
+                    ) : null}
+                  </span>
+                  <button
+                    type="button"
+                    className={cn('cps-mk-tog', included[rowKey] ? 'on' : 'off')}
+                    disabled={!eligible}
+                    onClick={() => onIncludedChange(rowKey, !included[rowKey])}
+                    aria-pressed={Boolean(included[rowKey])}
+                  >
+                    {eligible ? (included[rowKey] ? 'Included' : 'Excluded') : 'Not item'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+
+          <DialogFooter className="cps-sheet-actions cps-mk-foot sm:justify-stretch">
+            <button type="button" className="cps-cbtn ghost" onClick={() => onOpenChange(false)}><X size={12} /> Cancel</button>
+            <button type="button" className="cps-cbtn ghost" onClick={() => setResetConfirmOpen(true)}><RotateCcw size={12} /> Reset</button>
+            <button type="button" className="cps-cbtn ghost" onClick={onUndoReset} disabled={!canUndoReset}><Undo2 size={12} /> Undo Reset</button>
+            <button type="button" className="cps-cbtn primary" onClick={onApply} disabled={!canApply}>Apply Markup</button>
+          </DialogFooter>
         </div>
+      </div>
       </DialogContent>
       <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reset markup?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will set the current working selling prices to zero. You can undo this reset immediately afterward.
+              This restores the item selling prices to how they were when you opened Instant Markup. You can undo this reset immediately afterward.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

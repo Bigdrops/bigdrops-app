@@ -230,7 +230,7 @@ export function BrandingSettingsSection() {
                   variant="outline"
                   size="sm"
                   onClick={handleRemove}
-                  className="rounded-full text-xs font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
+                  className="rounded-full text-xs font-bold text-bd-status-danger-text hover:bg-bd-status-danger-bg"
                 >
                   Yes, Remove
                 </Button>
@@ -255,7 +255,7 @@ export function BrandingSettingsSection() {
                   variant="outline"
                   size="sm"
                   onClick={() => setConfirmingRemove(true)}
-                  className="rounded-full text-xs font-bold text-red-500 hover:bg-red-50 hover:text-red-600"
+                  className="rounded-full text-xs font-bold text-bd-status-danger-text hover:bg-bd-status-danger-bg"
                 >
                   Remove
                 </Button>
@@ -279,11 +279,11 @@ export function BrandingSettingsSection() {
           </div>
 
           {uploadError && (
-            <p className="mt-4 text-center text-xs font-medium text-red-500">{uploadError}</p>
+            <p className="mt-4 text-center text-xs font-medium text-bd-status-danger-text">{uploadError}</p>
           )}
 
           {logoState === 'uploaded-unsaved' && (
-            <p className="mt-3 text-center text-[10px] font-medium text-emerald-600">
+            <p className="mt-3 text-center text-[10px] font-medium text-bd-status-success-text">
               New logo uploaded &mdash; save changes to apply.
             </p>
           )}

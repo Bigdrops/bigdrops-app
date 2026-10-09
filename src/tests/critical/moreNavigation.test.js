@@ -14,6 +14,14 @@ test('more destination keeps the more tab selected', () => {
   assert.equal(getActiveTab('/more'), 'more')
 })
 
+test('settings landing and sub-routes keep the more tab selected', () => {
+  // Main Settings landing and all Settings sub-routes share one route owner
+  // (/settings) and one shared bottom navigation, so MORE stays selected.
+  for (const path of ['/settings', '/settings/notifications']) {
+    assert.equal(getActiveTab(path), 'more', `${path} must map to the more tab`)
+  }
+})
+
 test('accounting destinations keep the more tab selected', () => {
   for (const path of [
     '/accounting',
@@ -43,6 +51,7 @@ test('more sheet groups still resolve to real routes', () => {
     '/item-library',
     '/settings',
     '/tax',
+    '/cold-launch-preview',
   ])
   const pathByKey = {
     letters: '/letters',
@@ -52,6 +61,7 @@ test('more sheet groups still resolve to real routes', () => {
     'item-library': '/item-library',
     settings: '/settings',
     tax: '/tax',
+    'cold-launch-preview': '/cold-launch-preview',
   }
   for (const group of moreGroups) {
     for (const item of group.items) {

@@ -330,7 +330,7 @@ export function WorkspaceSwitchSection() {
                 height: 44,
                 borderRadius: 12,
                 background: 'var(--su-primary)',
-                color: '#fff',
+                color: 'hsl(var(--bd-button-primary-text))',
                 fontSize: 12,
                 fontWeight: 800,
               }}

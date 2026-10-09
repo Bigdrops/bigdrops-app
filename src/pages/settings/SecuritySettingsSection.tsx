@@ -66,7 +66,7 @@ export function SecuritySettingsSection() {
             disabled={!canToggle}
             className={`flex w-full items-center justify-between rounded-xl border p-4 transition-all ${
               enabled
-                ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30"
+                ? "border-bd-status-success-border bg-bd-status-success-bg"
                 : "border-[hsl(var(--bd-border)/0.5)] bg-[hsl(var(--bd-surface-muted)/0.1)]"
             } ${!canToggle ? "opacity-50 cursor-not-allowed" : "active:scale-[0.99]"}`}
           >
@@ -74,7 +74,7 @@ export function SecuritySettingsSection() {
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                   enabled
-                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
+                    ? "bg-bd-status-success-bg text-bd-status-success-text"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -93,7 +93,7 @@ export function SecuritySettingsSection() {
             {/* Toggle indicator */}
             <div
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                enabled ? "bg-emerald-500" : "bg-muted-foreground/30"
+                enabled ? "bg-bd-status-success-text" : "bg-muted-foreground/30"
               }`}
             >
               <div
@@ -106,9 +106,9 @@ export function SecuritySettingsSection() {
 
           {/* Unavailable notice */}
           {showUnavailable && (
-            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600" />
-              <div className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
+            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-bd-status-warning-border bg-bd-status-warning-bg p-3">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-bd-status-warning-text" />
+              <div className="text-[11px] leading-relaxed text-bd-status-warning-text">
                 {availability && !availability.available && "reason" in availability && availability.reason === "not_native"
                   ? "App lock is only available on the installed Android or iOS app."
                   : "No biometric hardware found or no fingerprints/face enrolled. Add a fingerprint or face unlock in your device settings first."}
@@ -118,9 +118,9 @@ export function SecuritySettingsSection() {
 
           {/* Active info */}
           {enabled && (
-            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
-              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" />
-              <div className="text-[11px] leading-relaxed text-emerald-700 dark:text-emerald-400">
+            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-bd-status-success-border bg-bd-status-success-bg p-3">
+              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-bd-status-success-text" />
+              <div className="text-[11px] leading-relaxed text-bd-status-success-text">
                 You will be prompted for biometric verification on app launch and
                 when returning from background. If verification fails, you will be
                 signed out and must log in again.
