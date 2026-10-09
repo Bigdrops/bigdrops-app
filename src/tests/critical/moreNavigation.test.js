@@ -51,7 +51,6 @@ test('more sheet groups still resolve to real routes', () => {
     '/item-library',
     '/settings',
     '/tax',
-    '/cold-launch-preview',
   ])
   const pathByKey = {
     letters: '/letters',
@@ -61,7 +60,6 @@ test('more sheet groups still resolve to real routes', () => {
     'item-library': '/item-library',
     settings: '/settings',
     tax: '/tax',
-    'cold-launch-preview': '/cold-launch-preview',
   }
   for (const group of moreGroups) {
     for (const item of group.items) {

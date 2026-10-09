@@ -3,7 +3,7 @@ import { Icons } from '@/lib/iconRegistry'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
+import { useEntity } from '@/lib/tenant/contexts'
 import {
   APP_NAME,
   mobileDrawerPrimaryNav,
@@ -38,23 +38,6 @@ function DrawerLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-2 pt-3 pb-1 text-[7px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--ink-3))]">
       {children}
-    </div>
-  )
-}
-
-function DrawerFooter() {
-  const { workspace, isLoading } = useWorkspace()
-  const workspaceName = String(workspace?.name || '').trim() || (isLoading ? 'Loading…' : '—')
-  const initials = workspaceName.slice(0, 2).toUpperCase()
-
-  return (
-    <div className="mt-auto border-t border-[hsl(var(--line))] px-3.5 py-3 flex items-center gap-2">
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[hsl(var(--primary-soft))] text-[hsl(var(--primary))] text-[8px] font-[800]">
-        {initials}
-      </span>
-      <div className="min-w-0">
-        <div className="truncate text-[10px] font-[800] text-[hsl(var(--ink))]">{workspaceName}</div>
-      </div>
     </div>
   )
 }
@@ -280,8 +263,6 @@ export function MobileSidebar({
           </div>
         </div>
 
-        {/* Footer — workspace identity only */}
-        <DrawerFooter />
       </SheetContent>
 
       {/* Canonical Company Selection Sheet */}
