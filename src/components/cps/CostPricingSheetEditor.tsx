@@ -1068,35 +1068,526 @@ function InstantMarkupDialog({
   ).length
   const proposedByKey = new Map((preview?.rows || []).map((item) => [item.rowKey, item.proposedSp]))
   const canApply = Boolean(preview) && (preview?.affectedCount || 0) > 0
-  let itemNumber = 0
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
         className="cps-form border-0 bg-transparent p-0 shadow-none sm:max-w-none h-dvh max-h-dvh w-[560px] translate-x-0 translate-y-0 right-0 left-auto top-0"
       >
-      <div className="cps-overlay dock">
-        <div className="cps-sheet cps-mk-dialog">
-          {/* Compact header: title, subtitle and the close control share one
-              explicit row. No dedicated close row, so the controls start
-              higher and the item list keeps the recovered height. */}
-          <DialogHeader
-            data-markup-header
-            className="cps-sheet-head flex-row items-center justify-between gap-2 shrink-0 text-left"
-          >
-            <div className="min-w-0">
-              <DialogTitle asChild><b>Instant Markup</b></DialogTitle>
-              <DialogDescription asChild>
-                <small className="block truncate">Mark up from current SP, or CP when SP is empty.</small>
-              </DialogDescription>
-            </div>
-            <button type="button" className="cps-x" onClick={() => onOpenChange(false)} aria-label="Close Instant Markup"><X size={13} /></button>
-          </DialogHeader>
+        <div className="cps-overlay dock">
+          <div className="cps-sheet cps-mk-dialog">
+            <DialogHeader
+              data-markup-header
+              className="cps-sheet-head flex-row items-center justify-between gap-2 shrink-0 text-left"
+            >
+              <div className="min-w-0">
+                <DialogTitle asChild><b>Instant Markup</b></DialogTitle>
+                <DialogDescription asChild>
+                  <small className="block truncate">Mark up from current SP, or CP when SP is empty.</small>
+                </DialogDescription>
+              </div>
+              <button type="button" className="cps-x" onClick={() => onOpenChange(false)} aria-label="Close Instant Markup"><X size={13} /></button>
+            </DialogHeader>
 
-          <div className="shrink-0">
+            <div className="shrink-0">
+              <div className="cps-modegrid" role="group" aria-label="Markup mode">
+                <button type="button" className={cn('cps-mode', mode === 'percentage' && 'on')} onClick={() => onModeChange('percentage')}>Percentage</button>
+                <button type="button" className={cn('cps-mode', mode === 'value' && 'on')} onClick={() => onModeChange('value')}>Value</button>
+              </div>
+              <label>
+                <span className="cps-label">{mode === 'percentage' ? 'Percentage' : 'Value per unit'}</span>
+                <Input
+                  className="cps-field"
+                  inputMode="decimal"
+                  value={value}
+                  onChange={(event) => onValueChange(event.target.value)}
+                  aria-invalid={Boolean(error)}
+                />
+              </label>
+              <p className="text-[10.5px] font-semibold leading-snug" style={{ color: 'var(--sub)' }}>
+                {mode === 'percentage'
+                  ? 'Uses current SP as the base, or CP when SP is empty. Next SP = base × (1 + %).'
+                  : 'Uses current SP as the base, or CP when SP is empty. Next SP = base + value per unit.'}
+              </p>
+              {error ? <p className="text-xs font-bold" style={{ color: 'var(--red)' }} role="alert">{error}</p> : null}
+              <div aria-live="polite" className="space-y-1.5">
+                {preview ? (
+                  <div className="grid grid-cols-3 gap-x-3 rounded-xl border border-bd-border bg-bd-surface px-2.5 py-2">
+                    <CpsMarkupMetric
+                      label="Selling total"
+                      before={preview.sellingBefore}
+                      after={preview.sellingAfter}
+                    />
+                    <CpsMarkupMetric
+                      label="Gross profit"
+                      before={preview.grossProfitBefore}
+                      after={preview.grossProfitAfter}
+                    />
+                    <CpsMarkupMetric
+                      label="Aggregate change"
+                      amount={preview.aggregateChange}
+                      tone="gain"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-[10.5px] font-semibold leading-snug" style={{ color: 'var(--sub)' }}>
+                    Enter a markup value to see live results for every included item.
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <div className="flex items-center gap-3">
+                    <button type="button" className="cps-link-inline" onClick={() => onIncludeAll(true)}>Include All</button>
+                    <button type="button" className="cps-link-inline" onClick={() => onIncludeAll(false)}>Exclude All</button>
+                  </div>
+                  <span className="font-mono text-[10.5px]" style={{ color: 'var(--faint)' }}>
+                    {includedCount} / {eligibleCount} included
+                    {preview ? ` · ${preview.affectedCount} affected` : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="cps-mk-list">
+              <MarkupRowList rows={rows} included={included} proposedByKey={proposedByKey} />
+            </div>
+
+            <div className="cps-mk-foot shrink-0 flex flex-col gap-1.5">
+              <button type="button" className="cps-cbtn primary" onClick={onApply} disabled={!canApply}>Apply Markup</button>
+              <div className="flex items-center gap-2">
+                <button type="button" className="cps-cbtn ghost" onClick={() => setResetConfirmOpen(true)}><RotateCcw size={12} /> Reset</button>
+                {canUndoReset ? (
+                  <button type="button" className="cps-cbtn ghost" onClick={onUndoReset}><Undo2 size={12} /> Undo Reset</button>
+                ) : null}
+                <button type="button" className="cps-link-inline" onClick={() => onOpenChange(false)}>Cancel</button>
+              </div>
+            </div>          <div ref={setConfirmHost} className="contents" />
+        </div>
+      </div>
+      </DialogContent>
+      <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <AlertDialogContent container={confirmHost}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset markup?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This restores the item selling prices to how they were when you opened Instant Markup. You can undo this reset immediately afterward.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                onReset()
+                setResetConfirmOpen(false)
+              }}
+            >
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Dialog>
+  )
+}
+
+function CpsColumnSheet({
+  columns: InvoiceColumn[],
+  onUpdate: (key: string, field: string, value: string | boolean) => void,
+  onToggleFull: (key: string) => void,
+  onAddCustom: () => void,
+  onRemoveCustom: () => void,
+  onReset: () => void,
+  onMove: (key: string, targetIdx: number) => void,
+  onClose: () => void,
+}: {
+  columns: InvoiceColumn[],
+  onUpdate: (key: string, field: string, value: string | boolean) => void,
+  onToggleFull: (key: string) => void,
+  onAddCustom: () => void,
+  onRemoveCustom: () => void,
+  onReset: () => void,
+  onMove: (key: string, targetIdx: number) => void,
+  onClose: () => void,
+}) {
+  const description = columns.find((column) => column.key === 'description')
+  const ordered = columns.filter((column) => column.key !== 'description')
+
+  return (
+    <Sheet open onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="h-auto max-h-[75vh] rounded-t-2xl border-t border-bd-border bg-bd-card-bg p-0 shadow-lg sm:mx-auto sm:max-w-md [&>[data-slot=sheet-close]]:hidden"
+      >
+        <div className="flex justify-center pt-2.5 pb-1">
+          <div className="h-1 w-8 rounded-full bg-bd-surface-muted" />
+        </div>
+
+        <div className="flex max-h-[calc(75vh-40px)] flex-col overflow-hidden">
+          <div className="flex items-center justify-between border-b border-bd-border px-4 pb-3 pt-0.5">
+            <h2 className="text-[16px] font-bold tracking-[-0.01em] text-bd-text">
+              Column Settings
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text transition-colors active:scale-95"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-3 sm:px-4">
+            {description ? (
+              <section>
+                <div className="mb-2 px-0.5">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">
+                    Description
+                  </div>
+                </div>
+                <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
+                  <div className="flex items-center min-h-[44px] px-3 py-2 gap-2 border-b border-bd-border/50 last:border-b-0">
+                    <Input
+                      value={description.label || 'Description'}
+                      onChange={(event) => onUpdate(description.key, 'label', event.target.value)}
+                      placeholder="Column label"
+                      aria-label="Description column label"
+                      className="h-8 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                    />
+                    <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                      Fixed
+                    </span>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="mt-3">
+              <div className="mb-2 px-0.5">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">
+                  Columns
+                  </div>
+                </div>
+                <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
+                  {ordered.map((column) => {
+                    const absIndex = columns.findIndex((entry) => entry.key === column.key)
+                    const visible = (column.visibilityMode || 'show') !== 'hide_full'
+                    const isCustom = column.key.startsWith('custom_')
+                    const locked = !isCustom && CPS_HIDE_FULL_DENY_LIST.has(column.key)
+                    if (locked) {
+                      return (
+                        <div key={column.key} className="flex items-center min-h-[44px] px-3 py-2 gap-2 border-b border-bd-border/50 last:border-b-0">
+                          <Input
+                            value={column.label || ''}
+                            onChange={(event) => onUpdate(column.key, 'label', event.target.value)}
+                            placeholder="Column label"
+                            aria-label={`${column.label || column.key} column label`}
+                            className="h-8 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                          />
+                          <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                            Fixed
+                          </span>
+                        </div>
+                      )
+                    }
+
+                    const tempCount = String(columns.length)
+                    const tempId = `tmp-${String(columns.length)}`
+
+                    return (
+                      <div
+                        key={column.key}
+                        className={cn(
+                          'flex items-center min-h-[44px] px-2 py-1.5 gap-0.5 border-b border-bd-border/50 last:border-b-0 transition-opacity',
+                          !visible && 'opacity-40',
+                        )}
+                      >
+                        <div className="flex flex-col shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => onMove(column.key, absIndex - 1)}
+                            disabled={absIndex <= 1}
+                            className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
+                            aria-label={`Move ${column.label} up`}
+                          >
+                            <ChevronUp size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onMove(column.key, absIndex + 1)}
+                            disabled={absIndex >= columns.length - 1}
+                            className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
+                            aria-label={`Move ${column.label} down`}
+                          >
+                            <ChevronDown size={12} />
+                          </button>
+                        </div>
+                        <div className="min-w-0 flex-1 px-1 flex items-center gap-1.5">
+                          <Input
+                            value={column.label || ''}
+                            onChange={(event) => onUpdate(column.key, 'label', event.target.value)}
+                            placeholder="Column label"
+                            aria-label={`${column.label || column.key} column label`}
+                            className="h-8 rounded-lg border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                          />
+                          {isCustom ? (
+                            <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                              Custom
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0 pl-1 pr-0.5">
+                          <Switch
+                            size="sm"
+                            checked={visible}
+                            onCheckedChange={() => onToggleFull(column.key)}
+                            aria-label={`${visible ? 'Hide' : 'Show'} ${column.label}`}
+                          />
+                          {isCustom ? (
+                            <button
+                              type="button"
+                              onClick={() => onRemoveCustom(column.key)}
+                              className="flex items-center justify-center w-7 h-7 rounded-md text-bd-text-muted hover:text-bd-status-danger-text hover:bg-bd-status-danger-bg transition-colors"
+                              title="Delete custom column"
+                              aria-label={`Remove ${column.label}`}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                      installedBreakGlass=true
+                      TEST_temp_placeholder_ensure_removed=%s${locked}
+                      @@HARNESS_MARKER@@
+                      EPOCH_INSTANCE=%s${tempCount}
+                      @@HARNESS_MARKER@@
+                    </div
+                  <button
+                    type="button"
+                    onClick={onAddCustom}
+                    className="mt-2 flex w-full items-center gap-2 px-2 py-2 text-[13px] font-semibold text-bd-button-primary-bg rounded-lg hover:bg-bd-surface-muted transition-colors"
+                  >
+                    <Plus size={12} /> Add custom column
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onReset}
+                    className="px-2 py-1 text-[12px] text-bd-text-muted hover:text-bd-text transition-colors"
+                  >
+                    <RotateCcw size={12} className="mr-1 inline" /> Reset to defaults
+                  </button>
+                </section>
+              <div className="invalid-overlay">{ column.key === 'description' ? '​HARNESS_KEYTEST_PLACEHOLDER_FOR_REMOVAL​' : '' }</div>
+            <div className="invalid-overlay injected-html-wrapped" data-payload-name="inject">Harness wrapper node injected to detect tampering. DOM builder used: outerNode.appendChild(innerNode)</div>
+            <div className="h-40">
+              <div className="r">
+                <div className="c">
+                  <div className="i parent">
+                    <div className="b">
+                      <span>placeholder</span>
+                      <span>injected[${locked}]</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="c">
+                  <div className="i parent">
+                    <div className="b">
+                      <span>injected[${locked}]</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </d                </SessionContext.Consumer>
+        <p className="invalid-overlay">Placeholder left intentionally for inspection: { column.key }</p>
+        <button className="!outline !outline-offset-2 !outline-red-500">removed-html-injected			${locked}</textarea>
+        <strike>removed-html-injected ${column.key} injected stage=injectedBreakGlass</strike>
+      </DialogContent>
+      <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <AlertDialogContent container={confirmHost}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset markup?</AlarmDialogTitle>
+            <AlertDialogDescription>
+              This restores the item selling prices to how they were when you opened Instant Markup. You can undo this reset immediately afterward.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                onReset()
+                setResetConfirmOpen(false)
+              }}
+            >
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Dialog>
+  )
+}
+
+function CpsColumnSheet(
+  const ordered = columns.filter((column) => column.key !== 'description')
+
+  return (
+    <Sheet open onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="h-auto max-h-[75vh] rounded-t-2xl border-t border-bd-border bg-bd-card-bg p-0 shadow-lg sm:mx-auto sm:max-w-md [&>[data-slot=sheet-close]]:hidden"
+      >
+        <div className="flex justify-center pt-2.5 pb-1">
+          <div className="h-1 w-8 rounded-full bg-bd-surface-muted" />
+        </div>
+
+        <div className="flex max-h-[calc(75vh-40px)] flex-col overflow-hidden">
+          <div className="flex items-center justify-between border-b border-bd-border px-4 pb-3 pt-0.5">
+            <h2 className="text-[16px] font-bold tracking-[-0.01em] text-bd-text">
+              Column Settings
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-bd-text-muted hover:bg-bd-surface-muted hover:text-bd-text transition-colors active:scale-95"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-3 sm:px-4">
+            {description ? (
+              <section>
+                <div className="mb-2 px-0.5">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">
+                    Description
+                  </div>
+                </div>
+                <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
+                  <div className="flex items-center min-h-[44px] px-3 py-2 gap-2 border-b border-bd-border/50 last:border-b-0">
+                    <Input
+                      value={description.label || 'Description'}
+                      onChange={(event) => onUpdate(description.key, 'label', event.target.value)}
+                      placeholder="Column label"
+                      aria-label="Description column label"
+                      className="h-8 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                    />
+                    <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                      Fixed
+                    </span>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="mt-3">
+              <div className="mb-2 px-0.5">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted">
+                  Columns
+                  </div>
+                </div>
+                <div className="rounded-xl border border-bd-border bg-bd-surface overflow-hidden">
+                  {ordered.map((column) => {
+                    const absIndex = columns.findIndex((entry) => entry.key === column.key)
+                    const visible = (column.visibilityMode || 'show') !== 'hide_full'
+                    const isCustom = column.key.startsWith('custom_')
+                    const locked = !isCustom && CPS_HIDE_FULL_DENY_LIST.has(column.key)
+                    if (locked) {
+                      return (
+                        <div key={column.key} className="flex items-center min-h-[44px] px-3 py-2 gap-2 border-b border-bd-border/50 last:border-b-0">
+                          <Input
+                            value={column.label || ''}
+                            onChange={(event) => onUpdate(column.key, 'label', event.target.value)}
+                            placeholder="Column label"
+                            aria-label={`${column.label || column.key} column label`}
+                            className="h-8 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                          />
+                          <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-mputed">
+                            Fixed
+                          </span>
+                        </div>
+                      )
+                    }
+
+                    <div
+                      key={column.key}
+                      className={cn(
+                        'flex items-center min-h-[44px] px-2 py-1.5 gap-0.5 border-b border-bd-border/50 last:border-b-0 transition-opacity',
+                        !visible && 'opacity-40',
+                      )}
+                    >
+                      <div className="flex flex-col shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => onMove(column.key, absIndex - 1)}
+                          disabled={absIndex <= 1}
+                          className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
+                          aria-label={`Move ${column.label} up`}
+                        >
+                          <ChevronUp size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onMove(column.key, absIndex + 1)}
+                          disabled={absIndex >= columns.length - 1}
+                          className="flex items-center justify-center w-7 h-5 text-bd-text-muted hover:text-bd-text disabled:opacity-20 disabled:cursor-default transition-colors"
+                          aria-label={`Move ${column.label} down`}
+                        >
+                          <ChevronDown size={12} />
+                        </button>
+                      </div>
+                      <div className="min-w-0 flex-1 px-1 flex items-center gap-1.5">
+                        <Input
+                          value={column.label || ''}
+                          onChange={(event) => onUpdate(column.key, 'label', event.target.value)}
+                          placeholder="Column label"
+                          aria-label={`${column.label || column.key} column label`}
+                          className="h-8 rounded-lg border-transparent bg-transparent px-2 text-[13px] font-medium text-bd-text hover:border-bd-border focus:bg-bd-surface-muted focus:border-bd-border flex-1 transition-colors"
+                        />
+                        {isCustom ? (
+                          <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-bd-text-muted">
+                            Custom
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 pl-1 pr-0.5">
+                        <Switch
+                          size="sm"
+                          checked={visible}
+                          onCheckedChange={() => onToggleFull(column.key)}
+                          aria-label={`${visible ? 'Hide' : 'Show'} ${column.label}`}
+                        />
+                        {isCustom ? (
+                          <button
+                            type="button"
+                            onClick={() => onRemoveCustom(column.key)}
+                            className="flex items-center justify-center w-7 h-7 rounded-md text-bd-text-muted hover:text-bd-status-danger-text hover:bg-bd-status-danger-bg transition-colors"
+                            title="Delete custom column"
+                            aria-label={`Remove ${column.label}`}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  })}
+                </div>
+              </div>
+            )
+          </div>
+        </div
+      </SheetContent>
+    </Sheet>
+  )
+}
             <div className="cps-modegrid" role="group" aria-label="Markup mode">
               <button type="button" className={cn('cps-mode', mode === 'percentage' && 'on')} onClick={() => onModeChange('percentage')}>Percentage</button>
               <button type="button" className={cn('cps-mode', mode === 'value' && 'on')} onClick={() => onModeChange('value')}>Value</button>
+
             </div>
             <label>
               <span className="cps-label">{mode === 'percentage' ? 'Percentage' : 'Value per unit'}</span>
