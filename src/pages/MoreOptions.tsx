@@ -117,6 +117,7 @@ export default function MoreOptions() {
       items: [
         { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
         { key: 'cold-launch-preview', label: 'Cold Launch Preview', icon: Sparkles, path: '/cold-launch-preview' },
+        { key: 'photohero-preview', label: 'PhotoHero Preview', icon: Sparkles, path: '/photohero-preview' },
         {
           key: 'signout',
           label: 'Sign Out',

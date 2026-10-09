@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Icons } from '@/lib/iconRegistry'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Sparkles, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
@@ -19,6 +19,7 @@ import {
   mobileDrawerUtilityNav,
 } from './navData'
 import { CompanySelectionSheet } from './CompanySelectionSheet'
+import { BxLogo } from './bx-logo'
 
 interface MobileSidebarProps {
   open: boolean
@@ -118,9 +119,7 @@ export function MobileSidebar({
       >
         {/* Brand area */}
         <div className="flex items-center gap-2.5 border-b border-[hsl(var(--line))] px-3.5 py-3">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[image:var(--gradient)] text-white">
-            <Sparkles className="h-4 w-4" strokeWidth={1.9} />
-          </span>
+          <BxLogo />
           <div className="min-w-0">
             <div className="text-[13px] font-[800] tracking-[-0.05em] text-[hsl(var(--ink))]">{APP_NAME}</div>
           </div>

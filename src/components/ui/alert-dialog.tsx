@@ -46,13 +46,22 @@ function AlertDialogOverlay({
 
 function AlertDialogContent({
   className,
+  container,
   size = "default",
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
+  /**
+   * Portal target for the confirmation surface. Omit to keep the historical
+   * body-level portal. Pass the owning overlay element when this dialog is
+   * raised from inside another overlay surface (sheet, dialog, dock) so the
+   * confirmation inherits that surface's stacking context and layer instead
+   * of competing with it by z-index.
+   */
+  container?: HTMLElement | null
 }) {
   return (
-    <AlertDialogPortal>
+    <AlertDialogPortal container={container ?? undefined}>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"

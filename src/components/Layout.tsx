@@ -51,6 +51,7 @@ import {
   type TabKey,
 } from './layout/navData'
 import { MobileSidebar } from './layout/MobileSidebar'
+import { bxLogoSrc } from './layout/bx-logo'
 import { DesktopSidebar } from './layout/DesktopSidebar'
 import { MobileSalesSheet } from './layout/MobileSalesSheet'
 
@@ -134,6 +135,7 @@ export default function Layout({
       tax: '/tax',
       settings: '/settings',
       'cold-launch-preview': '/cold-launch-preview',
+      'photohero-preview': '/photohero-preview',
     }
     setMoreOpen(false)
     setSidebarOpen(false)
@@ -215,6 +217,7 @@ export default function Layout({
                 <MobilePageHeader
                   title={APP_NAME}
                   subtitle={settings?.company_name || 'Invoicing and Projects'}
+                  logoSrc={bxLogoSrc}
                   accentClassName="tone-info-accent"
                   onMenuClick={openSidebar}
                   isOpen={sidebarOpen}

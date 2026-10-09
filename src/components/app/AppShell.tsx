@@ -70,6 +70,7 @@ const ViewLetter = lazy(() => import('@/pages/ViewLetter'))
 const NotificationSettingsPage = lazy(() => import('@/pages/settings/NotificationSettingsPage'))
 const MoreOptions = lazy(() => import('@/pages/MoreOptions'))
 const ColdLaunchPreview = lazy(() => import('@/pages/ColdLaunchPreview'))
+const PhotoHeroPreview = lazy(() => import('@/pages/PhotoHeroPreview'))
 const AccountingOverview = lazy(() => import('@/pages/accounting/AccountingOverview'))
 const Accounts = lazy(() => import('@/pages/accounting/Accounts'))
 const Periods = lazy(() => import('@/pages/accounting/Periods'))
@@ -297,6 +298,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/settings/notifications" element={withBoundary(<NotificationSettingsPage />)} />
           <Route path="/more" element={withBoundary(<MoreOptions />)} />
           <Route path="/cold-launch-preview" element={withBoundary(<ColdLaunchPreview />)} />
+          <Route path="/photohero-preview" element={withBoundary(<PhotoHeroPreview />)} />
           <Route path="/accounting" element={withBoundary(<AccountingOverview />)} />
           <Route path="/accounting/accounts" element={withBoundary(<Accounts />)} />
           <Route path="/accounting/periods" element={withBoundary(<Periods />)} />

@@ -10,6 +10,8 @@ type MobilePageHeaderProps = {
   title: string
   subtitle?: string
   eyebrow?: string
+  /** Approved BX logo URL. Rendered before the title when provided. */
+  logoSrc?: string
   accentClassName?: string
   eyebrowClassName?: string
   onMenuClick: () => void
@@ -30,6 +32,7 @@ export default function MobilePageHeader({
   title,
   subtitle,
   eyebrow,
+  logoSrc,
   accentClassName = 'tone-neutral-accent',
   eyebrowClassName,
   onMenuClick,
@@ -90,8 +93,19 @@ export default function MobilePageHeader({
 
           <div className="flex items-start justify-between gap-[var(--bd-row-gap)]">
             <div className="min-w-0">
-              <div className="truncate text-[16px] font-semibold leading-tight tracking-[-0.03em] text-bd-text">
-                {title}
+              <div className="flex items-center gap-2">
+                {logoSrc ? (
+                  <img
+                    src={logoSrc}
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    className="h-7 w-7 shrink-0 rounded-lg"
+                  />
+                ) : null}
+                <div className="truncate text-[16px] font-semibold leading-tight tracking-[-0.03em] text-bd-text">
+                  {title}
+                </div>
               </div>
               {subtitle ? (
                 <div className="mt-px truncate text-[11px] text-bd-text-muted">{subtitle}</div>

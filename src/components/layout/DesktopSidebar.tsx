@@ -5,6 +5,7 @@ import { Building2, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
+import { BxLogo } from './bx-logo'
 import {
   APP_NAME,
   desktopNav,
@@ -70,11 +71,16 @@ export function DesktopSidebar({
     <aside className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-bd-border bg-bd-layout-sidebar md:flex">
       <div className="flex h-full flex-col">
         <div className="px-5 py-6">
-          <div className="text-[13px] font-black tracking-tight text-bd-text">
-            {APP_NAME}
-          </div>
-          <div className="text-[9px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
-            Invoicing & Projects
+          <div className="flex items-center gap-2.5">
+            <BxLogo className="rounded-lg" />
+            <div className="min-w-0">
+              <div className="text-[13px] font-black tracking-tight text-bd-text">
+                {APP_NAME}
+              </div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-bd-text-muted opacity-60">
+                Invoicing & Projects
+              </div>
+            </div>
           </div>
           {session?.user?.email ? (
             <div className="mt-2 truncate text-[10px] font-bold text-bd-text-muted opacity-50">
