@@ -1203,11 +1203,34 @@ textarea.cps-field {
   box-shadow: var(--shadow-sheet);
   overflow-y: auto;
 }
+/* Desktop Instant Markup dock. The dock is bounded at the standard sheet
+   width so CP, SP and the calculated destination never collide, and it is
+   denser than the mobile sheet it shares tokens with. Recovered vertical
+   space goes to the item list, which owns its own scroll region. */
 .cps-overlay.dock .cps-sheet {
-  max-width: 440px;
+  max-width: 560px;
   height: 100%;
   max-height: none;
+  gap: 7px;
+  padding: 11px 14px calc(12px + env(safe-area-inset-bottom));
   border-radius: 18px 0 0 18px;
+}
+.cps-overlay.dock .cps-sheet-head {
+  padding-bottom: 6px;
+}
+.cps-overlay.dock .cps-label {
+  margin-bottom: 3px;
+}
+.cps-overlay.dock .cps-mode,
+.cps-overlay.dock .cps-field,
+.cps-overlay.dock .cps-cbtn {
+  min-height: 34px;
+}
+.cps-overlay.dock .cps-mk-row {
+  padding: 7px 9px;
+}
+.cps-overlay.dock .cps-mk-gcap {
+  margin: 8px 0 4px;
 }
 .cps-grab {
   width: 36px;
@@ -1239,15 +1262,39 @@ textarea.cps-field {
   color: var(--sub);
 }
 .cps-x {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: var(--soft);
   border: 1px solid var(--line);
   color: var(--sub);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+/* Adapter for the markup dock close control. `.cps-form button` resets border
+   and background, so this scoped selector restores the established control box
+   at the compact header size. Palette is untouched. */
+.cps-form .cps-x {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  color: var(--sub);
+  flex-shrink: 0;
+}
+/* Secondary markup controls: bulk inclusion and cancel. Text-level weight, so
+   they never compete with the markup input, the live prices, or Apply Markup. */
+.cps-form .cps-link-inline {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.cps-form .cps-link-inline:hover {
+  color: var(--ink);
 }
 .cps-modegrid,
 .cps-mk-agg {

@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Plus, RotateCcw, Trash2, Undo2, X } from 'lucid
 import ClientSelector from '@/components/ClientSelector'
 import { CpsImportSheet } from '@/components/cps/CpsImportSheet'
 import { CpsMarkupSheet } from '@/components/cps/CpsMarkupSheet'
+import { CpsMarkupMetric, CpsMarkupPriceFlow } from '@/components/cps/CpsMarkupPriceFlow'
 import { CostPricingSheetForm } from '@/components/cps/CostPricingSheetForm'
 import { newRowId } from '@/components/cps/CostPricingSheetForm'
 import type {
@@ -19,7 +20,7 @@ import {
   CpsClearAllDialog,
   CostPricingSheetDesktopForm,
 } from '@/components/cps/CostPricingSheetFormPresentations'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -1058,6 +1059,9 @@ function InstantMarkupDialog({
   canUndoReset: boolean
 }) {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+  // The reset confirmation is portaled into this dock, so it renders inside
+  // the dock's own layer instead of below it.
+  const [confirmHost, setConfirmHost] = useState<HTMLDivElement | null>(null)
   const eligibleCount = rows.filter(isInstantMarkupEligible).length
   const includedCount = rows.filter(
     (row, index) => isInstantMarkupEligible(row) && included[getCpsRowKey(row, index)],
@@ -1068,19 +1072,25 @@ function InstantMarkupDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="cps-form border-0 bg-transparent p-0 shadow-none sm:max-w-none h-dvh max-h-dvh w-[440px] translate-x-0 translate-y-0 right-0 left-auto top-0"
+        showCloseButton={false}
+        className="cps-form border-0 bg-transparent p-0 shadow-none sm:max-w-none h-dvh max-h-dvh w-[560px] translate-x-0 translate-y-0 right-0 left-auto top-0"
       >
       <div className="cps-overlay dock">
         <div className="cps-sheet cps-mk-dialog">
-          <div className="cps-grab" />
-          <DialogHeader className="cps-sheet-head shrink-0 text-left">
-            <div>
+          {/* Compact header: title, subtitle and the close control share one
+              explicit row. No dedicated close row, so the controls start
+              higher and the item list keeps the recovered height. */}
+          <DialogHeader
+            data-markup-header
+            className="cps-sheet-head flex-row items-center justify-between gap-2 shrink-0 text-left"
+          >
+            <div className="min-w-0">
               <DialogTitle asChild><b>Instant Markup</b></DialogTitle>
               <DialogDescription asChild>
-                <small>Mark up from current SP, or CP when SP is empty.</small>
+                <small className="block truncate">Mark up from current SP, or CP when SP is empty.</small>
               </DialogDescription>
             </div>
-            <button type="button" className="cps-x" onClick={() => onOpenChange(false)} aria-label="Close Instant Markup"><X size={12} /></button>
+            <button type="button" className="cps-x" onClick={() => onOpenChange(false)} aria-label="Close Instant Markup"><X size={13} /></button>
           </DialogHeader>
 
           <div className="shrink-0">
@@ -1098,30 +1108,46 @@ function InstantMarkupDialog({
                 aria-invalid={Boolean(error)}
               />
             </label>
-            <p className="text-[11px] font-semibold leading-relaxed" style={{ color: 'var(--sub)' }}>
+            <p className="text-[10.5px] font-semibold leading-snug" style={{ color: 'var(--sub)' }}>
               {mode === 'percentage'
                 ? 'Uses current SP as the base, or CP when SP is empty. Next SP = base × (1 + %).'
                 : 'Uses current SP as the base, or CP when SP is empty. Next SP = base + value per unit.'}
             </p>
             {error ? <p className="text-xs font-bold" style={{ color: 'var(--red)' }} role="alert">{error}</p> : null}
-            {preview ? (
-              <div aria-live="polite" className="cps-mk-agg">
-                <PreviewMetric label="Affected items" value={`${preview.affectedCount}`} />
-                <PreviewMetric label="Selling total" value={`${formatMoney(preview.sellingBefore)} -> ${formatMoney(preview.sellingAfter)}`} />
-                <PreviewMetric label="Gross profit" value={`${formatMoney(preview.grossProfitBefore)} -> ${formatMoney(preview.grossProfitAfter)}`} />
-                <PreviewMetric label="Aggregate change" value={formatMoney(preview.aggregateChange)} />
+            <div aria-live="polite" className="space-y-1.5">
+              {preview ? (
+                <div className="grid grid-cols-3 gap-x-3 rounded-xl border border-bd-border bg-bd-surface px-2.5 py-2">
+                  <CpsMarkupMetric
+                    label="Selling total"
+                    before={preview.sellingBefore}
+                    after={preview.sellingAfter}
+                  />
+                  <CpsMarkupMetric
+                    label="Gross profit"
+                    before={preview.grossProfitBefore}
+                    after={preview.grossProfitAfter}
+                  />
+                  <CpsMarkupMetric
+                    label="Aggregate change"
+                    amount={preview.aggregateChange}
+                    tone="gain"
+                  />
+                </div>
+              ) : (
+                <p className="text-[10.5px] font-semibold leading-snug" style={{ color: 'var(--sub)' }}>
+                  Enter a markup value to see live results for every included item.
+                </p>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <div className="flex items-center gap-3">
+                  <button type="button" className="cps-link-inline" onClick={() => onIncludeAll(true)}>Include All</button>
+                  <button type="button" className="cps-link-inline" onClick={() => onIncludeAll(false)}>Exclude All</button>
+                </div>
+                <span className="font-mono text-[10.5px]" style={{ color: 'var(--faint)' }}>
+                  {includedCount} / {eligibleCount} included
+                  {preview ? ` · ${preview.affectedCount} affected` : ''}
+                </span>
               </div>
-            ) : (
-              <p className="text-[11px] font-semibold leading-relaxed" style={{ color: 'var(--sub)' }}>
-                Enter a markup value to see live results for every included item.
-              </p>
-            )}
-            <div className="cps-sheet-actions">
-              <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(true)}>Include All</button>
-              <button type="button" className="cps-cbtn ghost" onClick={() => onIncludeAll(false)}>Exclude All</button>
-              <span className="font-mono text-[11px]" style={{ color: 'var(--faint)' }}>
-                {includedCount} / {eligibleCount} included
-              </span>
             </div>
           </div>
 
@@ -1134,23 +1160,30 @@ function InstantMarkupDialog({
               const eligible = isInstantMarkupEligible(row)
               if (row.row_type === 'item') itemNumber += 1
               const excluded = eligible && !included[rowKey]
-              const proposedSp = eligible && included[rowKey] ? proposedByKey.get(rowKey) ?? null : null
+              // The destination price only exists for an included eligible row,
+              // so an excluded row can never imply that markup applies to it.
+              const nextSp = eligible && included[rowKey] ? proposedByKey.get(rowKey) ?? null : null
               return (
-                <div key={rowKey} className={cn('cps-mk-row', excluded && 'opacity-60')}>
+                <div
+                  key={rowKey}
+                  className={cn('cps-mk-row', excluded && 'opacity-60')}
+                  data-markup-excluded={excluded ? 'true' : undefined}
+                >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-bd-border bg-bd-card-bg font-mono text-xs font-black">
                     {String(itemNumber).padStart(2, '0')}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <b className="block text-xs">{row.description || `(row ${index + 1})`}</b>
-                    <small style={{ color: 'var(--faint)' }}>
-                      {eligible ? `CP ${row.cp || 0} · Current ${row.sp || 0}` : 'Excluded - not an item row'}
-                      {excluded ? ' · excluded, untouched' : ''}
-                    </small>
-                    {proposedSp ? (
-                      <small style={{ color: 'var(--faint)' }}>
-                        Proposed <b>{proposedSp}</b>
-                      </small>
-                    ) : null}
+                    <b className="block truncate text-xs">{row.description || `(row ${index + 1})`}</b>
+                    {eligible ? (
+                      <CpsMarkupPriceFlow
+                        cp={row.cp}
+                        sp={row.sp}
+                        nextSp={nextSp}
+                        excluded={excluded}
+                      />
+                    ) : (
+                      <small style={{ color: 'var(--red)' }}>Excluded - not an item row</small>
+                    )}
                   </span>
                   <button
                     type="button"
@@ -1166,17 +1199,23 @@ function InstantMarkupDialog({
             })}
           </div>
 
-          <DialogFooter className="cps-sheet-actions cps-mk-foot sm:justify-stretch">
-            <button type="button" className="cps-cbtn ghost" onClick={() => onOpenChange(false)}><X size={12} /> Cancel</button>
-            <button type="button" className="cps-cbtn ghost" onClick={() => setResetConfirmOpen(true)}><RotateCcw size={12} /> Reset</button>
-            <button type="button" className="cps-cbtn ghost" onClick={onUndoReset} disabled={!canUndoReset}><Undo2 size={12} /> Undo Reset</button>
+          <div className="cps-mk-foot shrink-0 flex flex-col gap-1.5">
             <button type="button" className="cps-cbtn primary" onClick={onApply} disabled={!canApply}>Apply Markup</button>
-          </DialogFooter>
+            <div className="flex items-center gap-2">
+              <button type="button" className="cps-cbtn ghost" onClick={() => setResetConfirmOpen(true)}><RotateCcw size={12} /> Reset</button>
+              {/* Undo Reset exists only while a reset left an undoable state. */}
+              {canUndoReset ? (
+                <button type="button" className="cps-cbtn ghost" onClick={onUndoReset}><Undo2 size={12} /> Undo Reset</button>
+              ) : null}
+              <button type="button" className="cps-link-inline" onClick={() => onOpenChange(false)}>Cancel</button>
+            </div>
+          </div>
         </div>
+        <div ref={setConfirmHost} className="contents" />
       </div>
       </DialogContent>
       <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent container={confirmHost}>
           <AlertDialogHeader>
             <AlertDialogTitle>Reset markup?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1198,14 +1237,5 @@ function InstantMarkupDialog({
         </AlertDialogContent>
       </AlertDialog>
     </Dialog>
-  )
-}
-
-function PreviewMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="cps-mk-cell">
-      <small>{label}</small>
-      <b>{value}</b>
-    </div>
   )
 }

@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { CpsMarkupMetric, CpsMarkupPriceFlow } from '@/components/cps/CpsMarkupPriceFlow'
 import {
   getCpsRowKey,
   isInstantMarkupEligible,
@@ -43,10 +44,6 @@ export interface CpsMarkupSheetProps {
   canUndoReset: boolean
 }
 
-function naira0(value: unknown): string {
-  return '₦' + Number(value || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 })
-}
-
 function rowLabel(row: TableDocumentRow, index: number): string {
   return row.description?.trim() || `(row ${index + 1})`
 }
@@ -56,23 +53,26 @@ function SetupRow({
   index,
   itemNumber,
   included,
-  proposedSp,
+  nextSp,
   onIncludedChange,
 }: {
   row: TableDocumentRow
   index: number
   itemNumber: number
   included: boolean
-  proposedSp: string | null
+  nextSp: string | null
   onIncludedChange: (rowKey: string, included: boolean) => void
 }) {
   const rowKey = getCpsRowKey(row, index)
   const eligible = isInstantMarkupEligible(row)
   const excluded = eligible && !included
+  // The destination price only exists for an included eligible row, so an
+  // excluded row can never imply that markup will be applied to it.
+  const destination = eligible && included ? nextSp : null
   return (
     <div
       className={cn(
-        'flex items-center gap-2.5 border-b border-bd-border/50 px-3 py-2 transition-colors last:border-b-0',
+        'flex items-center gap-2.5 border-b border-bd-border/50 px-3 py-1.5 transition-colors last:border-b-0',
         excluded && 'bg-bd-surface-muted/70 text-bd-text-muted',
       )}
       data-markup-excluded={excluded ? 'true' : undefined}
@@ -87,26 +87,22 @@ function SetupRow({
       >
         {String(itemNumber).padStart(2, '0')}
       </span>
-      <div className="min-w-0 flex-1">
-        <div className={cn('truncate text-[13px] font-semibold', excluded ? 'text-bd-text-muted' : 'text-bd-text')}>
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <div
+          className={cn(
+            'truncate text-[13px] font-semibold',
+            excluded ? 'text-bd-text-muted' : 'text-bd-text',
+          )}
+        >
           {rowLabel(row, index)}
         </div>
         {eligible ? (
-          <div className="truncate font-mono text-[11px] text-bd-text-muted">
-            CP {naira0(row.cp)} · Current {naira0(row.sp)}
-            {included ? '' : ' · excluded, untouched'}
-          </div>
+          <CpsMarkupPriceFlow cp={row.cp} sp={row.sp} nextSp={destination} excluded={excluded} />
         ) : (
           <div className="truncate text-[11px] font-bold text-bd-status-danger-text">
             Excluded — not an item row
           </div>
         )}
-        {eligible && included && proposedSp ? (
-          <div className="truncate font-mono text-[12px] font-black">
-            <span className="font-bold text-bd-text-muted">Proposed </span>
-            <span className="text-bd-status-success-text">→ {naira0(proposedSp)}</span>
-          </div>
-        ) : null}
       </div>
       {eligible ? (
         <button
@@ -114,16 +110,16 @@ function SetupRow({
           onClick={() => onIncludedChange(rowKey, !included)}
           aria-pressed={included}
           className={cn(
-            'shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors',
+            'shrink-0 rounded-lg border px-2 py-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.08em] transition-colors',
             included
               ? 'border-bd-status-success-text text-bd-status-success-text'
-            : 'border-bd-border bg-bd-surface-muted text-bd-text-muted',
+              : 'border-bd-border bg-bd-surface-muted text-bd-text-muted',
           )}
         >
           {included ? 'Included' : 'Excluded'}
         </button>
       ) : (
-        <span className="shrink-0 rounded-lg border border-bd-border px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] text-bd-text-muted opacity-60">
+        <span className="shrink-0 rounded-lg border border-bd-border px-2 py-1.5 text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-bd-text-muted opacity-60">
           Not item
         </span>
       )}
@@ -150,6 +146,9 @@ export function CpsMarkupSheet({
   canUndoReset,
 }: CpsMarkupSheetProps) {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+  // The reset confirmation is portaled into this sheet, so it renders inside
+  // the sheet's own layer instead of below it.
+  const [confirmHost, setConfirmHost] = useState<HTMLDivElement | null>(null)
   const eligibleCount = rows.filter(isInstantMarkupEligible).length
   const includedCount = rows.filter(
     (row, index) => isInstantMarkupEligible(row) && included[getCpsRowKey(row, index)],
@@ -168,7 +167,7 @@ export function CpsMarkupSheet({
       list.push(
         <div
           key={key}
-          className="border-b border-bd-border/50 bg-bd-surface-muted px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted"
+          className="border-b border-bd-border/50 bg-bd-surface-muted px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted"
         >
           {row.section_title || row.description || 'Group'} — headers never participate
         </div>,
@@ -181,7 +180,7 @@ export function CpsMarkupSheet({
       list.push(
         <div
           key={`ungrouped-${index}`}
-          className="border-b border-bd-border/50 bg-bd-surface-muted px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted"
+          className="border-b border-bd-border/50 bg-bd-surface-muted px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted"
         >
           Ungrouped rows
         </div>,
@@ -195,7 +194,7 @@ export function CpsMarkupSheet({
         index={index}
         itemNumber={itemNumber}
         included={Boolean(included[key])}
-        proposedSp={included[key] ? proposedByKey.get(key) ?? null : null}
+        nextSp={included[key] ? proposedByKey.get(key) ?? null : null}
         onIncludedChange={onIncludedChange}
       />,
     )
@@ -207,16 +206,21 @@ export function CpsMarkupSheet({
         side="bottom"
         className="flex h-auto max-h-[85dvh] flex-col overflow-hidden rounded-t-2xl border-t border-bd-border bg-bd-card-bg p-0 shadow-lg sm:mx-auto sm:max-w-md [&>[data-slot=sheet-close]]:hidden"
       >
-        <div className="flex shrink-0 justify-center pb-1 pt-2.5">
+        <div className="flex shrink-0 justify-center pt-1.5 pb-0.5">
           <div className="h-1 w-8 rounded-full bg-bd-surface-muted" />
         </div>
 
-        <div className="flex shrink-0 items-start justify-between gap-3 px-4 pb-3">
+        {/* Compact header: title, subtitle and the close control on one row.
+            No dedicated close row, so the control block starts higher. */}
+        <div
+          data-markup-header
+          className="flex shrink-0 items-center justify-between gap-2 px-4 pb-2"
+        >
           <div className="min-w-0">
-            <h2 className="text-[15px] font-black uppercase tracking-[0.08em] text-bd-text">
+            <h2 className="text-[15px] font-black uppercase tracking-[0.06em] text-bd-text">
               Instant Markup
             </h2>
-            <p className="mt-0.5 text-xs text-bd-text-muted">
+            <p className="mt-0.5 truncate text-[11px] text-bd-text-muted">
               Mark up from current SP, or CP when SP is empty.
             </p>
           </div>
@@ -224,26 +228,28 @@ export function CpsMarkupSheet({
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close Instant Markup"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-bd-border text-bd-text transition-colors hover:bg-bd-surface-muted active:scale-95"
+            className="-mr-1 flex h-11 w-11 shrink-0 items-center justify-center active:scale-95"
           >
-            <X className="h-4 w-4" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-bd-border bg-bd-surface text-bd-text transition-colors hover:bg-bd-surface-muted">
+              <X className="h-4 w-4" />
+            </span>
           </button>
         </div>
 
-        <div className="shrink-0 space-y-2.5 px-4 pb-2">
-          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Markup mode">
+        <div className="shrink-0 space-y-2 px-4 pb-1.5">
+          <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Markup mode">
             <button
               type="button"
               onClick={() => onModeChange('percentage')}
               aria-pressed={mode === 'percentage'}
               className={cn(
-                'flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[12px] font-extrabold uppercase tracking-[0.08em] transition-colors',
+                'flex min-h-9 items-center justify-center gap-1.5 rounded-xl border px-3 text-[11.5px] font-extrabold uppercase tracking-[0.08em] transition-colors',
                 mode === 'percentage'
                   ? 'border-bd-button-primary-bg bg-bd-button-primary-bg/10 text-bd-text'
                   : 'border-bd-border bg-bd-surface text-bd-text-muted',
               )}
             >
-              <Percent className="h-4 w-4" />
+              <Percent className="h-3.5 w-3.5" />
               Percentage
             </button>
             <button
@@ -251,97 +257,96 @@ export function CpsMarkupSheet({
               onClick={() => onModeChange('value')}
               aria-pressed={mode === 'value'}
               className={cn(
-                'flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[12px] font-extrabold uppercase tracking-[0.08em] transition-colors',
+                'flex min-h-9 items-center justify-center gap-1.5 rounded-xl border px-3 text-[11.5px] font-extrabold uppercase tracking-[0.08em] transition-colors',
                 mode === 'value'
                   ? 'border-bd-button-primary-bg bg-bd-button-primary-bg/10 text-bd-text'
                   : 'border-bd-border bg-bd-surface text-bd-text-muted',
               )}
             >
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className="h-3.5 w-3.5" />
               Fixed Value
             </button>
           </div>
 
-          <div>
-            <label
-              htmlFor="cps-markup-value"
-              className="mb-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-bd-text-muted"
-            >
-              {mode === 'percentage' ? 'Markup percentage (%)' : 'Markup value per unit (₦)'}
-            </label>
-            <Input
-              id="cps-markup-value"
-              inputMode="decimal"
-              value={value}
-              onChange={(event) => onValueChange(event.target.value)}
-              aria-invalid={Boolean(error)}
-              className="h-11 rounded-xl bg-bd-surface font-mono text-base font-bold text-bd-text"
-            />
+          <div className="flex items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <label
+                htmlFor="cps-markup-value"
+                className="mb-1 block text-[9.5px] font-bold uppercase tracking-[0.14em] text-bd-text-muted"
+              >
+                {mode === 'percentage' ? 'Markup percentage (%)' : 'Markup value per unit (₦)'}
+              </label>
+              <Input
+                id="cps-markup-value"
+                inputMode="decimal"
+                value={value}
+                onChange={(event) => onValueChange(event.target.value)}
+                aria-invalid={Boolean(error)}
+                className="h-10 rounded-xl bg-bd-surface font-mono text-base font-bold text-bd-text"
+              />
+            </div>
+            <p className="max-w-[46%] pb-1 text-[10px] leading-snug text-bd-text-muted">
+              {mode === 'percentage'
+                ? 'SP base, or CP when SP is empty. Next SP = base × (1 + %).'
+                : 'SP base, or CP when SP is empty. Next SP = base + value per unit.'}
+            </p>
           </div>
 
-          <p className="rounded-xl border border-dashed border-bd-border bg-bd-surface px-3 py-2 text-[11px] leading-relaxed text-bd-text-muted">
-            {mode === 'percentage'
-              ? 'Uses current SP as the base, or CP when SP is empty. Next SP = base × (1 + %). CP stays unchanged.'
-              : 'Uses current SP as the base, or CP when SP is empty. Next SP = base + value, applied per item unit. CP stays unchanged.'}
-          </p>
-
           {error ? (
-            <p role="alert" className="rounded-lg border border-bd-status-danger-border bg-bd-status-danger-bg px-3 py-2 text-[11px] font-bold text-bd-status-danger-text">
+            <p role="alert" className="rounded-lg border border-bd-status-danger-border bg-bd-status-danger-bg px-3 py-1.5 text-[11px] font-bold text-bd-status-danger-text">
               {error}
             </p>
           ) : null}
 
-          {preview ? (
-            <div aria-live="polite" className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl border border-bd-border bg-bd-surface px-3 py-2">
-                <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Affected items</div>
-                <div className="text-[15px] font-black text-bd-text">{preview.affectedCount}</div>
+          <div aria-live="polite" className="space-y-2">
+            {preview ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-xl border border-bd-border bg-bd-surface px-2.5 py-2">
+                <CpsMarkupMetric
+                  label="Selling total"
+                  before={preview.sellingBefore}
+                  after={preview.sellingAfter}
+                />
+                <CpsMarkupMetric
+                  label="Gross profit"
+                  before={preview.grossProfitBefore}
+                  after={preview.grossProfitAfter}
+                />
+                <CpsMarkupMetric
+                  layout="row"
+                  className="col-span-2 border-t border-bd-border/60 pt-1.5"
+                  label="Aggregate change"
+                  amount={preview.aggregateChange}
+                  tone="gain"
+                />
               </div>
-              <div className="rounded-xl border border-bd-border bg-bd-surface px-3 py-2">
-                <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Aggregate change</div>
-                <div className="font-mono text-[13px] font-bold text-bd-status-success-text">
-                  +{naira0(preview.aggregateChange)} sell
-                </div>
-              </div>
-              <div className="rounded-xl border border-bd-border bg-bd-surface px-3 py-2">
-                <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Selling total</div>
-                <div className="font-mono text-[12px] font-bold text-bd-text">
-                  {naira0(preview.sellingBefore)} → {naira0(preview.sellingAfter)}
-                </div>
-              </div>
-              <div className="rounded-xl border border-bd-border bg-bd-surface px-3 py-2">
-                <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">Gross profit</div>
-                <div className="font-mono text-[12px] font-bold text-bd-text">
-                  {naira0(preview.grossProfitBefore)} → {naira0(preview.grossProfitAfter)}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="rounded-xl border border-dashed border-bd-border bg-bd-surface px-3 py-2 text-[11px] leading-relaxed text-bd-text-muted">
-              Enter a markup value to see live results for every included item.
-            </p>
-          )}
+            ) : (
+              <p className="rounded-xl border border-dashed border-bd-border bg-bd-surface px-3 py-2 text-[11px] leading-relaxed text-bd-text-muted">
+                Enter a markup value to see live results for every included item.
+              </p>
+            )}
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => onIncludeAll(true)}
-                className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-bd-text-muted transition-colors hover:text-bd-text"
-              >
-                Include All
-              </button>
-              <button
-                type="button"
-                onClick={() => onIncludeAll(false)}
-                className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-bd-text-muted transition-colors hover:text-bd-text"
-              >
-                Exclude All
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => onIncludeAll(true)}
+                  className="text-[10.5px] font-extrabold uppercase tracking-[0.1em] text-bd-text-muted transition-colors hover:text-bd-text"
+                >
+                  Include All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onIncludeAll(false)}
+                  className="text-[10.5px] font-extrabold uppercase tracking-[0.1em] text-bd-text-muted transition-colors hover:text-bd-text"
+                >
+                  Exclude All
+                </button>
+              </div>
+              <span className="font-mono text-[10.5px] text-bd-text-muted">
+                {includedCount} / {eligibleCount} included
+                {preview ? ` · ${preview.affectedCount} affected` : ''}
+              </span>
             </div>
-            <span className="font-mono text-[11px] text-bd-text-muted">
-              {includedCount} / {eligibleCount} included
-            </span>
           </div>
         </div>
 
@@ -362,7 +367,7 @@ export function CpsMarkupSheet({
           ) : null}
         </div>
 
-        <div className="shrink-0 space-y-2 border-t border-bd-border bg-bd-card-bg px-4 py-3" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="shrink-0 space-y-2 border-t border-bd-border bg-bd-card-bg px-4 py-2.5" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
           <Button
             type="button"
             onClick={onApply}
@@ -371,36 +376,40 @@ export function CpsMarkupSheet({
           >
             Apply Markup
           </Button>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setResetConfirmOpen(true)}
-              className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-bd-status-danger-border bg-bd-status-danger-bg px-3 text-[11px] font-extrabold uppercase tracking-[0.08em] text-bd-status-danger-text"
+              className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-bd-status-danger-border bg-bd-status-danger-bg px-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-bd-status-danger-text"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Reset
             </button>
+            {/* Undo Reset exists only while a reset left an undoable state. */}
+            {canUndoReset ? (
+              <button
+                type="button"
+                onClick={onUndoReset}
+                className="flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-bd-border bg-bd-surface px-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-bd-text"
+              >
+                <Undo2 className="h-3.5 w-3.5" />
+                Undo Reset
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={onUndoReset}
-              disabled={!canUndoReset}
-              className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-bd-border bg-bd-surface px-3 text-[11px] font-extrabold uppercase tracking-[0.08em] text-bd-text disabled:bg-bd-surface-muted disabled:text-bd-text-muted disabled:opacity-70"
+              onClick={() => onOpenChange(false)}
+              className="min-h-9 shrink-0 px-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-bd-text-muted transition-colors hover:text-bd-text"
             >
-              <Undo2 className="h-3.5 w-3.5" />
-              Undo Reset
+              Cancel
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="w-full py-1.5 text-[12px] font-extrabold uppercase tracking-[0.1em] text-bd-text-muted transition-colors hover:text-bd-text"
-          >
-            Cancel
-          </button>
         </div>
+
+        <div ref={setConfirmHost} className="contents" />
       </SheetContent>
       <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent container={confirmHost}>
           <AlertDialogHeader>
             <AlertDialogTitle>Reset markup?</AlertDialogTitle>
             <AlertDialogDescription>
