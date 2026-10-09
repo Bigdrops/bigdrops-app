@@ -120,27 +120,34 @@ export default function ColdLaunchPreview() {
         .clp{
           --clp-top:76px;
           --clp-comm:224px;
-          --clp-bg:hsl(var(--bg, 222 47% 11%));
-          --clp-surface:hsl(var(--surface, 217 33% 17%));
-          --clp-surface-raised:hsl(var(--surface-raised, 215 32% 22%));
-          --clp-surface-muted:hsl(var(--surface-muted, 215 25% 27%));
-          --clp-ink:hsl(var(--ink, 210 40% 96%));
-          --clp-ink-2:hsl(var(--ink-2, 213 27% 84%));
-          --clp-ink-3:hsl(var(--ink-3, 215 16% 47%));
-          --clp-on-dark:hsl(var(--bg, 222 47% 11%));
-          --clp-accent:hsl(var(--primary, 36 93% 51%));
-          --clp-hot:hsl(var(--primary-bright, 45 96% 56%));
-          --clp-secondary:hsl(var(--secondary, 24 96% 60%));
-          --clp-attention:color-mix(in oklab, hsl(var(--attention, 0 84% 63%)) 82%, #ffffff);
-          --clp-line:rgba(245,239,228,.09);
-          --clp-line-strong:rgba(245,239,228,.17);
-          --clp-dark:color-mix(in oklab,var(--clp-bg) 70%,#05070b 30%);
-          --clp-field-a:color-mix(in oklab,var(--clp-accent) 62%,transparent);
-          --clp-field-b:color-mix(in oklab,var(--clp-hot) 44%,transparent);
-          --clp-field-c:color-mix(in oklab,var(--clp-secondary) 38%,transparent);
-          --clp-glass:color-mix(in oklab,var(--clp-surface) 56%,transparent);
-          --clp-glass-line:color-mix(in oklab,var(--clp-hot) 20%,var(--clp-ink) 8%);
-          --clp-glass-shadow:color-mix(in oklab,var(--clp-bg) 62%,#000 38%);
+          --clp-bg:hsl(var(--bd-app-bg,var(--background,222 47% 11%)));
+          --clp-surface:hsl(var(--bd-surface,var(--card,217 33% 17%)));
+          --clp-surface-raised:hsl(var(--bd-surface-raised,var(--card,215 32% 22%)));
+          --clp-surface-muted:hsl(var(--bd-surface-muted,var(--muted,215 25% 27%)));
+          --clp-border:hsl(var(--bd-border-strong,var(--bd-border,var(--border,215 20% 65%))));
+          --clp-theme-ink:hsl(var(--bd-text,var(--foreground,210 40% 96%)));
+          --clp-theme-muted:hsl(var(--bd-text-muted,var(--muted-foreground,213 27% 84%)));
+          --clp-ink:color-mix(in oklab,var(--clp-theme-ink) 12%,#ffffff 88%);
+          --clp-ink-2:color-mix(in oklab,var(--clp-theme-muted) 24%,#ffffff 76%);
+          --clp-ink-3:color-mix(in oklab,var(--clp-theme-muted) 42%,#ffffff 58%);
+          --clp-on-dark:color-mix(in oklab,var(--clp-bg) 80%,#02040a 20%);
+          --clp-accent:hsl(var(--bd-brand,var(--primary,36 93% 51%)));
+          --clp-hot:hsl(var(--bd-accent,var(--accent,45 96% 56%)));
+          --clp-secondary:hsl(var(--secondary,var(--bd-brand,24 96% 60%)));
+          --clp-attention:hsl(var(--bd-status-danger-text,var(--destructive,0 84% 63%)));
+          --clp-line:color-mix(in oklab,var(--clp-ink) 18%,transparent);
+          --clp-line-strong:color-mix(in oklab,var(--clp-ink) 32%,transparent);
+          --clp-deep:color-mix(in oklab,var(--clp-bg) 20%,#05070b 80%);
+          --clp-dark:color-mix(in oklab,var(--clp-bg) 14%,#03050a 86%);
+          --clp-field-a:color-mix(in oklab,var(--clp-accent) 48%,transparent);
+          --clp-field-b:color-mix(in oklab,var(--clp-hot) 34%,transparent);
+          --clp-field-c:color-mix(in oklab,var(--clp-secondary) 30%,transparent);
+          --clp-glass-base:color-mix(in oklab,var(--clp-surface) 30%,#05070b 70%);
+          --clp-glass:color-mix(in oklab,var(--clp-glass-base) 88%,transparent);
+          --clp-glass-line:color-mix(in oklab,var(--clp-border) 72%,var(--clp-accent) 20%);
+          --clp-glass-shadow:color-mix(in oklab,var(--clp-bg) 42%,#000 58%);
+          --clp-node-surface:color-mix(in oklab,var(--clp-glass-base) 84%,var(--clp-accent) 16%);
+          --clp-node-muted:color-mix(in oklab,var(--clp-glass-base) 90%,var(--clp-surface-muted) 10%);
           position:fixed;
           inset:0;
           overflow:hidden;
@@ -158,7 +165,7 @@ export default function ColdLaunchPreview() {
             radial-gradient(ellipse at 16% 18%,color-mix(in oklab,var(--clp-field-c) 44%,transparent),transparent 30%),
             radial-gradient(ellipse at 82% 25%,color-mix(in oklab,var(--clp-field-a) 36%,transparent),transparent 28%),
             radial-gradient(ellipse at 48% 104%,color-mix(in oklab,var(--clp-accent) 16%,transparent),transparent 38%),
-            linear-gradient(168deg,color-mix(in oklab,var(--clp-bg) 90%,#000 10%) 0%,color-mix(in oklab,var(--clp-surface) 50%,#05070b 50%) 48%,#05070b 100%);
+            linear-gradient(168deg,var(--clp-deep) 0%,color-mix(in oklab,var(--clp-glass-base) 62%,#03050a 38%) 48%,#03050a 100%);
           z-index:0;
         }
         .clp::after{
@@ -198,9 +205,9 @@ export default function ColdLaunchPreview() {
         .clp .clp-node{opacity:0}
         .clp-run .clp-node{animation:clp-pop 6s cubic-bezier(.23,1,.32,1) both}
         @keyframes clp-pop{0%{opacity:0;transform:translate(var(--fx,0px),var(--fy,0px)) scale(.92)}12%{opacity:1}30%,100%{opacity:1;transform:none}}
-        .clp .clp-pill{fill:color-mix(in oklab,var(--clp-surface-raised) 95%,transparent);stroke:color-mix(in oklab,var(--clp-ink) 28%,transparent);stroke-width:1.5}
-        .clp .clp-group-pill{fill:color-mix(in oklab,var(--clp-surface-muted) 93%,transparent);stroke:color-mix(in oklab,var(--clp-ink) 24%,transparent)}
-        .clp .clp-dot{fill:var(--clp-surface-raised);stroke:color-mix(in oklab,var(--clp-secondary) 72%,transparent);stroke-width:1.6}
+        .clp .clp-pill{fill:var(--clp-node-surface);stroke:color-mix(in oklab,var(--clp-ink) 38%,transparent);stroke-width:1.5}
+        .clp .clp-group-pill{fill:var(--clp-node-muted);stroke:color-mix(in oklab,var(--clp-ink) 34%,transparent)}
+        .clp .clp-dot{fill:var(--clp-node-surface);stroke:color-mix(in oklab,var(--clp-secondary) 78%,var(--clp-ink) 8%);stroke-width:1.6}
         .clp .clp-n-hot .clp-pill{stroke:var(--clp-hot);stroke-width:2.1}
         .clp-run .clp-n-hot .clp-pill{animation:clp-node-wake 5.8s linear var(--wake-delay,0s) infinite}
         @keyframes clp-node-wake{0%,16%,100%{stroke-opacity:.8;filter:none}20%{stroke-opacity:1;filter:drop-shadow(0 0 9px color-mix(in oklab,var(--clp-hot) 52%,transparent))}28%{stroke-opacity:.9;filter:none}}
@@ -273,14 +280,14 @@ export default function ColdLaunchPreview() {
         .clp-ctrl[aria-selected="true"],.clp-ctrl[aria-pressed="true"]{background:var(--clp-ink);color:var(--clp-on-dark)}
         .clp-ctrl:focus-visible,.clp-close:focus-visible,.clp-retry:focus-visible{outline:2px solid var(--clp-hot);outline-offset:2px}
         .clp-close{position:absolute;right:10px;top:10px;z-index:45;display:grid;width:44px;height:44px;place-items:center;border-radius:14px;border:1px solid var(--clp-glass-line);background:var(--clp-glass);color:var(--clp-ink);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);box-shadow:0 18px 44px color-mix(in oklab,var(--clp-glass-shadow) 56%,transparent)}
-        .clp-preview-label{position:absolute;left:14px;bottom:12px;z-index:30;max-width:min(360px,calc(100vw - 28px));color:var(--clp-ink-3);font-size:9.5px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+        .clp-preview-label{position:absolute;left:14px;bottom:12px;z-index:30;max-width:min(360px,calc(100vw - 28px));color:var(--clp-ink-2);font-size:9.5px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
         /* Shared communication zone: one reserved band at the bottom holds
            persistent guidance and, when needed, compact connection feedback. */
         .clp-lower{position:absolute;left:0;right:0;bottom:0;height:var(--clp-comm);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,color-mix(in oklab,var(--clp-bg) 46%,transparent) 32%,color-mix(in oklab,#000 68%,transparent));pointer-events:none}
         .clp-lower>*{pointer-events:auto}
         .clp-comm-tips{width:100%;display:grid;justify-items:center;order:2}
         .clp-tip-body{display:grid;gap:5px;justify-items:center;max-width:560px}
-        .clp-tip-label{color:var(--clp-ink-3);font-size:9px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;font-family:var(--bd-font-family,Manrope,system-ui,sans-serif)}
+        .clp-tip-label{color:var(--clp-ink-2);font-size:9px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;font-family:var(--bd-font-family,Manrope,system-ui,sans-serif)}
         .clp-tip-text{margin:0;color:var(--clp-ink);font-size:13px;font-weight:650;line-height:1.5;max-width:52ch;text-wrap:balance}
         .clp-tip-text{animation:clp-tip-fade .45s cubic-bezier(.23,1,.32,1) both}
         @keyframes clp-tip-fade{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
@@ -308,6 +315,10 @@ export default function ColdLaunchPreview() {
         @media (max-width: 360px){.clp-word{font-size:16px}}
         @media (min-width: 560px){.clp-controls{left:18px;top:16px;right:76px}.clp-close{right:18px;top:16px}}
         @media (min-width: 900px){.clp-preview-label{left:22px;bottom:18px}}
+        @media (prefers-reduced-transparency: reduce){
+          .clp{--clp-glass:var(--clp-glass-base)}
+          .clp-control-group,.clp-close{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+        }
         @media (prefers-reduced-motion: reduce){
           .clp *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
           .clp .clp-ring,.clp .clp-edge,.clp .clp-node,.clp .clp-pill,.clp .clp-dot{opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
@@ -333,7 +344,7 @@ export default function ColdLaunchPreview() {
         <div className="clp-logo">
           <img src={bigdropsLogo} alt="" />
         </div>
-        <div className="clp-word">BIGDROPS</div>
+        <div className="clp-word">BOURXE</div>
         </div>
       </div>
 

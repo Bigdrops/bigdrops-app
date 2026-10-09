@@ -98,7 +98,7 @@ function GraphSurface({
       viewBox={`0 0 ${graph.w} ${graph.h}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="BIGDROPS workspace network: Sales, Operations and Finance workspaces linked to RFQ, Cost and Pricing Sheets, Quotation, Invoice, Waybill, Customer Service Reports and Payments"
+      aria-label="BOURXE workspace network: Sales, Operations and Finance workspaces linked to RFQ, Cost and Pricing Sheets, Quotation, Invoice, Waybill, Customer Service Reports and Payments"
       data-network-state={state}
     >
       <defs>
