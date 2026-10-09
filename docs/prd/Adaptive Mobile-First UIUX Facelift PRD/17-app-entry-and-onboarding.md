@@ -948,6 +948,172 @@ The entire entry and onboarding experience MUST use `Design.md` as the authorita
 - Authentication and onboarding screens respect the user's theme preference.
 - Theme switching during onboarding is NOT required but MUST NOT break the flow if it occurs.
 
+### 22.4 Cinematic Gradient & Glass Surface Direction
+
+Status: proposed visual direction. This section records design intent only. It does not authorize a global CSS change.
+
+#### Source of Direction
+
+PhotoHero V2 is the visual reference for cinematic onboarding and selected launch surfaces. It uses:
+
+- A dark foundation.
+- Theme-aware gradient stops.
+- Soft blurred light fields.
+- A controlled vignette.
+- Frosted glass surfaces with translucent fill, blur, saturation, subtle borders, and restrained elevation.
+
+The Cold Launch Tenant Tree structure is approved. Its network composition, motion, guidance tips, and connection-state behavior remain the authority for the cold-launch experience. PhotoHero V2 informs only the atmospheric treatment.
+
+#### Theme Authority
+
+The selected BIGDROPS visual theme is the color authority. Light and dark mode are separate controls.
+
+The direction must support these five theme families in dark mode:
+
+- Slate Navy, using Liquid Onyx as its dark variant.
+- Amber Terracotta.
+- Ocean Teal.
+- Rose Gold.
+- Forest Green.
+
+Implementations must use the existing theme registry and semantic token bridge. If a token stores HSL channels, CSS must wrap it as `hsl(var(--token))`. Do not use channel tokens as raw colors.
+
+#### Gradient Rules
+
+Use a cinematic dark base with layered gradients. The treatment may include:
+
+- A dark base surface from the active theme.
+- Primary and secondary theme color fields.
+- A bright accent field used sparingly.
+- A subtle vignette that improves text contrast.
+- Static blurred light fields.
+
+Do not apply a single translucent color overlay over the whole page. Do not keep permanent amber or blue energy in non-matching themes.
+
+#### Glass Rules
+
+Glass is an elevated surface treatment, not a universal surface.
+
+Allowed glass properties:
+
+- Translucent fill derived from the active surface color.
+- Backdrop blur and saturation.
+- Theme-aware border highlight.
+- Restrained shadow that supports depth.
+- Text contrast that meets the accessibility standard.
+
+Do not use glass for dense working surfaces by default. Invoice forms, Cost & Pricing Sheets, quotations, waybills, data tables, editors, and long forms must keep stable, readable surfaces unless a later specification approves a specific exception.
+
+#### Logo Rules
+
+Use official BIGDROPS app icon exports for branded marks. Do not recreate the logo with CSS, typography, or substitute SVG shapes. Do not recolor, crop, stretch, or filter the official artwork.
+
+Use an export size that matches the placement. Small UI marks should use launcher-size exports. Store-size exports are for store and marketing placements.
+
+#### Accessibility and Motion
+
+All surfaces must preserve readable text contrast over gradients and blurred fields.
+
+Reduced motion must remove or simplify motion that is decorative. Reduced transparency must replace frosted glass with stable opaque or near-opaque surfaces.
+
+#### Performance
+
+Use static blurred background layers where possible. Do not introduce expensive continuous blur animation. Mobile GPU and memory use must stay within the application performance budget.
+
+#### Recommended Use
+
+This direction is suitable for:
+
+- Cold launch preview and future launch surfaces.
+- Onboarding visual experiments.
+- Authentication presentation prototypes.
+- Dashboard headers and selected elevated surfaces.
+
+Use it with restraint in dense business workflows. The main work surfaces must remain stable and easy to read.
+
+### 22.5 BOURXE PhotoHero V3 Candidate
+
+Status: design candidate. This section records a preview direction only. It does not approve production authentication, onboarding persistence, or startup changes.
+
+#### Brand Naming
+
+BOURXE is the public-facing product name for the onboarding and authentication story.
+
+BIGDROPS remains the internal platform and repository identifier. Technical identifiers, code paths, database names, and existing internal references must not be renamed by this candidate.
+
+#### Candidate Scope
+
+PhotoHero V2 remains the visual reference for cinematic gradient depth, blurred light fields, and frosted glass surfaces.
+
+PhotoHero V3 is an application-hosted candidate that tests the same visual foundation with BOURXE-facing content. It is not a replacement for the production authentication flow.
+
+#### Four-Screen Content Architecture
+
+The candidate uses exactly four onboarding screens before authentication:
+
+| Screen | Headline | Purpose |
+|--------|----------|---------|
+| 1 | Your business. One connected workspace. | Combine the former operations introduction into one clear business workflow story. |
+| 2 | Multiple businesses. Teams in sync. | Show workspaces, Team Hub, roles, and permission-based access without implying cross-tenant data sharing. |
+| 3 | Stay ahead of your obligations. | Show tax records, VAT, WHT receipts, filings, and obligations without promising automatic filing or guaranteed compliance. |
+| 4 | Know where your business stands. | Replace project-only storytelling with payments, expenses, financial records, and reporting. |
+
+The candidate removes project-management positioning from the onboarding carousel. Projects remain an application module, but they are not the lead onboarding story for this candidate.
+
+#### Authentication Candidate
+
+Authentication appears after the four onboarding screens as a dedicated view.
+
+The candidate separates:
+
+- Sign In.
+- Create Account.
+
+The Sign In view includes:
+
+- BOURXE branding.
+- Email address.
+- Password.
+- Password reveal and hide control.
+- Forgot password action.
+- Sign In action.
+- Link to Create Account.
+
+The Create Account view includes:
+
+- BOURXE branding.
+- Full name as a prototype presentation field.
+- Email address.
+- Password.
+- Confirm password.
+- Independent password reveal and hide controls.
+- Password-match feedback.
+- Create Account action.
+- Link to Sign In.
+
+The production authentication contract currently supports email and password, password reset, and Google OAuth. The candidate must not show unsupported providers.
+
+Prototype submissions must not call Supabase, create accounts, authenticate users, or store passwords. They may show clear prototype-only feedback.
+
+#### Mobile and Safe-Area Rules
+
+The authentication candidate must be a full-screen surface, not a carousel slide.
+
+When authentication is active:
+
+- Hide onboarding pagination.
+- Hide onboarding Back and Next controls.
+- Remove carousel footer padding.
+- Allow vertical scrolling on short screens.
+- Respect safe-area insets.
+- Keep focused fields and primary actions reachable when the software keyboard opens.
+
+#### V2 and V3 Status
+
+PhotoHero V2 remains the five-theme visual experiment and reference.
+
+PhotoHero V3 is a candidate for content architecture and authentication layout. It must stay isolated from production onboarding until a separate implementation approval exists.
+
 ---
 
 ## 23. Loading Integration

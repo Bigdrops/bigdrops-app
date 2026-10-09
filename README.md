@@ -1,6 +1,12 @@
-# BIGDROPS
+<p align="center">
+  <img src="docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/icons/appstore.png" alt="BOURXE — BX logo" width="112" />
+</p>
 
-Internal business operations tool used by company staff to create, manage, and export documents across invoicing, logistics, and project tracking.
+# BOURXE
+
+**BOURXE** — Business Operations, Unified Resources & eXecution Engine — is an integrated business operations platform for Nigerian SMEs. Company staff use it to create, manage, and export documents across invoicing, logistics, and project tracking.
+
+> Brand note: BOURXE is the current public product name. `BIGDROPS` / `bigdrops` identifiers remain in repository names, environment variables, database objects, routes, and storage paths for operational compatibility. See `docs/brand-identity.md`.
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org)
@@ -14,9 +20,20 @@ Internal business operations tool used by company staff to create, manage, and e
 
 ---
 
-## What is BIGDROPS
+## What is BOURXE
 
-BIGDROPS is a private internal operations tool used exclusively by company staff. It manages document creation, financial calculations, logistics tracking, and project aggregation. The only customer-facing output is generated PDFs.
+BOURXE is an integrated business operations platform used by company staff. It manages document creation, financial calculations, logistics tracking, and project aggregation. The only customer-facing output is generated PDFs.
+
+### Brand identity
+
+- **Product name:** BOURXE (always in capitals).
+- **Official meaning:** Business Operations, Unified Resources & eXecution Engine.
+- **Logo:** the approved **BX** artwork. Canonical pack: `docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/icons/` (`AppIcon.icon/`, `android/mipmap-*/`, `appstore.png`, `playstore.png`). Wired Android launcher resources live under `android/app/src/main/res/mipmap-*/`. Do not replace or regenerate the BX artwork in this phase.
+- **Legacy identifiers:** the repository name, clone URL, environment variables, database objects, routes, API contracts, and storage paths still use `bigdrops` / `BIGDROPS`. Keep them unchanged. Full rules live in `docs/brand-identity.md`.
+
+#### Engineering note (internal only)
+
+Engineers informally expand BOURXE as **Bunch Of Unreasonably Restless eXperimental Engineers**. This version is for engineering culture only. Never use it in customer-facing UI, documentation, or in legal, financial, or business documents.
 
 ## Core Modules
 
@@ -156,4 +173,4 @@ All coding agents must read `AGENTS.md` at the project root before modifying any
 
 ## License
 
-Proprietary. This is a private internal tool. All rights reserved. Not licensed for external use, redistribution, or modification outside the company.
+Proprietary. BOURXE is a private internal tool. All rights reserved. Not licensed for external use, redistribution, or modification outside the company.
