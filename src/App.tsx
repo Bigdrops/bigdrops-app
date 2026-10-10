@@ -31,6 +31,7 @@ import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
 import { triggerPostgrestExposure } from '@/domain/tenant/tenantCreation'
 import type { OfflineAccessState } from '@/lib/native/offlineAccess'
 import type { TenantGatePhase } from '@/domain/tenant/tenantGate'
+import { isPassiveStartupPhase } from '@/domain/tenant/tenantGate'
 
 const Login = lazy(() => import('./pages/Login'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
@@ -508,7 +509,12 @@ function App() {
     offlineAccessLoading ||
     waitingForProfileResolution ||
     tenantGateLoading ||
-    shouldAwaitTenantGateReport
+    shouldAwaitTenantGateReport ||
+    // Passive provisioning runs under Cold Launch: ProvisioningProgress
+    // stays mounted (polling continues) while its card stays covered.
+    // Actionable phases (approval, failures, creation flows) are excluded
+    // by isPassiveStartupPhase and keep their own screens.
+    isPassiveStartupPhase(tenantGatePhase)
 
   useEffect(() => {
     if (!session || waitingForProfileResolution || !offlineAccessState.allowed || updateGateBlocked) {
