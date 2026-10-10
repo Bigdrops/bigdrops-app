@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { resolveGatePhase, isProvisioningStatus, slugify, buildTenantSchemaName } from '../../domain/tenant/tenantGate.ts'
+import { resolveGatePhase, isProvisioningStatus, isPassiveStartupPhase, slugify, buildTenantSchemaName } from '../../domain/tenant/tenantGate.ts'
 
 const base = {
   workspaceLoading: false,
@@ -168,7 +168,27 @@ test('isProvisioningStatus rejects unknown values', () => {
 test('slugify normalizes free text into a url-safe slug', () => {
   assert.equal(slugify('Acme Corp Ltd'), 'acme-corp-ltd')
   assert.equal(slugify('  Multiple   Spaces  '), 'multiple-spaces')
-  assert.equal(slugify('Café & Co.'), 'caf-co')
+  assert.equal(slugify('Caf� & Co.'), 'caf-co')
   assert.equal(slugify('---hello---'), 'hello')
   assert.equal(slugify(''), '')
+})
+
+test('isPassiveStartupPhase covers only automatic phases', () => {
+  assert.equal(isPassiveStartupPhase('loading'), true)
+  assert.equal(isPassiveStartupPhase('provisioning'), true)
+  assert.equal(isPassiveStartupPhase(null), false)
+  for (const phase of [
+    'error',
+    'create-workspace',
+    'select-workspace',
+    'pending-invitation',
+    'pending-approval',
+    'create-company',
+    'provisioning-failed',
+    'blocked',
+    'unavailable',
+    'ready',
+  ]) {
+    assert.equal(isPassiveStartupPhase(phase), false, `${phase} must keep its own screen`)
+  }
 })

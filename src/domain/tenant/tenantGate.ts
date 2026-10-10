@@ -240,6 +240,27 @@ export function phaseIsError(phase: TenantGatePhase): boolean {
   return phase === 'error' || phase === 'provisioning-failed' || phase === 'blocked' || phase === 'unavailable'
 }
 
+/**
+ * Whether a gate phase is passive startup: automatic work that completes
+ * without user input, so Cold Launch V1 stays the sole visible loading
+ * presentation while it runs.
+ *
+ * - 'loading': tenant resolution in progress.
+ * - 'provisioning': automatic provisioning and status polling in progress.
+ *   ProvisioningProgress stays mounted underneath Cold Launch so its
+ *   polling, completion detection, and failure handling continue.
+ *
+ * Deliberately excluded:
+ * - 'pending-approval' is actionable, not passive: approval can pend
+ *   indefinitely, the screen carries approval information the user must
+ *   read, and it owns Leave/Sign Out exit paths with no auto-completion.
+ * - Error phases and creation/selection/invitation phases all need the
+ *   user to read or act, so they keep their dedicated screens.
+ */
+export function isPassiveStartupPhase(phase: TenantGatePhase | null): boolean {
+  return phase === 'loading' || phase === 'provisioning'
+}
+
 export function gatePhaseLabel(phase: TenantGatePhase): string {
   switch (phase) {
     case 'create-workspace':
