@@ -17,6 +17,8 @@ interface BiometricGateProps {
   children: React.ReactNode;
   /** Called when biometric fails or user cancels — the parent should sign out. */
   onAuthFailure: () => void;
+  /** Reports when native biometric UI is the active startup destination. */
+  onGatedChange?: (gated: boolean) => void;
 }
 
 /**
@@ -34,6 +36,7 @@ export default function BiometricGate({
   enabled,
   children,
   onAuthFailure,
+  onGatedChange,
 }: BiometricGateProps) {
   const [gated, setGated] = useState(true);
   const wasInBackground = useRef(false);
@@ -96,6 +99,16 @@ export default function BiometricGate({
     void runVerificationRef.current("launch");
   }, [enabled]);
 
+  const gateActive = enabled && isNativePlatform() && gated;
+
+  useEffect(() => {
+    onGatedChange?.(gateActive);
+  }, [gateActive, onGatedChange]);
+
+  useEffect(() => {
+    return () => onGatedChange?.(false);
+  }, [onGatedChange]);
+
   // Resume-from-background listener
   useEffect(() => {
     if (!enabled || !isNativePlatform()) return undefined;
@@ -144,7 +157,7 @@ export default function BiometricGate({
 
   // Gate is active — show loader until biometric succeeds. The native
   // sheet is system UI; the app background shares session guidance.
-  if (gated)
+  if (gateActive)
     return (
       <PageLoader>
         <LoadingTips

@@ -1,12 +1,10 @@
-import { useEffect, useMemo, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import {
   resolveGatePhase,
   type TenantGateInput,
+  type TenantGatePhase,
 } from '@/domain/tenant/tenantGate'
-import PageLoader from '@/components/app/PageLoader'
-import LoadingTips from '@/components/loading/LoadingTips'
 import GuidanceTip from '@/components/guidance/GuidanceTip'
 import { getGuidanceEngine } from '@/domain/guidance/guidanceEngine'
 import { Button } from '@/components/ui/button'
@@ -17,6 +15,9 @@ import WorkspacePendingApproval from '@/pages/WorkspacePendingApproval'
 import CompanyCreation from '@/pages/CompanyCreation'
 import ProvisioningProgress from '@/pages/ProvisioningProgress'
 import ProvisioningFailed from '@/pages/ProvisioningFailed'
+
+const useIsomorphicLayoutEffect =
+  typeof window === 'undefined' ? useEffect : useLayoutEffect
 
 function GateError({ message, onRetry }: { message: string; onRetry: () => void }) {
   // Recovery guidance coexists beneath the error. The error stays primary:
@@ -45,10 +46,17 @@ function GateError({ message, onRetry }: { message: string; onRetry: () => void 
   );
 }
 
-export default function TenantGate({ children }: { children: ReactNode }) {
+export default function TenantGate({
+  children,
+  onLoadingChange,
+  onPhaseChange,
+}: {
+  children: ReactNode
+  onLoadingChange?: (loading: boolean) => void
+  onPhaseChange?: (phase: TenantGatePhase | null) => void
+}) {
   const workspaceCtx = useWorkspace()
   const entityCtx = useEntity()
-  const location = useLocation()
 
   const input = useMemo<TenantGateInput>(
     () => ({
@@ -83,13 +91,21 @@ export default function TenantGate({ children }: { children: ReactNode }) {
 
   const phase = resolveGatePhase(input)
 
+  useIsomorphicLayoutEffect(() => {
+    onLoadingChange?.(phase === 'loading')
+    onPhaseChange?.(phase)
+  }, [onLoadingChange, onPhaseChange, phase])
+
+  useIsomorphicLayoutEffect(() => {
+    return () => {
+      onLoadingChange?.(false)
+      onPhaseChange?.(null)
+    }
+  }, [onLoadingChange, onPhaseChange])
+
   switch (phase) {
     case 'loading':
-      return (
-        <PageLoader>
-          <LoadingTips pathname={location.pathname} active />
-        </PageLoader>
-      )
+      return null
 
     case 'error': {
       const message = workspaceCtx.error ?? entityCtx.error ?? 'Unknown error.'

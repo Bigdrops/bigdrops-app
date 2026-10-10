@@ -37,7 +37,7 @@ export default function UpdateBanner({ update }: { update: UseAppUpdateResult })
           <RefreshCw className="size-4 shrink-0 text-primary" aria-hidden="true" />
           <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             {expired ? (
-              <>Update required — install to continue using BIGDROPS.</>
+              <>Update required — install to continue using BOURXE.</>
             ) : (
               <>
                 New version required: v{state.policy?.versionCode ?? ''} · {daysLeft}d {hoursLeft}h

@@ -10,16 +10,14 @@ import AppShell from '@/components/app/AppShell'
 import TenantGate from '@/components/app/TenantGate'
 import PageLoader from '@/components/app/PageLoader'
 import OfflineAccessBlocked from '@/components/app/OfflineAccessBlocked'
-import SplashOverlay from '@/components/app/SplashOverlay'
+import ColdLaunchTenantTreePresentation from '@/components/cold-launch/ColdLaunchTenantTreePresentation'
 import { useSyncBootstrap } from '@/app/useSyncBootstrap'
 import { useSafeAsyncTask } from '@/hooks/useSafeAsyncTask'
 import { PushNotificationRuntime } from '@/components/notifications/PushNotificationRuntime'
 import { isInvalidSessionError } from '@/auth/sessionErrors'
 import { canUseAndroidNativeSqlite } from '@/lib/native/capacitor'
-import { useLoadingTip } from '@/hooks/useLoadingTip'
 import { InactivityNudge } from '@/components/guidance/GuidanceTip'
 import { suspendGuidanceSurface, isGuidanceSurfaceSuspended } from '@/domain/guidance/guidanceEngine'
-import type { LaunchStage } from '@/domain/guidance/guidanceEngine'
 import AndroidBackHandler from '@/components/app/AndroidBackHandler'
 import NativeAuthRedirect from '@/components/app/NativeAuthRedirect'
 import BiometricGate from '@/components/app/BiometricGate'
@@ -32,6 +30,7 @@ import { isAndroidNative } from '@/lib/native/capacitor'
 import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
 import { triggerPostgrestExposure } from '@/domain/tenant/tenantCreation'
 import type { OfflineAccessState } from '@/lib/native/offlineAccess'
+import type { TenantGatePhase } from '@/domain/tenant/tenantGate'
 
 const Login = lazy(() => import('./pages/Login'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
@@ -86,27 +85,18 @@ function App() {
     reason: 'not_native',
   })
   const [profileLoading, setProfileLoading] = useState(false)
-  const [showSplash, setShowSplash] = useState(true)
+  const [tenantGateLoading, setTenantGateLoading] = useState(false)
+  const [tenantGatePhase, setTenantGatePhase] = useState<TenantGatePhase | null>(null)
+  const [biometricGateActive, setBiometricGateActive] = useState(() => isBiometricLockEnabled() && isAndroidNative())
   const [biometricLockEnabled, setBiometricLockEnabled] = useState(() => isBiometricLockEnabled())
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [resolvedProfileUserId, setResolvedProfileUserId] = useState<string | null>(null)
-  // Launch stage drives contextual guidance: splash → profile → workspace.
-  const launchStage: LaunchStage =
-    profileLoading ? 'profile' : authLoading || offlineAccessLoading ? 'splash' : 'workspace'
-  const { tip: loadingTip, status: launchStatus } = useLoadingTip({
-    pathname: typeof window !== 'undefined' ? window.location.pathname : '/',
-    active: showSplash,
-    stage: launchStage,
-  })
-
   // Android mandatory-update discovery: launch + resume, throttled.
   // Non-Android contexts resolve immediately to up_to_date (no gate).
   const appUpdate = useAppUpdate({ enabled: true })
 
   const loadingRef = useRef(false)
-  const splashStartRef = useRef(Date.now())
-  const hasBootedRef = useRef(false)
   const lastUserIdRef = useRef<string | null>(null)
   const recoveringRef = useRef(false)
   const lastRecoveryAtRef = useRef(0)
@@ -341,24 +331,6 @@ function App() {
   })
 
   useEffect(() => {
-    const style = document.createElement('style')
-    style.innerHTML = `
-      @keyframes runnerMove {
-        0% { transform: translateX(4px); }
-        50% { transform: translateX(250px); }
-        100% { transform: translateX(4px); }
-      }
-    `
-    document.head.appendChild(style)
-    return () => {
-      document.head.removeChild(style)
-    }
-  }, [])
-
-  // Splash status lines are contextual to the launch stage. The
-  // educational quick-tip rotates through the guidance engine.
-
-  useEffect(() => {
     let isActive = true
     let subscription: Subscription | null = null
 
@@ -379,7 +351,6 @@ function App() {
 
       if (event === 'SIGNED_OUT') {
         resetAuthState()
-        setShowSplash(false)
         return
       }
 
@@ -433,12 +404,6 @@ function App() {
 
         setResolvedProfileUserId(null)
 
-        const isRealNewSignIn = !previousUserId && !!nextUserId
-        if (isRealNewSignIn && hasBootedRef.current) {
-          splashStartRef.current = Date.now()
-          setShowSplash(true)
-        }
-
         setAuthLoading(true)
         loadingRef.current = true
         await loadProfile(nextUserId)
@@ -460,7 +425,6 @@ function App() {
     }
 
     const init = async () => {
-      splashStartRef.current = Date.now()
       setAuthLoading(true)
 
       try {
@@ -514,26 +478,6 @@ function App() {
   }, [cancelProfileTask])
 
   useEffect(() => {
-    hasBootedRef.current = true
-  }, [])
-
-  useEffect(() => {
-    const loadingDone = !authLoading && !profileLoading && !offlineAccessLoading
-    if (!loadingDone) return
-
-    const elapsed = Date.now() - splashStartRef.current
-    // Keep splash brief — tips appear during sustained operations, not startup.
-    const minimumVisible = 600
-    const remaining = Math.max(0, minimumVisible - elapsed)
-
-    const timer = setTimeout(() => {
-      setShowSplash(false)
-    }, remaining)
-
-    return () => clearTimeout(timer)
-  }, [authLoading, offlineAccessLoading, profileLoading])
-
-  useEffect(() => {
     debugAuth('profileState', profile)
   }, [profile])
 
@@ -550,6 +494,28 @@ function App() {
     !currentSessionUserId || resolvedProfileUserId === currentSessionUserId
   const waitingForProfileResolution =
     !!currentSessionUserId && (!profileResolvedForCurrentSession || profileLoading)
+  const updateGateBlocked = isAndroidNative() && appUpdate.state.status === 'blocked'
+  const shouldAwaitTenantGateReport =
+    !!session &&
+    !waitingForProfileResolution &&
+    offlineAccessState.allowed &&
+    !updateGateBlocked &&
+    !biometricGateActive &&
+    tenantGatePhase === null
+  const showColdLaunch =
+    authLoading ||
+    profileLoading ||
+    offlineAccessLoading ||
+    waitingForProfileResolution ||
+    tenantGateLoading ||
+    shouldAwaitTenantGateReport
+
+  useEffect(() => {
+    if (!session || waitingForProfileResolution || !offlineAccessState.allowed || updateGateBlocked) {
+      setTenantGatePhase(null)
+      setTenantGateLoading(false)
+    }
+  }, [offlineAccessState.allowed, session, updateGateBlocked, waitingForProfileResolution])
 
   useEffect(() => {
     debugAuth('routeGate', {
@@ -611,10 +577,14 @@ function App() {
                            <BiometricGate
                              enabled={biometricLockEnabled}
                              onAuthFailure={handleBiometricAuthFailure}
+                             onGatedChange={setBiometricGateActive}
                            >
                             <WorkspaceProvider userId={session.user.id}>
                               <EntityProvider>
-                                <TenantGate>
+                                <TenantGate
+                                  onLoadingChange={setTenantGateLoading}
+                                  onPhaseChange={setTenantGatePhase}
+                                >
                                   <AppShell
                                     session={session}
                                     profile={profile}
@@ -630,11 +600,7 @@ function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
-      <SplashOverlay
-        visible={showSplash}
-        tip={launchStatus}
-        quickTip={loadingTip?.message ?? null}
-      />
+      {showColdLaunch ? <ColdLaunchTenantTreePresentation tipPathname="/" /> : null}
     </>
     </AppUpdateProvider>
   )
