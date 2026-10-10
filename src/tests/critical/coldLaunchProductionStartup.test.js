@@ -19,7 +19,8 @@ const themePresetsSource = read('src/lib/themePresets.ts')
 
 test('production startup renders approved Cold Launch V1 without preview controls', () => {
   assert.match(appSource, /ColdLaunchTenantTreePresentation/)
-  assert.match(appSource, /const showColdLaunch =\s*authLoading \|\|\s*profileLoading \|\|\s*offlineAccessLoading \|\|\s*waitingForProfileResolution \|\|\s*tenantGateLoading \|\|\s*shouldAwaitTenantGateReport/s)
+  assert.match(appSource, /const showColdLaunch =\s*authLoading \|\|\s*profileLoading \|\|\s*offlineAccessLoading \|\|\s*waitingForProfileResolution \|\|\s*tenantGateLoading \|\|\s*shouldAwaitTenantGateReport \|\|/s)
+  assert.match(appSource, /isPassiveStartupPhase\(tenantGatePhase\)/)
   assert.match(appSource, /showColdLaunch \? <ColdLaunchTenantTreePresentation tipPathname="\/" \/> : null/)
   assert.doesNotMatch(appSource, /SplashOverlay|showSplash|runnerMove/)
   assert.doesNotMatch(appSource, /Tree Original|Tree \+ Beams|Connection Error|Replay|V2 - Paper/)
@@ -133,4 +134,34 @@ test('retired startup animation styles are removed while shared loading remains'
   assert.doesNotMatch(indexCssSource, /bd-sheet-rear|bd-sheet-front|bd-mark|bd-halo|bd-progress/)
   assert.match(appSource, /<Suspense fallback=\{<PageLoader \/>\}>/)
   assert.match(appShellSource, /<Suspense fallback=\{<PageLoader \/>\}>/)
+})
+
+test('passive provisioning stays under Cold Launch while its operations continue', () => {
+  const provisioningSource = read('src/pages/ProvisioningProgress.tsx')
+  // Presentation ownership: App covers the provisioning phase with Cold Launch.
+  assert.match(appSource, /isPassiveStartupPhase\(tenantGatePhase\)/)
+  // Behavior preservation: TenantGate still mounts the owner, which keeps polling.
+  assert.match(gateSource, /case 'provisioning':\s*return <ProvisioningProgress \/>/s)
+  assert.match(provisioningSource, /setInterval\(\(\) => \{\s*entityCtx\.refresh\(\)\s*entityCtx\.recheckProvisioning\(\)/s)
+  assert.match(provisioningSource, /POLL_INTERVAL_MS/)
+  assert.match(provisioningSource, /clearInterval\(id\)/)
+  // No competing passive visual is introduced by the ownership change.
+  assert.doesNotMatch(appSource, /<ProvisioningProgress/)
+})
+
+test('pending approval keeps its actionable waiting screen', () => {
+  const approvalSource = read('src/pages/WorkspacePendingApproval.tsx')
+  assert.match(gateSource, /case 'pending-approval':\s*return <WorkspacePendingApproval \/>/s)
+  assert.match(approvalSource, /Leave waiting room/)
+  assert.match(approvalSource, /Sign Out/)
+  assert.match(approvalSource, /workspaceCtx\.refresh\(\)/)
+  // Approval is not a passive phase, so Cold Launch never covers it.
+  assert.doesNotMatch(appSource, /pending-approval/)
+})
+
+test('provisioning failure and recovery remain accessible outside Cold Launch', () => {
+  assert.match(gateSource, /case 'provisioning-failed':\s*return <ProvisioningFailed \/>/s)
+  assert.match(gateSource, /case 'error':/)
+  assert.match(gateSource, /workspaceCtx\.refresh\(\)/)
+  assert.match(gateSource, /entityCtx\.refresh\(\)/)
 })
