@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/icons/appstore.png" alt="BOURXE" width="112" />
-</p>
+![BOURXE](docs/prd/Adaptive%20Mobile-First%20UIUX%20Facelift%20PRD/Design-direction/icons/appstore.png)
 
 # BOURXE
 
@@ -8,7 +6,7 @@
 
 It brings commercial documents, finance, procurement, logistics, service operations, projects, compliance, reporting, and company administration into one system.
 
-> BOURXE is the current product name. Existing `BIGDROPS` / `bigdrops` technical identifiers remain where required for compatibility.
+> BOURXE is the current product name. Existing `BIGDROPS` / `bigdrops` identifiers remain in repository infrastructure, database objects, environment configuration, routes, APIs, storage paths, and other compatibility-sensitive areas. They should change only through an explicitly scoped migration.
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org)
@@ -98,6 +96,8 @@ Access to the required Supabase environment configuration
 Clone the repository:
 git clone https://github.com/Bigdrops/bigdrops-app.git
 cd bigdrops-app
+
+The repository continues to use the `bigdrops-app` project path and `BIGDROPS` / `bigdrops` identifiers for infrastructure, historical references, and compatibility.
 
 Install dependencies:
 bun install
@@ -218,8 +218,10 @@ docs/PROJECTSKILLINDEX.md
 
 AGENTS.md at the repository root defines the mandatory workflow and repository rules for coding agents.
 Repository Compatibility
-The product is named BOURXE, but parts of the underlying system retain historical BIGDROPS / bigdrops identifiers.
-These identifiers can exist in repository infrastructure, database objects, environment configuration, routes, APIs, storage paths, historical documentation, and other compatibility-sensitive areas.
+The product is named BOURXE. Parts of the underlying system retain historical `BIGDROPS` / `bigdrops` identifiers.
+
+These identifiers remain in repository infrastructure, database objects, environment configuration, routes, APIs, storage paths, historical documentation, and other compatibility-sensitive areas. They are not renamed here.
+
 Do not treat the product-name change as authorization for a repository-wide rename. Technical identifiers should change only through an explicitly scoped migration.
 License
 Proprietary software.

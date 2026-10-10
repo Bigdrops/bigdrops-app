@@ -1,4 +1,4 @@
-# AGENTS.md — BIGDROPS AI Agent Guide
+# AGENTS.md — BOURXE AI Agent Guide
 
 ## Project
 

@@ -1031,6 +1031,111 @@ This direction is suitable for:
 
 Use it with restraint in dense business workflows. The main work surfaces must remain stable and easy to read.
 
+#### Onboarding V2 Light-Mode Atmospheric System (Preview-Only)
+
+Status: implemented as a preview-only experiment at `/photohero-preview`. This subsection extends §22.4 and does not authorize a global rollout.
+
+The native React preview (`src/components/onboarding/PhotoHeroV2Preview.tsx`) preserves the approved V2 composition and adds an independent appearance dimension, for ten combinations:
+
+| Theme family | Light | Dark |
+|---|---|---|
+| Slate Navy | White/pearl canvas, cool blue illumination, navy structural accents | Approved dark baseline (Liquid Onyx tokens) |
+| Amber Terracotta | Warm-white canvas, amber/terracotta light fields, restrained warm highlights | Approved dark baseline |
+| Ocean Teal | Clean-white canvas, teal/aqua illumination, cool translucent surfaces | Approved dark baseline |
+| Rose Gold | Pearl-white canvas, rose/blush illumination, warm highlights, no metallic textures | Approved dark baseline |
+| Forest Green | White canvas, sage/forest-green illumination, restrained botanical depth | Approved dark baseline |
+
+Light-mode atmospheric foundation:
+
+- White or near-white primary canvas from the registry light tokens.
+- Theme-aware ambient gradient fields built with `color-mix` from the family's registry triplets — never a white overlay on the dark theme, never flat white with colored buttons.
+- A readability-preserving treatment that keeps scene bottoms near-white for dark copy.
+- Elevated glass stays selective: white-dominant translucent fill, theme-tinted border, dark ink, restrained shadow, opaque fallback under reduced transparency.
+
+Theme-aware light gradient behavior: one shared recipe serves all families. Base tokens (canvas, surfaces, ink, lines, primary) are read live from `getThemePreset`; dark base tokens from `getDarkVariantSemanticTokens`. Only the dark cinematic recipe (scene gradients, light fields, glass recipe) is preserved literally, because the registry holds no scene equivalent and dark must not regress.
+
+Glass surface rules for light appearance: glass-ink is always dark; borders carry the theme hue; forms, inputs, and primary actions keep solid readable surfaces. Primary CTAs use a solid theme fill (a white button would vanish on a white canvas).
+
+Contrast and opacity requirements: CTA, eyebrow, copy, pill, and focus-indicator colors must clear WCAG 2.2 AA (4.5:1 text, 3:1 large text and focus). Status pills pair mid-tone fills with near-black text. The baseline white CTA keeps its look with blackened primary text.
+
+Boundaries:
+
+- Preview-only. Family and appearance controls are local preview state; they never mutate persisted application theme preferences or touch `AppThemeManager`.
+- No production sign-in, sign-up, session, workspace, tenant, invitation, schema, routing, or dashboard-theme behavior changes.
+- No global rollout of the light-mode atmospheric system without a separate approval.
+- The original `BIGDROPS_Onboarding-PhotoHero-v2.html` reference remains untouched.
+
+#### Cold Launch Atmospheric Tenant Tree
+
+Status: selected for production startup and preserved for the existing `/cold-launch-preview` route. This subsection extends §22.4. It does not create a Cold Launch V2 route.
+
+Cold Launch now shares the Onboarding V2 atmospheric visual architecture. It uses the same family and appearance contract as `PhotoHeroV2Preview`.
+
+Supported combinations:
+
+| Theme family | Light | Dark |
+|---|---|---|
+| Slate Navy | White-primary canvas with cool blue atmosphere | Cinematic Liquid Onyx depth |
+| Amber Terracotta | White-primary canvas with warm amber atmosphere | Cinematic amber and terracotta depth |
+| Ocean Teal | White-primary canvas with teal atmosphere | Cinematic teal and cyan depth |
+| Rose Gold | White-primary canvas with rose atmosphere | Cinematic rose depth |
+| Forest Green | White-primary canvas with forest-green atmosphere | Cinematic forest depth |
+
+Theme isolation rules:
+
+- Family and appearance controls are local preview state.
+- The preview applies scoped custom properties on the Cold Launch root.
+- The preview must not read or mutate persisted user theme preferences.
+- The preview must not rely on global app theme tokens for its background, node materials, text, borders, controls, tips, or error state.
+- The global theme registry must remain unchanged for this work.
+- Production startup reuses the same presentation without preview controls.
+- Production startup readiness is still controlled by the existing session, profile, offline-access, workspace, and tenant gates. Animation timing must never decide startup completion.
+- Production startup must not add a minimum display timer, fake progress, fake percentages, generic progress bars, or a new global loading manager.
+- Ordinary route transitions keep their existing lightweight loading fallbacks. The full-screen Tenant Tree is reserved for app entry and tenant/workspace readiness.
+
+Glass and gradient material rules:
+
+- Light mode uses a white or near-white primary canvas with theme-colored ambient fields.
+- Dark mode uses deep cinematic surfaces with controlled colored light fields.
+- Node surfaces use frosted or translucent material with visible borders, readable text, and tinted shadow.
+- Workspace nodes must remain visually distinct from product/document nodes.
+- The center BX launcher artwork must use the official app icon export. It must not be recreated or replaced.
+- The center logo glow must be restrained and theme-colored. It must not become a large white spotlight.
+- Connection lines must remain visible, but they must not overpower node labels.
+- Tips, preview controls, connection-error messaging, and retry controls use the same scoped material system.
+
+Functional preservation boundaries:
+
+- The Tenant Tree topology remains intact.
+- Workspace/product relationships remain intact.
+- Product labels and meanings remain intact.
+- Animated connection paths, replay, Connection Error, Retry, tips, and loading lifecycle boundaries remain intact in preview.
+- Production authentication, startup routing, tenant resolution, database queries, and dashboard behaviour are not changed.
+- Production failure and recovery behavior must remain owned by the existing application gates and error boundaries. Preview-only Connection Error simulation must not appear in production.
+
+Visual acceptance requirements:
+
+- All ten family and appearance combinations must resolve.
+- Light mode must read as a white-primary atmospheric canvas, not flat white.
+- Dark mode must retain cinematic depth without uncontrolled white glow.
+- Text, controls, node labels, and tips must stay legible in every combination.
+- Narrow mobile, fold, tablet, and desktop layouts must keep preview controls accessible and avoid clipping critical tree content.
+- Reduced motion and reduced transparency must keep the experience usable.
+
+#### Rejected Cold Launch V2 Paper and Delivery Candidate
+
+Status: rejected and retired.
+
+The Paper and Delivery candidate is not part of `/cold-launch-preview` and is not part of production startup. Its preview-only component, preview-only theme, and focused V2 test were removed after the V1 Tenant Tree was selected for production.
+
+Retirement boundaries:
+
+- Do not add a V1/V2 candidate selector to Cold Launch Preview.
+- Do not add the Slate Amber Fusion theme to the global theme registry.
+- Do not reintroduce paper, processing, truck, or delivery-handoff animation into production startup without a new approval.
+- Preserve Onboarding V2 and shared atmospheric utilities.
+- Preserve Cold Launch V1 as the selected production startup presentation and as the only Cold Launch preview candidate.
+
 ## 23. Loading Integration
 
 Use `10-loading-and-refresh.md` as the loading authority.
@@ -1039,7 +1144,7 @@ Use `10-loading-and-refresh.md` as the loading authority.
 
 | Operation | Loading Level | Treatment |
 |-----------|--------------|-----------|
-| App launch | Level 0 or 1 | Launch state with brand mark. No tip. |
+| App launch | Level 0 or 1 | Cold Launch V1 Tenant Tree while real startup remains pending. Quick Tips may appear during visible waits. |
 | Session restoration | Level 0 or 2 | No visible UI if fast. Page skeleton if context resolution takes longer. |
 | Sign-up submission | Level 1 | Button spinner + "Creating account..." + button disabled. |
 | Sign-in submission | Level 1 | Button spinner + "Signing in..." + button disabled. |
