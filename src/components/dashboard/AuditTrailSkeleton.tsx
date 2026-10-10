@@ -134,7 +134,7 @@ export function AuditTrailSkeleton() {
 
   if (loading) {
     return (
-      <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
+      <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--primary))_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
         <AuditTrailLoadingSkeleton />
       </div>
     )
@@ -158,7 +158,7 @@ export function AuditTrailSkeleton() {
 
   if (auditEntries.length === 0) {
     return (
-      <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
+      <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--primary))_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
         <div className="flex flex-col items-center px-4 py-10 text-center">
           <div className="grid h-[58px] w-[58px] place-items-center rounded-[20px] bg-[hsl(var(--primary)/0.1)]">
             <History className="size-[26px] text-[hsl(var(--primary))]" strokeWidth={1.5} />
@@ -175,7 +175,7 @@ export function AuditTrailSkeleton() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]"
+    <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--primary))_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]"
     >
       <div className="px-[11px] md:px-4">
         {auditEntries.map((entry) => (

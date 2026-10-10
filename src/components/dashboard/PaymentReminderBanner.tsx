@@ -35,7 +35,7 @@ export function PaymentReminderBanner() {
       </h2>
       <section
         aria-label="Payment reminder"
-        className="relative overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]"
+        className="relative overflow-hidden rounded-[18px] bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--primary))_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]"
         style={{
           animation: 'bannerSlideIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both',
         }}

@@ -122,12 +122,12 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
       className={cn(
         'relative flex min-h-[108px] flex-col overflow-hidden rounded-[18px] p-[11px_12px_10px] text-left transition-all md:min-h-[116px] md:p-[12px_14px_11px] lg:min-h-[120px] lg:p-[14px_16px_12px]',
         isCollect
-          ? 'bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] text-white shadow-lg'
+          ? 'bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] text-white shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--primary))_12%,transparent),inset_0_1px_rgba(255,255,255,0.25)]'
           : isOverdue
-            ? 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--attention)_10%,transparent),inset_0_1px_rgba(255,255,255,0.18)]'
+            ? 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--attention))_10%,transparent),inset_0_1px_rgba(255,255,255,0.18)]'
             : isAwaiting
-              ? 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--secondary)_10%,transparent),inset_0_1px_rgba(255,255,255,0.18)]'
-              : 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.22)]',
+              ? 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--secondary))_10%,transparent),inset_0_1px_rgba(255,255,255,0.18)]'
+              : 'bg-[hsl(var(--surface))] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--primary))_8%,transparent),inset_0_1px_rgba(255,255,255,0.22)]',
       )}
     >
       {/* V6 decorative circles */}
@@ -137,15 +137,15 @@ function KpiCard({ card }: { card: KpiCardViewModel }) {
           background: isCollect
             ? 'radial-gradient(circle at 35% 35%, rgba(255,255,255,.35), rgba(255,255,255,0) 140%)'
             : isOverdue
-              ? 'radial-gradient(circle at 35% 35%, hsl(var(--bd-attention-soft)), hsl(var(--bd-attention)) 140%)'
+              ? 'radial-gradient(circle at 35% 35%, hsl(var(--attention-soft)), hsl(var(--attention)) 140%)'
               : isAwaiting
-                ? 'radial-gradient(circle at 35% 35%, hsl(var(--bd-secondary-soft, var(--bd-secondary) / 0.13)), hsl(var(--bd-secondary)) 140%)'
-                : 'radial-gradient(circle at 35% 35%, hsl(var(--bd-primary) / 0.14), hsl(var(--bd-primary)) 140%)',
+                ? 'radial-gradient(circle at 35% 35%, hsl(var(--secondary) / 0.13), hsl(var(--secondary)) 140%)'
+                : 'radial-gradient(circle at 35% 35%, hsl(var(--primary) / 0.14), hsl(var(--primary)) 140%)',
         }}
       />      <div
         className={cn(
           'pointer-events-none absolute -top-[14px] right-[10px] h-[34px] w-[34px] rounded-full border-2 opacity-55',
-          isCollect ? 'border-white/40' : 'border-[hsl(var(--bd-primary))]/20',
+          isCollect ? 'border-white/40' : 'border-[hsl(var(--primary))]/20',
         )}
       />
 

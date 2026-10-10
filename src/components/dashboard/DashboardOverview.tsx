@@ -201,7 +201,7 @@ export function DashboardOverview({
         className="sticky top-0 z-30 flex items-center justify-between"
         style={{
           padding: 'calc(8px + env(safe-area-inset-top, 0px)) 14px 8px 8px',
-          background: 'hsl(var(--bd-app-bg))',
+          background: 'linear-gradient(180deg, hsl(var(--bd-app-bg)) 72%, hsl(var(--bd-app-bg) / 0))',
         }}
       >
         <div className="flex min-w-0 items-center gap-[5px]">
@@ -252,7 +252,7 @@ export function DashboardOverview({
             type="button"
             aria-label="Ask AI assistant"
             className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-[12px] text-[10px] font-[800] tracking-[.01em] text-white shadow-[0_2px_6px_rgba(30,28,24,0.05),inset_0_1px_rgba(255,255,255,0.35)] transition active:scale-95"
-            style={{ background: 'linear-gradient(135deg, hsl(var(--bd-primary)), hsl(var(--bd-secondary)))' }}
+            style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
           >
             AI
           </button>
@@ -281,7 +281,7 @@ export function DashboardOverview({
             {loading ? (
               <RecentActivitySkeleton />
             ) : (
-              <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--bd-surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,var(--primary)_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
+              <div className="overflow-hidden rounded-[18px] bg-[hsl(var(--bd-surface))] px-[11px] shadow-[0_12px_28px_color-mix(in_srgb,hsl(var(--primary))_8%,transparent),inset_0_1px_rgba(255,255,255,0.18)]">
                 {recentDocs.length === 0 ? (
                   <div className="flex flex-col items-center px-4 py-10 text-center">
                     <div className="grid h-[58px] w-[58px] place-items-center rounded-[20px] bg-[hsl(var(--primary)/0.1)]">

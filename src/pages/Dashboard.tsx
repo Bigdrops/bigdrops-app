@@ -73,7 +73,7 @@ export default function DashboardRedesign({ session, preference, saveThemePref }
       title="Dashboard"
       hideMobileHomeHeader
       hidePageHeader
-      contentClassName="bg-background"
+      contentClassName="bg-transparent"
       data-bd-page="dashboard"
     >
       <DashboardOverview
