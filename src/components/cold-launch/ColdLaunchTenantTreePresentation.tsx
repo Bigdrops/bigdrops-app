@@ -107,6 +107,7 @@ export default function ColdLaunchTenantTreePresentation({
     <main
       className={`clp ${isRunning ? 'clp-run' : ''}`}
       style={vars as React.CSSProperties}
+      data-family={family}
       data-appearance={resolvedAppearance}
       data-variant={variant}
       data-network-state={networkState}
@@ -164,6 +165,24 @@ export default function ColdLaunchTenantTreePresentation({
           --clp-node-stroke:color-mix(in srgb,var(--clp-accent) 28%,rgba(15,23,42,.28));
           --clp-node-shadow:color-mix(in srgb,var(--clp-accent) 18%,rgba(15,23,42,.14));
         }
+        .clp[data-family="slate-navy"][data-appearance="dark"]{
+          --clp-line:color-mix(in srgb,#93c5fd 20%,transparent);
+          --clp-line-strong:color-mix(in srgb,#93c5fd 32%,rgba(148,163,184,.18));
+          --clp-glass:color-mix(in srgb,var(--glass-bg) 82%,rgba(59,92,130,.18));
+          --clp-glass-line:color-mix(in srgb,var(--glass-line) 68%,rgba(147,197,253,.18));
+          --clp-glass-shadow:color-mix(in srgb,var(--glass-shadow) 72%,rgba(15,23,42,.16));
+          --clp-node-surface:color-mix(in srgb,var(--glass-bg) 78%,rgba(59,92,130,.22));
+          --clp-node-muted:color-mix(in srgb,var(--glass-bg) 76%,rgba(30,58,95,.20));
+          --clp-node-stroke:color-mix(in srgb,#93c5fd 24%,rgba(255,255,255,.24));
+          --clp-node-shadow:color-mix(in srgb,#60a5fa 13%,rgba(15,23,42,.22));
+          --clp-lower-bg:linear-gradient(180deg,transparent,color-mix(in srgb,#13233a 30%,transparent) 38%,color-mix(in srgb,#0b1524 72%,transparent));
+        }
+        .clp[data-family="slate-navy"][data-appearance="light"]{
+          --clp-line:color-mix(in srgb,#60a5fa 24%,rgba(15,23,42,.08));
+          --clp-line-strong:color-mix(in srgb,#1e3a5f 28%,rgba(15,23,42,.18));
+          --clp-node-stroke:color-mix(in srgb,#60a5fa 24%,rgba(15,23,42,.18));
+          --clp-node-shadow:color-mix(in srgb,#60a5fa 14%,rgba(15,23,42,.10));
+        }
         .clp::before{
           content:"";
           position:absolute;
@@ -189,6 +208,25 @@ export default function ColdLaunchTenantTreePresentation({
           -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 20%,#000 78%,transparent 100%);
           pointer-events:none;
           z-index:3;
+        }
+        .clp[data-family="slate-navy"][data-appearance="dark"]::before{
+          background:
+            radial-gradient(ellipse at 18% 16%,rgba(251,191,36,.10),transparent 30%),
+            radial-gradient(ellipse at 82% 18%,rgba(96,165,250,.30),transparent 34%),
+            radial-gradient(ellipse at 28% 44%,rgba(147,197,253,.22),transparent 36%),
+            radial-gradient(ellipse at 58% 68%,rgba(59,92,130,.34),transparent 44%),
+            radial-gradient(ellipse at 48% 106%,rgba(39,73,111,.28),transparent 48%),
+            linear-gradient(165deg,#16283f 0%,#1e3a5f 44%,#3b5c82 78%,#7d97b4 100%);
+        }
+        .clp[data-family="slate-navy"][data-appearance="dark"]::after{
+          background:
+            linear-gradient(180deg,rgba(15,23,42,.08) 0%,rgba(15,23,42,0) 34%,rgba(15,23,42,.28) 68%,rgba(15,23,42,.58) 100%);
+          background-size:auto;
+        }
+        .clp[data-family="slate-navy"][data-appearance="light"]::after{
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.24) 0%,rgba(255,255,255,0) 34%,rgba(15,23,42,.08) 100%);
+          background-size:auto;
         }
         .clp[data-controls="none"]{--clp-top:clamp(42px,7vh,72px)}
         .clp .clp-tree-wrap{position:absolute;left:0;right:0;top:var(--clp-top);bottom:var(--clp-comm);z-index:1;pointer-events:none}
@@ -244,6 +282,7 @@ export default function ColdLaunchTenantTreePresentation({
         .clp-brand{position:absolute;left:0;right:0;top:var(--clp-top);bottom:var(--clp-comm);z-index:20;pointer-events:none}
         .clp-brand-inner{position:absolute;left:50%;transform:translate(-50%,-50%);display:grid;place-items:center}
         .clp-brand::before{content:"";position:absolute;left:50%;top:50%;width:clamp(180px,44vmin,286px);height:clamp(126px,28vmin,190px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--clp-accent) 18%,var(--clp-bg) 36%) 0%,color-mix(in srgb,var(--clp-bg) 34%,transparent) 48%,transparent 76%);filter:blur(2px);z-index:-1}
+        .clp[data-family="slate-navy"][data-appearance="dark"] .clp-brand::before{background:radial-gradient(closest-side,rgba(96,165,250,.16) 0%,rgba(30,58,95,.18) 46%,transparent 78%);filter:blur(4px)}
         .clp-logo{width:clamp(58px,8.4vmin,92px);height:clamp(58px,8.4vmin,92px);border-radius:28%;box-shadow:0 0 0 1px color-mix(in srgb,var(--clp-ink) 17%,transparent),0 20px 68px color-mix(in srgb,var(--clp-secondary) 27%,transparent);animation:clp-idle 3.4s cubic-bezier(.77,0,.175,1) 6s infinite}
         .clp-logo img{width:100%;height:100%;border-radius:inherit;object-fit:cover}
         .clp-word{margin-top:10px;text-align:center;font-weight:850;font-size:clamp(17px,2.7vmin,28px);letter-spacing:.04em;color:var(--clp-ink);text-shadow:var(--mini-shadow)}

@@ -1,5 +1,5 @@
 /**
- * Pure geometry for the `/cold-launch-preview` workspace tree.
+ * Pure geometry for the Cold Launch workspace tree.
  *
  * The layout is measured from the live container size and expressed in CSS
  * pixels, so the SVG maps 1:1 to its box. Featured nodes stay inside the safe

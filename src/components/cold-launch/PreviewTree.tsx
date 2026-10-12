@@ -1,5 +1,5 @@
 /**
- * Preview-only workspace tree renderer for `/cold-launch-preview`.
+ * Shared workspace tree renderer for the production Cold Launch presentation.
  *
  * The tree stays mounted across normal, connection-error, retry, and theme
  * changes: state and theme only swap CSS classes on stable elements. Layout

@@ -12,8 +12,8 @@ const appSource = read('src/App.tsx')
 const gateSource = read('src/components/app/TenantGate.tsx')
 const biometricGateSource = read('src/components/app/BiometricGate.tsx')
 const appShellSource = read('src/components/app/AppShell.tsx')
+const pageLoaderSource = read('src/components/app/PageLoader.tsx')
 const indexCssSource = read('src/index.css')
-const previewSource = read('src/pages/ColdLaunchPreview.tsx')
 const presentationSource = read('src/components/cold-launch/ColdLaunchTenantTreePresentation.tsx')
 const themePresetsSource = read('src/lib/themePresets.ts')
 
@@ -53,8 +53,8 @@ test('tenant readiness coordinates one Cold Launch while ordinary route lazy loa
   assert.match(gateSource, /workspaceCtx\.refresh\(\)/)
   assert.match(gateSource, /entityCtx\.refresh\(\)/)
 
-  assert.match(appSource, /<Suspense fallback=\{<PageLoader \/>\}>/)
-  assert.match(appShellSource, /<Suspense fallback=\{<PageLoader \/>\}>/)
+  assert.match(appSource, /<Suspense fallback=\{<PageLoader variant="startup" tipPathname="\/" \/>\}>/)
+  assert.match(appShellSource, /variant=\{initialRouteReady \? 'default' : 'startup'\}/)
 })
 
 test('startup handoff does not hide terminal tenant destinations behind Cold Launch', () => {
@@ -73,14 +73,58 @@ test('biometric security gate remains an accessible destination outside Cold Lau
   assert.match(biometricGateSource, /if \(gateActive\)\s*return \(\s*<PageLoader>/s)
 })
 
+test('startup PageLoader fallback replaces the blank white square with BX logo and Quick Tips', () => {
+  assert.match(pageLoaderSource, /variant\?: 'default' \| 'startup'/)
+  assert.match(pageLoaderSource, /function StartupPageLoader/)
+  assert.match(pageLoaderSource, /getPhotoHeroVars\('slate-navy', appearance\)/)
+  assert.match(pageLoaderSource, /<BxLogo className="h-full w-full rounded-\[inherit\]" \/>/)
+  assert.match(pageLoaderSource, /useLoadingTip\(\{ pathname: tipPathname, active: true \}\)/)
+  assert.match(pageLoaderSource, /tip\?\.message\?\.trim\(\) \|\| 'Loading guidance\.\.\.'/)
+  assert.match(pageLoaderSource, /bd-startup-tip/)
+  assert.match(pageLoaderSource, /100dvh/)
+  assert.match(pageLoaderSource, /env\(safe-area-inset-bottom,0px\)/)
+  assert.doesNotMatch(pageLoaderSource, /animate-spin|Loader2|progress|percentage/)
+})
+
+test('startup PageLoader fallback does not reintroduce Slate Navy decorative grid', () => {
+  const startupOverlay = pageLoaderSource.match(
+    /\.bd-startup-loader::before\{(?<body>[\s\S]*?)\n        \}/,
+  )?.groups?.body
+
+  assert.ok(startupOverlay, 'startup PageLoader atmospheric overlay must be present')
+  assert.ok(!startupOverlay.includes(' 1px,transparent 1px'), 'startup PageLoader must not draw 1px grid lines')
+  assert.ok(!startupOverlay.includes('34px 34px'), 'startup PageLoader must not tile grid backgrounds')
+  assert.match(startupOverlay, /var\(--vignette\)/)
+  assert.match(startupOverlay, /background-size:auto;/)
+})
+
+test('production keeps Slate Navy grid-free Cold Launch presentation after preview retirement', () => {
+  assert.match(appSource, /<ColdLaunchTenantTreePresentation tipPathname="\/" \/>/)
+  assert.match(presentationSource, /data-family=\{family\}/)
+  assert.match(presentationSource, /\.clp\[data-family="slate-navy"\]\[data-appearance="dark"\]::after/)
+  assert.equal(existsSync(pathResolve(root, 'src/pages/ColdLaunchPreview.tsx')), false)
+  assert.doesNotMatch(appShellSource, /ColdLaunchPreview|\/cold-launch-preview/)
+  assert.doesNotMatch(
+    presentationSource,
+    /\.clp\[data-family="slate-navy"\]\[data-appearance="(?:dark|light)"\]::after\{[\s\S]*?34px 34px[\s\S]*?\n        \}/,
+  )
+})
+
+test('initial destination fallback is branded only before first route content is ready', () => {
+  assert.match(appShellSource, /const \[initialRouteReady, setInitialRouteReady\] = useState\(false\)/)
+  assert.match(appShellSource, /function InitialRouteReadyMarker/)
+  assert.match(appShellSource, /<InitialRouteReadyMarker onReady=\{markInitialRouteReady\} \/>/)
+  assert.match(appShellSource, /variant=\{initialRouteReady \? 'default' : 'startup'\}/)
+  assert.match(appShellSource, /tipPathname=\{location\.pathname \|\| '\/'\}/)
+})
+
 test('theme isolation avoids preference mutation and rejected sixth theme registration', () => {
-  for (const source of [appSource, gateSource, presentationSource, previewSource]) {
+  for (const source of [appSource, gateSource, presentationSource]) {
     assert.doesNotMatch(source, /useUserThemePreferences|AppThemeManager|localStorage/)
   }
 
   assert.doesNotMatch(themePresetsSource, /slate-amber-fusion|SLATE_AMBER_FUSION|Slate × Amber/)
   assert.match(presentationSource, /getPhotoHeroVars/)
-  assert.match(previewSource, /PHOTO_HERO_FAMILY_META/)
 })
 
 test('rejected Cold Launch V2 Paper and Delivery files are retired', () => {
@@ -93,7 +137,7 @@ test('rejected Cold Launch V2 Paper and Delivery files are retired', () => {
     assert.equal(existsSync(pathResolve(root, path)), false, `${path} should be removed`)
   }
 
-  assert.doesNotMatch(previewSource, /Paper & Delivery|ColdLaunchPaperDeliveryPreview|candidate/)
+  assert.doesNotMatch(appShellSource, /Paper & Delivery|ColdLaunchPaperDeliveryPreview|candidate/)
 })
 
 test('reduced motion and production Quick Tips remain available in shared presentation', () => {
@@ -132,8 +176,8 @@ test('production connection geometry does not run infinite signal travel', () =>
 
 test('retired startup animation styles are removed while shared loading remains', () => {
   assert.doesNotMatch(indexCssSource, /bd-sheet-rear|bd-sheet-front|bd-mark|bd-halo|bd-progress/)
-  assert.match(appSource, /<Suspense fallback=\{<PageLoader \/>\}>/)
-  assert.match(appShellSource, /<Suspense fallback=\{<PageLoader \/>\}>/)
+  assert.match(appSource, /<Suspense fallback=\{<PageLoader variant="startup" tipPathname="\/" \/>\}>/)
+  assert.match(appShellSource, /variant=\{initialRouteReady \? 'default' : 'startup'\}/)
 })
 
 test('passive provisioning stays under Cold Launch while its operations continue', () => {
