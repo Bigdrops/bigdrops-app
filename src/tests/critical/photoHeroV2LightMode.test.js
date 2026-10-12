@@ -140,6 +140,55 @@ test('preview component stays isolated: no iframe, no persisted theme, no auth',
   assert.ok(source.includes('wheelSpin') || source.includes('oh2-wheelspin'), 'keke animation must be preserved')
 })
 
+test('existing onboarding slides remain registered as the original sequence', () => {
+  const source = readFileSync(
+    pathResolve(root, 'src/components/onboarding/PhotoHeroV2Preview.tsx'),
+    'utf8',
+  )
+  assert.match(source, /const SLIDE_NAMES = \['Intro', 'Invoicing', 'Logistics', 'Projects', 'Sign up'\]/)
+  for (const component of ['IntroSlide', 'InvoicingSlide', 'LogisticsSlide', 'ProjectsSlide', 'AuthSlide']) {
+    assert.match(source, new RegExp(`<${component} active=`), `${component} must stay in the carousel`)
+  }
+  assert.match(source, /<Carousel appearance=\{appearance\} active=\{active\} onActive=\{setActive\}/)
+})
+
+test('candidate review code has been removed from the surviving PhotoHero preview', () => {
+  const source = readFileSync(
+    pathResolve(root, 'src/components/onboarding/PhotoHeroV2Preview.tsx'),
+    'utf8',
+  )
+  for (const rejected of [
+    'candidateId',
+    '<CandidateReview',
+    'ONBOARDING_EXPERIMENTAL_CANDIDATES',
+    'photo-hero-v2-candidates',
+    'oh2-candidate',
+    'C01',
+  ]) {
+    assert.ok(!source.includes(rejected), `PhotoHero preview must not contain ${rejected}`)
+  }
+  assert.match(source, /<Carousel appearance=\{appearance\} active=\{active\} onActive=\{setActive\}/)
+})
+
+test('public onboarding preview branding uses BOURXE while preserving official artwork', () => {
+  const source = readFileSync(
+    pathResolve(root, 'src/components/onboarding/PhotoHeroV2Preview.tsx'),
+    'utf8',
+  )
+  assert.ok(source.includes('bigdropsLogo'), 'official launcher artwork import must remain in use')
+  assert.ok(source.includes('BOURXE'), 'visible public branding must use BOURXE')
+  assert.ok(!source.includes('BIGDROPS'), 'visible BIGDROPS branding must not remain in the React preview')
+})
+
+test('PhotoHero preview keeps reduced-motion scope without candidate artwork', () => {
+  const previewSource = readFileSync(
+    pathResolve(root, 'src/components/onboarding/PhotoHeroV2Preview.tsx'),
+    'utf8',
+  )
+  assert.match(previewSource, /@media \(prefers-reduced-motion:reduce\)/)
+  assert.match(previewSource, /\.oh2-root \*,\.oh2-root \*::before,\.oh2-root \*::after\{animation:none!important/)
+})
+
 test('route wrapper renders the native preview without the legacy iframe', () => {
   const source = readFileSync(pathResolve(root, 'src/pages/PhotoHeroPreview.tsx'), 'utf8')
   for (const banned of ['<iframe', 'srcDoc', '?raw', 'photoHeroHtml']) {

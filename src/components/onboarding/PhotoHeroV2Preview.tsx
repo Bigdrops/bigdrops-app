@@ -79,6 +79,7 @@ export default function PhotoHeroV2Preview() {
         onClick={(e) => {
           e.preventDefault()
           setMode('interactive')
+          setActive(AUTH)
           carouselGoTo(AUTH)
           window.setTimeout(() => document.getElementById('oh2-in-name')?.focus(), 460)
         }}
@@ -448,7 +449,7 @@ function Carousel({
           <span className="oh2-logo" aria-hidden="true">
             <img src={bigdropsLogo} alt="" />
           </span>
-          BIGDROPS
+          BOURXE
         </div>
         {active > 0 && active < LAST ? (
           <button type="button" className="oh2-skipbtn" onClick={() => goTo(LAST)}>
@@ -739,7 +740,7 @@ function LogisticsSlide({ active }: { active: boolean }) {
             <rect x="78" y="166" width="204" height="20" rx="8" fill="url(#oh2-pvband)" />
             <rect x="80" y="164" width="200" height="3" rx="1.5" fill="#ffffff" opacity=".8" />
             <text x="186" y="181" fontSize="9.5" fontWeight="800" letterSpacing="2.5" fill="#ffffff" textAnchor="middle" fontFamily="Manrope,sans-serif">
-              BIGDROPS
+              BOURXE
             </text>
             <path d="M88 200 a19 19 0 0 1 38 0 z" fill="#0b1524" />
             <path d="M154 200 a19 19 0 0 1 38 0 z" fill="#0b1524" />
@@ -898,7 +899,7 @@ function AuthSlide({ active }: { active: boolean }) {
       <div className="oh2-authwrap">
         <div className="oh2-authhead">
           <div className="oh2-authlogo">
-            <img src={bigdropsLogo} alt="BIGDROPS app icon" />
+            <img src={bigdropsLogo} alt="BOURXE app icon" />
           </div>
           <h1 className="oh2-rv" style={{ ['--d' as string]: '.05s' } as React.CSSProperties}>
             Create your account
@@ -1148,7 +1149,7 @@ function AuthSlide({ active }: { active: boolean }) {
             </form>
           )}
         </div>
-        <p className="oh2-fine">Built for your team. Powered by BIGDROPS.</p>
+        <p className="oh2-fine">Built for your team. Powered by BOURXE.</p>
       </div>
     </section>
   )
