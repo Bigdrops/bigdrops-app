@@ -1,0 +1,76 @@
+/*
+ * Design Lab viewport surface — shared by the Dashboard Theme Experiment and
+ * the Invoice Form Theme Experiment.
+ *
+ * A simulated viewport applies its documented layout width as a real CSS
+ * width. Nothing is scaled: text, controls, and fields keep their production
+ * size. When the simulated width is wider than the host, the stage scrolls
+ * horizontally.
+ *
+ * The surface becomes a named size container (`dlv`) so each experiment can
+ * express its production layout tiers as container queries. Production CSS
+ * media queries still answer to the host window, which is why the experiments
+ * restate the structural breakpoints they own against this container.
+ */
+
+.dlv-stage {
+  position: relative;
+  width: 100%;
+}
+
+[data-dlv-sim] .dlv-stage {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.dlv-surface {
+  width: 100%;
+  min-height: 100dvh;
+}
+
+[data-dlv-sim] .dlv-surface {
+  width: var(--dlv-width, 100%);
+  min-width: var(--dlv-width, 100%);
+  container: dlv / inline-size;
+}
+
+/* Compact viewport control. Sits inside the experiment's palette popover. */
+.dlv-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.dlv-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--glass-line, rgba(148, 163, 184, 0.4));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--glass-bg, rgba(255, 255, 255, 0.72)) 82%, transparent);
+  color: var(--glass-ink, currentColor);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.dlv-switch-btn[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--glass-ink, currentColor) 45%, transparent);
+  background: color-mix(in srgb, var(--glass-ink, currentColor) 14%, var(--glass-bg, transparent));
+}
+
+.dlv-switch-btn:focus-visible {
+  outline: 2px solid var(--glass-ink, currentColor);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlv-stage {
+    scroll-behavior: auto;
+  }
+}
