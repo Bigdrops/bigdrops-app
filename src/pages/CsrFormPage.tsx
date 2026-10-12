@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import {
   buildCsrPreviewData,
   createDefaultCsr,
@@ -28,6 +29,7 @@ import {
 } from '../components/csr/csrUtils'
 import { getCsrPdfDocument } from '../components/csr/preview-templates'
 import { canUseAndroidNativeSqlite } from '../lib/native/capacitor'
+import { registerAndroidBackGuard } from '@/lib/native/androidBackGuard'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { validateProjectAssignment } from '@/domain/projects'
@@ -105,8 +107,81 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   const autoNumberRef = useRef('')
   const [identityLockDialog, setIdentityLockDialog] = useState<{ open: boolean; field: 'client' | 'csr_number' | null }>({ open: false, field: null })
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
   const [saveSuccessOpen, setSaveSuccessOpen] = useState(false)
+  const [lastSaveOffline, setLastSaveOffline] = useState(false)
+
+  /**
+   * Unified exit intent. Null means no exit is pending. A route intent
+   * carries the destination (explicit Cancel defaults to the CSR list);
+   * a back intent means "reverse one history step" (hardware or browser
+   * Back) so the real previous route is preserved instead of forcing /csr.
+   */
+  type ExitIntent = { kind: 'route'; path: string } | { kind: 'back' }
+  const [exitRequest, setExitRequest] = useState<ExitIntent | null>(null)
+  // One-time bypass for navigation the user already authorized. It is set
+  // only around a confirmed exit and disarmed as soon as that exit lands
+  // (or when the form unmounts), so future navigation is guarded again.
+  const exitBypassRef = useRef(false)
+  // Set while the authorized route exit consumes the sentinel entry; the
+  // pending replace runs when that POP lands back on the form.
+  const consumePhaseRef = useRef<{ dest: string; state?: any; rearm: boolean } | null>(null)
+  // Set while an authorized back exit walks back through form-URL entries.
+  const passThroughRef = useRef(false)
+  const sentinelRef = useRef(false)
+  // Live mirrors for listeners registered once (popstate, back guard).
+  const exitRequestRef = useRef(exitRequest)
+  exitRequestRef.current = exitRequest
+  const hasUnsavedRef = useRef(hasUnsavedChanges)
+  hasUnsavedRef.current = hasUnsavedChanges
+  const savingRef = useRef(saving)
+  savingRef.current = saving
+  const saveSuccessRef = useRef(saveSuccessOpen)
+  saveSuccessRef.current = saveSuccessOpen
+
+  const isCsrFormPath = (pathname: string) =>
+    pathname === '/csr/new' || pathname.startsWith('/csr/edit/')
+
+  const pushExitSentinel = useCallback(() => {
+    try {
+      window.history.pushState(
+        { ...((window.history.state as any) || {}), csrExitGuard: true },
+        '',
+        window.location.href,
+      )
+      sentinelRef.current = true
+    } catch {
+      sentinelRef.current = false
+    }
+  }, [])
+
+  /**
+   * Authorized route exit. The sentinel entry sits directly above the form
+   * entry, so leaving is a two-step: step back onto the form entry (a POP
+   * the bypassed popstate handler observes), then replace it with the
+   * destination. The stack is left clean with no leftover guard entries.
+   */
+  const authorizedRouteExit = useCallback((dest: string, state?: any, rearm = false) => {
+    exitBypassRef.current = true
+    if (sentinelRef.current) {
+      consumePhaseRef.current = { dest, state, rearm }
+      window.history.back()
+    } else {
+      navigate(dest, state === undefined ? undefined : { state })
+    }
+  }, [navigate])
+
+  /** Authorized back exit: walk back through form-URL entries to the real previous page. */
+  const authorizedBackExit = useCallback(() => {
+    exitBypassRef.current = true
+    passThroughRef.current = true
+    window.history.back()
+    // Deep-link edge: nothing below the form entry, so no POP ever arrives
+    // to disarm the bypass. Release it so the guard works on later presses.
+    window.setTimeout(() => {
+      exitBypassRef.current = false
+      passThroughRef.current = false
+    }, 600)
+  }, [])
 
   /* ── Create-mode init effects ── */
   useEffect(() => {
@@ -228,7 +303,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
         if (error) {
           feedback.error('Load failed', { description: error.message })
-          navigate('/csr')
+          authorizedRouteExit('/csr')
           return
         }
 
@@ -242,7 +317,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
     }
 
     void loadData()
-  }, [isEdit, id, navigate])
+  }, [isEdit, id, navigate, authorizedRouteExit])
 
   /* ── State updaters ── */
   const update = (field: string, value: any) => {
@@ -265,21 +340,21 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
   const handleDuplicateFromEditable = useCallback(() => {
     const { id: _origId, ...csrWithoutId } = JSON.parse(JSON.stringify(csr))
-    navigate('/csr/new', {
-      state: {
-        duplicateState: {
-          csr: {
-            ...csrWithoutId,
-            client_id: '',
-            client_name: '',
-            csr_number: '',
-          },
-          csrMeta: JSON.parse(JSON.stringify(csrMeta)),
-          materialsRows: JSON.parse(JSON.stringify(materialsRows)),
+    // Same-route replace through the exit machine: consumes the sentinel so
+    // no stale guard entry is left behind, then re-arms it for the new form.
+    authorizedRouteExit('/csr/new', {
+      duplicateState: {
+        csr: {
+          ...csrWithoutId,
+          client_id: '',
+          client_name: '',
+          csr_number: '',
         },
+        csrMeta: JSON.parse(JSON.stringify(csrMeta)),
+        materialsRows: JSON.parse(JSON.stringify(materialsRows)),
       },
-    })
-  }, [csr, csrMeta, materialsRows, navigate])
+    }, true)
+  }, [csr, csrMeta, materialsRows, authorizedRouteExit])
 
   const updateMeta = (field: string, value: any) => {
     setHasUnsavedChanges(true)
@@ -365,25 +440,29 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   }
 
   /* ── Save ── */
-  const handleSave = async () => {
-    if (saving) return
+  // Authoritative CSR persistence used by the bottom Save button, the
+  // floating Save FAB, and the exit dialog's Save & Exit. Returns true only
+  // after confirmed persistence; validation, offline-draft, and server
+  // failures return false so callers stay on the form without navigating.
+  const handleSave = async (): Promise<boolean> => {
+    if (saving) return false
     if (isCreate) {
       if (!csrNumberPopulated.current || !String(csr.csr_number || '').trim()) {
         feedback.error('CSR number not ready', {
           description: 'Please wait for the CSR number to be assigned before saving.',
         })
-        return
+        return false
       }
 
       if (!isField && !csr.client_id) {
         feedback.error('Client required', { description: 'Please select a client before saving' })
-        return
+        return false
       }
     }
 
     if (isEdit && !csr.client_id) {
       feedback.error('Client required', { description: 'Please select a client before saving' })
-      return
+      return false
     }
 
     if (isCreate) {
@@ -395,7 +474,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
       if (projectError) {
         feedback.error('Project link invalid', { description: projectError })
-        return
+        return false
       }
 
       const { id: _id, ...csrFields } = csr
@@ -418,15 +497,17 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
             description: 'CSR draft saved on this device and queued for sync when you are back online.',
           })
           setHasUnsavedChanges(false)
+          setLastSaveOffline(true)
           setSaveSuccessOpen(true)
+          return true
         } catch (error) {
           feedback.error('Offline save failed', {
             description: error instanceof Error ? error.message : 'Could not save this CSR offline.',
           })
+          return false
         } finally {
           setSaving(false)
         }
-        return
       }
 
       setSaving(true)
@@ -496,13 +577,16 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
         setSaving(false)
         setHasUnsavedChanges(false)
+        setLastSaveOffline(false)
         setSaveSuccessOpen(true)
+        return true
       } catch (error) {
         console.error('[CsrFormPage] Save failed', error)
         feedback.error('Save failed', {
           description: getUserFacingMutationMessage(error, { action: 'create' }),
         })
         setSaving(false)
+        return false
       }
     }
 
@@ -522,7 +606,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         feedback.error('Duplicate CSR number', {
           description: 'CSR number already exists. Please use a different number.',
         })
-        return
+        return false
       }
 
       setSaving(true)
@@ -530,35 +614,177 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         await updateCsr(id!, csrData, tenantClient)
         setSaving(false)
         setHasUnsavedChanges(false)
+        setLastSaveOffline(false)
         setSaveSuccessOpen(true)
+        return true
       } catch (error) {
         console.error('[CsrFormPage] Save failed', error)
         feedback.error('Save failed', {
           description: getUserFacingMutationMessage(error, { action: 'update' }),
         })
         setSaving(false)
+        return false
       }
     }
+
+    // Unreachable in practice (create/edit cover both modes), but callers
+    // treat a non-true result as "stay on the form".
+    return false
   }
 
-  const handleCancel = () => {
-    if (saving) return
-    if (hasUnsavedChanges) {
-      setDiscardDialogOpen(true)
+  const requestExit = useCallback((intent: { kind: 'route'; path: string } | { kind: 'back' }) => {
+    if (savingRef.current) return
+    if (hasUnsavedRef.current) {
+      setExitRequest(intent)
       return
     }
-    navigate('/csr')
+    if (intent.kind === 'back') authorizedBackExit()
+    else authorizedRouteExit(intent.path)
+  }, [authorizedBackExit, authorizedRouteExit])
+
+  const handleCancel = () => {
+    requestExit({ kind: 'route', path: '/csr' })
   }
 
-  const handleDiscardAndExit = () => {
-    setDiscardDialogOpen(false)
-    navigate('/csr')
-  }
+  const handleKeepEditing = useCallback(() => {
+    // Close the dialog only. The form never unmounted and history was never
+    // left, so values, rows, signatures, and scroll position are intact.
+    setExitRequest(null)
+  }, [])
 
-  const handleSaveSuccessExit = () => {
+  const handleDiscardAndExit = useCallback(() => {
+    // Never saves: abandon local edits only and honor the original intent.
+    const pending = exitRequestRef.current
+    setExitRequest(null)
+    if (pending && pending.kind === 'back') authorizedBackExit()
+    else authorizedRouteExit(pending && pending.kind === 'route' ? pending.path : '/csr')
+  }, [authorizedBackExit, authorizedRouteExit])
+
+  const handleSaveAndExit = useCallback(async () => {
+    if (savingRef.current) return
+    // Same authoritative handler as the bottom Save button and the FAB.
+    // A non-true result (validation or save failure) keeps the dialog open
+    // on the form with entered values preserved for correction and retry.
+    await handleSave()
+    // On success the existing success dialog takes over (its confirm button
+    // completes the pending exit) while the exit request preserves the
+    // destination. On failure the dialog simply stays open on the form with
+    // entered values intact for correction and retry.
+  }, [handleSave])
+
+  const handleSaveSuccessExit = useCallback(() => {
     setSaveSuccessOpen(false)
-    navigate('/csr')
-  }
+    const pending = exitRequestRef.current
+    setExitRequest(null)
+    if (pending?.kind === 'back') authorizedBackExit()
+    else authorizedRouteExit(pending?.kind === 'route' ? pending.path : '/csr')
+  }, [authorizedBackExit, authorizedRouteExit])
+
+  /* ── Sentinel + browser-history guard ── */
+  useEffect(() => {
+    // One extra same-URL entry. A browser Back POP lands on the form entry
+    // (component stays mounted), where the popstate handler below either
+    // continues travel (pristine/authorized) or restores the sentinel and
+    // asks (dirty). No polling, no history loops. If this mount already sits
+    // on a marked entry (remount onto a leftover sentinel), adopt it instead
+    // of stacking a second one.
+    if ((window.history.state as any)?.csrExitGuard) {
+      sentinelRef.current = true
+      return () => { sentinelRef.current = false }
+    }
+    pushExitSentinel()
+    return () => { sentinelRef.current = false }
+  }, [pushExitSentinel])
+
+  useEffect(() => {
+    const onPopState = () => {
+      const pathname = window.location.pathname
+      const stillOnForm = isCsrFormPath(pathname)
+
+      if (exitBypassRef.current) {
+        const pending = consumePhaseRef.current
+        if (pending && stillOnForm) {
+          consumePhaseRef.current = null
+          exitBypassRef.current = false
+          navigate(pending.dest, { replace: true, state: pending.state })
+          if (pending.rearm) pushExitSentinel()
+          return
+        }
+        if (passThroughRef.current && stillOnForm) {
+          // Consumed one hop but still on a form-URL entry (sentinel or a
+          // same-URL push): keep walking back to the real previous page.
+          window.history.back()
+          return
+        }
+        if (!stillOnForm) {
+          // The authorized exit landed away from the form: disarm so all
+          // future navigation is guarded again.
+          exitBypassRef.current = false
+          passThroughRef.current = false
+          return
+        }
+        // Bypassed but nothing pending and still on the form: disarm and
+        // evaluate this same POP with the normal rules below.
+        exitBypassRef.current = false
+        passThroughRef.current = false
+      }
+
+      if (!stillOnForm) return
+      if (savingRef.current) {
+        // A save is in flight: hold the position without asking. Success
+        // clears the dirty flag (Back then travels normally); failure keeps
+        // the form dirty so the next Back press asks.
+        pushExitSentinel()
+        return
+      }
+      if (!hasUnsavedRef.current) {
+        // Pristine hop onto the form entry (or a leftover sentinel entry):
+        // continue normal travel instead of trapping the Back button.
+        if ((window.history.state as any)?.csrExitGuard) {
+          sentinelRef.current = false
+        }
+        window.history.back()
+        return
+      }
+      // Dirty: restore the sentinel consumed by this POP and ask once.
+      pushExitSentinel()
+      setExitRequest({ kind: 'back' })
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [navigate, pushExitSentinel])
+
+  /* ── Refresh / tab-close guard (browsers show their own prompt) ── */
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges && !exitBypassRef.current) e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [hasUnsavedChanges])
+
+  /* ── Capacitor Android hardware-back guard (scoped, cleaned up) ── */
+  const handleSaveSuccessExitRef = useRef(handleSaveSuccessExit)
+  handleSaveSuccessExitRef.current = handleSaveSuccessExit
+  useEffect(() => {
+    return registerAndroidBackGuard(() => {
+      if (savingRef.current) return true
+      if (saveSuccessRef.current) {
+        handleSaveSuccessExitRef.current()
+        return true
+      }
+      if (exitRequestRef.current) {
+        // Dialog already open: treat Back as Keep Editing, never stack dialogs.
+        setExitRequest(null)
+        return true
+      }
+      if (hasUnsavedRef.current) {
+        setExitRequest({ kind: 'back' })
+        return true
+      }
+      return false
+    })
+  }, [])
 
   /* ── Render ── */
   if (isEdit && loading) {
@@ -647,19 +873,55 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         onLockedFieldClick={isEdit ? handleLockedFieldClick : undefined}
       />
 
-      <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
+      <AlertDialog
+        open={exitRequest !== null && !saveSuccessOpen}
+        onOpenChange={(open) => {
+          // The dialog has no external dismiss path (AlertDialog traps
+          // Escape/outside clicks); any other close means Keep Editing.
+          // While the save-success dialog is up the exit request is hidden,
+          // not cancelled, so the pending destination survives.
+          if (!open && !saveSuccessRef.current) setExitRequest(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
             <AlertDialogDescription>
-              Your unsaved changes will be lost if you leave this report.
+              You have unsaved changes to this Customer Service Report. What would you like to do?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleDiscardAndExit}>
+          {/* DOM order is Save, Keep, Discard so keyboard focus lands on the
+              safe primary action; sm:order restores Discard-first hierarchy
+              on desktop rows. Destructive stays last and visually restrained.
+              Plain Buttons (not AlertDialogAction) so Save & Exit can keep
+              the dialog mounted with actions disabled during the save. */}
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              autoFocus
+              disabled={saving}
+              loading={saving}
+              onClick={() => void handleSaveAndExit()}
+              className="min-h-11 w-full sm:order-3 sm:w-auto"
+            >
+              {saving ? 'Saving...' : 'Save & Exit'}
+            </Button>
+            <AlertDialogCancel
+              disabled={saving}
+              onClick={handleKeepEditing}
+              className="min-h-11 w-full sm:order-2 sm:w-auto"
+            >
+              Keep Editing
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving}
+              onClick={handleDiscardAndExit}
+              className="min-h-11 w-full border-bd-status-danger-border/60 text-bd-status-danger-text hover:bg-bd-status-danger-bg hover:text-bd-status-danger-text sm:order-1 sm:w-auto"
+            >
               Discard &amp; Exit
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -667,9 +929,11 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
       <AlertDialog open={saveSuccessOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>CSR Saved</AlertDialogTitle>
+            <AlertDialogTitle>{lastSaveOffline ? 'Draft Saved Offline' : 'CSR Saved'}</AlertDialogTitle>
             <AlertDialogDescription>
-              The Customer Service Report has been saved successfully.
+              {lastSaveOffline
+                ? 'This Customer Service Report is saved on this device only and will sync when you are back online.'
+                : 'The Customer Service Report has been saved successfully.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
