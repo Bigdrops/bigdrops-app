@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 import { SidebarToggleIcon } from '@/components/unlumen-ui/sidebar-toggle-icon'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
 import { MobileChromeContext } from '@/components/Layout'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
@@ -42,6 +42,18 @@ type DashboardOverviewProps = {
   onViewAllActivity: () => void
   preference: UserThemePreference
   saveThemePref: (updates: Partial<UserThemePreference>) => Promise<void>
+  /**
+   * Optional slots for provider-bound children (Design Lab previews).
+   *
+   * The five children below read Supabase-backed hooks. A preview that must not
+   * touch production data mounts a read-only adapter instead. Production passes
+   * none of these props, so the defaults keep the current behaviour exactly.
+   */
+  searchSlot?: ReactNode
+  notificationSlot?: ReactNode
+  paymentReminderSlot?: ReactNode
+  alertsSlot?: ReactNode
+  auditSlot?: ReactNode
 }
 
 // V6 activity icon styling — typed by document domain
@@ -158,6 +170,11 @@ export function DashboardOverview({
   onViewAllActivity,
   preference,
   saveThemePref,
+  searchSlot,
+  notificationSlot,
+  paymentReminderSlot,
+  alertsSlot,
+  auditSlot,
 }: DashboardOverviewProps) {
 
   // Derive isDark from user preference, not from DOM class.
@@ -240,13 +257,17 @@ export function DashboardOverview({
             {isDark ? <Sun className="size-[17px]" strokeWidth={1.9} /> : <Moon className="size-[17px]" strokeWidth={1.9} />}
           </button>
           {/* Notification bell with V6 red pip */}
-          <div className="relative">
-            <NotificationBell className="h-[36px] w-[36px]" />
-          </div>
+          {notificationSlot ?? (
+            <div className="relative">
+              <NotificationBell className="h-[36px] w-[36px]" />
+            </div>
+          )}
           {/* Search */}
-          <div className="[&>button]:grid [&>button]:h-[36px] [&>button]:w-[36px] [&>button]:place-items-center [&>button]:rounded-[12px] [&>button]:bg-[hsl(var(--bd-surface-raised))] [&>button]:shadow-[0_2px_6px_rgba(30,28,24,0.05),inset_0_1px_rgba(255,255,255,0.35)] [&>button]:text-[hsl(var(--bd-ink))] [&_svg]:h-[17px] [&_svg]:w-[17px]">
-            <GlobalSearch />
-          </div>
+          {searchSlot ?? (
+            <div className="[&>button]:grid [&>button]:h-[36px] [&>button]:w-[36px] [&>button]:place-items-center [&>button]:rounded-[12px] [&>button]:bg-[hsl(var(--bd-surface-raised))] [&>button]:shadow-[0_2px_6px_rgba(30,28,24,0.05),inset_0_1px_rgba(255,255,255,0.35)] [&>button]:text-[hsl(var(--bd-ink))] [&_svg]:h-[17px] [&_svg]:w-[17px]">
+              <GlobalSearch />
+            </div>
+          )}
           {/* V6 AI button — gradient bg, white text, matching V6 spec */}
           <button
             type="button"
@@ -353,7 +374,7 @@ export function DashboardOverview({
 
           {/* Payment Reminder — 2/5 on tablet+ */}
           <section className="md:col-span-2">
-            <PaymentReminderBanner />
+            {paymentReminderSlot ?? <PaymentReminderBanner />}
           </section>
         </div>
 
@@ -363,14 +384,14 @@ export function DashboardOverview({
             <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--bd-ink-muted))] lg:mb-3 lg:text-[10px]">
               Recent alerts
             </h2>
-            <RecentAlertsCarousel />
+            {alertsSlot ?? <RecentAlertsCarousel />}
           </section>
 
           <section>
             <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--bd-ink-muted))] lg:mb-3 lg:text-[10px]">
               Audit trail
             </h2>
-            <AuditTrailSkeleton />
+            {auditSlot ?? <AuditTrailSkeleton />}
           </section>
         </div>
 
