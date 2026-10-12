@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { ChevronDown, ChevronUp, Download, Hash, Lock, Loader2, MoreHorizontal, SaveAll, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Lock, Loader2, SaveAll, X } from 'lucide-react'
 
 import { useEntity } from '@/lib/tenant/contexts'
-import { ThemeToggleButton } from '@/components/theme/ThemeToggleButton'
 import ClientSelector from '@/components/ClientSelector'
 import UnitInput from '@/components/UnitInput'
 import CsrImportSheet from '@/components/csr/CsrImportSheet'
+import { CsrDesktopTabletPresentation, CsrMobileFoldPresentation } from '@/components/csr/CsrFormPresentations'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { ParsedCsrImport } from '@/components/csr/csrImport'
@@ -15,6 +15,7 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { DateField } from '@/components/ui/date-field'
 import { IMAGE_ACCEPT_ATTRIBUTE, isSupportedImageFile, getUnsupportedImageErrorMessage } from '@/lib/documentImageUploadPolicy'
 import { feedback } from '@/lib/feedback'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 
 /* ── Types ────────────────────────────────────────────────────────────── */
 
@@ -60,7 +61,7 @@ type Props = {
   onRemoveMaterialRow: (index: number) => void
   onApplyImport: (result: ParsedCsrImport) => void
   onSave: () => void
-  onDownloadBlank?: () => void
+  onCancel: () => void
   onLockedFieldClick?: (field: 'client' | 'csr_number') => void
 }
 
@@ -200,13 +201,14 @@ export default function CsrFormScreen({
   onRemoveMaterialRow,
   onApplyImport,
   onSave,
-  onDownloadBlank,
+  onCancel,
   onLockedFieldClick,
 }: Props) {
   const { tenantClient } = useEntity()
   const [signatories, setSignatories] = React.useState<SignatoryRow[]>([])
   const [signatorySheetOpen, setSignatorySheetOpen] = React.useState(false)
   const [importSheetOpen, setImportSheetOpen] = React.useState(false)
+  const [optionsSheetOpen, setOptionsSheetOpen] = React.useState(false)
   const [clientPickerOpen, setClientPickerOpen] = React.useState(false)
   const [materialsTitle, setMaterialsTitle] = React.useState('Materials Used')
   const [recipientSignatureName, setRecipientSignatureName] = React.useState(() => {
@@ -273,66 +275,30 @@ export default function CsrFormScreen({
   const selectedSignatory =
     signatories.find((entry) => String(entry.id) === String(csr.technician_signatory_id || '')) || null
   const materialCount = materialsRows.filter((row) => row.item || row.quantity || row.unit).length
+  const { isMobile, isFoldable } = useLayoutMode()
+  // A foldable keeps the mobile editor even when its unfolded width is tablet-sized.
+  const useMobileFoldPresentation = isMobile || isFoldable
+  const Presentation = useMobileFoldPresentation ? CsrMobileFoldPresentation : CsrDesktopTabletPresentation
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-bd-app-bg px-4 pb-28 pt-4 sm:px-5">
+    <Presentation
+      mode={mode}
+      csrNumber={String(csr.csr_number || '')}
+      isFoldable={isFoldable}
+      saving={saving}
+      saveDisabled={saveDisabled}
+      onSave={onSave}
+      onCancel={onCancel}
+      onOpenOptions={() => setOptionsSheetOpen(true)}
+    >
       <style>{scopedStyles}</style>
 
-      {/* ── Top Minimal Toolbar ──────────────────────────────────────── */}
-      <div className="mb-4 flex items-center justify-between border-b border-bd-border pb-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-[13px] font-extrabold tracking-tight text-bd-text">
-            Customer Service Report
-          </h1>
-          <span className="rounded-[4px] bg-bd-surface-muted px-1.5 py-0.5 font-mono text-[7px] font-bold text-bd-text-muted">
-            {mode === 'new' ? 'CREATE' : 'EDIT'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Shared theme toggle — same control as the Dashboard, rendered in
-              the CSR form toolbar so users need not leave the editor. */}
-          <ThemeToggleButton className="h-11 w-11 rounded-[8px]" />
-          {onToggleFieldMode && (
-            <button
-              type="button"
-              onClick={onToggleFieldMode}
-              className={`h-8 px-2 rounded-[4px] text-[8px] font-bold uppercase tracking-wider transition-all active:scale-95 ${
-                isFieldMode
-                  ? 'bg-bd-button-primary-bg/14 text-bd-button-primary-bg'
-                  : 'bg-bd-surface-muted text-bd-text-muted'
-              }`}
-            >
-              {isFieldMode ? 'Field' : 'Standard'}
-            </button>
-          )}
-          {mode === 'new' && onDownloadBlank && (
-            <button
-              type="button"
-              onClick={onDownloadBlank}
-              className="flex h-11 w-11 items-center justify-center rounded-[8px] text-bd-text-muted transition-colors hover:text-bd-text active:scale-95"
-              title="Download Blank"
-              aria-label="Download blank CSR"
-            >
-              <Download className="h-4 w-4" />
-            </button>
-          )}
-          <button
-            type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-[8px] text-bd-text-muted transition-colors hover:text-bd-text active:scale-95"
-            aria-label="More options"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
       {/* ── CONTINUOUS FORM FLOW ─────────────────────────────────────── */}
-      <div className="divide-y divide-bd-border space-y-5">
+      <div className={`divide-y divide-bd-border ${useMobileFoldPresentation ? 'space-y-5' : 'grid grid-cols-12 gap-x-6 gap-y-0 space-y-0 divide-y-0'}`}>
 
         {/* ── 01. DOCUMENT DETAILS ──────────────────────────────────── */}
-        <section className="pt-4 space-y-3">
-          <div className="flex items-center justify-between">
+        <section className={useMobileFoldPresentation ? 'pt-4 space-y-3' : 'col-span-12 grid grid-cols-12 gap-4 border-b border-bd-border py-5'}>
+          <div className={`flex items-center justify-between ${useMobileFoldPresentation ? '' : 'col-span-12'}`}>
             <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
               01. Document Details
             </span>
@@ -345,7 +311,7 @@ export default function CsrFormScreen({
           </div>
 
           {/* Client Account Selector */}
-          <div ref={clientSelectorRef}>
+          <div ref={clientSelectorRef} className={useMobileFoldPresentation ? '' : 'col-span-6'}>
             <FieldLabel required>Client Account</FieldLabel>
             {mode === 'edit' ? (
               <button
@@ -388,7 +354,7 @@ export default function CsrFormScreen({
           </div>
 
           {/* CSR Number & Date */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 gap-2 ${useMobileFoldPresentation ? '' : 'col-span-3'}`}>
             <div ref={csrNumberRef}>
               <FieldLabel required>CSR Number</FieldLabel>
               {mode === 'edit' ? (
@@ -421,7 +387,7 @@ export default function CsrFormScreen({
           </div>
 
           {/* Customer Contact & PO Number */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid grid-cols-2 gap-2 ${useMobileFoldPresentation ? '' : 'col-span-3'}`}>
             <div>
               <FieldLabel>Customer Contact</FieldLabel>
               {mode === 'edit' ? (
@@ -456,7 +422,7 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 02. ITEM CONTROLS ─────────────────────────────────────── */}
-        <section className="pt-4 flex items-center justify-between">
+        <section className={`flex items-center justify-between ${useMobileFoldPresentation ? 'pt-4' : 'col-span-12 border-b border-bd-border py-4'}`}>
           <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
             02. Item Controls
           </span>              <button
@@ -469,7 +435,7 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 03. SERVICE PARAMETERS ────────────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-12 border-b border-bd-border py-5'} space-y-3`}>
           <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
             03. Service Parameters
           </span>
@@ -508,11 +474,11 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 04. EQUIPMENT SPECIFICATIONS ──────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-12 border-b border-bd-border py-5'} space-y-3`}>
           <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
             04. Equipment Specifications
           </span>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 md:gap-4">
             <div>
               <FieldLabel>Equipment Type</FieldLabel>
               <TextInput
@@ -530,7 +496,7 @@ export default function CsrFormScreen({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 md:gap-4">
             <div>
               <FieldLabel>Make</FieldLabel>
               <TextInput
@@ -548,7 +514,7 @@ export default function CsrFormScreen({
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2 md:gap-4">
             <div>
               <FieldLabel>{csrMeta.modelLabel || 'Model'}</FieldLabel>
               <TextInput
@@ -577,7 +543,7 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 05. PROBLEM & SERVICE ─────────────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-12 border-b border-bd-border py-5'} space-y-3`}>
           <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
             05. Problem & Service Details
           </span>
@@ -598,7 +564,7 @@ export default function CsrFormScreen({
               placeholder="Corrective actions taken by engineer..."
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 md:gap-4">
             <div>
               <FieldLabel>Defects Found</FieldLabel>
               <TextAreaCompact
@@ -621,11 +587,11 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 06. EXECUTION TIMELINE & STATUS ────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-8 border-b border-bd-border py-5'} space-y-3`}>
           <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted block">
             06. Execution Timeline & Status
           </span>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 md:gap-4">
             <div>
               <FieldLabel>Start Date & Time</FieldLabel>
               <div className="flex gap-1.5">
@@ -665,7 +631,7 @@ export default function CsrFormScreen({
               </div>
             </div>
           </div>
-          <div>
+          <div className={useMobileFoldPresentation ? '' : 'max-w-sm'}>
             <FieldLabel>Status After Service</FieldLabel>
             <SelectField
               value={String(csr.status || '')}
@@ -677,7 +643,7 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 07. OPERATIONAL READINGS ──────────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-4 border-b border-bd-border py-5'} space-y-3`}>
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
               07. Operational Readings
@@ -700,7 +666,7 @@ export default function CsrFormScreen({
           </div>
 
           {csrMeta.showOperationalReadings && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className={`grid grid-cols-3 gap-2 ${useMobileFoldPresentation ? '' : 'md:grid-cols-2'}`}>
               {[
                 { label: 'Voltage', field: 'voltage', placeholder: '415 V' },
                 { label: 'Frequency', field: 'frequency', placeholder: '50 Hz' },
@@ -723,7 +689,7 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 08. MATERIALS USED ────────────────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-12 border-b border-bd-border py-5'} space-y-3`}>
           <div className="flex items-center justify-between">
             <input
               type="text"
@@ -740,8 +706,13 @@ export default function CsrFormScreen({
           </div>
 
           <div className="divide-y divide-bd-border">
+            {!useMobileFoldPresentation && (
+              <div className="grid grid-cols-[minmax(0,1fr)_120px_120px_44px] gap-2 px-7 pb-2 text-[8px] font-extrabold uppercase tracking-[0.1em] text-bd-text-muted">
+                <span>Material specification</span><span>Quantity</span><span>Unit</span><span />
+              </div>
+            )}
             {materialsRows.map((row, index) => (
-              <div key={index} className="py-2 flex items-center gap-2 first:pt-0 last:pb-0">
+              <div key={index} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
                 {/* Row number */}
                 <span
                   className="w-5 h-5 rounded-[4px] bg-bd-surface-muted text-bd-text font-mono font-bold text-[9px] flex items-center justify-center shrink-0"
@@ -751,15 +722,15 @@ export default function CsrFormScreen({
                 </span>
 
                 {/* Fields: 12-col grid (6+3+3) */}
-                <div className="flex-1 grid grid-cols-12 gap-1.5">
-                  <div className="col-span-6">
+                <div className={`flex-1 grid gap-1.5 ${useMobileFoldPresentation ? 'grid-cols-12' : 'grid-cols-[minmax(0,1fr)_120px_120px]'}`}>
+                  <div className={useMobileFoldPresentation ? 'col-span-6' : ''}>
                     <TextInput
                       placeholder="Material specification"
                       value={row.item}
                       onChange={(e) => onUpdateMaterialRow(index, 'item', e.target.value)}
                     />
                   </div>
-                  <div className="col-span-3">
+                  <div className={useMobileFoldPresentation ? 'col-span-3' : ''}>
                     <TextInputMono
                       placeholder="Qty"
                       value={row.quantity}
@@ -767,7 +738,7 @@ export default function CsrFormScreen({
                       className="text-center"
                     />
                   </div>
-                  <div className="col-span-3">
+                  <div className={useMobileFoldPresentation ? 'col-span-3' : ''}>
                     <TextInput
                       placeholder="Unit"
                       value={row.unit}
@@ -802,7 +773,7 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 09. TECHNICIAN ENDORSEMENT ────────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-6 border-b border-bd-border py-5'} space-y-3`}>
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
               09. Technician Endorsement
@@ -868,7 +839,7 @@ export default function CsrFormScreen({
         </section>
 
         {/* ── 10. CUSTOMER ACKNOWLEDGEMENT ──────────────────────────── */}
-        <section className="pt-4 space-y-3">
+        <section className={`${useMobileFoldPresentation ? 'pt-4' : 'col-span-6 border-b border-bd-border py-5'} space-y-3`}>
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black uppercase tracking-[0.11em] text-bd-text-muted">
               10. Customer Acknowledgement
@@ -991,38 +962,35 @@ export default function CsrFormScreen({
       )}
 
       {/* ── Mobile FAB ─────────────────────────────────────────────── */}
-      <div className="sm:hidden">
+      {useMobileFoldPresentation && (
         <MobileFab
           onClick={onSave}
           icon={saving ? Loader2 : SaveAll}
           ariaLabel="Save CSR"
           disabled={saveDisabled}
         />
-      </div>
+      )}
 
-      {/* ── Desktop Save Buttons ────────────────────────────────────── */}
-      <div className="hidden sm:block fixed bottom-6 right-6 z-30 flex items-center gap-3">
-        {onDownloadBlank && (
-          <span className="csr-fab-float inline-flex">
+      <Sheet open={optionsSheetOpen} onOpenChange={setOptionsSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-[24px]">
+          <SheetHeader className="text-left">
+            <SheetTitle>CSR Form Options</SheetTitle>
+          </SheetHeader>
+          {onToggleFieldMode && (
             <button
-              onClick={onDownloadBlank}
-              className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-surface text-bd-button-primary-bg shadow-lg transition-transform hover:scale-105 active:scale-95 border border-bd-border"
-              title="Download blank CSR"
+              type="button"
+              onClick={() => {
+                onToggleFieldMode()
+                setOptionsSheetOpen(false)
+              }}
+              className="mt-4 flex min-h-11 w-full items-center justify-between rounded-[10px] border border-bd-border bg-bd-surface px-3 text-left text-[11px] font-bold text-bd-text"
             >
-              <Download className="h-6 w-6" />
+              <span>{isFieldMode ? 'Use standard CSR mode' : 'Use field CSR mode'}</span>
+              <span className="text-[9px] font-medium text-bd-text-muted">Document mode</span>
             </button>
-          </span>
-        )}
-        <span className="csr-fab-float inline-flex">
-          <button
-            onClick={onSave}
-            disabled={saveDisabled}
-            className="flex h-[50px] w-[50px] items-center justify-center rounded-[18px] bg-bd-button-primary-bg text-bd-button-primary-text shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <SaveAll className="h-6 w-6" />}
-          </button>
-        </span>
-      </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* ── Signatory Sheet ─────────────────────────────────────────── */}
       <Sheet open={signatorySheetOpen} onOpenChange={setSignatorySheetOpen}>
@@ -1068,6 +1036,6 @@ export default function CsrFormScreen({
         onOpenChange={setImportSheetOpen}
         onApplyImport={onApplyImport}
       />
-    </div>
+    </Presentation>
   )
 }

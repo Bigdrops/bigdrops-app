@@ -8,6 +8,16 @@ import Layout from '../components/Layout'
 import CsrFormScreen from '@/components/csr/CsrFormScreen'
 import IdentityLockDialog from '@/components/document/IdentityLockDialog'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   buildCsrPreviewData,
   createDefaultCsr,
   DEFAULT_CSR_META,
@@ -94,6 +104,9 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   // value means the user explicitly typed it (manual identifier).
   const autoNumberRef = useRef('')
   const [identityLockDialog, setIdentityLockDialog] = useState<{ open: boolean; field: 'client' | 'csr_number' | null }>({ open: false, field: null })
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
+  const [saveSuccessOpen, setSaveSuccessOpen] = useState(false)
 
   /* ── Create-mode init effects ── */
   useEffect(() => {
@@ -233,6 +246,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
   /* ── State updaters ── */
   const update = (field: string, value: any) => {
+    setHasUnsavedChanges(true)
     setCsr((current: any) => ({ ...current, [field]: value }))
   }
 
@@ -268,26 +282,31 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   }, [csr, csrMeta, materialsRows, navigate])
 
   const updateMeta = (field: string, value: any) => {
+    setHasUnsavedChanges(true)
     setCsrMeta((current: any) => ({ ...current, [field]: value }))
   }
 
   const updateMaterialRow = (index: number, field: string, value: any) => {
+    setHasUnsavedChanges(true)
     setMaterialsRows((current: any[]) =>
       current.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row)),
     )
   }
 
   const addMaterialRow = () => {
+    setHasUnsavedChanges(true)
     setMaterialsRows((current: any[]) => [...current, { ...DEFAULT_MATERIAL_ROW }])
   }
 
   const removeMaterialRow = (index: number) => {
+    setHasUnsavedChanges(true)
     setMaterialsRows((current: any[]) =>
       current.length === 1 ? [{ ...DEFAULT_MATERIAL_ROW }] : current.filter((_, rowIndex) => rowIndex !== index),
     )
   }
 
   const handleApplyImport = (result: any) => {
+    setHasUnsavedChanges(true)
     setCsr((current: any) => {
       const next = { ...current, ...result.fields }
       return next
@@ -347,6 +366,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
 
   /* ── Save ── */
   const handleSave = async () => {
+    if (saving) return
     if (isCreate) {
       if (!csrNumberPopulated.current || !String(csr.csr_number || '').trim()) {
         feedback.error('CSR number not ready', {
@@ -397,7 +417,8 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
           feedback.success('Saved offline', {
             description: 'CSR draft saved on this device and queued for sync when you are back online.',
           })
-          navigate('/csr')
+          setHasUnsavedChanges(false)
+          setSaveSuccessOpen(true)
         } catch (error) {
           feedback.error('Offline save failed', {
             description: error instanceof Error ? error.message : 'Could not save this CSR offline.',
@@ -453,8 +474,6 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
           throw saveError || new Error('CSR save returned no data')
         }
 
-        setSaving(false)
-
         if (isField) {
           try {
             const technicianSignatory = csrData.technician_signatory_id
@@ -475,7 +494,9 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
           }
         }
 
-        navigate('/csr/' + savedCsr.id)
+        setSaving(false)
+        setHasUnsavedChanges(false)
+        setSaveSuccessOpen(true)
       } catch (error) {
         console.error('[CsrFormPage] Save failed', error)
         feedback.error('Save failed', {
@@ -508,7 +529,8 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
       try {
         await updateCsr(id!, csrData, tenantClient)
         setSaving(false)
-        navigate('/csr/' + id)
+        setHasUnsavedChanges(false)
+        setSaveSuccessOpen(true)
       } catch (error) {
         console.error('[CsrFormPage] Save failed', error)
         feedback.error('Save failed', {
@@ -519,10 +541,29 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
     }
   }
 
+  const handleCancel = () => {
+    if (saving) return
+    if (hasUnsavedChanges) {
+      setDiscardDialogOpen(true)
+      return
+    }
+    navigate('/csr')
+  }
+
+  const handleDiscardAndExit = () => {
+    setDiscardDialogOpen(false)
+    navigate('/csr')
+  }
+
+  const handleSaveSuccessExit = () => {
+    setSaveSuccessOpen(false)
+    navigate('/csr')
+  }
+
   /* ── Render ── */
   if (isEdit && loading) {
     return (
-      <Layout title="Edit CSR" hidePageHeader immersive contentClassName="px-0 pb-24 pt-0">
+      <Layout title="Edit CSR" hidePageHeader immersive desktopShell contentClassName="!max-w-none px-0 pb-24 pt-0">
         <div className="mx-auto max-w-md px-4 py-10 text-sm text-muted-foreground">Loading CSR...</div>
       </Layout>
     )
@@ -531,7 +572,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
   const title = isCreate ? 'New CSR' : 'Edit CSR'
 
   return (
-    <Layout title={title} hidePageHeader immersive contentClassName="px-0 pb-24 pt-0">
+    <Layout title={title} hidePageHeader immersive desktopShell contentClassName="!max-w-none px-0 pb-24 pt-0">
       {/* Decorative ambient SVG backgrounds — subtle industrial identity */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
         <div
@@ -602,9 +643,42 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         onRemoveMaterialRow={removeMaterialRow}
         onApplyImport={handleApplyImport}
         onSave={handleSave}
-        onDownloadBlank={isCreate ? handleDownloadBlankCsr : undefined}
+        onCancel={handleCancel}
         onLockedFieldClick={isEdit ? handleLockedFieldClick : undefined}
       />
+
+      <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your unsaved changes will be lost if you leave this report.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleDiscardAndExit}>
+              Discard &amp; Exit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={saveSuccessOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>CSR Saved</AlertDialogTitle>
+            <AlertDialogDescription>
+              The Customer Service Report has been saved successfully.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleSaveSuccessExit}>
+              Back to CSR Reports
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isEdit && identityLockDialog.open && (
         <IdentityLockDialog
