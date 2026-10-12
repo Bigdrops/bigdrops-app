@@ -12,6 +12,19 @@ import {
   triggerPostgrestExposure,
 } from '@/domain/tenant/tenantCreation'
 
+import {
+  EntityContext,
+  type ActiveEntity,
+  type EntityContextValue,
+  type SchemaResolutionSource,
+} from '@/lib/tenant/entityContext'
+
+export {
+  type ActiveEntity,
+  type EntityContextValue,
+  type SchemaResolutionSource,
+} from '@/lib/tenant/entityContext'
+
 export { type ProvisioningStatus, isProvisioningStatus } from '@/domain/tenant/tenantGate'
 
 // Captured at module load (~app start) so the diagnostic page can show
@@ -26,20 +39,12 @@ export interface ActiveWorkspace {
   role: string | null
 }
 
-export interface ActiveEntity {
-  id: string
-  slug: string | null
-  name: string | null
-}
-
 export interface PendingInvitation {
   id: string
   workspaceId: string
   workspaceRole: string | null
   invitedById: string | null
 }
-
-export type SchemaResolutionSource = 'startup' | 'cache' | 'refresh' | 'workspace-change' | 'entity-change'
 
 /* ------------------------------------------------------------------ */
 /* Workspace Provider                                                 */
@@ -238,34 +243,6 @@ export function useWorkspace() {
 /* ------------------------------------------------------------------ */
 /* Entity Provider                                                    */
 /* ------------------------------------------------------------------ */
-
-type EntityContextValue = {
-  entity: ActiveEntity | null
-  /** All active entities within the current workspace. */
-  entities: ActiveEntity[]
-  entityCount: number
-  /** Switch the active entity. Updates schema resolution automatically. */
-  selectEntity: (id: string) => void
-  isLoading: boolean
-  error: string | null
-  expectedSchema: string | null
-  schemaName: string | null
-  schemaSource: SchemaResolutionSource | null
-  /**
-   * PostgREST exposure probe result for expectedSchema. true = served,
-   * false = not yet served, null = unchecked (probe pending or N/A).
-   * Consumed by TenantGate so provisioning-ready alone never renders
-   * the app as usable before exposure is confirmed.
-   */
-  schemaExposed: boolean | null
-  provisioningStatus: ProvisioningStatus | null
-  provisioningError: string | null
-  tenantClient: TenantClient
-  recheckProvisioning: () => void
-  refresh: () => void
-}
-
-const EntityContext = createContext<EntityContextValue | null>(null)
 
 export function EntityProvider({ children }: { children: React.ReactNode }) {
   const { workspace, isLoading: workspaceLoading } = useWorkspace()
