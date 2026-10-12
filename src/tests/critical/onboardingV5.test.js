@@ -122,7 +122,7 @@ test('workspaces show three independent illustrative businesses', () => {
 })
 
 test('finance includes a tax workflow without statutory claims', () => {
-  for (const concept of ['Tax command centre', 'Taxable transaction', 'VAT amount reviewed', 'WHT amount reviewed', 'RECONCILIATION', 'Filing period', 'Tax documents', 'OBLIGATIONS']) {
+  for (const concept of ['Tax command centre', 'Taxable transaction', 'VAT amount reviewed', 'WHT amount reviewed', 'RECONCILIATION', 'Filing period', 'Tax documents', 'Filing confirmation retained', 'OBLIGATIONS']) {
     assert.ok(sceneSource.includes(concept), `${concept} must be visible`)
   }
   assert.match(sceneSource, /No rates or filing dates shown/)

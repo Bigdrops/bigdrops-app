@@ -73,6 +73,7 @@ const DesignLab = lazy(() => import('@/pages/DesignLab'))
 const PhotoHeroPreview = lazy(() => import('@/pages/PhotoHeroPreview'))
 const DashboardThemeExperiment = lazy(() => import('@/pages/DashboardThemeExperiment'))
 const InvoiceThemeExperiment = lazy(() => import('@/pages/InvoiceThemeExperiment'))
+const CsrThemeExperiment = lazy(() => import('@/pages/CsrThemeExperiment'))
 const OnboardingV4Preview = lazy(() => import('@/pages/OnboardingV4Preview'))
 const OnboardingV5Preview = lazy(() => import('@/pages/OnboardingV5Preview'))
 const AccountingOverview = lazy(() => import('@/pages/accounting/AccountingOverview'))
@@ -325,6 +326,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/photohero-preview" element={withBoundary(<PhotoHeroPreview />)} />
           <Route path="/design-lab/dashboard-theme" element={withBoundary(<DashboardThemeExperiment />)} />
           <Route path="/design-lab/invoice-theme" element={withBoundary(<InvoiceThemeExperiment />)} />
+          <Route path="/design-lab/csr-theme" element={withBoundary(<CsrThemeExperiment />)} />
           <Route path="/design-lab/onboarding-v4" element={withBoundary(<OnboardingV4Preview />)} />
           <Route path="/design-lab/onboarding-v5" element={withBoundary(<OnboardingV5Preview />)} />
           <Route path="/accounting" element={withBoundary(<AccountingOverview />)} />

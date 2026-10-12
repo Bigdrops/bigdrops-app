@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, FileText, LayoutDashboard, PanelsTopLeft, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, FileText, LayoutDashboard, PanelsTopLeft, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -56,5 +56,14 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/invoice-theme',
     icon: FileText,
     capabilities: ['5 themes', 'Light/Dark', '5 viewports'],
+  },
+  {
+    id: 'csr-theme',
+    name: 'Customer Service Report',
+    eyebrow: 'CSR',
+    description: 'Explore the CSR form with Design Lab themes and responsive layouts.',
+    route: '/design-lab/csr-theme',
+    icon: ClipboardList,
+    capabilities: ['5 themes', 'Light/Dark', '6 viewports', 'Form preview'],
   },
 ]
