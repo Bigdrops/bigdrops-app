@@ -21,6 +21,8 @@ import {
 } from '@/components/onboarding/photo-hero-v2-theme'
 import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
 import { useDesignLabViewport } from '@/lib/designLabViewports'
+import { BusinessWorld } from './onboarding-v5-scenes'
+import './onboarding-v5-scenes.css'
 
 type ChapterId = 'workspaces' | 'commercial' | 'finance' | 'logistics' | 'field'
 type ScreenId = 'arrival' | 'chapter' | 'conversion' | 'signin' | 'signup'
@@ -48,37 +50,37 @@ const CHAPTERS: readonly Chapter[] = [
   {
     id: 'workspaces',
     eyebrow: 'Chapter 1',
-    title: 'Separate teams, one operating floor.',
-    copy: 'Give each business space its own rhythm, permissions and documents while the platform keeps the whole floor coordinated.',
-    signal: 'Teams align without losing control.',
+    title: 'One platform. Separate businesses.',
+    copy: 'Activa Electrical, Northline Fleet and Marketline Supply each keep their own workspace, team and records.',
+    signal: 'Switch business context without mixing the work.',
   },
   {
     id: 'commercial',
     eyebrow: 'Chapter 2',
-    title: 'Requests move into priced work.',
-    copy: 'A request becomes a quotation, pricing gets checked, and the confirmed job feeds the documents your team needs next.',
-    signal: 'Request, quote, invoice and execution stay connected.',
+    title: 'A request becomes a decision.',
+    copy: 'Follow a client brief into a quotation, review the price, then prepare the document that moves work forward.',
+    signal: 'Request, quotation and approval have a clear handoff.',
   },
   {
     id: 'finance',
     eyebrow: 'Chapter 3',
-    title: 'Finance runs as part of operations.',
-    copy: 'Payments, VAT, WHT and visibility sit in the same system as the work that created them, with no invented numbers on this screen.',
-    signal: 'Tax and cash flow are visible in context.',
+    title: 'Know what is paid, owed and due.',
+    copy: 'Review the transaction, separate its VAT and WHT records, then bring the documents into an obligation review.',
+    signal: 'A clear path from transaction to tax record.',
   },
   {
     id: 'logistics',
     eyebrow: 'Chapter 4',
-    title: 'Cargo moves with the paperwork.',
-    copy: 'Waybills, loading and delivery progress travel through the same route, so commercial work and movement stay in step.',
-    signal: 'Vehicles, cargo and waybills move together.',
+    title: 'Dispatch has a paper trail.',
+    copy: 'A vehicle leaves the yard with a waybill and reaches a documented delivery handoff.',
+    signal: 'The route and its document stay in view.',
   },
   {
     id: 'field',
     eyebrow: 'Chapter 5',
-    title: 'Service teams close the loop.',
-    copy: 'Technicians inspect equipment, report the result and bring field work back into the business record.',
-    signal: 'Work ends with proof and coordination.',
+    title: 'Field work returns as a record.',
+    copy: 'A technician inspects equipment, completes the service and returns a report to the business.',
+    signal: 'Inspection, maintenance and completion belong together.',
   },
 ] as const
 
@@ -116,230 +118,6 @@ function GoogleMark({ className }: { className?: string }) {
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53Z"
       />
     </svg>
-  )
-}
-
-function WorkspacesLayer() {
-  return (
-    <g className="ob5-layer ob5-workspaces">
-      <g className="ob5-space ob5-space-a">
-        <path d="M98 330 222 268l118 58-126 66Z" className="ob5-roof" />
-        <path d="m98 330 116 62v108L98 436Z" className="ob5-side" />
-        <path d="m214 392 126-66v107l-126 67Z" className="ob5-face" />
-        <path d="m130 352 54 28v54l-54-30Zm76 40 54-29v58l-54 29Z" className="ob5-window" />
-        <g className="ob5-team">
-          <circle cx="152" cy="317" r="11" />
-          <path d="M132 343q20-22 40 0" />
-          <circle cx="244" cy="305" r="10" />
-          <path d="M225 329q19-19 38 0" />
-        </g>
-      </g>
-      <g className="ob5-space ob5-space-b">
-        <path d="M382 265 500 207l132 65-119 63Z" className="ob5-roof" />
-        <path d="m382 265 131 70v121l-131-72Z" className="ob5-side" />
-        <path d="m513 335 119-63v121l-119 63Z" className="ob5-face" />
-        <path d="m423 297 56 29v58l-56-31Zm118-3 50-27v52l-50 27Z" className="ob5-window" />
-        <path d="m548 311 48-25v80l-48 25Z" className="ob5-door" />
-      </g>
-      <g className="ob5-space ob5-space-c">
-        <path d="M661 341 772 285l111 56-110 59Z" className="ob5-roof" />
-        <path d="m661 341 112 59v94l-112-58Z" className="ob5-side" />
-        <path d="m773 400 110-59v94l-110 59Z" className="ob5-face" />
-        <path d="m694 365 40 22v44l-40-21Zm111 32 42-22v43l-42 24Z" className="ob5-window" />
-      </g>
-      <path d="M240 392 C335 452 523 458 688 398" className="ob5-route ob5-route-workspaces" />
-    </g>
-  )
-}
-
-function CommercialLayer() {
-  return (
-    <g className="ob5-layer ob5-commercial">
-      <g className="ob5-machine">
-        <path d="M201 307h303l42 119H159Z" className="ob5-machine-floor" />
-        <rect x="247" y="189" width="215" height="139" rx="22" className="ob5-machine-body" />
-        <path d="M280 224h148M280 252h95" className="ob5-machine-lines" />
-        <g className="ob5-roller ob5-roller-a"><circle cx="253" cy="380" r="34" /><circle cx="253" cy="380" r="13" /></g>
-        <g className="ob5-roller ob5-roller-b"><circle cx="466" cy="380" r="34" /><circle cx="466" cy="380" r="13" /></g>
-        <path d="M217 380h284" className="ob5-belt" />
-        <g className="ob5-press">
-          <path d="M545 170h108v87H545Z" className="ob5-press-head" />
-          <path d="M574 257h50v76h-50Z" className="ob5-press-rod" />
-          <path d="M531 333h138v37H531Z" className="ob5-stamp" />
-        </g>
-        <g className="ob5-paper ob5-paper-a">
-          <rect x="137" y="315" width="86" height="115" rx="10" />
-          <path d="M157 350h45M157 371h34M157 392h54" />
-        </g>
-        <g className="ob5-paper ob5-paper-b">
-          <rect x="370" y="294" width="92" height="120" rx="10" />
-          <path d="M390 330h47M390 351h38M390 372h55" />
-        </g>
-        <g className="ob5-paper ob5-paper-c">
-          <rect x="656" y="283" width="98" height="126" rx="12" />
-          <path d="M676 319h54M676 344h40M676 369h56" />
-          <path d="m674 392 13 12 29-38" className="ob5-paid" />
-        </g>
-      </g>
-    </g>
-  )
-}
-
-function FinanceLayer() {
-  return (
-    <g className="ob5-layer ob5-finance">
-      <g className="ob5-ledger">
-        <circle cx="530" cy="306" r="138" className="ob5-ledger-halo" />
-        <circle cx="530" cy="306" r="88" className="ob5-ledger-core" />
-        <path d="M530 168v-62M530 444v66M392 306h-77M668 306h86M431 207l-54-45M629 207l54-45M431 405l-55 47M629 405l55 47" className="ob5-fin-wire" />
-        <g className="ob5-tax ob5-tax-vat">
-          <rect x="280" y="119" width="124" height="70" rx="18" />
-          <text x="342" y="162">VAT</text>
-        </g>
-        <g className="ob5-tax ob5-tax-wht">
-          <rect x="650" y="119" width="124" height="70" rx="18" />
-          <text x="712" y="162">WHT</text>
-        </g>
-        <g className="ob5-tax ob5-tax-pay">
-          <rect x="706" y="432" width="146" height="70" rx="18" />
-          <text x="779" y="475">Payments</text>
-        </g>
-        <g className="ob5-tax ob5-tax-view">
-          <rect x="204" y="432" width="146" height="70" rx="18" />
-          <text x="277" y="475">Visibility</text>
-        </g>
-        <g className="ob5-ledger-pages">
-          <rect x="493" y="265" width="75" height="94" rx="9" />
-          <path d="M511 293h38M511 315h31M511 337h42" />
-        </g>
-      </g>
-    </g>
-  )
-}
-
-function LogisticsLayer() {
-  return (
-    <g className="ob5-layer ob5-logistics">
-      <g className="ob5-skyline ob5-skyline-back">
-        <path d="M24 365V238h42v48h34v-82h58v106h36v-70h44v125Z" />
-        <use href="#ob5-skyline-a" x="360" />
-      </g>
-      <defs>
-        <g id="ob5-skyline-a">
-          <path d="M0 365V246h62v52h32V210h68v155h42v-74h54v74Z" />
-        </g>
-      </defs>
-      <path d="M0 438h1080" className="ob5-road-bed" />
-      <path d="M34 477h1020" className="ob5-road-mark" />
-      <g className="ob5-cargo-arm">
-        <path d="M198 245v121h37V261h88" />
-        <rect x="317" y="246" width="78" height="52" rx="8" />
-        <path d="M356 298v50" />
-      </g>
-      <g className="ob5-truck">
-        <path d="M410 333h258l57 58v70H386v-94Z" className="ob5-truck-body" />
-        <path d="M662 342h44l36 45h-80Z" className="ob5-truck-cab" />
-        <rect x="433" y="356" width="84" height="58" rx="9" className="ob5-cargo" />
-        <rect x="531" y="356" width="84" height="58" rx="9" className="ob5-cargo ob5-cargo-two" />
-        <g className="ob5-wheel ob5-wheel-a"><circle cx="458" cy="463" r="28" /><circle cx="458" cy="463" r="10" /></g>
-        <g className="ob5-wheel ob5-wheel-b"><circle cx="672" cy="463" r="28" /><circle cx="672" cy="463" r="10" /></g>
-        <path d="M747 403h52" className="ob5-headlamp" />
-      </g>
-      <g className="ob5-waybill">
-        <rect x="766" y="234" width="158" height="105" rx="16" />
-        <path d="M793 267h80M793 292h105M793 317h56" />
-        <path d="m875 312 16 16 31-46" className="ob5-delivered" />
-      </g>
-    </g>
-  )
-}
-
-function FieldLayer() {
-  return (
-    <g className="ob5-layer ob5-field">
-      <g className="ob5-equipment">
-        <path d="M263 375h334v118H263Z" className="ob5-generator" />
-        <path d="M298 342h261v63H298Z" className="ob5-generator-top" />
-        <circle cx="357" cy="436" r="31" className="ob5-fan-ring" />
-        <g className="ob5-fan"><path d="M357 405v62M326 436h62M337 416l40 40M377 416l-40 40" /></g>
-        <path d="M463 426h74M463 451h48" className="ob5-machine-lines" />
-      </g>
-      <g className="ob5-technician">
-        <circle cx="657" cy="239" r="25" />
-        <path d="M631 283h52l24 132h-102Z" className="ob5-tech-body" />
-        <path d="M629 306 552 365M684 307l74 44" className="ob5-tech-arm" />
-        <path d="M629 415 604 494M681 415l42 78" className="ob5-tech-leg" />
-        <path d="m530 379 33-31" className="ob5-tool" />
-      </g>
-      <g className="ob5-service-report">
-        <rect x="747" y="210" width="142" height="174" rx="15" />
-        <path d="M774 257h78M774 285h60M774 313h90" />
-        <path d="m776 349 22 22 58-74" className="ob5-check-path" />
-      </g>
-    </g>
-  )
-}
-
-function ConversionLayer() {
-  return (
-    <g className="ob5-layer ob5-conversion">
-      <path d="M168 282 C330 180 708 180 894 282" className="ob5-converge ob5-converge-top" />
-      <path d="M168 420 C330 522 708 522 894 420" className="ob5-converge ob5-converge-bottom" />
-      <g className="ob5-command">
-        <path d="M371 335 532 252l166 86-164 86Z" className="ob5-command-top" />
-        <path d="m371 335 163 89v111l-163-86Z" className="ob5-command-left" />
-        <path d="m534 424 164-86v111l-164 86Z" className="ob5-command-right" />
-        <g className="ob5-command-screens">
-          <rect x="456" y="314" width="62" height="45" rx="7" />
-          <rect x="538" y="303" width="62" height="45" rx="7" />
-          <rect x="604" y="334" width="50" height="39" rx="7" />
-        </g>
-      </g>
-      <g className="ob5-final-mark">
-        <circle cx="532" cy="241" r="46" />
-        <path d="m510 243 15 15 34-43" />
-      </g>
-    </g>
-  )
-}
-
-function BusinessWorld({ stage }: { stage: ChapterId | 'arrival' | 'conversion' | 'auth' }) {
-  return (
-    <div className="ob5-world" data-ob5-world-stage={stage} aria-hidden="true">
-      <svg viewBox="0 0 1080 660" role="img" aria-label="A continuous animated business world with workspaces, finance, logistics and field service">
-        <defs>
-          <linearGradient id="ob5-floor" x1="0" y1="0" x2="1" y2="1">
-            <stop stopColor="var(--ob5-accent-2)" stopOpacity=".44" />
-            <stop offset="1" stopColor="var(--ob5-accent)" stopOpacity=".12" />
-          </linearGradient>
-          <linearGradient id="ob5-metal" x1="0" y1="0" x2="1" y2="1">
-            <stop stopColor="#d9e3e7" />
-            <stop offset=".48" stopColor="var(--ob5-accent-2)" />
-            <stop offset="1" stopColor="var(--ob5-deep)" />
-          </linearGradient>
-          <filter id="ob5-shadow">
-            <feDropShadow dx="0" dy="20" stdDeviation="17" floodColor="#03101f" floodOpacity=".28" />
-          </filter>
-        </defs>
-        <rect x="0" y="0" width="1080" height="660" rx="0" className="ob5-sky" />
-        <path d="M72 543 532 314l476 238-474 238Z" className="ob5-floor" />
-        <path d="M112 543h842M191 503h686M271 463h530M351 423h374" className="ob5-floor-lines" />
-        <path d="M119 540 C272 466 384 445 532 445 C680 445 793 466 946 540" className="ob5-main-rail" />
-        <WorkspacesLayer />
-        <CommercialLayer />
-        <FinanceLayer />
-        <LogisticsLayer />
-        <FieldLayer />
-        <ConversionLayer />
-        <g className="ob5-carrier">
-          <path d="M0 0h92l32 25v36H0Z" />
-          <rect x="15" y="-29" width="72" height="44" rx="7" />
-          <path d="M29 -11h45" />
-          <circle cx="28" cy="63" r="13" />
-          <circle cx="93" cy="63" r="13" />
-        </g>
-      </svg>
-    </div>
   )
 }
 
@@ -458,9 +236,9 @@ function ArrivalScreen({ onExplore, onSignIn }: { onExplore: () => void; onSignI
     <section className="ob5-screen ob5-arrival" aria-labelledby="ob5-arrival-title">
       <div className="ob5-story-copy">
         <p className="ob5-eyebrow">BOURXE operating system</p>
-        <h2 id="ob5-arrival-title">Watch a business come alive.</h2>
+        <h2 id="ob5-arrival-title">Every business has its own work.</h2>
         <p>
-          Workspaces, sales, finance, delivery and service move through one connected business floor.
+          BOURXE gives separate businesses room for their teams, documents and operations.
         </p>
         <div className="ob5-actions">
           <button type="button" className="ob5-primary" onClick={onExplore}>
@@ -540,9 +318,9 @@ function ConversionScreen({ onPrevious, onSignup, onSignIn }: { onPrevious: () =
     <section className="ob5-screen ob5-conversion-screen" aria-labelledby="ob5-conversion-title">
       <div className="ob5-story-copy">
         <p className="ob5-eyebrow">Ready when you are</p>
-        <h2 id="ob5-conversion-title">One system for the work that moves the business.</h2>
+        <h2 id="ob5-conversion-title">Work has a place.</h2>
         <p>
-          Start with your first company workspace, then bring in the teams, documents and operations around it.
+          Start with a workspace. Keep each business and its people in a clear operating context.
         </p>
         <div className="ob5-actions ob5-actions-spread">
           <button type="button" className="ob5-secondary" onClick={onPrevious}>
@@ -949,7 +727,7 @@ const PREVIEW_CSS = `
     --ob5-surface:hsl(var(--surface));
     --ob5-raised:hsl(var(--surface-raised));
     --ob5-line:hsl(var(--line));
-    --ob5-deep:color-mix(in srgb,var(--ob5-accent) 22%,#071827 78%);
+    --ob5-deep:color-mix(in srgb,var(--ob5-accent) 18%,var(--ob5-surface) 82%);
     position:relative;
     min-height:100dvh;
     background:var(--scene-intro);
@@ -983,7 +761,7 @@ const PREVIEW_CSS = `
     grid-template-columns:minmax(280px,.76fr) minmax(0,1.24fr);
     gap:clamp(18px,4vw,68px);
     align-items:center;
-    padding:calc(42px + env(safe-area-inset-top,0px)) clamp(22px,5.5vw,88px) calc(42px + env(safe-area-inset-bottom,0px));
+    padding:calc(72px + env(safe-area-inset-top,0px)) clamp(22px,5.5vw,88px) calc(72px + env(safe-area-inset-bottom,0px));
   }
   .ob5-story-copy{
     position:relative;
@@ -1018,10 +796,8 @@ const PREVIEW_CSS = `
   }
   .ob5-signal{
     margin:22px 0 0;
-    padding:12px 14px;
-    border:1px solid var(--ob5-line);
-    border-radius:14px;
-    background:color-mix(in srgb,var(--ob5-surface) 68%,transparent);
+    padding:0 0 0 13px;
+    border-left:3px solid var(--ob5-accent);
     color:var(--ob5-ink);
     font-size:13px;
     font-weight:800;
@@ -1075,109 +851,6 @@ const PREVIEW_CSS = `
     height:min(74vh,720px);
     filter:drop-shadow(0 30px 48px rgba(0,0,0,.18));
   }
-  .ob5-world svg{width:100%;height:100%;overflow:visible}
-  .ob5-sky{fill:color-mix(in srgb,var(--ob5-surface) 58%,transparent)}
-  .ob5-floor{fill:url(#ob5-floor);stroke:var(--ob5-line);stroke-width:2}
-  .ob5-floor-lines,.ob5-main-rail,.ob5-route{fill:none;stroke:var(--ob5-line);stroke-width:2.5;stroke-linecap:round}
-  .ob5-main-rail{stroke:color-mix(in srgb,var(--ob5-accent) 48%,var(--ob5-line));stroke-width:5}
-  .ob5-layer{opacity:.12;transform:translateY(18px) scale(.97);transition:opacity .48s cubic-bezier(.22,1,.36,1),transform .58s cubic-bezier(.22,1,.36,1)}
-  [data-ob5-stage="arrival"] .ob5-workspaces,
-  [data-ob5-stage="arrival"] .ob5-commercial,
-  [data-ob5-stage="arrival"] .ob5-logistics,
-  [data-ob5-stage="conversion"] .ob5-conversion,
-  [data-ob5-stage="workspaces"] .ob5-workspaces,
-  [data-ob5-stage="commercial"] .ob5-commercial,
-  [data-ob5-stage="finance"] .ob5-finance,
-  [data-ob5-stage="logistics"] .ob5-logistics,
-  [data-ob5-stage="field"] .ob5-field,
-  [data-ob5-stage="auth"] .ob5-conversion{
-    opacity:1;
-    transform:none;
-  }
-  [data-ob5-stage="conversion"] .ob5-workspaces,
-  [data-ob5-stage="conversion"] .ob5-commercial,
-  [data-ob5-stage="conversion"] .ob5-finance,
-  [data-ob5-stage="conversion"] .ob5-logistics,
-  [data-ob5-stage="conversion"] .ob5-field{
-    opacity:.42;
-    transform:scale(.95);
-  }
-  .ob5-roof,.ob5-command-top{fill:var(--ob5-accent)}
-  .ob5-side,.ob5-command-left{fill:color-mix(in srgb,var(--ob5-accent) 44%,var(--ob5-deep))}
-  .ob5-face,.ob5-command-right{fill:var(--ob5-deep)}
-  .ob5-window,.ob5-door,.ob5-command-screens rect{fill:color-mix(in srgb,var(--ob5-accent-2) 72%,white 28%)}
-  .ob5-space,.ob5-machine,.ob5-ledger,.ob5-equipment,.ob5-command{filter:url(#ob5-shadow)}
-  .ob5-team circle,.ob5-team path{fill:var(--ob5-accent-2)}
-  .ob5-route-workspaces{stroke:var(--ob5-accent);stroke-dasharray:14 18;animation:ob5-route 2.6s linear infinite}
-  .ob5-space-a{transform:translateX(-20px)}
-  .ob5-space-b{transform:translateY(-24px)}
-  .ob5-space-c{transform:translateX(18px)}
-  [data-ob5-stage="workspaces"] .ob5-space-a{animation:ob5-space-a .9s cubic-bezier(.22,1,.36,1) both}
-  [data-ob5-stage="workspaces"] .ob5-space-b{animation:ob5-space-b .9s cubic-bezier(.22,1,.36,1) both}
-  [data-ob5-stage="workspaces"] .ob5-space-c{animation:ob5-space-c .9s cubic-bezier(.22,1,.36,1) both}
-
-  .ob5-machine-floor{fill:color-mix(in srgb,var(--ob5-accent) 16%,transparent);stroke:var(--ob5-line)}
-  .ob5-machine-body,.ob5-press-head,.ob5-press-rod,.ob5-stamp,.ob5-truck-body,.ob5-generator,.ob5-generator-top{fill:url(#ob5-metal);stroke:color-mix(in srgb,var(--ob5-ink) 22%,transparent);stroke-width:2}
-  .ob5-machine-lines,.ob5-paper path,.ob5-ledger-pages path,.ob5-waybill path,.ob5-service-report path{fill:none;stroke:var(--ob5-line);stroke-width:4;stroke-linecap:round}
-  .ob5-roller circle,.ob5-wheel circle,.ob5-fan-ring{fill:var(--ob5-deep);stroke:var(--ob5-accent-2);stroke-width:5}
-  .ob5-belt{stroke:var(--ob5-accent);stroke-width:9;stroke-dasharray:22 16;animation:ob5-belt 1.2s linear infinite}
-  .ob5-roller,.ob5-wheel,.ob5-fan{transform-box:fill-box;transform-origin:center;animation:ob5-spin 1.8s linear infinite}
-  .ob5-paper rect,.ob5-ledger-pages rect,.ob5-waybill rect,.ob5-service-report rect{fill:color-mix(in srgb,var(--ob5-surface) 92%,white 8%);stroke:var(--ob5-line);stroke-width:2}
-  .ob5-paper-a{animation:ob5-paper-a 4.8s cubic-bezier(.42,0,.2,1) infinite}
-  .ob5-paper-b{animation:ob5-paper-b 4.8s cubic-bezier(.42,0,.2,1) infinite}
-  .ob5-paper-c{animation:ob5-paper-c 4.8s cubic-bezier(.42,0,.2,1) infinite}
-  .ob5-press{animation:ob5-press 2.4s cubic-bezier(.42,0,.2,1) infinite}
-  .ob5-paid,.ob5-delivered,.ob5-check-path{stroke:var(--ob5-accent);stroke-width:8;stroke-linecap:round;stroke-linejoin:round;fill:none}
-
-  .ob5-ledger-core{fill:var(--ob5-deep);stroke:var(--ob5-accent);stroke-width:5}
-  .ob5-ledger-halo{fill:color-mix(in srgb,var(--ob5-accent) 18%,transparent)}
-  .ob5-fin-wire{fill:none;stroke:var(--ob5-accent);stroke-width:4;stroke-dasharray:11 16;animation:ob5-route 1.9s linear infinite}
-  .ob5-tax rect{fill:var(--ob5-raised);stroke:var(--ob5-line);stroke-width:2}
-  .ob5-tax text{fill:var(--ob5-ink);font-size:25px;font-weight:900;text-anchor:middle}
-  .ob5-tax-vat{animation:ob5-tax-a 3.4s cubic-bezier(.22,1,.36,1) infinite}
-  .ob5-tax-wht{animation:ob5-tax-b 3.4s cubic-bezier(.22,1,.36,1) infinite}
-  .ob5-ledger-pages{animation:ob5-ledger-paper 3.4s cubic-bezier(.22,1,.36,1) infinite}
-
-  .ob5-skyline path{fill:color-mix(in srgb,var(--ob5-accent) 18%,transparent)}
-  .ob5-skyline-back{animation:ob5-city 18s linear infinite}
-  .ob5-road-bed{stroke:var(--ob5-deep);stroke-width:82;stroke-linecap:round}
-  .ob5-road-mark{stroke:color-mix(in srgb,var(--ob5-accent-2) 74%,white 26%);stroke-width:7;stroke-dasharray:58 54;animation:ob5-road 1.1s linear infinite}
-  .ob5-truck{animation:ob5-drive 8s cubic-bezier(.42,0,.58,1) infinite}
-  .ob5-truck-cab,.ob5-cargo{fill:color-mix(in srgb,var(--ob5-accent-2) 76%,white 24%);stroke:var(--ob5-line);stroke-width:2}
-  .ob5-headlamp{stroke:#fee8a6;stroke-width:14;stroke-linecap:round;filter:drop-shadow(0 0 12px #fee8a6)}
-  .ob5-cargo-arm{fill:none;stroke:var(--ob5-accent);stroke-width:12;stroke-linecap:round;stroke-linejoin:round;animation:ob5-arm 5.2s cubic-bezier(.42,0,.2,1) infinite}
-  .ob5-waybill{animation:ob5-waybill 8s ease-in-out infinite}
-
-  .ob5-technician circle{fill:var(--ob5-accent-2)}
-  .ob5-tech-body{fill:var(--ob5-accent);stroke:var(--ob5-line);stroke-width:2}
-  .ob5-tech-arm,.ob5-tech-leg,.ob5-tool,.ob5-fan{fill:none;stroke:var(--ob5-ink);stroke-width:12;stroke-linecap:round;stroke-linejoin:round}
-  .ob5-technician{animation:ob5-tech 3.8s ease-in-out infinite alternate;transform-origin:657px 360px}
-  .ob5-check-path{stroke-dasharray:160;stroke-dashoffset:160}
-  [data-ob5-stage="field"] .ob5-check-path{animation:ob5-check 1.1s cubic-bezier(.22,1,.36,1) .8s forwards}
-
-  .ob5-converge{fill:none;stroke:var(--ob5-accent);stroke-width:6;stroke-dasharray:18 20;animation:ob5-route 2s linear infinite}
-  .ob5-final-mark circle{fill:var(--ob5-accent);filter:url(#ob5-shadow)}
-  .ob5-final-mark path{fill:none;stroke:white;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
-  .ob5-final-mark{animation:ob5-final .9s cubic-bezier(.34,1.56,.64,1) both}
-
-  .ob5-carrier{
-    fill:var(--ob5-accent);
-    stroke:color-mix(in srgb,var(--ob5-ink) 18%,transparent);
-    stroke-width:2;
-    transform:translate(120px,515px);
-    transition:transform .7s cubic-bezier(.22,1,.36,1),opacity .25s ease;
-    filter:url(#ob5-shadow);
-  }
-  [data-ob5-stage="arrival"] .ob5-carrier{transform:translate(120px,515px)}
-  [data-ob5-stage="workspaces"] .ob5-carrier{transform:translate(250px,474px)}
-  [data-ob5-stage="commercial"] .ob5-carrier{transform:translate(430px,445px)}
-  [data-ob5-stage="finance"] .ob5-carrier{transform:translate(554px,425px)}
-  [data-ob5-stage="logistics"] .ob5-carrier{transform:translate(720px,470px)}
-  [data-ob5-stage="field"] .ob5-carrier{transform:translate(858px,520px)}
-  [data-ob5-stage="conversion"] .ob5-carrier,[data-ob5-stage="auth"] .ob5-carrier{opacity:0}
-  .ob5-carrier circle{fill:var(--ob5-deep)}
-  .ob5-carrier path:last-of-type{stroke:white;stroke-width:4}
-
   .ob5-rail{
     position:absolute;
     z-index:5;
@@ -1186,21 +859,21 @@ const PREVIEW_CSS = `
     bottom:calc(24px + env(safe-area-inset-bottom,0px));
     display:flex;
     gap:8px;
-    max-width:620px;
+    max-width:440px;
   }
   .ob5-rail button{
     flex:1;
     min-height:44px;
-    border:1px solid var(--ob5-line);
-    border-radius:14px;
-    background:color-mix(in srgb,var(--ob5-surface) 62%,transparent);
+    border:0;
+    border-bottom:2px solid var(--ob5-line);
+    border-radius:0;
+    background:transparent;
     color:var(--ob5-muted);
-    font-size:11px;
+    font-size:12px;
     font-weight:900;
-    backdrop-filter:blur(14px);
   }
-  .ob5-rail button[aria-selected="true"]{color:white;background:var(--ob5-accent)}
-  .ob5-rail i{display:block;height:3px;margin:6px 8px 0;border-radius:999px;background:currentColor;opacity:.35}
+  .ob5-rail button[aria-selected="true"]{color:var(--ob5-accent);border-bottom-color:var(--ob5-accent)}
+  .ob5-rail i{display:none}
 
   .ob5-auth-screen{
     min-height:100dvh;
@@ -1327,8 +1000,8 @@ const PREVIEW_CSS = `
   .ob5-dock{
     position:fixed;
     z-index:70;
-    left:12px;
-    bottom:calc(22px + env(safe-area-inset-bottom,0px));
+    right:12px;
+    top:calc(10px + env(safe-area-inset-top,0px));
     display:flex;
     align-items:center;
     gap:8px;
@@ -1359,13 +1032,13 @@ const PREVIEW_CSS = `
   .ob5-pop{
     position:fixed;
     z-index:71;
-    left:12px;
-    bottom:calc(78px + env(safe-area-inset-bottom,0px));
+    right:12px;
+    top:calc(64px + env(safe-area-inset-top,0px));
     display:flex;
     flex-direction:column;
     gap:8px;
     width:min(340px,calc(100vw - 24px));
-    max-height:calc(100dvh - 110px);
+    max-height:calc(100dvh - 84px - env(safe-area-inset-top,0px));
     overflow-y:auto;
     padding:8px;
     border:1px solid var(--glass-line);
@@ -1394,34 +1067,12 @@ const PREVIEW_CSS = `
   .ob5-pop-close{justify-content:center;width:100%;border-top:1px solid var(--glass-line);border-radius:0 0 12px 12px}
 
   @keyframes ob5-copy-in{from{opacity:0;transform:translateY(18px);filter:blur(7px)}to{opacity:1;transform:none;filter:none}}
-  @keyframes ob5-route{to{stroke-dashoffset:-72}}
-  @keyframes ob5-belt{to{stroke-dashoffset:-76}}
-  @keyframes ob5-spin{to{transform:rotate(360deg)}}
-  @keyframes ob5-space-a{from{transform:translate(-60px,20px);opacity:.4}to{transform:translateX(-20px);opacity:1}}
-  @keyframes ob5-space-b{from{transform:translateY(-70px);opacity:.4}to{transform:translateY(-24px);opacity:1}}
-  @keyframes ob5-space-c{from{transform:translate(70px,24px);opacity:.4}to{transform:translateX(18px);opacity:1}}
-  @keyframes ob5-paper-a{0%{opacity:0;transform:translate(-70px,26px) rotate(-7deg)}18%,68%{opacity:1}100%{opacity:0;transform:translate(214px,-34px) rotate(9deg)}}
-  @keyframes ob5-paper-b{0%,24%{opacity:0;transform:translate(-48px,18px)}44%,82%{opacity:1}100%{opacity:0;transform:translate(162px,-31px)}}
-  @keyframes ob5-paper-c{0%,48%{opacity:0;transform:translate(-55px,16px)}68%,92%{opacity:1}100%{opacity:0;transform:translate(50px,-12px)}}
-  @keyframes ob5-press{0%,35%,70%,100%{transform:translateY(0)}48%,58%{transform:translateY(34px)}}
-  @keyframes ob5-tax-a{50%{transform:translate(-8px,-8px)}}
-  @keyframes ob5-tax-b{50%{transform:translate(8px,-8px)}}
-  @keyframes ob5-ledger-paper{50%{transform:translateY(-10px)}}
-  @keyframes ob5-city{to{transform:translateX(-360px)}}
-  @keyframes ob5-road{to{stroke-dashoffset:-112}}
-  @keyframes ob5-drive{0%{transform:translateX(-360px)}18%,33%{transform:translateX(-70px)}55%,70%{transform:translateX(70px)}100%{transform:translateX(430px)}}
-  @keyframes ob5-arm{0%,28%,100%{transform:translateY(0)}40%,58%{transform:translateY(48px)}}
-  @keyframes ob5-waybill{0%,20%{opacity:.55;transform:translateY(12px)}45%,82%{opacity:1;transform:none}100%{opacity:.55;transform:translateY(-8px)}}
-  @keyframes ob5-tech{to{transform:rotate(2deg)}}
-  @keyframes ob5-check{to{stroke-dashoffset:0}}
-  @keyframes ob5-final{from{opacity:0;transform:scale(.5);transform-origin:532px 241px}to{opacity:1;transform:scale(1);transform-origin:532px 241px}}
-
   @media (max-width:900px){
     .ob5-screen{
       grid-template-columns:1fr;
       align-content:start;
       gap:16px;
-      padding:calc(28px + env(safe-area-inset-top,0px)) 18px calc(96px + env(safe-area-inset-bottom,0px));
+      padding:calc(76px + env(safe-area-inset-top,0px)) 18px calc(28px + env(safe-area-inset-bottom,0px));
       overflow-y:auto;
     }
     .ob5-story-copy{max-width:none;order:2}
@@ -1430,7 +1081,7 @@ const PREVIEW_CSS = `
     .ob5-story-copy p:not(.ob5-eyebrow):not(.ob5-signal){font-size:15px;line-height:1.58}
     .ob5-actions{margin-top:24px}
     .ob5-primary,.ob5-secondary{flex:1 1 150px}
-    .ob5-rail{left:18px;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+    .ob5-rail{position:relative;left:auto;right:auto;bottom:auto;max-width:none;order:3;margin-top:10px}
     .ob5-auth-screen{grid-template-columns:1fr;overflow-y:auto}
     .ob5-auth-art{min-height:290px;padding:calc(18px + env(safe-area-inset-top,0px)) 18px 22px}
     .ob5-auth-art .ob5-world{inset:8% -32% 6% -10%;opacity:.42}
@@ -1441,7 +1092,7 @@ const PREVIEW_CSS = `
       grid-template-columns:1fr;
       align-content:start;
       gap:16px;
-      padding:calc(28px + env(safe-area-inset-top,0px)) 18px calc(96px + env(safe-area-inset-bottom,0px));
+      padding:calc(76px + env(safe-area-inset-top,0px)) 18px calc(28px + env(safe-area-inset-bottom,0px));
       overflow-y:auto;
     }
     [data-dlv-sim] .ob5-story-copy{max-width:none;order:2}
@@ -1450,7 +1101,7 @@ const PREVIEW_CSS = `
     [data-dlv-sim] .ob5-story-copy p:not(.ob5-eyebrow):not(.ob5-signal){font-size:15px;line-height:1.58}
     [data-dlv-sim] .ob5-actions{margin-top:24px}
     [data-dlv-sim] .ob5-primary,[data-dlv-sim] .ob5-secondary{flex:1 1 150px}
-    [data-dlv-sim] .ob5-rail{left:18px;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+    [data-dlv-sim] .ob5-rail{position:relative;left:auto;right:auto;bottom:auto;max-width:none;order:3;margin-top:10px}
     [data-dlv-sim] .ob5-auth-screen{grid-template-columns:1fr;overflow-y:auto}
     [data-dlv-sim] .ob5-auth-art{min-height:290px;padding:calc(18px + env(safe-area-inset-top,0px)) 18px 22px}
     [data-dlv-sim] .ob5-auth-art .ob5-world{inset:8% -32% 6% -10%;opacity:.42}
@@ -1458,21 +1109,23 @@ const PREVIEW_CSS = `
   }
   @media (max-width:520px){
     .ob5-canvas{overflow-y:auto}
-    .ob5-world{min-height:220px;height:35vh}
+    .ob5-world{min-height:290px;height:38vh}
+    .ob5-world[data-ob5-world-stage="workspaces"],.ob5-world[data-ob5-world-stage="arrival"]{min-height:345px}
+    .ob5-world[data-ob5-world-stage="finance"]{min-height:435px}
     .ob5-actions{display:grid;grid-template-columns:1fr}
     .ob5-primary,.ob5-secondary,.ob5-google{width:100%}
-    .ob5-rail{position:relative;left:auto;right:auto;bottom:auto;margin-top:18px}
-    .ob5-dock{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
-    .ob5-pop{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+    .ob5-story-copy h2{font-size:clamp(31px,9vw,43px)}
+    .ob5-eyebrow{margin-bottom:10px}
   }
   @container dlv (max-width: 520px){
     [data-dlv-sim] .ob5-canvas{overflow-y:auto}
-    [data-dlv-sim] .ob5-world{min-height:220px;height:35vh}
+    [data-dlv-sim] .ob5-world{min-height:290px;height:38vh}
+    [data-dlv-sim] .ob5-world[data-ob5-world-stage="workspaces"],[data-dlv-sim] .ob5-world[data-ob5-world-stage="arrival"]{min-height:345px}
+    [data-dlv-sim] .ob5-world[data-ob5-world-stage="finance"]{min-height:435px}
     [data-dlv-sim] .ob5-actions{display:grid;grid-template-columns:1fr}
     [data-dlv-sim] .ob5-primary,[data-dlv-sim] .ob5-secondary,[data-dlv-sim] .ob5-google{width:100%}
-    [data-dlv-sim] .ob5-rail{position:relative;left:auto;right:auto;bottom:auto;margin-top:18px}
-    [data-dlv-sim] .ob5-dock{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
-    [data-dlv-sim] .ob5-pop{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+    [data-dlv-sim] .ob5-story-copy h2{font-size:clamp(31px,9vw,43px)}
+    [data-dlv-sim] .ob5-eyebrow{margin-bottom:10px}
   }
   @media (max-height:660px) and (min-width:901px){
     .ob5-screen{padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
@@ -1485,12 +1138,9 @@ const PREVIEW_CSS = `
     .ob5-dock-btn,.ob5-pop{backdrop-filter:none;background:var(--scene-intro)}
   }
   @media (prefers-reduced-motion:reduce){
-    .ob5-story-copy,.ob5-layer,.ob5-carrier,.ob5-route-workspaces,.ob5-belt,.ob5-roller,.ob5-wheel,.ob5-fan,.ob5-paper-a,.ob5-paper-b,.ob5-paper-c,.ob5-press,.ob5-fin-wire,.ob5-tax-vat,.ob5-tax-wht,.ob5-ledger-pages,.ob5-skyline-back,.ob5-road-mark,.ob5-truck,.ob5-cargo-arm,.ob5-waybill,.ob5-technician,.ob5-check-path,.ob5-converge,.ob5-final-mark,.ob5-primary,.ob5-secondary,.ob5-google,.ob5-auth-back,.ob5-pop button{
+    .ob5-story-copy,.ob5-primary,.ob5-secondary,.ob5-google,.ob5-auth-back,.ob5-pop button{
       animation:none!important;
       transition:none!important;
     }
-    .ob5-layer{opacity:1;transform:none}
-    .ob5-check-path{stroke-dashoffset:0}
-    .ob5-carrier{opacity:1}
   }
 `

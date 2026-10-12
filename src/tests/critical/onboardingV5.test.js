@@ -16,6 +16,8 @@ const V5_ID = 'onboarding-v5-cinematic'
 const V5_ROUTE = '/design-lab/onboarding-v5'
 
 const previewSource = read('src/components/onboarding-v5/onboarding-v5-preview.tsx')
+const sceneSource = read('src/components/onboarding-v5/onboarding-v5-scenes.tsx')
+const sceneStyles = read('src/components/onboarding-v5/onboarding-v5-scenes.css')
 const pageSource = read('src/pages/OnboardingV5Preview.tsx')
 const appShellSource = read('src/components/app/AppShell.tsx')
 const registrySource = read('src/lib/designLabPreviews.ts')
@@ -78,7 +80,7 @@ test('story flow starts deliberately and reaches signup only at conversion', () 
   )
 })
 
-test('the connected business world contains substantial chapter artwork and motion', () => {
+test('each chapter has a distinct environment and an operational transition', () => {
   for (const id of ['workspaces', 'commercial', 'finance', 'logistics', 'field']) {
     assert.match(previewSource, new RegExp(`id: '${id}'`), `chapter ${id} must exist`)
   }
@@ -91,18 +93,40 @@ test('the connected business world contains substantial chapter artwork and moti
     'function ConversionLayer',
     'function BusinessWorld',
   ]) {
-    assert.ok(previewSource.includes(component), `${component} must be implemented`)
+    assert.ok(sceneSource.includes(component), `${component} must be implemented`)
   }
   for (const motion of [
-    '@keyframes ob5-paper-a',
-    '@keyframes ob5-press',
-    '@keyframes ob5-drive',
-    '@keyframes ob5-arm',
-    '@keyframes ob5-check',
-    '@keyframes ob5-route',
+    '@keyframes ob5-tenant-reveal',
+    '@keyframes ob5-document-enter',
+    '@keyframes ob5-tax-route',
+    '@keyframes ob5-truck-arrive',
+    '@keyframes ob5-inspect',
+    '@keyframes ob5-brand-resolve',
   ]) {
-    assert.ok(previewSource.includes(motion), `${motion} must be present`)
+    assert.ok(sceneStyles.includes(motion), `${motion} must be present`)
   }
+  assert.match(previewSource, /<BusinessWorld stage=\{chapter\.id\} \/>/)
+  assert.match(sceneSource, /key=\{stage\}/)
+})
+
+test('workspaces show three independent illustrative businesses', () => {
+  for (const business of ['Activa Electrical', 'Northline Fleet', 'Marketline Supply']) {
+    assert.ok(sceneSource.includes(business), `${business} must be visible`)
+  }
+  for (const record of ['Service orders', 'Dispatch records', 'Sales and stock']) {
+    assert.ok(sceneSource.includes(record), `${record} must remain tenant specific`)
+  }
+  assert.match(sceneSource, /Separate workspace/)
+  assert.match(sceneSource, /Records stay with their business/)
+  assert.match(sceneStyles, /\.ob5-tenant\{[^}]*border-right:3px solid/)
+})
+
+test('finance includes a tax workflow without statutory claims', () => {
+  for (const concept of ['Tax command centre', 'Taxable transaction', 'VAT amount reviewed', 'WHT amount reviewed', 'RECONCILIATION', 'Filing period', 'Tax documents', 'OBLIGATIONS']) {
+    assert.ok(sceneSource.includes(concept), `${concept} must be visible`)
+  }
+  assert.match(sceneSource, /No rates or filing dates shown/)
+  assert.doesNotMatch(sceneSource, /automatically files|filed with FIRS|\b\d+(?:\.\d+)?%\b/i)
 })
 
 test('navigation supports back, next, chapter revisit and explicit skip', () => {
@@ -153,9 +177,12 @@ test('Design Lab theme and viewport systems are integrated safely', () => {
 
 test('reduced motion, safe areas and copy constraints are present', () => {
   assert.match(previewSource, /@media \(prefers-reduced-motion:reduce\)/)
+  assert.match(sceneStyles, /@media\(prefers-reduced-motion:reduce\)/)
+  assert.match(sceneStyles, /@container dlv \(max-width:520px\)/)
   assert.match(previewSource, /env\(safe-area-inset-top,0px\)/)
   assert.match(previewSource, /env\(safe-area-inset-bottom,0px\)/)
   assert.ok(!previewSource.includes('—'), 'V5 source must avoid em dash characters')
+  assert.ok(!sceneSource.includes('—'), 'scene copy must avoid em dash characters')
   for (const banned of ['beaming dots', 'orbiting particles', 'decorative node', 'generic card']) {
     assert.ok(!previewSource.includes(banned), `V5 copy must not contain ${banned}`)
   }

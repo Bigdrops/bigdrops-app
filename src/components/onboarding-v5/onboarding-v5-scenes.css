@@ -1,0 +1,356 @@
+.ob5-scene{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  border:1px solid var(--ob5-line);
+  border-radius:26px;
+  background:var(--scene-intro);
+  color:var(--ob5-ink);
+  box-shadow:0 35px 80px color-mix(in srgb,var(--ob5-deep) 35%,transparent);
+}
+.ob5-scene::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  box-shadow:inset 0 0 75px color-mix(in srgb,var(--ob5-deep) 24%,transparent);
+}
+.ob5-tenant-scene,.ob5-commercial-scene,.ob5-tax-scene,.ob5-logistics-scene,.ob5-field-scene,.ob5-conversion-scene{position:relative;width:100%;height:100%;overflow:hidden}
+
+/* Three full-scale business bays share platform chrome, never their records. */
+.ob5-tenant-scene{display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:color-mix(in srgb,var(--ob5-surface) 54%,var(--scene-intro))}
+.ob5-scene-cap{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:0 24px;border-bottom:1px solid var(--ob5-line);background:var(--ob5-surface);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.ob5-scene-cap strong{font-size:19px;letter-spacing:.14em;color:var(--ob5-accent)}
+.ob5-scene-cap span{color:var(--ob5-muted);font-weight:800}
+.ob5-tenant-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));min-height:0}
+.ob5-tenant{position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;border-right:3px solid var(--ob5-line);background:radial-gradient(circle at 70% 30%,color-mix(in srgb,var(--ob5-accent) 17%,transparent),transparent 50%),var(--ob5-surface)}
+.ob5-tenant:last-child{border-right:0}
+.ob5-tenant--fleet{background:linear-gradient(155deg,color-mix(in srgb,var(--ob5-accent-2) 22%,var(--ob5-surface)),var(--ob5-surface) 65%)}
+.ob5-tenant--retail{background:radial-gradient(circle at 22% 31%,color-mix(in srgb,var(--ob5-accent) 21%,transparent),transparent 57%),var(--ob5-raised)}
+.ob5-tenant-heading{position:relative;z-index:2;padding:24px 20px 0}
+.ob5-tenant-scope{color:var(--ob5-accent);font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.ob5-tenant h3{margin:9px 0 4px;font-size:clamp(18px,2.1vw,27px);line-height:1.05;letter-spacing:-.04em}
+.ob5-tenant p{margin:0;color:var(--ob5-muted);font-size:12px;font-weight:700}
+.ob5-tenant-art{position:relative;flex:1;min-height:0}
+.ob5-tenant-art svg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.ob5-tenant-footer{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;min-height:64px;padding:10px 16px 14px;border-top:1px solid var(--ob5-line);background:color-mix(in srgb,var(--ob5-surface) 82%,transparent);font-size:11px;font-weight:900}
+.ob5-tenant-team{max-width:88px;text-align:right;color:var(--ob5-muted);font-weight:700}
+.ob5-tenant-baseline{margin:0;min-height:43px;padding:12px 24px;color:var(--ob5-muted);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.ob5-tenant--electrical{animation:ob5-tenant-first .65s cubic-bezier(.22,1,.36,1) both}
+.ob5-tenant--fleet{animation:ob5-tenant-reveal .7s cubic-bezier(.22,1,.36,1) .48s both}
+.ob5-tenant--retail{animation:ob5-tenant-reveal .7s cubic-bezier(.22,1,.36,1) .83s both}
+.ob5-electrical-shadow{fill:var(--ob5-deep);opacity:.5}
+.ob5-environment-floor,.ob5-fleet-road,.ob5-retail-floor{fill:color-mix(in srgb,var(--ob5-deep) 52%,var(--ob5-surface))}
+.ob5-electrical-cabinet{fill:url(#ob5-electrical-metal);stroke:var(--ob5-line);stroke-width:3}
+.ob5-electrical-seam,.ob5-electrical-cable,.ob5-fleet-depot-lines,.ob5-retail-shelf-line{fill:none;stroke:var(--ob5-line);stroke-width:3}
+.ob5-electrical-cable{stroke:var(--ob5-accent)}
+.ob5-electrical-panel,.ob5-technician-hardhat{fill:var(--ob5-raised);stroke:var(--ob5-line);stroke-width:2}
+.ob5-electrical-live{fill:var(--ob5-accent);animation:ob5-switch-on .5s ease .45s both}
+.ob5-electrical-live--two{animation-delay:.9s}
+.ob5-technician-body,.ob5-fleet-trailer,.ob5-retail-counter{fill:var(--ob5-accent)}
+.ob5-technician-face,.ob5-retail-person{fill:var(--ob5-accent-2)}
+.ob5-technician-limb,.ob5-technician-tool{fill:none;stroke:var(--ob5-ink);stroke-width:9;stroke-linecap:round}
+.ob5-fleet-horizon,.ob5-fleet-depot,.ob5-retail-wall{fill:color-mix(in srgb,var(--ob5-accent) 13%,var(--ob5-raised));stroke:var(--ob5-line);stroke-width:2}
+.ob5-fleet-roadline,.ob5-fleet-route{fill:none;stroke:var(--ob5-accent-2);stroke-width:5;stroke-dasharray:20 20}
+.ob5-fleet-vehicle{animation:ob5-fleet-depart 2s cubic-bezier(.2,.8,.25,1) .65s both}
+.ob5-fleet-cab{fill:var(--ob5-accent-2);stroke:var(--ob5-line);stroke-width:2}
+.ob5-fleet-window,.ob5-fleet-door,.ob5-retail-register{fill:var(--ob5-surface);stroke:var(--ob5-line);stroke-width:2}
+.ob5-fleet-wheel{fill:var(--ob5-deep);stroke:var(--ob5-ink);stroke-width:4}
+.ob5-fleet-lamp,.ob5-retail-scan{fill:none;stroke:var(--ob5-accent);stroke-width:7;stroke-linecap:round}
+.ob5-retail-shelf{fill:var(--ob5-deep);stroke:var(--ob5-line);stroke-width:3}
+.ob5-retail-stock path{fill:var(--ob5-accent-2);stroke:var(--ob5-surface);stroke-width:2}
+.ob5-retail-stock path:nth-child(2){fill:var(--ob5-accent)}
+.ob5-retail-stock path:nth-child(3){fill:color-mix(in srgb,var(--ob5-accent) 45%,var(--ob5-raised))}
+.ob5-retail-scan{stroke-dasharray:80;stroke-dashoffset:80;animation:ob5-scan .7s ease 1.5s both}
+
+/* The commercial scene is a physical worktable and three successive documents. */
+.ob5-commercial-scene{background:radial-gradient(circle at 77% 18%,color-mix(in srgb,var(--ob5-accent) 23%,transparent),transparent 38%),linear-gradient(145deg,var(--ob5-raised),var(--ob5-deep))}
+.ob5-commercial-backdrop{position:absolute;inset:0 0 55%;display:flex;justify-content:space-between;padding:24px;color:var(--ob5-muted);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+.ob5-commercial-backdrop::after{content:"";position:absolute;left:15%;right:13%;top:65%;height:1px;background:var(--ob5-line)}
+.ob5-commercial-desk{position:absolute;inset:29% 4% 3%;border-top:8px solid color-mix(in srgb,var(--ob5-accent-2) 30%,var(--ob5-deep));background:repeating-linear-gradient(92deg,color-mix(in srgb,var(--ob5-surface) 13%,transparent) 0 2px,transparent 2px 85px),color-mix(in srgb,var(--ob5-deep) 66%,var(--ob5-raised));transform:perspective(900px) rotateX(8deg)}
+.ob5-commercial-ruler{position:absolute;left:7%;right:7%;bottom:14%;height:3px;background:var(--ob5-line);opacity:.55}
+.ob5-commercial-sheet{position:absolute;display:flex;flex-direction:column;gap:9px;width:29%;height:65%;padding:21px 18px;background:var(--ob5-surface);border:1px solid var(--ob5-line);box-shadow:13px 22px 30px color-mix(in srgb,var(--ob5-deep) 30%,transparent);color:var(--ob5-ink);transform:rotate(-5deg)}
+.ob5-commercial-sheet span{font-size:10px;font-weight:900;letter-spacing:.14em;color:var(--ob5-accent)}
+.ob5-commercial-sheet strong{margin:4px 0 13px;font-size:clamp(16px,2vw,28px);line-height:1}
+.ob5-commercial-sheet i{display:block;height:5px;width:88%;background:var(--ob5-line)}
+.ob5-commercial-sheet i.short{width:57%}
+.ob5-commercial-sheet b{align-self:flex-end;margin-top:auto;padding:8px 10px;border:2px solid var(--ob5-accent);color:var(--ob5-accent);font-size:10px;letter-spacing:.08em;text-transform:uppercase;transform:rotate(-7deg)}
+.ob5-commercial-request{left:6%;top:13%;animation:ob5-document-enter .7s cubic-bezier(.22,1,.36,1) both}
+.ob5-commercial-quote{left:35%;top:5%;transform:rotate(3deg);animation:ob5-quote-enter .75s cubic-bezier(.22,1,.36,1) .38s both}
+.ob5-commercial-invoice{right:4%;top:15%;transform:rotate(-2deg);animation:ob5-invoice-enter .75s cubic-bezier(.22,1,.36,1) .85s both}
+.ob5-commercial-handoff{position:absolute;left:8%;right:8%;bottom:5%;display:flex;align-items:center;gap:9px;color:var(--ob5-muted);font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.ob5-commercial-handoff span{height:2px;flex:1;background:var(--ob5-accent)}
+
+/* Finance starts at a transaction, splits into VAT and WHT, then assembles records. */
+.ob5-tax-scene{display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:linear-gradient(155deg,color-mix(in srgb,var(--ob5-deep) 82%,var(--ob5-surface)),var(--ob5-raised))}
+.ob5-tax-header{display:flex;align-items:baseline;gap:18px;padding:23px 24px;border-bottom:1px solid var(--ob5-line)}
+.ob5-tax-header span,.ob5-tax-header small,.ob5-tax-unit{font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;color:var(--ob5-accent)}
+.ob5-tax-header strong{font-size:clamp(19px,2.3vw,32px);letter-spacing:-.035em}
+.ob5-tax-header small{margin-left:auto;max-width:150px;color:var(--ob5-muted);font-size:9px;line-height:1.3}
+.ob5-tax-system{display:grid;grid-template-columns:26% 43% 31%;min-height:0;padding:28px 14px 22px}
+.ob5-tax-intake,.ob5-tax-processing,.ob5-tax-filing{position:relative;min-width:0;padding:16px;border-right:1px solid var(--ob5-line)}
+.ob5-tax-filing{border-right:0}
+.ob5-tax-document{display:flex;flex-direction:column;gap:12px;margin:37px auto 20px;width:min(90%,220px);height:58%;min-height:155px;padding:19px;background:var(--ob5-surface);border:1px solid var(--ob5-line);box-shadow:11px 18px 0 color-mix(in srgb,var(--ob5-accent) 11%,transparent);animation:ob5-tax-intake .7s cubic-bezier(.22,1,.36,1) both}
+.ob5-tax-document strong{font-size:clamp(13px,1.5vw,19px);line-height:1.1}
+.ob5-tax-document i{height:4px;background:var(--ob5-line)}
+.ob5-tax-document i:nth-of-type(2){width:70%}
+.ob5-tax-document span{margin-top:auto;color:var(--ob5-muted);font-size:11px}
+.ob5-tax-intake p{margin:0;text-align:center;font-size:11px;font-weight:800;color:var(--ob5-muted)}
+.ob5-tax-processing{display:grid;grid-template-rows:1fr 1fr 1.2fr;gap:7px}
+.ob5-tax-lane{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:12px;padding:0 12px;border-top:2px solid var(--ob5-accent);background:color-mix(in srgb,var(--ob5-accent) 8%,transparent);animation:ob5-tax-lane .7s cubic-bezier(.22,1,.36,1) .45s both}
+.ob5-tax-lane--wht{border-color:var(--ob5-accent-2);animation-delay:.67s}
+.ob5-tax-lane>span{font-size:18px;font-weight:900;color:var(--ob5-accent)}
+.ob5-tax-lane strong{font-size:11px}
+.ob5-tax-track{height:2px;background:var(--ob5-line);overflow:hidden}
+.ob5-tax-track i{display:block;width:45%;height:100%;background:var(--ob5-accent);animation:ob5-tax-route .8s ease .8s both}
+.ob5-tax-lane--wht .ob5-tax-track i{animation-delay:1s;background:var(--ob5-accent-2)}
+.ob5-tax-ledger{display:flex;flex-direction:column;gap:9px;padding:14px 16px;background:var(--ob5-surface);border:1px solid var(--ob5-line);animation:ob5-tax-ledger .7s cubic-bezier(.22,1,.36,1) 1.1s both}
+.ob5-tax-ledger>span{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--ob5-accent)}
+.ob5-tax-ledger-lines{display:grid;gap:5px}
+.ob5-tax-ledger-lines i{height:3px;background:var(--ob5-line)}
+.ob5-tax-ledger-lines i:nth-child(2){width:78%}
+.ob5-tax-ledger-lines i:nth-child(4){width:56%}
+.ob5-tax-ledger strong{margin-top:auto;font-size:12px}
+.ob5-tax-period{display:grid;gap:5px;margin:42px 0 18px}
+.ob5-tax-period span,.ob5-tax-files span{color:var(--ob5-muted);font-size:11px;font-weight:800}
+.ob5-tax-period strong{font-size:clamp(14px,1.7vw,21px)}
+.ob5-tax-timeline{position:relative;display:flex;justify-content:space-between;align-items:center;margin:20px 0 40px;width:100%;height:2px;background:var(--ob5-line)}
+.ob5-tax-timeline::before{content:"";position:absolute;left:0;top:0;height:100%;background:var(--ob5-accent);animation:ob5-timeline 1s ease 1.6s both}
+.ob5-tax-timeline i{position:relative;width:9px;height:9px;border-radius:50%;border:2px solid var(--ob5-accent);background:var(--ob5-surface)}
+.ob5-tax-files{display:grid;gap:8px;padding:18px 12px;border-left:4px solid var(--ob5-accent);background:var(--ob5-surface);animation:ob5-tax-ledger .6s ease 1.8s both}
+.ob5-tax-files strong{font-size:12px}
+.ob5-tax-base{display:flex;justify-content:space-between;gap:10px;padding:13px 24px;border-top:1px solid var(--ob5-line);color:var(--ob5-muted);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+
+/* Logistics is an actual roadside event. The vehicle stops for its paper handoff. */
+.ob5-logistics-scene{background:linear-gradient(180deg,color-mix(in srgb,var(--ob5-accent-2) 20%,var(--scene-intro)),var(--ob5-deep) 72%)}
+.ob5-logistics-sky{position:absolute;inset:0 0 38%;padding:25px;font-size:11px;font-weight:900;letter-spacing:.15em;color:var(--ob5-ink)}
+.ob5-logistics-sky>i{position:absolute;bottom:0;width:10%;height:31%;background:color-mix(in srgb,var(--ob5-accent) 14%,var(--ob5-deep))}
+.ob5-logistics-sky>i:nth-of-type(1){left:38%;height:44%}.ob5-logistics-sky>i:nth-of-type(2){left:59%;height:61%}.ob5-logistics-sky>i:nth-of-type(3){left:82%;height:37%}
+.ob5-logistics-warehouse{position:absolute;left:4%;bottom:28%;width:34%;height:36%;background:var(--ob5-raised);clip-path:polygon(0 16%,50% 0,100% 16%,100% 100%,0 100%)}
+.ob5-logistics-warehouse i{position:absolute;bottom:0;width:22%;height:54%;background:var(--ob5-deep);border:2px solid var(--ob5-line)}
+.ob5-logistics-warehouse i:nth-child(1){left:10%}.ob5-logistics-warehouse i:nth-child(2){left:39%}.ob5-logistics-warehouse i:nth-child(3){left:68%}
+.ob5-logistics-road{position:absolute;left:0;right:0;bottom:11%;height:27%;background:color-mix(in srgb,var(--ob5-deep) 65%,var(--ob5-surface))}
+.ob5-logistics-road span{position:absolute;left:0;right:0;top:57%;border-top:5px dashed var(--ob5-accent-2);opacity:.6}
+.ob5-logistics-truck{position:absolute;left:3%;bottom:27%;width:55%;height:31%;animation:ob5-truck-arrive 2.2s cubic-bezier(.25,.7,.3,1) both}
+.ob5-logistics-trailer{position:absolute;left:0;top:0;width:70%;height:72%;display:flex;align-items:center;justify-content:center;background:var(--ob5-raised);border:4px solid var(--ob5-line);box-shadow:14px 18px 0 color-mix(in srgb,var(--ob5-deep) 35%,transparent)}
+.ob5-logistics-trailer span{color:var(--ob5-accent);font-size:clamp(12px,1.5vw,20px);font-weight:900;letter-spacing:.04em}
+.ob5-logistics-trailer i{position:absolute;left:10%;right:10%;bottom:16%;height:4px;background:var(--ob5-accent)}
+.ob5-logistics-cab{position:absolute;left:70%;bottom:28%;width:24%;height:50%;background:var(--ob5-accent);clip-path:polygon(0 0,70% 0,100% 48%,100% 100%,0 100%)}
+.ob5-logistics-cab i{position:absolute;left:15%;top:12%;width:60%;height:35%;background:var(--ob5-deep)}
+.ob5-logistics-wheel{position:absolute;bottom:11%;width:12%;aspect-ratio:1;border-radius:50%;background:var(--ob5-deep);border:6px solid var(--ob5-ink)}
+.ob5-logistics-wheel--rear{left:12%}.ob5-logistics-wheel--front{left:75%}
+.ob5-logistics-waybill{position:absolute;right:6%;top:22%;display:flex;flex-direction:column;gap:12px;width:24%;height:37%;padding:17px;background:var(--ob5-surface);border:1px solid var(--ob5-line);box-shadow:13px 17px 0 color-mix(in srgb,var(--ob5-accent) 15%,transparent);transform:rotate(4deg);animation:ob5-waybill-handoff .7s cubic-bezier(.22,1,.36,1) 1.55s both}
+.ob5-logistics-waybill span{color:var(--ob5-accent);font-size:10px;font-weight:900;letter-spacing:.13em}
+.ob5-logistics-waybill strong{font-size:clamp(14px,1.9vw,24px);line-height:1.05}
+.ob5-logistics-waybill i{height:4px;background:var(--ob5-line)}
+.ob5-logistics-route{position:absolute;left:5%;right:5%;bottom:3%;display:flex;align-items:center;gap:11px;color:var(--ob5-muted);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.ob5-logistics-route i{height:2px;flex:1;background:var(--ob5-accent)}
+
+/* A service bay uses equipment scale, inspection, and a report handoff. */
+.ob5-field-scene{background:linear-gradient(120deg,var(--ob5-deep),color-mix(in srgb,var(--ob5-accent) 13%,var(--ob5-raised)))}
+.ob5-field-wall{position:absolute;inset:0 0 22%;padding:24px;color:var(--ob5-muted);font-size:11px;font-weight:900;letter-spacing:.12em}
+.ob5-field-wall>i{position:absolute;top:0;bottom:0;width:2px;background:var(--ob5-line);opacity:.6}.ob5-field-wall>i:nth-of-type(1){left:38%}.ob5-field-wall>i:nth-of-type(2){left:75%}
+.ob5-field-equipment{position:absolute;left:8%;bottom:16%;width:48%;height:60%;border:8px solid var(--ob5-line);background:var(--ob5-raised);box-shadow:22px 20px 0 color-mix(in srgb,var(--ob5-deep) 40%,transparent)}
+.ob5-field-screen{position:absolute;left:9%;right:9%;top:12%;height:22%;display:flex;gap:8px;align-items:center;padding:12px;background:var(--ob5-deep)}
+.ob5-field-screen i{height:3px;background:var(--ob5-accent)}.ob5-field-screen i:nth-child(1){width:25%}.ob5-field-screen i:nth-child(2){width:45%}.ob5-field-screen i:nth-child(3){width:15%}
+.ob5-field-vents{position:absolute;left:10%;right:10%;bottom:11%;display:grid;gap:12px}
+.ob5-field-vents i{height:6px;background:var(--ob5-line)}
+.ob5-field-access{position:absolute;right:8%;top:45%;width:18%;height:29%;border:3px solid var(--ob5-line)}
+.ob5-field-access i{position:absolute;left:40%;top:40%;width:12px;height:12px;border-radius:50%;background:var(--ob5-accent);animation:ob5-switch-on .4s ease .9s both}
+.ob5-field-worker{position:absolute;left:45%;bottom:11%;width:31%;height:66%;filter:drop-shadow(13px 18px 15px color-mix(in srgb,var(--ob5-deep) 43%,transparent));animation:ob5-inspect .8s cubic-bezier(.22,1,.36,1) both}
+.ob5-field-shadow{stroke:var(--ob5-line);stroke-width:7}.ob5-field-face{fill:var(--ob5-accent-2)}.ob5-field-helmet{fill:var(--ob5-surface)}.ob5-field-uniform{fill:var(--ob5-accent)}.ob5-field-limbs{fill:none;stroke:var(--ob5-ink);stroke-width:14;stroke-linecap:round}.ob5-field-tool{fill:var(--ob5-raised);stroke:var(--ob5-line);stroke-width:3}
+.ob5-field-inspection{position:absolute;left:4%;top:28%;display:grid;gap:8px;color:var(--ob5-accent);font-size:11px;font-weight:900;letter-spacing:.12em}
+.ob5-field-inspection i{width:100px;height:2px;background:var(--ob5-accent);transform-origin:left;animation:ob5-inspection-line .7s ease .62s both}
+.ob5-field-report{position:absolute;right:4%;bottom:14%;display:flex;flex-direction:column;gap:10px;width:25%;height:43%;padding:18px;background:var(--ob5-surface);border:1px solid var(--ob5-line);transform:rotate(-4deg);animation:ob5-report-enter .75s cubic-bezier(.22,1,.36,1) 1.2s both}
+.ob5-field-report span{color:var(--ob5-accent);font-size:10px;font-weight:900;letter-spacing:.12em}.ob5-field-report strong{font-size:clamp(14px,1.9vw,24px);line-height:1.1}.ob5-field-report i{height:4px;background:var(--ob5-line)}.ob5-field-report b{margin-top:auto;color:var(--ob5-accent);font-size:11px;text-transform:uppercase}
+
+.ob5-conversion-scene{display:grid;place-items:center;background:radial-gradient(circle at center,color-mix(in srgb,var(--ob5-accent) 24%,var(--ob5-raised)),var(--ob5-deep) 75%)}
+.ob5-conversion-strata{position:absolute;inset:0;display:grid;grid-template-columns:repeat(5,1fr)}
+.ob5-conversion-strata span{display:flex;align-items:flex-end;justify-content:center;padding-bottom:25px;border-right:1px solid var(--ob5-line);background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--ob5-accent) 12%,transparent));color:var(--ob5-muted);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;animation:ob5-stratum .7s cubic-bezier(.22,1,.36,1) both}
+.ob5-conversion-strata span:nth-child(2){animation-delay:.1s}.ob5-conversion-strata span:nth-child(3){animation-delay:.2s}.ob5-conversion-strata span:nth-child(4){animation-delay:.3s}.ob5-conversion-strata span:nth-child(5){animation-delay:.4s}
+.ob5-conversion-brand{position:relative;z-index:1;display:grid;gap:12px;padding:30px 50px;background:color-mix(in srgb,var(--ob5-surface) 86%,transparent);border-top:3px solid var(--ob5-accent);box-shadow:0 28px 70px color-mix(in srgb,var(--ob5-deep) 40%,transparent);text-align:center;animation:ob5-brand-resolve .7s cubic-bezier(.22,1,.36,1) .55s both}
+.ob5-conversion-brand span{font-size:clamp(34px,6vw,70px);font-weight:900;letter-spacing:.15em;color:var(--ob5-accent)}
+.ob5-conversion-brand strong{font-size:clamp(15px,2vw,25px)}
+.ob5-conversion-footer{position:absolute;bottom:78px;font-size:12px;font-weight:800;color:var(--ob5-muted)}
+
+@keyframes ob5-tenant-first{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:none}}
+@keyframes ob5-tenant-reveal{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes ob5-switch-on{from{opacity:.15}to{opacity:1}}
+@keyframes ob5-fleet-depart{from{transform:translateX(-60px)}to{transform:translateX(12px)}}
+@keyframes ob5-scan{to{stroke-dashoffset:0}}
+@keyframes ob5-document-enter{from{opacity:0;transform:translate(-60px,30px) rotate(-10deg)}to{opacity:1;transform:rotate(-5deg)}}
+@keyframes ob5-quote-enter{from{opacity:0;transform:translate(-50px,20px) rotate(-4deg)}to{opacity:1;transform:rotate(3deg)}}
+@keyframes ob5-invoice-enter{from{opacity:0;transform:translate(-40px,20px) rotate(-7deg)}to{opacity:1;transform:rotate(-2deg)}}
+@keyframes ob5-tax-intake{from{opacity:0;transform:translateX(-25px)}to{opacity:1;transform:none}}
+@keyframes ob5-tax-lane{from{opacity:0;transform:scaleX(.5);transform-origin:left}to{opacity:1;transform:scaleX(1)}}
+@keyframes ob5-tax-route{from{transform:translateX(-100%)}to{transform:translateX(225%)}}
+@keyframes ob5-tax-ledger{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes ob5-timeline{from{width:0}to{width:100%}}
+@keyframes ob5-truck-arrive{from{transform:translateX(-48%)}to{transform:translateX(12%)}}
+@keyframes ob5-waybill-handoff{from{opacity:0;transform:translate(-50px,35px) rotate(-9deg)}to{opacity:1;transform:rotate(4deg)}}
+@keyframes ob5-inspect{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes ob5-inspection-line{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes ob5-report-enter{from{opacity:0;transform:translate(20px,40px) rotate(8deg)}to{opacity:1;transform:rotate(-4deg)}}
+@keyframes ob5-stratum{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes ob5-brand-resolve{from{opacity:0;transform:scale(.91)}to{opacity:1;transform:none}}
+
+@media(max-width:900px){
+  .ob5-scene-cap{padding:0 16px;min-height:44px}
+  .ob5-tenant-heading{padding:13px 11px 0}
+  .ob5-tenant-footer{padding:8px;min-height:52px}
+  .ob5-tax-system{padding:12px 8px}
+  .ob5-tax-intake,.ob5-tax-processing,.ob5-tax-filing{padding:8px}
+  .ob5-tax-header{padding:13px 16px}
+  .ob5-tax-header small{display:none}
+}
+@container dlv (max-width:900px){
+  [data-dlv-sim] .ob5-scene-cap{padding:0 16px;min-height:44px}
+  [data-dlv-sim] .ob5-tenant-heading{padding:13px 11px 0}
+  [data-dlv-sim] .ob5-tenant-footer{padding:8px;min-height:52px}
+  [data-dlv-sim] .ob5-tax-system{padding:12px 8px}
+  [data-dlv-sim] .ob5-tax-intake,[data-dlv-sim] .ob5-tax-processing,[data-dlv-sim] .ob5-tax-filing{padding:8px}
+  [data-dlv-sim] .ob5-tax-header{padding:13px 16px}
+  [data-dlv-sim] .ob5-tax-header small{display:none}
+}
+@media(max-width:520px){
+  .ob5-tenant-grid{grid-template-columns:1fr;grid-template-rows:repeat(3,minmax(0,1fr))}
+  .ob5-tenant{flex-direction:row;border-right:0;border-bottom:3px solid var(--ob5-line)}
+  .ob5-tenant-heading{width:47%;flex:none;padding:10px 0 8px 12px}
+  .ob5-tenant h3{font-size:16px;margin:5px 0 3px}.ob5-tenant p{font-size:10px}.ob5-tenant-scope{font-size:8px}
+  .ob5-tenant-art{width:29%;flex:none}.ob5-tenant-footer{width:24%;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;border-top:0;border-left:1px solid var(--ob5-line);font-size:9px;line-height:1.2}.ob5-tenant-team{text-align:left;font-size:8px}
+  .ob5-tenant-baseline{min-height:32px;padding:9px 12px;font-size:8px}
+  .ob5-scene-cap{font-size:8px;gap:6px}.ob5-scene-cap strong{font-size:14px}
+  .ob5-commercial-desk{inset:18% 2% 2%}.ob5-commercial-sheet{height:69%;width:32%;padding:9px 7px;gap:6px}.ob5-commercial-sheet strong{font-size:13px;margin:2px 0 4px}.ob5-commercial-sheet span{font-size:7px}.ob5-commercial-sheet i{height:3px}.ob5-commercial-sheet b{padding:4px;font-size:7px}.ob5-commercial-request{left:2%}.ob5-commercial-quote{left:34%}.ob5-commercial-invoice{right:1%}.ob5-commercial-handoff{font-size:7px;gap:4px}
+  .ob5-tax-header{display:grid;gap:2px;padding:8px 12px}.ob5-tax-header span{font-size:8px}.ob5-tax-header strong{font-size:18px}
+  .ob5-tax-system{grid-template-columns:31% 38% 31%;padding:5px}.ob5-tax-intake,.ob5-tax-processing,.ob5-tax-filing{padding:5px}.ob5-tax-unit{font-size:7px}.ob5-tax-document{min-height:0;height:61%;margin:14px auto 6px;padding:7px;gap:5px}.ob5-tax-document strong{font-size:9px}.ob5-tax-document i{height:2px}.ob5-tax-document span,.ob5-tax-intake p{font-size:7px}.ob5-tax-lane{grid-template-columns:1fr;gap:0;padding:2px 5px}.ob5-tax-lane>span{font-size:13px}.ob5-tax-lane strong{font-size:7px}.ob5-tax-track{display:none}.ob5-tax-ledger{padding:5px;gap:4px}.ob5-tax-ledger>span{font-size:6px}.ob5-tax-ledger strong{font-size:8px}.ob5-tax-ledger-lines{gap:3px}.ob5-tax-ledger-lines i{height:2px}.ob5-tax-period{margin:12px 0 7px}.ob5-tax-period span,.ob5-tax-files span{font-size:7px}.ob5-tax-period strong{font-size:10px}.ob5-tax-timeline{margin:7px 0 16px}.ob5-tax-files{padding:7px 4px;gap:4px}.ob5-tax-files strong{font-size:8px}.ob5-tax-base{padding:7px;font-size:7px;gap:4px}
+  .ob5-logistics-warehouse{bottom:35%}.ob5-logistics-truck{width:70%;bottom:31%}.ob5-logistics-waybill{right:3%;top:13%;width:30%;height:38%;padding:8px;gap:5px}.ob5-logistics-waybill span{font-size:7px}.ob5-logistics-waybill strong{font-size:11px}.ob5-logistics-route{font-size:7px;gap:4px}
+  .ob5-field-equipment{left:3%;width:56%;height:64%}.ob5-field-worker{left:40%;width:34%;height:69%}.ob5-field-report{right:3%;width:30%;height:42%;padding:7px;gap:5px}.ob5-field-report span{font-size:7px}.ob5-field-report strong{font-size:10px}.ob5-field-report b{font-size:8px}.ob5-field-inspection{font-size:8px}.ob5-field-inspection i{width:50px}
+  .ob5-conversion-brand{padding:18px 22px}.ob5-conversion-brand span{font-size:32px}.ob5-conversion-brand strong{font-size:14px}.ob5-conversion-strata span{font-size:6px;padding-bottom:13px}.ob5-conversion-footer{bottom:45px;font-size:9px}
+}
+@container dlv (max-width:520px){
+  [data-dlv-sim] .ob5-tenant-grid{grid-template-columns:1fr;grid-template-rows:repeat(3,minmax(0,1fr))}
+  [data-dlv-sim] .ob5-tenant{flex-direction:row;border-right:0;border-bottom:3px solid var(--ob5-line)}
+  [data-dlv-sim] .ob5-tenant-heading{width:47%;flex:none;padding:10px 0 8px 12px}
+  [data-dlv-sim] .ob5-tenant h3{font-size:16px;margin:5px 0 3px}
+  [data-dlv-sim] .ob5-tenant p{font-size:10px}
+  [data-dlv-sim] .ob5-tenant-scope{font-size:8px}
+  [data-dlv-sim] .ob5-tenant-art{width:29%;flex:none}
+  [data-dlv-sim] .ob5-tenant-footer{width:24%;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;border-top:0;border-left:1px solid var(--ob5-line);font-size:9px;line-height:1.2}
+  [data-dlv-sim] .ob5-tenant-team{text-align:left;font-size:8px}
+  [data-dlv-sim] .ob5-tenant-baseline{min-height:32px;padding:9px 12px;font-size:8px}
+  [data-dlv-sim] .ob5-scene-cap{font-size:8px;gap:6px}
+  [data-dlv-sim] .ob5-scene-cap strong{font-size:14px}
+  [data-dlv-sim] .ob5-commercial-desk{inset:18% 2% 2%}
+  [data-dlv-sim] .ob5-commercial-sheet{height:69%;width:32%;padding:9px 7px;gap:6px}
+  [data-dlv-sim] .ob5-commercial-sheet strong{font-size:13px;margin:2px 0 4px}
+  [data-dlv-sim] .ob5-commercial-sheet span{font-size:7px}
+  [data-dlv-sim] .ob5-commercial-sheet i{height:3px}
+  [data-dlv-sim] .ob5-commercial-sheet b{padding:4px;font-size:7px}
+  [data-dlv-sim] .ob5-commercial-request{left:2%}
+  [data-dlv-sim] .ob5-commercial-quote{left:34%}
+  [data-dlv-sim] .ob5-commercial-invoice{right:1%}
+  [data-dlv-sim] .ob5-commercial-handoff{font-size:7px;gap:4px}
+  [data-dlv-sim] .ob5-tax-header{display:grid;gap:2px;padding:8px 12px}
+  [data-dlv-sim] .ob5-tax-header span{font-size:8px}
+  [data-dlv-sim] .ob5-tax-header strong{font-size:18px}
+  [data-dlv-sim] .ob5-tax-system{grid-template-columns:31% 38% 31%;padding:5px}
+  [data-dlv-sim] .ob5-tax-intake,[data-dlv-sim] .ob5-tax-processing,[data-dlv-sim] .ob5-tax-filing{padding:5px}
+  [data-dlv-sim] .ob5-tax-unit{font-size:7px}
+  [data-dlv-sim] .ob5-tax-document{min-height:0;height:61%;margin:14px auto 6px;padding:7px;gap:5px}
+  [data-dlv-sim] .ob5-tax-document strong{font-size:9px}
+  [data-dlv-sim] .ob5-tax-document i{height:2px}
+  [data-dlv-sim] .ob5-tax-document span,[data-dlv-sim] .ob5-tax-intake p{font-size:7px}
+  [data-dlv-sim] .ob5-tax-lane{grid-template-columns:1fr;gap:0;padding:2px 5px}
+  [data-dlv-sim] .ob5-tax-lane>span{font-size:13px}
+  [data-dlv-sim] .ob5-tax-lane strong{font-size:7px}
+  [data-dlv-sim] .ob5-tax-track{display:none}
+  [data-dlv-sim] .ob5-tax-ledger{padding:5px;gap:4px}
+  [data-dlv-sim] .ob5-tax-ledger>span{font-size:6px}
+  [data-dlv-sim] .ob5-tax-ledger strong{font-size:8px}
+  [data-dlv-sim] .ob5-tax-ledger-lines{gap:3px}
+  [data-dlv-sim] .ob5-tax-ledger-lines i{height:2px}
+  [data-dlv-sim] .ob5-tax-period{margin:12px 0 7px}
+  [data-dlv-sim] .ob5-tax-period span,[data-dlv-sim] .ob5-tax-files span{font-size:7px}
+  [data-dlv-sim] .ob5-tax-period strong{font-size:10px}
+  [data-dlv-sim] .ob5-tax-timeline{margin:7px 0 16px}
+  [data-dlv-sim] .ob5-tax-files{padding:7px 4px;gap:4px}
+  [data-dlv-sim] .ob5-tax-files strong{font-size:8px}
+  [data-dlv-sim] .ob5-tax-base{padding:7px;font-size:7px;gap:4px}
+  [data-dlv-sim] .ob5-logistics-warehouse{bottom:35%}
+  [data-dlv-sim] .ob5-logistics-truck{width:70%;bottom:31%}
+  [data-dlv-sim] .ob5-logistics-waybill{right:3%;top:13%;width:30%;height:38%;padding:8px;gap:5px}
+  [data-dlv-sim] .ob5-logistics-waybill span{font-size:7px}
+  [data-dlv-sim] .ob5-logistics-waybill strong{font-size:11px}
+  [data-dlv-sim] .ob5-logistics-route{font-size:7px;gap:4px}
+  [data-dlv-sim] .ob5-field-equipment{left:3%;width:56%;height:64%}
+  [data-dlv-sim] .ob5-field-worker{left:40%;width:34%;height:69%}
+  [data-dlv-sim] .ob5-field-report{right:3%;width:30%;height:42%;padding:7px;gap:5px}
+  [data-dlv-sim] .ob5-field-report span{font-size:7px}
+  [data-dlv-sim] .ob5-field-report strong{font-size:10px}
+  [data-dlv-sim] .ob5-field-report b{font-size:8px}
+  [data-dlv-sim] .ob5-field-inspection{font-size:8px}
+  [data-dlv-sim] .ob5-field-inspection i{width:50px}
+  [data-dlv-sim] .ob5-conversion-brand{padding:18px 22px}
+  [data-dlv-sim] .ob5-conversion-brand span{font-size:32px}
+  [data-dlv-sim] .ob5-conversion-brand strong{font-size:14px}
+  [data-dlv-sim] .ob5-conversion-strata span{font-size:6px;padding-bottom:13px}
+  [data-dlv-sim] .ob5-conversion-footer{bottom:45px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .ob5-scene *,.ob5-scene *::before,.ob5-scene *::after{animation:none!important;transition:none!important}
+  .ob5-retail-scan{stroke-dashoffset:0}
+  .ob5-tax-timeline::before{width:100%}
+}
+
+/* The narrow tax scene becomes a readable workflow, not a reduced desktop diagram. */
+@media(max-width:520px){
+  .ob5-tax-system{display:grid;grid-template-columns:1fr;grid-template-rows:80px 145px minmax(0,1fr);gap:0;padding:4px 12px}
+  .ob5-tax-intake,.ob5-tax-processing,.ob5-tax-filing{border-right:0;border-bottom:1px solid var(--ob5-line);padding:6px 0}
+  .ob5-tax-intake{display:grid;grid-template-columns:42% 1fr;align-items:center;column-gap:10px}
+  .ob5-tax-intake>.ob5-tax-unit{grid-column:1/-1}
+  .ob5-tax-document{width:100%;height:45px;min-height:0;margin:0;padding:5px 8px;gap:3px}
+  .ob5-tax-document strong{font-size:10px}.ob5-tax-document i{display:none}.ob5-tax-document span{font-size:8px}
+  .ob5-tax-intake p{font-size:10px;text-align:left}
+  .ob5-tax-processing{grid-template-columns:1fr 1fr;grid-template-rows:61px 1fr;gap:6px}
+  .ob5-tax-lane{grid-template-columns:1fr;gap:2px;padding:4px 8px}
+  .ob5-tax-lane>span{font-size:16px}.ob5-tax-lane strong{font-size:10px}
+  .ob5-tax-ledger{grid-column:1/-1;gap:3px;padding:5px 8px}
+  .ob5-tax-ledger>span{font-size:8px}.ob5-tax-ledger strong{font-size:10px}
+  .ob5-tax-ledger-lines{grid-template-columns:repeat(4,1fr);gap:5px}.ob5-tax-ledger-lines i{width:auto!important}
+  .ob5-tax-filing{display:grid;grid-template-columns:1fr 1fr;column-gap:10px;align-items:center;border-bottom:0}
+  .ob5-tax-filing>.ob5-tax-unit{grid-column:1/-1}
+  .ob5-tax-period{margin:0}.ob5-tax-period span,.ob5-tax-files span{font-size:10px}.ob5-tax-period strong{font-size:12px}
+  .ob5-tax-timeline{grid-column:1/-1;margin:2px 0 6px}
+  .ob5-tax-files{grid-column:2;grid-row:2;padding:5px 8px}.ob5-tax-files strong{font-size:10px}
+  .ob5-tax-base{font-size:8px}
+}
+@container dlv (max-width:520px){
+  [data-dlv-sim] .ob5-tax-system{display:grid;grid-template-columns:1fr;grid-template-rows:80px 145px minmax(0,1fr);gap:0;padding:4px 12px}
+  [data-dlv-sim] .ob5-tax-intake,[data-dlv-sim] .ob5-tax-processing,[data-dlv-sim] .ob5-tax-filing{border-right:0;border-bottom:1px solid var(--ob5-line);padding:6px 0}
+  [data-dlv-sim] .ob5-tax-intake{display:grid;grid-template-columns:42% 1fr;align-items:center;column-gap:10px}
+  [data-dlv-sim] .ob5-tax-intake>.ob5-tax-unit{grid-column:1/-1}
+  [data-dlv-sim] .ob5-tax-document{width:100%;height:45px;min-height:0;margin:0;padding:5px 8px;gap:3px}
+  [data-dlv-sim] .ob5-tax-document strong{font-size:10px}
+  [data-dlv-sim] .ob5-tax-document i{display:none}
+  [data-dlv-sim] .ob5-tax-document span{font-size:8px}
+  [data-dlv-sim] .ob5-tax-intake p{font-size:10px;text-align:left}
+  [data-dlv-sim] .ob5-tax-processing{grid-template-columns:1fr 1fr;grid-template-rows:61px 1fr;gap:6px}
+  [data-dlv-sim] .ob5-tax-lane{grid-template-columns:1fr;gap:2px;padding:4px 8px}
+  [data-dlv-sim] .ob5-tax-lane>span{font-size:16px}
+  [data-dlv-sim] .ob5-tax-lane strong{font-size:10px}
+  [data-dlv-sim] .ob5-tax-ledger{grid-column:1/-1;gap:3px;padding:5px 8px}
+  [data-dlv-sim] .ob5-tax-ledger>span{font-size:8px}
+  [data-dlv-sim] .ob5-tax-ledger strong{font-size:10px}
+  [data-dlv-sim] .ob5-tax-ledger-lines{grid-template-columns:repeat(4,1fr);gap:5px}
+  [data-dlv-sim] .ob5-tax-ledger-lines i{width:auto!important}
+  [data-dlv-sim] .ob5-tax-filing{display:grid;grid-template-columns:1fr 1fr;column-gap:10px;align-items:center;border-bottom:0}
+  [data-dlv-sim] .ob5-tax-filing>.ob5-tax-unit{grid-column:1/-1}
+  [data-dlv-sim] .ob5-tax-period{margin:0}
+  [data-dlv-sim] .ob5-tax-period span,[data-dlv-sim] .ob5-tax-files span{font-size:10px}
+  [data-dlv-sim] .ob5-tax-period strong{font-size:12px}
+  [data-dlv-sim] .ob5-tax-timeline{grid-column:1/-1;margin:2px 0 6px}
+  [data-dlv-sim] .ob5-tax-files{grid-column:2;grid-row:2;padding:5px 8px}
+  [data-dlv-sim] .ob5-tax-files strong{font-size:10px}
+  [data-dlv-sim] .ob5-tax-base{font-size:8px}
+}
