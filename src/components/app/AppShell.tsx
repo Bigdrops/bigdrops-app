@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, type ReactNode } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import PageLoader from '@/components/app/PageLoader'
@@ -69,8 +69,12 @@ const EditLetter = lazy(() => import('@/pages/EditLetter'))
 const ViewLetter = lazy(() => import('@/pages/ViewLetter'))
 const NotificationSettingsPage = lazy(() => import('@/pages/settings/NotificationSettingsPage'))
 const MoreOptions = lazy(() => import('@/pages/MoreOptions'))
-const ColdLaunchPreview = lazy(() => import('@/pages/ColdLaunchPreview'))
+const DesignLab = lazy(() => import('@/pages/DesignLab'))
 const PhotoHeroPreview = lazy(() => import('@/pages/PhotoHeroPreview'))
+const DashboardThemeExperiment = lazy(() => import('@/pages/DashboardThemeExperiment'))
+const InvoiceThemeExperiment = lazy(() => import('@/pages/InvoiceThemeExperiment'))
+const OnboardingV4Preview = lazy(() => import('@/pages/OnboardingV4Preview'))
+const OnboardingV5Preview = lazy(() => import('@/pages/OnboardingV5Preview'))
 const AccountingOverview = lazy(() => import('@/pages/accounting/AccountingOverview'))
 const Accounts = lazy(() => import('@/pages/accounting/Accounts'))
 const Periods = lazy(() => import('@/pages/accounting/Periods'))
@@ -97,6 +101,14 @@ type AppShellProps = {
 }
 
 const withBoundary = (element: ReactNode) => <ErrorBoundary>{element}</ErrorBoundary>
+
+function InitialRouteReadyMarker({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    onReady()
+  }, [onReady])
+
+  return null
+}
 
 // Theme application uses user-scoped preferences (user_preferences table),
 // NOT tenant-scoped settings. This ensures each user's theme choice is independent.
@@ -246,9 +258,14 @@ function AppThemeManager({ userId, preference }: { userId: string; preference: U
 }
 
 export default function AppShell({ session, profile, onProfileUpdate }: AppShellProps) {
+  const location = useLocation()
   const provider = session?.user?.app_metadata?.provider
   const showSetPassword = Boolean(profile && !profile.has_password && provider !== 'email')
   const showAndroidBackHandler = isAndroidNative()
+  const [initialRouteReady, setInitialRouteReady] = useState(false)
+  const markInitialRouteReady = useCallback(() => {
+    setInitialRouteReady(true)
+  }, [])
 
   // SINGLE source of truth for theme preference state.
   // Both AppThemeManager and DashboardOverview consume this shared state.
@@ -272,7 +289,14 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <SetPasswordModal onComplete={onProfileUpdate} />
         </Suspense>
       )}
-      <Suspense fallback={<PageLoader />}>
+      <Suspense
+        fallback={
+          <PageLoader
+            variant={initialRouteReady ? 'default' : 'startup'}
+            tipPathname={location.pathname || '/'}
+          />
+        }
+      >
         <ThemePreferenceProvider value={{ preference, loading: prefLoading, save: saveThemePref, refresh: () => Promise.resolve() }}>
           <AppThemeManager userId={session.user.id} preference={preference} />
         <AuthorizationProvider userId={session.user.id}>
@@ -297,8 +321,12 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/settings" element={withBoundary(<Settings />)} />
           <Route path="/settings/notifications" element={withBoundary(<NotificationSettingsPage />)} />
           <Route path="/more" element={withBoundary(<MoreOptions />)} />
-          <Route path="/cold-launch-preview" element={withBoundary(<ColdLaunchPreview />)} />
+          <Route path="/design-lab" element={withBoundary(<DesignLab />)} />
           <Route path="/photohero-preview" element={withBoundary(<PhotoHeroPreview />)} />
+          <Route path="/design-lab/dashboard-theme" element={withBoundary(<DashboardThemeExperiment />)} />
+          <Route path="/design-lab/invoice-theme" element={withBoundary(<InvoiceThemeExperiment />)} />
+          <Route path="/design-lab/onboarding-v4" element={withBoundary(<OnboardingV4Preview />)} />
+          <Route path="/design-lab/onboarding-v5" element={withBoundary(<OnboardingV5Preview />)} />
           <Route path="/accounting" element={withBoundary(<AccountingOverview />)} />
           <Route path="/accounting/accounts" element={withBoundary(<Accounts />)} />
           <Route path="/accounting/periods" element={withBoundary(<Periods />)} />
@@ -340,6 +368,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
             <Route path="/debug/errors" element={withBoundary(<ErrorsDashboard />)} />
           )}
             </Routes>
+            <InitialRouteReadyMarker onReady={markInitialRouteReady} />
           </AuthorizationProvider>
         </ThemePreferenceProvider>
       </Suspense>

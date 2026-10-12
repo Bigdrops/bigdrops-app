@@ -53,8 +53,7 @@ test('more sheet groups still resolve to real routes', () => {
     '/item-library',
     '/settings',
     '/tax',
-    '/cold-launch-preview',
-    '/photohero-preview',
+    '/design-lab',
   ])
   const pathByKey = {
     letters: '/letters',
@@ -64,8 +63,7 @@ test('more sheet groups still resolve to real routes', () => {
     'item-library': '/item-library',
     settings: '/settings',
     tax: '/tax',
-    'cold-launch-preview': '/cold-launch-preview',
-    'photohero-preview': '/photohero-preview',
+    'design-lab': '/design-lab',
   }
   for (const group of moreGroups) {
     for (const item of group.items) {
@@ -78,25 +76,26 @@ test('more sheet groups still resolve to real routes', () => {
   }
 })
 
-test('preview gateways keep their restored labels and route targets', () => {
+test('Design Lab replaces preview gateways under More Options', () => {
   const workspaceItems = moreGroups.flatMap((group) => group.items)
-  const coldLaunchMore = workspaceItems.find((item) => item.key === 'cold-launch-preview')
-  const onboardingMore = workspaceItems.find((item) => item.key === 'photohero-preview')
-  const coldLaunchDrawer = mobileDrawerUtilityNav.find((item) => item.key === 'cold-launch-preview')
-  const onboardingDrawer = mobileDrawerUtilityNav.find((item) => item.key === 'photohero-preview')
+  const designLabMore = workspaceItems.find((item) => item.key === 'design-lab')
+  const designLabDrawer = mobileDrawerUtilityNav.find((item) => item.key === 'design-lab')
   const moreOptionsSource = readFileSync(resolve('src/pages/MoreOptions.tsx'), 'utf8')
   const appShellSource = readFileSync(resolve('src/components/app/AppShell.tsx'), 'utf8')
+  const designLabSource = readFileSync(resolve('src/pages/DesignLab.tsx'), 'utf8')
+  const registrySource = readFileSync(resolve('src/lib/designLabPreviews.ts'), 'utf8')
 
-  assert.equal(coldLaunchMore?.label, 'Cold Launch Preview')
-  assert.equal(onboardingMore?.label, 'Onboarding Preview')
-  assert.equal(coldLaunchDrawer?.label, 'Cold Launch Preview')
-  assert.equal(coldLaunchDrawer?.path, '/cold-launch-preview')
-  assert.equal(onboardingDrawer?.label, 'Onboarding Preview')
-  assert.equal(onboardingDrawer?.path, '/photohero-preview')
-  assert.match(moreOptionsSource, /label: 'Cold Launch Preview'[\s\S]*path: '\/cold-launch-preview'/)
-  assert.match(moreOptionsSource, /label: 'Onboarding Preview'[\s\S]*path: '\/photohero-preview'/)
-  assert.doesNotMatch(moreOptionsSource, /Design Previews/)
+  assert.equal(designLabMore?.label, 'Design Lab')
+  assert.equal(designLabDrawer?.label, 'Design Lab')
+  assert.equal(designLabDrawer?.path, '/design-lab')
+  assert.match(moreOptionsSource, /label: 'Design Lab'[\s\S]*path: '\/design-lab'/)
+  assert.doesNotMatch(moreOptionsSource, /Cold Launch Preview|Onboarding Preview/)
+  assert.match(appShellSource, /<Route path="\/design-lab"/)
   assert.doesNotMatch(moreOptionsSource, /PhotoHero Preview/)
-  assert.match(appShellSource, /<Route path="\/cold-launch-preview"/)
   assert.match(appShellSource, /<Route path="\/photohero-preview"/)
+  assert.doesNotMatch(appShellSource, /ColdLaunchPreview|\/cold-launch-preview/)
+  assert.match(designLabSource, /DESIGN_LAB_PREVIEWS/)
+  assert.match(registrySource, /id: 'onboarding-v2'/)
+  assert.match(registrySource, /name: 'Onboarding Experience'/)
+  assert.match(registrySource, /route: '\/photohero-preview'/)
 })

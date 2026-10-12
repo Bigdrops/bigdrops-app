@@ -558,7 +558,7 @@ function App() {
             <NativeAuthRedirect />
           </>
         )}
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<PageLoader variant="startup" tipPathname="/" />}>
           <Routes>
             <Route path="/reset-password" element={withBoundary(<ResetPassword />)} />
             <Route
@@ -573,10 +573,10 @@ function App() {
                   ? !offlineAccessState.allowed
                     ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                     : offlineAccessLoading
-                      ? withBoundary(<PageLoader />)
+                      ? withBoundary(<PageLoader variant="startup" tipPathname="/" />)
                       : withBoundary(<Login />)
                   : waitingForProfileResolution
-                    ? withBoundary(<PageLoader />)
+                    ? withBoundary(<PageLoader variant="startup" tipPathname="/" />)
                     : !offlineAccessState.allowed
                       ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                       : withBoundary(

@@ -75,6 +75,8 @@ interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   hidePageHeader?: boolean
   hideMobileHomeHeader?: boolean
   immersive?: boolean
+  /** Retain the desktop app shell while keeping the mobile route immersive. */
+  desktopShell?: boolean
   contentClassName?: string
 }
 
@@ -85,6 +87,7 @@ export default function Layout({
   hidePageHeader = false,
   hideMobileHomeHeader = false,
   immersive = false,
+  desktopShell = false,
   contentClassName = '',
   ...props
 }: LayoutProps) {
@@ -101,6 +104,7 @@ export default function Layout({
   const isHome = location.pathname === '/' || props['data-bd-page'] === 'dashboard'
   const salesRouteActive = activeTab === 'sales'
   const presalesRouteActive = isPathActive(location.pathname, '/rfqs') || isPathActive(location.pathname, '/cost-pricing-sheets')
+  const showDesktopShell = !immersive || desktopShell
   
   const openSidebar = React.useCallback(() => setSidebarOpen(true), [])
 
@@ -134,8 +138,7 @@ export default function Layout({
       'item-library': '/item-library',
       tax: '/tax',
       settings: '/settings',
-      'cold-launch-preview': '/cold-launch-preview',
-      'photohero-preview': '/photohero-preview',
+      'design-lab': '/design-lab',
     }
     setMoreOpen(false)
     setSidebarOpen(false)
@@ -195,7 +198,7 @@ export default function Layout({
   return (
     <div data-bd-shell="app" className="app-ambient">
       {/* Desktop Navigation */}
-      {!immersive && (
+      {showDesktopShell && (
         <DesktopSidebar
           session={session}
           activeTab={activeTab}
@@ -260,7 +263,7 @@ export default function Layout({
             data-bd-shell="content"
             className={cn(
               "flex-1 w-full",
-              !isHome && "md:px-[var(--bd-layout-padding,1.5rem)] md:py-[var(--bd-space-md)]",
+              !isHome && showDesktopShell && "md:px-[var(--bd-layout-padding,1.5rem)] md:py-[var(--bd-space-md)]",
               "px-0 pb-24 pt-0", // Mobile defaults
               contentClassName
             )}
