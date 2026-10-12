@@ -4,6 +4,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import type { PluginListenerHandle } from '@capacitor/core'
 import { emitFeedback } from '@/lib/NativeFeedbackBus'
 import { dismissActiveKeyboard, getKeyboardViewportState } from '@/lib/appKeyboard'
+import { consultAndroidBackGuards } from '@/lib/native/androidBackGuard'
 import { isAndroidNative } from '@/lib/native/capacitor'
 
 const ROOT_PATHS = new Set([
@@ -179,6 +180,11 @@ export default function AndroidBackHandler() {
         if (keyboardState.isOpen && dismissActiveKeyboard()) return
 
         if (await tryCloseOverlay()) return
+
+        // Route-scoped interceptors (for example an unsaved-changes guard on
+        // a form) run before default navigation. They registered here instead
+        // of adding competing backButton listeners.
+        if (consultAndroidBackGuards()) return
 
         const pathname = pathnameRef.current
         const routeState = stateRef.current
