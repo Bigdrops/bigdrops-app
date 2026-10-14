@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "TypeScript layer: widen adapter search fields (quick fix), shared search contract types, documentSearchService RPC wrapper, useDocumentSearch hook, DocumentSearchResults component. Independent of FEAT-001 except that the RPC called by documentSearchService must exist in the database (FEAT-001 must be pushed before manual runtime testing, but FEAT-002 can be written and typechecked before the push).",
+  "status": "completed",
+  "steps": [
+    "Read src/config/moduleAdapters.ts lines 280-400 (quotationsAdapter and invoicesAdapter fetcher bodies) to confirm the exact current SELECT string and ILIKE OR filter before editing.",
+    "Edit src/config/moduleAdapters.ts — quotationsAdapter: change the .select() string to include 'quotation_title'; change the .or() filter to add 'quotation_title.ilike.%${term}%'. invoicesAdapter: same for 'invoice_title'. Make surgical changes only — do not touch any other adapter logic, cache logic, or status resolution.",
+    "Read src/lib/formatters/date.ts to confirm the exact export name of the date formatter (expected: formatDisplayDate).",
+    "Read src/components/loading/AppLoadingStates.tsx to confirm the SkeletonCard/SkeletonRow component API before referencing them in DocumentSearchResults.",
+    "Create src/domain/search/types.ts with: DocumentType union type ('quotation' | 'invoice' | 'waybill' | 'csr' | 'rfq' | 'cps'), MatchSource union type ('number' | 'client' | 'title' | 'item_description' | 'item_make' | 'item_sub_description' | 'notes'), DocumentSearchResult interface (all fields from the search_documents RETURNS TABLE in plan.md), DocumentSearchParams interface (term: string, document_types?: DocumentType[] | null, client_id?: string | null, limit?: number), DocumentSearchResponse interface (results: DocumentSearchResult[], has_more: boolean). Export all.",
+    "Create src/modules/search/documentSearchService.ts. Import TenantClient from @/lib/tenantClient and types from @/domain/search/types. Export async function searchDocuments(tenantClient: TenantClient, params: DocumentSearchParams): Promise<DocumentSearchResponse>. Implementation: validate term (return empty response if term.trim().length < 2), call tenantClient.rpc('search_documents', { p_term: params.term, p_document_types: params.document_types ?? null, p_client_id: params.client_id ?? null, p_limit: params.limit ?? 50 }), destructure { data, error }, throw on error with prefix 'Search failed: ', return { results: (data as DocumentSearchResult[]) ?? [], has_more: (data?.length ?? 0) >= (params.limit ?? 50) }.",
+    "Create src/hooks/useDocumentSearch.ts. Import useEntity from @/lib/tenant/contexts, useCallback/useEffect/useRef/useState from react, searchDocuments from @/modules/search/documentSearchService, DocumentSearchResult/DocumentSearchParams/DocumentType from @/domain/search/types. Interface: useDocumentSearch(options?: { document_types?: DocumentType[]; client_id?: string | null }). Returns { search: string, setSearch: (t: string) => void, results: DocumentSearchResult[], loading: boolean, error: string | null, reset: () => void }. Implementation: local search state, debounce 350ms (useRef<ReturnType<typeof setTimeout>>), useEffect that cancels on cleanup (cancelled flag), calls searchDocuments, clears results when term < 2 chars. Requires tenantClient from useEntity() — throw if not ready.",
+    "Create src/components/search/DocumentSearchResults.tsx. Props: results: DocumentSearchResult[], loading: boolean, error: string | null, onNavigate: (result: DocumentSearchResult) => void. Render: loading state = 3 SkeletonCard instances. Error state = small error paragraph. Empty results (non-loading) = neutral 'No results.' paragraph. Results list = clickable card per result showing document type badge, document_number, title (if non-null), client_name (if non-null), document_date (formatted via formatDisplayDate), match_source + matched_text hint. Each card is a <button> element calling onNavigate(result). No financial amounts shown. Use existing Tailwind class conventions from the project (bd-surface, bd-text, bd-border etc.)."
+  ],
+  "acceptance_criteria": [
+    "bun run audit:load passes with no new high-risk patterns",
+    "bun run typecheck passes with no errors in any new or modified file",
+    "quotationsAdapter in moduleAdapters.ts selects quotation_title and includes it in the ILIKE OR filter",
+    "invoicesAdapter in moduleAdapters.ts selects invoice_title and includes it in the ILIKE OR filter",
+    "src/domain/search/types.ts exports DocumentSearchResult, DocumentSearchParams, DocumentSearchResponse, DocumentType, MatchSource",
+    "src/modules/search/documentSearchService.ts exports searchDocuments function",
+    "src/hooks/useDocumentSearch.ts exports useDocumentSearch hook",
+    "src/components/search/DocumentSearchResults.tsx exports DocumentSearchResults component"
+  ],
+  "verification": [
+    "bun run audit:load",
+    "bun run typecheck"
+  ],
+  "blocked_reason": null,
+  "findings": "bun run audit:load: exit 0 — no new high-risk patterns introduced. bun run typecheck: exit 0 — no type errors in any new or modified file. All five FEAT-002 deliverables created and passing."
+}

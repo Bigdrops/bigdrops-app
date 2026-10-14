@@ -1,0 +1,7 @@
+{
+  "task_id": "task-document-search-phase2",
+  "task_description": "Implement the Phase 2 BOURXE document search platform. One reusable search authority (search_documents SQL RPC + TypeScript service + React hook + results UI) that covers Quotations and Invoices, extensible to future document types. Acceptance reference: SASQUO-382 must be discoverable by document number, client name, title, and item description even when item_id IS NULL.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

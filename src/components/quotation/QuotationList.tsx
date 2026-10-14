@@ -50,6 +50,8 @@ import { useDocumentQuery } from '@/context/DocumentQueryContext'
 import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
+import { useDocumentSearch } from '@/hooks/useDocumentSearch'
+import { DocumentSearchResults } from '@/components/search/DocumentSearchResults'
 
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
@@ -60,6 +62,15 @@ export default function QuotationList() {
   const { settings } = useSettings()
   const { state, patchUpdate, reset, results: quotations, loading } = useDocumentQuery()
   const [showFilterOverlay, setShowFilterOverlay] = useState(false)
+
+  // ─── Document search platform ────────────────────────────────────────────
+  const documentSearch = useDocumentSearch({ document_types: ['quotation'] })
+  const isSearchActive = state.search.trim().length >= 2
+
+  // Keep the document search hook in sync with the shared search term
+  useEffect(() => {
+    documentSearch.setSearch(state.search)
+  }, [state.search])
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const [archiveId, setArchiveId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -459,10 +470,24 @@ export default function QuotationList() {
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="quotations" />
         }
-        records={mappedQuotations}
+        records={isSearchActive ? [] : mappedQuotations}
         renderRow={renderQuotationRow}
-        beforeListContent={syncRecoveryBanner}
-        emptyState={(
+        beforeListContent={
+          isSearchActive
+            ? (
+              <>
+                {syncRecoveryBanner}
+                <DocumentSearchResults
+                  results={documentSearch.results}
+                  loading={documentSearch.loading}
+                  error={documentSearch.error}
+                  onNavigate={(r) => navigate(r.route)}
+                />
+              </>
+            )
+            : syncRecoveryBanner
+        }
+        emptyState={isSearchActive ? null : (
           <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted">
                <ClipboardList className="h-6 w-6" />

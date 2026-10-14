@@ -38,6 +38,8 @@ import { useMultiSelect } from "@/hooks/useMultiSelect"
 import SelectableRowCard from "@/components/batch/SelectableRowCard"
 import BatchActionFooter, { createInvoiceBatchActions } from "@/components/batch/BatchActionFooter"
 import { ContextualExportDropdown } from "@/components/export/ContextualExportDropdown"
+import { useDocumentSearch } from "@/hooks/useDocumentSearch"
+import { DocumentSearchResults } from "@/components/search/DocumentSearchResults"
 
 function InvoicesContent() {
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
@@ -45,6 +47,15 @@ function InvoicesContent() {
   const entityId = entity?.id ?? null
   const { state, patchUpdate, reset, results, loading } = useDocumentQuery("invoices")
   const { settings } = useSettings()
+
+  // ─── Document search platform ────────────────────────────────────────────
+  const documentSearch = useDocumentSearch({ document_types: ['invoice'] })
+  const isSearchActive = state.search.trim().length >= 2
+
+  // Keep document search hook in sync with the shared search term
+  useEffect(() => {
+    documentSearch.setSearch(state.search)
+  }, [state.search])
 
   // ─── NON-FILTER STATE (page-specific, not query-related) ───
   const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null)
@@ -296,11 +307,19 @@ function InvoicesContent() {
             recordCount={invoices.length}
           />
         }
-        records={invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
+        records={isSearchActive ? [] : invoices} renderRow={renderInvoiceRow} loadMoreLabel="Load more invoices"
         filterOverlay={
           <QueryFilterOverlay open={showFilterOverlay} onClose={() => setShowFilterOverlay(false)} module="invoices" />
         }
-        emptyState={(
+        beforeListContent={isSearchActive ? (
+          <DocumentSearchResults
+            results={documentSearch.results}
+            loading={documentSearch.loading}
+            error={documentSearch.error}
+            onNavigate={(r) => navigate(r.route)}
+          />
+        ) : undefined}
+        emptyState={isSearchActive ? null : (
           <div className="rounded-[24px] border border-dashed border-bd-border bg-bd-surface/50 py-16 text-center shadow-inner">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-bd-surface-muted text-bd-text-muted"><Receipt className="h-6 w-6" /></div>
             <div className="mt-4 text-sm font-bold text-bd-text">No Invoices Found</div>

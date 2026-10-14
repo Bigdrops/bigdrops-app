@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Supabase migration: enable pg_trgm extension, create GIN trigram indexes on quotation/invoice title and item description/make columns, create search_documents SQL STABLE RPC in tenant schemas, update provisioning to install it for new tenants, backfill all existing entity_* schemas.",
+  "status": "completed",
+  "steps": [
+    "Read the latest provision_entity definition from supabase/migrations/20261005150000_tenant_rpc_cps_lineage_metadata.sql to see the exact current step numbering before writing the migration.",
+    "Read supabase/migrations/20260828000001_item_library_tenant_objects.sql to verify the exact __SCHEMA__ / __SCHEMA_TEXT__ placeholder and EXECUTE replace() pattern used by _prov_install_item_library.",
+    "Create supabase/migrations/20261014100000_document_search_platform.sql with these sections in order:\n  A. `CREATE EXTENSION IF NOT EXISTS pg_trgm;`\n  B. Create `public._prov_install_search(p_schema_name text)` using LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'. Inside, build the GIN index DDL and the search_documents function body as a text string, then EXECUTE replace(replace(v_body, '__SCHEMA__', v_schema_ident), '__SCHEMA_TEXT__', p_schema_name) exactly as _prov_install_item_library does.\n  C. GIN indexes to create inside _prov_install_search (use IF NOT EXISTS, no CONCURRENTLY): idx_quotations_quotation_title_trgm (quotations.quotation_title gin_trgm_ops), idx_quotation_items_description_trgm (quotation_items.description gin_trgm_ops), idx_quotation_items_make_trgm (quotation_items.make gin_trgm_ops), idx_invoices_invoice_title_trgm (invoices.invoice_title gin_trgm_ops), idx_invoice_items_description_trgm (invoice_items.description gin_trgm_ops), idx_invoice_items_make_trgm (invoice_items.make gin_trgm_ops).\n  D. search_documents RPC: LANGUAGE sql STABLE, no SECURITY DEFINER. Parameters: p_term text, p_document_types text[] DEFAULT NULL, p_client_id uuid DEFAULT NULL, p_limit integer DEFAULT 50. Returns TABLE with columns: document_type text, document_id uuid, document_number text, title text, client_id uuid, client_name text, document_date date, match_source text, matched_text text, match_rank integer, route text. Full SQL body is in plan.md — implement exactly as specified there.\n  E. Install into tenant_master_template (guarded by schema existence check).\n  F. Backfill DO block: iterate pg_namespace WHERE nspname LIKE 'entity\\_%%' AND EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = nspname AND tablename = 'quotations'), call _prov_install_search for each. Wrap each call in BEGIN/EXCEPTION WHEN OTHERS THEN RAISE WARNING to skip schemas with partial provisioning.\n  G. Redefine provision_entity to add `PERFORM public._prov_install_search(v_schema_name);` after `_prov_install_item_library_reconciliation` call. Model the full provision_entity redefinition on the latest version from 20261005150000. Do NOT add a new step number — insert the call as a sub-step labeled '11d. Install document search RPC and indexes'.\n  H. `NOTIFY pgrst, 'reload schema';`",
+    "Run `supabase db push`. Read the full output. If any error occurs, fix the SQL and push again. Repeat until push succeeds with no errors.",
+    "Run `supabase db shell` then execute `NOTIFY pgrst, 'reload schema';` to confirm the cache reload.",
+    "Update FEAT-001 status to 'completed' and record the push result in findings."
+  ],
+  "acceptance_criteria": [
+    "supabase db push exits 0 with no errors for migration 20261014100000_document_search_platform.sql",
+    "pg_trgm extension exists in the database after push",
+    "search_documents function exists in entity_bigdrops-main_main schema after push",
+    "search_documents function exists in tenant_master_template schema after push",
+    "GIN trigram indexes exist on quotations.quotation_title, quotation_items.description, quotation_items.make, invoices.invoice_title, invoice_items.description, invoice_items.make in entity_bigdrops-main_main",
+    "provision_entity function body references _prov_install_search"
+  ],
+  "verification": [
+    "supabase db push (must succeed, exit code 0)",
+    "supabase db shell then: SELECT to_regprocedure('entity_bigdrops-main_main.search_documents(text, text[], uuid, integer)'); — must return non-null",
+    "supabase db shell then: SELECT to_regprocedure('tenant_master_template.search_documents(text, text[], uuid, integer)'); — must return non-null"
+  ],
+  "blocked_reason": null,
+  "findings": "supabase db push succeeded with exit code 0 on 2026-10-14. Verified: (1) pg_trgm extension active; (2) search_documents(text, text[], uuid, integer) exists in entity_bigdrops-main_main; (3) search_documents exists in tenant_master_template; (4) all 6 GIN trigram indexes created in entity_bigdrops-main_main: idx_quotations_quotation_title_trgm, idx_quotation_items_description_trgm, idx_quotation_items_make_trgm, idx_invoices_invoice_title_trgm, idx_invoice_items_description_trgm, idx_invoice_items_make_trgm; (5) provision_entity body references _prov_install_search (has_search_step = true). Committed as 54168aea."
+}
