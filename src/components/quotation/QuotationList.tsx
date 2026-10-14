@@ -481,6 +481,7 @@ export default function QuotationList() {
                   results={documentSearch.results}
                   loading={documentSearch.loading}
                   error={documentSearch.error}
+                  hasMore={documentSearch.has_more}
                   onNavigate={(r) => navigate(r.route)}
                 />
               </>

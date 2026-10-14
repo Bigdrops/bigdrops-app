@@ -26,6 +26,7 @@ interface UseDocumentSearchResult {
   search: string
   setSearch: (term: string) => void
   results: DocumentSearchResult[]
+  has_more: boolean
   loading: boolean
   error: string | null
   reset: () => void
@@ -38,6 +39,7 @@ export function useDocumentSearch(
 
   const [search, setSearchState] = useState('')
   const [results, setResults] = useState<DocumentSearchResult[]>([])
+  const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -56,6 +58,7 @@ export function useDocumentSearch(
     if (timerRef.current) clearTimeout(timerRef.current)
     setSearchState('')
     setResults([])
+    setHasMore(false)
     setLoading(false)
     setError(null)
   }, [])
@@ -68,6 +71,7 @@ export function useDocumentSearch(
 
     if (term.length < MIN_TERM_LENGTH) {
       setResults([])
+      setHasMore(false)
       setLoading(false)
       setError(null)
       return
@@ -90,6 +94,7 @@ export function useDocumentSearch(
 
         if (!cancelled) {
           setResults(response.results)
+          setHasMore(response.has_more)
           setLoading(false)
         }
       } catch (err) {
@@ -113,5 +118,5 @@ export function useDocumentSearch(
     }
   }, [])
 
-  return { search, setSearch, results, loading, error, reset }
+  return { search, setSearch, results, has_more: hasMore, loading, error, reset }
 }

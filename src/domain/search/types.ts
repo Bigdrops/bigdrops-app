@@ -68,7 +68,8 @@ export interface DocumentSearchParams {
  * Shape returned by searchDocuments() and stored in useDocumentSearch state.
  */
 export interface DocumentSearchResponse {
+  /** At most `limit` rows, best match first. */
   results: DocumentSearchResult[]
-  /** True when the result count equals or exceeds the requested limit — more rows may exist. */
+  /** True when at least one further matching document exists beyond `results`. */
   has_more: boolean
 }

@@ -17,6 +17,11 @@ import type {
  * Returns an empty response immediately when the term is shorter than 2 characters —
  * short terms produce expensive full-table scans and are not useful to the user.
  *
+ * has_more is derived by requesting one row more than the caller asked for, returning
+ * only `limit` rows, and reporting has_more only when that extra row arrived.  Asking
+ * for exactly `limit` rows cannot distinguish "exactly limit matches" from "more than
+ * limit matches".
+ *
  * Follows the tenantClient.rpc() pattern from src/lib/audit.ts:
  *   const { data, error } = await tenantClient.rpc(...)
  */
@@ -36,17 +41,18 @@ export async function searchDocuments(
     p_term: term,
     p_document_types: params.document_types ?? null,
     p_client_id: params.client_id ?? null,
-    p_limit: limit,
+    // One extra row is requested so has_more is a fact, not an assumption.
+    p_limit: limit + 1,
   })
 
   if (error) {
     throw new Error(`Search failed: ${error.message}`)
   }
 
-  const results = (data as DocumentSearchResult[]) ?? []
+  const rawRows = (data as DocumentSearchResult[]) ?? []
 
   return {
-    results,
-    has_more: results.length >= limit,
+    results: rawRows.slice(0, limit),
+    has_more: rawRows.length > limit,
   }
 }

@@ -101,6 +101,8 @@ interface DocumentSearchResultsProps {
   results: DocumentSearchResult[]
   loading: boolean
   error: string | null
+  /** True when further matches exist beyond the rendered results. */
+  hasMore?: boolean
   onNavigate: (result: DocumentSearchResult) => void
 }
 
@@ -108,6 +110,7 @@ export function DocumentSearchResults({
   results,
   loading,
   error,
+  hasMore = false,
   onNavigate,
 }: DocumentSearchResultsProps) {
   if (loading) {
@@ -145,6 +148,11 @@ export function DocumentSearchResults({
           <ResultCard result={result} onNavigate={onNavigate} />
         </li>
       ))}
+      {hasMore ? (
+        <li className="px-1 pt-1 text-[11px] text-bd-text-muted">
+          More matching documents exist. Refine the search to narrow the list.
+        </li>
+      ) : null}
     </ul>
   )
 }
