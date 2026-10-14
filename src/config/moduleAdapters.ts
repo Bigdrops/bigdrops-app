@@ -140,12 +140,12 @@ const invoicesAdapter: DocumentAdapter<FinancialQueryState, any> = {
 
     let q = client
       .from("invoices")
-      .select("id, invoice_number, client_name, issue_date, due_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
+      .select("id, invoice_number, invoice_title, client_name, issue_date, due_date, created_at, total, status, project_id, custom_fields, payments(cash_amount, wht_amount, amount, voided_at)")
       .is("archived_at", null);
 
     if (query.search.trim()) {
       const term = query.search.trim().replace(/,/g, " ");
-      q = q.or(`invoice_number.ilike.%${term}%,client_name.ilike.%${term}%`);
+      q = q.or(`invoice_number.ilike.%${term}%,client_name.ilike.%${term}%,invoice_title.ilike.%${term}%`);
     }
 
     // Server-side status filtering
@@ -324,12 +324,12 @@ const quotationsAdapter: DocumentAdapter<FinancialQueryState, any> = {
 
     let q = client
       .from("quotations")
-      .select("id, quotation_number, client_name, issue_date, valid_until, created_at, total, status, project_id")
+      .select("id, quotation_number, quotation_title, client_name, issue_date, valid_until, created_at, total, status, project_id")
       .is("archived_at", null);
 
     if (query.search.trim()) {
       const term = query.search.trim().replace(/,/g, " ");
-      q = q.or(`quotation_number.ilike.%${term}%,client_name.ilike.%${term}%`);
+      q = q.or(`quotation_number.ilike.%${term}%,client_name.ilike.%${term}%,quotation_title.ilike.%${term}%`);
     }
 
     // Server-side status filtering (excluding OVERDUE which needs client-side date check)
