@@ -40,6 +40,7 @@ import BatchActionFooter, { createInvoiceBatchActions } from "@/components/batch
 import { ContextualExportDropdown } from "@/components/export/ContextualExportDropdown"
 import { useDocumentSearch } from "@/hooks/useDocumentSearch"
 import { DocumentSearchResults } from "@/components/search/DocumentSearchResults"
+import { searchResultSummary } from "@/domain/search/summary"
 
 function InvoicesContent() {
   // ─── QUERY PLATFORM BINDING (single source of truth) ───
@@ -292,7 +293,13 @@ function InvoicesContent() {
   return (
     <>
       <ModuleShell
-        eyebrow="Sales" title="Invoices" summary={`${invoices.length} invoices`} tone="blue"
+        eyebrow="Sales" title="Invoices"
+        summary={
+          isSearchActive
+            ? searchResultSummary(documentSearch.results.length, documentSearch.has_more, documentSearch.loading)
+            : `${invoices.length} invoices`
+        }
+        tone="blue"
         searchValue={state.search}
         onSearchChange={(value) => patchUpdate({ search: value } as any)}
         searchPlaceholder="Search by invoice number or client..."

@@ -424,7 +424,12 @@ export default function ModuleShell<T>({
             records.length > 0 ? (
               records.map(renderRow)
             ) : (
-              emptyState || (
+              // `undefined` means "no custom empty state, use the default".
+              // An explicit `null` means "show no empty state at all", which
+              // the search-aware callers rely on while enriched results are on
+              // screen.  A plain || would treat null as absent and render the
+              // default underneath those results.
+              emptyState === undefined ? (
                 <div className="rounded-[var(--bd-overlay-radius)] border border-dashed border-bd-border bg-bd-surface/50 py-10 text-center shadow-inner">
                   <div className="mx-auto grid h-10 w-10 place-items-center rounded-[var(--bd-radius-lg)] bg-bd-surface-muted text-bd-text-muted">
                     <Search className="h-4 w-4" />
@@ -432,6 +437,8 @@ export default function ModuleShell<T>({
                   <div className="mt-3 text-sm font-bold text-bd-text">No {title.toLowerCase()} found</div>
                   <div className="mt-1 text-[11px] text-bd-text-muted">Try adjusting your search or create a new one to get started.</div>
                 </div>
+              ) : (
+                emptyState
               )
             )
           ) : children}

@@ -33,6 +33,13 @@ import {
 } from '@/components/client/workspace/GroupedHistory'
 import { CenteredSpinner, SkeletonCard, SkeletonRow } from '@/components/loading/AppLoadingStates'
 
+// Client-scoped document search over the shared server-side authority
+import { ClientDocumentSearch } from '@/components/client/workspace/ClientDocumentSearch'
+
+// Commercial party foundation (OPTION B): the supplier role for this client.
+// The card owns the supplier authority; this page still owns the client role.
+import { ClientSupplierRoleCard } from '@/components/client/workspace/ClientSupplierRoleCard'
+
 export default function ClientDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -467,10 +474,19 @@ export default function ClientDetail() {
           </div>
         </div>
 
+        {/* Supplier role — explicit, optional, and never inferred from a name */}
+        <ClientSupplierRoleCard client={client} />
+
         <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6">
         <div className="min-w-0 space-y-4">
 
           <NeedsAttentionGroup overdue={overdue} />
+
+          {/* Search this client's documents through the shared authority */}
+          <ClientDocumentSearch
+            clientId={id ?? null}
+            onNavigate={(route) => navigate(route)}
+          >
 
           <HistoryGroup
             title="Invoices"
@@ -567,6 +583,8 @@ export default function ClientDetail() {
               onLoadAll={() => void loadProjects()}
             />
           </HistoryGroup>
+
+          </ClientDocumentSearch>
         </div>
 
         <div className="min-w-0 space-y-4 md:pt-0">

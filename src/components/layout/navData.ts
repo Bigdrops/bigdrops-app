@@ -182,6 +182,7 @@ export const desktopNav: NavItem[] = [
   { key: 'home', label: 'Dashboard', icon: Icons.dashboard as LucideIcon },
   { key: 'projects', label: 'Projects', icon: Icons.projects as LucideIcon },
   { key: 'clients', label: 'Clients', icon: Icons.clients as LucideIcon },
+  { key: 'suppliers', label: 'Suppliers', icon: Icons.suppliers as LucideIcon },
   { key: 'item-library', label: 'Item Library', icon: Icons.itemLibrary as LucideIcon },
 ]
 
@@ -189,6 +190,7 @@ export const mobileDrawerPrimaryNav: NavItem[] = [
   { key: 'home', label: 'Dashboard', icon: Icons.dashboard as LucideIcon, path: '/' },
   { key: 'projects', label: 'Projects', icon: Icons.projects as LucideIcon, path: '/projects' },
   { key: 'clients', label: 'Clients', icon: Icons.clients as LucideIcon, path: '/clients' },
+  { key: 'suppliers', label: 'Suppliers', icon: Icons.suppliers as LucideIcon, path: '/suppliers' },
 ]
 
 export const mobileDrawerUtilityNav: NavItem[] = [
@@ -234,6 +236,7 @@ export function getActiveTab(pathname: string): TabKey {
   if (pathname === '/') return 'home'
   if (pathname.startsWith('/projects')) return 'projects'
   if (pathname.startsWith('/clients')) return 'clients'
+  if (pathname.startsWith('/suppliers')) return 'clients'
   if (
     pathname.startsWith('/invoices') ||
     pathname.startsWith('/quotations') ||

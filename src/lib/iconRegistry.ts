@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronRight,
   UserRound,
+  Building2,
 } from 'lucide-react'
 
 /**
@@ -32,6 +33,7 @@ export const Icons = {
   projects: FolderKanban,
   sales: Receipt,
   clients: Users,
+  suppliers: Building2,
   more: MoreHorizontal,
   itemLibrary: Package,
 

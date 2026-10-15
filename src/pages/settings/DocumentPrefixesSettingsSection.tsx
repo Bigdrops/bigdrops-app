@@ -48,6 +48,7 @@ const PREFIX_KEYS: DocumentPrefixKey[] = [
   'csr',
   'receipt',
   'letter',
+  'purchase_order',
 ]
 
 const LABELS: Record<DocumentPrefixKey, string> = {
@@ -60,6 +61,7 @@ const LABELS: Record<DocumentPrefixKey, string> = {
   csr: 'CSR',
   receipt: 'Receipt',
   letter: 'Letter',
+  purchase_order: 'Purchase Order',
 }
 
 const PREFIX_INFO: Record<DocumentPrefixKey, { title: string; description: string }> = {
@@ -99,6 +101,10 @@ const PREFIX_INFO: Record<DocumentPrefixKey, { title: string; description: strin
     title: 'Letter Numbers',
     description: 'For generating official letter numbers.',
   },
+  purchase_order: {
+    title: 'Purchase Order Numbers',
+    description: 'For generating supplier purchase orders.',
+  },
 }
 
 const PREVIEW_TEMPLATES: Record<DocumentPrefixKey, (p: string) => string[]> = {
@@ -111,6 +117,7 @@ const PREVIEW_TEMPLATES: Record<DocumentPrefixKey, (p: string) => string[]> = {
   csr: (p) => [`${p}-000001`, `${p}-M-000001`],
   receipt: (p) => [`${p}-000001`],
   letter: (p) => [`${p}-000001`],
+  purchase_order: (p) => [`${p}-000001`],
 }
 
 function sanitizePrefixInput(value: string): string {
@@ -159,6 +166,8 @@ export function DocumentPrefixesSettingsSection() {
       csr: typeof raw.csr === 'string' ? raw.csr : DEFAULT_PREFIXES.csr,
       receipt: typeof raw.receipt === 'string' ? raw.receipt : DEFAULT_PREFIXES.receipt,
       letter: typeof raw.letter === 'string' ? raw.letter : DEFAULT_PREFIXES.letter,
+      purchase_order:
+        typeof raw.purchase_order === 'string' ? raw.purchase_order : DEFAULT_PREFIXES.purchase_order,
     }
   }, [settings])
 

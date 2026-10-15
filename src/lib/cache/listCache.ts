@@ -16,6 +16,15 @@ export function clientListCacheKey(schemaName: string): string {
 }
 
 /**
+ * Entity-scoped cache key for the Supplier List.
+ * Mirrors clientListCacheKey: each active entity/schema gets its own entry,
+ * so one tenant's suppliers are never served to another.
+ */
+export function supplierListCacheKey(schemaName: string): string {
+  return `bd:list:suppliers:v1:${schemaName}`
+}
+
+/**
  * Entity-scoped cache key for the Item Library summary list.
  * A null key means no usable tenant context — callers must not read or
  * write any entry (fail-closed). The previous global key

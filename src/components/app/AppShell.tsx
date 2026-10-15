@@ -35,6 +35,10 @@ const Clients = lazy(() => import('@/pages/Clients'))
 const AddClient = lazy(() => import('@/pages/AddClient'))
 const EditClient = lazy(() => import('@/pages/EditClient'))
 const ClientDetail = lazy(() => import('@/pages/ClientDetail'))
+const Suppliers = lazy(() => import('@/pages/Suppliers'))
+const AddSupplier = lazy(() => import('@/pages/AddSupplier'))
+const EditSupplier = lazy(() => import('@/pages/EditSupplier'))
+const SupplierDetail = lazy(() => import('@/pages/SupplierDetail'))
 const NewInvoice = lazy(() => import('@/pages/NewInvoice'))
 const ViewInvoice = lazy(() => import('@/pages/ViewInvoice'))
 const EditInvoice = lazy(() => import('@/pages/EditInvoice'))
@@ -319,6 +323,10 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/clients/new" element={withBoundary(<AddClient />)} />
           <Route path="/clients/edit/:id" element={withBoundary(<EditClient />)} />
           <Route path="/clients/:id" element={withBoundary(<ClientDetail />)} />
+          <Route path="/suppliers" element={withBoundary(<Suppliers />)} />
+          <Route path="/suppliers/new" element={withBoundary(<AddSupplier />)} />
+          <Route path="/suppliers/edit/:id" element={withBoundary(<EditSupplier />)} />
+          <Route path="/suppliers/:id" element={withBoundary(<SupplierDetail />)} />
           <Route path="/settings" element={withBoundary(<Settings />)} />
           <Route path="/settings/notifications" element={withBoundary(<NotificationSettingsPage />)} />
           <Route path="/more" element={withBoundary(<MoreOptions />)} />
