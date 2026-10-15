@@ -116,6 +116,13 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     LINK: 'Linked CPS',
     UNLINK: 'Unlinked CPS',
   },
+  purchase_order: {
+    CREATE: 'Created purchase order',
+    UPDATE: 'Updated purchase order',
+    ARCHIVE: 'Archived purchase order',
+    UNARCHIVE: 'Restored purchase order',
+    STATUS_CHANGE: 'Status changed',
+  },
 }
 
 function toTitleCase(value: string): string {

@@ -6,6 +6,7 @@ export type AuditEntityType =
   | 'waybill'
   | 'letter'
   | 'cps_sheets'
+  | 'purchase_order'
 
 export type AuditAction =
   | 'CREATE'
