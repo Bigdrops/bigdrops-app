@@ -8,6 +8,7 @@ export const DEFAULT_PREFIXES = {
   csr: 'CSR',
   receipt: 'RCP',
   letter: 'LTR',
+  purchase_order: 'PO',
 } as const
 
 export type DocumentPrefixKey = keyof typeof DEFAULT_PREFIXES

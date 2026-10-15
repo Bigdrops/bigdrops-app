@@ -14,6 +14,14 @@ import {
   toIsoDate,
 } from '../../components/ui/date-helpers.ts'
 
+// The shared document form is descriptor-driven. The exact Quotation/Invoice
+// wording now lives in these descriptors, so the visible labels stay pinned
+// here even though FormHeader no longer branches on a document boolean.
+import {
+  INVOICE_DESCRIPTOR,
+  QUOTATION_DESCRIPTOR,
+} from '../../components/document/documentDescriptor.ts'
+
 test('date-field: parses valid ISO dates and rejects invalid ones', () => {
   assert.deepEqual(parseIsoDate('2026-09-25'), { y: 2026, m: 9, d: 25 })
   assert.equal(parseIsoDate('2026-02-30'), null)
@@ -67,8 +75,17 @@ test('date-field: FormHeader routes Quotation/Invoice dates through DateField', 
   const source = fs.readFileSync(path.resolve('src/components/document/FormHeader.tsx'), 'utf8')
   assert.match(source, /import \{ DateField \} from '@\/components\/ui\/date-field'/)
   assert.match(source, /<DateField/)
-  assert.match(source, /label=\{isQuotation \? 'Quotation Date' : 'Issue Date'\}/)
-  assert.match(source, /label=\{isQuotation \? 'Valid Until' : 'Due Date'\}/)
+  // The date labels are descriptor-driven; both the visible field label and the
+  // DateField accessible label must read from the same descriptor entry.
+  assert.match(source, /<span className="cps-label">\{descriptor\.issueDateLabel\}<\/span>/)
+  assert.match(source, /label=\{descriptor\.issueDateLabel\}/)
+  assert.match(source, /<span className="cps-label">\{descriptor\.dueDateLabel\}<\/span>/)
+  assert.match(source, /label=\{descriptor\.dueDateLabel\}/)
+  // ...and the descriptor still supplies the original English wording.
+  assert.equal(QUOTATION_DESCRIPTOR.issueDateLabel, 'Quotation Date')
+  assert.equal(QUOTATION_DESCRIPTOR.dueDateLabel, 'Valid Until')
+  assert.equal(INVOICE_DESCRIPTOR.issueDateLabel, 'Issue Date')
+  assert.equal(INVOICE_DESCRIPTOR.dueDateLabel, 'Due Date')
   // Persistence contract intact: same state keys flow both ways.
   assert.match(source, /value=\{invoice\.issue_date \|\| ''\}/)
   assert.match(source, /value=\{invoice\.due_date \|\| ''\}/)

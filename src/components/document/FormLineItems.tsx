@@ -35,7 +35,6 @@ interface FormLineItemsProps {
   groups: any[]
   invoice: any
   context?: ItemContext
-  isQuotation: boolean
   customColumns: any[]
   computedItems: any[]
   computedGroups: any[]

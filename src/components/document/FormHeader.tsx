@@ -2,6 +2,7 @@ import { ChevronDown, UserRound, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { DateField } from '@/components/ui/date-field'
 import { DocumentSectionHead } from './DocumentFormPresentation'
+import type { DocumentDescriptor } from './documentDescriptor'
 
 interface FormHeaderProps {
   modeLabel: string
@@ -11,7 +12,7 @@ interface FormHeaderProps {
   invoiceTitle: string
   setInvoiceTitle: (val: string) => void
   updateInvoice: (field: string, value: any) => void
-  isQuotation: boolean
+  descriptor: DocumentDescriptor
   isEdit?: boolean
   onOpenClientPicker: () => void
   onLockedFieldClick?: (field: 'client' | 'invoice_number') => void
@@ -27,7 +28,7 @@ export function FormHeader({
   invoiceTitle,
   setInvoiceTitle,
   updateInvoice,
-  isQuotation,
+  descriptor,
   isEdit = false,
   onOpenClientPicker,
   onLockedFieldClick,
@@ -41,39 +42,43 @@ export function FormHeader({
       <DocumentSectionHead
         number="1."
         title="Document details"
-        meta={invoice.invoice_number || (isQuotation ? 'New quotation' : 'New invoice')}
+        meta={invoice.invoice_number || descriptor.unsavedMeta}
       />
       <div className="cps-dgrid">
         <div className="full">
-          <span className="cps-label">Client <span className="cps-req">*</span></span>
+          <span className="cps-label">{descriptor.party.term} <span className="cps-req">*</span></span>
           <button
             type="button"
-            className={`cps-clientpick ${invoice.client_name ? 'filled' : ''}`}
+            className={`cps-clientpick ${invoice[descriptor.party.nameField] ? 'filled' : ''}`}
             onClick={isEdit ? () => onLockedFieldClick?.('client') : onOpenClientPicker}
-            aria-label={invoice.client_name ? `Client ${invoice.client_name}` : 'Select a client'}
+            aria-label={
+              invoice[descriptor.party.nameField]
+                ? `${descriptor.party.selectedAriaPrefix} ${invoice[descriptor.party.nameField]}`
+                : descriptor.party.emptyLabel
+            }
           >
             <span className="ci"><UserRound /></span>
             <span className="ct">
-              <b>{invoice.client_name || 'Select a client'}</b>
-              <small>Bill to · Client</small>
+              <b>{invoice[descriptor.party.nameField] || descriptor.party.emptyLabel}</b>
+              <small>{descriptor.party.roleHint}</small>
             </span>
-            {invoice.client_name && !isEdit ? (
+            {invoice[descriptor.party.nameField] && !isEdit ? (
               <span
                 role="button"
                 tabIndex={0}
                 className="cx"
-                aria-label="Clear client"
+                aria-label={descriptor.party.clearAriaLabel}
                 onClick={(event) => {
                   event.stopPropagation()
-                  updateInvoice('client_id', '')
-                  updateInvoice('client_name', '')
+                  updateInvoice(descriptor.party.idField, '')
+                  updateInvoice(descriptor.party.nameField, '')
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault()
                     event.stopPropagation()
-                    updateInvoice('client_id', '')
-                    updateInvoice('client_name', '')
+                    updateInvoice(descriptor.party.idField, '')
+                    updateInvoice(descriptor.party.nameField, '')
                   }
                 }}
               >
@@ -85,24 +90,24 @@ export function FormHeader({
         </div>
 
         <label className="full">
-          <span className="cps-label">{isQuotation ? 'Quotation Title' : 'Invoice Title'}</span>
+          <span className="cps-label">{descriptor.titleFieldLabel}</span>
           <Input
             value={invoiceTitle || ''}
             onChange={(event) => setInvoiceTitle(event.target.value)}
-            placeholder={isQuotation ? 'e.g. Website Overhaul' : 'e.g. Monthly Maintenance'}
+            placeholder={descriptor.titleFieldPlaceholder}
             className="cps-field"
           />
         </label>
 
         <label>
-          <span className="cps-label">{isQuotation ? 'Quotation No.' : 'Invoice No.'}</span>
+          <span className="cps-label">{descriptor.numberLabel}</span>
           {isEdit ? (
             <input
               value={invoice.invoice_number || ''}
               readOnly
               onClick={() => onLockedFieldClick?.('invoice_number')}
               className="cps-field mono"
-              aria-label={isQuotation ? 'Quotation No.' : 'Invoice No.'}
+              aria-label={descriptor.numberLabel}
             />
           ) : (
             <Input
@@ -124,9 +129,9 @@ export function FormHeader({
         </label>
 
         <label>
-          <span className="cps-label">{isQuotation ? 'Quotation Date' : 'Issue Date'}</span>
+          <span className="cps-label">{descriptor.issueDateLabel}</span>
           <DateField
-            label={isQuotation ? 'Quotation Date' : 'Issue Date'}
+            label={descriptor.issueDateLabel}
             value={invoice.issue_date || ''}
             onChange={(next) => updateInvoice('issue_date', next)}
             className="cps-field"
@@ -134,9 +139,9 @@ export function FormHeader({
         </label>
 
         <label>
-          <span className="cps-label">{isQuotation ? 'Valid Until' : 'Due Date'}</span>
+          <span className="cps-label">{descriptor.dueDateLabel}</span>
           <DateField
-            label={isQuotation ? 'Valid Until' : 'Due Date'}
+            label={descriptor.dueDateLabel}
             value={invoice.due_date || ''}
             onChange={(next) => updateInvoice('due_date', next)}
             className="cps-field"

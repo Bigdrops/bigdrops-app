@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronDown, Percent, Plus, X } from 'lucide-react'
 import { formatCurrency } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { DocumentSectionHead } from './DocumentFormPresentation'
+import type { DocumentDescriptor } from './documentDescriptor'
 
 type CommercialTermsSectionProps = {
   invoice: Record<string, any>
-  isQuotation: boolean
+  descriptor: DocumentDescriptor
   updateInvoice: (field: string, value: unknown) => void
   discountType: DiscountType
   setDiscountType: (value: DiscountType) => void
@@ -72,7 +73,7 @@ function SettingRow({
 
 export function FormCommercialTerms({
   invoice,
-  isQuotation,
+  descriptor,
   updateInvoice,
   discountType,
   setDiscountType,
@@ -128,7 +129,7 @@ export function FormCommercialTerms({
           <div className="bd-payment-stage-head">
             <div className="copy">
               <small>Payment</small>
-              <b>{isQuotation ? 'When this quotation is due' : 'When this invoice is due'}</b>
+              <b>{descriptor.paymentHeadline}</b>
             </div>
             <span className="bd-payment-current">{String(invoice.payment_terms || 'Custom')}</span>
           </div>
@@ -156,7 +157,7 @@ export function FormCommercialTerms({
               <Input
                 value={String(invoice.custom_payment_terms || '')}
                 onChange={(event) => updateInvoice('custom_payment_terms', event.target.value)}
-                placeholder={isQuotation ? 'e.g. 14 days validity' : 'e.g. Due in 14 days'}
+                placeholder={descriptor.paymentNotePlaceholder}
                 className="cps-field"
               />
             </div>

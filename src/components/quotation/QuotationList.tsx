@@ -52,6 +52,7 @@ import { ContextualExportDropdown } from '@/components/export/ContextualExportDr
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { useDocumentSearch } from '@/hooks/useDocumentSearch'
 import { DocumentSearchResults } from '@/components/search/DocumentSearchResults'
+import { searchResultSummary } from '@/domain/search/summary'
 
 const formatMoney = (value: number | string | null | undefined) => formatNaira(value)
 
@@ -449,7 +450,9 @@ export default function QuotationList() {
       <ModuleShell
         eyebrow="Sales"
         title="Quotations"
-        summary={`${quotations.length} quotations total`}
+        summary={isSearchActive
+          ? searchResultSummary(documentSearch.results.length, documentSearch.has_more, documentSearch.loading)
+          : `${quotations.length} quotations total`}
         tone="blue"
         searchValue={state.search}
         onSearchChange={(value) => patchUpdate({ search: value } as any)}

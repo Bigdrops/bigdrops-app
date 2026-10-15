@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
-import ClientSelector from '@/components/ClientSelector'
 import ActionsSheet from '@/components/invoice/ActionsSheet'
+import ClientPartySelector from './ClientPartySelector'
 import { FormHeader } from './FormHeader'
 import { FormLineItems } from './FormLineItems'
 import { FormCommercialTerms } from './FormCommercialTerms'
@@ -8,6 +8,8 @@ import { FormTotals } from './FormTotals'
 import { FormNotesTerms } from './FormNotesTerms'
 import { FormFooter } from './FormFooter'
 import { DocumentTopBar } from './DocumentFormPresentation'
+import type { DocumentDescriptor, DocumentPartyDescriptor, PartySelectorComponent } from './documentDescriptor'
+import { resolveDocumentDescriptor } from './documentDescriptor'
 import { formatCurrency, pageCardCls } from '@/components/invoice/mobile/mobileFormPrimitives'
 import './document-cps-overrides.css'
 
@@ -25,7 +27,8 @@ function SheetLoadingState({ label }: { label: string }) {
 function DesktopActionRail({
   title,
   documentNumber,
-  clientName,
+  party,
+  partyName,
   itemCount,
   totalPayable,
   summaryRows,
@@ -37,7 +40,8 @@ function DesktopActionRail({
 }: {
   title: string
   documentNumber: string
-  clientName: string
+  party: DocumentPartyDescriptor
+  partyName: string
   itemCount: number
   totalPayable: number
   summaryRows: any[]
@@ -63,8 +67,8 @@ function DesktopActionRail({
           </div>
         </div>
         <div className="mt-3 rounded-[var(--bd-radius)] border border-dashed border-bd-border bg-bd-surface px-3 py-2">
-          <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-bd-text-muted">Client</span>
-          <b className="mt-1 block truncate text-[13px] text-bd-text">{clientName || 'No client selected'}</b>
+          <span className="block text-[10px] font-extrabold uppercase tracking-[0.14em] text-bd-text-muted">{party.term}</span>
+          <b className="mt-1 block truncate text-[13px] text-bd-text">{partyName || party.noneLabel}</b>
         </div>
       </section>
 
@@ -211,6 +215,25 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
     isMobile,
   } = props
 
+  /**
+   * Document-family descriptor. Resolved from the same inputs the retired
+   * binary document flag used, so Invoice and Quotation classify identically.
+   * A future document family passes an explicit descriptor instead of asking
+   * this component to learn another boolean.
+   */
+  const descriptor: DocumentDescriptor = useMemo(
+    () =>
+      props.descriptor ||
+      resolveDocumentDescriptor({ documentType: invoice.document_type, title, modeLabel }),
+    [props.descriptor, invoice.document_type, modeLabel, title],
+  )
+
+  /**
+   * Party-picker slot. Defaults to the ClientSelector-backed adapter; a future
+   * purchase-order page injects its own supplier-backed picker here.
+   */
+  const PartySelector: PartySelectorComponent = props.partySelector || ClientPartySelector
+
   const [showImportSheet, setShowImportSheet] = useState(false)
   const handleOpenImport = useCallback(() => setShowImportSheet(true), [])
   const handleOpenTableSettings = useCallback(() => setShowColumnManager(true), [])
@@ -223,11 +246,13 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
   const handleAddReferenceLink = useCallback(() => {
     setAttachments((prev: any[]) => [...prev, { label: '', url: '', _uiKey: crypto.randomUUID() }])
   }, [])
-  const handleClientChange = useCallback((id: string, name: string) => {
+  const handlePartyChange = useCallback((id: string, name: string) => {
+    // Party identity is immutable in edit mode. This is a document life-cycle
+    // rule shared by every family, so it is deliberately not descriptor-driven.
     if (props.mode === 'edit') return
-    updateInvoice('client_id', id)
-    updateInvoice('client_name', name)
-  }, [updateInvoice, props.mode])
+    updateInvoice(descriptor.party.idField, id)
+    updateInvoice(descriptor.party.nameField, name)
+  }, [updateInvoice, props.mode, descriptor])
   const handleCloseColumnManager = useCallback(() => setShowColumnManager(false), [])
   const [showActionsSheet, setShowActionsSheet] = useState(false)
   const [showNotesTerms, setShowNotesTerms] = useState(false)
@@ -237,11 +262,6 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
 
   const notesTermsRef = useRef<HTMLDivElement>(null)
   const linksRef = useRef<HTMLDivElement>(null)
-
-  const isQuotation = useMemo(() => {
-    const documentType = String(invoice.document_type || '').toUpperCase()
-    return documentType.includes('QUOT') || /quotation/i.test(title) || /quotation/i.test(modeLabel)
-  }, [invoice.document_type, modeLabel, title])
 
   const workmanship = Number(invoice.workmanship || 0)
   const transportation = Number(invoice.transportation || 0)
@@ -283,13 +303,13 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
   ]
 
   const documentNumber = String(invoice.invoice_number || '')
-  const clientName = String(invoice.client_name || '')
+  const partyName = String(invoice[descriptor.party.nameField] || '')
   const itemCount = items.filter((item: any) => item.row_type === 'standard').length
 
   return (
     <div className="bd-document-form bd-form-shell bd-custom-scrollbar overflow-x-hidden bg-[var(--bg)] text-[var(--ink)]">
       <DocumentTopBar
-        title={isQuotation ? 'Quotation' : 'Invoice'}
+        title={descriptor.title}
         subtitle={documentNumber || modeLabel}
         saveLabel={primaryLabel}
         onBack={onCancel}
@@ -308,7 +328,7 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
             invoiceTitle={invoiceTitle}
             setInvoiceTitle={setInvoiceTitle}
             updateInvoice={updateInvoice}
-            isQuotation={isQuotation}
+            descriptor={descriptor}
             isEdit={props.mode === 'edit'}
             onOpenClientPicker={() => setShowClientPicker(true)}
             onLockedFieldClick={props.onLockedFieldClick}
@@ -322,7 +342,6 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
             items={items}
             groups={groups}
             invoice={invoice}
-            isQuotation={isQuotation}
             customColumns={customColumns}
             computedItems={computedItems}
             computedGroups={computedGroups}
@@ -348,7 +367,7 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
           <div className="lg:hidden">
             <FormCommercialTerms
               invoice={invoice}
-              isQuotation={isQuotation}
+              descriptor={descriptor}
               updateInvoice={updateInvoice}
               discountType={discountType}
               setDiscountType={setDiscountType}
@@ -407,9 +426,10 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
 
           <div className="hidden lg:flex lg:flex-col lg:gap-5">
             <DesktopActionRail
-              title={isQuotation ? 'Quotation' : 'Invoice'}
+              title={descriptor.title}
               documentNumber={documentNumber}
-              clientName={clientName}
+              party={descriptor.party}
+              partyName={partyName}
               itemCount={itemCount}
               totalPayable={totalPayable}
               summaryRows={summaryRows}
@@ -422,7 +442,7 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
             <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-card-bg p-4 shadow-sm">
               <FormCommercialTerms
                 invoice={invoice}
-                isQuotation={isQuotation}
+                descriptor={descriptor}
                 updateInvoice={updateInvoice}
                 discountType={discountType}
                 setDiscountType={setDiscountType}
@@ -463,17 +483,12 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
         primaryLabel={primaryLabel}
       />
 
-      <ClientSelector
-        clientId={invoice.client_id || null}
-        clientName={invoice.client_name || ''}
-        compact
-        dense
-        hideHeader
-        hideTrigger
-        allowClear={false}
+      <PartySelector
+        partyId={invoice[descriptor.party.idField] || null}
+        partyName={invoice[descriptor.party.nameField] || ''}
         open={props.mode === 'edit' ? false : showClientPicker}
         onOpenChange={props.mode === 'edit' ? () => {} : setShowClientPicker}
-        onClientChange={handleClientChange}
+        onPartyChange={handlePartyChange}
       />
 
       <ActionsSheet
