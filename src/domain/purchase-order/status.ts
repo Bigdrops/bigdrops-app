@@ -111,3 +111,13 @@ export function nextPurchaseOrderStatuses(
 ): PurchaseOrderStatus[] {
   return PURCHASE_ORDER_TRANSITIONS[status].filter((next) => next !== status)
 }
+
+/**
+ * Content (items, quantities, unit costs, tax inputs, discounts, extra
+ * charges, notes, terms, supplier, number) is editable on a draft only.
+ * Once a PO leaves draft, the save authority rejects content updates and
+ * only the dedicated status-transition operation may change the status.
+ */
+export function isPurchaseOrderContentEditable(status: PurchaseOrderStatus): boolean {
+  return status === 'draft'
+}

@@ -394,7 +394,11 @@ test('po save: update refuses to reactivate a terminal purchase order', async ()
   const result = await savePurchaseOrder(client, 'entity-1', params)
 
   assert.equal(result.data, null)
-  assert.match(result.error, /final and cannot be changed/)
+  // C1.1 precedence: a content update on a non-draft PO is refused as a
+  // content rewrite before the transition table is consulted. The terminal
+  // refusal itself still applies on the status-only transition path
+  // (purchaseOrderLifecycle.test.js) and in the save RPC.
+  assert.match(result.error, /cannot change after it leaves draft/)
   assert.equal(client.calls.rpc.length, 0)
 })
 

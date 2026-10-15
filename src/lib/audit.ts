@@ -96,6 +96,21 @@ export const LETTER_TRACKED_FIELDS = [
   'status',
 ]
 
+export const PURCHASE_ORDER_TRACKED_FIELDS = [
+  'po_number',
+  'supplier_id',
+  'supplier_name',
+  'po_date',
+  'status',
+  'currency',
+  'subtotal',
+  'discount',
+  'vat',
+  'total',
+  'notes',
+  'terms',
+]
+
 export type AuditEntityType =
   | 'invoice'
   | 'quotation'
@@ -105,6 +120,7 @@ export type AuditEntityType =
   | 'receipt'
   | 'letter'
   | 'cps_sheets'
+  | 'purchase_order'
 export type AuditAction =
   | 'CREATE'
   | 'UPDATE'
@@ -600,6 +616,107 @@ export async function recordLetterArchived(tenantClient: TenantClient, letterId:
     p_actor_id: actor.id,
     p_actor_label: actor.label,
     p_source: 'web',
+  })
+}
+
+/**
+ * Supplier Purchase Order lifecycle audit.
+ *
+ * All PO events travel through the canonical `recordAuditLog` field-diff
+ * authority into `audit_logs` (Mechanism 1 of `audit-trail-standard.md`).
+ * No new action name is introduced: created maps to CREATE, draft content
+ * edits to UPDATE, issuance/cancellation/closure to STATUS_CHANGE,
+ * archiving to ARCHIVE, and restore to UNARCHIVE.
+ *
+ * Writes are best-effort post-write calls. Callers must catch failures so a
+ * lost audit row never fails a lifecycle mutation (invoice convention).
+ * `items`, `extra_charges` and `calculation_inputs` are never tracked:
+ * nested values are opaque to `compute_jsonb_diff()` and the item set is
+ * deliberately excluded, following the invoice precedent.
+ */
+export async function recordPurchaseOrderCreated(
+  tenantClient: TenantClient,
+  purchaseOrderId: string,
+  purchaseOrder: Record<string, any> | null,
+  poNumber?: string | null,
+) {
+  return recordAuditLog(tenantClient, {
+    entityType: 'purchase_order',
+    recordId: purchaseOrderId,
+    entityLabel: poNumber ?? (purchaseOrder?.po_number as string | undefined) ?? null,
+    action: 'CREATE',
+    newData: purchaseOrder,
+    trackedFields: PURCHASE_ORDER_TRACKED_FIELDS,
+  })
+}
+
+export async function recordPurchaseOrderUpdated(
+  tenantClient: TenantClient,
+  purchaseOrderId: string,
+  poNumber: string | null,
+  oldData: Record<string, any> | null,
+  newData: Record<string, any> | null,
+) {
+  return recordAuditLog(tenantClient, {
+    entityType: 'purchase_order',
+    recordId: purchaseOrderId,
+    entityLabel: poNumber,
+    action: 'UPDATE',
+    oldData,
+    newData,
+    trackedFields: PURCHASE_ORDER_TRACKED_FIELDS,
+  })
+}
+
+export async function recordPurchaseOrderStatusChanged(
+  tenantClient: TenantClient,
+  purchaseOrderId: string,
+  poNumber: string | null,
+  oldStatus: string | null,
+  newStatus: string | null,
+  oldData?: Record<string, any> | null,
+  newData?: Record<string, any> | null,
+) {
+  return recordAuditLog(tenantClient, {
+    entityType: 'purchase_order',
+    recordId: purchaseOrderId,
+    entityLabel: poNumber,
+    action: 'STATUS_CHANGE',
+    oldData: oldData ?? { status: oldStatus },
+    newData: newData ?? { status: newStatus },
+    trackedFields: PURCHASE_ORDER_TRACKED_FIELDS,
+  })
+}
+
+export async function recordPurchaseOrderArchived(
+  tenantClient: TenantClient,
+  purchaseOrderId: string,
+  poNumber: string | null,
+  purchaseOrder?: Record<string, any> | null,
+) {
+  return recordAuditLog(tenantClient, {
+    entityType: 'purchase_order',
+    recordId: purchaseOrderId,
+    entityLabel: poNumber,
+    action: 'ARCHIVE',
+    newData: purchaseOrder,
+    trackedFields: PURCHASE_ORDER_TRACKED_FIELDS,
+  })
+}
+
+export async function recordPurchaseOrderRestored(
+  tenantClient: TenantClient,
+  purchaseOrderId: string,
+  poNumber: string | null,
+  purchaseOrder?: Record<string, any> | null,
+) {
+  return recordAuditLog(tenantClient, {
+    entityType: 'purchase_order',
+    recordId: purchaseOrderId,
+    entityLabel: poNumber,
+    action: 'UNARCHIVE',
+    newData: purchaseOrder,
+    trackedFields: PURCHASE_ORDER_TRACKED_FIELDS,
   })
 }
 

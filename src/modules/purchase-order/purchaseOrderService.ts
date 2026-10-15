@@ -32,10 +32,14 @@
 //   accounting event; this path deliberately does NOT.
 //
 // AUDIT
-//   Lifecycle audit is NOT wired in this phase. `AuditEntityType` and the
-//   `activity_events.entity_type` CHECK are closed sets that do not yet include
-//   `purchase_order`; extending them belongs with the PO lifecycle UI phase.
-//   This is a deliberate deferral, recorded in the Phase C1 report.
+//   Lifecycle audit rides the canonical `recordAuditLog` field-diff authority
+//   into `audit_logs` (Mechanism 1 of `audit-trail-standard.md`), the same
+//   foundation the CPS audit migration established. `AuditEntityType` includes
+//   `purchase_order` and the `audit_logs` entity CHECK admits it; no new action
+//   name exists. Every audit call is best-effort post-write work: a lost audit
+//   row is logged and never fails the lifecycle mutation (invoice convention).
+//   No `activity_events` row is written: discrete PO events live in `audit_logs`
+//   and surface through the merged audit feed.
 // ============================================================================
 
 import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
@@ -51,7 +55,10 @@ import {
   toPurchaseOrderItemRpcPayloads,
   toPurchaseOrderRpcPayload,
 } from '@/domain/purchase-order/normalize'
-import { assertPurchaseOrderTransition } from '@/domain/purchase-order/status'
+import {
+  assertPurchaseOrderTransition,
+  isPurchaseOrderContentEditable,
+} from '@/domain/purchase-order/status'
 import {
   toPurchaseOrder,
   toPurchaseOrderItem,
@@ -74,7 +81,20 @@ export interface SavedPurchaseOrderRef {
   po_number: string
 }
 
-const SAVE_RPC = 'save_purchase_order_with_items_transaction'
+export const SAVE_RPC = 'save_purchase_order_with_items_transaction'
+export const TRANSITION_RPC = 'transition_purchase_order_status'
+
+/** Best-effort lifecycle audit. A lost audit row never fails the mutation. */
+export async function auditPurchaseOrder(
+  tenantClient: any,
+  run: () => Promise<unknown>,
+): Promise<void> {
+  try {
+    await run()
+  } catch (auditError) {
+    console.error('Purchase order audit trail failed:', auditError)
+  }
+}
 
 const PURCHASE_ORDER_COLUMNS =
   'id, po_number, po_date, supplier_id, supplier_name, status, currency, ' +
@@ -85,7 +105,7 @@ const PURCHASE_ORDER_ITEM_COLUMNS =
   'id, purchase_order_id, description, quantity, unit, unit_cost, line_total, ' +
   'sort_order, created_at, updated_at'
 
-function messageFrom(error: unknown, fallback: string): string {
+export function messageFrom(error: unknown, fallback: string): string {
   if (error && typeof error === 'object' && 'message' in error) {
     const message = String((error as { message?: unknown }).message ?? '')
     if (message) return message
@@ -108,7 +128,7 @@ function isUniqueViolation(error: unknown): boolean {
  * The save RPC raises deliberate, stable messages. Matching them here keeps the
  * service's contract readable while leaving the database as the final arbiter.
  */
-function describeSaveError(error: unknown, fallback: string): string {
+export function describeSaveError(error: unknown, fallback: string): string {
   if (isUniqueViolation(error)) {
     return 'That purchase order number is already used. Choose a different number.'
   }
@@ -126,6 +146,15 @@ function describeSaveError(error: unknown, fallback: string): string {
   if (/Illegal purchase order transition/i.test(raw)) {
     return 'That status change is not allowed for this purchase order.'
   }
+  if (/content is immutable|immutable once issued/i.test(raw)) {
+    return 'Purchase order content cannot change after it leaves draft. Change only its status.'
+  }
+  if (/Archived purchase order/i.test(raw)) {
+    return 'This purchase order is archived. Restore it before making changes.'
+  }
+  if (/changed since you loaded|stale/i.test(raw)) {
+    return 'This purchase order changed since you loaded it. Reload and try again.'
+  }
   if (/must not be negative/i.test(raw)) {
     return 'Amounts and quantities on a purchase order cannot be negative.'
   }
@@ -137,7 +166,7 @@ function describeSaveError(error: unknown, fallback: string): string {
 }
 
 /** PostgREST wraps a jsonb-returning function in a single-element array. */
-function unwrapRpcPayload(data: unknown): Record<string, any> | null {
+export function unwrapRpcPayload(data: unknown): Record<string, any> | null {
   const first = Array.isArray(data) ? data[0] : data
   return first && typeof first === 'object' ? (first as Record<string, any>) : null
 }
@@ -301,11 +330,24 @@ export async function savePurchaseOrder(
   }
 
   if (mode === 'update') {
-    const current = await readPurchaseOrderStatus(tenantClient, String(prepared.id))
+    // Content updates are a draft-only operation. A non-draft PO is
+    // historically frozen: the save authority rejects the rewrite and only
+    // `transitionPurchaseOrderStatus` may move the status.
+    const current = await readPurchaseOrderVersion(tenantClient, String(prepared.id))
     if (current.error) return { data: null, error: current.error }
     if (!current.data) return { data: null, error: 'That purchase order no longer exists.' }
+    if (current.data.archived_at) {
+      return { data: null, error: 'This purchase order is archived. Restore it before making changes.' }
+    }
+    if (!isPurchaseOrderContentEditable(current.data.status)) {
+      return {
+        data: null,
+        error:
+          'Purchase order content cannot change after it leaves draft. Change only its status.',
+      }
+    }
 
-    const transition = assertPurchaseOrderTransition(current.data, prepared.status)
+    const transition = assertPurchaseOrderTransition(current.data.status, prepared.status)
     if (!transition.valid) {
       return { data: null, error: transition.errorDescription ?? 'Illegal status change.' }
     }
@@ -318,6 +360,7 @@ export async function savePurchaseOrder(
       p_purchase_order_payload: payload,
       p_items: itemsPayload,
       p_mode: 'update',
+      p_expected_updated_at: current.data.updated_at,
     })
     if (error) {
       return { data: null, error: describeSaveError(error, 'Could not update this purchase order.') }
@@ -328,11 +371,44 @@ export async function savePurchaseOrder(
     // whatever the caller happened to hold.
     const rpcResult = unwrapRpcPayload(data)
     const saved = (rpcResult?.purchase_order ?? rpcResult) as Record<string, any> | null
+    const savedNumber = String(saved?.po_number ?? prepared.po_number ?? '')
+
+    const statusChanged = prepared.status !== current.data.status
+    const oldHeader = current.data.header as Record<string, any>
+    const newHeader = {
+      ...oldHeader,
+      ...JSON.parse(JSON.stringify(prepared)),
+      po_number: current.data.header.po_number,
+      supplier_id: current.data.header.supplier_id,
+      supplier_name: current.data.header.supplier_name,
+    }
+    await auditPurchaseOrder(tenantClient, async () => {
+      const audit = await import('@/lib/audit')
+      if (statusChanged) {
+        await audit.recordPurchaseOrderStatusChanged(
+          tenantClient,
+          String(prepared.id),
+          savedNumber,
+          current.data.status,
+          prepared.status,
+          oldHeader,
+          newHeader,
+        )
+      } else {
+        await audit.recordPurchaseOrderUpdated(
+          tenantClient,
+          String(prepared.id),
+          savedNumber,
+          oldHeader,
+          newHeader,
+        )
+      }
+    })
 
     return {
       data: {
         id: String(saved?.id ?? prepared.id),
-        po_number: String(saved?.po_number ?? prepared.po_number ?? ''),
+        po_number: savedNumber,
       },
       error: null,
     }
@@ -392,17 +468,36 @@ export async function savePurchaseOrder(
     }
   }
 
+  if (created.data) {
+    await auditPurchaseOrder(tenantClient, async () => {
+      const audit = await import('@/lib/audit')
+      await audit.recordPurchaseOrderCreated(
+        tenantClient,
+        created.data.id,
+        JSON.parse(JSON.stringify({ ...prepared, po_number: created.data.po_number })),
+        created.data.po_number,
+      )
+    })
+  }
+
   return { data: created.data, error: null }
 }
 
-/** Read the stored status. Returns a granular reason rather than a sentinel. */
-async function readPurchaseOrderStatus(
+export interface PurchaseOrderVersion {
+  status: PurchaseOrderStatus
+  archived_at: string | null
+  updated_at: string | null
+  header: DbPurchaseOrder
+}
+
+/** Read the stored lifecycle version: status, archive state and write stamp. */
+export async function readPurchaseOrderVersion(
   tenantClient: any,
   purchaseOrderId: string,
-): Promise<PurchaseOrderResult<PurchaseOrderStatus>> {
+): Promise<PurchaseOrderResult<PurchaseOrderVersion>> {
   const { data, error } = await tenantClient
     .from('purchase_orders')
-    .select('status')
+    .select(`${PURCHASE_ORDER_COLUMNS}, updated_at`)
     .eq('id', purchaseOrderId)
     .maybeSingle()
 
@@ -410,7 +505,16 @@ async function readPurchaseOrderStatus(
     return { data: null, error: messageFrom(error, 'Could not read this purchase order.') }
   }
   if (!data) return { data: null, error: null }
-  return { data: (data as { status: PurchaseOrderStatus }).status, error: null }
+  const row = data as DbPurchaseOrder & { updated_at?: string | null }
+  return {
+    data: {
+      status: row.status as PurchaseOrderStatus,
+      archived_at: (row.archived_at as string | null) ?? null,
+      updated_at: (row.updated_at as string | null) ?? null,
+      header: row,
+    },
+    error: null,
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -437,7 +541,17 @@ export async function archivePurchaseOrder(
   if (error) {
     return { data: null, error: messageFrom(error, 'Could not archive this purchase order.') }
   }
-  return { data: toPurchaseOrder(data as DbPurchaseOrder), error: null }
+  const archived = toPurchaseOrder(data as DbPurchaseOrder)
+  await auditPurchaseOrder(tenantClient, async () => {
+    const audit = await import('@/lib/audit')
+    await audit.recordPurchaseOrderArchived(
+      tenantClient,
+      purchaseOrderId,
+      archived.po_number,
+      JSON.parse(JSON.stringify(archived)),
+    )
+  })
+  return { data: archived, error: null }
 }
 
 /** Restore an archived PO. */
@@ -457,7 +571,19 @@ export async function restorePurchaseOrder(
   if (error) {
     return { data: null, error: messageFrom(error, 'Could not restore this purchase order.') }
   }
-  return { data: toPurchaseOrder(data as DbPurchaseOrder), error: null }
+  // Restore clears the archive flag only. The lifecycle status is preserved:
+  // a cancelled or closed PO stays cancelled or closed after restore.
+  const restored = toPurchaseOrder(data as DbPurchaseOrder)
+  await auditPurchaseOrder(tenantClient, async () => {
+    const audit = await import('@/lib/audit')
+    await audit.recordPurchaseOrderRestored(
+      tenantClient,
+      purchaseOrderId,
+      restored.po_number,
+      JSON.parse(JSON.stringify(restored)),
+    )
+  })
+  return { data: restored, error: null }
 }
 
 export type { PurchaseOrder, PurchaseOrderItem }
