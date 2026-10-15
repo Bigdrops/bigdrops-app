@@ -25,7 +25,34 @@ import type { ComponentType } from 'react'
  */
 
 /** Document families that render through the shared form today. */
-export type DocumentFamily = 'invoice' | 'quotation'
+export type DocumentFamily = 'invoice' | 'quotation' | 'purchase_order'
+
+/**
+ * Per-family section visibility.
+ *
+ * Every flag defaults to visible: families that omit `hiddenSections`
+ * (Invoice, Quotation) render exactly as before. A family sets a flag only
+ * when it has no backend column behind the control, so the form can never
+ * accept input that the save path would silently drop. A Supplier PO has no
+ * title, client PO reference, due date, payment terms, WHT, additional
+ * fields, or header custom fields, so it hides all seven.
+ */
+export type DocumentHiddenSections = {
+  /** Document title input. Hidden when the family stores no title. */
+  titleField?: boolean
+  /** Client PO reference input (the buyer's number on a sales document). */
+  clientPoNumberField?: boolean
+  /** Second date input (due date / validity). */
+  dueDateField?: boolean
+  /** Payment-terms stage (terms select and due note). */
+  paymentStage?: boolean
+  /** Withholding-tax control. */
+  whtSection?: boolean
+  /** Informational additional-fields ledger. */
+  additionalFieldsSection?: boolean
+  /** Free-form header custom fields. */
+  headerFieldsSection?: boolean
+}
 
 /**
  * Neutral party-picker contract.
@@ -104,6 +131,8 @@ export type DocumentDescriptor = {
   paymentNotePlaceholder: string
   /** Party terminology and record binding. */
   party: DocumentPartyDescriptor
+  /** Sections without a backend column for this family. All visible by default. */
+  hiddenSections?: DocumentHiddenSections
 }
 
 /**
@@ -148,6 +177,46 @@ export const QUOTATION_DESCRIPTOR: DocumentDescriptor = {
   paymentHeadline: 'When this quotation is due',
   paymentNotePlaceholder: 'e.g. 14 days validity',
   party: { ...CLIENT_PARTY_TERMINOLOGY },
+}
+
+/**
+ * Supplier parties are procurement-facing, so the PO binds the
+ * `supplier_id` / `supplier_name` columns. It never touches `client_id`,
+ * and it never reads `client_supplier_links`: a dual-role business stays
+ * a supplier in the PO context.
+ */
+const SUPPLIER_PARTY_TERMINOLOGY: DocumentPartyDescriptor = {
+  term: 'Supplier',
+  roleHint: 'Order from · Supplier',
+  emptyLabel: 'Select a supplier',
+  noneLabel: 'No supplier selected',
+  selectedAriaPrefix: 'Supplier',
+  clearAriaLabel: 'Clear supplier',
+  idField: 'supplier_id',
+  nameField: 'supplier_name',
+}
+
+export const PURCHASE_ORDER_DESCRIPTOR: DocumentDescriptor = {
+  family: 'purchase_order',
+  title: 'Purchase Order',
+  titleFieldLabel: 'Purchase Order Title',
+  titleFieldPlaceholder: 'e.g. Cement restock',
+  numberLabel: 'PO No.',
+  unsavedMeta: 'New purchase order',
+  issueDateLabel: 'PO Date',
+  dueDateLabel: 'Valid Until',
+  paymentHeadline: 'When this purchase order is due',
+  paymentNotePlaceholder: 'e.g. Net 30',
+  party: { ...SUPPLIER_PARTY_TERMINOLOGY },
+  hiddenSections: {
+    titleField: true,
+    clientPoNumberField: true,
+    dueDateField: true,
+    paymentStage: true,
+    whtSection: true,
+    additionalFieldsSection: true,
+    headerFieldsSection: true,
+  },
 }
 
 /** Inputs the old `isQuotation` boolean was derived from. */

@@ -94,6 +94,18 @@ export const presalesPicker: PickerItem[] = [
   },
 ]
 
+export const procurementPicker: PickerItem[] = [
+  {
+    key: 'purchase_orders',
+    label: 'Purchase Orders',
+    subtitle: 'Issue procurement commitments to suppliers.',
+    description: 'Issue procurement commitments to suppliers.',
+    icon: Icons.purchase_order as LucideIcon,
+    tint: 'bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30',
+    iconBg: 'bg-amber-700 text-white dark:bg-amber-500 dark:text-white',
+  },
+]
+
 export const moreGroups: NavGroup[] = [
   {
     group: 'Correspondence',
@@ -227,6 +239,14 @@ export function getPreSalesPath(key: string): string {
   return pathByKey[key] || '/'
 }
 
+export function getProcurementPath(key: string): string {
+  const pathByKey: Record<string, string> = {
+    purchase_orders: '/purchase-orders',
+  }
+
+  return pathByKey[key] || '/'
+}
+
 export function isPathActive(pathname: string, path: string): boolean {
   if (path === '/') return pathname === '/'
   return pathname === path || pathname.startsWith(`${path}/`)
@@ -244,6 +264,7 @@ export function getActiveTab(pathname: string): TabKey {
     pathname.startsWith('/waybills')
   ) return 'sales'
   if (
+    pathname.startsWith('/purchase-orders') ||
     pathname.startsWith('/rfqs') ||
     pathname.startsWith('/cost-pricing-sheets') ||
     pathname.startsWith('/receipts') ||

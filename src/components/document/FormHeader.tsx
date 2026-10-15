@@ -89,15 +89,17 @@ export function FormHeader({
           </button>
         </div>
 
-        <label className="full">
-          <span className="cps-label">{descriptor.titleFieldLabel}</span>
-          <Input
-            value={invoiceTitle || ''}
-            onChange={(event) => setInvoiceTitle(event.target.value)}
-            placeholder={descriptor.titleFieldPlaceholder}
-            className="cps-field"
-          />
-        </label>
+        {!descriptor.hiddenSections?.titleField ? (
+          <label className="full">
+            <span className="cps-label">{descriptor.titleFieldLabel}</span>
+            <Input
+              value={invoiceTitle || ''}
+              onChange={(event) => setInvoiceTitle(event.target.value)}
+              placeholder={descriptor.titleFieldPlaceholder}
+              className="cps-field"
+            />
+          </label>
+        ) : null}
 
         <label>
           <span className="cps-label">{descriptor.numberLabel}</span>
@@ -118,15 +120,17 @@ export function FormHeader({
           )}
         </label>
 
-        <label>
-          <span className="cps-label">PO Number</span>
-          <Input
-            value={invoice.po_number || ''}
-            onChange={(event) => updateInvoice('po_number', event.target.value)}
-            placeholder="Optional"
-            className="cps-field"
-          />
-        </label>
+        {!descriptor.hiddenSections?.clientPoNumberField ? (
+          <label>
+            <span className="cps-label">PO Number</span>
+            <Input
+              value={invoice.po_number || ''}
+              onChange={(event) => updateInvoice('po_number', event.target.value)}
+              placeholder="Optional"
+              className="cps-field"
+            />
+          </label>
+        ) : null}
 
         <label>
           <span className="cps-label">{descriptor.issueDateLabel}</span>
@@ -138,19 +142,22 @@ export function FormHeader({
           />
         </label>
 
-        <label>
-          <span className="cps-label">{descriptor.dueDateLabel}</span>
-          <DateField
-            label={descriptor.dueDateLabel}
-            value={invoice.due_date || ''}
-            onChange={(next) => updateInvoice('due_date', next)}
-            className="cps-field"
-          />
-        </label>
+        {!descriptor.hiddenSections?.dueDateField ? (
+          <label>
+            <span className="cps-label">{descriptor.dueDateLabel}</span>
+            <DateField
+              label={descriptor.dueDateLabel}
+              value={invoice.due_date || ''}
+              onChange={(next) => updateInvoice('due_date', next)}
+              className="cps-field"
+            />
+          </label>
+        ) : null}
 
-        <div className="full">
-          <span className="cps-label">Header Fields</span>
-          {customFields.length === 0 ? (
+        {!descriptor.hiddenSections?.headerFieldsSection ? (
+          <div className="full">
+            <span className="cps-label">Header Fields</span>
+            {customFields.length === 0 ? (
             <button
               type="button"
               onClick={onAddHeaderField}
@@ -199,8 +206,9 @@ export function FormHeader({
                 + Add header field
               </button>
             </>
-          )}
-        </div>
+            )}
+          </div>
+        ) : null}
       </div>
       <button type="button" onClick={onOpenActionsSheet} className="sr-only">Open document actions</button>
     </section>

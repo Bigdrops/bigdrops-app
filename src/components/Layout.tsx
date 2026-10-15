@@ -46,6 +46,7 @@ import {
   inactiveNavIconColorClassName,
   getSalesPath,
   getPreSalesPath,
+  getProcurementPath,
   isPathActive,
   getActiveTab,
   type TabKey,
@@ -118,6 +119,12 @@ export default function Layout({
     setSalesOpen(false)
     setSidebarOpen(false)
     navigate(getPreSalesPath(key))
+  }
+
+  const handleProcurementPick = (key: string) => {
+    setSalesOpen(false)
+    setSidebarOpen(false)
+    navigate(getProcurementPath(key))
   }
 
   const handleMorePick = async (key: string) => {
@@ -206,6 +213,7 @@ export default function Layout({
           handleSalesPick={handleSalesPick}
           handleMorePick={handleMorePick}
           handlePreSalesPick={handlePreSalesPick}
+          handleProcurementPick={handleProcurementPick}
           pathname={location.pathname}
         />
       )}

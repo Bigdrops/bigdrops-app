@@ -42,6 +42,10 @@ interface FormNotesTermsProps {
   showLinks: boolean
   setShowLinks: (val: boolean) => void
   linksSectionRef?: RefObject<HTMLDivElement | null>
+  /** Hide the signatory picker (families with no signatory column). Defaults to false. */
+  hideSignatorySection?: boolean
+  /** Hide reference links (families with no attachments column). Defaults to false. */
+  hideReferenceLinksSection?: boolean
 }
 
 export function FormNotesTerms({
@@ -62,6 +66,8 @@ export function FormNotesTerms({
   showLinks,
   setShowLinks,
   linksSectionRef,
+  hideSignatorySection = false,
+  hideReferenceLinksSection = false,
 }: FormNotesTermsProps) {
   const selectedSignatory = signatories.find((entry) => String(entry.id) === String(signatoryId))
   const signatorySubtitle = selectedSignatory?.name || 'No Signatory'
@@ -109,41 +115,44 @@ export function FormNotesTerms({
       </CollapseCard>
 
       {/* Signatory */}
-      <CollapseCard
-        icon={Signature}
-        iconTone={{ bg: '#d1fae5', fg: '#059669' }}
-        title="Signatory"
-        subtitle={signatorySubtitle}
-        open={showSignatory}
-        onToggle={() => setShowSignatory(!showSignatory)}
-        sectionColor="#059669"
-      >
-        <div className="space-y-4">
-          <SignatoryPicker
-            value={signatoryId}
-            onChange={onSignatoryChange}
-            signatories={signatories.map((s) => ({
-              id: s.id,
-              name: s.name,
-              role: s.role,
-              signatureUrl: s.signature_url || s.signatureUrl,
-            }))}
-          />
-          {afterSignatorySlot}
-        </div>
-      </CollapseCard>
+      {!hideSignatorySection ? (
+        <CollapseCard
+          icon={Signature}
+          iconTone={{ bg: '#d1fae5', fg: '#059669' }}
+          title="Signatory"
+          subtitle={signatorySubtitle}
+          open={showSignatory}
+          onToggle={() => setShowSignatory(!showSignatory)}
+          sectionColor="#059669"
+        >
+          <div className="space-y-4">
+            <SignatoryPicker
+              value={signatoryId}
+              onChange={onSignatoryChange}
+              signatories={signatories.map((s) => ({
+                id: s.id,
+                name: s.name,
+                role: s.role,
+                signatureUrl: s.signature_url || s.signatureUrl,
+              }))}
+            />
+            {afterSignatorySlot}
+          </div>
+        </CollapseCard>
+      ) : null}
 
       {/* Reference Links */}
-      <div ref={linksSectionRef}>
-        <CollapseCard
-          icon={Link2}
-          iconTone={{ bg: '#f5f3ff', fg: '#7c3aed' }}
-          title="Reference Links"
-          subtitle={linksSubtitle}
-          open={showLinks}
-          onToggle={() => setShowLinks(!showLinks)}
-          sectionColor="#7c3aed"
-        >
+      {!hideReferenceLinksSection ? (
+        <div ref={linksSectionRef}>
+          <CollapseCard
+            icon={Link2}
+            iconTone={{ bg: '#f5f3ff', fg: '#7c3aed' }}
+            title="Reference Links"
+            subtitle={linksSubtitle}
+            open={showLinks}
+            onToggle={() => setShowLinks(!showLinks)}
+            sectionColor="#7c3aed"
+          >
           <div className="space-y-2.5">
             {referenceLinks.length === 0 ? null : (
               referenceLinks.map((link, index) => (
@@ -180,8 +189,9 @@ export function FormNotesTerms({
               Add Link
             </button>
           </div>
-        </CollapseCard>
-      </div>
+          </CollapseCard>
+        </div>
+      ) : null}
     </section>
   )
 }

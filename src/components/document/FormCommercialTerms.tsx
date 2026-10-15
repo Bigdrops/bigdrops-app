@@ -118,6 +118,10 @@ export function FormCommercialTerms({
   const whtEffect = whtValue > 0 ? 'Deduction' : 'Not set'
 
   const taxedCount = extraCharges.filter((charge) => charge.withTax !== false).length
+  const showPaymentStage = descriptor.hiddenSections?.paymentStage !== true
+  const showWhtSection = descriptor.hiddenSections?.whtSection !== true
+  const showAdditionalFields = descriptor.hiddenSections?.additionalFieldsSection !== true
+  const visibleControlCount = 2 + (showWhtSection ? 1 : 0)
   const chargeCount = extraCharges.length
 
   return (
@@ -125,44 +129,46 @@ export function FormCommercialTerms({
       <DocumentSectionHead number="3." title="Commercial terms" meta="Payment · tax · charges" />
 
       <div className="bd-ux-shell">
-        <div className="bd-payment-stage">
-          <div className="bd-payment-stage-head">
-            <div className="copy">
-              <small>Payment</small>
-              <b>{descriptor.paymentHeadline}</b>
+        {showPaymentStage ? (
+          <div className="bd-payment-stage">
+            <div className="bd-payment-stage-head">
+              <div className="copy">
+                <small>Payment</small>
+                <b>{descriptor.paymentHeadline}</b>
+              </div>
+              <span className="bd-payment-current">{String(invoice.payment_terms || 'Custom')}</span>
             </div>
-            <span className="bd-payment-current">{String(invoice.payment_terms || 'Custom')}</span>
+            <div className="cps-dgrid">
+              <div>
+                <label className="cps-label">Payment Terms</label>
+                <Select
+                  value={String(invoice.payment_terms || 'Custom')}
+                  onValueChange={(value) => updateInvoice('payment_terms', value)}
+                >
+                  <SelectTrigger className="cps-field">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Custom">Custom</SelectItem>
+                    <SelectItem value="Net 7">Net 7 Days</SelectItem>
+                    <SelectItem value="Net 14">Net 14 Days</SelectItem>
+                    <SelectItem value="Net 30">Net 30 Days</SelectItem>
+                    <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="cps-label">Due / Validity Note</label>
+                <Input
+                  value={String(invoice.custom_payment_terms || '')}
+                  onChange={(event) => updateInvoice('custom_payment_terms', event.target.value)}
+                  placeholder={descriptor.paymentNotePlaceholder}
+                  className="cps-field"
+                />
+              </div>
+            </div>
           </div>
-          <div className="cps-dgrid">
-            <div>
-              <label className="cps-label">Payment Terms</label>
-              <Select
-                value={String(invoice.payment_terms || 'Custom')}
-                onValueChange={(value) => updateInvoice('payment_terms', value)}
-              >
-                <SelectTrigger className="cps-field">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Custom">Custom</SelectItem>
-                  <SelectItem value="Net 7">Net 7 Days</SelectItem>
-                  <SelectItem value="Net 14">Net 14 Days</SelectItem>
-                  <SelectItem value="Net 30">Net 30 Days</SelectItem>
-                  <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="cps-label">Due / Validity Note</label>
-              <Input
-                value={String(invoice.custom_payment_terms || '')}
-                onChange={(event) => updateInvoice('custom_payment_terms', event.target.value)}
-                placeholder={descriptor.paymentNotePlaceholder}
-                className="cps-field"
-              />
-            </div>
-          </div>
-        </div>
+        ) : null}
 
         <div className="bd-commercial-split">
           <div className="bd-ux-block">
@@ -172,7 +178,7 @@ export function FormCommercialTerms({
                 <b>Tax &amp; adjustments</b>
                 <span>Closed rows still show the active value and its effect.</span>
               </div>
-              <span className="bd-ux-count">3 controls</span>
+              <span className="bd-ux-count">{visibleControlCount} controls</span>
             </div>
 
             <SettingRow
@@ -237,37 +243,39 @@ export function FormCommercialTerms({
               <span className="bd-setting-help">Applied to taxable item lines and Additional Charges marked VAT applies. A line VAT override still takes priority.</span>
             </SettingRow>
 
-            <SettingRow
-              id="wht"
-              icon={<Percent />}
-              title="Withholding Tax (WHT)"
-              helper="Deducted after the invoice total is calculated"
-              value={whtDisplay}
-              effect={whtEffect}
-              tone="wht"
-              open={openSections.wht}
-              onToggle={() => toggleSection('wht')}
-            >
-              <div className="cps-dgrid">
-                <div>
-                  <label className="cps-label">WHT value</label>
-                  <NumericInput
-                    min={0}
-                    value={whtValue}
-                    onChange={(val) => updateInvoice('wht', val)}
-                    className="cps-field mono"
-                  />
-                </div>
-                <div>
-                  <label className="cps-label">Type</label>
-                  <div className="bd-seg">
-                    <button type="button" className={whtType === 'percent' ? 'on' : ''} onClick={() => setWhtType('percent')}>%</button>
-                    <button type="button" className={whtType === 'fixed' ? 'on' : ''} onClick={() => setWhtType('fixed')}>NGN</button>
+            {showWhtSection ? (
+              <SettingRow
+                id="wht"
+                icon={<Percent />}
+                title="Withholding Tax (WHT)"
+                helper="Deducted after the invoice total is calculated"
+                value={whtDisplay}
+                effect={whtEffect}
+                tone="wht"
+                open={openSections.wht}
+                onToggle={() => toggleSection('wht')}
+              >
+                <div className="cps-dgrid">
+                  <div>
+                    <label className="cps-label">WHT value</label>
+                    <NumericInput
+                      min={0}
+                      value={whtValue}
+                      onChange={(val) => updateInvoice('wht', val)}
+                      className="cps-field mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="cps-label">Type</label>
+                    <div className="bd-seg">
+                      <button type="button" className={whtType === 'percent' ? 'on' : ''} onClick={() => setWhtType('percent')}>%</button>
+                      <button type="button" className={whtType === 'fixed' ? 'on' : ''} onClick={() => setWhtType('fixed')}>NGN</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <span className="bd-setting-help">WHT is deducted from the amount payable. It is not presented as another VAT-like charge.</span>
-            </SettingRow>
+                <span className="bd-setting-help">WHT is deducted from the amount payable. It is not presented as another VAT-like charge.</span>
+              </SettingRow>
+            ) : null}
           </div>
 
           <div className="bd-ux-block">
@@ -343,24 +351,25 @@ export function FormCommercialTerms({
           </div>
         </div>
 
-        <div className="bd-ux-block">
-          <div className="bd-ux-block-head">
-            <div className="bd-ux-block-title">
-              <small>Secondary</small>
-              <b>Other commercial details</b>
-              <span>Less-used controls stay available without competing with tax and charges.</span>
+        {showAdditionalFields ? (
+          <div className="bd-ux-block">
+            <div className="bd-ux-block-head">
+              <div className="bd-ux-block-title">
+                <small>Secondary</small>
+                <b>Other commercial details</b>
+                <span>Less-used controls stay available without competing with tax and charges.</span>
+              </div>
             </div>
-          </div>
-          <SettingRow
-            id="fields"
-            icon={<Plus />}
-            title="Additional fields"
-            helper="Extra document information only"
-            value={additionalFields.length ? String(additionalFields.length) : '—'}
-            effect={additionalFields.length ? 'Document only' : 'None'}
-            open={openSections.fields}
-            onToggle={() => toggleSection('fields')}
-          >
+            <SettingRow
+              id="fields"
+              icon={<Plus />}
+              title="Additional fields"
+              helper="Extra document information only"
+              value={additionalFields.length ? String(additionalFields.length) : '—'}
+              effect={additionalFields.length ? 'Document only' : 'None'}
+              open={openSections.fields}
+              onToggle={() => toggleSection('fields')}
+            >
               {additionalFields.map((field) => (
                 <div key={field.id} className="bd-afield-row">
                   <Input
@@ -392,7 +401,8 @@ export function FormCommercialTerms({
               </button>
               <span className="bd-setting-help">Document fields are informational. They do not affect subtotal, VAT, WHT, or payable amount.</span>
             </SettingRow>
-        </div>
+          </div>
+        ) : null}
       </div>
     </section>
   )

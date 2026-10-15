@@ -39,6 +39,10 @@ const Suppliers = lazy(() => import('@/pages/Suppliers'))
 const AddSupplier = lazy(() => import('@/pages/AddSupplier'))
 const EditSupplier = lazy(() => import('@/pages/EditSupplier'))
 const SupplierDetail = lazy(() => import('@/pages/SupplierDetail'))
+const PurchaseOrders = lazy(() => import('@/pages/PurchaseOrders'))
+const NewPurchaseOrder = lazy(() => import('@/pages/NewPurchaseOrder'))
+const EditPurchaseOrder = lazy(() => import('@/pages/EditPurchaseOrder'))
+const PurchaseOrderDetail = lazy(() => import('@/pages/PurchaseOrderDetail'))
 const NewInvoice = lazy(() => import('@/pages/NewInvoice'))
 const ViewInvoice = lazy(() => import('@/pages/ViewInvoice'))
 const EditInvoice = lazy(() => import('@/pages/EditInvoice'))
@@ -327,6 +331,10 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/suppliers/new" element={withBoundary(<AddSupplier />)} />
           <Route path="/suppliers/edit/:id" element={withBoundary(<EditSupplier />)} />
           <Route path="/suppliers/:id" element={withBoundary(<SupplierDetail />)} />
+          <Route path="/purchase-orders" element={withBoundary(<PurchaseOrders />)} />
+          <Route path="/purchase-orders/new" element={withBoundary(<NewPurchaseOrder />)} />
+          <Route path="/purchase-orders/edit/:id" element={withBoundary(<EditPurchaseOrder />)} />
+          <Route path="/purchase-orders/:id" element={withBoundary(<PurchaseOrderDetail />)} />
           <Route path="/settings" element={withBoundary(<Settings />)} />
           <Route path="/settings/notifications" element={withBoundary(<NotificationSettingsPage />)} />
           <Route path="/more" element={withBoundary(<MoreOptions />)} />

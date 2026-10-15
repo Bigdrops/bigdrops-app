@@ -57,6 +57,12 @@ interface FormLineItemsProps {
   onClearInvalidRow?: () => void
   sectionNumber?: string
   sectionTitle?: string
+  /**
+   * Override the item-suggestion engine. Defaults to the established rule
+   * (every family except waybill). A procurement family disables it:
+   * catalog sales prices must never populate supplier costs.
+   */
+  enableItemSuggestions?: boolean
 }
 
 export const FormLineItems = React.memo(function FormLineItems({
@@ -86,7 +92,9 @@ export const FormLineItems = React.memo(function FormLineItems({
   onClearInvalidRow,
   sectionNumber = '2.',
   sectionTitle = 'Line items',
+  enableItemSuggestions,
 }: FormLineItemsProps) {
+  const suggestionsEnabled = enableItemSuggestions ?? ctx !== 'waybill'
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const lineItemsCount = useMemo(() => items.filter((item) => item.row_type === 'standard').length, [items])
   const groupMap = useMemo(() => new Map(groups.map((group) => [group.id, group])), [groups])
@@ -271,7 +279,7 @@ export const FormLineItems = React.memo(function FormLineItems({
                     items={row.items}
                     invoice={invoice}
                     context={ctx}
-                    enableItemSuggestions={ctx !== 'waybill'}
+                    enableItemSuggestions={suggestionsEnabled}
                     customColumns={customColumns}
                     groupSubtotal={computedGroupMap.get(row.group.id)?.subtotal || 0}
                     onUpdateGroupName={onUpdateGroupName}
@@ -295,7 +303,7 @@ export const FormLineItems = React.memo(function FormLineItems({
                   number={row.number}
                   invoice={invoice}
                   context={ctx}
-                  enableItemSuggestions={ctx !== 'waybill'}
+                  enableItemSuggestions={suggestionsEnabled}
                   customColumns={customColumns}
                   computedAmount={getComputedAmount(row.item)}
                   isFirst={row.isFirst}

@@ -213,6 +213,8 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
     showColumnManager,
     setShowColumnManager,
     isMobile,
+    hideSignatorySection,
+    hideReferenceLinksSection,
   } = props
 
   /**
@@ -420,6 +422,8 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
               showLinks={showLinks}
               setShowLinks={setShowLinks}
               linksSectionRef={linksRef}
+              hideSignatorySection={hideSignatorySection}
+              hideReferenceLinksSection={hideReferenceLinksSection}
             />
           </div>
           </main>

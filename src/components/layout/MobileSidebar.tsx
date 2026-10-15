@@ -16,6 +16,8 @@ import {
   getSalesPath,
   presalesPicker,
   getPreSalesPath,
+  procurementPicker,
+  getProcurementPath,
   mobileDrawerUtilityNav,
 } from './navData'
 import { CompanySelectionSheet } from './CompanySelectionSheet'
@@ -188,6 +190,32 @@ export function MobileSidebar({
                   type="button"
                   onClick={() => {
                     navigate(getPreSalesPath(item.key))
+                    onOpenChange(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center gap-2 rounded-xl px-2 py-[9px] text-[11px] font-[700] transition active:scale-[0.985]',
+                    isActive ? activeNavItemClassName : inactiveNavItemClassName,
+                  )}
+                >
+                  <Icon className={cn('h-4 w-4', isActive ? '' : inactiveNavIconColorClassName)} strokeWidth={1.9} />
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Procurement */}
+          <DrawerLabel>Procurement</DrawerLabel>
+          <div className="space-y-0.5 pb-1">
+            {procurementPicker.map((item) => {
+              const Icon = item.icon
+              const isActive = isPathActive(pathname, getProcurementPath(item.key))
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    navigate(getProcurementPath(item.key))
                     onOpenChange(false)
                   }}
                   className={cn(
