@@ -6,19 +6,34 @@
 
 import { SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { formatDisplayDate } from '@/lib/formatters/date'
-import type { DocumentSearchResult, MatchSource } from '@/domain/search/types'
+import type { DocumentSearchResult, DocumentType, MatchSource } from '@/domain/search/types'
+
 
 // ── Match source labels ────────────────────────────────────────────────────
 
 const MATCH_SOURCE_LABELS: Record<MatchSource, string> = {
   number:               'document number',
+  reference_number:     'linked number',
   client:               'client name',
+  vendor:               'vendor',
   title:                'title',
+  notes:                'notes',
+  location:             'location',
+  equipment_type:       'equipment',
+  equipment:            'equipment identity',
   item_description:     'item description',
   item_make:            'item make',
   item_sub_description: 'item detail',
-  notes:                'notes',
+  item_notes:           'item notes',
+  specification:        'specification',
+  section_title:        'section',
+  problem_reported:     'reported problem',
+  service_rendered:     'service rendered',
+  materials_used:       'materials used',
+  defects_found:        'defects found',
+  engineer_remarks:     'engineer remarks',
 }
+
 
 function matchSourceLabel(source: MatchSource | string): string {
   return MATCH_SOURCE_LABELS[source as MatchSource] ?? source
@@ -26,16 +41,17 @@ function matchSourceLabel(source: MatchSource | string): string {
 
 // ── Document type badge ────────────────────────────────────────────────────
 
-const DOC_TYPE_LABELS: Record<string, string> = {
+const DOC_TYPE_LABELS: Record<DocumentType, string> = {
   quotation: 'Quotation',
   invoice:   'Invoice',
-  waybill:   'Waybill',
-  csr:       'CSR',
   rfq:       'RFQ',
   cps:       'CPS',
+  csr:       'CSR',
+  waybill:   'Waybill',
+  receipt:   'Receipt',
 }
 
-function DocTypeBadge({ type }: { type: string }) {
+function DocTypeBadge({ type }: { type: DocumentType }) {
   return (
     <span className="shrink-0 inline-flex rounded-md border border-bd-border bg-bd-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">
       {DOC_TYPE_LABELS[type] ?? type}

@@ -11,23 +11,44 @@
 export type DocumentType =
   | 'quotation'
   | 'invoice'
-  | 'waybill'
-  | 'csr'
   | 'rfq'
   | 'cps'
+  | 'csr'
+  | 'waybill'
+  | 'receipt'
 
 /**
  * Which field inside the document produced the match.
  * Mirrors the match_source values returned by the search_documents RPC.
  */
 export type MatchSource =
+  // Document identity
   | 'number'
-  | 'client'
+  /** A number belonging to a different document, e.g. a receipt's linked invoice. */
+  | 'reference_number'
   | 'title'
+  | 'client'
+  | 'vendor'
+  // Header free text
+  | 'notes'
+  | 'location'
+  | 'equipment_type'
+  /** CSR make, model, serial number or engine number. */
+  | 'equipment'
+  // Item / content
   | 'item_description'
   | 'item_make'
   | 'item_sub_description'
-  | 'notes'
+  | 'item_notes'
+  | 'specification'
+  | 'section_title'
+  // CSR content
+  | 'problem_reported'
+  | 'service_rendered'
+  /** Material names extracted from the CSR materials envelope. */
+  | 'materials_used'
+  | 'defects_found'
+  | 'engineer_remarks'
 
 /**
  * One search result row, directly mapped from the RETURNS TABLE of search_documents.
