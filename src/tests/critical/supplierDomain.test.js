@@ -663,15 +663,21 @@ test('58. the supplier form is reusable and separate from the document form', ()
   assert.match(form, /export function SupplierForm/)
 })
 
-test('59. no purchase order route or page exists', () => {
-  // Phase A scope guard. Phase C1 (supplier purchase orders) later authorised
-  // the PO DOMAIN and its NUMBERING key, so the original blanket "no purchase
-  // order numbering" assertion was superseded and is now asserted positively
-  // below. The parts that still stand are that no PO ROUTE and no PO PAGE may
-  // exist: Phase C1 is a backend-authority phase and builds no UI.
-  const shell = read('src/components/app/AppShell.tsx').toLowerCase()
-  assert.ok(!shell.includes('purchase-order'), 'no PO route may exist')
-  assert.ok(!shell.includes('purchaseorder'), 'no PO page may exist')
+test('59. purchase order routes and pages exist through the authorized UI surface', () => {
+  // Phase A scope guard, superseded by Phase C2 (supplier purchase order
+  // form and workspace), which authorises PO routes, pages, and
+  // navigation. The guard now asserts that surface positively instead of
+  // forbidding it.
+  const shell = read('src/components/app/AppShell.tsx')
+  for (const route of ['/purchase-orders', '/purchase-orders/new', '/purchase-orders/edit/:id', '/purchase-orders/:id']) {
+    assert.match(shell, new RegExp(route.replace(/[/:]/g, (c) => `\\${c}`)), `${route} must be registered`)
+  }
+  for (const page of ['PurchaseOrders.tsx', 'NewPurchaseOrder.tsx', 'EditPurchaseOrder.tsx', 'PurchaseOrderDetail.tsx', 'PurchaseOrderFormPage.tsx']) {
+    assert.ok(fs.existsSync(path.resolve(process.cwd(), 'src/pages', page)), `${page} must exist`)
+  }
+  const nav = read('src/components/layout/navData.ts')
+  assert.match(nav, /procurementPicker/)
+  assert.match(nav, /purchase_orders: '\/purchase-orders'/)
 })
 
 test('59b. purchase order numbering is present and uses the canonical key', () => {
