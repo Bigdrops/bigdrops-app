@@ -161,16 +161,18 @@ export default function PurchaseOrderFormPage({ mode }: PurchaseOrderFormPagePro
     [po.extra_charges],
   )
 
-  /* ── Field routing ── */
+  /* ── Field routing ──
+   * Functional update: the shared form emits party selection as two
+   * synchronous updates (id, then name). A closed-over snapshot would let
+   * the second call overwrite the first and silently drop supplier_id
+   * while keeping supplier_name. Matching the invoice updater shape. */
   const updateHeader = useCallback(
     (field: string, value: unknown) => {
-      const next = applySharedHeaderUpdate(po, field, value)
-      if (!next) return
       markDirty()
-      setPo(next)
       setSaveError(null)
+      setPo((current) => applySharedHeaderUpdate(current, field, value) ?? current)
     },
-    [po, markDirty],
+    [markDirty],
   )
 
   const setDiscountType = useCallback(
