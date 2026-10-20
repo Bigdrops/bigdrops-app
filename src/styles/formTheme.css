@@ -477,6 +477,15 @@ h1, .bd-h1 {
   opacity: 1;
   pointer-events: auto;
   color: inherit;
+  flex-shrink: 0;
+}
+
+/* Narrow screens: the library single-lines the title (nowrap + ellipsis),
+   which clips long validation messages and crowds the close control.
+   Let the title wrap inside the header row. Short titles render unchanged. */
+.bd-goey-toast .gooey-title {
+  white-space: normal;
+  min-width: 0;
 }
 
 .bd-goey-toast .gooey-closeButton::after {
