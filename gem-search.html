@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<!--
+  gem-search — visual recreation of the local Chrome-extension dashboard that never hit the Web Store.
+  Single-file, zero-dependency (pure HTML/CSS/JS). All data is mock. Open directly in a browser.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gem-search // pipeline</title>
+<style>
+  :root {
+    --bg: #04070a;
+    --bg2: #070d12;
+    --panel: rgba(10, 18, 24, 0.72);
+    --line: rgba(0, 255, 156, 0.14);
+    --green: #00ff9c;
+    --cyan: #00e5ff;
+    --purple: #b26bff;
+    --red: #ff3b5c;
+    --amber: #ffc857;
+    --text: #c9e6d8;
+    --dim: #5d7a6e;
+    --mono: "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  /* ambient background: grid + scanlines + vignette */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 45% at 15% -5%, rgba(0,255,156,0.07), transparent 60%),
+      radial-gradient(ellipse 55% 40% at 90% 110%, rgba(178,107,255,0.06), transparent 60%),
+      linear-gradient(rgba(0,255,156,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,156,0.025) 1px, transparent 1px);
+    background-size: auto, auto, 36px 36px, 36px 36px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.11) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+    z-index: 60;
+    mix-blend-mode: multiply;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; gap: 18px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(5, 10, 13, 0.85);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo {
+    font-size: 18px; font-weight: 700; letter-spacing: 1px;
+    color: var(--green);
+    text-shadow: 0 0 12px rgba(0,255,156,0.55);
+    white-space: nowrap;
+  }
+  .logo .cursor { animation: blink 1.1s steps(1) infinite; color: var(--cyan); }
+  @keyframes blink { 50% { opacity: 0; } }
+  .logo small { display: block; font-size: 9px; color: var(--dim); letter-spacing: 3px; font-weight: 400; }
+  .status-pills { display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+  .pill {
+    display: flex; align-items: center; gap: 7px;
+    padding: 5px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: rgba(0,255,156,0.05);
+    color: var(--dim);
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+  .pill.on { color: var(--green); border-color: rgba(0,255,156,0.4); box-shadow: 0 0 14px rgba(0,255,156,0.15) inset; }
+  .pill.on .dot { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.6s ease-in-out infinite; }
+  .pill.warn { color: var(--amber); border-color: rgba(255,200,87,0.35); }
+  .pill.warn .dot { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+
+  /* ---------- layout ---------- */
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 300px 1fr 340px;
+    gap: 16px;
+    padding: 16px 22px;
+    position: relative; z-index: 1;
+    max-width: 1720px; width: 100%;
+    margin: 0 auto;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 10px 40px rgba(0,0,0,0.45), 0 0 24px rgba(0,255,156,0.04);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .panel:hover { border-color: rgba(0,255,156,0.28); }
+  .panel-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--dim);
+    background: rgba(0,255,156,0.03);
+  }
+  .panel-head .tag { margin-left: auto; color: var(--green); font-size: 9px; }
+  .panel-body { flex: 1; overflow-y: auto; padding: 12px 14px; min-height: 0; }
+  .panel-body::-webkit-scrollbar { width: 5px; }
+  .panel-body::-webkit-scrollbar-thumb { background: rgba(0,255,156,0.25); border-radius: 3px; }
+
+  /* ---------- live feed ---------- */
+  .feed-item {
+    border: 1px solid rgba(0,255,156,0.1);
+    border-left: 2px solid var(--cyan);
+    border-radius: 6px;
+    padding: 9px 11px;
+    margin-bottom: 9px;
+    background: rgba(0,229,255,0.03);
+    animation: slideIn 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .feed-item:hover { background: rgba(0,229,255,0.08); transform: translateX(3px); }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-12px) scale(0.97); } }
+  .feed-item .meta { display: flex; gap: 8px; align-items: center; font-size: 10px; color: var(--dim); margin-bottom: 4px; }
+  .feed-item .handle { color: var(--cyan); }
+  .feed-item .ticker { margin-left: auto; color: var(--purple); border: 1px solid rgba(178,107,255,0.35); padding: 0 6px; border-radius: 3px; font-size: 9px; }
+  .feed-item .txt { font-size: 11.5px; line-height: 1.45; color: var(--text); }
+  .feed-item .sig { margin-top: 5px; font-size: 9px; letter-spacing: 1px; }
+  .sig.strong { color: var(--green); } .sig.med { color: var(--amber); } .sig.weak { color: var(--dim); }
+
+  /* ---------- pipeline (center) ---------- */
+  .pipeline-wrap { display: flex; flex-direction: column; align-items: stretch; }
+  .pipeline {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 18px 10px 8px;
+    position: relative;
+  }
+  .stage {
+    width: 100%; max-width: 460px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(7, 13, 18, 0.8);
+    padding: 12px 16px;
+    position: relative;
+    transition: border-color 0.4s, box-shadow 0.4s, background 0.4s;
+  }
+  .stage .stage-top { display: flex; align-items: center; gap: 10px; }
+  .stage .name { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: var(--dim); transition: color 0.3s; }
+  .stage .desc { font-size: 10px; color: var(--dim); margin-top: 4px; line-height: 1.5; }
+  .stage .state { margin-left: auto; font-size: 9px; letter-spacing: 1.5px; padding: 3px 9px; border-radius: 3px; border: 1px solid var(--line); color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+  .stage.active { border-color: var(--cyan); box-shadow: 0 0 22px rgba(0,229,255,0.18), 0 0 6px rgba(0,229,255,0.25) inset; background: rgba(0,229,255,0.05); }
+  .stage.active .name { color: var(--cyan); text-shadow: 0 0 10px rgba(0,229,255,0.6); }
+  .stage.active .state { color: var(--cyan); border-color: rgba(0,229,255,0.5); animation: pulse 1s infinite; }
+  .stage.done { border-color: rgba(0,255,156,0.5); }
+  .stage.done .name { color: var(--green); text-shadow: 0 0 10px rgba(0,255,156,0.5); }
+  .stage.done .state { color: var(--green); border-color: rgba(0,255,156,0.5); }
+  .stage.blocked { border-color: var(--red); box-shadow: 0 0 22px rgba(255,59,92,0.2); }
+  .stage.blocked .name { color: var(--red); text-shadow: 0 0 10px rgba(255,59,92,0.6); }
+  .stage.blocked .state { color: var(--red); border-color: var(--red); animation: pulse 0.8s infinite; }
+  .stage.skipped { opacity: 0.45; border-style: dashed; }
+  .stage .bar {
+    height: 3px; border-radius: 2px; margin-top: 9px;
+    background: rgba(255,255,255,0.06); overflow: hidden;
+  }
+  .stage .bar i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--cyan), var(--green)); box-shadow: 0 0 8px var(--cyan); transition: width 0.3s linear; }
+  .connector { width: 2px; height: 22px; background: rgba(0,255,156,0.15); position: relative; overflow: hidden; }
+  .connector::after {
+    content: ""; position: absolute; left: 0; top: -40%;
+    width: 100%; height: 40%;
+    background: linear-gradient(180deg, transparent, var(--green));
+    animation: drip 2.2s linear infinite;
+  }
+  @keyframes drip { to { top: 110%; } }
+
+  /* ---------- reviewers ---------- */
+  .reviewer {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.015);
+    transition: border-color 0.25s, background 0.25s, transform 0.15s;
+  }
+  .reviewer:hover { border-color: rgba(178,107,255,0.45); background: rgba(178,107,255,0.05); transform: translateX(-3px); }
+  .reviewer .r-top { display: flex; align-items: center; gap: 9px; }
+  .reviewer .avatar {
+    width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+    border: 1px solid;
+  }
+  .reviewer .r-name { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+  .reviewer .r-role { font-size: 9px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
+  .reviewer .r-status { margin-left: auto; font-size: 9px; letter-spacing: 1.5px; padding: 3px 8px; border-radius: 3px; border: 1px solid var(--line); color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+  .reviewer.analyzing .r-status { color: var(--cyan); border-color: rgba(0,229,255,0.5); animation: pulse 1s infinite; }
+  .reviewer.ok { border-color: rgba(0,255,156,0.4); }
+  .reviewer.ok .r-status { color: var(--green); border-color: rgba(0,255,156,0.5); }
+  .reviewer.ok .avatar { color: var(--green); border-color: rgba(0,255,156,0.5); box-shadow: 0 0 12px rgba(0,255,156,0.2); }
+  .reviewer.reject { border-color: rgba(255,59,92,0.5); background: rgba(255,59,92,0.05); }
+  .reviewer.reject .r-status { color: var(--red); border-color: var(--red); animation: pulse 0.8s infinite; }
+  .reviewer.reject .avatar { color: var(--red); border-color: var(--red); box-shadow: 0 0 12px rgba(255,59,92,0.25); }
+  .reviewer .r-reason { font-size: 10.5px; color: var(--dim); margin-top: 7px; line-height: 1.5; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.35s ease, opacity 0.3s, margin 0.3s; }
+  .reviewer.expanded .r-reason { max-height: 90px; opacity: 1; margin-top: 7px; }
+  .spinner {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid rgba(0,229,255,0.2); border-top-color: var(--cyan);
+    animation: spin 0.7s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- gate + launch ---------- */
+  .gate-box {
+    text-align: center;
+    padding: 14px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: rgba(0,0,0,0.25);
+    transition: all 0.4s;
+  }
+  .gate-box .gate-label { font-size: 9px; letter-spacing: 3px; color: var(--dim); text-transform: uppercase; }
+  .gate-box .gate-value { font-size: 26px; font-weight: 700; letter-spacing: 2px; margin-top: 4px; color: var(--dim); transition: all 0.3s; }
+  .gate-box.pass { border-color: rgba(0,255,156,0.55); box-shadow: 0 0 26px rgba(0,255,156,0.15); }
+  .gate-box.pass .gate-value { color: var(--green); text-shadow: 0 0 16px rgba(0,255,156,0.7); }
+  .gate-box.fail { border-color: var(--red); box-shadow: 0 0 26px rgba(255,59,92,0.2); }
+  .gate-box.fail .gate-value { color: var(--red); text-shadow: 0 0 16px rgba(255,59,92,0.7); animation: pulse 0.9s infinite; }
+  .launch-btn {
+    width: 100%;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 13px; font-weight: 700; letter-spacing: 2.5px;
+    color: var(--green);
+    background: rgba(0,255,156,0.06);
+    border: 1px solid rgba(0,255,156,0.5);
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .launch-btn:hover:not(:disabled) { background: rgba(0,255,156,0.14); box-shadow: 0 0 24px rgba(0,255,156,0.3); transform: translateY(-1px); }
+  .launch-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--line); color: var(--dim); }
+  .launch-btn.dryrun { color: var(--amber); border-color: rgba(255,200,87,0.5); background: rgba(255,200,87,0.05); }
+  .launch-btn.dryrun:hover:not(:disabled) { background: rgba(255,200,87,0.12); box-shadow: 0 0 24px rgba(255,200,87,0.25); }
+  .launch-btn .sub { display: block; font-size: 9px; font-weight: 400; letter-spacing: 1px; margin-top: 4px; opacity: 0.7; }
+
+  /* ---------- controls ---------- */
+  .controls { display: flex; gap: 10px; padding: 0 14px 14px; flex-wrap: wrap; }
+  .ctl {
+    flex: 1; min-width: 130px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    border: 1px solid var(--line); border-radius: 7px;
+    padding: 8px 11px;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim);
+    cursor: pointer; user-select: none;
+    background: rgba(255,255,255,0.015);
+    transition: border-color 0.25s;
+  }
+  .ctl:hover { border-color: rgba(0,255,156,0.35); }
+  .switch { width: 32px; height: 17px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid var(--line); position: relative; transition: background 0.25s; flex-shrink: 0; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--dim); transition: all 0.25s; }
+  .ctl.on .switch { background: rgba(0,255,156,0.2); border-color: rgba(0,255,156,0.5); }
+  .ctl.on .switch::after { left: 17px; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .ctl.on { color: var(--green); }
+  .run-btn {
+    flex-basis: 100%;
+    padding: 10px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    color: var(--purple);
+    background: rgba(178,107,255,0.07);
+    border: 1px solid rgba(178,107,255,0.45);
+    border-radius: 7px; cursor: pointer; text-transform: uppercase;
+    transition: all 0.25s;
+  }
+  .run-btn:hover:not(:disabled) { background: rgba(178,107,255,0.16); box-shadow: 0 0 20px rgba(178,107,255,0.25); }
+  .run-btn:disabled { opacity: 0.4; cursor: wait; }
+
+  /* ---------- tape log ---------- */
+  .tape-panel { position: relative; z-index: 1; margin: 0 22px 18px; max-width: 1720px; width: calc(100% - 44px); align-self: center; }
+  #tape {
+    height: 148px; overflow-y: auto;
+    padding: 10px 16px;
+    font-size: 11px; line-height: 1.75;
+    background: rgba(2, 5, 7, 0.9);
+  }
+  #tape::-webkit-scrollbar { width: 5px; }
+  #tape::-webkit-scrollbar-thumb { background: rgba(0,255,156,0.25); border-radius: 3px; }
+  #tape .line { white-space: nowrap; animation: tapeIn 0.25s ease; }
+  @keyframes tapeIn { from { opacity: 0; transform: translateY(4px); } }
+  #tape .t { color: var(--dim); }
+  #tape .p { font-weight: 700; }
+  #tape .p.spider { color: var(--cyan); } #tape .p.cluster { color: var(--purple); }
+  #tape .p.crawl { color: var(--amber); } #tape .p.verify { color: var(--green); }
+  #tape .p.gate { color: var(--green); } #tape .p.launch { color: var(--green); }
+  #tape .p.warn { color: var(--amber); } #tape .p.err { color: var(--red); }
+  #tape .p.sys { color: var(--dim); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1100px) {
+    main { grid-template-columns: 1fr; }
+    .panel-body { max-height: 300px; }
+    .pipeline { order: -1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">gem-search<span class="cursor">_</span><small>MEMECOIN PIPELINE · LOCAL BUILD v0.9.4</small></div>
+  <div class="status-pills">
+    <div class="pill on"><span class="dot"></span>Spider Online</div>
+    <div class="pill on"><span class="dot"></span>Local Engine</div>
+    <div class="pill warn" id="modePill"><span class="dot"></span><span id="modePillText">Dry-run</span></div>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: live feed -->
+  <section class="panel">
+    <div class="panel-head">Live Feed Spider <span class="tag" id="feedCount">0 posts</span></div>
+    <div class="panel-body" id="feed"></div>
+  </section>
+
+  <!-- CENTER: pipeline -->
+  <section class="panel pipeline-wrap">
+    <div class="panel-head">Pipeline <span class="tag" id="pipelineTag">IDLE</span></div>
+    <div class="pipeline" id="pipeline">
+      <div class="stage" data-stage="cluster">
+        <div class="stage-top"><span class="name">CLUSTER</span><span class="state">idle</span></div>
+        <div class="desc">Groups posts by meaning, not ticker. Tracks clusters over a 6h window.</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="connector"></div>
+      <div class="stage" data-stage="crawl">
+        <div class="stage-top"><span class="name">CRAWL</span><span class="state">idle</span></div>
+        <div class="desc">Visits linked sites — pulls docs, repo, what was actually built.</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="connector"></div>
+      <div class="stage" data-stage="verify">
+        <div class="stage-top"><span class="name">VERIFY</span><span class="state">idle</span></div>
+        <div class="desc">Four Grok reviewers. Unanimous approval required to pass the gate.</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="connector"></div>
+      <div class="stage" data-stage="gate">
+        <div class="stage-top"><span class="name">GATE</span><span class="state">idle</span></div>
+        <div class="desc">4/4 OK → chain continues. Any single reject → chain stopped cold.</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="connector"></div>
+      <div class="stage" data-stage="launch">
+        <div class="stage-top"><span class="name">LAUNCH</span><span class="state">idle</span></div>
+        <div class="desc">Memecoin launchpad. Position capped at 0.025 SOL.</div>
+        <div class="bar"><i></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: verification + launch -->
+  <section class="panel">
+    <div class="panel-head">Verification <span class="tag" id="verdictTag">—</span></div>
+    <div class="panel-body">
+      <div id="reviewers"></div>
+      <div class="gate-box" id="gateBox">
+        <div class="gate-label">Gate Status</div>
+        <div class="gate-value" id="gateValue">STANDBY</div>
+      </div>
+      <button class="launch-btn dryrun" id="launchBtn" disabled>
+        Launch · 0.025 SOL cap
+        <span class="sub" id="launchSub">awaiting gate clearance</span>
+      </button>
+    </div>
+    <div class="controls">
+      <div class="ctl on" id="verifToggle">Verification <span class="switch"></span></div>
+      <div class="ctl on" id="modeToggle">Dry-run <span class="switch"></span></div>
+      <button class="run-btn" id="runBtn">▶ Run full tape</button>
+    </div>
+  </section>
+</main>
+
+<!-- BOTTOM: tape log -->
+<section class="panel tape-panel">
+  <div class="panel-head">Tape <span class="tag">tail -f</span></div>
+  <div id="tape"></div>
+</section>
+
+<script>
+"use strict";
+
+/* ================= mock data ================= */
+const HANDLES = ["@0xwhale", "@degen_farmer", "@anon_builder", "@cryptojes", "@solmaxi", "@nft_dre", "@chain_sage", "@gemhunt", "@0xmir", "@based_larry"];
+const TICKERS = ["$JEV", "$ORBIT", "$MIRA", "$PULSE", "$NOVA", "$ZEST", "$FLUX", "$DRIFT", "$ECHO", "$VANTA"];
+const POST_SNIPPETS = [
+  "just shipped an agent that scans feeds and clusters by meaning, not ticker. wild.",
+  "this thing actually reads the repo before shilling. first one i've seen do that.",
+  "weak narrative, strong dev. the build is real but the story ain't there yet.",
+  "anonymity is the point. team doxxed themselves after the first 100x. respect.",
+  "docs are clean, repo is active, but the feed signal is all noise. pass for me.",
+  "cluster forming around AI agent infra — 40+ posts in 6h, score climbing.",
+  "skeptical. last three launches from this narrative rugged within a week.",
+  "the runner data is insane: entry at 0.02, already 3x. this is the one.",
+  "marketing is all cap. no product, no docs, no signal. hard pass.",
+  "built in public, weekly updates, actual users. rare combo down here."
+];
+const CLUSTER_NAMES = ["AI agent infra", "on-chain gaming", "DePIN sensors", "agent launchpads", "restaking derivs", "social graphs"];
+const REVIEWERS = [
+  { id: "lookout",  name: "Lookout",  role: "signal quality",  color: "#00e5ff", reasons: {
+      ok: "Narrative signal strong — cluster score 0.87, organic mentions compounding.",
+      reject: "Weak narrative signal — mentions are bot-driven, no organic pull.",
+      idle: "Awaiting cluster data from the spider feed." } },
+  { id: "maker",    name: "Maker",    role: "product/build",   color: "#00ff9c", reasons: {
+      ok: "Repo active, docs clean, product actually works. Build quality confirmed.",
+      reject: "No repo, no docs, no build. Pure narrative — nothing to verify.",
+      idle: "Awaiting crawl output from linked sites." } },
+  { id: "skeptic",  name: "Skeptic",  role: "risks",          color: "#ffc857", reasons: {
+      ok: "Risks acceptable: liquidity locked, team doxxed, cap structure sane.",
+      reject: "Anonymous team + unaudited contract. Risk profile unacceptable.",
+      idle: "Awaiting risk scan of contract and team." } },
+  { id: "runner",   name: "Runner",   role: "entry data",      color: "#b26bff", reasons: {
+      ok: "Entry data clean: 0.02 entry, 3.2x already, momentum holding.",
+      reject: "Entry data thin — no volume confirmation, chasing a dead move.",
+      idle: "Awaiting market data from the crawl stage." } }
+];
+
+/* ================= state ================= */
+const state = {
+  verification: true,
+  dryRun: true,
+  running: false,
+  feedCount: 0,
+  clusterScore: 0,
+  clusterName: null,
+  gate: null // null | "pass" | "fail"
+};
+
+/* ================= dom refs ================= */
+const $ = id => document.getElementById(id);
+const feedEl = $("feed"), tapeEl = $("tape"), reviewersEl = $("reviewers");
+const stageEls = {};
+document.querySelectorAll(".stage").forEach(s => stageEls[s.dataset.stage] = s);
+
+/* ================= helpers ================= */
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function log(prefix, pClass, msg) {
+  const line = document.createElement("div");
+  line.className = "line";
+  const t = new Date().toTimeString().slice(0, 8);
+  line.innerHTML = `<span class="t">[${t}]</span> <span class="p ${pClass}">[${prefix}]</span> ${msg}`;
+  tapeEl.appendChild(line);
+  while (tapeEl.children.length > 80) tapeEl.removeChild(tapeEl.firstChild);
+  tapeEl.scrollTop = tapeEl.scrollHeight;
+}
+
+/* ================= feed spider ================= */
+function addFeedItem() {
+  const sig = pick([["strong", "STRONG"], ["med", "MED"], ["weak", "WEAK"]]);
+  const el = document.createElement("div");
+  el.className = "feed-item";
+  el.innerHTML = `
+    <div class="meta"><span class="handle">${pick(HANDLES)}</span><span>${Math.floor(rand(1, 59))}m</span><span class="ticker">${pick(TICKERS)}</span></div>
+    <div class="txt">${pick(POST_SNIPPETS)}</div>
+    <div class="sig ${sig[0]}">▲ signal: ${sig[1]}</div>`;
+  feedEl.prepend(el);
+  while (feedEl.children.length > 14) feedEl.removeChild(feedEl.lastChild);
+  state.feedCount++;
+  $("feedCount").textContent = state.feedCount + " posts";
+  if (Math.random() < 0.4) log("Spider", "spider", `Grabbed ${Math.floor(rand(4, 18))} posts from feed`);
+}
+
+/* ================= reviewers ================= */
+function renderReviewers() {
+  reviewersEl.innerHTML = "";
+  REVIEWERS.forEach(r => {
+    const el = document.createElement("div");
+    el.className = "reviewer";
+    el.dataset.id = r.id;
+    el.innerHTML = `
+      <div class="r-top">
+        <div class="avatar" style="color:${r.color};border-color:${r.color}55">${r.name[0]}</div>
+        <div><div class="r-name">${r.name}</div><div class="r-role">${r.role}</div></div>
+        <span class="r-status">idle</span>
+      </div>
+      <div class="r-reason">${r.reasons.idle}</div>`;
+    el.addEventListener("click", () => el.classList.toggle("expanded"));
+    reviewersEl.appendChild(el);
+  });
+}
+
+function setReviewer(id, status, reason) {
+  const el = reviewersEl.querySelector(`[data-id="${id}"]`);
+  if (!el) return;
+  el.classList.remove("analyzing", "ok", "reject");
+  if (status !== "idle") el.classList.add(status);
+  const badge = el.querySelector(".r-status");
+  if (status === "analyzing") badge.innerHTML = `<span class="spinner"></span> analyzing`;
+  else badge.textContent = status === "ok" ? "✓ OK" : status === "reject" ? "✗ REJECT" : "idle";
+  el.querySelector(".r-reason").textContent = reason;
+}
+
+/* ================= pipeline stages ================= */
+function setStage(name, mode, pct) {
+  const el = stageEls[name];
+  el.classList.remove("active", "done", "blocked", "skipped");
+  if (mode !== "idle") el.classList.add(mode);
+  el.querySelector(".state").textContent =
+    mode === "active" ? "running" : mode === "done" ? "done" :
+    mode === "blocked" ? "blocked" : mode === "skipped" ? "skipped" : "idle";
+  el.querySelector(".bar i").style.width = (pct || 0) + "%";
+}
+
+function resetPipeline() {
+  ["cluster", "crawl", "verify", "gate", "launch"].forEach(s => setStage(s, "idle", 0));
+  $("pipelineTag").textContent = "IDLE";
+  $("verdictTag").textContent = "—";
+  $("gateBox").className = "gate-box";
+  $("gateValue").textContent = "STANDBY";
+  $("launchBtn").disabled = true;
+  $("launchBtn").className = "launch-btn" + (state.dryRun ? " dryrun" : "");
+  $("launchSub").textContent = "awaiting gate clearance";
+  REVIEWERS.forEach(r => setReviewer(r.id, "idle", r.reasons.idle));
+}
+
+/* ================= full tape run ================= */
+async function runTape() {
+  if (state.running) return;
+  state.running = true;
+  $("runBtn").disabled = true;
+  $("runBtn").textContent = "… running";
+  resetPipeline();
+  log("SYS", "sys", "Manual run initiated — full pipeline sweep");
+
+  // CLUSTER
+  setStage("cluster", "active");
+  $("pipelineTag").textContent = "CLUSTERING";
+  log("CLUSTER", "cluster", "Grouping posts by meaning (not ticker)…");
+  for (let p = 0; p <= 100; p += 20) { setStage("cluster", "active", p); await sleep(160); }
+  state.clusterName = pick(CLUSTER_NAMES);
+  state.clusterScore = rand(0.62, 0.95);
+  setStage("cluster", "done", 100);
+  log("CLUSTER", "cluster", `Formed cluster "${state.clusterName}" (score ${state.clusterScore.toFixed(2)})`);
+
+  // CRAWL
+  setStage("crawl", "active");
+  $("pipelineTag").textContent = "CRAWLING";
+  const url = "https://" + pick(["github.com/", "docs.", "app."]) + pick(["orbitlabs", "miraprotocol", "pulsechain", "novaagent"]) + pick(["/docs", ".io", "/repo"]);
+  log("CRAWL", "crawl", `${url} → fetching docs + repo…`);
+  for (let p = 0; p <= 100; p += 25) { setStage("crawl", "active", p); await sleep(200); }
+  const found = Math.random() < 0.75;
+  setStage("crawl", "done", 100);
+  log("CRAWL", "crawl", found ? `${url} → docs + repo found` : `${url} → 404, no public build`);
+
+  // VERIFY
+  setStage("verify", "active");
+  $("pipelineTag").textContent = "VERIFYING";
+  log("Verify", "verify", "Dispatching 4 Grok reviewers — unanimous approval required");
+  REVIEWERS.forEach(r => setReviewer(r.id, "analyzing", "Analyzing…"));
+  const willPass = Math.random() < 0.6;
+  for (const r of REVIEWERS) {
+    await sleep(rand(500, 900));
+    const ok = willPass ? true : Math.random() < 0.45;
+    setReviewer(r.id, ok ? "ok" : "reject", ok ? r.reasons.ok : r.reasons.reject);
+    log(r.name, ok ? "verify" : "err", ok ? r.reasons.ok : r.reasons.reject);
+  }
+  const oks = reviewersEl.querySelectorAll(".reviewer.ok").length;
+  setStage("verify", "done", 100);
+
+  // GATE
+  setStage("gate", "active");
+  $("pipelineTag").textContent = "GATE CHECK";
+  await sleep(400);
+  if (!state.verification) {
+    setStage("gate", "skipped", 100);
+    $("gateBox").className = "gate-box";
+    $("gateValue").textContent = "OFF";
+    log("GATE", "warn", "Verification disabled — gate bypassed");
+    state.gate = "pass";
+  } else if (oks === 4) {
+    setStage("gate", "done", 100);
+    $("gateBox").className = "gate-box pass";
+    $("gateValue").textContent = "4/4 OK";
+    $("verdictTag").textContent = "UNANIMOUS";
+    log("GATE", "gate", "4/4 OK — chain cleared for launch");
+    state.gate = "pass";
+  } else {
+    setStage("gate", "blocked", 100);
+    $("gateBox").className = "gate-box fail";
+    $("gateValue").textContent = "BLOCKED";
+    $("verdictTag").textContent = oks + "/4 — STOPPED";
+    log("GATE", "err", `${oks}/4 — chain stopped cold`);
+    state.gate = "fail";
+  }
+
+  // LAUNCH
+  setStage("launch", "active");
+  $("pipelineTag").textContent = "LAUNCH";
+  await sleep(500);
+  if (state.gate === "pass") {
+    setStage("launch", "done", 100);
+    $("launchBtn").disabled = false;
+    $("launchSub").textContent = state.dryRun ? "dry-run mode — simulate launch" : "live mode — ready to fire";
+    log("Launch", "launch", state.dryRun
+      ? `Dry-run launch simulated · 0.025 SOL cap · no funds moved`
+      : `LIVE launch armed · 0.025 SOL cap · awaiting confirmation`);
+  } else {
+    setStage("launch", "blocked", 100);
+    log("Launch", "err", "Launch aborted — gate did not clear");
+  }
+
+  $("pipelineTag").textContent = "COMPLETE";
+  $("runBtn").disabled = false;
+  $("runBtn").textContent = "▶ Run full tape";
+  state.running = false;
+}
+
+/* ================= ambient tick ================= */
+function tick() {
+  if (state.running) return;
+  addFeedItem();
+  if (Math.random() < 0.3) {
+    state.clusterScore = Math.min(0.99, state.clusterScore + rand(0.01, 0.06));
+    if (!state.clusterName) state.clusterName = pick(CLUSTER_NAMES);
+    log("CLUSTER", "cluster", `Cluster "${state.clusterName}" score → ${state.clusterScore.toFixed(2)}`);
+  }
+  if (Math.random() < 0.2) log("Spider", "spider", `DOM scrape OK · ${Math.floor(rand(2, 9))} new nodes`);
+}
+
+/* ================= controls ================= */
+$("verifToggle").addEventListener("click", () => {
+  state.verification = !state.verification;
+  $("verifToggle").classList.toggle("on", state.verification);
+  $("verifToggle").lastChild.textContent = state.verification ? "Verification " : "Verification ";
+  log("SYS", "sys", `Verification ${state.verification ? "enabled — gate enforced" : "disabled — gate bypassed"}`);
+  if (!state.verification && state.gate === "fail") {
+    $("gateBox").className = "gate-box";
+    $("gateValue").textContent = "OFF";
+    $("launchBtn").disabled = false;
+    $("launchSub").textContent = state.dryRun ? "dry-run mode — simulate launch" : "live mode — ready to fire";
+  }
+});
+
+$("modeToggle").addEventListener("click", () => {
+  state.dryRun = !state.dryRun;
+  $("modeToggle").classList.toggle("on", state.dryRun);
+  $("modeToggle").lastChild.textContent = state.dryRun ? "Dry-run " : "Live ";
+  $("modePillText").textContent = state.dryRun ? "Dry-run" : "Live";
+  $("modePill").classList.toggle("warn", state.dryRun);
+  $("modePill").classList.toggle("on", !state.dryRun);
+  if (!$("launchBtn").disabled) {
+    $("launchBtn").className = "launch-btn" + (state.dryRun ? " dryrun" : "");
+    $("launchSub").textContent = state.dryRun ? "dry-run mode — simulate launch" : "live mode — ready to fire";
+  }
+  log("SYS", "sys", `Engine mode → ${state.dryRun ? "DRY-RUN (no funds move)" : "LIVE (real positions)"}`);
+});
+
+$("runBtn").addEventListener("click", runTape);
+
+$("launchBtn").addEventListener("click", () => {
+  if ($("launchBtn").disabled) return;
+  log("Launch", "launch", state.dryRun
+    ? "DRY-RUN: buy order simulated @ 0.025 SOL — no transaction signed"
+    : "LIVE: buy order fired @ 0.025 SOL cap");
+  $("launchBtn").disabled = true;
+  $("launchSub").textContent = state.dryRun ? "simulation complete" : "order sent — check wallet";
+});
+
+/* ================= boot ================= */
+renderReviewers();
+resetPipeline();
+log("SYS", "sys", "gem-search engine booted · local Chrome extension build");
+log("SYS", "sys", "Spider connected to feed · dry-run mode · verification ON");
+for (let i = 0; i < 6; i++) addFeedItem();
+setInterval(tick, 2600);
+</script>
+</body>
+</html>
