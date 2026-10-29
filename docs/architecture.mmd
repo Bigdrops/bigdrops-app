@@ -1,0 +1,96 @@
+flowchart TD
+
+subgraph group_app["Application and tenancy"]
+  node_application["BOURXE app<br/>[App.tsx]"]
+  node_shell["Responsive app shell<br/>[AppShell.tsx]"]
+  node_tenant["Tenant workspace context<br/>[contexts.tsx]"]
+  node_tenantclient["Tenant data client<br/>[tenantClient.ts]"]
+  node_admin["Company administration"]
+  node_notifications["Notifications"]
+end
+
+subgraph group_commercial["Commercial documents"]
+  node_quotations["Quotations"]
+  node_invoices["Invoices and payments"]
+  node_documents["Shared documents and PDFs"]
+end
+
+subgraph group_operations["Operations"]
+  node_rfqs["RFQs and sourcing"]
+  node_pricing["Cost and pricing sheets"]
+  node_logistics["Waybills and delivery"]
+  node_service["Service reports"]
+  node_projects["Project workspaces"]
+end
+
+subgraph group_finance["Finance and compliance"]
+  node_accounting["Accounting"]
+  node_compliance["Compliance"]
+  node_reports["Reporting"]
+end
+
+subgraph group_shared["Shared business services"]
+  node_clients["Client management<br/>[ClientDetail.tsx]"]
+  node_itemlibrary["Item library"]
+  node_search["Document search"]
+end
+
+node_staff(("Company staff"))
+node_supabase[("Supabase")]
+
+node_staff -->|"uses"| node_application
+node_application -->|"renders"| node_shell
+node_application -->|"gates access"| node_tenant
+node_tenant -->|"creates client"| node_tenantclient
+node_tenantclient -->|"scopes queries"| node_supabase
+node_application -->|"mounts runtime"| node_notifications
+node_application -->|"supports"| node_quotations
+node_application -->|"supports"| node_invoices
+node_application -->|"supports"| node_documents
+node_application -->|"supports"| node_rfqs
+node_application -->|"supports"| node_pricing
+node_application -->|"supports"| node_logistics
+node_application -->|"supports"| node_service
+node_application -->|"supports"| node_projects
+node_application -->|"supports"| node_accounting
+node_application -->|"supports"| node_compliance
+node_application -->|"supports"| node_reports
+node_application -->|"supports"| node_clients
+node_application -->|"supports"| node_itemlibrary
+node_application -->|"supports"| node_admin
+node_clients -->|"searches documents"| node_search
+node_itemlibrary -->|"loads tenant data"| node_tenantclient
+
+click node_application "https://github.com/bigdrops/bigdrops-app/blob/main/src/App.tsx"
+click node_shell "https://github.com/bigdrops/bigdrops-app/blob/main/src/components/app/AppShell.tsx"
+click node_tenant "https://github.com/bigdrops/bigdrops-app/blob/main/src/lib/tenant/contexts.tsx"
+click node_tenantclient "https://github.com/bigdrops/bigdrops-app/blob/main/src/lib/tenantClient.ts"
+click node_quotations "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/quotation"
+click node_invoices "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/invoice"
+click node_documents "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/document"
+click node_rfqs "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/rfq"
+click node_pricing "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/cps"
+click node_logistics "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/waybill"
+click node_service "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/csr"
+click node_projects "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/project"
+click node_accounting "https://github.com/bigdrops/bigdrops-app/tree/main/src/modules/accounting"
+click node_compliance "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/compliance"
+click node_reports "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/reports"
+click node_clients "https://github.com/bigdrops/bigdrops-app/blob/main/src/pages/ClientDetail.tsx"
+click node_itemlibrary "https://github.com/bigdrops/bigdrops-app/tree/main/src/modules/item-library"
+click node_search "https://github.com/bigdrops/bigdrops-app/blob/main/src/modules/search/documentSearchService.ts"
+click node_admin "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/settings"
+click node_notifications "https://github.com/bigdrops/bigdrops-app/tree/main/src/components/notifications"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_application,node_shell,node_tenant,node_tenantclient,node_admin,node_notifications toneBlue
+class node_quotations,node_invoices,node_documents,node_supabase toneAmber
+class node_rfqs,node_pricing,node_logistics,node_service,node_projects toneMint
+class node_accounting,node_compliance,node_reports toneRose
+class node_clients,node_itemlibrary,node_search,node_staff toneIndigo
