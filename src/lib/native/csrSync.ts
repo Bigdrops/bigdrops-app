@@ -190,6 +190,7 @@ async function processCsrCreateQueueRow(
         {
           csr_number: localCsr.csr_number,
           date: localCsr.date,
+          created_at: new Date().toISOString(),
           client_id: localCsr.client_id,
           client_name: localCsr.client_name,
           call_type: localCsr.call_type,

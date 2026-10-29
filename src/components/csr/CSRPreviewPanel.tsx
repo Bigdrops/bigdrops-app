@@ -266,7 +266,7 @@ export default function CSRPreviewPanel({
   const templateOptions = CSR_TEMPLATE_OPTIONS as CsrTemplateOption[]
   const readingFields = CSR_READING_FIELDS as CsrReadingField[]
   const templateVariants = CSR_TEMPLATE_VARIANTS as Record<string, CsrTemplateTheme>
-  const selectedTemplate = templateOptions.find((option) => option.key === template) || templateOptions[3]
+  const selectedTemplate = templateOptions.find((option) => option.key === template) || templateOptions[0]
   const theme = templateVariants[getCsrTemplateVariant(template)]
   const s = statusColor[safe(csr.status)] || { bg: '#F5F5F5', color: '#555' }
   const compact = Boolean(theme.compact)

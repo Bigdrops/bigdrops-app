@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { pdf } from '@react-pdf/renderer'
 import { feedback } from '@/lib/feedback'
 import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
+import { invalidateListCache } from '@/lib/cache/listCache'
+import { invalidateAllDashboardCaches } from '@/lib/cache/dashboardCache'
 
 import Layout from '../components/Layout'
 import CsrFormScreen from '@/components/csr/CsrFormScreen'
@@ -578,7 +580,14 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         setSaving(false)
         setHasUnsavedChanges(false)
         setLastSaveOffline(false)
-        setSaveSuccessOpen(true)
+        const createdId = (savedCsr as { id?: string })?.id
+        if (!createdId) {
+          throw new Error('CSR save returned no identifier')
+        }
+        invalidateListCache('bd:list:csr:v1:all')
+        invalidateAllDashboardCaches()
+        feedback.success('CSR created')
+        authorizedRouteExit(`/csr/${createdId}`)
         return true
       } catch (error) {
         console.error('[CsrFormPage] Save failed', error)
@@ -615,7 +624,10 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         setSaving(false)
         setHasUnsavedChanges(false)
         setLastSaveOffline(false)
-        setSaveSuccessOpen(true)
+        invalidateListCache('bd:list:csr:v1:all')
+        invalidateAllDashboardCaches()
+        feedback.success('CSR updated')
+        authorizedRouteExit(`/csr/${id}`)
         return true
       } catch (error) {
         console.error('[CsrFormPage] Save failed', error)
@@ -665,11 +677,10 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
     // Same authoritative handler as the bottom Save button and the FAB.
     // A non-true result (validation or save failure) keeps the dialog open
     // on the form with entered values preserved for correction and retry.
-    await handleSave()
-    // On success the existing success dialog takes over (its confirm button
-    // completes the pending exit) while the exit request preserves the
-    // destination. On failure the dialog simply stays open on the form with
-    // entered values intact for correction and retry.
+    const success = await handleSave()
+    if (success) {
+      setExitRequest(null)
+    }
   }, [handleSave])
 
   const handleSaveSuccessExit = useCallback(() => {

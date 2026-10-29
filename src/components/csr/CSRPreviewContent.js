@@ -90,55 +90,61 @@ export const CSR_TEMPLATE_VARIANTS = {
     previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
     previewShell: 'linear-gradient(180deg, #F3F4F6 0%, #E5E7EB 100%)',
   },
-  sentinel: {
-    headerBg: '#0D7377',
+  blueprint: {
+    headerBg: '#0c1e38',
     headerFg: '#ffffff',
-    accent: '#D4A857',
-    border: '#E2E8F0',
-    mutedBg: '#FFF8F0',
-    sectionBg: '#FFF8F0',
-    sectionTitleBg: '#0D7377',
-    sectionTitleFg: '#D4A857',
-    pageBg: '#FDF6EE',
-    pageFg: '#1A1A2E',
+    accent: '#2563eb',
+    border: '#cbd5e1',
+    mutedBg: '#f1f5f9',
+    sectionBg: '#ffffff',
+    sectionTitleBg: '#0c1e38',
+    sectionTitleFg: '#ffffff',
+    pageBg: '#ffffff',
+    pageFg: '#0c1e38',
     pagePadding: 12,
-    fontSize: 7.8,
+    fontSize: 7.5,
     titleSize: 9,
     headerNameSize: 14,
     sectionTitleSize: 7,
-    valueSize: 7.8,
+    valueSize: 7.5,
     compact: true,
-    headerMode: 'sentinel',
-    statusStyle: 'checks',
-    previewSurface: 'linear-gradient(180deg, #FFF8F0 0%, #FDF6EE 100%)',
-    previewShell: 'linear-gradient(180deg, #FFF8F0 0%, #F5EDE0 100%)',
+    headerMode: 'blueprint',
+    statusStyle: 'pills',
+    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)',
+    previewShell: 'linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)',
   },
-  nexus: {
-    headerBg: '#4A2C5A',
+  reference: {
+    headerBg: '#09090b',
     headerFg: '#ffffff',
-    accent: '#C87A2C',
-    border: '#E5E7EB',
-    mutedBg: '#F5EDE4',
+    accent: '#f59e0b',
+    border: '#e4e4e7',
+    mutedBg: '#f4f4f5',
     sectionBg: '#ffffff',
-    sectionTitleBg: '#4A2C5A',
+    sectionTitleBg: '#09090b',
     sectionTitleFg: '#ffffff',
-    pageBg: '#FDF8F3',
-    pageFg: '#1a1a1a',
-    pagePadding: 12,
-    fontSize: 7.8,
-    titleSize: 9,
+    pageBg: '#ffffff',
+    pageFg: '#09090b',
+    pagePadding: 14,
+    fontSize: 8,
+    titleSize: 9.5,
     headerNameSize: 14,
     sectionTitleSize: 7.2,
     valueSize: 8,
     compact: true,
-    headerMode: 'nexus',
-    statusStyle: 'checks',
-    previewSurface: 'linear-gradient(180deg, #FDF8F3 0%, #F5EDE4 100%)',
-    previewShell: 'linear-gradient(180deg, #FDF8F3 0%, #EDE0D0 100%)',
+    headerMode: 'reference',
+    statusStyle: 'pills',
+    previewSurface: 'linear-gradient(180deg, #ffffff 0%, #f4f4f5 100%)',
+    previewShell: 'linear-gradient(180deg, #f4f4f5 0%, #e4e4e7 100%)',
   },
 }
 
 export const CSR_TEMPLATE_OPTIONS = [
+  {
+    key: '8',
+    label: 'Industry',
+    blurb: 'Slate-inspired industrial report with distinct layout and customization support.',
+    accent: '#7D8A88',
+  },
   {
     key: '3',
     label: 'Zinc Light',
@@ -152,30 +158,30 @@ export const CSR_TEMPLATE_OPTIONS = [
     accent: '#111827',
   },
   {
-    key: '4',
-    label: 'Sentinel',
-    blurb: 'Teal-accented report with warm card sections and numbered materials grid.',
-    accent: '#0D7377',
+    key: 'csr-blueprint-landscape',
+    label: 'Landscape Blueprint',
+    blurb: 'A4 Landscape technical CAD drawing with physical handwriting lines and engineering BOM.',
+    accent: '#0c1e38',
+    orientation: 'landscape',
+    backend: 'pdfcn',
+    badge: 'A4 Landscape',
   },
   {
-    key: '5',
-    label: 'Nexus',
-    blurb: 'Plum-themed premium report with cream backgrounds and bordered summary cards.',
-    accent: '#4A2C5A',
-  },
-  {
-    key: '8',
-    label: 'Industry',
-    blurb: 'Slate-inspired industrial report with distinct layout and customization support.',
-    accent: '#7D8A88',
+    key: 'csr-reference-portrait',
+    label: 'Portrait Reference',
+    blurb: 'A4 Portrait high-contrast technical reference with master docket layout.',
+    accent: '#09090b',
+    orientation: 'portrait',
+    backend: 'pdfcn',
+    badge: 'A4 Portrait',
   },
 ]
 
-export function getCsrTemplateVariant(template = '3') {
+export function getCsrTemplateVariant(template = '8') {
   if (template === '3') return 'zinc'
-  if (template === '4') return 'sentinel'
-  if (template === '5') return 'nexus'
   if (template === '6') return 'minimal'
   if (template === '8') return 'industry'
-  return 'zinc'
+  if (template === 'csr-blueprint-landscape' || template === 'csr-blueprint-technical-drawinglandscape.html') return 'blueprint'
+  if (template === 'csr-reference-portrait' || template === 'csr-final-pdfcn-reference.html') return 'reference'
+  return 'industry'
 }

@@ -1,3 +1,5 @@
+import { invalidateListCache } from '@/lib/cache/listCache'
+import { invalidateAllDashboardCaches } from '@/lib/cache/dashboardCache'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import type { TenantClient } from '@/lib/tenantClient'
 import { resolvePrefix } from '@/domain/prefixConstants'
@@ -7,16 +9,28 @@ import { parseTrailingSequence } from '@/domain/prefixConstants'
 export async function archiveCSRRecord(id: string, tenantClient: TenantClient) {
   const { error } = await tenantClient.from('csrs').update({ archived_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
+  try {
+    invalidateListCache('bd:list:csr:v1:all')
+    invalidateAllDashboardCaches()
+  } catch { /* ignore */ }
 }
 
 export async function deleteCSRRecord(id: string, tenantClient: TenantClient) {
   const { error } = await tenantClient.from('csrs').delete().eq('id', id)
   if (error) throw error
+  try {
+    invalidateListCache('bd:list:csr:v1:all')
+    invalidateAllDashboardCaches()
+  } catch { /* ignore */ }
 }
 
 export async function updateCSRStatus(id: string, status: string, tenantClient: TenantClient) {
   const { error } = await tenantClient.from('csrs').update({ status }).eq('id', id)
   if (error) throw error
+  try {
+    invalidateListCache('bd:list:csr:v1:all')
+    invalidateAllDashboardCaches()
+  } catch { /* ignore */ }
 }
 
 /** Convert string booleans to real booleans for DB-safe payload */
@@ -75,6 +89,7 @@ export async function duplicateCSRRecord(id: string, tenantClient: TenantClient)
       const { data, error } = await tenantClient.from('csrs').insert([{
         ...basePayload,
         csr_number: candidateNumber,
+        created_at: new Date().toISOString(),
       }]).select().single()
       return { data, error }
     },
@@ -87,6 +102,10 @@ export async function duplicateCSRRecord(id: string, tenantClient: TenantClient)
     const csrPrefix = resolvePrefix((settingsRow as any)?.document_prefixes, 'csr')
     const seq = parseTrailingSequence(savedNumber)
     if (seq !== null) await advanceAutoCursor(tenantClient, csrFamilyFor(csrPrefix, savedNumber), seq)
+    try {
+      invalidateListCache('bd:list:csr:v1:all')
+      invalidateAllDashboardCaches()
+    } catch { /* ignore */ }
   }
 
   if (insertError || !created) {

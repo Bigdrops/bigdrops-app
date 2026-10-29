@@ -1,5 +1,7 @@
 import { recordAuditLog, recordCsrCreated, recordCsrStatusChanged, recordCsrLinked, CSR_TRACKED_FIELDS } from '@/lib/audit'
 import type { TenantClient } from '@/lib/tenantClient'
+import { invalidateListCache } from '@/lib/cache/listCache'
+import { invalidateAllDashboardCaches } from '@/lib/cache/dashboardCache'
 
 export type CsrRow = {
   id: string
@@ -94,6 +96,12 @@ export function sanitizeCsrInsertPayload<T extends Record<string, unknown>>(payl
 
 export async function createCsr(csrData: Record<string, unknown>, tenantClient: TenantClient): Promise<CreatedCsr> {
   const safeData = sanitizeCsrInsertPayload(csrData)
+  if (!safeData.created_at) {
+    safeData.created_at = new Date().toISOString()
+  }
+  if (!safeData.date) {
+    safeData.date = new Date().toISOString().split('T')[0]
+  }
 
   // ── VERIFY: id must never appear in the INSERT payload ──
   const keys = Object.keys(safeData)
@@ -124,6 +132,12 @@ export async function createCsr(csrData: Record<string, unknown>, tenantClient: 
     console.error('[csrService] createCsr empty response', err)
     throw err
   }
+
+  // Invalidate list and dashboard cache after successful create
+  try {
+    invalidateListCache('bd:list:csr:v1:all')
+    invalidateAllDashboardCaches()
+  } catch { /* cache invalidation failure must not break mutation */ }
 
   // Audit: fire-and-forget after successful create
   try {
@@ -164,6 +178,12 @@ export async function updateCsr(id: string, csrData: Record<string, unknown>, te
     console.error('[csrService] updateCsr supabase error', JSON.stringify(error, null, 2))
     throw error
   }
+
+  // Invalidate list and dashboard cache after successful update
+  try {
+    invalidateListCache('bd:list:csr:v1:all')
+    invalidateAllDashboardCaches()
+  } catch { /* cache invalidation failure must not break mutation */ }
 
   // Audit: fire-and-forget after successful update
   try {

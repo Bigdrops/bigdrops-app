@@ -9,8 +9,6 @@ export const MATERIAL_LAYOUT_POLICIES: Record<string, TemplateMaterialPolicy> = 
   minimal:  { maxMaterialHeight: 160, preferredRowHeight: 16, maxColumns: 4, supportsCompact: true },
   zinc:     { maxMaterialHeight: 140, preferredRowHeight: 16, maxColumns: 4, supportsCompact: true },
   industry: { maxMaterialHeight: 100, preferredRowHeight: 14, maxColumns: 3, supportsCompact: true },
-  sentinel: { maxMaterialHeight: 160, preferredRowHeight: 16, maxColumns: 3, supportsCompact: false },
-  nexus:    { maxMaterialHeight: 160, preferredRowHeight: 14, maxColumns: 3, supportsCompact: false },
 }
 
 const DEFAULT_POLICY: TemplateMaterialPolicy = { maxMaterialHeight: 120, preferredRowHeight: 16, maxColumns: 3, supportsCompact: false }

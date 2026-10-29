@@ -29,6 +29,7 @@ import {
 } from '@/domain/pdf/customization/csr'
 import type { PdfCustomizationSettings } from '@/domain/pdf/customization/types'
 import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
+import { generateCsrPdfcnPdf, isPdfcnCsrTemplate } from '@/components/pdf'
 import { useSettings } from '@/hooks/useSettings'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
@@ -59,14 +60,23 @@ const CSR_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] =
 ]
 
 const CSR_TEMPLATE_DEFAULTS: Record<string, { font: PdfFillableFontChoice; color: string }> = {
-  '2': { font: 'Caveat', color: '#0f172a' },
   '3': { font: 'Patrick Hand', color: '#3b82f6' },
-  '4': { font: 'Handlee', color: '#1e293b' },
+  '6': { font: 'Caveat', color: '#0f172a' },
+  '8': { font: 'Handlee', color: '#1e3a5f' },
+  'csr-blueprint-landscape': { font: 'Patrick Hand', color: '#0c1e38' },
+  'csr-reference-portrait': { font: 'Patrick Hand', color: '#09090b' },
 }
 
 function getStoredTemplate() {
-  if (typeof window === 'undefined') return '3'
-  return window.localStorage.getItem(CSR_TEMPLATE_KEY) || '3'
+  if (typeof window === 'undefined') return '8'
+  const stored = window.localStorage.getItem(CSR_TEMPLATE_KEY)
+  if (
+    stored &&
+    ['3', '6', '8', 'csr-blueprint-landscape', 'csr-reference-portrait'].includes(stored)
+  ) {
+    return stored
+  }
+  return '8'
 }
 
 function getStoredCustomFont(): 'auto' | PdfFillableFontChoice {
@@ -237,11 +247,33 @@ export default function ViewCSR() {
     if (!previewData || downloading) return
     setDownloading(true)
     try {
-      await downloadPdfFromElement({
-        fileName: previewData.csr_number || 'csr',
-        subdirectory: 'csr',
-        element: getCsrPdfDocument({ csr: previewData, comments, branding, template, designPreset }) as any,
-      })
+      if (isPdfcnCsrTemplate(template)) {
+        await generateCsrPdfcnPdf({
+          rawDocument: {
+            ...csr,
+            ...previewData,
+          },
+          templateId: template,
+          filename: previewData.csr_number || 'csr',
+          deliver: true,
+          options: {
+            serviceProvider: branding?.companyName
+              ? {
+                  name: branding.companyName,
+                  subtitle: branding.companyTagline || undefined,
+                  contact: branding.contactLine || undefined,
+                  logoUrl: branding.logoUrl || undefined,
+                }
+              : undefined,
+          },
+        })
+      } else {
+        await downloadPdfFromElement({
+          fileName: previewData.csr_number || 'csr',
+          subdirectory: 'csr',
+          element: getCsrPdfDocument({ csr: previewData, comments, branding, template, designPreset }) as any,
+        })
+      }
       showToast('Download ready', `${previewData.csr_number || 'CSR'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the CSR PDF.'
