@@ -1,0 +1,1241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>csr-blueprint-technical-drawing.html — Cummins QSV91G Customer Service Report</title>
+<style>
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  :root {
+    --bp-navy: #07192b;
+    --bp-Cobalt: #0f3156;
+    --bp-blue: #1d568a;
+    --bp-cyan-dim: #4678a3;
+    --bp-slate: #4f667a;
+    --bp-line-heavy: #07192b;
+    --bp-line-med: #29527a;
+    --bp-line-fine: #9cb4c9;
+    --bp-line-grid: #dce6ef;
+    --bp-paper: #f9fbfd;
+    --bp-cell-bg: #ffffff;
+    --bp-tint: #edf3f8;
+    --bp-tint-strong: #dde8f2;
+    --bp-amber: #b84a14;
+    --bp-ok: #135c47;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #c6d2dd;
+    color: var(--bp-navy);
+    font-family: var(--font-sans);
+    font-size: 7.8pt;
+    line-height: 1.28;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── A4 Landscape Engineering Sheet (297mm × 210mm) ─────────── */
+  .drawing-sheet {
+    width: 297mm;
+    min-height: 210mm;
+    margin: 3mm auto;
+    padding: 2.8mm;
+    background: var(--bp-paper);
+    box-shadow: 0 4px 22px rgba(7, 25, 43, 0.25);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Outer Coordinate Reference Frame */
+  .coord-frame {
+    border: 0.45mm solid var(--bp-line-heavy);
+    padding: 3.2mm;
+    flex: 1 1 auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .coord-h {
+    position: absolute;
+    left: 3.2mm;
+    right: 3.2mm;
+    height: 3.2mm;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    color: var(--bp-slate);
+    pointer-events: none;
+  }
+  .coord-h.top { top: 0; }
+  .coord-h.bot { bottom: 0; }
+  .coord-h span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 0.2mm solid var(--bp-line-fine);
+  }
+  .coord-h span:last-child { border-right: none; }
+
+  .coord-v {
+    position: absolute;
+    top: 3.2mm;
+    bottom: 3.2mm;
+    width: 3.2mm;
+    display: grid;
+    grid-template-rows: repeat(8, 1fr);
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    color: var(--bp-slate);
+    pointer-events: none;
+  }
+  .coord-v.left { left: 0; }
+  .coord-v.right { right: 0; }
+  .coord-v span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 0.2mm solid var(--bp-line-fine);
+  }
+  .coord-v span:last-child { border-bottom: none; }
+
+  /* Inner Active Drawing Area */
+  .schematic-canvas {
+    border: 0.55mm solid var(--bp-line-heavy);
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    background:
+      linear-gradient(to right, var(--bp-line-grid) 0.15mm, transparent 0.15mm) 0 0 / 6mm 6mm,
+      linear-gradient(to bottom, var(--bp-line-grid) 0.15mm, transparent 0.15mm) 0 0 / 6mm 6mm,
+      var(--bp-cell-bg);
+  }
+
+  /* ── Top Drawing Header Bar: Provider, CSR Title, Client & Site Location ── */
+  .top-bar {
+    display: grid;
+    grid-template-columns: 86mm 66mm 66mm 66mm;
+    border-bottom: 0.55mm solid var(--bp-line-heavy);
+    background: var(--bp-cell-bg);
+  }
+  .top-cell {
+    padding: 1.4mm 2.2mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .top-cell + .top-cell {
+    border-left: 0.35mm solid var(--bp-line-heavy);
+  }
+
+  /* Service Provider Block */
+  .provider-block {
+    background: linear-gradient(135deg, var(--bp-tint) 0%, var(--bp-cell-bg) 100%);
+  }
+  .provider-head {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+  }
+  .logo-box {
+    width: 10mm;
+    height: 10mm;
+    background: #fff;
+    border: 0.25mm solid var(--bp-line-med);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-svg {
+    width: 8.5mm;
+    height: 8.5mm;
+    display: block;
+    fill: var(--bp-navy);
+  }
+  .provider-id {
+    min-width: 0;
+  }
+  .provider-name {
+    font-size: 8.2pt;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--bp-navy);
+    line-height: 1.1;
+  }
+  .provider-sub {
+    font-size: 5.6pt;
+    font-weight: 700;
+    color: var(--bp-Cobalt);
+    margin-top: 0.2mm;
+  }
+  .provider-contact {
+    margin-top: 1mm;
+    padding-top: 0.8mm;
+    border-top: 0.2mm solid var(--bp-line-fine);
+    display: flex;
+    flex-direction: column;
+    font-size: 5.4pt;
+    line-height: 1.25;
+    color: var(--bp-slate);
+    font-family: var(--font-mono);
+  }
+
+  /* Dedicated CSR Document Title Block */
+  .title-block {
+    background: var(--bp-cell-bg);
+  }
+  .sheet-doc-title {
+    font-size: 10.5pt;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bp-navy);
+    line-height: 1.05;
+    margin: 0.4mm 0;
+  }
+  .title-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6mm 1.5mm;
+    margin-top: 0.6mm;
+    padding-top: 0.6mm;
+    border-top: 0.2mm solid var(--bp-line-fine);
+    font-family: var(--font-mono);
+    font-size: 5.4pt;
+  }
+  .title-meta-grid div {
+    display: flex;
+    flex-direction: column;
+  }
+  .title-meta-grid span {
+    font-size: 4.6pt;
+    color: var(--bp-slate);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .title-meta-grid b {
+    color: var(--bp-navy);
+    font-size: 5.8pt;
+  }
+  .title-meta-grid b.stat-ok {
+    color: var(--bp-ok);
+  }
+
+  /* Client Block & Physical Location Block */
+  .client-block, .location-block {
+    background: var(--bp-tint);
+  }
+  .meta-tag {
+    font-family: var(--font-mono);
+    font-size: 4.8pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bp-blue);
+    margin-bottom: 0.3mm;
+  }
+  .meta-strong {
+    font-size: 7.2pt;
+    font-weight: 700;
+    color: var(--bp-navy);
+    line-height: 1.2;
+  }
+  .meta-detail {
+    font-size: 6.2pt;
+    color: var(--bp-slate);
+    margin-top: 0.3mm;
+    line-height: 1.2;
+  }
+  .window-stamp-inline {
+    margin-top: 0.8mm;
+    padding-top: 0.6mm;
+    border-top: 0.2mm solid var(--bp-line-fine);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1mm;
+    font-family: var(--font-mono);
+    font-size: 5.3pt;
+  }
+  .window-stamp-inline div {
+    display: flex;
+    flex-direction: column;
+  }
+  .window-stamp-inline span {
+    font-size: 4.6pt;
+    color: var(--bp-slate);
+    text-transform: uppercase;
+  }
+  .window-stamp-inline b {
+    color: var(--bp-navy);
+    font-size: 5.6pt;
+  }
+
+  /* ── Main Schematic Workspace (Left Data Plate + Right Dossier) */
+  .workspace-grid {
+    display: grid;
+    grid-template-columns: 78mm 1fr;
+    border-bottom: 0.55mm solid var(--bp-line-heavy);
+  }
+
+  /* Left Column: Equipment Data Plate & Telemetry Callouts */
+  .left-plate {
+    border-right: 0.45mm solid var(--bp-line-heavy);
+    background: rgba(255, 255, 255, 0.94);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dwg-sec-head {
+    background: var(--bp-Cobalt);
+    color: #fff;
+    padding: 0.85mm 2mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 0.3mm solid var(--bp-line-heavy);
+  }
+  .dwg-sec-head .sh-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+    font-size: 6.2pt;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+  .dwg-sec-head .sh-code {
+    font-family: var(--font-mono);
+    font-size: 5.5pt;
+    background: #fff;
+    color: var(--bp-navy);
+    padding: 0.15mm 1mm;
+    font-weight: 700;
+  }
+  .dwg-sec-head .sh-zone {
+    font-family: var(--font-mono);
+    font-size: 5.3pt;
+    color: var(--bp-line-fine);
+  }
+
+  .nameplate-table {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 0.35mm solid var(--bp-line-heavy);
+  }
+  .np-cell {
+    padding: 1.1mm 1.8mm;
+    border-right: 0.2mm solid var(--bp-line-fine);
+    border-bottom: 0.2mm solid var(--bp-line-fine);
+    display: flex;
+    flex-direction: column;
+  }
+  .np-cell:nth-child(2n) { border-right: none; }
+  .np-cell.full {
+    grid-column: span 2;
+    border-right: none;
+  }
+  .np-cell.last-row { border-bottom: none; }
+  .np-k {
+    font-size: 4.9pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bp-slate);
+  }
+  .np-v {
+    font-family: var(--font-mono);
+    font-size: 7.1pt;
+    font-weight: 700;
+    color: var(--bp-navy);
+    margin-top: 0.25mm;
+  }
+  .np-v.sans {
+    font-family: var(--font-sans);
+    font-size: 6.9pt;
+  }
+
+  /* Dimension-Style Operational Readings Strip Matrix */
+  .telemetry-panel {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .tel-subbar {
+    background: var(--bp-tint-strong);
+    padding: 0.65mm 1.8mm;
+    font-family: var(--font-mono);
+    font-size: 5.3pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bp-Cobalt);
+    border-bottom: 0.2mm solid var(--bp-line-med);
+    display: flex;
+    justify-content: space-between;
+  }
+  .dim-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr 1fr;
+    border-bottom: none;
+    flex: 1 1 auto;
+  }
+  .dim-cell {
+    padding: 1mm 1.4mm;
+    border-right: 0.2mm solid var(--bp-line-fine);
+    border-bottom: 0.2mm solid var(--bp-line-fine);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .dim-cell:nth-child(3n) { border-right: none; }
+  .dim-cell:nth-child(n+4) { border-bottom: none; }
+  .dim-lbl {
+    font-size: 4.8pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bp-slate);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dim-val {
+    font-family: var(--font-mono);
+    font-size: 7.2pt;
+    font-weight: 700;
+    color: var(--bp-navy);
+    margin-top: 0.2mm;
+    display: flex;
+    align-items: center;
+    gap: 0.8mm;
+  }
+  .dim-val::before {
+    content: "├";
+    color: var(--bp-blue);
+    font-weight: 400;
+  }
+  .dim-val::after {
+    content: "┤";
+    color: var(--bp-blue);
+    font-weight: 400;
+  }
+
+  /* Right Column: Engineering Investigation & Overhaul Clauses */
+  .right-dossier {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .top-clauses {
+    display: grid;
+    grid-template-columns: 74mm 1fr;
+    border-bottom: 0.35mm solid var(--bp-line-heavy);
+  }
+  .problem-pane {
+    border-right: 0.35mm solid var(--bp-line-heavy);
+    display: flex;
+    flex-direction: column;
+  }
+  .defects-pane {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pane-body {
+    padding: 1.5mm 2.2mm;
+    flex: 1 1 auto;
+  }
+  .problem-quote {
+    margin: 0;
+    font-size: 7.3pt;
+    line-height: 1.35;
+    color: var(--bp-navy);
+    border-left: 0.7mm solid var(--bp-amber);
+    padding-left: 2mm;
+    background: var(--bp-tint);
+    padding-top: 1mm;
+    padding-bottom: 1mm;
+    padding-right: 1.4mm;
+  }
+  .date-callouts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2mm;
+    margin-top: 1.4mm;
+  }
+  .dc-box {
+    border: 0.2mm solid var(--bp-line-med);
+    background: #fff;
+    padding: 0.7mm 1.2mm;
+  }
+  .dc-box span {
+    display: block;
+    font-size: 4.7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bp-slate);
+  }
+  .dc-box b {
+    font-family: var(--font-mono);
+    font-size: 6.5pt;
+    color: var(--bp-navy);
+  }
+
+  /* 6-Item Technical Defect Schedule */
+  .defect-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex: 1 1 auto;
+  }
+  .def-item {
+    display: grid;
+    grid-template-columns: 9.5mm 1fr;
+    padding: 0.95mm 1.6mm;
+    border-bottom: 0.2mm solid var(--bp-line-fine);
+    border-right: 0.2mm solid var(--bp-line-fine);
+    align-items: start;
+  }
+  .def-item:nth-child(2n) { border-right: none; }
+  .def-item:nth-child(5), .def-item:nth-child(6) { border-bottom: none; }
+  .def-code {
+    font-family: var(--font-mono);
+    font-size: 5.8pt;
+    font-weight: 700;
+    color: var(--bp-amber);
+    background: #fdf3ee;
+    border: 0.2mm solid var(--bp-amber);
+    text-align: center;
+    padding: 0.15mm 0.5mm;
+    margin-right: 1.4mm;
+    margin-top: 0.2mm;
+  }
+  .def-desc {
+    font-size: 6.8pt;
+    line-height: 1.26;
+    color: var(--bp-navy);
+  }
+
+  /* Bottom Clauses: Service Rendered & Engineer's Remarks */
+  .bottom-clauses {
+    display: grid;
+    grid-template-columns: 1.22fr 1fr;
+    flex: 1 1 auto;
+  }
+  .service-pane {
+    border-right: 0.35mm solid var(--bp-line-heavy);
+    display: flex;
+    flex-direction: column;
+  }
+  .remarks-pane {
+    display: flex;
+    flex-direction: column;
+  }
+  .narrative-text {
+    margin: 0;
+    font-size: 7.15pt;
+    line-height: 1.34;
+    color: var(--bp-navy);
+    text-align: justify;
+  }
+
+  /* ── 4-Column Engineering Bill of Materials (BOM) ──────────── */
+  .bom-section {
+    border-bottom: 0.55mm solid var(--bp-line-heavy);
+    background: var(--bp-cell-bg);
+  }
+  .bom-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .bom-col + .bom-col {
+    border-left: 0.3mm solid var(--bp-line-heavy);
+  }
+  .bom-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .bom-table th {
+    background: var(--bp-tint-strong);
+    border-bottom: 0.25mm solid var(--bp-line-med);
+    padding: 0.65mm 1.2mm;
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bp-Cobalt);
+    text-align: left;
+  }
+  .bom-table th.b-id { width: 7.5mm; text-align: center; border-right: 0.2mm solid var(--bp-line-fine); }
+  .bom-table th.b-qt { width: 17mm; text-align: right; border-left: 0.2mm solid var(--bp-line-fine); }
+
+  .bom-table td {
+    padding: 0.68mm 1.2mm;
+    border-bottom: 0.18mm solid var(--bp-line-fine);
+    font-size: 6.55pt;
+    color: var(--bp-navy);
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bom-table tr:nth-child(even) td {
+    background: var(--bp-tint);
+  }
+  .bom-table tr:last-child td {
+    border-bottom: none;
+  }
+  .bom-table td.b-id {
+    font-family: var(--font-mono);
+    font-size: 6pt;
+    font-weight: 700;
+    color: var(--bp-blue);
+    text-align: center;
+    border-right: 0.2mm solid var(--bp-line-fine);
+  }
+  .bom-table td.b-qt {
+    font-family: var(--font-mono);
+    font-size: 6.1pt;
+    font-weight: 700;
+    text-align: right;
+    border-left: 0.2mm solid var(--bp-line-fine);
+    color: var(--bp-navy);
+  }
+  .bom-spec-note {
+    padding: 0.7mm 1.4mm;
+    font-family: var(--font-mono);
+    font-size: 5.5pt;
+    color: var(--bp-slate);
+    background: var(--bp-tint);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ── Formal Drawing Title Block & Signatures Band (Handwritten Print Usability) ── */
+  .titleblock-band {
+    display: grid;
+    grid-template-columns: 1.15fr 1.15fr 60mm;
+    background: var(--bp-cell-bg);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .tb-box + .tb-box {
+    border-left: 0.35mm solid var(--bp-line-heavy);
+  }
+
+  /* Handwriting Sign-off Area */
+  .tb-sig-area {
+    padding: 1.4mm 2.2mm 1.8mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+  }
+  .tb-sig-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-mono);
+    border-bottom: 0.25mm solid var(--bp-line-heavy);
+    padding-bottom: 0.4mm;
+    margin-bottom: 0.8mm;
+  }
+  .tb-sig-role {
+    font-size: 6pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bp-navy);
+  }
+  .tb-sig-instruction {
+    font-family: var(--font-sans);
+    font-size: 4.9pt;
+    font-weight: 500;
+    color: var(--bp-slate);
+  }
+
+  /* Handwritten Body: Generous Open Fields With Visible Baselines */
+  .tb-hw-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2mm;
+  }
+  .hw-field {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5mm;
+  }
+  .hw-lbl {
+    font-family: var(--font-mono);
+    font-size: 5.2pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bp-Cobalt);
+    flex-shrink: 0;
+    width: 22mm;
+  }
+  .hw-rule {
+    flex: 1 1 auto;
+    border-bottom: 0.25mm solid var(--bp-line-med);
+    height: 5.5mm;
+  }
+  .hw-sig-field {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.4mm;
+  }
+  .hw-sig-field .hw-lbl {
+    width: auto;
+  }
+  .hw-sig-box {
+    height: 12.5mm;
+    border-bottom: 0.35mm solid var(--bp-line-heavy);
+    background: #fff;
+    position: relative;
+  }
+  .hw-sig-prompt {
+    position: absolute;
+    bottom: 0.8mm;
+    left: 1mm;
+    font-size: 4.6pt;
+    color: #a4b6c6;
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .hw-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 2mm;
+  }
+  .hw-row .hw-lbl {
+    width: 17mm;
+  }
+
+  /* Document Master ID & Control */
+  .tb-doc-control {
+    background: var(--bp-navy);
+    color: #fff;
+    padding: 1.4mm 2.2mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .tbm-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 4.8pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bp-line-fine);
+    border-bottom: 0.2mm solid var(--bp-cyan-dim);
+    padding-bottom: 0.4mm;
+  }
+  .tbm-ref-block {
+    margin: 0.5mm 0;
+  }
+  .tbm-k {
+    font-family: var(--font-mono);
+    font-size: 4.8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bp-line-fine);
+    display: block;
+  }
+  .tbm-v {
+    font-family: var(--font-mono);
+    font-size: 8.8pt;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.04em;
+    display: block;
+  }
+  .tbm-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6mm 1.5mm;
+    border-top: 0.2mm solid var(--bp-cyan-dim);
+    padding-top: 0.6mm;
+    font-family: var(--font-mono);
+    font-size: 5.2pt;
+  }
+  .tbm-grid-2 div {
+    display: flex;
+    flex-direction: column;
+  }
+  .tbm-grid-2 span {
+    font-size: 4.4pt;
+    color: var(--bp-line-fine);
+    text-transform: uppercase;
+  }
+  .tbm-grid-2 b {
+    color: #fff;
+  }
+  .tbm-grid-2 b.stat-pill {
+    color: #64e3a1;
+  }
+  .tbm-note {
+    font-size: 4.7pt;
+    color: var(--bp-line-fine);
+    line-height: 1.2;
+    border-top: 0.2mm solid var(--bp-cyan-dim);
+    padding-top: 0.5mm;
+    margin-top: 0.4mm;
+  }
+
+  @media print {
+    html, body {
+      background: #fff;
+    }
+    .drawing-sheet {
+      margin: 0;
+      box-shadow: none;
+      width: 297mm;
+      min-height: 210mm;
+      padding: 3.2mm;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main class="drawing-sheet">
+  <div class="coord-frame">
+
+    <!-- Perimeter Coordinate Reference Grid -->
+    <div class="coord-h top" aria-hidden="true">
+      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span>
+    </div>
+    <div class="coord-h bot" aria-hidden="true">
+      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span>
+    </div>
+    <div class="coord-v left" aria-hidden="true">
+      <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+    </div>
+    <div class="coord-v right" aria-hidden="true">
+      <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+    </div>
+
+    <div class="schematic-canvas">
+
+      <!-- ── Top Drawing Header: Provider, CSR Title, Client & Site Location ── -->
+      <header class="top-bar">
+        <!-- 1. Service Provider Company Information -->
+        <div class="top-cell provider-block">
+          <div class="provider-head">
+            <div class="logo-box">
+              <svg class="logo-svg" viewBox="0 0 26.927 27" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Brand logo" xmlns="http://www.w3.org/2000/svg"><path d="M22.442.011L14.081.003C-4.693.003-4.693 27 14.081 27l12.846-.031v-9.807H14.51c-4.84 0-4.84-7.321 0-7.321l12.417-.02V.003L24.111 0l-.89.561c-.154-.149-.344-.038-.387-.011-.169.105-.244.226-.164.355.223.36 1.63-.847 2.231.126.334.54.138 1.168-.766 1.727-.565.349-1.299.55-1.702-.015l.932-.577c.164.1.335.085.458.003.148-.097.28-.242.167-.425-.257-.416-1.562.85-2.185-.155-.41-.663.125-1.261.637-1.578zM8.353 12.421l-.908.562-.231-.182c-.075.36-.207.556-.612.807-.536.332-1.099.201-1.559-.542l-.978-1.58.979-.605.867 1.401c.221.357.409.398.644.252.282-.175.234-.453-.015-.854l-.772-1.248.979-.605 1.606 2.594zM7.189 9.553l.898-.556.235.187c-.001-.429.449-.75.721-.863a.853.853 0 0 1 .878.096c.034-.812.61-1.045.774-1.118.646-.285 1.042.037 1.431.664l.95 1.535-.979.606-.817-1.323c-.223-.359-.393-.497-.66-.331-.287.178-.181.476.012.787l.794 1.283-.979.606-.819-1.322c-.236-.382-.382-.502-.66-.331-.287.177-.181.474.012.786l.794 1.283-.979.605-1.606-2.594zm11.096-3.278L16.679 3.68l.979-.605 1.606 2.595-.979.605zm-2.265-3.66l.979-.605.454.733-.979.606-.454-.734zm2.159.137l.894-.553.287.194c.039-.476.345-.738.711-.895.573-.245 1.039-.004 1.434.634l.962 1.555-.979.605-.849-1.372c-.163-.263-.363-.447-.644-.273-.301.187-.255.439-.05.771l.818 1.322-.979.606-1.605-2.594zM4.111 15.043c-2.637 1.632-5.022-2.176-2.385-3.808l1.198-.733.617.997-1.052.646c-1.312.809-.101 2.597 1.128 1.824l1.053-.646.617.997-1.176.723zm7.783-8.401l.898-.556.235.187c0-.429.45-.75.721-.863a.858.858 0 0 1 .878.096c.034-.812.61-1.045.773-1.118.646-.285 1.043.036 1.431.664l.95 1.535-.979.605-.817-1.322c-.222-.359-.392-.497-.661-.331-.287.178-.181.475.012.787l.794 1.283-.979.605-.818-1.322c-.236-.381-.382-.501-.661-.331-.287.178-.181.475.012.787l.794 1.283-.977.605-1.606-2.594z"/></svg>
+            </div>
+            <div class="provider-id">
+              <span class="meta-tag">Service Provider</span>
+              <div class="provider-name">Sun &amp; Shield Power Solutions</div>
+              <div class="provider-sub">Authorised Cummins Generation Specialist</div>
+            </div>
+          </div>
+          <div class="provider-contact">
+            <span>43 Oshola Street, Ifako-Ijaiye, Lagos State</span>
+            <span>Tel: +234 806 619 0685 &middot; Sunshieldpowersolutions@gmail.com</span>
+          </div>
+        </div>
+
+        <!-- 2. Dedicated CSR Document Title & Control -->
+        <div class="top-cell title-block">
+          <span class="meta-tag">Official Service Document</span>
+          <div class="sheet-doc-title">CUSTOMER SERVICE REPORT</div>
+          <div class="title-meta-grid">
+            <div><span>REPORT NO:</span><b>CSR-QSV91G-25381944</b></div>
+            <div><span>DATE:</span><b>2026-10-24</b></div>
+            <div><span>CALL TYPE:</span><b>Preventive Maint.</b></div>
+            <div><span>STATUS:</span><b class="stat-ok">COMPLETE</b></div>
+          </div>
+        </div>
+
+        <!-- 3. Client & Corporate Address -->
+        <div class="top-cell client-block">
+          <span class="meta-tag">Client &amp; Corporate Address</span>
+          <div class="meta-strong">11PLC (formerly Mobil Oil Nig. Plc)</div>
+          <div class="meta-detail">1 Mobil Rd, Apapa, Lagos 102272, Lagos</div>
+          <div class="meta-detail" style="font-family:var(--font-mono); font-size:5.2pt; color:var(--bp-blue); margin-top:0.6mm;">
+            ACCOUNT: ACC-11PLC-084 &middot; REF: MOBIL-ENG
+          </div>
+        </div>
+
+        <!-- 4. Site / Equipment Location & Service Window -->
+        <div class="top-cell location-block">
+          <div>
+            <span class="meta-tag">Site / Equipment Location</span>
+            <div class="meta-strong">Central Utility Plant, Powerhouse Bay 2</div>
+            <div class="meta-detail">Basement Level -1 (Generator House)</div>
+          </div>
+          <div class="window-stamp-inline">
+            <div><span>Start:</span> <b>2026-10-12</b></div>
+            <div><span>End:</span> <b>2026-10-24</b></div>
+            <div><span>Hours:</span> <b>30,142.6 hrs</b></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ── Main Technical Workspace ────────────────────────── -->
+      <div class="workspace-grid">
+
+        <!-- Left Column: Equipment Data Plate & Telemetry Callouts -->
+        <aside class="left-plate" aria-label="Equipment specification data plate and operating parameters">
+          <div class="dwg-sec-head">
+            <div class="sh-left"><span class="sh-code">SEC 01</span><span>Equipment Specification Plate</span></div>
+            <span class="sh-zone">Z: B1–D3</span>
+          </div>
+
+          <div class="nameplate-table">
+            <div class="np-cell full">
+              <span class="np-k">Equipment Type</span>
+              <span class="np-v sans">Lean Burn Natural Gas Generator Set</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Make</span>
+              <span class="np-v">Cummins</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Model</span>
+              <span class="np-v">QSV91G</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Serial Number</span>
+              <span class="np-v">25381944</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Engine Number</span>
+              <span class="np-v">91G-ENG-08421</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Rated Capacity</span>
+              <span class="np-v">2000 kW (2.0 MW)</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Rated Bus Voltage</span>
+              <span class="np-v">11,000 V</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Rated Frequency</span>
+              <span class="np-v">50 Hz</span>
+            </div>
+            <div class="np-cell">
+              <span class="np-k">Starting System</span>
+              <span class="np-v">24 VDC AGM</span>
+            </div>
+            <div class="np-cell full last-row">
+              <span class="np-k">Nameplate Specification</span>
+              <span class="np-v sans" style="font-size:5.8pt; color:var(--bp-slate);">QSV91G-G2 ISO 8528 Continuous Baseload Rating</span>
+            </div>
+          </div>
+
+          <div class="dwg-sec-head">
+            <div class="sh-left"><span class="sh-code">SEC 02</span><span>Operational Readings (6-Parameter Strip)</span></div>
+            <span class="sh-zone">Z: D1–E3 · POST-OVERHAUL RUN</span>
+          </div>
+
+          <div class="telemetry-panel">
+            <div class="tel-subbar">
+              <span>Standard Operational Readings</span>
+              <span>MEASURED COMMISSIONING VALUES</span>
+            </div>
+            <div class="dim-grid">
+              <div class="dim-cell">
+                <span class="dim-lbl">Gen Output Voltage (V)</span>
+                <span class="dim-val">11,000 V</span>
+              </div>
+              <div class="dim-cell">
+                <span class="dim-lbl">Frequency (Hz)</span>
+                <span class="dim-val">50.0 Hz</span>
+              </div>
+              <div class="dim-cell">
+                <span class="dim-lbl">Chg. Alt. / Battery</span>
+                <span class="dim-val">24.0 VDC</span>
+              </div>
+              <div class="dim-cell">
+                <span class="dim-lbl">Operating Temperature</span>
+                <span class="dim-val">88&deg;C</span>
+              </div>
+              <div class="dim-cell">
+                <span class="dim-lbl">Operating Pressure</span>
+                <span class="dim-val">4.8 bar</span>
+              </div>
+              <div class="dim-cell">
+                <span class="dim-lbl">Engine Running Hours</span>
+                <span class="dim-val">30,142.6 hrs</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Column: Reported Problem, Defects, Service & Remarks -->
+        <section class="right-dossier" aria-label="Service investigation, overhaul execution, and commissioning remarks">
+
+          <div class="top-clauses">
+            <!-- Reported Problem -->
+            <div class="problem-pane">
+              <div class="dwg-sec-head">
+                <div class="sh-left"><span class="sh-code">SEC 03</span><span>Reported Problem</span></div>
+                <span class="sh-zone">Z: B4–C6</span>
+              </div>
+              <div class="pane-body">
+                <p class="problem-quote">“Major scheduled top and bottom end overhaul at 30,000 running hours, high blow-by, exhaust port carbon fouling, and intermittent cylinder misfires under peak load.”</p>
+                <div class="date-callouts">
+                  <div class="dc-box"><span>Start Date</span><b>2026-10-12</b></div>
+                  <div class="dc-box"><span>End Date</span><b>2026-10-24</b></div>
+                  <div class="dc-box"><span>Run Hours</span><b>30142.6 hrs</b></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Defects Found -->
+            <div class="defects-pane">
+              <div class="dwg-sec-head">
+                <div class="sh-left"><span class="sh-code">SEC 04</span><span>Defects Found (Disassembly Inspection Schedule)</span></div>
+                <span class="sh-zone">Z: B7–C12</span>
+              </div>
+              <div class="defect-grid">
+                <div class="def-item">
+                  <span class="def-code">DF-01</span>
+                  <span class="def-desc">Severe carbon deposition across all 18 cylinder exhaust valves.</span>
+                </div>
+                <div class="def-item">
+                  <span class="def-code">DF-02</span>
+                  <span class="def-desc">Excessive side clearance on top compression ring grooves on Cylinders #4, #9, and #14.</span>
+                </div>
+                <div class="def-item">
+                  <span class="def-code">DF-03</span>
+                  <span class="def-desc">Moderate cavitation erosion on cylinder liner lower O-ring register lands (Cylinders #3, #7).</span>
+                </div>
+                <div class="def-item">
+                  <span class="def-code">DF-04</span>
+                  <span class="def-desc">Heat stress cracking on two ignition lead boots.</span>
+                </div>
+                <div class="def-item">
+                  <span class="def-code">DF-05</span>
+                  <span class="def-desc">Minor axial play (0.18 mm) on secondary turbocharger shaft exceeding service limit.</span>
+                </div>
+                <div class="def-item">
+                  <span class="def-code">DF-06</span>
+                  <span class="def-desc">Worn throttle spindle shaft seals causing air leakage.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-clauses">
+            <!-- Service Rendered -->
+            <div class="service-pane">
+              <div class="dwg-sec-head">
+                <div class="sh-left"><span class="sh-code">SEC 05</span><span>Service Rendered (Overhaul &amp; Calibration Scope)</span></div>
+                <span class="sh-zone">Z: D4–E8</span>
+              </div>
+              <div class="pane-body">
+                <p class="narrative-text">Conducted complete major engine overhaul: stripped down cylinder heads, replaced all cylinder liners, pistons, rings, wrist pins, con-rod bearings, and main crankshaft bearings. Rebuilt and leak-tested cylinder heads with new valves, seats, guides, and rotocaps. Replaced spark plugs, ignition extensions, ignition leads, and calibrated detonator sensors. Overhauled both turbochargers, replaced charge air cooler cores, inspected wastegate actuator linkages, aligned throttle body actuator, recalibrated fuel gas control valve and mixer, renewed all external water/oil plumbing elastomeric seals, replaced crankcase breather assemblies, flushed lube oil galleries, refilled with fresh low-ash gas engine oil, conducted engine bar-over, pre-lube check, cold commissioning, step load testing from 25% to 100% (2000 kW), and dynamic emission tuning to maintain NOx within operational limits.</p>
+              </div>
+            </div>
+
+            <!-- Engineer's Remarks -->
+            <div class="remarks-pane">
+              <div class="dwg-sec-head">
+                <div class="sh-left"><span class="sh-code">SEC 06</span><span>Engineer's Remarks &amp; Commissioning Release</span></div>
+                <span class="sh-zone">Z: D9–E12</span>
+              </div>
+              <div class="pane-body">
+                <p class="narrative-text">Major mechanical overhaul completed to manufacturer specifications. Engine barring torque smooth and within normal tolerance. Full synthetic low-ash SAE 40 lubricant loaded. Dynamic load banking achieved 500 kW, 1000 kW, 1500 kW, and sustained 2000 kW at 0.8 PF for 4 hours continuously. All bearing temperatures, exhaust port temperatures, and oil pressure profiles stabilized within OEM tolerances. Unit re-commissioned, auto-synchronization with plant 11kV bus verified, and returned to active baseload service.</p>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+      <!-- ── 4-Column Engineering Bill of Materials (BOM) ──────── -->
+      <section class="bom-section" aria-label="Materials used schedule">
+        <div class="dwg-sec-head">
+          <div class="sh-left"><span class="sh-code">SEC 07</span><span>Materials Used — Engineering Bill of Materials (18 Line Items · 4 Vertical Groups)</span></div>
+          <span class="sh-zone">Z: F1–G12 · VERTICAL INTERLEAVED ENUMERATION</span>
+        </div>
+
+        <div class="bom-grid-4">
+          <!-- Column 1: Group 1 (01, 05, 09, 13, 17) -->
+          <div class="bom-col">
+            <table class="bom-table">
+              <thead>
+                <tr><th class="b-id">No</th><th>Part / Material Description</th><th class="b-qt">Qty / Unit</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="b-id">01</td><td>Cylinder Liner Assembly</td><td class="b-qt">18 PCS</td></tr>
+                <tr><td class="b-id">05</td><td>Main Journal Bearing Set</td><td class="b-qt">10 SET</td></tr>
+                <tr><td class="b-id">09</td><td>Exhaust Valve Nimonic</td><td class="b-qt">36 PCS</td></tr>
+                <tr><td class="b-id">13</td><td>Turbocharger Core Assembly Cartridge</td><td class="b-qt">2 ASSY</td></tr>
+                <tr><td class="b-id">17</td><td>Spin-on Lube Oil Microglass Filter Element</td><td class="b-qt">6 PCS</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Column 2: Group 2 (02, 06, 10, 14, 18) -->
+          <div class="bom-col">
+            <table class="bom-table">
+              <thead>
+                <tr><th class="b-id">No</th><th>Part / Material Description</th><th class="b-qt">Qty / Unit</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="b-id">02</td><td>Piston Assembly Standard</td><td class="b-qt">18 PCS</td></tr>
+                <tr><td class="b-id">06</td><td>Thrust Bearing Washer Set</td><td class="b-qt">2 SET</td></tr>
+                <tr><td class="b-id">10</td><td>Valve Stem Guide &amp; Seal Kit</td><td class="b-qt">72 SET</td></tr>
+                <tr><td class="b-id">14</td><td>Charge Air Cooler Core Assembly</td><td class="b-qt">2 PCS</td></tr>
+                <tr><td class="b-id">18</td><td>Crankcase Breather Coalescing Filter Cartridge</td><td class="b-qt">4 PCS</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Column 3: Group 3 (03, 07, 11, 15) -->
+          <div class="bom-col">
+            <table class="bom-table">
+              <thead>
+                <tr><th class="b-id">No</th><th>Part / Material Description</th><th class="b-qt">Qty / Unit</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="b-id">03</td><td>Piston Ring Set</td><td class="b-qt">18 SET</td></tr>
+                <tr><td class="b-id">07</td><td>Cylinder Head Gasket Multi-Layer</td><td class="b-qt">18 PCS</td></tr>
+                <tr><td class="b-id">11</td><td>Pre-Chamber Spark Plug Shielded</td><td class="b-qt">18 PCS</td></tr>
+                <tr><td class="b-id">15</td><td>Full Engine Overhaul O-Ring &amp; Elastomer Gasket Kit</td><td class="b-qt">1 KIT</td></tr>
+                <tr><td class="b-id" style="color:var(--bp-line-fine);">&mdash;</td><td style="color:var(--bp-line-fine); font-style:italic;">&mdash;</td><td class="b-qt" style="color:var(--bp-line-fine);">&mdash;</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Column 4: Group 4 (04, 08, 12, 16) -->
+          <div class="bom-col">
+            <table class="bom-table">
+              <thead>
+                <tr><th class="b-id">No</th><th>Part / Material Description</th><th class="b-qt">Qty / Unit</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="b-id">04</td><td>Connecting Rod Bearing Pair</td><td class="b-qt">18 PAIR</td></tr>
+                <tr><td class="b-id">08</td><td>Intake Valve</td><td class="b-qt">36 PCS</td></tr>
+                <tr><td class="b-id">12</td><td>Ignition Extension Coil Boot Assembly</td><td class="b-qt">18 PCS</td></tr>
+                <tr><td class="b-id">16</td><td>Low-Ash Stationary Gas Engine Oil SAE 40</td><td class="b-qt">1200 LITERS</td></tr>
+                <tr><td class="b-id" style="color:var(--bp-line-fine);">&mdash;</td><td style="color:var(--bp-line-fine); font-style:italic;">&mdash;</td><td class="b-qt" style="color:var(--bp-line-fine);">&mdash;</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Bottom Engineering Drawing Title Block & Signatures ─ -->
+      <footer class="titleblock-band" aria-label="Customer Service Report Sign-Off and Approvals">
+        <!-- 1. Service Engineer Sign-Off (Generous Handwriting Lines) -->
+        <div class="tb-box tb-sig-area">
+          <div class="tb-sig-header">
+            <span class="tb-sig-role">01 &middot; SERVICE ENGINEER SIGN-OFF</span>
+            <span class="tb-sig-instruction">Field Verification &amp; Release</span>
+          </div>
+          <div class="tb-hw-body">
+            <div class="hw-field hw-sig-field">
+              <span class="hw-lbl">Engineer Signature:</span>
+              <div class="hw-sig-box">
+                <span class="hw-sig-prompt">Sign with pen upon service completion</span>
+              </div>
+            </div>
+            <div class="hw-row">
+              <div class="hw-field">
+                <span class="hw-lbl">Full Name:</span>
+                <div class="hw-rule"></div>
+              </div>
+              <div class="hw-field">
+                <span class="hw-lbl">Signing Date:</span>
+                <div class="hw-rule"></div>
+              </div>
+            </div>
+            <div class="hw-field">
+              <span class="hw-lbl">Designation:</span>
+              <div class="hw-rule"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Client Representative Sign-Off (Generous Handwriting Lines) -->
+        <div class="tb-box tb-sig-area">
+          <div class="tb-sig-header">
+            <span class="tb-sig-role">02 &middot; CLIENT REPRESENTATIVE SIGN-OFF</span>
+            <span class="tb-sig-instruction">Customer Acknowledgement &amp; Acceptance</span>
+          </div>
+          <div class="tb-hw-body">
+            <div class="hw-field hw-sig-field">
+              <span class="hw-lbl">Client Signature:</span>
+              <div class="hw-sig-box">
+                <span class="hw-sig-prompt">Sign with pen upon commissioning handover</span>
+              </div>
+            </div>
+            <div class="hw-row">
+              <div class="hw-field">
+                <span class="hw-lbl">Full Name:</span>
+                <div class="hw-rule"></div>
+              </div>
+              <div class="hw-field">
+                <span class="hw-lbl">Signing Date:</span>
+                <div class="hw-rule"></div>
+              </div>
+            </div>
+            <div class="hw-field">
+              <span class="hw-lbl">Designation:</span>
+              <div class="hw-rule"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Document Master ID & Engineering Control -->
+        <div class="tb-box tb-doc-control">
+          <div class="tbm-header">
+            <span>Drawing &amp; Document Control</span>
+            <span>ISO 5457 &middot; A4-L</span>
+          </div>
+          <div class="tbm-ref-block">
+            <span class="tbm-k">Document Reference</span>
+            <b class="tbm-v">CSR-QSV91G-25381944</b>
+          </div>
+          <div class="tbm-grid-2">
+            <div><span>System State</span><b>OPERATIONAL</b></div>
+            <div><span>Bus Voltage</span><b>11kV SYNC</b></div>
+            <div><span>CSR Status</span><b class="stat-pill">COMPLETE</b></div>
+            <div><span>Sheet</span><b>1 OF 1 &middot; NTS</b></div>
+          </div>
+          <div class="tbm-note">
+            Official field document &middot; Signatures and dates to be handwritten by authorized signatories.
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

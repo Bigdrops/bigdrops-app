@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSR-PROTO-01 — Customer Service Report (Command, one-page)</title>
+<style>
+@page {
+  size: A4 portrait;
+  margin: 8mm 10mm;
+  @bottom-left { content: "SUN & SHIELD POWER SOLUTIONS  |  CUSTOMER SERVICE REPORT"; font: bold 6.5pt Arial, sans-serif; color: #111; }
+  @bottom-right { content: "CSR-PROTO-01  |  PAGE " counter(page) " OF " counter(pages); font: bold 6.5pt Arial, sans-serif; color: #111; }
+}
+:root { --k: #111; --g: #e6e6e6; --m: #555; --y: #f2b705; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: #cfcfcf;
+  color: var(--k);
+  font: 7.5pt/9.5pt Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.sheet {
+  width: 190mm; /* 210mm - 20mm side margins */
+  min-height: 277mm; /* 297mm - 20mm top/bottom margins */
+  margin: 10mm auto;
+  background: #fff;
+  box-shadow: 0 1px 10px rgba(0,0,0,.25);
+  display: flex;
+  flex-direction: column;
+}
+/* Header */
+.hd { display: flex; background: var(--k); color: #fff; align-items: stretch; }
+.tile { background: #fff; margin: 2mm; width: 14mm; height: 14mm; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-svg { width: 10mm; height: 10mm; display: block; }
+.hc { flex: 1; padding: 2mm 0 2mm 2mm; }
+.hc b { display: block; font: 900 11pt/12pt "Arial Black", Arial, sans-serif; }
+.hc span { display: block; font-size: 6.5pt; line-height: 8.5pt; color: #d8d8d8; }
+.hid { background: var(--y); color: var(--k); padding: 2mm 3mm; width: 55mm; display: flex; flex-direction: column; justify-content: space-between; flex-shrink: 0; }
+.hid i { font: 900 9.5pt/10pt "Arial Black", Arial, sans-serif; font-style: normal; text-transform: uppercase; }
+.hid b { font: bold 11pt/12pt "Courier New", monospace; letter-spacing: .04em; }
+.hid span { font-size: 6pt; line-height: 7.5pt; font-weight: bold; text-transform: uppercase; }
+.haz { height: 2mm; background: repeating-linear-gradient(135deg, var(--k) 0 1.5mm, var(--y) 1.5mm 3mm); }
+.note { margin: 1.5mm 0 0; font-size: 6pt; line-height: 7.5pt; font-weight: bold; text-transform: uppercase; color: var(--m); }
+
+/* Typography & Utilities */
+.lb { font: bold 6pt/7.5pt Arial, sans-serif; text-transform: uppercase; letter-spacing: .09em; color: var(--m); margin-bottom: .5mm; }
+.mono { font-family: "Courier New", monospace; font-weight: bold; }
+.cn { font: 900 9.5pt/11pt "Arial Black", Arial, sans-serif; margin-bottom: 1mm; }
+
+/* Section Headers */
+.sh { display: flex; align-items: baseline; gap: 1.5mm; border-top: 0.8mm solid var(--k); margin-top: 2mm; padding-top: 0.5mm; break-after: avoid; }
+.sh .no { font: 900 11pt/12pt "Arial Black", Arial, sans-serif; min-width: 5mm; color: var(--y); -webkit-text-stroke: 0.5px var(--k); }
+.sh h2 { margin: 0; font: 900 8.5pt/10pt "Arial Black", Arial, sans-serif; text-transform: uppercase; }
+.sh em { margin-left: auto; font: bold 6pt Arial, sans-serif; font-style: normal; text-transform: uppercase; letter-spacing: .08em; color: var(--m); }
+
+/* Top Grid: Client & Equipment */
+.top { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3mm; margin-top: 2mm; border: 0.6mm solid var(--k); padding: 2mm; break-inside: avoid; }
+.col { display: flex; flex-direction: column; }
+.col + .col { border-left: 0.6mm solid var(--k); padding-left: 3mm; }
+.col .sh { margin-top: 0; border-top: none; padding-top: 0; margin-bottom: 1.5mm; }
+.col .sh .no { color: var(--k); -webkit-text-stroke: 0; }
+.sd { display: grid; grid-template-columns: 20mm 1fr; row-gap: 0.8mm; align-items: baseline; margin-bottom: 1mm; }
+.sd .k { font: bold 6pt/8pt Arial, sans-serif; text-transform: uppercase; letter-spacing: .07em; color: var(--m); }
+.sd .v { font-weight: bold; font-size: 7.5pt; }
+
+/* Equipment Plate */
+.plate { display: grid; grid-template-columns: 22mm 1fr; align-content: start; gap: 0.5mm 0; }
+.plate > div { padding: 0.8mm 0; border-bottom: 0.2mm solid var(--g); }
+.plate .k { font: bold 6pt/8pt Arial, sans-serif; text-transform: uppercase; letter-spacing: .07em; color: var(--m); background: transparent; }
+.plate .v { font-weight: bold; font-size: 7.5pt; }
+
+/* Service Info (2-column) */
+.nar { display: grid; grid-template-columns: 1fr 1fr; column-gap: 4mm; margin-top: 2mm; }
+.nar > div { min-width: 0; }
+p.t { margin: 1mm 0 0; font-size: 7.5pt; line-height: 10pt; text-align: justify; }
+.df { list-style: none; margin: 1mm 0 0; padding: 0; display: grid; gap: 1mm; }
+.df li { display: flex; gap: 1.5mm; border: 0.3mm solid var(--k); border-left: 1.5mm solid var(--k); padding: 0.8mm 1.5mm; break-inside: avoid; font-size: 7.5pt; line-height: 9.5pt; }
+.df b { font: 900 7pt/10pt "Arial Black", Arial, sans-serif; white-space: nowrap; min-width: 5mm; }
+.rem { margin-top: 1mm; border: 0.5mm solid var(--k); background: var(--g); padding: 1.5mm 2mm; font-size: 7.5pt; line-height: 10pt; break-inside: avoid; }
+
+/* Materials Grid (3 Columns) */
+.mg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4mm;
+  border: 0.5mm solid var(--k);
+  margin-top: 2mm;
+  background: #fff;
+  break-inside: avoid;
+}
+.mi {
+  display: grid;
+  grid-template-columns: 6mm 1fr 14mm;
+  align-items: start;
+  padding: 0.8mm 1.5mm;
+  break-inside: avoid;
+}
+.mi:nth-child(odd) { background: #f7f7f7; }
+.mi .n { font: bold 7pt "Courier New", monospace; color: var(--m); text-align: center; padding-top: 0.5mm; }
+.mi .d { font: 7pt/9.5pt Arial, sans-serif; overflow-wrap: anywhere; }
+.mi .q { text-align: right; }
+.mi .q b { font: bold 8pt "Courier New", monospace; display: block; line-height: 1; }
+.mi .q i { font: bold 6pt Arial, sans-serif; color: var(--m); display: block; line-height: 1; margin-top: 0.5mm; }
+
+/* Sign-off */
+.so { margin-top: 2mm; break-inside: avoid; }
+.pn { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin-top: 1.5mm; border: 0.6mm solid var(--k); padding: 0; }
+.sig { break-inside: avoid; }
+.sig + .sig { border-left: 0.6mm solid var(--k); }
+.sig .bar { background: var(--k); color: #fff; font: bold 6.5pt/8pt Arial, sans-serif; text-transform: uppercase; letter-spacing: .07em; padding: 1mm 2mm; display: flex; justify-content: space-between; gap: 2mm; }
+.sig .bar span { font-weight: normal; text-transform: none; letter-spacing: .02em; color: #ccc; }
+.stage { height: 18mm; display: flex; align-items: center; justify-content: center; background: #fff; border-bottom: 0.2mm solid var(--k); }
+.sig-a { width: 65mm; max-width: 90%; height: auto; display: block; }
+.sig-b { width: 42mm; max-width: 90%; height: auto; display: block; }
+.sm { display: grid; grid-template-columns: 1fr 24mm; }
+.sm div { padding: 3mm 2mm 0.5mm; font: bold 6pt Arial, sans-serif; text-transform: uppercase; letter-spacing: .07em; color: var(--m); }
+.sm div + div { border-left: 0.2mm solid var(--k); }
+.capn { padding: 0.8mm 2mm; font-size: 5.5pt; line-height: 7pt; color: var(--m); border-top: 0.2mm solid var(--k); }
+.foot { margin-top: 1.5mm; font-size: 6pt; font-weight: bold; text-transform: uppercase; letter-spacing: .05em; color: var(--m); text-align: center; }
+
+/* Print Overrides */
+@media print {
+  html, body { background: #fff; height: auto; }
+  .sheet { width: 100%; min-height: auto; margin: 0; padding: 0; box-shadow: none; }
+  .sh { break-after: avoid; }
+  .df li, .rem, .mg, .sig { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<main class="sheet">
+  <header>
+    <div class="hd">
+      <div class="tile">
+        <svg class="logo-svg" viewBox="0 0 26.927 27" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cummins logo" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.442.011L14.081.003C-4.693.003-4.693 27 14.081 27l12.846-.031v-9.807H14.51c-4.84 0-4.84-7.321 0-7.321l12.417-.02V.003L24.111 0l-.89.561c-.154-.149-.344-.038-.387-.011-.169.105-.244.226-.164.355.223.36 1.63-.847 2.231.126.334.54.138 1.168-.766 1.727-.565.349-1.299.55-1.702-.015l.932-.577c.164.1.335.085.458.003.148-.097.28-.242.167-.425-.257-.416-1.562.85-2.185-.155-.41-.663.125-1.261.637-1.578zM8.353 12.421l-.908.562-.231-.182c-.075.36-.207.556-.612.807-.536.332-1.099.201-1.559-.542l-.978-1.58.979-.605.867 1.401c.221.357.409.398.644.252.282-.175.234-.453-.015-.854l-.772-1.248.979-.605 1.606 2.594zM7.189 9.553l.898-.556.235.187c-.001-.429.449-.75.721-.863a.853.853 0 0 1 .878.096c.034-.812.61-1.045.774-1.118.646-.285 1.042.037 1.431.664l.95 1.535-.979.606-.817-1.323c-.223-.359-.393-.497-.66-.331-.287.178-.181.476.012.787l.794 1.283-.979.606-.819-1.322c-.236-.382-.382-.502-.66-.331-.287.177-.181.474.012.786l.794 1.283-.979.605-1.606-2.594zm11.096-3.278L16.679 3.68l.979-.605 1.606 2.595-.979.605zm-2.265-3.66l.979-.605.454.733-.979.606-.454-.734zm2.159.137l.894-.553.287.194c.039-.476.345-.738.711-.895.573-.245 1.039-.004 1.434.634l.962 1.555-.979.605-.849-1.372c-.163-.263-.363-.447-.644-.273-.301.187-.255.439-.05.771l.818 1.322-.979.606-1.605-2.594zM4.111 15.043c-2.637 1.632-5.022-2.176-2.385-3.808l1.198-.733.617.997-1.052.646c-1.312.809-.101 2.597 1.128 1.824l1.053-.646.617.997-1.176.723zm7.783-8.401l.898-.556.235.187c0-.429.45-.75.721-.863a.858.858 0 0 1 .878.096c.034-.812.61-1.045.773-1.118.646-.285 1.043.036 1.431.664l.95 1.535-.979.605-.817-1.322c-.222-.359-.392-.497-.661-.331-.287.178-.181.475.012.787l.794 1.283-.979.605-.818-1.322c-.236-.381-.382-.501-.661-.331-.287.178-.181.475.012.787l.794 1.283-.977.605-1.606-2.594z"/>
+        </svg>
+      </div>
+      <div class="hc">
+        <b>Sun &amp; Shield Power Solutions</b>
+        <span>Authorised Cummins industrial generation specialist</span>
+        <span>43 Oshola Street, Ifako-Ijaiye, Lagos State &nbsp;·&nbsp; +234 806 619 0685</span>
+        <span>Sunshieldpowersolutions@gmail.com</span>
+      </div>
+      <div class="hid">
+        <i>Customer Service Report</i>
+        <b>CSR-PROTO-01</b>
+        <span>Major scheduled generator overhaul</span>
+      </div>
+    </div>
+    <div class="haz"></div>
+    <p class="note">Prototype document · synthetic demonstration data · not a verified service record · signature artwork is illustrative</p>
+  </header>
+
+  <div class="top">
+    <div class="col">
+      <div class="sh"><div class="no">A</div><h2>Client Information</h2></div>
+      <div class="cn">11PLC (formerly Mobil Oil Nig. Plc)</div>
+      <div class="sd"><span class="k">Corporate address</span><span class="v">1 Mobil Rd, Apapa, Lagos 102272, Lagos</span></div>
+      
+      <div class="sh" style="margin-top: 2.5mm;"><div class="no">B</div><h2>Service Dates &amp; Status</h2></div>
+      <div class="sd"><span class="k">Service window</span><span class="v mono">2026-10-12 → 2026-10-24</span></div>
+      <div class="sd"><span class="k">Scope</span><span class="v">30,000-hour major overhaul</span></div>
+      <div class="sd"><span class="k">Running hours</span><span class="v mono">30142.6 hrs</span></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2mm; margin-top:1mm; border:0.4mm solid var(--k);">
+        <div style="padding:1mm 1.5mm;"><div class="lb">Initial state</div><div style="font:900 8pt/9pt 'Arial Black',sans-serif; text-transform:uppercase;">Down</div></div>
+        <div style="padding:1mm 1.5mm; background:var(--k); color:#fff;"><div class="lb" style="color:#ccc;">Post-service</div><div style="font:900 8pt/9pt 'Arial Black',sans-serif; text-transform:uppercase;">Returned to baseload</div></div>
+      </div>
+    </div>
+    
+    <div class="col">
+      <div class="sh"><div class="no">C</div><h2>Equipment Information</h2></div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0 2mm; margin-bottom: 1.5mm;">
+        <div><div class="lb">Make &amp; model</div><div style="font:900 16pt/16pt 'Arial Black',sans-serif; letter-spacing:-.02em;">Cummins QSV91G</div></div>
+        <div><div class="lb">Equipment type</div><div class="v" style="font-size:7.5pt;">Lean Burn Natural Gas Generator Set</div></div>
+      </div>
+      <div class="plate">
+        <div class="k">Serial no.</div><div class="v mono">25381944</div>
+        <div class="k">Engine no.</div><div class="v mono">91G-ENG-08421</div>
+        <div class="k">Equipment location</div><div class="v">Central Utility Plant, Powerhouse Bay 2, Basement Level -1</div>
+        <div class="k">Capacity</div><div class="v">2000 kW (2.0 MW)</div>
+        <div class="k">Bus voltage</div><div class="v">11000 V</div>
+        <div class="k">Frequency</div><div class="v">50 Hz</div>
+        <div class="k">DC starting bank</div><div class="v">24 VDC (4x 12V 200Ah AGM in series-parallel)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nar">
+    <div>
+      <section>
+        <div class="sh"><div class="no">1</div><h2>Problem reported</h2></div>
+        <p class="t">Major scheduled top and bottom end overhaul at 30,000 running hours, high blow-by, exhaust port carbon fouling, and intermittent cylinder misfires under peak load.</p>
+      </section>
+      <section style="margin-top: 2mm;">
+        <div class="sh"><div class="no">2</div><h2>Service rendered</h2></div>
+        <p class="t">Conducted complete major engine overhaul: stripped down cylinder heads, replaced all cylinder liners, pistons, rings, wrist pins, con-rod bearings, and main crankshaft bearings. Rebuilt and leak-tested cylinder heads with new valves, seats, guides, and rotocaps. Replaced spark plugs, ignition extensions, ignition leads, and calibrated detonator sensors. Overhauled both turbochargers, replaced charge air cooler cores, inspected wastegate actuator linkages, aligned throttle body actuator, recalibrated fuel gas control valve and mixer, renewed all external water/oil plumbing elastomeric seals, replaced crankcase breather assemblies, flushed lube oil galleries, refilled with fresh low-ash gas engine oil, conducted engine bar-over, pre-lube check, cold commissioning, step load testing from 25% to 100% (2000 kW), and dynamic emission tuning to maintain NOx within operational limits.</p>
+      </section>
+    </div>
+    <div>
+      <section>
+        <div class="sh"><div class="no">3</div><h2>Defects found</h2><em>6 findings</em></div>
+        <ul class="df">
+          <li><b>D1</b><span>Severe carbon deposition across all 18 cylinder exhaust valves.</span></li>
+          <li><b>D2</b><span>Excessive side clearance on top compression ring grooves on Cylinders #4, #9, and #14.</span></li>
+          <li><b>D3</b><span>Moderate cavitation erosion on cylinder liner lower O-ring register lands (Cylinders #3, #7).</span></li>
+          <li><b>D4</b><span>Heat stress cracking on two ignition lead boots.</span></li>
+          <li><b>D5</b><span>Minor axial play (0.18 mm) on secondary turbocharger shaft exceeding service limit.</span></li>
+          <li><b>D6</b><span>Worn throttle spindle shaft seals causing air leakage.</span></li>
+        </ul>
+      </section>
+      <section style="margin-top: 2mm;">
+        <div class="sh"><div class="no">4</div><h2>Engineer remarks</h2></div>
+        <div class="rem">Major mechanical overhaul completed to manufacturer specifications. Engine barring torque smooth and within normal tolerance. Full synthetic low-ash SAE 40 lubricant loaded. Dynamic load banking achieved 500 kW, 1000 kW, 1500 kW, and sustained 2000 kW at 0.8 PF for 4 hours continuously. All bearing temperatures, exhaust port temperatures, and oil pressure profiles stabilized within OEM tolerances. Unit re-commissioned, auto-synchronization with plant 11kV bus verified, and returned to active baseload service.</div>
+      </section>
+    </div>
+  </div>
+
+  <section style="margin-top: 2mm;">
+    <div class="sh"><div class="no">5</div><h2>Materials &amp; OEM consumables issued</h2><em>18 line items</em></div>
+    <div class="mg">
+      <div class="mi"><span class="n">01</span><span class="d">Cylinder Liner Assembly</span><span class="q"><b>18</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">02</span><span class="d">Piston Assembly Standard</span><span class="q"><b>18</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">03</span><span class="d">Piston Ring Set</span><span class="q"><b>18</b><i>SET</i></span></div>
+      <div class="mi"><span class="n">04</span><span class="d">Connecting Rod Bearing Pair</span><span class="q"><b>18</b><i>PAIR</i></span></div>
+      <div class="mi"><span class="n">05</span><span class="d">Main Journal Bearing Set</span><span class="q"><b>10</b><i>SET</i></span></div>
+      <div class="mi"><span class="n">06</span><span class="d">Thrust Bearing Washer Set</span><span class="q"><b>2</b><i>SET</i></span></div>
+      <div class="mi"><span class="n">07</span><span class="d">Cylinder Head Gasket Multi-Layer</span><span class="q"><b>18</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">08</span><span class="d">Intake Valve</span><span class="q"><b>36</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">09</span><span class="d">Exhaust Valve Nimonic</span><span class="q"><b>36</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">10</span><span class="d">Valve Stem Guide &amp; Seal Kit</span><span class="q"><b>72</b><i>SET</i></span></div>
+      <div class="mi"><span class="n">11</span><span class="d">Pre-Chamber Spark Plug Shielded</span><span class="q"><b>18</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">12</span><span class="d">Ignition Extension Coil Boot Assembly</span><span class="q"><b>18</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">13</span><span class="d">Turbocharger Core Assembly Cartridge</span><span class="q"><b>2</b><i>ASSY</i></span></div>
+      <div class="mi"><span class="n">14</span><span class="d">Charge Air Cooler Core Assembly</span><span class="q"><b>2</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">15</span><span class="d">Full Engine Overhaul O-Ring &amp; Elastomer Gasket Kit</span><span class="q"><b>1</b><i>KIT</i></span></div>
+      <div class="mi"><span class="n">16</span><span class="d">Low-Ash Stationary Gas Engine Oil SAE 40</span><span class="q"><b>1200</b><i>LITERS</i></span></div>
+      <div class="mi"><span class="n">17</span><span class="d">Spin-on Lube Oil Microglass Filter Element</span><span class="q"><b>6</b><i>PCS</i></span></div>
+      <div class="mi"><span class="n">18</span><span class="d">Crankcase Breather Coalescing Filter Cartridge</span><span class="q"><b>4</b><i>PCS</i></span></div>
+    </div>
+  </section>
+
+  <section class="so" aria-label="Sign-off">
+    <div class="sh"><div class="no">6</div><h2>Sign-off</h2></div>
+    <div class="pn">
+      <div class="sig">
+        <div class="bar">Signature 1 <span>Client acceptance · illustrative</span></div>
+        <div class="stage">
+          <svg class="sig-a" viewBox="5.503 73.109 181.749 46.538" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Illustrative signature 1" xmlns="http://www.w3.org/2000/svg">
+            <g fill-rule="evenodd" clip-rule="evenodd">
+              <path fill="#fff" d="M0 0h192.756v192.756H0V0z"/>
+              <path d="M69.335 105.061c-1.355 1.354-2.179 3.007-2.004 4.767.18 3.131 3.71 4.428 5.952 5.136 8.012.999 15.315-2.826 21.031-9.369.411-.12.647.233.889.466-1.415 2.709-4.48 4.893-6.957 6.776-3 1.864-6.566 3.355-10.261 3.73a17.531 17.531 0 0 1-3.351 0 14.946 14.946 0 0 1-3.474-.783c-2.474-.935-5.537-3.241-5.537-6.188.239-1.586.475-3.122 1.589-4.24l1.416-1.593c4.656-4.121 10.609-6.118 16.081-7.477-1.347-.762-3.233-1.354-3.649-3.127 0-5.298 5.479-7.007 9.192-9.182 8.245-3.774 18.022-5.011 26.983-4.538 1.764.526 3.477.585 4.654 2.302.355 2.646-2.771 4.058-4.357 5.652-6.836 4.708-15.203 7.714-24.045 6.771-1.115-.526-2.179-.943-2.53-2.238-.172-1.588 1.356-2.947 2.656-3.418 1.942-1.115 4.417-.233 6.243-.708.234.237.588.475.41.824l-.527.591c-2.602.179-5.483-.059-7.248 1.828-.355 1.299 1.122 1.535 1.823 1.826 8.489.417 19.385-2.829 26.043-10.133.115-.996-1.006-1.354-1.711-1.589-12.781-.887-25.567.942-35.171 8.893-.769.887-1.178 2.302-.59 3.42 3.476 3.118 6.659 1.003 10.727 1.417l.295.287-1.009.824c-7.595 1.415-15.198 2.71-21.44 7.363l-2.123 1.71zm114.917-.627v.829a1.682 1.682 0 0 1-.383.795c-18.266 10.96-40.594 1.243-60.807 5.66-.938.119-.461 2.356-1.707 1.236-.645-.473-.232-.996-.174-1.532 4.01-2.653 8.131-2.302 12.902-2.71 15.379-.175 33.469 5.362 48.078-3.118.527-.362.705-1.006.41-1.542-5.773-2.411-11.193-4.707-16.672-7.767-4.123 3.001-7.953 7.242-13.316 7.477-.881-.116-1.535-1.062-1.826-1.827-2.062 1.479-4.359 2.419-7.074 2.419-1.885-2.886-5.648 2.241-6.951-1.707-.055-1.709 1.654-3.123 2.826-3.949-.584 0-1.471-.76-1.822.114-2.475 2.711-5.299 6.192-9.016 5.242l-.703-1.115c-1.303 1.007-2.592 2.24-4.422 1.535-1.117-.475-1.41-1.89-.82-2.831 1.703-2.945 4.889-4.941 8.307-4.941.705.767 1.701-.533 2.293.292-.592 2.061-4.004 3.121-3.709 5.77 1.178.412 2.41-.712 3.535-1.12l5.24-5.475c.828-.179.18.769.713.939 1.586.295 2.885-.585 4.529.295-1.527 1.651-4.592 2.476-5.354 5.126 1.473.41 2.881-.761 4.062-1.181 1.824-3.41 5.537-4.114 8.656-4.476 2.068-4.417 6.604-8.422 11.141-10.069 3.594-4.656 8.602-8.482 14.43-7.61l.297 2.126c-.82 5.891-5.592 9.958-9.604 13.968 5.418 3.232 10.369 5.359 16.08 7.652.445.353.755.913.861 1.495zm-8.865-22.996c-1.178 5.242-5.484 9.43-9.486 12.84-1.004-.229-1.887-1.12-2.537-1.824 1.533-1.708 3.297-3.83 3.359-6.361-.352-.531-.883-.653-1.412-.709 2.83-2.409 6.014-5.062 9.785-4.946l.291 1zm-39.36.119c-6.832 2.12-12.965 6.718-17.199 12.606-2.832 2.888-3.658 7.833-7.955 8.775.533-1.765 2.301-3.061 2.826-4.826-1.236-2.652-3.654 1.058-4.77-1.005-2.594 1.767-4.006 5.655-7.547 6.128.471-2.123 2.18-3.712 3.721-5.418-1.947-.297-4.189-.529-6.074-.415-1.178 1.944-2.655 4.24-4.833 5.244-.999.175-2.001 1.472-2.943.589.882-1.768 2.59-2.772 3.354-4.538-.411-.644-.995 0-1.528 0-3.185-1.464-6.779.002-9.369 2.533-.586.942-1.533 2.298-.533 3.421 2.063 1.059 4.774-.119 6.659-.706.177.468.885 1.059 1.534 1.115 2.003-.175 3.302-1.062 4.948-2.122 2.415-1.004 2.829-5.418 5.772-3.946-1.178 1.296-2.123 2.705-2.236 4.474.588 2.242 3.123.65 4.24.479l-.295.822c.061.411.531.524.883.587 2.178-2.002 3.184-6.895 7.076-6.543-1.123 1.651-3.363 3.544-2.006 5.542.883.766 1.885-.3 2.709-.179-.178.12-.178.302-.178.477.236.409.705.409 1.119.409 1.891-2.414 2.828-6.363 6.361-6.948.533.233 1 .642 1 1.295-1.414 2.948-3.83 4.946-6.062 7.476-1.529 1.886-4.008 4.362-2.535 6.958 1.711.941 3.127.475 5.066.413.762-.18 1.824-.469 1.824-1.418-1.646-.354-4.117.585-5.654.294-.762-.529-.174-1.233-.23-1.885 2.234-3.77 7.242-7.005 8.895-11.131.641-1.36-.473-2.594-1.303-3.242 6.777-3.77 16.498-5.475 18.68-14.317-.29-1.764-2.239-.646-3.417-.998zm1.709 1.592c-1.059 4.888-6.893 7.188-11.021 9.193l-7.182 3.355c4.946-6.253 10.606-11.487 18.203-12.548zm25.037 7.362c-.176-1.413.65-2.827 2.01-3.302-.416 1.241-.826 2.421-2.01 3.302zm-1.703 1.529c-2.832 2.538-6.016 5.012-8.896 6.771.885-4.591 5.303-7.885 9.07-10.008-.474.887-.353 2.237-.174 3.237zm3.121 3.42c-3.008 2.531-6.602 5.713-10.607 6.892-.762-.241-1.115-.764-1.115-1.537 3.297-2.062 6.303-4.884 9.484-7.355.887.589 1.117 1.826 2.238 2zm-33.82 2.652c-1.35 1.882-3.594 4.768-6.066 4.946-.355-1.946 2.178-3.181 3.539-4.066.763-.473 1.644-.705 2.527-.88zm17.559 3.823c-1.291.238-3.184 1.531-4.125.418 1.354-2.652 4.006-3.655 6.656-3.949.891 2.059-1.232 2.652-2.531 3.531zm-56.264-2.12c-1.651 2.182-4.771 4.303-7.07 3.65.354-2.114 2.943-3.413 4.949-3.766l2.121.116z"/>
+              <path d="M70.602 103.566c5.364.407 9.249.585 13.553 4.119.234.943-.89.943-1.418.71-3.945-2.947-8.955-3.833-14.258-3.125l-2.122.297c-2.355-.297-5.653 1.238-7.54-.706-1.824.291-3.828.175-5.183-1.001l-1.297-1.591c-2.707 1.413-5.538 4.062-8.783 2.412-1.408.589-3.179 1.239-4.767.589-1.178-1.235-.824-2.528-.296-3.944.179-.475.825-.882.529-1.299-3.537 3.771-7.953 6.247-12.96 5.54a7.636 7.636 0 0 1-5.244-3.298c-.235-.826-.708-1.589-.708-2.533l-10.782 9.072c-.352-.117-.708-.351-.823-.709v-.412l14.431-12.485a7.11 7.11 0 0 1-4.825-2.531c-1.83-2.475-1.416-6.305-.117-8.895 2.824-4.893 8.541-7.432 13.957-7.667 4.186.468 8.312 1.412 10.906 4.954 2.001 2.294 2.117 6.308 1.588 9.072 3.595-.412 8.36-1.174 12.015.121 1.89-2.594 4.601-6.014 7.898-6.187.942.112 2.066.645 2.239 1.702-.352 5.013-5.123 8.547-8.722 12.02l-4.122 3.355c-.062.947.768 1.77 1.529 2.127 1.178.292 2.067.061 3.301.292-.118-2.065 1.471-4.126 3.242-5.362 1.356-1.058 3.475-1.058 5.065-.587.652 1.647-.411 3.118-1.237 4.237l-3.71 2.297 5.83-.178 2.831-.406zM37.49 78.941c-5.188-2.124-11.96-1.003-15.963 2.708-2.772 2.359-3.596 6.073-2.542 9.493 1.065 2.117 3.661 2.296 5.66 2.523l12.964-10.897 1.411-.115.296 1.001-11.724 9.721c5.359-.529 9.897-1.645 14.961-2.825.476-1.944 1-4.542.179-6.479-1.059-2.481-3.239-3.658-5.242-5.13zm27.16 6.831c-3.12.184-5.188 3.123-6.952 5.481l.588.589c.235.827 1.59 1.89.294 2.656-1.351.646-1.234-1.299-2.001-1.653-1.119 1.886-2.357 4.067-2.829 6.353 4.182-3.937 9.783-7.535 11.312-13.008l-.412-.418zm-20.678 6.367c-1.417 2.658-2.652 5.361-4.655 7.776 1.298-1.77 3.003-2.947 4.828-3.709 1.716-.475 4.245 0 5.487 1.586-1.12 1.648-2.539-.229-3.949 0-1.828.354-3.594 1.236-4.773 2.826-.241 1.12-1.946 2.057-1.001 3.355 4.064.533 4.948-4.416 8.189-5.241.232.296.646.533.705.885-.884 1.234-3.12 2.301-3.653 4.065 2.651 0 4.713-1.828 6.775-3.064-.238-3.353 1.71-6.182 3.356-8.954-3.595-1.114-7.777-.354-11.309.475zm-2.126.236l-7.888 1.888c-3.948 1.587-9.549-.826-12.138 4.057-.358 1.77.531 3.006 1.23 4.247 1.475 1.115 3.189 1.939 5.248 1.584 6.306-.468 11.313-6.293 13.548-11.776zm18.56 10.601c1.771-.706 4.715-1.649 5.068-4.244-2.354-.349-4.652 2.061-5.068 4.244z"/>
+            </g>
+          </svg>
+        </div>
+        <div class="sm">
+          <div>Name / designation</div>
+          <div>Date</div>
+        </div>
+        <div class="capn">Illustrative prototype asset. It does not represent a real person, approval, or sign-off.</div>
+      </div>
+      <div class="sig">
+        <div class="bar">Signature 2 <span>Service release · illustrative</span></div>
+        <div class="stage">
+          <svg class="sig-b" viewBox="5.503 51.024 181.748 90.711" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Illustrative signature 2" xmlns="http://www.w3.org/2000/svg">
+            <g fill-rule="evenodd" clip-rule="evenodd">
+              <path fill="#fff" d="M0 0h192.756v192.756H0V0z"/>
+              <path d="M93.78 101.383c-5.08-5.729-2.009-13.679-.19-19.963 7.379-21.167 29.831-25.463 49.528-27.396 3.049.327 7.303-.79 8.85 2.771 2.592 9.841-5.941 17.638-12.787 22.975-5.717 3.573-12.557 4.521-19.746 4.804-2.26-.289-5.348.017-6.801-2.146.545-.518 1.443-.708 2.178-.446 2.016 1.807 5.031.893 7.678 1.056 10.064-.294 18.695-6.41 24.125-14.469 1.721-3.583 3.807-8.135 1.459-12.073-1.781-1.644-4.529-1.295-6.943-1.073-12.404 1.192-24.035 4.002-34.002 10.706C99.166 72.222 94.428 81 93.241 90.481c-.256 3.267-.114 7.035 2.418 9.388.975.768 2.173 1.584 3.41 1.389 4.568-4.275 6.344-9.889 8.527-15.171.734-2.374.779-5.25-.453-7.405.088-.856 1.041-.932 1.598-1.281 1.508-.49 2.002 1.411 2.477 2.364 1.955 6.704-2.865 12.105-5.658 17.572-1.812 1.951-2.869 4.902-5.549 5.811-.545.014-1.129.041-1.721.041-1.725-.001-3.504-.24-4.51-1.806zM27.083 102.172c-.441-2.014.131-4.164-.142-6.07-1.715 1.164-3.316 2.613-5.031 3.893-3.431 2.324-8.702 2.902-12.52.969-2.124-2.084.109-4.84 1.073-6.888 2.897-3.779 6.354-7.242 9.998-10.14.648-6.033 7.003-10.853 12.242-12.834 1.454-.365 3.202-.191 3.801 1.263.033 1.4-.785 2.549-1.775 3.415-.616.185-1.132-.202-1.083-.763-.022-.735.517-1.53-.055-2.195-4.411 1.574-8.772 4.934-10.184 9.579.681.272 1.971-.044 2.821.223.741.43 1.601 1.198 1.117 2.107-1.296 2.282-4.014 1.502-6.159 1.383-4.296 3.697-9.153 7.645-10.09 13.177.997 1.717 3.278.541 4.634.85 5.217-.467 8.604-4.818 12.23-8.391 1.498-10.391 9.389-19.349 18.423-25.022 1.617-.545 3.932-2.565 5.386-.523.187 3.865-3.534 7.131-3.534 7.131l-4.362 5.066c-4.629 5.37-9.579 9.934-14.017 14.933-.496 2.543-1.051 5.423-.31 8.103 6.006-5.141 11.479-11.463 18.378-14.611.735-.071 1.422.475 1.552 1.155-.414 1.465-1.285 2.663-1.705 4.084 2.091-2.075 4.499-7.308 8.528-5.604l2.668 3.311c4.411-3.926 9.688-9.001 15.896-5.887 1.655 1.252 2.151 2.93 2.418 4.781-.403 2.086-.403 4.449-2.457 5.734-2.292.393-5.32.915-7.155-.784.043-.333.208-.681.54-.915 1.846-.381 3.779.528 5.391-.403 1.078-1.775 1.584-4.433.523-6.376-.588-1.051-1.879-1.019-2.897-1.28-6.022-.082-10.265 6.094-13.369 10.445-1.487 1.382-2.358 4.949-5.038 3.605-.168-.164-.397-.158-.572-.377 1.22-3.18 6.546-6.458 2.75-9.911-.463-.609-1.013.028-1.459.147-3.921 3.017-4.542 7.869-8.125 10.771-.899.072-1.639-.135-2.325-.625.108-2.811 1.002-5.31 1.955-7.755l-.79.021c-5.031 3.611-8.854 8.484-13.598 12.47-.416-.004-.879.027-1.332.027-1.017.002-1.981-.162-2.24-1.289zm7.863-21.956c-1.4 2.734-3.583 5.375-3.572 8.359a144.269 144.269 0 0 0 11.207-11.354c2.342-3.147 5.707-6.099 6.632-9.605-5.32 3.163-10.689 7.171-14.267 12.6z"/>
+              <path d="M65.224 76.012c-2.211-.676-.414-3.251-.621-4.825.871-1.258 3.621-1.378 3.894.588.07.387-.431.734-.769.8-.99.893.048 3.687-1.503 3.687-.256 0-.583-.076-1.001-.25zM137.084 138.555c-6.725-1.139-13.598-1.65-19.578-4.656.594-.969 2.053-1.121 3.055-1.709 6.709-1.564 12.771-4.744 18.832-7.701l18.477-8.537.789-.023c-1.715 1.34-3.715 2.619-5.717 3.512-10.244 4.58-19.773 10.707-30.137 14.895 6.078 2.445 13.168 2.445 20.039 3.012 13.92.969 28.65-1.971 34.559-15.781 3.305-5.533 4.045-12.361 3.316-19.152-.549-1.955-.943-4.309-3.219-5.326-3.453-.925-7.547 1.922-10.543-1.1-1.035-.871-.576-2.908-2.211-3.033-4.133 1.329-6.715-3.218-10.438-1.22-1.057.534-2.256-.337-3.389-.594-2.896 1.193-5.918 1.934-8.396 3.965-.779.468-1.471-.185-2.205-.343-.229-.158-.07-.446-.131-.67 1.912-.104-.502-2.064 1.41-2.227 1.182-.028 2.174-.894 2.656-1.917l-.01-.397c-3.67 1.607-7.035 4.558-10.76 6.447-1.559.714-3.398 1.204-5.006.234-1.492.927-3.365 2.608-5.201 1.241-1.529-.637-.439-2.124-.244-3.142.359-1.579 2.129-2.918 1.416-4.591-3.252 2.886-5.631 7.053-9.818 8.338-.959.07-1.857-.018-2.598-.508l-.016-.783c4.803-1.296 7.895-6.208 11.521-9.617.846-.185 1.559-.768 2.582-.561 1.324 1.486 2.119 4.166 1.094 6.159-.266.458-.762.806-.641 1.366 3.859-.936 3.832-7.013 8.342-6.67.789.152.697 1.111.713 1.617-1.139 1.824-2.967 3.164-3.932 4.934l.109.109c3.953-1.781 7.482-4.624 11.316-6.742 1.176-.25 2.574-.735 3.768-.195 1.248.473.637 3.299 2.467 1.965 2.559-3.55 5.859-6.556 9.109-9.388 4.412-3.986 9.275-7.591 14.502-10.074 1.121-.087 2.74-.741 3.219.431.305 1.061-.938.751-1.318 1.382-4.867 5.794-10.094 10.93-16.357 14.845l.01.277c1.02.316 2.463-.446 2.941.719.365 1.231-1.959 2.745.25 3.371 2.086.343 4.547-.387 6.209.975 1.318.986.855 2.739 2.117 3.719 3.758-.255 8.469-.931 11.137 2.271 4.205 4.455 3.262 12.072 2.041 17.502-1.904 7.412-6.664 15.461-14.004 19.006-6.928 3.777-15.303 4.545-23.668 4.545-2.838-.003-5.678-.09-8.459-.18zm17.557-49.534c.947-.354 2.406-.337 2.547-1.688-.948.414-1.721 1.111-2.547 1.688zm3.642-5.369c1.273-.708 2.613-1.127 3.713-2.113 3.213-2.217 6.934-4.215 9.164-7.477-4.611 2.473-8.92 5.898-12.877 9.59z"/>
+            </g>
+          </svg>
+        </div>
+        <div class="sm">
+          <div>Name / designation</div>
+          <div>Date</div>
+        </div>
+        <div class="capn">Illustrative prototype asset. It does not represent a real person, approval, or sign-off.</div>
+      </div>
+    </div>
+    <div class="foot">Prototype layout · all values from the heavy-load generator overhaul fixture</div>
+  </section>
+</main>
+</body>
+</html>
