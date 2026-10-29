@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CSR Template B — Executive Service Report | BOUXRE</title>
+<style>
+/* ── Print foundation ─────────────────────────────────────────── */
+@page { size: A4 portrait; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 210mm; background: #525659; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1a1d20;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+:root {
+  --bg: #fdfbf7;
+  --navy: #0f2942;
+  --navy-light: #f0f4f8;
+  --gold: #9a7b4f;
+  --ink: #181b1e;
+  --ink-secondary: #424952;
+  --muted: #6b7280;
+  --border: #dcd7ce;
+  --border-light: #ece8e1;
+  --serif: "Georgia", "Cambria", "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "Consolas", "Courier New", monospace;
+}
+.empty-val {
+  font-style: italic;
+  color: #8c887e;
+  font-size: 7pt;
+}
+
+/* ── Page container: strictly bounded A4 sheet ────────────────── */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  height: 297mm;
+  background: var(--bg);
+  padding: 6.5mm 9mm 5mm;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+@media screen {
+  .page { margin: 8mm auto; box-shadow: 0 4px 20px rgba(0,0,0,.35); }
+}
+
+/* ── Header: Refined Executive Presentation ───────────────────── */
+.top-deck {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 0.5pt solid var(--gold);
+  padding-bottom: 1.4mm;
+  margin-bottom: 2mm;
+  font-size: 6pt;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.header-row {
+  display: grid;
+  grid-template-columns: 1fr 68mm;
+  gap: 6mm;
+  align-items: start;
+  padding-bottom: 2.2mm;
+  border-bottom: 1.5pt solid var(--navy);
+}
+.brand-title {
+  font-family: var(--serif);
+  font-size: 15pt;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -.01em;
+  line-height: 1.1;
+}
+.brand-meta {
+  font-size: 6.4pt;
+  color: var(--ink-secondary);
+  margin-top: 1.2mm;
+  line-height: 1.4;
+}
+.report-title-block {
+  margin-top: 1.8mm;
+  display: flex;
+  align-items: baseline;
+  gap: 2.5mm;
+}
+.report-name {
+  font-size: 9.6pt;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.report-tag {
+  font-size: 6.6pt;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .04em;
+}
+
+.executive-docket-card {
+  background: var(--navy-light);
+  border: 0.75pt solid #c8d5e2;
+  border-left: 2.5pt solid var(--navy);
+  padding: 1.6mm 2.4mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2mm 2mm;
+}
+.docket-field { min-width: 0; }
+.docket-lbl {
+  display: block;
+  font-size: 5.6pt;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--navy);
+  margin-bottom: 0.4mm;
+}
+.docket-val {
+  font-size: 7.4pt;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.docket-val.down {
+  color: #b91c1c;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 1mm;
+}
+.docket-val.down::before {
+  content: "";
+  display: inline-block;
+  width: 2mm;
+  height: 2mm;
+  background: #b91c1c;
+  border-radius: 50%;
+}
+
+/* ── Section Titles ───────────────────────────────────────────── */
+.sec-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 0.6pt solid var(--navy);
+  padding-bottom: 0.8mm;
+  margin-top: 2.2mm;
+  margin-bottom: 1.4mm;
+}
+.sec-title h2 {
+  font-family: var(--serif);
+  font-size: 8.4pt;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: .02em;
+}
+.sec-title .sec-sub {
+  font-size: 5.8pt;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Asset & Client Specification Grid ────────────────────────── */
+.spec-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1.35fr 1fr;
+  gap: 2.4mm;
+  background: #ffffff;
+  border: 0.6pt solid var(--border);
+  padding: 1.8mm 2.4mm;
+}
+.spec-col { min-width: 0; }
+.spec-col:not(:last-child) {
+  border-right: 0.5pt solid var(--border-light);
+  padding-right: 2.4mm;
+}
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.7mm 0;
+  border-bottom: 0.4pt solid #f3f0e9;
+  font-size: 7.2pt;
+}
+.spec-item:last-child { border-bottom: 0; }
+.spec-k {
+  font-size: 5.8pt;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-right: 2mm;
+}
+.spec-v {
+  font-weight: 600;
+  color: var(--ink);
+  text-align: right;
+  overflow-wrap: break-word;
+}
+.spec-v.mono { font-family: var(--mono); font-size: 7pt; }
+
+/* ── Executive Performance Readings Matrix ────────────────────── */
+.readings-matrix {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1.6mm;
+  margin-top: 1.4mm;
+}
+.reading-box {
+  background: #ffffff;
+  border: 0.6pt solid var(--border);
+  border-top: 1.5pt solid var(--navy);
+  padding: 1.2mm 1.6mm 1.4mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+.reading-lbl {
+  font-size: 5.6pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--navy);
+  margin-bottom: 0.8mm;
+}
+.reading-val {
+  font-family: var(--mono);
+  font-size: 7.2pt;
+  line-height: 1.25;
+  color: var(--ink);
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+/* ── Executive Narrative Blocks ───────────────────────────────── */
+.narr-wrapper { margin-top: 2mm; }
+.narr-split-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+  margin-bottom: 1.8mm;
+}
+.narr-card {
+  background: #ffffff;
+  border: 0.6pt solid var(--border);
+  padding: 1.5mm 2.2mm 1.8mm;
+}
+.narr-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 0.5pt solid var(--border-light);
+  padding-bottom: 0.8mm;
+  margin-bottom: 1.1mm;
+}
+.narr-card-title {
+  font-size: 6.8pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+.narr-card-badge {
+  font-size: 5.6pt;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.narr-card p {
+  font-size: 7.4pt;
+  line-height: 1.28;
+  color: var(--ink-secondary);
+  text-align: justify;
+}
+
+.narr-full-card {
+  background: #ffffff;
+  border: 0.6pt solid var(--border);
+  border-left: 2pt solid var(--navy);
+  padding: 1.5mm 2.4mm 1.8mm;
+  margin-bottom: 1.8mm;
+}
+.narr-full-card:last-child { margin-bottom: 0; }
+.narr-full-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 0.5pt solid var(--border-light);
+  padding-bottom: 0.8mm;
+  margin-bottom: 1.1mm;
+}
+.narr-full-title {
+  font-size: 7.2pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+.narr-full-card p {
+  font-size: 7.4pt;
+  line-height: 1.28;
+  color: var(--ink-secondary);
+  text-align: justify;
+}
+
+/* ── Materials Schedule: Balanced 3-column ledger ─────────────── */
+.materials-ledger {
+  background: #ffffff;
+  border: 0.6pt solid var(--border);
+  padding: 1.2mm 1.6mm;
+  margin-top: 1.2mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 3mm;
+}
+.mat-col { min-width: 0; }
+.mat-col:not(:last-child) {
+  border-right: 0.5pt solid var(--border-light);
+  padding-right: 3mm;
+}
+.mat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.72mm 0;
+  border-bottom: 0.4pt solid #f4f1eb;
+  font-size: 7.2pt;
+}
+.mat-row:last-child { border-bottom: 0; }
+.mat-desc {
+  color: var(--ink);
+  line-height: 1.24;
+  overflow-wrap: break-word;
+  padding-right: 1.5mm;
+}
+.mat-qty-badge {
+  font-family: var(--mono);
+  font-size: 6.8pt;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Executive Sign-Off Panel ─────────────────────────────────── */
+.attestation-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+  margin-top: 2.2mm;
+}
+.attest-card {
+  background: #ffffff;
+  border: 0.6pt solid var(--border);
+  padding: 1.6mm 2.4mm 1.8mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 17mm;
+}
+.attest-header {
+  font-size: 6.2pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--navy);
+  border-bottom: 0.5pt solid var(--border-light);
+  padding-bottom: 0.8mm;
+  margin-bottom: 1.2mm;
+}
+.attest-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5mm;
+  font-size: 7pt;
+}
+.attest-field-lbl {
+  display: block;
+  font-size: 5.6pt;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 0.4mm;
+}
+.attest-field-val {
+  color: var(--ink-secondary);
+  font-style: italic;
+  font-size: 6.8pt;
+}
+.attest-signature-line {
+  margin-top: 2.5mm;
+  padding-top: 1mm;
+  border-top: 0.6pt dashed #bbb4a8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 6pt;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* ── Executive Colophon Footer ────────────────────────────────── */
+.executive-footer {
+  margin-top: auto;
+  border-top: 0.8pt solid var(--navy);
+  padding-top: 1.4mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 6.2pt;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+}
+.executive-footer .auth-badge {
+  font-weight: 700;
+  color: var(--navy);
+}
+.executive-footer .page-count {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--navy);
+}
+</style>
+</head>
+<body>
+
+<div class="page" id="p1">
+  <!-- Top decorative classification rule -->
+  <div class="top-deck">
+    <span>Executive Field Service Summary &nbsp;·&nbsp; Heavy Generation Asset Protocol</span>
+    <span>Operational Window: 2026-10-12 &rarr; 2026-10-24</span>
+  </div>
+
+  <!-- Header Block -->
+  <header class="header-row">
+    <div>
+      <div class="brand-title">Sun & Shield Power Solutions</div>
+      <div class="brand-meta">
+        43 oshola street, Ifako-Ijaiye &nbsp;|&nbsp; Lagos State &nbsp;|&nbsp; Tel: +2348066190685 &nbsp;|&nbsp; Sunshieldpowersolutions@gmail.com
+      </div>
+      <div class="report-title-block">
+        <span class="report-name">Customer Service Report</span>
+        <span class="report-tag">/ Executive Technical Review</span>
+      </div>
+    </div>
+
+    <!-- Executive Control Docket -->
+    <div class="executive-docket-card">
+      <div class="docket-field">
+        <span class="docket-lbl">CSR Number</span>
+        <span class="docket-val"><span class="empty-val">Not recorded</span></span>
+      </div>
+      <div class="docket-field">
+        <span class="docket-lbl">Report Date</span>
+        <span class="docket-val"><span class="empty-val">Not recorded</span></span>
+      </div>
+      <div class="docket-field">
+        <span class="docket-lbl">Service Window</span>
+        <span class="docket-val">2026-10-12 &rarr; 2026-10-24</span>
+      </div>
+      <div class="docket-field">
+        <span class="docket-lbl">System Status</span>
+        <span class="docket-val down">DOWN</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Section 1: Asset & Installation Schedule -->
+  <section>
+    <div class="sec-title">
+      <h2>1. Asset Profile &amp; Installation Location</h2>
+      <span class="sec-sub">Technical Registry Specification</span>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-col">
+        <div class="spec-item"><span class="spec-k">Make</span><span class="spec-v">Cummins</span></div>
+        <div class="spec-item"><span class="spec-k">Model</span><span class="spec-v mono">QSV91G</span></div>
+        <div class="spec-item"><span class="spec-k">Capacity</span><span class="spec-v mono">2000 kW (2.0 MW)</span></div>
+        <div class="spec-item"><span class="spec-k">Serial No.</span><span class="spec-v mono">25381944</span></div>
+      </div>
+      <div class="spec-col">
+        <div class="spec-item"><span class="spec-k">Engine No.</span><span class="spec-v mono">91G-ENG-08421</span></div>
+        <div class="spec-item"><span class="spec-k">Equipment Type</span><span class="spec-v">Lean Burn Natural Gas Generator Set</span></div>
+        <div class="spec-item"><span class="spec-k">Facility Location</span><span class="spec-v">Central Utility Plant, Powerhouse Bay 2, Basement Level -1</span></div>
+      </div>
+      <div class="spec-col">
+        <div class="spec-item"><span class="spec-k">Client Account</span><span class="spec-v"><span class="empty-val">Not recorded</span></span></div>
+        <div class="spec-item"><span class="spec-k">Client Address</span><span class="spec-v"><span class="empty-val">Not recorded</span></span></div>
+        <div class="spec-item"><span class="spec-k">Contact / P.O.</span><span class="spec-v"><span class="empty-val">Not recorded</span></span></div>
+        <div class="spec-item"><span class="spec-k">Call Type</span><span class="spec-v"><span class="empty-val">Not recorded</span></span></div>
+      </div>
+    </div>
+
+    <!-- Six Operational Readings in clean matrix -->
+    <div class="readings-matrix">
+      <div class="reading-box">
+        <span class="reading-lbl">Voltage</span>
+        <span class="reading-val">11000 V</span>
+      </div>
+      <div class="reading-box">
+        <span class="reading-lbl">Frequency</span>
+        <span class="reading-val">50 Hz</span>
+      </div>
+      <div class="reading-box">
+        <span class="reading-lbl">Battery Bank</span>
+        <span class="reading-val">24 VDC (4x 12V 200Ah AGM in series-parallel)</span>
+      </div>
+      <div class="reading-box">
+        <span class="reading-lbl">Temperature</span>
+        <span class="reading-val">88°C jacket water outlet / 52°C aftercooler / 510°C exhaust average</span>
+      </div>
+      <div class="reading-box">
+        <span class="reading-lbl">Pressure</span>
+        <span class="reading-val">4.8 bar lube oil / 1.6 bar differential oil filter / 2.2 bar crankcase vacuum</span>
+      </div>
+      <div class="reading-box">
+        <span class="reading-lbl">Running Hours</span>
+        <span class="reading-val">30142.6 hrs</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Executive Service Narrative -->
+  <section class="narr-wrapper">
+    <div class="sec-title">
+      <h2>2. Operational Diagnostics &amp; Engineering Intervention</h2>
+      <span class="sec-sub">Chronological Service Record</span>
+    </div>
+
+    <!-- Tier 1: Incident Trigger paired with Defects Observed -->
+    <div class="narr-split-top">
+      <div class="narr-card">
+        <div class="narr-card-header">
+          <span class="narr-card-title">Problem Reported &amp; Dispatch Baseline</span>
+          <span class="narr-card-badge">Initial Condition</span>
+        </div>
+        <p>Major scheduled top and bottom end overhaul at 30,000 running hours, high blow-by, exhaust port carbon fouling, and intermittent cylinder misfires under peak load.</p>
+      </div>
+
+      <div class="narr-card">
+        <div class="narr-card-header">
+          <span class="narr-card-title">Defects &amp; Material Wear Discovered</span>
+          <span class="narr-card-badge">Root Cause Analysis</span>
+        </div>
+        <p>Severe carbon deposition across all 18 cylinder exhaust valves; excessive side clearance on top compression ring grooves on Cylinders #4, #9, and #14; moderate cavitation erosion on cylinder liner lower O-ring register lands (Cylinders #3, #7); heat stress cracking on two ignition lead boots; minor axial play (0.18 mm) on secondary turbocharger shaft exceeding service limit; worn throttle spindle shaft seals causing air leakage.</p>
+      </div>
+    </div>
+
+    <!-- Tier 2: Comprehensive Overhaul Scope -->
+    <div class="narr-full-card">
+      <div class="narr-full-header">
+        <span class="narr-full-title">Service Rendered &amp; Commissioning Procedure</span>
+        <span class="narr-card-badge">Executive Engineering Scope</span>
+      </div>
+      <p>Conducted complete major engine overhaul: stripped down cylinder heads, replaced all cylinder liners, pistons, rings, wrist pins, con-rod bearings, and main crankshaft bearings. Rebuilt and leak-tested cylinder heads with new valves, seats, guides, and rotocaps. Replaced spark plugs, ignition extensions, ignition leads, and calibrated detonator sensors. Overhauled both turbochargers, replaced charge air cooler cores, inspected wastegate actuator linkages, aligned throttle body actuator, recalibrated fuel gas control valve and mixer, renewed all external water/oil plumbing elastomeric seals, replaced crankcase breather assemblies, flushed lube oil galleries, refilled with fresh low-ash gas engine oil, conducted engine bar-over, pre-lube check, cold commissioning, step load testing from 25% to 100% (2000 kW), and dynamic emission tuning to maintain NOx within operational limits.</p>
+    </div>
+
+    <!-- Tier 3: Chief Engineer Operational Verdict -->
+    <div class="narr-full-card">
+      <div class="narr-full-header">
+        <span class="narr-full-title">Engineer Remarks &amp; Grid Re-Synchronization Verdict</span>
+        <span class="narr-card-badge">Status: Complete · Verified</span>
+      </div>
+      <p>Major mechanical overhaul completed to manufacturer specifications. Engine barring torque smooth and within normal tolerance. Full synthetic low-ash SAE 40 lubricant loaded. Dynamic load banking achieved 500 kW, 1000 kW, 1500 kW, and sustained 2000 kW at 0.8 PF for 4 hours continuously. All bearing temperatures, exhaust port temperatures, and oil pressure profiles stabilized within OEM tolerances. Unit re-commissioned, auto-synchronization with plant 11kV bus verified, and returned to active baseload service.</p>
+    </div>
+  </section>
+
+  <!-- Section 3: Materials & Overhaul Consumables Schedule -->
+  <section>
+    <div class="sec-title">
+      <h2>3. Overhaul Materials &amp; Consumables Issued</h2>
+      <span class="sec-sub">18 Line Items Authenticated</span>
+    </div>
+
+    <div class="materials-ledger">
+      <div class="mat-col">
+        <div class="mat-row"><span class="mat-desc">1. Cylinder Liner Assembly</span><span class="mat-qty-badge">18 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">2. Piston Assembly Standard</span><span class="mat-qty-badge">18 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">3. Piston Ring Set</span><span class="mat-qty-badge">18 SET</span></div>
+        <div class="mat-row"><span class="mat-desc">4. Connecting Rod Bearing Pair</span><span class="mat-qty-badge">18 PAIR</span></div>
+        <div class="mat-row"><span class="mat-desc">5. Main Journal Bearing Set</span><span class="mat-qty-badge">10 SET</span></div>
+        <div class="mat-row"><span class="mat-desc">6. Thrust Bearing Washer Set</span><span class="mat-qty-badge">2 SET</span></div>
+      </div>
+      <div class="mat-col">
+        <div class="mat-row"><span class="mat-desc">7. Cylinder Head Gasket Multi-Layer</span><span class="mat-qty-badge">18 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">8. Intake Valve</span><span class="mat-qty-badge">36 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">9. Exhaust Valve Nimonic</span><span class="mat-qty-badge">36 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">10. Valve Stem Guide & Seal Kit</span><span class="mat-qty-badge">72 SET</span></div>
+        <div class="mat-row"><span class="mat-desc">11. Pre-Chamber Spark Plug Shielded</span><span class="mat-qty-badge">18 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">12. Ignition Extension Coil Boot Assembly</span><span class="mat-qty-badge">18 PCS</span></div>
+      </div>
+      <div class="mat-col">
+        <div class="mat-row"><span class="mat-desc">13. Turbocharger Core Assembly Cartridge</span><span class="mat-qty-badge">2 ASSY</span></div>
+        <div class="mat-row"><span class="mat-desc">14. Charge Air Cooler Core Assembly</span><span class="mat-qty-badge">2 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">15. Full Engine Overhaul O-Ring & Elastomer Gasket Kit</span><span class="mat-qty-badge">1 KIT</span></div>
+        <div class="mat-row"><span class="mat-desc">16. Low-Ash Stationary Gas Engine Oil SAE 40</span><span class="mat-qty-badge">1200 LITERS</span></div>
+        <div class="mat-row"><span class="mat-desc">17. Spin-on Lube Oil Microglass Filter Element</span><span class="mat-qty-badge">6 PCS</span></div>
+        <div class="mat-row"><span class="mat-desc">18. Crankcase Breather Coalescing Filter Cartridge</span><span class="mat-qty-badge">4 PCS</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Executive Sign-off & Mutual Attestation -->
+  <section class="attestation-panel">
+    <div class="attest-card">
+      <div class="attest-header">Client Acceptance &amp; Site Acknowledgement</div>
+      <div class="attest-body">
+        <div>
+          <span class="attest-field-lbl">Representative Name</span>
+          <span class="attest-field-val">Not recorded</span>
+        </div>
+        <div>
+          <span class="attest-field-lbl">Designation / Feedback</span>
+          <span class="attest-field-val">Not recorded</span>
+        </div>
+      </div>
+      <div class="attest-signature-line">
+        <span>Authorized Signature &amp; Corporate Stamp</span>
+        <span>Unsigned · Pending Site Review</span>
+      </div>
+    </div>
+
+    <div class="attest-card">
+      <div class="attest-header">Service Provider Certification &amp; Release</div>
+      <div class="attest-body">
+        <div>
+          <span class="attest-field-lbl">Lead Field Engineer</span>
+          <span class="attest-field-val">Not recorded</span>
+        </div>
+        <div>
+          <span class="attest-field-lbl">Final Operational Status</span>
+          <span style="font-weight: 700; color: var(--navy);">Complete · Baseload Service</span>
+        </div>
+      </div>
+      <div class="attest-signature-line">
+        <span>Technical Authority Signature</span>
+        <span>Unsigned · Field Execution Copy</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Executive Footer -->
+  <footer class="executive-footer">
+    <span class="auth-badge">Official Service Document &nbsp;|&nbsp; Sun &amp; Shield Power Solutions</span>
+    <span>BOUXRE Industrial Asset Management Suite</span>
+    <span class="page-count">Page 01 of 01</span>
+  </footer>
+</div>
+
+</body>
+</html>

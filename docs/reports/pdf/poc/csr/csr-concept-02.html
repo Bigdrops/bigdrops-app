@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSR Concept 02 — Editorial Field-Service Report | BOUXRE</title>
+<style>
+/* ============================================================
+   CONCEPT 02 — EDITORIAL FIELD-SERVICE REPORT
+   Composition: masthead, standfirst lede, margin-label
+   narrative column beside a narrow technical column,
+   leader-dot materials ledger, colophon sign-off.
+   Palette: warm ivory, ink, restrained terracotta.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ivory:   #faf5ec;
+  --ivory-2: #f2ebdd;
+  --ink:     #14110d;
+  --ink-2:   #3d372f;
+  --muted:   #857c6d;
+  --rule:    #cfc5b2;
+  --terra:   #a2542f;
+
+  --serif: Georgia, "Times New Roman", Times, serif;
+  --sans:  "Helvetica Neue", Arial, "Segoe UI", sans-serif;
+  --mono:  Consolas, "SF Mono", "Courier New", monospace;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: #525659;
+  font-family: var(--sans);
+  color: var(--ink);
+  line-height: 1.4;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── REVIEW TOOLBAR (not part of the document) ───────────── */
+.preview-bar {
+  width: 210mm;
+  background: #1d2126;
+  color: #e8e4dc;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 7px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.preview-bar b { color: #d07a4e; font-weight: 700; }
+.preview-bar span { color: #9aa0a6; }
+
+/* ── A4 SHEET ────────────────────────────────────────────── */
+.sheet {
+  width: 210mm;
+  height: 297mm;
+  background: var(--ivory);
+  padding: 11mm 15mm 8mm;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 6px 26px rgba(0,0,0,0.35);
+}
+
+/* ── MASTHEAD ────────────────────────────────────────────── */
+.masthead { margin-bottom: 4.5mm; }
+.mast-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--sans);
+  font-size: 7pt;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.mast-top .ref { letter-spacing: 0.16em; color: var(--muted); }
+.mast-top .ref b { color: var(--ink); font-weight: 700; }
+
+.mast-title {
+  font-family: var(--serif);
+  font-size: 31pt;
+  line-height: 1.02;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  margin-top: 3mm;
+}
+.mast-rule { border-top: 0.6mm solid var(--ink); margin-top: 3.2mm; }
+.mast-rule::after {
+  content: "";
+  display: block;
+  width: 42mm;
+  border-top: 1.4mm solid var(--terra);
+  margin-top: -0.7mm;
+}
+.mast-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+  margin-top: 2.2mm;
+  font-size: 7pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mast-meta b { color: var(--ink-2); font-weight: 700; }
+
+/* ── STANDFIRST / LEDE ───────────────────────────────────── */
+.lede {
+  display: grid;
+  grid-template-columns: 1fr 54mm;
+  gap: 8mm;
+  padding-bottom: 4mm;
+  border-bottom: 0.3mm solid var(--rule);
+  margin-bottom: 3.5mm;
+}
+.kicker {
+  font-family: var(--sans);
+  font-size: 6.6pt;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--terra);
+  display: block;
+  margin-bottom: 1.6mm;
+}
+.lede-text {
+  font-family: var(--serif);
+  font-size: 15pt;
+  line-height: 1.4;
+  color: var(--ink);
+  max-width: 84mm;
+}
+.facts { border-top: 0.45mm solid var(--ink); padding-top: 1.6mm; }
+.fact {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 3mm;
+  padding: 1mm 0;
+  border-bottom: 0.25mm solid var(--rule);
+}
+.fact:last-child { border-bottom: 0; }
+.fact .k {
+  font-family: var(--sans);
+  font-size: 6.2pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.fact .v {
+  font-family: var(--mono);
+  font-size: 8.2pt;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: right;
+}
+.fact .v.blank { color: var(--muted); font-weight: 400; }
+
+/* ── BODY: NARRATIVE + TECHNICAL COLUMN ──────────────────── */
+.body-grid {
+  display: grid;
+  grid-template-columns: 1fr 58mm;
+  gap: 9mm;
+  margin-bottom: 4mm;
+}
+.narrative { border-right: 0.25mm solid var(--rule); padding-right: 9mm; }
+.narr-sec { margin-bottom: 4.4mm; }
+.narr-sec:last-child { margin-bottom: 0; }
+.narr-head {
+  display: flex;
+  align-items: baseline;
+  gap: 2.5mm;
+  margin-bottom: 1.5mm;
+}
+.narr-head .no {
+  font-family: var(--mono);
+  font-size: 6.4pt;
+  color: var(--terra);
+  letter-spacing: 0.08em;
+}
+.narr-head .name {
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.narr-text {
+  font-family: var(--serif);
+  font-size: 10.4pt;
+  line-height: 1.6;
+  color: var(--ink-2);
+  padding-left: 9mm;
+  text-align: justify;
+}
+.narr-text.blank { color: var(--muted); padding-left: 9mm; }
+
+.tech-block { margin-bottom: 4mm; }
+.tech-block:last-child { margin-bottom: 0; }
+.tech-title {
+  font-family: var(--sans);
+  font-size: 6.4pt;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-bottom: 0.45mm solid var(--ink);
+  padding-bottom: 1.1mm;
+  margin-bottom: 0.6mm;
+}
+.tech-title em { font-style: normal; color: var(--terra); }
+.tech-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2.5mm;
+  padding: 1.15mm 0;
+  border-bottom: 0.25mm solid var(--rule);
+}
+.tech-row:last-child { border-bottom: 0; }
+.tech-row .k {
+  font-family: var(--sans);
+  font-size: 6.2pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.tech-row .v {
+  font-family: var(--mono);
+  font-size: 7.6pt;
+  color: var(--ink);
+  text-align: right;
+}
+.tech-row .v.prose {
+  font-family: var(--serif);
+  font-size: 8.4pt;
+  text-align: right;
+}
+.tech-row .v.blank { color: var(--muted); }
+
+/* ── MATERIALS LEDGER ────────────────────────────────────── */
+.ledger { margin-bottom: 4.5mm; }
+.ledger-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 0.6mm solid var(--ink);
+  padding-bottom: 1.3mm;
+}
+.ledger-head .title {
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.ledger-head .note {
+  font-family: var(--mono);
+  font-size: 6.2pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ledger-row {
+  display: flex;
+  align-items: baseline;
+  gap: 2mm;
+  padding: 1.7mm 0 1.5mm;
+  border-bottom: 0.25mm solid var(--rule);
+}
+.ledger-row .no {
+  font-family: var(--mono);
+  font-size: 6.4pt;
+  color: var(--terra);
+  width: 6mm;
+}
+.ledger-row .item {
+  font-family: var(--serif);
+  font-size: 9.4pt;
+  color: var(--ink);
+}
+.ledger-row .leader {
+  flex: 1;
+  border-bottom: 0.3mm dotted var(--rule);
+  transform: translateY(-1mm);
+}
+.ledger-row .qty {
+  font-family: var(--mono);
+  font-size: 8.4pt;
+  font-weight: 700;
+  width: 14mm;
+  text-align: right;
+}
+.ledger-row .unit {
+  font-family: var(--mono);
+  font-size: 7.2pt;
+  color: var(--muted);
+  width: 20mm;
+  text-align: right;
+}
+
+/* ── COLOPHON SIGN-OFF ───────────────────────────────────── */
+.colophon { margin-top: auto; }
+.colo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 44mm;
+  gap: 9mm;
+}
+.colo-col .cap {
+  font-family: var(--sans);
+  font-size: 6.4pt;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 6.5mm;
+}
+.colo-line { border-bottom: 0.35mm solid var(--ink); }
+.colo-under {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--sans);
+  font-size: 5.8pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 1mm;
+}
+.colo-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 4mm; margin-top: 2mm; }
+.colo-field { padding-top: 1.2mm; }
+.colo-field .k {
+  font-family: var(--sans);
+  font-size: 5.8pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+}
+.colo-field .v { font-family: var(--serif); font-size: 8.4pt; color: var(--muted); }
+.doc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2mm;
+  padding: 1.2mm 0;
+  border-bottom: 0.25mm solid var(--rule);
+}
+.doc-row:first-of-type { border-top: 0.45mm solid var(--ink); }
+.doc-row .k {
+  font-family: var(--sans);
+  font-size: 6.2pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.doc-row .v { font-family: var(--mono); font-size: 8pt; font-weight: 700; color: var(--ink); }
+.doc-row .v.blank { color: var(--muted); font-weight: 400; }
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+.foot {
+  margin-top: 4.5mm;
+  border-top: 0.3mm solid var(--ink);
+  padding-top: 1.8mm;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--sans);
+  font-size: 6.2pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.foot .mark { color: var(--ink); font-weight: 700; letter-spacing: 0.24em; }
+
+/* ── PRINT ───────────────────────────────────────────────── */
+@page { size: 210mm 297mm; margin: 0; }
+
+@media print {
+  html, body {
+    background: #ffffff;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+    display: block;
+    width: 210mm;
+    height: 297mm;
+  }
+  .preview-bar { display: none !important; }
+  .sheet {
+    box-shadow: none;
+    margin: 0;
+    width: 210mm;
+    height: 297mm;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="preview-bar">
+  <span><b>CONCEPT 02</b> &nbsp;Editorial Field-Service Report &nbsp;·&nbsp; A4 210 × 297 mm</span>
+  <span>CSR prototype — screen preview; the bar does not print</span>
+</div>
+
+<div class="sheet">
+
+  <!-- ── MASTHEAD ─────────────────────────────────────── -->
+  <header class="masthead">
+    <div class="mast-top">
+      <span>BOUXRE</span>
+      <span class="ref">CSR no. <b>—</b> &nbsp;·&nbsp; report date <b>—</b></span>
+    </div>
+    <h1 class="mast-title">Customer Service Report</h1>
+    <div class="mast-rule"></div>
+    <div class="mast-meta">
+      <span>Service performed <b>2026-10-26</b></span>
+      <span>Client account <b>—</b></span>
+      <span>Client address <b>—</b></span>
+      <span>Customer contact <b>—</b></span>
+      <span>P.O. no. <b>—</b></span>
+    </div>
+  </header>
+
+  <!-- ── STANDFIRST ───────────────────────────────────── -->
+  <section class="lede">
+    <div>
+      <span class="kicker">Problem reported</span>
+      <p class="lede-text">Generator recommended for routine service because it had exceeded 250 operating hours since the service interval.</p>
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="k">System status</span><span class="v">OPERATIONAL</span></div>
+      <div class="fact"><span class="k">Service start</span><span class="v">2026-10-26</span></div>
+      <div class="fact"><span class="k">Service end</span><span class="v">2026-10-26</span></div>
+      <div class="fact"><span class="k">Call type</span><span class="v blank">—</span></div>
+      <div class="fact"><span class="k">Service basis</span><span class="v blank">—</span></div>
+      <div class="fact"><span class="k">Status after service</span><span class="v blank">—</span></div>
+    </div>
+  </section>
+
+  <!-- ── NARRATIVE + TECHNICAL ────────────────────────── -->
+  <section class="body-grid">
+
+    <div class="narrative">
+      <div class="narr-sec">
+        <div class="narr-head"><span class="no">01</span><span class="name">Service rendered</span></div>
+        <p class="narr-text">Replaced fuel filter FS1212, oil filter LF9009, water filter WF2074, and 50 litres of engine oil. Tested the generator after servicing.</p>
+      </div>
+
+      <div class="narr-sec">
+        <div class="narr-head"><span class="no">02</span><span class="name">Defects found</span></div>
+        <p class="narr-text">The diesel tank has no air valve. Staff fold the fuel hose to stop fuel flow when required. This gradually damages and deforms the hose, restricting free fuel flow.</p>
+      </div>
+
+      <div class="narr-sec">
+        <div class="narr-head"><span class="no">03</span><span class="name">Engineer remarks</span></div>
+        <p class="narr-text">The generator ran smoothly during testing at 1500 RPM. No oil leaks, fuel leaks, unusual smoke, or other issues were observed. Install an air valve on the diesel tank.</p>
+      </div>
+
+      <div class="narr-sec">
+        <div class="narr-head"><span class="no">04</span><span class="name">Customer feedback</span></div>
+        <p class="narr-text blank">—</p>
+      </div>
+    </div>
+
+    <div class="tech">
+      <div class="tech-block">
+        <div class="tech-title">Equipment <em>&amp;</em> site</div>
+        <div class="tech-row"><span class="k">Type</span><span class="v prose">Generator</span></div>
+        <div class="tech-row"><span class="k">Make</span><span class="v prose">Cummins</span></div>
+        <div class="tech-row"><span class="k">Model</span><span class="v">NT-855-G6</span></div>
+        <div class="tech-row"><span class="k">Serial no.</span><span class="v blank">—</span></div>
+        <div class="tech-row"><span class="k">Engine no.</span><span class="v">25598493</span></div>
+        <div class="tech-row"><span class="k">Capacity</span><span class="v">350 kVA</span></div>
+        <div class="tech-row"><span class="k">Location</span><span class="v prose">Plot C89, Amuwo Odofin Industrial Layout, Along Oshodi-Mile 2 Expressway, Lagos</span></div>
+      </div>
+
+      <div class="tech-block">
+        <div class="tech-title">Measured values</div>
+        <div class="tech-row"><span class="k">Voltage</span><span class="v">392 V average across 3 phases</span></div>
+        <div class="tech-row"><span class="k">Frequency</span><span class="v">50 Hz</span></div>
+        <div class="tech-row"><span class="k">Battery</span><span class="v">27.3 V</span></div>
+        <div class="tech-row"><span class="k">Temperature</span><span class="v">74 °C</span></div>
+        <div class="tech-row"><span class="k">Pressure</span><span class="v">704 kPa</span></div>
+        <div class="tech-row"><span class="k">Hours</span><span class="v">9329.4</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MATERIALS LEDGER ─────────────────────────────── -->
+  <section class="ledger">
+    <div class="ledger-head">
+      <span class="title">Parts and materials issued</span>
+      <span class="note">4 line items</span>
+    </div>
+    <div class="ledger-row">
+      <span class="no">01</span>
+      <span class="item">Fuel Filter FS1212</span>
+      <span class="leader"></span>
+      <span class="qty">2</span>
+      <span class="unit"></span>
+    </div>
+    <div class="ledger-row">
+      <span class="no">02</span>
+      <span class="item">Oil Filter LF9009</span>
+      <span class="leader"></span>
+      <span class="qty">1</span>
+      <span class="unit"></span>
+    </div>
+    <div class="ledger-row">
+      <span class="no">03</span>
+      <span class="item">Water Filter WF2074</span>
+      <span class="leader"></span>
+      <span class="qty">1</span>
+      <span class="unit"></span>
+    </div>
+    <div class="ledger-row">
+      <span class="no">04</span>
+      <span class="item">Engine Oil</span>
+      <span class="leader"></span>
+      <span class="qty">50</span>
+      <span class="unit">Litres</span>
+    </div>
+  </section>
+
+  <!-- ── COLOPHON SIGN-OFF ────────────────────────────── -->
+  <section class="colophon">
+    <div class="colo-grid">
+      <div class="colo-col">
+        <span class="cap">Received by / witness</span>
+        <div class="colo-line"></div>
+        <div class="colo-under"><span>Signature</span><span>Date</span></div>
+        <div class="colo-fields">
+          <div class="colo-field"><span class="k">Name &amp; title</span><span class="v">—</span></div>
+          <div class="colo-field"><span class="k">Date</span><span class="v">—</span></div>
+        </div>
+      </div>
+
+      <div class="colo-col">
+        <span class="cap">Service engineer</span>
+        <div class="colo-line"></div>
+        <div class="colo-under"><span>Signature</span><span>Date</span></div>
+        <div class="colo-fields">
+          <div class="colo-field"><span class="k">Name</span><span class="v">—</span></div>
+          <div class="colo-field"><span class="k">Role</span><span class="v">—</span></div>
+        </div>
+      </div>
+
+      <div class="colo-col">
+        <span class="cap">Document</span>
+        <div class="doc-row"><span class="k">Type</span><span class="v">CSR</span></div>
+        <div class="doc-row"><span class="k">Sheet</span><span class="v">1 of 1</span></div>
+        <div class="doc-row"><span class="k">Status</span><span class="v blank">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ───────────────────────────────────────── -->
+  <footer class="foot">
+    <span><span class="mark">BOUXRE</span> &nbsp;·&nbsp; Customer Service Report</span>
+    <span>Service date 2026-10-26</span>
+    <span>Page 1 of 1</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

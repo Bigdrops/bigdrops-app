@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CSR Template C — Field Operations Record | BOUXRE</title>
+<style>
+/* ── Print foundation ─────────────────────────────────────────── */
+@page { size: A4 portrait; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 210mm; background: #525659; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #0f172a;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+:root {
+  --paper: #ffffff;
+  --dark: #0f172a;
+  --header-bg: #1e293b;
+  --rule: #94a3b8;
+  --rule-light: #cbd5e1;
+  --accent-down: #dc2626;
+  --accent-down-bg: #fef2f2;
+  --accent-down-border: #fca5a5;
+  --accent-green: #15803d;
+  --text-muted: #64748b;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "Consolas", "Courier New", monospace;
+}
+.empty-flag {
+  font-style: italic;
+  color: #94a3b8;
+  font-size: 6.8pt;
+}
+
+/* ── Page container: strictly bounded A4 sheet ────────────────── */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  height: 297mm;
+  background: var(--paper);
+  padding: 5.5mm 8mm 4.5mm;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+@media screen {
+  .page { margin: 8mm auto; box-shadow: 0 4px 20px rgba(0,0,0,.35); }
+}
+
+/* ── Work-Order Header ────────────────────────────────────────── */
+.wo-header {
+  display: grid;
+  grid-template-columns: 1fr 78mm;
+  gap: 5mm;
+  align-items: center;
+  border-bottom: 2pt solid var(--dark);
+  padding-bottom: 2mm;
+}
+.org-brand {
+  font-size: 13.5pt;
+  font-weight: 900;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--dark);
+  line-height: 1.1;
+}
+.org-contact {
+  font-size: 6.3pt;
+  color: #334155;
+  margin-top: 1mm;
+  line-height: 1.4;
+}
+.wo-doc-name {
+  margin-top: 1.5mm;
+  display: flex;
+  align-items: baseline;
+  gap: 2mm;
+}
+.wo-doc-name h1 {
+  font-size: 10pt;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--dark);
+}
+.wo-doc-name span {
+  font-size: 6.8pt;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── High-Visibility Dispatch Card ────────────────────────────── */
+.dispatch-badge-card {
+  background: var(--accent-down-bg);
+  border: 1.2pt solid var(--accent-down-border);
+  padding: 1.5mm 2.4mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1mm 2mm;
+}
+.disp-row { min-width: 0; }
+.disp-k {
+  display: block;
+  font-size: 5.6pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #991b1b;
+  margin-bottom: 0.3mm;
+}
+.disp-v {
+  font-family: var(--mono);
+  font-size: 7.3pt;
+  font-weight: 700;
+  color: var(--dark);
+  white-space: nowrap;
+}
+.disp-v.down-indicator {
+  color: var(--accent-down);
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+/* ── Section Banners: Industrial Solid Tabs ───────────────────── */
+.sec-banner {
+  background: var(--header-bg);
+  color: #ffffff;
+  padding: 0.9mm 2mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2mm;
+  margin-bottom: 0.8mm;
+}
+.sec-banner h2 {
+  font-size: 7.2pt;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.sec-banner .banner-sub {
+  font-size: 6pt;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* ── Section 1: Equipment Registry Table ──────────────────────── */
+.asset-banner-strip {
+  background: #f1f5f9;
+  border: 0.75pt solid var(--rule-light);
+  border-bottom: 0;
+  padding: 1.2mm 2.2mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.asset-banner-main {
+  font-size: 8.5pt;
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: var(--dark);
+  text-transform: uppercase;
+}
+.asset-banner-meta {
+  font-size: 6.8pt;
+  font-weight: 700;
+  color: #475569;
+}
+.registry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 0.75pt solid var(--rule);
+}
+.reg-cell {
+  padding: 1mm 1.8mm 1.1mm;
+  border-right: 0.5pt solid var(--rule-light);
+  border-bottom: 0.5pt solid var(--rule-light);
+  min-width: 0;
+}
+.reg-cell.span2 { grid-column: span 2; }
+.reg-cell.no-right { border-right: 0; }
+.reg-cell.no-bottom { border-bottom: 0; }
+.reg-k {
+  display: block;
+  font-size: 5.6pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4mm;
+}
+.reg-v {
+  font-size: 7.4pt;
+  font-weight: 600;
+  color: var(--dark);
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+.reg-v.mono { font-family: var(--mono); font-size: 7.2pt; }
+
+/* ── Section 2: Maintenance Telemetry Grid ────────────────────── */
+.telemetry-row {
+  display: grid;
+  grid-template-columns: .7fr .55fr 1.35fr 1.6fr 1.6fr .7fr;
+  border: 0.75pt solid var(--rule);
+  background: #f8fafc;
+}
+.telem-box {
+  padding: 1mm 1.8mm 1.2mm;
+  border-right: 0.5pt solid var(--rule);
+  min-width: 0;
+}
+.telem-box:last-child { border-right: 0; }
+.telem-lbl {
+  display: block;
+  font-size: 5.6pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.6mm;
+}
+.telem-val {
+  font-family: var(--mono);
+  font-size: 7.2pt;
+  line-height: 1.25;
+  color: var(--dark);
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+/* ── Section 3: Work Execution Logs ───────────────────────────── */
+.work-log-entry {
+  border: 0.75pt solid var(--rule-light);
+  border-left: 2.8pt solid var(--dark);
+  padding: 1.2mm 2.2mm 1.4mm;
+  margin-top: 1.2mm;
+  background: #ffffff;
+}
+.work-log-entry.trigger-entry {
+  border-left-color: #b45309;
+}
+.entry-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 0.4pt solid #e2e8f0;
+  padding-bottom: 0.6mm;
+  margin-bottom: 0.8mm;
+}
+.entry-title {
+  font-size: 6.8pt;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--dark);
+}
+.entry-tag {
+  font-size: 5.6pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.work-log-entry p {
+  font-size: 7.4pt;
+  line-height: 1.27;
+  color: #1e293b;
+  text-align: justify;
+}
+
+/* ── Section 4: Defect Analysis & Engineer Remarks ────────────── */
+.analysis-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.8mm;
+  margin-top: 1.2mm;
+}
+.analysis-card {
+  border: 0.75pt solid var(--rule-light);
+  border-top: 1.8pt solid var(--dark);
+  padding: 1.2mm 2mm 1.4mm;
+  background: #ffffff;
+}
+.analysis-card.defect-card {
+  border-top-color: #b91c1c;
+}
+.analysis-card.remark-card {
+  border-top-color: var(--accent-green);
+}
+.analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 0.4pt solid #e2e8f0;
+  padding-bottom: 0.6mm;
+  margin-bottom: 0.8mm;
+}
+.analysis-title {
+  font-size: 6.6pt;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--dark);
+}
+.analysis-card p {
+  font-size: 7.4pt;
+  line-height: 1.27;
+  color: #1e293b;
+  text-align: justify;
+}
+
+/* ── Section 5: Materials Schedule (3 columns x 6 items) ──────── */
+.parts-register-box {
+  border: 0.75pt solid var(--rule);
+  padding: 1mm 1.4mm;
+  margin-top: 1mm;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 2.5mm;
+  background: #ffffff;
+}
+.parts-col { min-width: 0; }
+.parts-col:not(:last-child) {
+  border-right: 0.5pt solid var(--rule-light);
+  padding-right: 2.5mm;
+}
+.parts-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.68mm 0;
+  border-bottom: 0.4pt solid #f1f5f9;
+  font-size: 7.2pt;
+}
+.parts-row:last-child { border-bottom: 0; }
+.parts-desc {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2mm;
+  color: var(--dark);
+  line-height: 1.24;
+  overflow-wrap: break-word;
+  padding-right: 1.2mm;
+}
+.parts-chk {
+  font-size: 6.5pt;
+  color: var(--text-muted);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.parts-qty {
+  font-family: var(--mono);
+  font-size: 6.8pt;
+  font-weight: 800;
+  color: var(--dark);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Section 6: Status & Operational Signoff ──────────────────── */
+.signoff-container {
+  border: 0.75pt solid var(--dark);
+  margin-top: 1.8mm;
+  background: #ffffff;
+}
+.status-indicator-bar {
+  background: #f1f5f9;
+  border-bottom: 0.6pt solid var(--rule);
+  padding: 1mm 2.2mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 6.6pt;
+}
+.status-indicator-bar .status-k {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--dark);
+}
+.status-options {
+  display: flex;
+  gap: 3mm;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #475569;
+}
+.opt-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.2mm;
+}
+.opt-box.active {
+  color: var(--accent-green);
+  font-weight: 900;
+}
+.opt-tick {
+  width: 2.6mm;
+  height: 2.6mm;
+  border: 0.75pt solid var(--dark);
+  display: inline-block;
+  position: relative;
+  background: #ffffff;
+}
+.opt-box.active .opt-tick {
+  background: var(--dark);
+}
+.opt-box.active .opt-tick::after {
+  content: "";
+  position: absolute;
+  left: 0.6mm;
+  top: 0.2mm;
+  width: 0.8mm;
+  height: 1.5mm;
+  border: solid #ffffff;
+  border-width: 0 0.55pt 0.55pt 0;
+  transform: rotate(45deg);
+}
+
+.signoff-quadrants {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.sig-quadrant {
+  padding: 1.4mm 2.4mm 1.6mm;
+  min-height: 15mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sig-quadrant:first-child {
+  border-right: 0.6pt solid var(--rule);
+}
+.sig-quadrant-header {
+  font-size: 6pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--dark);
+  border-bottom: 0.4pt solid #e2e8f0;
+  padding-bottom: 0.6mm;
+  margin-bottom: 1mm;
+}
+.sig-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5mm;
+  font-size: 6.8pt;
+}
+.sig-meta-lbl {
+  display: block;
+  font-size: 5.5pt;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.3mm;
+}
+.sig-meta-val {
+  color: #334155;
+  font-style: italic;
+}
+.sig-line-strip {
+  margin-top: 2.2mm;
+  padding-top: 0.8mm;
+  border-top: 0.6pt dashed #94a3b8;
+  display: flex;
+  justify-content: space-between;
+  font-size: 5.8pt;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Work-Order Footer ────────────────────────────────────────── */
+.wo-footer {
+  margin-top: auto;
+  border-top: 1.5pt solid var(--dark);
+  padding-top: 1.2mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 6.2pt;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--dark);
+}
+.wo-footer .pg-box {
+  font-family: var(--mono);
+  font-weight: 800;
+}
+</style>
+</head>
+<body>
+
+<div class="page" id="p1">
+  <!-- Work-Order Header -->
+  <header class="wo-header">
+    <div>
+      <div class="org-brand">Sun &amp; Shield Power Solutions</div>
+      <div class="org-contact">
+        43 oshola street, Ifako-Ijaiye &nbsp;|&nbsp; Lagos State &nbsp;|&nbsp; Tel: +2348066190685 &nbsp;|&nbsp; Sunshieldpowersolutions@gmail.com
+      </div>
+      <div class="wo-doc-name">
+        <h1>Customer Service Report</h1>
+        <span>/ Field Operations Record</span>
+      </div>
+    </div>
+
+    <!-- Dispatch Alert Card -->
+    <div class="dispatch-badge-card">
+      <div class="disp-row">
+        <span class="disp-k">CSR Number</span>
+        <span class="disp-v"><span class="empty-flag">Not recorded</span></span>
+      </div>
+      <div class="disp-row">
+        <span class="disp-k">Report Date</span>
+        <span class="disp-v"><span class="empty-flag">Not recorded</span></span>
+      </div>
+      <div class="disp-row">
+        <span class="disp-k">Service Window</span>
+        <span class="disp-v">2026-10-12 &rarr; 2026-10-24</span>
+      </div>
+      <div class="disp-row">
+        <span class="disp-k">System Status</span>
+        <span class="disp-v down-indicator">DOWN</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Section 1: Equipment Registry -->
+  <section>
+    <div class="sec-banner">
+      <h2>1. Equipment Dispatch Registry &amp; Site Coordinates</h2>
+      <span class="banner-sub">Asset Data &amp; Location Verification</span>
+    </div>
+
+    <div class="asset-banner-strip">
+      <span class="asset-banner-main">Make: Cummins &nbsp;|&nbsp; Model: QSV91G &nbsp;|&nbsp; Capacity: 2000 kW (2.0 MW)</span>
+      <span class="asset-banner-meta">Lean Burn Natural Gas Generator Set</span>
+    </div>
+
+    <div class="registry-grid">
+      <div class="reg-cell">
+        <span class="reg-k">Serial Number</span>
+        <span class="reg-v mono">25381944</span>
+      </div>
+      <div class="reg-cell">
+        <span class="reg-k">Engine Number</span>
+        <span class="reg-v mono">91G-ENG-08421</span>
+      </div>
+      <div class="reg-cell span2 no-right">
+        <span class="reg-k">Operating Facility Location</span>
+        <span class="reg-v">Central Utility Plant, Powerhouse Bay 2, Basement Level -1</span>
+      </div>
+      <div class="reg-cell no-bottom">
+        <span class="reg-k">Client Account</span>
+        <span class="reg-v"><span class="empty-flag">Not recorded</span></span>
+      </div>
+      <div class="reg-cell no-bottom">
+        <span class="reg-k">Client Address</span>
+        <span class="reg-v"><span class="empty-flag">Not recorded</span></span>
+      </div>
+      <div class="reg-cell no-bottom">
+        <span class="reg-k">Contact / P.O. No.</span>
+        <span class="reg-v"><span class="empty-flag">Not recorded</span></span>
+      </div>
+      <div class="reg-cell no-bottom no-right">
+        <span class="reg-k">Call Type / Basis</span>
+        <span class="reg-v"><span class="empty-flag">Not recorded</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Sensor Telemetry Grid -->
+  <section>
+    <div class="sec-banner">
+      <h2>2. Operational Telemetry &amp; Sensor Calibration Log</h2>
+      <span class="banner-sub">Six Verified Diagnostics</span>
+    </div>
+
+    <div class="telemetry-row">
+      <div class="telem-box">
+        <span class="telem-lbl">Voltage</span>
+        <div class="telem-val">11000 V</div>
+      </div>
+      <div class="telem-box">
+        <span class="telem-lbl">Frequency</span>
+        <div class="telem-val">50 Hz</div>
+      </div>
+      <div class="telem-box">
+        <span class="telem-lbl">DC Battery Bank</span>
+        <div class="telem-val">24 VDC (4x 12V 200Ah AGM in series-parallel)</div>
+      </div>
+      <div class="telem-box">
+        <span class="telem-lbl">Temperature Profile</span>
+        <div class="telem-val">88°C jacket water outlet / 52°C aftercooler / 510°C exhaust average</div>
+      </div>
+      <div class="telem-box">
+        <span class="telem-lbl">Pressure Log</span>
+        <div class="telem-val">4.8 bar lube oil / 1.6 bar differential oil filter / 2.2 bar crankcase vacuum</div>
+      </div>
+      <div class="telem-box">
+        <span class="telem-lbl">Total Run Hours</span>
+        <div class="telem-val">30142.6 hrs</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Field Work Log (Problem & Service) -->
+  <section>
+    <div class="sec-banner">
+      <h2>3. Field Maintenance Log &amp; Execution Protocol</h2>
+      <span class="banner-sub">Incident Trigger &amp; Technical Scope</span>
+    </div>
+
+    <div class="work-log-entry trigger-entry">
+      <div class="entry-bar">
+        <span class="entry-title">Dispatch Trigger / Problem Reported</span>
+        <span class="entry-tag">Baseline Fault</span>
+      </div>
+      <p>Major scheduled top and bottom end overhaul at 30,000 running hours, high blow-by, exhaust port carbon fouling, and intermittent cylinder misfires under peak load.</p>
+    </div>
+
+    <div class="work-log-entry">
+      <div class="entry-bar">
+        <span class="entry-title">Service Rendered / Engineering Actions Performed</span>
+        <span class="entry-tag">Full Overhaul Protocol</span>
+      </div>
+      <p>Conducted complete major engine overhaul: stripped down cylinder heads, replaced all cylinder liners, pistons, rings, wrist pins, con-rod bearings, and main crankshaft bearings. Rebuilt and leak-tested cylinder heads with new valves, seats, guides, and rotocaps. Replaced spark plugs, ignition extensions, ignition leads, and calibrated detonator sensors. Overhauled both turbochargers, replaced charge air cooler cores, inspected wastegate actuator linkages, aligned throttle body actuator, recalibrated fuel gas control valve and mixer, renewed all external water/oil plumbing elastomeric seals, replaced crankcase breather assemblies, flushed lube oil galleries, refilled with fresh low-ash gas engine oil, conducted engine bar-over, pre-lube check, cold commissioning, step load testing from 25% to 100% (2000 kW), and dynamic emission tuning to maintain NOx within operational limits.</p>
+    </div>
+  </section>
+
+  <!-- Section 4: Defect Analysis & Engineer Remarks -->
+  <section class="analysis-split">
+    <div class="analysis-card defect-card">
+      <div class="analysis-header">
+        <span class="analysis-title">Component Wear &amp; Defects Discovered</span>
+      </div>
+      <p>Severe carbon deposition across all 18 cylinder exhaust valves; excessive side clearance on top compression ring grooves on Cylinders #4, #9, and #14; moderate cavitation erosion on cylinder liner lower O-ring register lands (Cylinders #3, #7); heat stress cracking on two ignition lead boots; minor axial play (0.18 mm) on secondary turbocharger shaft exceeding service limit; worn throttle spindle shaft seals causing air leakage.</p>
+    </div>
+
+    <div class="analysis-card remark-card">
+      <div class="analysis-header">
+        <span class="analysis-title">Lead Engineer Remarks &amp; Load Verification</span>
+      </div>
+      <p>Major mechanical overhaul completed to manufacturer specifications. Engine barring torque smooth and within normal tolerance. Full synthetic low-ash SAE 40 lubricant loaded. Dynamic load banking achieved 500 kW, 1000 kW, 1500 kW, and sustained 2000 kW at 0.8 PF for 4 hours continuously. All bearing temperatures, exhaust port temperatures, and oil pressure profiles stabilized within OEM tolerances. Unit re-commissioned, auto-synchronization with plant 11kV bus verified, and returned to active baseload service.</p>
+    </div>
+  </section>
+
+  <!-- Section 5: Materials Consumed -->
+  <section>
+    <div class="sec-banner">
+      <h2>4. Consumables &amp; Replacement Parts Dispatched</h2>
+      <span class="banner-sub">18 Line Items Authenticated</span>
+    </div>
+
+    <div class="parts-register-box">
+      <div class="parts-col">
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 1. Cylinder Liner Assembly</span><span class="parts-qty">18 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 2. Piston Assembly Standard</span><span class="parts-qty">18 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 3. Piston Ring Set</span><span class="parts-qty">18 SET</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 4. Connecting Rod Bearing Pair</span><span class="parts-qty">18 PAIR</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 5. Main Journal Bearing Set</span><span class="parts-qty">10 SET</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 6. Thrust Bearing Washer Set</span><span class="parts-qty">2 SET</span></div>
+      </div>
+      <div class="parts-col">
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 7. Cylinder Head Gasket Multi-Layer</span><span class="parts-qty">18 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 8. Intake Valve</span><span class="parts-qty">36 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 9. Exhaust Valve Nimonic</span><span class="parts-qty">36 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 10. Valve Stem Guide & Seal Kit</span><span class="parts-qty">72 SET</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 11. Pre-Chamber Spark Plug Shielded</span><span class="parts-qty">18 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 12. Ignition Extension Coil Boot Assembly</span><span class="parts-qty">18 PCS</span></div>
+      </div>
+      <div class="parts-col">
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 13. Turbocharger Core Assembly Cartridge</span><span class="parts-qty">2 ASSY</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 14. Charge Air Cooler Core Assembly</span><span class="parts-qty">2 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 15. Full Engine Overhaul O-Ring & Elastomer Gasket Kit</span><span class="parts-qty">1 KIT</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 16. Low-Ash Stationary Gas Engine Oil SAE 40</span><span class="parts-qty">1200 LITERS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 17. Spin-on Lube Oil Microglass Filter Element</span><span class="parts-qty">6 PCS</span></div>
+        <div class="parts-row"><span class="parts-desc"><span class="parts-chk">[&#10003;]</span> 18. Crankcase Breather Coalescing Filter Cartridge</span><span class="parts-qty">4 PCS</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: Status & Signoff -->
+  <section class="signoff-container">
+    <div class="status-indicator-bar">
+      <span class="status-k">5. Status After Service</span>
+      <div class="status-options">
+        <span class="opt-box active"><span class="opt-tick"></span>Complete</span>
+        <span class="opt-box"><span class="opt-tick"></span>Incomplete</span>
+        <span class="opt-box"><span class="opt-tick"></span>Pending Spares</span>
+        <span class="opt-box"><span class="opt-tick"></span>Under Observation</span>
+        <span class="opt-box"><span class="opt-tick"></span>Working Solution</span>
+      </div>
+    </div>
+
+    <div class="signoff-quadrants">
+      <div class="sig-quadrant">
+        <div class="sig-quadrant-header">Customer Site Acceptance &amp; Facility Acknowledgement</div>
+        <div class="sig-meta-grid">
+          <div>
+            <span class="sig-meta-lbl">Client Representative</span>
+            <span class="sig-meta-val">Not recorded</span>
+          </div>
+          <div>
+            <span class="sig-meta-lbl">Designation / Feedback</span>
+            <span class="sig-meta-val">Not recorded</span>
+          </div>
+        </div>
+        <div class="sig-line-strip">
+          <span>Client Representative Signature &amp; Stamp</span>
+          <span>Unsigned &middot; Pending Site Review</span>
+        </div>
+      </div>
+
+      <div class="sig-quadrant">
+        <div class="sig-quadrant-header">Field Operations Authority &amp; System Release</div>
+        <div class="sig-meta-grid">
+          <div>
+            <span class="sig-meta-lbl">Lead Field Specialist</span>
+            <span class="sig-meta-val">Not recorded</span>
+          </div>
+          <div>
+            <span class="sig-meta-lbl">Work Order Verification</span>
+            <span style="font-weight: 800; color: var(--accent-green);">100% Commissioned</span>
+          </div>
+        </div>
+        <div class="sig-line-strip">
+          <span>Lead Field Specialist Signature</span>
+          <span>Unsigned &middot; Field Execution Copy</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="wo-footer">
+    <span>Official Service Document &nbsp;|&nbsp; Sun &amp; Shield Power Solutions</span>
+    <span>Field Maintenance &amp; Operations Record</span>
+    <span class="pg-box">Page 01 of 01</span>
+  </footer>
+</div>
+
+</body>
+</html>

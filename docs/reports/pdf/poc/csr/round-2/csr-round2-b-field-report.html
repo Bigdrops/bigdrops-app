@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CSR Round 2 — Concept B — Premium Industrial Field Report</title>
+<style>
+/* ── Print foundation ─────────────────────────────────────────── */
+@page { size: A4 portrait; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 210mm; background: #6b6b6b; }
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #1c1d1f;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+:root {
+  --ivory: #faf7ef;
+  --ink: #1c1d1f;
+  --ink-2: #3f434a;
+  --navy: #16324f;
+  --rule: #cdc7b8;
+  --rule-2: #16324f;
+  --mute: #7b776c;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Consolas", "DejaVu Sans Mono", monospace;
+}
+.ns {
+  font-size: 7.6pt;
+  font-style: italic;
+  color: #8f897a;
+  font-family: var(--sans);
+  letter-spacing: .02em;
+}
+
+/* ── Page model ───────────────────────────────────────────────── */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  background: var(--ivory);
+  padding: 0 0 7mm;
+  display: flex;
+  flex-direction: column;
+  break-after: page;
+}
+.page:last-child { break-after: auto; }
+@media screen {
+  .page { margin: 8mm auto; box-shadow: 0 2px 14px rgba(0,0,0,.45); }
+}
+.pad { padding: 0 13mm; }
+
+/* ── Masthead band (reference: screenshot band header) ────────── */
+.band {
+  background: var(--navy);
+  color: var(--ivory);
+  padding: 4mm 13mm 3.4mm;
+}
+.band .co {
+  font-family: var(--sans);
+  font-size: 13pt;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.band .addr {
+  font-family: var(--sans);
+  font-size: 6.8pt;
+  letter-spacing: .04em;
+  color: #d7dce3;
+  margin-top: 1.6mm;
+}
+
+/* ── Editorial title block ────────────────────────────────────── */
+.title-row {
+  display: grid;
+  grid-template-columns: 1fr 62mm;
+  gap: 8mm;
+  align-items: end;
+  padding-top: 4.5mm;
+  padding-bottom: 2.4mm;
+  border-bottom: 2pt solid var(--navy);
+}
+.title-row h1 {
+  font-family: var(--serif);
+  font-size: 24pt;
+  font-weight: 400;
+  letter-spacing: -.012em;
+  line-height: 1;
+  color: var(--navy);
+}
+.title-row .deck {
+  font-family: var(--sans);
+  font-size: 7.6pt;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-top: 2mm;
+  font-weight: 600;
+}
+.ident { text-align: right; font-family: var(--sans); }
+.ident .line { display: flex; justify-content: space-between; gap: 4mm; padding: 1.1mm 0; border-bottom: .4pt solid var(--rule); }
+.ident .line:last-child { border-bottom: 0; }
+.ident .k { font-size: 6.3pt; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+.ident .v { font-family: var(--mono); font-size: 7.6pt; color: var(--ink); }
+
+/* ── Docket: standing head of key facts ───────────────────────── */
+.docket {
+  display: grid;
+  grid-template-columns: 1.5fr .95fr .8fr 1.15fr .7fr;
+  border-bottom: .8pt solid var(--navy);
+}
+.docket .cell { padding: 1.8mm 4mm 2mm; border-right: .4pt solid var(--rule); }
+.docket .cell:first-child { padding-left: 0; }
+.docket .cell:last-child { border-right: 0; padding-right: 0; }
+.docket .k {
+  font-family: var(--sans);
+  font-size: 6.1pt;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  display: block;
+  margin-bottom: 1.3mm;
+}
+.docket .v { font-family: var(--sans); font-size: 8.2pt; font-weight: 600; line-height: 1.3; color: var(--ink); }
+.docket .v.down { color: var(--navy); font-weight: 800; letter-spacing: .06em; }
+
+/* ── Body: narrative (main) + data sidebar ────────────────────── */
+.body-grid {
+  display: grid;
+  grid-template-columns: 1fr 66mm;
+  gap: 9mm;
+  margin-top: 2.4mm;
+  flex: 1;
+}
+.narr-sec { margin-bottom: 3.4mm; }
+.narr-sec:last-child { margin-bottom: 0; }
+.narr-sec .h {
+  display: flex;
+  align-items: baseline;
+  gap: 2.6mm;
+  margin-bottom: 1.4mm;
+}
+.narr-sec .no {
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: .06em;
+}
+.narr-sec .name {
+  font-family: var(--sans);
+  font-size: 7.2pt;
+  font-weight: 800;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.narr-sec .h::after {
+  content: "";
+  flex: 1;
+  border-bottom: .5pt solid var(--rule);
+  transform: translateY(-1mm);
+}
+.narr-sec p {
+  font-family: var(--serif);
+  font-size: 8.8pt;
+  line-height: 1.38;
+  color: var(--ink-2);
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Sidebar */
+.side-block { margin-bottom: 3.2mm; }
+.side-block:last-child { margin-bottom: 0; }
+.side-h {
+  font-family: var(--sans);
+  font-size: 6.4pt;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  background: var(--navy);
+  padding: 1.5mm 2.4mm;
+}
+.side-kv { border-bottom: .4pt solid var(--rule); }
+.side-kv .r { padding: 1.6mm 0 1.7mm; border-bottom: .4pt solid var(--rule); }
+.side-kv .r:last-child { border-bottom: 0; }
+.side-kv .k {
+  font-family: var(--sans);
+  font-size: 6.1pt;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--mute);
+  display: block;
+  margin-bottom: .9mm;
+}
+.side-kv .v { font-family: var(--sans); font-size: 8.1pt; line-height: 1.34; color: var(--ink); overflow-wrap: break-word; }
+.side-kv .v.mono { font-family: var(--mono); font-size: 7.7pt; }
+.side-kv .v.reading { font-family: var(--mono); font-size: 7.6pt; line-height: 1.4; }
+
+/* ── Page 2 head / foot ───────────────────────────────────────── */
+.thin-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4.5mm 13mm 2.2mm;
+  border-bottom: .8pt solid var(--navy);
+}
+.thin-head .co { font-family: var(--sans); font-size: 8pt; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--navy); }
+.thin-head .r { font-family: var(--mono); font-size: 7pt; color: var(--ink-2); }
+
+.sec-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 2pt solid var(--navy);
+  padding-bottom: 1.6mm;
+  margin-top: 6mm;
+  margin-bottom: 2.6mm;
+}
+.sec-title .t {
+  font-family: var(--serif);
+  font-size: 13.5pt;
+  color: var(--navy);
+  font-weight: 400;
+  letter-spacing: -.01em;
+}
+.sec-title .m { font-family: var(--sans); font-size: 6.4pt; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+
+/* ── Materials ledger with dot leaders ────────────────────────── */
+.ledger { list-style: none; }
+.ledger li {
+  display: flex;
+  align-items: baseline;
+  gap: 2mm;
+  padding: 1.55mm 0;
+  border-bottom: .35pt solid var(--rule);
+}
+.ledger .no {
+  font-family: var(--mono);
+  font-size: 7.2pt;
+  color: var(--navy);
+  width: 7mm;
+  text-align: right;
+}
+.ledger .name { font-family: var(--serif); font-size: 8.7pt; color: var(--ink); white-space: nowrap; }
+.ledger .dots { flex: 1; border-bottom: .5pt dotted #a9a294; transform: translateY(-1.2mm); }
+.ledger .qty { font-family: var(--mono); font-size: 7.8pt; color: var(--ink); width: 16mm; text-align: right; }
+.ledger .unit { font-family: var(--sans); font-size: 6.6pt; font-weight: 800; letter-spacing: .1em; color: var(--ink-2); width: 17mm; text-align: left; }
+
+/* ── Status + window row ──────────────────────────────────────── */
+.facts-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8mm; }
+.facts-table { width: 100%; border-collapse: collapse; }
+.facts-table td { padding: 1.8mm 0; border-bottom: .4pt solid var(--rule); vertical-align: baseline; }
+.facts-table .k {
+  font-family: var(--sans);
+  font-size: 6.3pt;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  width: 44mm;
+}
+.facts-table .v { font-family: var(--sans); font-size: 8.4pt; font-weight: 600; color: var(--ink); }
+.facts-table .v.mono { font-family: var(--mono); font-weight: 400; font-size: 8pt; }
+.status-line { font-family: var(--sans); font-size: 8.4pt; font-weight: 700; color: var(--ink); }
+.status-line .mark {
+  display: inline-block;
+  width: 3.4mm; height: 3.4mm;
+  background: var(--navy);
+  margin-right: 2mm;
+  vertical-align: -.4mm;
+  position: relative;
+}
+.status-line .mark::after {
+  content: ""; position: absolute; left: .85mm; top: .35mm;
+  width: 1mm; height: 2mm; border: solid var(--ivory);
+  border-width: 0 .55pt .55pt 0; transform: rotate(42deg);
+}
+
+/* ── Sign-off: baseline rules ─────────────────────────────────── */
+.signoff { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm; margin-top: 2mm; }
+.signoff .col .lbl {
+  font-family: var(--sans);
+  font-size: 6.3pt;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  display: block;
+}
+.signoff .space { min-height: 14mm; border-bottom: .7pt solid var(--ink-2); margin-top: 10mm; }
+.signoff .note {
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-style: italic;
+  color: #8f897a;
+  display: block;
+  margin-top: 1.4mm;
+  line-height: 1.3;
+}
+
+/* ── Colophon ─────────────────────────────────────────────────── */
+.colophon {
+  margin-top: auto;
+  padding-top: 2.5mm;
+  border-top: 2pt solid var(--navy);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--sans);
+}
+.colophon .addr { font-size: 6.4pt; letter-spacing: .06em; color: var(--ink-2); text-transform: uppercase; }
+.colophon .pg { font-family: var(--mono); font-size: 7.2pt; color: var(--navy); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ PAGE 1 ══════════════ -->
+<div class="page" id="p1">
+
+  <div class="band">
+    <div class="co">Sun & Shield Power Solutions</div>
+    <div class="addr">43 oshola street, Ifako-Ijaiye  |  Lagos State  |  Tel: +2348066190685  |  Sunshieldpowersolutions@gmail.com</div>
+  </div>
+
+  <div class="pad">
+    <div class="title-row">
+      <div>
+        <h1>Customer Service Report</h1>
+        <div class="deck">Major overhaul · Cummins QSV91G · 2000 kW (2.0 MW) · Lean burn natural gas generator set</div>
+      </div>
+      <div class="ident">
+        <div class="line"><span class="k">CSR number</span><span class="v"><span class="ns">not supplied</span></span></div>
+        <div class="line"><span class="k">Report date</span><span class="v"><span class="ns">not supplied</span></span></div>
+        <div class="line"><span class="k">Call type</span><span class="v"><span class="ns">not supplied</span></span></div>
+        <div class="line"><span class="k">Service basis</span><span class="v"><span class="ns">not supplied</span></span></div>
+      </div>
+    </div>
+
+    <div class="docket">
+      <div class="cell"><span class="k">Equipment</span><span class="v">Lean Burn Natural Gas Generator Set</span></div>
+      <div class="cell"><span class="k">Make / model</span><span class="v">Cummins QSV91G</span></div>
+      <div class="cell"><span class="k">Capacity</span><span class="v">2000 kW (2.0 MW)</span></div>
+      <div class="cell"><span class="k">Service window</span><span class="v">2026-10-12 → 2026-10-24</span></div>
+      <div class="cell"><span class="k">System status</span><span class="v down">DOWN</span></div>
+    </div>
+
+    <div class="body-grid">
+      <!-- Narrative is the main content -->
+      <div>
+        <div class="narr-sec">
+          <div class="h"><span class="no">01</span><span class="name">Problem reported</span></div>
+          <p>Major scheduled top and bottom end overhaul at 30,000 running hours, high blow-by, exhaust port carbon fouling, and intermittent cylinder misfires under peak load.</p>
+        </div>
+
+        <div class="narr-sec">
+          <div class="h"><span class="no">02</span><span class="name">Service rendered</span></div>
+          <p>Conducted complete major engine overhaul: stripped down cylinder heads, replaced all cylinder liners, pistons, rings, wrist pins, con-rod bearings, and main crankshaft bearings. Rebuilt and leak-tested cylinder heads with new valves, seats, guides, and rotocaps. Replaced spark plugs, ignition extensions, ignition leads, and calibrated detonator sensors. Overhauled both turbochargers, replaced charge air cooler cores, inspected wastegate actuator linkages, aligned throttle body actuator, recalibrated fuel gas control valve and mixer, renewed all external water/oil plumbing elastomeric seals, replaced crankcase breather assemblies, flushed lube oil galleries, refilled with fresh low-ash gas engine oil, conducted engine bar-over, pre-lube check, cold commissioning, step load testing from 25% to 100% (2000 kW), and dynamic emission tuning to maintain NOx within operational limits.</p>
+        </div>
+
+        <div class="narr-sec">
+          <div class="h"><span class="no">03</span><span class="name">Defects found</span></div>
+          <p>Severe carbon deposition across all 18 cylinder exhaust valves; excessive side clearance on top compression ring grooves on Cylinders #4, #9, and #14; moderate cavitation erosion on cylinder liner lower O-ring register lands (Cylinders #3, #7); heat stress cracking on two ignition lead boots; minor axial play (0.18 mm) on secondary turbocharger shaft exceeding service limit; worn throttle spindle shaft seals causing air leakage.</p>
+        </div>
+
+        <div class="narr-sec">
+          <div class="h"><span class="no">04</span><span class="name">Engineer remarks</span></div>
+          <p>Major mechanical overhaul completed to manufacturer specifications. Engine barring torque smooth and within normal tolerance. Full synthetic low-ash SAE 40 lubricant loaded. Dynamic load banking achieved 500 kW, 1000 kW, 1500 kW, and sustained 2000 kW at 0.8 PF for 4 hours continuously. All bearing temperatures, exhaust port temperatures, and oil pressure profiles stabilized within OEM tolerances. Unit re-commissioned, auto-synchronization with plant 11kV bus verified, and returned to active baseload service.</p>
+        </div>
+      </div>
+
+      <!-- Technical data integrated as a ruled sidebar -->
+      <aside>
+        <div class="side-block">
+          <div class="side-h">Equipment identity</div>
+          <div class="side-kv">
+            <div class="r"><span class="k">Location</span><span class="v">Central Utility Plant, Powerhouse Bay 2, Basement Level -1</span></div>
+            <div class="r"><span class="k">Serial no.</span><span class="v mono">25381944</span></div>
+            <div class="r"><span class="k">Engine no.</span><span class="v mono">91G-ENG-08421</span></div>
+            <div class="r"><span class="k">Capacity</span><span class="v mono">2000 kW (2.0 MW)</span></div>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-h">Operational readings</div>
+          <div class="side-kv">
+            <div class="r"><span class="k">Voltage</span><span class="v reading">11000 V</span></div>
+            <div class="r"><span class="k">Frequency</span><span class="v reading">50 Hz</span></div>
+            <div class="r"><span class="k">Battery</span><span class="v reading">24 VDC (4x 12V 200Ah AGM in series-parallel)</span></div>
+            <div class="r"><span class="k">Temperature</span><span class="v reading">88°C jacket water outlet / 52°C aftercooler / 510°C exhaust average</span></div>
+            <div class="r"><span class="k">Pressure</span><span class="v reading">4.8 bar lube oil / 1.6 bar differential oil filter / 2.2 bar crankcase vacuum</span></div>
+            <div class="r"><span class="k">Hours</span><span class="v reading">30142.6 hrs</span></div>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <div class="side-h">Client & account</div>
+          <div class="side-kv">
+            <div class="r"><span class="k">Client account</span><span class="v"><span class="ns">not supplied</span></span></div>
+            <div class="r"><span class="k">Client address</span><span class="v"><span class="ns">not supplied</span></span></div>
+            <div class="r"><span class="k">Customer contact</span><span class="v"><span class="ns">not supplied</span></span></div>
+            <div class="r"><span class="k">P.O. number</span><span class="v"><span class="ns">not supplied</span></span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="pad">
+    <div class="colophon">
+      <span class="addr">43 oshola street, Ifako-Ijaiye  |  Lagos State  |  Tel: +2348066190685  |  Sunshieldpowersolutions@gmail.com</span>
+      <span class="pg">Page 01 / 02</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PAGE 2 ══════════════ -->
+<div class="page" id="p2">
+
+  <div class="thin-head">
+    <span class="co">Customer Service Report — Sun & Shield Power Solutions</span>
+    <span class="r">CSR no.: not supplied  ·  Cummins QSV91G  ·  Page 02 / 02</span>
+  </div>
+
+  <div class="pad">
+    <div class="sec-title">
+      <span class="t">Materials used</span>
+      <span class="m">18 lines · issued for this service</span>
+    </div>
+
+    <ul class="ledger">
+      <li><span class="no">01</span><span class="name">Cylinder Liner Assembly</span><span class="dots"></span><span class="qty">18</span><span class="unit">PCS</span></li>
+      <li><span class="no">02</span><span class="name">Piston Assembly Standard</span><span class="dots"></span><span class="qty">18</span><span class="unit">PCS</span></li>
+      <li><span class="no">03</span><span class="name">Piston Ring Set</span><span class="dots"></span><span class="qty">18</span><span class="unit">SET</span></li>
+      <li><span class="no">04</span><span class="name">Connecting Rod Bearing Pair</span><span class="dots"></span><span class="qty">18</span><span class="unit">PAIR</span></li>
+      <li><span class="no">05</span><span class="name">Main Journal Bearing Set</span><span class="dots"></span><span class="qty">10</span><span class="unit">SET</span></li>
+      <li><span class="no">06</span><span class="name">Thrust Bearing Washer Set</span><span class="dots"></span><span class="qty">2</span><span class="unit">SET</span></li>
+      <li><span class="no">07</span><span class="name">Cylinder Head Gasket Multi-Layer</span><span class="dots"></span><span class="qty">18</span><span class="unit">PCS</span></li>
+      <li><span class="no">08</span><span class="name">Intake Valve</span><span class="dots"></span><span class="qty">36</span><span class="unit">PCS</span></li>
+      <li><span class="no">09</span><span class="name">Exhaust Valve Nimonic</span><span class="dots"></span><span class="qty">36</span><span class="unit">PCS</span></li>
+      <li><span class="no">10</span><span class="name">Valve Stem Guide & Seal Kit</span><span class="dots"></span><span class="qty">72</span><span class="unit">SET</span></li>
+      <li><span class="no">11</span><span class="name">Pre-Chamber Spark Plug Shielded</span><span class="dots"></span><span class="qty">18</span><span class="unit">PCS</span></li>
+      <li><span class="no">12</span><span class="name">Ignition Extension Coil Boot Assembly</span><span class="dots"></span><span class="qty">18</span><span class="unit">PCS</span></li>
+      <li><span class="no">13</span><span class="name">Turbocharger Core Assembly Cartridge</span><span class="dots"></span><span class="qty">2</span><span class="unit">ASSY</span></li>
+      <li><span class="no">14</span><span class="name">Charge Air Cooler Core Assembly</span><span class="dots"></span><span class="qty">2</span><span class="unit">PCS</span></li>
+      <li><span class="no">15</span><span class="name">Full Engine Overhaul O-Ring & Elastomer Gasket Kit</span><span class="dots"></span><span class="qty">1</span><span class="unit">KIT</span></li>
+      <li><span class="no">16</span><span class="name">Low-Ash Stationary Gas Engine Oil SAE 40</span><span class="dots"></span><span class="qty">1200</span><span class="unit">LITERS</span></li>
+      <li><span class="no">17</span><span class="name">Spin-on Lube Oil Microglass Filter Element</span><span class="dots"></span><span class="qty">6</span><span class="unit">PCS</span></li>
+      <li><span class="no">18</span><span class="name">Crankcase Breather Coalescing Filter Cartridge</span><span class="dots"></span><span class="qty">4</span><span class="unit">PCS</span></li>
+    </ul>
+
+    <div class="sec-title">
+      <span class="t">Service record</span>
+      <span class="m">Window · status</span>
+    </div>
+
+    <div class="facts-row">
+      <table class="facts-table">
+        <tr><td class="k">Service window (start)</td><td class="v mono">2026-10-12</td></tr>
+        <tr><td class="k">Service window (end)</td><td class="v mono">2026-10-24</td></tr>
+        <tr><td class="k">Start / end time</td><td class="v"><span class="ns">not supplied</span></td></tr>
+        <tr><td class="k">System status</td><td class="v" style="color:var(--navy); font-weight:800; letter-spacing:.06em;">DOWN</td></tr>
+      </table>
+      <table class="facts-table">
+        <tr><td class="k">Status after service</td><td class="v"><span class="status-line"><span class="mark"></span>Complete</span></td></tr>
+        <tr><td class="k">Incomplete</td><td class="v" style="font-weight:400; color:var(--mute);">not selected</td></tr>
+        <tr><td class="k">Pending for spares</td><td class="v" style="font-weight:400; color:var(--mute);">not selected</td></tr>
+        <tr><td class="k">Under observation</td><td class="v" style="font-weight:400; color:var(--mute);">not selected</td></tr>
+        <tr><td class="k">Working solution provided</td><td class="v" style="font-weight:400; color:var(--mute);">not selected</td></tr>
+      </table>
+    </div>
+
+    <div class="sec-title">
+      <span class="t">Acknowledgement</span>
+      <span class="m">Client & technician sign-off</span>
+    </div>
+
+    <div class="signoff">
+      <div class="col">
+        <span class="lbl">Client representative name</span>
+        <div class="space"></div>
+        <span class="note">not supplied — no acknowledgement name in the source record</span>
+      </div>
+      <div class="col">
+        <span class="lbl">Client signature & stamp</span>
+        <div class="space"></div>
+        <span class="note">unsigned — no signature supplied for this record</span>
+      </div>
+      <div class="col">
+        <span class="lbl">Technician name / signature</span>
+        <div class="space"></div>
+        <span class="note">unsigned — no technician or signature supplied for this record</span>
+      </div>
+    </div>
+
+    <div class="colophon">
+      <span class="addr">43 oshola street, Ifako-Ijaiye  |  Lagos State  |  Tel: +2348066190685  |  Sunshieldpowersolutions@gmail.com</span>
+      <span class="pg">Page 02 / 02</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSR Concept 03 — Field Technician Service Sheet | BOUXRE</title>
+<style>
+/* ============================================================
+   CONCEPT 03 — FIELD TECHNICIAN SERVICE SHEET
+   Composition: single column of numbered sections with solid
+   header bars, boxed form fields, tick-box status, parts
+   schedule with check column, two signature boxes.
+   Palette: paper monochrome + one blue-black accent.
+   Colour never carries meaning by itself.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper:  #fbfbf9;
+  --field:  #ffffff;
+  --accent: #101c26;
+  --ink:    #16191c;
+  --line:   #a9b0b6;
+  --line-2: #ccd1d5;
+  --muted:  #6e767c;
+
+  --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: Consolas, "SF Mono", "Courier New", monospace;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: #525659;
+  font-family: var(--sans);
+  color: var(--ink);
+  line-height: 1.35;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── REVIEW TOOLBAR (not part of the document) ───────────── */
+.preview-bar {
+  width: 210mm;
+  background: #1d2126;
+  color: #e8e4dc;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 7px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.preview-bar b { color: #8fb3cc; font-weight: 700; }
+.preview-bar span { color: #9aa0a6; }
+
+/* ── A4 SHEET ────────────────────────────────────────────── */
+.sheet {
+  width: 210mm;
+  height: 297mm;
+  background: var(--paper);
+  padding: 6mm 9mm 4mm;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 6px 26px rgba(0,0,0,0.35);
+}
+
+/* ── FORM HEADER ─────────────────────────────────────────── */
+.form-head {
+  display: flex;
+  align-items: stretch;
+  gap: 3mm;
+  margin-bottom: 2.4mm;
+}
+.brand-plate {
+  background: var(--accent);
+  color: #ffffff;
+  padding: 2.4mm 4mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 52mm;
+}
+.brand-plate .wm {
+  font-family: var(--mono);
+  font-size: 13pt;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  line-height: 1;
+}
+.brand-plate .sub {
+  font-size: 6.2pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b7c1c9;
+  margin-top: 1.3mm;
+}
+.form-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-top: 0.7mm solid var(--accent);
+  border-bottom: 0.7mm solid var(--accent);
+  padding: 1.6mm 0;
+}
+.form-title h1 {
+  font-size: 13pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.form-title p {
+  font-size: 6.6pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 1mm;
+}
+.head-boxes { display: flex; gap: 2mm; }
+.head-box {
+  border: 0.35mm solid var(--accent);
+  padding: 1.5mm 2.5mm;
+  min-width: 30mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.head-box .k {
+  font-family: var(--mono);
+  font-size: 5.6pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.head-box .v {
+  font-family: var(--mono);
+  font-size: 9.5pt;
+  font-weight: 700;
+  color: var(--ink);
+  padding-top: 2.5mm;
+}
+.head-box .v.blank { color: var(--muted); font-weight: 400; }
+
+/* ── NUMBERED SECTIONS ───────────────────────────────────── */
+.sec { margin-bottom: 1.4mm; }
+.sec:last-of-type { margin-bottom: 0; }
+
+.sec-h {
+  background: var(--accent);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  padding: 0.95mm 2.5mm 0.95mm 2mm;
+}
+.sec-h .n {
+  font-family: var(--mono);
+  font-size: 7.4pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-right: 0.25mm solid #5c6a75;
+  padding-right: 2.5mm;
+}
+.sec-h .t {
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.sec-h .hint {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 5.5pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #93a1ab;
+}
+
+/* ── BOXED FORM FIELDS ───────────────────────────────────── */
+.fgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-left: 0.3mm solid var(--line);
+  background: var(--field);
+}
+.cell {
+  border-right: 0.3mm solid var(--line);
+  border-bottom: 0.3mm solid var(--line);
+  padding: 0.9mm 2mm 1.3mm;
+  min-width: 0;
+}
+.cell.span2 { grid-column: span 2; }
+.cell.span3 { grid-column: span 3; }
+.cell .k {
+  display: block;
+  font-family: var(--mono);
+  font-size: 5.5pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.7mm;
+}
+.cell .v {
+  font-size: 8.6pt;
+  color: var(--ink);
+  display: block;
+  line-height: 1.3;
+}
+.cell .v.mono { font-family: var(--mono); font-size: 8.2pt; }
+.cell .v.blank { color: var(--muted); }
+
+/* tick boxes — state is written out, colour is not the signal */
+.status-row { display: flex; gap: 5mm; align-items: center; padding-top: 0.6mm; }
+.tick { display: inline-flex; align-items: center; gap: 1.4mm; }
+.tick .box {
+  width: 3.1mm;
+  height: 3.1mm;
+  border: 0.32mm solid var(--accent);
+  display: inline-block;
+  position: relative;
+  flex: 0 0 auto;
+}
+.tick.on .box::after {
+  content: "";
+  position: absolute;
+  inset: 0.55mm;
+  background: var(--accent);
+}
+.tick .lab {
+  font-family: var(--mono);
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tick:not(.on) .lab { color: var(--muted); font-weight: 400; }
+
+/* ── TEXT BOXES ──────────────────────────────────────────── */
+.box-body {
+  background: var(--field);
+  border-left: 0.3mm solid var(--line);
+  border-right: 0.3mm solid var(--line);
+  border-bottom: 0.3mm solid var(--line);
+  padding: 1.2mm 2.5mm 1.5mm;
+}
+.box-body p { font-size: 8.5pt; line-height: 1.45; color: var(--ink); }
+.box-body p.blank { color: var(--muted); }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 2.4mm; }
+.mini-h {
+  font-family: var(--mono);
+  font-size: 5.5pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 0.8mm;
+}
+.mini-h b { color: var(--ink); font-weight: 700; }
+.sub-box {
+  background: var(--field);
+  border: 0.3mm solid var(--line);
+  padding: 1.3mm 2.2mm 1.7mm;
+}
+.sub-box p { font-size: 8.3pt; line-height: 1.45; }
+.sub-box p.blank { color: var(--muted); }
+
+.line-field {
+  background: var(--field);
+  border: 0.3mm solid var(--line);
+  border-top: 0;
+  padding: 1.3mm 2.5mm;
+  display: flex;
+  align-items: baseline;
+  gap: 3mm;
+}
+.line-field .k {
+  font-family: var(--mono);
+  font-size: 5.5pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 34mm;
+}
+.line-field .v { font-size: 8.4pt; color: var(--muted); }
+
+/* ── PARTS SCHEDULE ──────────────────────────────────────── */
+.parts {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--field);
+  border-left: 0.3mm solid var(--line);
+  border-right: 0.3mm solid var(--line);
+  border-bottom: 0.3mm solid var(--line);
+}
+.parts th {
+  font-family: var(--mono);
+  font-size: 5.5pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: left;
+  padding: 1.1mm 2mm;
+  border-bottom: 0.3mm solid var(--line);
+  background: #eef0f1;
+}
+.parts td {
+  padding: 1.15mm 2mm;
+  font-size: 8.5pt;
+  border-bottom: 0.25mm solid var(--line-2);
+}
+.parts tr:last-child td { border-bottom: 0; }
+.parts th.ck, .parts td.ck { width: 9mm; text-align: center; padding-left: 0; padding-right: 0; }
+.parts th.qty, .parts td.qty { width: 18mm; text-align: right; font-family: var(--mono); font-size: 8.2pt; font-weight: 700; }
+.parts th.unit, .parts td.unit { width: 26mm; text-align: right; font-family: var(--mono); font-size: 7.6pt; color: var(--muted); }
+.parts th.no, .parts td.no { width: 9mm; font-family: var(--mono); font-size: 7pt; color: var(--muted); }
+.parts td.ck .box { width: 3mm; height: 3mm; border: 0.32mm solid var(--line); display: inline-block; }
+
+/* ── SIGN-OFF ────────────────────────────────────────────── */
+.sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.4mm; }
+.sign-box {
+  background: var(--field);
+  border: 0.32mm solid var(--accent);
+}
+.sign-box .sig-cap {
+  font-family: var(--mono);
+  font-size: 5.5pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 1.2mm 2.2mm 0;
+}
+.sign-box .sig-area {
+  margin: 1.6mm 2.2mm 0;
+  border-bottom: 0.32mm solid var(--accent);
+  height: 7.5mm;
+}
+.sign-box .sig-note {
+  font-family: var(--mono);
+  font-size: 5.4pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0.8mm 2.2mm 1.4mm;
+  text-align: right;
+}
+.sign-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 0.3mm solid var(--line-2);
+}
+.sign-fields .sf {
+  padding: 0.9mm 2.2mm 1.2mm;
+  border-right: 0.25mm solid var(--line-2);
+}
+.sign-fields .sf:last-child { border-right: 0; }
+.sign-fields .sf .k {
+  display: block;
+  font-family: var(--mono);
+  font-size: 5.4pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6mm;
+}
+.sign-fields .sf .v { font-size: 8.2pt; color: var(--muted); }
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+.foot {
+  margin-top: auto;
+  padding-top: 1.8mm;
+  border-top: 0.5mm solid var(--accent);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 5.8pt;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.foot .mark { color: var(--accent); font-weight: 700; letter-spacing: 0.2em; }
+.foot .mid { color: var(--ink); }
+
+/* ── PRINT ───────────────────────────────────────────────── */
+@page { size: 210mm 297mm; margin: 0; }
+
+@media print {
+  html, body {
+    background: #ffffff;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+    display: block;
+    width: 210mm;
+    height: 297mm;
+  }
+  .preview-bar { display: none !important; }
+  .sheet {
+    box-shadow: none;
+    margin: 0;
+    width: 210mm;
+    height: 297mm;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="preview-bar">
+  <span><b>CONCEPT 03</b> &nbsp;Field Technician Service Sheet &nbsp;·&nbsp; A4 210 × 297 mm</span>
+  <span>CSR prototype — screen preview; the bar does not print</span>
+</div>
+
+<div class="sheet">
+
+  <!-- ── FORM HEADER ──────────────────────────────────── -->
+  <header class="form-head">
+    <div class="brand-plate">
+      <span class="wm">BOUXRE</span>
+      <span class="sub">Service documentation</span>
+    </div>
+    <div class="form-title">
+      <h1>Customer Service Report</h1>
+      <p>Field service sheet · equipment maintenance record</p>
+    </div>
+    <div class="head-boxes">
+      <div class="head-box">
+        <span class="k">CSR no.</span>
+        <span class="v blank">—</span>
+      </div>
+      <div class="head-box">
+        <span class="k">Report date</span>
+        <span class="v blank">—</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 1. CLIENT & SITE ───────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">1</span><span class="t">Client &amp; site</span><span class="hint">Section 1 of 9</span></div>
+    <div class="fgrid">
+      <div class="cell"><span class="k">P.O. number</span><span class="v mono blank">—</span></div>
+      <div class="cell"><span class="k">Client account</span><span class="v blank">—</span></div>
+      <div class="cell"><span class="k">Customer contact</span><span class="v blank">—</span></div>
+      <div class="cell span3"><span class="k">Client address</span><span class="v blank">—</span></div>
+    </div>
+  </section>
+
+  <!-- ── 2. SERVICE PARAMETERS ────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">2</span><span class="t">Service parameters</span><span class="hint">Section 2 of 9</span></div>
+    <div class="fgrid">
+      <div class="cell"><span class="k">Call type</span><span class="v blank">—</span></div>
+      <div class="cell"><span class="k">Service basis</span><span class="v blank">—</span></div>
+      <div class="cell">
+        <span class="k">System status</span>
+        <span class="status-row">
+          <span class="tick on"><span class="box"></span><span class="lab">Operational</span></span>
+          <span class="tick"><span class="box"></span><span class="lab">Down</span></span>
+        </span>
+      </div>
+      <div class="cell"><span class="k">Start of service</span><span class="v mono">2026-10-26</span></div>
+      <div class="cell"><span class="k">End of service</span><span class="v mono">2026-10-26</span></div>
+      <div class="cell"><span class="k">Status after service</span><span class="v blank">—</span></div>
+    </div>
+  </section>
+
+  <!-- ── 3. EQUIPMENT ─────────────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">3</span><span class="t">Equipment identification</span><span class="hint">Section 3 of 9</span></div>
+    <div class="fgrid">
+      <div class="cell"><span class="k">Equipment type</span><span class="v">Generator</span></div>
+      <div class="cell"><span class="k">Make</span><span class="v">Cummins</span></div>
+      <div class="cell"><span class="k">Capacity</span><span class="v mono">350 kVA</span></div>
+      <div class="cell"><span class="k">Model</span><span class="v mono">NT-855-G6</span></div>
+      <div class="cell"><span class="k">Serial no.</span><span class="v mono blank">—</span></div>
+      <div class="cell"><span class="k">Engine no.</span><span class="v mono">25598493</span></div>
+      <div class="cell span3"><span class="k">Equipment location</span><span class="v">Plot C89, Amuwo Odofin Industrial Layout, Along Oshodi-Mile 2 Expressway, Lagos</span></div>
+    </div>
+  </section>
+
+  <!-- ── 4. REPORTED PROBLEM ──────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">4</span><span class="t">Reported problem</span><span class="hint">Problem reported</span></div>
+    <div class="box-body">
+      <p>Generator recommended for routine service because it had exceeded 250 operating hours since the service interval.</p>
+    </div>
+  </section>
+
+  <!-- ── 5. WORK PERFORMED ────────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">5</span><span class="t">Work performed</span><span class="hint">Service rendered</span></div>
+    <div class="box-body">
+      <p>Replaced fuel filter FS1212, oil filter LF9009, water filter WF2074, and 50 litres of engine oil. Tested the generator after servicing.</p>
+    </div>
+  </section>
+
+  <!-- ── 6. FINDINGS & ACTION ─────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">6</span><span class="t">Findings &amp; recommended action</span><span class="hint">Section 6 of 9</span></div>
+    <div class="split" style="padding:0">
+      <div class="sub-box">
+        <span class="mini-h"><b>6.1</b> &nbsp;Defects found — observation</span>
+        <p>The diesel tank has no air valve. Staff fold the fuel hose to stop fuel flow when required. This gradually damages and deforms the hose, restricting free fuel flow.</p>
+      </div>
+      <div class="sub-box">
+        <span class="mini-h"><b>6.2</b> &nbsp;Engineer remarks — corrective action</span>
+        <p>The generator ran smoothly during testing at 1500 RPM. No oil leaks, fuel leaks, unusual smoke, or other issues were observed. Install an air valve on the diesel tank.</p>
+      </div>
+    </div>
+    <div class="line-field" style="border-top:0.3mm solid var(--line); margin-top:-0.3mm">
+      <span class="k">6.3 &nbsp;Customer feedback</span>
+      <span class="v">—</span>
+    </div>
+  </section>
+
+  <!-- ── 7. MEASURED VALUES ───────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">7</span><span class="t">Measured values</span><span class="hint">Recorded at service</span></div>
+    <div class="fgrid">
+      <div class="cell"><span class="k">Voltage</span><span class="v mono">392 V average across 3 phases</span></div>
+      <div class="cell"><span class="k">Frequency</span><span class="v mono">50 Hz</span></div>
+      <div class="cell"><span class="k">Battery</span><span class="v mono">27.3 V</span></div>
+      <div class="cell"><span class="k">Temperature</span><span class="v mono">74 °C</span></div>
+      <div class="cell"><span class="k">Pressure</span><span class="v mono">704 kPa</span></div>
+      <div class="cell"><span class="k">Operating hours</span><span class="v mono">9329.4</span></div>
+    </div>
+  </section>
+
+  <!-- ── 8. PARTS & MATERIALS ─────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">8</span><span class="t">Parts &amp; materials used</span><span class="hint">4 line items</span></div>
+    <table class="parts">
+      <thead>
+        <tr>
+          <th class="ck">Chk</th>
+          <th class="no">No.</th>
+          <th>Item</th>
+          <th class="qty">Qty</th>
+          <th class="unit">Unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="ck"><span class="box"></span></td><td class="no">01</td><td>Fuel Filter FS1212</td><td class="qty">2</td><td class="unit"></td></tr>
+        <tr><td class="ck"><span class="box"></span></td><td class="no">02</td><td>Oil Filter LF9009</td><td class="qty">1</td><td class="unit"></td></tr>
+        <tr><td class="ck"><span class="box"></span></td><td class="no">03</td><td>Water Filter WF2074</td><td class="qty">1</td><td class="unit"></td></tr>
+        <tr><td class="ck"><span class="box"></span></td><td class="no">04</td><td>Engine Oil</td><td class="qty">50</td><td class="unit">Litres</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 9. SIGN-OFF ──────────────────────────────────── -->
+  <section class="sec">
+    <div class="sec-h"><span class="n">9</span><span class="t">Acknowledgement &amp; sign-off</span><span class="hint">Section 9 of 9</span></div>
+    <div class="sign-grid">
+      <div class="sign-box">
+        <span class="sig-cap">Customer acknowledgement — received by / witness</span>
+        <div class="sig-area"></div>
+        <div class="sig-note">Signature</div>
+        <div class="sign-fields">
+          <div class="sf"><span class="k">Name</span><span class="v">—</span></div>
+          <div class="sf"><span class="k">Title</span><span class="v">—</span></div>
+          <div class="sf"><span class="k">Date</span><span class="v">—</span></div>
+        </div>
+      </div>
+      <div class="sign-box">
+        <span class="sig-cap">Service engineer</span>
+        <div class="sig-area"></div>
+        <div class="sig-note">Signature</div>
+        <div class="sign-fields">
+          <div class="sf"><span class="k">Name</span><span class="v">—</span></div>
+          <div class="sf"><span class="k">Role</span><span class="v">—</span></div>
+          <div class="sf"><span class="k">Date</span><span class="v">—</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ───────────────────────────────────────── -->
+  <footer class="foot">
+    <span><span class="mark">BOUXRE</span> &nbsp;·&nbsp; Customer Service Report</span>
+    <span class="mid">Service date 2026-10-26</span>
+    <span>Page 1 of 1</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
