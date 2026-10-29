@@ -676,7 +676,7 @@ const handleDownload = async () => {
 ```
 
 #### What Stays Untouched
-- CSR templates (`Zinc.tsx`, `Sentinel.tsx`, `Nexus.tsx`, `Minimal.tsx`, `IndustryCsr.tsx`)
+- CSR templates (`IndustryCsr.tsx`, `Zinc.tsx`, `Minimal.tsx`)
 - Waybill templates (`EvergreenTemplate`, `MinimalTemplate`, `ThermalTemplate`, `ClassicTemplate`, `PremiumTemplate`, `SlateTemplate`)
 - Customization engines (`usePdfCustomization`, `bridgeToDesignPreset`)
 - Render models (`buildWaybillRenderModel`, `buildCsrPreviewData`)

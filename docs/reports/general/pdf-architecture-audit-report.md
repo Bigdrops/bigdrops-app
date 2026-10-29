@@ -23,7 +23,7 @@ A unified PDF pipeline is **strongly recommended** but requires careful phased m
 | **Invoice** | `pdf-new/` layers | `domain/invoice/previewModel.ts` | `pdf-new/index.ts → generateInvoicePdf()` | Domain: `document-view/invoice/invoicePdfActions.ts` | 7 (Industry, Ledger, Crest, Minimal, Evergreen, Bolt, Ember) |
 | **Quotation** | `pdf-new/` layers | `domain/quotation/previewModel.ts` | `pdf-new/index.ts → generateQuotationPdf()` | Domain: `domain/quotation/pdfDownloadHandler.ts` | 7 (same templates as Invoice) |
 | **Waybill** | Direct `@react-pdf/renderer` templates | `domain/waybill/engine/assembly.ts → buildWaybillRenderModel()` | `components/waybill/WaybillPDF.tsx` | Shared: `downloadPdfFromElement()` | 6 (Evergreen, Minimal, Thermal, Classic, Premium, Slate) |
-| **CSR** | Direct `@react-pdf/renderer` preview templates | `domain/csr/csrRenderModel.ts` | `components/csr/preview-templates/*.tsx` | Shared: `downloadPdfFromElement()` | 4+ (IndustryCsr, Minimal, Zinc, Sentinel) |
+| **CSR** | Direct `@react-pdf/renderer` preview templates | `domain/csr/csrRenderModel.ts` | `components/csr/preview-templates/*.tsx` | Shared: `downloadPdfFromElement()` | 3 (IndustryCsr, Minimal, Zinc) |
 | **BOQ** | `table-document/` adapter | N/A (raw DB rows) | `components/boq/BoqPdfDocument.tsx → TableDocumentPdfDocument` | Shared: `downloadPdfFromElement()` | 1 (Modern) |
 | **RFQ** | `table-document/` adapter | N/A (raw DB rows) | `components/rfq/RfqPdfDocument.tsx → TableDocumentPdfDocument` | Shared: `downloadPdfFromElement()` | 1 (Modern) |
 | **Receipt** | `pdf-new/ReceiptPdf.tsx` (standalone) | `domain/receipt/previewModel.ts → buildReceiptPreviewData()` | `components/pdf-new/ReceiptPdf.tsx` | Shared: `downloadPdfFromElement()` | 1 |

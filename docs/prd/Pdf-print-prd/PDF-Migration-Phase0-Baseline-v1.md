@@ -36,7 +36,7 @@
 | `pdf(element).toBlob()` | `src/components/document-view/shared/downloadPdf.tsx:26` | `downloadPdfFromElement` | `.toBlob()` |
 | Template components (JSX) | `src/components/pdf-new/templates/*.tsx` | Industry, Ledger, Crest, Minimal, Evergreen, Bolt, Ember | `Document`, `Page`, `View`, `Text`, `Image`, `StyleSheet` |
 | Waybill templates | `src/components/waybill/*Template.tsx` | Classic, Premium, Evergreen, Slate, Minimal, Thermal | `Document`, `Page`, `View`, `Text`, `Image`, `StyleSheet` |
-| CSR templates | `src/components/csr/preview-templates/*.tsx` | Zinc, Minimal, Sentinel, Nexus, Industry | `Document`, `Page`, `View`, `Text`, `Image`, `StyleSheet` |
+| CSR templates | `src/components/csr/preview-templates/*.tsx` | Zinc, Minimal, Industry | `Document`, `Page`, `View`, `Text`, `Image`, `StyleSheet` |
 | Receipt template | `src/components/pdf-new/ReceiptPdf.tsx` | Receipt | `Document`, `Page`, `View`, `Text`, `Image`, `StyleSheet` |
 | BOQ/RFQ template | `src/components/table-document/TableDocumentPdfDocument.tsx` | BOQ, RFQ | `Document`, `Page`, `View`, `Text`, `StyleSheet` |
 | PdfRenderer wrapper | `src/components/pdf-new/renderers/PdfRenderer.tsx:1` | `PdfRenderer` | `Document` |
