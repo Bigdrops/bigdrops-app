@@ -79,3 +79,20 @@ export function invalidateDashboardCache(key: string) {
     // Ignore storage cleanup failures.
   }
 }
+
+export function invalidateAllDashboardCaches() {
+  if (!canUseStorage()) return
+
+  try {
+    const keysToRemove: string[] = []
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i)
+      if (key && key.startsWith('bd:dashboard:')) {
+        keysToRemove.push(key)
+      }
+    }
+    keysToRemove.forEach((key) => window.localStorage.removeItem(key))
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+}

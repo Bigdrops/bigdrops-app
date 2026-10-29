@@ -150,9 +150,9 @@ function buildRecentDocs(invoices: any[], quotations: any[], csrs: any[], waybil
     ...csrs.map((doc) => ({
       id: doc.id,
       type: 'CSR' as const,
-      number: doc.csr_number,
+      number: doc.csr_number || 'CSR',
       client: doc.client_name || 'Walking Client',
-      date: doc.created_at || doc.date,
+      date: useIssueDate ? (doc.date || doc.created_at) : (doc.created_at || doc.date),
       status: String(doc.status || ''),
       amount: null,
       path: `/csr/${doc.id}`,
@@ -359,7 +359,14 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           .is('archived_at', null)
           .order('created_at', { ascending: false }),
           tenantClient.from('quotations').select('id, quotation_number, client_name, status, created_at, total').order('created_at', { ascending: false }).limit(8),
-          tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(5),
+          tenantClient
+            .from('csrs')
+            .select('id, csr_number, client_name, status, created_at, date')
+            .is('archived_at', null)
+            .order('created_at', { ascending: false, nullsFirst: false })
+            .order('date', { ascending: false, nullsFirst: false })
+            .order('csr_number', { ascending: false, nullsFirst: false })
+            .limit(16),
           tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
           tenantClient.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(5),
           tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),
@@ -471,7 +478,14 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): UseDash
           .is('archived_at', null)
           .order('created_at', { ascending: false }),
         tenantClient.from('quotations').select('id, quotation_number, client_name, status, created_at, issue_date, total').order('created_at', { ascending: false }).limit(8),
-        tenantClient.from('csrs').select('id, csr_number, client_name, status, created_at, date').order('created_at', { ascending: false }).order('csr_number', { ascending: false }).limit(8),
+        tenantClient
+          .from('csrs')
+          .select('id, csr_number, client_name, status, created_at, date')
+          .is('archived_at', null)
+          .order('created_at', { ascending: false, nullsFirst: false })
+          .order('date', { ascending: false, nullsFirst: false })
+          .order('csr_number', { ascending: false, nullsFirst: false })
+          .limit(16),
         tenantClient.from('waybills').select('id, waybill_number, client_name, status, created_at, date, type, vehicle_plate').order('created_at', { ascending: false }).limit(8),
         tenantClient.from('rfqs').select('id, rfq_number, vendor_name, created_at').order('created_at', { ascending: false }).limit(8),
         tenantClient.from('projects').select('id, name, client_name').order('created_at', { ascending: false }).limit(3),

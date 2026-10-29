@@ -38,6 +38,40 @@ function applyDateFilter(query: any, dateRange: DocumentQueryState["dateRange"])
   return query;
 }
 
+export function getCsrEffectiveTimestamp(row: any): number {
+  if (row?.created_at) {
+    const t = new Date(row.created_at).getTime();
+    if (!Number.isNaN(t)) return t;
+  }
+  if (row?.date) {
+    const dateStr = typeof row.date === "string" && !row.date.includes("T")
+      ? `${row.date}T00:00:00.000Z`
+      : row.date;
+    const t = new Date(dateStr).getTime();
+    if (!Number.isNaN(t)) return t;
+  }
+  return 0;
+}
+
+export function sortCsrRows(rows: any[], sortBy: string, sortDirection: "asc" | "desc"): any[] {
+  const dir = sortDirection === "asc" ? 1 : -1;
+  const sorted = [...rows];
+
+  if (sortBy === "created_at" || sortBy === "date") {
+    sorted.sort((a, b) => {
+      const timeA = getCsrEffectiveTimestamp(a);
+      const timeB = getCsrEffectiveTimestamp(b);
+      if (timeA !== timeB) {
+        return (timeA - timeB) * dir;
+      }
+      return String(a?.csr_number || "").localeCompare(String(b?.csr_number || ""), undefined, { numeric: true }) * dir;
+    });
+    return sorted;
+  }
+
+  return applySortLocally(sorted, sortBy, sortDirection);
+}
+
 function applySortOrder(query: any, sortBy: string, sortDirection: "asc" | "desc") {
   return query.order(sortBy, { ascending: sortDirection === "asc" });
 }
@@ -527,16 +561,21 @@ const csrAdapter: DocumentAdapter<ProjectQueryState, any> = {
     }
 
     q = applyDateFilter(q, query.dateRange);
-    q = applySortOrder(q, query.sortBy, query.sortDirection);
-    // Secondary sort by csr_number for deterministic ordering when created_at ties
     if (query.sortBy === "created_at") {
-      q = q.order("csr_number", { ascending: query.sortDirection === "asc" });
+      q = q
+        .order("created_at", { ascending: query.sortDirection === "asc", nullsFirst: false })
+        .order("date", { ascending: query.sortDirection === "asc", nullsFirst: false })
+        .order("csr_number", { ascending: query.sortDirection === "asc", nullsFirst: false });
+    } else {
+      q = q.order(query.sortBy, { ascending: query.sortDirection === "asc", nullsFirst: false });
     }
 
     const { data, error } = await q;
     if (error) throw error;
 
-    const rows = (data as any[]) || [];
+    let rows = (data as any[]) || [];
+    rows = sortCsrRows(rows, query.sortBy, query.sortDirection);
+
     if (!hasActiveFilters(query)) {
       writeListCache(csrAdapter.cacheKey, rows);
     }
