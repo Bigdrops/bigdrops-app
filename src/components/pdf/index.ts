@@ -195,6 +195,37 @@ export async function generateCpsFormePdf(request: {
   return { status: 'generated', filename, uri: result.uri }
 }
 
+export async function generateCsrPdfcnPdf(request: {
+  rawDocument: Record<string, any>
+  templateId: string
+  deliver?: boolean
+  filename?: string
+  options?: Record<string, unknown>
+}): Promise<PdfGenerationResult> {
+  const { resolvePdfcnDocument } = await import('./pdfcn')
+  const { generatePdfcnPdf } = await import('./pdfcn/adapter')
+
+  const resolution = resolvePdfcnDocument({
+    documentType: 'csr',
+    templateId: request.templateId,
+    rawDocument: request.rawDocument,
+    options: request.options,
+  })
+
+  if (!resolution.success || !resolution.envelope || !resolution.element) {
+    throw new Error(`PDFCN CSR generation failed: ${resolution.error || 'Unknown resolution error'}`)
+  }
+
+  const result = await generatePdfcnPdf(resolution.envelope, resolution.element, {
+    deliver: request.deliver !== false,
+    filename: request.filename,
+  })
+
+  return { status: 'generated', filename: result.filename, uri: result.uri }
+}
+
+export { isPdfcnCsrTemplate } from './pdfcn'
+
 export {
   buildPdfRowCells,
   buildPdfTableColumns,
