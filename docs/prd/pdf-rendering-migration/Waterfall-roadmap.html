@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Waterfall Roadmap &amp; Phased Execution Sequence — PDF Rendering Migration</title>
+<meta name="description" content="Approved living command document for the Forme Engine + pdfcn presentation layer migration. Seven milestones, three gates, frozen documentation baseline.">
+<meta name="color-scheme" content="dark">
+<script>document.documentElement.className += " js";</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   WATERFALL ROADMAP — mission-control blueprint, mobile-first
+   ============================================================ */
+:root{
+  --bg:#07080B;
+  --panel:#0E1117;
+  --line:rgba(255,255,255,.085);
+  --line-2:rgba(255,255,255,.16);
+  --text:#E9EBF1;
+  --muted:#99A1B4;
+  --dim:#69718A;
+  --amber:#FFB300;
+  --amber-2:#FFD976;
+  --go:#23E08A;
+  --alert:#FF4D5E;
+  --info:#46C8FF;
+  --violet:#A18CFF;
+  --radius:14px;
+  --maxw:1180px;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --display:'Archivo','Arial Black','Helvetica Neue',sans-serif;
+  --body:'Barlow','Segoe UI',Helvetica,Arial,sans-serif;
+  --scroll:0%;
+  --barH:112px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--body);font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;
+}
+img,svg{max-width:100%}
+a{color:inherit}
+code{
+  font-family:var(--mono);font-size:.85em;font-weight:500;
+  color:var(--amber-2);background:rgba(255,179,0,.09);
+  border:1px solid rgba(255,179,0,.18);border-radius:5px;
+  padding:.08em .36em;
+  overflow-wrap:anywhere;word-break:break-word;
+}
+::selection{background:var(--amber);color:#0A0A0A}
+button{font:inherit;color:inherit}
+
+/* ---------- atmosphere ---------- */
+.backdrop{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(700px 460px at 6% -8%, rgba(255,179,0,.14), transparent 62%),
+    radial-gradient(620px 460px at 102% 4%, rgba(70,200,255,.09), transparent 60%),
+    linear-gradient(180deg,#08090D 0%,#07080B 45%,#06070A 100%);
+}
+.backdrop::after{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(900px 600px at 50% 6%,#000 8%,transparent 76%);
+  mask-image:radial-gradient(900px 600px at 50% 6%,#000 8%,transparent 76%);
+}
+.grain{
+  position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:60;
+  background:rgba(6,7,10,.9);backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid var(--line);
+}
+.topbar__in{max-width:var(--maxw);margin:0 auto;padding:9px 14px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;min-width:0}
+.brand__mark{
+  width:27px;height:27px;border:1.5px solid var(--amber);border-radius:7px;
+  display:grid;place-items:center;color:var(--amber);flex:0 0 auto;
+  font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:-.03em;
+  box-shadow:0 0 16px rgba(255,179,0,.3),inset 0 0 10px rgba(255,179,0,.14);
+}
+.brand__txt{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);line-height:1.35;overflow:hidden}
+.brand__txt b{display:block;color:var(--text);font-weight:600;letter-spacing:.1em;font-size:10px}
+.live{
+  margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--go);
+}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--go);box-shadow:0 0 9px var(--go);animation:blip 1.8s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.nav{
+  order:3;flex:1 0 100%;display:flex;gap:3px;overflow-x:auto;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  padding:7px 0 8px;margin-top:6px;border-top:1px solid var(--line);
+}
+.nav::-webkit-scrollbar{display:none}
+.nav a{
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;padding:11px 10px;border-radius:7px;
+  white-space:nowrap;transition:color .25s,background .25s;flex:0 0 auto;
+}
+.nav a.active{color:#0B0B0B;background:var(--amber);font-weight:600}
+.scrollline{
+  position:absolute;left:0;bottom:-1px;height:2px;width:var(--scroll);
+  background:linear-gradient(90deg,#FF7A18,var(--amber),var(--amber-2));
+  box-shadow:0 0 14px rgba(255,179,0,.75);transition:width .1s linear;
+}
+
+/* ---------- layout ---------- */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+section{position:relative;scroll-margin-top:calc(var(--barH) + 44px)}
+.pad{padding:54px 0}
+.pad-sm{padding:34px 0}
+
+/* ---------- hero ---------- */
+.hero{position:relative;padding:calc(var(--barH) + 34px) 0 26px;overflow:hidden}
+.hero__spot{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(340px 340px at var(--mx,55%) var(--my,35%),rgba(255,179,0,.11),transparent 65%);
+}
+.hero__rings{position:absolute;right:-140px;top:40px;width:340px;height:340px;opacity:.42;pointer-events:none}
+.hero__rings circle{fill:none;stroke:rgba(255,179,0,.35)}
+.hero__rings .r2{stroke:rgba(70,200,255,.28);stroke-dasharray:4 9}
+.hero__rings .r3{stroke:rgba(255,255,255,.18);stroke-dasharray:2 14}
+.spin{transform-origin:170px 170px;animation:spin 44s linear infinite}
+.spin-rev{transform-origin:170px 170px;animation:spin 70s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hero__in{position:relative;z-index:2}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:9px;max-width:100%;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--amber);border:1px solid rgba(255,179,0,.32);background:rgba(255,179,0,.07);
+  padding:6px 12px;border-radius:999px;
+}
+.eyebrow i{width:6px;height:6px;background:var(--amber);border-radius:50%;box-shadow:0 0 9px var(--amber);animation:blip 2.2s ease-in-out infinite;flex:0 0 auto}
+h1{
+  font-family:var(--display);font-variation-settings:'wdth' 116,'wght' 850;
+  font-size:clamp(2.5rem,15vw,5.6rem);line-height:.86;letter-spacing:-.038em;
+  text-transform:uppercase;margin:20px 0 0;
+}
+.line{display:block;overflow:hidden;padding-bottom:.05em}
+.line>span{display:block;transform:translateY(112%);animation:rise 1s cubic-bezier(.19,1,.22,1) forwards;animation-delay:var(--d,0s)}
+@keyframes rise{to{transform:translateY(0)}}
+.outline{color:transparent;-webkit-text-stroke:1.5px var(--amber)}
+.solid-grad{
+  background:linear-gradient(96deg,#FFF 12%,#B9C0D2 58%,#7C849B 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero__seq{
+  margin:16px 0 0;font-family:var(--mono);font-size:clamp(10px,3vw,13px);
+  letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+}
+.hero__seq b{color:var(--amber);font-weight:600}
+.meta{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;
+  margin-top:22px;background:var(--line);border:1px solid var(--line);
+  border-radius:12px;overflow:hidden;
+}
+.meta__cell{background:#0A0C11;padding:11px 13px;min-width:0}
+.meta__k{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:4px}
+.meta__v{font-size:13px;font-weight:500;line-height:1.4;color:var(--text);overflow-wrap:anywhere}
+.meta__v .hl{color:var(--amber);font-weight:600}
+.fade-up{opacity:0;transform:translateY(22px);animation:fadeUp .85s cubic-bezier(.19,1,.22,1) forwards;animation-delay:var(--d,0s)}
+@keyframes fadeUp{to{opacity:1;transform:none}}
+
+/* ---------- section headings ---------- */
+.shead{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.shead__no{
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--amber);
+  border-top:2px solid var(--amber);padding-top:7px;flex:0 0 auto;
+}
+.shead h2{
+  font-family:var(--display);font-variation-settings:'wdth' 110,'wght' 750;
+  font-size:clamp(1.35rem,6vw,2.4rem);line-height:1.03;letter-spacing:-.028em;
+  text-transform:uppercase;margin:0;flex:1 1 180px;
+}
+.shead__rule{flex:1 0 100%;height:1px;background:linear-gradient(90deg,var(--line-2),transparent);position:relative;overflow:hidden}
+.shead__rule::after{
+  content:"";position:absolute;left:0;top:0;height:100%;width:0;
+  background:linear-gradient(90deg,var(--amber),transparent);
+  transition:width 1.1s cubic-bezier(.2,.8,.2,1) .12s;
+}
+.reveal.in .shead__rule::after{width:100%}
+
+/* ---------- reveal ---------- */
+.reveal{transition:opacity .8s cubic-bezier(.19,1,.22,1) var(--d,0s),transform .8s cubic-bezier(.19,1,.22,1) var(--d,0s)}
+.js .reveal{opacity:0;transform:translateY(24px)}
+.js .reveal.in{opacity:1;transform:none}
+
+/* ---------- progress ---------- */
+.prog{
+  background:linear-gradient(155deg,rgba(255,179,0,.085),rgba(255,255,255,.015) 58%);
+  border:1px solid rgba(255,179,0,.24);border-radius:16px;padding:20px 18px;
+  position:relative;overflow:hidden;
+}
+.prog__big{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;position:relative;z-index:2}
+.prog__num{
+  font-family:var(--display);font-variation-settings:'wdth' 120,'wght' 850;
+  font-size:clamp(3.6rem,20vw,6.4rem);line-height:.78;letter-spacing:-.05em;color:var(--amber);
+  text-shadow:0 0 50px rgba(255,179,0,.35);
+}
+.prog__num sup{font-size:.3em;vertical-align:super;letter-spacing:0;color:var(--amber-2)}
+.prog__cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding-bottom:9px}
+.prog__cap b{display:block;color:var(--text);font-size:12.5px;letter-spacing:.08em;margin-top:4px}
+.segbar{display:flex;gap:4px;margin-top:20px;position:relative;z-index:2}
+.seg{flex:1;height:24px;border:1px solid var(--line-2);border-radius:4px;background:rgba(255,255,255,.03);position:relative;overflow:hidden}
+.seg::after{
+  content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--amber),#FF8A00);
+  transform:scaleX(0);transform-origin:left;transition:transform .7s cubic-bezier(.2,.8,.2,1);
+}
+.seg.on::after{transform:scaleX(1)}
+.seg.half::after{transform:scaleX(.5)}
+.segbar.in .seg{transition-delay:calc(var(--i) * .07s)}
+.js .segbar:not(.in) .seg::after{transform:scaleX(0)}
+.facts{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;position:relative;z-index:2;
+}
+.fact{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);background:rgba(6,7,10,.55);border:1px solid var(--line);
+  border-radius:8px;padding:8px 11px;flex:1 1 auto;text-align:center;
+}
+.fact b{color:var(--amber);font-weight:600}
+.terminal{
+  background:#05060A;border:1px solid var(--line);border-radius:9px;padding:11px 13px;margin-top:10px;
+  font-family:var(--mono);font-size:13px;letter-spacing:.04em;
+  display:flex;align-items:center;gap:9px;overflow:hidden;
+}
+.term__ascii{color:var(--go);white-space:nowrap;text-shadow:0 0 12px rgba(35,224,138,.4);overflow-x:auto}
+.terminal .caret{width:7px;height:14px;background:var(--go);display:inline-block;flex:0 0 auto;animation:caret 1.05s steps(2) infinite}
+@keyframes caret{0%,50%{opacity:1}51%,100%{opacity:0}}
+.note{
+  margin-top:16px;padding:13px 16px;border-left:2px solid var(--line-2);
+  color:var(--muted);font-style:italic;font-size:14.5px;font-weight:300;
+  background:rgba(255,255,255,.02);border-radius:0 10px 10px 0;
+}
+.note b{color:var(--amber);font-style:normal;font-weight:600}
+
+/* ---------- legend / filter ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-align:left;
+  background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:999px;
+  padding:9px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);transition:transform .25s,border-color .25s,background .25s,color .25s;
+}
+.chip:hover,.chip:focus-visible{transform:translateY(-2px);border-color:var(--line-2);color:var(--text);outline:none}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 9px var(--c);flex:0 0 auto}
+.chip b{color:var(--c);font-weight:600}
+.chip[aria-pressed="true"]{border-color:var(--c);background:rgba(255,255,255,.09);color:#fff}
+.chip .desc{display:none}
+.filterbar{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);
+}
+.filterbar .count-pill{color:var(--amber);border:1px dashed rgba(255,179,0,.4);padding:4px 10px;border-radius:6px}
+.filterbar .reset{color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px;letter-spacing:.11em;font-family:var(--mono);font-size:10px;text-transform:uppercase;padding:0}
+.filterbar .reset:hover{color:var(--amber)}
+.dim{opacity:.15;filter:grayscale(.85)}
+[data-status],.reveal,.step,.node{transition:opacity .4s,filter .4s}
+
+/* ---------- cascade (desktop) ---------- */
+.cascade{display:none}
+
+/* ---------- tables as mobile cards ---------- */
+.table-wrap{
+  border:1px solid var(--line);border-radius:16px;padding:11px;
+  background:linear-gradient(180deg,rgba(255,255,255,.032),rgba(255,255,255,.008));
+}
+table{width:100%;border-collapse:collapse}
+thead{display:none}
+tbody{display:block}
+tbody tr{
+  display:flex;flex-wrap:wrap;gap:9px 10px;align-items:center;
+  border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;margin-bottom:10px;background:rgba(10,12,17,.6);
+  transition:border-color .3s,background .3s;
+}
+tbody tr:last-child{margin-bottom:0}
+tbody tr:hover{border-color:rgba(255,179,0,.36);background:rgba(255,179,0,.05)}
+tbody td{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:5px 0;border:none;font-size:14.3px;line-height:1.5}
+tbody td::before{
+  content:attr(data-label);flex:0 0 auto;
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);padding-top:3px;max-width:42%;
+}
+td.id{
+  display:block;font-family:var(--display);font-variation-settings:'wdth' 116,'wght' 850;
+  font-size:27px;letter-spacing:-.035em;color:var(--amber);padding:0 0 6px;
+}
+td.id::before{display:none}
+td.head-cell{
+  display:block;color:var(--text);font-weight:600;font-size:15px;
+  padding:0 0 9px;margin-bottom:5px;border-bottom:1px dashed var(--line);
+}
+td.head-cell::before{display:none}
+td.stack{display:block}
+td.stack::before{display:block;margin-bottom:5px}
+/* mobile card row order: id + name, then chips, then long text */
+td.id{order:1}
+td.head-cell{order:2;flex:1 1 auto;min-width:0}
+td[data-label="Priority"]{order:3;flex:0 0 auto}
+td[data-label="Status"]{order:4;flex:0 0 auto}
+td[data-label="Priority"]::before,
+td[data-label="Status"]::before,
+td[data-label="% Done"]::before{display:none}
+td[data-label="% Done"]{order:5;display:flex;flex:0 0 100%;min-width:0;max-width:none}
+td[data-label="% Done"] .mini{flex:1;max-width:none}
+td[data-label="Scope"]{order:6;flex:0 0 100%}
+td[data-label="Target Gate"]{order:7;flex:0 0 100%}
+td .mname{display:block;color:var(--text);font-weight:600}
+.pri{font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:4px 8px;border-radius:5px;border:1px solid;white-space:nowrap;display:inline-block}
+.pri.CRIT{color:var(--alert);border-color:rgba(255,77,94,.42);background:rgba(255,77,94,.1)}
+.pri.HIGH{color:var(--amber);border-color:rgba(255,179,0,.4);background:rgba(255,179,0,.1)}
+.pri.MED{color:var(--info);border-color:rgba(70,200,255,.35);background:rgba(70,200,255,.09)}
+.pri.LOW{color:var(--dim);border-color:var(--line-2);background:rgba(255,255,255,.04)}
+.st{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;padding:5px 9px;border-radius:6px;border:1px solid}
+.st-implemented{color:var(--go);border-color:rgba(35,224,138,.38);background:rgba(35,224,138,.1)}
+.st-improved{color:var(--info);border-color:rgba(70,200,255,.36);background:rgba(70,200,255,.1)}
+.st-corrected{color:var(--amber);border-color:rgba(255,179,0,.38);background:rgba(255,179,0,.1)}
+.st-superseded{color:var(--violet);border-color:rgba(161,140,255,.36);background:rgba(161,140,255,.1)}
+.st-pending{color:var(--alert);border-color:rgba(255,77,94,.34);background:rgba(255,77,94,.09)}
+.mini{display:flex;align-items:center;gap:9px;flex:1;max-width:190px}
+.mini__bar{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;min-width:48px}
+.mini__bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF8A00,var(--amber));transition:width 1.1s cubic-bezier(.2,.8,.2,1) var(--d,.15s)}
+tr.done .mini__bar i{background:linear-gradient(90deg,#0FA968,var(--go))}
+.mini span{font-family:var(--mono);font-size:11.5px;color:var(--text);min-width:36px;text-align:right}
+.gatecell{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;flex:1}
+.gatecell b{color:var(--alert);background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.3);padding:2px 6px;border-radius:5px;font-size:10px;letter-spacing:.08em;margin-right:6px}
+
+/* ---------- execution: accordion timeline ---------- */
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tool{
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:8px;
+  padding:11px 14px;cursor:pointer;color:var(--muted);transition:.25s;
+}
+.tool:hover,.tool:focus-visible{color:#0B0B0B;background:var(--amber);border-color:var(--amber);outline:none}
+.timeline{position:relative;padding-left:30px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:0;width:2px;background:rgba(255,255,255,.09)}
+.timeline::after{
+  content:"";position:absolute;left:6px;top:6px;width:2px;height:var(--spine,0%);
+  background:linear-gradient(180deg,var(--amber),#FF7A18);
+  box-shadow:0 0 14px rgba(255,179,0,.7);transition:height .18s linear;
+}
+.phase{position:relative;padding-bottom:16px}
+.phase::before{
+  content:"";position:absolute;left:-31px;top:16px;width:16px;height:16px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--line-2);transition:border-color .4s,box-shadow .4s;
+}
+.phase[open]::before{border-color:var(--amber);box-shadow:0 0 0 4px rgba(255,179,0,.13),0 0 20px rgba(255,179,0,.5)}
+.phase.done-phase[open]::before{border-color:var(--go);box-shadow:0 0 0 4px rgba(35,224,138,.12),0 0 20px rgba(35,224,138,.45)}
+.phase__head{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;cursor:pointer;list-style:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+  transition:border-color .3s,background .3s;
+}
+.phase__head::-webkit-details-marker{display:none}
+.phase__head:hover,.phase__head:focus-visible{border-color:rgba(255,179,0,.4);outline:none}
+.phase__no{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:#0B0B0B;background:var(--amber);padding:4px 8px;border-radius:5px;font-weight:600;flex:0 0 auto;
+}
+.done-phase .phase__no{background:var(--go)}
+.phase__t{
+  font-family:var(--display);font-variation-settings:'wdth' 108,'wght' 700;
+  font-size:14.5px;letter-spacing:-.012em;text-transform:uppercase;margin:0;flex:1 1 130px;line-height:1.2;
+}
+.chev{
+  flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:1px solid var(--line-2);
+  display:grid;place-items:center;color:var(--amber);font-size:11px;transition:transform .3s,background .3s;
+}
+details[open] .chev{transform:rotate(180deg);background:rgba(255,179,0,.14)}
+.phase__body{padding:14px 2px 4px}
+details[open] .phase__body{animation:slideDown .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.phase__status{display:none}
+
+.callout{border:1px solid;border-radius:12px;padding:15px 16px;margin:0 0 14px;position:relative;overflow:hidden;background:rgba(255,255,255,.03)}
+.callout::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.callout--critical{border-color:rgba(255,77,94,.4);background:linear-gradient(120deg,rgba(255,77,94,.1),rgba(255,77,94,.02))}
+.callout--critical::before{background:var(--alert);box-shadow:0 0 14px var(--alert)}
+.callout--important{border-color:rgba(255,179,0,.4);background:linear-gradient(120deg,rgba(255,179,0,.1),rgba(255,179,0,.02))}
+.callout--important::before{background:var(--amber);box-shadow:0 0 14px var(--amber)}
+.callout__tag{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.callout--critical .callout__tag{color:var(--alert)}
+.callout--important .callout__tag{color:var(--amber)}
+.callout__tag svg{width:13px;height:13px}
+.callout h4{margin:0 0 8px;font-family:var(--display);font-variation-settings:'wdth' 105,'wght' 700;font-size:14.5px;letter-spacing:-.01em;text-transform:uppercase;line-height:1.25}
+.callout p{margin:0 0 9px;color:var(--muted);font-size:14.3px}
+.callout ol{margin:0;padding-left:19px;color:var(--muted);font-size:14px}
+.callout ol li{margin:5px 0}
+.callout ol li::marker{color:var(--alert);font-family:var(--mono);font-size:11px}
+.callout--important ol li::marker{color:var(--amber)}
+
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.step{
+  display:flex;gap:12px;background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+  border:1px solid var(--line);border-radius:12px;padding:14px 14px;
+  transition:border-color .3s,transform .3s,background .3s,opacity .4s,filter .4s;
+}
+.step:hover{border-color:rgba(255,179,0,.38);background:linear-gradient(160deg,rgba(255,179,0,.05),rgba(255,255,255,.012))}
+.check{
+  flex:0 0 auto;width:21px;height:21px;border-radius:6px;border:1.5px solid var(--line-2);
+  display:grid;place-items:center;margin-top:2px;background:rgba(255,255,255,.03);
+}
+.check.on{background:rgba(35,224,138,.14);border-color:rgba(35,224,138,.6)}
+.check svg{width:12px;height:12px;stroke:var(--go);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .5s cubic-bezier(.2,.8,.2,1) var(--d,.2s)}
+.js .step.in .check.on svg,.step.in .check.on svg{stroke-dashoffset:0}
+.step__b{flex:1;min-width:0}
+.step__t{margin:0;font-size:14.7px;color:var(--text);font-weight:500;line-height:1.5;overflow-wrap:anywhere}
+.step__t .num{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--amber);
+  background:rgba(255,179,0,.11);border:1px solid rgba(255,179,0,.28);
+  padding:2px 7px;border-radius:5px;margin-right:8px;display:inline-block;vertical-align:1px;white-space:nowrap;
+}
+.sub{list-style:none;margin:11px 0 0;padding:0 0 0 14px;border-left:1px dashed rgba(255,255,255,.16)}
+.sub li{position:relative;padding-left:15px;margin:6px 0;font-size:13.8px;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
+.sub li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:1.5px;background:rgba(255,179,0,.7)}
+.statline{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.statline .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.statline .date{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+
+/* ---------- decision log ---------- */
+.acc{margin-top:4px}
+.log tbody tr{display:flex;flex-wrap:wrap;gap:7px 10px;align-items:center}
+.log td{padding:0;border:none;display:block}
+.log td::before{display:none}
+.log .date{font-family:var(--mono);font-size:11.5px;color:var(--amber);letter-spacing:.03em;flex:0 0 auto}
+.log .status-cell{margin-left:auto;flex:0 0 auto}
+.log .phase-a{font-family:var(--mono);font-size:11.5px;color:var(--text);letter-spacing:.02em;flex:0 0 100%;padding-top:2px}
+.log .dec{flex:0 0 100%;color:var(--muted);font-size:14.3px;border-top:1px dashed var(--line);padding-top:9px !important;margin-top:2px}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;background:linear-gradient(180deg,transparent,rgba(255,179,0,.035))}
+.foot__t{font-family:var(--display);font-variation-settings:'wdth' 110,'wght' 750;font-size:16px;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 6px}
+.foot p{margin:0 0 14px;color:var(--dim);font-size:13.5px}
+.foot__meta{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);line-height:2.1}
+.foot__meta b{color:var(--amber)}
+
+/* ============================================================
+   DESKTOP
+   ============================================================ */
+@media (min-width:760px){
+  :root{--barH:56px}
+  body{font-size:16.5px}
+  .wrap{padding:0 24px}
+  .pad{padding:76px 0}
+  .pad-sm{padding:52px 0}
+  section{scroll-margin-top:76px}
+
+  .topbar__in{padding:11px 24px;flex-wrap:nowrap;gap:24px}
+  .brand__txt{font-size:11px}
+  .brand__txt b{font-size:11.5px}
+  .nav{order:0;flex:1 1 auto;margin-top:0;padding:0;border-top:none;justify-content:flex-end}
+  .nav a{font-size:11px;letter-spacing:.13em;padding:7px 11px}
+  .live{font-size:10px}
+
+  .hero{padding:calc(var(--barH) + 92px) 0 44px}
+  .hero__rings{right:-70px;top:60px;width:470px;height:470px;opacity:.5}
+  .spin,.spin-rev{transform-origin:235px 235px}
+  h1{font-size:clamp(3rem,8.4vw,6.6rem);margin-top:24px}
+  .hero__seq{margin-top:20px}
+  .meta{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:30px}
+  .meta__cell{padding:14px 16px}
+  .meta__v{font-size:14px}
+
+  .shead{gap:20px;margin-bottom:26px}
+  .prog{padding:30px}
+  .prog__row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:26px;align-items:start}
+  .seg{height:30px}
+  .facts{gap:10px}
+  .fact{font-size:11px;padding:9px 14px}
+  .note{font-size:15px}
+
+  .chip{padding:10px 16px;font-size:11px}
+  .chip .desc{display:inline}
+
+  /* cascade strip appears on desktop */
+  .cascade{
+    display:flex;align-items:flex-start;gap:0;list-style:none;
+    margin:0 0 30px;padding:2px 2px 16px;overflow-x:auto;
+  }
+  .cascade::-webkit-scrollbar{height:6px}
+  .cascade::-webkit-scrollbar-thumb{background:rgba(255,179,0,.4);border-radius:99px}
+  .cascade::-webkit-scrollbar-track{background:rgba(255,255,255,.05);border-radius:99px}
+  .node{
+    flex:0 0 auto;width:158px;background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
+    border:1px solid var(--line);border-radius:13px;padding:14px;position:relative;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .35s,box-shadow .35s,opacity .4s,filter .4s;
+  }
+  .node:hover{transform:translateY(-7px);border-color:rgba(255,179,0,.45);box-shadow:0 22px 44px -26px rgba(255,179,0,.75)}
+  .node__id{font-family:var(--display);font-variation-settings:'wdth' 118,'wght' 850;font-size:28px;line-height:1;letter-spacing:-.04em;color:var(--text)}
+  .node.done .node__id{color:var(--go)}
+  .node__t{font-size:12.3px;line-height:1.35;color:var(--muted);margin:8px 0 10px;min-height:33px;font-weight:500}
+  .node__bar{height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}
+  .node__bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF8A00,var(--amber));transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+  .node.done .node__bar i{background:linear-gradient(90deg,#0FA968,var(--go))}
+  .node__p{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--dim);margin-top:7px;gap:6px}
+  .node__p b{color:var(--text)}
+  .arrow{flex:0 0 auto;display:grid;place-items:center;width:34px;color:rgba(255,179,0,.55);font-family:var(--mono);font-size:14px;align-self:center}
+  .gate{flex:0 0 auto;width:86px;display:flex;flex-direction:column;align-items:center;gap:7px;align-self:center;text-align:center}
+  .gate__dia{
+    width:34px;height:34px;transform:rotate(45deg);border:1.5px solid var(--alert);
+    background:rgba(255,77,94,.1);border-radius:7px;display:grid;place-items:center;
+    box-shadow:0 0 20px rgba(255,77,94,.32);animation:pulseG 2.6s ease-in-out infinite;
+  }
+  .gate__dia span{transform:rotate(-45deg);color:var(--alert);font-size:14px}
+  @keyframes pulseG{0%,100%{box-shadow:0 0 16px rgba(255,77,94,.28)}50%{box-shadow:0 0 30px rgba(255,77,94,.6)}}
+  .gate__l{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--alert);line-height:1.35}
+
+  /* tables return to rows */
+  .table-wrap{padding:0;overflow:hidden}
+  thead{display:table-header-group}
+  tbody{display:table-row-group}
+  table{min-width:100%;display:table}
+  thead th{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);
+    text-align:left;padding:14px 15px;background:rgba(6,7,10,.62);border-bottom:1px solid rgba(255,179,0,.28);
+    white-space:nowrap;
+  }
+  tbody tr{display:table-row;border:none;border-radius:0;padding:0;margin:0;background:none}
+  tbody tr:hover{background:rgba(255,179,0,.055);border-color:transparent}
+  tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
+  tbody td{display:table-cell;padding:15px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14.4px}
+  tbody tr:last-child td{border-bottom:none}
+  tbody td::before{display:none}
+  td.id{display:table-cell;font-size:22px;color:var(--text);padding:15px 15px}
+  td.head-cell{display:table-cell;border:none;padding:15px 15px;margin:0}
+  td.stack{display:table-cell}
+  tbody td[data-label]{display:table-cell;min-width:0}
+  .gatecell{text-align:left;max-width:230px}
+  .mini{max-width:none;min-width:130px}
+
+  /* execution */
+  .timeline{padding-left:56px}
+  .timeline::before,.timeline::after{left:17px}
+  .phase::before{left:-47px;top:20px;width:20px;height:20px}
+  .phase{padding-bottom:30px}
+  .phase__head{padding:15px 18px;gap:13px}
+  .phase__t{font-size:17px;flex:1 1 auto}
+  .phase__status{display:inline-flex}
+  .phase__body{padding:18px 4px 6px}
+  .step{padding:17px 19px;gap:15px}
+  .step:hover{transform:translateX(5px)}
+  .step__t{font-size:15.4px}
+  .sub li{font-size:14.3px}
+  .callout{padding:19px 22px}
+  .callout h4{font-size:16px}
+  .callout p,.callout ol{font-size:15px}
+  .steps{gap:12px}
+
+  /* decision log */
+  .log tbody tr{display:table-row;flex-wrap:nowrap}
+  .log td{display:table-cell;padding:15px;border-bottom:1px solid var(--line);font-size:14.4px}
+  .log tr:last-child td{border-bottom:none}
+  .log .date{font-size:12.5px}
+  .log .status-cell{margin-left:0}
+  .log .phase-a{flex:none;padding-top:0}
+  .log .dec{flex:none;border-top:none;padding-top:0 !important;margin-top:0}
+  .log tbody tr:hover{background:rgba(255,179,0,.055)}
+
+  footer{padding:40px 0 54px}
+  .foot{display:flex;justify-content:space-between;gap:30px;align-items:flex-start}
+  .foot__t{font-size:19px}
+  .foot__meta{text-align:right}
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  .line>span,.fade-up{transform:none;opacity:1}
+  .js .reveal{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+
+/* ---------- print ---------- */
+@media print{
+  :root{--bg:#fff;--text:#111;--muted:#333;--dim:#555;--line:#ccc;--line-2:#999}
+  body{background:#fff;color:#111;font-size:10.5pt}
+  .backdrop,.grain,.topbar,.hero__rings,.hero__spot,.filterbar,.tools,.cascade{display:none !important}
+  .hero{padding:0 0 14px}
+  h1{font-size:30pt;color:#111}
+  .outline{color:#111 !important;-webkit-text-stroke:0}
+  .line>span,.fade-up,.js .reveal{transform:none !important;opacity:1 !important;animation:none !important}
+  .prog,.step,.meta__cell,.table-wrap,.callout,.phase__head{background:#fff !important;border-color:#bbb !important;box-shadow:none !important}
+  .prog__num{color:#111 !important;text-shadow:none}
+  .timeline::after{height:100% !important;background:#111}
+  .phase__body{animation:none !important}
+  table{min-width:0}
+  .table-wrap{overflow:visible;padding:0}
+  section,.phase{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar">
+  <div class="topbar__in">
+    <a class="brand" href="#top">
+      <span class="brand__mark">WF</span>
+      <span class="brand__txt">PDF Migration<b>Waterfall Roadmap</b></span>
+    </a>
+    <span class="live"><i></i>Baseline frozen</span>
+    <nav class="nav" aria-label="Document sections">
+      <a href="#progress">01 Progress</a>
+      <a href="#legend">02 Legend</a>
+      <a href="#tracker">03 Milestones</a>
+      <a href="#execution">04 Execution</a>
+      <a href="#decisions">05 Decisions</a>
+    </nav>
+  </div>
+  <div class="scrollline" aria-hidden="true"></div>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero__spot" aria-hidden="true"></div>
+  <svg class="hero__rings" viewBox="0 0 470 470" aria-hidden="true">
+    <g class="spin"><circle class="r2" cx="235" cy="235" r="206"/><circle class="r3" cx="235" cy="235" r="178"/></g>
+    <g class="spin-rev"><circle class="r2" cx="235" cy="235" r="146"/><circle cx="235" cy="235" r="116" stroke-dasharray="1 6"/></g>
+    <circle cx="235" cy="235" r="86" stroke-opacity=".2"/>
+    <circle cx="235" cy="29" r="4" fill="#FFB300" stroke="none"/>
+    <circle cx="381" cy="235" r="3" fill="#46C8FF" stroke="none"/>
+  </svg>
+
+  <div class="wrap hero__in">
+    <span class="eyebrow fade-up" style="--d:.05s"><i></i>🏗️ PRD · Approved Living Command Document</span>
+
+    <h1>
+      <span class="line"><span class="solid-grad" style="--d:.14s">Waterfall</span></span>
+      <span class="line"><span class="outline" style="--d:.26s">Roadmap</span></span>
+    </h1>
+
+    <p class="hero__seq fade-up" style="--d:.42s">&amp; Phased Execution Sequence · <b>Forme + pdfcn</b></p>
+
+    <div class="meta fade-up" style="--d:.54s">
+      <div class="meta__cell">
+        <span class="meta__k">Status</span>
+        <span class="meta__v"><span class="hl">Approved</span> — frozen baseline, ready for M1 planning</span>
+      </div>
+      <div class="meta__cell">
+        <span class="meta__k">Architecture</span>
+        <span class="meta__v">Forme Engine + <code>pdfcn</code></span>
+      </div>
+      <div class="meta__cell">
+        <span class="meta__k">Writing Standard</span>
+        <span class="meta__v">ASD-STE100</span>
+      </div>
+      <div class="meta__cell">
+        <span class="meta__k">Last Updated</span>
+        <span class="meta__v">2026-10-30</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1. MASTER PROGRESS ============ -->
+<section id="progress" class="pad-sm">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="shead__no">01 / 05</span>
+      <h2>Master Progress</h2>
+      <div class="shead__rule"></div>
+    </div>
+
+    <div class="prog reveal">
+      <div class="prog__row">
+        <div>
+          <div class="prog__big">
+            <span class="prog__num count" data-to="15">0<sup>%</sup></span>
+            <span class="prog__cap">Overall completion<b>Program execution</b></span>
+          </div>
+          <div class="segbar bar" aria-hidden="true">
+            <span class="seg on" style="--i:0"></span>
+            <span class="seg half" style="--i:1"></span>
+            <span class="seg" style="--i:2"></span>
+            <span class="seg" style="--i:3"></span>
+            <span class="seg" style="--i:4"></span>
+            <span class="seg" style="--i:5"></span>
+            <span class="seg" style="--i:6"></span>
+            <span class="seg" style="--i:7"></span>
+            <span class="seg" style="--i:8"></span>
+            <span class="seg" style="--i:9"></span>
+          </div>
+        </div>
+        <div>
+          <div class="facts">
+            <span class="fact">Milestones <b>7</b></span>
+            <span class="fact">Current Phase <b>1 — Engine Foundation</b></span>
+          </div>
+          <div class="terminal">
+            <span class="term__ascii">[██░░░░░░░░] 15%</span>
+            <span class="caret"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note reveal">
+      <b>Note:</b> Milestone M0 is the Discovery and PRD documentation deliverable — 100% complete and frozen. M1–M6 are software implementation phases, pending execution.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 2. STATUS LEGEND ============ -->
+<section id="legend" class="pad-sm">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="shead__no">02 / 05</span>
+      <h2>Status Legend</h2>
+      <div class="shead__rule"></div>
+    </div>
+
+    <div class="legend reveal">
+      <button class="chip" type="button" data-filter="implemented" aria-pressed="false" style="--c:var(--go)">
+        <span class="dot"></span><b>✅ Implemented</b><span class="desc"> — executed, verified, active</span>
+      </button>
+      <button class="chip" type="button" data-filter="improved" aria-pressed="false" style="--c:var(--info)">
+        <span class="dot"></span><b>🔄 Improved</b><span class="desc"> — executed, then enhanced</span>
+      </button>
+      <button class="chip" type="button" data-filter="corrected" aria-pressed="false" style="--c:var(--amber)">
+        <span class="dot"></span><b>🛠️ Corrected</b><span class="desc"> — patched to fix defects</span>
+      </button>
+      <button class="chip" type="button" data-filter="superseded" aria-pressed="false" style="--c:var(--violet)">
+        <span class="dot"></span><b>⏭️ Superseded</b><span class="desc"> — replaced by newer decision</span>
+      </button>
+      <button class="chip" type="button" data-filter="pending" aria-pressed="false" style="--c:var(--alert)">
+        <span class="dot"></span><b>⛔ Pending</b><span class="desc"> — blocked until gates pass</span>
+      </button>
+    </div>
+
+    <div class="filterbar">
+      <span>Tap a status to isolate it</span>
+      <span class="count-pill" id="filterCount" hidden></span>
+      <button class="reset" type="button" id="resetFilter" hidden>Clear</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. MILESTONE TRACKER ============ -->
+<section id="tracker" class="pad-sm">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="shead__no">03 / 05</span>
+      <h2>Milestones &amp; Gates</h2>
+      <div class="shead__rule"></div>
+    </div>
+
+    <ol class="cascade reveal" aria-label="Milestone execution sequence">
+      <li class="node done" data-status="implemented">
+        <span class="node__id">M0</span>
+        <p class="node__t">Discovery &amp; Problem Register</p>
+        <div class="node__bar" data-p="100"><i></i></div>
+        <div class="node__p"><span>Done</span><b>100%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node" data-status="pending">
+        <span class="node__id">M1</span>
+        <p class="node__t">Forme Foundation &amp; Typography</p>
+        <div class="node__bar" data-p="0"><i></i></div>
+        <div class="node__p"><span>Pending</span><b>0%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node" data-status="pending">
+        <span class="node__id">M2</span>
+        <p class="node__t">Natural Pagination (Normal)</p>
+        <div class="node__bar" data-p="0"><i></i></div>
+        <div class="node__p"><span>Pending</span><b>0%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 1<br>Sign-off</span></li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node" data-status="pending">
+        <span class="node__id">M3</span>
+        <p class="node__t">Compact &amp; Force 1 Page</p>
+        <div class="node__bar" data-p="0"><i></i></div>
+        <div class="node__p"><span>Pending</span><b>0%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 2<br>Compaction</span></li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node" data-status="pending">
+        <span class="node__id">M4</span>
+        <p class="node__t">Reference Template Cert.</p>
+        <div class="node__bar" data-p="0"><i></i></div>
+        <div class="node__p"><span>Pending</span><b>0%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 3<br>Pre-production</span></li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node" data-status="pending">
+        <span class="node__id">M5</span>
+        <p class="node__t">Remaining Document Families</p>
+        <div class="node__bar" data-p="0"><i></i></div>
+        <div class="node__p"><span>Pending</span><b>0%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node" data-status="pending">
+        <span class="node__id">M6</span>
+        <p class="node__t">Legacy Cleanup &amp; Deprecation</p>
+        <div class="node__bar" data-p="0"><i></i></div>
+        <div class="node__p"><span>Pending</span><b>0%</b></div>
+      </li>
+    </ol>
+
+    <div class="table-wrap reveal">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Milestone / Phase</th>
+            <th scope="col">Scope Summary</th>
+            <th scope="col">Priority</th>
+            <th scope="col">Status</th>
+            <th scope="col">% Done</th>
+            <th scope="col">Target Gate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="done" data-status="implemented">
+            <td class="id">M0</td>
+            <td class="head-cell">Discovery &amp; Problem Register</td>
+            <td class="stack" data-label="Scope">Root cause analysis on <code>SASQUO-000427</code>, <code>SASQUO-000428</code>, <code>SASQUO-430</code>. PRD documentation suite update and baseline freeze.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Documentation Baseline Frozen.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M1</td>
+            <td class="head-cell">Forme Foundation &amp; Typography</td>
+            <td class="stack" data-label="Scope">TrueType font evaluation (static TTF vs binary bundle for mobile/offline), Unicode normalizer, 5-step rich text pipeline, scoped emoji fallback.</td>
+            <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
+            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Typography, mobile font &amp; rich-text tests pass.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M2</td>
+            <td class="head-cell">Natural Pagination (Normal Mode)</td>
+            <td class="stack" data-label="Scope">Calibrated table columns (candidate 72 pt make), adaptive closing layout, repeating headers, dynamic footer, selective keep-together, oversized row handling.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 1</b>Representative Document Suite Sign-Off.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M3</td>
+            <td class="head-cell">Compact &amp; Force 1 Page Modes</td>
+            <td class="stack" data-label="Scope">Wire 32 candidate compact tokens, multi-pass measurement via <code>renderDocumentWithLayout</code>, legibility-first safeguards (candidate 7 pt floor), fallback.</td>
+            <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
+            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 2</b>Compaction Tests.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M4</td>
+            <td class="head-cell">Reference Template Certification</td>
+            <td class="stack" data-label="Scope">Full Quotation &amp; Invoice templates in Forme, Landscape mode, preview parity, visual regression.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 3</b>Pre-Production Approval.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M5</td>
+            <td class="head-cell">Remaining Document Families</td>
+            <td class="stack" data-label="Scope">Waybill, RFQ, BOQ, and CSR migration to Forme templates.</td>
+            <td data-label="Priority"><span class="pri MED">MED</span></td>
+            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">All document types active.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M6</td>
+            <td class="head-cell">Legacy Cleanup &amp; Deprecation</td>
+            <td class="stack" data-label="Scope">Verify zero React-PDF imports, remove obsolete adapters, uninstall <code>@react-pdf/renderer</code>.</td>
+            <td data-label="Priority"><span class="pri LOW">LOW</span></td>
+            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Package removed.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. DETAILED EXECUTION STEPS ============ -->
+<section id="execution" class="pad-sm">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="shead__no">04 / 05</span>
+      <h2>Execution Steps</h2>
+      <div class="shead__rule"></div>
+    </div>
+
+    <div class="tools reveal">
+      <button class="tool" type="button" id="expandAll">Expand all</button>
+      <button class="tool" type="button" id="collapseAll">Collapse all</button>
+      <button class="tool" type="button" id="openCurrent">Open current phase</button>
+    </div>
+
+    <div class="timeline" id="timeline">
+
+      <!-- PHASE 0 -->
+      <details class="phase done-phase" data-status="implemented">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 0</span>
+          <span class="phase__t">Discovery, Audit &amp; Problem Register</span>
+          <span class="st st-implemented phase__status">✅ Implemented</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 0.1</span>Audit <code>IndustryTemplate.tsx</code>, <code>table.ts</code>, <code>compact.ts</code>, and <code>safeText.ts</code>.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 0.2</span>Trace pagination failure on <code>SASQUO-000427 (1).pdf</code> (113.73 pt closing block breaking over 75.25 pt free space).</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 0.3</span>Trace character corruption on <code>SASQUO-000428.pdf</code> (double-prime <code>″</code> rendering into digits <code>23</code>, <code>33</code>, <code>43</code>).</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 0.4</span>Update and freeze PRD document suite in <code>docs/prd/pdf-rendering-migration/</code> to record problem register, Forme architecture, and testable gates.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 1 -->
+      <details class="phase" data-status="pending" open>
+        <summary class="phase__head">
+          <span class="phase__no">Phase 1</span>
+          <span class="phase__t">Forme Foundation &amp; Typography</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1.1</span>Confirm <code>@formepdf/react</code> and <code>@formepdf/core</code> registration and test minimal document generation.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1.2</span>Evaluate font packaging strategy:</p>
+                <ul class="sub">
+                  <li>Test static TTF font assets from <code>public/fonts/</code> (Inter Regular, Medium, Bold).</li>
+                  <li>Verify offline PDF generation in Capacitor mobile builds (Android/iOS).</li>
+                  <li>Retain binary bundling as a verified fallback if static delivery fails.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1.3</span>Build deterministic Unicode normalizer (<code>safeText</code> replacement):</p>
+                <ul class="sub">
+                  <li>Empirically trace font fallback and encoding paths for double-prime (<code>U+2033</code>).</li>
+                  <li>Map double-prime (<code>U+2033</code>) and prime (<code>U+2032</code>) cleanly without modulo-256 corruption.</li>
+                  <li>Support Nigerian Naira (<code>₦</code>, <code>U+20A6</code>) via font glyph or inline SVG vector icon.</li>
+                  <li>Support engineering symbols (<code>²</code>, <code>×</code>, <code>±</code>, <code>°</code>).</li>
+                  <li>Implement scoped emoji handling: preserve surrounding text, support small justified set of icons, safely strip unmapped emoji without crashing.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1.4</span>Implement interactive hyperlink primitives (<code>&lt;Image href="..."&gt;</code> and coordinate overlay views) and enforce logo aspect-ratio preservation (<code>objectFit: 'contain'</code>).</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1.5</span>Implement 5-step rich-text conversion pipeline:</p>
+                <ul class="sub">
+                  <li>Sanitize incoming HTML via DOMPurify with strict allowlist.</li>
+                  <li>Parse sanitized HTML into intermediate tree.</li>
+                  <li>Map permitted nodes into controlled document AST (<code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;u&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;ol&gt;</code>, <code>&lt;li&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;br&gt;</code>).</li>
+                  <li>Render AST through Forme components.</li>
+                  <li>Fallback unsupported nodes safely to plain text.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 2 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 2</span>
+          <span class="phase__t">Natural Pagination (Normal Mode First)</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <aside class="callout callout--critical">
+            <span class="callout__tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 4.4-3.2 8.4-8 9.5C7.2 20.4 4 16.4 4 12V7l8-4z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+              Critical
+            </span>
+            <h4>Gate 1 — Natural pagination on the representative suite first</h4>
+            <p>Verify natural pagination across the complete Representative Document Suite before Phase 3 begins:</p>
+            <ol>
+              <li>Short documents with few line items.</li>
+              <li>The original 13-item <code>SASQUO-000427</code> quotation.</li>
+              <li>Documents with long and wrapping descriptions.</li>
+              <li>Documents with large totals and bank details.</li>
+              <li>Documents with notes and commercial terms.</li>
+              <li>Documents with attachments and signatures.</li>
+              <li>Multi-page documents with different content distributions.</li>
+            </ol>
+            <p style="margin:10px 0 0"><b style="color:var(--alert)">Compaction must never mask broken natural pagination.</b></p>
+          </aside>
+
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.1</span>Implement Forme Table component with calibrated column widths &amp; oversized row handling:</p>
+                <ul class="sub">
+                  <li>Test candidate target <b style="color:var(--amber)">72 pt</b> for <code>make</code> column (eliminating 2-line wraps for <code>"Atlas Copco"</code>).</li>
+                  <li>Implement proportional column budgeting for description and item columns.</li>
+                  <li>Keep ordinary rows intact across pages where possible; define safe fragmentation or a controlled fallback for rows exceeding available page height, to prevent clipping or silent content loss.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.2</span>Enable native repeating table header (<code>&lt;Row header&gt;</code>) across continuation pages and verify runtime repetition in exported PDF.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.3</span>Implement adaptive closing layout for Bank Details and Totals:</p>
+                <ul class="sub">
+                  <li>Display side-by-side when space and content permit.</li>
+                  <li>Provide a deliberate readable fallback (adaptive stacking or continuation) when space is restricted.</li>
+                  <li>Avoid rigid row-locking; do not prescribe custom row balancing without measured evidence.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.4</span>Replace defensive global page padding (<code>paddingBottom: 48</code>) with Forme native <code>&lt;Fixed position="footer"&gt;</code> dynamic reservation.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.5</span>Apply selective keep-together behavior:</p>
+                <ul class="sub">
+                  <li>Protect small logical units (individual signature blocks, single table rows).</li>
+                  <li>Allow long sections (commercial terms, notes, attachments) to fragment naturally.</li>
+                  <li>Mitigate orphaned section headings where practical.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.6</span>Run Gate 1 Verification across the complete Representative Document Suite.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 3 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 3</span>
+          <span class="phase__t">Compact &amp; Force 1 Page Modes</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 3.1</span>Implement Compact Mode:</p>
+                <ul class="sub">
+                  <li>Wire all 32 candidate styling token overrides from <code>compact.ts</code> into the Forme Industry template.</li>
+                  <li>Verify deterministic spacing, margin, and typography reductions without content loss.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 3.2</span>Implement Two-Pass Measurement Engine:</p>
+                <ul class="sub">
+                  <li>Use <code>renderDocumentWithLayout</code> from <code>@formepdf/core</code> to extract exact rendered heights and bounding boxes.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 3.3</span>Implement Progressive Compaction Algorithm for Force 1 Page Mode:</p>
+                <ul class="sub">
+                  <li><b style="color:var(--text)">Pass 1:</b> Compact mode tokens.</li>
+                  <li><b style="color:var(--text)">Pass 2:</b> Margin reduction (candidate floor 18 pt) and row padding reduction (candidate floor 2 pt).</li>
+                  <li><b style="color:var(--text)">Pass 3:</b> Typography scale down to candidate floor 7 pt.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 3.4</span>Implement Readability Safeguards and Fallback:</p>
+                <ul class="sub">
+                  <li>Prioritize commercial legibility over page count. Treat candidate floors (7 pt font, 2 pt padding) as provisional targets subject to readability testing.</li>
+                  <li>Enforce zero content omission, no overlapping bounding boxes, and no unreadable text.</li>
+                  <li>If the document exceeds 1-page limits, fall back cleanly to a readable 2-page document with a user warning.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 3.5</span>Run Gate 2 Verification on 1-page and multi-page test corpus.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 4 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 4</span>
+          <span class="phase__t">Reference Template Certification</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <aside class="callout callout--important">
+            <span class="callout__tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+              Important
+            </span>
+            <h4>Gate 3 Requirement</h4>
+            <p style="margin:0">New Forme templates must be built, tested, and certified before production traffic switchover.</p>
+          </aside>
+
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.1</span>Verify complete Quotation family against <code>SASQUO-000427</code>, <code>SASQUO-000428</code>, and <code>SASQUO-430</code>.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.2</span>Certify Invoice family (<code>SASINV</code>) sharing the Forme Industry template foundation.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.3</span>Implement and verify A4 Landscape orientation (297 × 210 mm) with recalculation from first principles.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.4</span>Verify web preview parity with exported PDF files.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.5</span>Obtain Gate 3 Pre-Production Approval.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 5 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 5</span>
+          <span class="phase__t">Rollout to Remaining Families</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.1</span>Migrate Waybill template to Forme.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.2</span>Migrate RFQ and BOQ templates to Forme.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.3</span>Migrate Contractor Service Report (CSR) templates to Forme.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 6 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 6</span>
+          <span class="phase__t">Legacy Deprecation &amp; Cleanup</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 6.1</span>Run AST import analysis across <code>src/</code> to confirm zero remaining imports of <code>@react-pdf/renderer</code>.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 6.2</span>Delete obsolete React-PDF adapters, components, and workaround scripts.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 6.3</span>Uninstall <code>@react-pdf/renderer</code> from <code>package.json</code>.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 6.4</span>Run <code>bun run audit:load</code> and <code>bun run typecheck</code> to confirm clean repository state.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. DECISION LOG ============ -->
+<section id="decisions" class="pad-sm">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="shead__no">05 / 05</span>
+      <h2>Decision Log</h2>
+      <div class="shead__rule"></div>
+    </div>
+
+    <details class="acc">
+      <summary class="phase__head">
+        <span class="phase__no">Log</span>
+        <span class="phase__t">9 decisions · all dated 2026-10-30</span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="phase__body">
+      <div class="table-wrap reveal">
+      <table class="log">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Phase Affected</th>
+            <th scope="col">Status Applied</th>
+            <th scope="col">Decision &amp; Justification</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Architecture Baseline</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Selected Forme (<code>@formepdf/react</code> and <code>@formepdf/core</code> v0.20.1) as target PDF engine, wrapped by <code>pdfcn</code>. Superseded Takumi and Typst spikes.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Execution Sequence</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Enforced Gate 1: natural pagination must be solved and verified across the complete Representative Document Suite before Compact or Force 1 Page mode implementation.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Closing Sections</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Decoupled Bank Details and Totals with adaptive fallback. Rejected premature row-balancing algorithm without measured evidence.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Keep-Together &amp; Rows</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Selective keep-together: protect small logical units (signatures, ordinary rows); long content fragments naturally; oversized rows handled safely to prevent clipping.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Rich-Text Pipeline</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Established 5-step conversion pipeline (Sanitize → Parse → Allowlisted AST → Forme Render → Fallback). Limited initial scope to commercial basics.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Emoji Fallback</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Scoped emoji fallback: preserve surrounding text, small justified icon set where needed, safe stripping fallback; not a blocker for template 1.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Font Packaging</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Evidence-driven strategy: evaluate static TTF assets first; check offline mobile export reliability; retain binary bundle as fallback.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Production Cutover</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Enforced Gate 3: new Forme Invoice and Quotation templates must be built and approved before production migration begins.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-10-30</td>
+            <td class="phase-a">Documentation Freeze</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="dec">Formally froze the PRD documentation suite in <code>docs/prd/pdf-rendering-migration/</code> as approved baseline for M1 implementation planning.</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      </div>
+    </details>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <h2 class="foot__t">Waterfall Roadmap · PDF Rendering Migration</h2>
+      <p>Frozen baseline. Changes require a decision-log entry and a new revision date.</p>
+    </div>
+    <div class="foot__meta">
+      Architecture <b>Forme + pdfcn</b> · Standard <b>ASD-STE100</b><br>
+      Updated <b>2026-10-30</b> · Milestones <b>7</b> · Gates <b>3</b>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function fillBars(root){
+    root.querySelectorAll('.node__bar, .mini__bar').forEach(function(el){
+      var p = parseFloat(el.getAttribute('data-p') || '0');
+      var i = el.querySelector('i');
+      if(i) i.style.width = p + '%';
+    });
+  }
+  function countUp(el){
+    var to = parseFloat(el.getAttribute('data-to') || '0');
+    if(reduce){ el.innerHTML = to + '<sup>%</sup>'; return; }
+    var start = null, dur = 1400;
+    function tick(ts){
+      if(!start) start = ts;
+      var t = Math.min((ts - start) / dur, 1);
+      var e = 1 - Math.pow(1 - t, 3);
+      el.innerHTML = Math.round(to * e) + '<sup>%</sup>';
+      if(t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+    setTimeout(function(){ el.innerHTML = to + '<sup>%</sup>'; }, dur + 300);
+  }
+  function activate(el){
+    if(el.classList.contains('in')) return;
+    el.classList.add('in');
+    fillBars(el);
+    if(el.classList.contains('count')) countUp(el);
+  }
+  function revealInside(root){
+    root.querySelectorAll('.reveal, .bar, .count, .step, .node').forEach(activate);
+  }
+
+  /* ---------- reveal ---------- */
+  var targets = document.querySelectorAll('.reveal, .bar, .count, .step, .node');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ activate(en.target); io.unobserve(en.target); } });
+    }, {threshold:0.1, rootMargin:'0px 0px -5% 0px'});
+    targets.forEach(function(el){ io.observe(el); });
+  } else {
+    targets.forEach(activate);
+  }
+
+  /* Safety net: observer delivery can lag in backgrounded tabs. */
+  function sweep(){
+    var vh = window.innerHeight || 800;
+    document.querySelectorAll('.reveal:not(.in), .bar:not(.in), .count:not(.in), .step:not(.in), .node:not(.in)').forEach(function(el){
+      var r = el.getBoundingClientRect();
+      if(r.height && r.top < vh && r.bottom > 0) activate(el);
+    });
+  }
+  setTimeout(sweep, 2200);
+  window.addEventListener('load', function(){ setTimeout(sweep, 400); });
+
+  /* ---------- accordions ---------- */
+  var allDetails = Array.prototype.slice.call(document.querySelectorAll('details'));
+  var phases = allDetails.filter(function(d){ return d.classList.contains('phase'); });
+  allDetails.forEach(function(d){
+    d.addEventListener('toggle', function(){
+      if(d.open) revealInside(d);
+      onScroll();
+    });
+  });
+  function setAll(open){ allDetails.forEach(function(d){ d.open = open; }); }
+  var ea = document.getElementById('expandAll'),
+      ca = document.getElementById('collapseAll'),
+      oc = document.getElementById('openCurrent');
+  if(ea) ea.addEventListener('click', function(){ setAll(true); });
+  if(ca) ca.addEventListener('click', function(){ setAll(false); });
+  if(oc) oc.addEventListener('click', function(){
+    setAll(false);
+    var cur = phases[1] || phases[0];
+    if(cur){ cur.open = true; cur.scrollIntoView({block:'center'}); }
+  });
+  window.addEventListener('beforeprint', function(){ setAll(true); });
+
+  /* ---------- scroll: progress line + spine ---------- */
+  var timeline = document.getElementById('timeline');
+  var exec = document.getElementById('execution');
+  var ticking = false;
+  function onScroll(){
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - window.innerHeight;
+    doc.style.setProperty('--scroll', (max > 0 ? (window.scrollY / max) * 100 : 0).toFixed(2) + '%');
+    if(timeline && exec){
+      var r = exec.getBoundingClientRect();
+      var span = r.height - window.innerHeight * 0.45;
+      var passed = (window.innerHeight * 0.55) - r.top;
+      var f = span > 0 ? Math.max(0, Math.min(passed / span, 1)) : 0;
+      timeline.style.setProperty('--spine', (f * 100).toFixed(2) + '%');
+    }
+    sweep();
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ ticking = true; requestAnimationFrame(onScroll); }
+  }, {passive:true});
+  window.addEventListener('resize', onScroll);
+  onScroll();
+
+  /* ---------- active nav ---------- */
+  if('IntersectionObserver' in window){
+    var links = {};
+    document.querySelectorAll('.nav a').forEach(function(a){
+      links[a.getAttribute('href').slice(1)] = a;
+    });
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        var a = links[en.target.id];
+        if(a && en.isIntersecting){
+          Object.keys(links).forEach(function(k){ links[k].classList.remove('active'); });
+          a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-45% 0px -50% 0px'});
+    Object.keys(links).forEach(function(id){
+      var s = document.getElementById(id);
+      if(s) nio.observe(s);
+    });
+  }
+
+  /* ---------- hero spotlight ---------- */
+  var hero = document.querySelector('.hero');
+  var spot = document.querySelector('.hero__spot');
+  if(hero && spot && !reduce && window.matchMedia('(hover:hover)').matches){
+    hero.addEventListener('mousemove', function(e){
+      var r = hero.getBoundingClientRect();
+      spot.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+      spot.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+    });
+  }
+
+  /* ---------- status filter ---------- */
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip[data-filter]'));
+  var resetBtn = document.getElementById('resetFilter');
+  var countPill = document.getElementById('filterCount');
+  var items = Array.prototype.slice.call(document.querySelectorAll('[data-status]'));
+  var active = null;
+
+  function applyFilter(){
+    var shown = 0;
+    items.forEach(function(el){
+      var match = !active || el.getAttribute('data-status') === active;
+      el.classList.toggle('dim', !match);
+      if(match) shown++;
+    });
+    chips.forEach(function(c){
+      c.setAttribute('aria-pressed', String(c.getAttribute('data-filter') === active));
+    });
+    if(active){
+      resetBtn.hidden = false;
+      countPill.hidden = false;
+      countPill.textContent = shown + '/' + items.length + ' · ' + active;
+    } else {
+      resetBtn.hidden = true;
+      countPill.hidden = true;
+    }
+  }
+  chips.forEach(function(c){
+    c.addEventListener('click', function(){
+      var f = c.getAttribute('data-filter');
+      active = (active === f) ? null : f;
+      applyFilter();
+    });
+  });
+  if(resetBtn) resetBtn.addEventListener('click', function(){ active = null; applyFilter(); });
+})();
+</script>
+</body>
+</html>
