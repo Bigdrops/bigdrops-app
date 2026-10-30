@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOUXRE Commercial Document — Template 1 (Modern Executive)</title>
+  <style>
+    /* CSS Reset & Variables */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #0f172a;       /* Deep Navy */
+      --primary-light: #1e293b; /* Navy 800 */
+      --accent: #0284c7;        /* Cobalt/Steel Blue */
+      --accent-tint: #f0f9ff;   /* Soft Ice Blue */
+      --text-main: #0f172a;     /* Very dark slate */
+      --text-muted: #64748b;    /* Medium slate */
+      --border-color: #cbd5e1;  /* Slate 300 */
+      --border-light: #e2e8f0;  /* Slate 200 */
+      --bg-card: #f8fafc;       /* Slate 50 */
+      --bg-zebra: #f1f5f9;      /* Slate 100 */
+      --danger: #b91c1c;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      background-color: #525659;
+      padding: 30px 15px;
+      line-height: 1.45;
+      font-size: 9.5pt;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Screen Toolbar Controls */
+    .screen-toolbar {
+      max-width: 210mm;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .toolbar-title {
+      font-size: 13pt;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toolbar-badge {
+      font-size: 7.5pt;
+      background: var(--accent);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .switcher-group {
+      display: flex;
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 3px;
+      gap: 4px;
+    }
+    .switch-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      font-size: 9pt;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+    .switch-btn:hover {
+      color: var(--primary);
+    }
+    .switch-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .action-btn {
+      border: 1px solid var(--border-color);
+      background: white;
+      padding: 7px 16px;
+      border-radius: 5px;
+      font-size: 9pt;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      transition: all 0.15s ease;
+    }
+    .action-btn:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+    .action-btn.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .action-btn.primary:hover {
+      background: var(--primary-light);
+    }
+
+    /* A4 Page Container & Print Geometry */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 30px auto;
+      background: #ffffff;
+      padding: 16mm 16mm 14mm 16mm;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Print Media Rules */
+    @page {
+      size: A4 portrait;
+      margin: 14mm 14mm 14mm 14mm;
+    }
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .screen-toolbar {
+        display: none !important;
+      }
+      .a4-page {
+        margin: 0;
+        box-shadow: none;
+        padding: 0;
+        width: 100%;
+        min-height: auto;
+      }
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+      .avoid-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+
+    /* Document Layout Structure */
+    .doc-content {
+      flex: 1 0 auto;
+    }
+
+    /* Header Section */
+    .header-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--primary);
+      margin-bottom: 16px;
+    }
+    .company-brand {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20pt;
+      font-weight: 800;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .company-details h1 {
+      font-size: 14pt;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.3px;
+      margin-bottom: 3px;
+    }
+    .company-meta {
+      font-size: 8pt;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+    .company-meta strong {
+      color: var(--text-main);
+    }
+
+    .doc-badge-meta {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-start;
+    }
+    .doc-type-badge {
+      display: inline-block;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 13pt;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      padding: 5px 16px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .doc-type-badge.quotation {
+      background: #0369a1; /* Ocean Navy */
+    }
+    .doc-type-badge.po {
+      background: #1e293b; /* Executive Slate */
+    }
+    .doc-number {
+      font-family: var(--font-mono);
+      font-size: 11pt;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .doc-dates-table {
+      font-size: 8.5pt;
+      border-collapse: collapse;
+      margin-top: 4px;
+    }
+    .doc-dates-table td {
+      padding: 1.5px 4px;
+    }
+    .doc-dates-table td.label {
+      color: var(--text-muted);
+      text-align: right;
+      font-weight: 500;
+    }
+    .doc-dates-table td.value {
+      color: var(--text-main);
+      font-weight: 700;
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+
+    /* Counterparty / Party Cards */
+    .party-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .party-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-left: 3px solid var(--primary);
+      border-radius: 4px;
+      padding: 10px 14px;
+    }
+    .party-card.secondary {
+      border-left-color: var(--accent);
+    }
+    .party-label {
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .party-name {
+      font-size: 10pt;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 3px;
+    }
+    .party-details {
+      font-size: 8.5pt;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* Line Items Table */
+    .items-table-container {
+      margin-bottom: 18px;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    .items-table th {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 7.5pt;
+      padding: 7px 8px;
+      border: none;
+    }
+    .items-table th.col-num { width: 5%; text-align: center; }
+    .items-table th.col-desc { width: 47%; text-align: left; }
+    .items-table th.col-qty { width: 10%; text-align: right; }
+    .items-table th.col-unit { width: 10%; text-align: center; }
+    .items-table th.col-price { width: 14%; text-align: right; }
+    .items-table th.col-amt { width: 14%; text-align: right; }
+
+    .items-table td {
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: top;
+    }
+    .items-table tr:nth-child(even) td {
+      background-color: var(--bg-card);
+    }
+    .items-table td.col-num {
+      text-align: center;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 8pt;
+    }
+    .item-title {
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+    .item-desc-text {
+      color: var(--text-muted);
+      font-size: 7.8pt;
+      line-height: 1.3;
+    }
+    .item-specs {
+      font-family: var(--font-mono);
+      font-size: 7.2pt;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+    .items-table td.col-qty {
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+    .items-table td.col-unit {
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .items-table td.col-price {
+      text-align: right;
+      font-family: var(--font-mono);
+      color: #334155;
+    }
+    .items-table td.col-amt {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Group Row */
+    .group-row td {
+      background: #e2e8f0 !important;
+      font-weight: 700;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      padding: 5px 8px;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+    }
+
+    /* Summary & Settlement Grid */
+    .settlement-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      margin-bottom: 18px;
+      break-inside: avoid;
+    }
+
+    /* Left Column: Bank / Instructions */
+    .ancillary-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      padding: 10px 14px;
+    }
+    .info-card-header {
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .bank-accounts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .bank-item {
+      font-size: 8pt;
+      line-height: 1.35;
+    }
+    .bank-name {
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .bank-num {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 9pt;
+      letter-spacing: 0.5px;
+    }
+    .bank-holder {
+      color: var(--text-muted);
+      font-size: 7.2pt;
+    }
+
+    .notes-box {
+      font-size: 8pt;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+    .notes-box strong {
+      color: var(--text-main);
+    }
+
+    /* Right Column: Financial Summary */
+    .totals-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px 14px;
+    }
+    .totals-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    .totals-table tr td {
+      padding: 4px 0;
+    }
+    .totals-table td.total-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .totals-table td.total-val {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .totals-table tr.discount-row td.total-val {
+      color: var(--danger);
+    }
+    .totals-table tr.wht-row td.total-val {
+      color: var(--danger);
+    }
+    .totals-table tr.grand-total-row {
+      border-top: 2px solid var(--primary);
+    }
+    .totals-table tr.grand-total-row td {
+      padding-top: 8px;
+    }
+    .totals-table tr.grand-total-row td.total-label {
+      font-size: 10pt;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+    .totals-table tr.grand-total-row td.total-val {
+      font-size: 12pt;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .amount-words-banner {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-light);
+      font-size: 7.8pt;
+      line-height: 1.3;
+      color: var(--text-muted);
+    }
+    .amount-words-banner strong {
+      color: var(--primary);
+    }
+
+    /* Terms and Conditions Block */
+    .terms-block {
+      border-top: 1px solid var(--border-light);
+      padding-top: 10px;
+      margin-bottom: 18px;
+      font-size: 7.5pt;
+      color: var(--text-muted);
+      line-height: 1.35;
+      break-inside: avoid;
+    }
+    .terms-block h4 {
+      font-size: 7.8pt;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    /* Signatures Section */
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 12px;
+      break-inside: avoid;
+    }
+    .sig-col {
+      display: flex;
+      flex-direction: column;
+    }
+    .sig-line {
+      border-bottom: 1px solid #94a3b8;
+      height: 42px;
+      margin-bottom: 6px;
+      position: relative;
+    }
+    .sig-stamp-mock {
+      position: absolute;
+      right: 10px;
+      top: 0px;
+      border: 1.5px dashed var(--accent);
+      color: var(--accent);
+      font-size: 6.5pt;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      transform: rotate(-4deg);
+      opacity: 0.75;
+    }
+    .sig-name {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .sig-title {
+      font-size: 7.5pt;
+      color: var(--text-muted);
+    }
+
+    /* Running Footer */
+    .doc-footer {
+      border-top: 1px solid var(--border-light);
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 7.2pt;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .footer-security {
+      font-family: var(--font-mono);
+      font-size: 6.8pt;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Interactive Controls -->
+  <header class="screen-toolbar">
+    <div class="toolbar-title">
+      <span>BOUXRE Commercial Template 1</span>
+      <span class="toolbar-badge">Modern Executive</span>
+    </div>
+
+    <div class="switcher-group" role="tablist" aria-label="Commercial Document Switcher">
+      <button class="switch-btn active" id="btn-inv" onclick="setDocMode('invoice')">Invoice</button>
+      <button class="switch-btn" id="btn-quo" onclick="setDocMode('quotation')">Quotation</button>
+      <button class="switch-btn" id="btn-po" onclick="setDocMode('po')">Purchase Order</button>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button class="action-btn" onclick="toggleMultiPage()">
+        <span id="page-toggle-text">Show 2-Page Density</span>
+      </button>
+      <button class="action-btn primary" onclick="window.print()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Print / PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Printable A4 Container -->
+  <main class="a4-page" id="document-page">
+    <div class="doc-content">
+
+      <!-- Header Section -->
+      <section class="header-grid">
+        <div class="company-brand">
+          <div class="brand-logo">B</div>
+          <div class="company-details">
+            <h1 id="issuer-name">BOURXE INDUSTRIAL SOLUTIONS LTD</h1>
+            <div class="company-meta">
+              RC: 1849204 &bull; TIN: 23904918-0001<br>
+              Plot 14, Commercial Avenue, Ikeja Industrial Estate, Lagos, Nigeria<br>
+              +234 (01) 888-2940 &bull; contact@bourxe.com &bull; www.bourxe.com
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-badge-meta">
+          <div class="doc-type-badge" id="badge-doc-type">INVOICE</div>
+          <div class="doc-number" id="val-doc-num">SASINV-001284</div>
+          <table class="doc-dates-table">
+            <tr>
+              <td class="label" id="lbl-primary-date">Issue Date:</td>
+              <td class="value" id="val-primary-date">24 Oct 2026</td>
+            </tr>
+            <tr id="row-secondary-date">
+              <td class="label" id="lbl-secondary-date">Due Date:</td>
+              <td class="value" id="val-secondary-date">07 Nov 2026</td>
+            </tr>
+            <tr id="row-po-ref">
+              <td class="label" id="lbl-po-ref">Client PO Ref:</td>
+              <td class="value" id="val-po-ref">PO-NIG-7731</td>
+            </tr>
+            <tr id="row-payment-term">
+              <td class="label" id="lbl-payment-term">Terms:</td>
+              <td class="value" id="val-payment-term">Net 14 Days</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- Counterparty Section -->
+      <section class="party-section">
+        <div class="party-card">
+          <div class="party-label" id="lbl-counterparty">BILL TO &bull; CLIENT</div>
+          <div class="party-name" id="val-party-name">APEX MANUFACTURING WEST AFRICA PLC</div>
+          <div class="party-details" id="val-party-details">
+            Attn: Engr. Babatunde Lawal (Chief Operations Officer)<br>
+            KM 38, Lagos-Ibadan Expressway, Industrial Zone, Ogun State<br>
+            TIN: 10492819-0001 &bull; Phone: +234 803 555 0192 &bull; apex.wa@apexgrp.com
+          </div>
+        </div>
+
+        <div class="party-card secondary" id="card-delivery-meta">
+          <div class="party-label" id="lbl-delivery-meta">PROJECT &bull; SCOPE DETAILS</div>
+          <div class="party-name" id="val-project-title">Factory Power Expansion Phase II</div>
+          <div class="party-details" id="val-project-details">
+            Delivery Site: Central Ingestion Warehouse B, Sagamu<br>
+            Project Manager: Engr. K. Adebayo (+234 802 111 4455)<br>
+            Currency: Nigerian Naira (NGN / ₦)
+          </div>
+        </div>
+      </section>
+
+      <!-- Line Items Table -->
+      <section class="items-table-container">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th class="col-num">#</th>
+              <th class="col-desc">Item Description &amp; Specifications</th>
+              <th class="col-qty">Qty</th>
+              <th class="col-unit">Unit</th>
+              <th class="col-price" id="th-rate">Unit Price</th>
+              <th class="col-amt">Amount (₦)</th>
+            </tr>
+          </thead>
+          <tbody id="items-table-body">
+            <!-- Dynamic Items Injected via JS -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Settlement & Summary Grid -->
+      <section class="settlement-grid">
+        <!-- Left: Banking Details or Delivery Instructions -->
+        <div class="ancillary-block">
+          <div class="info-card" id="card-banking">
+            <div class="info-card-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+              <span>Settlement &amp; Bank Transfer Details</span>
+            </div>
+            <div class="bank-accounts-grid">
+              <div class="bank-item">
+                <div class="bank-name">First Bank of Nigeria</div>
+                <div class="bank-num">2039481726</div>
+                <div class="bank-holder">Bourxe Industrial Solutions Ltd</div>
+              </div>
+              <div class="bank-item">
+                <div class="bank-name">Zenith Bank Plc</div>
+                <div class="bank-num">1018492048</div>
+                <div class="bank-holder">Bourxe Industrial Solutions Ltd</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-card" id="card-notes">
+            <div class="info-card-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span id="lbl-notes-header">Important Notes &amp; Instructions</span>
+            </div>
+            <div class="notes-box" id="val-notes-content">
+              1. All payments must reference the document number above.<br>
+              2. Materials remain the legal property of Bourxe Industrial Solutions Ltd until payment is discharged in full.<br>
+              3. Factory warranty applies for 12 months post-commissioning.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Financial Summary Totals -->
+        <div class="totals-card">
+          <table class="totals-table">
+            <tr>
+              <td class="total-label">Subtotal</td>
+              <td class="total-val" id="val-tot-subtotal">₦ 5,420,000.00</td>
+            </tr>
+            <tr id="row-tot-discount" class="discount-row">
+              <td class="total-label">Discount (5%)</td>
+              <td class="total-val" id="val-tot-discount">-₦ 271,000.00</td>
+            </tr>
+            <tr>
+              <td class="total-label">Net Subtotal</td>
+              <td class="total-val" id="val-tot-net">₦ 5,149,000.00</td>
+            </tr>
+            <tr>
+              <td class="total-label">VAT (7.5%)</td>
+              <td class="total-val" id="val-tot-vat">₦ 386,175.00</td>
+            </tr>
+            <tr id="row-tot-extra">
+              <td class="total-label">Transport &amp; Rigging</td>
+              <td class="total-val" id="val-tot-extra">₦ 150,000.00</td>
+            </tr>
+            <tr id="row-tot-wht" class="wht-row">
+              <td class="total-label">Withholding Tax (WHT 5%)</td>
+              <td class="total-val" id="val-tot-wht">-₦ 257,450.00</td>
+            </tr>
+            <tr class="grand-total-row">
+              <td class="total-label" id="lbl-grand-total">Total Payable</td>
+              <td class="total-val" id="val-tot-grand">₦ 5,427,725.00</td>
+            </tr>
+          </table>
+
+          <div class="amount-words-banner">
+            Amount in words: <strong id="val-amount-words">Five Million, Four Hundred and Twenty-Seven Thousand, Seven Hundred and Twenty-Five Naira Only</strong>
+          </div>
+        </div>
+      </section>
+
+      <!-- Terms Block -->
+      <section class="terms-block">
+        <h4 id="lbl-terms-header">Commercial Terms &amp; Conditions</h4>
+        <p id="val-terms-content">
+          Payment is strictly due within the stipulated credit timeline. Late payments attract a monthly statutory interest penalty of 1.5%. For warranty and support inquiries, please contact our engineering operations center quoting the document identifier above.
+        </p>
+      </section>
+
+      <!-- Signatures Block -->
+      <section class="signatures-grid">
+        <div class="sig-col">
+          <div class="sig-line">
+            <div class="sig-stamp-mock">BOURXE &bull; OFFICIAL</div>
+          </div>
+          <div class="sig-name" id="val-sig1-name">Engr. T. Balogun (FNSE)</div>
+          <div class="sig-title" id="val-sig1-title">Managing Director / Authorized Representative</div>
+        </div>
+
+        <div class="sig-col">
+          <div class="sig-line"></div>
+          <div class="sig-name" id="val-sig2-name">Client Acceptance &amp; Stamp</div>
+          <div class="sig-title" id="val-sig2-title">Authorized Signature, Name &amp; Date Received</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Document Running Footer -->
+    <footer class="doc-footer">
+      <div>BOURXE Industrial Solutions Ltd &bull; CAC Reg: RC 1849204</div>
+      <div class="footer-security">CONFIDENTIAL &bull; AUTH-SHA256: 7b9f2e8c14</div>
+      <div id="val-footer-page">Page 1 of 1</div>
+    </footer>
+  </main>
+
+  <script>
+    // State & Dataset for the 3 Document Types
+    const documentDatasets = {
+      invoice: {
+        badge: "INVOICE",
+        badgeClass: "",
+        docNum: "SASINV-001284",
+        lblPrimaryDate: "Issue Date:",
+        valPrimaryDate: "24 Oct 2026",
+        showSecondaryDate: true,
+        lblSecondaryDate: "Due Date:",
+        valSecondaryDate: "07 Nov 2026",
+        showPoRef: true,
+        valPoRef: "PO-NIG-7731",
+        showPaymentTerm: true,
+        valPaymentTerm: "Net 14 Days",
+        lblCounterparty: "BILL TO • CLIENT",
+        partyName: "APEX MANUFACTURING WEST AFRICA PLC",
+        partyDetails: "Attn: Engr. Babatunde Lawal (Chief Operations Officer)<br>KM 38, Lagos-Ibadan Expressway, Industrial Zone, Ogun State<br>TIN: 10492819-0001 • Phone: +234 803 555 0192 • apex.wa@apexgrp.com",
+        lblDeliveryMeta: "PROJECT • SCOPE DETAILS",
+        projectTitle: "Factory Power Expansion Phase II",
+        projectDetails: "Delivery Site: Central Ingestion Warehouse B, Sagamu<br>Project Manager: Engr. K. Adebayo (+234 802 111 4455)<br>Currency: Nigerian Naira (NGN / ₦)",
+        thRate: "Unit Price",
+        items: [
+          { num: "01", title: "Industrial Step-Down Transformer 500kVA", desc: "Oil-immersed copper-wound 33kV/415V with off-circuit tap changer & Marshalling box", specs: "MAKE: ABB / MODEL: ONAN-500", qty: "1", unit: "unit", price: "₦ 3,200,000.00", amt: "₦ 3,200,000.00" },
+          { num: "02", title: "Armoured Underground XLPE Cable 4-Core 185mm²", desc: "Multi-strand annealed copper conductors with galvanized steel wire armouring (SWA)", specs: "MAKE: KABELMETAL / 600/1000V", qty: "120", unit: "meters", price: "₦ 14,500.00", amt: "₦ 1,740,000.00" },
+          { num: "03", title: "Low Voltage Distribution Feeder Pillar 800A", desc: "Outdoor weatherproof IP55 enclosure with 4-way fused outgoing ways and copper busbars", specs: "MAKE: SCHNEIDER / TYPE: LV-FP800", qty: "1", unit: "unit", price: "₦ 480,000.00", amt: "₦ 480,000.00" }
+        ],
+        showBanking: true,
+        lblNotesHeader: "Payment & Settlement Notes",
+        notesContent: "1. All electronic remittances must reference <strong>SASINV-001284</strong>.<br>2. Proof of transfer should be emailed to accounts@bourxe.com immediately upon transaction.<br>3. Equipment remains the property of Bourxe Ltd until final reconciliation.",
+        subtotal: "₦ 5,420,000.00",
+        discount: "-₦ 271,000.00",
+        net: "₦ 5,149,000.00",
+        vat: "₦ 386,175.00",
+        extra: "₦ 150,000.00",
+        showWht: true,
+        wht: "-₦ 257,450.00",
+        lblGrandTotal: "Total Amount Due",
+        grandTotal: "₦ 5,427,725.00",
+        amountInWords: "Five Million, Four Hundred and Twenty-Seven Thousand, Seven Hundred and Twenty-Five Naira Only",
+        lblTermsHeader: "Commercial Terms & Conditions",
+        termsContent: "Payment is strictly due within 14 days of invoice date. Overdue amounts incur interest at 1.5% per month. Equipment warranty covers 12 months from delivery against manufacturing defects.",
+        sig1Name: "Engr. T. Balogun (FNSE)",
+        sig1Title: "Managing Director / Authorized Representative",
+        sig2Name: "Apex Manufacturing WA Plc",
+        sig2Title: "Authorized Receiving Officer Signature & Stamp"
+      },
+
+      quotation: {
+        badge: "QUOTATION",
+        badgeClass: "quotation",
+        docNum: "SASQUO-000427",
+        lblPrimaryDate: "Quotation Date:",
+        valPrimaryDate: "28 Oct 2026",
+        showSecondaryDate: true,
+        lblSecondaryDate: "Valid Until:",
+        valSecondaryDate: "28 Nov 2026",
+        showPoRef: true,
+        valPoRef: "RFQ-2026-ENG-08",
+        showPaymentTerm: true,
+        valPaymentTerm: "70% Advance, 30% on Handover",
+        lblCounterparty: "PROSPECTIVE CLIENT • ESTIMATE TO",
+        partyName: "DANGOTE CEMENT PLC (IBESE PLANT)",
+        partyDetails: "Attn: Procurement & Facilities Directorate<br>Ibese Plant Complex, Ilaro Road, Ogun State, Nigeria<br>TIN: 01928374-0001 • Phone: +234 807 900 1200 • procurement@dangote.com",
+        lblDeliveryMeta: "COMMERCIAL SCOPE • PROPOSAL",
+        projectTitle: "Substation Switchgear Automation Retrofit",
+        projectDetails: "Site: Line 3 Substation Control Building<br>Lead Consultant: Engr. Femi Adeleke (+234 803 222 9988)<br>Estimated Lead Time: 3 Weeks from LPO",
+        thRate: "Unit Price",
+        items: [
+          { num: "01", title: "Digital Protective Relay Unit (Overcurrent/Earth Fault)", desc: "Microprocessor-based multifunction numerical protection relay with Modbus RTU/TCP", specs: "MAKE: SIEMENS / MODEL: SIPROTEC 7SJ82", qty: "4", unit: "units", price: "₦ 1,850,000.00", amt: "₦ 7,400,000.00" },
+          { num: "02", title: "Current Transformer Ring Type 1000/5A Class 0.5S", desc: "Epoxy resin cast indoor measuring and protection current transformers", specs: "MAKE: ABB / RATIO: 1000:5A", qty: "12", unit: "pcs", price: "₦ 165,000.00", amt: "₦ 1,980,000.00" },
+          { num: "03", title: "Integration, Configuration & Onsite Commissioning", desc: "Relay parameter programming, secondary injection testing, tripping tests and SCADA mapping", specs: "SPECIALIST ENGINEERING LABOUR", qty: "1", unit: "lot", price: "₦ 1,250,000.00", amt: "₦ 1,250,000.00" }
+        ],
+        showBanking: true,
+        lblNotesHeader: "Proposal Validity & Deposit Notes",
+        notesContent: "1. Quotation pricing is firm for thirty (30) calendar days from quotation date.<br>2. Work commences upon receipt of official Purchase Order and 70% advance commitment.<br>3. Manufacturer warranty is 24 months from commissioning.",
+        subtotal: "₦ 10,630,000.00",
+        discount: "-₦ 330,000.00",
+        net: "₦ 10,300,000.00",
+        vat: "₦ 772,500.00",
+        extra: "₦ 200,000.00",
+        showWht: true,
+        wht: "-₦ 515,000.00",
+        lblGrandTotal: "Total Quoted Amount",
+        grandTotal: "₦ 10,757,500.00",
+        amountInWords: "Ten Million, Seven Hundred and Fifty-Seven Thousand, Five Hundred Naira Only",
+        lblTermsHeader: "Quotation Terms & Assumptions",
+        termsContent: "Prices quoted include delivery to Ibese site. Client provides crane/rigging assistance for heavy offloading. Quotation does not include civil building structural modifications.",
+        sig1Name: "Engr. Femi Adeleke (MNSE)",
+        sig1Title: "Head of Commercial Engineering / Proposals",
+        sig2Name: "Dangote Cement Plc",
+        sig2Title: "Client Acceptance Signature & Official Date"
+      },
+
+      po: {
+        badge: "PURCHASE ORDER",
+        badgeClass: "po",
+        docNum: "PO-2026-0042",
+        lblPrimaryDate: "PO Date:",
+        valPrimaryDate: "29 Oct 2026",
+        showSecondaryDate: false,
+        lblSecondaryDate: "",
+        valSecondaryDate: "",
+        showPoRef: false,
+        valPoRef: "",
+        showPaymentTerm: false,
+        valPaymentTerm: "",
+        lblCounterparty: "ORDER FROM • SUPPLIER / VENDOR",
+        partyName: "NIGERIAN WIRE & CABLE MANUFACTURING LTD",
+        partyDetails: "Factory Premises, Industrial Layout, Ibadan, Oyo State<br>Attn: Chief Sales Directorate<br>TIN: 29019284-0001 • Phone: +234 802 444 8811 • sales@niwirecable.ng",
+        lblDeliveryMeta: "DELIVERY SITE & CONSIGNMENT",
+        projectTitle: "Bourxe Central Depot (Lagos Logistics Center)",
+        projectDetails: "Address: Warehouse 4, Oshodi-Apapa Expressway, Isolo, Lagos<br>Receiving Contact: Mr. Chidi Okon (+234 803 777 2200)<br>Working Hours: Mon-Fri 08:00 - 17:00",
+        thRate: "Unit Cost",
+        items: [
+          { num: "01", title: "High-Conductivity Bare Copper Earth Tape 25 x 3mm", desc: "Annealed electrolytic tough pitch high-conductivity copper conductor (25m coils)", specs: "SPEC: BS EN 13601 / CW004A", qty: "40", unit: "coils", price: "₦ 85,000.00", amt: "₦ 3,400,000.00" },
+          { num: "02", title: "Copperbonded Steel Earth Rod 5/8\" x 8ft (16mm x 2.4m)", desc: "High tensile steel core molecularly bonded with 99.9% pure electrolytic copper", specs: "SPEC: UL 467 / 250 MICRON COPPER", qty: "60", unit: "pcs", price: "₦ 24,500.00", amt: "₦ 1,470,000.00" },
+          { num: "03", title: "Exothermic Welding Powder 90g Cartridges & Moulds", desc: "Pre-measured weld metal containers including starting powder and disc", specs: "BRAND: THERMOWELD / SIZE: #90", qty: "100", unit: "tins", price: "₦ 7,200.00", amt: "₦ 720,000.00" }
+        ],
+        showBanking: false, // In PO, company is buyer paying supplier; no company bank accounts needed
+        lblNotesHeader: "Supplier Quality & Delivery Instructions",
+        notesContent: "1. All items must be delivered strictly accompanied by Mill Test Certificates and Waybill.<br>2. Goods subject to warehouse QA inspection prior to acceptance stamp.<br>3. Damaged coils or sub-standard copper thickness will be rejected at vendor expense.",
+        subtotal: "₦ 5,590,000.00",
+        discount: "-₦ 140,000.00",
+        net: "₦ 5,450,000.00",
+        vat: "₦ 408,750.00",
+        extra: "₦ 80,000.00",
+        showWht: false, // In PO, buyer purchase commitment does not deduct WHT from gross order total
+        wht: "",
+        lblGrandTotal: "Total Order Commitment",
+        grandTotal: "₦ 5,938,750.00",
+        amountInWords: "Five Million, Nine Hundred and Thirty-Eight Thousand, Seven Hundred and Fifty Naira Only",
+        lblTermsHeader: "Purchase Order Procurement Terms",
+        termsContent: "Payment will be disbursed within 30 days upon submission of original supplier invoice and verified Good Received Note (GRN). Bourxe Ltd reserves the right to cancel unfulfilled items after 14 days overdue.",
+        sig1Name: "Mrs. Halima Dangana",
+        sig1Title: "Procurement & Supply Chain Lead",
+        sig2Name: "Engr. T. Balogun (FNSE)",
+        sig2Title: "Authorized Approval (Managing Director)"
+      }
+    };
+
+    let currentMode = 'invoice';
+    let isMultiPage = false;
+
+    function setDocMode(mode) {
+      currentMode = mode;
+      const data = documentDatasets[mode];
+
+      // Update button highlights
+      document.getElementById('btn-inv').classList.toggle('active', mode === 'invoice');
+      document.getElementById('btn-quo').classList.toggle('active', mode === 'quotation');
+      document.getElementById('btn-po').classList.toggle('active', mode === 'po');
+
+      // Update Badge & Header
+      const badge = document.getElementById('badge-doc-type');
+      badge.textContent = data.badge;
+      badge.className = 'doc-type-badge ' + (data.badgeClass || '');
+
+      document.getElementById('val-doc-num').textContent = data.docNum;
+      document.getElementById('lbl-primary-date').textContent = data.lblPrimaryDate;
+      document.getElementById('val-primary-date').textContent = data.valPrimaryDate;
+
+      // Secondary Date (Due Date / Valid Until / None)
+      const secRow = document.getElementById('row-secondary-date');
+      if (data.showSecondaryDate) {
+        secRow.style.display = '';
+        document.getElementById('lbl-secondary-date').textContent = data.lblSecondaryDate;
+        document.getElementById('val-secondary-date').textContent = data.valSecondaryDate;
+      } else {
+        secRow.style.display = 'none';
+      }
+
+      // PO Reference row
+      const poRow = document.getElementById('row-po-ref');
+      if (data.showPoRef) {
+        poRow.style.display = '';
+        document.getElementById('val-po-ref').textContent = data.valPoRef;
+      } else {
+        poRow.style.display = 'none';
+      }
+
+      // Payment Terms row
+      const termRow = document.getElementById('row-payment-term');
+      if (data.showPaymentTerm) {
+        termRow.style.display = '';
+        document.getElementById('val-payment-term').textContent = data.valPaymentTerm;
+      } else {
+        termRow.style.display = 'none';
+      }
+
+      // Counterparties
+      document.getElementById('lbl-counterparty').innerHTML = data.lblCounterparty;
+      document.getElementById('val-party-name').textContent = data.partyName;
+      document.getElementById('val-party-details').innerHTML = data.partyDetails;
+
+      document.getElementById('lbl-delivery-meta').innerHTML = data.lblDeliveryMeta;
+      document.getElementById('val-project-title').textContent = data.projectTitle;
+      document.getElementById('val-project-details').innerHTML = data.projectDetails;
+
+      // Rate Column Header
+      document.getElementById('th-rate').textContent = data.thRate;
+
+      // Render Items
+      renderItems(data.items);
+
+      // Banking Block (hidden for PO, shown for Invoice/Quotation)
+      const cardBank = document.getElementById('card-banking');
+      if (data.showBanking) {
+        cardBank.style.display = '';
+      } else {
+        cardBank.style.display = 'none';
+      }
+
+      // Notes
+      document.getElementById('lbl-notes-header').textContent = data.lblNotesHeader;
+      document.getElementById('val-notes-content').innerHTML = data.notesContent;
+
+      // Totals
+      document.getElementById('val-tot-subtotal').textContent = data.subtotal;
+      document.getElementById('val-tot-discount').textContent = data.discount;
+      document.getElementById('val-tot-net').textContent = data.net;
+      document.getElementById('val-tot-vat').textContent = data.vat;
+      document.getElementById('val-tot-extra').textContent = data.extra;
+
+      // WHT Row (absent in PO)
+      const whtRow = document.getElementById('row-tot-wht');
+      if (data.showWht) {
+        whtRow.style.display = '';
+        document.getElementById('val-tot-wht').textContent = data.wht;
+      } else {
+        whtRow.style.display = 'none';
+      }
+
+      document.getElementById('lbl-grand-total').textContent = data.lblGrandTotal;
+      document.getElementById('val-tot-grand').textContent = data.grandTotal;
+      document.getElementById('val-amount-words').textContent = data.amountInWords;
+
+      // Terms
+      document.getElementById('lbl-terms-header').textContent = data.lblTermsHeader;
+      document.getElementById('val-terms-content').textContent = data.termsContent;
+
+      // Signatures
+      document.getElementById('val-sig1-name').textContent = data.sig1Name;
+      document.getElementById('val-sig1-title').textContent = data.sig1Title;
+      document.getElementById('val-sig2-name').textContent = data.sig2Name;
+      document.getElementById('val-sig2-title').textContent = data.sig2Title;
+    }
+
+    function renderItems(items) {
+      const tbody = document.getElementById('items-table-body');
+      let html = '';
+
+      items.forEach(item => {
+        html += `
+          <tr>
+            <td class="col-num">${item.num}</td>
+            <td class="col-desc">
+              <div class="item-title">${item.title}</div>
+              <div class="item-desc-text">${item.desc}</div>
+              <div class="item-specs">${item.specs}</div>
+            </td>
+            <td class="col-qty">${item.qty}</td>
+            <td class="col-unit">${item.unit}</td>
+            <td class="col-price">${item.price}</td>
+            <td class="col-amt">${item.amt}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function toggleMultiPage() {
+      isMultiPage = !isMultiPage;
+      const data = documentDatasets[currentMode];
+      const toggleText = document.getElementById('page-toggle-text');
+      const footerPage = document.getElementById('val-footer-page');
+
+      if (isMultiPage) {
+        toggleText.textContent = "Show Single Page";
+        footerPage.textContent = "Page 1 of 2";
+
+        // Double the items to demonstrate continuation
+        const multiItems = [
+          ...data.items,
+          { num: "04", title: "Heavy Duty Surge Arrester 33kV Gapless Metal-Oxide", desc: "Polymer housed high-discharge class 1 station arrester with surge monitor", specs: "MAKE: RAYCHEM / VOLTAGE: 33KV", qty: "6", unit: "pcs", price: "₦ 210,000.00", amt: "₦ 1,260,000.00" },
+          { num: "05", title: "Galvanized Lattice Steel Crossarms 2.4m Length", desc: "Hot-dip galvanized heavy angle steel crossarms with mounting U-bolts and hardware", specs: "SPEC: HDG-BS729 / 100x100x10mm", qty: "18", unit: "sets", price: "₦ 45,000.00", amt: "₦ 810,000.00" },
+          { num: "06", title: "High-Voltage Disc Insulators 70kN Ball & Socket Type", desc: "Toughened glass disc suspension insulators for 33kV high-tension feeder lines", specs: "MAKE: SEDIVER / TYPE: F70/127", qty: "36", unit: "units", price: "₦ 28,000.00", amt: "₦ 1,008,000.00" }
+        ];
+        renderItems(multiItems);
+      } else {
+        toggleText.textContent = "Show 2-Page Density";
+        footerPage.textContent = "Page 1 of 1";
+        renderItems(data.items);
+      }
+    }
+
+    // Initialize with Invoice
+    setDocMode('invoice');
+  </script>
+</body>
+</html>

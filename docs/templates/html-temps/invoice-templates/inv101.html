@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOUXRE Commercial Document — A4 Portrait (Refined)</title>
+<style>
+  /* ── Base & Print Reset ───────────────────────────────────── */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 20mm 15mm; /* Bottom margin larger for footer */
+  }
+
+  :root {
+    --primary: #7D8A88; /* Sage/Stone Green */
+    --primary-dark: #5C6B68;
+    --primary-light: #F0F4F3;
+    --ink: #1C2624;
+    --ink-muted: #64748B;
+    --border: #E2E8F0;
+    --bg-body: #F1F5F9;
+    --bg-paper: #FFFFFF;
+    --bg-table-alt: #F8FAFC;
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-body);
+    color: var(--ink);
+    font-family: var(--font-main);
+    font-size: 9pt;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Screen-only UI Controls ─────────────────────────────── */
+  .controls {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 8px;
+    z-index: 1000;
+  }
+
+  .controls button {
+    background: var(--bg-body);
+    border: 1px solid var(--border);
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 8pt;
+    cursor: pointer;
+    color: var(--ink);
+    transition: all 0.2s;
+  }
+
+  .controls button.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* ── Document Container ──────────────────────────────────── */
+  .document-wrapper {
+    width: 210mm;
+    margin: 80px auto 40px;
+    background: var(--bg-paper);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    position: relative;
+  }
+
+  .content-area {
+    padding: 15mm;
+  }
+
+  /* ── Print Specific Overrides ────────────────────────────── */
+  @media print {
+    body { background: #fff; }
+    .controls { display: none; }
+    .document-wrapper {
+      width: auto;
+      margin: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+    .content-area {
+      padding: 0;
+    }
+    .footer {
+      position: fixed;
+      bottom: -15mm;
+      left: 0;
+      right: 0;
+      height: 15mm;
+      background: #fff;
+      border-top: 2px solid var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 15mm;
+      font-size: 7pt;
+      color: var(--ink-muted);
+      z-index: 100;
+    }
+    .page-number::after {
+      content: "Page " counter(page) " of " counter(pages);
+    }
+    .table-header-row {
+      display: table-header-group;
+    }
+    tr {
+      break-inside: avoid;
+    }
+    .totals-section, .signature-section {
+      break-inside: avoid;
+    }
+  }
+
+  /* ── Mode Visibility Logic ───────────────────────────────── */
+  body[data-mode="invoice"] .po-only { display: none !important; }
+  body[data-mode="purchase_order"] .inv-only { display: none !important; }
+
+  /* ── Header ──────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8mm;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 5mm;
+  }
+
+  .brand {
+    display: flex;
+    gap: 4mm;
+    align-items: center;
+  }
+
+  .logo-svg {
+    width: 16mm;
+    height: 16mm;
+    fill: var(--primary);
+  }
+
+  .brand-text h1 {
+    font-size: 16pt;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .brand-text p {
+    margin: 1mm 0 0;
+    font-size: 7.5pt;
+    color: var(--ink-muted);
+    line-height: 1.3;
+  }
+
+  .doc-badge {
+    background: var(--primary-dark);
+    color: #FFFFFF;
+    padding: 4mm 6mm;
+    border-radius: 4px;
+    text-align: right;
+    min-width: 60mm;
+  }
+
+  .doc-badge h2 {
+    font-size: 18pt;
+    font-weight: 800;
+    margin: 0 0 1mm;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  
+  .doc-badge .meta-line {
+    font-size: 7.5pt;
+    color: #D1D5DB;
+    margin-top: 1.5mm;
+  }
+  .doc-badge .meta-line strong {
+    color: #fff;
+  }
+
+  /* ── Parties Block ───────────────────────────────────────── */
+  .parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8mm;
+    margin-bottom: 8mm;
+  }
+
+  .party-card {
+    background: var(--bg-table-alt);
+    border-top: 3px solid var(--primary);
+    padding: 4mm;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .party-card h3 {
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--primary-dark);
+    margin: 0 0 2mm;
+  }
+
+  .party-card .name {
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 1mm;
+  }
+
+  .party-card .detail {
+    font-size: 8pt;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* ── Document Info Grid ──────────────────────────────────── */
+  .doc-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4mm;
+    margin-bottom: 8mm;
+    padding: 3mm 4mm;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .info-item .label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+    font-weight: 600;
+    margin-bottom: 0.5mm;
+  }
+
+  .info-item .value {
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ── Line Items Table ────────────────────────────────────── */
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8mm;
+    font-size: 8.5pt;
+  }
+
+  /* Table Headers */
+  .items-table th {
+    background: var(--primary);
+    color: #fff;
+    font-size: 7.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3mm 2mm;
+    text-align: left;
+    border: 1px solid var(--primary-dark);
+  }
+
+  .items-table th.col-num { width: 5%; text-align: center; }
+  .items-table th.col-desc { width: 45%; }
+  .items-table th.col-qty { width: 10%; text-align: right; }
+  .items-table th.col-unit { width: 10%; text-align: center; }
+  .items-table th.col-price { width: 15%; text-align: right; }
+  .items-table th.col-amount { width: 15%; text-align: right; }
+
+  /* Standard Cells */
+  .items-table td {
+    padding: 3mm 2mm;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  /* Column Alignment */
+  .items-table td.col-num { text-align: center; font-weight: 600; color: var(--ink-muted); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .items-table td.col-desc { font-weight: 400; color: var(--ink); border-right: 1px solid var(--border); }
+  .items-table td.col-qty { text-align: right; font-family: monospace; font-size: 9pt; border-right: 1px solid var(--border); }
+  .items-table td.col-unit { text-align: center; color: var(--ink-muted); border-right: 1px solid var(--border); }
+  .items-table td.col-price { text-align: right; font-family: monospace; font-size: 9pt; border-right: 1px solid var(--border); }
+  .items-table td.col-amount { text-align: right; font-family: monospace; font-size: 9pt; font-weight: 700; border-right: 1px solid var(--border); }
+
+  /* Zebra striping for standalone rows */
+  .items-table tbody tr.standalone:nth-child(even) td {
+    background: var(--bg-table-alt);
+  }
+
+  /* ── Grouping Visuals ────────────────────────────────────── */
+  .group-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .group-header td {
+    background: var(--primary-light) !important;
+    color: var(--primary-dark) !important;
+    font-weight: 700;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3mm 2mm;
+    border-top: 2px solid var(--primary) !important;
+    border-bottom: 1px solid var(--primary) !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  /* Group Children */
+  .group-item td {
+    background: #FFFFFF;
+    border-left: none;
+    border-right: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  /* The continuous left border to show grouping */
+  .group-item td.col-num {
+    border-left: 4px solid var(--primary) !important;
+  }
+
+  /* Last Group Item */
+  .group-last td {
+    border-bottom: 2px solid var(--primary) !important;
+  }
+  .group-last td.col-num {
+    border-bottom-left-radius: 0; /* Just to be safe */
+  }
+
+  /* PO Mode Flattening (Data limitation fix) */
+  body[data-mode="purchase_order"] .group-header { display: none !important; }
+  body[data-mode="purchase_order"] .group-item td,
+  body[data-mode="purchase_order"] .group-last td {
+    border-left: 1px solid var(--border) !important;
+    border-right: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: #FFFFFF !important;
+  }
+  body[data-mode="purchase_order"] tr:nth-child(even) td {
+    background: var(--bg-table-alt) !important;
+  }
+
+  /* ── Description Hierarchy ───────────────────────────────── */
+  .main-desc {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .sub-desc {
+    font-size: 7.5pt;
+    color: var(--ink-muted);
+    margin-top: 1mm;
+    line-height: 1.4;
+  }
+
+  .thumb-wrap {
+    margin-top: 2mm;
+    width: 10mm;
+    height: 10mm;
+    display: block;
+    opacity: 0.85;
+  }
+
+  .thumb-wrap svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* ── Lower Section (Totals & Notes) ──────────────────────── */
+  .lower-section {
+    display: grid;
+    grid-template-columns: 1fr 80mm;
+    gap: 8mm;
+    margin-bottom: 8mm;
+    break-inside: avoid;
+  }
+
+  .notes-area h3, .terms-area h3 {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-dark);
+    margin: 0 0 1.5mm;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1mm;
+  }
+
+  .notes-content, .terms-content {
+    font-size: 7.5pt;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    margin-bottom: 5mm;
+  }
+
+  .notes-content ul {
+    margin: 0;
+    padding-left: 4mm;
+  }
+  .notes-content li { margin-bottom: 1mm; }
+
+  /* Bank / Payment Card */
+  .payment-card {
+    background: var(--bg-table-alt);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    padding: 3mm 4mm;
+    border-radius: 4px;
+    margin-bottom: 5mm;
+  }
+
+  .payment-card h4 {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-dark);
+    margin: 0 0 1.5mm;
+  }
+
+  .payment-card p {
+    margin: 0;
+    font-size: 8pt;
+    line-height: 1.4;
+  }
+  .payment-card .acct-no {
+    font-family: monospace;
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* Totals Block */
+  .totals-block {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--primary);
+    border-radius: 4px;
+    padding: 4mm;
+  }
+
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5mm 0;
+    font-size: 8.5pt;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .totals-row:last-child {
+    border-bottom: none;
+  }
+
+  .totals-row .label {
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+
+  .totals-row .value {
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .totals-row.grand-total {
+    border-top: 2px solid var(--primary);
+    border-bottom: none;
+    margin-top: 2mm;
+    padding-top: 3mm;
+    font-size: 11pt;
+  }
+
+  .totals-row.grand-total .label {
+    font-weight: 800;
+    color: var(--ink);
+    font-size: 10pt;
+  }
+
+  .totals-row.grand-total .value {
+    font-weight: 800;
+    color: var(--primary-dark);
+  }
+
+  .amount-in-words {
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: right;
+    margin-top: 3mm;
+    padding-top: 2mm;
+    border-top: 1px solid var(--border);
+    line-height: 1.4;
+  }
+
+  /* ── Signatures ──────────────────────────────────────────── */
+  .signature-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15mm;
+    margin-top: 10mm;
+    padding-top: 5mm;
+    border-top: 1px solid var(--border);
+    break-inside: avoid;
+  }
+
+  .sign-box {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sign-box .title {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-dark);
+    margin-bottom: 2mm;
+  }
+
+  .sign-line {
+    height: 18mm;
+    border-bottom: 1px solid var(--ink-muted);
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 1mm;
+    margin-bottom: 2mm;
+  }
+
+  .sig-svg {
+    height: 14mm;
+    width: auto;
+    max-width: 100%;
+    display: block;
+  }
+
+  .sign-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 7pt;
+    color: var(--ink-muted);
+  }
+
+</style>
+</head>
+
+<body data-mode="invoice">
+
+<!-- SCREEN CONTROLS -->
+<div class="controls">
+  <button onclick="setMode('invoice')" class="active" id="btn-inv">Invoice</button>
+  <button onclick="setMode('purchase_order')" id="btn-po">Purchase Order</button>
+</div>
+
+<main class="document-wrapper">
+  <div class="content-area">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="brand">
+        <svg class="logo-svg" viewBox="0 0 26.927 27" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.442.011L14.081.003C-4.693.003-4.693 27 14.081 27l12.846-.031v-9.807H14.51c-4.84 0-4.84-7.321 0-7.321l12.417-.02V.003L24.111 0l-.89.561c-.154-.149-.344-.038-.387-.011-.169.105-.244.226-.164.355.223.36 1.63-.847 2.231.126.334.54.138 1.168-.766 1.727-.565.349-1.299.55-1.702-.015l.932-.577c.164.1.335.085.458.003.148-.097.28-.242.167-.425-.257-.416-1.562.85-2.185-.155-.41-.663.125-1.261.637-1.578zM8.353 12.421l-.908.562-.231-.182c-.075.36-.207.556-.612.807-.536.332-1.099.201-1.559-.542l-.978-1.58.979-.605.867 1.401c.221.357.409.398.644.252.282-.175.234-.453-.015-.854l-.772-1.248.979-.605 1.606 2.594zM7.189 9.553l.898-.556.235.187c-.001-.429.449-.75.721-.863a.853.853 0 0 1 .878.096c.034-.812.61-1.045.774-1.118.646-.285 1.042.037 1.431.664l.95 1.535-.979.606-.817-1.323c-.223-.359-.393-.497-.66-.331-.287.178-.181.476.012.787l.794 1.283-.979.606-.819-1.322c-.236-.382-.382-.502-.66-.331-.287.177-.181.474.012.786l.794 1.283-.979.605-1.606-2.594zm11.096-3.278L16.679 3.68l.979-.605 1.606 2.595-.979.605zm-2.265-3.66l.979-.605.454.733-.979.606-.454-.734zm2.159.137l.894-.553.287.194c.039-.476.345-.738.711-.895.573-.245 1.039-.004 1.434.634l.962 1.555-.979.605-.849-1.372c-.163-.263-.363-.447-.644-.273-.301.187-.255.439-.05.771l.818 1.322-.979.606-1.605-2.594zM4.111 15.043c-2.637 1.632-5.022-2.176-2.385-3.808l1.198-.733.617.997-1.052.646c-1.312.809-.101 2.597 1.128 1.824l1.053-.646.617.997-1.176.723zm7.783-8.401l.898-.556.235.187c0-.429.45-.75.721-.863a.858.858 0 0 1 .878.096c.034-.812.61-1.045.773-1.118.646-.285 1.043.036 1.431.664l.95 1.535-.979.605-.817-1.322c-.222-.359-.392-.497-.661-.331-.287.178-.181.475.012.787l.794 1.283-.979.605-.818-1.322c-.236-.381-.382-.501-.661-.331-.287.178-.181.475.012.787l.794 1.283-.977.605-1.606-2.594z"/>
+        </svg>
+        <div class="brand-text">
+          <h1>Apex BuildTech Solutions Ltd.</h1>
+          <p>RC: 1092834 · TIN: 20938475-001<br>
+          Plot 12, Industrial Estate, Agbara, Ogun State, Nigeria.<br>
+          +234 803 123 4567 · info@apexbuildtech.com</p>
+        </div>
+      </div>
+      
+      <div class="doc-badge">
+        <h2 class="inv-only">INVOICE</h2>
+        <h2 class="po-only">PURCHASE ORDER</h2>
+        
+        <div class="meta-line">
+          <span class="label inv-only">Invoice #</span>
+          <span class="label po-only">PO Number</span>
+          <br>
+          <strong class="inv-only">INV-2026-10-001</strong>
+          <strong class="po-only">PO-2026-10-089</strong>
+        </div>
+        <div class="meta-line">
+          <span class="label inv-only">Issue Date</span>
+          <span class="label po-only">PO Date</span>
+          <br>
+          <strong>30 October 2026</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- PARTIES -->
+    <section class="parties">
+      <!-- Issuer -->
+      <div class="party-card">
+        <h3>Issued By</h3>
+        <div class="name">Apex BuildTech Solutions Ltd.</div>
+        <p class="detail">
+          Project: Agbara Factory Complex - Phase 1 Supply<br>
+          Attn: Engr. Adebayo<br>
+          accounts@apexbuildtech.com
+        </p>
+      </div>
+
+      <!-- Counterparty -->
+      <div class="party-card">
+        <div class="inv-only">
+          <h3>Bill To · Client</h3>
+          <div class="name">Ogun State Industrial Development Corp.</div>
+          <p class="detail">
+            Block 4, Oke-Mosan, Abeokuta, Ogun State.<br>
+            Attn: Mrs. Folake Adeyemi<br>
+            procurement@osidc.gov.ng
+          </p>
+        </div>
+        <div class="po-only">
+          <h3>Order From · Vendor</h3>
+          <div class="name">Lagos Heavy Hardware & Logistics</div>
+          <p class="detail">
+            Km 14, Lagos-Ibadan Expressway, Ibafo, Ogun State.<br>
+            Attn: Sales Manager<br>
+            sales@lagosheavyhardware.com
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOC INFO GRID -->
+    <section class="doc-info-grid">
+      <div class="info-item">
+        <span class="label inv-only">Due Date</span>
+        <span class="label po-only">Payment Terms</span>
+        <span class="value inv-only">29 November 2026</span>
+        <span class="value po-only">30 Days Net</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Client Ref / Project</span>
+        <span class="value">OSIDC/PRJ/2026/44</span>
+      </div>
+      <div class="info-item">
+        <span class="label inv-only">Payment Terms</span>
+        <span class="label po-only">Delivery Terms</span>
+        <span class="value inv-only">Net 30 Days</span>
+        <span class="value po-only">DDP - Agbara Site</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Currency</span>
+        <span class="value">NGN (₦)</span>
+      </div>
+    </section>
+
+    <!-- LINE ITEMS -->
+    <table class="items-table">
+      <thead class="table-header-row">
+        <tr>
+          <th class="col-num">#</th>
+          <th class="col-desc">Item & Description</th>
+          <th class="col-qty">Qty</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-price inv-only">Unit Price</th>
+          <th class="col-price po-only" style="display:none;">Unit Cost</th>
+          <th class="col-amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Standalone Items 1-3 -->
+        <tr class="standalone">
+          <td class="col-num">1</td>
+          <td class="col-desc">
+            <div class="main-desc">4-Core Armoured Cable 16mm²</div>
+            <div class="sub-desc">XLPE insulated, PVC sheathed, copper conductor. Suitable for underground industrial power distribution.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="4" y="6" width="16" height="12" rx="2" /><path d="M8 6v12M16 6v12M4 12h16" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">150</td>
+          <td class="col-unit">m</td>
+          <td class="col-price">₦ 45,000.00</td>
+          <td class="col-amount">₦ 6,750,000.00</td>
+        </tr>
+        <tr class="standalone">
+          <td class="col-num">2</td>
+          <td class="col-desc">
+            <div class="main-desc">3-Phase Distribution Board</div>
+            <div class="sub-desc">12-way, 400V, IP54 rated. Complete with busbar and neutral link.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M9 9h6v6H9z" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">10</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 125,000.00</td>
+          <td class="col-amount">₦ 1,250,000.00</td>
+        </tr>
+        <tr class="standalone">
+          <td class="col-num">3</td>
+          <td class="col-desc">
+            <div class="main-desc">63A MCCB Circuit Breaker</div>
+            <div class="sub-desc">3-pole, 25kA breaking capacity.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M12 3v18M8 8h8M8 16h8" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">24</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 18,000.00</td>
+          <td class="col-amount">₦ 432,000.00</td>
+        </tr>
+
+        <!-- Group 1: IT Infrastructure -->
+        <tr class="group-header">
+          <td colspan="6">Group 1: IT Infrastructure & Computing</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">4</td>
+          <td class="col-desc">
+            <div class="main-desc">42U Server Rack Enclosure</div>
+            <div class="sub-desc">600x1000mm, glass front door, perforated rear. Includes 4x PDU and cable management.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 9h16M9 9v11" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">2</td>
+          <td class="col-unit">units</td>
+          <td class="col-price">₦ 850,000.00</td>
+          <td class="col-amount">₦ 1,700,000.00</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">5</td>
+          <td class="col-desc">
+            <div class="main-desc">24-Port Gigabit Managed Switch</div>
+            <div class="sub-desc">Layer 3, rackmount, with 4x SFP+ uplink ports.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 12h2M10 12h2M14 12h2M18 12h2" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">6</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 420,000.00</td>
+          <td class="col-amount">₦ 2,520,000.00</td>
+        </tr>
+        <tr class="group-item group-last">
+          <td class="col-num">6</td>
+          <td class="col-desc">
+            <div class="main-desc">Dell PowerEdge R750 Server</div>
+            <div class="sub-desc">2x Intel Xeon Gold, 128GB RAM, 4x 1.92TB SSD, dual power supply.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 15h10M12 5v10" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">2</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 3,500,000.00</td>
+          <td class="col-amount">₦ 7,000,000.00</td>
+        </tr>
+
+        <!-- Standalone Items 7-10 -->
+        <tr class="standalone">
+          <td class="col-num">7</td>
+          <td class="col-desc">
+            <div class="main-desc">Centrifugal Water Pump 10HP</div>
+            <div class="sub-desc">Cast iron body, brass impeller, 3-phase motor, 50Hz. Max head: 45m.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><circle cx="12" cy="12" r="6" /><path d="M12 6v6l4 2" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">4</td>
+          <td class="col-unit">units</td>
+          <td class="col-price">₦ 850,000.00</td>
+          <td class="col-amount">₦ 3,400,000.00</td>
+        </tr>
+        <tr class="standalone">
+          <td class="col-num">8</td>
+          <td class="col-desc">
+            <div class="main-desc">Three-Phase Induction Motor 15kW</div>
+            <div class="sub-desc">4-pole, 415V, IP55, foot-mounted. IE3 premium efficiency.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><circle cx="12" cy="12" r="4" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">6</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 1,200,000.00</td>
+          <td class="col-amount">₦ 7,200,000.00</td>
+        </tr>
+        <tr class="standalone">
+          <td class="col-num">9</td>
+          <td class="col-desc">
+            <div class="main-desc">Industrial Axial Fan 500mm</div>
+            <div class="sub-desc">Wall-mounted exhaust fan with gravity shutter and 1/2 HP motor.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2" /><path d="M12 4v4M12 16v4M4 12h4M16 12h4" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">12</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 180,000.00</td>
+          <td class="col-amount">₦ 2,160,000.00</td>
+        </tr>
+        <tr class="standalone">
+          <td class="col-num">10</td>
+          <td class="col-desc">
+            <div class="main-desc">Vibration Isolator Pads</div>
+            <div class="sub-desc">Rubber cork composition, 100x100mm, 10mm thickness.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="4" y="10" width="16" height="4" rx="1" /><path d="M6 14v4M18 14v4" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">50</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 12,000.00</td>
+          <td class="col-amount">₦ 600,000.00</td>
+        </tr>
+
+        <!-- Group 2: Plumbing -->
+        <tr class="group-header">
+          <td colspan="6">Group 2: Plumbing & Sanitary Installations</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">11</td>
+          <td class="col-desc">
+            <div class="main-desc">4-inch PVC Sewer Pipe</div>
+            <div class="sub-desc">Heavy duty, 6m length, plain end. Compliant with NIS standards.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M4 8h16v8H4z" /><path d="M8 8v8M16 8v8" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">300</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 8,500.00</td>
+          <td class="col-amount">₦ 2,550,000.00</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">12</td>
+          <td class="col-desc">
+            <div class="main-desc">Brass Gate Valve 2-inch</div>
+            <div class="sub-desc">PN16, threaded BSP connections. Heavy pattern.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M12 4v16M8 8h8M8 16h8" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">40</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 25,000.00</td>
+          <td class="col-amount">₦ 1,000,000.00</td>
+        </tr>
+        <tr class="group-item group-last">
+          <td class="col-num">13</td>
+          <td class="col-desc">
+            <div class="main-desc">Wall-Hung Toilet Suite</div>
+            <div class="sub-desc">White vitreous china, soft-close seat, concealed cistern with dual flush.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M6 10h12v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6zM9 10V6h6v4" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">15</td>
+          <td class="col-unit">sets</td>
+          <td class="col-price">₦ 145,000.00</td>
+          <td class="col-amount">₦ 2,175,000.00</td>
+        </tr>
+
+        <!-- Standalone Items 14-15 -->
+        <tr class="standalone">
+          <td class="col-num">14</td>
+          <td class="col-desc">
+            <div class="main-desc">Dangote 3X Cement 50kg</div>
+            <div class="sub-desc">Portland Limestone Cement (PLC) 42.5R. High early strength.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M7 8h10v12H7zM9 8V5h6v3" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">2000</td>
+          <td class="col-unit">bags</td>
+          <td class="col-price">₦ 3,500.00</td>
+          <td class="col-amount">₦ 7,000,000.00</td>
+        </tr>
+        <tr class="standalone">
+          <td class="col-num">15</td>
+          <td class="col-desc">
+            <div class="main-desc">16mm Reinforcement Steel Bars</div>
+            <div class="sub-desc">Deformed high-yield steel (HYSD), 12m length. Mill certificate included.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M4 18L20 6M4 12L20 0M8 22L24 10" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">500</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 12,500.00</td>
+          <td class="col-amount">₦ 6,250,000.00</td>
+        </tr>
+
+        <!-- Group 3: Safety -->
+        <tr class="group-header">
+          <td colspan="6">Group 3: Safety Equipment & PPE</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">16</td>
+          <td class="col-desc">
+            <div class="main-desc">Vented Safety Helmet</div>
+            <div class="sub-desc">ANSI Z89.1 compliant, 4-point ratchet suspension, high-visibility yellow.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M12 3a9 9 0 0 0-9 9h18a9 9 0 0 0-9-9zM12 3v9" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">150</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 4,500.00</td>
+          <td class="col-amount">₦ 675,000.00</td>
+        </tr>
+        <tr class="group-item group-last">
+          <td class="col-num">17</td>
+          <td class="col-desc">
+            <div class="main-desc">Steel-Toe Leather Boots</div>
+            <div class="sub-desc">S3 rated, oil and slip resistant, anti-static. Sizes 40-46 mixed.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M6 18v-4h12v4M8 14V8h8v6" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">150</td>
+          <td class="col-unit">pairs</td>
+          <td class="col-price">₦ 15,000.00</td>
+          <td class="col-amount">₦ 2,250,000.00</td>
+        </tr>
+
+        <!-- Group 4: Heavy Mechanical (6 items) -->
+        <tr class="group-header">
+          <td colspan="6">Group 4: Heavy Mechanical Equipment</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">18</td>
+          <td class="col-desc">
+            <div class="main-desc">Industrial Air Compressor 50HP</div>
+            <div class="sub-desc">Screw type, 10 bar, air-cooled, complete with air receiver and dryer.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="3" y="8" width="18" height="10" rx="2" /><path d="M7 8V6h10v2" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">2</td>
+          <td class="col-unit">units</td>
+          <td class="col-price">₦ 4,500,000.00</td>
+          <td class="col-amount">₦ 9,000,000.00</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">19</td>
+          <td class="col-desc">
+            <div class="main-desc">Plate Heat Exchanger</div>
+            <div class="sub-desc">Stainless steel 316 plates, EPDM gaskets. 200kW capacity.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1" /><path d="M6 6v12M10 6v12M14 6v12M18 6v12" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">3</td>
+          <td class="col-unit">units</td>
+          <td class="col-price">₦ 750,000.00</td>
+          <td class="col-amount">₦ 2,250,000.00</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">20</td>
+          <td class="col-desc">
+            <div class="main-desc">Diaphragm Pressure Tank</div>
+            <div class="sub-desc">24 litre, 10 bar, butyl rubber bladder. For booster pump systems.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="6" y="4" width="12" height="16" rx="4" /><path d="M9 4v16" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">4</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 320,000.00</td>
+          <td class="col-amount">₦ 1,280,000.00</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">21</td>
+          <td class="col-desc">
+            <div class="main-desc">Thermal Expansion Valve</div>
+            <div class="sub-desc">R410A refrigerant, external equalizer, 10TR capacity.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><circle cx="12" cy="12" r="4" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">10</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 45,000.00</td>
+          <td class="col-amount">₦ 450,000.00</td>
+        </tr>
+        <tr class="group-item group-last">
+          <td class="col-num">22</td>
+          <td class="col-desc">
+            <div class="main-desc">Air Handling Unit 20,000 CFM</div>
+            <div class="sub-desc">Double skin construction, chilled water coil, VFD controlled fan.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 8h8v8H8z" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">2</td>
+          <td class="col-unit">units</td>
+          <td class="col-price">₦ 2,800,000.00</td>
+          <td class="col-amount">₦ 5,600,000.00</td>
+        </tr>
+
+        <!-- Group 5: Lighting -->
+        <tr class="group-header">
+          <td colspan="6">Group 5: Lighting & Accessories</td>
+        </tr>
+        <tr class="group-item">
+          <td class="col-num">23</td>
+          <td class="col-desc">
+            <div class="main-desc">LED High Bay Light 200W</div>
+            <div class="sub-desc">IP65, 5000K daylight, 140lm/W, Meanwell driver.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><circle cx="12" cy="12" r="5" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">80</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 35,000.00</td>
+          <td class="col-amount">₦ 2,800,000.00</td>
+        </tr>
+        <tr class="group-item group-last">
+          <td class="col-num">24</td>
+          <td class="col-desc">
+            <div class="main-desc">Weatherproof Junction Box</div>
+            <div class="sub-desc">IP66 rated, 150x150x100mm, ABS plastic with brass screws.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="1" /><path d="M8 4v16M12 4v16M16 4v16" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">200</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 4,500.00</td>
+          <td class="col-amount">₦ 900,000.00</td>
+        </tr>
+
+        <!-- Standalone Item 25 -->
+        <tr class="standalone">
+          <td class="col-num">25</td>
+          <td class="col-desc">
+            <div class="main-desc">Heavy-Duty Extension Reel</div>
+            <div class="sub-desc">50m, 3x2.5mm² cable, 4-way socket, thermal cut-out. Industrial grade.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><circle cx="12" cy="12" r="8" /><path d="M12 4v8l4 4" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">25</td>
+          <td class="col-unit">pcs</td>
+          <td class="col-price">₦ 28,000.00</td>
+          <td class="col-amount">₦ 700,000.00</td>
+        </tr>
+
+        <!-- Standalone Item 26 -->
+        <tr class="standalone">
+          <td class="col-num">26</td>
+          <td class="col-desc">
+            <div class="main-desc">Marine Plywood 18mm</div>
+            <div class="sub-desc">WBP glue, 4x8ft sheet. For formwork and temporary structures.</div>
+            <div class="thumb-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M4 12h16v4H4zM8 12V8h8v4" /></svg>
+            </div>
+          </td>
+          <td class="col-qty">400</td>
+          <td class="col-unit">sheets</td>
+          <td class="col-price">₦ 8,500.00</td>
+          <td class="col-amount">₦ 3,400,000.00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- LOWER SECTION -->
+    <section class="lower-section">
+      <div class="left-col">
+        <!-- BANK DETAILS (Invoice) -->
+        <div class="payment-card inv-only">
+          <h4>Bank Settlement Details</h4>
+          <p><strong>Bank Name:</strong> Zenith Bank Plc<br>
+          <strong>Account Name:</strong> Apex BuildTech Solutions Ltd.<br>
+          <strong>Account Number:</strong> <span class="acct-no">1012345678</span></p>
+        </div>
+
+        <!-- DELIVERY INSTRUCTIONS (PO) -->
+        <div class="payment-card po-only">
+          <h4>Delivery & Procurement Terms</h4>
+          <p><strong>Deliver To:</strong> Agbara Factory Site, Warehouse 2, Ogun State.<br>
+          <strong>Terms:</strong> DDP. All goods subject to inspection upon receipt. Payment within 30 days of verified invoice.</p>
+        </div>
+
+        <div class="notes-area">
+          <h3>Notes & Instructions</h3>
+          <div class="notes-content">
+            <ul>
+              <li>Please quote the document number on all correspondence and bank transfers.</li>
+              <li>All materials must meet the specified technical standards and be accompanied by mill certificates or test reports.</li>
+              <li>Delivery must be scheduled at least 48 hours in advance with the site manager.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="terms-area">
+          <h3>Terms & Conditions</h3>
+          <div class="terms-content">
+            <p><strong>Warranty:</strong> All equipment is covered by a standard 12-month manufacturer warranty against defects.</p>
+            <p><strong>Validity:</strong> Prices are valid for 30 days from the date of this document.</p>
+            <p><strong>Title:</strong> Ownership of goods passes to the client only upon full settlement of the invoice.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="totals-block">
+          <div class="totals-row">
+            <span class="label">Subtotal</span>
+            <span class="value">₦ 75,242,000.00</span>
+          </div>
+          <div class="totals-row">
+            <span class="label">Installation & Labour</span>
+            <span class="value">₦ 5,000,000.00</span>
+          </div>
+          <div class="totals-row">
+            <span class="label">Discount (2%)</span>
+            <span class="value">- ₦ 2,000,000.00</span>
+          </div>
+          <div class="totals-row">
+            <span class="label">VAT (7.5%)</span>
+            <span class="value">₦ 5,868,150.00</span>
+          </div>
+          <div class="totals-row">
+            <span class="label">Additional Charges (Transport)</span>
+            <span class="value">₦ 1,250,000.00</span>
+          </div>
+          
+          <!-- WHT (Invoice only) -->
+          <div class="totals-row inv-only">
+            <span class="label">Withholding Tax (5%)</span>
+            <span class="value">- ₦ 3,912,100.00</span>
+          </div>
+
+          <div class="totals-row grand-total">
+            <span class="label inv-only">Total Due</span>
+            <span class="label po-only">Total Order Amount</span>
+            <span class="value inv-only">₦ 81,448,050.00</span>
+            <span class="value po-only">₦ 85,360,150.00</span>
+          </div>
+          
+          <div class="amount-in-words inv-only">
+            Eighty-One Million, Four Hundred and Forty-Eight Thousand, and Fifty Naira Only
+          </div>
+          <div class="amount-in-words po-only">
+            Eighty-Five Million, Three Hundred and Sixty Thousand, One Hundred and Fifty Naira Only
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SIGNATURES -->
+    <section class="signature-section">
+      <div class="sign-box">
+        <div class="title inv-only">For: Apex BuildTech Solutions Ltd.</div>
+        <div class="title po-only">Authorized By: Apex BuildTech Solutions Ltd.</div>
+        
+        <div class="sign-line">
+          <svg class="sig-svg" viewBox="5.503 51.024 181.748 90.711" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+            <g fill-rule="evenodd" clip-rule="evenodd">
+              <path fill="none" d="M0 0h192.756v192.756H0V0z"/>
+              <path d="M93.78 101.383c-5.08-5.729-2.009-13.679-.19-19.963 7.379-21.167 29.831-25.463 49.528-27.396 3.049.327 7.303-.79 8.85 2.771 2.592 9.841-5.941 17.638-12.787 22.975-5.717 3.573-12.557 4.521-19.746 4.804-2.26-.289-5.348.017-6.801-2.146.545-.518 1.443-.708 2.178-.446 2.016 1.807 5.031.893 7.678 1.056 10.064-.294 18.695-6.41 24.125-14.469 1.721-3.583 3.807-8.135 1.459-12.073-1.781-1.644-4.529-1.295-6.943-1.073-12.404 1.192-24.035 4.002-34.002 10.706C99.166 72.222 94.428 81 93.241 90.481c-.256 3.267-.114 7.035 2.418 9.388.975.768 2.173 1.584 3.41 1.389 4.568-4.275 6.344-9.889 8.527-15.171.734-2.374.779-5.25-.453-7.405.088-.856 1.041-.932 1.598-1.281 1.508-.49 2.002 1.411 2.477 2.364 1.955 6.704-2.865 12.105-5.658 17.572-1.812 1.951-2.869 4.902-5.549 5.811-.545.014-1.129.041-1.721.041-1.725-.001-3.504-.24-4.51-1.806zM27.083 102.172c-.441-2.014.131-4.164-.142-6.07-1.715 1.164-3.316 2.613-5.031 3.893-3.431 2.324-8.702 2.902-12.52.969-2.124-2.084.109-4.84 1.073-6.888 2.897-3.779 6.354-7.242 9.998-10.14.648-6.033 7.003-10.853 12.242-12.834 1.454-.365 3.202-.191 3.801 1.263.033 1.4-.785 2.549-1.775 3.415-.616.185-1.132-.202-1.083-.763-.022-.735.517-1.53-.055-2.195-4.411 1.574-8.772 4.934-10.184 9.579.681.272 1.971-.044 2.821.223.741.43 1.601 1.198 1.117 2.107-1.296 2.282-4.014 1.502-6.159 1.383-4.296 3.697-9.153 7.645-10.09 13.177.997 1.717 3.278.541 4.634.85 5.217-.467 8.604-4.818 12.23-8.391 1.498-10.391 9.389-19.349 18.423-25.022 1.617-.545 3.932-2.565 5.386-.523.187 3.865-3.534 7.131-3.534 7.131l-4.362 5.066c-4.629 5.37-9.579 9.934-14.017 14.933-.496 2.543-1.051 5.423-.31 8.103 6.006-5.141 11.479-11.463 18.378-14.611.735-.071 1.422.475 1.552 1.155-.414 1.465-1.285 2.663-1.705 4.084 2.091-2.075 4.499-7.308 8.528-5.604l2.668 3.311c4.411-3.926 9.688-9.001 15.896-5.887 1.655 1.252 2.151 2.93 2.418 4.781-.403 2.086-.403 4.449-2.457 5.734-2.292.393-5.32.915-7.155-.784.043-.333.208-.681.54-.915 1.846-.381 3.779.528 5.391-.403 1.078-1.775 1.584-4.433.523-6.376-.588-1.051-1.879-1.019-2.897-1.28-6.022-.082-10.265 6.094-13.369 10.445-1.487 1.382-2.358 4.949-5.038 3.605-.168-.164-.397-.158-.572-.377 1.22-3.18 6.546-6.458 2.75-9.911-.463-.609-1.013.028-1.459.147-3.921 3.017-4.542 7.869-8.125 10.771-.899.072-1.639-.135-2.325-.625.108-2.811 1.002-5.31 1.955-7.755l-.79.021c-5.031 3.611-8.854 8.484-13.598 12.47-.416-.004-.879.027-1.332.027-1.017.002-1.981-.162-2.24-1.289zm7.863-21.956c-1.4 2.734-3.583 5.375-3.572 8.359a144.269 144.269 0 0 0 11.207-11.354c2.342-3.147 5.707-6.099 6.632-9.605-5.32 3.163-10.689 7.171-14.267 12.6z"/>
+              <path d="M65.224 76.012c-2.211-.676-.414-3.251-.621-4.825.871-1.258 3.621-1.378 3.894.588.07.387-.431.734-.769.8-.99.893.048 3.687-1.503 3.687-.256 0-.583-.076-1.001-.25zM137.084 138.555c-6.725-1.139-13.598-1.65-19.578-4.656.594-.969 2.053-1.121 3.055-1.709 6.709-1.564 12.771-4.744 18.832-7.701l18.477-8.537.789-.023c-1.715 1.34-3.715 2.619-5.717 3.512-10.244 4.58-19.773 10.707-30.137 14.895 6.078 2.445 13.168 2.445 20.039 3.012 13.92.969 28.65-1.971 34.559-15.781 3.305-5.533 4.045-12.361 3.316-19.152-.549-1.955-.943-4.309-3.219-5.326-3.453-.925-7.547 1.922-10.543-1.1-1.035-.871-.576-2.908-2.211-3.033-4.133 1.329-6.715-3.218-10.438-1.22-1.057.534-2.256-.337-3.389-.594-2.896 1.193-5.918 1.934-8.396 3.965-.779.468-1.471-.185-2.205-.343-.229-.158-.07-.446-.131-.67 1.912-.104-.502-2.064 1.41-2.227 1.182-.028 2.174-.894 2.656-1.917l-.01-.397c-3.67 1.607-7.035 4.558-10.76 6.447-1.559.714-3.398 1.204-5.006.234-1.492.927-3.365 2.608-5.201 1.241-1.529-.637-.439-2.124-.244-3.142.359-1.579 2.129-2.918 1.416-4.591-3.252 2.886-5.631 7.053-9.818 8.338-.959.07-1.857-.018-2.598-.508l-.016-.783c4.803-1.296 7.895-6.208 11.521-9.617.846-.185 1.559-.768 2.582-.561 1.324 1.486 2.119 4.166 1.094 6.159-.266.458-.762.806-.641 1.366 3.859-.936 3.832-7.013 8.342-6.67.789.152.697 1.111.713 1.617-1.139 1.824-2.967 3.164-3.932 4.934l.109.109c3.953-1.781 7.482-4.624 11.316-6.742 1.176-.25 2.574-.735 3.768-.195 1.248.473.637 3.299 2.467 1.965 2.559-3.55 5.859-6.556 9.109-9.388 4.412-3.986 9.275-7.591 14.502-10.074 1.121-.087 2.74-.741 3.219.431.305 1.061-.938.751-1.318 1.382-4.867 5.794-10.094 10.93-16.357 14.845l.01.277c1.02.316 2.463-.446 2.941.719.365 1.231-1.959 2.745.25 3.371 2.086.343 4.547-.387 6.209.975 1.318.986.855 2.739 2.117 3.719 3.758-.255 8.469-.931 11.137 2.271 4.205 4.455 3.262 12.072 2.041 17.502-1.904 7.412-6.664 15.461-14.004 19.006-6.928 3.777-15.303 4.545-23.668 4.545-2.838-.003-5.678-.09-8.459-.18zm17.557-49.534c.947-.354 2.406-.337 2.547-1.688-.948.414-1.721 1.111-2.547 1.688zm3.642-5.369c1.273-.708 2.613-1.127 3.713-2.113 3.213-2.217 6.934-4.215 9.164-7.477-4.611 2.473-8.92 5.898-12.877 9.59z"/>
+            </g>
+          </svg>
+        </div>
+        <div class="sign-meta">
+          <span>Name: <strong>Oluwaseun Adeyemi</strong></span>
+          <span>Date: <strong>30/10/2026</strong></span>
+        </div>
+      </div>
+
+      <div class="sign-box">
+        <div class="title inv-only">Client Acknowledgment</div>
+        <div class="title po-only">Procurement Approval</div>
+        
+        <div class="sign-line"></div>
+        
+        <div class="sign-meta">
+          <span>Name: _________________________</span>
+          <span>Date: _________________________</span>
+        </div>
+      </div>
+    </section>
+
+  </div> 
+
+  <footer class="footer">
+    <div>
+      <strong>Apex BuildTech Solutions Ltd.</strong> · RC: 1092834 · Powered by BOUXRE
+    </div>
+    <div style="text-align: right;">
+      <span>Confidential & Proprietary</span>
+      <span class="page-number" style="margin-left: 10mm; font-weight: bold;"></span>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+  function setMode(mode) {
+    document.body.setAttribute('data-mode', mode);
+    
+    document.querySelectorAll('.controls button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btn-inv').classList.remove('active');
+    document.getElementById('btn-po').classList.remove('active');
+    
+    if (mode === 'invoice') document.getElementById('btn-inv').classList.add('active');
+    if (mode === 'purchase_order') document.getElementById('btn-po').classList.add('active');
+
+    const priceHeaderInv = document.querySelector('.col-price.inv-only');
+    const priceHeaderPo = document.querySelector('.col-price.po-only');
+    
+    if (mode === 'purchase_order') {
+      if (priceHeaderInv) priceHeaderInv.style.display = 'none';
+      if (priceHeaderPo) priceHeaderPo.style.display = 'table-cell';
+    } else {
+      if (priceHeaderInv) priceHeaderInv.style.display = 'table-cell';
+      if (priceHeaderPo) priceHeaderPo.style.display = 'none';
+    }
+  }
+</script>
+</body>
+</html>
