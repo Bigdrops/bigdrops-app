@@ -1,13 +1,15 @@
 import React from 'react'
 import type { CanonicalPreparedCsr } from '@/domain/pdf/resolver/csr/csrPreparedContract'
+import { View, Text } from '../primitives'
 import {
-  View,
-  Text,
-  Table,
-  Row,
-  Cell,
-} from '../primitives'
-import { BrandLogo, getAdaptiveMaterialColumns } from './csrPdfcnUtils'
+  BrandLogo,
+  READING_FIELDS,
+  dash,
+  formatMakeModel,
+  formatServiceDate,
+  isCompleteStatus,
+} from './csrPdfcnUtils'
+import { CsrMaterialsSchedule, type MaterialsTheme } from './csrMaterialsSchedule'
 
 export const BLUEPRINT_PALETTE = {
   navy: '#07192b',
@@ -29,186 +31,240 @@ export const BLUEPRINT_PALETTE = {
 
 const C = BLUEPRINT_PALETTE
 
-export const BlueprintHeader: React.FC<{ csr: CanonicalPreparedCsr }> = ({ csr }) => (
+const LABEL_SIZE = 7
+const VALUE_SIZE = 10.5
+const BODY_SIZE = 9
+
+const labelStyle = { fontSize: LABEL_SIZE, fontWeight: 700 as const, color: C.blue, letterSpacing: 0.4 }
+
+const BLUEPRINT_MATERIALS_THEME: MaterialsTheme = {
+  border: C.lineHeavy,
+  headerBg: C.tintStrong,
+  headerText: C.cobalt,
+  rule: C.lineGrid,
+  zebra: C.tint,
+  paper: C.white,
+  text: C.navy,
+  muted: C.slate,
+  accent: C.blue,
+  divider: C.lineMed,
+}
+
+/** Small caption above a value. */
+const Field: React.FC<{ label: string; value: string; valueColor?: string; grow?: number }> = ({
+  label,
+  value,
+  valueColor = C.navy,
+  grow,
+}) => (
+  <View style={{ flexGrow: grow, flexShrink: 1 }}>
+    <Text style={{ fontSize: LABEL_SIZE, color: C.slate, letterSpacing: 0.3 }}>{label}</Text>
+    <Text style={{ fontSize: VALUE_SIZE, fontWeight: 700, color: valueColor, marginTop: 1.5 }}>{value}</Text>
+  </View>
+)
+
+const SectionBar: React.FC<{ code: string; title: string; accent?: string }> = ({
+  code,
+  title,
+  accent = C.navy,
+}) => (
   <View
     style={{
       display: 'flex',
       flexDirection: 'row',
-      borderBottomWidth: 1.5,
-      borderBottomColor: C.lineHeavy,
-      backgroundColor: C.white,
+      alignItems: 'center',
+      backgroundColor: C.tintStrong,
+      borderBottomWidth: 0.8,
+      borderBottomColor: C.lineMed,
+      paddingVertical: 3.5,
+      paddingHorizontal: 8,
     }}
   >
-    {/* Col 1: Service Provider Information */}
-    <View
-      style={{
-        width: 250,
-        padding: 5,
-        borderRightWidth: 1,
-        borderRightColor: C.lineHeavy,
-        backgroundColor: C.tint,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-      }}
-    >
-      <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+    <View style={{ backgroundColor: accent, paddingHorizontal: 4, paddingVertical: 1.5 }}>
+      <Text style={{ fontSize: 7, fontWeight: 700, color: C.white }}>{code}</Text>
+    </View>
+    <Text style={{ fontSize: 8, fontWeight: 700, color: C.navy, marginLeft: 6, letterSpacing: 0.3 }}>{title}</Text>
+  </View>
+)
+
+export const BlueprintHeader: React.FC<{ csr: CanonicalPreparedCsr }> = ({ csr }) => {
+  const provider = csr.serviceProvider
+  const hasLogo = Boolean(provider.logoUrl)
+  const hasProvider = Boolean(
+    provider.name || provider.subtitle || provider.address || provider.contact || hasLogo,
+  )
+  const hasContact = Boolean(provider.address || provider.contact)
+  const statusColor = isCompleteStatus(csr.status) ? C.ok : C.navy
+
+  return (
+    <View style={{ borderBottomWidth: 1.2, borderBottomColor: C.lineHeavy }}>
+      {/* Tier 1: who issued the document and what it is */}
+      <View style={{ display: 'flex', flexDirection: 'row', borderBottomWidth: 0.8, borderBottomColor: C.lineMed }}>
+        {hasProvider ? (
+          <View
+            style={{
+              flex: 1.35,
+              padding: 8,
+              backgroundColor: C.tint,
+              borderRightWidth: 1.2,
+              borderRightColor: C.lineHeavy,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              {hasLogo ? (
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    backgroundColor: C.white,
+                    borderWidth: 0.8,
+                    borderColor: C.lineMed,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <BrandLogo logoUrl={provider.logoUrl} width={36} height={36} />
+                </View>
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <Text style={labelStyle}>SERVICE PROVIDER</Text>
+                {provider.name ? (
+                  <Text style={{ fontSize: 14.5, fontWeight: 700, color: C.navy, lineHeight: 1.15, marginTop: 1.5 }}>
+                    {provider.name}
+                  </Text>
+                ) : null}
+                {provider.subtitle ? (
+                  <Text style={{ fontSize: 9, fontWeight: 700, color: C.cobalt, marginTop: 2 }}>
+                    {provider.subtitle}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            {hasContact ? (
+              <View style={{ borderTopWidth: 0.5, borderTopColor: C.lineFine, paddingTop: 4, marginTop: 5 }}>
+                {provider.address ? <Text style={{ fontSize: 8.5, color: C.slate }}>{provider.address}</Text> : null}
+                {provider.contact ? (
+                  <Text style={{ fontSize: 8.5, color: C.slate, marginTop: 1 }}>{provider.contact}</Text>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
         <View
           style={{
-            width: 28,
-            height: 28,
-            backgroundColor: C.white,
-            borderWidth: 0.8,
-            borderColor: C.lineMed,
+            flex: 1,
+            padding: 8,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
           }}
         >
-          <BrandLogo
-            logoUrl={csr.serviceProvider.logoUrl}
-            width={22}
-            height={22}
-            fillColor={C.navy}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 5, fontWeight: 700, color: C.blue, textTransform: 'uppercase' }}>
-            SERVICE PROVIDER
+          <Text style={{ fontSize: 19, fontWeight: 700, color: C.navy, letterSpacing: 0.6 }}>
+            CUSTOMER SERVICE REPORT
           </Text>
-          <Text style={{ fontSize: 8.5, fontWeight: 700, color: C.navy, lineHeight: 1.1 }}>
-            {csr.serviceProvider.name}
-          </Text>
-          <Text style={{ fontSize: 5.5, color: C.cobalt, fontWeight: 700 }}>
-            {csr.serviceProvider.subtitle}
-          </Text>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 18,
+              borderTopWidth: 0.5,
+              borderTopColor: C.lineFine,
+              paddingTop: 4,
+              marginTop: 6,
+            }}
+          >
+            <Field label="REPORT NO." value={dash(csr.csrNumber)} />
+            <Field label="DATE" value={dash(csr.date)} />
+            {csr.status ? <Field label="STATUS" value={csr.status.toUpperCase()} valueColor={statusColor} /> : null}
+          </View>
         </View>
       </View>
-      <View style={{ borderTopWidth: 0.5, borderTopColor: C.lineFine, paddingTop: 3, marginTop: 3 }}>
-        <Text style={{ fontSize: 5.2, color: C.slate }}>{csr.serviceProvider.address}</Text>
-        <Text style={{ fontSize: 5.2, color: C.slate }}>{csr.serviceProvider.contact}</Text>
-      </View>
-    </View>
 
-    {/* Col 2: Dedicated CSR Document Title Block */}
-    <View
-      style={{
-        width: 185,
-        padding: 5,
-        borderRightWidth: 1,
-        borderRightColor: C.lineHeavy,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-      }}
-    >
-      <View>
-        <Text style={{ fontSize: 5, fontWeight: 700, color: C.blue, textTransform: 'uppercase' }}>
-          OFFICIAL SERVICE DOCUMENT
-        </Text>
-        <Text style={{ fontSize: 10, fontWeight: 700, color: C.navy, letterSpacing: 0.5 }}>
-          CUSTOMER SERVICE REPORT
-        </Text>
-      </View>
-      <View
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          borderTopWidth: 0.5,
-          borderTopColor: C.lineFine,
-          paddingTop: 3,
-        }}
-      >
-        <View>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>REPORT NO:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.navy }}>{csr.csrNumber}</Text>
+      {/* Tier 2: client, location and service date */}
+      <View style={{ display: 'flex', flexDirection: 'row' }}>
+        <View style={{ flex: 1.2, padding: 8, borderRightWidth: 0.8, borderRightColor: C.lineMed }}>
+          <Text style={labelStyle}>CLIENT</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: 700, color: C.navy, marginTop: 1.5 }}>{dash(csr.client.name)}</Text>
+          {csr.client.address ? (
+            <Text style={{ fontSize: 8.5, color: C.slate, marginTop: 1.5, lineHeight: 1.25 }}>{csr.client.address}</Text>
+          ) : null}
+          {csr.client.accountRef || csr.client.poNumber ? (
+            <Text style={{ fontSize: 8.5, color: C.blue, marginTop: 3 }}>
+              {[
+                csr.client.accountRef ? `Account: ${csr.client.accountRef}` : '',
+                csr.client.poNumber ? `PO: ${csr.client.poNumber}` : '',
+              ]
+                .filter(Boolean)
+                .join('  |  ')}
+            </Text>
+          ) : null}
         </View>
-        <View>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>DATE:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.navy }}>{csr.date}</Text>
+        <View style={{ flex: 1.2, padding: 8, borderRightWidth: 0.8, borderRightColor: C.lineMed }}>
+          <Text style={labelStyle}>{csr.location.label.toUpperCase()}</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: 700, color: C.navy, marginTop: 1.5 }}>{dash(csr.location.site)}</Text>
+          {csr.location.subLocation ? (
+            <Text style={{ fontSize: 8.5, color: C.slate, marginTop: 1.5 }}>{csr.location.subLocation}</Text>
+          ) : null}
         </View>
-        <View>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>STATUS:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.ok }}>{csr.status.toUpperCase()}</Text>
+        <View style={{ flex: 0.7, padding: 8, backgroundColor: C.tint }}>
+          <Text style={labelStyle}>SERVICE DATE</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: 700, color: C.navy, marginTop: 1.5 }}>
+            {formatServiceDate(csr.serviceWindow, csr.date)}
+          </Text>
         </View>
       </View>
     </View>
+  )
+}
 
-    {/* Col 3: Client & Corporate Address */}
-    <View
-      style={{
-        width: 195,
-        padding: 5,
-        borderRightWidth: 1,
-        borderRightColor: C.lineHeavy,
-        backgroundColor: C.tint,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-      }}
-    >
-      <View>
-        <Text style={{ fontSize: 5, fontWeight: 700, color: C.blue, textTransform: 'uppercase' }}>
-          CLIENT & CORPORATE ADDRESS
-        </Text>
-        <Text style={{ fontSize: 7.5, fontWeight: 700, color: C.navy }}>{csr.client.name}</Text>
-        <Text style={{ fontSize: 6, color: C.slate }}>{csr.client.address || '-'}</Text>
-      </View>
-      <View style={{ borderTopWidth: 0.5, borderTopColor: C.lineFine, paddingTop: 3 }}>
-        <Text style={{ fontSize: 5.2, color: C.blue }}>
-          {csr.client.accountRef ? `ACCOUNT: ${csr.client.accountRef}` : 'ACCOUNT: SAS-11PLC-084'}
-          {csr.client.poNumber ? ` · PO: ${csr.client.poNumber}` : ''}
-        </Text>
-      </View>
-    </View>
+const SpecCell: React.FC<{ label: string; value: string; width: string; borderRight?: boolean; borderTop?: boolean }> = ({
+  label,
+  value,
+  width,
+  borderRight,
+  borderTop,
+}) => (
+  <View
+    style={{
+      width,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      borderRightWidth: borderRight ? 0.5 : 0,
+      borderRightColor: C.lineFine,
+      borderTopWidth: borderTop ? 0.5 : 0,
+      borderTopColor: C.lineFine,
+    }}
+  >
+    <Text style={{ fontSize: LABEL_SIZE, color: C.slate, letterSpacing: 0.3 }}>{label}</Text>
+    <Text style={{ fontSize: 10, fontWeight: 700, color: C.navy, marginTop: 1.5 }}>{value}</Text>
+  </View>
+)
 
-    {/* Col 4: Site / Equipment Location & Service Window */}
-    <View
-      style={{
-        flex: 1,
-        padding: 5,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-      }}
-    >
-      <View>
-        <Text style={{ fontSize: 5, fontWeight: 700, color: C.blue, textTransform: 'uppercase' }}>
-          SITE / EQUIPMENT LOCATION
-        </Text>
-        <Text style={{ fontSize: 7.5, fontWeight: 700, color: C.navy }}>
-          {csr.location.site || 'Site Location Not Specified'}
-        </Text>
-        {csr.location.subLocation ? (
-          <Text style={{ fontSize: 6, color: C.slate }}>{csr.location.subLocation}</Text>
-        ) : null}
-      </View>
-      <View
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          borderTopWidth: 0.5,
-          borderTopColor: C.lineFine,
-          paddingTop: 3,
-        }}
-      >
-        <View>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>START:</Text>
-          <Text style={{ fontSize: 5.8, fontWeight: 700, color: C.navy }}>{csr.serviceWindow.startDate}</Text>
-        </View>
-        <View>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>END:</Text>
-          <Text style={{ fontSize: 5.8, fontWeight: 700, color: C.navy }}>{csr.serviceWindow.endDate}</Text>
-        </View>
-        <View>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>HOURS:</Text>
-          <Text style={{ fontSize: 5.8, fontWeight: 700, color: C.navy }}>
-            {csr.serviceWindow.operatingHours}
-          </Text>
-        </View>
-      </View>
+const Narrative: React.FC<{
+  code: string
+  title: string
+  text: string
+  accent?: string
+  grow?: number
+  borderRight?: boolean
+}> = ({ code, title, text, accent, grow = 1, borderRight }) => (
+  <View
+    style={{
+      flex: grow,
+      display: 'flex',
+      flexDirection: 'column',
+      borderRightWidth: borderRight ? 0.8 : 0,
+      borderRightColor: C.lineMed,
+    }}
+  >
+    <SectionBar code={code} title={title} accent={accent} />
+    <View style={{ padding: 8 }}>
+      <Text style={{ fontSize: BODY_SIZE, color: C.navy, lineHeight: 1.35 }}>{dash(text)}</Text>
     </View>
   </View>
 )
@@ -218,100 +274,60 @@ export const BlueprintWorkspace: React.FC<{ csr: CanonicalPreparedCsr }> = ({ cs
     style={{
       display: 'flex',
       flexDirection: 'row',
-      borderBottomWidth: 1.5,
+      borderBottomWidth: 1.2,
       borderBottomColor: C.lineHeavy,
-      flex: 1,
+      flexGrow: 1,
     }}
   >
-    {/* Left Column: Equipment Data Plate & 6 Operational Telemetry Cells */}
+    {/* Left plate: equipment specification and the six recorded readings */}
     <View
       style={{
-        width: 230,
+        width: 282,
         borderRightWidth: 1.2,
         borderRightColor: C.lineHeavy,
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      <View style={{ padding: 4, backgroundColor: C.tintStrong, borderBottomWidth: 0.8, borderBottomColor: C.lineMed }}>
-        <Text style={{ fontSize: 5.5, fontWeight: 700, color: C.navy }}>
-          SEC 01 · EQUIPMENT SPECIFICATION PLATE
-        </Text>
-      </View>
-      <View style={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: 5.4, color: C.slate }}>MAKE / MODEL:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.navy }}>{csr.equipment.make} {csr.equipment.model}</Text>
-        </View>
-        <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: 5.4, color: C.slate }}>TYPE:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.navy }}>{csr.equipment.type}</Text>
-        </View>
-        <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: 5.4, color: C.slate }}>SERIAL NO:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.navy }}>{csr.equipment.serialNo || '-'}</Text>
-        </View>
-        <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: 5.4, color: C.slate }}>ENGINE NO:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.navy }}>{csr.equipment.engineNo || '-'}</Text>
-        </View>
-        <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontSize: 5.4, color: C.slate }}>RATED CAPACITY:</Text>
-          <Text style={{ fontSize: 6.2, fontWeight: 700, color: C.navy }}>{csr.equipment.capacity || '-'}</Text>
-        </View>
+      <SectionBar code="01" title="EQUIPMENT" />
+      <View style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+        <SpecCell label="MAKE / MODEL" value={formatMakeModel(csr.equipment)} width="60%" borderRight />
+        <SpecCell label="TYPE" value={dash(csr.equipment.type)} width="40%" />
+        <SpecCell label="SERIAL NO." value={dash(csr.equipment.serialNo)} width="33.33%" borderRight borderTop />
+        <SpecCell label="ENGINE NO." value={dash(csr.equipment.engineNo)} width="33.33%" borderRight borderTop />
+        <SpecCell label="RATED CAPACITY" value={dash(csr.equipment.capacity)} width="33.34%" borderTop />
       </View>
 
-      {/* 6-Cell Operational Telemetry Callouts */}
-      <View
-        style={{
-          padding: 4,
-          backgroundColor: C.tintStrong,
-          borderTopWidth: 0.8,
-          borderTopColor: C.lineMed,
-          borderBottomWidth: 0.8,
-          borderBottomColor: C.lineMed,
-          marginTop: 'auto',
-        }}
-      >
-        <Text style={{ fontSize: 5.5, fontWeight: 700, color: C.navy }}>
-          SEC 02 · OPERATIONAL READINGS (6-CELL STRIP)
-        </Text>
+      <View style={{ borderTopWidth: 0.8, borderTopColor: C.lineMed }}>
+        <SectionBar code="02" title="OPERATIONAL READINGS" />
       </View>
-      <View style={{ display: 'flex', flexDirection: 'column' }}>
-        <View style={{ display: 'flex', flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.lineFine }}>
-          <View style={{ flex: 1, padding: 3, borderRightWidth: 0.5, borderRightColor: C.lineFine }}>
-            <Text style={{ fontSize: 4.6, color: C.slate }}>GEN VOLTAGE (V)</Text>
-            <Text style={{ fontSize: 6.4, fontWeight: 700, color: C.navy }}>{csr.readings.voltage.value ?? '-'}</Text>
+      <View style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', flexGrow: 1 }}>
+        {READING_FIELDS.map((field, idx) => (
+          <View
+            key={field.key}
+            style={{
+              width: '33.33%',
+              paddingVertical: 5,
+              paddingHorizontal: 8,
+              borderRightWidth: idx % 3 !== 2 ? 0.5 : 0,
+              borderRightColor: C.lineFine,
+              borderBottomWidth: idx < 3 ? 0.5 : 0,
+              borderBottomColor: C.lineFine,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 6.5, color: C.slate, letterSpacing: 0.2 }}>{field.label}</Text>
+            <Text style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginTop: 2 }}>
+              {dash(csr.readings[field.key].value)}
+            </Text>
           </View>
-          <View style={{ flex: 1, padding: 3 }}>
-            <Text style={{ fontSize: 4.6, color: C.slate }}>FREQUENCY (HZ)</Text>
-            <Text style={{ fontSize: 6.4, fontWeight: 700, color: C.navy }}>{csr.readings.frequency.value ?? '-'}</Text>
-          </View>
-        </View>
-        <View style={{ display: 'flex', flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.lineFine }}>
-          <View style={{ flex: 1, padding: 3, borderRightWidth: 0.5, borderRightColor: C.lineFine }}>
-            <Text style={{ fontSize: 4.6, color: C.slate }}>BATTERY / ALT</Text>
-            <Text style={{ fontSize: 6.4, fontWeight: 700, color: C.navy }}>{csr.readings.battery.value ?? '-'}</Text>
-          </View>
-          <View style={{ flex: 1, padding: 3 }}>
-            <Text style={{ fontSize: 4.6, color: C.slate }}>TEMPERATURE</Text>
-            <Text style={{ fontSize: 6.4, fontWeight: 700, color: C.navy }}>{csr.readings.temperature.value ?? '-'}</Text>
-          </View>
-        </View>
-        <View style={{ display: 'flex', flexDirection: 'row' }}>
-          <View style={{ flex: 1, padding: 3, borderRightWidth: 0.5, borderRightColor: C.lineFine }}>
-            <Text style={{ fontSize: 4.6, color: C.slate }}>PRESSURE</Text>
-            <Text style={{ fontSize: 6.4, fontWeight: 700, color: C.navy }}>{csr.readings.pressure.value ?? '-'}</Text>
-          </View>
-          <View style={{ flex: 1, padding: 3 }}>
-            <Text style={{ fontSize: 4.6, color: C.slate }}>ENGINE HOURS</Text>
-            <Text style={{ fontSize: 6.4, fontWeight: 700, color: C.navy }}>{csr.readings.hours.value ?? '-'}</Text>
-          </View>
-        </View>
+        ))}
       </View>
     </View>
 
-    {/* Right Column: Service Overview, Findings, and Narrative Clauses */}
+    {/* Right dossier: call details and the four narrative records */}
     <View style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <View
         style={{
@@ -322,167 +338,61 @@ export const BlueprintWorkspace: React.FC<{ csr: CanonicalPreparedCsr }> = ({ cs
           backgroundColor: C.tint,
         }}
       >
-        <View style={{ flex: 1, padding: 4, borderRightWidth: 0.5, borderRightColor: C.lineFine }}>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>CALL TYPE</Text>
-          <Text style={{ fontSize: 6.5, fontWeight: 700, color: C.navy }}>{csr.callTypeDisplay}</Text>
+        <View style={{ flex: 1, padding: 8, borderRightWidth: 0.5, borderRightColor: C.lineFine }}>
+          <Field label="CALL TYPE" value={dash(csr.callTypeDisplay)} />
         </View>
-        <View style={{ flex: 1, padding: 4, borderRightWidth: 0.5, borderRightColor: C.lineFine }}>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>SERVICE BASIS</Text>
-          <Text style={{ fontSize: 6.5, fontWeight: 700, color: C.navy }}>{csr.serviceBasis || 'Contractual Maint.'}</Text>
+        <View style={{ flex: 1, padding: 8, borderRightWidth: 0.5, borderRightColor: C.lineFine }}>
+          <Field label="SERVICE BASIS" value={dash(csr.serviceBasis)} />
         </View>
-        <View style={{ flex: 1, padding: 4 }}>
-          <Text style={{ fontSize: 4.8, color: C.slate }}>SYSTEM STATE</Text>
-          <Text style={{ fontSize: 6.5, fontWeight: 700, color: C.navy }}>{csr.systemDownDisplay}</Text>
+        <View style={{ flex: 1, padding: 8 }}>
+          <Field label="SYSTEM STATE" value={dash(csr.systemDownDisplay)} />
         </View>
       </View>
 
-      <View style={{ display: 'flex', flexDirection: 'row', borderBottomWidth: 0.8, borderBottomColor: C.lineMed, flex: 1 }}>
-        <View style={{ flex: 1, padding: 5, borderRightWidth: 0.8, borderRightColor: C.lineMed }}>
-          <Text style={{ fontSize: 5.5, fontWeight: 700, color: C.blue, marginBottom: 2 }}>
-            SEC 03 · PROBLEM REPORTED
-          </Text>
-          <Text style={{ fontSize: 6.4, color: C.navy, lineHeight: 1.3 }}>
-            {csr.narratives.problemReported || 'Scheduled routine overhaul and full service inspection.'}
-          </Text>
-        </View>
-        <View style={{ flex: 1, padding: 5 }}>
-          <Text style={{ fontSize: 5.5, fontWeight: 700, color: C.amber, marginBottom: 2 }}>
-            SEC 04 · OBSERVATIONS & DEFECTS FOUND
-          </Text>
-          <Text style={{ fontSize: 6.4, color: C.navy, lineHeight: 1.3 }}>
-            {csr.narratives.defectsFound}
-          </Text>
-        </View>
+      <View
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          borderBottomWidth: 0.8,
+          borderBottomColor: C.lineMed,
+          flexGrow: 1,
+        }}
+      >
+        <Narrative code="03" title="PROBLEM REPORTED" text={csr.narratives.problemReported} borderRight />
+        <Narrative
+          code="04"
+          title="OBSERVATIONS & DEFECTS FOUND"
+          text={csr.narratives.defectsFound}
+          accent={C.amber}
+        />
       </View>
 
-      <View style={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
-        <View style={{ flex: 1.2, padding: 5, borderRightWidth: 0.8, borderRightColor: C.lineMed }}>
-          <Text style={{ fontSize: 5.5, fontWeight: 700, color: C.navy, marginBottom: 2 }}>
-            SERVICE RENDERED
-          </Text>
-          <Text style={{ fontSize: 6.2, color: C.navy, lineHeight: 1.25 }}>
-            {csr.narratives.serviceRendered || 'Engine overhauled in accordance with manufacturer technical specifications.'}
-          </Text>
-        </View>
-        <View style={{ flex: 1, padding: 5 }}>
-          <Text style={{ fontSize: 5.5, fontWeight: 700, color: C.navy, marginBottom: 2 }}>
-            ENGINEER'S REMARKS
-          </Text>
-          <Text style={{ fontSize: 6.2, color: C.navy, lineHeight: 1.25 }}>
-            {csr.narratives.engineerRemarks || 'System certified operational and safe for commercial service load.'}
-          </Text>
-        </View>
+      <View style={{ display: 'flex', flexDirection: 'row', flexGrow: 1.4 }}>
+        <Narrative code="05" title="SERVICE RENDERED" text={csr.narratives.serviceRendered} grow={1.2} borderRight />
+        <Narrative code="06" title="ENGINEER'S REMARKS" text={csr.narratives.engineerRemarks} />
       </View>
     </View>
   </View>
 )
 
-export const BlueprintBomSchedule: React.FC<{ csr: CanonicalPreparedCsr }> = ({ csr }) => {
-  const adaptive = getAdaptiveMaterialColumns(csr.materials, 'landscape')
-
-  return (
-    <View style={{ borderBottomWidth: 1.5, borderBottomColor: C.lineHeavy, backgroundColor: C.white }}>
-      <View
-        style={{
-          padding: 3,
-          backgroundColor: C.navy,
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Text style={{ fontSize: 5.8, fontWeight: 700, color: C.white }}>
-          SEC 05 · PARTS & MATERIALS SCHEDULE{csr.materials.length > 0 ? ` (${csr.materials.length} ITEMS)` : ''}
-        </Text>
-        <Text style={{ fontSize: 5.2, color: C.lineFine }}>
-          {adaptive.colCount === 4
-            ? 'READ VERTICALLY DOWN COLUMNS 1 → 4'
-            : 'RECORDED REPLACEMENT PARTS & CONSUMABLES'}
-        </Text>
-      </View>
-
-      {adaptive.layoutMode === 'empty' ? (
-        <View style={{ padding: 6, backgroundColor: C.tint, alignItems: 'center' }}>
-          <Text style={{ fontSize: 5.5, color: C.slate, fontStyle: 'italic' }}>
-            No replacement parts or materials recorded for this service.
-          </Text>
-        </View>
-      ) : adaptive.layoutMode === 'single' ? (
-        <Table>
-          <Row header style={{ backgroundColor: C.tintStrong, borderBottomWidth: 0.5, borderBottomColor: C.lineMed }}>
-            <Cell style={{ width: 28, padding: 2.5 }}><Text style={{ fontSize: 5, fontWeight: 700, color: C.cobalt }}>ITEM NO</Text></Cell>
-            <Cell style={{ flex: 1, padding: 2.5 }}><Text style={{ fontSize: 5, fontWeight: 700, color: C.cobalt }}>DESCRIPTION</Text></Cell>
-            <Cell style={{ width: 90, padding: 2.5 }}><Text style={{ fontSize: 5, fontWeight: 700, color: C.cobalt }}>PART NUMBER</Text></Cell>
-            <Cell style={{ width: 60, padding: 2.5, alignItems: 'flex-end' }}><Text style={{ fontSize: 5, fontWeight: 700, color: C.cobalt }}>QUANTITY</Text></Cell>
-          </Row>
-          {adaptive.columns[0].map((item, rowIdx) => (
-            <Row
-              key={item.no}
-              style={{
-                backgroundColor: rowIdx % 2 === 1 ? C.tint : C.white,
-                borderBottomWidth: rowIdx < adaptive.columns[0].length - 1 ? 0.4 : 0,
-                borderBottomColor: C.lineGrid,
-              }}
-            >
-              <Cell style={{ width: 28, padding: 2.5 }}>
-                <Text style={{ fontSize: 5.6, fontWeight: 700, color: C.blue }}>{item.no}</Text>
-              </Cell>
-              <Cell style={{ flex: 1, padding: 2.5 }}>
-                <Text style={{ fontSize: 5.6, color: C.navy }}>{item.description}</Text>
-              </Cell>
-              <Cell style={{ width: 90, padding: 2.5 }}>
-                <Text style={{ fontSize: 5.6, color: C.slate }}>{item.partNo || '-'}</Text>
-              </Cell>
-              <Cell style={{ width: 60, padding: 2.5, alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 5.6, fontWeight: 700, color: C.navy }}>{item.qty} {item.unit}</Text>
-              </Cell>
-            </Row>
-          ))}
-        </Table>
-      ) : (
-        <View style={{ display: 'flex', flexDirection: 'row' }}>
-          {adaptive.columns.map((group, colIdx) => (
-            <View
-              key={colIdx}
-              style={{
-                flex: 1,
-                borderRightWidth: colIdx < adaptive.colCount - 1 ? 0.8 : 0,
-                borderRightColor: C.lineMed,
-              }}
-            >
-              <Table>
-                <Row header style={{ backgroundColor: C.tintStrong, borderBottomWidth: 0.5, borderBottomColor: C.lineMed }}>
-                  <Cell style={{ width: 18, padding: 2 }}><Text style={{ fontSize: 4.8, fontWeight: 700, color: C.cobalt }}>NO</Text></Cell>
-                  <Cell style={{ flex: 1, padding: 2 }}><Text style={{ fontSize: 4.8, fontWeight: 700, color: C.cobalt }}>DESCRIPTION</Text></Cell>
-                  <Cell style={{ width: 34, padding: 2, alignItems: 'flex-end' }}><Text style={{ fontSize: 4.8, fontWeight: 700, color: C.cobalt }}>QTY</Text></Cell>
-                </Row>
-                {group.map((item, rowIdx) => (
-                  <Row
-                    key={item.no}
-                    style={{
-                      backgroundColor: rowIdx % 2 === 1 ? C.tint : C.white,
-                      borderBottomWidth: rowIdx < group.length - 1 ? 0.4 : 0,
-                      borderBottomColor: C.lineGrid,
-                    }}
-                  >
-                    <Cell style={{ width: 18, padding: 2 }}>
-                      <Text style={{ fontSize: 5.4, fontWeight: 700, color: C.blue }}>{item.no}</Text>
-                    </Cell>
-                    <Cell style={{ flex: 1, padding: 2 }}>
-                      <Text style={{ fontSize: 5.4, color: C.navy }}>{item.description}</Text>
-                    </Cell>
-                    <Cell style={{ width: 34, padding: 2, alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 5.4, fontWeight: 700, color: C.navy }}>{item.qty} {item.unit}</Text>
-                    </Cell>
-                  </Row>
-                ))}
-              </Table>
-            </View>
-          ))}
-        </View>
-      )}
+export const BlueprintBomSchedule: React.FC<{ csr: CanonicalPreparedCsr }> = ({ csr }) => (
+  <View style={{ borderBottomWidth: 1.2, borderBottomColor: C.lineHeavy, backgroundColor: C.white }}>
+    <View
+      style={{
+        paddingVertical: 4.5,
+        paddingHorizontal: 9,
+        backgroundColor: C.navy,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+      }}
+    >
+      <Text style={{ fontSize: 8, fontWeight: 700, color: C.white, letterSpacing: 0.3 }}>
+        {`07 \u00b7 PARTS & MATERIALS SCHEDULE${csr.materials.length > 0 ? ` (${csr.materials.length} ${csr.materials.length === 1 ? 'ITEM' : 'ITEMS'})` : ''}`}
+      </Text>
     </View>
-  )
-}
+    <CsrMaterialsSchedule materials={csr.materials} orientation="landscape" theme={BLUEPRINT_MATERIALS_THEME} />
+  </View>
+)
 
 export { BlueprintTitleBlock } from './blueprintTitleBlock'

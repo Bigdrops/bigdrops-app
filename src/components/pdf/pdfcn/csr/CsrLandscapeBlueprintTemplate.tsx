@@ -10,7 +10,9 @@ import {
   BlueprintTitleBlock,
 } from './blueprintSections'
 
+/** A4 landscape in PDF points (297 x 210 mm). Fixed regardless of content volume. */
 const PAGE_SIZE = { width: 841.89, height: 595.28 }
+const PAGE_MARGIN = 14
 
 export const CsrLandscapeBlueprintTemplate: React.FC<{
   envelope: PdfcnDocumentEnvelope<CanonicalPreparedCsr>
@@ -19,28 +21,19 @@ export const CsrLandscapeBlueprintTemplate: React.FC<{
 
   return (
     <Document title={`CSR-${csr.csrNumber || 'Report'}`}>
-      <Page size={PAGE_SIZE} style={{ backgroundColor: '#c6d2dd', padding: 8 }}>
+      <Page size={PAGE_SIZE} margin={PAGE_MARGIN} style={{ backgroundColor: '#ffffff' }}>
         <View
           style={{
             backgroundColor: BLUEPRINT_PALETTE.paper,
             borderWidth: 1.5,
             borderColor: BLUEPRINT_PALETTE.lineHeavy,
-            height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            padding: 4,
           }}
         >
-          {/* Top Drawing Header Bar (4 Columns) */}
           <BlueprintHeader csr={csr} />
-
-          {/* Main Technical Workspace (Left Plate + Right Dossier) */}
           <BlueprintWorkspace csr={csr} />
-
-          {/* 4-Column Engineering Bill of Materials (BOM) */}
           <BlueprintBomSchedule csr={csr} />
-
-          {/* Bottom Title Block & Handwriting Sign-Off Areas */}
           <BlueprintTitleBlock csr={csr} />
         </View>
       </Page>

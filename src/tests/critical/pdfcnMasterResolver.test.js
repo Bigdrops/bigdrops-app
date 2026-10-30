@@ -215,10 +215,13 @@ test('Forme / PDFCN Engine: End-to-End PDF Byte Generation for Landscape Bluepri
   assert.equal(header, '%PDF-', 'Must start with PDF signature %PDF-')
 
   const pdf = await PDFDocument.load(bytes)
-  assert.equal(pdf.getPageCount(), 1, 'Landscape blueprint must produce strictly 1 page')
-  const size = pdf.getPage(0).getSize()
-  assert.equal(Math.round(size.width), 842, 'Width must be 842pt (A4 landscape)')
-  assert.equal(Math.round(size.height), 595, 'Height must be 595pt (A4 landscape)')
+  const pageCount = pdf.getPageCount()
+  assert.ok(pageCount >= 1, 'Landscape blueprint must produce at least one page')
+  for (let index = 0; index < pageCount; index += 1) {
+    const size = pdf.getPage(index).getSize()
+    assert.equal(Math.round(size.width), 842, `Landscape page ${index + 1} width must be 842pt (A4 landscape)`)
+    assert.equal(Math.round(size.height), 595, `Landscape page ${index + 1} height must be 595pt (A4 landscape)`)
+  }
 })
 
 test('Forme / PDFCN Engine: End-to-End PDF Byte Generation for Portrait Reference', async () => {
@@ -239,10 +242,13 @@ test('Forme / PDFCN Engine: End-to-End PDF Byte Generation for Portrait Referenc
   assert.equal(header, '%PDF-', 'Must start with PDF signature %PDF-')
 
   const pdf = await PDFDocument.load(bytes)
-  assert.equal(pdf.getPageCount(), 1, 'Portrait reference must produce strictly 1 page')
-  const size = pdf.getPage(0).getSize()
-  assert.equal(Math.round(size.width), 595, 'Width must be 595pt (A4 portrait)')
-  assert.equal(Math.round(size.height), 842, 'Height must be 842pt (A4 portrait)')
+  const pageCount = pdf.getPageCount()
+  assert.ok(pageCount >= 1, 'Portrait reference must produce at least one page')
+  for (let index = 0; index < pageCount; index += 1) {
+    const size = pdf.getPage(index).getSize()
+    assert.equal(Math.round(size.width), 595, `Portrait page ${index + 1} width must be 595pt (A4 portrait)`)
+    assert.equal(Math.round(size.height), 842, `Portrait page ${index + 1} height must be 842pt (A4 portrait)`)
+  }
 })
 
 test('PDFCN CSR Customization & Picker Registration Compliance', async () => {

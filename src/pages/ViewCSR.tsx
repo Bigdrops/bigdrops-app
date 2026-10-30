@@ -257,14 +257,13 @@ export default function ViewCSR() {
           filename: previewData.csr_number || 'csr',
           deliver: true,
           options: {
-            serviceProvider: branding?.companyName
-              ? {
-                  name: branding.companyName,
-                  subtitle: branding.companyTagline || undefined,
-                  contact: branding.contactLine || undefined,
-                  logoUrl: branding.logoUrl || undefined,
-                }
-              : undefined,
+            serviceProvider: {
+              name: branding.companyName || undefined,
+              subtitle: branding.companyTagline || undefined,
+              address: branding.addressLine || undefined,
+              contact: branding.phoneEmailLine || undefined,
+              logoUrl: branding.logoUrl || undefined,
+            },
           },
         })
       } else {

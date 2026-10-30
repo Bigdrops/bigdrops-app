@@ -323,6 +323,10 @@ export interface CsrBranding {
   companyName: string
   companyTagline: string
   contactLine: string
+  /** Street address and city only. */
+  addressLine: string
+  /** Telephone and email only. */
+  phoneEmailLine: string
   footerText: string
   logoUrl: string
 }
@@ -341,6 +345,10 @@ export function getCsrBranding(settings: any = {}): CsrBranding {
     companyName,
     companyTagline,
     contactLine: contactBits.join('  |  '),
+    addressLine: [settings.company_address, settings.company_city].filter(Boolean).join(', '),
+    phoneEmailLine: [settings.company_phone ? `Tel: ${settings.company_phone}` : '', settings.company_email]
+      .filter(Boolean)
+      .join('  |  '),
     footerText: settings.footer_text || contactBits.join('  |  ') || '',
     logoUrl: settings.company_logo_url || '',
   }
