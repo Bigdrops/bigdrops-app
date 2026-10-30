@@ -33,7 +33,7 @@ export {
   CSR_PORTRAIT_REFERENCE_TEMPLATE_ID,
   isPdfcnCsrTemplate,
   getAdaptiveMaterialColumns,
-  CUMMINS_LOGO_PATH_D,
+  distributePortraitMaterialColumns,
   BrandLogo,
   SignatureStage,
   csrLandscapeBlueprintDefinition,

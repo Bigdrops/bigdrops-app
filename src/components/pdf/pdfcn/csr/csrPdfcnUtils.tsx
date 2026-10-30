@@ -1,93 +1,171 @@
 import React from 'react'
-import type { CsrMaterialItem } from '@/domain/pdf/resolver/csr/csrPreparedContract'
-import { Svg, Image, View, Text } from '../primitives'
+import type {
+  CanonicalPreparedCsr,
+  CsrMaterialItem,
+  CsrOperationalReadings,
+} from '@/domain/pdf/resolver/csr/csrPreparedContract'
+import { Image, View } from '../primitives'
 
-/**
- * Authorised Cummins Specialist Vector Mark (exact path from approved HTML specifications).
- */
-export const CUMMINS_LOGO_PATH_D =
-  'M22.442.011L14.081.003C-4.693.003-4.693 27 14.081 27l12.846-.031v-9.807H14.51c-4.84 0-4.84-7.321 0-7.321l12.417-.02V.003L24.111 0l-.89.561c-.154-.149-.344-.038-.387-.011-.169.105-.244.226-.164.355.223.36 1.63-.847 2.231.126.334.54.138 1.168-.766 1.727-.565.349-1.299.55-1.702-.015l.932-.577c.164.1.335.085.458.003.148-.097.28-.242.167-.425-.257-.416-1.562.85-2.185-.155-.41-.663.125-1.261.637-1.578zM8.353 12.421l-.908.562-.231-.182c-.075.36-.207.556-.612.807-.536.332-1.099.201-1.559-.542l-.978-1.58.979-.605.867 1.401c.221.357.409.398.644.252.282-.175.234-.453-.015-.854l-.772-1.248.979-.605 1.606 2.594zM7.189 9.553l.898-.556.235.187c-.001-.429.449-.75.721-.863a.853.853 0 0 1 .878.096c.034-.812.61-1.045.774-1.118.646-.285 1.042.037 1.431.664l.95 1.535-.979.606-.817-1.323c-.223-.359-.393-.497-.66-.331-.287.178-.181.476.012.787l.794 1.283-.979.606-.819-1.322c-.236-.382-.382-.502-.66-.331-.287.177-.181.474.012.786l.794 1.283-.979.605-1.606-2.594zm11.096-3.278L16.679 3.68l.979-.605 1.606 2.595-.979.605zm-2.265-3.66l.979-.605.454.733-.979.606-.454-.734zm2.159.137l.894-.553.287.194c.039-.476.345-.738.711-.895.573-.245 1.039-.004 1.434.634l.962 1.555-.979.606-.849-1.372c-.163-.263-.363-.447-.644-.273-.301.187-.255.439-.05.771l.818 1.322-.979.606-1.605-2.594zM4.111 15.043c-2.637 1.632-5.022-2.176-2.385-3.808l1.198-.733.617.997-1.052.646c-1.312.809-.101 2.597 1.128 1.824l1.053-.646.617.997-1.176.723zm7.783-8.401l.898-.556.235.187c0-.429.45-.75.721-.863a.858.858 0 0 1 .878.096c.034-.812.61-1.045.773-1.118.646-.285 1.043.036 1.431.664l.95 1.535-.979.605-.817-1.322c-.222-.359-.392-.497-.661-.331-.287.178-.181.475.012.787l.794 1.283-.979.605-.818-1.322c-.236-.381-.382-.501-.661-.331-.287.178-.181.475.012.787l.794 1.283-.977.605-1.606-2.594z'
+export type CsrOrientation = 'portrait' | 'landscape'
 
 export interface AdaptiveMaterialsResult {
   columns: CsrMaterialItem[][]
   colCount: number
-  layoutMode: 'empty' | 'single' | 'dual' | 'quad'
+  layoutMode: 'empty' | 'single' | 'dual' | 'triple' | 'quad'
+  /** True when at least one item carries a part number (single-list layout shows the column only then). */
+  hasPartNo: boolean
+}
+
+/** Description length above which narrow columns start to hurt readability. */
+const LONG_DESCRIPTION_CHARS: Record<CsrOrientation, number> = {
+  landscape: 40,
+  portrait: 30,
+}
+
+function pickColumnCount(count: number, orientation: CsrOrientation, longestDescription: number): number {
+  if (count === 0) return 0
+  if (count <= 3) return 1
+
+  let columns: number
+  if (orientation === 'portrait') {
+    if (count <= 5) columns = 1
+    else if (count <= 12) columns = 2
+    else if (count <= 18) columns = 3
+    else columns = 4
+  } else if (count <= 8) {
+    columns = 2
+  } else if (count <= 12) {
+    columns = 3
+  } else {
+    columns = 4
+  }
+
+  // Long descriptions need wider columns; extra rows are cheaper than cramped text.
+  if (columns > 2 && longestDescription > LONG_DESCRIPTION_CHARS[orientation]) {
+    columns -= 1
+  }
+  return columns
 }
 
 /**
- * Adaptive materials partitioner.
- * - 0 items: empty layout.
- * - 1–3 items: single table spanning full width for optimal legibility.
- * - 4 items: portrait uses single table; landscape uses 2 balanced columns.
- * - 5–8 items: 2 balanced columns.
- * - 9+ items: 4 columns with strict vertical reading order (01,05,09...; 02,06,10...).
+ * Content-aware materials partitioner. Column count follows the real item
+ * count, the page orientation and the longest description. It never drops,
+ * duplicates or renames an item.
+ *
+ * - 1-3 items: one list.
+ * - 4-8 items: one list (portrait, up to 5) or two sequential columns.
+ * - 9+ items: more columns as capacity requires.
+ * - Two columns split in source order (first half, second half).
+ * - Three or more columns read vertically in interleaved order, so four
+ *   columns hold 01,05,09,... / 02,06,10,... / 03,07,11,... / 04,08,12,...
  */
 export function getAdaptiveMaterialColumns(
   materials: readonly CsrMaterialItem[],
-  orientation: 'portrait' | 'landscape',
+  orientation: CsrOrientation,
 ): AdaptiveMaterialsResult {
   const count = materials.length
+  const hasPartNo = materials.some((item) => Boolean(item.partNo))
   if (count === 0) {
-    return { columns: [], colCount: 0, layoutMode: 'empty' }
+    return { columns: [], colCount: 0, layoutMode: 'empty', hasPartNo }
   }
 
-  if (count <= 3 || (count === 4 && orientation === 'portrait')) {
-    return {
-      columns: [Array.from(materials)],
-      colCount: 1,
-      layoutMode: 'single',
-    }
+  const longest = materials.reduce((max, item) => Math.max(max, item.description.length), 0)
+  const colCount = pickColumnCount(count, orientation, longest)
+
+  if (colCount === 1) {
+    return { columns: [Array.from(materials)], colCount: 1, layoutMode: 'single', hasPartNo }
   }
 
-  if (count <= 8) {
+  if (colCount === 2) {
     const half = Math.ceil(count / 2)
-    const col1 = materials.slice(0, half)
-    const col2 = materials.slice(half)
     return {
-      columns: [col1, col2],
+      columns: [materials.slice(0, half), materials.slice(half)],
       colCount: 2,
       layoutMode: 'dual',
+      hasPartNo,
     }
   }
 
-  // 9+ items: 4 columns with strict vertical sequence
-  const cols: CsrMaterialItem[][] = [[], [], [], []]
+  const columns: CsrMaterialItem[][] = Array.from({ length: colCount }, () => [])
   materials.forEach((item, index) => {
-    cols[index % 4].push(item)
+    columns[index % colCount].push(item)
   })
 
   return {
-    columns: cols,
-    colCount: 4,
-    layoutMode: 'quad',
+    columns,
+    colCount,
+    layoutMode: colCount === 3 ? 'triple' : 'quad',
+    hasPartNo,
   }
 }
 
+/** Placeholder for a recorded-but-empty value in a labelled field. */
+export function dash(value: string | null | undefined): string {
+  const text = value == null ? '' : String(value).trim()
+  return text.length > 0 ? text : '-'
+}
+
+export function formatQuantity(item: CsrMaterialItem): string {
+  return [item.qty, item.unit].filter(Boolean).join(' ') || '-'
+}
+
+export function formatMakeModel(equipment: CanonicalPreparedCsr['equipment']): string {
+  return dash([equipment.make, equipment.model].filter(Boolean).join(' '))
+}
+
+/** One date when the service started and ended on the same day, otherwise the period. */
+export function formatServiceDate(window: CanonicalPreparedCsr['serviceWindow'], fallbackDate: string): string {
+  const start = window.startDate || fallbackDate
+  const end = window.endDate || start
+  if (!start && !end) return '-'
+  return start === end || !end ? start : `${start} to ${end}`
+}
+
+export interface ReadingField {
+  readonly key: keyof CsrOperationalReadings
+  readonly label: string
+}
+
+/** Presentation labels for the six recorded channels. Values are shown exactly as recorded. */
+export const READING_FIELDS: readonly ReadingField[] = [
+  { key: 'voltage', label: 'GEN. VOLTAGE (V)' },
+  { key: 'frequency', label: 'FREQUENCY (Hz)' },
+  { key: 'battery', label: 'BATTERY / ALT. (Vdc)' },
+  { key: 'temperature', label: 'TEMPERATURE (\u00b0C)' },
+  { key: 'pressure', label: 'PRESSURE' },
+  { key: 'hours', label: 'ENGINE HOURS' },
+]
+
+export function isCompleteStatus(status: string): boolean {
+  return /^(complete|completed)$/i.test(status.trim())
+}
+
 /**
- * Brand logo renderer: handles uploaded company logo URLs or falls back to
- * the authentic Cummins vector mark from the approved HTML specifications.
+ * Brand logo renderer. Renders only an uploaded company logo. Without one it
+ * renders nothing, so no other provider's mark can appear on a report.
  */
 export const BrandLogo: React.FC<{
   logoUrl?: string | null
   width?: number
   height?: number
-  fillColor?: string
-}> = ({ logoUrl, width = 24, height = 24, fillColor = '#111111' }) => {
-  if (logoUrl) {
-    return (
-      <Image
-        src={logoUrl}
-        width={width}
-        height={height}
-        style={{ width, height }}
-      />
-    )
+}> = ({ logoUrl, width, height }) => {
+  if (!logoUrl) return null
+  // A height-only Image keeps the file's own aspect ratio: wide lockups stay
+  // wide, tall marks stay tall, and nothing is squeezed into a square.
+  if (height !== undefined && width === undefined) {
+    return <Image src={logoUrl} height={height} style={{ height }} />
   }
-
+  const resolvedWidth = width ?? 24
+  if (height === undefined) {
+    return <Image src={logoUrl} width={resolvedWidth} style={{ width: resolvedWidth }} />
+  }
   return (
-    <Svg width={width} height={height} viewBox="0 0 26.927 27">
-      <path d={CUMMINS_LOGO_PATH_D} fill={fillColor} />
-    </Svg>
+    <Image
+      src={logoUrl}
+      width={resolvedWidth}
+      height={height}
+      style={{ width: resolvedWidth, height }}
+    />
   )
 }
 
@@ -95,7 +173,6 @@ export const BrandLogo: React.FC<{
  * Signature stage renderer:
  * - If signature image URL is provided, renders the signature image.
  * - Otherwise, provides a clean blank writable line for physical handwritten completion.
- * - Never prints "SIGN WITH REAL PEN" or awkward instructions.
  */
 export const SignatureStage: React.FC<{
   signatureUrl?: string | null

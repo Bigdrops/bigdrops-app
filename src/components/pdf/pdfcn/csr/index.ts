@@ -13,10 +13,10 @@ export { CsrLandscapeBlueprintTemplate } from './CsrLandscapeBlueprintTemplate'
 export { CsrPortraitReferenceTemplate } from './CsrPortraitReferenceTemplate'
 export {
   getAdaptiveMaterialColumns,
-  CUMMINS_LOGO_PATH_D,
   BrandLogo,
   SignatureStage,
 } from './csrPdfcnUtils'
+export { distributePortraitMaterialColumns } from './csrPortraitMaterialsLayout'
 
 export const CSR_LANDSCAPE_BLUEPRINT_TEMPLATE_ID = 'csr-blueprint-landscape'
 export const CSR_PORTRAIT_REFERENCE_TEMPLATE_ID = 'csr-reference-portrait'
