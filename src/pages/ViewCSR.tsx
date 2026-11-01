@@ -51,20 +51,15 @@ const CSR_CUSTOM_COLOR_STASH = 'csr_custom_color_stash'
 const CSR_COLOR_SWATCHES = ['#000000', '#374151', '#1e3a5f', '#064e3b', '#7f1d1d']
 
 const CSR_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] = [
-  { value: 'Reenie Beanie', label: 'Reenie Beanie' },
   { value: 'Caveat', label: 'Caveat' },
-  { value: 'Kalam', label: 'Kalam' },
-  { value: 'Patrick Hand', label: 'Patrick Hand' },
-  { value: 'Handlee', label: 'Handlee' },
-  { value: 'Sue Ellen Francisco', label: 'Sue Ellen Francisco' },
 ]
 
 const CSR_TEMPLATE_DEFAULTS: Record<string, { font: PdfFillableFontChoice; color: string }> = {
-  '3': { font: 'Patrick Hand', color: '#3b82f6' },
+  '3': { font: 'Caveat', color: '#3b82f6' },
   '6': { font: 'Caveat', color: '#0f172a' },
-  '8': { font: 'Handlee', color: '#1e3a5f' },
-  'csr-blueprint-landscape': { font: 'Patrick Hand', color: '#0c1e38' },
-  'csr-reference-portrait': { font: 'Patrick Hand', color: '#09090b' },
+  '8': { font: 'Caveat', color: '#1e3a5f' },
+  'csr-blueprint-landscape': { font: 'Caveat', color: '#0c1e38' },
+  'csr-reference-portrait': { font: 'Caveat', color: '#09090b' },
 }
 
 function getStoredTemplate() {
@@ -81,7 +76,9 @@ function getStoredTemplate() {
 
 function getStoredCustomFont(): 'auto' | PdfFillableFontChoice {
   if (typeof window === 'undefined') return 'auto'
-  return (window.localStorage.getItem(CSR_CUSTOM_FONT_STASH) as any) || 'auto'
+  const val = window.localStorage.getItem(CSR_CUSTOM_FONT_STASH)
+  if (val === 'Caveat') return 'Caveat'
+  return 'auto'
 }
 
 function getStoredCustomColor(): 'auto' | string {
@@ -153,7 +150,7 @@ export default function ViewCSR() {
     const migrated: PdfCustomizationSettings = {
       version: 1,
       documentFont: 'Inter',
-      inkFont: oldFont && oldFont !== 'auto' ? (oldFont as any) : 'Inter',
+      inkFont: oldFont && oldFont !== 'auto' && oldFont === 'Caveat' ? 'Caveat' : 'Caveat',
       inkColour: oldColor && oldColor !== 'auto' ? oldColor : '#3b82f6',
     }
     window.localStorage.setItem(newKey, JSON.stringify(migrated))
@@ -407,7 +404,7 @@ export default function ViewCSR() {
               open={ui.isSheetOpen(SHEET_CUSTOMIZE)}
               onClose={ui.closeSheet}
               title="Customize CSR PDF"
-              subtitle="Adjust template, ink color, and handwriting font for PDF exports."
+              subtitle="Adjust template and ink color for PDF exports."
             >
               <DocumentCustomizeCard
                 customization={customization}

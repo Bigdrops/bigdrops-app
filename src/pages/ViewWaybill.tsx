@@ -54,7 +54,9 @@ const WAYBILL_COLOR_SWATCHES = ['#000000', '#374151', '#0f172a', '#1e3a5f', '#7f
 
 function getStoredCustomFont(): 'auto' | PdfFillableFontChoice {
   if (typeof window === 'undefined') return 'auto'
-  return (window.localStorage.getItem(WAYBILL_CUSTOM_FONT_KEY) as any) || 'auto'
+  const val = window.localStorage.getItem(WAYBILL_CUSTOM_FONT_KEY)
+  if (val === 'Caveat') return 'Caveat'
+  return 'auto'
 }
 
 function getStoredCustomColor(): 'auto' | string {
@@ -62,9 +64,9 @@ function getStoredCustomColor(): 'auto' | string {
   return window.localStorage.getItem(WAYBILL_CUSTOM_COLOR_KEY) || 'auto'
 }
 
-const WAYBILL_HANDWRITING_FONTS = PDF_FILLABLE_FONT_OPTIONS.filter(
-  (f) => f.value === 'Patrick Hand' || f.value === 'Reenie Beanie' || f.value === 'Caveat' || f.value === 'Kalam' || f.value === 'Handlee' || f.value === 'Sue Ellen Francisco',
-)
+const WAYBILL_HANDWRITING_FONTS: { value: PdfFillableFontChoice; label: string }[] = [
+  { value: 'Caveat', label: 'Caveat' },
+]
 
 const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
@@ -131,7 +133,7 @@ export default function ViewWaybill() {
     const migrated: PdfCustomizationSettings = {
       version: 1,
       documentFont: 'Inter',
-      inkFont: oldFont && oldFont !== 'auto' ? (oldFont as any) : 'Patrick Hand',
+      inkFont: oldFont && oldFont !== 'auto' && oldFont === 'Caveat' ? 'Caveat' : 'Caveat',
       inkColour: oldColor && oldColor !== 'auto' ? oldColor : '#0f172a',
     }
     window.localStorage.setItem(newKey, JSON.stringify(migrated))

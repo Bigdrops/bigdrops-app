@@ -38,7 +38,7 @@ export const WAYBILL_POLICY: PdfCustomizationPolicy = {
 export const WAYBILL_TEMPLATE_DEFAULTS: PdfTemplateDefaults = {
   accentColor: '#0f172a',
   documentFont: 'Inter',
-  handwritingFont: 'Patrick Hand',
+  handwritingFont: 'Caveat',
   handwritingColor: '#0f172a',
 }
 

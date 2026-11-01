@@ -26,7 +26,7 @@ const ALL_POLICY: PdfCustomizationPolicy = {
 const TEMPLATE_DEFAULTS: PdfTemplateDefaults = {
   accentColor: '#0F172A',
   documentFont: 'Inter',
-  handwritingFont: 'Patrick Hand',
+  handwritingFont: 'Caveat',
   handwritingColor: '#000000',
 }
 
@@ -47,7 +47,7 @@ test('2. Enabled capability with user override — user value wins', () => {
   const user: PdfCustomizationSettings = {
     version: 1,
     accentColor: '#FF0000',
-    documentFont: 'Roboto',
+    documentFont: 'Archivo Black',
     inkFont: 'Caveat',
     inkColour: '#00FF00',
   }
@@ -56,7 +56,7 @@ test('2. Enabled capability with user override — user value wins', () => {
   const customization = resolvePdfCustomization(TEMPLATE_DEFAULTS, settings)
 
   assert.equal(customization.accentColor, '#FF0000')
-  assert.equal(customization.documentFont, 'Roboto')
+  assert.equal(customization.documentFont, 'Archivo Black')
   assert.equal(customization.handwritingFont, 'Caveat')
   assert.equal(customization.handwritingColor, '#00FF00')
 })
@@ -262,4 +262,55 @@ test('9. Determinism — same input produces identical output', () => {
   const b = resolveFull(TEMPLATE_DEFAULTS, ALL_ENABLED, ALL_POLICY, user)
 
   assert.deepStrictEqual(a, b)
+})
+
+// ── Scenario 14: Retired handwriting fonts safely normalize to Caveat ──
+
+test('14. Saved settings with retired handwriting font normalizes to Caveat', () => {
+  const retiredFonts = [
+    'Patrick Hand',
+    'Handlee',
+    'Sue Ellen Francisco',
+    'Kalam',
+    'Reenie Beanie',
+    'Biro Script',
+    'Ballpoint Handwriting',
+    'Ballpoint Rush',
+  ]
+
+  for (const retired of retiredFonts) {
+    const user: PdfCustomizationSettings = {
+      version: 1,
+      inkFont: retired,
+    }
+    const settings = resolveSettings(ALL_ENABLED, ALL_POLICY, user, TEMPLATE_DEFAULTS)
+    assert.equal(settings.inkFont, 'Caveat', `${retired} must safely normalize to Caveat`)
+  }
+})
+
+// ── Scenario 15: Retired commercial document fonts safely normalize to Inter ──
+
+test('15. Saved settings with retired commercial font normalizes to Inter', () => {
+  const retiredFonts = [
+    'Roboto',
+    'Open Sans',
+    'Lato',
+    'Montserrat',
+    'Poppins',
+    'Raleway',
+    'Orbitron',
+    'Source Sans Pro',
+    'Roboto Condensed',
+    'Cormorant Garamond',
+    'DejaVu Sans',
+  ]
+
+  for (const retired of retiredFonts) {
+    const user: PdfCustomizationSettings = {
+      version: 1,
+      documentFont: retired,
+    }
+    const settings = resolveSettings(ALL_ENABLED, ALL_POLICY, user, TEMPLATE_DEFAULTS)
+    assert.equal(settings.documentFont, 'Inter', `${retired} must safely normalize to Inter`)
+  }
 })

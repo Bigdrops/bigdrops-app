@@ -55,7 +55,7 @@ export interface PdfTemplateDefaults {
 export const FALLBACK_TEMPLATE_DEFAULTS: PdfTemplateDefaults = {
   accentColor: '#0f172a',
   documentFont: 'Inter',
-  handwritingFont: 'Patrick Hand',
+  handwritingFont: 'Caveat',
   handwritingColor: '#0f172a',
 }
 

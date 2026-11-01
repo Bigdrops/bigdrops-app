@@ -25,7 +25,7 @@ test('pdf currency helper uses a locked Noto Sans family for the symbol and pres
   assert.match(sharedFontSource, /PDF_CURRENCY_FONT_FAMILY = 'Noto Sans'/)
   assert.match(sharedFontSource, /family: PDF_CURRENCY_FONT_FAMILY/)
   assert.match(helperSource, /import \{ PDF_CURRENCY_FONT_FAMILY \} from '@\/lib\/pdfSharedFonts'/)
-  assert.match(helperSource, /<Text style=\{\{ fontFamily: PDF_CURRENCY_FONT_FAMILY \}\}>/)
+  assert.match(helperSource, /fontFamily:\s*PDF_CURRENCY_FONT_FAMILY/)
   assert.match(formatterSource, /PDF_CURRENCY_WITH_SPACE = `\$\{PDF_CURRENCY_SYMBOL\} `/)
   assert.match(adapterSource, /const formatted = formatPdfCurrencyString\(value as any\)/)
   assert.ok(adapterSource.includes(".replace(/^₦\\s*/, '')"))

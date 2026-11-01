@@ -12,7 +12,7 @@ export const LINK_BG = '#f2eaf6'
 export const WHITE = '#ffffff'
 export const MUTED_TEXT = '#7d6f5f'
 export const WARM_BLACK = '#1a1510'
-export const CREST_SERIF = 'Cormorant Garamond'
+export const CREST_SERIF = 'Inter'
 export const CREST_SANS = 'Inter'
 
 export const styles = StyleSheet.create({

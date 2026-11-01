@@ -15,6 +15,51 @@ import type {
 } from './types'
 import { DEFAULT_CAPABILITIES, DEFAULT_POLICY, FALLBACK_TEMPLATE_DEFAULTS } from './types'
 
+const RETIRED_HANDWRITING_FONTS = [
+  'Patrick Hand',
+  'Handlee',
+  'Sue Ellen Francisco',
+  'Kalam',
+  'Reenie Beanie',
+  'Biro Script',
+  'Ballpoint Handwriting',
+  'Ballpoint Rush',
+]
+
+const RETIRED_DOCUMENT_FONTS = [
+  'Roboto',
+  'Open Sans',
+  'Lato',
+  'Montserrat',
+  'Poppins',
+  'Raleway',
+  'Orbitron',
+  'Source Sans Pro',
+  'Roboto Condensed',
+  'Cormorant Garamond',
+  'DejaVu Sans',
+]
+
+function normalizeResolvedHandwritingFont(font: unknown, fallback: string): string {
+  const normalized = String(font || '').trim()
+  if (RETIRED_HANDWRITING_FONTS.includes(normalized)) {
+    return 'Caveat'
+  }
+  if (normalized === 'Caveat') return 'Caveat'
+  if (normalized) return normalized
+  return fallback
+}
+
+function normalizeResolvedDocumentFont(font: unknown, fallback: string): string {
+  const normalized = String(font || '').trim()
+  if (RETIRED_DOCUMENT_FONTS.includes(normalized)) {
+    return 'Inter'
+  }
+  if (normalized === 'Inter' || normalized === 'Archivo Black') return normalized
+  if (normalized) return 'Inter'
+  return fallback
+}
+
 /**
  * Resolve user-saved settings into a fully concrete settings object,
  * applying only values for capabilities that are enabled in both the
@@ -46,10 +91,10 @@ export function resolveSettings(
       ? (user.accentEnabled ?? (user.accentColor != null))
       : false,
     documentFont: canUse('documentFont')
-      ? (user.documentFont ?? defaults.documentFont)
+      ? normalizeResolvedDocumentFont(user.documentFont ?? defaults.documentFont, defaults.documentFont)
       : defaults.documentFont,
     inkFont: canUse('handwritingFont')
-      ? (user.inkFont ?? defaults.handwritingFont)
+      ? normalizeResolvedHandwritingFont(user.inkFont ?? defaults.handwritingFont, defaults.handwritingFont)
       : defaults.handwritingFont,
     inkColour: canUse('handwritingColor')
       ? (user.inkColour ?? defaults.handwritingColor)

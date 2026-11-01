@@ -23,7 +23,7 @@ export const CSR_POLICY: PdfCustomizationPolicy = {
 export const CSR_STATIC_DEFAULTS: PdfTemplateDefaults = {
   accentColor: '#0f172a',
   documentFont: 'Inter',
-  handwritingFont: 'Inter',
+  handwritingFont: 'Caveat',
   handwritingColor: '#3b82f6',
 }
 

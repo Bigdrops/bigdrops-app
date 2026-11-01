@@ -113,7 +113,7 @@ export default function DocumentCustomizeCard({
       </div>
 
       {/* ── Appearance (accent + document font share one card) ─── */}
-      {((showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null) || showDocumentFont) ? (
+      {((showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null) || (showDocumentFont && PDF_FONT_OPTIONS.length > 1)) ? (
         <div className="rounded-[20px] border border-bd-border bg-bd-card-bg p-3 space-y-3">
           {showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null ? (
             <AccentColorSection
@@ -124,10 +124,10 @@ export default function DocumentCustomizeCard({
               swatches={accentColorSwatches ?? ['#14b8a6', '#3b82f6', '#ef4444', '#f59e0b', '#6366f1', '#111827']}
             />
           ) : null}
-          {showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null && showDocumentFont ? (
+          {showAccentColor && onAccentColorChange && onAccentEnabledChange && accentColor != null && showDocumentFont && PDF_FONT_OPTIONS.length > 1 ? (
             <div className="border-t border-bd-border" />
           ) : null}
-          {showDocumentFont ? (
+          {showDocumentFont && PDF_FONT_OPTIONS.length > 1 ? (
             <div>
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-bd-text">
                 <Type className="h-4 w-4 text-bd-button-primary-bg" />
@@ -159,8 +159,8 @@ export default function DocumentCustomizeCard({
         />
       ) : null}
 
-      {/* ── Handwriting Font (service documents only) ────────────── */}
-      {handwritingFonts.length > 0 ? (
+      {/* ── Handwriting Font (service documents only; hidden when Caveat is sole option) ── */}
+      {handwritingFonts.length > 1 ? (
         <HandwritingFontSection
           customFont={customFont}
           onCustomFontChange={onCustomFontChange}

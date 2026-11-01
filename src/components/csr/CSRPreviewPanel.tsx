@@ -273,7 +273,7 @@ export default function CSRPreviewPanel({
   const hasBranding = Boolean(branding.companyName || branding.companyTagline || branding.contactLine)
   const showDocumentHeader = hasBranding || theme.headerMode === 'compactRibbon' || theme.headerMode === 'editorialSplit'
   const lbl: CSSProperties = { fontSize: compact ? '10px' : '11px', fontWeight: '700', color: theme.accent, textTransform: 'uppercase', letterSpacing: compact ? '0.24px' : '0.3px', display: 'block', marginBottom: '4px' }
-  const fillableFontFamily = resolvePdfWebFontFamily(getEffectiveFillableFont(designPreset || { useCustomColors: false, useCustomFonts: false, accentColor: '#0f172a', textColor: '#0f172a', mutedColor: '#475569', borderColor: '#cbd5e1', surfaceColor: '#f8fafc', headerFont: 'Inter', bodyFont: 'Inter', fillableFont: 'Patrick Hand', fillableFontMode: 'custom', fillableColor: '#0f172a' }))
+  const fillableFontFamily = resolvePdfWebFontFamily(getEffectiveFillableFont(designPreset || { useCustomColors: false, useCustomFonts: false, accentColor: '#0f172a', textColor: '#0f172a', mutedColor: '#475569', borderColor: '#cbd5e1', surfaceColor: '#f8fafc', headerFont: 'Inter', bodyFont: 'Inter', fillableFont: 'Caveat', fillableFontMode: 'custom', fillableColor: '#0f172a' }))
   const fillableColor = designPreset?.fillableColor || theme.pageFg || '#1a1a1a'
   const val: CSSProperties = { fontSize: compact ? '12px' : '13px', color: fillableColor, fontFamily: fillableFontFamily }
   const sec: CSSProperties = {
