@@ -1,108 +1,95 @@
-# PDF Rendering Migration — Project PRD & Specifications
+# PDF Rendering Migration — Master Product Requirements Document (PRD)
 
-> **Status:** APPROVED SPECIFICATION & FROZEN DOCUMENTATION BASELINE (Ready for M1 Implementation Planning)  
+> **Status:** AUTHORITATIVE SPECIFICATION & CONSOLIDATED MIGRATION PRD  
 > **Target Engine:** Forme (`@formepdf/react` and `@formepdf/core` v0.20.1)  
-> **Component Architecture:** `pdfcn` Design System  
+> **Component Architecture:** `pdfcn` Presentation & Design System  
 > **Writing Standard:** ASD-STE100 Simplified Technical English  
+> **Document Authority:** This directory is the sole authoritative specification for the BOUXRE PDF rendering migration. All historical reports under `docs/reports/` serve as supporting evidence.
 
 ---
 
 ## 1. Executive Summary
 
-BIGDROPS will replace `@react-pdf/renderer` with a modern, deterministic PDF rendering architecture. The target architecture uses **Forme** as the underlying layout and PDF generation engine and **pdfcn** as the document presentation, token, and component layer.
+BOUXRE will replace `@react-pdf/renderer` with a deterministic, high-fidelity PDF rendering architecture across all eight in-scope document types:
+- **Commercial:** Invoice, Quotation, Purchase Order (PO), Cost Pricing Sheet (CPS), Receipt
+- **Procurement:** Request for Quotation (RFQ)
+- **Logistics:** Waybill
+- **Technical / Service:** Customer Service Report (CSR)  
+*(Bill of Quantities / BOQ is explicitly excluded).*
 
-This migration resolves long-standing rendering defects in BIGDROPS commercial documents:
-1. **Natural Pagination & Usable Space:** Eliminates avoidable premature page breaks by decoupling rigid closing sections, calibrating table column widths, and dynamically reserving footer space.
-2. **Selective Keep-Together & Oversized Row Handling:** Protects small logical units (individual signature blocks, ordinary single table rows) while allowing long sections (notes, commercial terms, attachments) to fragment naturally. For oversized table rows exceeding available page height, the system defines a safe fragmentation or controlled fallback strategy to prevent clipping or silent content loss.
-3. **Adaptive Closing Layout:** Displays Bank Details and Totals side-by-side when space and content permit, with a deliberate, readable fallback (adaptive stacking or continuation) when space is restricted.
-4. **Typography & Encoding Diagnostics:** Addresses observed character corruptions (such as `2″`, `3″`, `4″` rendering as `23`, `33`, `43` in `SASQUO-000428.pdf`), with font coverage and encoding paths identified as technically plausible suspected causes requiring implementation-stage empirical verification.
-5. **Three Controlled Density Modes:** Formalizes three distinct pagination modes: **Normal** (natural flow), **Compact** (content-aware density reduction), and **Force 1 Page** (two-pass fitting prioritizing commercial legibility over arbitrary page counts, with strict safeguards and readable multi-page fallback).
-6. **5-Step Rich-Text Pipeline:** Defines a structured pipeline (Sanitize $\to$ Parse $\to$ Allowlisted AST $\to$ Forme Render $\to$ Fallback) prioritizing essential commercial formatting.
-7. **Scoped Emoji Fallback:** Preserves surrounding text and applies clean stripping or optional minimal icon replacement without requiring a massive emoji library.
-8. **Evidence-Driven Font Packaging:** Evaluates static TTF asset delivery first, assessing mobile/offline export reliability, with binary font bundling retained as a verified fallback.
-9. **Interactive & Visual Capabilities:** Introduces native coordinate-accurate image hyperlinks (`/Annots` `/Link`), logo aspect-ratio preservation (`objectFit: 'contain'`), and robust A4 Landscape orientation.
+The target architecture uses **Forme** as the underlying layout and PDF byte generation engine, wrapped by the **pdfcn** document design system.
 
-The documentation baseline is formally frozen. The implementation follows a strict progressive rollout. New Forme Invoice and Quotation templates must be built, verified, and approved before production migration begins. Existing production templates will continue to use `@react-pdf/renderer` until their Forme replacements pass all verification gates.
-
----
-
-## 2. Document Index
-
-This directory contains the complete frozen specification and planning suite for the PDF rendering migration:
-
-| File | Purpose | Primary Audience |
-| :--- | :--- | :--- |
-| [`draft.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/draft.md) | **Master Product Requirements Document (PRD)**. Defines architecture, principles, superseded decisions, technical capability statuses, and non-goals. | Engineering Leads, Architects |
-| [`functional-req.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/functional-req.md) | **Detailed Functional Requirements & Problem Register**. Specifies natural pagination, the 3 modes, Unicode handling, rich text, and hyperlinks. | Developers, QA Engineers |
-| [`Prerequisites.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/Prerequisites.md) | **Pre-Implementation Gates**. Checklists that teams must verify before implementation starts. | All Agents, Project Leads |
-| [`risk-register.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/risk-register.md) | **Risk Register & Mitigations**. Identifies technical and commercial risks with concrete mitigation steps. | Project Leads, Developers |
-| [`Waterfall-roadmap.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/Waterfall-roadmap.md) | **Execution Roadmap & Phased Gates**. Milestone tracker enforcing that Natural Pagination precedes Compact implementation. | Scrum Masters, Developers |
-| [`test-plan.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/test-plan.md) | **Verification & Test Plan**. Test cases anchored by a representative document suite (`SASQUO-000427`, `SASQUO-000428`, `SASQUO-430`, short/long docs). | QA Engineers, Developers |
+### 1.1 Core Architectural Principles
+1. **Critical Commercial Infrastructure Group:** Invoice, Quotation, and Purchase Order (PO) share a unified commercial PDF infrastructure (fonts, image/branding resolution, Unicode/glyph diagnostics, low-level Forme primitives, and delivery pipeline). However, each document retains its independent layout, fields, and business semantics. Existing PO templates are strictly preserved; PO is an outgoing supplier-facing document, not a client invoice.
+2. **Strict Domain Boundaries:** Domain preparation owns canonical business data and calculations. The master template resolver owns deterministic resolution, registration, and envelope construction. The customization engine owns design preferences and capabilities. `pdfcn` owns design tokens and primitives. Forme owns layout and PDF generation. Composite delivery owns persistence, dispatch, and feedback.
+3. **No Universal Table or Layout Abstraction:** Shared infrastructure does not force identical layouts or table abstractions onto different document families. CSR, Waybill, CPS, and commercial documents retain distinct structures.
+4. **Natural Pagination First:** Natural pagination (Normal Mode) must be verified across the representative document suite before compaction (Compact Mode or Force 1 Page Mode) is implemented. Compaction must never mask broken pagination.
+5. **Text & Data Immutability:** Financial calculations, tax rules, and user input text are immutable in the rendering layer. Silent Unicode sanitization is strictly prohibited; read-only glyph diagnostics report missing characters without altering source text.
+6. **Progressive Rollout:** Document families migrate sequentially. Existing production templates continue running on `@react-pdf/renderer` until their Forme replacements pass all verification gates.
 
 ---
 
-## 3. Epistemological Classification: Facts, Evidence, and Assumptions
+## 2. Document Index & Authority
 
-To maintain technical rigor, all documents enforce clear distinctions between confirmed facts, empirical observations, suspected causes, provisional targets, and open decisions:
+This directory contains the consolidated, authoritative specification for the PDF rendering migration. In the event of any contradiction between historical reports and this PRD, **this PRD takes precedence**:
 
-1. **Verified Repository Facts (Codebase State):**
-   - `@formepdf/core` (v0.20.1) and `@formepdf/react` (v0.20.1) are installed in `package.json`.
-   - Core API exports (`renderDocumentWithLayout`, `Table`, `Row`, `Cell`, `Fixed`, `Image`, `Link`, etc.) exist in the installed packages.
-   - `@react-pdf/renderer` (v4.3.2) is installed and pinned for legacy templates.
-2. **Observed Reproduction Evidence (Document Benchmarks):**
-   - In `SASQUO-000427 (1).pdf`, an indivisible 113.73 pt closing block spilled to Page 2 despite 75.25 pt remaining on Page 1. This is diagnostic evidence from an observed reproduction, not a universal physical constant across all documents.
-   - In `SASQUO-000428.pdf`, dimensions `2″`, `3″`, and `4″` rendered as `23`, `33`, and `43`. This is confirmed reproduction evidence of a rendering bug.
-3. **Suspected Causes (Requiring Empirical Tracing):**
-   - WinAnsi modulo-256 truncation in React-PDF fallback fonts is a **technically plausible suspected cause** for the `2″` $\to$ `23` defect ($0x2033 \pmod{256} = 0x33$). However, it is not claimed as proven until the exact font encoding and fallback execution path is traced empirically during Phase 1.
-4. **Provisional Planning Targets (Subject to Testing):**
-   - Candidate values—including the **72 pt** candidate `make` column width, the **32** compact styling tokens, the **7 pt** typography floor, and the **2 pt** row padding floor—are **provisional candidate targets** subject to empirical readability testing during Phase 2 and Phase 3. They are not permanently fixed or universally non-negotiable.
-5. **Forme Runtime Behavior Status:**
-   - Package export inspection confirms that an API exists; it does **not** prove runtime correctness.
-   - Runtime repetition of table headers (`<Row header>`), dynamic footer reservation (`<Fixed position="footer">`), coordinate accuracy in `renderDocumentWithLayout`, and PDF link annotations (`/Annots /Link`) are explicitly classified as **implementation-stage empirical verification requirements**.
-6. **Roadmap Milestone Statuses:**
-   - Milestone M0 (*Discovery, Problem Register & PRD Documentation*) is **100% complete** as a documentation deliverable. Milestones M1 through M6 represent software implementation phases that are **pending execution**.
+| File | Purpose | Primary Audience | Authority Level |
+| :--- | :--- | :--- | :--- |
+| [`Readme.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/Readme.md) | **Navigation, Scope & Epistemological Baseline**. Defines document scope, authority, status, and epistemological standards. | All Engineers & Leads | **Authoritative Baseline** |
+| [`architecture.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/architecture.md) | **Master Architecture & System Design**. Defines what the target system is, how responsibilities are divided across the 6 subsystems, and document-family boundaries. | Architects, Developers | **Authoritative Architecture** |
+| [`functional-req.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/functional-req.md) | **Functional Requirements & Coverage Matrix**. Defines what the system must do across all 8 document types, shared infrastructure, and problem register. | Developers, QA Engineers | **Authoritative Requirements** |
+| [`Prerequisites.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/Prerequisites.md) | **Readiness & Gating Checklists**. Defines what must be established and verified before implementation stages commence. | Project Leads, Developers | **Authoritative Gates** |
+| [`Waterfall-roadmap.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/Waterfall-roadmap.md) | **Execution Roadmap & Milestone Sequence**. Governs the authoritative order of implementation, milestone dependencies, gates, and exit criteria. | Engineering Leads | **Authoritative Roadmap** |
+| [`decision-log.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/decision-log.md) | **Decision Governance Register**. Authoritative record of which decisions are approved, qualified, proposed, rejected, verified, or unresolved. | Architects, Stakeholders | **Authoritative Governance** |
+| [`test-plan.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/test-plan.md) | **Verification, Test Suites & Certification**. Defines how implementation will be verified across representative test suites, regression suites, and physical devices. | QA Engineers, Developers | **Authoritative Test Plan** |
+| [`risk-register.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/risk-register.md) | **Risk Register & Mitigations**. Details known technical, commercial, and operational risks alongside concrete mitigations. | Project Leads, Developers | **Authoritative Risks** |
+| [`invoice-quotation-po-template-spec.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/invoice-quotation-po-template-spec.md) | **Commercial Template Specifications**. Detailed structural and field comparison between Invoice, Quotation, and Purchase Order. | Template Developers | **Authoritative Spec** |
 
 ---
 
-## 4. Architectural Hierarchy
+## 3. Epistemological Classification: Facts, Evidence, and Decisions
 
-```
-+-------------------------------------------------------------+
-|                     Business Data Layer                     |
-|                 (Supabase / Domain Entities)                |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|                  Canonical Document Model                   |
-|              (PdfDocumentModel / Data Adapter)              |
-|        *Strictly renderer-independent; math locked*         |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|                   pdfcn Presentation Layer                  |
-|          (Design Tokens, Spacing, Layout Primitives)        |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|                     Forme Engine Backend                    |
-|             (@formepdf/react & @formepdf/core)              |
-+-------------------------------------------------------------+
-                              |
-                              v
-+-------------------------------------------------------------+
-|                     Final PDF Document                      |
-|          (Accurate Vector Output, Links, Embedded TTF)      |
-+-------------------------------------------------------------+
-```
+To ensure technical integrity and prevent unverified claims from becoming false implementation assumptions, all documentation enforces explicit epistemological categories:
+
+### 3.1 Verified Repository Facts (Directly Confirmed in Codebase)
+- `@formepdf/core` (v0.20.1) and `@formepdf/react` (v0.20.1) are installed in `package.json`.
+- `@formepdf/core` requires raw TrueType (`.ttf`) or OpenType (`.otf`) SFNT streams; it rejects `.woff` and `.woff2` files (confirmed in package source `node_modules/@formepdf/core/dist/index.js` and `browserHelpers.js`).
+- The repository contains only **one** production TrueType font: `public/fonts/ArchivoBlack-Regular.ttf` (90,988 bytes). All `@fontsource/*` packages in `node_modules` ship `.woff`/`.woff2` files only.
+- In `src/components/pdf/forme/fonts.ts`, `FORME_SUPPORTED_FONT_EXTENSIONS = ['.ttf', '.otf']`. Because shared commercial fonts in `src/lib/pdfSharedFonts.ts` are `.woff`, CPS Forme templates silently fall back to `Helvetica`.
+- In `node_modules/@react-pdf/pdfkit/lib/pdfkit.js`, `encodeText` pushes `char.toString(16)` for unmapped characters. For `U+2033` (8243, `0x2033`), it outputs `'2033'`. In 1-byte WinAnsi text chunks, conforming viewers decode `0x32` (`'2'`), `0x20` (space), and `0x33` (`'3'`), rendering $2''$ as `23`. This confirmed defect occurs when fonts like `Lato` or `Orbitron` lack `U+2033` and bypass glyph checks in `safeText.ts`.
+- `src/lib/native/invoiceCache.ts` caches invoice items and invoices only. It does **not** cache company logos, signatures, or documents in Waybill, CSR, CPS, RFQ, Receipt, or PO families.
+- In `vite.config.js`, `base: './'` is configured. Capacitor packages `dist/` into native apps via `webDir: 'dist'`.
+
+### 3.2 Architecturally Approved Decisions
+- **Forme + pdfcn Engine:** Forme is the PDF layout and generation engine; `pdfcn` is the document design token and primitive layer.
+- **8-Document Scope:** Invoice, Quotation, PO, CPS, RFQ, Waybill, Receipt, CSR are in scope. BOQ is excluded.
+- **Commercial Group Alignment:** Invoice, Quotation, and PO share commercial infrastructure, but retain distinct templates and layouts. Existing PO templates are preserved.
+- **Text Preservation Rule:** User input text must not be silently mutated. General-purpose Unicode sanitizers that strip emojis or rewrite primes are rejected. Read-only glyph diagnostics report missing characters.
+- **Single Font Authority:** `src/components/pdf/forme/fonts.ts` remains the single font registration authority, supporting dual-runtime path resolution.
+
+### 3.3 Proposed Implementation Approaches (Subject to Review)
+- Sourcing static desktop TrueType binaries (Regular, Bold, Italic) from Rasmus Andersson's official Inter v4.0 release.
+- Clamping maximum image resolution in the media loader to $2000 \times 2000\text{ px}$ to protect low-RAM mobile devices.
+- Retaining `Noto Sans Regular` as a secondary multi-script currency fallback.
+
+### 3.4 Unresolved Decisions Requiring Founder / Lead Approval
+- Selection of Inter static TTF binary source (Rasmus Andersson v4.0 release vs Google Fonts static export).
+- Text-only header fallback policy when remote company logos fail to load offline.
+- Schedule and priority for implementing PO's dedicated canonical preparation contract (`preparePurchaseOrderDocument.ts`).
+
+### 3.5 Migration Milestone Statuses
+- **Milestone M0:** *Discovery, Problem Register & PRD Consolidation* — ✅ **100% Complete**.
+- **Milestone M1A:** *PDF Architecture Contracts & Responsibility Definition* — ✅ **Complete Specification**.
+- **Milestone M1B:** *Shared Font & Image Asset Infrastructure Specification* — ✅ **Complete Specification**.
+- **Milestone M1C:** *PO Canonical Preparation Contract & Commercial Alignment* — ⛔ **Pending Execution**.
+- **Milestones M2–M6:** *Implementation, Certification & Legacy Deprecation* — ⛔ **Pending Execution**.
 
 ---
 
-## 5. Non-Negotiable Operational Rules
+## 4. Non-Negotiable Operational Rules
 
-1. **Do not run `bun run build`:** The build process is excluded due to local host memory constraints.
-2. **Never hide broken pagination with compaction:** Natural pagination must work cleanly across the representative document suite in Normal Mode before Compact or Force 1 Page modes are applied.
-3. **Preserve business logic:** Tax calculations, totals, discounts, document numbering, and database schemas remain strictly outside the rendering layer.
-4. **Build and approve new Forme templates before migration:** Production document traffic must not switch to Forme until new templates pass all acceptance gates.
+1. **DO NOT run `bun run build`:** Permanently prohibited due to the host machine's 4GB RAM ceiling.
+2. **DO NOT run unauthorized verification commands during documentation tasks:** No builds, typechecks, tests, or linters during documentation-only tasks.
+3. **Never hide broken pagination with compaction:** Natural pagination (Normal Mode) must pass across the representative document suite before Compact Mode or Force 1 Page Mode are implemented.
+4. **Preserve business logic and calculations:** Financial calculations, VAT rules, line-item totals, and database schemas remain strictly in the business domain layer (`src/domain/` and `src/lib/Calculations.ts`).
+5. **Preserve existing uncommitted work:** Pre-existing dirty and untracked files must not be cleaned, overwritten, or staged.

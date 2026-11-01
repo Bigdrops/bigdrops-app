@@ -1,20 +1,20 @@
 # 04 — Test Plan & Quality Assurance Strategy (PDF Rendering Migration)
 
-- **Status:** APPROVED TEST PLAN & FROZEN DOCUMENTATION BASELINE (Ready for M1 Planning)
-- **Architecture:** Forme Engine (`@formepdf/react` & `@formepdf/core` v0.20.1) + `pdfcn` Design System
+- **Status:** AUTHORITATIVE TEST PLAN & CERTIFICATION GATES
+- **Architecture:** Forme Engine (`@formepdf/react` & `@formepdf/core` v0.20.1) + `pdfcn` Presentation Layer
 - **Writing Standard:** ASD-STE100 Simplified Technical English
-- **Last Updated:** 2026-10-30
+- **Scope:** Eight In-Scope Document Types. BOQ Excluded.
 
 ---
 
 ## 1. Test Philosophy & Scope
 
-This test plan defines the verification strategy to ensure that documents rendered by Forme maintain complete visual fidelity, mathematical accuracy, and superior pagination compared to the legacy React-PDF implementation.
+This test plan defines the verification strategy to ensure that documents rendered by Forme maintain complete visual fidelity, mathematical accuracy, and superior pagination compared to legacy React-PDF output.
 
-Verification uses a representative corpus of real production documents from `docs/templates/ref-invquo/` alongside targeted synthetic stress documents. No mock approximations are accepted as primary evidence.
-
-> [!NOTE]
-> Measurements reported in investigation benchmarks (e.g. 113.73 pt, 75.25 pt, 58 pt vs 72 pt) are observed empirical evidence on the reference files. They serve as diagnostic test targets rather than universal physical laws.
+Verification combines:
+1. Real production benchmark documents (`SASQUO-000427`, `SASQUO-000428`, `SASQUO-430`).
+2. Targeted synthetic stress documents.
+3. Cross-platform runtime verification (Browser, Bun CLI tests, and Capacitor mobile WebViews).
 
 ---
 
@@ -37,7 +37,7 @@ Verification uses a representative corpus of real production documents from `doc
 ## 3. Test Suites & Verification Criteria
 
 ### 🧪 TS-1: Natural Pagination & Gate 1 Suite (Normal Mode)
-- **Objective:** Verify that documents use available page height efficiently, never break prematurely, and paginate cleanly across all document profiles before compaction is attempted.
+- **Objective:** Verify efficient space utilization, clean multi-page breaks, and adaptive closing flow before compaction is attempted.
 - **Test Cases:**
   - [ ] **TC-1.1 (Space Utilization on `SASQUO-000427`):** Render `SASQUO-000427` in Normal mode. Confirm that with candidate column widths (Make $\ge 72\text{ pt}$) and decoupled closing layout, the complete document fits naturally onto **1 physical page**.
   - [ ] **TC-1.2 (Adaptive Closing Flow):** When vertical content height approaches the bottom page margin, confirm that Totals stay attached to line items while Bank Details adaptively stack or move to continuation pages without forcing an unnecessary blank page.
@@ -53,13 +53,14 @@ Verification uses a representative corpus of real production documents from `doc
 
 ---
 
-### 🧪 TS-2: Typography & Character Encoding
-- **Objective:** Verify that technical symbols, currency symbols, and special characters render accurately without corruption.
+### 🧪 TS-2: Typography & Read-Only Glyph Diagnostics
+- **Objective:** Verify that technical symbols, currency symbols, and special characters render accurately without corruption, and confirm read-only diagnostics report missing characters without altering text.
 - **Test Cases:**
-  - [ ] **TC-2.1 (Double-Prime on `SASQUO-000428`):** Render `SASQUO-000428`. Extract text from output PDF using MuPDF/pdftotext. Verify descriptions contain `2"`, `3"`, `4"` or `2″`, `3″`, `4″`. Confirm digits `23`, `33`, `43` do not appear.
+  - [ ] **TC-2.1 (Double-Prime on `SASQUO-000428`):** Render `SASQUO-000428`. Extract text from output PDF using pdftotext/MuPDF. Verify descriptions contain `2"`, `3"`, `4"` or `2″`, `3″`, `4″`. Confirm digits `23`, `33`, `43` do not appear.
   - [ ] **TC-2.2 (Nigerian Naira Symbol):** Render an invoice containing amounts formatted in Nigerian Naira. Verify the `₦` glyph renders correctly in header, table cells, and totals.
   - [ ] **TC-2.3 (Engineering Symbols):** Test line items containing squared (`m²`), multiplication (`3 × 4`), degree (`45°`), and tolerance (`±0.5`). Verify all glyphs render cleanly.
-  - [ ] **TC-2.4 (Scoped Emoji Fallback):** Inject automotive emoji (`🛞`, `🚗`) into line item descriptions. Verify output PDF generates without syntax errors. Confirm surrounding text is completely preserved. Confirm supported icons render cleanly or unmapped emoji strip safely without crashing.
+  - [ ] **TC-2.4 (Read-Only Glyph Diagnostics):** Test input strings containing unmapped glyphs. Confirm diagnostic service emits structured warning containing missing code points. Assert original user text in rendered PDF remains uncorrupted and unmutated.
+  - [ ] **TC-2.5 (Scoped Emoji Fallback):** Inject automotive emoji (`🛞`, `🚗`) into line item descriptions. Verify output PDF generates without syntax errors. Confirm surrounding text is completely preserved. Confirm supported icons render cleanly or unmapped emoji strip safely without crashing.
 
 ---
 
@@ -79,19 +80,19 @@ Verification uses a representative corpus of real production documents from `doc
 - **Objective:** Verify that Force 1 Page mode compresses qualifying documents to single-page output while prioritizing commercial legibility.
 - **Test Cases:**
   - [ ] **TC-4.1 (Borderline Document Fit):** Test a 14-item document that slightly overflows Page 1. Select "Force 1 Page". Verify output is exactly **1 physical page**.
-  - [ ] **TC-4.2 (Legibility-First Candidate Floor Enforcement):** Confirm font size never scales below candidate floor of **7 pt** and table row padding never scales below candidate floor of **2 pt**. Conduct visual readability inspection on printed/screen output.
+  - [ ] **TC-4.2 (Legibility-First Floor Enforcement):** Confirm font size never scales below candidate floor of **7 pt** and table row padding never scales below candidate floor of **2 pt**. Conduct visual readability inspection on printed/screen output.
   - [ ] **TC-4.3 (No Overlapping Elements):** Measure bounding boxes via `renderDocumentWithLayout`. Assert zero overlap between adjacent views.
   - [ ] **TC-4.4 (Graceful Fallback on `DOC-OVERFLOW-25`):** Run Force 1 Page mode on a 25-item document. Verify the engine detects the deficit exceeds candidate threshold (120 pt), aborts single-page compaction, and outputs a clean 2-page document with an in-app notice. Assert zero content was dropped to force fitting.
 
 ---
 
-### 🧪 TS-5: Interactive Image Hyperlinks & Logo Aspect Ratios
-- **Objective:** Verify interactive hyperlinks embedded over images and custom coordinate overlays, and verify logo aspect ratio preservation.
+### 🧪 TS-5: Interactive Hyperlinks & Image Geometry
+- **Objective:** Verify interactive hyperlinks embedded over images and custom coordinate overlays, and verify explicit image sizing in Forme.
 - **Test Cases:**
   - [ ] **TC-5.1 (Direct Image Link):** Render an invoice with a clickable header logo (`<Image href="https://example.com">`). Inspect PDF objects using MuPDF. Assert `/Annots` contains `/Subtype /Link` with `/URI (https://example.com)`.
   - [ ] **TC-5.2 (Coordinate Overlay Link):** Place an absolute `<View href="https://verify.bourxe.com">` over a signature badge. Click the badge in Adobe Acrobat and Google Chrome PDF viewers. Assert browser navigates to the target URL.
   - [ ] **TC-5.3 (Coordinate Alignment):** Verify link annotation bounding box matches image dimensions exactly in both Portrait and Landscape orientations.
-  - [ ] **TC-5.4 (Logo Aspect Ratio Preservation):** Test logos with varying width-to-height ratios ($1:1$, $3:1$, $1:3$). Confirm images preserve natural proportions via `objectFit: 'contain'` without horizontal or vertical stretching.
+  - [ ] **TC-5.4 (Forme Explicit Sizing):** Confirm all `<Image>` primitives specify explicit numeric `width` and `height` props. Confirm zero usage of invalid `objectFit` style properties.
 
 ---
 
@@ -114,12 +115,13 @@ Verification uses a representative corpus of real production documents from `doc
 
 ---
 
-### 🧪 TS-8: Font Packaging & Offline Mobile Export
-- **Objective:** Verify reliable font asset delivery across web and offline mobile environments.
+### 🧪 TS-8: Font Packaging & Dual-Runtime / Mobile Offline Asset Resolution
+- **Objective:** Verify reliable font asset delivery across web, Bun CLI, and offline mobile environments.
 - **Test Cases:**
-  - [ ] **TC-8.1 (Static Asset Loading):** Verify static TTF fonts load cleanly from `public/fonts/` during browser export.
-  - [ ] **TC-8.2 (Capacitor Mobile Offline Export):** Test client-side PDF export in an offline Capacitor Android/iOS container. Confirm fonts embed successfully without network access.
-  - [ ] **TC-8.3 (Binary Fallback Verification):** If static asset delivery fails in offline mobile testing, verify base64/binary font bundling embeds identically.
+  - [ ] **TC-8.1 (Bun CLI Filesystem Resolution):** Verify `ensureFormeFontFamily` resolves filesystem paths (`public/fonts/*.ttf`) via `readFile` in Bun CLI tests.
+  - [ ] **TC-8.2 (Browser Public URL Resolution):** Verify static TTF fonts load cleanly from `/fonts/*.ttf` via `fetch()` in browser runtime.
+  - [ ] **TC-8.3 (Capacitor Mobile Offline Export):** Test client-side PDF export in an offline Capacitor Android/iOS container. Confirm fonts embed successfully without network access under `base: './'`.
+  - [ ] **TC-8.4 (Observable Font Fallback):** Request an unregistered font name. Assert status is `WARN_UNREGISTERED_FAMILY` and font visibly falls back to standard `Helvetica`.
 
 ---
 
@@ -132,17 +134,45 @@ Verification uses a representative corpus of real production documents from `doc
 
 ---
 
-### 🧪 TS-10: Financial & Data Integrity
-- **Objective:** Verify that rendering migration does not alter business values or financial calculations.
+### 🧪 TS-10: Commercial Group Regression & Supplier-Facing PO Correctness
+- **Objective:** Verify that Invoice, Quotation, and Purchase Order share commercial infrastructure while preserving distinct layouts, fields, and calculations.
 - **Test Cases:**
-  - [ ] **TC-10.1 (Calculations Immutability):** Compare subtotal, VAT (7.5%), total, and balance due between legacy React-PDF output and Forme output for `SASQUO-000427`. Assert values match to 2 decimal places.
-  - [ ] **TC-10.2 (Model Independence):** Verify rendering templates receive data solely through `PdfDocumentModel`. Assert zero Supabase client calls exist in rendering components.
+  - [ ] **TC-10.1 (Invoice AR & Bank Details):** Verify Invoice renders client "Bill To", Receiving Bank Details, VAT (7.5%), WHT deduction, Due Date, and Balance Due.
+  - [ ] **TC-10.2 (Quotation Pipeline & Terms):** Verify Quotation renders client "Bill To", Validity Period, commercial terms, and client acceptance block.
+  - [ ] **TC-10.3 (PO Supplier-Facing AP Correctness):**
+    - Verify PO header displays "PURCHASE ORDER" and Buyer as issuer.
+    - Verify counterparty displays **Order From · Supplier / Vendor**.
+    - Verify table column displays **Unit Cost**, not Unit Price.
+    - Verify Receiving Bank Details are hidden.
+    - Verify Withholding Tax (WHT) deduction is not applied.
+    - Verify Buyer purchasing officer signature blocks render cleanly.
+  - [ ] **TC-10.4 (Preservation of Existing PO Templates):** Confirm PO Forme template uses PO-specific layout and does not force an invoice design.
 
 ---
 
-### 🧪 TS-11: Verification & Resource Safeguards
+### 🧪 TS-11: Specialized Document Family Certification
+- **Objective:** Certify remaining document families against their specific functional requirements.
+- **Test Cases:**
+  - [ ] **TC-11.1 (CPS Font Fix & Cost Schedule):** Render CPS document in Forme. Extract fonts from PDF. Confirm text renders in `Inter` (or selected family) and does NOT fall back to `Helvetica`. Verify dense cost breakdown schedules render accurately.
+  - [ ] **TC-11.2 (RFQ Procurement Unpriced Semantics):** Render RFQ. Confirm table columns show specifications, quantities, and units. Assert pricing, tax, and total columns are absent.
+  - [ ] **TC-11.3 (Waybill Logistics & Signatures):** Render Waybill. Confirm goods condition status, vehicle number, and transport mode render cleanly. Confirm signature blocks support `Caveat` script font or blank completion lines.
+  - [ ] **TC-11.4 (Receipt Proof of Payment):** Render Receipt. Confirm issuer, payer, payment method, transaction reference, and amount in words render cleanly. Confirm strict financial immutability.
+  - [ ] **TC-11.5 (CSR Multi-Orientation & Readings):** Render CSR Portrait Reference (`Archivo Black` headings) and Blueprint Landscape. Confirm 6 operational reading channels and parts replacement schedules render accurately.
+
+---
+
+### 🧪 TS-12: PDF Delivery, Persistence & Diagnostic Telemetry
+- **Objective:** Verify document dispatch through `CompositePdfDelivery`.
+- **Test Cases:**
+  - [ ] **TC-12.1 (Composite Dispatch):** Export documents across all 8 families. Confirm PDF bytes route through `CompositePdfDelivery`.
+  - [ ] **TC-12.2 (Media Failure Graceful Fallback):** Simulate remote logo fetch failure (CORS/offline). Confirm `mediaResolver` returns `null` without throwing, and document outputs clean text branding.
+  - [ ] **TC-12.3 (Diagnostic Logging Privacy):** Confirm diagnostic telemetry captures error codes without logging confidential customer pricing or contractual text.
+
+---
+
+### 🧪 TS-13: Verification & Resource Safeguards
 - **Objective:** Ensure compliance with repository operational guardrails.
 - **Test Cases:**
-  - [ ] **TC-11.1 (Typecheck):** Execute `bun run audit:load` followed by `bun run typecheck`. Assert zero TypeScript compilation errors.
-  - [ ] **TC-11.2 (Build Prohibition):** Confirm `bun run build` was **NOT** executed during development or testing.
-  - [ ] **TC-11.3 (Git Working Tree):** Execute `git status`. Verify that only files designated in the PRD scope were modified.
+  - [ ] **TC-13.1 (Static Typecheck Baseline):** Execute `bun run audit:load` followed by `bun run typecheck`. Assert zero TypeScript compilation errors.
+  - [ ] **TC-13.2 (Build Prohibition):** Confirm `bun run build` was **NOT** executed during development or testing.
+  - [ ] **TC-13.3 (Git Working Tree):** Execute `git status`. Verify that only files designated in the PRD scope were modified.

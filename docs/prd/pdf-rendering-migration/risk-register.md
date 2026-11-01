@@ -1,9 +1,9 @@
 # 05 — Risk Register & Mitigation Strategy (PDF Rendering Migration)
 
-- **Status:** APPROVED RISK REGISTER & FROZEN DOCUMENTATION BASELINE (Ready for M1 Planning)
-- **Architecture:** Forme Engine + `pdfcn` Design System
+- **Status:** AUTHORITATIVE RISK REGISTER & MITIGATION STRATEGY
+- **Architecture:** Forme Engine (`@formepdf/react` & `@formepdf/core` v0.20.1) + `pdfcn` Presentation Layer
 - **Writing Standard:** ASD-STE100 Simplified Technical English
-- **Last Updated:** 2026-10-30
+- **Scope:** Eight In-Scope Document Types. BOQ Excluded.
 
 ---
 
@@ -14,7 +14,7 @@
 | **R-01** | Premature Compaction Masking | High | High | Low | Engineering Lead |
 | **R-02** | Indivisible Closing Block Fragmentation | High | High | Low | Template Developer |
 | **R-03** | Table Column Geometry & Oversized Row Inflation | Medium | High | Low | Template Developer |
-| **R-04** | Font Subsetting & Glyph Corruption | Critical | High | Low | Core Architect |
+| **R-04** | Font Subsetting & Glyph Corruption ($2'' \to 23$) | Critical | High | Low | Core Architect |
 | **R-05** | Emoji Rendering Vector Syntax Failures | Medium | Medium | Low | Core Architect |
 | **R-06** | Rich-Text / HTML Tag Ingestion | Medium | Medium | Medium | Template Developer |
 | **R-07** | Company Logo Aspect-Ratio Distortion | Low | Medium | Low | Design Lead |
@@ -23,131 +23,203 @@
 | **R-10** | Offline Mobile Font Delivery Failure | High | Medium | Low | Engine Integrator |
 | **R-11** | Host RAM Exhaustion via Build Execution | Critical | Low | Low | All Agents |
 | **R-12** | Premature Legacy Dependency Retirement | Critical | Low | Low | Project Lead |
+| **R-13** | CORS and Remote Storage Image Failure | High | High | Low | Core Architect |
+| **R-14** | Incomplete PO Canonical Preparation Contract | High | High | Low | Domain Architect |
+| **R-15** | Variable Font Layout and Weight Distortion | High | High | Low | Engine Integrator |
+| **R-16** | Silent Font Fallback Masking Layout Bugs | Medium | High | Low | Core Architect |
+| **R-17** | Capacitor Relative Base Path (`base: './'`) | High | Medium | Low | Mobile Integrator |
+| **R-18** | Offline Media Gaps (Uncached Logos & Signatures) | Medium | High | Low | Core Architect |
+| **R-19** | Forme Style Incompatibility (`objectFit`) | Medium | High | Low | Template Developer |
+| **R-20** | Duplicate Global Font Registration | Low | Medium | Low | Engine Integrator |
+| **R-21** | Existing Dirty-Worktree Collisions | Medium | High | Low | All Agents |
+| **R-22** | Delivery Subsystem Fragmentation | Medium | Medium | Low | System Architect |
 
 ---
 
-## 2. Detailed Risk Descriptions & Mitigation Actions
+## 2. Detailed Risk Descriptions & Concrete Mitigations
 
 ### ⚠️ R-01: Premature Compaction Masking
-- **Description:** Developers or AI agents might use Compact Mode or Force 1 Page Mode to shrink a document, hiding the fact that natural pagination (Normal Mode) is broken.
+- **Description:** Developers or AI agents might use Compact Mode or Force 1 Page Mode to shrink a document, hiding broken natural pagination.
 - **Root Cause:** Historical reliance on compaction to solve layout overflow rather than fixing root causes (column widths, closing blocks, defensive padding).
 - **Mitigation Strategy:**
   1. Enforce strict sequential gating in [`Waterfall-roadmap.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/prd/pdf-rendering-migration/Waterfall-roadmap.md).
-  2. Phase 2 (Natural Pagination) must achieve sign-off across the complete **Gate 1 Representative Document Suite** (short documents, `SASQUO-000427`, wrapping descriptions, large totals, notes/terms, signatures, multi-page distributions) in **Normal Mode** before any code for Compact Mode or Force 1 Page Mode may be written.
+  2. Milestone M2 (Natural Pagination) must achieve sign-off across the complete **Gate 1 Representative Document Suite** in **Normal Mode** before any code for Compact Mode or Force 1 Page Mode may be written.
   3. Acceptance tests must explicitly verify that `SASQUO-000427` fits onto 1 page naturally under Normal Mode without compact tokens.
 
 ---
 
 ### ⚠️ R-02: Indivisible Closing Block Fragmentation
-- **Description:** Coupling Bank Details and Totals in an indivisible container (`wrap={false}`) forces large vertical blocks across page boundaries when space is tight (observed as 113.73 pt in `SASQUO-000427`).
+- **Description:** Coupling Bank Details and Totals in an indivisible container (`wrap={false}`) forces large vertical blocks across page boundaries (observed as 113.73 pt in `SASQUO-000427`).
 - **Root Cause:** Inflexible flex-row layout in legacy `IndustryTemplate.tsx`.
 - **Mitigation Strategy:**
   1. Decouple Bank Details and Totals into independent layout primitives.
-  2. Implement an adaptive layout container:
-     - Side-by-side when remaining vertical space $\ge H_{\text{closing}}$ and page width permits.
-     - Stacked or split across pages when vertical space is restricted: Totals stay on the primary page with the line items; Bank Details adaptively stack or move to the next page.
-  3. Avoid promising an absolute zero-break guarantee; eliminate avoidable premature breaks through adaptive layout rather than rigid row balancing.
+  2. Implement adaptive layout: side-by-side when vertical space permits; adaptively stacked or moved to continuation pages when space is restricted. Totals remain prioritized with line items on the primary page.
 
 ---
 
 ### ⚠️ R-03: Table Column Geometry & Oversized Row Inflation
 - **Description:** Hardcoded narrow column widths (observed as `make: { pdfWidth: 58 }`) force text wrapping across many rows, adding unnecessary vertical height (~131 pt in `SASQUO-000427`). Additionally, exceptionally long descriptions in a single row could overflow page height and trigger clipping.
-- **Root Cause:** Inflexible column width definitions in `table.ts` and lack of an oversized row handling strategy.
 - **Mitigation Strategy:**
-  1. Test and apply candidate column widths based on realistic B2B dataset analysis (e.g. `make` column widened to candidate target of 72 pt).
-  2. Implement a column budget calculator that distributes remaining table width proportionally to content-heavy columns.
-  3. Ordinary rows stay intact across pages where possible; for oversized rows exceeding available page height, implement a safe fragmentation or controlled fallback strategy to prevent clipping or silent content loss.
+  1. Apply candidate column widths based on realistic B2B dataset analysis (`make` column widened to at least 72 pt).
+  2. Ordinary rows stay intact across pages where possible; for oversized rows exceeding available page height, implement safe internal fragmentation or virtual sub-row splitting to prevent clipping or content omission.
 
 ---
 
-### ⚠️ R-04: Font Subsetting & Glyph Corruption
+### ⚠️ R-04: Font Subsetting & Glyph Corruption ($2'' \to 23$)
 - **Description:** Double-prime (`″`), Naira (`₦`), and engineering symbols (`²`, `×`, `±`, `°`) corrupt into digits (`23`, `33`, `43`) or missing squares.
-- **Root Cause:** `safeText.ts` exempting Unicode ranges without font glyph verification, combined with standard PDF Helvetica fallback. WinAnsi modulo-256 truncation is a technically plausible suspected cause.
+- **Root Cause Confirmed:** In `@react-pdf/pdfkit/lib/pdfkit.js`, `encodeText` pushes `char.toString(16)` for unmapped characters. For `U+2033` (8243, `0x2033`), it outputs `'2033'`. In 1-byte WinAnsi text chunks, conforming viewers decode `0x32` (`'2'`), `0x20` (space), and `0x33` (`'3'`), rendering $2''$ as `23`. This defect occurs when Latin-subset fonts (such as `Lato` or `Orbitron`) lack `U+2033` and bypass glyph checks in `safeText.ts`.
 - **Mitigation Strategy:**
-  1. Trace font fallback and encoding paths empirically during Phase 1 font setup.
-  2. Embed complete TrueType (`.ttf`) binary fonts (Inter TTF) with full Latin-1 and currency glyph sets.
-  3. Implement a deterministic typography preprocessor:
-     - Map double-prime (`U+2033`) to ASCII quote (`"`, `U+0022`) or native Unicode glyph if font supports it.
-     - Map Naira (`U+20A6`) with embedded font or inline SVG vector icon fallback.
-     - Never allow 16-bit Unicode characters to truncate modulo 256.
+  1. Procure and embed complete static TrueType (`.ttf`) binaries (Inter TTF, Caveat, Archivo Black, Noto Sans) with verified cmap coverage of `U+2032`, `U+2033`, and `U+20A6`.
+  2. Forme embeds Identity-H 2-byte font streams, permanently eliminating WinAnsi 1-byte decoding corruption.
+  3. Deploy read-only glyph diagnostic utilities to report unmapped characters during pre-render checks.
 
 ---
 
 ### ⚠️ R-05: Emoji Rendering Vector Syntax Failures
 - **Description:** OpenType COLR, CBDT, and sbix color emoji tables cannot be parsed by standard vector PDF generators, causing syntax crashes when user input contains emoji (e.g. `🛞`).
-- **Root Cause:** User enters emoji in item descriptions or notes.
 - **Mitigation Strategy:**
-  1. Preserve surrounding text without corrupting the description or crashing the PDF.
-  2. Implement a regex emoji detector in the document text normalization pipeline.
-  3. Substitute a small, justified set of high-frequency commercial equipment symbols with bundled monochrome SVG vector icons.
-  4. Provide a safe fallback (clean stripping or neutral placeholder) for unsupported emoji. Do not make a large emoji library a prerequisite for the first template.
+  1. Preserve surrounding text 100%.
+  2. Substitute a small, curated set of high-frequency commercial equipment symbols with bundled monochrome SVG vector icons.
+  3. Provide a safe fallback (clean stripping or neutral placeholder) for unmapped emoji without interrupting document flow.
 
 ---
 
 ### ⚠️ R-06: Rich-Text / HTML Tag Ingestion
-- **Description:** Users paste formatted text containing HTML tags (`<b>`, `<i>`, `<ul>`, `<li>`, `<br>`) into line item descriptions or terms, causing broken rendering or XML parser errors.
-- **Root Cause:** Quotation description inputs in Supabase contain rich-text HTML strings.
+- **Description:** Users paste formatted text containing HTML tags into line item descriptions or terms, causing raw HTML tags to render literally or crash parsers.
 - **Mitigation Strategy:**
-  1. Implement a structured 5-step conversion pipeline:
-     - Sanitize incoming HTML via DOMPurify with strict allowlist (compatible with desktop and Capacitor mobile WebViews).
-     - Parse sanitized HTML into an intermediate tree.
-     - Convert permitted nodes into a controlled document AST.
-     - Render AST via Forme components (`<Text>`, `<Strong>`, `<Em>`, `<UnorderedList>`, `<ListItem>`).
-     - Apply predictable fallback (strip unsupported tags to plain text).
-  2. Limit scope to essential commercial formatting (bold, italic, underline, lists, paragraphs).
+  1. Implement structured 5-step conversion: Sanitize $\to$ Parse $\to$ Allowlisted AST $\to$ Forme Render $\to$ Plain Text Fallback.
+  2. Limit scope to essential commercial formatting (bold, italic, underline, lists, paragraphs). Arbitrary CSS and scripts are stripped.
 
 ---
 
 ### ⚠️ R-07: Company Logo Aspect-Ratio Distortion
-- **Description:** User-uploaded company logos appear stretched, squashed, or clipped when placed into fixed-dimension header slots.
-- **Root Cause:** Using fixed width and height on image containers without aspect-ratio preservation.
+- **Description:** Logos appear stretched or squashed when rendered inside rigid square boxes.
 - **Mitigation Strategy:**
-  1. Enforce `objectFit: 'contain'` semantics on all image wrappers in `pdfcn`.
-  2. Calculate proportional bounding boxes using natural image dimensions.
+  1. Preserves natural aspect ratios via explicit height or width constraints in `BrandLogo` and media components.
+  2. Provide height-only or width-only sizing so wide lockups stay wide and tall marks stay tall.
 
 ---
 
 ### ⚠️ R-08: Over-Compaction Legibility Degradation
-- **Description:** Force 1 Page mode could aggressively shrink text size or padding, making the document unreadable or legally non-compliant.
-- **Root Cause:** Unconstrained optimization algorithms prioritizing single-page fit over document legibility.
+- **Description:** Aggressive compaction in Force 1 Page mode could shrink text or margins to unreadable sizes.
 - **Mitigation Strategy:**
-  1. Establish that **commercial legibility takes precedence over single-page fitting**.
-  2. Treat candidate floor limits (candidate minimum font size **7 pt**, candidate minimum table row padding **2 pt**) as **provisional candidate targets** requiring empirical readability testing before final sign-off.
-  3. If the document exceeds 1 page after maximum allowable compaction, the engine must abort 1-page mode and output a clean, readable 2-page document with a user-facing notice.
+  1. Legibility-first safeguard: candidate floors (7 pt font, 2 pt padding) are provisional targets subject to readability testing.
+  2. The system must never drop line items, totals, or signatures to satisfy a 1-page target.
+  3. Graceful fallback: uncompressible documents automatically output a clean 2-page document with an in-app notice.
 
 ---
 
 ### ⚠️ R-09: Hyperlink Coordinate Drift
-- **Description:** Clickable `/Link` annotations drift away from visual images when documents scale, rotate, or reflow.
-- **Root Cause:** Absolute coordinate calculations that fail to account for page margin offsets and aspect-ratio scaling.
+- **Description:** Clickable link annotations (`/Annots /Link`) drift from their visual elements during document scaling or orientation changes.
 - **Mitigation Strategy:**
-  1. Use Forme's native `<Image href="...">` and relative bounding box overlays.
-  2. Include coordinate-accuracy automated test assertions in the test suite (`TS-5`).
+  1. Leverage Forme's native `/Annots /Link` generation.
+  2. Test coordinate alignment via automated MuPDF extraction in both Portrait and Landscape orientations.
 
 ---
 
 ### ⚠️ R-10: Offline Mobile Font Delivery Failure
-- **Description:** Loading static TrueType font files over HTTP (`fetch()`) fails in Capacitor mobile apps when the device is offline or in flight mode.
-- **Root Cause:** WebView network boundary restrictions when generating PDFs client-side without an active internet connection.
+- **Description:** Capacitor mobile apps on Android or iOS cannot load static fonts when disconnected from the internet.
 - **Mitigation Strategy:**
-  1. Test static TTF asset delivery in offline Capacitor Android/iOS builds during Phase 1.
-  2. Retain binary font bundling (base64/arraybuffer import) as a proven fallback if static fetching proves unreliable.
+  1. Vite copies `public/fonts/` into `dist/fonts/` during bundling.
+  2. Capacitor serves `dist/` as local origin (`https://localhost/fonts/...`).
+  3. Perform physical device verification during Milestone M1B testing. Retain base64 binary bundling as a verified fallback.
 
 ---
 
 ### ⚠️ R-11: Host RAM Exhaustion via Build Execution
-- **Description:** Running `bun run build` exhausts RAM on the development/host machine, causing crashes and session aborts.
-- **Root Cause:** Vite full-app bundling requires more RAM than available on the development container.
+- **Description:** Running `bun run build` exhausts host memory on machines with 4GB RAM ceilings.
 - **Mitigation Strategy:**
-  1. Document explicit warnings in `AGENTS.md`, `Prerequisites.md`, and this risk register.
-  2. Agents and developers must verify changes using `bun run audit:load` and `bun run typecheck`.
-  3. `bun run build` is permanently banned.
+  1. `bun run build` is permanently prohibited by repository operational rules.
+  2. Verification relies on `bun run audit:load`, `bun run typecheck`, and focused Bun CLI test executions.
 
 ---
 
 ### ⚠️ R-12: Premature Legacy Dependency Retirement
-- **Description:** Uninstalling `@react-pdf/renderer` before all document families (Waybill, BOQ, CSR) migrate breaks production PDF exports.
-- **Root Cause:** Premature cleanup before verifying 100% dependency elimination across the repository.
+- **Description:** Uninstalling `@react-pdf/renderer` before all eight document families are migrated breaks production features.
 - **Mitigation Strategy:**
-  1. `@react-pdf/renderer` remains installed in `package.json` until Phase 6.
-  2. Run static AST import analysis across `src/` to confirm zero remaining imports before initiating dependency removal.
+  1. `@react-pdf/renderer` remains pinned until Milestone M6.
+  2. Only when AST analysis confirms zero remaining imports of `@react-pdf/renderer` across `src/` may the package be uninstalled.
+
+---
+
+### ⚠️ R-13: CORS and Remote Storage Image Failure
+- **Description:** Remote images hosted on Supabase Storage fail to load during client-side PDF export because of missing CORS headers or network errors. Client-side base64 conversion fails because `fetch()` is blocked.
+- **Mitigation Strategy:**
+  1. Implement non-throwing media loading in `mediaResolver.ts`.
+  2. If `fetch()` fails due to CORS, timeout, or network unavailability, catch error, return `null` data URI, and emit a diagnostic warning.
+  3. Document templates render clean text branding when logo is `null`, ensuring PDF generation never crashes.
+
+---
+
+### ⚠️ R-14: Incomplete PO Canonical Preparation Contract
+- **Description:** PO domain logic exists in `src/domain/purchase-order/calculations.ts`, but the dedicated canonical PDF preparation contract `preparePurchaseOrderDocument.ts` is missing, blocking PO template integration into the Master Deterministic Resolver.
+- **Mitigation Strategy:**
+  1. Formally record Milestone M1C dedicated to authoring `preparePurchaseOrderDocument.ts` in `src/domain/pdf/resolver/commercial/`.
+  2. Adapt PO fields (supplier snapshot, procurement terms, unit cost, purchasing authorizations) into the canonical envelope.
+  3. Preserve existing PO template layouts without forcing an invoice layout.
+
+---
+
+### ⚠️ R-15: Variable Font Layout and Weight Distortion
+- **Description:** Deploying variable fonts (such as `docs/reports/pdf/poc/assets/inter-var.ttf`) into Forme causes Wasm table parsing warnings and incorrect weight instantiation.
+- **Mitigation Strategy:**
+  1. Strictly prohibit variable font binaries in production.
+  2. Deploy static, single-weight TrueType binaries (`Inter-Regular.ttf`, `Inter-Bold.ttf`) with explicit weights registered.
+
+---
+
+### ⚠️ R-16: Silent Font Fallback Masking Layout Bugs
+- **Description:** Font loader silently substituting `Inter` for unknown font requests hides configuration errors and missing assets.
+- **Mitigation Strategy:**
+  1. Reject silent mapping to `Inter`.
+  2. Emit explicit diagnostic telemetry on unregistered font requests.
+  3. Fall back visibly to standard `Helvetica` so font configuration defects are immediately observable.
+
+---
+
+### ⚠️ R-17: Capacitor Relative Base Path (`base: './'`)
+- **Description:** In `vite.config.js`, `base: './'` is configured. In Capacitor mobile WebViews, absolute URL fetches (`fetch('/fonts/Inter-Regular.ttf')`) may resolve differently across Android (`https://localhost/`) and iOS (`capacitor://localhost/`).
+- **Mitigation Strategy:**
+  1. Test URL resolution in Android and iOS emulator/device runtimes during Milestone M1B verification.
+  2. If relative path resolution differs on iOS WKWebView, provide an environment-aware URL prefix helper or fall back to base64 binary font imports.
+
+---
+
+### ⚠️ R-18: Offline Media Gaps (Uncached Logos & Signatures)
+- **Description:** `src/lib/native/invoiceCache.ts` only caches invoice line items and invoices. It does not cache company logos, signatures, or documents in other families. Offline mobile users will lose remote images.
+- **Mitigation Strategy:**
+  1. Acknowledge and document that offline mobile exports cannot fetch remote images unless previously stored in local cache.
+  2. Ensure all document templates render gracefully with text branding when image data is `null`.
+
+---
+
+### ⚠️ R-19: Forme Style Incompatibility (`objectFit`)
+- **Description:** React-PDF supports `objectFit: 'contain'`, but Forme's `Style` interface does not. Passing `objectFit` in Forme style objects causes TypeScript compilation errors.
+- **Mitigation Strategy:**
+  1. Enforce explicit numeric `width` and `height` props on `<Image>` primitives.
+  2. Avoid passing `objectFit` in style definitions.
+
+---
+
+### ⚠️ R-20: Duplicate Global Font Registration
+- **Description:** Calling `Font.register()` repeatedly during document export leaks memory in long-running browser sessions.
+- **Mitigation Strategy:**
+  1. Guard font registration in `src/components/pdf/forme/fonts.ts` with a module-level `Set<string>`.
+  2. Only register a font family if it has not been registered previously.
+
+---
+
+### ⚠️ R-21: Existing Dirty-Worktree Collisions
+- **Description:** Pre-existing uncommitted modifications and untracked files in the working directory risk being accidentally overwritten, staged, or deleted during PDF migration tasks.
+- **Mitigation Strategy:**
+  1. Always run `git status --short` before and after every task.
+  2. Strictly avoid modifying files outside the authorized milestone scope.
+  3. Never run `git clean`, `git reset --hard`, or indiscriminate git add commands.
+
+---
+
+### ⚠️ R-22: Delivery Subsystem Fragmentation
+- **Description:** Individual document templates invoking raw Forme rendering functions directly rather than utilizing `CompositePdfDelivery`, causing divergent caching, analytics, and error handling.
+- **Mitigation Strategy:**
+  1. Route all document export actions through `CompositePdfDelivery`.
+  2. Standardize PDF byte generation, local caching, download triggers, and error reporting across all eight document families.
