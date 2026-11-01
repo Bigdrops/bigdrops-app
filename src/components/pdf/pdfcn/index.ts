@@ -40,3 +40,11 @@ export {
   csrPortraitReferenceDefinition,
   registerAllCsrPdfcnTemplates,
 } from './csr'
+
+export {
+  industryInvoiceDefinition,
+  industryQuotationDefinition,
+  industryFormeInvoiceDefinition,
+  industryFormeQuotationDefinition,
+  registerCommercialPdfcnTemplates,
+} from './commercial'

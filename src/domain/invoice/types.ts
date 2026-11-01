@@ -75,7 +75,15 @@ export interface InvoicePdfOutput {
   landscapeLayout?: boolean
 }
 
-export const INVOICE_PDF_TEMPLATE_IDS = ['industry', 'ledger', 'crest', 'minimal', 'evergreen', 'bolt', 'ember'] as const
+export const INVOICE_PDF_TEMPLATE_IDS = [
+  'industrial',
+  'industry',
+  'industry-forme',
+  'industry-react-pdf',
+  'crest',
+  'minimal',
+  'evergreen',
+] as const
 
 export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
 
@@ -84,7 +92,8 @@ export function isInvoicePdfTemplateId(value: unknown): value is InvoicePdfTempl
 }
 
 export function normalizeInvoicePdfTemplateId(value: unknown): InvoicePdfTemplateId | null {
-  if (value === 'naijabiz' || value === 'apex') return null
+  if (value === 'naijabiz' || value === 'apex' || value === 'ledger' || value === 'bolt' || value === 'ember') return null
+  if (value === 'industry-forme') return 'industry'
   return isInvoicePdfTemplateId(value) ? value : null
 }
 

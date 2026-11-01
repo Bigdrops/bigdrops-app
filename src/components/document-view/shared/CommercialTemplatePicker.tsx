@@ -5,18 +5,25 @@ import TemplatePickerCarousel, { type TemplatePickerOption } from './TemplatePic
 // no live data, no PDF generation.
 const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
   {
-    id: 'industry',
-    label: 'Industry',
-    blurb: 'Structured',
+    id: 'industrial',
+    label: 'Industrial',
+    blurb: 'Technical · Forme',
     layout: 'commercial',
-    theme: { pageBg: '#ffffff', headerBg: '#334155', headerFg: '#ffffff', accent: '#64748b', border: '#e2e8f0', mutedBg: '#f1f5f9' },
+    theme: { pageBg: '#f6f6f2', headerBg: '#1d2528', headerFg: '#ffffff', accent: '#dc5a21', border: '#1d2528', mutedBg: '#eceeea' },
   },
   {
-    id: 'ledger',
-    label: 'Ledger',
-    blurb: 'Editorial',
+    id: 'industry',
+    label: 'Industry — Forme',
+    blurb: 'Structured · Forme',
     layout: 'commercial',
-    theme: { pageBg: '#fdfcfb', headerBg: '#2b2b2b', headerFg: '#f4f2ed', accent: '#7b8b6f', border: '#e7e3da', mutedBg: '#f4f2ed' },
+    theme: { pageBg: '#ffffff', headerBg: '#7D8A88', headerFg: '#ffffff', accent: '#7D8A88', border: '#e2e8f0', mutedBg: '#f1f5f9' },
+  },
+  {
+    id: 'industry-react-pdf',
+    label: 'Industry — React-PDF',
+    blurb: 'Structured · React-PDF',
+    layout: 'commercial',
+    theme: { pageBg: '#ffffff', headerBg: '#7D8A88', headerFg: '#ffffff', accent: '#7D8A88', border: '#e2e8f0', mutedBg: '#f1f5f9' },
   },
   {
     id: 'crest',
@@ -39,20 +46,6 @@ const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
     layout: 'commercial',
     theme: { pageBg: '#ffffff', headerBg: '#1f6e5c', headerFg: '#ffffff', accent: '#2a8a73', border: '#e8f3ef', mutedBg: '#f0f6f2' },
   },
-  {
-    id: 'bolt',
-    label: 'Bolt',
-    blurb: 'Certificate',
-    layout: 'commercial',
-    theme: { pageBg: '#faf8f0', headerBg: '#1b4332', headerFg: '#ffffff', accent: '#52b788', border: '#d1d5db', mutedBg: '#f0f7f0' },
-  },
-  {
-    id: 'ember',
-    label: 'Ember',
-    blurb: 'Warm',
-    layout: 'commercial',
-    theme: { pageBg: '#f4f6f8', headerBg: '#2c3e50', headerFg: '#ffffff', accent: '#e67e22', border: '#e9edf2', mutedBg: '#ffffff' },
-  },
 ]
 
 interface CommercialTemplatePickerProps {
@@ -61,5 +54,6 @@ interface CommercialTemplatePickerProps {
 }
 
 export default function CommercialTemplatePicker({ value, onChange }: CommercialTemplatePickerProps) {
-  return <TemplatePickerCarousel value={value} onChange={onChange} options={TEMPLATE_OPTIONS} />
+  const activeValue = value === 'industry-forme' ? 'industry' : value
+  return <TemplatePickerCarousel value={activeValue} onChange={onChange} options={TEMPLATE_OPTIONS} />
 }

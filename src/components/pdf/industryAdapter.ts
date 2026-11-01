@@ -5,6 +5,12 @@ import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../dom
 import { resolvePreviewGroupSubtotal } from '@/domain/invoice/projections/lineItemResolvers'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
 
+export const INDUSTRY_DEFAULT_ACCENT = '#7D8A88'
+
+export const INDUSTRY_GROUP_TOKENS = {
+  border: '#8299A8',
+} as const
+
 type CommercialDocumentDesign = Pick<
   PdfDesignPreset,
   | 'accentColor'
@@ -73,6 +79,7 @@ export type CommercialDocumentData = {
       rowType?: string
       isGroupHeader?: boolean
       isGroupFooter?: boolean
+      groupId?: string | null
       groupName?: string | null
       groupLabel?: string | null
       showSubtotal?: boolean
@@ -90,7 +97,7 @@ export type CommercialDocumentData = {
     sortCode: string
   } | null
   totals: {
-    lines: Array<{ label: string; value: string }>
+    lines: Array<{ label: string; value: string; isDeduction?: boolean }>
     mainLine: { label: string; value: string } | null
     amountInWords: string
     balanceDue: { label: string; value: string } | null
@@ -141,7 +148,7 @@ export function splitAddressLines(lines: string[] = []) {
   }
 }
 
-function stringifyValue(value: unknown) {
+function _stringifyValue(value: unknown) {
   if (value === null || value === undefined) return ''
   return String(value)
 }
@@ -154,7 +161,7 @@ const normalizePdfTextSection = normalizeRichTextSection
 
 export function formatPdfMoney(value: unknown, options: { withSymbol?: boolean } = { withSymbol: true }) {
   if (!hasDisplayValue(value)) return ''
-  const formatted = formatPdfCurrencyString(value as any)
+  const formatted = formatPdfCurrencyString(value as string | number)
   return options.withSymbol === false ? formatted.replace(/^₦\s*/, '') : formatted
 }
 
@@ -182,7 +189,7 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
   const hideEmptyGroups = model.hideEmptyGroups !== false
   let lineNumber = 0
   const rows: CommercialDocumentData['table']['rows'] = []
-  let currentGroupHeader: any = null
+  let currentGroupHeader: CommercialDocumentData['table']['rows'][number] | null = null
 
   model.items.forEach((item, index) => {
     const isGroupHeader = item.rowType === 'group_header'
@@ -313,10 +320,18 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
 
   const totalLinesRaw = model.totals.rows
     .filter((line) => !line.emphasis)
-    .map((line) => ({
-      label: line.label,
-      value: formatPdfMoney(line.amount),
-    }))
+    .map((line) => {
+      const isDeduction = line.tone === 'danger' ||
+        line.amount < 0 ||
+        line.key === 'discount' ||
+        line.key === 'wht' ||
+        /discount|wht|withholding|deduction/i.test(line.label)
+      return {
+        label: line.label,
+        value: formatPdfMoney(line.amount),
+        isDeduction,
+      }
+    })
 
   // Remove "Balance Due" only when this is an advance child document
   const isAdvanceDocument = Boolean(model.totals.advanceSummary)
@@ -447,7 +462,7 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
     },
     layout: model.pageLayout || { size: 'A4', orientation: 'portrait' },
     design: {
-      accentColor: model.template?.designPreset?.accentColor || null,
+      accentColor: model.template?.designPreset?.accentColor || INDUSTRY_DEFAULT_ACCENT,
       textColor: model.template?.designPreset?.textColor || null,
       mutedColor: model.template?.designPreset?.mutedColor || null,
       borderColor: model.template?.designPreset?.borderColor || null,

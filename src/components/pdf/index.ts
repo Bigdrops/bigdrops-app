@@ -17,11 +17,12 @@ export type PdfGenerationResult = {
   uri?: string
 }
 
-type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
+export type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
   model: TModel
   documentNumber?: string | null
   templateId?: string | null
   compact?: boolean
+  engine?: 'forme' | 'react-pdf'
 }
 
 type CpsPdfStage = 'forme-init' | 'render' | 'bytes' | 'delivery'
@@ -57,67 +58,119 @@ function resolveFilename(model: PdfDocumentModel, fallbackNumber?: string | null
 }
 
 async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
+  const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
+  const filename = resolveFilename(request.model, request.documentNumber)
+  const docType = request.model.identity.kind as PdfDocumentType
+
+  // Determine rendering engine:
+  // 1. Explicit 'industrial' routes directly to Forme IndustrialFormeDocument (HTML-based industrial layout).
+  // 2. Explicit 'industry-react-pdf' forces React-PDF IndustryTemplate (cannot be overridden by request.engine).
+  // 3. Explicit 'industry-forme' forces Forme IndustryFormeDocument (cannot be overridden by request.engine).
+  // 4. 'industry' defaults to Forme IndustryFormeDocument, falling back to React-PDF only when request.engine === 'react-pdf'.
+  // 5. Retained templates 'crest', 'minimal', 'evergreen' route to React-PDF.
+  const isIndustrial = activeTemplateId === 'industrial'
+  const isExplicitReactPdf = activeTemplateId === 'industry-react-pdf'
+  const isExplicitForme = activeTemplateId === 'industry-forme'
+  const shouldUseForme = isIndustrial || (!isExplicitReactPdf && (isExplicitForme || (activeTemplateId === 'industry' && request.engine !== 'react-pdf')))
+
+  // Forme Commercial Rendering Path (Industrial & Industry)
+  if (shouldUseForme) {
+    const [
+      IndustrialDocModule,
+      IndustryDocModule,
+      { renderPdfcnToBytes },
+      { ensureFormeFontFamily },
+    ] = await Promise.all([
+      import('./forme/IndustrialFormeDocument'),
+      import('./forme/IndustryFormeDocument'),
+      import('./pdfcn/adapter'),
+      import('./forme/fonts'),
+    ])
+
+    await Promise.all([
+      ensureFormeFontFamily('Inter'),
+      ensureFormeFontFamily('Archivo Black'),
+      ensureFormeFontFamily('Caveat'),
+      ensureFormeFontFamily('Noto Sans'),
+    ])
+
+    const adaptedData = adaptCommercialDocumentData(request.model as PdfDocumentModel)
+    const element = isIndustrial
+      ? React.createElement(IndustrialDocModule.IndustrialFormeDocument, {
+          data: adaptedData,
+          compact: request.compact,
+        })
+      : React.createElement(IndustryDocModule.IndustryFormeDocument, {
+          data: adaptedData,
+          compact: request.compact,
+        })
+
+    const bytes = await renderPdfcnToBytes(element)
+    const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
+
+    const asset = {
+      blob,
+      filename,
+      mimeType: 'application/pdf',
+      sizeBytes: blob.size,
+      documentType: docType,
+      metadata: {},
+    }
+
+    const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
+    const result = await delivery.deliver({ asset, mode: 'download' })
+
+    const feedbackBus = new DefaultFeedbackBus()
+    if (!result.success) {
+      feedbackBus.emit({ kind: 'failed', documentType: docType, timestamp: Date.now(), fileName: filename, error: result.error })
+      throw new Error(result.error ?? 'PDF delivery failed')
+    }
+
+    feedbackBus.emit({ kind: 'downloaded', documentType: docType, timestamp: Date.now(), fileName: filename })
+
+    return { status: 'generated', filename, uri: result.uri }
+  }
+
+  // Retained React-PDF Rendering Path (Minimal, Evergreen, Crest, and Industry React-PDF comparison)
   const [
     { PdfRenderer },
     IndustryModule,
-    LedgerModule,
     CrestModule,
     MinimalModule,
     EvergreenModule,
-    BoltModule,
-    EmberModule,
   ] = await Promise.all([
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
-    import('./templates/Ledger'),
     import('./templates/Crest'),
     import('./templates/Minimal'),
     import('./templates/Evergreen'),
-    import('./templates/Bolt'),
-    import('./templates/Ember'),
   ])
 
   const Industry = IndustryModule.default
-  const Ledger = LedgerModule.default
   const Crest = CrestModule.default
   const Minimal = MinimalModule.default
   const Evergreen = EvergreenModule.default
-  const Bolt = BoltModule.default
-  const Ember = EmberModule.default
 
   registerPdfFonts()
-
-  const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
 
   let Template: PdfTemplateRenderer = Industry as PdfTemplateRenderer
 
   switch (activeTemplateId) {
-    case 'ledger':
-      Template = Ledger
-      break
     case 'crest':
       Template = Crest
       break
     case 'minimal':
       Template = Minimal
       break
-    case 'ember':
-      Template = Ember
-      break
-    case 'bolt':
-      Template = Bolt
-      break
     case 'evergreen':
       Template = Evergreen
       break
+    case 'industry-react-pdf':
     case 'industry':
     default:
       Template = Industry
       break
   }
-
-  const filename = resolveFilename(request.model, request.documentNumber)
-  const docType = request.model.identity.kind as PdfDocumentType
 
   const generator = new DefaultPdfGenerator(
     (model) => React.createElement(PdfRenderer, {
@@ -225,6 +278,9 @@ export async function generateCsrPdfcnPdf(request: {
 }
 
 export { isPdfcnCsrTemplate } from './pdfcn'
+export { IndustrialFormeDocument } from './forme/IndustrialFormeDocument'
+export { IndustryFormeDocument } from './forme/IndustryFormeDocument'
+export { default as IndustryTemplate } from './presentation/industry/IndustryTemplate'
 
 export {
   buildPdfRowCells,

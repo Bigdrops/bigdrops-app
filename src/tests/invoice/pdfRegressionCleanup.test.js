@@ -5,9 +5,10 @@ import path from 'node:path'
 
 const previewModelPath = path.resolve('src/domain/invoice/previewModel.ts')
 const financialProjectionPath = path.resolve('src/domain/invoice/projections/financialProjection.ts')
+const contentProjectionPath = path.resolve('src/domain/invoice/projections/contentProjection.ts')
 const documentMediaPath = path.resolve('src/domain/documentMedia.ts')
 const industryStylesPath = path.resolve('src/components/pdf/templates/industryStyles.ts')
-const industryTemplatePath = path.resolve('src/components/pdf/templates/Industry.tsx')
+const industryTemplatePath = path.resolve('src/components/pdf/presentation/industry/IndustryTemplate.tsx')
 const industryAdapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
 const tablePath = path.resolve('src/components/pdf/table.ts')
 const pdfOutputSettingsPath = path.resolve('src/components/PdfOutputSettings.tsx')
@@ -16,7 +17,7 @@ const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
 const pdfIndexPath = path.resolve('src/components/pdf/index.ts')
 
 test('invoice preview detail rows exclude duplicate title and client header entries', () => {
-  const source = fs.readFileSync(previewModelPath, 'utf8')
+  const source = fs.readFileSync(previewModelPath, 'utf8') + fs.readFileSync(contentProjectionPath, 'utf8')
 
   assert.doesNotMatch(source, /\{\s*label:\s*'Client'/)
   assert.doesNotMatch(source, /\{\s*label:\s*'Title'/)
@@ -54,8 +55,8 @@ test('industry pdf header keeps a wider logo and stable horizontal meta layout',
 test('advance invoice summary renders after the shared totals block', () => {
   const source = fs.readFileSync(industryTemplatePath, 'utf8')
 
-  assert.ok(source.indexOf('{data.totals.mainLine ? (') < source.indexOf('{data.advanceSummary ? ('), 'advance summary should render after the main totals block')
-  assert.ok(source.indexOf('{data.totals.balanceDue ? (') < source.indexOf('{data.advanceSummary ? ('), 'advance summary should render after balance due handling')
+  assert.ok(source.indexOf('mainTotal') < source.indexOf('advanceSummary'), 'advance summary should render after the main totals block')
+  assert.ok(source.indexOf('balanceDue') < source.indexOf('advanceSummary'), 'advance summary should render after balance due handling')
 })
 
 test('industry adapter removes duplicated standard metadata from custom header fields', () => {
@@ -116,7 +117,13 @@ test('pdf generation can switch invoice output between templates', () => {
   const source = fs.readFileSync(pdfIndexPath, 'utf8')
 
   assert.doesNotMatch(source, /import\('\.\/templates\/Apex'\)/)
-  assert.match(source, /import\('\.\/templates\/Bolt'\)/)
-  assert.doesNotMatch(source, /case 'apex':/)
-  assert.match(source, /case 'bolt':/)
+  assert.doesNotMatch(source, /import\('\.\/templates\/Bolt'\)/)
+  assert.doesNotMatch(source, /import\('\.\/templates\/Ledger'\)/)
+  assert.doesNotMatch(source, /import\('\.\/templates\/Ember'\)/)
+  assert.match(source, /import\('\.\/templates\/Crest'\)/)
+  assert.match(source, /import\('\.\/templates\/Minimal'\)/)
+  assert.match(source, /import\('\.\/templates\/Evergreen'\)/)
+  assert.match(source, /case 'crest':/)
+  assert.match(source, /case 'minimal':/)
+  assert.match(source, /case 'evergreen':/)
 })

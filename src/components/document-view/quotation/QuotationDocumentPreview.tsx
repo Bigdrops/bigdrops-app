@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from 'react'
 import { Calendar, Hash } from 'lucide-react'
 import './QuotationDocumentPreview.css'
@@ -142,7 +143,9 @@ export default function QuotationDocumentPreview({
                     ))}
                   </div>
                   {item?.imageUrl && (
-                    <img src={item.imageUrl} alt={item?.label || 'Item image'} loading="lazy" style={{ width: '100%', maxWidth: 200, height: 120, borderRadius: 'var(--bd-radius-md)', objectFit: 'cover', border: '1px solid hsl(var(--bd-border))', background: 'hsl(var(--bd-surface-muted))', marginTop: 8, display: 'block' }} />
+                    <a href={item.imageUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+                      <img src={item.imageUrl} alt={item?.label || 'Item image'} loading="lazy" style={{ width: '100%', maxWidth: 200, height: 120, borderRadius: 'var(--bd-radius-md)', objectFit: 'cover', border: '1px solid hsl(var(--bd-border))', background: 'hsl(var(--bd-surface-muted))', marginTop: 8, display: 'block' }} />
+                    </a>
                   )}
                 </div>
                 <div className="item-amount">{item?.value || '—'}</div>

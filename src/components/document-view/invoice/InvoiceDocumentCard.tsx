@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { Hash, Calendar, Clock, FileText } from "lucide-react";
 import styles from "../shared/DocumentPreview.module.css";
@@ -130,12 +131,14 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
                   ))}
                 </div>
                 {item?.imageUrl && (
-                  <img
-                    className={styles.itemThumb}
-                    src={item.imageUrl}
-                    alt={item?.label || "Item image"}
-                    loading="lazy"
-                  />
+                  <a href={item.imageUrl} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
+                    <img
+                      className={styles.itemThumb}
+                      src={item.imageUrl}
+                      alt={item?.label || "Item image"}
+                      loading="lazy"
+                    />
+                  </a>
                 )}
               </div>
               <div className={styles.itemAmount}>{item?.value || ""}</div>

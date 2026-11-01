@@ -28,9 +28,17 @@ export default function DocumentBrandBlock({
   return (
     <div className={className}>
       {logoUrl ? (
-        <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-white dark:bg-slate-900 p-0.5">
-          <img src={logoUrl} alt={companyName} className={imgClassName} />
-        </div>
+        <a
+          href={logoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open full logo image"
+          className="block cursor-pointer transition-opacity hover:opacity-80"
+        >
+          <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-white dark:bg-slate-900 p-0.5">
+            <img src={logoUrl} alt={companyName} className={imgClassName} />
+          </div>
+        </a>
       ) : (
         <span className={fallbackClassName}>{initials}</span>
       )}

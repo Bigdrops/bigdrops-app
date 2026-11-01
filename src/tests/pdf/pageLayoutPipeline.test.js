@@ -14,10 +14,10 @@ const invoicePreviewCssPath = path.resolve('src/components/document-view/shared/
 const quotationPreviewCssPath = path.resolve('src/components/document-view/quotation/QuotationDocumentPreview.css')
 
 const templatePaths = [
-  path.resolve('src/components/pdf/templates/Industry.tsx'),
-  path.resolve('src/components/pdf/templates/Ledger.tsx'),
-  path.resolve('src/components/pdf/templates/Bolt.tsx'),
-  path.resolve('src/components/pdf/templates/ObsidianReceipt.tsx'),
+  path.resolve('src/components/pdf/presentation/industry/IndustryTemplate.tsx'),
+  path.resolve('src/components/pdf/templates/Crest.tsx'),
+  path.resolve('src/components/pdf/templates/Minimal.tsx'),
+  path.resolve('src/components/pdf/templates/Evergreen.tsx'),
 ]
 
 test('table settings expose the computed pdf page layout', () => {
@@ -26,7 +26,7 @@ test('table settings expose the computed pdf page layout', () => {
 
   assert.match(typesSource, /pageLayout:\s*PdfPageLayout/)
   assert.match(typesSource, /pageLayout\?:\s*PdfPageLayout\s*\|\s*null/)
-  assert.match(tableSource, /pageLayout:\s*resolvePdfPageLayout\(resultColumns\)/)
+  assert.match(tableSource, /pageLayout:\s*resolvePdfPageLayout\(resultColumns/)
 })
 
 test('download builders pass resolved page layout into the pdf model', () => {
