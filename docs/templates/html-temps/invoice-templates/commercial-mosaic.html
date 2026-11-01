@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOUXRE — Commercial Documents / Mosaic</title>
+<style>
+  :root {
+    --mos-forest: #0D2B1D;
+    --mos-forest-mid: #1B4332;
+    --mos-charcoal: #1A1D1A;
+    --mos-slate: #47554E;
+    --mos-border: #D6DFD9;
+    --mos-border-light: #E5EBE7;
+    --mos-paper: #FFFFFF;
+    --mos-cell: #FFFFFF;
+    --mos-tint: #F7FAF8;
+    --mos-tint2: #EEF4F0;
+    --mos-lime: #84CC16;
+    --mos-lime-soft: #F4FCE3;
+    --mos-lime-dark: #4D7C0F;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { background: #CBD5E1; }
+  body {
+    margin: 0;
+    background: #CBD5E1;
+    color: var(--mos-charcoal);
+    font-family: var(--font-sans);
+    font-size: 7.2pt;
+    line-height: 1.34;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .screen-bar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 9px 18px;
+    background: var(--mos-forest);
+    color: #F7FAF8;
+    font-size: 11px;
+    letter-spacing: .05em;
+    border-bottom: 2px solid var(--mos-lime);
+  }
+  .screen-bar .bar-brand { font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+  .screen-bar .bar-brand span { font-weight: 400; color: #A3B899; margin-left: 10px; letter-spacing: .1em; }
+  .screen-bar nav { display: flex; gap: 6px; margin-left: auto; }
+  .screen-bar button {
+    appearance: none;
+    border: 1px solid #2D5A43;
+    background: transparent;
+    color: #E2EFE7;
+    padding: 6px 12px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+  }
+  .screen-bar button:hover { border-color: var(--mos-lime); color: #FFF; }
+  .screen-bar button.active { background: var(--mos-lime); border-color: var(--mos-lime); color: var(--mos-charcoal); font-weight: 700; }
+  .screen-bar button:focus-visible { outline: 2px solid var(--mos-lime); outline-offset: 2px; }
+  .screen-bar .bar-note { font-size: 9px; letter-spacing: .11em; color: #A3B899; text-transform: uppercase; }
+  .doc-set[hidden] { display: none !important; }
+  .doc-stack { padding: 6mm 0 12mm; }
+
+  /* ── A4 Portrait Asymmetric Mosaic Sheet (210mm × 297mm) ── */
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 auto 7mm;
+    padding: 7mm;
+    background: #FFFFFF;
+    box-shadow: 0 2mm 7mm rgba(13, 43, 29, 0.22);
+    overflow: hidden;
+    display: flex;
+    position: relative;
+  }
+  .mos-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    border: 0.35mm solid var(--mos-forest);
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* ── Asymmetric Header: Large Identity Slab (64%) vs Vertical Tower (36%) ── */
+  .mos-top-grid {
+    display: grid;
+    grid-template-columns: 1.78fr 1fr;
+    border-bottom: 0.35mm solid var(--mos-forest);
+    background: #FFFFFF;
+    flex: none;
+  }
+  
+  /* Left Asymmetric Block (64%) */
+  .mos-left-block {
+    display: flex;
+    flex-direction: column;
+    border-right: 0.35mm solid var(--mos-forest);
+    background: #FFFFFF;
+  }
+  .mos-identity-slab {
+    padding: 3.4mm 4mm 3mm;
+    border-bottom: 0.3mm solid var(--mos-border);
+    border-left: 5mm solid var(--mos-lime);
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+  }
+  .mos-eyebrow-row {
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+  }
+  .mos-status-pill {
+    background: var(--mos-charcoal);
+    color: var(--mos-lime);
+    font-family: var(--font-mono);
+    font-size: 4.8pt;
+    font-weight: 700;
+    padding: 0.2mm 1.4mm;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .mos-eyebrow-text {
+    font-family: var(--font-mono);
+    font-size: 4.8pt;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mos-slate);
+  }
+  .mos-title-h1 {
+    font-size: 26pt;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--mos-forest);
+    margin: 1.4mm 0 0.8mm;
+  }
+  .mos-title-note {
+    font-size: 7.6pt;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--mos-charcoal);
+    border-bottom: 0.4mm solid var(--mos-lime);
+    padding-bottom: 0.8mm;
+    margin-top: 0.6mm;
+  }
+  .mos-title-note:empty { display: none; }
+
+  .mos-party-slab {
+    padding: 2.8mm 4mm;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+  }
+  .mos-party-tag {
+    font-family: var(--font-mono);
+    font-size: 4.8pt;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mos-forest);
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+    margin-bottom: 1mm;
+  }
+  .mos-party-tag::before {
+    content: "";
+    width: 2.2mm;
+    height: 2.2mm;
+    background: var(--mos-lime);
+    display: inline-block;
+  }
+  .mos-party-name {
+    font-size: 8.8pt;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--mos-forest);
+    margin-bottom: 0.8mm;
+  }
+  .mos-party-detail {
+    font-size: 6.1pt;
+    line-height: 1.38;
+    color: var(--mos-slate);
+  }
+  .mos-party-detail b {
+    color: var(--mos-forest);
+    font-family: var(--font-mono);
+    font-size: 5.6pt;
+  }
+
+  /* Right Vertical Document Control Tower (36%) */
+  .mos-tower-block {
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+  }
+  .mos-tower-top {
+    padding: 2.8mm 3.2mm;
+    border-bottom: 0.3mm solid var(--mos-border);
+    display: flex;
+    align-items: flex-start;
+    gap: 2.4mm;
+  }
+  .mos-logo-box {
+    width: 9.5mm;
+    height: 9.5mm;
+    background: #FFFFFF;
+    border: 0.25mm solid var(--mos-forest);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+  .mos-logo-box svg { width: 7.8mm; height: 7.8mm; fill: var(--mos-forest); }
+  .mos-issuer-name {
+    font-size: 8pt;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1.15;
+    color: var(--mos-forest);
+  }
+  .mos-issuer-meta {
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    color: var(--mos-slate);
+    margin-top: 0.4mm;
+  }
+  .mos-tower-number {
+    background: var(--mos-charcoal);
+    color: #FFFFFF;
+    padding: 2mm 3.2mm;
+    border-bottom: 0.3mm solid var(--mos-forest);
+    display: flex;
+    flex-direction: column;
+  }
+  .mos-tower-num-tag {
+    font-family: var(--font-mono);
+    font-size: 4.6pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mos-lime);
+  }
+  .mos-tower-num-val {
+    font-family: var(--font-mono);
+    font-size: 8.8pt;
+    font-weight: 800;
+    color: #FFFFFF;
+    letter-spacing: 0.04em;
+    margin-top: 0.4mm;
+  }
+  .mos-tower-meta {
+    padding: 2.4mm 3.2mm;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1mm;
+    font-family: var(--font-mono);
+  }
+  .mos-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 0.15mm solid var(--mos-border-light);
+    padding-bottom: 0.6mm;
+  }
+  .mos-meta-row:last-child { border-bottom: none; }
+  .mos-meta-k {
+    font-size: 4.7pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mos-slate);
+  }
+  .mos-meta-v {
+    font-size: 6.2pt;
+    font-weight: 700;
+    color: var(--mos-forest);
+  }
+  .mos-meta-v.hot {
+    color: #FFFFFF;
+    background: var(--mos-forest);
+    border-left: 1.5mm solid var(--mos-lime);
+    padding: 0.15mm 1.2mm;
+    font-size: 6pt;
+  }
+  .mos-tower-project {
+    padding: 2mm 3.2mm;
+    border-top: 0.2mm solid var(--mos-border);
+    font-size: 5.6pt;
+    line-height: 1.34;
+    color: var(--mos-slate);
+  }
+  .mos-tower-project b { color: var(--mos-forest); }
+
+  /* ── Continuation Banner (Pages 2+) ── */
+  .mos-run-strip {
+    background: var(--mos-charcoal);
+    color: #FFFFFF;
+    display: grid;
+    grid-template-columns: 1.78fr 1fr;
+    border-bottom: 0.35mm solid var(--mos-forest);
+    flex: none;
+  }
+  .mos-run-left {
+    padding: 1.1mm 3.6mm;
+    border-right: 0.35mm solid var(--mos-lime);
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+  }
+  .mos-run-badge {
+    background: var(--mos-lime);
+    color: var(--mos-charcoal);
+    font-family: var(--font-mono);
+    font-size: 5.2pt;
+    font-weight: 800;
+    padding: 0.15mm 1.2mm;
+  }
+  .mos-run-title {
+    font-size: 6.2pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .mos-run-right {
+    padding: 1.1mm 3.2mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 5.2pt;
+    color: #D6DFD9;
+  }
+  .mos-run-right b { color: var(--mos-lime); }
+
+  /* ── Item Table: Asymmetric Styling ── */
+  .mos-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    background: #FFFFFF;
+  }
+  .mos-table col.c-no { width: 8.5mm; }
+  .mos-table col.c-qty { width: 13mm; }
+  .mos-table col.c-unit { width: 13mm; }
+  .mos-table col.c-price { width: 25mm; }
+  .mos-table col.c-amt { width: 28mm; }
+  .mos-table thead th {
+    background: var(--mos-charcoal);
+    border-bottom: 0.55mm solid var(--mos-lime);
+    padding: 1.1mm 1.8mm;
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-align: left;
+  }
+  .mos-table thead th.r { text-align: right; }
+  .mos-table thead th.c-center { text-align: center; }
+  .mos-table td {
+    padding: 1.1mm 1.8mm;
+    border-bottom: 0.18mm solid var(--mos-border-light);
+    vertical-align: top;
+    font-size: 6.6pt;
+    color: var(--mos-charcoal);
+  }
+  .mos-table tbody tr:nth-child(even) td { background: var(--mos-tint); }
+  .mos-table .num {
+    font-family: var(--font-mono);
+    font-size: 6.4pt;
+    font-weight: 700;
+    color: var(--mos-forest);
+    text-align: center;
+    border-right: 0.2mm solid var(--mos-border-light);
+    padding-left: 0.6mm;
+    padding-right: 0.6mm;
+  }
+  .mos-table .iname { font-size: 7.1pt; font-weight: 700; line-height: 1.3; color: var(--mos-forest); }
+  .mos-table .imake {
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mos-slate);
+    margin-top: 0.5mm;
+  }
+  .mos-table .ispec { font-size: 6pt; line-height: 1.34; color: #47554E; margin-top: 0.5mm; }
+  .mos-table .ispec i { color: var(--mos-slate); }
+  .mos-table .r { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+  .mos-table .qty { border-left: 0.2mm solid var(--mos-border-light); font-weight: 700; font-size: 6.3pt; }
+  .mos-table .unit { font-size: 6.1pt; color: var(--mos-slate); }
+  .mos-table .price { font-size: 6.2pt; white-space: nowrap; }
+  .mos-table .amt { font-size: 6.5pt; font-weight: 700; color: var(--mos-forest); white-space: nowrap; }
+  .mos-table tr { break-inside: avoid; page-break-inside: avoid; }
+
+  .thumb {
+    margin-top: 0.9mm;
+    width: 12mm;
+    height: 6mm;
+    border: 0.2mm solid var(--mos-border);
+    background: #FFFFFF;
+    padding: 0.5mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .thumb img { max-width: 100%; max-height: 100%; display: block; }
+
+  /* Asymmetric Group Container Rules */
+  .mos-table tr.gopen td {
+    background: var(--mos-tint2) !important;
+    border-top: 0.4mm solid var(--mos-forest);
+    border-bottom: 0.25mm solid var(--mos-forest);
+    padding: 1.2mm 2mm;
+  }
+  .gletter {
+    font-family: var(--font-mono);
+    font-size: 8.5pt;
+    font-weight: 800;
+    color: var(--mos-forest);
+    text-align: center;
+    line-height: 1;
+  }
+  .gopen .gbadge {
+    background: var(--mos-forest);
+    color: var(--mos-lime);
+    font-family: var(--font-mono);
+    font-size: 4.9pt;
+    font-weight: 800;
+    padding: 0.2mm 1.4mm;
+    letter-spacing: 0.08em;
+    margin-right: 2mm;
+    border-left: 1.2mm solid var(--mos-lime);
+  }
+  .gopen .gtitle { font-size: 6.6pt; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mos-forest); }
+  .gopen .gcount { font-family: var(--font-mono); font-size: 4.8pt; font-weight: 700; text-transform: uppercase; color: var(--mos-slate); text-align: right; white-space: nowrap; }
+
+  .mos-table tr.gclose td {
+    background: var(--mos-tint) !important;
+    border-top: 0.2mm solid var(--mos-border);
+    border-bottom: 0.55mm double var(--mos-forest);
+    padding: 1.1mm 2mm;
+  }
+  .gclose .gclabel { font-family: var(--font-mono); font-size: 5.3pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mos-forest); }
+  .gclose .gclabel span { color: var(--mos-slate); margin-left: 2mm; font-size: 4.8pt; }
+  .gclose .gsum { text-align: right; font-family: var(--font-mono); font-size: 6.8pt; font-weight: 800; color: var(--mos-forest); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  
+  .mos-table tr.cont td {
+    background: var(--mos-tint) !important;
+    border-top: 0.2mm solid var(--mos-border);
+    border-bottom: 0.2mm solid var(--mos-border);
+    padding: 1mm 2mm;
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mos-slate);
+  }
+
+  /* Asymmetric Group child row left accent */
+  .mos-table tr[data-group-child="true"] td:first-child {
+    border-left: 3px solid var(--mos-forest);
+  }
+
+  /* ── Final Page Closing Blocks: Expressive Asymmetric Composition ── */
+  .mos-close { margin-top: auto; flex: none; background: #FFFFFF; }
+  
+  /* Asymmetric 58% / 42% Financial Settlement Block */
+  .mos-summary-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    border-bottom: 0.35mm solid var(--mos-forest);
+    background: #FFFFFF;
+  }
+  
+  /* Visually Dominant Financial Anchor Card (Left) */
+  .mos-anchor-card {
+    padding: 2.4mm 3.6mm;
+    border-right: 0.35mm solid var(--mos-forest);
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .mos-total-box {
+    background: var(--mos-forest);
+    color: #FFFFFF;
+    padding: 2.2mm 3mm;
+    border-left: 4.5mm solid var(--mos-lime);
+  }
+  .mos-total-ribbon {
+    font-family: var(--font-mono);
+    font-size: 4.9pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mos-lime);
+  }
+  .mos-total-val {
+    font-family: var(--font-mono);
+    font-size: 14pt;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #FFFFFF;
+    margin: 0.8mm 0 0.4mm;
+  }
+  .mos-total-words {
+    font-size: 5.5pt;
+    line-height: 1.32;
+    color: #D6DFD9;
+    border-top: 0.18mm solid rgba(255, 255, 255, 0.2);
+    padding-top: 0.8mm;
+    margin-top: 0.6mm;
+  }
+  .mos-settle-info {
+    margin-top: 2mm;
+    display: flex;
+    flex-direction: column;
+    gap: 1mm;
+  }
+  .mos-bank-card {
+    border: 0.2mm solid var(--mos-border);
+    background: #FFFFFF;
+    padding: 0.8mm 1.4mm;
+  }
+  .mos-bank-card span {
+    display: block;
+    font-size: 4.8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mos-slate);
+  }
+  .mos-bank-card b {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 6.8pt;
+    color: var(--mos-forest);
+    margin: 0.2mm 0;
+  }
+  .mos-bank-card em {
+    display: block;
+    font-style: normal;
+    font-size: 5.1pt;
+    color: var(--mos-slate);
+    line-height: 1.3;
+  }
+  .mos-anc-line {
+    border-left: 0.7mm solid var(--mos-lime);
+    background: var(--mos-tint);
+    padding: 0.8mm 1.6mm;
+    margin-bottom: 0.8mm;
+    font-size: 5.9pt;
+    line-height: 1.38;
+    color: var(--mos-charcoal);
+  }
+  .mos-anc-line b { color: var(--mos-forest); }
+
+  /* Supporting Financial Ledger (Right) */
+  .mos-ledger-pane {
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+  }
+  .mos-ledger-pane table { width: 100%; border-collapse: collapse; }
+  .mos-ledger-pane td {
+    padding: 1.1mm 2.2mm;
+    border-bottom: 0.18mm solid var(--mos-border-light);
+    font-size: 6.3pt;
+    color: var(--mos-forest);
+  }
+  .mos-ledger-pane td:last-child {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 6.5pt;
+    font-weight: 700;
+    white-space: nowrap;
+    padding-left: 3mm;
+    font-variant-numeric: tabular-nums;
+  }
+  .mos-ledger-pane tr:last-child td { border-bottom: 0; }
+  .mos-ledger-pane tr.sum td {
+    font-weight: 800;
+    background: var(--mos-tint2);
+    border-top: 0.25mm solid var(--mos-forest);
+    border-bottom: 0.25mm solid var(--mos-forest);
+  }
+  .mos-ledger-pane tr.ded td:last-child { color: var(--mos-lime-dark); }
+
+  /* Asymmetric 45% / 55% Notes & Terms */
+  .mos-clauses-grid {
+    display: grid;
+    grid-template-columns: 0.85fr 1fr;
+    border-bottom: 0.35mm solid var(--mos-forest);
+    background: #FFFFFF;
+  }
+  .mos-clause-pane { padding: 0; background: #FFFFFF; }
+  .mos-clause-pane + .mos-clause-pane { border-left: 0.3mm solid var(--mos-forest); }
+  .mos-clause-head {
+    background: var(--mos-tint2);
+    border-bottom: 0.2mm solid var(--mos-border);
+    padding: 0.7mm 2.2mm;
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mos-forest);
+    display: flex;
+    justify-content: space-between;
+  }
+  .mos-clause-body { padding: 1.6mm 2.4mm; }
+  .mos-notes-body {
+    border-left: 3.5mm solid var(--mos-lime);
+    background: #FFFFFF;
+    padding-left: 2.5mm !important;
+  }
+  .mos-notes-body ul {
+    margin: 0;
+    padding-left: 3.2mm;
+    list-style: none;
+    font-size: 5.85pt;
+    line-height: 1.38;
+    color: #374151;
+  }
+  .mos-notes-body li { margin-bottom: 0.8mm; position: relative; }
+  .mos-notes-body li::before {
+    content: "▲";
+    color: var(--mos-forest);
+    position: absolute;
+    left: -2.8mm;
+    font-size: 3.5pt;
+    top: 0.3mm;
+  }
+  .mos-notes-body b { color: var(--mos-forest); }
+
+  .mos-terms-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9mm 1.5mm;
+    padding: 1.4mm 2.2mm;
+  }
+  .mos-term-item { display: grid; grid-template-columns: 8mm 1fr; align-items: start; }
+  .mos-term-code {
+    font-family: var(--font-mono);
+    font-size: 5.2pt;
+    font-weight: 800;
+    color: var(--mos-forest);
+    border: 0.2mm solid var(--mos-forest);
+    background: var(--mos-lime-soft);
+    text-align: center;
+    padding: 0.15mm 0.4mm;
+    margin-right: 1.2mm;
+    margin-top: 0.15mm;
+  }
+  .mos-term-text { font-size: 5.6pt; line-height: 1.32; color: #47554E; }
+  .mos-term-text b { color: var(--mos-forest); }
+
+  /* Asymmetric Signatures & Verification */
+  .mos-sigs-band {
+    display: grid;
+    grid-template-columns: 1.18fr 1fr 44mm;
+    background: #FFFFFF;
+    flex: none;
+  }
+  .mos-sig-card {
+    padding: 1.6mm 2.4mm 2mm;
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+  }
+  .mos-sig-card + .mos-sig-card { border-left: 0.3mm solid var(--mos-forest); }
+  .mos-sig-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--font-mono);
+    border-bottom: 0.25mm solid var(--mos-forest);
+    padding-bottom: 0.4mm;
+    margin-bottom: 1.2mm;
+  }
+  .mos-sig-role { font-size: 5.9pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mos-forest); }
+  .mos-sig-note { font-family: var(--font-sans); font-size: 4.8pt; color: var(--mos-slate); }
+  .mos-hw-field { display: flex; align-items: flex-end; gap: 1.5mm; margin-bottom: 1.1mm; }
+  .mos-hw-lbl {
+    font-family: var(--font-mono);
+    font-size: 5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mos-forest);
+    flex: none;
+    width: 20mm;
+  }
+  .mos-hw-rule { flex: 1 1 auto; border-bottom: 0.25mm solid var(--mos-border); height: 4.6mm; }
+  .mos-hw-sig-box {
+    flex: 1 1 auto;
+    height: 10mm;
+    border-bottom: 0.35mm solid var(--mos-forest);
+    background: #FFFFFF;
+    position: relative;
+  }
+  .mos-hw-sig-prompt {
+    position: absolute;
+    bottom: 0.8mm;
+    left: 1mm;
+    font-size: 4.6pt;
+    color: #94A3B8;
+    font-family: var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .mos-hw-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 2.5mm; }
+
+  .mos-ctrl-card {
+    background: var(--mos-forest);
+    color: #FFFFFF;
+    padding: 1.6mm 2.2mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .mos-ctrl-head {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 4.8pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mos-lime);
+    border-bottom: 0.2mm solid var(--mos-forest-mid);
+    padding-bottom: 0.4mm;
+  }
+  .mos-ctrl-ref-title { font-family: var(--font-mono); font-size: 4.8pt; text-transform: uppercase; letter-spacing: 0.08em; color: #D6DFD9; display: block; margin-top: 0.6mm; }
+  .mos-ctrl-ref-val { font-family: var(--font-mono); font-size: 8.8pt; font-weight: 700; color: #FFFFFF; letter-spacing: 0.03em; display: block; line-height: 1.15; }
+  .mos-ctrl-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6mm 1.5mm;
+    border-top: 0.2mm solid var(--mos-forest-mid);
+    padding-top: 0.6mm;
+    margin-top: 0.6mm;
+    font-family: var(--font-mono);
+    font-size: 5.1pt;
+  }
+  .mos-ctrl-grid div { display: flex; flex-direction: column; }
+  .mos-ctrl-grid span { font-size: 4.4pt; color: #D6DFD9; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mos-ctrl-grid b { color: #FFFFFF; }
+  .mos-ctrl-note { font-size: 4.6pt; color: #D6DFD9; line-height: 1.25; border-top: 0.2mm solid var(--mos-forest-mid); padding-top: 0.6mm; margin-top: 0.6mm; }
+
+  /* ── Running Footer (Pages 1..N-1) ── */
+  .mos-foot {
+    margin-top: auto;
+    flex: none;
+    height: 6.8mm;
+    background: var(--mos-forest);
+    color: #E2EFE7;
+    display: grid;
+    grid-template-columns: 1.3fr auto 1fr;
+    align-items: center;
+    column-gap: 4mm;
+    padding: 0 3mm;
+    font-family: var(--font-mono);
+    font-size: 5.1pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-top: 0.35mm solid var(--mos-forest);
+  }
+  .mos-foot .sf-left { grid-column: 1; justify-self: start; display: flex; align-items: center; gap: 1.8mm; min-width: 0; }
+  .mos-foot .sf-logo { width: 4.2mm; height: 4.2mm; fill: #FFFFFF; flex: none; }
+  .mos-foot .sf-name { overflow: hidden; text-overflow: ellipsis; color: #F7FAF8; }
+  .mos-foot .sf-center {
+    grid-column: 2;
+    justify-self: center;
+    background: var(--mos-lime);
+    color: var(--mos-charcoal);
+    padding: 0.2mm 1.6mm;
+    font-weight: 800;
+  }
+  .mos-foot .sf-right { grid-column: 3; justify-self: end; color: #A3B899; letter-spacing: 0.09em; }
+
+  @page { size: A4 portrait; margin: 0; }
+  @media print {
+    html, body { background: #FFFFFF !important; }
+    .screen-bar { display: none !important; }
+    .doc-stack { padding: 0 !important; }
+    .page { margin: 0 !important; box-shadow: none !important; break-after: page; page-break-after: always; }
+    .page:last-child { break-after: auto; page-break-after: auto; }
+    .doc-set[hidden] { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<header class="screen-bar" role="navigation" aria-label="Document mode">
+  <div class="bar-brand">BOUXRE <span>Commercial Mosaic · Expressive Asymmetric Architecture</span></div>
+  <nav>
+    <button type="button" data-mode="invoice" class="active">Invoice</button>
+    <button type="button" data-mode="po">Purchase order</button>
+  </nav>
+  <div class="bar-note">Specimen — synthetic test data</div>
+  <button type="button" onclick="window.print()">Print</button>
+</header>
+<main class="doc-stack">
+<section class="doc-set" data-doc="invoice" aria-label="INVOICE specimen">
+<section class="page" data-page="1" aria-label="INVOICE page 1 of 3">
+  <div class="mos-frame">
+    <div class="mos-top-grid">
+    <div class="mos-left-block">
+      <div class="mos-identity-slab">
+        <div class="mos-eyebrow-row">
+          <span class="mos-status-pill">REGISTERED</span>
+          <span class="mos-eyebrow-text">COMMERCIAL SPECIMEN · BOUXRE</span>
+        </div>
+        <div class="mos-title-h1">INVOICE</div>
+        <div class="mos-title-note" data-field="invoice_title">Materials, Equipment &amp; Supplies — Phase 2</div>
+      </div>
+      <div class="mos-party-slab">
+        <span class="mos-party-tag">Bill To · Client</span>
+        <div class="mos-party-name">Northgate Foods Processing Nigeria Ltd</div>
+        <div class="mos-party-detail">
+          Ms. Adaeze Obi — Procurement Lead<br>
+          Km 18, Lagos–Ibadan Expressway, Mowe, Ogun State, Nigeria<br>
+          +234 800 555 0177 · procurement@northgate-foods.example<br>
+          <b>TIN 31827465-0001</b>
+        </div>
+      </div>
+    </div>
+    <div class="mos-tower-block">
+      <div class="mos-tower-top">
+        <div class="mos-logo-box"><svg viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg></div>
+        <div>
+          <div class="mos-issuer-name">Kestrel Industrial Supply Ltd</div>
+          <div class="mos-issuer-meta">RC 1928374 · TIN 20384756-0001</div>
+        </div>
+      </div>
+      <div class="mos-tower-number">
+        <span class="mos-tower-num-tag">INSTRUMENT IDENTIFIER</span>
+        <span class="mos-tower-num-val">INV-2026-0147</span>
+      </div>
+      <div class="mos-tower-meta">
+        <div class="mos-meta-row"><span class="mos-meta-k">Issue Date</span><b class="mos-meta-v ">30/10/2026</b></div><div class="mos-meta-row"><span class="mos-meta-k">Due Date</span><b class="mos-meta-v hot">29/11/2026</b></div><div class="mos-meta-row"><span class="mos-meta-k">Payment Terms</span><b class="mos-meta-v ">Net 30</b></div><div class="mos-meta-row"><span class="mos-meta-k">Client PO Ref.</span><b class="mos-meta-v ">NGF-LPO-4471</b></div>
+      </div>
+      <div class="mos-tower-project">
+        <b>Project Information:</b> Northgate Foods Factory — Phase 2 (Production Hall &amp; Utilities)
+      </div>
+    </div>
+  </div><table class="mos-table"><colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup><thead><tr><th class="c-center">#</th><th>Description / specification</th><th class="r">Qty</th><th>Unit</th><th class="r">Unit Price (₦)</th><th class="r">Amount (₦)</th></tr></thead><tbody><tr data-rid="r0" data-group-child="false"><td class="num">1</td><td><div class="iname">Portland-limestone cement CEM II 42.5R</div><div class="imake">Dangote-grade bulk supply (synthetic spec)</div><div class="ispec">50 kg bags, palletised<br><i>Delivery in 4 tranches</i></div></td><td class="r qty">1,200</td><td class="unit">bags</td><td class="r price">₦10,400.00</td><td class="r amt">₦12,480,000.00</td></tr><tr data-rid="r1" data-group-child="false"><td class="num">2</td><td><div class="iname">High-yield deformed reinforcement bar Y16</div><div class="imake">BS 4449:2005 Grade B500B</div><div class="ispec">12 m lengths, mill-certified<br>Bundled &amp; tagged by heat number<br>Delivery tolerance ±2% on tonnage; weighbridge tickets supplied with every load</div></td><td class="r qty">85</td><td class="unit">tonnes</td><td class="r price">₦1,150,000.00</td><td class="r amt">₦97,750,000.00</td></tr><tr data-rid="r2" data-group-child="false"><td class="num">3</td><td><div class="iname">Hot-dip galvanised structural I-beam IPE 300</div><div class="imake">S275JR — EN 10025</div><div class="ispec">12 m lengths; <b>galvanised to ISO 1461</b><br>Mill test certificates supplied<br><i>Optional:</i> primer plus two-coat polyurethane finish available on request</div></td><td class="r qty">42</td><td class="unit">pcs</td><td class="r price">₦486,500.00</td><td class="r amt">₦20,433,000.00</td></tr><tr class="gopen" data-rid="r3"><td class="gletter">A</td><td colspan="4"><span class="gbadge">GRP A</span><span class="gtitle">Electrical — Power Cables &amp; Distribution</span></td><td class="gcount">3 items</td></tr><tr data-rid="r4" data-group-child="true"><td class="num">4</td><td><div class="iname">Armoured power cable 4-core 95 mm² Cu/XLPE/SWA/PVC</div><div class="imake">0.6/1 kV — BS 5467</div><div class="ispec">Drum length 250 m; <b>cut-to-length</b> on request<br>Supplied on returnable steel drums</div><div class="thumb"><img src="assets/products/havells.svg" alt="Havells"></div></td><td class="r qty">1,500</td><td class="unit">m</td><td class="r price">₦28,400.00</td><td class="r amt">₦42,600,000.00</td></tr><tr data-rid="r5" data-group-child="true"><td class="num">5</td><td><div class="iname">Main LV distribution board, 800 A, TPN, 36-way</div><div class="imake">Form 2b, IP54 floor-standing</div><div class="ispec">Powder-coated 2 mm sheet steel, 800 A copper busbar<br>Incl. neutral &amp; earth bars; type-tested to IEC 61439<br>Factory-wired with surge protection and metering CT provisions</div><div class="thumb"><img src="assets/products/schneider-electric.svg" alt="Schneider Electric"></div></td><td class="r qty">6</td><td class="unit">pcs</td><td class="r price">₦1,850,000.00</td><td class="r amt">₦11,100,000.00</td></tr><tr data-rid="r6" data-group-child="true"><td class="num">6</td><td><div class="iname">MCCB 3-pole 250 A, 36 kA</div><div class="imake">Adjustable thermal-magnetic trip</div><div class="ispec">Breaking capacity 36 kA @ 415 V; rotary handle, terminal shrouds &amp; auxiliary contact included</div></td><td class="r qty">24</td><td class="unit">pcs</td><td class="r price">₦142,000.00</td><td class="r amt">₦3,408,000.00</td></tr><tr class="gclose" data-rid="r7"><td class="gletter">A</td><td colspan="4" class="gclabel">End of Group A<span>subtotal</span></td><td class="gsum">₦57,108,000.00</td></tr><tr data-rid="r8" data-group-child="false"><td class="num">7</td><td><div class="iname">Centrifugal end-suction pump set, 7.5 kW</div><div class="imake">50 m³/h @ 32 m head — cast-iron volute</div><div class="ispec"><b>Set includes:</b> 3-phase motor, baseplate, coupling guard, flexible couplings<br><i>2-year manufacturer warranty</i></div><div class="thumb"><img src="assets/products/grundfos.svg" alt="Grundfos"></div></td><td class="r qty">4</td><td class="unit">sets</td><td class="r price">₦1,420,000.00</td><td class="r amt">₦5,680,000.00</td></tr><tr data-rid="r9" data-group-child="false"><td class="num">8</td><td><div class="iname">Axial roof ventilation fan 900 mm, 1.1 kW</div><div class="imake">IP55, 3-phase, backdraught shutter</div><div class="ispec">Galvanised housing; 18,500 m³/h</div></td><td class="r qty">12</td><td class="unit">pcs</td><td class="r price">₦385,000.00</td><td class="r amt">₦4,620,000.00</td></tr><tr data-rid="r10" data-group-child="false"><td class="num">9</td><td><div class="iname">Three-phase induction motor 15 kW, IE3, 4-pole, B3</div><div class="imake">Foot-mounted, 400 V / 50 Hz</div><div class="ispec">Class F insulation; IP55; with PTC thermistors</div><div class="thumb"><img src="assets/products/leroy-somer.svg" alt="Leroy-Somer"></div></td><td class="r qty">6</td><td class="unit">pcs</td><td class="r price">₦920,000.00</td><td class="r amt">₦5,520,000.00</td></tr></tbody></table><footer class="mos-foot"><span class="sf-left"><svg class="sf-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="sf-name">Kestrel Industrial Supply Ltd</span></span><span class="sf-center">Sheet 1 of 3</span><span class="sf-right">INV-2026-0147</span></footer>
+  </div>
+</section>
+<section class="page" data-page="2" aria-label="INVOICE page 2 of 3">
+  <div class="mos-frame">
+    <div class="mos-run-strip">
+    <div class="mos-run-left">
+      <span class="mos-run-badge">ITEMS</span>
+      <span class="mos-run-title">Items Schedule — continued</span>
+    </div>
+    <div class="mos-run-right">
+      <span>INV-2026-0147</span>
+      <b>PAGE 2</b>
+    </div>
+  </div><table class="mos-table"><colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup><thead><tr><th class="c-center">#</th><th>Description / specification</th><th class="r">Qty</th><th>Unit</th><th class="r">Unit Price (₦)</th><th class="r">Amount (₦)</th></tr></thead><tbody><tr data-rid="r11" data-group-child="false"><td class="num">10</td><td><div class="iname">V-belt, pulley &amp; coupling accessory kit</div><div class="imake">Assorted B-section</div></td><td class="r qty">30</td><td class="unit">lots</td><td class="r price">₦38,500.00</td><td class="r amt">₦1,155,000.00</td></tr><tr class="gopen" data-rid="r12"><td class="gletter">B</td><td colspan="4"><span class="gbadge">GRP B</span><span class="gtitle">Plumbing &amp; Sanitary Materials</span></td><td class="gcount">3 items</td></tr><tr data-rid="r13" data-group-child="true"><td class="num">11</td><td><div class="iname">uPVC pressure pipe 110 mm, PN10</div><div class="imake">6 m socketed lengths — water supply</div><div class="ispec">Solvent-weld or rubber-ring joint; includes 10% fitting allowance</div><div class="thumb"><img src="assets/products/comap.svg" alt="Comap"></div></td><td class="r qty">320</td><td class="unit">lengths</td><td class="r price">₦18,600.00</td><td class="r amt">₦5,952,000.00</td></tr><tr data-rid="r14" data-group-child="true"><td class="num">12</td><td><div class="iname">Cast-iron flanged gate valve DN100, PN16</div><div class="imake">Resilient-seated, non-rising stem</div><div class="ispec">Epoxy-coated body; handwheel operated; PN16 drilled flanges</div></td><td class="r qty">18</td><td class="unit">pcs</td><td class="r price">₦96,500.00</td><td class="r amt">₦1,737,000.00</td></tr><tr data-rid="r15" data-group-child="true"><td class="num">13</td><td><div class="iname">Industrial sanitary suite — floor-mounted WC with cistern &amp; wall-hung basin</div><div class="imake">Vitreous china, white</div><div class="ispec">Complete with seat, 15 mm angle valves, flexible connectors &amp; waste fittings<br><b>Includes</b> installation pack</div><div class="thumb"><img src="assets/products/kohler.svg" alt="Kohler"></div></td><td class="r qty">14</td><td class="unit">sets</td><td class="r price">₦128,000.00</td><td class="r amt">₦1,792,000.00</td></tr><tr class="gclose" data-rid="r16"><td class="gletter">B</td><td colspan="4" class="gclabel">End of Group B<span>subtotal</span></td><td class="gsum">₦9,481,000.00</td></tr><tr data-rid="r17" data-group-child="false"><td class="num">14</td><td><div class="iname">Safety helmet (hard hat), 6-point ratchet</div><div class="imake">HDPE shell — EN 397</div><div class="ispec">Colour-coded by trade: white / yellow / blue</div></td><td class="r qty">180</td><td class="unit">pcs</td><td class="r price">₦4,200.00</td><td class="r amt">₦756,000.00</td></tr><tr data-rid="r18" data-group-child="false"><td class="num">15</td><td><div class="iname">Safety boots, steel toe-cap &amp; midsole, S3</div><div class="imake">Oil-resistant PU outsole — sizes 39–46</div><div class="ispec">Supplied in a size run agreed with site HSE</div></td><td class="r qty">180</td><td class="unit">pairs</td><td class="r price">₦31,500.00</td><td class="r amt">₦5,670,000.00</td></tr><tr class="gopen" data-rid="r19"><td class="gletter">C</td><td colspan="4"><span class="gbadge">GRP C</span><span class="gtitle">Computers &amp; IT Equipment</span></td><td class="gcount">2 items</td></tr><tr data-rid="r20" data-group-child="true"><td class="num">16</td><td><div class="iname">Desktop workstation, Core i7 / 16 GB / 512 GB NVMe, with 24″ monitor</div><div class="imake">Business-class tower, Windows 11 Pro</div><div class="ispec"><b>Specification:</b> 12th-gen Core i7, 16 GB DDR4, 512 GB NVMe SSD, 24″ FHD IPS monitor, keyboard &amp; mouse<br>3-year on-site warranty<br><b>Included:</b> Windows 11 Pro licence, wired keyboard &amp; optical mouse, power cable<br>Pre-imaged with the client’s standard software build; asset-tagged on delivery<br>Rated for 24/7 operation up to 35 °C ambient</div></td><td class="r qty">20</td><td class="unit">units</td><td class="r price">₦865,000.00</td><td class="r amt">₦17,300,000.00</td></tr><tr data-rid="r21" data-group-child="true"><td class="num">17</td><td><div class="iname">Managed 48-port Gigabit PoE+ switch with 4 × 10G SFP+ uplinks</div><div class="imake">Layer 3 lite; rack-mount 1U</div><div class="ispec">740 W PoE budget; includes rack ears &amp; console cable<br>Dual hot-swap PSU bays (one fitted); front-to-back airflow<br>Supports 802.1X, LACP, IGMP snooping, VLAN and QoS<br>Includes 4 × SFP+ direct-attach cables, 1 m</div></td><td class="r qty">4</td><td class="unit">pcs</td><td class="r price">₦1,240,000.00</td><td class="r amt">₦4,960,000.00</td></tr><tr class="gclose" data-rid="r22"><td class="gletter">C</td><td colspan="4" class="gclabel">End of Group C<span>subtotal</span></td><td class="gsum">₦22,260,000.00</td></tr><tr class="gopen" data-rid="r23"><td class="gletter">D</td><td colspan="4"><span class="gbadge">GRP D</span><span class="gtitle">Electrical — Power Systems &amp; Lighting</span></td><td class="gcount">6 items</td></tr><tr data-rid="r24" data-group-child="true"><td class="num">18</td><td><div class="iname">Online double-conversion UPS 10 kVA, 3-phase in / 1-phase out</div><div class="imake">Rack/tower convertible, with 15-min battery bank</div><div class="ispec">True online topology; <b>N+1 parallel-ready</b>; SNMP card included<br>Battery: 20 × 12 V 9 Ah sealed lead-acid</div><div class="thumb"><img src="assets/products/apc.svg" alt="APC"></div></td><td class="r qty">3</td><td class="unit">units</td><td class="r price">₦2,350,000.00</td><td class="r amt">₦7,050,000.00</td></tr><tr data-rid="r25" data-group-child="true"><td class="num">19</td><td><div class="iname">LED high-bay light 150 W, IP65</div><div class="imake">5000 K, 120 lm/W, 90° optic</div><div class="ispec">Aluminium heat-sink body; 5-year warranty</div><div class="thumb"><img src="assets/products/philips.svg" alt="Philips"></div></td><td class="r qty">120</td><td class="unit">pcs</td><td class="r price">₦38,500.00</td><td class="r amt">₦4,620,000.00</td></tr><tr data-rid="r26" data-group-child="true"><td class="num">20</td><td><div class="iname">LED recessed panel 600 × 600 mm, 40 W</div><div class="imake">4000 K, UGR&lt;19</div></td><td class="r qty">200</td><td class="unit">pcs</td><td class="r price">₦16,800.00</td><td class="r amt">₦3,360,000.00</td></tr><tr data-rid="r27" data-group-child="true"><td class="num">21</td><td><div class="iname">LED emergency exit sign, 3-hour battery backup</div><div class="imake">Maintained / non-maintained selectable</div></td><td class="r qty">36</td><td class="unit">pcs</td><td class="r price">₦14,900.00</td><td class="r amt">₦536,400.00</td></tr></tbody></table><footer class="mos-foot"><span class="sf-left"><svg class="sf-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="sf-name">Kestrel Industrial Supply Ltd</span></span><span class="sf-center">Sheet 2 of 3</span><span class="sf-right">INV-2026-0147</span></footer>
+  </div>
+</section>
+<section class="page" data-page="3" aria-label="INVOICE page 3 of 3">
+  <div class="mos-frame">
+    <div class="mos-run-strip">
+    <div class="mos-run-left">
+      <span class="mos-run-badge">ITEMS</span>
+      <span class="mos-run-title">Items Schedule — continued</span>
+    </div>
+    <div class="mos-run-right">
+      <span>INV-2026-0147</span>
+      <b>PAGE 3</b>
+    </div>
+  </div><table class="mos-table"><colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup><thead><tr><th class="c-center">#</th><th>Description / specification</th><th class="r">Qty</th><th>Unit</th><th class="r">Unit Price (₦)</th><th class="r">Amount (₦)</th></tr></thead><tbody><tr class="cont" data-rid="c3"><td class="gletter">D</td><td colspan="5">Group D · Electrical — Power Systems &amp; Lighting — continued</td></tr><tr data-rid="r28" data-group-child="true"><td class="num">22</td><td><div class="iname">Heavy-gauge PVC conduit 25 mm with standard junction boxes, saddles, bends and couplers (assorted)</div><div class="imake">BS EN 61386 — 3 m lengths</div><div class="ispec">Lengths priced individually; accessories supplied at the ratio 1 : 1</div></td><td class="r qty">800</td><td class="unit">lengths</td><td class="r price">₦1,350.00</td><td class="r amt">₦1,080,000.00</td></tr><tr data-rid="r29" data-group-child="true"><td class="num">23</td><td><div class="iname">13 A twin switched socket outlet, flush-mount, IP20</div><div class="imake">White, with 2 × USB-A charging ports</div><div class="thumb"><img src="assets/products/legrand.svg" alt="Legrand"></div></td><td class="r qty">260</td><td class="unit">pcs</td><td class="r price">₦3,900.00</td><td class="r amt">₦1,014,000.00</td></tr><tr class="gclose" data-rid="r30"><td class="gletter">D</td><td colspan="4" class="gclabel">End of Group D<span>subtotal</span></td><td class="gsum">₦17,660,400.00</td></tr><tr class="gopen" data-rid="r31"><td class="gletter">E</td><td colspan="4"><span class="gbadge">GRP E</span><span class="gtitle">Safety Equipment &amp; PPE</span></td><td class="gcount">2 items</td></tr><tr data-rid="r32" data-group-child="true"><td class="num">24</td><td><div class="iname">Fire extinguisher 9 kg ABC dry-powder, with wall bracket</div><div class="imake">Rated 55A/233B — EN 3-7</div><div class="ispec">Annual service tag included<br><b>Includes</b> 1 × signage plate per unit</div></td><td class="r qty">40</td><td class="unit">pcs</td><td class="r price">₦44,000.00</td><td class="r amt">₦1,760,000.00</td></tr><tr data-rid="r33" data-group-child="true"><td class="num">25</td><td><div class="iname">High-visibility reflective vest, class 2</div><div class="imake">EN ISO 20471 — 120 gsm</div><div class="ispec">Zip front, 2 pockets; sizes M–3XL</div><div class="thumb"><img src="assets/products/honeywell.svg" alt="Honeywell"></div></td><td class="r qty">220</td><td class="unit">pcs</td><td class="r price">₦3,800.00</td><td class="r amt">₦836,000.00</td></tr><tr class="gclose" data-rid="r34"><td class="gletter">E</td><td colspan="4" class="gclabel">End of Group E<span>subtotal</span></td><td class="gsum">₦2,596,000.00</td></tr><tr data-rid="r35" data-group-child="false"><td class="num">26</td><td><div class="iname">Exterior weatherproof emulsion paint 20 L</div><div class="imake">Elastomeric, factory grey (RAL 7040)</div><div class="ispec">Two-coat system; coverage ≈ 10 m²/L per coat</div></td><td class="r qty">160</td><td class="unit">buckets</td><td class="r price">₦46,500.00</td><td class="r amt">₦7,440,000.00</td></tr></tbody></table><div class="mos-close">
+    <div class="mos-summary-grid">
+      <div class="mos-anchor-card">
+        <div class="mos-total-box">
+          <span class="mos-total-ribbon">Total Amount Due · NGN</span>
+          <div class="mos-total-val">₦280,501,253.13</div>
+          <div class="mos-total-words">Two Hundred and Eighty Million, Five Hundred and One Thousand, Two Hundred and Fifty-Three Naira and Thirteen Kobo Only</div>
+        </div>
+        <div class="mos-settle-info"><div class="mos-bank-card"><span>First Meridian Bank (illustrative)</span><b>0123456789</b><em>Kestrel Industrial Supply Ltd · </em></div><div class="mos-bank-card"><span>Atlas Commerce Bank (illustrative)</span><b>9876543210</b><em>Kestrel Industrial Supply Ltd · </em></div></div>
+      </div>
+      <div class="mos-ledger-pane">
+        <table><tbody><tr class=""><td>Gross subtotal</td><td>₦270,609,400.00</td></tr><tr class=""><td>Installation / labour</td><td>₦7,600,960.00</td></tr><tr class=" ded"><td>Subtotal discount (2.5%)</td><td>−₦6,765,235.00</td></tr><tr class="sum"><td>Net subtotal</td><td>₦271,445,125.00</td></tr><tr class=""><td>VAT (7.5%)</td><td>₦20,358,384.38</td></tr><tr class=""><td>Transportation &amp; logistics</td><td>₦1,850,000.00</td></tr><tr class=""><td>Offloading &amp; handling</td><td>₦420,000.00</td></tr><tr class=" ded"><td>WHT (5.0%) — deducted</td><td>−₦13,572,256.25</td></tr></tbody></table>
+      </div>
+    </div>
+    <div class="mos-clauses-grid">
+      <div class="mos-clause-pane">
+        <div class="mos-clause-head"><span>Document Narrative</span><span>Operational Notes</span></div>
+        <div class="mos-clause-body mos-notes-body"><ul><li><b>Scope:</b> materials, equipment and supplies for <b>Phase 2</b> of the Northgate Foods factory (production hall &amp; utilities), awarded under contract <b>NGF/CON/2026/P2-014</b>.</li><li>Items 1–3 and 7–10 were delivered in full on the dates shown on the signed delivery notes; grouped items were delivered per section.</li><li>Installation charges apply only where an installation rate is stated per item. All other items are supply-only.</li><li><i>Tax invoice:</i> VAT is charged at 7.5%. WHT at 5% is deducted at source by the client; a valid WHT credit note must be returned within 30 days.</li></ul></div>
+      </div>
+      <div class="mos-clause-pane">
+        <div class="mos-clause-head"><span>Commercial Conditions</span><span>T-01 – T-08</span></div>
+        <div class="mos-terms-grid"><div class="mos-term-item"><span class="mos-term-code">T-01</span><span class="mos-term-text"><b>Payment:</b> Net 30 days from invoice date. Payment is by electronic transfer to the accounts shown; quote the invoice number as reference.</span></div><div class="mos-term-item"><span class="mos-term-code">T-02</span><span class="mos-term-text"><b>Late payment:</b> overdue balances attract interest at 1.5% per month on the outstanding amount after the due date.</span></div><div class="mos-term-item"><span class="mos-term-code">T-03</span><span class="mos-term-text"><b>Retention of title:</b> goods remain the property of the issuer until paid for in full.</span></div><div class="mos-term-item"><span class="mos-term-code">T-04</span><span class="mos-term-text"><b>Inspection:</b> any shortage, damage or non-conformity must be reported in writing within 7 days of delivery; claims after this period may not be accepted.</span></div><div class="mos-term-item"><span class="mos-term-code">T-05</span><span class="mos-term-text"><b>Warranty:</b> manufacturer warranties apply as stated per item; workmanship on installed items is warranted for 12 months.</span></div><div class="mos-term-item"><span class="mos-term-code">T-06</span><span class="mos-term-text"><b>Returns:</b> special-order and cut-to-length items (e.g. cables, conduit) are non-returnable.</span></div><div class="mos-term-item"><span class="mos-term-code">T-07</span><span class="mos-term-text"><b>Disputes:</b> unresolved disputes are referred to arbitration in Lagos under the Arbitration and Mediation Act.</span></div><div class="mos-term-item"><span class="mos-term-code">T-08</span><span class="mos-term-text"><b>Governing law:</b> the laws of the Federal Republic of Nigeria.</span></div></div>
+      </div>
+    </div>
+    <div class="mos-sigs-band">
+      <div class="mos-sig-card">
+        <div class="mos-sig-head"><span class="mos-sig-role">01 · Issuer authorised signatory</span><span class="mos-sig-note">Authorised Execution</span></div>
+        <div class="mos-hw-field"><span class="mos-hw-lbl">Signature:</span><div class="mos-hw-sig-box"><span class="mos-hw-sig-prompt">Sign on execution</span></div></div>
+        <div class="mos-hw-row">
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Name:</span><div class="mos-hw-rule"></div></div>
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Date:</span><div class="mos-hw-rule"></div></div>
+        </div>
+      </div>
+      <div class="mos-sig-card">
+        <div class="mos-sig-head"><span class="mos-sig-role">02 · Client receiving / confirmation acknowledgement</span><span class="mos-sig-note">Counterpart Acknowledgement</span></div>
+        <div class="mos-hw-field"><span class="mos-hw-lbl">Received by:</span><div class="mos-hw-sig-box"><span class="mos-hw-sig-prompt">Sign on receipt</span></div></div>
+        <div class="mos-hw-row">
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Name:</span><div class="mos-hw-rule"></div></div>
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Date:</span><div class="mos-hw-rule"></div></div>
+        </div>
+      </div>
+      <div class="mos-ctrl-card">
+        <div class="mos-ctrl-head"><span>Control</span><span>A4-P · MOSAIC</span></div>
+        <div>
+          <span class="mos-ctrl-ref-title">Reference No.</span>
+          <b class="mos-ctrl-ref-val">INV-2026-0147</b>
+        </div>
+        <div class="mos-ctrl-grid">
+          <div><span>Type</span><b>INVOICE</b></div>
+          <div><span>Currency</span><b>NGN ₦</b></div>
+          <div><span>Status</span><b>ISSUED</b></div>
+          <div><span>Sheet</span><b>3 of 3</b></div>
+        </div>
+        <div class="mos-ctrl-note">Official commercial register · authorized execution binding.</div>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+</section>
+<section class="doc-set" data-doc="po" hidden aria-label="PURCHASE ORDER specimen">
+<section class="page" data-page="1" aria-label="PURCHASE ORDER page 1 of 3">
+  <div class="mos-frame">
+    <div class="mos-top-grid">
+    <div class="mos-left-block">
+      <div class="mos-identity-slab">
+        <div class="mos-eyebrow-row">
+          <span class="mos-status-pill">REGISTERED</span>
+          <span class="mos-eyebrow-text">COMMERCIAL SPECIMEN · BOUXRE</span>
+        </div>
+        <div class="mos-title-h1">PURCHASE ORDER</div>
+        <div class="mos-title-note" data-field="invoice_title"></div>
+      </div>
+      <div class="mos-party-slab">
+        <span class="mos-party-tag">Order From · Supplier / Vendor</span>
+        <div class="mos-party-name">Meridian Industrial Wholesale Ltd</div>
+        <div class="mos-party-detail">
+          Mr. Tunde Bakare — Sales Manager<br>
+          Warehouse 4, Ikeja Industrial Estate, Ikeja, Lagos State, Nigeria<br>
+          +234 800 555 0199 · orders@meridian-wholesale.example<br>
+          <b>TIN 24491830-0001</b>
+        </div>
+      </div>
+    </div>
+    <div class="mos-tower-block">
+      <div class="mos-tower-top">
+        <div class="mos-logo-box"><svg viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg></div>
+        <div>
+          <div class="mos-issuer-name">Kestrel Industrial Supply Ltd</div>
+          <div class="mos-issuer-meta">RC 1928374 · TIN 20384756-0001</div>
+        </div>
+      </div>
+      <div class="mos-tower-number">
+        <span class="mos-tower-num-tag">INSTRUMENT IDENTIFIER</span>
+        <span class="mos-tower-num-val">PO-2026-0089</span>
+      </div>
+      <div class="mos-tower-meta">
+        <div class="mos-meta-row"><span class="mos-meta-k">PO Date</span><b class="mos-meta-v ">30/10/2026</b></div><div class="mos-meta-row"><span class="mos-meta-k">Required by</span><b class="mos-meta-v hot">20/11/2026</b></div><div class="mos-meta-row"><span class="mos-meta-k">Project</span><b class="mos-meta-v ">Northgate Factory Ph. 2</b></div><div class="mos-meta-row"><span class="mos-meta-k">Contract No.</span><b class="mos-meta-v ">NGF/CON/2026/P2-014</b></div>
+      </div>
+      <div class="mos-tower-project">
+        <b>Deliver To · Site:</b> Northgate Foods Factory — Phase 2 (Production Hall &amp; Utilities)
+      </div>
+    </div>
+  </div><table class="mos-table"><colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup><thead><tr><th class="c-center">#</th><th>Description / specification</th><th class="r">Qty</th><th>Unit</th><th class="r">Unit Cost (₦)</th><th class="r">Amount (₦)</th></tr></thead><tbody><tr data-rid="r0" data-group-child="false"><td class="num">1</td><td><div class="iname">Portland-limestone cement CEM II 42.5R</div><div class="imake">Dangote-grade bulk supply (synthetic spec)</div><div class="ispec">50 kg bags, palletised<br><i>Delivery in 4 tranches</i></div></td><td class="r qty">1,200</td><td class="unit">bags</td><td class="r price">₦8,550.00</td><td class="r amt">₦10,260,000.00</td></tr><tr data-rid="r1" data-group-child="false"><td class="num">2</td><td><div class="iname">High-yield deformed reinforcement bar Y16</div><div class="imake">BS 4449:2005 Grade B500B</div><div class="ispec">12 m lengths, mill-certified<br>Bundled &amp; tagged by heat number<br>Delivery tolerance ±2% on tonnage; weighbridge tickets supplied with every load</div></td><td class="r qty">85</td><td class="unit">tonnes</td><td class="r price">₦943,000.00</td><td class="r amt">₦80,155,000.00</td></tr><tr data-rid="r2" data-group-child="false"><td class="num">3</td><td><div class="iname">Hot-dip galvanised structural I-beam IPE 300</div><div class="imake">S275JR — EN 10025</div><div class="ispec">12 m lengths; <b>galvanised to ISO 1461</b><br>Mill test certificates supplied<br><i>Optional:</i> primer plus two-coat polyurethane finish available on request</div></td><td class="r qty">42</td><td class="unit">pcs</td><td class="r price">₦398,950.00</td><td class="r amt">₦16,755,900.00</td></tr><tr data-rid="r3" data-group-child="false"><td class="num">4</td><td><div class="iname">Armoured power cable 4-core 95 mm² Cu/XLPE/SWA/PVC</div><div class="imake">0.6/1 kV — BS 5467</div><div class="ispec">Drum length 250 m; <b>cut-to-length</b> on request<br>Supplied on returnable steel drums</div><div class="thumb"><img src="assets/products/havells.svg" alt="Havells"></div></td><td class="r qty">1,500</td><td class="unit">m</td><td class="r price">₦23,300.00</td><td class="r amt">₦34,950,000.00</td></tr><tr data-rid="r4" data-group-child="false"><td class="num">5</td><td><div class="iname">Main LV distribution board, 800 A, TPN, 36-way</div><div class="imake">Form 2b, IP54 floor-standing</div><div class="ispec">Powder-coated 2 mm sheet steel, 800 A copper busbar<br>Incl. neutral &amp; earth bars; type-tested to IEC 61439<br>Factory-wired with surge protection and metering CT provisions</div><div class="thumb"><img src="assets/products/schneider-electric.svg" alt="Schneider Electric"></div></td><td class="r qty">6</td><td class="unit">pcs</td><td class="r price">₦1,517,000.00</td><td class="r amt">₦9,102,000.00</td></tr><tr data-rid="r5" data-group-child="false"><td class="num">6</td><td><div class="iname">MCCB 3-pole 250 A, 36 kA</div><div class="imake">Adjustable thermal-magnetic trip</div><div class="ispec">Breaking capacity 36 kA @ 415 V; rotary handle, terminal shrouds &amp; auxiliary contact included</div></td><td class="r qty">24</td><td class="unit">pcs</td><td class="r price">₦116,450.00</td><td class="r amt">₦2,794,800.00</td></tr><tr data-rid="r6" data-group-child="false"><td class="num">7</td><td><div class="iname">Centrifugal end-suction pump set, 7.5 kW</div><div class="imake">50 m³/h @ 32 m head — cast-iron volute</div><div class="ispec"><b>Set includes:</b> 3-phase motor, baseplate, coupling guard, flexible couplings<br><i>2-year manufacturer warranty</i></div><div class="thumb"><img src="assets/products/grundfos.svg" alt="Grundfos"></div></td><td class="r qty">4</td><td class="unit">sets</td><td class="r price">₦1,164,400.00</td><td class="r amt">₦4,657,600.00</td></tr><tr data-rid="r7" data-group-child="false"><td class="num">8</td><td><div class="iname">Axial roof ventilation fan 900 mm, 1.1 kW</div><div class="imake">IP55, 3-phase, backdraught shutter</div><div class="ispec">Galvanised housing; 18,500 m³/h</div></td><td class="r qty">12</td><td class="unit">pcs</td><td class="r price">₦315,700.00</td><td class="r amt">₦3,788,400.00</td></tr></tbody></table><footer class="mos-foot"><span class="sf-left"><svg class="sf-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="sf-name">Kestrel Industrial Supply Ltd</span></span><span class="sf-center">Sheet 1 of 3</span><span class="sf-right">PO-2026-0089</span></footer>
+  </div>
+</section>
+<section class="page" data-page="2" aria-label="PURCHASE ORDER page 2 of 3">
+  <div class="mos-frame">
+    <div class="mos-run-strip">
+    <div class="mos-run-left">
+      <span class="mos-run-badge">ITEMS</span>
+      <span class="mos-run-title">Items Schedule — continued</span>
+    </div>
+    <div class="mos-run-right">
+      <span>PO-2026-0089</span>
+      <b>PAGE 2</b>
+    </div>
+  </div><table class="mos-table"><colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup><thead><tr><th class="c-center">#</th><th>Description / specification</th><th class="r">Qty</th><th>Unit</th><th class="r">Unit Cost (₦)</th><th class="r">Amount (₦)</th></tr></thead><tbody><tr data-rid="r8" data-group-child="false"><td class="num">9</td><td><div class="iname">Three-phase induction motor 15 kW, IE3, 4-pole, B3</div><div class="imake">Foot-mounted, 400 V / 50 Hz</div><div class="ispec">Class F insulation; IP55; with PTC thermistors</div><div class="thumb"><img src="assets/products/leroy-somer.svg" alt="Leroy-Somer"></div></td><td class="r qty">6</td><td class="unit">pcs</td><td class="r price">₦754,400.00</td><td class="r amt">₦4,526,400.00</td></tr><tr data-rid="r9" data-group-child="false"><td class="num">10</td><td><div class="iname">V-belt, pulley &amp; coupling accessory kit</div><div class="imake">Assorted B-section</div></td><td class="r qty">30</td><td class="unit">lots</td><td class="r price">₦31,550.00</td><td class="r amt">₦946,500.00</td></tr><tr data-rid="r10" data-group-child="false"><td class="num">11</td><td><div class="iname">uPVC pressure pipe 110 mm, PN10</div><div class="imake">6 m socketed lengths — water supply</div><div class="ispec">Solvent-weld or rubber-ring joint; includes 10% fitting allowance</div><div class="thumb"><img src="assets/products/comap.svg" alt="Comap"></div></td><td class="r qty">320</td><td class="unit">lengths</td><td class="r price">₦15,250.00</td><td class="r amt">₦4,880,000.00</td></tr><tr data-rid="r11" data-group-child="false"><td class="num">12</td><td><div class="iname">Cast-iron flanged gate valve DN100, PN16</div><div class="imake">Resilient-seated, non-rising stem</div><div class="ispec">Epoxy-coated body; handwheel operated; PN16 drilled flanges</div></td><td class="r qty">18</td><td class="unit">pcs</td><td class="r price">₦79,150.00</td><td class="r amt">₦1,424,700.00</td></tr><tr data-rid="r12" data-group-child="false"><td class="num">13</td><td><div class="iname">Industrial sanitary suite — floor-mounted WC with cistern &amp; wall-hung basin</div><div class="imake">Vitreous china, white</div><div class="ispec">Complete with seat, 15 mm angle valves, flexible connectors &amp; waste fittings<br><b>Includes</b> installation pack</div><div class="thumb"><img src="assets/products/kohler.svg" alt="Kohler"></div></td><td class="r qty">14</td><td class="unit">sets</td><td class="r price">₦104,950.00</td><td class="r amt">₦1,469,300.00</td></tr><tr data-rid="r13" data-group-child="false"><td class="num">14</td><td><div class="iname">Safety helmet (hard hat), 6-point ratchet</div><div class="imake">HDPE shell — EN 397</div><div class="ispec">Colour-coded by trade: white / yellow / blue</div></td><td class="r qty">180</td><td class="unit">pcs</td><td class="r price">₦3,450.00</td><td class="r amt">₦621,000.00</td></tr><tr data-rid="r14" data-group-child="false"><td class="num">15</td><td><div class="iname">Safety boots, steel toe-cap &amp; midsole, S3</div><div class="imake">Oil-resistant PU outsole — sizes 39–46</div><div class="ispec">Supplied in a size run agreed with site HSE</div></td><td class="r qty">180</td><td class="unit">pairs</td><td class="r price">₦25,850.00</td><td class="r amt">₦4,653,000.00</td></tr><tr data-rid="r15" data-group-child="false"><td class="num">16</td><td><div class="iname">Desktop workstation, Core i7 / 16 GB / 512 GB NVMe, with 24″ monitor</div><div class="imake">Business-class tower, Windows 11 Pro</div><div class="ispec"><b>Specification:</b> 12th-gen Core i7, 16 GB DDR4, 512 GB NVMe SSD, 24″ FHD IPS monitor, keyboard &amp; mouse<br>3-year on-site warranty<br><b>Included:</b> Windows 11 Pro licence, wired keyboard &amp; optical mouse, power cable<br>Pre-imaged with the client’s standard software build; asset-tagged on delivery<br>Rated for 24/7 operation up to 35 °C ambient</div></td><td class="r qty">20</td><td class="unit">units</td><td class="r price">₦709,300.00</td><td class="r amt">₦14,186,000.00</td></tr><tr data-rid="r16" data-group-child="false"><td class="num">17</td><td><div class="iname">Managed 48-port Gigabit PoE+ switch with 4 × 10G SFP+ uplinks</div><div class="imake">Layer 3 lite; rack-mount 1U</div><div class="ispec">740 W PoE budget; includes rack ears &amp; console cable<br>Dual hot-swap PSU bays (one fitted); front-to-back airflow<br>Supports 802.1X, LACP, IGMP snooping, VLAN and QoS<br>Includes 4 × SFP+ direct-attach cables, 1 m</div></td><td class="r qty">4</td><td class="unit">pcs</td><td class="r price">₦1,016,800.00</td><td class="r amt">₦4,067,200.00</td></tr><tr data-rid="r17" data-group-child="false"><td class="num">18</td><td><div class="iname">Online double-conversion UPS 10 kVA, 3-phase in / 1-phase out</div><div class="imake">Rack/tower convertible, with 15-min battery bank</div><div class="ispec">True online topology; <b>N+1 parallel-ready</b>; SNMP card included<br>Battery: 20 × 12 V 9 Ah sealed lead-acid</div><div class="thumb"><img src="assets/products/apc.svg" alt="APC"></div></td><td class="r qty">3</td><td class="unit">units</td><td class="r price">₦1,927,000.00</td><td class="r amt">₦5,781,000.00</td></tr><tr data-rid="r18" data-group-child="false"><td class="num">19</td><td><div class="iname">LED high-bay light 150 W, IP65</div><div class="imake">5000 K, 120 lm/W, 90° optic</div><div class="ispec">Aluminium heat-sink body; 5-year warranty</div><div class="thumb"><img src="assets/products/philips.svg" alt="Philips"></div></td><td class="r qty">120</td><td class="unit">pcs</td><td class="r price">₦31,550.00</td><td class="r amt">₦3,786,000.00</td></tr><tr data-rid="r19" data-group-child="false"><td class="num">20</td><td><div class="iname">LED recessed panel 600 × 600 mm, 40 W</div><div class="imake">4000 K, UGR&lt;19</div></td><td class="r qty">200</td><td class="unit">pcs</td><td class="r price">₦13,800.00</td><td class="r amt">₦2,760,000.00</td></tr><tr data-rid="r20" data-group-child="false"><td class="num">21</td><td><div class="iname">LED emergency exit sign, 3-hour battery backup</div><div class="imake">Maintained / non-maintained selectable</div></td><td class="r qty">36</td><td class="unit">pcs</td><td class="r price">₦12,200.00</td><td class="r amt">₦439,200.00</td></tr></tbody></table><footer class="mos-foot"><span class="sf-left"><svg class="sf-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="sf-name">Kestrel Industrial Supply Ltd</span></span><span class="sf-center">Sheet 2 of 3</span><span class="sf-right">PO-2026-0089</span></footer>
+  </div>
+</section>
+<section class="page" data-page="3" aria-label="PURCHASE ORDER page 3 of 3">
+  <div class="mos-frame">
+    <div class="mos-run-strip">
+    <div class="mos-run-left">
+      <span class="mos-run-badge">ITEMS</span>
+      <span class="mos-run-title">Items Schedule — continued</span>
+    </div>
+    <div class="mos-run-right">
+      <span>PO-2026-0089</span>
+      <b>PAGE 3</b>
+    </div>
+  </div><table class="mos-table"><colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup><thead><tr><th class="c-center">#</th><th>Description / specification</th><th class="r">Qty</th><th>Unit</th><th class="r">Unit Cost (₦)</th><th class="r">Amount (₦)</th></tr></thead><tbody><tr data-rid="r21" data-group-child="false"><td class="num">22</td><td><div class="iname">Heavy-gauge PVC conduit 25 mm with standard junction boxes, saddles, bends and couplers (assorted)</div><div class="imake">BS EN 61386 — 3 m lengths</div><div class="ispec">Lengths priced individually; accessories supplied at the ratio 1 : 1</div></td><td class="r qty">800</td><td class="unit">lengths</td><td class="r price">₦1,100.00</td><td class="r amt">₦880,000.00</td></tr><tr data-rid="r22" data-group-child="false"><td class="num">23</td><td><div class="iname">13 A twin switched socket outlet, flush-mount, IP20</div><div class="imake">White, with 2 × USB-A charging ports</div><div class="thumb"><img src="assets/products/legrand.svg" alt="Legrand"></div></td><td class="r qty">260</td><td class="unit">pcs</td><td class="r price">₦3,200.00</td><td class="r amt">₦832,000.00</td></tr><tr data-rid="r23" data-group-child="false"><td class="num">24</td><td><div class="iname">Fire extinguisher 9 kg ABC dry-powder, with wall bracket</div><div class="imake">Rated 55A/233B — EN 3-7</div><div class="ispec">Annual service tag included<br><b>Includes</b> 1 × signage plate per unit</div></td><td class="r qty">40</td><td class="unit">pcs</td><td class="r price">₦36,100.00</td><td class="r amt">₦1,444,000.00</td></tr><tr data-rid="r24" data-group-child="false"><td class="num">25</td><td><div class="iname">High-visibility reflective vest, class 2</div><div class="imake">EN ISO 20471 — 120 gsm</div><div class="ispec">Zip front, 2 pockets; sizes M–3XL</div><div class="thumb"><img src="assets/products/honeywell.svg" alt="Honeywell"></div></td><td class="r qty">220</td><td class="unit">pcs</td><td class="r price">₦3,100.00</td><td class="r amt">₦682,000.00</td></tr><tr data-rid="r25" data-group-child="false"><td class="num">26</td><td><div class="iname">Exterior weatherproof emulsion paint 20 L</div><div class="imake">Elastomeric, factory grey (RAL 7040)</div><div class="ispec">Two-coat system; coverage ≈ 10 m²/L per coat</div></td><td class="r qty">160</td><td class="unit">buckets</td><td class="r price">₦38,150.00</td><td class="r amt">₦6,104,000.00</td></tr></tbody></table><div class="mos-close">
+    <div class="mos-summary-grid">
+      <div class="mos-anchor-card">
+        <div class="mos-total-box">
+          <span class="mos-total-ribbon">Total Order Amount · NGN</span>
+          <div class="mos-total-val">₦232,269,191.50</div>
+          <div class="mos-total-words">Two Hundred and Thirty-Two Million, Two Hundred and Sixty-Nine Thousand, One Hundred and Ninety-One Naira and Fifty Kobo Only</div>
+        </div>
+        <div class="mos-settle-info"><div class="mos-anc-line"><b>Deliver to:</b> Northgate Foods Factory, Km 18 Lagos–Ibadan Expressway, Mowe, Ogun State — Gate 2 (heavy goods).</div><div class="mos-anc-line"><b>Delivery window:</b> Mon–Fri 08:00–16:00; 24-hour prior notice to the site store.</div><div class="mos-anc-line"><b>Payment:</b> within 30 days upon receipt of delivery and verified invoice.</div></div>
+      </div>
+      <div class="mos-ledger-pane">
+        <table><tbody><tr class=""><td>Procurement subtotal</td><td>₦221,946,000.00</td></tr><tr class=" ded"><td>PO discount (3.0%)</td><td>−₦6,658,380.00</td></tr><tr class="sum"><td>Net subtotal</td><td>₦215,287,620.00</td></tr><tr class=""><td>VAT (7.5%)</td><td>₦16,146,571.50</td></tr><tr class=""><td>Inbound freight to site</td><td>₦650,000.00</td></tr><tr class=""><td>Loading &amp; insurance in transit</td><td>₦185,000.00</td></tr></tbody></table>
+      </div>
+    </div>
+    <div class="mos-clauses-grid">
+      <div class="mos-clause-pane">
+        <div class="mos-clause-head"><span>Document Narrative</span><span>Operational Notes</span></div>
+        <div class="mos-clause-body mos-notes-body"><ul><li><b>Procurement for:</b> Northgate Foods factory — Phase 2 (contract <b>NGF/CON/2026/P2-014</b>), as per approved material schedule.</li><li><b>Prices are unit costs</b> agreed under the supplier’s quotation ref. MIW/Q/2026/883 dated 22/10/2026.</li><li>Partial deliveries are acceptable only with prior written approval; each delivery must carry a delivery note quoting this PO number.</li><li><b>Documentation:</b> mill test certificates (items 2–3), type-test reports (items 5–6) and warranty cards (items 7–9, 16–18) must accompany the goods.</li></ul></div>
+      </div>
+      <div class="mos-clause-pane">
+        <div class="mos-clause-head"><span>Commercial Conditions</span><span>T-01 – T-08</span></div>
+        <div class="mos-terms-grid"><div class="mos-term-item"><span class="mos-term-code">T-01</span><span class="mos-term-text"><b>Supplier payment terms:</b> payment within 30 days upon receipt of delivery and a verified tax invoice quoting this PO number.</span></div><div class="mos-term-item"><span class="mos-term-code">T-02</span><span class="mos-term-text"><b>Delivery:</b> by 20/11/2026 to the site address shown; early or late delivery requires 48-hour prior notice.</span></div><div class="mos-term-item"><span class="mos-term-code">T-03</span><span class="mos-term-text"><b>Quality &amp; inspection:</b> goods are subject to inspection on arrival. Non-conforming goods will be rejected at the supplier’s cost and replaced within 7 days.</span></div><div class="mos-term-item"><span class="mos-term-code">T-04</span><span class="mos-term-text"><b>Penalties:</b> late delivery attracts 0.5% of the line value per day, capped at 10% of the order value.</span></div><div class="mos-term-item"><span class="mos-term-code">T-05</span><span class="mos-term-text"><b>Packing &amp; marking:</b> goods must be packed to withstand road transit and marked with PO number, item number and weight.</span></div><div class="mos-term-item"><span class="mos-term-code">T-06</span><span class="mos-term-text"><b>Warranty:</b> manufacturer warranty plus a 12-month supplier warranty against defects in materials and workmanship.</span></div><div class="mos-term-item"><span class="mos-term-code">T-07</span><span class="mos-term-text"><b>Changes:</b> amendments to this order are valid only if issued in writing by the purchasing officer.</span></div><div class="mos-term-item"><span class="mos-term-code">T-08</span><span class="mos-term-text"><b>Confidentiality:</b> pricing and project details are confidential to the parties.</span></div></div>
+      </div>
+    </div>
+    <div class="mos-sigs-band">
+      <div class="mos-sig-card">
+        <div class="mos-sig-head"><span class="mos-sig-role">01 · Purchasing officer / requisitioner</span><span class="mos-sig-note">Authorised Execution</span></div>
+        <div class="mos-hw-field"><span class="mos-hw-lbl">Signature:</span><div class="mos-hw-sig-box"><span class="mos-hw-sig-prompt">Sign on execution</span></div></div>
+        <div class="mos-hw-row">
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Name:</span><div class="mos-hw-rule"></div></div>
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Date:</span><div class="mos-hw-rule"></div></div>
+        </div>
+      </div>
+      <div class="mos-sig-card">
+        <div class="mos-sig-head"><span class="mos-sig-role">02 · Management / finance authorisation</span><span class="mos-sig-note">Counterpart Acknowledgement</span></div>
+        <div class="mos-hw-field"><span class="mos-hw-lbl">Authorised by:</span><div class="mos-hw-sig-box"><span class="mos-hw-sig-prompt">Sign on receipt</span></div></div>
+        <div class="mos-hw-row">
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Name:</span><div class="mos-hw-rule"></div></div>
+          <div class="mos-hw-field"><span class="mos-hw-lbl">Date:</span><div class="mos-hw-rule"></div></div>
+        </div>
+      </div>
+      <div class="mos-ctrl-card">
+        <div class="mos-ctrl-head"><span>Control</span><span>A4-P · MOSAIC</span></div>
+        <div>
+          <span class="mos-ctrl-ref-title">Reference No.</span>
+          <b class="mos-ctrl-ref-val">PO-2026-0089</b>
+        </div>
+        <div class="mos-ctrl-grid">
+          <div><span>Type</span><b>PURCHASE ORDER</b></div>
+          <div><span>Currency</span><b>NGN ₦</b></div>
+          <div><span>Status</span><b>ISSUED</b></div>
+          <div><span>Sheet</span><b>3 of 3</b></div>
+        </div>
+        <div class="mos-ctrl-note">Official commercial register · authorized execution binding.</div>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+</section>
+</main>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><g id="g-logo"><path d="M22.442.011L14.081.003C-4.693.003-4.693 27 14.081 27l12.846-.031v-9.807H14.51c-4.84 0-4.84-7.321 0-7.321l12.417-.02V.003L24.111 0l-.89.561c-.154-.149-.344-.038-.387-.011-.169.105-.244.226-.164.355.223.36 1.63-.847 2.231.126.334.54.138 1.168-.766 1.727-.565.349-1.299.55-1.702-.015l.932-.577c.164.1.335.085.458.003.148-.097.28-.242.167-.425-.257-.416-1.562.85-2.185-.155-.41-.663.125-1.261.637-1.578zM8.353 12.421l-.908.562-.231-.182c-.075.36-.207.556-.612.807-.536.332-1.099.201-1.559-.542l-.978-1.58.979-.605.867 1.401c.221.357.409.398.644.252.282-.175.234-.453-.015-.854l-.772-1.248.979-.605 1.606 2.594zM7.189 9.553l.898-.556.235.187c-.001-.429.449-.75.721-.863a.853.853 0 0 1 .878.096c.034-.812.61-1.045.774-1.118.646-.285 1.042.037 1.431.664l.95 1.535-.979.606-.817-1.323c-.223-.359-.393-.497-.66-.331-.287.178-.181.476.012.787l.794 1.283-.979.606-.819-1.322c-.236-.382-.382-.502-.66-.331-.287.177-.181.474.012.786l.794 1.283-.979.605-1.606-2.594zm11.096-3.278L16.679 3.68l.979-.605 1.606 2.595-.979.605zm-2.265-3.66l.979-.605.454.733-.979.606-.454-.734zm2.159.137l.894-.553.287.194c.039-.476.345-.738.711-.895.573-.245 1.039-.004 1.434.634l.962 1.555-.979.605-.849-1.372c-.163-.263-.363-.447-.644-.273-.301.187-.255.439-.05.771l.818 1.322-.979.606-1.605-2.594zM4.111 15.043c-2.637 1.632-5.022-2.176-2.385-3.808l1.198-.733.617.997-1.052.646c-1.312.809-.101 2.597 1.128 1.824l1.053-.646.617.997-1.176.723zm7.783-8.401l.898-.556.235.187c0-.429.45-.75.721-.863a.858.858 0 0 1 .878.096c.034-.812.61-1.045.773-1.118.646-.285 1.043.036 1.431.664l.95 1.535-.979.605-.817-1.322c-.222-.359-.392-.497-.661-.331-.287.178-.181.475.012.787l.794 1.283-.979.605-.818-1.322c-.236-.381-.382-.501-.661-.331-.287.178-.181.475.012.787l.794 1.283-.977.605-1.606-2.594z"/></g><g id="g-sig"><g fill-rule="evenodd" clip-rule="evenodd"><path d="M69.335 105.061c-1.355 1.354-2.179 3.007-2.004 4.767.18 3.131 3.71 4.428 5.952 5.136 8.012.999 15.315-2.826 21.031-9.369.411-.12.647.233.889.466-1.415 2.709-4.48 4.893-6.957 6.776-3 1.864-6.566 3.355-10.261 3.73a17.531 17.531 0 0 1-3.351 0 14.946 14.946 0 0 1-3.474-.783c-2.474-.935-5.537-3.241-5.537-6.188.239-1.586.475-3.122 1.589-4.24l1.416-1.593c4.656-4.121 10.609-6.118 16.081-7.477-1.347-.762-3.233-1.354-3.649-3.127 0-5.298 5.479-7.007 9.192-9.182 8.245-3.774 18.022-5.011 26.983-4.538 1.764.526 3.477.585 4.654 2.302.355 2.646-2.771 4.058-4.357 5.652-6.836 4.708-15.203 7.714-24.045 6.771-1.115-.526-2.179-.943-2.53-2.238-.172-1.588 1.356-2.947 2.656-3.418 1.942-1.115 4.417-.233 6.243-.708.234.237.588.475.41.824l-.527.591c-2.602.179-5.483-.059-7.248 1.828-.355 1.299 1.122 1.535 1.823 1.826 8.489.417 19.385-2.829 26.043-10.133.115-.996-1.006-1.354-1.711-1.589-12.781-.887-25.567.942-35.171 8.893-.769.887-1.178 2.302-.59 3.42 3.476 3.118 6.659 1.003 10.727 1.417l.295.287-1.009.824c-7.595 1.415-15.198 2.71-21.44 7.363l-2.123 1.71zm114.917-.627v.829a1.682 1.682 0 0 1-.383.795c-18.266 10.96-40.594 1.243-60.807 5.66-.938.119-.461 2.356-1.707 1.236-.645-.473-.232-.996-.174-1.532 4.01-2.653 8.131-2.302 12.902-2.71 15.379-.175 33.469 5.362 48.078-3.118.527-.362.705-1.006.41-1.542-5.773-2.411-11.193-4.707-16.672-7.767-4.123 3.001-7.953 7.242-13.316 7.477-.881-.116-1.535-1.062-1.826-1.827-2.062 1.479-4.359 2.419-7.074 2.419-1.885-2.886-5.648 2.241-6.951-1.707-.055-1.709 1.654-3.123 2.826-3.949-.584 0-1.471-.76-1.822.114-2.475 2.711-5.299 6.192-9.016 5.242l-.703-1.115c-1.303 1.007-2.592 2.24-4.422 1.535-1.117-.475-1.41-1.89-.82-2.831 1.703-2.945 4.889-4.941 8.307-4.941.705.767 1.701-.533 2.293.292-.592 2.061-4.004 3.121-3.709 5.77 1.178.412 2.41-.712 3.535-1.12l5.24-5.475c.828-.179.18.769.713.939 1.586.295 2.885-.585 4.529.295-1.527 1.651-4.592 2.476-5.354 5.126 1.473.41 2.881-.761 4.062-1.181 1.824-3.41 5.537-4.114 8.656-4.476 2.068-4.417 6.604-8.422 11.141-10.069 3.594-4.656 8.602-8.482 14.43-7.61l.297 2.126c-.82 5.891-5.592 9.958-9.604 13.968 5.418 3.232 10.369 5.359 16.08 7.652.445.353.755.913.861 1.495zm-8.865-22.996c-1.178 5.242-5.484 9.43-9.486 12.84-1.004-.229-1.887-1.12-2.537-1.824 1.533-1.708 3.297-3.83 3.359-6.361-.352-.531-.883-.653-1.412-.709 2.83-2.409 6.014-5.062 9.785-4.946l.291 1zm-39.36.119c-6.832 2.12-12.965 6.718-17.199 12.606-2.832 2.888-3.658 7.833-7.955 8.775.533-1.765 2.301-3.061 2.826-4.826-1.236-2.652-3.654 1.058-4.77-1.005-2.594 1.767-4.006 5.655-7.547 6.128.471-2.123 2.18-3.712 3.721-5.418-1.947-.297-4.189-.529-6.074-.415-1.178 1.944-2.655 4.24-4.833 5.244-.999.175-2.001 1.472-2.943.589.882-1.768 2.59-2.772 3.354-4.538-.411-.644-.995 0-1.528 0-3.185-1.464-6.779.002-9.369 2.533-.586.942-1.533 2.298-.533 3.421 2.063 1.059 4.774-.119 6.659-.706.177.468.885 1.059 1.534 1.115 2.003-.175 3.302-1.062 4.948-2.122 2.415-1.004 2.829-5.418 5.772-3.946-1.178 1.296-2.123 2.705-2.236 4.474.588 2.242 3.123.65 4.24.479l-.295.822c.061.411.531.524.883.587 2.178-2.002 3.184-6.895 7.076-6.543-1.123 1.651-3.363 3.544-2.006 5.542.883.766 1.885-.3 2.709-.179-.178.12-.178.302-.178.477.236.409.705.409 1.119.409 1.891-2.414 2.828-6.363 6.361-6.948.533.233 1 .642 1 1.295-1.414 2.948-3.83 4.946-6.062 7.476-1.529 1.886-4.008 4.362-2.535 6.958 1.711.941 3.127.475 5.066.413.762-.18 1.824-.469 1.824-1.418-1.646-.354-4.117.585-5.654.294-.762-.529-.174-1.233-.23-1.885 2.234-3.77 7.242-7.005 8.895-11.131.641-1.36-.473-2.594-1.303-3.242 6.777-3.77 16.498-5.475 18.68-14.317-.29-1.764-2.239-.646-3.417-.998zm1.709 1.592c-1.059 4.888-6.893 7.188-11.021 9.193l-7.182 3.355c4.946-6.253 10.606-11.487 18.203-12.548zm25.037 7.362c-.176-1.413.65-2.827 2.01-3.302-.416 1.241-.826 2.421-2.01 3.302zm-1.703 1.529c-2.832 2.538-6.016 5.012-8.896 6.771.885-4.591 5.303-7.885 9.07-10.008-.474.887-.353 2.237-.174 3.237zm3.121 3.42c-3.008 2.531-6.602 5.713-10.607 6.892-.762-.241-1.115-.764-1.115-1.537 3.297-2.062 6.303-4.884 9.484-7.355.887.589 1.117 1.826 2.238 2zm-33.82 2.652c-1.35 1.882-3.594 4.768-6.066 4.946-.355-1.946 2.178-3.181 3.539-4.066.763-.473 1.644-.705 2.527-.88zm17.559 3.823c-1.291.238-3.184 1.531-4.125.418 1.354-2.652 4.006-3.655 6.656-3.949.891 2.059-1.232 2.652-2.531 3.531zm-56.264-2.12c-1.651 2.182-4.771 4.303-7.07 3.65.354-2.114 2.943-3.413 4.949-3.766l2.121.116z"/><path d="M70.602 103.566c5.364.407 9.249.585 13.553 4.119.234.943-.89.943-1.418.71-3.945-2.947-8.955-3.833-14.258-3.125l-2.122.297c-2.355-.297-5.653 1.238-7.54-.706-1.824.291-3.828.175-5.183-1.001l-1.297-1.591c-2.707 1.413-5.538 4.062-8.783 2.412-1.408.589-3.179 1.239-4.767.589-1.178-1.235-.824-2.528-.296-3.944.179-.475.825-.882.529-1.299-3.537 3.771-7.953 6.247-12.96 5.54a7.636 7.636 0 0 1-5.244-3.298c-.235-.826-.708-1.589-.708-2.533l-10.782 9.072c-.352-.117-.708-.351-.823-.709v-.412l14.431-12.485a7.11 7.11 0 0 1-4.825-2.531c-1.83-2.475-1.416-6.305-.117-8.895 2.824-4.893 8.541-7.432 13.957-7.667 4.186.468 8.312 1.412 10.906 4.954 2.001 2.294 2.117 6.308 1.588 9.072 3.595-.412 8.36-1.174 12.015.121 1.89-2.594 4.601-6.014 7.898-6.187.942.112 2.066.645 2.239 1.702-.352 5.013-5.123 8.547-8.722 12.02l-4.122 3.355c-.062.947.768 1.77 1.529 2.127 1.178.292 2.067.061 3.301.292-.118-2.065 1.471-4.126 3.242-5.362 1.356-1.058 3.475-1.058 5.065-.587.652 1.647-.411 3.118-1.237 4.237l-3.71 2.297 5.83-.178 2.831-.406zM37.49 78.941c-5.188-2.124-11.96-1.003-15.963 2.708-2.772 2.359-3.596 6.073-2.542 9.493 1.065 2.117 3.661 2.296 5.66 2.523l12.964-10.897 1.411-.115.296 1.001-11.724 9.721c5.359-.529 9.897-1.645 14.961-2.825.476-1.944 1-4.542.179-6.479-1.059-2.481-3.239-3.658-5.242-5.13zm27.16 6.831c-3.12.184-5.188 3.123-6.952 5.481l.588.589c.235.827 1.59 1.89.294 2.656-1.351.646-1.234-1.299-2.001-1.653-1.119 1.886-2.357 4.067-2.829 6.353 4.182-3.937 9.783-7.535 11.312-13.008l-.412-.418zm-20.678 6.367c-1.417 2.658-2.652 5.361-4.655 7.776 1.298-1.77 3.003-2.947 4.828-3.709 1.716-.475 4.245 0 5.487 1.586-1.12 1.648-2.539-.229-3.949 0-1.828.354-3.594 1.236-4.773 2.826-.241 1.12-1.946 2.057-1.001 3.355 4.064.533 4.948-4.416 8.189-5.241.232.296.646.533.705.885-.884 1.234-3.12 2.301-3.653 4.065 2.651 0 4.713-1.828 6.775-3.064-.238-3.353 1.71-6.182 3.356-8.954-3.595-1.114-7.777-.354-11.309.475zm-2.126.236l-7.888 1.888c-3.948 1.587-9.549-.826-12.138 4.057-.358 1.77.531 3.006 1.23 4.247 1.475 1.115 3.189 1.939 5.248 1.584 6.306-.468 11.313-6.293 13.548-11.776zm18.56 10.601c1.771-.706 4.715-1.649 5.068-4.244-2.354-.349-4.652 2.061-5.068 4.244z"/></g></g></defs></svg>
+
+<script>
+(function(){
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('button[data-mode]'));
+  var sets = Array.prototype.slice.call(document.querySelectorAll('.doc-set'));
+  function setMode(mode){
+    sets.forEach(function(set){ set.hidden = set.getAttribute('data-doc') !== mode; });
+    buttons.forEach(function(button){ button.classList.toggle('active', button.getAttribute('data-mode') === mode); });
+  }
+  buttons.forEach(function(button){ button.addEventListener('click', function(){ setMode(button.getAttribute('data-mode')); }); });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOUXRE Commercial Document — A4 Portrait</title>
+<style>
+  /* ── Base & Print Setup ───────────────────────────────────── */
+  :root {
+    --primary-sage: #7D8A88;      /* Primary Brand / Structural */
+    --sage-dark: #586563;
+    --sage-light: #F0F4F3;
+    --secondary-navy: #202B3C;   /* Deep Charcoal/Navy Authority */
+    --navy-dark: #141B26;
+    --accent-terracotta: #B65E3C;/* Accent / Signals / Badges */
+    --terracotta-light: #FDF3EF;
+    --ink-main: #202B3C;         /* Primary text */
+    --ink-sub: #4B5563;          /* Secondary text */
+    --ink-muted: #6B7280;        /* Muted captions */
+    --border-line: #C9D1D0;      /* Grid lines */
+    --border-light: #E2E7E6;
+    --bg-page: #FFFFFF;
+    --bg-surface: #F8FAFA;
+    --bg-group-child: #FAFBFB;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: #4A5251;
+    color: var(--ink-main);
+    font-family: var(--font-sans);
+    font-size: 8.6pt;
+    line-height: 1.42;
+    padding-top: 56px;
+    padding-bottom: 40px;
+  }
+
+  /* ── Screen Controller Toolbar ────────────────────────────── */
+  .screen-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: var(--secondary-navy);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    border-bottom: 2px solid var(--accent-terracotta);
+  }
+  .screen-bar .brand-tag {
+    color: #fff;
+    font-weight: 800;
+    font-size: 9.5pt;
+    letter-spacing: 0.5px;
+    margin-right: 12px;
+  }
+  .screen-bar .brand-tag span {
+    color: var(--accent-terracotta);
+  }
+  .screen-bar button {
+    font-family: inherit;
+    font-size: 8.5pt;
+    font-weight: 600;
+    border: 1px solid var(--primary-sage);
+    background: transparent;
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .screen-bar button:hover {
+    background: rgba(125, 138, 136, 0.2);
+  }
+  .screen-bar button.active {
+    background: var(--accent-terracotta);
+    border-color: var(--accent-terracotta);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  .screen-bar .btn-print {
+    margin-left: 20px;
+    background: #fff;
+    color: var(--secondary-navy);
+    border-color: #fff;
+    font-weight: 700;
+  }
+  .screen-bar .btn-print:hover {
+    background: var(--sage-light);
+  }
+
+  /* ── A4 Portrait Sheet Container ──────────────────────────── */
+  .sheet {
+    width: 210mm;
+    margin: 12mm auto;
+    padding: 15mm 14mm 15mm 14mm;
+    background: var(--bg-page);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  /* ── A4 Page Media Print Rules ────────────────────────────── */
+  @page {
+    size: A4 portrait;
+    margin: 14mm 14mm 15mm 14mm;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+      color: var(--ink-main);
+    }
+    .screen-bar { display: none !important; }
+    .sheet {
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
+    .page-break {
+      break-before: page;
+      page-break-before: always;
+    }
+    .avoid-break {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  }
+
+  /* ── Header Layout ────────────────────────────────────────── */
+  .hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8mm;
+    margin-bottom: 2mm;
+  }
+  .brand {
+    display: flex;
+    gap: 4.5mm;
+    align-items: flex-start;
+  }
+  svg.logo {
+    width: 16mm;
+    height: 16mm;
+    flex: none;
+    display: block;
+    fill: var(--secondary-navy);
+  }
+  .co-title {
+    font-size: 14pt;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--secondary-navy);
+  }
+  .co-tagline {
+    font-size: 7.5pt;
+    color: var(--primary-sage);
+    font-weight: 600;
+    font-style: italic;
+    margin: 0.8mm 0 1.2mm;
+  }
+  .co-meta {
+    font-size: 7.2pt;
+    line-height: 1.45;
+    color: var(--ink-sub);
+  }
+
+  .badge-col {
+    text-align: right;
+    flex: none;
+  }
+  .badge-title {
+    font-size: 21pt;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    color: var(--secondary-navy);
+    text-transform: uppercase;
+  }
+  .badge-number {
+    display: inline-block;
+    margin-top: 2.2mm;
+    background: var(--secondary-navy);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 9.5pt;
+    font-weight: 700;
+    padding: 1.6mm 3.2mm;
+    border-radius: 2px;
+    letter-spacing: 0.04em;
+    border-left: 3px solid var(--accent-terracotta);
+  }
+
+  /* ── Horizontal Dividing Rule ─────────────────────────────── */
+  .rule {
+    height: 1.2mm;
+    background: var(--primary-sage);
+    margin: 3.5mm 0 0;
+  }
+  .rule::after {
+    content: "";
+    display: block;
+    height: 0.3mm;
+    background: var(--accent-terracotta);
+    margin-top: 0.7mm;
+  }
+
+  /* ── Key-Value Metadata Strip ─────────────────────────────── */
+  .kv-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 0.3mm solid var(--border-line);
+    margin-top: 1mm;
+    background: var(--bg-surface);
+  }
+  .kv-item {
+    padding: 2.2mm 3mm;
+    border-right: 0.25mm solid var(--border-light);
+  }
+  .kv-item:last-child {
+    border-right: none;
+  }
+  .kv-label {
+    font-size: 6.4pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--sage-dark);
+    margin-bottom: 0.5mm;
+  }
+  .kv-val {
+    font-family: var(--font-mono);
+    font-size: 8.8pt;
+    font-weight: 700;
+    color: var(--secondary-navy);
+  }
+  .kv-val.highlight {
+    color: var(--accent-terracotta);
+  }
+
+  /* ── Parties Section ──────────────────────────────────────── */
+  .parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6mm;
+    margin: 4.5mm 0 5mm;
+  }
+  .party-card {
+    border-top: 1.2mm solid var(--primary-sage);
+    background: var(--bg-surface);
+    padding: 3mm 3.5mm;
+    border-radius: 0 0 2px 2px;
+    border-left: 0.25mm solid var(--border-light);
+    border-right: 0.25mm solid var(--border-light);
+    border-bottom: 0.25mm solid var(--border-light);
+  }
+  .party-card.secondary {
+    border-top-color: var(--secondary-navy);
+  }
+  .party-label {
+    font-size: 6.6pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--primary-sage);
+    margin-bottom: 1.2mm;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .party-label.secondary {
+    color: var(--secondary-navy);
+  }
+  .party-name {
+    font-size: 10.5pt;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--secondary-navy);
+    margin-bottom: 1.2mm;
+  }
+  .party-text {
+    font-size: 7.8pt;
+    line-height: 1.42;
+    color: var(--ink-sub);
+  }
+  .party-text strong {
+    color: var(--secondary-navy);
+  }
+
+  /* ── Line Items Table ─────────────────────────────────────── */
+  table.items {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-top: 2mm;
+    font-size: 8.4pt;
+  }
+  table.items thead {
+    display: table-header-group;
+  }
+  table.items th {
+    background: var(--sage-light);
+    color: var(--secondary-navy);
+    font-size: 6.8pt;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2.2mm 2mm;
+    border-top: 0.8mm solid var(--primary-sage);
+    border-bottom: 0.4mm solid var(--secondary-navy);
+  }
+  .col-n { width: 9mm; text-align: center; }
+  .col-d { width: 84mm; text-align: left; }
+  .col-q { width: 16mm; text-align: right; }
+  .col-u { width: 14mm; text-align: center; }
+  .col-p { width: 27mm; text-align: right; }
+  .col-a { width: 32mm; text-align: right; }
+
+  /* Standard Table Rows */
+  table.items td {
+    padding: 2.4mm 2mm;
+    vertical-align: top;
+    border-bottom: 0.25mm solid var(--border-line);
+  }
+  table.items tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Standalone Row Styling */
+  tr.standalone-row td {
+    background: #FFFFFF;
+    border-bottom: 0.25mm solid var(--border-line);
+  }
+  tr.standalone-row:nth-child(even) td {
+    background: var(--bg-surface);
+  }
+
+  /* ── Product Description & Thumbnail Layout (DeepSeek Approach) ── */
+  .p-name {
+    font-size: 8.8pt;
+    font-weight: 800;
+    color: var(--secondary-navy);
+    line-height: 1.25;
+  }
+  .p-make {
+    font-size: 7.6pt;
+    font-weight: 600;
+    color: var(--primary-sage);
+    margin-top: 0.6mm;
+  }
+  .p-spec {
+    font-size: 7.3pt;
+    color: var(--ink-sub);
+    line-height: 1.38;
+    margin-top: 0.8mm;
+  }
+  /* Image explicitly beneath sub-description */
+  .p-thumb {
+    margin-top: 2.4mm;
+    width: 24px;
+    height: 24px;
+    background: var(--sage-light);
+    border: 0.8px solid var(--border-line);
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p-thumb svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--primary-sage);
+    fill: none;
+    stroke-width: 1.5;
+    display: block;
+  }
+
+  /* Numeric Columns */
+  td.cell-n {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--sage-dark);
+    padding-top: 2.8mm;
+  }
+  td.cell-q {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--ink-main);
+  }
+  td.cell-u {
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 7.8pt;
+  }
+  td.cell-p {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--secondary-navy);
+  }
+  td.cell-a {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    color: var(--secondary-navy);
+  }
+
+  /* ── Group Enclosure Container System ─────────────────────── */
+  /* Group Header Bar */
+  tr.grp-head td {
+    background: var(--sage-light) !important;
+    border-top: 1.2mm solid var(--primary-sage) !important;
+    border-bottom: 0.4mm solid var(--primary-sage) !important;
+    border-left: 2px solid var(--primary-sage) !important;
+    border-right: 2px solid var(--primary-sage) !important;
+    padding: 2.2mm 2.5mm !important;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .grp-head-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  .grp-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .grp-badge {
+    background: var(--accent-terracotta);
+    color: #fff;
+    font-size: 6.6pt;
+    font-weight: 800;
+    padding: 1.5px 6px;
+    border-radius: 2px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .grp-title {
+    font-size: 7.8pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--secondary-navy);
+  }
+  .grp-subtotal {
+    text-align: right;
+    font-size: 7.4pt;
+    color: var(--sage-dark);
+  }
+  .grp-subtotal strong {
+    font-family: var(--font-mono);
+    font-size: 8.2pt;
+    font-weight: 800;
+    color: var(--secondary-navy);
+    margin-left: 4px;
+  }
+
+  /* Group Child Rows (Enclosed within side rails & tinted fill) */
+  tr.grp-row td {
+    background: var(--bg-group-child) !important;
+    border-bottom: 0.25mm solid var(--border-light);
+  }
+  tr.grp-row td:first-child {
+    border-left: 2px solid var(--primary-sage) !important;
+  }
+  tr.grp-row td:last-child {
+    border-right: 2px solid var(--primary-sage) !important;
+  }
+
+  /* Last Child in Group closes the container */
+  tr.grp-last td {
+    border-bottom: 1.5mm solid var(--primary-sage) !important;
+  }
+
+  /* ── Lower Section: Settlement & Totals Grid ──────────────── */
+  .fin-grid {
+    display: grid;
+    grid-template-columns: 1fr 84mm;
+    gap: 6mm;
+    margin-top: 5mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Left Box: Bank Accounts / Delivery Terms */
+  .box-card {
+    background: var(--bg-surface);
+    border: 0.3mm solid var(--border-line);
+    border-top: 1mm solid var(--primary-sage);
+    border-radius: 2px;
+    padding: 3mm 3.5mm;
+    margin-bottom: 3.5mm;
+  }
+  .box-card h4 {
+    margin: 0 0 2mm;
+    font-size: 7pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary-sage);
+  }
+  .acct-row {
+    padding: 1.8mm 0;
+    border-top: 0.25mm dashed var(--border-line);
+  }
+  .acct-row:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+  .acct-bank {
+    font-size: 8.2pt;
+    font-weight: 800;
+    color: var(--secondary-navy);
+  }
+  .acct-num {
+    font-family: var(--font-mono);
+    font-size: 10.5pt;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--secondary-navy);
+    margin: 0.5mm 0;
+  }
+  .acct-meta {
+    font-size: 7pt;
+    color: var(--ink-muted);
+  }
+
+  /* Notes & Instructions Area */
+  .notes-box {
+    margin-top: 2mm;
+  }
+  .sec-heading {
+    font-size: 7.8pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--secondary-navy);
+    border-bottom: 0.4mm solid var(--primary-sage);
+    padding-bottom: 1.2mm;
+    margin: 4mm 0 2mm;
+    break-after: avoid;
+  }
+  .rich-text {
+    font-size: 7.5pt;
+    color: var(--ink-sub);
+    line-height: 1.45;
+  }
+  .rich-text ul, .rich-text ol {
+    margin: 0;
+    padding-left: 4.5mm;
+  }
+  .rich-text li {
+    margin-bottom: 1.2mm;
+    break-inside: avoid;
+  }
+
+  /* Right Box: Financial Totals Table */
+  table.tot-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+  }
+  table.tot-table td {
+    padding: 1.2mm 0;
+    font-size: 8.2pt;
+    border-bottom: 0.25mm solid var(--border-light);
+  }
+  table.tot-table td:last-child {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--secondary-navy);
+  }
+  table.tot-table tr.discount-row td:last-child {
+    color: var(--accent-terracotta);
+  }
+  table.tot-table tr.wht-row td:last-child {
+    color: var(--accent-terracotta);
+  }
+  table.tot-table tr.sum-row td {
+    font-weight: 800;
+    color: var(--secondary-navy);
+    border-top: 0.4mm solid var(--primary-sage);
+  }
+  /* Grand Total Callout */
+  table.tot-table tr.grand-row td {
+    background: var(--secondary-navy);
+    color: #fff !important;
+    font-size: 9.8pt;
+    font-weight: 800;
+    padding: 2.2mm 3mm;
+    border: none;
+  }
+  table.tot-table tr.grand-row td:last-child {
+    font-size: 11.5pt;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  /* Total in Words Card */
+  .words-card {
+    margin-top: 2.5mm;
+    border: 0.3mm solid var(--border-line);
+    border-left: 1.4mm solid var(--accent-terracotta);
+    padding: 2mm 3mm;
+    background: #fff;
+  }
+  .words-lbl {
+    font-size: 6.4pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-terracotta);
+  }
+  .words-text {
+    font-size: 7.8pt;
+    font-weight: 700;
+    color: var(--secondary-navy);
+    margin-top: 0.8mm;
+    line-height: 1.35;
+  }
+
+  /* ── Signatures & Authorization Section (Approved Claude Model) ── */
+  .sign-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-top: 6mm;
+    border-top: 0.4mm solid var(--primary-sage);
+    padding-top: 3mm;
+  }
+  .sign-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10mm;
+    margin-top: 2mm;
+  }
+  .sign-label {
+    min-height: 2.4em;
+    font-size: 6.6pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary-sage);
+  }
+  .sign-area {
+    height: 28mm;
+    border-bottom: 0.35mm solid var(--secondary-navy);
+    display: flex;
+    align-items: flex-end;
+    margin-top: 1.5mm;
+    position: relative;
+  }
+  .sign-area svg.sig-asset {
+    width: 52mm;
+    height: 26mm;
+    display: block;
+    margin-bottom: 0.6mm;
+  }
+  /* Client Handwritten Bounding Box */
+  .sign-area.blank-box {
+    border: 0.4mm dashed var(--accent-terracotta);
+    border-bottom: 0.35mm solid var(--secondary-navy);
+    background: #FFFDFC;
+  }
+  .sign-area.blank-box span {
+    position: absolute;
+    left: 2.4mm;
+    top: 1.8mm;
+    font-size: 6.6pt;
+    font-weight: 600;
+    color: var(--accent-terracotta);
+    letter-spacing: 0.04em;
+  }
+  .stamp-mark {
+    position: absolute;
+    right: 0;
+    bottom: 2mm;
+    width: 22mm;
+    height: 22mm;
+    border: 0.35mm dashed var(--primary-sage);
+    border-radius: 50%;
+    font-size: 5.6pt;
+    font-weight: 700;
+    color: var(--primary-sage);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+  }
+  .sign-meta-text {
+    font-size: 7.5pt;
+    margin-top: 1.5mm;
+    color: var(--ink-sub);
+  }
+  .sign-meta-text b {
+    font-weight: 800;
+    color: var(--secondary-navy);
+  }
+  .sign-meta-text .fill-line {
+    display: inline-block;
+    border-bottom: 0.25mm solid var(--secondary-navy);
+    width: 32mm;
+    height: 3.6mm;
+    vertical-align: bottom;
+  }
+
+  /* ── Running Footer ───────────────────────────────────────── */
+  .running-footer {
+    border-top: 0.4mm solid var(--primary-sage);
+    margin-top: 6mm;
+    padding-top: 2.5mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 6.8pt;
+    color: var(--ink-muted);
+  }
+  .running-footer strong {
+    color: var(--secondary-navy);
+  }
+</style>
+</head>
+<body>
+
+<!-- SVG Asset Definitions -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="g-logo"><path d="M22.442.011L14.081.003C-4.693.003-4.693 27 14.081 27l12.846-.031v-9.807H14.51c-4.84 0-4.84-7.321 0-7.321l12.417-.02V.003L24.111 0l-.89.561c-.154-.149-.344-.038-.387-.011-.169.105-.244.226-.164.355.223.36 1.63-.847 2.231.126.334.54.138 1.168-.766 1.727-.565.349-1.299.55-1.702-.015l.932-.577c.164.1.335.085.458.003.148-.097.28-.242.167-.425-.257-.416-1.562.85-2.185-.155-.41-.663.125-1.261.637-1.578zM8.353 12.421l-.908.562-.231-.182c-.075.36-.207.556-.612.807-.536.332-1.099.201-1.559-.542l-.978-1.58.979-.605.867 1.401c.221.357.409.398.644.252.282-.175.234-.453-.015-.854l-.772-1.248.979-.605 1.606 2.594zM7.189 9.553l.898-.556.235.187c-.001-.429.449-.75.721-.863a.853.853 0 0 1 .878.096c.034-.812.61-1.045.774-1.118.646-.285 1.042.037 1.431.664l.95 1.535-.979.606-.817-1.323c-.223-.359-.393-.497-.66-.331-.287.178-.181.476.012.787l.794 1.283-.979.606-.819-1.322c-.236-.382-.382-.502-.66-.331-.287.177-.181.474.012.786l.794 1.283-.979.605-1.606-2.594zm11.096-3.278L16.679 3.68l.979-.605 1.606 2.595-.979.605zm-2.265-3.66l.979-.605.454.733-.979.606-.454-.734zm2.159.137l.894-.553.287.194c.039-.476.345-.738.711-.895.573-.245 1.039-.004 1.434.634l.962 1.555-.979.605-.849-1.372c-.163-.263-.363-.447-.644-.273-.301.187-.255.439-.05.771l.818 1.322-.979.606-1.605-2.594zM4.111 15.043c-2.637 1.632-5.022-2.176-2.385-3.808l1.198-.733.617.997-1.052.646c-1.312.809-.101 2.597 1.128 1.824l1.053-.646.617.997-1.176.723zm7.783-8.401l.898-.556.235.187c0-.429.45-.75.721-.863a.858.858 0 0 1 .878.096c.034-.812.61-1.045.773-1.118.646-.285 1.043.036 1.431.664l.95 1.535-.979.605-.817-1.322c-.222-.359-.392-.497-.661-.331-.287.178-.181.475.012.787l.794 1.283-.979.605-.818-1.322c-.236-.381-.382-.501-.661-.331-.287.178-.181.475.012.787l.794 1.283-.977.605-1.606-2.594z"/></g>
+<g id="g-sig"><g fill-rule="evenodd" clip-rule="evenodd"><path fill="#fff" d="M0 0h192.756v192.756H0V0z"/><path d="M69.335 105.061c-1.355 1.354-2.179 3.007-2.004 4.767.18 3.131 3.71 4.428 5.952 5.136 8.012.999 15.315-2.826 21.031-9.369.411-.12.647.233.889.466-1.415 2.709-4.48 4.893-6.957 6.776-3 1.864-6.566 3.355-10.261 3.73a17.531 17.531 0 0 1-3.351 0 14.946 14.946 0 0 1-3.474-.783c-2.474-.935-5.537-3.241-5.537-6.188.239-1.586.475-3.122 1.589-4.24l1.416-1.593c4.656-4.121 10.609-6.118 16.081-7.477-1.347-.762-3.233-1.354-3.649-3.127 0-5.298 5.479-7.007 9.192-9.182 8.245-3.774 18.022-5.011 26.983-4.538 1.764.526 3.477.585 4.654 2.302.355 2.646-2.771 4.058-4.357 5.652-6.836 4.708-15.203 7.714-24.045 6.771-1.115-.526-2.179-.943-2.53-2.238-.172-1.588 1.356-2.947 2.656-3.418 1.942-1.115 4.417-.233 6.243-.708.234.237.588.475.41.824l-.527.591c-2.602.179-5.483-.059-7.248 1.828-.355 1.299 1.122 1.535 1.823 1.826 8.489.417 19.385-2.829 26.043-10.133.115-.996-1.006-1.354-1.711-1.589-12.781-.887-25.567.942-35.171 8.893-.769.887-1.178 2.302-.59 3.42 3.476 3.118 6.659 1.003 10.727 1.417l.295.287-1.009.824c-7.595 1.415-15.198 2.71-21.44 7.363l-2.123 1.71zm114.917-.627v.829a1.682 1.682 0 0 1-.383.795c-18.266 10.96-40.594 1.243-60.807 5.66-.938.119-.461 2.356-1.707 1.236-.645-.473-.232-.996-.174-1.532 4.01-2.653 8.131-2.302 12.902-2.71 15.379-.175 33.469 5.362 48.078-3.118.527-.362.705-1.006.41-1.542-5.773-2.411-11.193-4.707-16.672-7.767-4.123 3.001-7.953 7.242-13.316 7.477-.881-.116-1.535-1.062-1.826-1.827-2.062 1.479-4.359 2.419-7.074 2.419-1.885-2.886-5.648 2.241-6.951-1.707-.055-1.709 1.654-3.123 2.826-3.949-.584 0-1.471-.76-1.822.114-2.475 2.711-5.299 6.192-9.016 5.242l-.703-1.115c-1.303 1.007-2.592 2.24-4.422 1.535-1.117-.475-1.41-1.89-.82-2.831 1.703-2.945 4.889-4.941 8.307-4.941.705.767 1.701-.533 2.293.292-.592 2.061-4.004 3.121-3.709 5.77 1.178.412 2.41-.712 3.535-1.12l5.24-5.475c.828-.179.18.769.713.939 1.586.295 2.885-.585 4.529.295-1.527 1.651-4.592 2.476-5.354 5.126 1.473.41 2.881-.761 4.062-1.181 1.824-3.41 5.537-4.114 8.656-4.476 2.068-4.417 6.604-8.422 11.141-10.069 3.594-4.656 8.602-8.482 14.43-7.61l.297 2.126c-.82 5.891-5.592 9.958-9.604 13.968 5.418 3.232 10.369 5.359 16.08 7.652.445.353.755.913.861 1.495zm-8.865-22.996c-1.178 5.242-5.484 9.43-9.486 12.84-1.004-.229-1.887-1.12-2.537-1.824 1.533-1.708 3.297-3.83 3.359-6.361-.352-.531-.883-.653-1.412-.709 2.83-2.409 6.014-5.062 9.785-4.946l.291 1zm-39.36.119c-6.832 2.12-12.965 6.718-17.199 12.606-2.832 2.888-3.658 7.833-7.955 8.775.533-1.765 2.301-3.061 2.826-4.826-1.236-2.652-3.654 1.058-4.77-1.005-2.594 1.767-4.006 5.655-7.547 6.128.471-2.123 2.18-3.712 3.721-5.418-1.947-.297-4.189-.529-6.074-.415-1.178 1.944-2.655 4.24-4.833 5.244-.999.175-2.001 1.472-2.943.589.882-1.768 2.59-2.772 3.354-4.538-.411-.644-.995 0-1.528 0-3.185-1.464-6.779.002-9.369 2.533-.586.942-1.533 2.298-.533 3.421 2.063 1.059 4.774-.119 6.659-.706.177.468.885 1.059 1.534 1.115 2.003-.175 3.302-1.062 4.948-2.122 2.415-1.004 2.829-5.418 5.772-3.946-1.178 1.296-2.123 2.705-2.236 4.474.588 2.242 3.123.65 4.24.479l-.295.822c.061.411.531.524.883.587 2.178-2.002 3.184-6.895 7.076-6.543-1.123 1.651-3.363 3.544-2.006 5.542.883.766 1.885-.3 2.709-.179-.178.12-.178.302-.178.477.236.409.705.409 1.119.409 1.891-2.414 2.828-6.363 6.361-6.948.533.233 1 .642 1 1.295-1.414 2.948-3.83 4.946-6.062 7.476-1.529 1.886-4.008 4.362-2.535 6.958 1.711.941 3.127.475 5.066.413.762-.18 1.824-.469 1.824-1.418-1.646-.354-4.117.585-5.654.294-.762-.529-.174-1.233-.23-1.885 2.234-3.77 7.242-7.005 8.895-11.131.641-1.36-.473-2.594-1.303-3.242 6.777-3.77 16.498-5.475 18.68-14.317-.29-1.764-2.239-.646-3.417-.998zm1.709 1.592c-1.059 4.888-6.893 7.188-11.021 9.193l-7.182 3.355c4.946-6.253 10.606-11.487 18.203-12.548zm25.037 7.362c-.176-1.413.65-2.827 2.01-3.302-.416 1.241-.826 2.421-2.01 3.302zm-1.703 1.529c-2.832 2.538-6.016 5.012-8.896 6.771.885-4.591 5.303-7.885 9.07-10.008-.474.887-.353 2.237-.174 3.237zm3.121 3.42c-3.008 2.531-6.602 5.713-10.607 6.892-.762-.241-1.115-.764-1.115-1.537 3.297-2.062 6.303-4.884 9.484-7.355.887.589 1.117 1.826 2.238 2zm-33.82 2.652c-1.35 1.882-3.594 4.768-6.066 4.946-.355-1.946 2.178-3.181 3.539-4.066.763-.473 1.644-.705 2.527-.88zm17.559 3.823c-1.291.238-3.184 1.531-4.125.418 1.354-2.652 4.006-3.655 6.656-3.949.891 2.059-1.232 2.652-2.531 3.531zm-56.264-2.12c-1.651 2.182-4.771 4.303-7.07 3.65.354-2.114 2.943-3.413 4.949-3.766l2.121.116z"/><path d="M70.602 103.566c5.364.407 9.249.585 13.553 4.119.234.943-.89.943-1.418.71-3.945-2.947-8.955-3.833-14.258-3.125l-2.122.297c-2.355-.297-5.653 1.238-7.54-.706-1.824.291-3.828.175-5.183-1.001l-1.297-1.591c-2.707 1.413-5.538 4.062-8.783 2.412-1.408.589-3.179 1.239-4.767.589-1.178-1.235-.824-2.528-.296-3.944.179-.475.825-.882.529-1.299-3.537 3.771-7.953 6.247-12.96 5.54a7.636 7.636 0 0 1-5.244-3.298c-.235-.826-.708-1.589-.708-2.533l-10.782 9.072c-.352-.117-.708-.351-.823-.709v-.412l14.431-12.485a7.11 7.11 0 0 1-4.825-2.531c-1.83-2.475-1.416-6.305-.117-8.895 2.824-4.893 8.541-7.432 13.957-7.667 4.186.468 8.312 1.412 10.906 4.954 2.001 2.294 2.117 6.308 1.588 9.072 3.595-.412 8.36-1.174 12.015.121 1.89-2.594 4.601-6.014 7.898-6.187.942.112 2.066.645 2.239 1.702-.352 5.013-5.123 8.547-8.722 12.02l-4.122 3.355c-.062.947.768 1.77 1.529 2.127 1.178.292 2.067.061 3.301.292-.118-2.065 1.471-4.126 3.242-5.362 1.356-1.058 3.475-1.058 5.065-.587.652 1.647-.411 3.118-1.237 4.237l-3.71 2.297 5.83-.178 2.831-.406zM37.49 78.941c-5.188-2.124-11.96-1.003-15.963 2.708-2.772 2.359-3.596 6.073-2.542 9.493 1.065 2.117 3.661 2.296 5.66 2.523l12.964-10.897 1.411-.115.296 1.001-11.724 9.721c5.359-.529 9.897-1.645 14.961-2.825.476-1.944 1-4.542.179-6.479-1.059-2.481-3.239-3.658-5.242-5.13zm27.16 6.831c-3.12.184-5.188 3.123-6.952 5.481l.588.589c.235.827 1.59 1.89.294 2.656-1.351.646-1.234-1.299-2.001-1.653-1.119 1.886-2.357 4.067-2.829 6.353 4.182-3.937 9.783-7.535 11.312-13.008l-.412-.418zm-20.678 6.367c-1.417 2.658-2.652 5.361-4.655 7.776 1.298-1.77 3.003-2.947 4.828-3.709 1.716-.475 4.245 0 5.487 1.586-1.12 1.648-2.539-.229-3.949 0-1.828.354-3.594 1.236-4.773 2.826-.241 1.12-1.946 2.057-1.001 3.355 4.064.533 4.948-4.416 8.189-5.241.232.296.646.533.705.885-.884 1.234-3.12 2.301-3.653 4.065 2.651 0 4.713-1.828 6.775-3.064-.238-3.353 1.71-6.182 3.356-8.954-3.595-1.114-7.777-.354-11.309.475zm-2.126.236l-7.888 1.888c-3.948 1.587-9.549-.826-12.138 4.057-.358 1.77.531 3.006 1.23 4.247 1.475 1.115 3.189 1.939 5.248 1.584 6.306-.468 11.313-6.293 13.548-11.776zm18.56 10.601c1.771-.706 4.715-1.649 5.068-4.244-2.354-.349-4.652 2.061-5.068 4.244z"/></g></g></defs></svg>
+
+<!-- Interactive Screen Toolbar -->
+<header class="screen-bar" role="navigation" aria-label="Document Mode Switcher">
+  <div class="brand-tag">BOUXRE <span>PORTRAIT</span></div>
+  <button id="btn-m-inv" class="active" onclick="switchMode('inv')">INVOICE</button>
+  <button id="btn-m-quo" onclick="switchMode('quo')">QUOTATION</button>
+  <button id="btn-m-po" onclick="switchMode('po')">PURCHASE ORDER</button>
+  <button class="btn-print" onclick="window.print()">Print / Save PDF</button>
+</header>
+
+<!-- Main Printable A4 Sheet -->
+<main class="sheet" id="sheet-root">
+  <!-- Content dynamically populated from fixture -->
+</main>
+
+<script src="commercial-fixture.js"></script>
+<script>
+// Fallback if loaded in restricted environment where external script is blocked
+if (typeof COMMERCIAL_DATA === 'undefined') {
+  console.warn("COMMERCIAL_DATA not found on window. Ensure commercial-fixture.js is present.");
+}
+
+function renderPortrait(modeKey) {
+  const data = window.COMMERCIAL_DATA;
+  if (!data || !data.models[modeKey]) return;
+
+  const I = data.issuer;
+  const m = data.models[modeKey];
+  const p = (modeKey === 'po' && data.supplier) ? data.supplier : m.party;
+
+  // Build Metadata Strip
+  const metaHtml = m.meta.map(([label, val]) => `
+    <div class="kv-item">
+      <div class="kv-label">${label}</div>
+      <div class="kv-val ${label.includes('Due') || label.includes('Valid') ? 'highlight' : ''}">${val}</div>
+    </div>
+  `).join('');
+
+  // Build Party Cards
+  const partyCard1 = `
+    <div class="party-card">
+      <div class="party-label">${m.party_label}</div>
+      <div class="party-name">${p.name}</div>
+      <div class="party-text">
+        ${p.contact ? p.contact + '<br>' : ''}
+        ${p.addr}<br>
+        ${p.phone ? p.phone + ' &bull; ' : ''}${p.email || ''}<br>
+        <strong>${p.tin || ''}</strong>
+      </div>
+    </div>
+  `;
+
+  const partyCard2 = `
+    <div class="party-card secondary">
+      <div class="party-label secondary">${m.project_block ? m.project_block.label : 'Project & Delivery'}</div>
+      <div class="party-name" style="font-size: 9.5pt;">${m.project_block ? m.project_block.lines[0] : 'Commercial Consignment'}</div>
+      <div class="party-text">
+        ${m.project_block ? m.project_block.lines.slice(1).join('<br>') : ''}
+      </div>
+    </div>
+  `;
+
+  // Build Table Rows (Handling both Groups & Standalone Rows)
+  let tableRowsHtml = '';
+  let inGroup = false;
+
+  m.rows.forEach((row, idx) => {
+    if (row.kind === 'group') {
+      // Group Header Row
+      tableRowsHtml += `
+        <tr class="grp-head">
+          <td colspan="6">
+            <div class="grp-head-wrap">
+              <div class="grp-left">
+                <span class="grp-badge">GROUP</span>
+                <span class="grp-title">${row.title}</span>
+              </div>
+              <div class="grp-subtotal">Group Subtotal: <strong>₦ ${row.subtotal}</strong></div>
+            </div>
+          </td>
+        </tr>
+      `;
+      inGroup = true;
+    } else {
+      // Determine if this is the last item in a group
+      const nextRow = m.rows[idx + 1];
+      const isLastInGroup = inGroup && (!nextRow || nextRow.kind === 'group' || (nextRow.kind === 'item' && isStandalone(nextRow.n)));
+
+      const rowClass = inGroup 
+        ? `grp-row ${isLastInGroup ? 'grp-last' : ''}` 
+        : 'standalone-row';
+
+      // Render product thumbnail beneath sub-description (DeepSeek placement rule)
+      const thumbHtml = row.svg ? `
+        <div class="p-thumb" title="Product illustration">
+          ${row.svg}
+        </div>
+      ` : '';
+
+      tableRowsHtml += `
+        <tr class="${rowClass}">
+          <td class="cell-n">${row.n}</td>
+          <td class="col-d">
+            <div class="p-name">${row.name}</div>
+            ${row.make ? `<div class="p-make">${row.make}</div>` : ''}
+            ${row.spec ? `<div class="p-spec">${row.spec}</div>` : ''}
+            ${thumbHtml}
+          </td>
+          <td class="cell-q">${row.qty}</td>
+          <td class="cell-u">${row.unit}</td>
+          <td class="cell-p">₦ ${row.price}</td>
+          <td class="cell-a">₦ ${row.amount}</td>
+        </tr>
+      `;
+
+      if (isLastInGroup) {
+        inGroup = false;
+      }
+    }
+  });
+
+  // Helper to identify standalone item indices based on user-locked sequence:
+  // Standalone: 1, 2, 3, 7, 8, 9, 10, 14, 15, 26
+  function isStandalone(num) {
+    return [1, 2, 3, 7, 8, 9, 10, 14, 15, 26].includes(num);
+  }
+
+  // Build Financial Totals
+  const totalsHtml = m.totals.map(([label, val, flag]) => {
+    let trClass = '';
+    if (label.toLowerCase().includes('discount')) trClass = 'discount-row';
+    if (label.toLowerCase().includes('wht')) trClass = 'wht-row';
+    if (flag === 'sum') trClass = 'sum-row';
+    return `
+      <tr class="${trClass}">
+        <td>${label}</td>
+        <td>${val.startsWith('−') ? val : '₦ ' + val}</td>
+      </tr>
+    `;
+  }).join('') + `
+    <tr class="grand-row">
+      <td>${m.total_label}</td>
+      <td>₦ ${m.total}</td>
+    </tr>
+  `;
+
+  // Build Ancillary Block (Bank vs Delivery Instructions)
+  let ancillaryHtml = '';
+  if (m.ancillary) {
+    if (m.ancillary.kind === 'bank') {
+      const acctsHtml = m.ancillary.accounts.map(acc => `
+        <div class="acct-row">
+          <div class="acct-bank">${acc.bank}</div>
+          <div class="acct-num">${acc.no}</div>
+          <div class="acct-meta">Account Name: <strong>${acc.name}</strong> &bull; ${acc.note}</div>
+        </div>
+      `).join('');
+      ancillaryHtml = `
+        <div class="box-card">
+          <h4>${m.ancillary.title}</h4>
+          ${acctsHtml}
+        </div>
+      `;
+    } else {
+      const linesHtml = m.ancillary.lines.map(line => `<div style="margin-bottom: 1.5mm;">${line}</div>`).join('');
+      ancillaryHtml = `
+        <div class="box-card">
+          <h4>${m.ancillary.title}</h4>
+          <div class="rich-text">${linesHtml}</div>
+        </div>
+      `;
+    }
+  }
+
+  // Build Terms List
+  const termsHtml = m.terms ? `
+    <div class="sec-heading">Terms &amp; Commercial Conditions</div>
+    <div class="rich-text">
+      <ol>${m.terms.map(t => `<li>${t}</li>`).join('')}</ol>
+    </div>
+  ` : '';
+
+  // Build Signatures Section (Approved Claude Architecture)
+  const sigs = m.sigs;
+  const signatureSectionHtml = `
+    <section class="sign-section">
+      <div class="sec-heading" style="margin-top:0; border-bottom:none; padding-bottom:0;">Document Authorisation &amp; Acknowledgement</div>
+      <div class="sign-grid">
+        <!-- Issuer Column -->
+        <div>
+          <div class="sign-label">${sigs.left}</div>
+          <div class="sign-area">
+            <svg class="sig-asset" viewBox="5.503 51.024 181.748 90.711" role="img" aria-label="Issuer signature">
+              <use href="#g-sig"/>
+            </svg>
+            <div class="stamp-mark">OFFICIAL<br>SEAL</div>
+          </div>
+          <div class="sign-meta-text">
+            <b>${sigs.lname}</b><br>
+            ${sigs.ltitle} &mdash; ${I.name}<br>
+            Date: <span class="fill-line"></span>
+          </div>
+        </div>
+
+        <!-- Client Column -->
+        <div>
+          <div class="sign-label">${sigs.right}</div>
+          <div class="sign-area blank-box">
+            <span>Handwritten signature &mdash; sign inside this boundary</span>
+          </div>
+          <div class="sign-meta-text">
+            ${sigs.rlabel} (name): <span class="fill-line" style="width: 36mm;"></span><br>
+            Designation: <span class="fill-line" style="width: 24mm;"></span> &nbsp;Date: <span class="fill-line" style="width: 18mm;"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+
+  // Assemble Complete Portrait Document
+  document.getElementById('sheet-root').innerHTML = `
+    <!-- Header -->
+    <header class="hd">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 26.927 27" role="img" aria-label="Company logo"><use href="#g-logo"/></svg>
+        <div>
+          <div class="co-title">${I.name}</div>
+          <div class="co-tagline">${I.tagline}</div>
+          <div class="co-meta">
+            ${I.rc} &bull; ${I.tin}<br>
+            ${I.addr}<br>
+            ${I.phone} &bull; ${I.email} &bull; ${I.web}
+          </div>
+        </div>
+      </div>
+
+      <div class="badge-col">
+        <div class="badge-title">${m.title}</div>
+        <div class="badge-number">${m.number}</div>
+      </div>
+    </header>
+
+    <div class="rule"></div>
+
+    <!-- Metadata Key-Value Strip -->
+    <div class="kv-strip">
+      ${metaHtml}
+    </div>
+
+    <!-- Parties Cards -->
+    <section class="parties">
+      ${partyCard1}
+      ${partyCard2}
+    </section>
+
+    <!-- Line Items Table -->
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="col-n">#</th>
+          <th class="col-d">Item &amp; Description</th>
+          <th class="col-q">Qty</th>
+          <th class="col-u">Unit</th>
+          <th class="col-p">${m.pricehead}</th>
+          <th class="col-a">Amount (₦)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRowsHtml}
+      </tbody>
+    </table>
+
+    <!-- Financial Settlement & Totals Grid -->
+    <section class="fin-grid">
+      <div>
+        ${ancillaryHtml}
+        <div class="notes-box">
+          <div class="sec-heading" style="margin-top: 1mm;">Notes &amp; Operational Directives</div>
+          <div class="rich-text">${m.notes}</div>
+        </div>
+      </div>
+
+      <div>
+        <table class="tot-table">
+          ${totalsHtml}
+        </table>
+
+        <div class="words-card">
+          <div class="words-lbl">Total Amount in Words</div>
+          <div class="words-text">${m.words}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Commercial Terms -->
+    ${termsHtml}
+
+    <!-- Dual Signature Section -->
+    ${signatureSectionHtml}
+
+    <!-- Running Document Footer -->
+    <footer class="running-footer">
+      <div><strong>${I.name}</strong> &bull; ${I.rc} &bull; Powered by BOUXRE Business Platform</div>
+      <div style="font-family: var(--font-mono); font-size: 6.4pt;">CONFIDENTIAL &bull; AUTH-SHA256: 9F20-A841</div>
+      <div>Page 1 of 1</div>
+    </footer>
+  `;
+
+  // Update Toolbar States
+  document.querySelectorAll('.screen-bar button[id^="btn-m-"]').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById('btn-m-' + modeKey);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  document.title = `${m.title} ${m.number} — Portrait A4`;
+}
+
+function switchMode(key) {
+  renderPortrait(key);
+  location.hash = key;
+}
+
+// Initial synchronous render
+const initialDocKey = new URLSearchParams(location.search).get('doc') || location.hash.replace('#', '') || 'inv';
+renderPortrait(['inv', 'quo', 'po'].includes(initialDocKey) ? initialDocKey : 'inv');
+
+window.addEventListener('hashchange', () => {
+  const hashKey = location.hash.replace('#', '') || 'inv';
+  renderPortrait(['inv', 'quo', 'po'].includes(hashKey) ? hashKey : 'inv');
+});
+</script>
+</body>
+</html>
