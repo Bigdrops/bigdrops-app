@@ -1,4 +1,5 @@
 import type { ImportMode, ParsedImportRoot, NormalizedImportData, NormalizedImportItem, NormalizedImportGroup } from './types'
+import { normalizeImportedRichTextField } from '@/lib/commercialRichText'
 import {
   inferColumnType,
   isDangerousKey,
@@ -162,8 +163,16 @@ export function normalizeImportData(
 
   const title = normalizeText((input as any).title)
   const poNumber = normalizeText(input.po_number)
-  const notes = normalizeText(input.notes)
-  const terms = normalizeText(input.terms)
+
+  // Notes / Terms accept null, a legacy string, or shared rich-text blocks.
+  // Structured blocks are validated strictly and canonicalized to rich-text HTML;
+  // malformed structured content rejects the import instead of flattening.
+  const notesField = normalizeImportedRichTextField(input.notes, 'Notes', normalizeText)
+  if (notesField.ok === false) return { ok: false, message: notesField.message }
+  const termsField = normalizeImportedRichTextField(input.terms, 'Terms', normalizeText)
+  if (termsField.ok === false) return { ok: false, message: termsField.message }
+  const notes = notesField.value
+  const terms = termsField.value
 
   const groups: NormalizedImportGroup[] = Array.isArray(input.groups)
     ? input.groups

@@ -13,6 +13,21 @@ export const JSON_IMPORT_DISCIPLINE_SPEC = `You are a strict JSON data extractor
 · Each document type is independent (no cross-domain inference).
 · The identifier po_number MUST be null unless the source explicitly labels it as PO/Voucher.`
 
+export const RICH_TEXT_IMPORT_SPEC = `Notes and Terms use this rich-text contract. Each value is null or an array of blocks:
+· Paragraph: { "type": "paragraph", "children": [ { "text": "Payment Terms:", "bold": true }, { "text": " 50% advance payment is required." } ] }
+· Heading: { "type": "heading", "text": "General Conditions" }
+· Numbered list: { "type": "ordered_list", "items": [ [ { "text": "Payment must be made before delivery." } ], [ { "text": "Delivery will take place within five working days." } ] ] }
+· Bulleted list: { "type": "unordered_list", "items": [ [ { "text": "Delivery charges are included." } ], [ { "text": "Installation is excluded." } ] ] }
+Text runs support optional "bold", "italic" and "underline" booleans.
+Rules for notes and terms:
+· Copy source wording and order exactly. Never paraphrase, summarize, invent headings, or merge conditions.
+· Return null when the source has no Notes or no Terms.
+· A plain string is allowed only when the whole field is one unstructured paragraph.
+· Convert headings into heading blocks, numbered lists into ordered lists, bullet lists into unordered lists, and separate paragraphs into separate paragraph blocks.
+· Mark bold, italic or underline only where the source clearly shows it. Keep uncertain text as plain runs.
+· Do not convert ordinary paragraphs into lists.
+· Do not return HTML or Markdown syntax.`
+
 export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, documentType: 'invoice' | 'quotation', currentItemCount: number): string {
   const DISCIPLINE_SPEC = JSON_IMPORT_DISCIPLINE_SPEC
 
@@ -45,8 +60,10 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
   const jsonStructure: any = {
     title: "Document Title",
     po_number: "PO-12345",
-    notes: "Remarks or internal notes",
-    terms: "Payment terms or conditions",
+    notes: [
+      { type: "paragraph", children: [ { text: "Remarks or internal notes", bold: false } ] }
+    ],
+    terms: null,
     extra_charges: [
       { label: "Delivery", value: 5000 }
     ],
@@ -68,8 +85,8 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
     mode === 'Update' ? `Valid row_numbers for this document are 1 through ${currentItemCount}. Any row_number outside this range will be rejected.` : ``,
     `Extract document title into "title" (Maps to ${documentType === 'invoice' ? 'Invoice' : 'Quotation'} Title field)`,
     `Extract PO reference into "po_number"`,
-    `Put remarks into "notes"`,
-    `Put conditions / payment terms into "terms"`,
+    `Put remarks into "notes" as a rich-text block array (contract below)`,
+    `Put conditions / payment terms into "terms" as a rich-text block array (contract below)`,
     `Standalone charges -> extra_charges (label + value only)`,
     `Main table -> items`,
     `JSON only.`,
@@ -89,7 +106,7 @@ export function generateImportPrompt(columns: ColumnConfig[], mode: ImportMode, 
     `Import must reflect the active form configuration: only include shown columns.`,
   ].filter(Boolean)
 
-  return DISCIPLINE_SPEC + "\n\n" + `Convert the source content into JSON for ${documentType} ${mode === 'Add' ? 'import' : 'update'}.
+  return DISCIPLINE_SPEC + "\n\n" + RICH_TEXT_IMPORT_SPEC + "\n\n" + `Convert the source content into JSON for ${documentType} ${mode === 'Add' ? 'import' : 'update'}.
 
 Return JSON only.
 
@@ -102,6 +119,6 @@ ${Object.keys(customSchema).length > 0 ? `- Use these keys inside "custom_fields
 - Do not guess missing values
 - Do not add top-level fields outside this structure
 
-Wrap the JSON output in a code block.
+Return raw JSON only. Do not wrap it in a code block or Markdown fences.
 Copy the JSON above and paste it back into the app.`
 }

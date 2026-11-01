@@ -21,11 +21,26 @@ Requirements:
 - Use YYYY-MM-DD for dates if present
 - Use true/false/null for system_down
 - materials must be an array of { "item": "", "quantity": "", "unit": "" }
-- Missing values should be empty strings, except system_down can be null`
+- Missing values should be empty strings, except system_down can be null
+
+Narrative fields (problem_reported, service_rendered, defects_found, engineer_remarks) use this rich-text contract. Each value is a plain string or an array of blocks:
+· Paragraph: { "type": "paragraph", "children": [ { "text": "Replaced the damaged control relay.", "bold": true } ] }
+· Heading: { "type": "heading", "text": "Work Performed" }
+· Numbered list: { "type": "ordered_list", "items": [ [ { "text": "Isolated the faulty feeder." } ], [ { "text": "Fitted a replacement relay." } ] ] }
+· Bulleted list: { "type": "unordered_list", "items": [ [ { "text": "Site left operational." } ] ] }
+Text runs support optional "bold", "italic" and "underline" booleans.
+Rules for narrative fields:
+· Copy source wording and order exactly. Never paraphrase, summarize, invent headings, or merge points.
+· Return an empty string when the source has no content for the field.
+· Use a block array only when the source clearly shows headings, lists or separate paragraphs. Otherwise use a plain string.
+· Convert headings into heading blocks, numbered lists into ordered lists, bullet lists into unordered lists, and separate paragraphs into separate paragraph blocks.
+· Mark bold, italic or underline only where the source clearly shows it. Keep uncertain text as plain runs.
+· Do not convert ordinary paragraphs into lists.
+· Do not return HTML or Markdown syntax.`
 
 const csrJsonSchema = z.object({
   system_down: z.boolean().nullable().optional(),
-  problem_reported: z.string().optional(),
+  problem_reported: z.union([z.string(), z.array(z.unknown())]).optional(),
   equipment_type: z.string().optional(),
   equipment_location: z.string().optional(),
   make: z.string().optional(),
@@ -39,9 +54,9 @@ const csrJsonSchema = z.object({
   temperature: z.string().optional(),
   pressure: z.string().optional(),
   hours: z.string().optional(),
-  service_rendered: z.string().optional(),
-  defects_found: z.string().optional(),
-  engineer_remarks: z.string().optional(),
+  service_rendered: z.union([z.string(), z.array(z.unknown())]).optional(),
+  defects_found: z.union([z.string(), z.array(z.unknown())]).optional(),
+  engineer_remarks: z.union([z.string(), z.array(z.unknown())]).optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   materials: z.array(z.object({

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Wand2, ClipboardCheck } from 'lucide-react'
 import { feedback } from '@/lib/feedback'
 import { CSR_IMPORT_PROMPT, parseCsrJson, type ParsedCsrImport } from '@/components/csr/csrImport'
+import { normalizeImportedRichTextField } from '@/lib/commercialRichText'
 import { JsonImportLayout } from '@/components/import/JsonImportLayout'
 
 type CsrImportSheetProps = {
@@ -44,10 +45,39 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
     )
     const materials = data.materials ?? []
 
+    // Narrative fields accept a legacy string or the shared rich-text block array.
+    // CSR narrative surfaces are plain text, so structured blocks are converted to
+    // structure-preserving plain text; malformed blocks reject the import.
+    const narrativeFields = {
+      problem_reported: 'Problem reported',
+      service_rendered: 'Service rendered',
+      defects_found: 'Defects found',
+      engineer_remarks: 'Engineer remarks',
+    } as const
+    const narrative: Record<keyof typeof narrativeFields, string | null> = {
+      problem_reported: null,
+      service_rendered: null,
+      defects_found: null,
+      engineer_remarks: null,
+    }
+    for (const [key, label] of Object.entries(narrativeFields)) {
+      const normalized = normalizeImportedRichTextField(
+        data[key as keyof typeof data],
+        label,
+        (value) => (typeof value === 'string' ? value : undefined),
+        'plain-text',
+      )
+      if (normalized.ok === false) {
+        feedback.error('Import failed', { description: normalized.message })
+        return
+      }
+      narrative[key as keyof typeof narrativeFields] = normalized.value ?? null
+    }
+
     const adaptedResult: ParsedCsrImport = {
       fields: {
         system_down: data.system_down ?? null,
-        problem_reported: data.problem_reported ?? null,
+        problem_reported: narrative.problem_reported,
         equipment_type: data.equipment_type ?? null,
         equipment_location: data.equipment_location ?? null,
         make: data.make ?? null,
@@ -61,9 +91,9 @@ export default function CsrImportSheet({ open, onOpenChange, onApplyImport }: Cs
         temperature: data.temperature ?? null,
         pressure: data.pressure ?? null,
         hours: data.hours ?? null,
-        service_rendered: data.service_rendered ?? null,
-        defects_found: data.defects_found ?? null,
-        engineer_remarks: data.engineer_remarks ?? null,
+        service_rendered: narrative.service_rendered,
+        defects_found: narrative.defects_found,
+        engineer_remarks: narrative.engineer_remarks,
         start_date: data.start_date ?? null,
         end_date: data.end_date ?? null,
       },

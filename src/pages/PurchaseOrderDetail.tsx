@@ -34,6 +34,25 @@ import {
   type PurchaseOrderStatus,
 } from '@/domain/purchase-order/types'
 import { formatCurrency } from '@/components/invoice/mobile/mobileFormPrimitives'
+import { renderRichTextContent } from '@/lib/richText'
+
+const RICH_TEXT_MARKUP = /<\/?(?:p|div|br|strong|b|em|i|u|ul|ol|li|h[1-6])(?:\s[^<>]*)?\/?>/i
+
+const PO_RICH_TEXT_CLASS = [
+  'mt-1 break-words text-bd-text',
+  '[&_p]:my-1 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
+  '[&_h1]:my-1 [&_h2]:my-1 [&_h3]:my-1 [&_h1]:text-sm [&_h2]:text-sm [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold',
+  '[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5',
+].join(' ')
+
+/** Legacy PO records were stored as plain text; keep their line breaks intact
+ * while canonical rich-text HTML (imports and the rich-text editor) renders safely. */
+function NotesBody({ value }: { value: string }) {
+  if (!RICH_TEXT_MARKUP.test(value)) {
+    return <div className="mt-1 whitespace-pre-wrap text-bd-text">{value}</div>
+  }
+  return renderRichTextContent(value, PO_RICH_TEXT_CLASS)
+}
 
 function isArchived(purchaseOrder: PurchaseOrder): boolean {
   return purchaseOrder.archived_at !== null && purchaseOrder.archived_at !== undefined
@@ -424,13 +443,13 @@ export default function PurchaseOrderDetail() {
               {purchaseOrder.notes && (
                 <div>
                   <div className="font-bold uppercase tracking-wider text-bd-text-muted">Notes</div>
-                  <div className="mt-1 whitespace-pre-wrap text-bd-text">{purchaseOrder.notes}</div>
+                  <NotesBody value={purchaseOrder.notes} />
                 </div>
               )}
               {purchaseOrder.terms && (
                 <div>
                   <div className="font-bold uppercase tracking-wider text-bd-text-muted">Terms</div>
-                  <div className="mt-1 whitespace-pre-wrap text-bd-text">{purchaseOrder.terms}</div>
+                  <NotesBody value={purchaseOrder.terms} />
                 </div>
               )}
             </CardContent>

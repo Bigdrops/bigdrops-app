@@ -1,3 +1,8 @@
+import {
+  commercialRichTextToHtml,
+  parseCommercialRichTextBlocks,
+} from '@/lib/commercialRichText'
+
 type RichTextMark = 'bold' | 'italic' | 'underline'
 
 export type RichTextSegment = {
@@ -12,12 +17,18 @@ export type RichTextParagraphBlock = {
   segments: RichTextSegment[]
 }
 
+export type RichTextHeadingBlock = {
+  type: 'heading'
+  level: number
+  segments: RichTextSegment[]
+}
+
 export type RichTextListBlock = {
   type: 'bullet_list' | 'ordered_list'
   items: RichTextSegment[][]
 }
 
-export type RichTextBlock = RichTextParagraphBlock | RichTextListBlock
+export type RichTextBlock = RichTextParagraphBlock | RichTextHeadingBlock | RichTextListBlock
 
 export type RichTextDocument = {
   blocks: RichTextBlock[]
@@ -114,6 +125,13 @@ function renderSegmentsToHtml(segments: RichTextSegment[]) {
 }
 
 export function parseRichText(value: unknown): RichTextDocument {
+  // Structured rich-text arrays (shared commercial import contract) are
+  // canonicalized to HTML and interpreted by the same parser below.
+  if (Array.isArray(value)) {
+    const parsed = parseCommercialRichTextBlocks(value, 'Rich text')
+    value = parsed.ok ? commercialRichTextToHtml(parsed.blocks) : ''
+  }
+
   if (typeof value !== 'string' || !value.trim()) return { blocks: [] }
 
   const tokens: string[] = value.match(/<!--[\s\S]*?-->|<\/?[^>]+>|[^<]+/g) || []
@@ -123,8 +141,22 @@ export function parseRichText(value: unknown): RichTextDocument {
   let paragraphSegments: RichTextSegment[] = []
   let currentList: RichTextListBlock | null = null
   let currentListItem: RichTextSegment[] | null = null
+  let headingLevel: number | null = null
+
+  const pushHeading = () => {
+    if (headingLevel === null) return false
+    const level = headingLevel
+    headingLevel = null
+    const trimmed = trimSegmentEdges(paragraphSegments)
+    paragraphSegments = []
+    if (trimmed.length > 0) {
+      blocks.push({ type: 'heading', level, segments: trimmed })
+    }
+    return true
+  }
 
   const pushParagraph = () => {
+    if (pushHeading()) return
     const trimmed = trimSegmentEdges(paragraphSegments)
     if (trimmed.length > 0) {
       blocks.push({ type: 'paragraph', segments: trimmed })
@@ -200,6 +232,18 @@ export function parseRichText(value: unknown): RichTextDocument {
 
     if (tagName === 'br') {
       appendLineBreak()
+      return
+    }
+
+    const headingMatch = /^h([1-6])$/.exec(tagName)
+    if (headingMatch) {
+      if (isClosing) {
+        pushParagraph()
+      } else {
+        pushParagraph()
+        pushList()
+        headingLevel = Number(headingMatch[1])
+      }
       return
     }
 
@@ -285,6 +329,11 @@ export function normalizeRichTextHtml(value: unknown): string {
         return `<p>${renderSegmentsToHtml(block.segments)}</p>`
       }
 
+      if (block.type === 'heading') {
+        const level = Math.min(3, Math.max(1, Math.round(block.level) || 2))
+        return `<h${level}>${renderSegmentsToHtml(block.segments)}</h${level}>`
+      }
+
       const tag = block.type === 'bullet_list' ? 'ul' : 'ol'
       const items = block.items
         .map((item) => `<li>${renderSegmentsToHtml(item)}</li>`)
@@ -304,6 +353,7 @@ export function richTextToPlainText(value: unknown): string {
 
     return document.blocks.map((block) => {
       if (block.type === 'paragraph') return plainTextFromSegments(block.segments).trim()
+      if (block.type === 'heading') return plainTextFromSegments(block.segments).trim()
 
       return block.items.map((item, index) => {
         const marker = block.type === 'bullet_list' ? '•' : `${index + 1}.`

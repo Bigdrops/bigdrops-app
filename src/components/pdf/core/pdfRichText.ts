@@ -7,12 +7,17 @@ import { PdfGlyphText } from './PdfGlyphText'
 type RenderPdfRichTextOptions = {
   containerStyle?: any
   paragraphStyle?: any
+  headingStyle?: any
   listStyle?: any
   listItemRowStyle?: any
   listMarkerStyle?: any
   listItemTextStyle?: any
   fallbackTextStyle?: any
 }
+
+/** Distinguished but template-respecting heading treatment: bold runs (same
+ * Helvetica-Bold path as existing bold text) plus vertical spacing. */
+const DEFAULT_HEADING_STYLE = { marginTop: 6, marginBottom: 2 }
 
 function renderInlineSegments(segments: RichTextSegment[], baseStyle: any, keyPrefix: string) {
   return segments.map((segment, index) => React.createElement(
@@ -47,6 +52,19 @@ export function renderPdfRichText(value: unknown, options: RenderPdfRichTextOpti
               style: options.paragraphStyle,
             },
             ...renderInlineSegments(block.segments, options.paragraphStyle, `paragraph-${blockIndex}`),
+          )
+        }
+
+        if (block.type === 'heading') {
+          const headingStyle = [options.headingStyle ?? options.paragraphStyle, DEFAULT_HEADING_STYLE]
+          const headingSegments = block.segments.map((segment) => ({ ...segment, bold: true }))
+          return React.createElement(
+            Text,
+            {
+              key: `heading-${blockIndex}`,
+              style: headingStyle,
+            },
+            ...renderInlineSegments(headingSegments, headingStyle, `heading-${blockIndex}`),
           )
         }
 
