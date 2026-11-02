@@ -1,5 +1,6 @@
 import { AlertTriangle, Download, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { formatDownloadProgress } from '@/domain/appUpdate/updateStateMachine'
 import type { UseAppUpdateResult } from '@/hooks/useAppUpdate'
 
 /**
@@ -8,18 +9,25 @@ import type { UseAppUpdateResult } from '@/hooks/useAppUpdate'
  * the gate never blocks its own escape paths.
  */
 export default function UpdateGate({ update }: { update: UseAppUpdateResult }) {
-  const { state, downloadPhase, startInAppDownload, installDownloadedApk, openWebDownload } = update
+  const {
+    state,
+    downloadPhase,
+    startInAppDownload,
+    cancelInAppDownload,
+    installDownloadedApk,
+    openWebDownload,
+  } = update
   const policy = state.policy
 
   const downloading = downloadPhase.kind === 'downloading'
   const installing = downloadPhase.kind === 'installing'
+  const totalBytes = downloadPhase.kind === 'downloading' ? downloadPhase.totalBytes : null
+  const downloadedBytes = downloadPhase.kind === 'downloading' ? downloadPhase.downloadedBytes : null
 
-  const primaryLabel =
-    downloadPhase.kind === 'downloaded'
-      ? 'Install update'
-      : downloading
-        ? 'Downloading…'
-        : 'Download & Install'
+  const progressPercent =
+    downloadedBytes !== null && totalBytes
+      ? Math.min(100, Math.round((downloadedBytes / totalBytes) * 100))
+      : null
 
   return (
     <div className="min-h-screen bg-background px-4 py-6 flex flex-col items-center justify-center gap-4">
@@ -55,15 +63,18 @@ export default function UpdateGate({ update }: { update: UseAppUpdateResult }) {
               <Download data-icon="inline-start" />
               Install update
             </Button>
+          ) : downloading ? (
+            <Button variant="outline" onClick={() => void cancelInAppDownload()} size="lg">
+              Cancel download
+            </Button>
           ) : (
             <Button
               onClick={() => void startInAppDownload()}
-              loading={downloading}
-              disabled={installing}
+              loading={installing}
               size="lg"
             >
               <Download data-icon="inline-start" />
-              {primaryLabel}
+              Download &amp; Install
             </Button>
           )}
 
@@ -74,9 +85,22 @@ export default function UpdateGate({ update }: { update: UseAppUpdateResult }) {
         </div>
 
         {downloadPhase.kind === 'downloading' && (
-          <p className="mt-4 text-xs text-muted-foreground">
-            Downloading… {downloadPhase.downloadedBytes.toLocaleString()} bytes
-            {downloadPhase.totalBytes ? ` of ${downloadPhase.totalBytes.toLocaleString()}` : ''}
+          <div className="mt-4 space-y-1">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${progressPercent ?? 0}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Downloading… {formatDownloadProgress(downloadedBytes, totalBytes)}
+            </p>
+          </div>
+        )}
+
+        {downloadPhase.kind === 'downloaded' && downloadPhase.message && (
+          <p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-500" role="alert">
+            {downloadPhase.message}
           </p>
         )}
 

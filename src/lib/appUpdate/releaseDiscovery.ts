@@ -50,6 +50,76 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+/**
+ * Detects whether a URL points directly to an installable APK file
+ * (e.g. Supabase Storage public URL or direct CDN link).
+ */
+export function isDirectApkUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false
+  const trimmed = url.trim()
+  if (!/^https:\/\//i.test(trimmed)) return false
+  try {
+    const parsed = new URL(trimmed)
+    const pathname = parsed.pathname.toLowerCase()
+    return (
+      pathname.endsWith('.apk') ||
+      pathname.includes('/storage/v1/object/public/app-releases/')
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Extracts the APK file name from a URL or falls back to a clean default.
+ */
+export function extractApkFileName(
+  url: string,
+  fallbackPrefix = 'BIGDROPS-test-release',
+): string {
+  try {
+    const parsed = new URL(url)
+    const segments = parsed.pathname.split('/').filter(Boolean)
+    const last = segments[segments.length - 1]
+    if (last && last.toLowerCase().endsWith('.apk')) {
+      return decodeURIComponent(last)
+    }
+  } catch {
+    // fallback below
+  }
+  return `${fallbackPrefix}.apk`
+}
+
+/**
+ * Builds an ApprovedRelease directly from policy metadata when webReleaseUrl
+ * is a direct APK URL (e.g., Supabase Storage). Bypasses GitHub API calls.
+ */
+export function buildDirectPolicyRelease(policy: {
+  versionCode: number
+  versionName: string | null
+  webReleaseUrl: string | null
+  apkAssetPrefix: string
+  effectiveAtMs?: number | null
+}): ApprovedRelease | null {
+  if (!isDirectApkUrl(policy.webReleaseUrl)) return null
+  const downloadUrl = policy.webReleaseUrl!.trim()
+  const name = extractApkFileName(downloadUrl, policy.apkAssetPrefix)
+
+  return {
+    versionCode: policy.versionCode,
+    versionName: policy.versionName,
+    webUrl: downloadUrl,
+    assets: [
+      {
+        name,
+        downloadUrl,
+        sizeBytes: null,
+      },
+    ],
+    publishedAtMs: policy.effectiveAtMs ?? null,
+  }
+}
+
 /** Resolves owner/name from the git remote injected at build time. */
 export function resolveGithubRepo(): { owner: string; repo: string } | null {
   const raw = import.meta.env.VITE_GIT_REPO

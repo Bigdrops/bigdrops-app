@@ -10,6 +10,8 @@ import {
   validateReleasePolicy,
   describeGraceRemaining,
   resolveUpdateState,
+  formatMegabytes,
+  formatDownloadProgress,
 } from '../../domain/appUpdate/updateStateMachine.ts'
 
 const VALID_POLICY = {
@@ -335,3 +337,76 @@ test('future promotion to 1010 offers the update to installed 1009 without code 
   assert.equal(result.policy?.versionCode, 1010)
   assert.ok(result.graceAnchorToPersist, 'first sighting records a grace anchor')
 })
+
+test('formatMegabytes handles valid bytes and edge cases safely', () => {
+  assert.equal(formatMegabytes(0), '0.0 MB')
+  assert.equal(formatMegabytes(1024 * 1024), '1.0 MB')
+  assert.equal(formatMegabytes(55 * 1024 * 1024), '55.0 MB')
+  assert.equal(formatMegabytes(15.75 * 1024 * 1024), '15.8 MB')
+  assert.equal(formatMegabytes(null), null)
+  assert.equal(formatMegabytes(undefined), null)
+  assert.equal(formatMegabytes(-100), null)
+  assert.equal(formatMegabytes(NaN), null)
+  assert.equal(formatMegabytes(Infinity), null)
+})
+
+test('formatDownloadProgress formats progress strings cleanly', () => {
+  assert.equal(formatDownloadProgress(0, 50 * 1024 * 1024), '0.0 MB of 50.0 MB')
+  assert.equal(formatDownloadProgress(25 * 1024 * 1024, 50 * 1024 * 1024), '25.0 MB of 50.0 MB')
+  assert.equal(formatDownloadProgress(25 * 1024 * 1024, null), '25.0 MB')
+  assert.equal(formatDownloadProgress(null, 50 * 1024 * 1024), '0.0 MB of 50.0 MB')
+  assert.equal(formatDownloadProgress(null, null), '0.0 MB')
+})
+
+test('consecutive mandatory releases do not reset grace countdown for already-outdated clients', () => {
+  const day0 = Date.parse('2026-10-01T00:00:00.000Z')
+  const day2 = day0 + 2 * DAY_MS
+  const day4 = day0 + 4 * DAY_MS
+
+  // Client on 1023 gets mandatory policy 1024 at day0.
+  // Persisted anchor is recorded at day0. Grace deadline = day0 + 3 days.
+  const firstCheck = resolveUpdateState({
+    policyAvailable: true,
+    installedVersionCode: 1023,
+    rawPolicy: mandatoryPolicy({
+      version_code: 1024,
+      effective_at: new Date(day0).toISOString(),
+    }),
+    persisted: null,
+    nowMs: day0,
+  })
+  assert.equal(firstCheck.status, 'grace')
+  assert.equal(firstCheck.graceDeadlineMs, day0 + GRACE_PERIOD_MS)
+
+  // 2 days later, CI publishes 1025 with effective_at = day2.
+  // Client is still on 1023 (installedVersionCode < 1024).
+  // The grace deadline must remain day0 + GRACE_PERIOD_MS (NOT extended to day2 + 3 days).
+  const checkAtDay2 = resolveUpdateState({
+    policyAvailable: true,
+    installedVersionCode: 1023,
+    rawPolicy: mandatoryPolicy({
+      version_code: 1025,
+      effective_at: new Date(day2).toISOString(),
+    }),
+    persisted: { versionCode: 1024, anchoredAtMs: day0, deviceClockSkewMs: 0 },
+    nowMs: day2,
+  })
+  assert.equal(checkAtDay2.status, 'grace')
+  assert.equal(checkAtDay2.graceDeadlineMs, day0 + GRACE_PERIOD_MS, 'must keep original deadline')
+  assert.equal(checkAtDay2.graceAnchorToPersist?.versionCode, 1025)
+  assert.equal(checkAtDay2.graceAnchorToPersist?.anchoredAtMs, day0)
+
+  // At day4 (past the original 3-day deadline): client is blocked even though 1025 was released at day2!
+  const checkAtDay4 = resolveUpdateState({
+    policyAvailable: true,
+    installedVersionCode: 1023,
+    rawPolicy: mandatoryPolicy({
+      version_code: 1025,
+      effective_at: new Date(day2).toISOString(),
+    }),
+    persisted: checkAtDay2.graceAnchorToPersist,
+    nowMs: day4,
+  })
+  assert.equal(checkAtDay4.status, 'blocked', 'must be blocked past the original 3-day deadline')
+})
+

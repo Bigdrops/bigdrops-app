@@ -11,22 +11,27 @@ policy layer and the client-side update rules.
 
 | Concern | Owner | Source |
 | --- | --- | --- |
-| APK distribution | GitHub Releases | `test-release-*` tag workflow |
+| Primary APK distribution | Supabase Storage | `app-releases/bigdrops-latest.apk` (public bucket) |
+| Secondary release tracking | GitHub Releases | `test-release-*` tag workflow (git history) |
 | Update policy (which version, mandatory, effective) | BIGDROPS | Supabase `app_release_policy` |
 | Install mechanism | Android package installer | `ApkUpdatePlugin` |
 
 GitHub releases never decide what is mandatory. The Supabase policy row
-decides. The app never trusts a GitHub asset that the policy does not
-name through the approved asset prefix.
+decides. When `web_release_url` points to a direct APK URL (such as
+Supabase Storage), the app resolves the asset directly from policy metadata
+without making unauthenticated GitHub API calls, avoiding rate limits and
+private repository 404 errors.
 
-## 2. Release Publishing (Existing Workflow)
+## 2. Release Publishing (Workflow)
 
-`build-android-test-release.yml` on tag push `test-release-*`:
+`build-android-test-release.yml` on tag push `test-release-*` or `workflow_dispatch`:
 
 - `versionCode = 1000 + github.run_number`
 - `versionName = 1.0.<run_number>`
 - APK asset name: `BIGDROPS-test-release-<versionName>-run<run>-<sha>.apk`
-- Release notes contain: `App ID com.bigdrops.app, versionCode <N>, versionName <M>`
+- Primary storage: Uploads to Supabase Storage at `/storage/v1/object/app-releases/bigdrops-latest.apk` (with upsert)
+- Automatic policy update: Patches `public.app_release_policy` (row `id = 1`) with the new `version_code`, `version_name`, and cache-busted `web_release_url` (`.../bigdrops-latest.apk?v=${version_code}`)
+- Secondary distribution: GitHub Release published with the versioned APK asset for tag tracking
 
 ## 3. Policy Table
 

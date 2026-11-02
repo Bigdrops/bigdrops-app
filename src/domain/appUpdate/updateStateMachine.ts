@@ -69,6 +69,8 @@ export interface PersistedGraceState {
   anchoredAtMs: number
   /** serverNow - deviceNow measured at anchor time. Best-effort fallback only. */
   deviceClockSkewMs: number
+  /** True when this anchor was carried over from an earlier unfulfilled mandatory release. */
+  carriedOver?: boolean
 }
 
 export type AppUpdateStatus =
@@ -289,14 +291,29 @@ function resolveMandatoryTarget(
   base: UpdateState,
 ): UpdateState {
   const sameTargetPersisted = persisted !== null && persisted.versionCode === policy.versionCode
+  const isCarriedOver =
+    (sameTargetPersisted && !!persisted?.carriedOver) ||
+    (!sameTargetPersisted && persisted !== null && installedVersionCode < persisted.versionCode)
 
   // Never reset the countdown for the same target on repeated checks.
   let anchorMs: number
   if (sameTargetPersisted && persisted) {
-    // A later re-anchored effective_at can only extend, never shorten,
-    // an already-recorded countdown (BIGDROPS granting more time).
-    const effectiveMs = policy.effectiveAtMs ?? 0
-    anchorMs = Math.max(persisted.anchoredAtMs, effectiveMs)
+    if (persisted.carriedOver) {
+      // Anchors carried over from earlier unfulfilled releases cannot be extended
+      // by the newer release's effective_at.
+      anchorMs = persisted.anchoredAtMs
+    } else {
+      // A later re-anchored effective_at can only extend, never shorten,
+      // an already-recorded countdown (BIGDROPS granting more time).
+      const effectiveMs = policy.effectiveAtMs ?? 0
+      anchorMs = Math.max(persisted.anchoredAtMs, effectiveMs)
+    }
+  } else if (persisted !== null && installedVersionCode < persisted.versionCode) {
+    // The client is ALREADY outdated and pending an unfulfilled mandatory update.
+    // Consecutive newer releases must NOT grant infinite grace by resetting the countdown.
+    // Preserve the original anchor (or use server effective_at if it was earlier).
+    const serverEffective = policy.effectiveAtMs ?? persisted.anchoredAtMs
+    anchorMs = Math.min(persisted.anchoredAtMs, serverEffective)
   } else if (policy.effectiveAtMs !== null) {
     anchorMs = policy.effectiveAtMs
   } else {
@@ -316,7 +333,8 @@ function resolveMandatoryTarget(
         anchoredAtMs: anchorMs,
         // Caller supplies the measured skew; the machine carries 0 when
         // the anchor came from trusted server time at call time.
-        deviceClockSkewMs: sameTargetPersisted && persisted ? persisted.deviceClockSkewMs : 0,
+        deviceClockSkewMs: persisted ? persisted.deviceClockSkewMs : 0,
+        ...(isCarriedOver ? { carriedOver: true } : {}),
       }
     : null
 
@@ -349,4 +367,31 @@ function resolveFromPersistedOnly(
   const graceDeadlineMs = persisted.anchoredAtMs + GRACE_PERIOD_MS
   const status: AppUpdateStatus = isGraceExpired(graceDeadlineMs, nowMs) ? 'blocked' : 'grace'
   return { ...base, status, graceDeadlineMs }
+}
+
+// ── Progress formatting helpers ────────────────────────────────────────
+
+/**
+ * Formats a byte count as megabytes with 1 decimal place (e.g. "14.5 MB").
+ * Returns null if the value is non-positive or not a finite number.
+ */
+export function formatMegabytes(bytes: number | null | undefined): string | null {
+  if (bytes === null || bytes === undefined || !Number.isFinite(bytes) || bytes < 0) {
+    return null
+  }
+  const mb = bytes / (1024 * 1024)
+  return `${mb.toFixed(1)} MB`
+}
+
+/**
+ * Formats downloaded vs total bytes into human-readable string:
+ * "14.5 MB of 52.8 MB" or "14.5 MB" if total is unknown.
+ */
+export function formatDownloadProgress(
+  downloadedBytes: number | null | undefined,
+  totalBytes: number | null | undefined,
+): string {
+  const downloadedMb = formatMegabytes(downloadedBytes ?? 0) ?? '0.0 MB'
+  const totalMb = formatMegabytes(totalBytes)
+  return totalMb ? `${downloadedMb} of ${totalMb}` : downloadedMb
 }

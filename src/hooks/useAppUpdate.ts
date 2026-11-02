@@ -11,7 +11,7 @@ import {
 } from '@/domain/appUpdate/updateStateMachine'
 import type { ApprovedRelease } from '@/lib/appUpdate/releaseDiscovery'
 import { fetchReleasePolicy } from '@/lib/appUpdate/releasePolicyClient'
-import { fetchApprovedRelease } from '@/lib/appUpdate/releaseDiscovery'
+import { fetchApprovedRelease, buildDirectPolicyRelease } from '@/lib/appUpdate/releaseDiscovery'
 import { getAppVersionInfo } from '@/lib/appUpdate/appVersion'
 import {
   logAppUpdateDiagnostic,
@@ -46,7 +46,7 @@ import {
 export type DownloadPhase =
   | { kind: 'idle' }
   | { kind: 'downloading'; downloadedBytes: number; totalBytes: number | null }
-  | { kind: 'downloaded'; fileName: string; uri: string }
+  | { kind: 'downloaded'; fileName: string; uri: string; message?: string }
   | { kind: 'failed'; message: string }
   | { kind: 'installing' }
 
@@ -207,7 +207,12 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
         let approved: ApprovedRelease | null = null
         let discovery: DiscoveryOutcome = 'not-attempted'
         if (nextState.policy) {
-          if (force) {
+          const directRelease = buildDirectPolicyRelease(nextState.policy)
+          if (directRelease) {
+            approved = directRelease
+            setRelease(approved)
+            discovery = 'success'
+          } else if (force) {
             // Awaited so the caller receives the exact completed result.
             // A null outcome clears stale detail instead of reusing it.
             approved = await fetchApprovedRelease(
@@ -340,7 +345,33 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     })
   }, [])
 
+  const installDownloadedApk = useCallback(async () => {
+    const downloaded = downloadedFileRef.current
+    if (!downloaded) return
+    setDownloadPhase({ kind: 'installing' })
+    try {
+      await installApkNative({ uri: downloaded.uri })
+      // Installer takes over; the app may be backgrounded or replaced.
+      // State stays 'installing' until the user returns.
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Installation could not start. Try the download again.'
+      setDownloadPhase({
+        kind: 'downloaded',
+        fileName: downloaded.fileName,
+        uri: downloaded.uri,
+        message,
+      })
+    }
+  }, [])
+
   const startInAppDownload = useCallback(async () => {
+    if (downloadedFileRef.current) {
+      await installDownloadedApk()
+      return
+    }
     const apkAsset = release?.assets[0]
     if (!apkAsset || !hasApkUpdatePlugin()) return
     if (downloadingUrlRef.current !== null) return // duplicate-download guard
@@ -366,32 +397,15 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     } finally {
       downloadingUrlRef.current = null
     }
-  }, [release, state.policy, downloadPhase.kind, registerProgressListener])
+  }, [release, state.policy, downloadPhase.kind, registerProgressListener, installDownloadedApk])
 
   const cancelInAppDownload = useCallback(async () => {
-    if (downloadPhase.kind !== 'downloading') return
+    downloadingUrlRef.current = null
+    setDownloadPhase({ kind: 'idle' })
     try {
       await cancelDownloadNative()
-    } finally {
-      downloadingUrlRef.current = null
-      setDownloadPhase({ kind: 'idle' })
-    }
-  }, [downloadPhase.kind])
-
-  const installDownloadedApk = useCallback(async () => {
-    const downloaded = downloadedFileRef.current
-    if (!downloaded) return
-    setDownloadPhase({ kind: 'installing' })
-    try {
-      await installApkNative({ uri: downloaded.uri })
-      // Installer takes over; the app may be backgrounded or replaced.
-      // State stays 'installing' until the user returns.
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : 'Installation could not start. Try the download again.'
-      setDownloadPhase({ kind: 'failed', message })
+    } catch {
+      // Best-effort cancel
     }
   }, [])
 

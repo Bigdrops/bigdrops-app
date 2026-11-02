@@ -5,8 +5,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.core.content.FileProvider;
@@ -30,10 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Install: FileProvider content:// URI handed to ACTION_VIEW /
  * ACTION_INSTALL_PACKAGE with FLAG_GRANT_READ_URI_PERMISSION, so Android
  * runs its standard package-install confirmation. The app never installs
- * silently. Rationale for ACTION_VIEW with application/vnd.android.package-archive:
- * on API 24+ it routes into the same PackageInstaller confirm flow and
- * avoids REQUEST_INSTALL_PACKAGES edge cases that ACTION_INSTALL_PACKAGE
- * alone can trigger on some OEM builds; both are Android-supported flows.
+ * silently.
  *
  * Files stay in cache until deleted (deleteDownload) or evicted by the OS.
  */
@@ -46,7 +47,109 @@ public class ApkUpdatePlugin extends Plugin {
     private static final int DIAGNOSTIC_MAX_LENGTH = 512;
 
     private final ConcurrentHashMap<Long, PluginCall> activeDownloadCalls = new ConcurrentHashMap<>();
+    private final Handler progressHandler = new Handler(Looper.getMainLooper());
+    private Runnable progressRunnable = null;
+    private String currentDownloadUrl = null;
     private volatile Long lastEnqueueId = null;
+    private volatile String pendingInstallUri = null;
+
+    private File getUpdatesDir(Context context) {
+        File dir = context.getExternalCacheDir();
+        if (dir == null) {
+            dir = context.getCacheDir();
+        }
+        return new File(dir, UPDATES_DIR);
+    }
+
+    private synchronized void startProgressPolling(Context context, long downloadId, String url) {
+        stopProgressPolling();
+        currentDownloadUrl = url;
+        DownloadManager downloadManager =
+                (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (downloadManager == null) return;
+
+        progressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (lastEnqueueId == null || lastEnqueueId != downloadId) {
+                    return;
+                }
+
+                DownloadManager.Query query = new DownloadManager.Query().setFilterById(downloadId);
+                Cursor cursor = null;
+                try {
+                    cursor = downloadManager.query(query);
+                    if (cursor != null && cursor.moveToFirst()) {
+                        int bytesIdx = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                        int totalIdx = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+                        int statusIdx = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+
+                        long downloaded = bytesIdx >= 0 ? cursor.getLong(bytesIdx) : 0L;
+                        long total = totalIdx >= 0 ? cursor.getLong(totalIdx) : -1L;
+                        int status = statusIdx >= 0 ? cursor.getInt(statusIdx) : -1;
+
+                        if (status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING) {
+                            JSObject progress = new JSObject();
+                            progress.put("url", currentDownloadUrl);
+                            progress.put("downloadedBytes", downloaded);
+                            if (total > 0) {
+                                progress.put("totalBytes", total);
+                            } else {
+                                progress.put("totalBytes", null);
+                            }
+                            notifyListeners("apkDownloadProgress", progress);
+                        }
+                    }
+                } catch (Exception ignored) {
+                } finally {
+                    if (cursor != null) cursor.close();
+                }
+
+                synchronized (ApkUpdatePlugin.this) {
+                    if (progressRunnable != null && lastEnqueueId != null && lastEnqueueId == downloadId) {
+                        progressHandler.postDelayed(this, 250);
+                    }
+                }
+            }
+        };
+        progressHandler.post(progressRunnable);
+    }
+
+    private synchronized void stopProgressPolling() {
+        if (progressRunnable != null) {
+            progressHandler.removeCallbacks(progressRunnable);
+            progressRunnable = null;
+        }
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        stopProgressPolling();
+        super.handleOnDestroy();
+    }
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+        if (pendingInstallUri != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Context context = getContext();
+            if (context != null && context.getPackageManager().canRequestPackageInstalls()) {
+                String uriToInstall = pendingInstallUri;
+                pendingInstallUri = null;
+                try {
+                    Uri contentUri = Uri.parse(uriToInstall);
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+                    intent.addFlags(
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                    | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } catch (Exception e) {
+                    Log.e(DIAGNOSTIC_TAG, "Auto-install failed on resume: " + safeMessage(e));
+                }
+            }
+        }
+    }
 
     @PluginMethod
     public void downloadApk(PluginCall call) {
@@ -61,7 +164,7 @@ public class ApkUpdatePlugin extends Plugin {
         }
 
         Context context = getContext();
-        File updatesDir = new File(context.getCacheDir(), UPDATES_DIR);
+        File updatesDir = getUpdatesDir(context);
         if (!updatesDir.exists() && !updatesDir.mkdirs()) {
             call.reject("Could not prepare update cache directory.");
             return;
@@ -76,9 +179,12 @@ public class ApkUpdatePlugin extends Plugin {
             fileName = fileName + ".apk";
         }
 
-        // A completed prior download of the same URL is reused; a partial
-        // file is replaced. This makes retry-after-failure safe and cheap.
+        // Delete any existing target file so bigdrops-latest.apk never collides with a prior download.
         File destination = new File(updatesDir, fileName);
+        if (destination.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            destination.delete();
+        }
 
         DownloadManager.Request request;
         try {
@@ -110,6 +216,7 @@ public class ApkUpdatePlugin extends Plugin {
 
         lastEnqueueId = downloadId;
         activeDownloadCalls.put(downloadId, call);
+        startProgressPolling(context, downloadId, url);
         registerCompletionReceiver(context, downloadId, destination);
     }
 
@@ -121,6 +228,8 @@ public class ApkUpdatePlugin extends Plugin {
                 if (intent == null) return;
                 long completedId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
                 if (completedId != downloadId) return;
+
+                stopProgressPolling();
 
                 PluginCall call = activeDownloadCalls.remove(downloadId);
                 try {
@@ -186,6 +295,30 @@ public class ApkUpdatePlugin extends Plugin {
         }
 
         Context context = getContext();
+
+        // Android 8.0+ (Oreo, API 26+) unknown sources check
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!context.getPackageManager().canRequestPackageInstalls()) {
+                pendingInstallUri = uriValue;
+                try {
+                    Intent settingsIntent = new Intent(
+                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                            Uri.parse("package:" + context.getPackageName()));
+                    settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(settingsIntent);
+                } catch (Exception e) {
+                    try {
+                        Intent genericIntent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+                        genericIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(genericIntent);
+                    } catch (Exception ignored) {
+                    }
+                }
+                call.reject("Please allow 'Install unknown apps' for BOURXE in Settings, then tap 'Install update' again.");
+                return;
+            }
+        }
+
         Uri contentUri = Uri.parse(uriValue);
 
         try {
@@ -203,6 +336,7 @@ public class ApkUpdatePlugin extends Plugin {
 
     @PluginMethod
     public void cancelDownload(PluginCall call) {
+        stopProgressPolling();
         Context context = getContext();
         DownloadManager downloadManager =
                 (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -232,7 +366,7 @@ public class ApkUpdatePlugin extends Plugin {
             return;
         }
 
-        File target = new File(new File(getContext().getCacheDir(), UPDATES_DIR), fileName);
+        File target = new File(getUpdatesDir(getContext()), fileName);
         boolean removed = !target.exists() || target.delete();
         if (!removed) {
             call.reject("Could not delete downloaded file.");

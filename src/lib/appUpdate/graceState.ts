@@ -15,6 +15,7 @@ interface StoredGraceState {
   versionCode: number
   anchoredAtMs: number
   deviceClockSkewMs: number
+  carriedOver?: boolean
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -40,6 +41,7 @@ export function loadPersistedGraceState(): PersistedGraceState | null {
       versionCode: parsed.versionCode,
       anchoredAtMs: parsed.anchoredAtMs,
       deviceClockSkewMs: parsed.deviceClockSkewMs,
+      ...(parsed.carriedOver ? { carriedOver: true } : {}),
     }
   } catch {
     return null
@@ -52,6 +54,7 @@ export function savePersistedGraceState(state: PersistedGraceState): void {
       versionCode: state.versionCode,
       anchoredAtMs: state.anchoredAtMs,
       deviceClockSkewMs: state.deviceClockSkewMs,
+      ...(state.carriedOver ? { carriedOver: true } : {}),
     }
     window.localStorage.setItem(GRACE_STATE_KEY, JSON.stringify(stored))
   } catch {

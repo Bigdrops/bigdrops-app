@@ -7,6 +7,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import { formatDownloadProgress } from '@/domain/appUpdate/updateStateMachine'
 import type { UseAppUpdateResult } from '@/hooks/useAppUpdate'
 
 /**
@@ -100,10 +101,15 @@ export default function UpdateSheet({
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                {downloadedBytes?.toLocaleString() ?? 0} bytes
-                {totalBytes ? ` of ${totalBytes.toLocaleString()}` : ''}
+                Downloading… {formatDownloadProgress(downloadedBytes, totalBytes)}
               </p>
             </div>
+          )}
+
+          {downloadPhase.kind === 'downloaded' && downloadPhase.message && (
+            <p className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-500" role="alert">
+              {downloadPhase.message}
+            </p>
           )}
 
           {downloadPhase.kind === 'failed' && (

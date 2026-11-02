@@ -321,3 +321,58 @@ jobs:
           gh release create "$TAG" "${{ steps.find-apk.outputs.apk_path }}" \
             --title "BIGDROPS test release ${{ steps.meta.outputs.version_name }} ($TAG)" \
             --notes "BIGDROPS Android test-release APK. App ID com.bigdrops.app, versionCode ${{ steps.meta.outputs.version_code }}, versionName ${{ steps.meta.outputs.version_name }}. Signed with the stable test-release key. First install over an old random-debug APK may need one final uninstall; later test releases update in place."
+
+      # ── 23. Upload APK to Supabase Storage & Update Release Policy ──────
+      - name: Upload to Supabase Storage & Update Release Policy
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+          APK_PATH: ${{ steps.find-apk.outputs.apk_path }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::warning::SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secret not found. Skipping Supabase Storage upload and release policy update."
+            exit 0
+          fi
+
+          CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"
+          UPLOAD_URL="${CLEAN_SUPABASE_URL}/storage/v1/object/app-releases/bigdrops-latest.apk"
+          PUBLIC_APK_URL="${CLEAN_SUPABASE_URL}/storage/v1/object/public/app-releases/bigdrops-latest.apk?v=${VERSION_CODE}"
+          ISO_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          echo "Uploading $APK_PATH to Supabase Storage at $UPLOAD_URL..."
+          UPLOAD_HTTP_CODE=$(curl -s -o /tmp/upload_response.json -w "%{http_code}" -X POST "$UPLOAD_URL" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/vnd.android.package-archive" \
+            -H "x-upsert: true" \
+            --data-binary "@$APK_PATH")
+
+          if [ "$UPLOAD_HTTP_CODE" -ge 200 ] && [ "$UPLOAD_HTTP_CODE" -lt 300 ]; then
+            echo "✅ Successfully uploaded APK to Supabase Storage ($PUBLIC_APK_URL)"
+          else
+            echo "::error::Supabase Storage upload failed with HTTP status $UPLOAD_HTTP_CODE"
+            cat /tmp/upload_response.json 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "Updating public.app_release_policy (id = 1) via PostgREST..."
+          RELEASE_NOTES="BOURXE v${VERSION_NAME} (build ${VERSION_CODE}) maintenance and performance update."
+          PATCH_PAYLOAD="{\"version_code\":$VERSION_CODE,\"version_name\":\"$VERSION_NAME\",\"web_release_url\":\"$PUBLIC_APK_URL\",\"effective_at\":\"$ISO_NOW\",\"release_notes\":\"$RELEASE_NOTES\",\"updated_at\":\"$ISO_NOW\"}"
+
+          PATCH_HTTP_CODE=$(curl -s -o /tmp/patch_response.json -w "%{http_code}" -X PATCH \
+            "${CLEAN_SUPABASE_URL}/rest/v1/app_release_policy?id=eq.1" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "$PATCH_PAYLOAD")
+
+          if [ "$PATCH_HTTP_CODE" -ge 200 ] && [ "$PATCH_HTTP_CODE" -lt 300 ]; then
+            echo "✅ Successfully updated app_release_policy to versionCode $VERSION_CODE ($VERSION_NAME)"
+          else
+            echo "::error::Updating app_release_policy failed with HTTP status $PATCH_HTTP_CODE"
+            cat /tmp/patch_response.json 2>/dev/null || true
+            exit 1
+          fi

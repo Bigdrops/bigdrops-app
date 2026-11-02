@@ -551,7 +551,10 @@ function App() {
         <Toaster />
         <NativeFeedbackRenderer />
         <NudgeMount />
-        {isAndroidNative() && appUpdate.state.status === 'grace' && <UpdateBanner update={appUpdate} />}
+        {isAndroidNative() &&
+          (appUpdate.state.status === 'grace' || appUpdate.state.status === 'available') && (
+            <UpdateBanner update={appUpdate} />
+          )}
         {isAndroidNative() && (
           <>
             <AndroidBackHandler />

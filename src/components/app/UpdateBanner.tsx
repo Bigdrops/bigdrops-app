@@ -24,11 +24,12 @@ export default function UpdateBanner({ update }: { update: UseAppUpdateResult })
     if (state.status === 'up_to_date') setDismissedThisSession(false)
   }, [state.status])
 
-  if (state.status !== 'grace' && state.status !== 'blocked') return null
+  if (state.status !== 'grace' && state.status !== 'blocked' && state.status !== 'available') return null
   if (dismissedThisSession && state.status !== 'blocked') return null
 
   const daysLeft = expired ? 0 : (graceRemaining?.days ?? 0)
   const hoursLeft = expired ? 0 : (graceRemaining?.hours ?? 0)
+  const targetVersion = state.policy?.versionName || state.policy?.versionCode || ''
 
   return (
     <>
@@ -36,7 +37,9 @@ export default function UpdateBanner({ update }: { update: UseAppUpdateResult })
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <RefreshCw className="size-4 shrink-0 text-primary" aria-hidden="true" />
           <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-            {expired ? (
+            {state.status === 'available' ? (
+              <>Update available: v{targetVersion}</>
+            ) : expired ? (
               <>Update required — install to continue using BOURXE.</>
             ) : (
               <>
@@ -48,7 +51,7 @@ export default function UpdateBanner({ update }: { update: UseAppUpdateResult })
           <Button size="sm" onClick={() => setSheetOpen(true)}>
             Update
           </Button>
-          {state.status === 'grace' && (
+          {(state.status === 'grace' || state.status === 'available') && (
             <Button
               variant="ghost"
               size="icon-sm"
