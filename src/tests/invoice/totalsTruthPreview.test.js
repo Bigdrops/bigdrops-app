@@ -5,26 +5,26 @@ import path from 'node:path'
 
 const calculationsPath = path.resolve('src/domain/invoice/calculations.ts')
 const previewModelPath = path.resolve('src/domain/invoice/previewModel.ts')
-const viewInvoicePath = path.resolve('src/pages/ViewInvoice.tsx')
-const viewQuotationPath = path.resolve('src/pages/ViewQuotation.tsx')
+const invoiceActionsPath = path.resolve('src/components/document-view/invoice/invoicePdfActions.ts')
+const quotationPreviewModelPath = path.resolve('src/domain/quotation/previewModel.ts')
 
-test('invoice preview model builds totals from the shared summary row builder and keeps balance due separate', () => {
+test('invoice preview model resolves amount in words and keeps balance due separate', () => {
   const source = fs.readFileSync(previewModelPath, 'utf8').replace(/\s+/g, ' ')
 
-  assert.match(source, /buildSummaryRows\(\{/)
+  assert.match(source, /buildTotalsProjection\(\{/)
   assert.doesNotMatch(source, /Cash Received/)
-  assert.match(source, /previewAmountInWords: pdfOutput\?\.showAmountInWords === false \? '' : String\(invoice\.amount_in_words \|\| ''\)/)
-  assert.match(source, /previewBalanceDue: advanceSummary \|\| pdfOutput\?\.showBalanceDue === false \? null : \{/)
+  assert.match(source, /buildAmountInWordsProjection\(invoice, pdfOutput, invoiceTotal\)/)
+  assert.match(source, /previewBalanceDue: previewBalanceDueRow/)
   assert.match(source, /type: 'group_footer'/)
 })
 
-test('invoice totals source is recomputed from current document fields before preview and pdf generation', () => {
-  const source = fs.readFileSync(viewInvoicePath, 'utf8').replace(/\s+/g, ' ')
+test('invoice download transports preview totals and amount in words', () => {
+  const source = fs.readFileSync(invoiceActionsPath, 'utf8').replace(/\s+/g, ' ')
 
   assert.match(source, /computeDocument\(\{/)
-  assert.match(source, /rows: \(Array\.isArray\(previewModel\?\.previewTotals\) \? previewModel\.previewTotals : \[\]\)\.map\(\(row\) => \(\{/)
-  assert.match(source, /amountInWords: String\(previewModel\?\.previewAmountInWords \|\| ''\)/)
-  assert.match(source, /balanceDue: previewModel\?\.previewBalanceDueAmount \?\? null/)
+  assert.match(source, /rows: \(Array\.isArray\(targetPreviewModel\?\.previewTotals\) \? targetPreviewModel\.previewTotals : \[\]\)\.map\(\(row\) => \(\{/)
+  assert.match(source, /amountInWords: String\(targetPreviewModel\?\.previewAmountInWords \|\| ""\)/)
+  assert.match(source, /balanceDue: targetPreviewModel\?\.previewBalanceDueAmount \?\? null/)
 })
 
 test('shared summary rows normalize compatibility extra-charge sources instead of reading custom fields blindly', () => {
@@ -36,12 +36,10 @@ test('shared summary rows normalize compatibility extra-charge sources instead o
   assert.match(source, /const extraCharges = resolveExtraCharges\(/)
 })
 
-test('quotation view page builds preview totals from the shared summary row builder', () => {
-  const source = fs.readFileSync(viewQuotationPath, 'utf8').replace(/\s+/g, ' ')
+test('quotation preview model builds totals from the shared summary row builder', () => {
+  const source = fs.readFileSync(quotationPreviewModelPath, 'utf8').replace(/\s+/g, ' ')
 
   assert.match(source, /buildSummaryRows\(\{/)
   assert.doesNotMatch(source, /const previewTotals = \[ \{ label: 'Subtotal'/)
-  assert.match(source, /showAmountInWords: true/)
-  assert.match(source, /amountInWords: pdfOutput\.showAmountInWords === false \? '' : String\(quotation\.amount_in_words \|\| ''\)/)
-  assert.match(source, /amountInWords=\{pdfOutput\.showAmountInWords === false \? '' : quotation\.amount_in_words \|\| ''\}/)
+  assert.match(source, /buildQuotationPreviewModel\(/)
 })

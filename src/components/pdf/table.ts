@@ -8,6 +8,7 @@ import {
 } from '../../domain/invoice/columns'
 import { normalizeQuantity } from '../../domain/invoice/normalize'
 import type { ColumnConfig, InvoiceItem } from '../../domain/invoice/types'
+import { normalizeInvoicePdfTemplateId } from '../../domain/invoice/types'
 import { formatMergedQtyUnit } from '../../domain/documentMedia.js'
 import type {
   PdfCellValue,
@@ -30,6 +31,7 @@ type InterpretPdfTableSettingsOptions = {
   hideEmptyGroups?: boolean
   items?: InvoiceItem[]
   landscapeLayout?: boolean
+  templateId?: string | null
 }
 
 type BuildPdfRowCellsOptions = {
@@ -177,7 +179,7 @@ export function interpretPdfTableSettings(
   return {
     mergeQtyUnit,
     hideEmptyGroups: options.hideEmptyGroups !== false,
-    pageLayout: resolvePdfPageLayout(resultColumns, options.landscapeLayout),
+    pageLayout: resolvePdfPageLayout(resultColumns, options.landscapeLayout, options.templateId),
     configuredColumns,
     activeColumns: resolvedColumns.map((column) => createPdfColumnDefinition(column)),
     columns: resultColumns,
@@ -228,7 +230,12 @@ export function buildPdfRowCells(
   }))
 }
 
-export function resolvePdfPageLayout(columns: PdfColumnDefinition[], forceLandscape?: boolean): PdfPageLayout {
-  const orientation = forceLandscape ? 'landscape' : 'portrait'
+export function resolvePdfPageLayout(
+  columns: PdfColumnDefinition[],
+  forceLandscape?: boolean,
+  templateId?: string | null,
+): PdfPageLayout {
+  const templateForcesLandscape = normalizeInvoicePdfTemplateId(templateId) === 'landscape'
+  const orientation = forceLandscape || templateForcesLandscape ? 'landscape' : 'portrait'
   return { size: 'A4', orientation }
 }

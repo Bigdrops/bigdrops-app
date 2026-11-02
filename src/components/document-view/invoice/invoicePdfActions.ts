@@ -82,6 +82,7 @@ export const downloadInvoicePdfDocument = async ({
     mergeQtyUnit: targetCustomFields?.mergeQtyUnit === true,
     items: Array.isArray(targetItems) ? targetItems : [],
     landscapeLayout: pdfOutput?.landscapeLayout === true,
+    templateId: targetTemplateId,
   });
 
   const referenceLinks = Array.isArray(targetCustomFields?.attachments)

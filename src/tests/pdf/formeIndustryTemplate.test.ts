@@ -211,13 +211,15 @@ test('Industry original React-PDF implementation remains intact and independentl
 test('Retained commercial templates include dual Industry options, Crest, Minimal, and Evergreen', () => {
   assert.deepStrictEqual(
     [...INVOICE_PDF_TEMPLATE_IDS].sort(),
-    ['crest', 'evergreen', 'industrial', 'industry', 'industry-forme', 'industry-react-pdf', 'minimal'].sort(),
+    ['crest', 'evergreen', 'industrial', 'industry', 'industry-forme', 'industry-react-pdf', 'landscape', 'minimal'].sort(),
   )
 
   assert.equal(normalizeInvoicePdfTemplateId('industrial'), 'industrial')
   assert.equal(normalizeInvoicePdfTemplateId('industry'), 'industry')
   assert.equal(normalizeInvoicePdfTemplateId('industry-forme'), 'industry')
   assert.equal(normalizeInvoicePdfTemplateId('industry-react-pdf'), 'industry-react-pdf')
+  assert.equal(normalizeInvoicePdfTemplateId('landscape'), 'landscape')
+  assert.equal(normalizeInvoicePdfTemplateId('modern-minimal'), 'minimal')
   assert.equal(normalizeInvoicePdfTemplateId('crest'), 'crest')
   assert.equal(normalizeInvoicePdfTemplateId('minimal'), 'minimal')
   assert.equal(normalizeInvoicePdfTemplateId('evergreen'), 'evergreen')

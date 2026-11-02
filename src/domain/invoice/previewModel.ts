@@ -92,13 +92,13 @@ export function buildInvoicePreviewModel({
   const attachmentLinks = buildAttachmentLinksProjection(customFieldObject)
 
   const previewDetailRows = buildDetailRowsProjection({ customFieldObject, poNumber, invoice })
-  const previewTableSettings = resolveInvoicePreviewTableSettings(items, customFieldObject)
+  const previewTableSettings = resolveInvoicePreviewTableSettings(items, customFieldObject, pdfOutput)
 
   const advanceSummary = buildAdvanceDisplayProjection(invoice)
   const previewTotals = buildTotalsProjection({
     invoice, totals, customFieldObject, invoiceTotal, balanceDue, pdfOutput, formatMoney,
   })
-  const previewAmountInWords = buildAmountInWordsProjection(invoice, pdfOutput)
+  const previewAmountInWords = buildAmountInWordsProjection(invoice, pdfOutput, invoiceTotal)
   const previewBalanceDueRow = buildBalanceDisplayProjection(balanceDue, pdfOutput, formatMoney)
   const previewNotesSections = buildNotesSectionsProjection({
     invoice, customFieldObject, additionalFields, attachmentLinks,
@@ -155,6 +155,7 @@ function buildPreviewFacts(row: any, columns: PdfDocumentModel['columns']) {
 function resolveInvoicePreviewTableSettings(
   items: BuildInvoicePreviewModelInput['items'],
   customFieldObject: BuildInvoicePreviewModelInput['customFieldObject'],
+  pdfOutput?: BuildInvoicePreviewModelInput['pdfOutput'],
 ) {
   const sourceItems = Array.isArray(items) ? items : []
   return interpretPdfTableSettings(
@@ -163,6 +164,8 @@ function resolveInvoicePreviewTableSettings(
       mergeQtyUnit: customFieldObject?.mergeQtyUnit === true,
       hideEmptyGroups: customFieldObject?.hideEmptyGroups !== false,
       items: sourceItems as never[],
+      landscapeLayout: pdfOutput?.landscapeLayout === true,
+      templateId: customFieldObject?.pdfTemplateId ?? null,
     },
   )
 }

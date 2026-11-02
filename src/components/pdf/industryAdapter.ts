@@ -37,6 +37,8 @@ export type CommercialDocumentData = {
   customTitle: string | null
   documentNumber: string
   documentNumberLabel: string
+  /** Document currency code supplied by the authoritative document model. */
+  currency?: string | null
   issueDate: string | null | undefined
   issueDateLabel: string
   dueDateOrValidityDate: string | null | undefined
@@ -364,6 +366,7 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
     customTitle: (rawTitle && !isDuplicate) ? rawTitle : null,
     documentNumber: model.identity.number,
     documentNumberLabel: getDocumentNumberLabel(model.identity.kind),
+    currency: model.identity.currency || null,
     issueDate: model.identity.issueDate,
     issueDateLabel: 'Issue Date',
     dueDateOrValidityDate: model.identity.kind === 'invoice' ? model.identity.dueDate : model.identity.validUntil,

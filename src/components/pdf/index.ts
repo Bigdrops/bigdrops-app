@@ -57,6 +57,35 @@ function resolveFilename(model: PdfDocumentModel, fallbackNumber?: string | null
   return `${sanitizeFilename(number)}.pdf`
 }
 
+export type CommercialPdfRoute =
+  | 'industrial-forme'
+  | 'industry-forme'
+  | 'landscape-forme'
+  | 'minimal-forme'
+  | 'react-pdf'
+
+/**
+ * Resolve which renderer handles a commercial template identifier.
+ *
+ * - 'industrial' always uses the Forme Industrial renderer.
+ * - 'industry' uses the Forme Industry renderer unless the caller forces react-pdf.
+ * - 'landscape' and 'minimal' always use their Forme renderers.
+ * - Explicit 'industry-forme' normalizes to 'industry' and therefore also uses Forme.
+ * - Retired 'modern-minimal' normalizes to 'minimal'.
+ * - Everything else keeps the retained React-PDF renderers.
+ */
+export function resolveCommercialPdfRoute(
+  templateId: string | null | undefined,
+  engine?: 'forme' | 'react-pdf',
+): CommercialPdfRoute {
+  const activeTemplateId = normalizeInvoicePdfTemplateId(templateId) || 'industry'
+  if (activeTemplateId === 'industrial') return 'industrial-forme'
+  if (activeTemplateId === 'landscape') return 'landscape-forme'
+  if (activeTemplateId === 'minimal') return 'minimal-forme'
+  if (activeTemplateId === 'industry' && engine !== 'react-pdf') return 'industry-forme'
+  return 'react-pdf'
+}
+
 async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
   const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
   const filename = resolveFilename(request.model, request.documentNumber)
@@ -67,22 +96,24 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   // 2. Explicit 'industry-react-pdf' forces React-PDF IndustryTemplate (cannot be overridden by request.engine).
   // 3. Explicit 'industry-forme' forces Forme IndustryFormeDocument (cannot be overridden by request.engine).
   // 4. 'industry' defaults to Forme IndustryFormeDocument, falling back to React-PDF only when request.engine === 'react-pdf'.
-  // 5. Retained templates 'crest', 'minimal', 'evergreen' route to React-PDF.
-  const isIndustrial = activeTemplateId === 'industrial'
-  const isExplicitReactPdf = activeTemplateId === 'industry-react-pdf'
-  const isExplicitForme = activeTemplateId === 'industry-forme'
-  const shouldUseForme = isIndustrial || (!isExplicitReactPdf && (isExplicitForme || (activeTemplateId === 'industry' && request.engine !== 'react-pdf')))
+  // 5. Retained templates 'crest' and 'evergreen' route to React-PDF.
+  const route = resolveCommercialPdfRoute(request.templateId, request.engine)
+  const shouldUseForme = route !== 'react-pdf'
 
-  // Forme Commercial Rendering Path (Industrial & Industry)
+  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal)
   if (shouldUseForme) {
     const [
       IndustrialDocModule,
       IndustryDocModule,
+      LandscapeDocModule,
+      MinimalDocModule,
       { renderPdfcnToBytes },
       { ensureFormeFontFamily },
     ] = await Promise.all([
       import('./forme/IndustrialFormeDocument'),
       import('./forme/IndustryFormeDocument'),
+      import('./forme/LandscapeFormeDocument'),
+      import('./forme/MinimalFormeDocument'),
       import('./pdfcn/adapter'),
       import('./forme/fonts'),
     ])
@@ -95,15 +126,28 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     ])
 
     const adaptedData = adaptCommercialDocumentData(request.model as PdfDocumentModel)
-    const element = isIndustrial
-      ? React.createElement(IndustrialDocModule.IndustrialFormeDocument, {
-          data: adaptedData,
-          compact: request.compact,
-        })
-      : React.createElement(IndustryDocModule.IndustryFormeDocument, {
-          data: adaptedData,
-          compact: request.compact,
-        })
+    let element: React.ReactElement
+    if (route === 'industrial-forme') {
+      element = React.createElement(IndustrialDocModule.IndustrialFormeDocument, {
+        data: adaptedData,
+        compact: request.compact,
+      })
+    } else if (route === 'landscape-forme') {
+      element = React.createElement(LandscapeDocModule.LandscapeFormeDocument, {
+        data: adaptedData,
+        compact: request.compact,
+      })
+    } else if (route === 'minimal-forme') {
+      element = React.createElement(MinimalDocModule.MinimalFormeDocument, {
+        data: adaptedData,
+        compact: request.compact,
+      })
+    } else {
+      element = React.createElement(IndustryDocModule.IndustryFormeDocument, {
+        data: adaptedData,
+        compact: request.compact,
+      })
+    }
 
     const bytes = await renderPdfcnToBytes(element)
     const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
@@ -131,24 +175,21 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     return { status: 'generated', filename, uri: result.uri }
   }
 
-  // Retained React-PDF Rendering Path (Minimal, Evergreen, Crest, and Industry React-PDF comparison)
+  // Retained React-PDF Rendering Path (Evergreen, Crest, and Industry React-PDF comparison)
   const [
     { PdfRenderer },
     IndustryModule,
     CrestModule,
-    MinimalModule,
     EvergreenModule,
   ] = await Promise.all([
     import('./renderers/PdfRenderer'),
     import('./templates/Industry'),
     import('./templates/Crest'),
-    import('./templates/Minimal'),
     import('./templates/Evergreen'),
   ])
 
   const Industry = IndustryModule.default
   const Crest = CrestModule.default
-  const Minimal = MinimalModule.default
   const Evergreen = EvergreenModule.default
 
   registerPdfFonts()
@@ -158,9 +199,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   switch (activeTemplateId) {
     case 'crest':
       Template = Crest
-      break
-    case 'minimal':
-      Template = Minimal
       break
     case 'evergreen':
       Template = Evergreen
@@ -280,6 +318,8 @@ export async function generateCsrPdfcnPdf(request: {
 export { isPdfcnCsrTemplate } from './pdfcn'
 export { IndustrialFormeDocument } from './forme/IndustrialFormeDocument'
 export { IndustryFormeDocument } from './forme/IndustryFormeDocument'
+export { LandscapeFormeDocument } from './forme/LandscapeFormeDocument'
+export { MinimalFormeDocument } from './forme/MinimalFormeDocument'
 export { default as IndustryTemplate } from './presentation/industry/IndustryTemplate'
 
 export {

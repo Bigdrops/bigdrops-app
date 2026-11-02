@@ -5,6 +5,7 @@ import { buildPdfRowCells, interpretPdfTableSettings } from "@/components/pdf/ta
 import type { PdfDocumentModel, PdfColumnDefinition, PdfResolvedTableSettings } from "@/components/pdf/types";
 import { getPdfSummaryLabels } from "@/domain/document/pdfSummaryLabels";
 import { buildSummaryRows } from "@/domain/invoice";
+import { resolveAmountInWords } from "@/domain/document/amountInWords";
 import {
   buildBankAccountsProjection,
   resolveSelectedBankAccount,
@@ -45,7 +46,7 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
       .filter((field: any) => field?.label && field?.value)
       .map((field: any) => ({ label: String(field.label), value: String(field.value) })),
   ].filter((row) => String(row.value || "").trim().length > 0);
-  const previewTableSettings = resolveQuotationPreviewTableSettings(items, customFields);
+  const previewTableSettings = resolveQuotationPreviewTableSettings(items, customFields, pdfOutput);
 
   const previewSummaryLabels = getPdfSummaryLabels(quotation, {
     discountType: (customFields?.calculationInputs?.discountType ?? customFields?.discountType) as 'fixed' | 'percent' | undefined,
@@ -77,6 +78,12 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
       valueClassName: "text-[hsl(var(--bd-text))]",
     },
   ];
+
+  const previewAmountInWords = resolveAmountInWords({
+    stored: quotation?.amount_in_words,
+    show: pdfOutput?.showAmountInWords !== false,
+    payableTotal: totals?.totalPayable,
+  });
 
   const previewAttachmentLinks = Array.isArray(customFields.attachments)
     ? customFields.attachments
@@ -136,6 +143,7 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
     pageLayout: previewTableSettings.pageLayout,
     previewItems: buildQuotationPreviewItems(items, customFields, previewTableSettings),
     previewTotals,
+    previewAmountInWords,
     previewNotesSections,
     previewAttachmentLinks,
     quotationAttachments,
@@ -211,7 +219,11 @@ export function buildQuotationPreviewItems(
   });
 }
 
-function resolveQuotationPreviewTableSettings(items: any[], customFields: Record<string, any>) {
+function resolveQuotationPreviewTableSettings(
+  items: any[],
+  customFields: Record<string, any>,
+  pdfOutput?: { landscapeLayout?: boolean } | null,
+) {
   const sourceItems = Array.isArray(items) ? items : [];
   return interpretPdfTableSettings(
     Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : [],
@@ -219,6 +231,8 @@ function resolveQuotationPreviewTableSettings(items: any[], customFields: Record
       mergeQtyUnit: customFields?.mergeQtyUnit === true,
       hideEmptyGroups: customFields?.hideEmptyGroups !== false,
       items: sourceItems as never[],
+      landscapeLayout: pdfOutput?.landscapeLayout === true,
+      templateId: customFields?.pdfTemplateId ?? null,
     },
   );
 }

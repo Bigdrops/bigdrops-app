@@ -1,4 +1,5 @@
 import { getPdfSummaryLabels } from '@/domain/document/pdfSummaryLabels'
+import { resolveAmountInWords } from '@/domain/document/amountInWords'
 import { buildSummaryRows } from '../calculations'
 import { getAdvanceSummaryValues } from '../advanceSummary'
 import { calculateInvoiceFinancialState } from '../financialState'
@@ -72,8 +73,13 @@ export function buildBalanceDisplayProjection(
 export function buildAmountInWordsProjection(
   invoice: InvoiceLike,
   pdfOutput?: PdfOutputLike,
+  payableTotal?: number | null,
 ): string {
-  return pdfOutput?.showAmountInWords === false ? '' : String(invoice.amount_in_words || '')
+  return resolveAmountInWords({
+    stored: invoice.amount_in_words,
+    show: pdfOutput?.showAmountInWords,
+    payableTotal,
+  })
 }
 
 export function buildAdvanceDisplayProjection(

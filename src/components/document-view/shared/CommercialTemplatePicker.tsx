@@ -19,6 +19,13 @@ const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
     theme: { pageBg: '#ffffff', headerBg: '#7D8A88', headerFg: '#ffffff', accent: '#7D8A88', border: '#e2e8f0', mutedBg: '#f1f5f9' },
   },
   {
+    id: 'minimal',
+    label: 'Minimal — Forme',
+    blurb: 'Restrained · Forme',
+    layout: 'commercial',
+    theme: { pageBg: '#ffffff', headerBg: '#f5f5f5', headerFg: '#1a1a1a', accent: '#d4d4d4', border: '#e8e8e8', mutedBg: '#f5f5f5' },
+  },
+  {
     id: 'industry-react-pdf',
     label: 'Industry — React-PDF',
     blurb: 'Structured · React-PDF',
@@ -26,18 +33,18 @@ const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
     theme: { pageBg: '#ffffff', headerBg: '#7D8A88', headerFg: '#ffffff', accent: '#7D8A88', border: '#e2e8f0', mutedBg: '#f1f5f9' },
   },
   {
+    id: 'landscape',
+    label: 'Landscape',
+    blurb: 'Technical · Wide format',
+    layout: 'commercial',
+    theme: { pageBg: '#ffffff', headerBg: '#07192b', headerFg: '#ffffff', accent: '#1d568a', border: '#9cb4c9', mutedBg: '#edf3f8' },
+  },
+  {
     id: 'crest',
     label: 'Crest',
     blurb: 'Gold serif',
     layout: 'commercial',
     theme: { pageBg: '#fdfbf7', headerBg: '#2d1f3a', headerFg: '#f9f3e6', accent: '#b28b3d', border: '#e4ddd0', mutedBg: '#f7f3ed' },
-  },
-  {
-    id: 'minimal',
-    label: 'Minimal',
-    blurb: 'Restrained',
-    layout: 'commercial',
-    theme: { pageBg: '#ffffff', headerBg: '#f5f5f5', headerFg: '#1a1a1a', accent: '#d4d4d4', border: '#e8e8e8', mutedBg: '#f5f5f5' },
   },
   {
     id: 'evergreen',

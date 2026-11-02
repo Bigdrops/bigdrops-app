@@ -12,6 +12,7 @@ test('invoice pdf template ids keep live templates and reject legacy classic var
     'industry',
     'industry-forme',
     'industry-react-pdf',
+    'landscape',
     'crest',
     'minimal',
     'evergreen',
@@ -20,6 +21,8 @@ test('invoice pdf template ids keep live templates and reject legacy classic var
   assert.equal(normalizeInvoicePdfTemplateId('industry'), 'industry')
   assert.equal(normalizeInvoicePdfTemplateId('industry-forme'), 'industry')
   assert.equal(normalizeInvoicePdfTemplateId('industry-react-pdf'), 'industry-react-pdf')
+  assert.equal(normalizeInvoicePdfTemplateId('landscape'), 'landscape')
+  assert.equal(normalizeInvoicePdfTemplateId('modern-minimal'), 'minimal')
   assert.equal(normalizeInvoicePdfTemplateId('crest'), 'crest')
   assert.equal(normalizeInvoicePdfTemplateId('minimal'), 'minimal')
   assert.equal(normalizeInvoicePdfTemplateId('evergreen'), 'evergreen')

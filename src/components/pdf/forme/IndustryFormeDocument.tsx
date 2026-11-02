@@ -460,8 +460,24 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
             ) : null}
 
             {amountInWords ? (
-              <View style={{ backgroundColor: subtleSurfaceColor, padding: 5, borderRadius: 2, marginTop: 6 }}>
-                <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedColor, fontStyle: 'italic' }}>{amountInWords}</Text>
+              <View
+                style={{
+                  backgroundColor: '#ffffff',
+                  borderWidth: 0.75,
+                  borderColor,
+                  borderLeftWidth: 2,
+                  borderLeftColor: accentColor,
+                  borderRadius: 2,
+                  paddingTop: compact ? 4 : 5,
+                  paddingBottom: compact ? 4 : 5,
+                  paddingLeft: 7,
+                  paddingRight: 7,
+                  marginTop: compact ? 4 : 6,
+                }}
+              >
+                <Text style={{ fontFamily: font, fontSize: 8.8, fontWeight: 700, lineHeight: 1.35, color: textColor }}>
+                  {amountInWords}
+                </Text>
               </View>
             ) : null}
 

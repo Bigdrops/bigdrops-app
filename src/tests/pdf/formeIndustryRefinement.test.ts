@@ -462,6 +462,47 @@ test('DocumentBrandBlock renders interactive anchor wrapping logo for full-resol
   assert.equal(anchor.props.target, '_blank')
 })
 
+test('Amount in words renders as a dark bold block independent of muted colours', () => {
+  const data = createSampleRefinementData({
+    design: {
+      accentColor: '#7D8A88',
+      textColor: '#1E293B',
+      mutedColor: '#CBD5E1',
+      borderColor: '#E2E8F0',
+      surfaceColor: '#F8FAFC',
+      headerFont: null,
+      bodyFont: null,
+      useCustomFonts: false,
+      useCustomColors: true,
+    },
+  })
+  const tree = serialize(React.createElement(IndustryFormeDocument, { data }))
+
+  const wordsNodes = findNodes(
+    tree,
+    (n) => n?.kind?.type === 'Text' && n?.kind?.content === data.totals.amountInWords,
+  )
+  assert.equal(wordsNodes.length, 1, 'Amount in words must render from the authoritative totals value')
+  const words = wordsNodes[0]
+  assert.equal(words.style.fontWeight, 700, 'Amount in words must be bold')
+  assert.notEqual(words.style.fontStyle, 'italic', 'Amount in words must not use italic')
+  assert.ok(Number(words.style.fontSize) >= 8.5, 'Amount in words must use a readable size')
+  assert.equal(
+    colorToHex(words.style.color),
+    '#1E293B',
+    'Amount in words must use the dark body text colour, not the muted colour',
+  )
+
+  const blocks = findNodes(
+    tree,
+    (n) =>
+      n?.style?.borderWidth?.left === 2 &&
+      colorToHex(n?.style?.borderColor?.left) === '#7D8A88' &&
+      colorToHex(n?.style?.backgroundColor) === '#FFFFFF',
+  )
+  assert.ok(blocks.length > 0, 'Amount in words must sit on a white block with the accent stripe')
+})
+
 test('Industry Forme generates valid PDF bytes with refinements applied', async () => {
   await ensureFormeFontFamily('Inter')
   await ensureFormeFontFamily('Archivo Black')

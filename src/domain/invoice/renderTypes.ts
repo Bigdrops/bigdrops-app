@@ -129,6 +129,7 @@ export type PdfOutputLike = {
   bankAccountId?: string | null
   showBalanceDue?: boolean
   showAmountInWords?: boolean
+  landscapeLayout?: boolean
 }
 
 export type BuildInvoicePreviewModelInput = {

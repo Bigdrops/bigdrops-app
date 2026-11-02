@@ -40,10 +40,12 @@ export async function handleDownloadQuotationPdf(input: {
     } = await import("@/components/pdf");
     const pdfDesignPreset = resolveCommercialDesignPreset("quotation");
     const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : BUILTIN_COLUMNS;
+    const templateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry";
     const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
       mergeQtyUnit: customFields?.mergeQtyUnit === true,
       items: Array.isArray(items) ? items : [],
       landscapeLayout: pdfOutput?.landscapeLayout === true,
+      templateId,
     });
     const referenceLinks = Array.isArray(customFields.attachments)
       ? customFields.attachments
@@ -65,7 +67,6 @@ export async function handleDownloadQuotationPdf(input: {
           validUntil: String(quotation.valid_until || ""),
           poNumber: String(quotation.po_number || ""),
           status: String(quotation.status || ""),
-          currency: "NGN",
         },
         issuer: {
           label: "From",
@@ -130,8 +131,7 @@ export async function handleDownloadQuotationPdf(input: {
             amount: Number(String(row.value).replace(/[^\d.-]/g, "")) || 0,
             emphasis: row.emphasis === true,
           })),
-          amountInWords:
-            pdfOutput.showAmountInWords === false ? "" : String(quotation.amount_in_words || ""),
+          amountInWords: String(previewModel?.previewAmountInWords || ""),
         },
         bankDetails:
           pdfOutput.showBankDetails && previewModel.selectedPreviewBank
@@ -161,7 +161,7 @@ export async function handleDownloadQuotationPdf(input: {
         metaFooter: { companyName: String(settings?.company_name || "") },
         template: { designPreset: pdfDesignPreset },
       },
-      templateId: normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry",
+      templateId,
       compact: pdfOutput.compact === true,
     });
     showToast("Download ready", `Quotation PDF saved to ${userDownloadLocationLabel()}.`, "success");

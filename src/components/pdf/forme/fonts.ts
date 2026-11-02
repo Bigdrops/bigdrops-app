@@ -2,6 +2,9 @@ import { Font } from '@formepdf/react'
 
 const FALLBACK_FAMILY = 'Helvetica'
 
+/** Internal Greek coverage subset, registered with Noto Sans. Never offered as a user font choice. */
+export const GREEK_GLYPH_FONT = 'Noto Sans Greek'
+
 export const FORME_SUPPORTED_FAMILIES = [
   'Inter',
   'Archivo Black',
@@ -66,8 +69,12 @@ export async function ensureFormeFontFamily(choice: unknown): Promise<string> {
     if (family === 'Inter') {
       const regular = await resolveFontSource('Inter-Regular.ttf')
       const bold = await resolveFontSource('Inter-Bold.ttf')
+      const italic = await resolveFontSource('Inter-Italic.ttf')
+      const boldItalic = await resolveFontSource('Inter-BoldItalic.ttf')
       Font.register({ family, src: regular, fontWeight: 400 })
       Font.register({ family, src: bold, fontWeight: 700 })
+      Font.register({ family, src: italic, fontWeight: 400, fontStyle: 'italic' })
+      Font.register({ family, src: boldItalic, fontWeight: 700, fontStyle: 'italic' })
       registeredFamilies.add(family)
       return family
     }
@@ -87,6 +94,12 @@ export async function ensureFormeFontFamily(choice: unknown): Promise<string> {
       Font.register({ family, src: regular, fontWeight: 400 })
       Font.register({ family, src: bold, fontWeight: 700 })
       registeredFamilies.add(family)
+      try {
+        const greek = await resolveFontSource('NotoSansGreek-Regular.ttf')
+        Font.register({ family: GREEK_GLYPH_FONT, src: greek, fontWeight: 400 })
+      } catch (err) {
+        console.error('[forme/fonts] Greek glyph subset failed to register:', err)
+      }
       return family
     }
 

@@ -11,7 +11,9 @@ export function isGroupFooter(row: TableRow): boolean {
 }
 
 export function getGroupLabel(row: TableRow): string {
-  return row.groupName || row.groupLabel || ''
+  // groupLabel carries the full supplied label (for example "GROUP A — Cables").
+  // groupName is only a fallback when no full label was supplied.
+  return row.groupLabel || row.groupName || ''
 }
 
 export function getGroupSubtotal(row: TableRow): string | null {
