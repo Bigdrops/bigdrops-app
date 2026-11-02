@@ -1,6 +1,7 @@
 # 🏗️ Waterfall Roadmap & Phased Execution Sequence
 
 - **Status:** AUTHORITATIVE LIVING ROADMAP & RECONCILED EXECUTION SEQUENCE
+- **Revision:** 2026-11-01
 - **Architecture:** Forme Engine (`@formepdf/react` & `@formepdf/core` v0.20.1) + `pdfcn` Presentation Layer
 - **Writing Standard:** ASD-STE100 Simplified Technical English
 - **Scope:** Eight In-Scope Document Types. BOQ Excluded.
@@ -9,35 +10,42 @@
 
 ## 1. Master Progress Bar
 
-`[████░░░░░░] 35%` | **Total Milestones:** 9 | **Current Phase:** Phase M1C (PO Canonical Preparation) & Pre-Implementation Setup
+`[████░░░░░░] 44%` | **Total Milestones:** 9 | **Current Phase:** Phase M1C pending. Phases M2, M3 and M4 have in-flight work.
 
-*Note: Milestones M0, M1A, and M1B represent completed investigation and specification deliverables. Milestones M1C through M6 represent software implementation and rollout phases pending execution.*
+- Milestones M0, M1A and M1B are complete.
+- Milestones M2, M3 and M4 have in-flight implementation from the Industrial Forme commercial template pass. Gate 1, Gate 2 and Gate 3 are not signed off.
+- Milestones M1C, M5 and M6 are pending.
+- The percentage is the mean of the milestone percentages in Section 3. It does not represent gate approval.
 
 ---
 
 ## 2. Status Legend
 
 - ✅ **COMPLETE** — Specification or phase executed, verified, and accepted.
-- 🔄 **IN PROGRESS** — Active work package currently under development.
+- 🔄 **IN PROGRESS** — Active work package under development. The exit gate is open.
 - 🛠️ **CORRECTED** — Phase executed, then patched to resolve defects.
 - ⏭️ **SUPERSEDED** — Task or approach replaced by a newer architectural decision.
 - ⛔ **PENDING** — Awaiting execution; blocked until preceding gates pass.
+- `[~]` **PARTIAL** — Sub-step executed. The full exit condition is not met.
 
 ---
 
 ## 3. Milestone Tracker & Gating Table
 
-| ID | Milestone / Phase | Scope Summary | Priority | Status | Target Deliverables & Gating | Dependencies |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M0** | **Discovery & Problem Register** | Root cause analysis on `SASQUO-000427`, `SASQUO-000428`, `SASQUO-430`. PRD suite update and baseline freeze. | CRIT | ✅ COMPLETE | Authoritative PRD suite in `docs/prd/pdf-rendering-migration/`. | None |
-| **M1A** | **PDF Architecture Contracts** | Responsibility definition across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery. | CRIT | ✅ COMPLETE | Specification: `docs/reports/pdf/m1a-pdf-architecture-contracts-and-responsibility-definition.md`. | M0 |
-| **M1B** | **Shared Font & Media Infrastructure** | TrueType SFNT requirement, font inventory, WOFF rejection, CORS reality, Text Preservation Rule, single font authority. | CRIT | ✅ COMPLETE | Specification: `docs/reports/pdf/m1b-shared-font-and-image-asset-infrastructure-specification.md`. | M1A |
-| **M1C** | **PO Canonical Preparation Contract** | Author `preparePurchaseOrderDocument.ts`, adapt PO supplier-facing fields and calculations, integrate into commercial group. | HIGH | ⛔ PENDING | Canonical PO prepared document contract and resolver adapter. | M1A |
-| **M2** | **Natural Pagination (Normal Mode First)** | Calibrated table columns (candidate $\ge 72\text{ pt}$ make), adaptive closing layout, repeating headers, dynamic footers, selective keep-together, oversized rows. | CRIT | ⛔ PENDING | **GATE 1: Representative Document Suite Sign-Off**. Premature page breaks eliminated on `SASQUO-000427`. | M1B, M1C |
-| **M3** | **Compact & Force 1 Page Modes** | Wire 32 candidate compact tokens, two-pass measurement via `renderDocumentWithLayout`, legibility-first safeguards (candidate 7 pt floor), fallback. | HIGH | ⛔ PENDING | **GATE 2: Compaction Tests**. Deterministic compaction without content loss. | M2 |
-| **M4** | **Commercial Reference Certification** | Full Quotation, Invoice, and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output. | CRIT | ⛔ PENDING | **GATE 3: Pre-Production Approval**. Commercial family certified for live traffic switchover. | M3 |
-| **M5** | **Remaining Document Families** | CPS font fix & resolver integration, CSR delivery integration, Waybill templates (Caveat font), Receipt, and RFQ migration. | HIGH | ⛔ PENDING | All 8 document types active on Forme; zero React-PDF traffic. | M4 |
-| **M6** | **Legacy Cleanup & Deprecation** | Verify zero React-PDF imports via AST analysis, remove obsolete adapters, uninstall `@react-pdf/renderer` from `package.json`. | MED | ⛔ PENDING | Repository clean; `@react-pdf/renderer` removed; typecheck clean. | M5 |
+| ID | Milestone / Phase | Scope Summary | Priority | Status | % Done | Target Deliverables & Gating | Dependencies |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **M0** | **Discovery & Problem Register** | Root cause analysis on `SASQUO-000427`, `SASQUO-000428`, `SASQUO-430`. PRD suite update and baseline freeze. | CRIT | ✅ COMPLETE | 100% | Authoritative PRD suite in `docs/prd/pdf-rendering-migration/`. | None |
+| **M1A** | **PDF Architecture Contracts** | Responsibility definition across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery. | CRIT | ✅ COMPLETE | 100% | Specification: `docs/reports/pdf/m1a-pdf-architecture-contracts-and-responsibility-definition.md`. | M0 |
+| **M1B** | **Shared Font & Media Infrastructure** | TrueType SFNT requirement, font inventory, WOFF rejection, CORS reality, Text Preservation Rule, single font authority. | CRIT | ✅ COMPLETE | 100% | Specification: `docs/reports/pdf/m1b-shared-font-and-image-asset-infrastructure-specification.md`. | M1A |
+| **M1C** | **PO Canonical Preparation Contract** | Author `preparePurchaseOrderDocument.ts`, adapt PO supplier-facing fields and calculations, integrate into commercial group. | HIGH | ⛔ PENDING | 0% | Canonical PO prepared document contract and resolver adapter. | M1A |
+| **M2** | **Natural Pagination (Normal Mode First)** | Calibrated table columns (candidate $\ge 72\text{ pt}$ make), adaptive closing layout, repeating headers, dynamic footers, selective keep-together, oversized rows. | CRIT | 🔄 IN PROGRESS | 35% | **GATE 1: Representative Document Suite Sign-Off**. Premature page breaks eliminated on `SASQUO-000427`. | M1B, M1C |
+| **M3** | **Compact & Force 1 Page Modes** | Wire 32 candidate compact tokens, two-pass measurement via `renderDocumentWithLayout`, legibility-first safeguards (candidate 7 pt floor), fallback. | HIGH | 🔄 IN PROGRESS | 25% | **GATE 2: Compaction Tests**. Deterministic compaction without content loss. | M2 |
+| **M4** | **Commercial Reference Certification** | Full Quotation, Invoice, and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output. | CRIT | 🔄 IN PROGRESS | 40% | **GATE 3: Pre-Production Approval**. Commercial family certified for live traffic switchover. | M3 |
+| **M5** | **Remaining Document Families** | CPS font fix & resolver integration, CSR delivery integration, Waybill templates (Caveat font), Receipt, and RFQ migration. | HIGH | ⛔ PENDING | 0% | All 8 document types active on Forme; zero React-PDF traffic. | M4 |
+| **M6** | **Legacy Cleanup & Deprecation** | Verify zero React-PDF imports via AST analysis, remove obsolete adapters, uninstall `@react-pdf/renderer` from `package.json`. | MED | ⛔ PENDING | 0% | Repository clean; `@react-pdf/renderer` removed; typecheck clean. | M5 |
+
+> [!NOTE]
+> **Recorded sequence deviation.** Industrial commercial template authoring (M2, M3, M4) started before M1C completed and before Gate 1 and Gate 2 passed. The gates stay closed. Gate 3 stays blocked until Gate 1 and Gate 2 pass.
 
 ---
 
@@ -87,7 +95,7 @@
 
 ---
 
-### Milestone M2: Natural Pagination Implementation (Normal Mode First) ⛔
+### Milestone M2: Natural Pagination Implementation (Normal Mode First) 🔄
 > [!CRITICAL]
 > **GATE 1 REQUIREMENT: NATURAL PAGINATION ON REPRESENTATIVE SUITE FIRST**  
 > Natural pagination must be verified across the complete Representative Document Suite before Phase M3 begins:
@@ -100,55 +108,79 @@
 > 7. Multi-page documents with different content distributions.  
 > Compaction must never be used to mask broken natural pagination.
 
-- [ ] **Step 2.1:** Procure and deploy static TrueType font binaries in `public/fonts/`:
-  - `Inter-Regular.ttf`, `Inter-Bold.ttf`
+- [~] **Step 2.1:** Procure and deploy static TrueType font binaries in `public/fonts/`:
+  - `Inter-Regular.ttf`, `Inter-Bold.ttf`, `Inter-Italic.ttf`, `Inter-BoldItalic.ttf`
+  - `ArchivoBlack-Regular.ttf`
   - `Caveat-Regular.ttf`, `Caveat-Bold.ttf`
-  - `NotoSans-Regular.ttf`
-  - Verify cmap coverage of `₦` (`U+20A6`), `′` (`U+2032`), and `″` (`U+2033`).
-- [ ] **Step 2.2:** Upgrade `src/components/pdf/forme/fonts.ts` to support dual-runtime path resolution and observable fallback.
-- [ ] **Step 2.3:** Implement Forme Table component with calibrated column widths (candidate $\ge 72\text{ pt}$ for `make`) and oversized row handling.
-- [ ] **Step 2.4:** Implement native repeating table headers (`<Row header>`) across continuation pages.
-- [ ] **Step 2.5:** Implement adaptive closing layout for Bank Details and Totals:
+  - `NotoSans-Regular.ttf`, `NotoSans-Bold.ttf`
+  - `NotoSansGreek-Regular.ttf` (internal Greek subset)
+  - `₦` (`U+20A6`) routes to Noto Sans and is covered by a rendered-PDF test.  
+  *Status:* 🔄 PARTIAL (2026-11-01). The binaries are deployed and `₦` coverage is tested. Prime (`U+2032`) and double-prime (`U+2033`) cmap coverage is not verified.
+- [x] **Step 2.2:** Upgrade `src/components/pdf/forme/fonts.ts` to support dual-runtime path resolution and observable fallback.  
+  *Status:* ✅ COMPLETE (2026-11-01). Server paths use `public/fonts/`, browser paths use `/fonts/`, fetch failure logs and throws, and an unsupported family logs a warning before the Helvetica fallback.
+- [~] **Step 2.3:** Implement the Forme Table component with calibrated column widths and oversized row handling.
+  - The row budget is `contentWidth − 4 × 0.71 pt`. Columns always sum to the budget.
+  - The description column keeps a 120 pt minimum when space allows.
+  - Optional columns shrink toward legible minimums before the description loses space.  
+  *Status:* 🔄 PARTIAL (2026-11-01). Column budgeting is done and tested at the widest combination and at a narrow 420 pt budget. Oversized-row handling is not implemented.
+- [~] **Step 2.4:** Implement native repeating table headers (`<Row header>`) across continuation pages.  
+  *Status:* 🔄 PARTIAL (2026-11-01). The template uses `<Row header>`. Repetition on a continuation page is not verified.
+- [~] **Step 2.5:** Implement adaptive closing layout for Bank Details and Totals:
   - Display side-by-side when vertical space permits.
-  - Totals prioritize with line items; Bank Details adaptively stack or move to next page when space is restricted.
-- [ ] **Step 2.6:** Replace defensive global page padding (`paddingBottom: 48`) with Forme native `<Fixed position="footer">` dynamic reservation.
-- [ ] **Step 2.7:** Apply selective keep-together behavior (protect signatures and single rows; fragment long terms and notes).
-- [ ] **Step 2.8:** Run Gate 1 Verification across the complete 7-profile Representative Document Suite.  
+  - Totals prioritise with line items; Bank Details adaptively stack or move to the next page when space is restricted.  
+  *Status:* 🔄 PARTIAL (2026-11-01). Totals and Bank Details render side-by-side. Measured adaptive stacking is not implemented.
+- [x] **Step 2.6:** Replace defensive global page padding (`paddingBottom: 48`) with Forme native `<Fixed position="footer">` dynamic reservation.  
+  *Status:* ✅ COMPLETE (2026-11-01). The footer is a fixed element and the page content uses an 8 pt bottom inset (6 pt in compact mode).
+- [ ] **Step 2.7:** Apply selective keep-together behaviour (protect signatures and single rows; fragment long terms and notes).  
+  *Status:* ⛔ PENDING
+- [ ] **Step 2.8:** Run Gate 1 verification across the complete 7-profile Representative Document Suite.  
+  *Status:* ⛔ PENDING  
 *Exit Gate:* Gate 1 signed off; `SASQUO-000427` fits naturally on 1 page in Normal Mode.
 
 ---
 
-### Milestone M3: Compact Mode & Force 1 Page Mode ⛔
-- [ ] **Step 3.1:** Implement Compact Mode:
+### Milestone M3: Compact Mode & Force 1 Page Mode 🔄
+- [~] **Step 3.1:** Implement Compact Mode:
   - Wire all 32 candidate styling token overrides from `compact.ts` into the Forme Industry template.
-  - Verify deterministic spacing, margin, and typography reductions without content loss.
-- [ ] **Step 3.2:** Implement Two-Pass Measurement Engine using `renderDocumentWithLayout` from `@formepdf/core`.
-- [ ] **Step 3.3:** Implement Progressive Compaction Algorithm for Force 1 Page Mode:
+  - Verify deterministic spacing, margin, and typography reductions without content loss.  
+  *Status:* 🔄 PARTIAL (2026-11-01). The `compact` flag scales padding by 0.72, gaps by 0.7, the top margin from 22.68 pt to 18 pt, the bottom inset from 8 pt to 6 pt, and the display type. The 32-token table is not wired.
+- [ ] **Step 3.2:** Implement the two-pass measurement engine using `renderDocumentWithLayout` from `@formepdf/core`.  
+  *Status:* ⛔ PENDING
+- [ ] **Step 3.3:** Implement the progressive compaction algorithm for Force 1 Page Mode:
   - Pass 1: Compact mode tokens.
   - Pass 2: Margin reduction (candidate floor 18 pt) and row padding reduction (candidate floor 2 pt).
-  - Pass 3: Typography scale down to candidate floor 7 pt.
-- [ ] **Step 3.4:** Implement Readability Safeguards and Graceful Fallback:
-  - Prioritize commercial legibility over page count. Treat candidate floors (7 pt font, 2 pt padding) as provisional targets subject to testing.
+  - Pass 3: Typography scale down to candidate floor 7 pt.  
+  *Status:* ⛔ PENDING
+- [ ] **Step 3.4:** Implement readability safeguards and graceful fallback:
+  - Prioritise commercial legibility over page count. Treat candidate floors (7 pt font, 2 pt padding) as provisional targets subject to testing.
   - Enforce zero content omission, no overlapping bounding boxes, and no unreadable text.
-  - If document exceeds 1-page limits, fallback cleanly to readable 2-page document with an in-app notice.
-- [ ] **Step 3.5:** Run Gate 2 Verification on 1-page and multi-page test corpus.  
+  - If the document exceeds 1-page limits, fall back cleanly to a readable 2-page document with an in-app notice.  
+  *Status:* ⛔ PENDING
+- [ ] **Step 3.5:** Run Gate 2 verification on the 1-page and multi-page test corpus.  
+  *Status:* ⛔ PENDING  
 *Exit Gate:* Gate 2 signed off; compaction verified without content loss or legibility degradation.
 
 ---
 
-### Milestone M4: Commercial Reference Certification (Quotation, Invoice, PO) ⛔
+### Milestone M4: Commercial Reference Certification (Quotation, Invoice, PO) 🔄
 > [!IMPORTANT]
 > **GATE 3 REQUIREMENT:** New Forme commercial templates must be certified before production traffic switchover.
 
-- [ ] **Step 4.1:** Verify complete Quotation family against `SASQUO-000427`, `SASQUO-000428`, and `SASQUO-430`.
-- [ ] **Step 4.2:** Certify Invoice family (`SASINV`) sharing the Forme Industry template foundation.
-- [ ] **Step 4.3:** Implement and certify supplier-facing Purchase Order Forme template:
+- [~] **Step 4.1:** Verify the complete Quotation family against `SASQUO-000427`, `SASQUO-000428`, and `SASQUO-430`.  
+  *Status:* 🔄 PARTIAL (2026-11-01). The Industrial Quotation template is implemented and covered by rendered-PDF tests. The named sample set is not re-certified.
+- [~] **Step 4.2:** Certify the Invoice family (`SASINV`) on the Forme Industry template foundation.  
+  *Status:* 🔄 PARTIAL (2026-11-01). The Industrial Invoice template shares the same component and test suite. `SASINV` certification is pending.
+- [ ] **Step 4.3:** Implement and certify the supplier-facing Purchase Order Forme template:
   - Ensure supplier snapshot, procurement delivery terms, and unit costs render cleanly.
-  - Verify receiving bank details are hidden and WHT is not deducted.
-- [ ] **Step 4.4:** Implement and verify A4 Landscape orientation ($297 \times 210\text{ mm}$) with recalculation from first principles.
-- [ ] **Step 4.5:** Verify web preview parity with exported PDF files across desktop and mobile.
+  - Verify receiving bank details are hidden and WHT is not deducted.  
+  *Status:* ⛔ PENDING. Blocked by Step 1C.1. `PdfDocumentKind` accepts `invoice` and `quotation` only.
+- [~] **Step 4.4:** Implement and verify A4 Landscape orientation ($297 \times 210\text{ mm}$) with recalculation from first principles.  
+  *Status:* 🔄 PARTIAL (2026-11-01). `layout.orientation` swaps the page dimensions to 841.89 × 595.28 pt and rebuilds the column budget. Portrait and landscape right-edge tests pass. The remaining template tokens are not recalculated.
+- [ ] **Step 4.5:** Verify web preview parity with exported PDF files across desktop and mobile.  
+  *Status:* ⛔ PENDING
 - [ ] **Step 4.6:** Connect commercial export actions to `CompositePdfDelivery`.  
-*Exit Gate:* Gate 3 Pre-Production Approval granted for Commercial Group.
+  *Status:* ⛔ PENDING  
+*Exit Gate:* Gate 3 Pre-Production Approval granted for the Commercial Group.
 
 ---
 
@@ -179,3 +211,65 @@
 - [ ] **Step 6.3:** Uninstall `@react-pdf/renderer` from `package.json`.
 - [ ] **Step 6.4:** Execute `bun run audit:load` followed by `bun run typecheck` to confirm clean repository state.  
 *Exit Gate:* Clean repository state; legacy dependency removed; migration complete.
+
+---
+
+## 5. Work Log
+
+### 2026-10-30 — Discovery and problem register (M0)
+- Audited `IndustryTemplate.tsx`, `table.ts`, `compact.ts`, and `safeText.ts`.
+- Traced the `SASQUO-000427` page break: a 113.73 pt closing block overflowed 75.25 pt of free space.
+- Traced the `SASQUO-000428` character corruption: a double-prime serialized into digits through a 1-byte WinAnsi path.
+
+### 2026-11-01 — Architecture contracts and media specification (M1A, M1B)
+- Published the responsibility contract across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery.
+- Published the font and media infrastructure specification: TrueType SFNT only, WOFF rejected, no silent font mapping, Text Preservation Rule, single font authority.
+
+### 2026-11-01 — Industrial Forme commercial template correction (M2, M3, M4 in flight)
+**Implementation**
+- `src/components/pdf/forme/IndustrialFormeDocument.tsx` — template corrections.
+- `src/components/pdf/forme/industrialLayout.ts` — column allocation and group-label parsing.
+- `src/components/pdf/forme/glyphs.tsx` — per-glyph font runs.
+- `src/components/pdf/forme/fonts.ts` — dual-runtime source resolution and Greek subset registration.
+- `public/fonts/NotoSansGreek-Regular.ttf` — internal OFL glyph subset.
+- `src/components/pdf/index.ts` — route resolver returns `industrial-forme` for the `industrial` template.
+- `src/components/pdf/industryAdapter.ts` — adds the `currency` field from the document identity.
+- `src/components/pdf/engine/group.ts` — prefers the supplied `groupLabel`.
+- `src/domain/quotation/amountInWords.ts` — new resolver for the amount in words.
+- `src/domain/quotation/previewModel.ts` and `src/domain/quotation/pdfDownloadHandler.ts` — use the authoritative amount in words; remove the fixed currency code.
+
+**Review corrections**
+- Removed the `pt` and `Mt` unit suffixes and the `COMMERCIAL DOCUMENT` eyebrow.
+- Removed the internal codes `N-01`, `T-01`, `SCH-01`, and `PAY`, and the `PARTY` and `ISSUER` chips.
+- Removed the currency chip from the total summary. The template renders no currency code. The value comes only from `data.totals`.
+- Added an amount-in-words panel: 8.5 pt bold text (7.5 pt compact), an orange left rule, and a label. The value comes from the stored field or `computeDocument().totalPayable`. The quotation save workflow still stores an empty string; the domain layer resolves the value and the save workflow is unchanged.
+- Removed the `ISSUED BY` panel, the TIN, and all `customInfo` entries. The tagline moved to the masthead and still obeys `showTagline`.
+- Missing data omits the field and its label. The template renders no `-`, `—`, `–`, `N/A`, `null`, `undefined`, or `NaN`. Zero remains valid data.
+
+**Verification**
+
+| Command | Result |
+| :--- | :--- |
+| `bun run typecheck` | Pass. |
+| `bunx eslint` on the changed component, helpers, and new test | Pass. Pre-existing `no-explicit-any` and unused declarations remain in `previewModel.ts` and `pdfDownloadHandler.ts`. |
+| `bun test src/tests/pdf/formeIndustrialTemplate.test.ts` | 19 pass, 0 fail. |
+| `bun test src/tests/pdf/dualIndustryRendererRouting.test.ts` | 5 pass, 0 fail. |
+| `bun test src/tests/quotation/quotationAmountInWords.test.ts` | 5 pass, 0 fail. |
+| `bun run build` | Not run. Permanently banned on this host (4 GB RAM). |
+| `bun run audit:load` | Not run. No schema, query, or data-layer change. |
+
+The tests inspect the page count, page size, link annotations, font resources, text baselines, drawn rectangles, and the serialized element tree. The host has no PDF rasterizer. No page screenshot inspection took place.
+
+### Known pre-existing failures (not caused by this pass)
+- `src/tests/pdf/index.test.js` — 2 failures at HEAD. The test expects `150,000` and `text`; the committed adapter returns `₦ 150,000` and `rich-text`.
+- `src/tests/pdf/totalsTruthPreview.test.js` — 3 failures at HEAD. The test expects the older `ViewInvoice` and `ViewQuotation` source strings. Those pages were not changed.
+
+---
+
+## 6. Gate Readiness Snapshot
+
+| Gate | State | Blocking Items |
+| :--- | :--- | :--- |
+| **Gate 1 — Natural Pagination** | ⛔ OPEN | Prime and double-prime cmap verification. Oversized-row handling. Continuation-page header repetition. Measured adaptive closing layout. Selective keep-together. 7-profile suite run. |
+| **Gate 2 — Compaction** | ⛔ OPEN | 32-token compact map. Two-pass measurement. Progressive compaction. Readability safeguards and fallback. 1-page and multi-page corpus run. |
+| **Gate 3 — Pre-Production** | ⛔ OPEN | Gate 1 and Gate 2 sign-off. Named sample recertification. Purchase Order template and contract. Preview parity. `CompositePdfDelivery` connection. |

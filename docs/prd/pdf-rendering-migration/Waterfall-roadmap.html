@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Waterfall Roadmap &amp; Phased Execution Sequence — PDF Rendering Migration</title>
-<meta name="description" content="Approved living command document for the Forme Engine + pdfcn presentation layer migration. Seven milestones, three gates, frozen documentation baseline.">
+<meta name="description" content="Living command document for the Forme Engine + pdfcn presentation layer migration. Nine milestones, three gates, revision dated 2026-11-01.">
 <meta name="color-scheme" content="dark">
 <script>document.documentElement.className += " js";</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -330,6 +330,7 @@ td .mname{display:block;color:var(--text);font-weight:600}
 .st{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;padding:5px 9px;border-radius:6px;border:1px solid}
 .st-implemented{color:var(--go);border-color:rgba(35,224,138,.38);background:rgba(35,224,138,.1)}
 .st-improved{color:var(--info);border-color:rgba(70,200,255,.36);background:rgba(70,200,255,.1)}
+.st-progress{color:var(--amber);border-color:rgba(255,179,0,.42);background:rgba(255,179,0,.12)}
 .st-corrected{color:var(--amber);border-color:rgba(255,179,0,.38);background:rgba(255,179,0,.1)}
 .st-superseded{color:var(--violet);border-color:rgba(161,140,255,.36);background:rgba(161,140,255,.1)}
 .st-pending{color:var(--alert);border-color:rgba(255,77,94,.34);background:rgba(255,77,94,.09)}
@@ -363,6 +364,7 @@ tr.done .mini__bar i{background:linear-gradient(90deg,#0FA968,var(--go))}
 }
 .phase[open]::before{border-color:var(--amber);box-shadow:0 0 0 4px rgba(255,179,0,.13),0 0 20px rgba(255,179,0,.5)}
 .phase.done-phase[open]::before{border-color:var(--go);box-shadow:0 0 0 4px rgba(35,224,138,.12),0 0 20px rgba(35,224,138,.45)}
+.phase.progress-phase .phase__no{background:var(--amber-2)}
 .phase__head{
   display:flex;align-items:center;gap:9px;flex-wrap:wrap;cursor:pointer;list-style:none;
   background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
@@ -419,6 +421,8 @@ details[open] .phase__body{animation:slideDown .42s cubic-bezier(.2,.8,.2,1)}
   display:grid;place-items:center;margin-top:2px;background:rgba(255,255,255,.03);
 }
 .check.on{background:rgba(35,224,138,.14);border-color:rgba(35,224,138,.6)}
+.check.partial{background:rgba(255,179,0,.16);border-color:rgba(255,179,0,.62)}
+.check.partial::after{content:"";width:9px;height:2px;background:var(--amber);border-radius:2px}
 .check svg{width:12px;height:12px;stroke:var(--go);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;
   stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .5s cubic-bezier(.2,.8,.2,1) var(--d,.2s)}
 .js .step.in .check.on svg,.step.in .check.on svg{stroke-dashoffset:0}
@@ -435,6 +439,8 @@ details[open] .phase__body{animation:slideDown .42s cubic-bezier(.2,.8,.2,1)}
 .statline{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
 .statline .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .statline .date{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.step__note{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--muted);font-style:italic}
+.step__note code{font-style:normal}
 
 /* ---------- decision log ---------- */
 .acc{margin-top:4px}
@@ -619,13 +625,14 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       <span class="brand__mark">WF</span>
       <span class="brand__txt">PDF Migration<b>Waterfall Roadmap</b></span>
     </a>
-    <span class="live"><i></i>Baseline frozen</span>
+    <span class="live"><i></i>Living baseline</span>
     <nav class="nav" aria-label="Document sections">
       <a href="#progress">01 Progress</a>
       <a href="#legend">02 Legend</a>
       <a href="#tracker">03 Milestones</a>
       <a href="#execution">04 Execution</a>
-      <a href="#decisions">05 Decisions</a>
+      <a href="#worklog">05 Work Log</a>
+      <a href="#decisions">06 Decisions</a>
     </nav>
   </div>
   <div class="scrollline" aria-hidden="true"></div>
@@ -645,7 +652,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
   </svg>
 
   <div class="wrap hero__in">
-    <span class="eyebrow fade-up" style="--d:.05s"><i></i>🏗️ PRD · Approved Living Command Document</span>
+    <span class="eyebrow fade-up" style="--d:.05s"><i></i>🏗️ PRD · Living Execution Command Document</span>
 
     <h1>
       <span class="line"><span class="solid-grad" style="--d:.14s">Waterfall</span></span>
@@ -657,7 +664,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     <div class="meta fade-up" style="--d:.54s">
       <div class="meta__cell">
         <span class="meta__k">Status</span>
-        <span class="meta__v"><span class="hl">Approved</span> — frozen baseline, ready for M1 planning</span>
+        <span class="meta__v"><span class="hl">Living</span> — M1C pending, M2–M4 in flight</span>
       </div>
       <div class="meta__cell">
         <span class="meta__k">Architecture</span>
@@ -669,7 +676,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       </div>
       <div class="meta__cell">
         <span class="meta__k">Last Updated</span>
-        <span class="meta__v">2026-10-30</span>
+        <span class="meta__v">2026-11-01</span>
       </div>
     </div>
   </div>
@@ -679,7 +686,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
 <section id="progress" class="pad-sm">
   <div class="wrap">
     <div class="shead reveal">
-      <span class="shead__no">01 / 05</span>
+      <span class="shead__no">01 / 06</span>
       <h2>Master Progress</h2>
       <div class="shead__rule"></div>
     </div>
@@ -688,29 +695,28 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       <div class="prog__row">
         <div>
           <div class="prog__big">
-            <span class="prog__num count" data-to="15">0<sup>%</sup></span>
+            <span class="prog__num count" data-to="44">0<sup>%</sup></span>
             <span class="prog__cap">Overall completion<b>Program execution</b></span>
           </div>
           <div class="segbar bar" aria-hidden="true">
             <span class="seg on" style="--i:0"></span>
-            <span class="seg half" style="--i:1"></span>
-            <span class="seg" style="--i:2"></span>
+            <span class="seg on" style="--i:1"></span>
+            <span class="seg on" style="--i:2"></span>
             <span class="seg" style="--i:3"></span>
-            <span class="seg" style="--i:4"></span>
-            <span class="seg" style="--i:5"></span>
-            <span class="seg" style="--i:6"></span>
+            <span class="seg half" style="--i:4"></span>
+            <span class="seg half" style="--i:5"></span>
+            <span class="seg half" style="--i:6"></span>
             <span class="seg" style="--i:7"></span>
             <span class="seg" style="--i:8"></span>
-            <span class="seg" style="--i:9"></span>
           </div>
         </div>
         <div>
           <div class="facts">
-            <span class="fact">Milestones <b>7</b></span>
-            <span class="fact">Current Phase <b>1 — Engine Foundation</b></span>
+            <span class="fact">Milestones <b>9</b></span>
+            <span class="fact">Current Phase <b>M1C pending</b></span>
           </div>
           <div class="terminal">
-            <span class="term__ascii">[██░░░░░░░░] 15%</span>
+            <span class="term__ascii">[████░░░░░░] 44%</span>
             <span class="caret"></span>
           </div>
         </div>
@@ -718,7 +724,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     </div>
 
     <p class="note reveal">
-      <b>Note:</b> Milestone M0 is the Discovery and PRD documentation deliverable — 100% complete and frozen. M1–M6 are software implementation phases, pending execution.
+      <b>Note:</b> M0, M1A and M1B are complete. M2, M3 and M4 have in-flight work from the Industrial Forme commercial template pass. Gate 1, Gate 2 and Gate 3 are not signed off. M1C, M5 and M6 are pending. The percentage is the mean of the milestone values and does not represent gate approval.
     </p>
   </div>
 </section>
@@ -727,20 +733,20 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
 <section id="legend" class="pad-sm">
   <div class="wrap">
     <div class="shead reveal">
-      <span class="shead__no">02 / 05</span>
+      <span class="shead__no">02 / 06</span>
       <h2>Status Legend</h2>
       <div class="shead__rule"></div>
     </div>
 
     <div class="legend reveal">
       <button class="chip" type="button" data-filter="implemented" aria-pressed="false" style="--c:var(--go)">
-        <span class="dot"></span><b>✅ Implemented</b><span class="desc"> — executed, verified, active</span>
+        <span class="dot"></span><b>✅ Complete</b><span class="desc"> — executed, verified, accepted</span>
       </button>
-      <button class="chip" type="button" data-filter="improved" aria-pressed="false" style="--c:var(--info)">
-        <span class="dot"></span><b>🔄 Improved</b><span class="desc"> — executed, then enhanced</span>
+      <button class="chip" type="button" data-filter="progress" aria-pressed="false" style="--c:var(--amber)">
+        <span class="dot"></span><b>🔄 In Progress</b><span class="desc"> — active work, exit gate open</span>
       </button>
       <button class="chip" type="button" data-filter="corrected" aria-pressed="false" style="--c:var(--amber)">
-        <span class="dot"></span><b>🛠️ Corrected</b><span class="desc"> — patched to fix defects</span>
+        <span class="dot"></span><b>🛠️ Corrected</b><span class="desc"> — executed, then patched</span>
       </button>
       <button class="chip" type="button" data-filter="superseded" aria-pressed="false" style="--c:var(--violet)">
         <span class="dot"></span><b>⏭️ Superseded</b><span class="desc"> — replaced by newer decision</span>
@@ -762,7 +768,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
 <section id="tracker" class="pad-sm">
   <div class="wrap">
     <div class="shead reveal">
-      <span class="shead__no">03 / 05</span>
+      <span class="shead__no">03 / 06</span>
       <h2>Milestones &amp; Gates</h2>
       <div class="shead__rule"></div>
     </div>
@@ -770,41 +776,55 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     <ol class="cascade reveal" aria-label="Milestone execution sequence">
       <li class="node done" data-status="implemented">
         <span class="node__id">M0</span>
-        <p class="node__t">Discovery &amp; Problem Register</p>
+        <p class="node__t">Discovery &amp; Register</p>
         <div class="node__bar" data-p="100"><i></i></div>
-        <div class="node__p"><span>Done</span><b>100%</b></div>
+        <div class="node__p"><span>Complete</span><b>100%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node done" data-status="implemented">
+        <span class="node__id">M1A</span>
+        <p class="node__t">Architecture Contracts</p>
+        <div class="node__bar" data-p="100"><i></i></div>
+        <div class="node__p"><span>Complete</span><b>100%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node done" data-status="implemented">
+        <span class="node__id">M1B</span>
+        <p class="node__t">Font &amp; Media Infrastructure</p>
+        <div class="node__bar" data-p="100"><i></i></div>
+        <div class="node__p"><span>Complete</span><b>100%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
       <li class="node" data-status="pending">
-        <span class="node__id">M1</span>
-        <p class="node__t">Forme Foundation &amp; Typography</p>
+        <span class="node__id">M1C</span>
+        <p class="node__t">PO Canonical Contract</p>
         <div class="node__bar" data-p="0"><i></i></div>
         <div class="node__p"><span>Pending</span><b>0%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
-      <li class="node" data-status="pending">
+      <li class="node" data-status="progress">
         <span class="node__id">M2</span>
-        <p class="node__t">Natural Pagination (Normal)</p>
-        <div class="node__bar" data-p="0"><i></i></div>
-        <div class="node__p"><span>Pending</span><b>0%</b></div>
+        <p class="node__t">Natural Pagination</p>
+        <div class="node__bar" data-p="35"><i></i></div>
+        <div class="node__p"><span>In Progress</span><b>35%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
       <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 1<br>Sign-off</span></li>
       <li class="arrow" aria-hidden="true">→</li>
-      <li class="node" data-status="pending">
+      <li class="node" data-status="progress">
         <span class="node__id">M3</span>
         <p class="node__t">Compact &amp; Force 1 Page</p>
-        <div class="node__bar" data-p="0"><i></i></div>
-        <div class="node__p"><span>Pending</span><b>0%</b></div>
+        <div class="node__bar" data-p="25"><i></i></div>
+        <div class="node__p"><span>In Progress</span><b>25%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
       <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 2<br>Compaction</span></li>
       <li class="arrow" aria-hidden="true">→</li>
-      <li class="node" data-status="pending">
+      <li class="node" data-status="progress">
         <span class="node__id">M4</span>
-        <p class="node__t">Reference Template Cert.</p>
-        <div class="node__bar" data-p="0"><i></i></div>
-        <div class="node__p"><span>Pending</span><b>0%</b></div>
+        <p class="node__t">Commercial Certification</p>
+        <div class="node__bar" data-p="40"><i></i></div>
+        <div class="node__p"><span>In Progress</span><b>40%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
       <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 3<br>Pre-production</span></li>
@@ -843,60 +863,78 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
             <td class="head-cell">Discovery &amp; Problem Register</td>
             <td class="stack" data-label="Scope">Root cause analysis on <code>SASQUO-000427</code>, <code>SASQUO-000428</code>, <code>SASQUO-430</code>. PRD documentation suite update and baseline freeze.</td>
             <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
-            <td data-label="Status"><span class="st st-implemented">✅ Implemented</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
-            <td class="stack" data-label="Target Gate"><span class="gatecell">Documentation Baseline Frozen.</span></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Documentation baseline frozen.</span></td>
+          </tr>
+          <tr class="done" data-status="implemented">
+            <td class="id">M1A</td>
+            <td class="head-cell">PDF Architecture Contracts</td>
+            <td class="stack" data-label="Scope">Responsibility split across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery. Boundary rules enforced.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Contract specification published.</span></td>
+          </tr>
+          <tr class="done" data-status="implemented">
+            <td class="id">M1B</td>
+            <td class="head-cell">Shared Font &amp; Media Infrastructure</td>
+            <td class="stack" data-label="Scope">TrueType SFNT requirement, font inventory, WOFF rejection, CORS reality, Text Preservation Rule, single font authority.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Media specification published.</span></td>
           </tr>
           <tr data-status="pending">
-            <td class="id">M1</td>
-            <td class="head-cell">Forme Foundation &amp; Typography</td>
-            <td class="stack" data-label="Scope">TrueType font evaluation (static TTF vs binary bundle for mobile/offline), Unicode normalizer, 5-step rich text pipeline, scoped emoji fallback.</td>
+            <td class="id">M1C</td>
+            <td class="head-cell">PO Canonical Preparation Contract</td>
+            <td class="stack" data-label="Scope">Author <code>preparePurchaseOrderDocument.ts</code>, adapt supplier snapshot and procurement terms, map unit cost, hide receiving bank blocks.</td>
             <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
             <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
-            <td class="stack" data-label="Target Gate"><span class="gatecell">Typography, mobile font &amp; rich-text tests pass.</span></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">PO contract and resolver adapter.</span></td>
           </tr>
-          <tr data-status="pending">
+          <tr data-status="progress">
             <td class="id">M2</td>
             <td class="head-cell">Natural Pagination (Normal Mode)</td>
             <td class="stack" data-label="Scope">Calibrated table columns (candidate 72 pt make), adaptive closing layout, repeating headers, dynamic footer, selective keep-together, oversized row handling.</td>
             <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
-            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
-            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td data-label="Status"><span class="st st-progress">🔄 In Progress</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="35"><i></i></span><span>35%</span></div></td>
             <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 1</b>Representative Document Suite Sign-Off.</span></td>
           </tr>
-          <tr data-status="pending">
+          <tr data-status="progress">
             <td class="id">M3</td>
             <td class="head-cell">Compact &amp; Force 1 Page Modes</td>
-            <td class="stack" data-label="Scope">Wire 32 candidate compact tokens, multi-pass measurement via <code>renderDocumentWithLayout</code>, legibility-first safeguards (candidate 7 pt floor), fallback.</td>
+            <td class="stack" data-label="Scope">Wire 32 candidate compact tokens, two-pass measurement via <code>renderDocumentWithLayout</code>, legibility-first safeguards (candidate 7 pt floor), fallback.</td>
             <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
-            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
-            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td data-label="Status"><span class="st st-progress">🔄 In Progress</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="25"><i></i></span><span>25%</span></div></td>
             <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 2</b>Compaction Tests.</span></td>
           </tr>
-          <tr data-status="pending">
+          <tr data-status="progress">
             <td class="id">M4</td>
-            <td class="head-cell">Reference Template Certification</td>
-            <td class="stack" data-label="Scope">Full Quotation &amp; Invoice templates in Forme, Landscape mode, preview parity, visual regression.</td>
+            <td class="head-cell">Commercial Reference Certification</td>
+            <td class="stack" data-label="Scope">Full Quotation, Invoice and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output.</td>
             <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
-            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
-            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td data-label="Status"><span class="st st-progress">🔄 In Progress</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="40"><i></i></span><span>40%</span></div></td>
             <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 3</b>Pre-Production Approval.</span></td>
           </tr>
           <tr data-status="pending">
             <td class="id">M5</td>
             <td class="head-cell">Remaining Document Families</td>
-            <td class="stack" data-label="Scope">Waybill, RFQ, BOQ, and CSR migration to Forme templates.</td>
-            <td data-label="Priority"><span class="pri MED">MED</span></td>
+            <td class="stack" data-label="Scope">CPS font fix and resolver integration, CSR delivery integration, Waybill, Receipt, and RFQ migration.</td>
+            <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
             <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
-            <td class="stack" data-label="Target Gate"><span class="gatecell">All document types active.</span></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">All 8 document types active.</span></td>
           </tr>
           <tr data-status="pending">
             <td class="id">M6</td>
             <td class="head-cell">Legacy Cleanup &amp; Deprecation</td>
             <td class="stack" data-label="Scope">Verify zero React-PDF imports, remove obsolete adapters, uninstall <code>@react-pdf/renderer</code>.</td>
-            <td data-label="Priority"><span class="pri LOW">LOW</span></td>
+            <td data-label="Priority"><span class="pri MED">MED</span></td>
             <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
             <td class="stack" data-label="Target Gate"><span class="gatecell">Package removed.</span></td>
@@ -911,7 +949,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
 <section id="execution" class="pad-sm">
   <div class="wrap">
     <div class="shead reveal">
-      <span class="shead__no">04 / 05</span>
+      <span class="shead__no">04 / 06</span>
       <h2>Execution Steps</h2>
       <div class="shead__rule"></div>
     </div>
@@ -927,9 +965,9 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       <!-- PHASE 0 -->
       <details class="phase done-phase" data-status="implemented">
         <summary class="phase__head">
-          <span class="phase__no">Phase 0</span>
+          <span class="phase__no">Phase 0 · M0</span>
           <span class="phase__t">Discovery, Audit &amp; Problem Register</span>
-          <span class="st st-implemented phase__status">✅ Implemented</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
           <span class="chev" aria-hidden="true">▾</span>
         </summary>
         <div class="phase__body">
@@ -938,39 +976,109 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
               <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
                 <p class="step__t"><span class="num">Step 0.1</span>Audit <code>IndustryTemplate.tsx</code>, <code>table.ts</code>, <code>compact.ts</code>, and <code>safeText.ts</code>.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-10-30</span></div>
               </div>
             </li>
             <li class="step" data-status="implemented">
               <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
                 <p class="step__t"><span class="num">Step 0.2</span>Trace pagination failure on <code>SASQUO-000427 (1).pdf</code> (113.73 pt closing block breaking over 75.25 pt free space).</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-10-30</span></div>
               </div>
             </li>
             <li class="step" data-status="implemented">
               <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
                 <p class="step__t"><span class="num">Step 0.3</span>Trace character corruption on <code>SASQUO-000428.pdf</code> (double-prime <code>″</code> rendering into digits <code>23</code>, <code>33</code>, <code>43</code>).</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-10-30</span></div>
               </div>
             </li>
             <li class="step" data-status="implemented">
               <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
                 <p class="step__t"><span class="num">Step 0.4</span>Update and freeze PRD document suite in <code>docs/prd/pdf-rendering-migration/</code> to record problem register, Forme architecture, and testable gates.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Implemented</span><span class="date">2026-10-30</span></div>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-10-30</span></div>
               </div>
             </li>
           </ul>
         </div>
       </details>
 
-      <!-- PHASE 1 -->
-      <details class="phase" data-status="pending" open>
+      <!-- PHASE 1A -->
+      <details class="phase done-phase" data-status="implemented">
         <summary class="phase__head">
-          <span class="phase__no">Phase 1</span>
-          <span class="phase__t">Forme Foundation &amp; Typography</span>
+          <span class="phase__no">Phase 1A · M1A</span>
+          <span class="phase__t">PDF Architecture Contracts</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1A.1</span>Define explicit ownership across Domain Preparation, Master Resolver, Customization, Presentation, Forme, and Delivery.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1A.2</span>Enforce boundary rules: domain preparation owns business math; the resolver does not own fonts, branding, or delivery.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 1B -->
+      <details class="phase done-phase" data-status="implemented">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 1B · M1B</span>
+          <span class="phase__t">Shared Font &amp; Media Infrastructure</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1B.1</span>Audit the physical font inventory and npm packages. The audit found 0 TTF files in <code>@fontsource/*</code> and confirmed WOFF rejection by Forme.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1B.2</span>Confirm the root cause of the <code>2″ → 23</code> defect in <code>@react-pdf/pdfkit</code>: 4-digit hex serialization inside 1-byte WinAnsi text chunks.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1B.3</span>Record the CORS reality: base64 conversion does not bypass CORS; the client fetch must succeed first. Define the 6-step media loading path.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 1B.4</span>Reconcile font fallback with no silent mapping to Inter, and establish the Text Preservation Rule. The sanitizer is removed; diagnostics are read-only.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 1C -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 1C · M1C</span>
+          <span class="phase__t">PO Canonical Preparation Contract</span>
           <span class="st st-pending phase__status">⛔ Pending</span>
           <span class="chev" aria-hidden="true">▾</span>
         </summary>
@@ -979,18 +1087,12 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 1.1</span>Confirm <code>@formepdf/react</code> and <code>@formepdf/core</code> registration and test minimal document generation.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 1.2</span>Evaluate font packaging strategy:</p>
+                <p class="step__t"><span class="num">Step 1C.1</span>Implement <code>preparePurchaseOrderDocument.ts</code> in <code>src/domain/pdf/resolver/commercial/</code>:</p>
                 <ul class="sub">
-                  <li>Test static TTF font assets from <code>public/fonts/</code> (Inter Regular, Medium, Bold).</li>
-                  <li>Verify offline PDF generation in Capacitor mobile builds (Android/iOS).</li>
-                  <li>Retain binary bundling as a verified fallback if static delivery fails.</li>
+                  <li>Adapt the PO domain entity into the canonical prepared contract.</li>
+                  <li>Adapt the supplier snapshot and the procurement payment terms.</li>
+                  <li>Map the procurement unit cost (<code>unit_cost</code>) and the item lines.</li>
+                  <li>Preserve Buyer authorisation signatures and hide the receiving bank blocks.</li>
                 </ul>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
@@ -998,35 +1100,14 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 1.3</span>Build deterministic Unicode normalizer (<code>safeText</code> replacement):</p>
-                <ul class="sub">
-                  <li>Empirically trace font fallback and encoding paths for double-prime (<code>U+2033</code>).</li>
-                  <li>Map double-prime (<code>U+2033</code>) and prime (<code>U+2032</code>) cleanly without modulo-256 corruption.</li>
-                  <li>Support Nigerian Naira (<code>₦</code>, <code>U+20A6</code>) via font glyph or inline SVG vector icon.</li>
-                  <li>Support engineering symbols (<code>²</code>, <code>×</code>, <code>±</code>, <code>°</code>).</li>
-                  <li>Implement scoped emoji handling: preserve surrounding text, support small justified set of icons, safely strip unmapped emoji without crashing.</li>
-                </ul>
+                <p class="step__t"><span class="num">Step 1C.2</span>Connect the PO prepared model to the Master Deterministic Resolver.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 1.4</span>Implement interactive hyperlink primitives (<code>&lt;Image href="..."&gt;</code> and coordinate overlay views) and enforce logo aspect-ratio preservation (<code>objectFit: 'contain'</code>).</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 1.5</span>Implement 5-step rich-text conversion pipeline:</p>
-                <ul class="sub">
-                  <li>Sanitize incoming HTML via DOMPurify with strict allowlist.</li>
-                  <li>Parse sanitized HTML into intermediate tree.</li>
-                  <li>Map permitted nodes into controlled document AST (<code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;u&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;ol&gt;</code>, <code>&lt;li&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;br&gt;</code>).</li>
-                  <li>Render AST through Forme components.</li>
-                  <li>Fallback unsupported nodes safely to plain text.</li>
-                </ul>
+                <p class="step__t"><span class="num">Step 1C.3</span>Author unit tests in <code>src/tests/critical/preparePurchaseOrderDocument.test.js</code>. Verify the model output and verify that data is not mutated.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
@@ -1035,11 +1116,11 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       </details>
 
       <!-- PHASE 2 -->
-      <details class="phase" data-status="pending">
+      <details class="phase progress-phase" data-status="progress">
         <summary class="phase__head">
-          <span class="phase__no">Phase 2</span>
+          <span class="phase__no">Phase 2 · M2</span>
           <span class="phase__t">Natural Pagination (Normal Mode First)</span>
-          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="st st-progress phase__status">🔄 In Progress</span>
           <span class="chev" aria-hidden="true">▾</span>
         </summary>
         <div class="phase__body">
@@ -1049,7 +1130,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
               Critical
             </span>
             <h4>Gate 1 — Natural pagination on the representative suite first</h4>
-            <p>Verify natural pagination across the complete Representative Document Suite before Phase 3 begins:</p>
+            <p>Verify natural pagination across the complete Representative Document Suite before Phase 3 is signed off:</p>
             <ol>
               <li>Short documents with few line items.</li>
               <li>The original 13-item <code>SASQUO-000427</code> quotation.</li>
@@ -1063,60 +1144,78 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
           </aside>
 
           <ul class="steps">
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 2.1</span>Implement Forme Table component with calibrated column widths &amp; oversized row handling:</p>
+                <p class="step__t"><span class="num">Step 2.1</span>Deploy static TrueType binaries in <code>public/fonts/</code> and verify glyph coverage:</p>
                 <ul class="sub">
-                  <li>Test candidate target <b style="color:var(--amber)">72 pt</b> for <code>make</code> column (eliminating 2-line wraps for <code>"Atlas Copco"</code>).</li>
-                  <li>Implement proportional column budgeting for description and item columns.</li>
-                  <li>Keep ordinary rows intact across pages where possible; define safe fragmentation or a controlled fallback for rows exceeding available page height, to prevent clipping or silent content loss.</li>
+                  <li>Inter Regular, Bold, Italic and BoldItalic.</li>
+                  <li>Archivo Black Regular; Caveat Regular and Bold.</li>
+                  <li>Noto Sans Regular and Bold, plus the internal Greek subset.</li>
+                  <li>Naira (<code>₦</code>, <code>U+20A6</code>) routes to Noto Sans and is covered by a rendered-PDF test.</li>
                 </ul>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">Prime (<code>U+2032</code>) and double-prime (<code>U+2033</code>) cmap coverage is not verified.</p>
               </div>
             </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 2.2</span>Enable native repeating table header (<code>&lt;Row header&gt;</code>) across continuation pages and verify runtime repetition in exported PDF.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <p class="step__t"><span class="num">Step 2.2</span>Upgrade <code>src/components/pdf/forme/fonts.ts</code> for dual-runtime path resolution and observable fallback. The server path is <code>public/fonts/</code>, the browser path is <code>/fonts/</code>, a fetch failure logs and throws, and an unsupported family logs a warning before the Helvetica fallback.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
               </div>
             </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 2.3</span>Implement adaptive closing layout for Bank Details and Totals:</p>
+                <p class="step__t"><span class="num">Step 2.3</span>Implement the Forme Table with calibrated column widths and oversized row handling:</p>
                 <ul class="sub">
-                  <li>Display side-by-side when space and content permit.</li>
-                  <li>Provide a deliberate readable fallback (adaptive stacking or continuation) when space is restricted.</li>
-                  <li>Avoid rigid row-locking; do not prescribe custom row balancing without measured evidence.</li>
+                  <li>The row budget is <code>contentWidth − 4 × 0.71 pt</code>. Columns always sum to the budget.</li>
+                  <li>The description column keeps a 120 pt minimum when space allows.</li>
+                  <li>Optional columns shrink before the description loses space. Tested at the widest combination and at a 420 pt budget.</li>
                 </ul>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">Oversized-row handling is not implemented.</p>
               </div>
             </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 2.4</span>Replace defensive global page padding (<code>paddingBottom: 48</code>) with Forme native <code>&lt;Fixed position="footer"&gt;</code> dynamic reservation.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <p class="step__t"><span class="num">Step 2.4</span>Enable the native repeating table header (<code>&lt;Row header&gt;</code>) across continuation pages.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">The template uses <code>&lt;Row header&gt;</code>. Repetition on a continuation page is not verified.</p>
               </div>
             </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 2.5</span>Apply selective keep-together behavior:</p>
+                <p class="step__t"><span class="num">Step 2.5</span>Implement the adaptive closing layout for Bank Details and Totals:</p>
                 <ul class="sub">
-                  <li>Protect small logical units (individual signature blocks, single table rows).</li>
-                  <li>Allow long sections (commercial terms, notes, attachments) to fragment naturally.</li>
-                  <li>Mitigate orphaned section headings where practical.</li>
+                  <li>Totals and Bank Details render side-by-side.</li>
+                  <li>The side-by-side block sits after the line items.</li>
                 </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">Measured adaptive stacking is not implemented.</p>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.6</span>Replace the defensive global page padding (<code>paddingBottom: 48</code>) with a Forme <code>&lt;Fixed position="footer"&gt;</code>. The page content uses an 8 pt bottom inset, and 6 pt in compact mode.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-01</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 2.7</span>Apply selective keep-together behaviour: protect signatures and single rows; let long terms and notes fragment.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 2.6</span>Run Gate 1 Verification across the complete Representative Document Suite.</p>
+                <p class="step__t"><span class="num">Step 2.8</span>Run Gate 1 verification across the complete 7-profile Representative Document Suite.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
@@ -1125,40 +1224,39 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       </details>
 
       <!-- PHASE 3 -->
-      <details class="phase" data-status="pending">
+      <details class="phase progress-phase" data-status="progress">
         <summary class="phase__head">
-          <span class="phase__no">Phase 3</span>
+          <span class="phase__no">Phase 3 · M3</span>
           <span class="phase__t">Compact &amp; Force 1 Page Modes</span>
-          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="st st-progress phase__status">🔄 In Progress</span>
           <span class="chev" aria-hidden="true">▾</span>
         </summary>
         <div class="phase__body">
           <ul class="steps">
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
               <div class="step__b">
                 <p class="step__t"><span class="num">Step 3.1</span>Implement Compact Mode:</p>
                 <ul class="sub">
-                  <li>Wire all 32 candidate styling token overrides from <code>compact.ts</code> into the Forme Industry template.</li>
-                  <li>Verify deterministic spacing, margin, and typography reductions without content loss.</li>
+                  <li>The <code>compact</code> flag scales padding by 0.72 and gaps by 0.7.</li>
+                  <li>The page top margin moves from 22.68 pt to 18 pt; the bottom inset moves from 8 pt to 6 pt.</li>
+                  <li>The display type scales down; the amount-in-words text moves from 8.5 pt to 7.5 pt.</li>
                 </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">The 32-token table from <code>compact.ts</code> is not wired.</p>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 3.2</span>Implement the Two-Pass Measurement Engine. Use <code>renderDocumentWithLayout</code> from <code>@formepdf/core</code> to extract exact rendered heights and bounding boxes.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 3.2</span>Implement Two-Pass Measurement Engine:</p>
-                <ul class="sub">
-                  <li>Use <code>renderDocumentWithLayout</code> from <code>@formepdf/core</code> to extract exact rendered heights and bounding boxes.</li>
-                </ul>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 3.3</span>Implement Progressive Compaction Algorithm for Force 1 Page Mode:</p>
+                <p class="step__t"><span class="num">Step 3.3</span>Implement the Progressive Compaction Algorithm for Force 1 Page Mode:</p>
                 <ul class="sub">
                   <li><b style="color:var(--text)">Pass 1:</b> Compact mode tokens.</li>
                   <li><b style="color:var(--text)">Pass 2:</b> Margin reduction (candidate floor 18 pt) and row padding reduction (candidate floor 2 pt).</li>
@@ -1182,7 +1280,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 3.5</span>Run Gate 2 Verification on 1-page and multi-page test corpus.</p>
+                <p class="step__t"><span class="num">Step 3.5</span>Run Gate 2 verification on the 1-page and multi-page test corpus.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
@@ -1191,11 +1289,11 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       </details>
 
       <!-- PHASE 4 -->
-      <details class="phase" data-status="pending">
+      <details class="phase progress-phase" data-status="progress">
         <summary class="phase__head">
-          <span class="phase__no">Phase 4</span>
-          <span class="phase__t">Reference Template Certification</span>
-          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="phase__no">Phase 4 · M4</span>
+          <span class="phase__t">Commercial Reference Certification</span>
+          <span class="st st-progress phase__status">🔄 In Progress</span>
           <span class="chev" aria-hidden="true">▾</span>
         </summary>
         <div class="phase__body">
@@ -1205,53 +1303,74 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
               Important
             </span>
             <h4>Gate 3 Requirement</h4>
-            <p style="margin:0">New Forme templates must be built, tested, and certified before production traffic switchover.</p>
+            <p style="margin:0">New Forme commercial templates must be built, tested, and certified before production traffic switchover. Gate 3 stays blocked until Gate 1 and Gate 2 pass.</p>
           </aside>
 
           <ul class="steps">
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.1</span>Verify the complete Quotation family against <code>SASQUO-000427</code>, <code>SASQUO-000428</code>, and <code>SASQUO-430</code>.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">The Industrial Quotation template is implemented and covered by rendered-PDF tests. The named sample set is not re-certified.</p>
+              </div>
+            </li>
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.2</span>Certify the Invoice family (<code>SASINV</code>) on the Forme Industry template foundation.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">The Industrial Invoice template shares the same component and test suite. <code>SASINV</code> certification is pending.</p>
+              </div>
+            </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 4.1</span>Verify complete Quotation family against <code>SASQUO-000427</code>, <code>SASQUO-000428</code>, and <code>SASQUO-430</code>.</p>
+                <p class="step__t"><span class="num">Step 4.3</span>Implement and certify the supplier-facing Purchase Order template:</p>
+                <ul class="sub">
+                  <li>Render the supplier snapshot, the procurement delivery terms, and the unit costs.</li>
+                  <li>Hide the receiving bank details and confirm that WHT is not deducted.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <p class="step__note">Blocked by Step 1C.1. <code>PdfDocumentKind</code> accepts <code>invoice</code> and <code>quotation</code> only.</p>
+              </div>
+            </li>
+            <li class="step" data-status="progress">
+              <span class="check partial" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.4</span>Implement and verify A4 Landscape orientation (297 × 210 mm):</p>
+                <ul class="sub">
+                  <li><code>layout.orientation</code> swaps the page dimensions to 841.89 × 595.28 pt.</li>
+                  <li>The column budget is rebuilt for the new content width.</li>
+                  <li>Portrait and landscape right-edge tests pass.</li>
+                </ul>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-01</span></div>
+                <p class="step__note">The remaining template tokens are not recalculated from first principles.</p>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 4.5</span>Verify web preview parity with the exported PDF files on desktop and mobile.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 4.2</span>Certify Invoice family (<code>SASINV</code>) sharing the Forme Industry template foundation.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 4.3</span>Implement and verify A4 Landscape orientation (297 × 210 mm) with recalculation from first principles.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 4.4</span>Verify web preview parity with exported PDF files.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 4.5</span>Obtain Gate 3 Pre-Production Approval.</p>
+                <p class="step__t"><span class="num">Step 4.6</span>Connect the commercial export actions to <code>CompositePdfDelivery</code>.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
           </ul>
+          <p class="step__note">Recorded sequence deviation: commercial template authoring started before M1C completed and before Gate 1 and Gate 2 passed. The gates stay closed.</p>
         </div>
       </details>
 
       <!-- PHASE 5 -->
       <details class="phase" data-status="pending">
         <summary class="phase__head">
-          <span class="phase__no">Phase 5</span>
+          <span class="phase__no">Phase 5 · M5</span>
           <span class="phase__t">Rollout to Remaining Families</span>
           <span class="st st-pending phase__status">⛔ Pending</span>
           <span class="chev" aria-hidden="true">▾</span>
@@ -1261,21 +1380,35 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.1</span>Migrate Waybill template to Forme.</p>
+                <p class="step__t"><span class="num">Step 5.1</span>Cost Pricing Sheet (CPS): connect the templates to the static TTF fonts, the Master Deterministic Resolver, and <code>CompositePdfDelivery</code>. This removes the silent Helvetica fallback.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.2</span>Migrate RFQ and BOQ templates to Forme.</p>
+                <p class="step__t"><span class="num">Step 5.2</span>Customer Service Report (CSR): fix the customization picker scrollbar, complete the on-device print verification for both templates, and connect the export path to <code>CompositePdfDelivery</code>.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.3</span>Migrate Contractor Service Report (CSR) templates to Forme.</p>
+                <p class="step__t"><span class="num">Step 5.3</span>Waybill: implement the Forme templates with the Caveat script font and preserve the logistics conditions, transport details, and signature blocks.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.4</span>Receipt: implement the Forme template and enforce strict financial immutability with a clean proof-of-payment layout.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.5</span>Request for Quotation (RFQ): implement the Forme template and preserve the unpriced procurement table semantics.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
@@ -1286,7 +1419,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       <!-- PHASE 6 -->
       <details class="phase" data-status="pending">
         <summary class="phase__head">
-          <span class="phase__no">Phase 6</span>
+          <span class="phase__no">Phase 6 · M6</span>
           <span class="phase__t">Legacy Deprecation &amp; Cleanup</span>
           <span class="st st-pending phase__status">⛔ Pending</span>
           <span class="chev" aria-hidden="true">▾</span>
@@ -1329,11 +1462,144 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
   </div>
 </section>
 
-<!-- ============ 5. DECISION LOG ============ -->
+<!-- ============ 5. WORK LOG ============ -->
+<section id="worklog" class="pad-sm">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="shead__no">05 / 06</span>
+      <h2>Work Log</h2>
+      <div class="shead__rule"></div>
+    </div>
+
+    <details class="acc" open>
+      <summary class="phase__head">
+        <span class="phase__no">2026-11-01</span>
+        <span class="phase__t">Industrial Forme commercial template correction</span>
+        <span class="st st-progress phase__status">🔄 M2–M4 in flight</span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="phase__body">
+        <p class="step__note">Scope: Invoice and Quotation on the Industrial template. Gates 1, 2 and 3 stay open.</p>
+
+        <p class="step__t"><b>Implementation</b></p>
+        <ul class="sub">
+          <li><code>IndustrialFormeDocument.tsx</code> — template corrections.</li>
+          <li><code>industrialLayout.ts</code> — column allocation and group-label parsing.</li>
+          <li><code>glyphs.tsx</code> — per-glyph font runs.</li>
+          <li><code>fonts.ts</code> — dual-runtime source resolution and Greek subset registration.</li>
+          <li><code>public/fonts/NotoSansGreek-Regular.ttf</code> — internal OFL glyph subset.</li>
+          <li><code>src/components/pdf/index.ts</code> — the route resolver returns <code>industrial-forme</code> for the <code>industrial</code> template.</li>
+          <li><code>industryAdapter.ts</code> — adds the <code>currency</code> field from the document identity.</li>
+          <li><code>engine/group.ts</code> — prefers the supplied <code>groupLabel</code>.</li>
+          <li><code>src/domain/quotation/amountInWords.ts</code> — new resolver for the amount in words.</li>
+          <li><code>previewModel.ts</code> and <code>pdfDownloadHandler.ts</code> — use the authoritative amount in words; the fixed currency code is removed.</li>
+        </ul>
+
+        <p class="step__t" style="margin-top:14px"><b>Review corrections</b></p>
+        <ul class="sub">
+          <li>Removed the <code>pt</code> and <code>Mt</code> unit suffixes and the <code>COMMERCIAL DOCUMENT</code> eyebrow.</li>
+          <li>Removed the internal codes <code>N-01</code>, <code>T-01</code>, <code>SCH-01</code>, and <code>PAY</code>, and the <code>PARTY</code> and <code>ISSUER</code> chips.</li>
+          <li>Removed the currency chip from the total summary. The template renders no currency code.</li>
+          <li>Added an amount-in-words panel: 8.5 pt bold text (7.5 pt compact), an orange left rule, and a label. The value comes from the stored field or <code>computeDocument().totalPayable</code>.</li>
+          <li>Removed the <code>ISSUED BY</code> panel, the TIN, and all <code>customInfo</code> entries. The tagline moved to the masthead and still obeys <code>showTagline</code>.</li>
+          <li>Missing data omits the field and its label. No placeholder text. Zero remains valid data.</li>
+        </ul>
+
+        <p class="step__t" style="margin-top:14px"><b>Verification</b></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Command</th><th scope="col">Result</th></tr>
+            </thead>
+            <tbody>
+              <tr data-status="implemented">
+                <td class="stack" data-label="Command"><code>bun run typecheck</code></td>
+                <td class="stack" data-label="Result">Pass.</td>
+              </tr>
+              <tr data-status="implemented">
+                <td class="stack" data-label="Command"><code>bunx eslint</code> on the changed files</td>
+                <td class="stack" data-label="Result">Pass. Pre-existing <code>no-explicit-any</code> and unused declarations remain in <code>previewModel.ts</code> and <code>pdfDownloadHandler.ts</code>.</td>
+              </tr>
+              <tr data-status="implemented">
+                <td class="stack" data-label="Command"><code>bun test src/tests/pdf/formeIndustrialTemplate.test.ts</code></td>
+                <td class="stack" data-label="Result">19 pass, 0 fail.</td>
+              </tr>
+              <tr data-status="implemented">
+                <td class="stack" data-label="Command"><code>bun test src/tests/pdf/dualIndustryRendererRouting.test.ts</code></td>
+                <td class="stack" data-label="Result">5 pass, 0 fail.</td>
+              </tr>
+              <tr data-status="implemented">
+                <td class="stack" data-label="Command"><code>bun test src/tests/quotation/quotationAmountInWords.test.ts</code></td>
+                <td class="stack" data-label="Result">5 pass, 0 fail.</td>
+              </tr>
+              <tr data-status="pending">
+                <td class="stack" data-label="Command"><code>bun run build</code></td>
+                <td class="stack" data-label="Result">Not run. Permanently banned on this host (4 GB RAM).</td>
+              </tr>
+              <tr data-status="pending">
+                <td class="stack" data-label="Command"><code>bun run audit:load</code></td>
+                <td class="stack" data-label="Result">Not run. No schema, query, or data-layer change.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="step__note">The tests inspect the page count, page size, link annotations, font resources, text baselines, drawn rectangles, and the serialized element tree. The host has no PDF rasterizer. No page screenshot inspection took place.</p>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary class="phase__head">
+        <span class="phase__no">2026-11-01</span>
+        <span class="phase__t">Architecture contracts and media specification</span>
+        <span class="st st-implemented phase__status">✅ Complete</span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="phase__body">
+        <ul class="sub">
+          <li>Published the responsibility contract across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery.</li>
+          <li>Published the font and media specification: TrueType SFNT only, WOFF rejected, no silent font mapping, Text Preservation Rule, single font authority.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary class="phase__head">
+        <span class="phase__no">2026-10-30</span>
+        <span class="phase__t">Discovery and problem register</span>
+        <span class="st st-implemented phase__status">✅ Complete</span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="phase__body">
+        <ul class="sub">
+          <li>Audited <code>IndustryTemplate.tsx</code>, <code>table.ts</code>, <code>compact.ts</code>, and <code>safeText.ts</code>.</li>
+          <li>Traced the <code>SASQUO-000427</code> page break: a 113.73 pt closing block overflowed 75.25 pt of free space.</li>
+          <li>Traced the <code>SASQUO-000428</code> character corruption: a double-prime serialized into digits through a 1-byte WinAnsi path.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="acc">
+      <summary class="phase__head">
+        <span class="phase__no">Known</span>
+        <span class="phase__t">Pre-existing test failures (not caused by this pass)</span>
+        <span class="st st-pending phase__status">⛔ Open</span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="phase__body">
+        <ul class="sub">
+          <li><code>src/tests/pdf/index.test.js</code> — 2 failures at HEAD. The test expects <code>150,000</code> and <code>text</code>; the committed adapter returns <code>₦ 150,000</code> and <code>rich-text</code>.</li>
+          <li><code>src/tests/pdf/totalsTruthPreview.test.js</code> — 3 failures at HEAD. The test expects the older <code>ViewInvoice</code> and <code>ViewQuotation</code> source strings. Those pages were not changed.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============ 6. DECISION LOG ============ -->
 <section id="decisions" class="pad-sm">
   <div class="wrap">
     <div class="shead reveal">
-      <span class="shead__no">05 / 05</span>
+      <span class="shead__no">06 / 06</span>
       <h2>Decision Log</h2>
       <div class="shead__rule"></div>
     </div>
@@ -1341,7 +1607,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     <details class="acc">
       <summary class="phase__head">
         <span class="phase__no">Log</span>
-        <span class="phase__t">9 decisions · all dated 2026-10-30</span>
+        <span class="phase__t">17 decisions · 2026-10-30 and 2026-11-01</span>
         <span class="chev" aria-hidden="true">▾</span>
       </summary>
       <div class="phase__body">
@@ -1359,56 +1625,104 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Architecture Baseline</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Selected Forme (<code>@formepdf/react</code> and <code>@formepdf/core</code> v0.20.1) as target PDF engine, wrapped by <code>pdfcn</code>. Superseded Takumi and Typst spikes.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Execution Sequence</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Enforced Gate 1: natural pagination must be solved and verified across the complete Representative Document Suite before Compact or Force 1 Page mode implementation.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Closing Sections</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Decoupled Bank Details and Totals with adaptive fallback. Rejected premature row-balancing algorithm without measured evidence.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Keep-Together &amp; Rows</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Selective keep-together: protect small logical units (signatures, ordinary rows); long content fragments naturally; oversized rows handled safely to prevent clipping.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Rich-Text Pipeline</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Established 5-step conversion pipeline (Sanitize → Parse → Allowlisted AST → Forme Render → Fallback). Limited initial scope to commercial basics.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Emoji Fallback</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Scoped emoji fallback: preserve surrounding text, small justified icon set where needed, safe stripping fallback; not a blocker for template 1.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Font Packaging</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Evidence-driven strategy: evaluate static TTF assets first; check offline mobile export reliability; retain binary bundle as fallback.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Production Cutover</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Enforced Gate 3: new Forme Invoice and Quotation templates must be built and approved before production migration begins.</td>
           </tr>
           <tr data-status="implemented">
             <td class="date">2026-10-30</td>
             <td class="phase-a">Documentation Freeze</td>
-            <td class="status-cell"><span class="st st-implemented">✅ Implemented</span></td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
             <td class="dec">Formally froze the PRD documentation suite in <code>docs/prd/pdf-rendering-migration/</code> as approved baseline for M1 implementation planning.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Data Fidelity</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">The Industrial template renders only supplied data. It adds no currency code, no payment terms, no project reference, no signature area, and no document-control panel.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Amount In Words</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">The amount in words is resolved in the domain layer from the stored value or <code>computeDocument().totalPayable</code>. The save workflow is unchanged and still stores an empty string.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Total Summary</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">Removed the currency chip from the total callout. The callout shows the authoritative value only. No currency code is hardcoded in the template.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Page Furniture</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">Removed the <code>pt</code> and <code>Mt</code> unit suffixes, the <code>COMMERCIAL DOCUMENT</code> eyebrow, the internal codes <code>N-01</code>, <code>T-01</code>, <code>SCH-01</code>, <code>PAY</code>, and the <code>PARTY</code> and <code>ISSUER</code> chips.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Issuer Panel</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">Removed the <code>ISSUED BY</code> panel, the TIN, and all <code>customInfo</code> entries. The tagline moved to the masthead and still obeys <code>showTagline</code>.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Missing Data</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">Missing data omits the field and its label. The template renders no <code>-</code>, <code>—</code>, <code>–</code>, <code>N/A</code>, <code>null</code>, <code>undefined</code>, or <code>NaN</code>. Zero remains valid data.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Table Geometry</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">The row budget is <code>contentWidth − 4 × 0.71 pt</code>. Columns always sum to the budget, and the description column keeps a 120 pt minimum when space allows.</td>
+          </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-01</td>
+            <td class="phase-a">Glyph Routing</td>
+            <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
+            <td class="dec">Naira routes to Noto Sans and the Ohm sign routes to the internal Greek subset. A rendered-PDF test confirms that no Helvetica or Arial resource is used.</td>
           </tr>
         </tbody>
       </table>
@@ -1424,11 +1738,11 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
   <div class="wrap foot">
     <div>
       <h2 class="foot__t">Waterfall Roadmap · PDF Rendering Migration</h2>
-      <p>Frozen baseline. Changes require a decision-log entry and a new revision date.</p>
+      <p>Living baseline. Changes require a decision-log entry and a new revision date.</p>
     </div>
     <div class="foot__meta">
       Architecture <b>Forme + pdfcn</b> · Standard <b>ASD-STE100</b><br>
-      Updated <b>2026-10-30</b> · Milestones <b>7</b> · Gates <b>3</b>
+      Updated <b>2026-11-01</b> · Milestones <b>9</b> · Gates <b>3</b>
     </div>
   </div>
 </footer>
@@ -1508,7 +1822,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
   if(ca) ca.addEventListener('click', function(){ setAll(false); });
   if(oc) oc.addEventListener('click', function(){
     setAll(false);
-    var cur = phases[1] || phases[0];
+    var cur = phases.filter(function(d){ return !d.classList.contains('done-phase'); })[0] || phases[0];
     if(cur){ cur.open = true; cur.scrollIntoView({block:'center'}); }
   });
   window.addEventListener('beforeprint', function(){ setAll(true); });
