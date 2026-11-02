@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { RotateCw } from 'lucide-react'
+import { isAndroidNative } from '@/lib/native/capacitor'
 import { useLoadingTip } from '@/hooks/useLoadingTip'
 import {
   PreviewTree,
@@ -69,7 +70,7 @@ function resolveAmbientAppearance(): PhotoHeroAppearance {
 export default function ColdLaunchTenantTreePresentation({
   family = 'slate-navy',
   appearance,
-  variant = 'original',
+  variant,
   networkState = 'normal',
   isRunning = true,
   tipPathname = '/',
@@ -79,6 +80,10 @@ export default function ColdLaunchTenantTreePresentation({
   previewLabel = null,
   onRetry,
 }: ColdLaunchTenantTreePresentationProps) {
+  const isNative = isAndroidNative()
+  const isPreviewMode = Boolean(previewControls || closeButton || previewLabel)
+  const resolvedVariant = variant ?? (isNative ? 'enhanced' : 'original')
+
   const [brandTop, setBrandTop] = React.useState(0.44)
   const [ambientAppearance, setAmbientAppearance] =
     React.useState<PhotoHeroAppearance>(() => resolveAmbientAppearance())
@@ -103,13 +108,40 @@ export default function ColdLaunchTenantTreePresentation({
     setBrandTop((prev) => (Math.abs(prev - ratio) < 0.002 ? prev : ratio))
   }, [])
 
+  if (!isNative && !isPreviewMode) {
+    return (
+      <div
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0d1624] text-slate-100 select-none overflow-hidden"
+        style={vars as React.CSSProperties}
+        role="status"
+        aria-live="polite"
+      >
+        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-200">
+          <div className="relative size-16 sm:size-20 rounded-[28%] overflow-hidden shadow-2xl ring-1 ring-white/20 animate-pulse">
+            <img src={bigdropsLogo} alt="BOURXE" className="size-full object-cover" />
+          </div>
+          <span className="text-xl sm:text-2xl font-black tracking-widest text-slate-100 uppercase">
+            BOURXE
+          </span>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="size-1.5 rounded-full bg-primary animate-ping" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Loading
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <main
       className={`clp ${isRunning ? 'clp-run' : ''}`}
       style={vars as React.CSSProperties}
       data-family={family}
       data-appearance={resolvedAppearance}
-      data-variant={variant}
+      data-variant={resolvedVariant}
+      data-native={isNative ? 'true' : 'false'}
       data-network-state={networkState}
       data-controls={previewControls ? 'preview' : 'none'}
     >
@@ -235,6 +267,8 @@ export default function ColdLaunchTenantTreePresentation({
         .clp .clp-ring-soft{stroke:color-mix(in oklab,var(--clp-accent) 30%,transparent)}
         .clp-run .clp-ring{animation:clp-ring-in 6s cubic-bezier(.23,1,.32,1) both}
         @keyframes clp-ring-in{0%{opacity:0}12%,100%{opacity:.72}}
+        .clp[data-variant="enhanced"] circle.clp-ring{animation:clp-ring-spin 36s linear infinite}
+        @keyframes clp-ring-spin{from{stroke-dashoffset:0}to{stroke-dashoffset:192}}
         .clp .clp-edge{fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.78}
         .clp .clp-edge-primary{stroke:color-mix(in srgb,var(--clp-secondary) 72%,var(--clp-accent));stroke-width:2.75}
         .clp .clp-edge-secondary{stroke:color-mix(in srgb,var(--clp-accent) 82%,var(--clp-ink) 8%);stroke-width:2.35}
@@ -297,12 +331,12 @@ export default function ColdLaunchTenantTreePresentation({
         .clp-ctrl:focus-visible,.clp-close:focus-visible,.clp-retry:focus-visible{outline:2px solid var(--clp-hot);outline-offset:2px}
         .clp-close{position:absolute;right:10px;top:10px;z-index:45;display:grid;width:44px;height:44px;place-items:center;border-radius:14px;border:1px solid var(--clp-glass-line);background:var(--clp-glass);color:var(--clp-ink);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);box-shadow:0 18px 44px var(--clp-glass-shadow)}
         .clp-preview-label{position:absolute;left:14px;bottom:12px;z-index:30;max-width:min(360px,calc(100vw - 28px));color:var(--clp-ink-2);font-size:9.5px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
-        .clp-lower{position:absolute;left:0;right:0;bottom:0;height:var(--clp-comm);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--clp-lower-bg);pointer-events:none}
+        .clp-lower{position:absolute;left:0;right:0;bottom:0;height:var(--clp-comm);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--clp-lower-bg);pointer-events:none}
         .clp-lower>*{pointer-events:auto}
         .clp-comm-tips{width:100%;display:grid;justify-items:center;order:2}
-        .clp-tip-body{display:grid;gap:5px;justify-items:center;max-width:560px;padding:10px 16px;border:1px solid var(--clp-glass-line);border-radius:18px;background:var(--clp-glass);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);box-shadow:0 18px 44px var(--clp-glass-shadow)}
+        .clp-tip-body{width:100%;display:grid;gap:5px;justify-items:center;max-width:560px;padding:10px 16px;border:1px solid var(--clp-glass-line);border-radius:18px;background:var(--clp-glass);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);box-shadow:0 18px 44px var(--clp-glass-shadow)}
         .clp-tip-label{color:var(--clp-ink-2);font-size:9px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;font-family:var(--bd-font-family,Manrope,system-ui,sans-serif)}
-        .clp-tip-text{margin:0;color:var(--clp-ink);font-size:13px;font-weight:650;line-height:1.5;max-width:52ch;text-wrap:balance;animation:clp-tip-fade .45s cubic-bezier(.23,1,.32,1) both}
+        .clp-tip-text{margin:0;width:100%;text-align:center;color:var(--clp-ink);font-size:13px;font-weight:650;line-height:1.5;text-wrap:balance;animation:clp-tip-fade .45s cubic-bezier(.23,1,.32,1) both}
         @keyframes clp-tip-fade{0%{opacity:1;transform:translateY(4px)}100%{opacity:1;transform:none}}
         .clp-comm-error{width:min(480px,100%);display:grid;gap:6px;justify-items:center;text-align:center;order:1}
         .clp-comm-eyebrow{color:var(--clp-attention);font-size:9.5px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
@@ -320,11 +354,11 @@ export default function ColdLaunchTenantTreePresentation({
           .clp-controls .clp-control-group{max-width:calc(100vw - 78px)}
           .clp-control-group{padding:3px;border-radius:12px}
           .clp-ctrl{min-height:44px;padding:0 8px;font-size:9px}
-          .clp-lower{gap:7px;padding-top:8px}
+          .clp-lower{gap:7px;justify-content:center;padding-top:8px}
           .clp-comm-error{gap:4px}
           .clp-comm-text{font-size:12.5px;line-height:1.38}
-          .clp-tip-body{gap:3px}
-          .clp-tip-text{font-size:12px;line-height:1.38;max-width:44ch}
+          .clp-tip-body{width:100%;gap:3px}
+          .clp-tip-text{width:100%;text-align:center;font-size:12px;line-height:1.38}
           .clp-retry{min-height:42px;padding:0 16px}
           .clp-preview-label{display:none}
         }
@@ -334,19 +368,19 @@ export default function ColdLaunchTenantTreePresentation({
         @media (min-width: 900px){.clp-preview-label{left:22px;bottom:18px}}
         @media (prefers-reduced-transparency: reduce){.clp{--clp-glass:var(--clp-surface)}.clp-control-group,.clp-close,.clp-tip-body{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
         @media (prefers-reduced-motion: reduce){
-          .clp *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-          .clp .clp-ring,.clp .clp-edge,.clp .clp-node,.clp .clp-pill,.clp .clp-dot{opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
-          .clp .clp-signal,.clp .clp-pulse{display:none!important}
-          .clp .clp-tip-text{animation:none!important}
-          .clp[data-network-state="error"] .clp-affected-edge{opacity:.4!important;stroke:color-mix(in oklab,var(--clp-attention) 48%,var(--clp-secondary))!important;stroke-dasharray:.009 .015!important}
-          .clp[data-network-state="error"] .clp-affected-node{opacity:.5!important}
-          .clp[data-network-state="retrying"] .clp-affected-edge{opacity:.85!important;stroke:var(--clp-hot)!important}
-          .clp[data-network-state="retrying"] .clp-recovery-signal{display:none!important}
+          .clp:not([data-native="true"]) *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+          .clp:not([data-native="true"]) .clp-ring,.clp:not([data-native="true"]) .clp-edge,.clp:not([data-native="true"]) .clp-node,.clp:not([data-native="true"]) .clp-pill,.clp:not([data-native="true"]) .clp-dot{opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
+          .clp:not([data-native="true"]) .clp-signal,.clp:not([data-native="true"]) .clp-pulse{display:none!important}
+          .clp:not([data-native="true"]) .clp-tip-text{animation:none!important}
+          .clp:not([data-native="true"])[data-network-state="error"] .clp-affected-edge{opacity:.4!important;stroke:color-mix(in oklab,var(--clp-attention) 48%,var(--clp-secondary))!important;stroke-dasharray:.009 .015!important}
+          .clp:not([data-native="true"])[data-network-state="error"] .clp-affected-node{opacity:.5!important}
+          .clp:not([data-native="true"])[data-network-state="retrying"] .clp-affected-edge{opacity:.85!important;stroke:var(--clp-hot)!important}
+          .clp:not([data-native="true"])[data-network-state="retrying"] .clp-recovery-signal{display:none!important}
         }
       `}</style>
 
       <PreviewTree
-        enhanced={variant === 'enhanced'}
+        enhanced={resolvedVariant === 'enhanced'}
         state={networkState}
         onBrandRatio={setBrandRatio}
       />
