@@ -70,6 +70,14 @@ export default function DocumentShareSheet({
   // Unsupported desktop state for WhatsApp
   const [desktopWhatsappNotice, setDesktopWhatsappNotice] = useState(false)
   const [deliveryError, setDeliveryError] = useState<string | null>(null)
+  const [isAmbiguousOutcome, setIsAmbiguousOutcome] = useState(false)
+  const [operationId, setOperationId] = useState<string>(() => `op_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`)
+
+  // Reset operation ID when email composition details change intentionally
+  const resetOperationId = () => {
+    setOperationId(`op_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`)
+    setIsAmbiguousOutcome(false)
+  }
 
   // Ensure authoritative PDF blob is available (cached within sheet lifecycle)
   const getOrFetchBlob = async (): Promise<Blob> => {
@@ -249,6 +257,7 @@ export default function DocumentShareSheet({
         recipientEmail: recipientEmail.trim(),
         subject,
         message,
+        operationId,
       })
 
       if (result.success && result.method === 'resend-edge') {
@@ -261,6 +270,7 @@ export default function DocumentShareSheet({
       } else {
         const errorDetail = result.error || 'Direct email delivery failed.'
         setDeliveryError(errorDetail)
+        setIsAmbiguousOutcome(Boolean(result.ambiguous))
         feedback.error('Email delivery failed', {
           description: errorDetail,
         })
@@ -268,6 +278,7 @@ export default function DocumentShareSheet({
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not prepare email.'
       setDeliveryError(msg)
+      setIsAmbiguousOutcome(true)
       feedback.error('Email preparation failed', {
         description: msg,
       })
@@ -540,7 +551,10 @@ export default function DocumentShareSheet({
                 type="email"
                 placeholder="client@example.com"
                 value={recipientEmail}
-                onChange={(e) => setRecipientEmail(e.target.value)}
+                onChange={(e) => {
+                  setRecipientEmail(e.target.value)
+                  resetOperationId()
+                }}
                 className="h-9 text-xs"
               />
             </div>
@@ -549,7 +563,10 @@ export default function DocumentShareSheet({
               <Label className="text-xs font-semibold">Subject</Label>
               <Input
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
+                onChange={(e) => {
+                  setSubject(e.target.value)
+                  resetOperationId()
+                }}
                 className="h-9 text-xs"
               />
             </div>
@@ -559,7 +576,10 @@ export default function DocumentShareSheet({
               <textarea
                 rows={3}
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={(e) => {
+                  setMessage(e.target.value)
+                  resetOperationId()
+                }}
                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-xs text-bd-text shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
@@ -576,12 +596,29 @@ export default function DocumentShareSheet({
             {deliveryError && (
               <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
                 <div className="flex items-center gap-1.5 font-semibold">
-                  <AlertCircle size={14} /> Direct Delivery Notice
+                  <AlertCircle size={14} /> {isAmbiguousOutcome ? 'Delivery Status Uncertain' : 'Direct Delivery Notice'}
                 </div>
                 <p className="mt-1 text-[11px] leading-relaxed">
                   {deliveryError}
                 </p>
+                {isAmbiguousOutcome && (
+                  <p className="mt-1 text-[10px] text-amber-800/80 dark:text-amber-300/80">
+                    Retrying with the same operation identifier will not send duplicate emails if the provider already accepted the request.
+                  </p>
+                )}
                 <div className="mt-2.5 flex items-center gap-2">
+                  {isAmbiguousOutcome ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1.5 font-semibold"
+                      disabled={loading}
+                      onClick={handleSendEmail}
+                    >
+                      Retry Send (Same Operation)
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     size="sm"

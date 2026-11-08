@@ -18,6 +18,7 @@ export type DocumentShareRecord = {
 
 export type DocumentShareMetadata = {
   issuerName?: string
+  issuerEmail?: string
   issuerLogoUrl?: string
   recipientName?: string
   recipientEmail?: string
@@ -38,6 +39,7 @@ export type DocumentSharePayload = {
   recipientName?: string
   recipientEmail?: string
   issuerName?: string
+  issuerEmail?: string
   issuerLogoUrl?: string
   totalFormatted?: string
   issueDate?: string
@@ -58,4 +60,6 @@ export type ShareActionResult = {
   prefilledText?: string
   mailtoUrl?: string
   messageId?: string
+  operationId?: string
+  ambiguous?: boolean
 }

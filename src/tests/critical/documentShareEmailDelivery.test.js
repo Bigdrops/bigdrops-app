@@ -3,79 +3,699 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-test('send-document-email Edge Function exists and enforces strict HTTP method and CORS security', () => {
-  const edgeFunctionPath = path.resolve('supabase/functions/send-document-email/index.ts')
-  assert.ok(fs.existsSync(edgeFunctionPath), 'send-document-email Edge Function file must exist')
-  const source = fs.readFileSync(edgeFunctionPath, 'utf8')
+import {
+  handleSendDocumentEmail,
+  sanitizeReplyTo,
+  MAX_ATTACHMENT_BYTES,
+} from '../../../supabase/functions/send-document-email/index.ts'
+import {
+  buildDocumentEmailHtml,
+  renderDocumentEmailHtml,
+  escapeHtml,
+} from '../../domain/documentShare/documentEmailHtml.ts'
+import { DocumentEmailTemplate } from '../../components/email/DocumentEmailTemplate.tsx'
 
-  assert.match(source, /req\.method !== "POST" && req\.method !== "OPTIONS"/, 'Must reject non-POST/OPTIONS methods')
-  assert.match(source, /status:\s*405/, 'Must return 405 Method Not Allowed')
-  assert.match(source, /req\.method === "OPTIONS"/, 'Must handle preflight CORS')
-  assert.match(source, /Access-Control-Allow-Origin/, 'Must declare CORS headers')
+const VALID_TOKEN = 'token_test_1234567890_abcdef1234'
+const VALID_OP_ID = 'op_test_operation_1234567890_xyz'
+
+function createMockPdfBlob(size = 100, isPdf = true) {
+  const bytes = new Uint8Array(size)
+  if (isPdf && size >= 5) {
+    bytes[0] = 0x25 // %
+    bytes[1] = 0x50 // P
+    bytes[2] = 0x44 // D
+    bytes[3] = 0x46 // F
+    bytes[4] = 0x2d // -
+  }
+  return new Blob([bytes], { type: 'application/pdf' })
+}
+
+function createMockAdminClient(overrides = {}) {
+  const defaultShare = {
+    id: 'share_1',
+    token: VALID_TOKEN,
+    document_type: 'Invoice',
+    document_id: 'inv_1',
+    document_number: 'INV-2026-001',
+    document_title: 'Commercial Invoice INV-2026-001',
+    pdf_path: `${VALID_TOKEN}.pdf`,
+    tenant_id: 'tenant_123',
+    created_by: 'user_alice',
+    is_revoked: false,
+    expires_at: new Date(Date.now() + 86400000).toISOString(),
+    metadata: {
+      issuerName: 'Acme Nigeria Ltd',
+      issuerEmail: 'billing@acme.ng',
+      recipientName: 'Globex Ltd',
+      totalFormatted: 'NGN 1,500,000.00',
+      fileName: 'INV-2026-001.pdf',
+    },
+  }
+
+  const shareRecord = overrides.share !== undefined ? overrides.share : defaultShare
+  const callerUser = overrides.callerUser !== undefined ? overrides.callerUser : { id: 'user_alice' }
+  const isMember = overrides.isMember !== undefined ? overrides.isMember : true
+  const storageBlob = overrides.storageBlob !== undefined ? overrides.storageBlob : createMockPdfBlob()
+
+  return {
+    auth: {
+      getUser: async (token) => {
+        if (token === 'valid_jwt') {
+          return { data: { user: callerUser }, error: null }
+        }
+        return { data: { user: null }, error: new Error('Invalid token') }
+      },
+    },
+    from: (tableName) => {
+      if (tableName === 'document_shares') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: shareRecord,
+                error: overrides.shareError || null,
+              }),
+            }),
+          }),
+        }
+      }
+      if (tableName === 'entities') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: overrides.entityData !== undefined ? overrides.entityData : { workspace_id: 'ws_123' },
+                error: null,
+              }),
+            }),
+          }),
+        }
+      }
+      if (tableName === 'profiles') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { email: 'creator@acme.ng' },
+                error: null,
+              }),
+            }),
+          }),
+        }
+      }
+      throw new Error(`Unexpected table: ${tableName}`)
+    },
+    rpc: async (funcName, args) => {
+      if (funcName === 'is_workspace_member') {
+        if (typeof overrides.rpcMemberFn === 'function') {
+          return overrides.rpcMemberFn(args)
+        }
+        return { data: isMember, error: overrides.rpcError || null }
+      }
+      return { data: false, error: new Error('Unknown RPC') }
+    },
+    storage: {
+      from: (bucketName) => {
+        assert.equal(bucketName, 'document-shares')
+        return {
+          download: async (path) => {
+            if (overrides.downloadError) {
+              return { data: null, error: overrides.downloadError }
+            }
+            return { data: storageBlob, error: null }
+          },
+        }
+      },
+    },
+  }
+}
+
+// ====================================================================
+// 1. AUTHENTICATION BEHAVIORAL TESTS
+// ====================================================================
+
+test('BEHAVIORAL: handleSendDocumentEmail rejects missing Authorization header with 401', async () => {
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: VALID_TOKEN, operationId: VALID_OP_ID }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: createMockAdminClient() })
+  assert.equal(res.status, 401)
+  const body = await res.json()
+  assert.match(body.error, /Missing or invalid authorization header/i)
 })
 
-test('send-document-email Edge Function enforces caller JWT authentication', () => {
-  const source = fs.readFileSync(path.resolve('supabase/functions/send-document-email/index.ts'), 'utf8')
+test('BEHAVIORAL: handleSendDocumentEmail rejects invalid or expired JWT with 401', async () => {
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer expired_or_tampered_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token: VALID_TOKEN, operationId: VALID_OP_ID }),
+  })
 
-  assert.match(source, /authHeader\.startsWith\("Bearer "\)/, 'Must require Bearer authorization header')
-  assert.match(source, /adminClient\.auth\.getUser\(jwt\)/, 'Must authenticate caller via Supabase auth.getUser')
-  assert.match(source, /status:\s*401/, 'Must return 401 Unauthorized for invalid JWT')
+  const res = await handleSendDocumentEmail(req, { adminClient: createMockAdminClient() })
+  assert.equal(res.status, 401)
+  const body = await res.json()
+  assert.match(body.error, /Unauthorized/i)
 })
 
-test('send-document-email Edge Function enforces strict input validation and CRLF injection protection', () => {
-  const source = fs.readFileSync(path.resolve('supabase/functions/send-document-email/index.ts'), 'utf8')
+// ====================================================================
+// 2. AUTHORIZATION & TENANT BOUNDARY TESTS (FIND-04)
+// ====================================================================
 
-  assert.match(source, /SAFE_TOKEN_PATTERN\.test\(token\)/, 'Must validate token against safe pattern')
-  assert.match(source, /EMAIL_REGEX\.test\(recipientEmail\)/, 'Must validate recipient email structure')
-  assert.match(source, /\/\[\\r\\n\]\/\.test\(subject\)/, 'Must reject CRLF linebreaks in subject to prevent email header injection')
-  assert.match(source, /escapeHtml/, 'Must HTML-escape user-provided message content')
+test('BEHAVIORAL (FIND-04): Creator who is NO LONGER a workspace member is rejected with 403', async () => {
+  // Alice created the share originally, but has been removed from the tenant workspace
+  const mockClient = createMockAdminClient({
+    callerUser: { id: 'user_alice' },
+    share: {
+      id: 'share_1',
+      token: VALID_TOKEN,
+      created_by: 'user_alice', // Alice was the creator
+      tenant_id: 'tenant_123',
+      pdf_path: `${VALID_TOKEN}.pdf`,
+      is_revoked: false,
+    },
+    isMember: false, // is_workspace_member returns false (membership revoked)
+  })
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: mockClient })
+  assert.equal(res.status, 403)
+  const body = await res.json()
+  assert.match(body.error, /not an active member of this document's workspace/i)
 })
 
-test('send-document-email Edge Function validates share revocation, expiry, and tenant authorization', () => {
-  const source = fs.readFileSync(path.resolve('supabase/functions/send-document-email/index.ts'), 'utf8')
+test('BEHAVIORAL: Unauthorized non-member user is rejected with 403', async () => {
+  const mockClient = createMockAdminClient({
+    callerUser: { id: 'user_charlie' },
+    isMember: false,
+  })
 
-  assert.match(source, /share\.is_revoked/, 'Must check revoked state')
-  assert.match(source, /new Date\(share\.expires_at\)\.getTime\(\) <= Date\.now\(\)/, 'Must check expiry time')
-  assert.match(source, /is_workspace_member/, 'Must verify caller workspace membership for the tenant')
-  assert.match(source, /status:\s*403/, 'Must return 403 Forbidden for unauthorized senders')
-  assert.match(source, /status:\s*410/, 'Must return 410 for revoked/expired shares')
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: mockClient })
+  assert.equal(res.status, 403)
 })
 
-test('send-document-email Edge Function validates storage path, PDF magic bytes, and attachment size', () => {
-  const source = fs.readFileSync(path.resolve('supabase/functions/send-document-email/index.ts'), 'utf8')
+test('BEHAVIORAL: Active workspace member successfully passes authorization', async () => {
+  let resendCallCount = 0
+  const mockResend = {
+    emails: {
+      send: async () => {
+        resendCallCount++
+        return { data: { id: 'msg_active_member_ok' }, error: null }
+      },
+    },
+  }
 
-  assert.match(source, /share\.pdf_path !== `\$\{token\}\.pdf`/, 'Must strictly derive storage path from database token')
-  assert.match(source, /from\(["']document-shares["']\)[\s\S]*?\.download\(/, 'Must download from private document-shares bucket')
-  assert.match(source, /PDF_MAGIC_BYTES/, 'Must verify standard %PDF- magic bytes')
-  assert.match(source, /fileBlob\.size > MAX_ATTACHMENT_BYTES/, 'Must enforce 10MB maximum attachment limit')
-  assert.match(source, /status:\s*413/, 'Must return 413 Payload Too Large when attachment exceeds limit')
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, {
+    adminClient: createMockAdminClient({ isMember: true }),
+    resendClient: mockResend,
+  })
+
+  assert.equal(res.status, 200)
+  const body = await res.json()
+  assert.equal(body.success, true)
+  assert.equal(body.messageId, 'msg_active_member_ok')
+  assert.equal(resendCallCount, 1)
 })
 
-test('send-document-email Edge Function configures Resend with attachments and BOURXE executive template', () => {
-  const source = fs.readFileSync(path.resolve('supabase/functions/send-document-email/index.ts'), 'utf8')
+// ====================================================================
+// 3. SHARE LIFECYCLE TESTS
+// ====================================================================
 
-  assert.match(source, /RESEND_API_KEY/, 'Must use RESEND_API_KEY from Edge Function secrets')
-  assert.match(source, /DOCUMENT_EMAIL_FROM/, 'Must support configurable verified sender')
-  assert.match(source, /uint8ArrayToBase64/, 'Must convert PDF binary to Base64 for Resend attachment')
-  assert.match(source, /buildDocumentEmailHtml/, 'Must build BOURXE branded executive HTML')
-  assert.match(source, /View Document Online/, 'Must include secure public viewer link in email HTML')
+test('BEHAVIORAL: Revoked share is rejected with 410 Gone', async () => {
+  const mockClient = createMockAdminClient({
+    share: {
+      id: 'share_1',
+      token: VALID_TOKEN,
+      tenant_id: 'tenant_123',
+      pdf_path: `${VALID_TOKEN}.pdf`,
+      is_revoked: true, // Revoked!
+    },
+  })
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: mockClient })
+  assert.equal(res.status, 410)
+  const body = await res.json()
+  assert.match(body.error, /revoked/i)
 })
 
-test('documentShareService wires direct Resend delivery with client fallback', () => {
-  const serviceSource = fs.readFileSync(path.resolve('src/domain/documentShare/documentShareService.ts'), 'utf8')
+test('BEHAVIORAL: Expired share is rejected with 410 Gone', async () => {
+  const mockClient = createMockAdminClient({
+    share: {
+      id: 'share_1',
+      token: VALID_TOKEN,
+      tenant_id: 'tenant_123',
+      pdf_path: `${VALID_TOKEN}.pdf`,
+      is_revoked: false,
+      expires_at: new Date(Date.now() - 3600000).toISOString(), // Expired 1 hour ago
+    },
+  })
 
-  assert.match(serviceSource, /supabase\.functions\.invoke\(\s*'send-document-email'/, 'Must invoke send-document-email Edge Function')
-  assert.match(serviceSource, /method:\s*'resend-edge'/, 'Must return resend-edge method upon success')
-  assert.match(serviceSource, /shareViaEmailClientFallback/, 'Must export shareViaEmailClientFallback for explicit fallback')
-  assert.match(serviceSource, /mailtoUrl/, 'Must provide mailtoUrl on error for fallback continuity')
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: mockClient })
+  assert.equal(res.status, 410)
+  const body = await res.json()
+  assert.match(body.error, /expired/i)
 })
 
-test('DocumentShareSheet provides direct email sending and explicit fallback on error', () => {
-  const sheetSource = fs.readFileSync(path.resolve('src/components/document-view/shared/DocumentShareSheet.tsx'), 'utf8')
+// ====================================================================
+// 4. STORAGE & PDF INTEGRITY TESTS
+// ====================================================================
 
-  assert.match(sheetSource, /shareViaEmailClientFallback/, 'Must import client email fallback')
-  assert.match(sheetSource, /deliveryError/, 'Must track delivery error state')
-  assert.match(sheetSource, /handleClientEmailFallback/, 'Must provide explicit fallback handler')
-  assert.match(sheetSource, /Open in Email App \(Fallback\)/, 'Must offer user fallback button when direct delivery fails')
-  assert.match(sheetSource, /Send Email/, 'Must render direct Send Email button')
+test('BEHAVIORAL: Mismatched or traversal storage path is rejected with 422', async () => {
+  const mockClient = createMockAdminClient({
+    share: {
+      id: 'share_1',
+      token: VALID_TOKEN,
+      tenant_id: 'tenant_123',
+      pdf_path: '../other_token.pdf', // Path traversal attempt!
+      is_revoked: false,
+    },
+  })
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: mockClient })
+  assert.equal(res.status, 422)
+  const body = await res.json()
+  assert.match(body.error, /corrupted or untrusted/i)
+})
+
+test('BEHAVIORAL: Non-PDF binary failing %PDF- magic signature is rejected with 422', async () => {
+  const mockClient = createMockAdminClient({
+    storageBlob: new Blob(['NOT_A_PDF_FILE_CONTENT'], { type: 'text/plain' }),
+  })
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: mockClient })
+  assert.equal(res.status, 422)
+  const body = await res.json()
+  assert.match(body.error, /valid PDF document/i)
+})
+
+test('BEHAVIORAL (FIND-06): Attachment exceeding 10MB limit is rejected with 413', async () => {
+  // Create an oversized 11MB file with valid magic bytes
+  const mockClient = createMockAdminClient({
+    storageBlob: createMockPdfBlob(11 * 1024 * 1024, true),
+  })
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice Attached',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, { adminClient: mockClient })
+  assert.equal(res.status, 413)
+  const body = await res.json()
+  assert.match(body.error, /exceeds maximum email attachment limit/i)
+})
+
+// ====================================================================
+// 5. RESEND DISPATCH & IDEMPOTENCY TESTS (FIND-01 & FIND-02)
+// ====================================================================
+
+test('BEHAVIORAL (FIND-01 & FIND-02): Dispatches via Resend SDK passing Idempotency-Key and NO dual-send fallback', async () => {
+  let capturedPayload = null
+  let capturedOptions = null
+  let callCount = 0
+
+  const mockResend = {
+    emails: {
+      send: async (payload, options) => {
+        callCount++
+        capturedPayload = payload
+        capturedOptions = options
+        return { data: { id: 'msg_idempotent_123' }, error: null }
+      },
+    },
+  }
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice INV-2026-001',
+      message: 'Please review and confirm.',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, {
+    adminClient: createMockAdminClient(),
+    resendClient: mockResend,
+  })
+
+  assert.equal(res.status, 200)
+  assert.equal(callCount, 1, 'Must call Resend SDK exactly once')
+  assert.equal(capturedOptions?.idempotencyKey, VALID_OP_ID, 'Must pass operationId as idempotencyKey')
+  assert.equal(capturedPayload?.to[0], 'client@example.com')
+  assert.equal(capturedPayload?.attachments?.length, 1)
+  assert.equal(capturedPayload?.attachments[0]?.filename, 'INV-2026-001.pdf')
+})
+
+test('BEHAVIORAL (FIND-01): Network timeout during Resend dispatch returns 504 ambiguous and NEVER triggers second send', async () => {
+  let sendCallCount = 0
+  const mockResend = {
+    emails: {
+      send: async () => {
+        sendCallCount++
+        throw new Error('Socket timeout while reading response')
+      },
+    },
+  }
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice INV-2026-001',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, {
+    adminClient: createMockAdminClient(),
+    resendClient: mockResend,
+  })
+
+  assert.equal(res.status, 504, 'Must return 504 Gateway Timeout on ambiguous network exception')
+  const body = await res.json()
+  assert.equal(body.ambiguous, true, 'Must flag outcome as ambiguous')
+  assert.equal(body.operationId, VALID_OP_ID, 'Must preserve operationId for reconciliation')
+  assert.equal(sendCallCount, 1, 'Must NOT execute a second send attempt via REST fallback')
+})
+
+test('BEHAVIORAL: Provider confirmed rejection returns 422 with ambiguous=false', async () => {
+  const mockResend = {
+    emails: {
+      send: async () => {
+        return {
+          data: null,
+          error: { message: 'Domain not verified. Unable to send from notifications@bourxe.com' },
+        }
+      },
+    },
+  }
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice INV-2026-001',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, {
+    adminClient: createMockAdminClient(),
+    resendClient: mockResend,
+  })
+
+  assert.equal(res.status, 422)
+  const body = await res.json()
+  assert.equal(body.ambiguous, false)
+  assert.match(body.error, /Domain not verified/i)
+})
+
+// ====================================================================
+// 6. BUSINESS REPLY-TO BEHAVIORAL TESTS (FIND-05)
+// ====================================================================
+
+test('BEHAVIORAL (FIND-05): Configures valid replyTo and invites replies in email footer when business email exists', async () => {
+  let capturedReplyTo = null
+  let capturedHtml = ''
+
+  const mockResend = {
+    emails: {
+      send: async (payload) => {
+        capturedReplyTo = payload.replyTo
+        capturedHtml = payload.html
+        return { data: { id: 'msg_reply_ok' }, error: null }
+      },
+    },
+  }
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice INV-2026-001',
+    }),
+  })
+
+  const res = await handleSendDocumentEmail(req, {
+    adminClient: createMockAdminClient({
+      share: {
+        id: 'share_1',
+        token: VALID_TOKEN,
+        document_number: 'INV-2026-001',
+        tenant_id: 'tenant_123',
+        pdf_path: `${VALID_TOKEN}.pdf`,
+        is_revoked: false,
+        metadata: {
+          issuerName: 'Acme Nigeria Ltd',
+          issuerEmail: 'billing@acme.ng', // Valid trusted business email
+        },
+      },
+    }),
+    resendClient: mockResend,
+  })
+
+  assert.equal(res.status, 200)
+  assert.deepEqual(capturedReplyTo, ['billing@acme.ng'], 'Must set replyTo array')
+  assert.match(capturedHtml, /reply directly to this email or contact Acme Nigeria Ltd/, 'Must invite direct reply')
+})
+
+test('BEHAVIORAL (FIND-05): Omits replyTo and avoids false promise in footer when business email is absent', async () => {
+  let capturedReplyTo = null
+  let capturedHtml = ''
+
+  const mockResend = {
+    emails: {
+      send: async (payload) => {
+        capturedReplyTo = payload.replyTo
+        capturedHtml = payload.html
+        return { data: { id: 'msg_no_reply_ok' }, error: null }
+      },
+    },
+  }
+
+  const req = new Request('http://localhost/functions/v1/send-document-email', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer valid_jwt',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: VALID_TOKEN,
+      operationId: VALID_OP_ID,
+      recipientEmail: 'client@example.com',
+      subject: 'Invoice INV-2026-001',
+    }),
+  })
+
+  const baseClient = createMockAdminClient({
+    share: {
+      id: 'share_1',
+      token: VALID_TOKEN,
+      tenant_id: 'tenant_123',
+      pdf_path: `${VALID_TOKEN}.pdf`,
+      is_revoked: false,
+      metadata: {
+        issuerName: 'Acme Nigeria Ltd',
+        // No issuerEmail provided
+      },
+    },
+  })
+
+  const mockClient = {
+    ...baseClient,
+    from: (table) => {
+      if (table === 'profiles') {
+        return {
+          select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }),
+        }
+      }
+      return baseClient.from(table)
+    },
+  }
+
+  const res = await handleSendDocumentEmail(req, {
+    adminClient: mockClient,
+    resendClient: mockResend,
+  })
+
+  assert.equal(res.status, 200)
+  assert.equal(capturedReplyTo, undefined, 'Must omit replyTo when no trusted business email exists')
+  assert.match(
+    capturedHtml,
+    /contact Acme Nigeria Ltd through your standard business contact channels/,
+    'Must not falsely promise direct replies',
+  )
+})
+
+// ====================================================================
+// 7. SINGLE AUTHORITATIVE TEMPLATE TESTS (FIND-03)
+// ====================================================================
+
+test('BEHAVIORAL (FIND-03): buildDocumentEmailHtml correctly escapes user-provided content and matches preview', () => {
+  const maliciousInput = {
+    documentType: 'Invoice',
+    documentNumber: 'INV<script>alert(1)</script>',
+    documentTitle: 'Title & "Quotes"',
+    issuerName: 'Acme <Corp>',
+    recipientName: 'O\'Connor & Co',
+    shareUrl: 'https://bouxre.com/shared/token?param="test"',
+    message: 'Hello <script>steal()</script> & goodbye!',
+  }
+
+  const html = buildDocumentEmailHtml(maliciousInput)
+
+  assert.equal(html.includes('<script>'), false, 'Must never contain unescaped script tags')
+  assert.match(html, /INV&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
+  assert.match(html, /Acme &lt;Corp&gt;/)
+  assert.match(html, /O&#039;Connor &amp; Co/)
+  assert.match(html, /Hello &lt;script&gt;steal\(\)&lt;\/script&gt; &amp; goodbye!/)
+})
+
+test('BEHAVIORAL (FIND-03): DocumentEmailTemplate preview component renders exact output from buildDocumentEmailHtml', async () => {
+  const props = {
+    documentType: 'Invoice',
+    documentNumber: 'INV-2026-999',
+    shareUrl: 'https://bouxre.com/shared/test',
+    issuerName: 'BOURXE Verified',
+    totalFormatted: 'NGN 250,000.00',
+  }
+
+  const generatedHtml = buildDocumentEmailHtml(props)
+  const renderedFromComponentHelper = await renderDocumentEmailHtml(props)
+
+  assert.equal(generatedHtml, renderedFromComponentHelper, 'Preview and delivery must use identical HTML string output')
 })

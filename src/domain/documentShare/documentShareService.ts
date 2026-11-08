@@ -98,6 +98,7 @@ export async function createOrGetDocumentShare(
   // 5. Insert record into public.document_shares FIRST to authorize storage upload
   const metadata = {
     issuerName: payload.issuerName || '',
+    issuerEmail: payload.issuerEmail || '',
     issuerLogoUrl: payload.issuerLogoUrl || '',
     recipientName: payload.recipientName || '',
     recipientEmail: payload.recipientEmail || '',
@@ -362,7 +363,7 @@ export async function shareViaWhatsApp(input: {
 
 /**
  * Direct transactional email delivery via Supabase Edge Function (Resend)
- * with the authoritative PDF attached and verified sender authorization.
+ * with the authoritative PDF attached, verified sender authorization, and operation-level idempotency.
  */
 export async function shareViaEmail(input: {
   pdfBlob: Blob
@@ -374,11 +375,13 @@ export async function shareViaEmail(input: {
   recipientEmail?: string
   subject: string
   message: string
+  operationId?: string
 }): Promise<ShareActionResult> {
   const fullBody = `${input.message}\n\nView document online: ${input.shareUrl}`
   const mailtoUrl = `mailto:${encodeURIComponent(input.recipientEmail || '')}?subject=${encodeURIComponent(
     input.subject,
   )}&body=${encodeURIComponent(fullBody)}`
+  const operationId = input.operationId || `op_${generateCryptoToken().slice(0, 24)}`
 
   // 1. Direct Server-Side Email Delivery via Resend (when shareToken and recipientEmail are present)
   if (input.shareToken && input.recipientEmail && input.recipientEmail.trim()) {
@@ -391,6 +394,7 @@ export async function shareViaEmail(input: {
             recipientEmail: input.recipientEmail.trim(),
             subject: input.subject,
             message: input.message,
+            operationId,
           },
         },
       )
@@ -400,9 +404,11 @@ export async function shareViaEmail(input: {
           success: true,
           method: 'resend-edge',
           messageId: edgeData.messageId,
+          operationId: edgeData.operationId || operationId,
         }
       }
 
+      const isAmbiguous = Boolean(edgeData?.ambiguous)
       const errorMessage =
         (edgeData && edgeData.error) ||
         (edgeError && edgeError.message) ||
@@ -412,6 +418,8 @@ export async function shareViaEmail(input: {
         success: false,
         method: 'error',
         error: errorMessage,
+        operationId,
+        ambiguous: isAmbiguous,
         mailtoUrl,
       }
     } catch (err) {
@@ -420,6 +428,8 @@ export async function shareViaEmail(input: {
         success: false,
         method: 'error',
         error: err instanceof Error ? err.message : 'Could not reach email delivery service.',
+        operationId,
+        ambiguous: true,
         mailtoUrl,
       }
     }

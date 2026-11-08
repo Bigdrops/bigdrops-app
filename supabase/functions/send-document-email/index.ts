@@ -1,48 +1,86 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0";
-import { Resend } from "npm:resend@6.37.0";
+declare const Deno: any;
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const DOCUMENT_EMAIL_FROM = Deno.env.get("DOCUMENT_EMAIL_FROM") || "BOURXE Documents <notifications@bourxe.com>";
-const APP_PUBLIC_URL = Deno.env.get("APP_PUBLIC_URL") || "https://bouxre.com";
+import {
+  buildDocumentEmailHtml,
+  type DocumentEmailTemplateProps,
+} from "../../../src/domain/documentShare/documentEmailHtml";
 
-const CORS_HEADERS = {
+// Cross-runtime loaders (compatible with both Supabase Edge Function Deno runtime and Bun/Node test runner)
+async function getSupabaseCreateClient(): Promise<any> {
+  try {
+    // @ts-ignore
+    const mod = await import("https://esm.sh/@supabase/supabase-js@2.42.0");
+    if (typeof mod.createClient === "function") return mod.createClient;
+  } catch {}
+  try {
+    const mod = await import("@supabase/supabase-js");
+    return mod.createClient;
+  } catch {}
+  return null;
+}
+
+async function getResendClass(): Promise<any> {
+  try {
+    // @ts-ignore
+    const mod = await import("npm:resend@6.37.0");
+    if (typeof mod.Resend === "function") return mod.Resend;
+  } catch {}
+  try {
+    const mod = await import("resend");
+    return mod.Resend;
+  } catch {}
+  return null;
+}
+
+function getEnvVar(key: string): string {
+  if (typeof Deno !== "undefined" && Deno.env && typeof Deno.env.get === "function") {
+    return Deno.env.get(key) || "";
+  }
+  if (typeof process !== "undefined" && process.env) {
+    return process.env[key] || "";
+  }
+  return "";
+}
+
+export const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SAFE_TOKEN_PATTERN = /^[a-zA-Z0-9_-]{16,64}$/;
-const SAFE_PDF_PATH_PATTERN = /^[a-zA-Z0-9_-]{16,64}\.pdf$/;
-const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+export const SAFE_TOKEN_PATTERN = /^[a-zA-Z0-9_-]{16,64}$/;
+export const SAFE_OPERATION_ID_PATTERN = /^[a-zA-Z0-9_-]{16,128}$/;
+export const SAFE_PDF_PATH_PATTERN = /^[a-zA-Z0-9_-]{16,64}\.pdf$/;
+export const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 /**
  * Standard PDF Magic Bytes (%PDF-)
  * Standard PDF files must begin with '%PDF-' (0x25, 0x50, 0x44, 0x46, 0x2D).
  */
-const PDF_MAGIC_BYTES = [0x25, 0x50, 0x44, 0x46, 0x2d];
+export const PDF_MAGIC_BYTES = [0x25, 0x50, 0x44, 0x46, 0x2d];
 
-/** Maximum allowed PDF attachment size for direct email delivery: 10 MB */
-const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+/** Maximum allowed raw PDF attachment size: 10 MB (within Resend's 40 MB total payload limit) */
+export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
-interface SendEmailPayload {
+export interface SendEmailPayload {
   token: string;
   recipientEmail: string;
   subject: string;
   message?: string;
+  operationId?: string;
 }
 
-function escapeHtml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+export interface SendDocumentEmailDeps {
+  supabaseUrl?: string;
+  serviceRoleKey?: string;
+  resendApiKey?: string;
+  documentEmailFrom?: string;
+  appPublicUrl?: string;
+  adminClient?: any;
+  resendClient?: any;
 }
 
-function uint8ArrayToBase64(bytes: Uint8Array): string {
+export function uint8ArrayToBase64(bytes: Uint8Array): string {
   const chunks: string[] = [];
   const chunkSize = 8192;
   for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -53,157 +91,30 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
 }
 
 /**
- * Generates executive BOURXE branded email HTML identical to DocumentEmailTemplate.tsx.
+ * Validates and extracts a trusted reply-to email address.
  */
-function buildDocumentEmailHtml(props: {
-  documentType: string;
-  documentNumber: string;
-  documentTitle?: string;
-  issuerName: string;
-  recipientName?: string;
-  totalFormatted?: string;
-  issueDate?: string;
-  dueDate?: string;
-  validUntil?: string;
-  shareUrl: string;
-  message?: string;
-  fileName: string;
-}): string {
-  const docHeading = props.documentTitle || `${props.documentType.charAt(0).toUpperCase() + props.documentType.slice(1)} ${props.documentNumber}`;
-  const previewText = `${docHeading} from ${props.issuerName}`;
-  const typeUpper = props.documentType.toUpperCase();
-
-  const recipientHtml = props.recipientName
-    ? `<p style="font-size: 13px; color: #635d55; margin: 0 0 18px 0;">Prepared for: <strong>${escapeHtml(props.recipientName)}</strong></p>`
-    : "";
-
-  const messageHtml = props.message && props.message.trim()
-    ? `<div style="background-color: #faf9f7; border-left: 3px solid #2b2621; padding: 12px 16px; margin: 16px 0 20px 0; border-radius: 4px;">
-        <p style="font-size: 14px; line-height: 1.5; color: #2b2621; margin: 0; white-space: pre-wrap;">${escapeHtml(props.message.trim())}</p>
-      </div>`
-    : `<p style="font-size: 14px; line-height: 1.5; color: #3d3832; margin: 0 0 16px 0;">
-        Please find your official ${escapeHtml(props.documentType.toLowerCase())} attached to this email. You can also view and download it online at any time.
-      </p>`;
-
-  const rows: string[] = [
-    `<tr style="padding: 4px 0;">
-      <td style="font-size: 12px; font-weight: 600; color: #7a7369; width: 40%; padding: 4px 0;">Document No:</td>
-      <td style="font-size: 13px; font-weight: 600; color: #1a1815; text-align: right; padding: 4px 0;">${escapeHtml(props.documentNumber)}</td>
-    </tr>`,
-  ];
-
-  if (props.issuerName) {
-    rows.push(
-      `<tr style="padding: 4px 0;">
-        <td style="font-size: 12px; font-weight: 600; color: #7a7369; width: 40%; padding: 4px 0;">Issued By:</td>
-        <td style="font-size: 13px; font-weight: 600; color: #1a1815; text-align: right; padding: 4px 0;">${escapeHtml(props.issuerName)}</td>
-      </tr>`
-    );
+export function sanitizeReplyTo(candidate?: string | null): string | null {
+  if (!candidate || typeof candidate !== "string") return null;
+  const trimmed = candidate.trim();
+  if (
+    trimmed.length > 0 &&
+    trimmed.length <= 254 &&
+    !/[\r\n]/.test(trimmed) &&
+    EMAIL_REGEX.test(trimmed)
+  ) {
+    return trimmed;
   }
-
-  if (props.issueDate) {
-    rows.push(
-      `<tr style="padding: 4px 0;">
-        <td style="font-size: 12px; font-weight: 600; color: #7a7369; width: 40%; padding: 4px 0;">Date:</td>
-        <td style="font-size: 13px; font-weight: 600; color: #1a1815; text-align: right; padding: 4px 0;">${escapeHtml(props.issueDate)}</td>
-      </tr>`
-    );
-  }
-
-  if (props.dueDate) {
-    rows.push(
-      `<tr style="padding: 4px 0;">
-        <td style="font-size: 12px; font-weight: 600; color: #7a7369; width: 40%; padding: 4px 0;">Due Date:</td>
-        <td style="font-size: 13px; font-weight: 600; color: #1a1815; text-align: right; padding: 4px 0;">${escapeHtml(props.dueDate)}</td>
-      </tr>`
-    );
-  }
-
-  if (props.validUntil) {
-    rows.push(
-      `<tr style="padding: 4px 0;">
-        <td style="font-size: 12px; font-weight: 600; color: #7a7369; width: 40%; padding: 4px 0;">Valid Until:</td>
-        <td style="font-size: 13px; font-weight: 600; color: #1a1815; text-align: right; padding: 4px 0;">${escapeHtml(props.validUntil)}</td>
-      </tr>`
-    );
-  }
-
-  if (props.totalFormatted) {
-    rows.push(
-      `<tr style="padding-top: 8px; border-top: 1px dashed #dcd8cf;">
-        <td style="font-size: 14px; font-weight: 700; color: #1a1815; width: 40%; padding: 8px 0 4px 0;">Total Amount:</td>
-        <td style="font-size: 16px; font-weight: 800; color: #1a1815; text-align: right; font-family: monospace, sans-serif; padding: 8px 0 4px 0;">${escapeHtml(props.totalFormatted)}</td>
-      </tr>`
-    );
-  }
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(previewText)}</title>
-</head>
-<body style="background-color: #f6f5f2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px 0;">
-  <div style="background-color: #ffffff; margin: 0 auto; padding: 36px 32px; max-width: 580px; border-radius: 12px; border: 1px solid #e7e5e0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);">
-    <!-- Header -->
-    <table style="width: 100%; margin-bottom: 16px; border-collapse: collapse;">
-      <tr>
-        <td style="vertical-align: middle;">
-          <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #1a1815; margin: 0;">BOURXE</div>
-          <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8c857b; margin: 2px 0 0 0;">Business Management Suite</div>
-        </td>
-        <td style="text-align: right; vertical-align: middle;">
-          <span style="display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #5c4813; background-color: #fbf3db; border: 1px solid #eedda6; padding: 4px 10px; border-radius: 9999px;">${escapeHtml(typeUpper)}</span>
-        </td>
-      </tr>
-    </table>
-
-    <hr style="border: none; border-top: 1px solid #ebe8e1; margin: 20px 0;" />
-
-    <!-- Document Info -->
-    <div style="margin: 16px 0;">
-      <h1 style="font-size: 22px; font-weight: 700; color: #1a1815; margin: 0 0 8px 0; letter-spacing: -0.3px;">${escapeHtml(docHeading)}</h1>
-      ${recipientHtml}
-      ${messageHtml}
-
-      <!-- Key Document Details -->
-      <div style="background-color: #faf9f6; border-radius: 8px; padding: 14px 18px; border: 1px solid #eeebe3; margin: 20px 0;">
-        <table style="width: 100%; border-collapse: collapse;">
-          ${rows.join("\n")}
-        </table>
-      </div>
-
-      <!-- Primary Action CTA -->
-      <div style="text-align: center; margin: 28px 0 20px 0;">
-        <a href="${escapeHtml(props.shareUrl)}" style="background-color: #1f1c19; color: #ffffff; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 8px; text-decoration: none; display: inline-block;">View Document Online</a>
-      </div>
-
-      <!-- Attachment Notice -->
-      <div style="background-color: #f2f7f4; border: 1px solid #d4e7db; border-radius: 8px; padding: 10px 14px; margin: 18px 0 8px 0;">
-        <p style="font-size: 12px; color: #1a4e2d; margin: 0;">
-          📎 <strong>Attachment:</strong> ${escapeHtml(props.fileName)} is attached to this email for your records.
-        </p>
-      </div>
-    </div>
-
-    <hr style="border: none; border-top: 1px solid #ebe8e1; margin: 20px 0;" />
-
-    <!-- Footer -->
-    <div style="margin-top: 20px; text-align: center;">
-      <p style="font-size: 12px; color: #8c857b; margin: 0 0 6px 0;">
-        Sent via <strong>BOURXE</strong> — Enterprise financial and workflow management for SMEs.
-      </p>
-      <p style="font-size: 11px; color: #a39c91; margin: 0; line-height: 1.4;">
-        If you have any questions regarding this document, please reply directly to this email or contact ${escapeHtml(props.issuerName)}.
-      </p>
-    </div>
-  </div>
-</body>
-</html>`;
+  return null;
 }
 
-Deno.serve(async (req) => {
+/**
+ * Core HTTP Request Handler for send-document-email.
+ * Exported to allow direct, deterministic behavioral testing.
+ */
+export async function handleSendDocumentEmail(
+  req: Request,
+  deps: SendDocumentEmailDeps = {},
+): Promise<Response> {
   // 1. Explicitly accept POST and OPTIONS only; reject others with 405
   if (req.method !== "POST" && req.method !== "OPTIONS") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
@@ -234,15 +145,28 @@ Deno.serve(async (req) => {
     });
   }
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error("[send-document-email] Supabase service environment is not configured");
+  const supabaseUrl = deps.supabaseUrl || getEnvVar("SUPABASE_URL");
+  const serviceRoleKey = deps.serviceRoleKey || getEnvVar("SUPABASE_SERVICE_ROLE_KEY");
+  const resendApiKey = deps.resendApiKey || getEnvVar("RESEND_API_KEY");
+  const documentEmailFrom =
+    deps.documentEmailFrom || getEnvVar("DOCUMENT_EMAIL_FROM") || "BOURXE Documents <notifications@bourxe.com>";
+  const appPublicUrl = deps.appPublicUrl || getEnvVar("APP_PUBLIC_URL") || "https://bouxre.com";
+
+  let adminClient = deps.adminClient;
+  if (!adminClient) {
+    const createClientFn = await getSupabaseCreateClient();
+    if (createClientFn && supabaseUrl && serviceRoleKey) {
+      adminClient = createClientFn(supabaseUrl, serviceRoleKey);
+    }
+  }
+
+  if (!adminClient) {
+    console.error("[send-document-email] Supabase service client could not be configured");
     return new Response(JSON.stringify({ error: "Internal server configuration error" }), {
       status: 500,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }
-
-  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // Validate caller identity
   const { data: authData, error: authError } = await adminClient.auth.getUser(jwt);
@@ -270,10 +194,19 @@ Deno.serve(async (req) => {
   const recipientEmail = typeof payload.recipientEmail === "string" ? payload.recipientEmail.trim() : "";
   const subject = typeof payload.subject === "string" ? payload.subject.trim() : "";
   const userMessage = typeof payload.message === "string" ? payload.message.trim() : "";
+  const operationId = typeof payload.operationId === "string" ? payload.operationId.trim() : "";
 
   // Validate token structure
   if (!token || !SAFE_TOKEN_PATTERN.test(token)) {
     return new Response(JSON.stringify({ error: "Invalid document share token format" }), {
+      status: 400,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  // Validate operation ID for server and provider idempotency
+  if (!operationId || !SAFE_OPERATION_ID_PATTERN.test(operationId)) {
+    return new Response(JSON.stringify({ error: "Missing or invalid operation identifier for idempotency" }), {
       status: 400,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
@@ -289,10 +222,13 @@ Deno.serve(async (req) => {
 
   // Validate subject (prevent email header injection via CRLF)
   if (!subject || subject.length > 200 || /[\r\n]/.test(subject)) {
-    return new Response(JSON.stringify({ error: "Invalid subject: Must be non-empty, max 200 characters, without line breaks" }), {
-      status: 400,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Invalid subject: Must be non-empty, max 200 characters, without line breaks" }),
+      {
+        status: 400,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      },
+    );
   }
 
   // Validate personalized message length
@@ -333,34 +269,47 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 6. Enforce tenant & document authorization
-    let isAuthorized = share.created_by === callerUser.id;
-
-    if (!isAuthorized && share.tenant_id) {
-      // Validate caller belongs to the tenant workspace
-      const { data: entityData } = await adminClient
-        .from("entities")
-        .select("workspace_id")
-        .eq("id", share.tenant_id)
-        .maybeSingle();
-
-      if (entityData?.workspace_id) {
-        const { data: isMember, error: memberError } = await adminClient.rpc("is_workspace_member", {
-          p_workspace_id: entityData.workspace_id,
-          p_user_id: callerUser.id,
-        });
-
-        if (!memberError && Boolean(isMember)) {
-          isAuthorized = true;
-        }
-      }
+    // 6. Enforce current tenant & workspace authorization
+    // In accordance with FIND-04: Original creator status CANNOT bypass active workspace membership.
+    if (!share.tenant_id) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Share record lacks verified tenant association" }),
+        {
+          status: 403,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    if (!isAuthorized) {
-      return new Response(JSON.stringify({ error: "Forbidden: You are not authorized to email this document" }), {
-        status: 403,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
+    const { data: entityData, error: entityError } = await adminClient
+      .from("entities")
+      .select("workspace_id")
+      .eq("id", share.tenant_id)
+      .maybeSingle();
+
+    if (entityError || !entityData?.workspace_id) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Tenant entity or workspace not found" }),
+        {
+          status: 403,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const { data: isMember, error: memberError } = await adminClient.rpc("is_workspace_member", {
+      p_workspace_id: entityData.workspace_id,
+      p_user_id: callerUser.id,
+    });
+
+    if (memberError || !Boolean(isMember)) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: You are not an active member of this document's workspace" }),
+        {
+          status: 403,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // 7. Validate storage path strictly matches <token>.pdf
@@ -398,38 +347,63 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 10. Validate attachment size does not exceed email limits
+    // 10. Validate attachment size does not exceed email limits (FIND-06)
     if (fileBlob.size > MAX_ATTACHMENT_BYTES) {
-      return new Response(JSON.stringify({
-        error: `Document PDF (${(fileBlob.size / 1024 / 1024).toFixed(1)} MB) exceeds maximum email attachment limit (10 MB). Please share via Direct Link.`,
-      }), {
-        status: 413,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: `Document PDF (${(fileBlob.size / 1024 / 1024).toFixed(
+            1,
+          )} MB) exceeds maximum email attachment limit (10 MB). Please share via Direct Link.`,
+        }),
+        {
+          status: 413,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // 11. Check Resend configuration
-    if (!RESEND_API_KEY) {
+    if (!resendApiKey && !deps.resendClient) {
       console.error("[send-document-email] RESEND_API_KEY is not configured in Edge Function secrets");
-      return new Response(JSON.stringify({
-        error: "Transactional email service is not configured (RESEND_API_KEY missing in server secrets). Please contact system administrator or use native email client.",
-      }), {
-        status: 503,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Transactional email service is not configured (RESEND_API_KEY missing in server secrets). Please contact system administrator or use native email client.",
+          ambiguous: false,
+        }),
+        {
+          status: 503,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    // 12. Build trusted document metadata & HTML
+    // 12. Derive trusted reply-to address (FIND-05)
     const metadata = (share.metadata || {}) as Record<string, any>;
-    const sanitizedFileName = (metadata.fileName || `${share.document_number || "Document"}.pdf`)
-      .replace(/[^a-zA-Z0-9._-]/g, "_");
-    const shareUrl = `${APP_PUBLIC_URL.replace(/\/$/, "")}/shared/${token}`;
+    let trustedReplyTo: string | null = sanitizeReplyTo(metadata.issuerEmail);
+
+    if (!trustedReplyTo && share.created_by) {
+      const { data: creatorProfile } = await adminClient
+        .from("profiles")
+        .select("email")
+        .eq("id", share.created_by)
+        .maybeSingle();
+
+      trustedReplyTo = sanitizeReplyTo(creatorProfile?.email);
+    }
+
+    // 13. Build trusted document metadata & HTML using the single authoritative template builder (FIND-03)
+    const sanitizedFileName = (metadata.fileName || `${share.document_number || "Document"}.pdf`).replace(
+      /[^a-zA-Z0-9._-]/g,
+      "_",
+    );
+    const shareUrl = `${appPublicUrl.replace(/\/$/, "")}/shared/${token}`;
 
     const emailHtml = buildDocumentEmailHtml({
       documentType: share.document_type || "Document",
       documentNumber: share.document_number || "DOC-001",
       documentTitle: share.document_title || undefined,
       issuerName: metadata.issuerName || "BOURXE",
+      issuerEmail: trustedReplyTo || undefined,
       recipientName: metadata.recipientName || undefined,
       totalFormatted: metadata.totalFormatted || undefined,
       issueDate: metadata.issueDate || undefined,
@@ -438,100 +412,148 @@ Deno.serve(async (req) => {
       shareUrl,
       message: userMessage,
       fileName: sanitizedFileName,
+      replyTo: trustedReplyTo,
     });
 
-    // 13. Convert PDF binary to Base64 for Resend attachment
+    // 14. Convert PDF binary to Base64 for Resend attachment
     const pdfBuffer = await fileBlob.arrayBuffer();
     const pdfBase64 = uint8ArrayToBase64(new Uint8Array(pdfBuffer));
 
-    // 14. Dispatch email via Resend SDK (with direct REST API fallback)
-    let messageId: string | null = null;
-    let resendErrorMsg: string | null = null;
-
-    try {
-      const resend = new Resend(RESEND_API_KEY);
-      const resendRes = await resend.emails.send({
-        from: DOCUMENT_EMAIL_FROM,
-        to: [recipientEmail],
-        subject,
-        html: emailHtml,
-        attachments: [
-          {
-            filename: sanitizedFileName,
-            content: pdfBase64,
-          },
-        ],
-      });
-
-      if (resendRes.error) {
-        resendErrorMsg = resendRes.error.message || "Resend API error";
-      } else if (resendRes.data?.id) {
-        messageId = resendRes.data.id;
-      }
-    } catch (sdkErr) {
-      console.warn("[send-document-email] Resend SDK invocation failed, trying direct REST API fallback:", sdkErr);
-
-      // Direct REST fallback to api.resend.com
-      try {
-        const restRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${RESEND_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: DOCUMENT_EMAIL_FROM,
-            to: [recipientEmail],
-            subject,
-            html: emailHtml,
-            attachments: [
-              {
-                filename: sanitizedFileName,
-                content: pdfBase64,
-              },
-            ],
+    // 15. Single Transport Resend Dispatch with Operation-Level Idempotency (FIND-01 & FIND-02)
+    let resend = deps.resendClient;
+    if (!resend) {
+      const ResendClass = await getResendClass();
+      if (!ResendClass) {
+        console.error("[send-document-email] Resend SDK module could not be loaded");
+        return new Response(
+          JSON.stringify({
+            error: "Transactional email module could not be initialized on server.",
+            ambiguous: false,
+            operationId,
           }),
-        });
-
-        const restData = await restRes.json();
-        if (restRes.ok && restData?.id) {
-          messageId = restData.id;
-          resendErrorMsg = null;
-        } else {
-          resendErrorMsg = restData?.message || restData?.error?.message || `HTTP ${restRes.status}`;
-        }
-      } catch (restErr) {
-        resendErrorMsg = restErr instanceof Error ? restErr.message : "Network failure contacting Resend";
+          {
+            status: 500,
+            headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+          },
+        );
+      }
+      try {
+        resend = new ResendClass(resendApiKey);
+      } catch (sdkInitErr) {
+        console.error("[send-document-email] Resend SDK client initialization failed:", sdkInitErr);
+        return new Response(
+          JSON.stringify({
+            error: "Transactional email service failed to initialize on server. Please use client fallback.",
+            ambiguous: false,
+            operationId,
+          }),
+          {
+            status: 500,
+            headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+          },
+        );
       }
     }
 
-    if (!messageId || resendErrorMsg) {
-      console.error("[send-document-email] Resend transmission failure:", resendErrorMsg);
-      return new Response(JSON.stringify({
-        error: `Email transmission rejected by provider: ${resendErrorMsg || "Unknown delivery error"}`,
-      }), {
-        status: 502,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
+    let resendRes: any;
+    try {
+      resendRes = await resend.emails.send(
+        {
+          from: documentEmailFrom,
+          to: [recipientEmail],
+          subject,
+          html: emailHtml,
+          replyTo: trustedReplyTo ? [trustedReplyTo] : undefined,
+          attachments: [
+            {
+              filename: sanitizedFileName,
+              content: pdfBase64,
+            },
+          ],
+        },
+        {
+          idempotencyKey: operationId,
+        },
+      );
+    } catch (networkDispatchErr) {
+      // In-flight network error (timeout, connection reset, TLS abort).
+      // Acceptance by provider is UNKNOWN. DO NOT attempt a second POST.
+      console.error("[send-document-email] In-flight network error during Resend dispatch:", networkDispatchErr);
+      return new Response(
+        JSON.stringify({
+          error: "Network timeout or connection reset during email transmission. Provider acceptance could not be confirmed.",
+          ambiguous: true,
+          operationId,
+        }),
+        {
+          status: 504,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    // 15. Return structured success
-    return new Response(JSON.stringify({
-      success: true,
-      messageId,
-      recipient: recipientEmail,
-      fileName: sanitizedFileName,
-    }), {
-      status: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
+    if (resendRes?.error) {
+      console.error("[send-document-email] Resend provider confirmed rejection:", resendRes.error);
+      return new Response(
+        JSON.stringify({
+          error: `Email transmission rejected by provider: ${resendRes.error.message || "Unknown delivery error"}`,
+          ambiguous: false,
+          operationId,
+        }),
+        {
+          status: 422,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const messageId = resendRes?.data?.id;
+    if (!messageId) {
+      console.error("[send-document-email] Provider response omitted message ID:", resendRes);
+      return new Response(
+        JSON.stringify({
+          error: "Provider did not return a valid transmission reference.",
+          ambiguous: true,
+          operationId,
+        }),
+        {
+          status: 502,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // 16. Return structured success
+    return new Response(
+      JSON.stringify({
+        success: true,
+        messageId,
+        operationId,
+        recipient: recipientEmail,
+        fileName: sanitizedFileName,
+      }),
+      {
+        status: 200,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      },
+    );
   } catch (err) {
     console.error("[send-document-email] Unhandled server error:", err);
-    return new Response(JSON.stringify({
-      error: "Internal server error occurred while processing document email",
-    }), {
-      status: 500,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error occurred while processing document email",
+        ambiguous: false,
+        operationId,
+      }),
+      {
+        status: 500,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      },
+    );
   }
-});
+}
+
+// Serve HTTP in Supabase Deno runtime
+if (typeof Deno !== "undefined" && typeof Deno.serve === "function") {
+  Deno.serve((req: Request) => handleSendDocumentEmail(req));
+}
