@@ -4,7 +4,7 @@ import { adaptCommercialDocumentData } from "@/components/pdf/industryAdapter";
 import { buildPdfRowCells, interpretPdfTableSettings } from "@/components/pdf/table";
 import type { PdfDocumentModel, PdfColumnDefinition, PdfResolvedTableSettings } from "@/components/pdf/types";
 import { getPdfSummaryLabels } from "@/domain/document/pdfSummaryLabels";
-import { buildSummaryRows } from "@/domain/invoice";
+import { buildSummaryRows, normalizeAdditionalFieldEntries } from "@/domain/invoice";
 import { resolveAmountInWords } from "@/domain/document/amountInWords";
 import {
   buildBankAccountsProjection,
@@ -106,16 +106,23 @@ export function buildQuotationPreviewModel(input: QuotationPreviewModelInput) {
       kind: "html" as const,
       html: String(quotation.terms),
     } : null,
-    ...(Array.isArray(customFields.additionalFields) && customFields.additionalFields.length > 0 ? [{
-      title: "Additional Fields",
-      kind: "fields" as const,
-      fields: customFields.additionalFields
-        .filter((field: any) => field?.label || field?.value)
-        .map((field: any) => ({
-          label: String(field?.label || ""),
-          value: String(field?.value || ""),
-        })),
-    }] : []),
+    ...(() => {
+      const normalizedFields = normalizeAdditionalFieldEntries(
+        customFields?.additionalFields,
+        customFields?.bottom,
+      )
+        .map((field) => ({
+          label: String(field?.label || "").trim(),
+          value: String(field?.value || "").trim(),
+        }))
+        .filter((field) => field.label || field.value);
+
+      return normalizedFields.length > 0 ? [{
+        title: "Additional Fields",
+        kind: "fields" as const,
+        fields: normalizedFields,
+      }] : [];
+    })(),
     ...(previewAttachmentLinks.length > 0 ? [{
       title: "Reference Links",
       kind: "links" as const,

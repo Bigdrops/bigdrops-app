@@ -187,6 +187,7 @@ export type PdfBaseDocumentModel = {
   notes?: PdfTextSection | null
   terms?: PdfTextSection | null
   additionalSections?: PdfTextSection[]
+  additionalFields?: Array<{ label: string; value: string }>
   referenceLinks?: PdfReferenceLink[]
   attachments?: PdfAttachmentReference[]
   signature?: PdfSignature | null

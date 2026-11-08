@@ -453,10 +453,13 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
       ...(model.referenceLinks || []).map((entry) => ({ label: entry.label, url: entry.url })),
       ...(model.attachments || []).map((entry) => ({ label: entry.label || entry.fileName || '', url: entry.url || undefined })),
     ].filter((entry) => entry.label || entry.url),
-    additionalFields: (model.additionalSections || []).map((section) => ({
-      label: section.title,
-      value: section.content,
-    })),
+    additionalFields: [
+      ...((model as any).additionalFields || []),
+      ...(model.additionalSections || []).map((section) => ({
+        label: section.title,
+        value: section.content,
+      })),
+    ].filter((field) => Boolean((field.label && field.label.trim()) || (field.value && field.value.trim()))),
     signature: model.signature || null,
     footer: {
       documentNumber: model.identity.number,

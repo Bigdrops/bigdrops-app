@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChevronDown, ChevronUp, Landmark } from "lucide-react"
+import { Check, ChevronDown, ChevronUp, Landmark } from "lucide-react"
 
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
@@ -325,36 +325,24 @@ function BankAccountPickerSheet({
                 type="button"
                 onClick={() => onSelect(bank.id)}
                 className={[
-                  "w-full rounded-[var(--bd-radius-lg)] border p-3 text-left transition",
+                  "w-full rounded-[var(--bd-radius-lg)] border p-3.5 text-left transition",
                   active
-                    ? "border-bd-border-strong bg-bd-border-strong text-bd-surface"
+                    ? "border-primary/60 bg-primary/10 text-bd-text shadow-sm ring-1 ring-primary/40"
                     : "border-bd-border bg-bd-surface text-bd-text hover:bg-bd-surface-muted",
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold">{bank.bankName}</p>
+                      <p className="text-sm font-semibold text-bd-text">{bank.bankName}</p>
                       {bank.isDefault ? (
-                        <span
-                          className={[
-                            "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
-                            active
-                              ? "border-bd-border bg-[hsl(var(--bd-border-strong)/0.1)] text-bd-surface"
-                              : "border-bd-status-success-border bg-bd-status-success-bg text-bd-status-success-text",
-                          ].join(" ")}
-                        >
+                        <span className="inline-flex items-center rounded-full border border-bd-status-success-border bg-bd-status-success-bg px-2 py-0.5 text-[11px] font-semibold text-bd-status-success-text">
                           DEFAULT
                         </span>
                       ) : null}
                     </div>
 
-                    <div
-                      className={[
-                        "mt-2 space-y-1 text-sm",
-                        active ? "text-[hsl(var(--bd-surface)/0.8)]" : "text-bd-text-muted",
-                      ].join(" ")}
-                    >
+                    <div className="mt-2 space-y-1 text-sm text-bd-text-muted">
                       <p>{bank.accountName}</p>
                       <p className="font-mono">{bank.accountNumber}</p>
                       <p className="font-mono">{bank.sortCode}</p>
@@ -363,9 +351,9 @@ function BankAccountPickerSheet({
 
                   <div className="pt-0.5">
                     {active ? (
-                      <ChevronUp className="h-4 w-4 opacity-90" />
+                      <Check className="h-4 w-4 text-primary shrink-0" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-bd-text-muted" />
+                      <ChevronDown className="h-4 w-4 text-bd-text-muted opacity-50 shrink-0" />
                     )}
                   </div>
                 </div>

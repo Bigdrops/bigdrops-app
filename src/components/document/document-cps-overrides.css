@@ -1387,6 +1387,10 @@
   color: var(--faint);
 }
 
+.bd-document-form .bd-setting-value:not(:has(b)) small {
+  margin-top: 0;
+}
+
 .bd-document-form .bd-setting-value.tax small { color: var(--vat); }
 .bd-document-form .bd-setting-value.disc small { color: var(--disc); }
 .bd-document-form .bd-setting-value.wht small { color: var(--wht); }

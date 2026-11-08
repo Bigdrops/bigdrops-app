@@ -203,6 +203,23 @@ export default function QuotationDocumentPreview({
               <div className="notes-label">{section?.title || 'Notes'}</div>
               {section?.kind === 'html' ? (
                 <div className="notes-content">{renderRichTextContent(section?.html)}</div>
+              ) : section?.kind === 'fields' && Array.isArray(section?.fields) ? (
+                <div className="notes-fields-grid">
+                  {section.fields.map((field: any, fIdx: number) => (
+                    <div key={fIdx} className="notes-field-item">
+                      <span className="notes-field-label">{field.label}:</span>{' '}
+                      <span className="notes-field-value">{field.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : section?.kind === 'links' && Array.isArray(section?.links) ? (
+                <div className="notes-links-list">
+                  {section.links.map((link: any, lIdx: number) => (
+                    <a key={lIdx} href={link.url} target="_blank" rel="noopener noreferrer" className="notes-link">
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
               ) : (
                 <div className="notes-content">{section?.text || section?.value || ''}</div>
               )}

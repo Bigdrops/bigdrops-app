@@ -51,19 +51,24 @@ function SettingRow({
   icon: ReactNode
   title: string
   helper: string
-  value: string
+  value?: string
   effect: string
   tone?: string
   open: boolean
   onToggle: () => void
   children: ReactNode
 }) {
+  const hasValue = Boolean(value && value !== '—' && value !== '-' && value.trim() !== '')
+
   return (
     <div className={`bd-setting-row${open ? ' open' : ''}`} data-tcard={id}>
       <button type="button" className="bd-setting-hit" aria-expanded={open} onClick={onToggle} aria-label={`${title} settings`}>
         <span className="bd-setting-ico">{icon}</span>
         <span className="bd-setting-copy"><b>{title}</b><small>{helper}</small></span>
-        <span className={`bd-setting-value${tone ? ` ${tone}` : ''}`}><b>{value}</b><small>{effect}</small></span>
+        <span className={`bd-setting-value${tone ? ` ${tone}` : ''}`}>
+          {hasValue ? <b>{value}</b> : null}
+          <small>{effect}</small>
+        </span>
         <span className="bd-setting-chev"><ChevronDown /></span>
       </button>
       {open ? <div className="bd-setting-editor">{children}</div> : null}
@@ -106,15 +111,15 @@ export function FormCommercialTerms({
 
   const discountDisplay = discountValue > 0
     ? (discountType === 'percent' ? `${discountValue}%` : formatCurrency(discountValue))
-    : '—'
+    : ''
   const discountEffect = discountValue > 0
     ? (discountTiming === 'before' ? 'Before VAT' : 'After VAT')
     : 'Not set'
-  const vatDisplay = vatValue > 0 ? `${vatValue}%` : '—'
+  const vatDisplay = vatValue > 0 ? `${vatValue}%` : ''
   const vatEffect = vatValue > 0 ? 'Tax rate' : 'Not set'
   const whtDisplay = whtValue > 0
     ? (whtType === 'percent' ? `${whtValue}%` : formatCurrency(whtValue))
-    : '—'
+    : ''
   const whtEffect = whtValue > 0 ? 'Deduction' : 'Not set'
 
   const taxedCount = extraCharges.filter((charge) => charge.withTax !== false).length
@@ -211,7 +216,7 @@ export function FormCommercialTerms({
                 </div>
               </div>
               <div style={{ marginTop: 8 }}>
-                <label className="cps-label">When discount reduces tax</label>
+                <label className="cps-label">Apply discount</label>
                 <div className="bd-seg">
                   <button type="button" className={discountTiming === 'before' ? 'on' : ''} onClick={() => setDiscountTiming('before')}>Before VAT</button>
                   <button type="button" className={discountTiming === 'after' ? 'on' : ''} onClick={() => setDiscountTiming('after')}>After VAT</button>
@@ -365,7 +370,7 @@ export function FormCommercialTerms({
               icon={<Plus />}
               title="Additional fields"
               helper="Extra document information only"
-              value={additionalFields.length ? String(additionalFields.length) : '—'}
+              value={additionalFields.length ? String(additionalFields.length) : ''}
               effect={additionalFields.length ? 'Document only' : 'None'}
               open={openSections.fields}
               onToggle={() => toggleSection('fields')}

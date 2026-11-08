@@ -1,6 +1,7 @@
 import {
   BUILTIN_COLUMNS,
   normalizeInvoicePdfTemplateId,
+  normalizeAdditionalFieldEntries,
   parseCustomFields,
 } from "@/domain/invoice";
 import { InvoicePdfTemplateId } from "@/domain/invoice/types";
@@ -12,18 +13,7 @@ import { resolveCanonicalLogoUrl, resolveCanonicalItemImageUrl } from "@/domain/
 import { resolveCommercialDesignPreset } from "@/domain/pdf/customization/commercial";
 
 
-export const downloadInvoicePdfDocument = async ({
-  targetInvoice,
-  targetItems,
-  targetPayments,
-  client,
-  settings,
-  bankAccounts,
-  signatories,
-  pdfOutput,
-  pdfTemplateId,
-  settingsData,
-}: {
+export type InvoicePdfGenerationParams = {
   targetInvoice: any;
   targetItems: any[];
   targetPayments?: any[];
@@ -34,8 +24,21 @@ export const downloadInvoicePdfDocument = async ({
   pdfOutput: any;
   pdfTemplateId: InvoicePdfTemplateId;
   settingsData: any;
-}) => {
-  const { buildPdfRowCells, generateInvoicePdf, interpretPdfTableSettings } = await import("@/components/pdf");
+};
+
+export const buildInvoicePdfPayload = async ({
+  targetInvoice,
+  targetItems,
+  targetPayments,
+  client,
+  settings,
+  bankAccounts,
+  signatories,
+  pdfOutput,
+  pdfTemplateId,
+  settingsData,
+}: InvoicePdfGenerationParams) => {
+  const { buildPdfRowCells, interpretPdfTableSettings } = await import("@/components/pdf");
   
   const targetCustomFields = parseCustomFields(targetInvoice?.custom_fields);
   const targetTemplateId: InvoicePdfTemplateId = normalizeInvoicePdfTemplateId(targetCustomFields?.pdfTemplateId) || pdfTemplateId;
@@ -94,11 +97,22 @@ export const downloadInvoicePdfDocument = async ({
         }))
     : [];
 
-  await generateInvoicePdf({
+  const rawAdditionalFields = normalizeAdditionalFieldEntries(
+    targetCustomFields?.additionalFields,
+    targetCustomFields?.bottom,
+  );
+  const validAdditionalFields = rawAdditionalFields
+    .filter((field: any) => Boolean((field?.label && String(field.label).trim()) || (field?.value && String(field.value).trim())))
+    .map((field: any) => ({
+      label: String(field.label || '').trim(),
+      value: String(field.value || '').trim(),
+    }));
+
+  return {
     model: {
       identity: {
         id: String(targetInvoice.id),
-        kind: "invoice",
+        kind: "invoice" as const,
         number: String(targetInvoice.invoice_number || "invoice"),
         title: String(targetInvoice.invoice_title || "Invoice"),
         issueDate: String(targetInvoice.issue_date || ""),
@@ -131,7 +145,7 @@ export const downloadInvoicePdfDocument = async ({
       mergeQtyUnit: resolvedTable.mergeQtyUnit,
       items: (Array.isArray(targetItems) ? targetItems : []).map((item, index) => ({
         id: String(item.id || item._uiKey || index),
-        rowType: item.row_type === "group_header" ? "group_header" : "line",
+        rowType: (item.row_type === "group_header" ? "group_header" : "line") as "line" | "group_header",
         groupLabel: item.group_name || null,
         groupId: item.group_id || null,
         description: item.description || "",
@@ -157,7 +171,7 @@ export const downloadInvoicePdfDocument = async ({
         },
       })),
       totals: {
-        mode: targetPreviewModel?.advanceSummary ? "advance" : "standard",
+        mode: targetPreviewModel?.advanceSummary ? ("advance" as const) : ("standard" as const),
         rows: (Array.isArray(targetPreviewModel?.previewTotals) ? targetPreviewModel.previewTotals : []).map((row) => ({
           key: String(row.label || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
           label: String(row.label || ""),
@@ -173,9 +187,13 @@ export const downloadInvoicePdfDocument = async ({
         } : null,
       },
       bankDetails: pdfOutput.showBankDetails ? targetPreviewModel?.selectedPreviewBank : null,
-      notes: targetInvoice.notes ? { title: String(targetCustomFields?.notesTitle || "Notes"), content: targetInvoice.notes, format: "html" } : null,
-      terms: targetInvoice.terms ? { title: String(targetCustomFields?.termsTitle || "Terms and Conditions"), content: targetInvoice.terms, format: "html" } : null,
-      additionalSections: [],
+      notes: targetInvoice.notes ? { title: String(targetCustomFields?.notesTitle || "Notes"), content: targetInvoice.notes, format: "html" as const } : null,
+      terms: targetInvoice.terms ? { title: String(targetCustomFields?.termsTitle || "Terms and Conditions"), content: targetInvoice.terms, format: "html" as const } : null,
+      additionalSections: validAdditionalFields.map((field: any) => ({
+        title: field.label,
+        content: field.value,
+      })),
+      additionalFields: validAdditionalFields,
       referenceLinks,
       signature: targetPreviewModel?.signatory ? {
         name: targetPreviewModel.signatory.name || "",
@@ -190,5 +208,17 @@ export const downloadInvoicePdfDocument = async ({
     },
     templateId: targetTemplateId,
     compact: pdfOutput.compact === true,
-  });
+  };
+};
+
+export const getInvoicePdfBlob = async (params: InvoicePdfGenerationParams): Promise<{ blob: Blob; filename: string }> => {
+  const payload = await buildInvoicePdfPayload(params);
+  const { generateInvoicePdfBlob } = await import("@/components/pdf");
+  return generateInvoicePdfBlob(payload);
+};
+
+export const downloadInvoicePdfDocument = async (params: InvoicePdfGenerationParams) => {
+  const payload = await buildInvoicePdfPayload(params);
+  const { generateInvoicePdf } = await import("@/components/pdf");
+  return generateInvoicePdf(payload);
 };

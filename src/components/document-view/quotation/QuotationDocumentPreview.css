@@ -388,6 +388,40 @@
     line-height: 1.6;
 }
 
+.notes-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px 16px;
+    margin-top: 4px;
+}
+
+.notes-field-item {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.notes-field-label {
+    color: hsl(var(--bd-text-muted));
+    font-weight: 600;
+}
+
+.notes-field-value {
+    color: hsl(var(--bd-text));
+}
+
+.notes-links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.notes-link {
+    font-size: 12px;
+    color: hsl(var(--primary));
+    text-decoration: underline;
+}
+
 /* ── responsive ── */
 @media (max-width: 640px) {
     .info-grid {
