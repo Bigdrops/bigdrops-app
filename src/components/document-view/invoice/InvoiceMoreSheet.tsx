@@ -5,6 +5,7 @@ import {
   Zap,
   Link,
   Copy,
+  PlusCircle,
   DownloadCloud,
   Archive,
   Trash2,
@@ -15,6 +16,7 @@ import DocumentMoreSheet from '../shared/DocumentMoreSheet'
 interface InvoiceMoreSheetProps {
   open: boolean
   onClose: () => void
+  onCreateNew?: () => void
   onRevert: () => void
   onGenerateWaybill: () => void
   onRecordPayment: () => void
@@ -32,6 +34,7 @@ interface InvoiceMoreSheetProps {
 export default function InvoiceMoreSheet({
   open,
   onClose,
+  onCreateNew,
   onRevert,
   onGenerateWaybill,
   onRecordPayment,
@@ -87,6 +90,12 @@ export default function InvoiceMoreSheet({
     {
       title: 'Common Actions',
       items: [
+        {
+          id: 'create-new',
+          label: 'Create New Invoice',
+          icon: <PlusCircle size={18} />,
+          onClick: onCreateNew,
+        },
         {
           id: 'link-project',
           label: 'Link to Project',

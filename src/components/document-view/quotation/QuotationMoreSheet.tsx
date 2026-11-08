@@ -2,6 +2,7 @@ import {
   Zap,
   Link,
   Copy,
+  PlusCircle,
   DownloadCloud,
   Archive,
   Trash2,
@@ -11,6 +12,7 @@ import DocumentMoreSheet from '../shared/DocumentMoreSheet'
 interface QuotationMoreSheetProps {
   open: boolean
   onClose: () => void
+  onCreateNew?: () => void
   onConvertToInvoice: () => void
   onLinkProject: () => void
   onDuplicate: () => void
@@ -23,6 +25,7 @@ interface QuotationMoreSheetProps {
 export default function QuotationMoreSheet({
   open,
   onClose,
+  onCreateNew,
   onConvertToInvoice,
   onLinkProject,
   onDuplicate,
@@ -47,6 +50,12 @@ export default function QuotationMoreSheet({
     {
       title: 'Common Actions',
       items: [
+        {
+          id: 'create-new',
+          label: 'Create New Quotation',
+          icon: <PlusCircle size={18} />,
+          onClick: onCreateNew,
+        },
         {
           id: 'link-project',
           label: 'Link to Project',

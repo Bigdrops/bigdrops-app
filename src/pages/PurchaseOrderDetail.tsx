@@ -8,6 +8,7 @@ import {
   ChevronDown,
   History,
   Pencil,
+  Plus,
   RotateCcw,
 } from 'lucide-react'
 
@@ -223,13 +224,25 @@ export default function PurchaseOrderDetail() {
             <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
               Purchase Order
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h1 className="font-mono text-xl font-black tracking-tight text-bd-text">
-                {purchaseOrder.po_number}
-              </h1>
-              <Badge className={statusBadgeClassName(purchaseOrder)}>
-                {archived ? 'Archived' : PURCHASE_ORDER_STATUS_LABELS[purchaseOrder.status]}
-              </Badge>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-mono text-xl font-black tracking-tight text-bd-text">
+                  {purchaseOrder.po_number}
+                </h1>
+                <Badge className={statusBadgeClassName(purchaseOrder)}>
+                  {archived ? 'Archived' : PURCHASE_ORDER_STATUS_LABELS[purchaseOrder.status]}
+                </Badge>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs font-semibold"
+                onClick={() => navigate('/purchase-orders/new')}
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                New Purchase Order
+              </Button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
               <div>
