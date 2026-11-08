@@ -49,7 +49,7 @@ export type EntityContextValue = {
   provisioningError: string | null
   tenantClient: TenantClient
   recheckProvisioning: () => void
-  refresh: () => void
+  refresh: () => Promise<void> | void
 }
 
 export const EntityContext = createContext<EntityContextValue | null>(null)

@@ -258,7 +258,14 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
   // Session-only entity pick. Resets on workspace change or full reload.
   const selectedEntityId = useRef<string | null>(null)
 
-  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
+  const resolvePromiseRef = useRef<(() => void) | null>(null)
+
+  const refresh = useCallback((): Promise<void> => {
+    return new Promise<void>((res) => {
+      resolvePromiseRef.current = res
+      setRefreshKey((k) => k + 1)
+    })
+  }, [])
 
   const selectEntity = useCallback(
     (id: string) => {
@@ -278,7 +285,11 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       setEntityCount(0)
       setError(null)
       setIsLoading(workspaceLoading)
-      if (!workspace) return
+      if (!workspace) {
+        resolvePromiseRef.current?.()
+        resolvePromiseRef.current = null
+        return
+      }
 
       setIsLoading(true)
       try {
@@ -320,12 +331,20 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
         if (!cancelled) setError(String((e as Error)?.message ?? e))
       } finally {
         if (!cancelled) setIsLoading(false)
+        if (resolvePromiseRef.current) {
+          resolvePromiseRef.current()
+          resolvePromiseRef.current = null
+        }
       }
     }
 
     resolve()
     return () => {
       cancelled = true
+      if (resolvePromiseRef.current) {
+        resolvePromiseRef.current()
+        resolvePromiseRef.current = null
+      }
     }
   }, [workspace, workspaceLoading, refreshKey])
 

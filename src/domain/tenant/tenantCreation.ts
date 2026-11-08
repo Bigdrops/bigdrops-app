@@ -16,6 +16,12 @@ import {
   mapCreatedWorkspaceStatus,
 } from './tenantGate'
 export { slugify, buildInitialCompanyInput, buildInitialWorkspaceInput, buildTenantSchemaName }
+export { updateEntityDisplayName, synchronizedCompanySave } from './companyIdentity'
+export type {
+  UpdateEntityDisplayNameInput,
+  SynchronizedCompanySaveInput,
+  SynchronizedCompanySaveResult,
+} from './companyIdentity'
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/postgrest-schema-exposure`
 

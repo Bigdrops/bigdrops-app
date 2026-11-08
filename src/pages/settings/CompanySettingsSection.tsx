@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Building2, Pencil, Plus, Trash2, Mail, Phone, Globe, MapPin, Fingerprint, X, Check } from 'lucide-react'
 import { saveSettings, useSettings } from '@/hooks/useSettings'
-import { useEntity } from '@/lib/tenant/contexts'
+import { useEntity, useWorkspace } from '@/lib/tenant/contexts'
+import { synchronizedCompanySave } from '@/domain/tenant/companyIdentity'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
 import { normalizeCompanyCustomInfo } from '@/domain/invoice/normalize'
 import {
@@ -31,7 +32,8 @@ type CustomInfoItem = {
 
 export function CompanySettingsSection() {
   const { settings, loading } = useSettings()
-  const { tenantClient } = useEntity()
+  const { tenantClient, entity, refresh: refreshEntity } = useEntity()
+  const { workspace } = useWorkspace()
   const [form, setForm] = useState<CompanyForm>({
     company_name: '',
     company_tagline: '',
@@ -76,18 +78,27 @@ export function CompanySettingsSection() {
     setSaving(true)
 
     try {
-      await saveSettings({
-        ...form,
-        custom_info: JSON.stringify(customInfo.filter((item) => item.label || item.value)),
-      }, tenantClient)
+      await synchronizedCompanySave({
+        entityId: entity?.id || '',
+        workspaceId: workspace?.id,
+        currentDisplayName: entity?.name || '',
+        newCompanyName: form.company_name,
+        settingsPayload: {
+          ...form,
+          custom_info: JSON.stringify(customInfo.filter((item) => item.label || item.value)),
+        },
+        tenantClient,
+        persistSettings: saveSettings,
+        refreshEntity,
+      })
 
       feedback.success('Company info updated')
       setIsEditing(false)
     } catch (error) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'save' }))
+    } finally {
+      setSaving(false)
     }
-
-    setSaving(false)
   }
 
   if (loading) return <SettingsLoadingState />
