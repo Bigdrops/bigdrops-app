@@ -136,6 +136,7 @@ export type ApplyImportResult = {
   overwriteTargets: OverwriteTarget[]
   skippedRows: ValidationIssue[]
   groups: { id: string; name: string; showSubtotal: boolean }[]
+  resolved?: ResolvedImportData
 }
 
 export type BuildApplyResultOptions = {

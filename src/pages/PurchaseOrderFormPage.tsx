@@ -15,6 +15,7 @@ import {
 import { validatePurchaseOrder } from '@/domain/purchase-order/validation'
 import {
   PURCHASE_ORDER_FORM_COLUMNS,
+  applyPurchaseOrderImport,
   applyPurchaseOrderItemUpdate,
   applySharedHeaderUpdate,
   createPurchaseOrderFormItem,
@@ -70,7 +71,7 @@ export default function PurchaseOrderFormPage({ mode }: PurchaseOrderFormPagePro
   const [saveError, setSaveError] = useState<string | null>(null)
   const [invalidRowIndex, setInvalidRowIndex] = useState<number | null>(null)
   const [showColumnManager, setShowColumnManager] = useState(false)
-  const [mergeQtyUnit, setMergeQtyUnit] = useState(false)
+  const [mergeQtyUnit, setMergeQtyUnit] = useState(true)
   const [invoiceTitle, setInvoiceTitle] = useState('')
   const [notesTitle, setNotesTitle] = useState('Notes')
   const [termsTitle, setTermsTitle] = useState('Terms')
@@ -308,12 +309,12 @@ export default function PurchaseOrderFormPage({ mode }: PurchaseOrderFormPagePro
   const handleImportApply = useCallback(
     (result: ApplyImportResult) => {
       markDirty()
-      const items = (result.items ?? []).map((row, index) =>
-        purchaseOrderItemFromImport(row as unknown as Record<string, unknown>, index),
-      )
+      const rawImportedRows: Array<Record<string, unknown>> = result.resolved?.items
+        ? result.resolved.items.map((item) => ({ ...item.customFields, ...item.baseFields }))
+        : ((result.items ?? []) as unknown as Array<Record<string, unknown>>)
       setPo((current) => ({
         ...current,
-        items,
+        items: applyPurchaseOrderImport(current.items ?? [], rawImportedRows),
         extra_charges: (result.topLevel.extra_charges ?? []).map((charge) => ({
           label: String(charge.label ?? ''),
           value: Number(charge.value ?? 0),

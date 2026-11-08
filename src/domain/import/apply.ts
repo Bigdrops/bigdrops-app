@@ -255,6 +255,7 @@ export function buildApplyResult({
       overwriteTargets: [],
       skippedRows,
       groups: mergedGroups,
+      resolved,
     }
   }
 
@@ -282,5 +283,6 @@ export function buildApplyResult({
     overwriteTargets,
     skippedRows,
     groups: existingGroups,
+    resolved,
   }
 }

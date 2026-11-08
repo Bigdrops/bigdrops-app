@@ -196,12 +196,109 @@ export function matchesPurchaseOrderQuery(purchaseOrder: PurchaseOrder, query: s
 export function purchaseOrderItemFromImport(row: Record<string, unknown>, index: number): PurchaseOrderItem {
   const item = createPurchaseOrderFormItem(index)
   const { row_type: _rowType, unit_price: _unitPrice, _uiKey, ...domainItem } = item
-  return {
+  const mapped: PurchaseOrderItem & Record<string, unknown> = {
     ...domainItem,
     description: String(row.description ?? ''),
     quantity: finiteNumber(row.quantity, 1),
     unit: String(row.unit ?? ''),
     unit_cost: finiteNumber((row.unit_cost ?? row.unit_price) as unknown),
-    _uiKey,
+    _uiKey: typeof row._uiKey === 'string' && row._uiKey ? row._uiKey : _uiKey,
   }
+  mapped.line_total = finiteNumber(mapped.quantity) * finiteNumber(mapped.unit_cost)
+  if (row.sub_description !== undefined) mapped.sub_description = String(row.sub_description ?? '')
+  if (row.image_url !== undefined) mapped.image_url = row.image_url ? String(row.image_url) : null
+  if (row.item_id !== undefined) mapped.item_id = row.item_id ? String(row.item_id) : null
+  if (row.custom_data !== undefined) mapped.custom_data = row.custom_data
+  return mapped as PurchaseOrderItem
+}
+
+/**
+ * Determine if a PO line item is populated.
+ *
+ * A line item is populated if it has a non-whitespace description,
+ * or meaningful text in sub_description, or an image. Persisted rows
+ * (with id) are always populated.
+ *
+ * A row with quantity = 0 or unit_cost = 0 is NOT empty if it has
+ * a description. Emptiness is defined by the absence of commercial text.
+ */
+export function isPurchaseOrderItemPopulated(item: PurchaseOrderItem | Record<string, unknown>): boolean {
+  if (item.id) return true
+  if (typeof item.description === 'string' && item.description.trim() !== '') return true
+  const raw = item as Record<string, unknown>
+  if (typeof raw.sub_description === 'string' && raw.sub_description.trim() !== '') return true
+  if (typeof raw.image_url === 'string' && raw.image_url.trim() !== '') return true
+  if (typeof raw.item_id === 'string' && raw.item_id.trim() !== '') return true
+  return false
+}
+
+export function isPurchaseOrderItemEmpty(item: PurchaseOrderItem | Record<string, unknown>): boolean {
+  return !isPurchaseOrderItemPopulated(item)
+}
+
+/**
+ * Apply imported items to an existing PO line-item array with strictly additive semantics.
+ *
+ * Rules:
+ *  - Preserves all existing populated line items unchanged without accidental mutation.
+ *  - Appends imported items after existing populated items.
+ *  - If the existing final row is an empty placeholder, reuses that row for the first valid imported item.
+ *  - If the final row is populated, appends all valid imported items as new rows.
+ *  - Never creates empty intermediate rows.
+ *  - Preserves item ordering and all item metadata (descriptions, sub-descriptions, quantities, rates, units, images).
+ *  - Never silently discards valid imported items.
+ */
+export function applyPurchaseOrderImport(
+  existingItems: PurchaseOrderItem[],
+  importedRows: Array<Record<string, unknown>>,
+): PurchaseOrderItem[] {
+  const validImportedRows = (importedRows ?? []).filter((row) => {
+    const desc = String(row?.description ?? '').trim()
+    return desc.length > 0
+  })
+
+  if (validImportedRows.length === 0) {
+    return existingItems ?? []
+  }
+
+  const existing = existingItems ?? []
+  const hasItems = existing.length > 0
+  const lastIndex = existing.length - 1
+  const lastItem = hasItems ? existing[lastIndex] : null
+  const isLastRowEmpty = lastItem ? isPurchaseOrderItemEmpty(lastItem) : false
+
+  const precedingItems = isLastRowEmpty ? existing.slice(0, lastIndex) : existing
+  const preservedExisting = precedingItems
+    .filter(isPurchaseOrderItemPopulated)
+    .map((item) => ({ ...item }))
+
+  let combined: PurchaseOrderItem[]
+
+  if (isLastRowEmpty && lastItem) {
+    const firstRow = validImportedRows[0]
+    const mappedFirst = purchaseOrderItemFromImport(firstRow, preservedExisting.length)
+    const firstImportedItem: PurchaseOrderItem = {
+      ...mappedFirst,
+      _uiKey: lastItem._uiKey || mappedFirst._uiKey,
+      id: lastItem.id || undefined,
+    }
+
+    const remainingImported = validImportedRows.slice(1).map((row, idx) =>
+      purchaseOrderItemFromImport(row, preservedExisting.length + 1 + idx),
+    )
+
+    combined = [...preservedExisting, firstImportedItem, ...remainingImported]
+  } else {
+    const allImported = validImportedRows.map((row, idx) =>
+      purchaseOrderItemFromImport(row, preservedExisting.length + idx),
+    )
+
+    combined = [...preservedExisting, ...allImported]
+  }
+
+  return combined.map((item, index) => ({
+    ...item,
+    sort_order: index,
+    line_total: finiteNumber(item.quantity) * finiteNumber(item.unit_cost),
+  }))
 }
