@@ -3,7 +3,7 @@ import { QUICK_TILE_REGISTRY } from '@/config/quickTiles'
 import type { LucideIcon } from 'lucide-react'
 import { Calculator, FlaskConical } from 'lucide-react'
 
-export const APP_NAME = 'BOURXE'
+export const APP_NAME = 'BOUXRE'
 
 export type TabKey = 'home' | 'projects' | 'sales' | 'clients' | 'more' | 'item-library'
 

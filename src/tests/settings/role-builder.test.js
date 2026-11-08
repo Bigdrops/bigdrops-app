@@ -130,7 +130,7 @@ test('role selection has separate library, info, and editor surfaces', () => {
     items: [{ resource: 'invoice', action: 'view' }],
   }
   const info = renderToStaticMarkup(createElement(RoleInfoPanel, {
-    template: role, workspaceName: 'BIGDROPS', holderIds: ['known', 'unresolved'],
+    template: role, workspaceName: 'BOUXRE', holderIds: ['known', 'unresolved'],
     holderMembers: [{ userId: 'known', membershipId: 'member-1', name: 'Engineer Account', email: 'engineer@example.com', initials: 'EA', avatarUrl: null, joinedAt: '', role: 'member', isCurrentUser: false }],
     isOwner: true, onBack() {}, onEdit() {}, management: createElement('div', null, 'Manage role'),
   }))
@@ -143,7 +143,7 @@ test('role selection has separate library, info, and editor surfaces', () => {
   expect(info).not.toContain('Mark all')
 
   const readOnly = renderToStaticMarkup(createElement(RoleInfoPanel, {
-    template: role, workspaceName: 'BIGDROPS', holderIds: [], holderMembers: [],
+    template: role, workspaceName: 'BOUXRE', holderIds: [], holderMembers: [],
     isOwner: false, onBack() {}, onEdit() {}, management: null,
   }))
   expect(readOnly).not.toContain('Edit role')

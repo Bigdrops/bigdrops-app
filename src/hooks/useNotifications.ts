@@ -139,7 +139,7 @@ export function useNotifications(limit = 30): UseNotificationsResult {
             domain: 'system',
             source: 'ota',
             generator_key: 'app:android:update',
-            title: 'BOURXE Android Update Available',
+            title: 'BOUXRE Android Update Available',
             message: targetVersionName
               ? `Version ${targetVersionName} is ready to install. Tap to update.`
               : 'A new Android update is available. Tap to review and install.',
@@ -160,9 +160,9 @@ export function useNotifications(limit = 30): UseNotificationsResult {
             domain: 'app',
             source: 'web',
             generator_key: 'app:web:android-promo',
-            title: 'Get BOURXE for Android',
+            title: 'Get BOUXRE for Android',
             message: webApk.versionName
-              ? `Download BOURXE Android APK (v${webApk.versionName}) for faster native speeds.`
+              ? `Download BOUXRE Android APK (v${webApk.versionName}) for faster native speeds.`
               : 'Download the official Android APK for faster native performance and offline access.',
             route: webApk.apkUrl,
             severity: 'info',

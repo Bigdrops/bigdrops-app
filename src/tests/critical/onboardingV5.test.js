@@ -69,13 +69,13 @@ test('all eight references are recorded as inspected inputs', () => {
 
 test('story flow starts deliberately and reaches signup only at conversion', () => {
   assert.match(previewSource, /type ScreenId = 'arrival' \| 'chapter' \| 'conversion' \| 'signin' \| 'signup'/)
-  assert.match(previewSource, /Explore BOURXE/)
+  assert.match(previewSource, /Explore BOUXRE/)
   assert.match(previewSource, /const beginStory = \(\) => \{/)
   assert.match(previewSource, /setChapterIndex\(0\)[\s\S]*?setScreen\('chapter'\)/)
   assert.match(previewSource, /const skipStory = \(\) => \{[\s\S]*?setScreen\('conversion'\)/)
   assert.match(previewSource, /onSignup=\{\(\) => setScreen\('signup'\)\}/)
   assert.ok(
-    previewSource.indexOf('Explore BOURXE') < previewSource.indexOf('Get Started'),
+    previewSource.indexOf('Explore BOUXRE') < previewSource.indexOf('Get Started'),
     'Get Started must belong to the later conversion screen',
   )
 })

@@ -145,7 +145,7 @@ export const PREVIEW_BANK_ACCOUNTS = [
   {
     id: 'preview-bank-1',
     bankName: 'Zenith Bank',
-    accountName: 'BIGDROPS NIGERIA LTD',
+    accountName: 'BOUXRE NIGERIA LTD',
     accountNumber: '1012223344',
     sortCode: '057',
     isDefault: true,
@@ -153,7 +153,7 @@ export const PREVIEW_BANK_ACCOUNTS = [
   {
     id: 'preview-bank-2',
     bankName: 'GTBank',
-    accountName: 'BIGDROPS NIGERIA LTD',
+    accountName: 'BOUXRE NIGERIA LTD',
     accountNumber: '0221445588',
     sortCode: '058',
     isDefault: false,
@@ -162,5 +162,5 @@ export const PREVIEW_BANK_ACCOUNTS = [
 
 export const PREVIEW_COMPANY_PROFILE = {
   tagline: 'Power, projects, and progress',
-  footerText: 'BIGDROPS Nigeria Ltd · 14 Adeniyi Jones, Ikeja, Lagos · TIN 20884471-0001',
+  footerText: 'BOUXRE Nigeria Ltd · 14 Adeniyi Jones, Ikeja, Lagos · TIN 20884471-0001',
 } as const

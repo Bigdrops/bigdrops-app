@@ -24,7 +24,7 @@ function getCreateError(e: unknown): string {
     msg.includes('networkerror') ||
     msg.includes('load failed')
   ) {
-    return "Couldn't reach BigDrops. Check your connection and try again."
+    return "Couldn't reach BOUXRE. Check your connection and try again."
   }
   return "Couldn't create the workspace. Try again."
 }
@@ -217,7 +217,7 @@ export function WorkspaceSwitchSection() {
             Cancel
           </button>
         </form>
-        <p className="su-footer">BIGDROPS ERP</p>
+        <p className="su-footer">BOUXRE ERP</p>
       </div>
     )
   }
@@ -369,7 +369,7 @@ export function WorkspaceSwitchSection() {
         <Plus aria-hidden="true" />
       </button>
 
-      <p className="su-footer">BIGDROPS ERP</p>
+      <p className="su-footer">BOUXRE ERP</p>
     </div>
   )
 }

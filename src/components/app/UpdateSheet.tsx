@@ -55,10 +55,10 @@ export default function UpdateSheet({
           </SheetTitle>
           <SheetDescription>
             {policy
-              ? `Approved BOURXE release v${policy.versionCode}${
+              ? `Approved BOUXRE release v${policy.versionCode}${
                   policy.versionName ? ` (${policy.versionName})` : ''
                 }`
-              : 'Approved BOURXE release'}
+              : 'Approved BOUXRE release'}
           </SheetDescription>
         </SheetHeader>
 
@@ -66,7 +66,7 @@ export default function UpdateSheet({
           {state.status === 'grace' && graceRemaining && !graceRemaining.expired && (
             <p className="rounded-2xl bg-muted px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {graceRemaining.days}d {graceRemaining.hours}h {graceRemaining.minutes}m left to
-              update — after that, BOURXE pauses until you install this version.
+              update — after that, BOUXRE pauses until you install this version.
             </p>
           )}
 
@@ -88,7 +88,7 @@ export default function UpdateSheet({
                 {apkAsset.sizeBytes ? ` · ${(apkAsset.sizeBytes / 1024 / 1024).toFixed(1)} MB` : ''}
               </span>
             ) : (
-              <span>Only BOURXE-approved release assets are accepted.</span>
+              <span>Only BOUXRE-approved release assets are accepted.</span>
             )}
           </div>
 

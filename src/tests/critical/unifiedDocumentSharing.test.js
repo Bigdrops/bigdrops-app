@@ -59,7 +59,7 @@ test('PublicDocumentViewer renders executive responsive viewer with in-browser P
   assert.match(viewerSource, /fetchPublicDocumentShare\(token\)/)
   assert.match(viewerSource, /type="application\/pdf"/, 'Must render responsive PDF object')
   assert.match(viewerSource, /Download/)
-  assert.match(viewerSource, /BOURXE/)
+  assert.match(viewerSource, /BOUXRE/)
   assert.match(viewerSource, /Document Unavailable/)
 })
 
@@ -72,7 +72,7 @@ test('DocumentEmailTemplate renders executive branded email with React Email', a
   assert.match(templateSource, /DocumentEmailTemplate/)
   assert.match(templateSource, /export async function renderDocumentEmailHtml/)
   assert.match(templateSource, /View Document Online/)
-  assert.match(templateSource, /BOURXE/)
+  assert.match(templateSource, /BOUXRE/)
 })
 
 test('DocumentShareSheet provides the 3 channels: Direct Link, WhatsApp, and Email with layout preview', () => {

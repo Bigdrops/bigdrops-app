@@ -133,7 +133,7 @@ export default function OnboardingV4Preview() {
         <iframe
           key={`${sourceTheme}-${appearance}`}
           className="ob4-frame"
-          title="BOURXE Onboarding V4 source-led preview"
+          title="BOUXRE Onboarding V4 source-led preview"
           srcDoc={srcDoc}
           sandbox="allow-scripts allow-forms"
           referrerPolicy="no-referrer"

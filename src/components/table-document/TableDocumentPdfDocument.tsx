@@ -84,7 +84,7 @@ export function TableDocumentPdfDocument({ documentType, templateId, document, r
           <View>
             {templateId === 'modern' && document.show_brand_name ? (
               <Text style={{ fontSize: 14, color: accentColor, marginBottom: 4, fontFamily: 'Helvetica-Bold' }}>
-                {document.brand_name_override || 'BIGDROPS'}
+                {document.brand_name_override || 'BOUXRE'}
               </Text>
             ) : null}
             <Text style={styles.title}>{titleFor(documentType, document)}</Text>

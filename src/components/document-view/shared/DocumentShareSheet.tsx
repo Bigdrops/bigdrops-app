@@ -432,7 +432,7 @@ export default function DocumentShareSheet({
                     <div>
                       <div className="text-xs font-bold text-bd-text">Direct Link</div>
                       <div className="text-[11px] text-bd-text-muted">
-                        Branded BOURXE page with live browser PDF viewer
+                        Branded BOUXRE page with live browser PDF viewer
                       </div>
                     </div>
                   </div>
@@ -588,7 +588,7 @@ export default function DocumentShareSheet({
                     <div>
                       <div className="text-xs font-bold text-bd-text">Email</div>
                       <div className="text-[11px] text-bd-text-muted">
-                        Executive BOURXE email template with PDF attachment
+                        Executive BOUXRE email template with PDF attachment
                       </div>
                     </div>
                   </div>

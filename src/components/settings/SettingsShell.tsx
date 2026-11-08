@@ -37,5 +37,5 @@ export function SettingsShell({ groups, activeSection, setActiveSection, childre
 }
 
 export function SettingsFooter() {
-  return <p className="su-footer">BIGDROPS ERP</p>
+  return <p className="su-footer">BOUXRE ERP</p>
 }

@@ -90,7 +90,7 @@ export default function PublicDocumentViewer() {
             <div className="pt-2">
               <Link to="/">
                 <Button variant="outline" className="text-xs">
-                  Go to BOURXE Home
+                  Go to BOUXRE Home
                 </Button>
               </Link>
             </div>
@@ -123,7 +123,7 @@ export default function PublicDocumentViewer() {
           <div className="flex items-center gap-3">
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="font-extrabold tracking-tight text-[#1a1815]">BOURXE</span>
+                <span className="font-extrabold tracking-tight text-[#1a1815]">BOUXRE</span>
                 <span className="rounded bg-[#f0eee6] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6e685f]">
                   Portal
                 </span>
@@ -260,7 +260,7 @@ export default function PublicDocumentViewer() {
         {/* Verified Badge Footer */}
         <div className="flex items-center justify-center gap-1.5 py-4 text-center text-xs text-muted-foreground">
           <ShieldCheck size={14} className="text-emerald-600" />
-          <span>Issued and verified via <strong>BOURXE</strong> Business Platform</span>
+          <span>Issued and verified via <strong>BOUXRE</strong> Business Platform</span>
         </div>
       </main>
     </div>

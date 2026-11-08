@@ -9,7 +9,7 @@ import {
 
 test('isDirectApkUrl recognizes Supabase Storage and direct APK URLs', () => {
   assert.equal(
-    isDirectApkUrl('https://xyz.supabase.co/storage/v1/object/public/app-releases/bigdrops-latest.apk?v=1024'),
+    isDirectApkUrl('https://xyz.supabase.co/storage/v1/object/public/app-releases/bouxre-latest.apk?v=1024'),
     true,
   )
   assert.equal(
@@ -35,8 +35,8 @@ test('isDirectApkUrl recognizes Supabase Storage and direct APK URLs', () => {
 
 test('extractApkFileName extracts filename from url or uses fallback', () => {
   assert.equal(
-    extractApkFileName('https://xyz.supabase.co/storage/v1/object/public/app-releases/bigdrops-latest.apk?v=1024'),
-    'bigdrops-latest.apk',
+    extractApkFileName('https://xyz.supabase.co/storage/v1/object/public/app-releases/bouxre-latest.apk?v=1024'),
+    'bouxre-latest.apk',
   )
   assert.equal(
     extractApkFileName('https://xyz.supabase.co/app.apk'),
@@ -52,7 +52,7 @@ test('buildDirectPolicyRelease returns complete ApprovedRelease for direct APK U
   const policy = {
     versionCode: 1024,
     versionName: '1.0.24',
-    webReleaseUrl: 'https://xyz.supabase.co/storage/v1/object/public/app-releases/bigdrops-latest.apk?v=1024',
+    webReleaseUrl: 'https://xyz.supabase.co/storage/v1/object/public/app-releases/bouxre-latest.apk?v=1024',
     apkAssetPrefix: 'BIGDROPS-test-release-',
     effectiveAtMs: 1729000000000,
   }
@@ -64,7 +64,7 @@ test('buildDirectPolicyRelease returns complete ApprovedRelease for direct APK U
   assert.equal(release?.webUrl, policy.webReleaseUrl)
   assert.equal(release?.publishedAtMs, 1729000000000)
   assert.equal(release?.assets.length, 1)
-  assert.equal(release?.assets[0].name, 'bigdrops-latest.apk')
+  assert.equal(release?.assets[0].name, 'bouxre-latest.apk')
   assert.equal(release?.assets[0].downloadUrl, policy.webReleaseUrl)
   assert.equal(release?.assets[0].sizeBytes, null)
 })

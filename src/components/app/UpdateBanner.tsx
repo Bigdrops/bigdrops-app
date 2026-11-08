@@ -40,7 +40,7 @@ export default function UpdateBanner({ update }: { update: UseAppUpdateResult })
             {state.status === 'available' ? (
               <>Update available: v{targetVersion}</>
             ) : expired ? (
-              <>Update required — install to continue using BOURXE.</>
+              <>Update required — install to continue using BOUXRE.</>
             ) : (
               <>
                 New version required: v{state.policy?.versionCode ?? ''} · {daysLeft}d {hoursLeft}h

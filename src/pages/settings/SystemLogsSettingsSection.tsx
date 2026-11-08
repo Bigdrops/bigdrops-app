@@ -103,7 +103,7 @@ export default function SystemLogsSettingsSection() {
 
   const buildDiagnosticSummary = () => {
     const recent = logs.slice(0, 5)
-    let summary = `BOURXE Diagnostic Report (${new Date().toLocaleString()})\n`
+    let summary = `BOUXRE Diagnostic Report (${new Date().toLocaleString()})\n`
     summary += `Total logged events: ${logs.length}\n`
     summary += `Platform: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A'}\n\n`
     summary += 'Recent Events:\n'
@@ -120,14 +120,14 @@ export default function SystemLogsSettingsSection() {
   }
 
   const handleEmailSupport = () => {
-    const subject = encodeURIComponent(`BOURXE Diagnostic Report [${new Date().toISOString().slice(0, 10)}]`)
+    const subject = encodeURIComponent(`BOUXRE Diagnostic Report [${new Date().toISOString().slice(0, 10)}]`)
     const body = encodeURIComponent(buildDiagnosticSummary())
     window.location.href = `mailto:${DEVELOPER_EMAIL}?subject=${subject}&body=${body}`
   }
 
   const handleWhatsAppSupport = () => {
     const text = encodeURIComponent(
-      `Hello BOURXE Support, here is my diagnostic report:\n\n${buildDiagnosticSummary()}`,
+      `Hello BOUXRE Support, here is my diagnostic report:\n\n${buildDiagnosticSummary()}`,
     )
     window.open(`${DEVELOPER_WHATSAPP}?text=${text}`, '_blank')
   }

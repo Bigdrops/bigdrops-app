@@ -1,5 +1,5 @@
 import * as React from 'react'
-// Underlying email rendering framework types for BOURXE document sharing
+// Underlying email rendering framework types for BOUXRE document sharing
 import type { Html, Head, Body, Container } from '@react-email/components'
 import type { render } from '@react-email/render'
 import {
@@ -10,10 +10,10 @@ import {
 export type DocumentEmailProps = DocumentEmailTemplateProps
 
 /**
- * Renders the authoritative BOURXE document email design.
+ * Renders the authoritative BOUXRE document email design.
  * Single source of truth: buildDocumentEmailHtml().
  * Features:
- * - BOURXE executive branding & layout
+ * - BOUXRE executive branding & layout
  * - Primary Action: View Document Online
  * Eliminates visual and structural divergence between preview and Resend delivery.
  */

@@ -470,7 +470,7 @@ export default function DesignLab() {
                     <span className="dlab-thumb" aria-hidden="true">
                       <span className="dlab-mark">
                         <strong>B</strong>
-                        <small>BOURXE</small>
+                        <small>BOUXRE</small>
                       </span>
                     </span>
                     <span className="dlab-info">

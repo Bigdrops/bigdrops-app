@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { fetchReleasePolicy } from '@/lib/appUpdate/releasePolicyClient'
 import { isDirectApkUrl } from '@/lib/appUpdate/releaseDiscovery'
 
-const FALLBACK_APK_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/app-releases/bigdrops-latest.apk`
+const FALLBACK_APK_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/app-releases/bouxre-latest.apk`
 
 export interface WebAndroidApkInfo {
   apkUrl: string

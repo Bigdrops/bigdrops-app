@@ -77,7 +77,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
       message.includes('load failed') ||
       message.includes('network request failed')
     ) {
-      return "Couldn't reach BigDrops. Check your connection and try again."
+      return "Couldn't reach BOUXRE. Check your connection and try again."
     }
     console.error('[company-creation-sheet]', e)
     return "Couldn't create the company. Try again."
@@ -644,7 +644,7 @@ export function CreateCompanySheet({ open, onOpenChange }: CreateCompanySheetPro
               <Save aria-hidden="true" />
             </button>
 
-            <p className="su-footer">BIGDROPS ERP</p>
+            <p className="su-footer">BOUXRE ERP</p>
           </form>
         )}
       </SheetContent>

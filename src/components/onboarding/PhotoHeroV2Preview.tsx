@@ -203,7 +203,7 @@ function CompareView() {
   return (
     <section className="oh2-compare" aria-label="Five-theme light and dark comparison">
       <div className="oh2-compare-head">
-        <h1>PhotoHero under five BOURXE themes</h1>
+        <h1>PhotoHero under five BOUXRE themes</h1>
         <p>
           Light and dark appearances share one premium recipe. Each card reuses the same cinematic
           gradient and glass-card system with color definitions grounded in the app theme registry.
@@ -449,7 +449,7 @@ function Carousel({
           <span className="oh2-logo" aria-hidden="true">
             <img src={bigdropsLogo} alt="" aria-hidden="true" />
           </span>
-          BOURXE
+          BOUXRE
         </div>
         {active > 0 && active < LAST ? (
           <button type="button" className="oh2-skipbtn" onClick={() => goTo(LAST)}>
@@ -469,7 +469,7 @@ function Carousel({
         className="oh2-deck"
         ref={deckRef}
         aria-roledescription="carousel"
-        aria-label="BOURXE onboarding"
+        aria-label="BOUXRE onboarding"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -740,7 +740,7 @@ function LogisticsSlide({ active }: { active: boolean }) {
             <rect x="78" y="166" width="204" height="20" rx="8" fill="url(#oh2-pvband)" />
             <rect x="80" y="164" width="200" height="3" rx="1.5" fill="#ffffff" opacity=".8" />
             <text x="186" y="181" fontSize="9.5" fontWeight="800" letterSpacing="2.5" fill="#ffffff" textAnchor="middle" fontFamily="Manrope,sans-serif">
-              BOURXE
+              BOUXRE
             </text>
             <path d="M88 200 a19 19 0 0 1 38 0 z" fill="#0b1524" />
             <path d="M154 200 a19 19 0 0 1 38 0 z" fill="#0b1524" />
@@ -1149,7 +1149,7 @@ function AuthSlide({ active }: { active: boolean }) {
             </form>
           )}
         </div>
-        <p className="oh2-fine">Built for your team. Powered by BOURXE.</p>
+        <p className="oh2-fine">Built for your team. Powered by BOUXRE.</p>
       </div>
     </section>
   )

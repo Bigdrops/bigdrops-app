@@ -40,7 +40,7 @@ function toFriendlyError(e: unknown): string {
     message.includes('load failed') ||
     message.includes('network request failed')
   ) {
-    return "Couldn't reach BigDrops. Check your connection and try again."
+    return "Couldn't reach BOUXRE. Check your connection and try again."
   }
   console.error('[company-creation]', e)
   return "Couldn't create the company. Try again."
@@ -304,7 +304,7 @@ export default function CompanyCreation() {
           {/* Header */}
           <div className="mt-6">
             <div className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
-              BigDrops ERP
+              BOUXRE ERP
             </div>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
               {phase === 'success'

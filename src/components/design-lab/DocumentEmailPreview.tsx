@@ -107,7 +107,7 @@ Phone: ${INVOICE_130_DATA.issuerPhone}`
   const [isSending, setIsSending] = useState(false)
 
   // Mock share URL
-  const mockShareUrl = 'https://bigdrops-app.vercel.app/shared/sh_sas130_demo980400'
+  const mockShareUrl = 'https://bouxre.vercel.app/shared/sh_sas130_demo980400'
 
   // Dynamic email HTML build based on active form state
   const renderedEmailHtml = useMemo(() => {
@@ -555,7 +555,7 @@ Phone: ${INVOICE_130_DATA.issuerPhone}`
                       Root Cause Audit 1: "Failed to send a request to the Edge Function"
                     </h3>
                     <p className="text-xs text-stone-500">
-                      Why direct email delivery fails on bigdrops-app.vercel.app with SASINV-000130
+                      Why direct email delivery fails on bouxre.vercel.app with SASINV-000130
                     </p>
                   </div>
                 </div>
@@ -663,7 +663,7 @@ Phone: ${INVOICE_130_DATA.issuerPhone}`
                 </div>
               </div>
 
-              {/* Workflow Architecture: Refrens vs BOURXE */}
+              {/* Workflow Architecture: Refrens vs BOUXRE */}
               <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 p-6 shadow-xs">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 flex items-center justify-center">
@@ -671,10 +671,10 @@ Phone: ${INVOICE_130_DATA.issuerPhone}`
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-stone-900 dark:text-white">
-                      Workflow Comparison: Refrens Benchmark vs BOURXE Architecture
+                      Workflow Comparison: Refrens Benchmark vs BOUXRE Architecture
                     </h3>
                     <p className="text-xs text-stone-500">
-                      How BOURXE can achieve Refrens-level speed while keeping its superior PDFCN & executive email quality
+                      How BOUXRE can achieve Refrens-level speed while keeping its superior PDFCN & executive email quality
                     </p>
                   </div>
                 </div>
@@ -698,13 +698,13 @@ Phone: ${INVOICE_130_DATA.issuerPhone}`
 
                   <div className="p-4 rounded-xl border border-stone-200 dark:border-stone-700 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-stone-800 dark:text-stone-200">BOURXE Enhanced Target</span>
+                      <span className="font-bold text-stone-800 dark:text-stone-200">BOUXRE Enhanced Target</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
                         Recommended Implementation
                       </span>
                     </div>
                     <ul className="space-y-1.5 text-stone-600 dark:text-stone-300">
-                      <li>• Retain BOURXE Share bottom sheet, but allow direct 1-tap "Compose Email".</li>
+                      <li>• Retain BOUXRE Share bottom sheet, but allow direct 1-tap "Compose Email".</li>
                       <li>• Prefill rich message with Nigerian SME context: items summary, UBA bank account, and equipment details.</li>
                       <li>• Deliver via Resend with authoritative PDFCN attachment directly from Supabase Storage.</li>
                       <li>• Provide robust fallback to Mailto / Web Share API if Edge Function is offline.</li>

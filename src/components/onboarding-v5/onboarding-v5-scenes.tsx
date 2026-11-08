@@ -184,7 +184,7 @@ const BUSINESSES = [
 function WorkspacesLayer() {
   return (
     <div className="ob5-tenant-scene">
-      <div className="ob5-scene-cap"><strong>BOURXE</strong><span>Illustrative businesses · independent workspaces</span></div>
+      <div className="ob5-scene-cap"><strong>BOUXRE</strong><span>Illustrative businesses · independent workspaces</span></div>
       <div className="ob5-tenant-grid">
         {BUSINESSES.map(({ name, kind, record, team, className, Environment }) => (
           <section className={'ob5-tenant ob5-tenant--' + className} key={name}>
@@ -323,7 +323,7 @@ function ConversionLayer() {
       <div className="ob5-conversion-strata">
         <span>Companies</span><span>Commercial</span><span>Finance</span><span>Dispatch</span><span>Service</span>
       </div>
-      <div className="ob5-conversion-brand"><span>BOURXE</span><strong>Work has a place.</strong></div>
+      <div className="ob5-conversion-brand"><span>BOUXRE</span><strong>Work has a place.</strong></div>
       <div className="ob5-conversion-footer">A clear operating context for every business.</div>
     </div>
   )

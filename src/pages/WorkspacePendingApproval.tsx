@@ -60,7 +60,7 @@ export default function WorkspacePendingApproval() {
           lower.includes('load failed') ||
           lower.includes('network request failed')
         ) {
-          setLeaveError("Couldn't reach BigDrops. Check your connection and try again.")
+          setLeaveError("Couldn't reach BOUXRE. Check your connection and try again.")
         } else {
           console.error('[workspace-pending-approval]', e)
           setLeaveError("Couldn't leave the waiting room. Try again.")
@@ -118,7 +118,7 @@ export default function WorkspacePendingApproval() {
                 ) : null}
                 <p className="text-sm leading-6 text-muted-foreground">
                   Your workspace was created. An administrator must approve it before you can create
-                  a company and start using BigDrops.
+                  a company and start using BOUXRE.
                 </p>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   This page refreshes automatically. Approval usually takes a few minutes.

@@ -57,7 +57,7 @@ test('Web Android app promo banner exists and is mounted in App.tsx without viol
 
   assert.match(bannerSource, /bouxre_web_apk_promo_dismissed_v1/)
   assert.match(bannerSource, /useWebAndroidApk/)
-  assert.match(bannerSource, /download="bigdrops-latest\.apk"/)
+  assert.match(bannerSource, /download="bouxre-latest\.apk"/)
   assert.match(bannerSource, /Download APK/)
 
   // App.tsx mounts WebAppPromoBanner on web
@@ -70,16 +70,16 @@ test('Web Android app promo banner exists and is mounted in App.tsx without viol
   }
 })
 
-test('Settings AppUpdateSection renders permanent BOURXE for Android card on web', () => {
+test('Settings AppUpdateSection renders permanent BOUXRE for Android card on web', () => {
   const settingsSectionSource = read('src/pages/settings/AppUpdateSettingsSection.tsx')
   const settingsConfigSource = read('src/pages/settings/settings-config.ts')
 
   // Web Android download card rendered when !isAndroidNative()
   assert.match(settingsSectionSource, /WebAndroidDownloadSection/)
   assert.match(settingsSectionSource, /if \(!isAndroidNative\(\)\) \{\s*return <WebAndroidDownloadSection \/>/)
-  assert.match(settingsSectionSource, /BOURXE for Android/)
+  assert.match(settingsSectionSource, /BOUXRE for Android/)
   assert.match(settingsSectionSource, /Download Android APK/)
-  assert.match(settingsSectionSource, /download="bigdrops-latest\.apk"/)
+  assert.match(settingsSectionSource, /download="bouxre-latest\.apk"/)
 
   // settings-config.ts makes app-update available on web with 'Android App' label
   assert.match(settingsConfigSource, /id:\s*'app-update'/)

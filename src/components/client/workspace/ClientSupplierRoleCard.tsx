@@ -106,7 +106,7 @@ export function ClientSupplierRoleCard({ client }: { client: ClientRecord }) {
             <p className="mt-0.5 text-xs text-bd-text-muted">
               {linkedSupplier
                 ? 'The same business is recorded as a supplier. Client and supplier details are edited independently.'
-                : 'Add a supplier role if BOURXE also buys from this business.'}
+                : 'Add a supplier role if BOUXRE also buys from this business.'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

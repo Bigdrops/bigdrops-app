@@ -44,7 +44,7 @@ export const RfqCustomizationPanel: React.FC<RfqCustomizationPanelProps> = ({
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label className={pageFormLabelClassName}>Brand Identity</Label>
-            <p className="text-[10px] text-muted-foreground">Show "BIGDROPS" or custom header</p>
+            <p className="text-[10px] text-muted-foreground">Show "BOUXRE" or custom header</p>
           </div>
           <Switch
             checked={rfq.show_brand_name}

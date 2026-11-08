@@ -64,7 +64,7 @@ function ModernPreview({ documentType, document, rows }: Omit<Props, 'templateId
         <div>
           {document.show_brand_name ? (
             <h1 className="text-xl font-black tracking-tighter uppercase mb-1" style={styles.accent}>
-              {document.brand_name_override || 'BIGDROPS'}
+              {document.brand_name_override || 'BOUXRE'}
             </h1>
           ) : null}
           <div className="text-2xl font-black uppercase tracking-tight">{getDocumentTitle(documentType, document)}</div>

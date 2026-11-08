@@ -16,7 +16,7 @@ function WebAndroidDownloadSection() {
   return (
     <div className="space-y-4">
       <SettingsSummaryCard
-        title="BOURXE for Android"
+        title="BOUXRE for Android"
         description="Download the native Android app for faster performance, biometric security, and offline support."
       >
         <SettingsSummaryRow
@@ -52,9 +52,9 @@ function WebAndroidDownloadSection() {
       </SettingsSummaryCard>
 
       <Button asChild size="lg" className="w-full shadow-xs">
-        <a href={apkUrl} download="bigdrops-latest.apk">
+        <a href={apkUrl} download="bouxre-latest.apk">
           <Download className="size-4" data-icon="inline-start" />
-          Download Android APK
+          Download BOUXRE APK
         </a>
       </Button>
 

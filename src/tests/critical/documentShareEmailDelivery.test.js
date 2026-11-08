@@ -690,7 +690,7 @@ test('BEHAVIORAL (FIND-03): DocumentEmailTemplate preview component renders exac
     documentType: 'Invoice',
     documentNumber: 'INV-2026-999',
     shareUrl: 'https://bouxre.com/shared/test',
-    issuerName: 'BOURXE Verified',
+    issuerName: 'BOUXRE Verified',
     totalFormatted: 'NGN 250,000.00',
   }
 

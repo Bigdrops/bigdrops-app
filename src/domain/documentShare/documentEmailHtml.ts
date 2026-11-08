@@ -1,12 +1,12 @@
 /**
- * BOURXE Authoritative Document Email Template Builder
+ * BOUXRE Authoritative Document Email Template Builder
  *
  * Single source of truth for both:
  * 1. Client-side visual preview in DocumentShareSheet.tsx (via DocumentEmailTemplate.tsx)
  * 2. Server-side transactional email transmission in send-document-email Edge Function
  *
  * Designed to be runtime-neutral (works in React browser, Node.js, Bun, and Deno).
- * Adheres strictly to the BOURXE executive theme with email-client-safe inline styles.
+ * Adheres strictly to the BOUXRE executive theme with email-client-safe inline styles.
  */
 
 export interface DocumentEmailTemplateProps {
@@ -148,7 +148,7 @@ export function escapeHtml(unsafe: string): string {
 export function buildDocumentEmailHtml(props: DocumentEmailTemplateProps): string {
   const documentType = props.documentType || 'Document'
   const documentNumber = props.documentNumber || 'DOC-001'
-  const issuerName = props.issuerName || 'BOURXE'
+  const issuerName = props.issuerName || 'BOUXRE'
   const docHeading =
     props.documentTitle ||
     `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} ${documentNumber}`
@@ -276,7 +276,7 @@ export function buildDocumentEmailHtml(props: DocumentEmailTemplateProps): strin
     <table style="width: 100%; margin-bottom: 16px; border-collapse: collapse;">
       <tr>
         <td style="vertical-align: middle;">
-          <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #1a1815; margin: 0;">BOURXE</div>
+          <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #1a1815; margin: 0;">BOUXRE</div>
           <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #8c857b; margin: 2px 0 0 0;">Business Management Suite</div>
         </td>
         <td style="text-align: right; vertical-align: middle;">
@@ -326,7 +326,7 @@ export function buildDocumentEmailHtml(props: DocumentEmailTemplateProps): strin
     <!-- Footer -->
     <div style="margin-top: 20px; text-align: center;">
       <p style="font-size: 12px; color: #8c857b; margin: 0 0 6px 0;">
-        Sent via <strong>BOURXE</strong> — Enterprise financial and workflow management for SMEs.
+        Sent via <strong>BOUXRE</strong> — Enterprise financial and workflow management for SMEs.
       </p>
       <p style="font-size: 11px; color: #a39c91; margin: 0; line-height: 1.4;">
         ${footerContactNotice}

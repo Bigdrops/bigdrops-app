@@ -48,7 +48,7 @@ test('useNotifications and PaymentReminderBanner prioritize update and web APK p
 
   const reminderBanner = read('src/components/dashboard/PaymentReminderBanner.tsx')
   assert.match(reminderBanner, /Update available|Update required/i, 'PaymentReminderBanner must prioritize Android update')
-  assert.match(reminderBanner, /Get BOURXE for Android/, 'PaymentReminderBanner must prioritize Web APK promo')
+  assert.match(reminderBanner, /Get BOUXRE for Android/, 'PaymentReminderBanner must prioritize Web APK promo')
 })
 
 test('Settings includes Diagnostic Logs Center with diagnostic export actions', () => {

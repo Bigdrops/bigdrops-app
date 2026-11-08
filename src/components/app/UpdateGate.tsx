@@ -38,7 +38,7 @@ export default function UpdateGate({ update }: { update: UseAppUpdateResult }) {
         </div>
 
         <h1 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-foreground">
-          Update BOURXE to continue
+          Update BOUXRE to continue
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-muted-foreground">

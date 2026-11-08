@@ -102,9 +102,9 @@ export async function verifyBiometricIdentity(): Promise<BiometricVerifyResult> 
   try {
     const { NativeBiometric } = await import("@capgo/capacitor-native-biometric");
     await NativeBiometric.verifyIdentity({
-      title: "BigDrops",
+      title: "BOUXRE",
       subtitle: "Verify your identity to continue",
-      reason: "Unlock BigDrops",
+      reason: "Unlock BOUXRE",
       negativeButtonText: "Cancel",
     });
     return { success: true };

@@ -25,10 +25,10 @@ describe('Document Share Email Content Prefilling & Clipboard Verification', () 
       documentType: 'quotation',
       documentNumber: 'QUO-009',
       documentTitle: 'Quotation',
-      issuerName: 'BOURXE',
+      issuerName: 'BOUXRE',
     })
 
-    expect(subject).toBe('Quotation QUO-009 from BOURXE')
+    expect(subject).toBe('Quotation QUO-009 from BOUXRE')
   })
 
   it('buildDefaultEmailMessage builds structured message with verified invoice details', () => {

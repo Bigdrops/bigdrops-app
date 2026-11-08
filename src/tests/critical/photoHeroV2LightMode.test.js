@@ -170,13 +170,13 @@ test('candidate review code has been removed from the surviving PhotoHero previe
   assert.match(source, /<Carousel appearance=\{appearance\} active=\{active\} onActive=\{setActive\}/)
 })
 
-test('public onboarding preview branding uses BOURXE while preserving official artwork', () => {
+test('public onboarding preview branding uses BOUXRE while preserving official artwork', () => {
   const source = readFileSync(
     pathResolve(root, 'src/components/onboarding/PhotoHeroV2Preview.tsx'),
     'utf8',
   )
   assert.ok(source.includes('bigdropsLogo'), 'official launcher artwork import must remain in use')
-  assert.ok(source.includes('BOURXE'), 'visible public branding must use BOURXE')
+  assert.ok(source.includes('BOUXRE'), 'visible public branding must use BOUXRE')
   assert.ok(!source.includes('BIGDROPS'), 'visible BIGDROPS branding must not remain in the React preview')
 })
 

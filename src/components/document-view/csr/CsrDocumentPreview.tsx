@@ -61,7 +61,7 @@ export default function CsrDocumentPreview({
               />
             </div>
           ) : null}
-          <div className="doc-co-name">{settings.company_name || 'BigDrops'}</div>
+          <div className="doc-co-name">{settings.company_name || 'BOUXRE'}</div>
           <div className="doc-co-addr">
             {[
               settings.company_address,

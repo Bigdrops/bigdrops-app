@@ -153,7 +153,7 @@ function createMergeProposal(
 
   if (unknownIds.length > 0) {
     console.warn(
-      `[BigDrops] createMergeProposal: ${unknownIds.length} merged item(s) (${unknownIds.join(', ')}) not found in export payload for "${canonicalName}".`,
+      `[BOUXRE] createMergeProposal: ${unknownIds.length} merged item(s) (${unknownIds.join(', ')}) not found in export payload for "${canonicalName}".`,
     )
   }
 
@@ -336,7 +336,7 @@ export function ItemLibraryAdvancedCleanupPanel({
   const handleDownload = () => {
     if (!currentBatch || !currentExportPayload) return
     void downloadJson(
-      `bigdrops-catalog-cleanup-${currentBatch.batch_id}-${new Date().toISOString().slice(0, 10)}.json`,
+      `bouxre-catalog-cleanup-${currentBatch.batch_id}-${new Date().toISOString().slice(0, 10)}.json`,
       exportJson,
     )
     if ((currentBatchState?.status || 'not_started') === 'not_started') {
@@ -601,7 +601,7 @@ export function ItemLibraryAdvancedCleanupPanel({
             <SectionTitle
               eyebrow="Cleanup Hub"
               title="External AI Duplicate Review"
-              description="Review all flagged duplicate groups together. Export the JSON, review it outside BIGDROPS, and paste the validated result."
+              description="Review all flagged duplicate groups together. Export the JSON, review it outside BOUXRE, and paste the validated result."
             />
 
             <div className="mt-4 grid gap-3 md:grid-cols-4">

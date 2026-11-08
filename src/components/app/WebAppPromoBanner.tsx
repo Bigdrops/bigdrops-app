@@ -39,7 +39,7 @@ export default function WebAppPromoBanner() {
           <Smartphone className="size-4" aria-hidden="true" />
         </div>
         <p className="min-w-0 truncate text-xs text-muted-foreground">
-          <strong className="font-semibold text-foreground">Use BOURXE on Android</strong>
+          <strong className="font-semibold text-foreground">Use BOUXRE on Android</strong>
           {' '}for faster native performance and biometric security.
           {versionName && (
             <span className="ml-2 inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-border/50">
@@ -51,7 +51,7 @@ export default function WebAppPromoBanner() {
 
       <div className="flex items-center gap-2 shrink-0">
         <Button asChild size="sm" className="h-7 text-xs font-medium px-3 gap-1.5 shadow-xs">
-          <a href={apkUrl} download="bigdrops-latest.apk">
+          <a href={apkUrl} download="bouxre-latest.apk">
             <Download className="size-3.5" data-icon="inline-start" />
             Download APK
           </a>

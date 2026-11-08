@@ -134,7 +134,7 @@ export function buildGroups(isAdmin?: boolean, isOperator?: boolean): SettingsGr
           return {
             ...item,
             label: 'Android App',
-            desc: 'Download BOURXE APK for Android',
+            desc: 'Download BOUXRE APK for Android',
           }
         }
         return item

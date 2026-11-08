@@ -1,5 +1,5 @@
 /** 
- * SEO & Metadata utilities for BigDrops ERP 
+ * SEO & Metadata utilities for BOUXRE ERP 
  * 
  * Usage in page components:
  * import { usePageMetadata } from '@/lib/seo'
@@ -44,6 +44,15 @@ export function usePageMetadata(metadata: SeoMetadata): {
   }
 }
 
+/**
+ * Tags added by this utility carry BOUXRE-branded content. Match both the
+ * current brand string and the legacy one so re-apply/reset removes stale tags.
+ */
+function isBourxeTag(content: string | null): boolean {
+  const value = content ?? ''
+  return value.includes('BOUXRE') || value.includes('BigDrops')
+}
+
 /** 
  * Apply metadata to the document head. 
  * Sets title, meta description, and Open Graph tags. 
@@ -51,7 +60,7 @@ export function usePageMetadata(metadata: SeoMetadata): {
 function applyMetadata(metadata: SeoMetadata): void {
   // Set page title
   if (metadata.title) {
-    document.title = `${metadata.title} - BigDrops ERP`
+    document.title = `${metadata.title} - BOUXRE ERP`
   }
 
   // Set meta description
@@ -59,7 +68,7 @@ function applyMetadata(metadata: SeoMetadata): void {
     // Remove any existing custom descriptions added by this utility
     const descEls = document.querySelectorAll('meta[name="description"]')
     descEls.forEach(el => {
-      if ((el.getAttribute('content') ?? '').includes('BigDrops')) {
+      if (isBourxeTag(el.getAttribute('content'))) {
         el.remove()
       }
     })
@@ -74,7 +83,7 @@ function applyMetadata(metadata: SeoMetadata): void {
     // Remove any existing custom og:image added by this utility
     const existingOg = document.querySelector('meta[property="og:image"]')
     if (existingOg) {
-      if ((existingOg.getAttribute('content') ?? '').includes('BigDrops')) {
+      if (isBourxeTag(existingOg.getAttribute('content'))) {
         existingOg.remove()
       }
     }
@@ -89,7 +98,7 @@ function applyMetadata(metadata: SeoMetadata): void {
     // Remove any existing custom twitter:image added by this utility
     const existingTwitter = document.querySelector('meta[name="twitter:image"]')
     if (existingTwitter) {
-      if ((existingTwitter.getAttribute('content') ?? '').includes('BigDrops')) {
+      if (isBourxeTag(existingTwitter.getAttribute('content'))) {
         existingTwitter.remove()
       }
     }
@@ -105,12 +114,12 @@ function applyMetadata(metadata: SeoMetadata): void {
  */
 function resetMetadata(): void {
   // Reset title to app default
-  document.title = 'BigDrops ERP'
+  document.title = 'BOUXRE ERP'
 
   // Remove all meta description elements added by this utility
   const descEls = document.querySelectorAll('meta[name="description"]')
   descEls.forEach(el => {
-    if ((el.getAttribute('content') ?? '').includes('BigDrops')) {
+    if (isBourxeTag(el.getAttribute('content'))) {
       el.remove()
     }
   })
@@ -118,7 +127,7 @@ function resetMetadata(): void {
   // Remove all og:image elements added by this utility
   const ogImgs = document.querySelectorAll('meta[property="og:image"]')
   ogImgs.forEach(el => {
-    if ((el.getAttribute('content') ?? '').includes('BigDrops')) {
+    if (isBourxeTag(el.getAttribute('content'))) {
       el.remove()
     }
   })
@@ -126,7 +135,7 @@ function resetMetadata(): void {
   // Remove all twitter:image elements added by this utility
   const twitterImgs = document.querySelectorAll('meta[name="twitter-image"]')
   twitterImgs.forEach(el => {
-    if ((el.getAttribute('content') ?? '').includes('BigDrops')) {
+    if (isBourxeTag(el.getAttribute('content'))) {
       el.remove()
     }
   })

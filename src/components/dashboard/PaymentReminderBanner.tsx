@@ -87,9 +87,9 @@ export function PaymentReminderBanner() {
 
   const title =
     bannerType === 'android-update'
-      ? `Update available: BOURXE ${targetVersionName ? 'v' + targetVersionName : ''}`
+      ? `Update available: BOUXRE ${targetVersionName ? 'v' + targetVersionName : ''}`
       : bannerType === 'web-promo'
-        ? 'Get BOURXE for Android'
+        ? 'Get BOUXRE for Android'
         : 'Keep payments recorded as they land'
 
   const description =

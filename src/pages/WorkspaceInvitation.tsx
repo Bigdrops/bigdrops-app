@@ -60,7 +60,7 @@ export default function WorkspaceInvitation() {
 
               <CardContent className="p-0">
                 <p className="text-sm leading-6 text-muted-foreground">
-                  Someone has invited you to join their workspace on BigDrops. Accept the
+                  Someone has invited you to join their workspace on BOUXRE. Accept the
                   invitation to become a member and access shared companies.
                 </p>
                 {acceptError && (

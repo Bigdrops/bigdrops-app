@@ -31,7 +31,7 @@ export function getImportHelpSteps() {
     {
       title: 'Using Import',
       description:
-        'Copy a BigDrops AI prompt, paste it into your AI tool, copy the JSON output, then paste it into the JSON input field and tap Apply.',
+        'Copy a BOUXRE AI prompt, paste it into your AI tool, copy the JSON output, then paste it into the JSON input field and tap Apply.',
     },
     {
       title: 'Common Mistakes',

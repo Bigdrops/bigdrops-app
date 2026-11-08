@@ -220,7 +220,7 @@ function StartupPageLoader({
         <div className="bd-startup-logo-card">
           <BxLogo className="h-full w-full rounded-[inherit]" />
         </div>
-        <p className="bd-startup-word" aria-hidden="true">BOURXE</p>
+        <p className="bd-startup-word" aria-hidden="true">BOUXRE</p>
       </div>
       {tipMessage ? (
         <div className="bd-startup-tip" role="status" aria-live="polite">
