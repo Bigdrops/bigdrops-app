@@ -53,8 +53,9 @@ export type ShareChannel = 'link' | 'whatsapp' | 'email'
 
 export type ShareActionResult = {
   success: boolean
-  method: 'native' | 'web-share-file' | 'clipboard' | 'unsupported-desktop' | 'mailto-fallback' | 'error'
+  method: 'native' | 'web-share-file' | 'clipboard' | 'unsupported-desktop' | 'mailto-fallback' | 'resend-edge' | 'error'
   error?: string
   prefilledText?: string
   mailtoUrl?: string
+  messageId?: string
 }

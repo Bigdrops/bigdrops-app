@@ -23,6 +23,7 @@ import {
   revokeDocumentShare,
   shareViaWhatsApp,
   shareViaEmail,
+  shareViaEmailClientFallback,
 } from '@/domain/documentShare/documentShareService'
 import type { DocumentSharePayload } from '@/domain/documentShare/types'
 import { DocumentEmailTemplate } from '@/components/email/DocumentEmailTemplate'
@@ -68,6 +69,7 @@ export default function DocumentShareSheet({
 
   // Unsupported desktop state for WhatsApp
   const [desktopWhatsappNotice, setDesktopWhatsappNotice] = useState(false)
+  const [deliveryError, setDeliveryError] = useState<string | null>(null)
 
   // Ensure authoritative PDF blob is available (cached within sheet lifecycle)
   const getOrFetchBlob = async (): Promise<Blob> => {
@@ -205,14 +207,23 @@ export default function DocumentShareSheet({
     }
   }
 
-  // Handle Email Sending
+  // Handle Email Sending via Direct Resend Delivery (with Client Fallback)
   const handleSendEmail = async () => {
+    if (!recipientEmail || !recipientEmail.trim()) {
+      feedback.warning('Recipient required', {
+        description: 'Please enter a recipient email address to send this document.',
+      })
+      return
+    }
+
     setLoading(true)
+    setDeliveryError(null)
     try {
       const blob = await getOrFetchBlob()
 
       let currentShareUrl = shareUrl
-      if (!currentShareUrl) {
+      let currentToken = activeToken
+      if (!currentShareUrl || !currentToken) {
         try {
           const res = await createOrGetDocumentShare({
             ...payload,
@@ -220,6 +231,7 @@ export default function DocumentShareSheet({
             getPdfBlob: () => Promise.resolve(blob),
           })
           currentShareUrl = res.shareUrl
+          currentToken = res.token
           setActiveToken(res.token)
           setShareUrl(currentShareUrl)
         } catch {
@@ -233,26 +245,66 @@ export default function DocumentShareSheet({
         title: payload.documentTitle || payload.documentType,
         documentNumber: payload.documentNumber,
         shareUrl: currentShareUrl,
-        recipientEmail,
+        shareToken: currentToken,
+        recipientEmail: recipientEmail.trim(),
+        subject,
+        message,
+      })
+
+      if (result.success && result.method === 'resend-edge') {
+        feedback.success('Email submitted', {
+          description: `Document sent to ${recipientEmail.trim()} with PDF attached.`,
+        })
+        onClose()
+      } else if (result.success) {
+        feedback.success('Email prepared', { description: 'Opening email client...' })
+      } else {
+        const errorDetail = result.error || 'Direct email delivery failed.'
+        setDeliveryError(errorDetail)
+        feedback.error('Email delivery failed', {
+          description: errorDetail,
+        })
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not prepare email.'
+      setDeliveryError(msg)
+      feedback.error('Email preparation failed', {
+        description: msg,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Explicit Client Fallback (Native Share Sheet or Desktop Mailto)
+  const handleClientEmailFallback = async () => {
+    setLoading(true)
+    try {
+      const blob = await getOrFetchBlob()
+      const result = await shareViaEmailClientFallback({
+        pdfBlob: blob,
+        fileName: payload.fileName,
+        title: payload.documentTitle || payload.documentType,
+        documentNumber: payload.documentNumber,
+        shareUrl: shareUrl || 'https://bouxre.com',
+        recipientEmail: recipientEmail.trim(),
         subject,
         message,
       })
 
       if (result.success) {
-        feedback.success('Email prepared', { description: 'Opening email client...' })
-      } else {
-        if (result.method === 'mailto-fallback' && result.mailtoUrl) {
-          window.open(result.mailtoUrl, '_blank')
-          feedback.info('Email client opened', {
-            description: 'Recipient and message prefilled. Attach the downloaded PDF to send.',
-          })
-        } else if (result.error && result.error !== 'Share was cancelled.') {
-          feedback.error('Email failed', { description: result.error })
-        }
+        feedback.success('Email app opened', { description: 'Complete sending via your email client.' })
+      } else if (result.method === 'mailto-fallback' && result.mailtoUrl) {
+        window.open(result.mailtoUrl, '_blank')
+        feedback.info('Email client opened', {
+          description: 'Recipient and message prefilled. Attach the downloaded PDF to send.',
+        })
+      } else if (result.error && result.error !== 'Share was cancelled.') {
+        feedback.error('Fallback failed', { description: result.error })
       }
     } catch (err) {
-      feedback.error('Email preparation failed', {
-        description: err instanceof Error ? err.message : 'Could not prepare email.',
+      feedback.error('Fallback preparation failed', {
+        description: err instanceof Error ? err.message : 'Could not open email client.',
       })
     } finally {
       setLoading(false)
@@ -521,6 +573,29 @@ export default function DocumentShareSheet({
               <span className="text-[11px] text-bd-text-muted">Attached</span>
             </div>
 
+            {deliveryError && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+                <div className="flex items-center gap-1.5 font-semibold">
+                  <AlertCircle size={14} /> Direct Delivery Notice
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed">
+                  {deliveryError}
+                </p>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1.5 font-semibold"
+                    disabled={loading}
+                    onClick={handleClientEmailFallback}
+                  >
+                    <ExternalLink size={12} /> Open in Email App (Fallback)
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Action buttons */}
             <div className="pt-2 flex gap-2">
               <Button
@@ -529,12 +604,13 @@ export default function DocumentShareSheet({
                 disabled={loading}
                 onClick={handleSendEmail}
               >
-                <Send size={14} /> Send via Email App
+                <Send size={14} /> {loading ? 'Sending...' : 'Send Email'}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 className="text-xs"
+                title="Download PDF"
                 onClick={handleDownloadPdf}
               >
                 <Download size={14} />

@@ -361,9 +361,78 @@ export async function shareViaWhatsApp(input: {
 }
 
 /**
- * Native file sharing to Email with the authoritative PDF attached and prefilled metadata.
+ * Direct transactional email delivery via Supabase Edge Function (Resend)
+ * with the authoritative PDF attached and verified sender authorization.
  */
 export async function shareViaEmail(input: {
+  pdfBlob: Blob
+  fileName: string
+  title: string
+  documentNumber: string
+  shareUrl: string
+  shareToken?: string
+  recipientEmail?: string
+  subject: string
+  message: string
+}): Promise<ShareActionResult> {
+  const fullBody = `${input.message}\n\nView document online: ${input.shareUrl}`
+  const mailtoUrl = `mailto:${encodeURIComponent(input.recipientEmail || '')}?subject=${encodeURIComponent(
+    input.subject,
+  )}&body=${encodeURIComponent(fullBody)}`
+
+  // 1. Direct Server-Side Email Delivery via Resend (when shareToken and recipientEmail are present)
+  if (input.shareToken && input.recipientEmail && input.recipientEmail.trim()) {
+    try {
+      const { data: edgeData, error: edgeError } = await supabase.functions.invoke(
+        'send-document-email',
+        {
+          body: {
+            token: input.shareToken,
+            recipientEmail: input.recipientEmail.trim(),
+            subject: input.subject,
+            message: input.message,
+          },
+        },
+      )
+
+      if (!edgeError && edgeData && edgeData.success) {
+        return {
+          success: true,
+          method: 'resend-edge',
+          messageId: edgeData.messageId,
+        }
+      }
+
+      const errorMessage =
+        (edgeData && edgeData.error) ||
+        (edgeError && edgeError.message) ||
+        'Server email transmission failed.'
+
+      return {
+        success: false,
+        method: 'error',
+        error: errorMessage,
+        mailtoUrl,
+      }
+    } catch (err) {
+      console.warn('[documentShare] Direct edge email dispatch failed:', err)
+      return {
+        success: false,
+        method: 'error',
+        error: err instanceof Error ? err.message : 'Could not reach email delivery service.',
+        mailtoUrl,
+      }
+    }
+  }
+
+  // 2. Client fallback when no token or recipient email was supplied
+  return shareViaEmailClientFallback(input)
+}
+
+/**
+ * Client-assisted email fallback via Native Share Sheet (Capacitor), Web Share API, or mailto: link.
+ */
+export async function shareViaEmailClientFallback(input: {
   pdfBlob: Blob
   fileName: string
   title: string
