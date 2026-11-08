@@ -259,27 +259,37 @@
 
 ---
 
-### Milestone M9: Migrate Three Additional Commercial HTML Templates to Forme ⛔
+### Milestone M9: Migrate Three Additional Commercial HTML Templates to Forme 🔄
 - **Objective:** Migrate the three additional source commercial HTML designs individually to the Forme PDF rendering architecture.
 
-*Status:* ⛔ PENDING
-*% Done:* 0%
+*Status:* 🔄 IN PROGRESS (2026-11-08)
+*% Done:* 67% (2 of 3 templates migrated)
 
-**Source Designs:**
+**Source Designs & Selection:**
 
-- Commercial Architectural Frame — `docs/templates/html-temps/invoice-templates/commercial-architectural-frame.html`
-- Commercial Executive — `docs/templates/html-temps/invoice-templates/commercial-executive.html`
-- Commercial Heritage House — `docs/templates/html-temps/invoice-templates/commercial-heritage-house.html`
+- **Selected Candidate 1:** Commercial Architectural Frame (`architectural`) — `docs/templates/html-temps/invoice-templates/commercial-architectural-frame.html`
+  - *Identity:* High-precision engineering and architectural drafting visual language.
+  - *Palette:* Charcoal (`#1E2427`), warm ivory paper (`#F6F0E4`), copper and sand accents (`#A4663F`, `#C08a5F`, `#E3D7C3`).
+  - *Key Structural Elements:* Asymmetric header with charcoal company badge, copper technical divider rule, two-column party/project block, clean table with group badge/subtotals, two-column closing with financial ledger and prominent charcoal Total Due box, bank settlement block, notes, terms, and 3-column signature block with document control stamp.
+  - *Implementation:* `src/components/pdf/forme/ArchitecturalFormeDocument.tsx` (583 lines, strictly $\le 600$ lines).
+- **Selected Candidate 2:** Commercial Executive Luxury (`executive`) — `docs/templates/html-temps/invoice-templates/commercial-executive.html`
+  - *Identity:* Prestigious corporate executive and advisory visual language.
+  - *Palette:* Deep forest green (`#173A2C`, `#0F281E`), gold accents (`#A9854F`, `#D8C39C`, `#EFE6D5`), warm cream paper (`#FCF9F2`, `#F6F0E2`).
+  - *Key Structural Elements:* Symmetrical centered masthead, diamond ornament rule (`❖`), serif document title, 4-cell horizontal metadata bar, gold-ruled party block, forest green table headers, alternating row tints, full-width forest green Total Due banner, financial ledger, bank settlement card, and dual executive signatures.
+  - *Implementation:* `src/components/pdf/forme/ExecutiveFormeDocument.tsx` (558 lines, strictly $\le 600$ lines).
+- **Untouched Candidate 3:** Commercial Heritage House — `docs/templates/html-temps/invoice-templates/commercial-heritage-house.html`
+  - Completely untouched as required by two-template migration scope; preserved for subsequent milestone completion.
 
-**Planned Outcomes:**
+**Delivered Outcomes:**
 
-- Inspect each source HTML template.
-- Document its unique visual identity and layout characteristics.
-- Rebuild each as a Forme template.
-- Preserve the individual design identities rather than flattening them into one generic design.
-- Adapt the templates to the existing BOURXE document data contracts.
-- Verify invoice and quotation output, including multipage behaviour where applicable.
-- Retire source implementations only when replacements are verified and retirement is explicitly approved.
+- Implemented both `ArchitecturalFormeDocument.tsx` and `ExecutiveFormeDocument.tsx` with native Forme primitives, responsive column budgeting, and glyph fallback for currency (`₦`).
+- Registered `'architectural'` and `'executive'` template identifiers in `src/domain/invoice/types.ts` (`INVOICE_PDF_TEMPLATE_IDS`, `normalizeInvoicePdfTemplateId`).
+- Updated Master Commercial Resolver in `src/components/pdf/index.ts` to route `'architectural-forme'` and `'executive-forme'`, with dynamic module loading and `PT Serif` font resolution.
+- Updated `CommercialTemplatePicker.tsx` carousel with authentic theme tokens for both new templates.
+- Added comprehensive unit tests in `src/tests/pdf/formeArchitecturalTemplate.test.ts` and `src/tests/pdf/formeExecutiveTemplate.test.ts`.
+- Verified 100% passing test suite (25/25 PDF tests pass), clean `bun run typecheck`, clean `bun run audit:load`, and clean `git diff --check`.
+
+**Next Active Step:** Migrate Candidate 3 (Heritage House) to complete Milestone M9 (100%).
 
 ---
 

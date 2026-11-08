@@ -72,6 +72,8 @@ export type CommercialPdfRoute =
   | 'landscape-forme'
   | 'minimal-forme'
   | 'evergreen-forme'
+  | 'architectural-forme'
+  | 'executive-forme'
 
 /**
  * Resolve which renderer handles a commercial template identifier.
@@ -80,6 +82,8 @@ export type CommercialPdfRoute =
  * - 'industry' always uses the Forme Industry renderer.
  * - 'landscape' and 'minimal' always use their Forme renderers.
  * - 'evergreen' always uses the Forme Evergreen renderer.
+ * - 'architectural' always uses the Forme Architectural renderer.
+ * - 'executive' always uses the Forme Executive renderer.
  * - Explicit 'industry-forme' normalizes to 'industry' and therefore also uses Forme.
  * - Retired 'modern-minimal' normalizes to 'minimal'.
  * - Everything else defaults to Forme Industry.
@@ -93,6 +97,8 @@ export function resolveCommercialPdfRoute(
   if (activeTemplateId === 'landscape') return 'landscape-forme'
   if (activeTemplateId === 'minimal') return 'minimal-forme'
   if (activeTemplateId === 'evergreen') return 'evergreen-forme'
+  if (activeTemplateId === 'architectural') return 'architectural-forme'
+  if (activeTemplateId === 'executive') return 'executive-forme'
   return 'industry-forme'
 }
 
@@ -102,13 +108,15 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
 
   const route = resolveCommercialPdfRoute(request.templateId, request.engine)
 
-  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen)
+  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen, Architectural, Executive)
   const [
     IndustrialDocModule,
     IndustryDocModule,
     LandscapeDocModule,
     MinimalDocModule,
     EvergreenDocModule,
+    ArchitecturalDocModule,
+    ExecutiveDocModule,
     { renderPdfcnToBytes },
     { ensureFormeFontFamily },
   ] = await Promise.all([
@@ -117,6 +125,8 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     import('./forme/LandscapeFormeDocument'),
     import('./forme/MinimalFormeDocument'),
     import('./forme/EvergreenFormeDocument'),
+    import('./forme/ArchitecturalFormeDocument'),
+    import('./forme/ExecutiveFormeDocument'),
     import('./pdfcn/adapter'),
     import('./forme/fonts'),
   ])
@@ -126,6 +136,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     ensureFormeFontFamily('Archivo Black'),
     ensureFormeFontFamily('Caveat'),
     ensureFormeFontFamily('Noto Sans'),
+    ensureFormeFontFamily('PT Serif'),
   ])
 
   const adaptedData = adaptCommercialDocumentData(request.model as PdfDocumentModel)
@@ -147,6 +158,16 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     })
   } else if (route === 'evergreen-forme') {
     element = React.createElement(EvergreenDocModule.EvergreenFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  } else if (route === 'architectural-forme') {
+    element = React.createElement(ArchitecturalDocModule.ArchitecturalFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  } else if (route === 'executive-forme') {
+    element = React.createElement(ExecutiveDocModule.ExecutiveFormeDocument, {
       data: adaptedData,
       compact: request.compact,
     })

@@ -39,6 +39,20 @@ const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
     layout: 'commercial',
     theme: { pageBg: '#ffffff', headerBg: '#1f6e5c', headerFg: '#ffffff', accent: '#2a8a73', border: '#e8f3ef', mutedBg: '#f0f6f2' },
   },
+  {
+    id: 'architectural',
+    label: 'Architectural',
+    blurb: 'Charcoal & Copper',
+    layout: 'commercial',
+    theme: { pageBg: '#f6f0e4', headerBg: '#1e2427', headerFg: '#ffffff', accent: '#a4663f', border: '#c08a5f', mutedBg: '#ede4d3' },
+  },
+  {
+    id: 'executive',
+    label: 'Executive',
+    blurb: 'Forest & Gold',
+    layout: 'commercial',
+    theme: { pageBg: '#fcf9f2', headerBg: '#173a2c', headerFg: '#ffffff', accent: '#a9854f', border: '#d8c39c', mutedBg: '#f6f0e2' },
+  },
 ]
 
 interface CommercialTemplatePickerProps {

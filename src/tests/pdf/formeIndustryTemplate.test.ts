@@ -203,7 +203,7 @@ test('Industry Forme document generates valid PDF bytes with approved fonts', as
 test('Retained commercial templates include Forme options and Evergreen', () => {
   assert.deepStrictEqual(
     [...INVOICE_PDF_TEMPLATE_IDS].sort(),
-    ['evergreen', 'industrial', 'industry', 'industry-forme', 'landscape', 'minimal'].sort(),
+    ['architectural', 'evergreen', 'executive', 'industrial', 'industry', 'industry-forme', 'landscape', 'minimal'].sort(),
   )
 
   assert.equal(normalizeInvoicePdfTemplateId('industrial'), 'industrial')
@@ -212,6 +212,8 @@ test('Retained commercial templates include Forme options and Evergreen', () => 
   assert.equal(normalizeInvoicePdfTemplateId('industry-react-pdf'), 'industry')
   assert.equal(normalizeInvoicePdfTemplateId('landscape'), 'landscape')
   assert.equal(normalizeInvoicePdfTemplateId('modern-minimal'), 'minimal')
+  assert.equal(normalizeInvoicePdfTemplateId('architectural'), 'architectural')
+  assert.equal(normalizeInvoicePdfTemplateId('executive'), 'executive')
   assert.equal(normalizeInvoicePdfTemplateId('crest'), null)
   assert.equal(normalizeInvoicePdfTemplateId('minimal'), 'minimal')
   assert.equal(normalizeInvoicePdfTemplateId('evergreen'), 'evergreen')
