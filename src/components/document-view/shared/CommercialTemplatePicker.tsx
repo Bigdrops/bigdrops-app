@@ -24,10 +24,10 @@ function Preview({ src, alt }: { src: string; alt: string }) {
   )
 }
 
-// Theme tokens sampled from each template's `*Styles.ts` defaults in
-// `src/components/pdf/templates/`. Each option supplies a faithful
-// template-specific miniature (CommercialTemplateMiniature) — no live
-// data, no PDF generation.
+// Static miniature previews generated from the actual production Forme
+// renderers (see scripts/generate-commercial-template-previews.ts). They are
+// ordinary committed PNGs — no PDF generation or rasterisation happens when
+// the picker opens.
 const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
   {
     id: 'industrial',
