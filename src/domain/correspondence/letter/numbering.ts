@@ -10,36 +10,38 @@
  * document families do. No independent numbering logic.
  */
 
-import { resolvePrefix } from '@/domain/prefixConstants'
+import {
+  belongsToFamily,
+  nextAutomaticNumber,
+  parseTrailingSequence,
+  resolvePrefix,
+} from '@/domain/prefixConstants'
 import type { DocumentPrefixes } from '@/domain/prefixConstants'
-
-/**
- * Extracts the numeric serial from a letter number string.
- * Returns 0 if no serial is found.
- */
-function extractSerial(letterNumber: string): number {
-  const match = letterNumber.match(/(\d+)$/)
-  return match ? Number.parseInt(match[1], 10) : 0
-}
 
 /**
  * Generates the next letter number from existing rows.
  *
  * @param rows - Existing letter rows with `letter_number` field
  * @param prefixes - Document prefix configuration (from settings)
+ * @param cursor - Optional persisted auto cursor for letter family
  * @returns Next available letter number (e.g. "LTR-000001")
  */
 export function getNextLetterNumber(
   rows: Array<{ letter_number?: string | null }>,
   prefixes?: DocumentPrefixes | null,
+  cursor?: number,
 ): string {
   const prefix = resolvePrefix(prefixes, 'letter')
+  const family = `${prefix}-`
 
-  const maxSerial = rows
+
+  const occupied = rows
     .map((row) => String(row.letter_number || '').trim().toUpperCase())
-    .filter((value) => value.startsWith(prefix))
-    .map(extractSerial)
+    .filter((value) => belongsToFamily(value, family))
+  const maxSerial = occupied
+    .map((value) => parseTrailingSequence(value))
+    .filter((value): value is number => Number.isFinite(value))
     .reduce((max, serial) => Math.max(max, serial), 0)
 
-  return `${prefix}-${String(maxSerial + 1).padStart(6, '0')}`
+  return nextAutomaticNumber(family, cursor, occupied, maxSerial).candidate
 }

@@ -4,7 +4,7 @@ import type {
   DocumentTrailLink,
   InvoiceItem,
 } from '@/domain/invoice'
-import { nextAutomaticNumber, parseTrailingSequence } from '@/domain/prefixConstants'
+import { belongsToFamily, nextAutomaticNumber, parseTrailingSequence } from '@/domain/prefixConstants'
 
 export function getNextInvoiceNumber(
   rows: Array<{ invoice_number?: string | null }>,
@@ -13,7 +13,7 @@ export function getNextInvoiceNumber(
 ): string {
   const family = `${prefix}-`
   const upper = rows.map((row) => String(row.invoice_number || '').trim().toUpperCase())
-  const occupied = upper.filter((value) => value.startsWith(prefix.toUpperCase()))
+  const occupied = upper.filter((value) => belongsToFamily(value, family))
   const maxNumber = occupied
     .map((value) => parseTrailingSequence(value))
     .filter((value): value is number => Number.isFinite(value))

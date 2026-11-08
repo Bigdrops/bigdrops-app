@@ -53,7 +53,9 @@ export async function saveWaybill(params: {
       .limit(1000)
     const existingNumbers = (existingWaybills || []).map((w) => w.waybill_number || '').filter(Boolean)
     const prefix = resolvePrefix(prefixes, 'waybill')
-    waybillNumber = getNextWaybillNumber(waybill.type || 'external', existingNumbers, prefix)
+    const routingPrefix = getWaybillRoutingPrefix(waybill.type || 'external', prefix)
+    const cursor = await fetchAutoCursor(db, routingPrefix)
+    waybillNumber = getNextWaybillNumber(waybill.type || 'external', existingNumbers, prefix, 'normal', cursor)
   }
 
   const purpose = waybill.purpose ?? null

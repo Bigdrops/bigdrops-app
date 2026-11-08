@@ -16,7 +16,8 @@ import { supabase } from "@/supabase"
 import type { TenantClient } from "@/lib/tenantClient"
 import type { PaymentAttachment } from "@/lib/attachmentTypes"
 import { getNextReceiptNumber } from "@/domain/receipt/receiptNumber"
-import type { DocumentPrefixes } from '@/domain/prefixConstants'
+import { resolvePrefix, parseTrailingSequence, type DocumentPrefixes } from '@/domain/prefixConstants'
+import { fetchAutoCursor, advanceAutoCursor } from '@/domain/documentNumbering'
 
 interface SettlementSummary {
   cashReceived: number
@@ -191,6 +192,8 @@ export async function recordInvoicePayment(
 
           const { withUniqueRetry } = await import('@/lib/withUniqueRetry')
           const { data: settings } = await tenantClient.from('settings').select('document_prefixes').limit(1).single()
+          const receiptPrefix = resolvePrefix((settings?.document_prefixes as DocumentPrefixes | null) ?? null, 'receipt')
+          const receiptFamily = `${receiptPrefix}-`
 
           const receiptPayload = {
             ...snapshot,
@@ -205,14 +208,21 @@ export async function recordInvoicePayment(
               return tenantClient.from('receipts').insert([receiptPayload]).select().single()
             },
             async () => {
-              const { data: rows } = await tenantClient.from('receipts').select('receipt_number')
-              return getNextReceiptNumber(rows || [], (settings?.document_prefixes as DocumentPrefixes | null) ?? null)
+              const [{ data: rows }, cursor] = await Promise.all([
+                tenantClient.from('receipts').select('receipt_number'),
+                fetchAutoCursor(tenantClient, receiptFamily),
+              ])
+              return getNextReceiptNumber(rows || [], (settings?.document_prefixes as DocumentPrefixes | null) ?? null, cursor)
             },
           )
 
           if (receiptError) {
             console.error('Receipt creation failed:', receiptError)
           } else if (receiptRow) {
+            const seq = parseTrailingSequence(receiptRow.receipt_number)
+            if (seq !== null) {
+              await advanceAutoCursor(tenantClient, receiptFamily, seq)
+            }
             const { recordReceiptGenerated } = await import('@/lib/audit')
             await recordReceiptGenerated(
               tenantClient,
@@ -372,6 +382,8 @@ export async function recordInvoicePayment(
 
         const { withUniqueRetry } = await import('@/lib/withUniqueRetry')
         const { data: settings } = await tenantClient.from('settings').select('document_prefixes').limit(1).single()
+        const receiptPrefix = resolvePrefix((settings?.document_prefixes as DocumentPrefixes | null) ?? null, 'receipt')
+        const receiptFamily = `${receiptPrefix}-`
 
         const receiptPayload = {
           ...snapshot,
@@ -386,14 +398,21 @@ export async function recordInvoicePayment(
             return tenantClient.from('receipts').insert([receiptPayload]).select().single()
           },
           async () => {
-            const { data: rows } = await tenantClient.from('receipts').select('receipt_number')
-            return getNextReceiptNumber(rows || [], (settings?.document_prefixes as DocumentPrefixes | null) ?? null)
+            const [{ data: rows }, cursor] = await Promise.all([
+              tenantClient.from('receipts').select('receipt_number'),
+              fetchAutoCursor(tenantClient, receiptFamily),
+            ])
+            return getNextReceiptNumber(rows || [], (settings?.document_prefixes as DocumentPrefixes | null) ?? null, cursor)
           },
         )
 
         if (receiptError) {
           console.error('Receipt creation failed:', receiptError)
         } else if (receiptRow) {
+          const seq = parseTrailingSequence(receiptRow.receipt_number)
+          if (seq !== null) {
+            await advanceAutoCursor(tenantClient, receiptFamily, seq)
+          }
           const { recordReceiptGenerated } = await import('@/lib/audit')
           await recordReceiptGenerated(
             tenantClient,

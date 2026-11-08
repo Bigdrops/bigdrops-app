@@ -32,3 +32,11 @@ test('invoice document preview renders synchronized preview items instead of raw
   assert.match(source, /item\?\.(type|rowType) === ["']group/)
   assert.doesNotMatch(source, /items\.map\(\(item, index\) =>/)
 })
+
+test('invoice document card renders notes and terms sections with rich text formatting', () => {
+  const source = fs.readFileSync(invoiceCardPath, 'utf8')
+
+  assert.match(source, /notesSections/)
+  assert.match(source, /renderRichTextContent/)
+  assert.match(source, /styles\.notesBlock/)
+})

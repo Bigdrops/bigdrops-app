@@ -196,6 +196,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
           const nextNumber = await peekNextOfflineCsrNumber()
           if (mounted) {
             csrNumberPopulated.current = true
+            autoNumberRef.current = nextNumber
             setCsr((current: any) => ({
               ...current,
               csr_number: current.csr_number || nextNumber,

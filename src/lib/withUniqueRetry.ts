@@ -19,7 +19,8 @@ export async function withUniqueRetry<T>(
   const hasManualCandidate = initialValue !== undefined && initialValue !== ''
   let candidate = hasManualCandidate ? initialValue : await regenerateValue()
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  let attempt = 0
+  while (true) {
     const result = await insertFn(candidate)
 
     if (!result.error) {
@@ -32,6 +33,7 @@ export async function withUniqueRetry<T>(
         return result
       }
       if (attempt < maxRetries) {
+        attempt++
         candidate = await regenerateValue()
         continue
       }
@@ -39,6 +41,4 @@ export async function withUniqueRetry<T>(
 
     return result
   }
-
-  return { data: null, error: null as unknown as PostgrestError }
 }

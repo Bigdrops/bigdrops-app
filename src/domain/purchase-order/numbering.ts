@@ -22,6 +22,7 @@
 // ============================================================================
 
 import {
+  belongsToFamily,
   formatDocumentNumber,
   nextAutomaticNumber,
   parseTrailingSequence,
@@ -59,10 +60,10 @@ export function getNextPurchaseOrderNumber(
   cursor?: number,
 ): string {
   const family = purchaseOrderNumberFamily(prefix)
-  const upperPrefix = prefix.toUpperCase()
+
   const occupied = rows
     .map((row) => String(row.po_number ?? '').trim().toUpperCase())
-    .filter((value) => value.startsWith(upperPrefix))
+    .filter((value) => belongsToFamily(value, family))
   const maxSequence = occupied
     .map((value) => parseTrailingSequence(value))
     .filter((value): value is number => Number.isFinite(value))

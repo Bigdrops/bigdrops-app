@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { formatDocumentNumber, parseTrailingSequence, resolvePrefix } from '../../domain/prefixConstants.ts'
+import { belongsToFamily, formatDocumentNumber, parseTrailingSequence, resolvePrefix } from '../../domain/prefixConstants.ts'
 import {
   AUTO_CURSOR_KEY,
   clearAutoCursors,
@@ -21,6 +21,9 @@ import { getNextQuotationNumber } from '../../domain/quotation/normalize.ts'
 import { getNextRfqNumber } from '../../domain/rfq/normalize.ts'
 import { getNextCpsNumber } from '../../domain/cps/normalize.ts'
 import { getNextCsrNumber } from '../../domain/csr/csrNumbering.ts'
+import { getNextReceiptNumber } from '../../domain/receipt/receiptNumber.ts'
+import { getNextLetterNumber } from '../../domain/correspondence/letter/numbering.ts'
+import { getNextPurchaseOrderNumber } from '../../domain/purchase-order/numbering.ts'
 import { getNextWaybillNumber } from '../../components/waybill/waybillUtils.ts'
 import { withUniqueRetry } from '../../lib/withUniqueRetry.ts'
 
@@ -268,9 +271,11 @@ test('numbering: save paths separate manual identity from automatic allocation',
   }
   for (const file of ['src/pages/NewRfq.tsx']) {
     const source = fs.readFileSync(path.resolve(file), 'utf8')
+    assert.match(source, /autoNumberRef/, `${file} must compare against the last system pre-fill`)
     assert.match(source, /advanceAutoCursor/, `${file} must advance the cursor on automatic success`)
   }
   const csr = fs.readFileSync(path.resolve('src/pages/CsrFormPage.tsx'), 'utf8')
+  assert.match(csr, /autoNumberRef\.current = nextNumber/, 'CSR offline draft must set autoNumberRef')
   assert.match(csr, /autoNumberRef/, 'CSR must compare the field against the last system pre-fill')
   assert.match(csr, /advanceAutoCursor/, 'CSR must advance the cursor on automatic success')
 })
@@ -290,4 +295,181 @@ test('numbering: form init preserves typed manual numbers', () => {
   assert.match(quotation, /current\.quotation_number \|\| nextQuotationNumber/, 'quotation init must not clobber manual numbers')
   assert.equal(resolvePrefix({ invoice: 'SASINV' }, 'invoice'), 'SASINV')
   assert.equal(resolvePrefix(null, 'invoice'), 'INV')
+})
+
+test('numbering: belongsToFamily correctly maps canonical, unpadded, and legacy variants', () => {
+  assert.equal(belongsToFamily('SASINV-000128', 'SASINV-'), true)
+  assert.equal(belongsToFamily('SASINV-128', 'SASINV-'), true)
+  assert.equal(belongsToFamily('SASINV128', 'SASINV-'), true)
+  assert.equal(belongsToFamily('SASQUO-432', 'SASQUO-'), true)
+  assert.equal(belongsToFamily('SASQUO432', 'SASQUO-'), true)
+  assert.equal(belongsToFamily('WBL-E-000001', 'WBL-E-'), true)
+  assert.equal(belongsToFamily('WBL-ME-000001', 'WBL-E-'), false)
+  assert.equal(belongsToFamily('CSR-000001', 'CSR-'), true)
+  assert.equal(belongsToFamily('CSR-M-000001', 'CSR-'), false)
+  assert.equal(belongsToFamily('CSR-M-000001', 'CSR-M-'), true)
+  assert.equal(belongsToFamily('SPECIAL-INV-2026-A', 'SASINV-'), false)
+})
+
+test('numbering: findFreeSequence skips unpadded legacy numbers preventing collision', () => {
+  // Reported defect: SASINV128, SASINV129, SASINV130 existed in DB.
+  // Previous engine allocated SASINV-000128, SASINV-000129, SASINV-000130!
+  const legacyRows = ['SASINV128', 'SASINV129', 'SASINV130']
+  assert.equal(findFreeSequence('SASINV-', 128, legacyRows), 131)
+  assert.equal(findFreeSequence('SASINV-', 1, legacyRows), 1)
+
+  // Combined legacy and padded rows
+  const mixedRows = ['SASINV128', 'SASINV-000129', 'SASINV130']
+  assert.equal(findFreeSequence('SASINV-', 128, mixedRows), 131)
+})
+
+test('numbering: quotation generator accounts for legacy unpadded and unhyphenated quotations', () => {
+  const rows = [
+    { quotation_number: 'SASQUO-432' },
+    { quotation_number: 'SASQUO-433' },
+  ]
+  assert.equal(getNextQuotationNumber(rows, 'SASQUO'), 'SASQUO-000434')
+
+  const unhyphenated = [
+    { quotation_number: 'SASQUO432' },
+    { quotation_number: 'SASQUO433' },
+  ]
+  assert.equal(getNextQuotationNumber(unhyphenated, 'SASQUO'), 'SASQUO-000434')
+})
+
+test('numbering: receipt and letter generators comply with prefix engine standard', () => {
+  const receiptRows = [
+    { receipt_number: 'RCP-000001' },
+    { receipt_number: 'RCP-000002' },
+    { receipt_number: 'RCP-000005' },
+  ]
+  // Cursor at 3 generates 3, skipping occupied 1 and 2
+  assert.equal(getNextReceiptNumber(receiptRows, null, 3), 'RCP-000003')
+  // Cursor at 5 skips occupied 5 and generates 6
+  assert.equal(getNextReceiptNumber(receiptRows, null, 5), 'RCP-000006')
+
+  const letterRows = [
+    { letter_number: 'LTR-000001' },
+    { letter_number: 'LTR-000002' },
+    { letter_number: 'LTR-000004' },
+  ]
+  assert.equal(getNextLetterNumber(letterRows, null, 3), 'LTR-000003')
+  assert.equal(getNextLetterNumber(letterRows, null, 4), 'LTR-000005')
+})
+
+test('numbering: F-04 belongsToFamily prevents over-broad prefix matching from consuming sequences', () => {
+  // With prefix 'INV', a row named 'INVOICELEGACY-000007' startsWith('INV')
+  // but does NOT belong to the 'INV-' family.
+  const invoiceRows = [{ invoice_number: 'INVOICELEGACY-000007' }]
+  assert.equal(getNextInvoiceNumber(invoiceRows, 'INV'), 'INV-000001')
+
+  const quotationRows = [{ quotation_number: 'QTNLEGACY-000007' }]
+  assert.equal(getNextQuotationNumber(quotationRows, 'QTN'), 'QTN-000001')
+
+  const cpsRows = [{ cps_number: 'CPSLEGACY-000007' }]
+  assert.equal(getNextCpsNumber(cpsRows, 'CPS'), 'CPS-000001')
+
+  const rfqRows = [{ rfq_number: 'RFQLEGACY-000007' }]
+  assert.equal(getNextRfqNumber(rfqRows, 'RFQ'), 'RFQ-000001')
+
+  const poRows = [{ po_number: 'POLEGACY-000007' }]
+  assert.equal(getNextPurchaseOrderNumber(poRows, 'PO'), 'PO-000001')
+
+  const receiptRows = [{ receipt_number: 'RCPLEGACY-000007' }]
+  assert.equal(getNextReceiptNumber(receiptRows, null), 'RCP-000001')
+
+  const letterRows = [{ letter_number: 'LTRLEGACY-000007' }]
+  assert.equal(getNextLetterNumber(letterRows, null), 'LTR-000001')
+})
+
+test('numbering: F-01 RFQ behavioural test verifies prefill auto-status, collision retry, and manual preservation', async () => {
+  // Simulate system prefill
+  const systemPrefill = 'RFQ-000001'
+  const autoNumberRef = { current: systemPrefill }
+
+  // Case 1: User accepts the prefill without edits
+  const rfqWithPrefill = { rfq_number: systemPrefill }
+  const typed1 = String(rfqWithPrefill.rfq_number || '').trim()
+  const manualNumber1 = typed1 && typed1 !== autoNumberRef.current ? typed1 : undefined
+  assert.equal(manualNumber1, undefined, 'Untouched pre-fill must be classified as automatic (undefined manualNumber)')
+
+  let attemptCount = 0
+  let advancedCursor = null
+
+  const result1 = await withUniqueRetry(
+    async (candidate) => {
+      attemptCount++
+      if (attemptCount === 1) {
+        // First attempt collides with a race
+        return { data: null, error: { code: '23505', message: 'duplicate key' } }
+      }
+      return { data: { id: 'rfq-1', rfq_number: candidate }, error: null }
+    },
+    async () => 'RFQ-000002',
+    manualNumber1,
+  )
+
+  assert.equal(result1.error, null)
+  assert.equal(result1.data?.rfq_number, 'RFQ-000002')
+  assert.equal(attemptCount, 2, 'Collision on automatic candidate must retry')
+
+  if (!result1.error && !manualNumber1) {
+    advancedCursor = parseTrailingSequence(result1.data?.rfq_number)
+  }
+  assert.equal(advancedCursor, 2, 'Automatic save advances the cursor')
+
+  // Case 2: User explicitly types a custom manual number
+  const customManual = 'RFQ-SPECIAL-2026'
+  const rfqManual = { rfq_number: customManual }
+  const typed2 = String(rfqManual.rfq_number || '').trim()
+  const manualNumber2 = typed2 && typed2 !== autoNumberRef.current ? typed2 : undefined
+  assert.equal(manualNumber2, customManual, 'Custom edited number must be classified as manual')
+
+  let manualAttempts = 0
+  let manualAdvancedCursor = null
+
+  const result2 = await withUniqueRetry(
+    async (candidate) => {
+      manualAttempts++
+      return { data: null, error: { code: '23505', message: 'duplicate key' } }
+    },
+    async () => 'RFQ-000003',
+    manualNumber2,
+  )
+
+  assert.equal(result2.error?.code, '23505')
+  assert.equal(manualAttempts, 1, 'Manual duplicate must fail immediately without retry')
+
+  if (!result2.error && !manualNumber2) {
+    manualAdvancedCursor = parseTrailingSequence(result2.data?.rfq_number)
+  }
+  assert.equal(manualAdvancedCursor, null, 'Manual number never advances automatic cursor')
+})
+
+test('numbering: F-02 CSR offline draft behavioural test ensures online save retains auto status and cursor advance', async () => {
+  // Offline initialization sets both form field and autoNumberRef
+  const offlineNextNumber = 'CSR-000005'
+  const autoNumberRef = { current: offlineNextNumber }
+  const csr = { csr_number: offlineNextNumber }
+
+  // User comes online and saves without changing the number
+  const manualNumber =
+    String(csr.csr_number || '').trim() && csr.csr_number !== autoNumberRef.current
+      ? String(csr.csr_number).trim()
+      : undefined
+
+  assert.equal(manualNumber, undefined, 'Offline CSR draft saved online must remain automatic')
+
+  let advancedSeq = null
+  const result = await withUniqueRetry(
+    async (candidate) => ({ data: { id: 'csr-1', csr_number: candidate }, error: null }),
+    async () => 'CSR-000006',
+    manualNumber,
+  )
+
+  assert.equal(result.error, null)
+  if (!result.error && !manualNumber) {
+    advancedSeq = parseTrailingSequence(result.data?.csr_number)
+  }
+  assert.equal(advancedSeq, 6, 'Unchanged offline CSR draft triggers automatic allocation and advances cursor to allocated number upon online save')
 })

@@ -6,34 +6,63 @@ import { letterRowToDocument, documentToInsertPayload, documentToUpdatePayload }
 import { getNextLetterNumber } from './numbering'
 import { createLetterDraft, normalizeLetter } from './normalize'
 import { createCorrespondenceIdentity } from './normalize'
+import { withUniqueRetry } from '@/lib/withUniqueRetry'
+import { fetchAutoCursor, advanceAutoCursor } from '@/domain/documentNumbering'
+import { resolvePrefix, parseTrailingSequence, type DocumentPrefixes } from '@/domain/prefixConstants'
 
 export async function createLetter(input: CreateLetterInput, tenantClient: TenantClient): Promise<LetterDocument> {
   const tenantId = await getCurrentTenantId()
 
-  const { data: existingRows } = await tenantClient
-    .from('letters')
-    .select('letter_number')
-
-  const letterNumber = getNextLetterNumber(existingRows ?? [])
-
-  const draft = createLetterDraft(input)
-  const identity = createCorrespondenceIdentity(
-    '', // assigned by DB
-    letterNumber,
-    'letter',
-  )
-  const doc: LetterDocument = { ...draft, identity }
-  const normalized = normalizeLetter(doc)
-
-  const payload: LetterInsertPayload = documentToInsertPayload(normalized, tenantId)
-
-  const { data, error } = await tenantClient
-    .from('letters')
-    .insert(payload)
-    .select()
+  const { data: settingsData } = await tenantClient
+    .from('settings')
+    .select('document_prefixes')
+    .limit(1)
     .single()
 
+  const prefixes = (settingsData as { document_prefixes?: DocumentPrefixes })?.document_prefixes ?? null
+  const prefix = resolvePrefix(prefixes, 'letter')
+  const family = `${prefix}-`
+
+  const manualNumber = typeof input.letter_number === 'string' && input.letter_number.trim()
+    ? input.letter_number.trim()
+    : undefined
+
+  const { data, error } = await withUniqueRetry(
+    async (candidateNumber: string) => {
+      const draft = createLetterDraft(input)
+      const identity = createCorrespondenceIdentity(
+        '', // assigned by DB
+        candidateNumber,
+        'letter',
+      )
+      const doc: LetterDocument = { ...draft, identity }
+      const normalized = normalizeLetter(doc)
+      const payload: LetterInsertPayload = documentToInsertPayload(normalized, tenantId)
+
+      return tenantClient
+        .from('letters')
+        .insert(payload)
+        .select()
+        .single()
+    },
+    async () => {
+      const [{ data: existingRows }, cursor] = await Promise.all([
+        tenantClient.from('letters').select('letter_number'),
+        fetchAutoCursor(tenantClient, family),
+      ])
+      return getNextLetterNumber(existingRows ?? [], prefixes, cursor)
+    },
+    manualNumber,
+  )
+
   if (error) throw error
+
+  if (!manualNumber && data) {
+    const seq = parseTrailingSequence((data as LetterRow).letter_number)
+    if (seq !== null) {
+      await advanceAutoCursor(tenantClient, family, seq)
+    }
+  }
 
   const row = data as LetterRow
   return letterRowToDocument(row)

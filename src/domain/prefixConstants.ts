@@ -175,6 +175,36 @@ export function resetAllPrefixesUpdate(
 }
 
 /**
+ * Checks whether a document identifier belongs to the specified family.
+ * Supports canonical identifiers (e.g. SASINV-000128), short-padded/unpadded
+ * hyphenated identifiers (e.g. SASINV-128, SASQUO-432), and legacy
+ * unhyphenated variants (e.g. SASINV128, SASQUO432).
+ */
+export function belongsToFamily(
+  identifier: string | null | undefined,
+  family: string,
+): boolean {
+  if (!identifier || !family) return false
+  const trimmed = identifier.trim().toUpperCase()
+  const fam = family.toUpperCase()
+
+  // Case 1: Exact family prefix (e.g. family="SASINV-", identifier="SASINV-000128" or "SASINV-128")
+  if (trimmed.startsWith(fam)) {
+    const remainder = trimmed.slice(fam.length)
+    return /^\d+$/.test(remainder)
+  }
+
+  // Case 2: Unhyphenated legacy variant (e.g. family="SASINV-", identifier="SASINV128")
+  const prefixCore = fam.endsWith('-') ? fam.slice(0, -1) : fam
+  if (trimmed.startsWith(prefixCore)) {
+    const remainder = trimmed.slice(prefixCore.length)
+    return /^\d+$/.test(remainder)
+  }
+
+  return false
+}
+
+/**
  * Advances from a start sequence past every occupied identifier.
  * Pure skip-scan over ground-truth strings: occupied manual numbers,
  * legacy numbers, and concurrent allocations are all skipped alike.
@@ -184,9 +214,26 @@ export function findFreeSequence(
   fromSeq: number,
   occupied: Set<string> | string[],
 ): number {
-  const occupiedSet = Array.isArray(occupied) ? new Set(occupied) : occupied
+  const occupiedList = Array.isArray(occupied) ? occupied : Array.from(occupied)
+  const occupiedSet = occupied instanceof Set ? occupied : new Set(occupiedList)
+
+  const occupiedSeqs = new Set<number>()
+  for (const item of occupiedList) {
+    if (belongsToFamily(item, family)) {
+      const parsedSeq = parseTrailingSequence(item)
+      if (parsedSeq !== null && parsedSeq > 0) {
+        occupiedSeqs.add(parsedSeq)
+      }
+    }
+  }
+
   let seq = Math.max(1, Math.floor(fromSeq) || 1)
-  while (occupiedSet.has(`${family}${String(seq).padStart(DOCUMENT_SERIAL_WIDTH, '0')}`)) {
+  while (
+    occupiedSeqs.has(seq) ||
+    occupiedSet.has(`${family}${String(seq).padStart(DOCUMENT_SERIAL_WIDTH, '0')}`) ||
+    occupiedSet.has(`${family}${seq}`) ||
+    (family.endsWith('-') && occupiedSet.has(`${family.slice(0, -1)}${seq}`))
+  ) {
     seq += 1
   }
   return seq

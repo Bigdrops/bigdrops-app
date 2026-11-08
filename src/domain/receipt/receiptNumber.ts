@@ -1,4 +1,9 @@
-import { resolvePrefix } from '@/domain/prefixConstants'
+import {
+  belongsToFamily,
+  nextAutomaticNumber,
+  parseTrailingSequence,
+  resolvePrefix,
+} from '@/domain/prefixConstants'
 import type { DocumentPrefixes } from '@/domain/prefixConstants'
 
 /**
@@ -9,18 +14,19 @@ import type { DocumentPrefixes } from '@/domain/prefixConstants'
 export function getNextReceiptNumber(
   rows: Array<{ receipt_number?: string | null }>,
   prefixes?: DocumentPrefixes | null,
+  cursor?: number,
 ): string {
   const prefix = resolvePrefix(prefixes, 'receipt') || 'RCP'
+  const family = `${prefix}-`
 
-  const maxSerial = rows
+
+  const occupied = rows
     .map((row) => String(row.receipt_number || '').trim().toUpperCase())
-    .filter((value) => value.startsWith(prefix.toUpperCase()))
-    .map((value) => {
-      const match = value.match(/(\d+)$/)
-      return match ? Number(match[1]) : null
-    })
+    .filter((value) => belongsToFamily(value, family))
+  const maxNumber = occupied
+    .map((value) => parseTrailingSequence(value))
     .filter((value): value is number => Number.isFinite(value))
     .reduce((max, value) => Math.max(max, value), 0)
 
-  return `${prefix}-${String(maxSerial + 1).padStart(6, '0')}`
+  return nextAutomaticNumber(family, cursor, occupied, maxNumber).candidate
 }

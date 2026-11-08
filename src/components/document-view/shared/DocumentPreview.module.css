@@ -313,6 +313,80 @@
     line-height: 1.5;
 }
 
+/* ── Notes and Terms ── */
+
+.notesBlock {
+    padding: 16px 18px;
+    border-top: 1px solid hsl(var(--bd-border) / 0.42);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: hsl(var(--bd-surface));
+}
+
+.notesSection {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notesLabel {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(var(--bd-text-muted));
+}
+
+.notesContent {
+    font-size: 13px;
+    line-height: 1.6;
+    color: hsl(var(--bd-text));
+    word-break: break-word;
+}
+
+.notesFields,
+.notesFieldsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notesFieldRow,
+.notesFieldItem {
+    font-size: 13px;
+    line-height: 1.5;
+    color: hsl(var(--bd-text));
+}
+
+.notesFieldLabel {
+    color: hsl(var(--bd-text-muted));
+    font-weight: 500;
+}
+
+.notesFieldValue {
+    font-weight: 500;
+}
+
+.notesLinks,
+.notesLinksList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notesLink {
+    font-size: 13px;
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    word-break: break-all;
+}
+
+.notesLink:hover {
+    opacity: 0.8;
+}
+
 /* ── Signatory ── */
 
 .signatoryBlock {
@@ -498,4 +572,64 @@
     color: hsl(var(--bd-text-muted));
     margin-top: 2px;
     font-weight: 400;
+}
+
+/* ── Document Notes & Additional Fields ──────────────────────────────────── */
+
+.docNotes {
+    padding: 18px;
+    border-top: 1px solid hsl(var(--bd-border) / 0.42);
+}
+
+.notesSection + .notesSection {
+    margin-top: 16px;
+}
+
+.notesLabel {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: hsl(var(--bd-text-muted));
+    margin-bottom: 6px;
+}
+
+.notesContent {
+    font-size: 13px;
+    color: hsl(var(--bd-text-muted));
+    line-height: 1.6;
+}
+
+.notesFieldsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px 16px;
+    margin-top: 4px;
+}
+
+.notesFieldItem {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.notesFieldLabel {
+    color: hsl(var(--bd-text-muted));
+    font-weight: 600;
+}
+
+.notesFieldValue {
+    color: hsl(var(--bd-text));
+}
+
+.notesLinksList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.notesLink {
+    font-size: 12px;
+    color: hsl(var(--primary));
+    text-decoration: underline;
 }

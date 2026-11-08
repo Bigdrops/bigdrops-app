@@ -4,6 +4,8 @@ import { Hash, Calendar, Clock, FileText } from "lucide-react";
 import styles from "../shared/DocumentPreview.module.css";
 import { formatDisplayDate } from "@/lib/formatters/date";
 import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
+import { renderRichTextContent } from "@/lib/richText";
+import { normalizeRichTextHtml } from "@/components/pdf/core/richText";
 import DocumentBrandBlock from "../shared/DocumentBrandBlock";
 import DocumentMetaChips from "../shared/DocumentMetaChips";
 
@@ -34,6 +36,12 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
   const clientLines: string[] = Array.isArray(previewModel?.clientPreviewLines) ? previewModel.clientPreviewLines : [];
   const detailRows: any[] = Array.isArray(previewModel?.previewDetailRows) ? previewModel.previewDetailRows : [];
   const previewItems: any[] = Array.isArray(previewModel?.previewItems) ? previewModel.previewItems : [];
+  const notesSections: any[] = Array.isArray(previewModel?.previewNotesSections) && previewModel.previewNotesSections.length > 0
+    ? previewModel.previewNotesSections
+    : [
+        ...(invoice?.notes ? [{ title: 'Notes', kind: 'html' as const, html: normalizeRichTextHtml(invoice.notes) }] : []),
+        ...(invoice?.terms ? [{ title: 'Terms and Conditions', kind: 'html' as const, html: normalizeRichTextHtml(invoice.terms) }] : []),
+      ];
   const poRow = detailRows.find((row: any) => row?.label === 'PO Number');
 
   return (
@@ -171,6 +179,38 @@ export const InvoiceDocumentCard: React.FC<InvoiceDocumentCardProps> = ({
           <div className={styles.amountWords}>{previewModel.previewAmountInWords}</div>
         )}
       </div>
+
+      {notesSections.length > 0 && (
+        <div className={styles.notesBlock}>
+          {notesSections.map((section: any, index: number) => (
+            <div className={styles.notesSection} key={index}>
+              <div className={styles.notesLabel}>{section?.title || 'Notes'}</div>
+              {section?.kind === 'html' ? (
+                <div className={styles.notesContent}>{renderRichTextContent(section?.html)}</div>
+              ) : section?.kind === 'fields' && Array.isArray(section?.fields) ? (
+                <div className={styles.notesFieldsGrid}>
+                  {section.fields.map((field: any, fIdx: number) => (
+                    <div key={fIdx} className={styles.notesFieldItem}>
+                      <span className={styles.notesFieldLabel}>{field.label}:</span>{' '}
+                      <span className={styles.notesFieldValue}>{field.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : section?.kind === 'links' && Array.isArray(section?.links) ? (
+                <div className={styles.notesLinksList}>
+                  {section.links.map((link: any, lIdx: number) => (
+                    <a key={lIdx} href={link.url} target="_blank" rel="noopener noreferrer" className={styles.notesLink}>
+                      {link.label || link.url}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.notesContent}>{section?.text || section?.value || ''}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {signatory && (
         <div className={styles.signatoryBlock}>

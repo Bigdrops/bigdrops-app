@@ -46,11 +46,13 @@ const ENTITY_MAP: Record<string, string> = {
   lt: '<',
   gt: '>',
   quot: '"',
+  apos: "'",
   '#39': "'",
+  '#x27': "'",
 }
 
 function decodeHtmlEntities(value: string): string {
-  return value.replace(/&(#39|nbsp|amp|lt|gt|quot);/gi, (match, entity) => ENTITY_MAP[String(entity).toLowerCase()] ?? match)
+  return value.replace(/&(#39|#x27|nbsp|amp|lt|gt|quot|apos);/gi, (match, entity) => ENTITY_MAP[String(entity).toLowerCase()] ?? match)
 }
 
 function escapeHtml(value: string): string {
@@ -124,6 +126,21 @@ function renderSegmentsToHtml(segments: RichTextSegment[]) {
     .join('')
 }
 
+function detectSupportedHtml(content: string): boolean {
+  if (/<br\s*\/?>/i.test(content) || /<!--[\s\S]*?-->/.test(content)) return true
+  if (/<\/(?:p|div|li|ul|ol|h[1-6]|strong|b|em|i|u|span|a|script|style)>/i.test(content)) return true
+  if (/^\s*<(?:p|div|ul|ol|h[1-6]|script|style)\b/i.test(content)) return true
+  return /<\s*(strong|b|em|i|u|span|a|p|div|li|h[1-6]|script|style)\b[^>]*>[\s\S]*?<\/\s*\1\s*>/i.test(content)
+}
+
+function hasMatchingClosingTag(tokens: string[], fromIndex: number, tagName: string): boolean {
+  const closePattern = new RegExp(`^<\\/\\s*${tagName}\\b`, 'i')
+  for (let i = fromIndex + 1; i < tokens.length; i++) {
+    if (closePattern.test(tokens[i])) return true
+  }
+  return false
+}
+
 export function parseRichText(value: unknown): RichTextDocument {
   // Structured rich-text arrays (shared commercial import contract) are
   // canonicalized to HTML and interpreted by the same parser below.
@@ -134,7 +151,19 @@ export function parseRichText(value: unknown): RichTextDocument {
 
   if (typeof value !== 'string' || !value.trim()) return { blocks: [] }
 
-  const tokens: string[] = value.match(/<!--[\s\S]*?-->|<\/?[^>]+>|[^<]+/g) || []
+  let htmlContent = value
+  const hasSupportedHtml = detectSupportedHtml(htmlContent)
+  if (!hasSupportedHtml) {
+    const normalized = htmlContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    htmlContent = normalized
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => `<p>${escapeHtml(decodeHtmlEntities(p)).replace(/\n/g, '<br />')}</p>`)
+      .join('')
+  }
+
+  const tokens: string[] = htmlContent.match(/<!--[\s\S]*?-->|<\/?[a-z][a-z0-9:-]*(?:\s+[^>]*)?>|[^<]+|<+/gi) || []
   const blocks: RichTextBlock[] = []
   const marks = new Set<RichTextMark>()
   const skipStack: string[] = []
@@ -195,7 +224,7 @@ export function parseRichText(value: unknown): RichTextDocument {
     target.push(createSegment('\n', marks))
   }
 
-  tokens.forEach((token) => {
+  tokens.forEach((token, index) => {
     if (skipStack.length > 0) {
       if (/^<\//.test(token)) {
         const closeTag = token.replace(/^<\//, '').replace(/>$/g, '').trim().toLowerCase()
@@ -214,16 +243,15 @@ export function parseRichText(value: unknown): RichTextDocument {
 
     if (/^<!--/.test(token)) return
 
-    const isClosing = /^<\//.test(token)
-    const tagName = token
-      .replace(/^<\//, '')
-      .replace(/^</, '')
-      .replace(/\/?>$/g, '')
-      .trim()
-      .toLowerCase()
-      .split(/\s+/, 1)[0]
+    const tagMatch = /^<\/?([a-z][a-z0-9:-]*)/i.exec(token)
+    if (!tagMatch) {
+      // Not a valid tag name (e.g. "<" or "<=" in math comparisons)
+      appendText(token)
+      return
+    }
 
-    if (!tagName) return
+    const isClosing = /^<\//.test(token)
+    const tagName = tagMatch[1].toLowerCase()
 
     if (tagName === 'script' || tagName === 'style') {
       if (!isClosing) skipStack.push(tagName)
@@ -248,26 +276,55 @@ export function parseRichText(value: unknown): RichTextDocument {
     }
 
     if (tagName === 'strong' || tagName === 'b') {
-      if (isClosing) marks.delete('bold')
-      else marks.add('bold')
+      if (isClosing) {
+        marks.delete('bold')
+      } else if (hasMatchingClosingTag(tokens, index, tagName)) {
+        marks.add('bold')
+      } else {
+        appendText(token)
+      }
       return
     }
 
     if (tagName === 'em' || tagName === 'i') {
-      if (isClosing) marks.delete('italic')
-      else marks.add('italic')
+      if (isClosing) {
+        marks.delete('italic')
+      } else if (hasMatchingClosingTag(tokens, index, tagName)) {
+        marks.add('italic')
+      } else {
+        appendText(token)
+      }
       return
     }
 
     if (tagName === 'u') {
-      if (isClosing) marks.delete('underline')
-      else marks.add('underline')
+      if (isClosing) {
+        marks.delete('underline')
+      } else if (hasMatchingClosingTag(tokens, index, tagName)) {
+        marks.add('underline')
+      } else {
+        appendText(token)
+      }
+      return
+    }
+
+    if (tagName === 'a') {
+      if (!isClosing && !hasMatchingClosingTag(tokens, index, tagName)) {
+        appendText(token)
+      }
       return
     }
 
     if (tagName === 'p' || tagName === 'div') {
-      if (isClosing) pushParagraph()
-      else if (paragraphSegments.length > 0) pushParagraph()
+      if (isClosing) {
+        pushParagraph()
+      } else if (paragraphSegments.length > 0) {
+        if (hasMatchingClosingTag(tokens, index, tagName)) {
+          pushParagraph()
+        } else {
+          appendText(token)
+        }
+      }
       return
     }
 

@@ -171,6 +171,7 @@ export interface LetterDocument extends CorrespondenceDocument {
  * by the normalization and persistence layers.
  */
 export interface CreateLetterInput {
+  letter_number?: string
   recipient: CorrespondenceRecipient
   sender: CorrespondenceSender
   subject: string

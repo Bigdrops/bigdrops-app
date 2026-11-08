@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout'
 import { RfqEditor } from '@/components/rfq/RfqEditor'
 import { Rfq, RfqItem } from '@/domain/rfq/types'
+import { createEmptyRfq } from '@/domain/rfq/factories'
 import { denormalizeToDbRfq, denormalizeToDbRfqItem, getNextRfqNumber } from '@/domain/rfq/normalize'
 import { feedback } from '@/lib/feedback'
 import { useEntity } from '@/lib/tenant/contexts'
@@ -18,14 +19,49 @@ export default function NewRfq() {
   const { settings } = useSettings();
   const { tenantClient } = useEntity();
   const [saving, setSaving] = useState(false);
+  const [initialRfq, setInitialRfq] = useState<Rfq | null>(null);
+  const [loading, setLoading] = useState(true);
+  const autoNumberRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!tenantClient.isReady) return;
+    let active = true;
+
+    async function loadPrefill() {
+      try {
+        const prefix = resolvePrefix(settings?.document_prefixes, 'rfq');
+        const family = `${prefix}-`;
+        const [{ data: rows }, cursor] = await Promise.all([
+          tenantClient.from('rfqs').select('rfq_number'),
+          fetchAutoCursor(tenantClient, family),
+        ]);
+        if (!active) return;
+        const number = getNextRfqNumber(rows || [], prefix, cursor);
+        autoNumberRef.current = number;
+        const empty = createEmptyRfq();
+        empty.rfq_number = number;
+        setInitialRfq(empty);
+      } catch {
+        if (!active) return;
+        setInitialRfq(createEmptyRfq());
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadPrefill();
+    return () => {
+      active = false;
+    };
+  }, [settings?.document_prefixes, tenantClient, tenantClient.isReady]);
 
   const handleSave = async (rfq: Rfq, items: RfqItem[]) => {
     setSaving(true);
 
     const rfqPrefix = resolvePrefix(settings?.document_prefixes, 'rfq');
     const rfqFamily = `${rfqPrefix}-`;
-    // The field starts empty, so any non-empty value was explicitly typed.
-    const manualNumber = String(rfq.rfq_number || '').trim() || undefined;
+    const typed = String(rfq.rfq_number || '').trim();
+    const manualNumber = typed && typed !== autoNumberRef.current ? typed : undefined;
 
     const { data: createdRfq, error: rfqError } = await withUniqueRetry(
       async (candidateNumber: string) => {
@@ -65,7 +101,6 @@ export default function NewRfq() {
       const { error: itemsError } = await tenantClient.from('rfq_items').insert(dbItems);
       if (itemsError) {
         feedback.error('Item save failed', { description: itemsError.message });
-        // Optionally delete the parent RFQ here but let's keep it for now
       }
     }
 
@@ -74,9 +109,17 @@ export default function NewRfq() {
     navigate(`/rfqs/${rfqId}`);
   };
 
+  if (loading || !initialRfq) {
+    return (
+      <Layout title="New RFQ" session={null} hidePageHeader immersive>
+        <div className="p-12 text-center text-sm text-bd-text-muted">Loading RFQ...</div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="New RFQ" session={null} hidePageHeader immersive>
-      <RfqEditor onSave={handleSave} saving={saving} />
+      <RfqEditor initialRfq={initialRfq} onSave={handleSave} saving={saving} />
     </Layout>
   );
 }

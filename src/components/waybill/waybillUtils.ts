@@ -1,7 +1,7 @@
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { safeParseJson } from '@/lib/json/safeParseJson'
 import { WAYBILL_ITEM_KEYS, assertNoExtensionFieldsOutsideCustomData } from '@/domain/waybill/contracts/waybillContract'
-import { nextAutomaticNumber, parseTrailingSequence } from '@/domain/prefixConstants'
+import { belongsToFamily, nextAutomaticNumber, parseTrailingSequence } from '@/domain/prefixConstants'
 
 export type WaybillPdfTemplateId = 'evergreen' | 'minimal' | 'thermal' | 'classic' | 'premium' | 'slate'
 
@@ -519,7 +519,7 @@ export function getNextWaybillNumber(
   const routingPrefix = getWaybillRoutingPrefix(type, prefix, mode)
   const occupied = existingNumbers
     .map((n) => String(n || '').trim().toUpperCase())
-    .filter((n) => n.startsWith(routingPrefix.toUpperCase()))
+    .filter((n) => belongsToFamily(n, routingPrefix))
   const maxNumber = occupied
     .map((n) => parseTrailingSequence(n.slice(routingPrefix.length)))
     .filter((value): value is number => Number.isFinite(value))

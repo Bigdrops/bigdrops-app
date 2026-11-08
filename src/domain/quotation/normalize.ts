@@ -13,7 +13,7 @@ import { resolveFinancialColumns } from '@/domain/financial/resolveFinancialColu
 import { normalizeLineageId } from '@/domain/cps/lineage'
 import { resolveCanonicalItemImageUrl } from '@/domain/documentMedia.js'
 import { safeParseJson } from '@/lib/json/safeParseJson'
-import { nextAutomaticNumber } from '@/domain/prefixConstants'
+import { belongsToFamily, nextAutomaticNumber, parseTrailingSequence } from '@/domain/prefixConstants'
 import type { InvoiceItem } from '@/domain/invoice'
 import type {
   DbQuotation,
@@ -35,12 +35,9 @@ export function getNextQuotationNumber(
   const family = `${prefix}-`
   const occupied = rows
     .map((row) => String(row.quotation_number || '').trim().toUpperCase())
-    .filter((value) => value.startsWith(family))
+    .filter((value) => belongsToFamily(value, family))
   const maxNumber = occupied
-    .map((value) => {
-      const match = value.match(/-(\d+)$/)
-      return match ? Number(match[1]) : null
-    })
+    .map((value) => parseTrailingSequence(value))
     .filter((value): value is number => Number.isFinite(value))
     .reduce((max, value) => Math.max(max, value), 0)
 
