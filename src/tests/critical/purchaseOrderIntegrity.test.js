@@ -105,7 +105,9 @@ test('po integrity: item writes qualify a locked parent and never race issuance'
   assert.match(guard, /FOR UPDATE/)
   // The atomic create path: items that commit with a parent born in the
   // same transaction are the authorized save-RPC shape.
+  // xmin (xid) requires explicit cast on pg_current_xact_id() (xid8) to prevent operator mismatch.
   assert.match(guard, /pg_current_xact_id\(\)/)
+  assert.match(guard, /xmin = \(pg_current_xact_id\(\)\)::xid/)
   assert.match(guard, /Archived purchase order items are read-only/)
   assert.match(guard, /items are immutable once the order is issued/)
   // Re-pointing an item qualifies both the old and the new parent.
@@ -200,3 +202,18 @@ test('po integrity: no destructive operation and no foreign domain writes', () =
   }
   assert.equal(/client_id\s+(uuid|text|numeric)/.test(sql), false)
 })
+
+test('po integrity: xid type compatibility cast resolves xid = xid8 error', () => {
+  const baseSql = executableSql()
+  assert.match(baseSql, /xmin = \(pg_current_xact_id\(\)\)::xid/)
+
+  const repairMigrationPath = path.resolve(
+    import.meta.dirname,
+    '../../../supabase/migrations/20261108233000_purchase_order_xid_type_cast_repair.sql',
+  )
+  assert.ok(fs.existsSync(repairMigrationPath), 'repair migration must exist')
+  const repairSql = fs.readFileSync(repairMigrationPath, 'utf8')
+  assert.match(repairSql, /xmin = \(pg_current_xact_id\(\)\)::xid/)
+  assert.match(repairSql, /FUNCTION public\._po_guard_purchase_order_items\(\)/)
+})
+

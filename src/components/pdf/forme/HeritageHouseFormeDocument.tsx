@@ -259,7 +259,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
           {/* Bill To */}
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: headerFont, fontSize: 7, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, letterSpacing: 0.5, marginBottom: 2 }}>
-              {'Bill To · Client'}
+              {data.isProcurement ? (data.partyHeaderLabel || 'Order From · Supplier') : 'Bill To · Client'}
             </Text>
             {clientLineMap.get('name') ? (
               <Text style={{ fontFamily: headerFont, fontSize: 9.5, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, marginBottom: 2 }}>
@@ -483,6 +483,27 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
                 {renderBankRow('Account Name', data.paymentDetails.accountName, font, headerFont)}
                 {renderBankRow('Sort Code', data.paymentDetails.sortCode, font, headerFont)}
               </View>
+            ) : data.isProcurement && data.deliveryDestination ? (
+              <View style={{ backgroundColor: HERITAGE_TOKENS.white, borderWidth: 0.5, borderColor: HERITAGE_TOKENS.bronze, borderRadius: 2, padding: compact ? 5 : 6 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule, paddingBottom: 1.5 }}>
+                  {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
+                </Text>
+                {data.deliveryDestination.site ? (
+                  <Text style={{ fontFamily: headerFont, fontSize: 7.2, fontWeight: 700, color: HERITAGE_TOKENS.ink, marginBottom: 1 }}>
+                    {data.deliveryDestination.site}
+                  </Text>
+                ) : null}
+                {(data.deliveryDestination.addressLines || []).map((line, idx) => (
+                  <Text key={'dest-line-' + idx} style={{ fontFamily: font, fontSize: 6.8, color: HERITAGE_TOKENS.muted, marginBottom: 1 }}>
+                    {line}
+                  </Text>
+                ))}
+                {data.deliveryDestination.contactPerson ? (
+                  <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted, marginTop: 1 }}>
+                    Contact: {data.deliveryDestination.contactPerson} {data.deliveryDestination.phone ? '(' + data.deliveryDestination.phone + ')' : ''}
+                  </Text>
+                ) : null}
+              </View>
             ) : null}
           </View>
         </View>
@@ -522,31 +543,35 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
         <View style={{ flexDirection: 'row', gap: 10, marginTop: compact ? 6 : 8, paddingTop: 4, borderTopWidth: 1, borderTopColor: HERITAGE_TOKENS.burgundy }} wrap={false}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, marginBottom: 2 }}>
-              {'Issuer Authorised Signatory'}
+              {data.isProcurement ? (data.procurementSignatories?.requisitioner?.label || 'Purchasing Officer / Requisitioner') : 'Issuer Authorised Signatory'}
             </Text>
-            {data.signature?.imageUrl ? (
-              <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 80, height: 24, marginVertical: 2 }} />
+            {(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) ? (
+              <Image src={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} href={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} style={{ width: 80, height: 24, marginVertical: 2 }} />
             ) : (
               <View style={{ height: 24, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.burgundy, marginBottom: 2 }} />
             )}
             <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>
-              {safeText(data.signature?.name || companyName || 'Authorised Signatory')}
+              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.name : data.signature?.name) || companyName || 'Authorised Signatory')}
             </Text>
             <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted }}>
-              {safeText(data.signature?.role || 'Authorised Signatory')}
+              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.title : data.signature?.role) || (data.isProcurement ? 'Purchasing Officer' : 'Authorised Signatory'))}
             </Text>
           </View>
 
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, marginBottom: 2 }}>
-              {'Client Receiving Acknowledgement'}
+              {data.isProcurement ? (data.procurementSignatories?.authorizer?.label || 'Management / Finance Authorisation') : 'Client Receiving Acknowledgement'}
             </Text>
-            <View style={{ height: 24, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.burgundy, marginBottom: 2 }} />
+            {(data.isProcurement && data.procurementSignatories?.authorizer?.signatureUrl) ? (
+              <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 80, height: 24, marginVertical: 2 }} />
+            ) : (
+              <View style={{ height: 24, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.burgundy, marginBottom: 2 }} />
+            )}
             <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>
-              {'Received & Acknowledged'}
+              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.name : null) || (data.isProcurement ? 'Authorised By' : 'Received & Acknowledged'))}
             </Text>
             <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted }}>
-              {'Signature & Corporate Stamp'}
+              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.title : null) || (data.isProcurement ? 'Management Authorisation' : 'Signature & Corporate Stamp'))}
             </Text>
           </View>
 

@@ -2,6 +2,7 @@ import { Cell, Document, Fixed, Image, Page, Row, Table, Text, View } from '@for
 import type { CpsPdfModel, CpsPdfRow } from '../cpsPreparedModel'
 import { formatQuantityValue, groupedItemKeys } from '../cpsPreparedModel'
 import { INDUSTRY_SCHEDULE_GEOMETRY, resolveScheduleWidths } from './cpsScheduleGeometry'
+import { renderFormeRichText } from './formeRichText'
 
 const INK = '#1f2937'
 const BODY = '#333333'
@@ -73,7 +74,7 @@ function IndustryHeader({ model, font }: { model: CpsPdfModel; font: string }) {
           </View>
         </View>
       </View>
-      <Text style={{ fontFamily: font, fontSize: 26, color: INK, letterSpacing: 1, marginTop: 12 }}>COST &amp; PRICING SHEET</Text>
+      <Text style={{ fontFamily: font, fontSize: 26, color: INK, letterSpacing: 1, marginTop: 12 }}>COST & PRICING SHEET</Text>
       <Text style={{ fontFamily: font, fontSize: 14, color: MUTED, marginTop: 2 }}>{model.title}</Text>
     </View>
   )
@@ -243,8 +244,12 @@ function IndustryNotes({ model, font, accent }: { model: CpsPdfModel; font: stri
   if (!model.notes) return null
   return (
     <View style={{ marginBottom: 8 }}>
-      <Text style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: accent, marginBottom: 8 }}>NOTES</Text>
-      <Text style={{ fontFamily: font, fontSize: 9.5, color: BODY }}>{model.notes}</Text>
+      <Text style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: accent, marginBottom: 6 }}>NOTES</Text>
+      {renderFormeRichText(model.notes, {
+        font,
+        paragraphStyle: { fontFamily: font, fontSize: 9.5, color: BODY, lineHeight: 1.35 },
+        headingStyle: { fontFamily: font, fontSize: 11, fontWeight: 700, color: INK, marginTop: 4, marginBottom: 2 },
+      })}
     </View>
   )
 }

@@ -10,7 +10,13 @@ import {
   parsePurchaseOrderCalculationInputs,
   parsePurchaseOrderExtraCharges,
   toPurchaseOrder,
+  toPurchaseOrderItem,
 } from '../../domain/purchase-order/types.ts'
+import {
+  toPurchaseOrderFormItems,
+  createPurchaseOrderFormItem,
+  applyPurchaseOrderItemUpdate,
+} from '../../domain/purchase-order/formAdapter.ts'
 import {
   PURCHASE_ORDER_TRANSITIONS,
   allowedPurchaseOrderTransitions,
@@ -450,4 +456,41 @@ test('po: the save payload carries prepared totals and ordered lines', () => {
   assert.deepEqual(items.map((item) => item.description), ['Cement', 'Sand'])
   assert.equal(items[1].unit, 'trip')
   assert.equal(items[1].unit_cost, 0)
+})
+
+test('po mobile focus: _uiKey is generated and preserved stably across item updates and renders', () => {
+  // 1. Initial draft has stable key
+  const po = createEmptyPurchaseOrder()
+  assert.ok(po.items[0]._uiKey, 'initial item must carry _uiKey')
+  const initialKey = po.items[0]._uiKey
+
+  // 2. toPurchaseOrderFormItems returns the exact same _uiKey
+  const formItems1 = toPurchaseOrderFormItems(po)
+  assert.equal(formItems1[0]._uiKey, initialKey)
+
+  // 3. Simulating multiple keystrokes via applyPurchaseOrderItemUpdate
+  const updatedItems1 = applyPurchaseOrderItemUpdate(po.items, 0, 'description', 'C')
+  assert.equal(updatedItems1[0]._uiKey, initialKey, 'keystroke 1 preserves _uiKey')
+  const formItemsAfterKey1 = toPurchaseOrderFormItems({ ...po, items: updatedItems1 })
+  assert.equal(formItemsAfterKey1[0]._uiKey, initialKey, 'form item after keystroke 1 preserves _uiKey')
+
+  const updatedItems2 = applyPurchaseOrderItemUpdate(updatedItems1, 0, 'description', 'Ce')
+  assert.equal(updatedItems2[0]._uiKey, initialKey, 'keystroke 2 preserves _uiKey')
+  const formItemsAfterKey2 = toPurchaseOrderFormItems({ ...po, items: updatedItems2 })
+  assert.equal(formItemsAfterKey2[0]._uiKey, initialKey, 'form item after keystroke 2 preserves _uiKey')
+
+  // 4. Adding a line item generates a stable _uiKey
+  const newItem = createPurchaseOrderFormItem(1)
+  const { row_type: _rt, unit_price: _up, ...domainItem } = newItem
+  assert.ok(domainItem._uiKey, 'added domainItem must retain _uiKey')
+  const poWithTwo = { ...po, items: [...updatedItems2, domainItem] }
+  const formItemsTwo = toPurchaseOrderFormItems(poWithTwo)
+  assert.equal(formItemsTwo[0]._uiKey, initialKey)
+  assert.equal(formItemsTwo[1]._uiKey, domainItem._uiKey)
+
+  // 5. Converting stored row preserves _uiKey or falls back to item.id
+  const storedRow = toPurchaseOrderItem({ id: 'item-uuid-1', description: 'Paint', quantity: 5, unit_cost: 2000 })
+  assert.equal(storedRow._uiKey, 'item-uuid-1')
+  const formStored = toPurchaseOrderFormItems({ ...po, items: [storedRow] })
+  assert.equal(formStored[0]._uiKey, 'item-uuid-1')
 })

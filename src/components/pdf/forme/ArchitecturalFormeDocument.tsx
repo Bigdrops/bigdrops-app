@@ -273,7 +273,7 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
           {/* Bill To */}
           <View style={{ flex: 1, paddingRight: 6 }}>
             <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-              {'BILL TO · CLIENT'}
+              {data.isProcurement ? (data.partyHeaderLabel || 'ORDER FROM · SUPPLIER') : 'BILL TO · CLIENT'}
             </Text>
             {clientLineMap.get('name') ? (
               <Text style={{ fontFamily: headerFont, fontSize: 9.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.ink, marginBottom: 2 }}>
@@ -498,6 +498,27 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                 {renderBankRow('Account Name', data.paymentDetails.accountName, font, headerFont)}
                 {renderBankRow('Sort Code', data.paymentDetails.sortCode, font, headerFont)}
               </View>
+            ) : data.isProcurement && data.deliveryDestination ? (
+              <View style={{ backgroundColor: ARCHITECTURAL_TOKENS.white, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.copperLight, borderRadius: 3, padding: compact ? 6 : 7, marginTop: 4 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
+                  {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
+                </Text>
+                {data.deliveryDestination.site ? (
+                  <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal, marginBottom: 2 }}>
+                    {data.deliveryDestination.site}
+                  </Text>
+                ) : null}
+                {(data.deliveryDestination.addressLines || []).map((line, idx) => (
+                  <Text key={`dest-line-${idx}`} style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.grayText, marginBottom: 1 }}>
+                    {line}
+                  </Text>
+                ))}
+                {data.deliveryDestination.contactPerson ? (
+                  <Text style={{ fontFamily: font, fontSize: 6.5, color: ARCHITECTURAL_TOKENS.mutedText, marginTop: 2 }}>
+                    Contact: {data.deliveryDestination.contactPerson} {data.deliveryDestination.phone ? `(${data.deliveryDestination.phone})` : ''}
+                  </Text>
+                ) : null}
+              </View>
             ) : null}
           </View>
         </View>
@@ -537,31 +558,35 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
         <View style={{ flexDirection: 'row', gap: 10, marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: ARCHITECTURAL_TOKENS.charcoal }} wrap={false}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: ARCHITECTURAL_TOKENS.copper, marginBottom: 2 }}>
-              {'Issuer Authorised Signatory'}
+              {data.isProcurement ? (data.procurementSignatories?.requisitioner?.label || 'Purchasing Officer / Requisitioner') : 'Issuer Authorised Signatory'}
             </Text>
-            {data.signature?.imageUrl ? (
-              <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 80, height: 26, marginVertical: 2 }} />
+            {(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) ? (
+              <Image src={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} href={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} style={{ width: 80, height: 26, marginVertical: 2 }} />
             ) : (
               <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.charcoal, marginBottom: 2 }} />
             )}
             <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
-              {safeText(data.signature?.name || companyLineMap.get('name') || 'Authorised Signatory')}
+              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.name : data.signature?.name) || companyLineMap.get('name') || 'Authorised Signatory')}
             </Text>
             <Text style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.mutedText }}>
-              {safeText(data.signature?.role || 'Authorised Signatory')}
+              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.title : data.signature?.role) || (data.isProcurement ? 'Purchasing Officer' : 'Authorised Signatory'))}
             </Text>
           </View>
 
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: ARCHITECTURAL_TOKENS.copper, marginBottom: 2 }}>
-              {'Client Receiving Acknowledgement'}
+              {data.isProcurement ? (data.procurementSignatories?.authorizer?.label || 'Management / Finance Authorisation') : 'Client Receiving Acknowledgement'}
             </Text>
-            <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.charcoal, marginBottom: 2 }} />
+            {(data.isProcurement && data.procurementSignatories?.authorizer?.signatureUrl) ? (
+              <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 80, height: 26, marginVertical: 2 }} />
+            ) : (
+              <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.charcoal, marginBottom: 2 }} />
+            )}
             <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
-              {'Received & Verified By'}
+              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.name : null) || (data.isProcurement ? 'Authorised By' : 'Received & Verified By'))}
             </Text>
             <Text style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.mutedText }}>
-              {'Signature & Company Stamp'}
+              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.title : null) || (data.isProcurement ? 'Management Authorisation' : 'Signature & Company Stamp'))}
             </Text>
           </View>
 

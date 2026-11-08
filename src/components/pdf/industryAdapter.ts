@@ -4,6 +4,10 @@ import { normalizeRichTextSection } from './core/richText'
 import { resolveCanonicalItemImageUrl, resolveCanonicalLogoUrl } from '../../domain/documentMedia'
 import { resolvePreviewGroupSubtotal } from '@/domain/invoice/projections/lineItemResolvers'
 import type { PdfColumnDefinition, PdfDocumentModel, PdfPageLayout } from './types'
+import type {
+  PurchaseOrderDeliveryDestination,
+  PurchaseOrderProcurementSignatories,
+} from '@/domain/pdf/resolver/commercial/purchaseOrderPreparedContract'
 
 export const INDUSTRY_DEFAULT_ACCENT = '#7D8A88'
 
@@ -33,6 +37,11 @@ type CommercialDocumentDesign = Pick<
 }
 
 export type CommercialDocumentData = {
+  documentKind?: 'invoice' | 'quotation' | 'purchase_order'
+  isProcurement?: boolean
+  partyHeaderLabel?: string
+  deliveryDestination?: PurchaseOrderDeliveryDestination | null
+  procurementSignatories?: PurchaseOrderProcurementSignatories | null
   title: string
   customTitle: string | null
   documentNumber: string
@@ -124,13 +133,15 @@ export type CommercialDocumentData = {
   design: CommercialDocumentDesign
 }
 
-const PDF_MONEY_KEYS = new Set(['unit_price', 'amount', 'install_rate'])
+const PDF_MONEY_KEYS = new Set(['unit_price', 'amount', 'install_rate', 'unitCost', 'unit_cost'])
 
 function getDocumentNumberLabel(kind: PdfDocumentModel['identity']['kind']) {
+  if (kind === 'purchase_order') return 'PO Number'
   return kind === 'invoice' ? 'Invoice Number' : 'Quotation Number'
 }
 
 function getDateLabel(kind: PdfDocumentModel['identity']['kind']) {
+  if (kind === 'purchase_order') return 'PO Date'
   return kind === 'invoice' ? 'Due Date' : 'Valid Until'
 }
 
@@ -244,7 +255,20 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
 
     for (const column of columns) {
       if (column.key === 'description') continue
-      cells[column.key] = formatPreparedCell(column, cells[column.key])
+      const rawValue = cells[column.key] !== undefined
+        ? cells[column.key]
+        : column.key === 'unitCost' || column.key === 'unit_cost'
+          ? item.unitCost
+          : column.key === 'unit_price'
+            ? item.unitPrice
+            : column.key === 'quantity'
+              ? item.quantity
+              : column.key === 'unit'
+                ? item.unit
+                : column.key === 'amount'
+                  ? item.amount
+                  : (item as any)[column.key]
+      cells[column.key] = formatPreparedCell(column, rawValue)
     }
 
     cells.description = {
@@ -346,9 +370,19 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
 
   const columns = model.columns || []
 
-  const primaryTitle = model.identity.kind === 'invoice' ? 'INVOICE' : 'QUOTATION'
+  const isProcurement = model.identity.kind === 'purchase_order'
+
+  const primaryTitle =
+    model.identity.kind === 'purchase_order'
+      ? 'PURCHASE ORDER'
+      : model.identity.kind === 'invoice'
+        ? 'INVOICE'
+        : 'QUOTATION'
   const rawTitle = (model.identity.title || '').trim()
   const isDuplicate = rawTitle.toUpperCase() === primaryTitle
+  const partyHeaderLabel =
+    model.recipient?.label ||
+    (isProcurement ? 'Order From · Supplier / Vendor' : 'Bill To · Client')
   const standardHeaderLabels = new Set([
     normalizeHeaderLabel(getDocumentNumberLabel(model.identity.kind)),
     normalizeHeaderLabel('Issue Date'),
@@ -362,16 +396,21 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
   }
 
   return {
+    documentKind: model.identity.kind,
+    isProcurement,
+    partyHeaderLabel,
+    deliveryDestination: (model as any).deliveryDestination || null,
+    procurementSignatories: (model as any).procurementSignatories || null,
     title: primaryTitle,
     customTitle: (rawTitle && !isDuplicate) ? rawTitle : null,
     documentNumber: model.identity.number,
     documentNumberLabel: getDocumentNumberLabel(model.identity.kind),
     currency: model.identity.currency || null,
     issueDate: model.identity.issueDate,
-    issueDateLabel: 'Issue Date',
+    issueDateLabel: isProcurement ? 'PO Date' : 'Issue Date',
     dueDateOrValidityDate: model.identity.kind === 'invoice' ? model.identity.dueDate : model.identity.validUntil,
     dueDateOrValidityDateLabel: getDateLabel(model.identity.kind),
-    poNumber: model.identity.poNumber,
+    poNumber: isProcurement ? null : model.identity.poNumber,
     poNumberLabel: 'PO Number',
     customHeaderFields: (model.headerFields || []).filter((field) => !standardHeaderLabels.has(normalizeHeaderLabel(field.label))),
     showTagline: Boolean(model.tagline),

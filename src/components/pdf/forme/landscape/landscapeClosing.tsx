@@ -457,3 +457,106 @@ export function SignatureBlock({
     </View>
   )
 }
+
+export function DeliveryDestinationBlock({
+  deliveryDestination,
+  scale,
+}: {
+  deliveryDestination: NonNullable<CommercialDocumentData['deliveryDestination']>
+  scale: LandscapeScale
+}) {
+  return (
+    <View
+      style={{
+        marginTop: scale.gap(4),
+        padding: scale.pad(6),
+        backgroundColor: C.paper,
+        borderWidth: 0.5,
+        borderColor: C.lineMed,
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: scale.font,
+          fontSize: scale.micro,
+          fontWeight: 700,
+          color: C.cobalt,
+          textTransform: 'uppercase',
+          letterSpacing: 0.7,
+          marginBottom: 3,
+        }}
+      >
+        {deliveryDestination.label || 'Delivery Destination'}
+      </Text>
+      {deliveryDestination.site ? (
+        <Text style={{ fontFamily: scale.font, fontSize: scale.bodySmall, fontWeight: 700, color: C.navy, marginBottom: 1 }}>
+          {glyphRuns(deliveryDestination.site, scale.font)}
+        </Text>
+      ) : null}
+      {(deliveryDestination.addressLines || []).map((line, idx) => (
+        <Text key={'dest-line-' + idx} style={{ fontFamily: scale.font, fontSize: scale.micro, color: C.slate, marginBottom: 1 }}>
+          {glyphRuns(line, scale.font)}
+        </Text>
+      ))}
+      {deliveryDestination.contactPerson ? (
+        <Text style={{ fontFamily: scale.font, fontSize: scale.micro, color: C.slate, marginTop: 1 }}>
+          Contact: {glyphRuns(deliveryDestination.contactPerson, scale.font)} {deliveryDestination.phone ? '(' + glyphRuns(deliveryDestination.phone, scale.font) + ')' : ''}
+        </Text>
+      ) : null}
+    </View>
+  )
+}
+
+export function ProcurementSignatureBlock({
+  procurementSignatories,
+  scale,
+}: {
+  procurementSignatories: NonNullable<CommercialDocumentData['procurementSignatories']>
+  scale: LandscapeScale
+}) {
+  const req = procurementSignatories.requisitioner
+  const auth = procurementSignatories.authorizer
+
+  return (
+    <View style={{ flexDirection: 'row', gap: scale.gap(12) }}>
+      {req ? (
+        <View style={{ width: 140, alignItems: 'center' }}>
+          {req.signatureUrl ? (
+            <View style={{ height: 36, width: 110, alignItems: 'center', justifyContent: 'center', marginBottom: 3 }}>
+              <Image src={req.signatureUrl} style={{ width: 90, height: 32 }} alt="" />
+            </View>
+          ) : (
+            <View style={{ height: 26 }} />
+          )}
+          <View style={{ width: '100%', borderTopWidth: 0.8, borderTopColor: C.navy, paddingTop: 3, alignItems: 'center' }}>
+            <Text style={{ fontFamily: scale.font, fontSize: scale.bodySmall, fontWeight: 700, color: C.navy }}>
+              {glyphRuns(req.name || 'Authorised Signatory', scale.font)}
+            </Text>
+            <Text style={{ fontFamily: scale.font, fontSize: scale.micro, color: C.slate, marginTop: 1 }}>
+              {glyphRuns(req.title || req.label || 'Purchasing Officer', scale.font)}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+      {auth ? (
+        <View style={{ width: 140, alignItems: 'center' }}>
+          {auth.signatureUrl ? (
+            <View style={{ height: 36, width: 110, alignItems: 'center', justifyContent: 'center', marginBottom: 3 }}>
+              <Image src={auth.signatureUrl} style={{ width: 90, height: 32 }} alt="" />
+            </View>
+          ) : (
+            <View style={{ height: 26 }} />
+          )}
+          <View style={{ width: '100%', borderTopWidth: 0.8, borderTopColor: C.navy, paddingTop: 3, alignItems: 'center' }}>
+            <Text style={{ fontFamily: scale.font, fontSize: scale.bodySmall, fontWeight: 700, color: C.navy }}>
+              {glyphRuns(auth.name || 'Authorised By', scale.font)}
+            </Text>
+            <Text style={{ fontFamily: scale.font, fontSize: scale.micro, color: C.slate, marginTop: 1 }}>
+              {glyphRuns(auth.title || auth.label || 'Management Authorisation', scale.font)}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  )
+}

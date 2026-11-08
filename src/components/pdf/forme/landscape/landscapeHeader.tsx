@@ -310,15 +310,17 @@ export function DocumentIdentity({
 export function ClientBlock({
   client,
   scale,
+  label,
 }: {
   client: NonNullable<CommercialDocumentData['client']>
   scale: LandscapeScale
+  label?: string
 }) {
   const lines = buildPartyLines(client).filter((line) => line.type !== 'name')
 
   return (
     <View>
-      <FieldLabel scale={scale}>Client</FieldLabel>
+      <FieldLabel scale={scale}>{label || 'Client'}</FieldLabel>
       {hasText(client.name) ? (
         <Text
           style={{

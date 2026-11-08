@@ -197,7 +197,7 @@ BEGIN
     FOREACH v_parent_id IN ARRAY v_parent_ids
     LOOP
         EXECUTE format(
-            'SELECT status, archived_at, (xmin = pg_current_xact_id()) FROM %I.purchase_orders WHERE id = $1 FOR UPDATE',
+            'SELECT status, archived_at, (xmin = (pg_current_xact_id())::xid) FROM %I.purchase_orders WHERE id = $1 FOR UPDATE',
             TG_TABLE_SCHEMA
         ) INTO v_parent_status, v_parent_archived, v_parent_same_txn
         USING v_parent_id;

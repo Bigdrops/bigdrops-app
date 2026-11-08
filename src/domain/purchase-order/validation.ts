@@ -73,7 +73,7 @@ export function validatePurchaseOrder(
   if (requireNumber && !String(purchaseOrder.po_number ?? '').trim()) {
     return invalid(
       'Purchase order number required',
-      'Enter a purchase order number or let BOURXE generate one.',
+      'Enter a purchase order number or let BOUXRE generate one.',
       { field: 'po_number' },
     )
   }

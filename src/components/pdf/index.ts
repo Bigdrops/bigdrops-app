@@ -6,7 +6,7 @@ import {
 } from '@/lib/pdf'
 import { adaptCommercialDocumentData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
-import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
+import type { InvoicePdfModel, PdfDocumentModel, PurchaseOrderPdfModel, QuotationPdfModel } from './types'
 
 export type PdfTemplateRendererProps = {
   data: unknown
@@ -240,11 +240,27 @@ export async function generateQuotationPdfBlob(request: PdfGenerationRequest<Quo
   return generatePdfBlob(request)
 }
 
+export async function generatePurchaseOrderPdf(request: PdfGenerationRequest<PurchaseOrderPdfModel>): Promise<PdfGenerationResult> {
+  return generatePdf(request)
+}
+
+export async function generatePurchaseOrderPdfBlob(request: PdfGenerationRequest<PurchaseOrderPdfModel>): Promise<{ blob: Blob; filename: string }> {
+  return generatePdfBlob(request)
+}
+
 export async function generateCpsFormePdfBlob(request: {
   element: React.ReactElement
   filename: string
 }): Promise<{ blob: Blob; filename: string }> {
-  const { renderDocument } = await cpsPdfStage('forme-init', () => import('@formepdf/core/browser'))
+  const [{ renderDocument }, { ensureFormeFontFamily }] = await Promise.all([
+    cpsPdfStage('forme-init', () => import('@formepdf/core/browser')),
+    cpsPdfStage('forme-init', () => import('./forme/fonts')),
+  ])
+
+  await Promise.all([
+    ensureFormeFontFamily('Inter'),
+    ensureFormeFontFamily('Noto Sans'),
+  ])
 
   const bytes = await cpsPdfStage('render', () => renderDocument(request.element))
 
@@ -263,7 +279,15 @@ export async function generateCpsFormePdf(request: {
   element: React.ReactElement
   filename: string
 }): Promise<PdfGenerationResult> {
-  const { renderDocument } = await cpsPdfStage('forme-init', () => import('@formepdf/core/browser'))
+  const [{ renderDocument }, { ensureFormeFontFamily }] = await Promise.all([
+    cpsPdfStage('forme-init', () => import('@formepdf/core/browser')),
+    cpsPdfStage('forme-init', () => import('./forme/fonts')),
+  ])
+
+  await Promise.all([
+    ensureFormeFontFamily('Inter'),
+    ensureFormeFontFamily('Noto Sans'),
+  ])
 
   const bytes = await cpsPdfStage('render', () => renderDocument(request.element))
 

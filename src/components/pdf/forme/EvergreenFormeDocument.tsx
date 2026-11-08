@@ -281,7 +281,7 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
         {(data.company || data.client) ? (
           <View style={{ flexDirection: 'row', gap: 12, marginBottom: compact ? 8 : 10 }} wrap={false}>
             {data.company ? renderPartyCard('From', companyLineMap, companyLines, compact, accentPale, headerFont, accentColor, font, inkColor, grayTextColor) : null}
-            {data.client ? renderPartyCard('Bill To', clientLineMap, clientLines, compact, accentPale, headerFont, accentColor, font, inkColor, grayTextColor) : null}
+            {data.client ? renderPartyCard(data.isProcurement ? (data.partyHeaderLabel || 'Order From · Supplier') : 'Bill To', clientLineMap, clientLines, compact, accentPale, headerFont, accentColor, font, inkColor, grayTextColor) : null}
           </View>
         ) : null}
 
@@ -464,6 +464,27 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
                   {renderBankRow('Account No', data.paymentDetails.accountNumber, font, headerFont, inkColor, grayTextColor)}
                   {renderBankRow('Sort Code', data.paymentDetails.sortCode, font, headerFont, inkColor, grayTextColor)}
                 </View>
+              ) : data.isProcurement && data.deliveryDestination ? (
+                <View style={{ backgroundColor: accentPale, borderRadius: 6, padding: compact ? 8 : 12 }}>
+                  <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: accentColor, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6, borderBottomWidth: 0.5, borderBottomColor: EVERGREEN_TOKENS.lightRule, paddingBottom: 4 }}>
+                    {data.deliveryDestination.label || 'Delivery Destination'}
+                  </Text>
+                  {data.deliveryDestination.site ? (
+                    <Text style={{ fontFamily: headerFont, fontSize: 8.5, fontWeight: 700, color: inkColor, marginBottom: 2 }}>
+                      {data.deliveryDestination.site}
+                    </Text>
+                  ) : null}
+                  {(data.deliveryDestination.addressLines || []).map((line, idx) => (
+                    <Text key={`dest-line-${idx}`} style={{ fontFamily: font, fontSize: 8, color: inkColor, marginBottom: 1 }}>
+                      {line}
+                    </Text>
+                  ))}
+                  {data.deliveryDestination.contactPerson ? (
+                    <Text style={{ fontFamily: font, fontSize: 7.5, color: grayTextColor, marginTop: 2 }}>
+                      Contact: {data.deliveryDestination.contactPerson} {data.deliveryDestination.phone ? `(${data.deliveryDestination.phone})` : ''}
+                    </Text>
+                  ) : null}
+                </View>
               ) : null}
             </View>
 
@@ -563,7 +584,42 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
         ) : null}
 
         {/* 10. SIGNATURE BLOCK */}
-        {data.signature && (data.signature.imageUrl || data.signature.name) ? (
+        {data.isProcurement && data.procurementSignatories ? (
+          <View style={{ marginTop: compact ? 12 : 16, flexDirection: 'row', justifyContent: 'space-between', width: '100%' }} wrap={false}>
+            {data.procurementSignatories.requisitioner ? (
+              <View style={{ width: 180, alignItems: 'center' }}>
+                {data.procurementSignatories.requisitioner.signatureUrl ? (
+                  <Image src={data.procurementSignatories.requisitioner.signatureUrl} href={data.procurementSignatories.requisitioner.signatureUrl} style={{ width: 110, height: 34, marginBottom: 2 }} />
+                ) : (
+                  <View style={{ height: 34, marginBottom: 2 }} />
+                )}
+                <View style={{ width: '100%', borderTopWidth: 0.5, borderTopColor: ruleColor, marginBottom: 4 }} />
+                <Text style={{ fontFamily: headerFont, fontSize: 9.5, fontWeight: 700, color: inkColor, textAlign: 'center' }}>
+                  {safeText(data.procurementSignatories.requisitioner.name || 'Requisitioner')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 8, color: grayTextColor, textAlign: 'center' }}>
+                  {safeText(data.procurementSignatories.requisitioner.title || data.procurementSignatories.requisitioner.label || 'Purchasing Officer')}
+                </Text>
+              </View>
+            ) : <View style={{ width: 180 }} />}
+            {data.procurementSignatories.authorizer ? (
+              <View style={{ width: 180, alignItems: 'center' }}>
+                {data.procurementSignatories.authorizer.signatureUrl ? (
+                  <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 110, height: 34, marginBottom: 2 }} />
+                ) : (
+                  <View style={{ height: 34, marginBottom: 2 }} />
+                )}
+                <View style={{ width: '100%', borderTopWidth: 0.5, borderTopColor: ruleColor, marginBottom: 4 }} />
+                <Text style={{ fontFamily: headerFont, fontSize: 9.5, fontWeight: 700, color: inkColor, textAlign: 'center' }}>
+                  {safeText(data.procurementSignatories.authorizer.name || 'Authorised By')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 8, color: grayTextColor, textAlign: 'center' }}>
+                  {safeText(data.procurementSignatories.authorizer.title || data.procurementSignatories.authorizer.label || 'Management Authorisation')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : data.signature && (data.signature.imageUrl || data.signature.name) ? (
           <View style={{ marginTop: compact ? 12 : 16, flexDirection: 'row', justifyContent: 'flex-end' }} wrap={false}>
             <View style={{ width: 180, alignItems: 'center' }}>
               {data.signature.imageUrl ? (

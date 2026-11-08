@@ -23,7 +23,7 @@ const DEFAULT_MARGIN_H = 32
 const COMPACT_MARGIN_H = 24
 
 const FIXED_COLUMN_WIDTHS: Record<string, number> = {
-  num: 28, quantity: 48, unit: 42, make: 58, unit_price: 74,
+  num: 28, quantity: 48, unit: 42, make: 58, unit_price: 74, unitCost: 74, unit_cost: 74,
   amount: 80, install_rate: 72, vat_rate: 36, discount_rate: 42,
 }
 
@@ -193,7 +193,7 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
             {data.client ? (
               <View style={{ flex: 1, backgroundColor: panelSurfaceColor, borderWidth: 1, borderColor, borderRadius: 3, padding: 10 }}>
                 <Text style={{ fontFamily: headerFont, fontSize: 8.5, fontWeight: 700, color: accentColor, textTransform: 'uppercase', marginBottom: 4 }}>
-                  To
+                  {data.isProcurement ? (data.partyHeaderLabel || 'Order From · Supplier') : 'To'}
                 </Text>
                 {buildPartyLines(data.client).map((line) => {
                   const isName = line.type === 'name'
@@ -424,6 +424,32 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
                 </View>
               ) : null}
             </View>
+          ) : data.isProcurement && data.deliveryDestination ? (
+            <View style={{ flex: 1, marginRight: 16, backgroundColor: panelSurfaceColor, borderWidth: 1, borderColor, borderRadius: 3, padding: 10 }}>
+              <Text style={{ fontFamily: headerFont, fontSize: 8.5, fontWeight: 700, color: accentColor, textTransform: 'uppercase', marginBottom: 4 }}>
+                {data.deliveryDestination.label || 'Delivery Destination'}
+              </Text>
+              {data.deliveryDestination.site ? (
+                <Text style={{ fontFamily: font, fontSize: 8.5, fontWeight: 700, color: textColor, marginBottom: 2 }}>
+                  {data.deliveryDestination.site}
+                </Text>
+              ) : null}
+              {(data.deliveryDestination.addressLines || []).map((line, idx) => (
+                <Text key={`dest-line-${idx}`} style={{ fontFamily: font, fontSize: 8, color: textColor, marginBottom: 1 }}>
+                  {line}
+                </Text>
+              ))}
+              {data.deliveryDestination.contactPerson ? (
+                <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor, marginTop: 2 }}>
+                  Contact: {data.deliveryDestination.contactPerson} {data.deliveryDestination.phone ? `(${data.deliveryDestination.phone})` : ''}
+                </Text>
+              ) : null}
+              {data.deliveryDestination.notes ? (
+                <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedColor, marginTop: 2, fontStyle: 'italic' }}>
+                  {data.deliveryDestination.notes}
+                </Text>
+              ) : null}
+            </View>
           ) : (
             <View style={{ flex: 1 }} />
           )}
@@ -551,7 +577,43 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
         ) : null}
 
         {/* Signature Block */}
-        {data.signature && (data.signature.imageUrl || data.signature.name) ? (
+        {data.isProcurement && data.procurementSignatories ? (
+          <View style={{ marginTop: 14, flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
+            {data.procurementSignatories.requisitioner ? (
+              <View style={{ width: 160 }}>
+                {data.procurementSignatories.requisitioner.signatureUrl ? (
+                  <Image src={data.procurementSignatories.requisitioner.signatureUrl} href={data.procurementSignatories.requisitioner.signatureUrl} style={{ width: 120, height: 44, marginBottom: 2 }} />
+                ) : (
+                  <View style={{ height: 44, justifyContent: 'flex-end', marginBottom: 2 }} />
+                )}
+                <View style={{ height: 1, backgroundColor: textColor, marginBottom: 4 }} />
+                <Text style={{ fontFamily: font, fontSize: 8.5, fontWeight: 700, color: textColor }}>
+                  {data.procurementSignatories.requisitioner.name || 'Requisitioner'}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor }}>
+                  {data.procurementSignatories.requisitioner.title || data.procurementSignatories.requisitioner.label || 'Purchasing Officer'}
+                </Text>
+              </View>
+            ) : <View style={{ width: 160 }} />}
+
+            {data.procurementSignatories.authorizer ? (
+              <View style={{ width: 160 }}>
+                {data.procurementSignatories.authorizer.signatureUrl ? (
+                  <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 120, height: 44, marginBottom: 2 }} />
+                ) : (
+                  <View style={{ height: 44, justifyContent: 'flex-end', marginBottom: 2 }} />
+                )}
+                <View style={{ height: 1, backgroundColor: textColor, marginBottom: 4 }} />
+                <Text style={{ fontFamily: font, fontSize: 8.5, fontWeight: 700, color: textColor }}>
+                  {data.procurementSignatories.authorizer.name || 'Authorised By'}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor }}>
+                  {data.procurementSignatories.authorizer.title || data.procurementSignatories.authorizer.label || 'Management Authorisation'}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : data.signature && (data.signature.imageUrl || data.signature.name) ? (
           <View style={{ marginTop: 14, width: 160 }}>
             {data.signature.imageUrl ? (
               <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 120, height: 44, marginBottom: 2 }} />

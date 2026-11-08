@@ -2,6 +2,7 @@ import { Cell, Document, Fixed, Image, Page, Row, Table, Text, View } from '@for
 import type { CpsPdfModel, CpsPdfRow } from '../cpsPreparedModel'
 import { formatQuantityValue, groupedItemKeys } from '../cpsPreparedModel'
 import { LEDGER_SCHEDULE_GEOMETRY, resolveScheduleWidths } from './cpsScheduleGeometry'
+import { renderFormeRichText } from './formeRichText'
 
 const NAVY = '#183b52'
 const INK = '#17232d'
@@ -61,7 +62,7 @@ function LedgerHeader({ model, font }: { model: CpsPdfModel; font: string }) {
         ))}
       </View>
       <View style={{ flex: 1, paddingTop: 21, paddingBottom: 20, paddingLeft: 25, paddingRight: 25 }}>
-        <Text style={{ fontFamily: font, fontSize: 20, fontWeight: 700, color: accent }}>COST &amp; PRICING SHEET</Text>
+        <Text style={{ fontFamily: font, fontSize: 20, fontWeight: 700, color: accent }}>COST & PRICING SHEET</Text>
         <View style={{ width: 42, height: 3, backgroundColor: accent, marginTop: 10, marginBottom: 11 }} />
         <Text style={{ fontFamily: font, fontSize: 6, fontWeight: 700, color: MUTED }}>TITLE</Text>
         <Text style={{ fontFamily: font, fontSize: 15, fontWeight: 700, color: INK, marginTop: 3 }}>{model.title}</Text>
@@ -263,8 +264,12 @@ function LedgerCloseout({ model, font }: { model: CpsPdfModel; font: string }) {
       <View style={{ flex: 1, paddingRight: 31 }}>
         {model.notes ? (
           <View>
-            <Text style={{ fontFamily: font, fontSize: 6.5, fontWeight: 700, color: INK }}>NOTES</Text>
-            <Text style={{ fontFamily: font, fontSize: 6.4, color: MUTED, marginTop: 6 }}>{model.notes}</Text>
+            <Text style={{ fontFamily: font, fontSize: 6.5, fontWeight: 700, color: INK, marginBottom: 4 }}>NOTES</Text>
+            {renderFormeRichText(model.notes, {
+              font,
+              paragraphStyle: { fontFamily: font, fontSize: 6.4, color: MUTED, marginTop: 2, lineHeight: 1.4 },
+              headingStyle: { fontFamily: font, fontSize: 7, fontWeight: 700, color: INK, marginTop: 4, marginBottom: 2 },
+            })}
           </View>
         ) : null}
       </View>

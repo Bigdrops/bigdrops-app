@@ -268,7 +268,10 @@ export async function getCpsPdfBlob(input: {
 
   const prefs = await cpsStage('customization', () => readCpsPdfDisplayPreferences())
   const { customization } = await cpsStage('customization', () => resolveFull(CPS_TEMPLATE_DEFAULTS, CPS_CAPABILITIES, CPS_POLICY, loadSettings('cps_sheets')))
-  const fontFamily = await cpsStage('font', () => ensureFormeFontFamily(customization.documentFont))
+  const [fontFamily] = await cpsStage('font', () => Promise.all([
+    ensureFormeFontFamily(customization.documentFont),
+    ensureFormeFontFamily('Noto Sans'),
+  ]))
   const accent = customization.accentEnabled ? customization.accentColor : null
   const columnVisibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
 
@@ -328,7 +331,10 @@ export async function handleDownloadCpsPdf(input: {
 
     const prefs = await cpsStage('customization', () => readCpsPdfDisplayPreferences())
     const { customization } = await cpsStage('customization', () => resolveFull(CPS_TEMPLATE_DEFAULTS, CPS_CAPABILITIES, CPS_POLICY, loadSettings('cps_sheets')))
-    const fontFamily = await cpsStage('font', () => ensureFormeFontFamily(customization.documentFont))
+    const [fontFamily] = await cpsStage('font', () => Promise.all([
+      ensureFormeFontFamily(customization.documentFont),
+      ensureFormeFontFamily('Noto Sans'),
+    ]))
     const accent = customization.accentEnabled ? customization.accentColor : null
     const columnVisibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
 

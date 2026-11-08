@@ -434,7 +434,7 @@ export function MinimalFormeDocument({ data }: MinimalFormeDocumentProps): React
         {data.company || data.client ? (
           <View wrap={false} style={{ flexDirection: 'row', marginBottom: 10 }}>
             {data.company ? renderPartyBox('From', companyBoxLines, companyLineMap, false) : null}
-            {data.client ? renderPartyBox('Bill To', clientBoxLines, clientLineMap, true) : null}
+            {data.client ? renderPartyBox(data.isProcurement ? (data.partyHeaderLabel || 'Order From · Supplier') : 'Bill To', clientBoxLines, clientLineMap, true) : null}
           </View>
         ) : null}
 
@@ -754,7 +754,7 @@ export function MinimalFormeDocument({ data }: MinimalFormeDocumentProps): React
         ) : null}
 
         {/* Bank details and totals */}
-        {hasBankDetails || totalsLines.length > 0 || mainTotal || balanceDue || amountInWords || advance ? (
+        {hasBankDetails || (data.isProcurement && Boolean(data.deliveryDestination)) || totalsLines.length > 0 || mainTotal || balanceDue || amountInWords || advance ? (
           <View
             wrap={false}
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}
@@ -865,6 +865,74 @@ export function MinimalFormeDocument({ data }: MinimalFormeDocumentProps): React
                         {safeText(data.paymentDetails.sortCode)}
                       </Text>
                     </View>
+                  ) : null}
+                </View>
+              ) : data.isProcurement && data.deliveryDestination ? (
+                <View
+                  style={{
+                    borderWidth: 1,
+                    borderColor: PALETTE.rule,
+                    padding: 10,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: headerFont,
+                      fontSize: 7,
+                      fontWeight: 700,
+                      color: PALETTE.mutedText,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.8,
+                      marginBottom: 6,
+                      borderBottomWidth: 0.5,
+                      borderBottomColor: PALETTE.lightRule,
+                      paddingBottom: 4,
+                      ...colorAccent,
+                    }}
+                  >
+                    {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
+                  </Text>
+                  {data.deliveryDestination.site ? (
+                    <Text
+                      style={{
+                        fontFamily: headerFont,
+                        fontSize: 8.5,
+                        fontWeight: 700,
+                        color: PALETTE.ink,
+                        marginBottom: 2,
+                        ...colorText,
+                      }}
+                    >
+                      {safeText(data.deliveryDestination.site)}
+                    </Text>
+                  ) : null}
+                  {(data.deliveryDestination.addressLines || []).map((line, idx) => (
+                    <Text
+                      key={'dest-line-' + idx}
+                      style={{
+                        fontFamily: baseFont,
+                        fontSize: 8,
+                        color: PALETTE.grayText,
+                        marginBottom: 1,
+                        ...colorMuted,
+                      }}
+                    >
+                      {safeText(line)}
+                    </Text>
+                  ))}
+                  {data.deliveryDestination.contactPerson ? (
+                    <Text
+                      style={{
+                        fontFamily: baseFont,
+                        fontSize: 7.5,
+                        color: PALETTE.mutedText,
+                        marginTop: 2,
+                        ...colorMuted,
+                      }}
+                    >
+                      Contact: {safeText(data.deliveryDestination.contactPerson)} {data.deliveryDestination.phone ? '(' + safeText(data.deliveryDestination.phone) + ')' : ''}
+                    </Text>
                   ) : null}
                 </View>
               ) : null}
@@ -1165,7 +1233,48 @@ export function MinimalFormeDocument({ data }: MinimalFormeDocumentProps): React
         ) : null}
 
         {/* Signature */}
-        {data.signature && (data.signature.imageUrl || data.signature.name) ? (
+        {data.isProcurement && data.procurementSignatories ? (
+          <View wrap={false} style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'space-between', gap: 20 }}>
+            {data.procurementSignatories.requisitioner ? (
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 7, color: PALETTE.mutedText, textTransform: 'uppercase', marginBottom: 2 }}>
+                  {data.procurementSignatories.requisitioner.label || 'Purchasing Officer / Requisitioner'}
+                </Text>
+                {data.procurementSignatories.requisitioner.signatureUrl ? (
+                  <Image src={data.procurementSignatories.requisitioner.signatureUrl} style={{ width: 120, height: 36, marginBottom: 2 }} />
+                ) : (
+                  <View style={{ height: 36 }} />
+                )}
+                <View style={{ width: '100%', borderTopWidth: 0.5, borderTopColor: PALETTE.ink, marginBottom: 4, ...colorBorder }} />
+                <Text style={{ fontFamily: headerFont, fontSize: 9.5, fontWeight: 700, color: PALETTE.ink, marginBottom: 2, textAlign: 'center', ...colorText }}>
+                  {safeText(data.procurementSignatories.requisitioner.name || 'Authorised Signatory')}
+                </Text>
+                <Text style={{ fontFamily: baseFont, fontSize: 8, color: PALETTE.grayText, textAlign: 'center', ...colorMuted }}>
+                  {safeText(data.procurementSignatories.requisitioner.title || 'Purchasing Officer')}
+                </Text>
+              </View>
+            ) : null}
+            {data.procurementSignatories.authorizer ? (
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 7, color: PALETTE.mutedText, textTransform: 'uppercase', marginBottom: 2 }}>
+                  {data.procurementSignatories.authorizer.label || 'Management / Finance Authorisation'}
+                </Text>
+                {data.procurementSignatories.authorizer.signatureUrl ? (
+                  <Image src={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 120, height: 36, marginBottom: 2 }} />
+                ) : (
+                  <View style={{ height: 36 }} />
+                )}
+                <View style={{ width: '100%', borderTopWidth: 0.5, borderTopColor: PALETTE.ink, marginBottom: 4, ...colorBorder }} />
+                <Text style={{ fontFamily: headerFont, fontSize: 9.5, fontWeight: 700, color: PALETTE.ink, marginBottom: 2, textAlign: 'center', ...colorText }}>
+                  {safeText(data.procurementSignatories.authorizer.name || 'Authorised By')}
+                </Text>
+                <Text style={{ fontFamily: baseFont, fontSize: 8, color: PALETTE.grayText, textAlign: 'center', ...colorMuted }}>
+                  {safeText(data.procurementSignatories.authorizer.title || 'Management Authorisation')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : data.signature && (data.signature.imageUrl || data.signature.name) ? (
           <View wrap={false} style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'flex-end' }}>
             <View style={{ width: 200, alignItems: 'center' }}>
               {typeof data.signature.imageUrl === 'string' && data.signature.imageUrl.trim() ? (

@@ -136,7 +136,7 @@ export function IndustrialFormeDocument({ data, compact = false }: IndustrialFor
   const signature = data.signature && (data.signature.imageUrl || data.signature.name) ? data.signature : null
 
   const hasClosingLeft = totalsLines.length > 0
-  const hasClosingRight = Boolean(bankDetails)
+  const hasClosingRight = Boolean(bankDetails) || Boolean(data.isProcurement && data.deliveryDestination)
 
   return (
     <Document title={`${data.title} ${data.documentNumber || ''}`.trim()}>
@@ -332,7 +332,7 @@ export function IndustrialFormeDocument({ data, compact = false }: IndustrialFor
               <View style={{ borderWidth: 0.75, borderColor: INDUSTRIAL_TOKENS.graphite, backgroundColor: 'rgba(255,255,255,0.45)' }}>
                 <View style={{ backgroundColor: INDUSTRIAL_TOKENS.panelDeep, borderBottomWidth: 0.75, borderBottomColor: INDUSTRIAL_TOKENS.graphite, padding: 3 }}>
                   <Text style={{ fontFamily: font, fontSize: 5.2, color: INDUSTRIAL_TOKENS.graphite, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                    BILL TO / CLIENT
+                    {data.isProcurement ? (data.partyHeaderLabel || 'ORDER FROM / SUPPLIER') : 'BILL TO / CLIENT'}
                   </Text>
                 </View>
                 <View style={{ padding: pad(6) }}>
@@ -655,6 +655,31 @@ export function IndustrialFormeDocument({ data, compact = false }: IndustrialFor
                     ) : null}
                   </View>
                 </View>
+              ) : data.isProcurement && data.deliveryDestination ? (
+                <View style={{ flex: hasClosingLeft ? 0.95 : 1, borderWidth: 0.75, borderColor: INDUSTRIAL_TOKENS.graphite, backgroundColor: 'rgba(255,255,255,0.45)' }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: INDUSTRIAL_TOKENS.graphite, padding: 3 }}>
+                    <Text style={{ fontFamily: font, fontSize: 5.2, fontWeight: 700, color: '#EFF1ED', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                      {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
+                    </Text>
+                  </View>
+                  <View style={{ padding: pad(6) }}>
+                    {data.deliveryDestination.site ? (
+                      <Text style={{ fontFamily: font, fontSize: 6.8, fontWeight: 700, color: INDUSTRIAL_TOKENS.graphite, textTransform: 'uppercase' }}>
+                        {data.deliveryDestination.site}
+                      </Text>
+                    ) : null}
+                    {(data.deliveryDestination.addressLines || []).map((line, idx) => (
+                      <Text key={'dest-line-' + idx} style={{ fontFamily: font, fontSize: 6, color: '#343E41', marginTop: 1 }}>
+                        {line}
+                      </Text>
+                    ))}
+                    {data.deliveryDestination.contactPerson ? (
+                      <Text style={{ fontFamily: font, fontSize: 5.5, color: INDUSTRIAL_TOKENS.steel, marginTop: 1 }}>
+                        Contact: {data.deliveryDestination.contactPerson} {data.deliveryDestination.phone ? '(' + data.deliveryDestination.phone + ')' : ''}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
               ) : null}
             </View>
           ) : null}
@@ -835,7 +860,46 @@ export function IndustrialFormeDocument({ data, compact = false }: IndustrialFor
           ) : null}
 
           {/* 9. Issuer Signature — rendered only when a signature is supplied */}
-          {signature ? (
+          {data.isProcurement && data.procurementSignatories ? (
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: gap(5) }}>
+              {data.procurementSignatories.requisitioner ? (
+                <View style={{ width: 210, borderWidth: 0.75, borderColor: INDUSTRIAL_TOKENS.graphite, backgroundColor: 'rgba(255,255,255,0.45)', padding: 4 }}>
+                  <Text style={{ fontFamily: font, fontSize: 5, color: INDUSTRIAL_TOKENS.steel, textTransform: 'uppercase', letterSpacing: 0.6, borderBottomWidth: 0.5, borderBottomColor: INDUSTRIAL_TOKENS.line, paddingBottom: 2 }}>
+                    {data.procurementSignatories.requisitioner.label || 'PURCHASING OFFICER / REQUISITIONER'}
+                  </Text>
+                  <View style={{ height: compact ? 18 : 22, overflow: 'hidden', justifyContent: 'center' }}>
+                    {data.procurementSignatories.requisitioner.signatureUrl ? (
+                      <Image src={data.procurementSignatories.requisitioner.signatureUrl} href={data.procurementSignatories.requisitioner.signatureUrl} height={compact ? 16 : 20} />
+                    ) : null}
+                  </View>
+                  <Text style={{ fontFamily: font, fontSize: 6.2, fontWeight: 700, color: INDUSTRIAL_TOKENS.graphite, textTransform: 'uppercase' }}>
+                    {data.procurementSignatories.requisitioner.name || 'Requisitioner'}
+                  </Text>
+                  <Text style={{ fontFamily: font, fontSize: 5, color: INDUSTRIAL_TOKENS.steel, textTransform: 'uppercase' }}>
+                    {data.procurementSignatories.requisitioner.title || 'Purchasing Officer'}
+                  </Text>
+                </View>
+              ) : null}
+              {data.procurementSignatories.authorizer ? (
+                <View style={{ width: 210, borderWidth: 0.75, borderColor: INDUSTRIAL_TOKENS.graphite, backgroundColor: 'rgba(255,255,255,0.45)', padding: 4 }}>
+                  <Text style={{ fontFamily: font, fontSize: 5, color: INDUSTRIAL_TOKENS.steel, textTransform: 'uppercase', letterSpacing: 0.6, borderBottomWidth: 0.5, borderBottomColor: INDUSTRIAL_TOKENS.line, paddingBottom: 2 }}>
+                    {data.procurementSignatories.authorizer.label || 'MANAGEMENT / FINANCE AUTHORISATION'}
+                  </Text>
+                  <View style={{ height: compact ? 18 : 22, overflow: 'hidden', justifyContent: 'center' }}>
+                    {data.procurementSignatories.authorizer.signatureUrl ? (
+                      <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} height={compact ? 16 : 20} />
+                    ) : null}
+                  </View>
+                  <Text style={{ fontFamily: font, fontSize: 6.2, fontWeight: 700, color: INDUSTRIAL_TOKENS.graphite, textTransform: 'uppercase' }}>
+                    {data.procurementSignatories.authorizer.name || 'Authorised By'}
+                  </Text>
+                  <Text style={{ fontFamily: font, fontSize: 5, color: INDUSTRIAL_TOKENS.steel, textTransform: 'uppercase' }}>
+                    {data.procurementSignatories.authorizer.title || 'Management Authorisation'}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : signature ? (
             <View style={{ flexDirection: 'row', marginBottom: gap(5) }}>
               <View style={{ width: 210, borderWidth: 0.75, borderColor: INDUSTRIAL_TOKENS.graphite, backgroundColor: 'rgba(255,255,255,0.45)', padding: 4 }}>
                 <Text style={{ fontFamily: font, fontSize: 5, color: INDUSTRIAL_TOKENS.steel, textTransform: 'uppercase', letterSpacing: 0.6, borderBottomWidth: 0.5, borderBottomColor: INDUSTRIAL_TOKENS.line, paddingBottom: 2 }}>

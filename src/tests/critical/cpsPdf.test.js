@@ -486,10 +486,12 @@ test('CPS customization capabilities enable accent color', () => {
   assert.equal(CPS_CAPABILITIES.documentFont, true)
 })
 
-test('CPS Forme font resolver falls back instead of registering WOFF shared fonts', async () => {
+test('CPS Forme font resolver integrates with shared font registry and falls back safely', async () => {
   resetFormeFontCache()
   const fontFamily = await ensureFormeFontFamily('Inter')
-  assert.equal(fontFamily, 'Helvetica')
+  assert.equal(fontFamily, 'Inter')
+  const fallback = await ensureFormeFontFamily('UnknownLegacyWoffFont')
+  assert.equal(fallback, 'Helvetica')
 })
 
 test('CPS PDF diagnostics preserve pipeline stage and cause', () => {

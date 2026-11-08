@@ -248,7 +248,7 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
           {/* Bill To */}
           <View style={{ flex: 1, backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: compact ? 6 : 8 }}>
             <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldPale, paddingBottom: 2 }}>
-              {'CLIENT INFORMATION · BILL TO'}
+              {data.isProcurement ? (data.partyHeaderLabel || 'SUPPLIER INFORMATION · ORDER FROM') : 'CLIENT INFORMATION · BILL TO'}
             </Text>
             {clientLineMap.get('name') ? (
               <Text style={{ fontFamily: headerFont, fontSize: 9.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest, marginBottom: 2 }}>
@@ -476,6 +476,29 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
                 {renderBankRow('Account Name', data.paymentDetails.accountName, font, headerFont)}
                 {renderBankRow('Sort Code', data.paymentDetails.sortCode, font, headerFont)}
               </View>
+            ) : data.isProcurement ? (
+              data.deliveryDestination ? (
+                <View style={{ backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: compact ? 6 : 7 }}>
+                  <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
+                    {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
+                  </Text>
+                  {data.deliveryDestination.site ? (
+                    <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest, marginBottom: 2 }}>
+                      {data.deliveryDestination.site}
+                    </Text>
+                  ) : null}
+                  {(data.deliveryDestination.addressLines || []).map((line, idx) => (
+                    <Text key={'dest-line-' + idx} style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.grayText, marginBottom: 1 }}>
+                      {line}
+                    </Text>
+                  ))}
+                  {data.deliveryDestination.contactPerson ? (
+                    <Text style={{ fontFamily: font, fontSize: 6.5, color: EXECUTIVE_TOKENS.mutedText, marginTop: 2 }}>
+                      Contact: {data.deliveryDestination.contactPerson} {data.deliveryDestination.phone ? '(' + data.deliveryDestination.phone + ')' : ''}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null
             ) : (
               <View style={{ backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: 8, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
@@ -524,31 +547,35 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
         <View style={{ flexDirection: 'row', gap: 12, marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 0.5, borderTopColor: EXECUTIVE_TOKENS.goldLight }} wrap={false}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: EXECUTIVE_TOKENS.gold, marginBottom: 2 }}>
-              {'Executive Authorised Signatory'}
+              {data.isProcurement ? (data.procurementSignatories?.requisitioner?.label || 'Purchasing Officer / Requisitioner') : 'Executive Authorised Signatory'}
             </Text>
-            {data.signature?.imageUrl ? (
-              <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 80, height: 26, marginVertical: 2 }} />
+            {(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) ? (
+              <Image src={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} href={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} style={{ width: 80, height: 26, marginVertical: 2 }} />
             ) : (
               <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldLight, marginBottom: 2 }} />
             )}
             <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
-              {safeText(data.signature?.name || companyLineMap.get('name') || 'Authorised Signatory')}
+              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.name : data.signature?.name) || companyLineMap.get('name') || 'Authorised Signatory')}
             </Text>
             <Text style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.mutedText }}>
-              {safeText(data.signature?.role || 'Authorised Executive')}
+              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.title : data.signature?.role) || (data.isProcurement ? 'Purchasing Officer' : 'Authorised Executive'))}
             </Text>
           </View>
 
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: EXECUTIVE_TOKENS.gold, marginBottom: 2 }}>
-              {'Client Executive Acknowledgment'}
+              {data.isProcurement ? (data.procurementSignatories?.authorizer?.label || 'Management / Finance Authorisation') : 'Client Executive Acknowledgment'}
             </Text>
-            <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldLight, marginBottom: 2 }} />
+            {(data.isProcurement && data.procurementSignatories?.authorizer?.signatureUrl) ? (
+              <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 80, height: 26, marginVertical: 2 }} />
+            ) : (
+              <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldLight, marginBottom: 2 }} />
+            )}
             <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
-              {'Acknowledged & Counter-signed'}
+              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.name : null) || (data.isProcurement ? 'Authorised By' : 'Acknowledged & Counter-signed'))}
             </Text>
             <Text style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.mutedText }}>
-              {'Signature & Official Seal'}
+              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.title : null) || (data.isProcurement ? 'Management Authorisation' : 'Signature & Official Seal'))}
             </Text>
           </View>
         </View>

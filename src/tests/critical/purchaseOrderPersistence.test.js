@@ -166,6 +166,9 @@ const RPC_NAME = 'save_purchase_order_with_items_transaction'
 /** A PostgREST-shaped success, echoing back what the RPC was handed. */
 function successRpc(id = 'po-created') {
   return (name, args, store) => {
+    if (name !== RPC_NAME) {
+      return { data: null, error: null }
+    }
     const payload = args.p_purchase_order_payload
     store.purchaseOrders.push({
       id,
@@ -221,12 +224,13 @@ test('po save: create writes the header and items in one transactional call', as
   assert.equal(result.data.id, 'po-created')
 
   // Exactly one write authority, and it is the PO transaction.
-  assert.equal(client.calls.rpc.length, 1)
-  assert.equal(client.calls.rpc[0].name, RPC_NAME)
-  assert.equal(client.calls.rpc[0].args.p_mode, 'create')
-  assert.equal(client.calls.rpc[0].args.p_entity_id, 'entity-1')
+  const saveCalls = client.calls.rpc.filter((call) => call.name === RPC_NAME)
+  assert.equal(saveCalls.length, 1)
+  assert.equal(saveCalls[0].name, RPC_NAME)
+  assert.equal(saveCalls[0].args.p_mode, 'create')
+  assert.equal(saveCalls[0].args.p_entity_id, 'entity-1')
 
-  const payload = client.calls.rpc[0].args.p_purchase_order_payload
+  const payload = saveCalls[0].args.p_purchase_order_payload
   assert.equal(payload.po_number, 'PO-000001')
   assert.equal(payload.supplier_id, 'supplier-1')
   assert.equal(payload.status, 'draft')
@@ -280,6 +284,9 @@ test('po save: an automatic collision retries a fresh candidate', async () => {
   let attempt = 0
   const client = createFakeTenantClient({
     rpc: (name, args, store) => {
+      if (name !== RPC_NAME) {
+        return { data: null, error: null }
+      }
       attempt += 1
       if (attempt === 1) {
         // Another save won the race and committed this number.
@@ -296,10 +303,11 @@ test('po save: an automatic collision retries a fresh candidate', async () => {
   const result = await savePurchaseOrder(client, 'entity-1', draftFor())
 
   assert.equal(result.error, null)
-  assert.equal(client.calls.rpc.length, 2, 'the loser must retry')
+  const saveCalls = client.calls.rpc.filter((call) => call.name === RPC_NAME)
+  assert.equal(saveCalls.length, 2, 'the loser must retry')
 
-  const first = client.calls.rpc[0].args.p_purchase_order_payload.po_number
-  const second = client.calls.rpc[1].args.p_purchase_order_payload.po_number
+  const first = saveCalls[0].args.p_purchase_order_payload.po_number
+  const second = saveCalls[1].args.p_purchase_order_payload.po_number
   assert.notEqual(first, second, 'the retry must use a fresh candidate')
   assert.equal(result.data.po_number, second)
 })
@@ -415,15 +423,16 @@ test('po save: update allows a legal transition and sends no identity fields', a
   const result = await savePurchaseOrder(client, 'entity-1', params)
 
   assert.equal(result.error, null)
-  assert.equal(client.calls.rpc.length, 1)
-  assert.equal(client.calls.rpc[0].args.p_mode, 'update')
-  assert.equal(client.calls.rpc[0].args.p_purchase_order_payload.id, 'po-1')
+  const saveCalls = client.calls.rpc.filter((call) => call.name === RPC_NAME)
+  assert.equal(saveCalls.length, 1)
+  assert.equal(saveCalls[0].args.p_mode, 'update')
+  assert.equal(saveCalls[0].args.p_purchase_order_payload.id, 'po-1')
 
   // The stored number is the authoritative one and is reported back.
   assert.equal(result.data.id, 'po-1')
   assert.equal(result.data.po_number, 'PO-000001')
-  assert.equal(client.calls.rpc[0].args.p_purchase_order_payload.status, 'issued')
-  assert.equal('supplier_name' in client.calls.rpc[0].args.p_purchase_order_payload, false)
+  assert.equal(saveCalls[0].args.p_purchase_order_payload.status, 'issued')
+  assert.equal('supplier_name' in saveCalls[0].args.p_purchase_order_payload, false)
 
   // The number is immutable identity, so a manual number is ignored on update
   // and the automatic cursor is never touched.
@@ -555,7 +564,10 @@ test('po isolation: the save path never writes an accounting or inventory row', 
     assert.equal(FORBIDDEN_TABLES.includes(table), false, `unexpected table access: ${table}`)
   }
   for (const call of client.calls.rpc) {
-    assert.equal(call.name, RPC_NAME, `unexpected rpc: ${call.name}`)
+    assert.ok(
+      call.name === RPC_NAME || call.name === 'record_audit_log',
+      `unexpected rpc: ${call.name}`,
+    )
   }
   for (const update of client.calls.updates) {
     assert.notEqual(update.table, 'purchase_orders')

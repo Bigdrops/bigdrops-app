@@ -225,9 +225,10 @@ test('po lifecycle: a draft content update carries the loaded write stamp', asyn
   const result = await savePurchaseOrder(client, 'entity-1', updateFor('po-1', 'draft'))
 
   assert.equal(result.error, null)
-  assert.equal(client.calls.rpc.length, 1)
+  const saveCalls = client.calls.rpc.filter((call) => call.name === SAVE_RPC)
+  assert.equal(saveCalls.length, 1)
   assert.equal(
-    client.calls.rpc[0].args.p_expected_updated_at,
+    saveCalls[0].args.p_expected_updated_at,
     '2026-10-15T10:00:00.000Z',
     'the save must prove it loaded current state',
   )

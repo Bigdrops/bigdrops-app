@@ -1,5 +1,6 @@
 import { Cell, Document, Fixed, Image, Page, Row, Table, Text, View } from '@formepdf/react'
 import type { CpsPdfColumnKey, CpsPdfGroup, CpsPdfModel, CpsPdfRow } from '../cpsPreparedModel'
+import { renderFormeRichText } from './formeRichText'
 
 const INK = '#101828'
 const MUTED = '#667085'
@@ -115,8 +116,11 @@ function DocNotes({ model, font }: { model: CpsPdfModel; font: string }) {
   if (!model.notes) return null
   return (
     <View wrap={false} style={{ marginTop: 10 }}>
-      <Text style={{ fontFamily: font, fontSize: 9, fontWeight: 700 }}>Notes</Text>
-      <Text style={{ fontFamily: font, fontSize: 9, color: MUTED }}>{model.notes}</Text>
+      <Text style={{ fontFamily: font, fontSize: 9, fontWeight: 700, marginBottom: 4 }}>Notes</Text>
+      {renderFormeRichText(model.notes, {
+        font,
+        paragraphStyle: { fontFamily: font, fontSize: 9, color: MUTED, lineHeight: 1.35 },
+      })}
     </View>
   )
 }

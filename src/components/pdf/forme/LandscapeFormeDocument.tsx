@@ -37,6 +37,8 @@ import {
   ReferencesSection,
   AdditionalFieldsSection,
   SignatureBlock,
+  DeliveryDestinationBlock,
+  ProcurementSignatureBlock,
   type SummaryRow,
 } from './landscape/landscapeClosing'
 
@@ -123,7 +125,7 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
     rowTwoBlocks.push({
       key: 'client',
       weight: 1.4,
-      node: <ClientBlock client={client} scale={scale} />,
+      node: <ClientBlock client={client} scale={scale} label={data.isProcurement ? (data.partyHeaderLabel || 'Order From · Supplier') : 'Client'} />,
     })
   }
   if (detailPairs.length > 0) {
@@ -150,9 +152,10 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
         }
       : null
   const bankDetails = data.showBankDetails ? data.paymentDetails : null
+  const deliveryDestination = data.isProcurement ? data.deliveryDestination : null
 
   const hasLedger = totalsLines.length > 0 || advanceSummary !== null
-  const hasSummaryPanel = mainTotal !== null || amountInWords !== null || bankDetails !== null
+  const hasSummaryPanel = mainTotal !== null || amountInWords !== null || bankDetails !== null || deliveryDestination !== null
   const hasClosing = hasLedger || hasSummaryPanel
 
   const ledgerColumnWidth = Math.round(contentWidth * 0.52 * 100) / 100
@@ -336,6 +339,7 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
                       accent={accent}
                     />
                     {bankDetails ? <BankDetailsBlock bankDetails={bankDetails} scale={scale} /> : null}
+                    {deliveryDestination ? <DeliveryDestinationBlock deliveryDestination={deliveryDestination} scale={scale} /> : null}
                   </Cell>
                   <Cell style={{ padding: scale.pad(7) }}>
                     <SummaryPanel
@@ -382,7 +386,7 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
         <AdditionalFieldsSection fields={additionalFields} width={contentWidth} scale={scale} accent={accent} />
 
         {/* Signature & Verification Block */}
-        {signature || footerNote ? (
+        {(data.isProcurement && data.procurementSignatories) || signature || footerNote ? (
           <View
             wrap={false}
             style={{
@@ -401,7 +405,11 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
                 </View>
               ) : null}
             </View>
-            <SignatureBlock signature={signature} scale={scale} />
+            {data.isProcurement && data.procurementSignatories ? (
+              <ProcurementSignatureBlock procurementSignatories={data.procurementSignatories} scale={scale} />
+            ) : (
+              <SignatureBlock signature={signature} scale={scale} />
+            )}
           </View>
         ) : null}
       </Page>

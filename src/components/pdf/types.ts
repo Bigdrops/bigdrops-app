@@ -1,6 +1,6 @@
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
-export type PdfDocumentKind = 'invoice' | 'quotation'
+export type PdfDocumentKind = 'invoice' | 'quotation' | 'purchase_order'
 
 export type PdfTextAlign = 'left' | 'center' | 'right'
 
@@ -83,6 +83,7 @@ export type PdfLineItem = {
   quantity?: number | null
   unit?: string | null
   unitPrice?: number | null
+  unitCost?: number | null
   installRate?: number | null
   vatRate?: number | null
   discountRate?: number | null
@@ -212,4 +213,10 @@ export type QuotationPdfModel = PdfBaseDocumentModel & {
   }
 }
 
-export type PdfDocumentModel = InvoicePdfModel | QuotationPdfModel
+export type PurchaseOrderPdfModel = PdfBaseDocumentModel & {
+  identity: PdfDocumentIdentity & {
+    kind: 'purchase_order'
+  }
+}
+
+export type PdfDocumentModel = InvoicePdfModel | QuotationPdfModel | PurchaseOrderPdfModel

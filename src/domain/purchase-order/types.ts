@@ -1,7 +1,7 @@
 // ============================================================================
 // SUPPLIER PURCHASE ORDER DOMAIN — types, statuses and factories
 // ============================================================================
-// A Supplier Purchase Order is an OUTGOING procurement commitment: BOURXE
+// A Supplier Purchase Order is an OUTGOING procurement commitment: BOUXRE
 // issues it TO a supplier to request goods or services at agreed costs.
 //
 // It is NOT a sales invoice, a quotation, a customer order, an expense
@@ -165,6 +165,10 @@ export function createEmptyPurchaseOrderItem(sortOrder = 0): PurchaseOrderItem {
     unit_cost: 0,
     line_total: 0,
     sort_order: sortOrder,
+    _uiKey:
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `po-item-${sortOrder}-${Math.random().toString(36).slice(2, 9)}`,
   }
 }
 
@@ -291,8 +295,9 @@ export function isPurchaseOrderStatus(value: unknown): value is PurchaseOrderSta
 
 /** Normalise a stored item row into the domain shape. */
 export function toPurchaseOrderItem(row: Record<string, unknown>): PurchaseOrderItem {
+  const id = (row.id as string) ?? undefined
   return {
-    id: (row.id as string) ?? undefined,
+    id,
     purchase_order_id: (row.purchase_order_id as string) ?? undefined,
     description: String(row.description ?? ''),
     quantity: finiteNumber(row.quantity, 0),
@@ -302,5 +307,6 @@ export function toPurchaseOrderItem(row: Record<string, unknown>): PurchaseOrder
     sort_order: finiteNumber(row.sort_order, 0),
     created_at: (row.created_at as string | null) ?? null,
     updated_at: (row.updated_at as string | null) ?? null,
+    _uiKey: (row._uiKey as string) || id || undefined,
   }
 }

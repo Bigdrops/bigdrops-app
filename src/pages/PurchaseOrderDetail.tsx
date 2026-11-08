@@ -6,6 +6,7 @@ import {
   Ban,
   CheckCheck,
   ChevronDown,
+  Download,
   History,
   Pencil,
   Plus,
@@ -36,6 +37,9 @@ import {
 } from '@/domain/purchase-order/types'
 import { formatCurrency } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { renderRichTextContent } from '@/lib/richText'
+import { useSettings } from '@/hooks/useSettings'
+import { preparePurchaseOrderDocument } from '@/domain/pdf/resolver/commercial/preparePurchaseOrderDocument'
+import { generatePurchaseOrderPdf } from '@/components/pdf'
 
 const RICH_TEXT_MARKUP = /<\/?(?:p|div|br|strong|b|em|i|u|ul|ol|li|h[1-6])(?:\s[^<>]*)?\/?>/i
 
@@ -90,6 +94,8 @@ export default function PurchaseOrderDetail() {
   const canEdit = hasAuthorization('purchase_order', 'edit')
   const entityId = entity?.id ?? null
 
+  const { settings } = useSettings()
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -182,6 +188,25 @@ export default function PurchaseOrderDetail() {
     feedback.success('Purchase order restored with its original status')
   }
 
+  const handleDownloadPdf = async () => {
+    if (!purchaseOrder) return
+    try {
+      setDownloadingPdf(true)
+      const prepared = preparePurchaseOrderDocument(purchaseOrder, {
+        settings: (settings || {}) as Record<string, unknown>,
+      })
+      await generatePurchaseOrderPdf({
+        model: prepared,
+        templateId: (purchaseOrder as any).custom_fields?.pdfTemplateId || 'industry',
+      })
+      feedback.success('Purchase order PDF downloaded')
+    } catch (err: any) {
+      feedback.error('Failed to generate PDF: ' + (err?.message || String(err)))
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
+
   if (loading) {
     return (
       <Layout title="Purchase Order" session={null} hidePageHeader>
@@ -233,16 +258,29 @@ export default function PurchaseOrderDetail() {
                   {archived ? 'Archived' : PURCHASE_ORDER_STATUS_LABELS[purchaseOrder.status]}
                 </Badge>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs font-semibold"
-                onClick={() => navigate('/purchase-orders/new')}
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                New Purchase Order
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs font-semibold"
+                  disabled={downloadingPdf}
+                  onClick={() => void handleDownloadPdf()}
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  {downloadingPdf ? 'Generating…' : 'Download PDF'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs font-semibold"
+                  onClick={() => navigate('/purchase-orders/new')}
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  New Purchase Order
+                </Button>
+              </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
               <div>

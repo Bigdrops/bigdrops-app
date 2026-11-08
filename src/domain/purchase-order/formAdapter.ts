@@ -59,20 +59,22 @@ export function toPurchaseOrderFormItems(purchaseOrder: PurchaseOrder): Purchase
     sort_order: index,
     _uiKey:
       item._uiKey ||
-      (typeof item.id === 'string' && item.id ? item.id : `po-new-${index}-${Date.now()}`),
+      (typeof item.id === 'string' && item.id ? item.id : `po-item-${index}`),
   }))
 }
 
 /** A blank PO line for the editor. */
 export function createPurchaseOrderFormItem(sortOrder = 0): PurchaseOrderFormItem {
+  const empty = createEmptyPurchaseOrderItem(sortOrder)
   return {
-    ...createEmptyPurchaseOrderItem(sortOrder),
+    ...empty,
     row_type: 'standard' as const,
     unit_price: 0,
     _uiKey:
-      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      empty._uiKey ||
+      (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
         ? crypto.randomUUID()
-        : `po-new-${sortOrder}-${Date.now()}`,
+        : `po-item-${sortOrder}-${Math.random().toString(36).slice(2, 9)}`),
   }
 }
 

@@ -4,7 +4,7 @@ import type React from 'react'
  * Supported document families on the new PDFCN rendering path.
  * Extensible for future document types without CSR-specific branching.
  */
-export type PdfcnDocumentType = 'csr' | 'invoice' | 'quotation' | 'waybill' | 'cps' | (string & {})
+export type PdfcnDocumentType = 'csr' | 'invoice' | 'quotation' | 'purchase_order' | 'waybill' | 'cps' | (string & {})
 
 export type PdfcnPageOrientation = 'portrait' | 'landscape'
 

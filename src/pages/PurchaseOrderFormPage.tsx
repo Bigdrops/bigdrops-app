@@ -215,7 +215,7 @@ export default function PurchaseOrderFormPage({ mode }: PurchaseOrderFormPagePro
     setPo((current) => {
       const items = current.items ?? []
       const formItem = createPurchaseOrderFormItem(items.length)
-      const { row_type: _rowType, unit_price: _unitPrice, _uiKey, ...domainItem } = formItem
+      const { row_type: _rowType, unit_price: _unitPrice, ...domainItem } = formItem
       return { ...current, items: [...items, domainItem as PurchaseOrderItem] }
     })
   }, [markDirty])
@@ -252,7 +252,7 @@ export default function PurchaseOrderFormPage({ mode }: PurchaseOrderFormPagePro
       setPo((current) => {
         const items = [...(current.items ?? [])]
         const formItem = createPurchaseOrderFormItem(index + 1)
-        const { row_type: _rowType, unit_price: _unitPrice, _uiKey, ...domainItem } = formItem
+        const { row_type: _rowType, unit_price: _unitPrice, ...domainItem } = formItem
         items.splice(index + 1, 0, domainItem as PurchaseOrderItem)
         return { ...current, items }
       })
