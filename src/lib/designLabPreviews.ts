@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, ClipboardList, FileText, LayoutDashboard, PanelsTopLeft, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Network, PanelsTopLeft, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -65,5 +65,14 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/csr-theme',
     icon: ClipboardList,
     capabilities: ['5 themes', 'Light/Dark', '6 viewports', 'Form preview'],
+  },
+  {
+    id: 'cold-launch-tree',
+    name: 'Cold Launch Tenant Tree',
+    eyebrow: 'Startup',
+    description: 'Production tenant-tree boot presentation with theme, network, and layout simulation.',
+    route: '/design-lab/cold-launch',
+    icon: Network,
+    capabilities: ['Tenant tree', '5 themes', 'Light/Dark', 'Network states', 'Quick Tips'],
   },
 ]

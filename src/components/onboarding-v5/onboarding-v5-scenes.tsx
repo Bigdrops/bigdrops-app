@@ -1,71 +1,177 @@
+import * as React from 'react'
+
 export type WorldStage = 'arrival' | 'workspaces' | 'commercial' | 'finance' | 'logistics' | 'field' | 'conversion' | 'auth'
+
+/**
+ * Polyfork 3D Character models from the Polyfork parametric asset library.
+ * Each character is real-world scaled (meters), flat-shaded, low-poly (under 5k tris),
+ * and authored to represent key operational roles across SME business functions.
+ */
+export interface PolyforkCharacterSpec {
+  id: string
+  title: string
+  kit: string
+  triangles: number
+  heroRender: string
+  pageUrl: string
+  role: string
+}
+
+export const POLYFORK_CHARACTERS = {
+  fieldTechnician: {
+    id: 'construction-worker-c1ad8c',
+    title: 'Site Technician',
+    kit: 'nyc-city-kit-fbca88',
+    triangles: 3861,
+    heroRender: 'https://polyfork.dev/files/construction-worker-c1ad8c/renders/hero.png',
+    pageUrl: 'https://polyfork.dev/asset/construction-worker-c1ad8c',
+    role: 'Electrical & Equipment Maintenance',
+  },
+  deliveryCourier: {
+    id: 'delivery-courier-327e30',
+    title: 'Fleet Courier',
+    kit: 'nyc-city-kit-fbca88',
+    triangles: 3523,
+    heroRender: 'https://polyfork.dev/files/delivery-courier-327e30/renders/hero.png',
+    pageUrl: 'https://polyfork.dev/asset/delivery-courier-327e30',
+    role: 'Dispatch & Waybill Delivery',
+  },
+  retailMerchant: {
+    id: 'shopkeeper-be5547',
+    title: 'Store Merchant',
+    kit: 'japanese-suburban-city-street-baa482',
+    triangles: 4347,
+    heroRender: 'https://polyfork.dev/files/shopkeeper-be5547/renders/hero.png',
+    pageUrl: 'https://polyfork.dev/asset/shopkeeper-be5547',
+    role: 'Stock & Point of Sale',
+  },
+  commercialAdvisor: {
+    id: 'standing-worker-on-a-8a0f9a',
+    title: 'Commercial Lead',
+    kit: 'office-794453',
+    triangles: 2969,
+    heroRender: 'https://polyfork.dev/files/standing-worker-on-a-8a0f9a/renders/hero.png',
+    pageUrl: 'https://polyfork.dev/asset/standing-worker-on-a-8a0f9a',
+    role: 'Quotation & Client Handoff',
+  },
+  financeAccountant: {
+    id: 'seated-office-worker-854671',
+    title: 'Finance Controller',
+    kit: 'office-794453',
+    triangles: 3027,
+    heroRender: 'https://polyfork.dev/files/seated-office-worker-854671/renders/hero.png',
+    pageUrl: 'https://polyfork.dev/asset/seated-office-worker-854671',
+    role: 'Reconciliation & Tax Review',
+  },
+} as const
+
+function PolyforkFigure({
+  character,
+  className = '',
+  badgeLabel,
+}: {
+  character: PolyforkCharacterSpec
+  className?: string
+  badgeLabel?: string
+}) {
+  return (
+    <div className={`ob5-poly-figure ${className}`} title={`${character.title} (${character.triangles} tris)`}>
+      <div className="ob5-poly-wrap">
+        <div className="ob5-poly-shadow" />
+        <img
+          src={character.heroRender}
+          alt={character.title}
+          loading="eager"
+          className="ob5-poly-img"
+        />
+      </div>
+      <div className="ob5-poly-badge">
+        <span>3D</span> {badgeLabel || character.title}
+      </div>
+    </div>
+  )
+}
 
 function ElectricalEnvironment() {
   return (
-    <svg viewBox="0 0 320 290" aria-hidden="true">
-      <defs>
-        <linearGradient id="ob5-electrical-metal" x2="1" y2="1">
-          <stop stopColor="var(--ob5-raised)" />
-          <stop offset="1" stopColor="var(--ob5-deep)" />
-        </linearGradient>
-      </defs>
-      <path className="ob5-environment-floor" d="M0 246h320v44H0z" />
-      <path className="ob5-electrical-shadow" d="M26 55h196v182H26z" />
-      <path className="ob5-electrical-cabinet" d="M35 45h178v190H35z" />
-      <path className="ob5-electrical-seam" d="M125 45v190M40 119h169M40 168h169" />
-      <path className="ob5-electrical-panel" d="M52 61h56v42H52zM140 61h56v42h-56zM52 130h56v26H52zM140 130h56v26h-56z" />
-      <path className="ob5-electrical-cable" d="M79 104v65c0 25 24 20 24 42M165 104v40c0 43 44 31 44 66" />
-      <circle className="ob5-electrical-live" cx="79" cy="82" r="6" />
-      <circle className="ob5-electrical-live ob5-electrical-live--two" cx="166" cy="82" r="6" />
-      <path className="ob5-technician-body" d="M235 152q10-26 31-26t30 26l-8 57h-45z" />
-      <circle className="ob5-technician-face" cx="265" cy="111" r="20" />
-      <path className="ob5-technician-hardhat" d="M242 107q1-28 23-28t24 28z" />
-      <path className="ob5-technician-limb" d="M245 172l-27 29M287 168l15 24M253 206l-9 47M281 206l8 47" />
-      <path className="ob5-technician-tool" d="m212 194 19-16 7 9-19 16z" />
-    </svg>
+    <div className="relative w-full h-full">
+      <svg viewBox="0 0 320 290" aria-hidden="true" className="absolute inset-0 w-full h-full">
+        <defs>
+          <linearGradient id="ob5-electrical-metal" x2="1" y2="1">
+            <stop stopColor="var(--ob5-raised)" />
+            <stop offset="1" stopColor="var(--ob5-deep)" />
+          </linearGradient>
+        </defs>
+        <path className="ob5-environment-floor" d="M0 246h320v44H0z" />
+        <path className="ob5-electrical-shadow" d="M26 55h160v182H26z" />
+        <path className="ob5-electrical-cabinet" d="M35 45h150v190H35z" />
+        <path className="ob5-electrical-seam" d="M110 45v190M40 119h140M40 168h140" />
+        <path className="ob5-electrical-panel" d="M48 61h50v42H48zM122 61h50v42h-50zM48 130h50v26H48zM122 130h50v26h-50z" />
+        <path className="ob5-electrical-cable" d="M72 104v65c0 25 22 20 22 42M145 104v40c0 43 36 31 36 66" />
+        <circle className="ob5-electrical-live" cx="72" cy="82" r="6" />
+        <circle className="ob5-electrical-live ob5-electrical-live--two" cx="146" cy="82" r="6" />
+      </svg>
+      <PolyforkFigure
+        character={POLYFORK_CHARACTERS.fieldTechnician}
+        className="right-[6%] bottom-[8%] w-[42%] h-[78%]"
+        badgeLabel="Site tech"
+      />
+    </div>
   )
 }
 
 function FleetEnvironment() {
   return (
-    <svg viewBox="0 0 320 290" aria-hidden="true">
-      <path className="ob5-fleet-horizon" d="M0 69h320v127H0z" />
-      <path className="ob5-fleet-depot" d="M18 77h146v121H18zM37 110h106v88H37z" />
-      <path className="ob5-fleet-depot-lines" d="M20 94h143M48 126h86M48 148h86" />
-      <path className="ob5-fleet-road" d="M0 204h320v86H0z" />
-      <path className="ob5-fleet-roadline" d="M0 253h320" />
-      <g className="ob5-fleet-vehicle">
-        <path className="ob5-fleet-trailer" d="M75 145h141v77H75z" />
-        <path className="ob5-fleet-cab" d="M216 165h47l30 28v29h-77z" />
-        <path className="ob5-fleet-window" d="M232 173h27l19 18h-46z" />
-        <path className="ob5-fleet-door" d="M89 157h54v50H89z" />
-        <circle className="ob5-fleet-wheel" cx="111" cy="222" r="17" />
-        <circle className="ob5-fleet-wheel" cx="251" cy="222" r="17" />
-        <path className="ob5-fleet-lamp" d="M289 204h8" />
-      </g>
-      <path className="ob5-fleet-route" d="M33 270h70m21 0h53m23 0h52" />
-    </svg>
+    <div className="relative w-full h-full">
+      <svg viewBox="0 0 320 290" aria-hidden="true" className="absolute inset-0 w-full h-full">
+        <path className="ob5-fleet-horizon" d="M0 69h320v127H0z" />
+        <path className="ob5-fleet-depot" d="M18 77h146v121H18zM37 110h106v88H37z" />
+        <path className="ob5-fleet-depot-lines" d="M20 94h143M48 126h86M48 148h86" />
+        <path className="ob5-fleet-road" d="M0 204h320v86H0z" />
+        <path className="ob5-fleet-roadline" d="M0 253h320" />
+        <g className="ob5-fleet-vehicle">
+          <path className="ob5-fleet-trailer" d="M110 145h120v77H110z" />
+          <path className="ob5-fleet-cab" d="M230 165h42l26 28v29h-68z" />
+          <path className="ob5-fleet-window" d="M244 173h24l16 18h-40z" />
+          <path className="ob5-fleet-door" d="M122 157h48v50h-48z" />
+          <circle className="ob5-fleet-wheel" cx="142" cy="222" r="17" />
+          <circle className="ob5-fleet-wheel" cx="260" cy="222" r="17" />
+          <path className="ob5-fleet-lamp" d="M294 204h8" />
+        </g>
+        <path className="ob5-fleet-route" d="M33 270h70m21 0h53m23 0h52" />
+      </svg>
+      <PolyforkFigure
+        character={POLYFORK_CHARACTERS.deliveryCourier}
+        className="left-[6%] bottom-[8%] w-[38%] h-[74%]"
+        badgeLabel="Courier"
+      />
+    </div>
   )
 }
 
 function RetailEnvironment() {
   return (
-    <svg viewBox="0 0 320 290" aria-hidden="true">
-      <path className="ob5-retail-wall" d="M0 42h320v206H0z" />
-      <path className="ob5-retail-floor" d="M0 245h320v45H0z" />
-      <path className="ob5-retail-shelf" d="M22 79h188v164H22z" />
-      <path className="ob5-retail-shelf-line" d="M22 130h188M22 184h188M22 238h188" />
-      <g className="ob5-retail-stock">
-        <path d="M36 96h30v31H36zM76 88h23v39H76zM111 99h29v28h-29zM151 92h39v35h-39z" />
-        <path d="M38 144h24v36H38zM73 153h34v27H73zM119 143h24v37h-24zM155 151h31v29h-31z" />
-        <path d="M40 199h40v35H40zM89 194h29v40H89zM132 200h23v34h-23zM166 194h25v40h-25z" />
-      </g>
-      <path className="ob5-retail-counter" d="M221 193h84v49h-84z" />
-      <path className="ob5-retail-register" d="M239 158h49v35h-49zM244 169h39" />
-      <circle className="ob5-retail-person" cx="265" cy="122" r="18" />
-      <path className="ob5-retail-person" d="M238 157q7-19 27-19t27 19v32h-54z" />
-      <path className="ob5-retail-scan" d="m218 176 21 15" />
-    </svg>
+    <div className="relative w-full h-full">
+      <svg viewBox="0 0 320 290" aria-hidden="true" className="absolute inset-0 w-full h-full">
+        <path className="ob5-retail-wall" d="M0 42h320v206H0z" />
+        <path className="ob5-retail-floor" d="M0 245h320v45H0z" />
+        <path className="ob5-retail-shelf" d="M22 79h160v164H22z" />
+        <path className="ob5-retail-shelf-line" d="M22 130h160M22 184h160M22 238h160" />
+        <g className="ob5-retail-stock">
+          <path d="M36 96h26v31H36zM70 88h20v39H70zM100 99h25v28h-25zM135 92h34v35h-34z" />
+          <path d="M38 144h22v36H38zM68 153h30v27H68zM108 143h22v37h-22zM140 151h28v29h-28z" />
+          <path d="M40 199h35v35H40zM84 194h26v40H84zM120 200h20v34h-20zM150 194h22v40h-22z" />
+        </g>
+        <path className="ob5-retail-counter" d="M195 193h110v49h-110z" />
+        <path className="ob5-retail-register" d="M205 158h44v35h-44zM210 169h34" />
+        <path className="ob5-retail-scan" d="m190 176 21 15" />
+      </svg>
+      <PolyforkFigure
+        character={POLYFORK_CHARACTERS.retailMerchant}
+        className="right-[6%] bottom-[8%] w-[40%] h-[76%]"
+        badgeLabel="Merchant"
+      />
+    </div>
   )
 }
 
@@ -119,6 +225,11 @@ function CommercialLayer() {
         </div>
         <div className="ob5-commercial-handoff">Request <span /> Quotation <span /> Approval</div>
       </div>
+      <PolyforkFigure
+        character={POLYFORK_CHARACTERS.commercialAdvisor}
+        className="ob5-commercial-advisor"
+        badgeLabel="Lead"
+      />
     </div>
   )
 }
@@ -173,6 +284,11 @@ function LogisticsLayer() {
         <b className="ob5-logistics-wheel ob5-logistics-wheel--rear" />
         <b className="ob5-logistics-wheel ob5-logistics-wheel--front" />
       </div>
+      <PolyforkFigure
+        character={POLYFORK_CHARACTERS.deliveryCourier}
+        className="left-[8%] bottom-[12%] w-[22%] h-[68%]"
+        badgeLabel="Driver"
+      />
       <div className="ob5-logistics-waybill"><span>WAYBILL</span><strong>Delivery handoff</strong><i /><i /></div>
       <div className="ob5-logistics-route"><span>Dispatch</span><i /><span>On route</span><i /><span>Handoff</span></div>
     </div>
@@ -188,14 +304,13 @@ function FieldLayer() {
         <div className="ob5-field-vents"><i /><i /><i /><i /></div>
         <div className="ob5-field-access"><i /></div>
       </div>
-      <svg className="ob5-field-worker" viewBox="0 0 230 370" aria-hidden="true">
-        <path className="ob5-field-shadow" d="M16 344h200" />
-        <circle cx="119" cy="72" r="29" className="ob5-field-face" />
-        <path d="M89 69q2-40 30-40t31 40z" className="ob5-field-helmet" />
-        <path d="M91 104h57l22 130H70z" className="ob5-field-uniform" />
-        <path d="m88 139-57 71m118-70 47 54M92 231l-18 110m74-110 22 110" className="ob5-field-limbs" />
-        <path d="m25 203 33-24 11 13-33 24z" className="ob5-field-tool" />
-      </svg>
+      <div className="ob5-field-worker">
+        <PolyforkFigure
+          character={POLYFORK_CHARACTERS.fieldTechnician}
+          className="relative w-full h-full"
+          badgeLabel="Technician"
+        />
+      </div>
       <div className="ob5-field-inspection"><span>INSPECTION</span><i /></div>
       <div className="ob5-field-report"><span>SERVICE REPORT</span><strong>Work completed</strong><i /><i /><b>Reviewed</b></div>
     </div>
