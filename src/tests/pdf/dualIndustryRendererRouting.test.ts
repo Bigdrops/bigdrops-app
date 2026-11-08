@@ -109,7 +109,9 @@ test('resolveCommercialPdfRoute keeps Industrial Forme, Industry Forme and retai
   assert.equal(resolveCommercialPdfRoute('industry-forme'), 'industry-forme', 'Explicit Forme normalises to industry and stays Forme')
   assert.equal(resolveCommercialPdfRoute('industry-react-pdf'), 'industry-forme', 'Retired Industry React-PDF routes to Industry Forme')
 
-  assert.equal(resolveCommercialPdfRoute('evergreen'), 'react-pdf')
+  assert.equal(resolveCommercialPdfRoute('evergreen'), 'evergreen-forme')
+  assert.equal(resolveCommercialPdfRoute('evergreen', 'forme'), 'evergreen-forme')
+  assert.equal(resolveCommercialPdfRoute('evergreen', 'react-pdf'), 'evergreen-forme', 'Evergreen is Forme-only')
   assert.equal(resolveCommercialPdfRoute('crest'), 'industry-forme', 'Retired Crest routes to Industry Forme default')
 
   assert.equal(resolveCommercialPdfRoute('landscape'), 'landscape-forme')

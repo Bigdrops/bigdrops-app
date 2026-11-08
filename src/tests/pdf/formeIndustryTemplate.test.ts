@@ -307,6 +307,8 @@ test('Retired commercial template files are physically deleted from the codebase
     'Minimal.tsx',
     'MinimalStyles.ts',
     'Industry.tsx',
+    'Evergreen.tsx',
+    'EvergreenStyles.ts',
   ]
 
   for (const file of deletedFiles) {
@@ -315,8 +317,7 @@ test('Retired commercial template files are physically deleted from the codebase
   }
 
   const retainedFiles = [
-    'Evergreen.tsx',
-    'EvergreenStyles.ts',
+    'industryStyles.ts',
   ]
 
   for (const file of retainedFiles) {

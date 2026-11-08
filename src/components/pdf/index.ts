@@ -1,8 +1,7 @@
 import React from 'react'
 import { normalizeInvoicePdfTemplateId } from '@/domain/invoice/types'
-import { registerPdfFonts } from '@/lib/pdfFontRegistry'
 import {
-  DefaultPdfGenerator, CompositePdfDelivery, WebPdfDelivery, NativePdfDelivery, DefaultFeedbackBus,
+  CompositePdfDelivery, WebPdfDelivery, NativePdfDelivery, DefaultFeedbackBus,
   type PdfDocumentType,
 } from '@/lib/pdf'
 import { adaptCommercialDocumentData } from './industryAdapter'
@@ -72,7 +71,7 @@ export type CommercialPdfRoute =
   | 'industry-forme'
   | 'landscape-forme'
   | 'minimal-forme'
-  | 'react-pdf'
+  | 'evergreen-forme'
 
 /**
  * Resolve which renderer handles a commercial template identifier.
@@ -80,9 +79,9 @@ export type CommercialPdfRoute =
  * - 'industrial' always uses the Forme Industrial renderer.
  * - 'industry' always uses the Forme Industry renderer.
  * - 'landscape' and 'minimal' always use their Forme renderers.
+ * - 'evergreen' always uses the Forme Evergreen renderer.
  * - Explicit 'industry-forme' normalizes to 'industry' and therefore also uses Forme.
  * - Retired 'modern-minimal' normalizes to 'minimal'.
- * - 'evergreen' uses React-PDF.
  * - Everything else defaults to Forme Industry.
  */
 export function resolveCommercialPdfRoute(
@@ -93,108 +92,82 @@ export function resolveCommercialPdfRoute(
   if (activeTemplateId === 'industrial') return 'industrial-forme'
   if (activeTemplateId === 'landscape') return 'landscape-forme'
   if (activeTemplateId === 'minimal') return 'minimal-forme'
-  if (activeTemplateId === 'evergreen') return 'react-pdf'
+  if (activeTemplateId === 'evergreen') return 'evergreen-forme'
   return 'industry-forme'
 }
 
 async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>) {
-  const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
   const filename = resolveFilename(request.model, request.documentNumber)
   const docType = request.model.identity.kind as PdfDocumentType
 
   const route = resolveCommercialPdfRoute(request.templateId, request.engine)
-  const shouldUseForme = route !== 'react-pdf'
 
-  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal)
-  if (shouldUseForme) {
-    const [
-      IndustrialDocModule,
-      IndustryDocModule,
-      LandscapeDocModule,
-      MinimalDocModule,
-      { renderPdfcnToBytes },
-      { ensureFormeFontFamily },
-    ] = await Promise.all([
-      import('./forme/IndustrialFormeDocument'),
-      import('./forme/IndustryFormeDocument'),
-      import('./forme/LandscapeFormeDocument'),
-      import('./forme/MinimalFormeDocument'),
-      import('./pdfcn/adapter'),
-      import('./forme/fonts'),
-    ])
-
-    await Promise.all([
-      ensureFormeFontFamily('Inter'),
-      ensureFormeFontFamily('Archivo Black'),
-      ensureFormeFontFamily('Caveat'),
-      ensureFormeFontFamily('Noto Sans'),
-    ])
-
-    const adaptedData = adaptCommercialDocumentData(request.model as PdfDocumentModel)
-    let element: React.ReactElement
-    if (route === 'industrial-forme') {
-      element = React.createElement(IndustrialDocModule.IndustrialFormeDocument, {
-        data: adaptedData,
-        compact: request.compact,
-      })
-    } else if (route === 'landscape-forme') {
-      element = React.createElement(LandscapeDocModule.LandscapeFormeDocument, {
-        data: adaptedData,
-        compact: request.compact,
-      })
-    } else if (route === 'minimal-forme') {
-      element = React.createElement(MinimalDocModule.MinimalFormeDocument, {
-        data: adaptedData,
-        compact: request.compact,
-      })
-    } else {
-      element = React.createElement(IndustryDocModule.IndustryFormeDocument, {
-        data: adaptedData,
-        compact: request.compact,
-      })
-    }
-
-    const bytes = await renderPdfcnToBytes(element)
-    const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
-
-    return {
-      blob,
-      filename,
-      mimeType: 'application/pdf',
-      sizeBytes: blob.size,
-      documentType: docType,
-      metadata: {},
-    }
-  }
-
-  // Retained React-PDF Rendering Path (Evergreen)
+  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen)
   const [
-    { Document },
-    EvergreenModule,
+    IndustrialDocModule,
+    IndustryDocModule,
+    LandscapeDocModule,
+    MinimalDocModule,
+    EvergreenDocModule,
+    { renderPdfcnToBytes },
+    { ensureFormeFontFamily },
   ] = await Promise.all([
-    import('@react-pdf/renderer'),
-    import('./templates/Evergreen'),
+    import('./forme/IndustrialFormeDocument'),
+    import('./forme/IndustryFormeDocument'),
+    import('./forme/LandscapeFormeDocument'),
+    import('./forme/MinimalFormeDocument'),
+    import('./forme/EvergreenFormeDocument'),
+    import('./pdfcn/adapter'),
+    import('./forme/fonts'),
   ])
 
-  const Evergreen = EvergreenModule.default
-  registerPdfFonts()
+  await Promise.all([
+    ensureFormeFontFamily('Inter'),
+    ensureFormeFontFamily('Archivo Black'),
+    ensureFormeFontFamily('Caveat'),
+    ensureFormeFontFamily('Noto Sans'),
+  ])
 
-  const generator = new DefaultPdfGenerator(
-    () => React.createElement(Document, null, React.createElement(Evergreen, {
-      data: adaptCommercialDocumentData(request.model as PdfDocumentModel),
+  const adaptedData = adaptCommercialDocumentData(request.model as PdfDocumentModel)
+  let element: React.ReactElement
+  if (route === 'industrial-forme') {
+    element = React.createElement(IndustrialDocModule.IndustrialFormeDocument, {
+      data: adaptedData,
       compact: request.compact,
-    })),
-  )
+    })
+  } else if (route === 'landscape-forme') {
+    element = React.createElement(LandscapeDocModule.LandscapeFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  } else if (route === 'minimal-forme') {
+    element = React.createElement(MinimalDocModule.MinimalFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  } else if (route === 'evergreen-forme') {
+    element = React.createElement(EvergreenDocModule.EvergreenFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  } else {
+    element = React.createElement(IndustryDocModule.IndustryFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  }
 
-  const asset = await generator.generate({
-    template: activeTemplateId,
-    model: request.model,
+  const bytes = await renderPdfcnToBytes(element)
+  const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
+
+  return {
+    blob,
     filename,
+    mimeType: 'application/pdf',
+    sizeBytes: blob.size,
     documentType: docType,
-    options: { compact: request.compact },
-  })
-
-  return asset
+    metadata: {},
+  }
 }
 
 export async function generatePdfBlob<TModel extends PdfDocumentModel>(
@@ -327,6 +300,7 @@ export { IndustrialFormeDocument } from './forme/IndustrialFormeDocument'
 export { IndustryFormeDocument } from './forme/IndustryFormeDocument'
 export { LandscapeFormeDocument } from './forme/LandscapeFormeDocument'
 export { MinimalFormeDocument } from './forme/MinimalFormeDocument'
+export { EvergreenFormeDocument } from './forme/EvergreenFormeDocument'
 export {
   buildPdfRowCells,
   buildPdfTableColumns,

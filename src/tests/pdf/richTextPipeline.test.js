@@ -5,9 +5,7 @@ import path from 'node:path'
 
 import { normalizeRichTextHtml, richTextToPlainText } from '../../components/pdf/core/richText.ts'
 
-const commercialTemplatePath = fs.existsSync(path.resolve('src/components/pdf/templates/Evergreen.tsx'))
-  ? path.resolve('src/components/pdf/templates/Evergreen.tsx')
-  : path.resolve('src/components/pdf/forme/IndustryFormeDocument.tsx')
+const commercialTemplatePath = path.resolve('src/components/pdf/forme/EvergreenFormeDocument.tsx')
 const industryAdapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
 
 const sampleRichText = [

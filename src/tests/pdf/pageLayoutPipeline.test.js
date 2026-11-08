@@ -14,7 +14,7 @@ const invoicePreviewCssPath = path.resolve('src/components/document-view/shared/
 const quotationPreviewCssPath = path.resolve('src/components/document-view/quotation/QuotationDocumentPreview.css')
 
 const templatePaths = [
-  path.resolve('src/components/pdf/templates/Evergreen.tsx'),
+  path.resolve('src/components/pdf/forme/EvergreenFormeDocument.tsx'),
 ]
 
 test('table settings expose the computed pdf page layout', () => {
@@ -41,7 +41,8 @@ test('pdf adapter and templates use model layout instead of hardcoded portrait p
 
   for (const templatePath of templatePaths) {
     const source = fs.readFileSync(templatePath, 'utf8').replace(/\s+/g, ' ')
-    assert.match(source, /<Page size=\{data\.layout\?\.size \|\| ['"]A4['"]\} orientation=\{data\.layout\?\.orientation \|\| ['"]portrait['"]\}/, templatePath)
+    assert.match(source, /isLandscape = data\.layout\?\.orientation === ['"]landscape['"]/, templatePath)
+    assert.match(source, /<Page size=\{pageSize\}/, templatePath)
   }
 })
 
