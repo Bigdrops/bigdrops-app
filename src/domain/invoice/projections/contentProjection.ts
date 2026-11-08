@@ -22,9 +22,14 @@ export function buildDetailRowsProjection(
     ? customFieldObject.header.filter((field) => field?.label && field?.value)
     : []
 
+  const effectivePaymentTerms =
+    invoice.payment_terms === 'Custom' && invoice.custom_payment_terms
+      ? invoice.custom_payment_terms
+      : (invoice.payment_terms || invoice.custom_payment_terms || '')
+
   return [
     { label: 'PO Number', value: poNumber || '' },
-    { label: 'Payment Terms', value: invoice.payment_terms || '' },
+    { label: 'Payment Terms', value: effectivePaymentTerms },
     { label: 'Work Duration', value: invoice.work_duration || '' },
     ...topHeaderFields.map((field) => ({ label: field.label || '', value: field.value || '' })),
   ].filter((row) => String(row.value || '').trim().length > 0)
