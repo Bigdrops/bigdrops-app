@@ -378,7 +378,12 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
     showBankDetails: Boolean(model.bankDetails),
     company: model.issuer
         ? {
-          companyLogoUrl: resolveCanonicalLogoUrl(model.logo) || '',
+          companyLogoUrl:
+            resolveCanonicalLogoUrl(model.logo) ||
+            resolveCanonicalLogoUrl((model.issuer as any)?.logoUrl) ||
+            resolveCanonicalLogoUrl((model.issuer as any)?.companyLogoUrl) ||
+            (typeof (model as any)?.companyLogoUrl === 'string' ? (model as any).companyLogoUrl : '') ||
+            '',
           name: model.issuer.name || '',
           tagline: model.tagline || '',
           address: issuerAddress.address,

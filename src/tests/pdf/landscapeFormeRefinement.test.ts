@@ -10,7 +10,7 @@ import { adaptCommercialDocumentData } from '../../components/pdf/industryAdapte
 import { buildDetailRowsProjection } from '../../domain/invoice/projections/contentProjection'
 import type { PdfDocumentModel } from '../../components/pdf/types'
 
-function createSampleModel(): PdfDocumentModel {
+function createSampleModel(): any {
   return {
     identity: {
       id: 'doc-1',

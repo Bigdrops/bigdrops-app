@@ -18,7 +18,7 @@ import type { PdfDocumentModel } from '../../components/pdf/types'
 
 const SAMPLE_BASE64_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 
-function buildSampleInvoice(): PdfDocumentModel {
+function buildSampleInvoice(): any {
   return {
     identity: {
       id: 'inv-1',
@@ -148,7 +148,7 @@ function buildSampleInvoice(): PdfDocumentModel {
   }
 }
 
-function buildSampleQuotation(): PdfDocumentModel {
+function buildSampleQuotation(): any {
   const inv = buildSampleInvoice()
   return {
     ...inv,
@@ -166,7 +166,7 @@ function buildSampleQuotation(): PdfDocumentModel {
   }
 }
 
-function buildMultiPageInvoice(): PdfDocumentModel {
+function buildMultiPageInvoice(): any {
   const base = buildSampleInvoice()
   const items: any[] = []
   for (let g = 0; g < 3; g++) {
@@ -328,4 +328,47 @@ test('Retired React-PDF Evergreen files are physically deleted from disk', () =>
     const fullPath = path.join(templatesDir, file)
     assert.ok(!fs.existsSync(fullPath), `Retired file ${file} must not exist on disk`)
   }
+})
+
+test('adaptCommercialDocumentData correctly resolves companyLogoUrl from issuer.logoUrl fallback', () => {
+  const model = buildSampleInvoice()
+  delete (model as any).logo
+  assert.ok((model.issuer as any)?.logoUrl, 'issuer.logoUrl must be present in sample model')
+
+  const adapted = adaptCommercialDocumentData(model)
+  assert.equal(adapted.company?.companyLogoUrl, SAMPLE_BASE64_IMAGE, 'Fallback to issuer.logoUrl must succeed')
+})
+
+test('Evergreen Forme page margin is anchored at bottom 20 (compact 16) to prevent floating footer', () => {
+  const data = adaptCommercialDocumentData(buildSampleInvoice())
+  const regularTree: any = serialize(React.createElement(EvergreenFormeDocument, { data, compact: false }))
+  const compactTree: any = serialize(React.createElement(EvergreenFormeDocument, { data, compact: true }))
+
+  const regularPage = regularTree.children?.[0]
+  const compactPage = compactTree.children?.[0]
+
+  assert.equal(regularPage?.kind?.config?.margin?.bottom, 20, 'Regular layout bottom margin must be 20pt')
+  assert.equal(compactPage?.kind?.config?.margin?.bottom, 16, 'Compact layout bottom margin must be 16pt')
+})
+
+test('Evergreen Forme serializes logo in both header and footer when companyLogoUrl is available', () => {
+  const data = adaptCommercialDocumentData(buildSampleInvoice())
+  const tree: any = serialize(React.createElement(EvergreenFormeDocument, { data }))
+
+  function findImages(node: any, found: any[] = []): any[] {
+    if (!node || typeof node !== 'object') return found
+    if (node?.kind?.type === 'Image') found.push(node)
+    for (const val of Object.values(node)) {
+      if (Array.isArray(val)) {
+        val.forEach((item) => findImages(item, found))
+      } else if (typeof val === 'object') {
+        findImages(val, found)
+      }
+    }
+    return found
+  }
+
+  const images = findImages(tree)
+  const logoImages = images.filter((img) => img?.kind?.src === SAMPLE_BASE64_IMAGE)
+  assert.ok(logoImages.length >= 2, `Expected at least 2 company logo instances (header and footer), found ${logoImages.length}`)
 })

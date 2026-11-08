@@ -43,7 +43,7 @@
 | **M4** | **Commercial Reference Certification** | Full Quotation, Invoice, and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output. | CRIT | 🔄 IN PROGRESS | 40% | **GATE 3: Pre-Production Approval**. Commercial family certified for live traffic switchover. | M3 |
 | **M5** | **Remaining Document Families** | CPS font fix & resolver integration, CSR delivery integration, Waybill templates (Caveat font), Receipt, and RFQ migration. | HIGH | ⛔ PENDING | 0% | All 8 document types active on Forme; zero React-PDF traffic. | M4 |
 | **M6** | **Legacy Cleanup & Deprecation** | Verify zero React-PDF imports via AST analysis, remove obsolete adapters, uninstall `@react-pdf/renderer` from `package.json`. | MED | ⛔ PENDING | 0% | Repository clean; `@react-pdf/renderer` removed; typecheck clean. | M5 |
-| **M7** | **Evergreen Forme Migration and Legacy Retirement** | Migrate the existing Evergreen PDF template to the Forme architecture; preserve data, behaviour and pagination; verify against legacy output; retire obsolete implementation after verification. | CRIT | ⛔ PENDING | 0% | Legacy deletion gated by successful Forme verification. | M6 |
+| **M7** | **Evergreen Forme Migration and Legacy Retirement** | Migrate the existing Evergreen PDF template to the Forme architecture; preserve data, behaviour and pagination; verify against legacy output; retire obsolete implementation after verification. | CRIT | ✅ COMPLETE | 100% | Evergreen Forme Document live; legacy files retired; footer anchoring & logo fallbacks remediated. | M6 |
 | **M8** | **Landscape Rebuild from Scratch** | Rebuild the A4 Landscape template cleanly from scratch on Forme; support invoice and quotation rendering, multipage documents, repeated headers, footer placement, tables and closing sections; verify against representative documents. | HIGH | ⛔ PENDING | 0% | Retirement of the current Landscape implementation gated by fresh-rebuild verification and a documented retirement decision. | M7 |
 | **M9** | **Migrate Three Additional Commercial HTML Templates to Forme** | Migrate the three additional source commercial HTML designs individually to Forme, preserving each design identity; verify invoice and quotation output; retire source implementations only when replacements are verified and retirement is explicitly approved. | CRIT | ⛔ PENDING | 0% | Retire source implementations only when replacements are verified and retirement is explicitly approved. | M8 |
 | **M10** | **Purchase Order (PO) Template Integration** | Extend the migrated commercial template system to support Purchase Orders; reuse the shared Forme rendering architecture; respect PO-specific data, terminology, supplier/vendor relationships and document semantics; verify supported PO templates and document-specific output. | HIGH | ⛔ PENDING | 0% | Must follow completion of the commercial template migrations. | M9 |
@@ -219,22 +219,23 @@
 
 ---
 
-### Milestone M7: Evergreen Forme Migration and Legacy Retirement ⛔
-- **Objective:** Migrate the existing Evergreen PDF template to the Forme PDF rendering architecture.
+### Milestone M7: Evergreen Forme Migration and Legacy Retirement ✅
+- **Objective:** Migrate the existing Evergreen PDF template to the Forme PDF rendering architecture, retire obsolete legacy files, and remediate footer positioning and logo rendering.
 
-*Status:* ⛔ PENDING
-*% Done:* 0%
+*Status:* ✅ COMPLETE (2026-11-08)
+*% Done:* 100%
 
-**Planned Outcomes:**
+**Delivered Outcomes:**
 
-- Inspect and document the existing Evergreen template's functionality and design.
-- Reimplement Evergreen using Forme.
-- Preserve the required document data, rendering behaviour, and supported pagination.
-- Verify the Forme implementation against the legacy output.
-- After successful verification, permanently delete the obsolete Evergreen implementation and its dead routing/references.
-- Preserve shared dependencies still required by other templates.
+- Reimplemented Evergreen as `src/components/pdf/forme/EvergreenFormeDocument.tsx` (592 lines, strictly complying with the 600-line audit threshold).
+- Permanently removed legacy React-PDF files `src/components/pdf/templates/Evergreen.tsx` and `EvergreenStyles.ts` from disk and pruned obsolete dynamic imports.
+- Fixed floating footer defect: adjusted `Page margin.bottom` from 42pt to 20pt (compact 16pt), anchoring the footer 18-20pt from the physical bottom edge and eliminating blank margin gap.
+- Added company logo thumbnail (13x13) to fixed footer next to company name, harmonizing with Industry and Landscape Forme templates.
+- Added robust fallback logo resolution in `src/components/pdf/industryAdapter.ts` supporting `model.logo`, `model.issuer.logoUrl`, `model.issuer.companyLogoUrl`, and root `companyLogoUrl`.
+- Verified natural pagination, dynamic page numbering, repeated top accent bar, and zero text/footer collisions across single-page, quotation, and multi-page documents via MuPDF rasterization.
+- Suite of 9 unit tests passing in `src/tests/pdf/formeEvergreenTemplate.test.ts`.
 
-**Retirement Condition:** Legacy Evergreen must not be deleted before its Forme replacement has been verified.
+**Next Active Milestone:** **Milestone M8 — Landscape Rebuild from Scratch**.
 
 ---
 

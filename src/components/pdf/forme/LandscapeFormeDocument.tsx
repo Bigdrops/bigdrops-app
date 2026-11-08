@@ -1274,7 +1274,7 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
                     marginRight: 6,
                   }}
                 >
-                  <Image src={company.companyLogoUrl} style={{ width: 11, height: 11, objectFit: 'contain' }} alt="" />
+                  <Image src={company.companyLogoUrl} style={{ width: 11, height: 11 }} alt="" />
                 </View>
               ) : null}
               <Text style={{ fontFamily: font, fontSize: 5, fontWeight: 700, color: LANDSCAPE_TOKENS.headerInk, textTransform: 'uppercase', letterSpacing: 0.7 }}>

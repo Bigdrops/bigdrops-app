@@ -153,15 +153,16 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
   const amountInWords = getAmountInWords(data.totals)
   const advance = buildAdvanceSummary(data.advanceSummary)
   const isAdvanceInvoice = Boolean(advance)
+  const companyLogo = data.company?.companyLogoUrl || (data as any)?.companyLogoUrl || (data as any)?.logoUrl || ''
 
   const footerVisible = Boolean(
-    data.footer.extraText || data.showTagline || data.footer.documentNumber || data.footer.companyName,
+    data.footer.extraText || data.showTagline || data.footer.documentNumber || data.footer.companyName || companyLogo,
   )
   const hasBankDetails = data.showBankDetails && Boolean(data.paymentDetails)
 
   const isLandscape = data.layout?.orientation === 'landscape'
   const pageWidth = isLandscape ? LANDSCAPE_WIDTH : PORTRAIT_WIDTH
-  const pageMargin = { top: compact ? 16 : 22, right: 24, bottom: compact ? 34 : 42, left: 24 }
+  const pageMargin = { top: compact ? 16 : 22, right: 24, bottom: compact ? 16 : 20, left: 24 }
   const contentWidth = pageWidth - pageMargin.left - pageMargin.right
   const tableColumns = resolveTableColumns(data.table.columns, contentWidth)
   const tableColumnCount = data.table.columns.length
@@ -200,15 +201,24 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
                 </Text>
               ) : null}
               <View style={{ borderTopWidth: 0.5, borderTopColor: EVERGREEN_TOKENS.rule, paddingTop: 4, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedTextColor }}>
+                <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedTextColor, flex: 1 }}>
                   {'Page {{pageNumber}} of {{totalPages}}'}
                 </Text>
-                <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedTextColor }}>
+                <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedTextColor, textAlign: 'center', flex: 1 }}>
                   {safeText(data.footer.documentNumber || data.documentNumber)}
                 </Text>
-                <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedTextColor }}>
-                  {safeText(data.footer.companyName || data.company?.name || '')}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flex: 1 }}>
+                  {companyLogo ? (
+                    <Image
+                      src={companyLogo}
+                      href={companyLogo}
+                      style={{ width: 13, height: 13, marginRight: 5 }}
+                    />
+                  ) : null}
+                  <Text style={{ fontFamily: font, fontSize: 7.5, color: mutedTextColor, textAlign: 'right' }}>
+                    {safeText(data.footer.companyName || data.company?.name || '')}
+                  </Text>
+                </View>
               </View>
             </View>
           </Fixed>
@@ -250,9 +260,9 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
           </View>
 
           <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
-            {data.company?.companyLogoUrl ? (
-              <View style={{ marginBottom: 6 }}>
-                <Image src={data.company.companyLogoUrl} href={data.company.companyLogoUrl} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+            {companyLogo ? (
+              <View style={{ marginBottom: 6, alignItems: 'flex-end' }}>
+                <Image src={companyLogo} href={companyLogo} style={{ width: 64, height: 64 }} />
               </View>
             ) : null}
             {data.documentNumber ? (
@@ -327,7 +337,7 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
                         fontSize: 7.5,
                         fontWeight: 700,
                         color: EVERGREEN_TOKENS.white,
-                        textAlign: column.align || 'left',
+                        textAlign: (column.align as 'left' | 'center' | 'right' | 'justify') || 'left',
                         textTransform: 'uppercase',
                         letterSpacing: 0.5,
                       }}
@@ -402,8 +412,8 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
                             ) : null}
                             {row.imageUrl ? (
                               <View style={{ marginTop: 4 }}>
-                                <Image src={row.imageUrl} href={row.imageUrl} style={{ width: 36, height: 36, borderRadius: 4, objectFit: 'cover' }} />
-                                <Link src={row.imageUrl} style={{ fontSize: 7, color: EVERGREEN_TOKENS.link, textDecoration: 'underline', marginTop: 2 }}>
+                                <Image src={row.imageUrl} href={row.imageUrl} style={{ width: 36, height: 36, borderRadius: 4 }} />
+                                <Link href={row.imageUrl} style={{ fontSize: 7, color: EVERGREEN_TOKENS.link, textDecoration: 'underline', marginTop: 2 }}>
                                   Open image
                                 </Link>
                               </View>
@@ -423,7 +433,7 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
                               fontSize: 8.5,
                               fontWeight: col.key === 'amount' || col.key === 'num' ? 700 : 400,
                               color: inkColor,
-                              textAlign: align,
+                              textAlign: (align as 'left' | 'center' | 'right' | 'justify'),
                               lineHeight: 1.3,
                             }}
                           >
@@ -524,7 +534,7 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
             </Text>
             {attachmentItems.map((item, idx) => (
               item.formattedUrl ? (
-                <Link key={`att-${idx}`} src={item.formattedUrl} style={{ fontFamily: font, fontSize: 8, color: EVERGREEN_TOKENS.link, textDecoration: 'underline', marginBottom: 2 }}>
+                <Link key={`att-${idx}`} href={item.formattedUrl} style={{ fontFamily: font, fontSize: 8, color: EVERGREEN_TOKENS.link, textDecoration: 'underline', marginBottom: 2 }}>
                   {safeText(item.label)}
                 </Link>
               ) : (
@@ -557,7 +567,7 @@ export function EvergreenFormeDocument({ data, compact = false }: EvergreenForme
           <View style={{ marginTop: compact ? 12 : 16, flexDirection: 'row', justifyContent: 'flex-end' }} wrap={false}>
             <View style={{ width: 180, alignItems: 'center' }}>
               {data.signature.imageUrl ? (
-                <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 110, height: 34, objectFit: 'contain', marginBottom: 2 }} />
+                <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 110, height: 34, marginBottom: 2 }} />
               ) : null}
               <View style={{ width: '100%', borderTopWidth: 0.5, borderTopColor: ruleColor, marginBottom: 4 }} />
               {data.signature.name ? (

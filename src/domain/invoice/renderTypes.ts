@@ -44,6 +44,7 @@ export type InvoiceLike = {
   custom_fields?: unknown
   client_name?: string | null
   payment_terms?: string | null
+  custom_payment_terms?: string | null
   invoice_title?: string | null
   document_type?: string | null
   work_duration?: string | null
