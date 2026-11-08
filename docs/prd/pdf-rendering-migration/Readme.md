@@ -83,6 +83,11 @@ To ensure technical integrity and prevent unverified claims from becoming false 
 - **Milestone M1B:** *Shared Font & Image Asset Infrastructure Specification* — ✅ **Complete Specification**.
 - **Milestone M1C:** *PO Canonical Preparation Contract & Commercial Alignment* — ⛔ **Pending Execution**.
 - **Milestones M2–M6:** *Implementation, Certification & Legacy Deprecation* — ⛔ **Pending Execution**.
+- **Milestone M7:** *Evergreen Forme Migration and Legacy Retirement* — ⛔ **Pending Execution**.
+- **Milestone M8:** *Landscape Rebuild from Scratch* — ⛔ **Pending Execution**.
+- **Milestone M9:** *Migrate Three Additional Commercial HTML Templates to Forme* — ⛔ **Pending Execution**.
+- **Milestone M10:** *Purchase Order (PO) Template Integration* — ⛔ **Pending Execution**.
+- **Milestone M11:** *Cost Pricing Sheet (CPS) Template Integration* — ⛔ **Pending Execution**.
 
 ---
 
