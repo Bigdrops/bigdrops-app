@@ -4,6 +4,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEntity } from '@/lib/tenant/contexts'
+import { useSettings } from '@/hooks/useSettings'
 import {
   APP_NAME,
   mobileDrawerPrimaryNav,
@@ -50,7 +51,9 @@ function DrawerLabel({ children }: { children: React.ReactNode }) {
 
 function CompanySwitcher({ onOpenSheet }: { onOpenSheet: () => void }) {
   const { entity, entities, isLoading } = useEntity()
-  const name = entity?.name || (isLoading ? 'Loading…' : '—')
+  const { settings } = useSettings()
+  const activeCoName = settings?.company_name?.trim() || entity?.name
+  const name = activeCoName || (isLoading ? 'Loading…' : '—')
   const initials = (name || '?').charAt(0).toUpperCase()
   const hasMultiple = entities.length > 1
 

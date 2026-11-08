@@ -332,8 +332,8 @@ jobs:
           APK_PATH: ${{ steps.find-apk.outputs.apk_path }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-            echo "::warning::SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secret not found. Skipping Supabase Storage upload and release policy update."
-            exit 0
+            echo "::error::Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. Cannot publish release binary to Supabase Storage or update app_release_policy."
+            exit 1
           fi
 
           CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"

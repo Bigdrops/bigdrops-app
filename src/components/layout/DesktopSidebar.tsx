@@ -5,6 +5,7 @@ import { Building2, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
+import { useSettings } from '@/hooks/useSettings'
 import { BxLogo } from './bx-logo'
 import {
   APP_NAME,
@@ -42,8 +43,9 @@ interface DesktopSidebarProps {
 function ContextControl() {
   const { workspace } = useWorkspace()
   const { entity } = useEntity()
+  const { settings } = useSettings()
   const wsName = String(workspace?.name || '').trim() || '—'
-  const coName = entity?.name || '—'
+  const coName = settings?.company_name?.trim() || entity?.name || '—'
 
   return (
     <div className="rounded-[var(--bd-radius-lg)] border border-bd-border bg-bd-surface px-3 py-2.5 shadow-sm">

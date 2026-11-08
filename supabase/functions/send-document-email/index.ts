@@ -409,6 +409,7 @@ export async function handleSendDocumentEmail(
       issueDate: metadata.issueDate || undefined,
       dueDate: metadata.dueDate || undefined,
       validUntil: metadata.validUntil || undefined,
+      paymentStatus: metadata.paymentStatus || undefined,
       shareUrl,
       message: userMessage,
       fileName: sanitizedFileName,

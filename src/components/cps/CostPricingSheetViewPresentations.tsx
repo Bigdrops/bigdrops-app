@@ -145,7 +145,7 @@ function PhotoButton({ row }: { row: Extract<CpsViewRow, { type: 'item' }> }) {
   if (!row.imageUrl) return null
   return (
     <button type="button" className="cps-thumb" aria-label={`Preview photo for item ${row.number}`}>
-      <img src={row.imageUrl} alt="" />
+      <img src={row.imageUrl} alt="" aria-hidden="true" />
     </button>
   )
 }

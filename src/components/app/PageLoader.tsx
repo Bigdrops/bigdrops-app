@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { X } from 'lucide-react'
 import { BxLogo } from '@/components/layout/bx-logo'
+import { SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { useLoadingTip } from '@/hooks/useLoadingTip'
 import {
   getPhotoHeroVars,
@@ -35,7 +37,7 @@ function StartupPageLoader({
 }) {
   const [appearance, setAppearance] = useState<PhotoHeroAppearance>(() => resolveStartupAppearance())
   const vars = useMemo(() => getPhotoHeroVars('slate-navy', appearance), [appearance])
-  const { tip } = useLoadingTip({ pathname: tipPathname, active: true })
+  const { tip, dismissTip } = useLoadingTip({ pathname: tipPathname, active: true })
   const tipMessage = tip?.message?.trim() || 'Loading guidance...'
 
   useEffect(() => {
@@ -159,6 +161,23 @@ function StartupPageLoader({
           box-shadow:0 18px 44px var(--loader-shadow);
           text-align:center;
         }
+        .bd-startup-tip-dismiss{
+          position:absolute;
+          top:6px;
+          right:6px;
+          width:28px;
+          height:28px;
+          border:none;
+          border-radius:50%;
+          background:var(--surface-muted,rgba(128,128,128,.18));
+          color:var(--loader-ink-2);
+          display:grid;
+          place-items:center;
+          cursor:pointer;
+          transition:background .2s ease,color .2s ease;
+        }
+        .bd-startup-tip-dismiss:hover{background:var(--surface,rgba(128,128,128,.28));color:var(--loader-ink)}
+        .bd-startup-tip-dismiss:focus-visible{outline:2px solid var(--loader-accent);outline-offset:2px}
         .bd-startup-tip-label{
           color:var(--loader-ink-2);
           font-size:9px;
@@ -203,12 +222,22 @@ function StartupPageLoader({
         </div>
         <p className="bd-startup-word" aria-hidden="true">BOURXE</p>
       </div>
-      <div className="bd-startup-tip" role="status" aria-live="polite">
-        <span className="bd-startup-tip-label">Quick tip</span>
-        <p key={tip ? tip.id : 'fallback'} className="bd-startup-tip-text">
-          {tipMessage}
-        </p>
-      </div>
+      {tipMessage ? (
+        <div className="bd-startup-tip" role="status" aria-live="polite">
+          <button
+            type="button"
+            className="bd-startup-tip-dismiss"
+            aria-label="Dismiss tip"
+            onClick={dismissTip}
+          >
+            <X size={15} strokeWidth={1.9} aria-hidden="true" />
+          </button>
+          <span className="bd-startup-tip-label">Quick tip</span>
+          <p key={tip?.id ?? 'tip'} className="bd-startup-tip-text">
+            {tipMessage}
+          </p>
+        </div>
+      ) : null}
       {children ? <div className="bd-startup-loader-extra">{children}</div> : null}
     </div>
   )
@@ -224,8 +253,8 @@ export default function PageLoader({
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background">
-      <div className="h-14 w-14 rounded-[18px] border border-zinc-900/10 bg-card shadow-[0_6px_18px_rgba(24,24,27,0.05)]" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background" aria-busy="true">
+      <SkeletonCard className="w-64" />
       {children}
     </div>
   )

@@ -162,6 +162,9 @@ export default function ViewCps() {
     issueDate: cps?.created_at?.slice(0, 10) || '',
     notes: (cps as any)?.notes || '',
     fileName: `${cps?.cps_number || 'cps'}.pdf`,
+    tenantId: (cps as any)?.tenant_id || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
     getPdfBlob: async () => {
       if (!cps) throw new Error('CPS document not loaded')
       const res = await getCpsPdfBlob({ cps, settings })

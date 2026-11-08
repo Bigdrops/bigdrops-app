@@ -11,7 +11,7 @@ export function BxLogo({ className }: { className?: string }) {
   return (
     <img
       src={bxLogoSrc}
-      alt="BOURXE"
+      alt="BOURXE logo"
       draggable={false}
       className={cn('h-8 w-8 shrink-0 rounded-[11px]', className)}
     />

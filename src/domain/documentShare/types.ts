@@ -20,8 +20,11 @@ export type DocumentShareMetadata = {
   issuerName?: string
   issuerEmail?: string
   issuerLogoUrl?: string
+  issuerPhone?: string
+  issuerAddress?: string
   recipientName?: string
   recipientEmail?: string
+  recipientAddress?: string
   issueDate?: string
   dueDate?: string
   validUntil?: string
@@ -29,6 +32,11 @@ export type DocumentShareMetadata = {
   currency?: string
   fileName: string
   notes?: string
+  paymentStatus?: string
+  bankName?: string
+  bankAccountName?: string
+  bankAccountNumber?: string
+  equipment?: string
 }
 
 export type DocumentSharePayload = {
@@ -38,9 +46,12 @@ export type DocumentSharePayload = {
   documentTitle?: string
   recipientName?: string
   recipientEmail?: string
+  recipientAddress?: string
   issuerName?: string
   issuerEmail?: string
   issuerLogoUrl?: string
+  issuerPhone?: string
+  issuerAddress?: string
   totalFormatted?: string
   issueDate?: string
   dueDate?: string
@@ -48,6 +59,11 @@ export type DocumentSharePayload = {
   notes?: string
   fileName: string
   tenantId?: string
+  paymentStatus?: string
+  bankName?: string
+  bankAccountName?: string
+  bankAccountNumber?: string
+  equipment?: string
   getPdfBlob: () => Promise<Blob>
 }
 

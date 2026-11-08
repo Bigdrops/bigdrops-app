@@ -13,6 +13,9 @@
           var key = 'bigdrops_active_theme';
           var raw = localStorage.getItem(key);
           if (!raw) {
+            raw = localStorage.getItem('bd-theme-preference') || localStorage.getItem('theme');
+          }
+          if (!raw) {
             for (var i = 0; i < localStorage.length; i++) {
               var k = localStorage.key(i);
               if (k && k.indexOf('bigdrops_user_theme_') === 0) {
@@ -24,10 +27,18 @@
           var theme = 'slate-navy';
           var mode = 'light';
           if (raw) {
-            var parsed = JSON.parse(raw);
-            if (parsed) {
-              if (parsed.themePresetId) theme = parsed.themePresetId;
-              if (parsed.themeMode) mode = parsed.themeMode;
+            try {
+              var parsed = JSON.parse(raw);
+              if (parsed) {
+                if (parsed.themePresetId) theme = parsed.themePresetId;
+                if (parsed.themeMode) mode = parsed.themeMode;
+                if (parsed.mode && !parsed.themeMode) mode = parsed.mode;
+                if (parsed.theme && !parsed.themePresetId) theme = parsed.theme;
+              }
+            } catch (jsonErr) {
+              if (raw === 'dark' || raw === 'light') {
+                mode = raw;
+              }
             }
           }
           var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);

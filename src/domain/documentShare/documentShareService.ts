@@ -100,14 +100,22 @@ export async function createOrGetDocumentShare(
     issuerName: payload.issuerName || '',
     issuerEmail: payload.issuerEmail || '',
     issuerLogoUrl: payload.issuerLogoUrl || '',
+    issuerPhone: payload.issuerPhone || '',
+    issuerAddress: payload.issuerAddress || '',
     recipientName: payload.recipientName || '',
     recipientEmail: payload.recipientEmail || '',
+    recipientAddress: payload.recipientAddress || '',
     issueDate: payload.issueDate || '',
     dueDate: payload.dueDate || '',
     validUntil: payload.validUntil || '',
     totalFormatted: payload.totalFormatted || '',
     fileName: payload.fileName,
     notes: payload.notes || '',
+    paymentStatus: payload.paymentStatus || '',
+    bankName: payload.bankName || '',
+    bankAccountName: payload.bankAccountName || '',
+    bankAccountNumber: payload.bankAccountNumber || '',
+    equipment: payload.equipment || '',
   }
 
   const { data: record, error: insertError } = await supabase

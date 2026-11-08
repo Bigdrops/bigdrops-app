@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Link as LinkIcon,
   Copy,
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Download,
   ShieldAlert,
+  Loader2,
 } from 'lucide-react'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { Button } from '@/components/ui/button'
@@ -27,6 +28,11 @@ import {
 } from '@/domain/documentShare/documentShareService'
 import type { DocumentSharePayload } from '@/domain/documentShare/types'
 import { DocumentEmailTemplate } from '@/components/email/DocumentEmailTemplate'
+import { copyToClipboard } from '@/lib/clipboard'
+import {
+  buildDefaultEmailSubject,
+  buildDefaultEmailMessage,
+} from '@/domain/documentShare/documentEmailHtml'
 
 // WhatsApp custom icon
 function WhatsAppIcon({ size = 18 }: { size?: number }) {
@@ -53,25 +59,36 @@ export default function DocumentShareSheet({
 
   const [activeTab, setActiveTab] = useState<'channels' | 'email' | 'preview'>('channels')
   const [loading, setLoading] = useState(false)
+  const [preparingShare, setPreparingShare] = useState(false)
   const [shareUrl, setShareUrl] = useState<string>('')
   const [activeToken, setActiveToken] = useState<string>('')
   const [copied, setCopied] = useState(false)
+  const [clipboardError, setClipboardError] = useState(false)
   const [cachedBlob, setCachedBlob] = useState<Blob | null>(null)
 
-  // Email form state
+  // Email form state prefilled with rich contextual metadata
   const [recipientEmail, setRecipientEmail] = useState(payload.recipientEmail || '')
-  const [subject, setSubject] = useState(
-    `${payload.documentTitle || payload.documentType} ${payload.documentNumber} from ${payload.issuerName || 'BOURXE'}`,
-  )
-  const [message, setMessage] = useState(
-    `Please find attached ${payload.documentType} ${payload.documentNumber}. You can also view and download it online.`,
-  )
+  const [subject, setSubject] = useState(() => buildDefaultEmailSubject(payload))
+  const [message, setMessage] = useState(() => buildDefaultEmailMessage(payload))
 
   // Unsupported desktop state for WhatsApp
   const [desktopWhatsappNotice, setDesktopWhatsappNotice] = useState(false)
   const [deliveryError, setDeliveryError] = useState<string | null>(null)
   const [isAmbiguousOutcome, setIsAmbiguousOutcome] = useState(false)
   const [operationId, setOperationId] = useState<string>(() => `op_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`)
+
+  // Synchronize form and reset cached state when target document changes
+  useEffect(() => {
+    setRecipientEmail(payload.recipientEmail || '')
+    setSubject(buildDefaultEmailSubject(payload))
+    setMessage(buildDefaultEmailMessage(payload))
+    setShareUrl('')
+    setActiveToken('')
+    setCachedBlob(null)
+    setDeliveryError(null)
+    setClipboardError(false)
+    setCopied(false)
+  }, [payload.documentId, payload.documentNumber, payload.documentType])
 
   // Reset operation ID when email composition details change intentionally
   const resetOperationId = () => {
@@ -87,16 +104,56 @@ export default function DocumentShareSheet({
     return b
   }
 
-  // Handle Direct Link Generation
+  // Eagerly resolve or prepare share link in the background when sheet opens
+  useEffect(() => {
+    if (!open) return
+    let isMounted = true
+
+    const prepareShare = async () => {
+      if (shareUrl && activeToken) return
+      setPreparingShare(true)
+      try {
+        const res = await createOrGetDocumentShare({
+          ...payload,
+          tenantId: activeTenantId,
+          getPdfBlob: getOrFetchBlob,
+        })
+        if (!isMounted) return
+        setActiveToken(res.token)
+        setShareUrl(res.shareUrl)
+      } catch (err) {
+        console.warn('[DocumentShareSheet] Background share preparation notice:', err)
+      } finally {
+        if (isMounted) setPreparingShare(false)
+      }
+    }
+
+    void prepareShare()
+
+    return () => {
+      isMounted = false
+    }
+  }, [open, payload.documentId, payload.documentType, activeTenantId])
+
+  // Handle Direct Link Generation & Synchronous Copy
   const handleGenerateLink = async () => {
+    setClipboardError(false)
+
+    // 1. If share URL is already prepared, copy immediately in direct user gesture context
     if (shareUrl) {
-      await navigator.clipboard.writeText(shareUrl)
-      setCopied(true)
-      feedback.success('Link copied', { description: 'Direct link copied to clipboard.' })
-      setTimeout(() => setCopied(false), 2000)
+      const ok = await copyToClipboard(shareUrl)
+      if (ok) {
+        setCopied(true)
+        feedback.success('Link copied', { description: 'Direct link copied to clipboard.' })
+        setTimeout(() => setCopied(false), 2000)
+      } else {
+        setClipboardError(true)
+        feedback.info('Link ready', { description: 'Select and copy the link from the input field below.' })
+      }
       return
     }
 
+    // 2. Not prepared yet: perform full creation with loading feedback
     setLoading(true)
     try {
       const res = await createOrGetDocumentShare({
@@ -106,10 +163,18 @@ export default function DocumentShareSheet({
       })
       setActiveToken(res.token)
       setShareUrl(res.shareUrl)
-      await navigator.clipboard.writeText(res.shareUrl)
-      setCopied(true)
-      feedback.success('Direct link ready', { description: 'Branded public link copied to clipboard.' })
-      setTimeout(() => setCopied(false), 2000)
+
+      const ok = await copyToClipboard(res.shareUrl)
+      if (ok) {
+        setCopied(true)
+        feedback.success('Direct link ready', { description: 'Branded public link copied to clipboard.' })
+        setTimeout(() => setCopied(false), 2000)
+      } else {
+        setClipboardError(true)
+        feedback.info('Direct link ready', {
+          description: 'Direct link generated. Tap Copy or copy from the box below.',
+        })
+      }
     } catch (err) {
       feedback.error('Link creation failed', {
         description: err instanceof Error ? err.message : 'Could not generate direct link.',
@@ -261,8 +326,8 @@ export default function DocumentShareSheet({
       })
 
       if (result.success && result.method === 'resend-edge') {
-        feedback.success('Email submitted', {
-          description: `Document sent to ${recipientEmail.trim()} with PDF attached.`,
+        feedback.success('Email accepted for delivery', {
+          description: `Document submitted to Resend for ${recipientEmail.trim()} (Ref: ${result.messageId || 'sent'}).`,
         })
         onClose()
       } else if (result.success) {
@@ -379,13 +444,21 @@ export default function DocumentShareSheet({
                     disabled={loading}
                     onClick={handleGenerateLink}
                   >
-                    {copied ? (
+                    {loading ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" /> Preparing...
+                      </>
+                    ) : copied ? (
                       <>
                         <Check size={14} className="text-emerald-500" /> Copied
                       </>
                     ) : shareUrl ? (
                       <>
                         <Copy size={13} /> Copy Link
+                      </>
+                    ) : preparingShare ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" /> Preparing Link...
                       </>
                     ) : (
                       'Get Link'
@@ -399,14 +472,37 @@ export default function DocumentShareSheet({
                       <Input
                         readOnly
                         value={shareUrl}
+                        onFocus={(e) => e.target.select()}
                         className="h-7 border-0 bg-transparent font-mono text-[11px] text-bd-text focus-visible:ring-0"
                       />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        title="Copy to clipboard"
+                        onClick={async () => {
+                          const ok = await copyToClipboard(shareUrl)
+                          if (ok) {
+                            setCopied(true)
+                            feedback.success('Copied', { description: 'Link copied to clipboard.' })
+                            setTimeout(() => setCopied(false), 2000)
+                          }
+                        }}
+                      >
+                        <Copy size={13} />
+                      </Button>
                       <a href={shareUrl} target="_blank" rel="noopener noreferrer">
                         <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs">
                           <ExternalLink size={13} />
                         </Button>
                       </a>
                     </div>
+                    {clipboardError && (
+                      <p className="text-[10px] text-amber-700 dark:text-amber-300">
+                        Clipboard permission restricted by browser. Tap the copy icon or copy the selected text above.
+                      </p>
+                    )}
                     <div className="flex items-center justify-between px-0.5">
                       <span className="text-[10px] text-bd-text-muted">Active public link</span>
                       <Button

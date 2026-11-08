@@ -117,6 +117,9 @@ export default function ViewReceipt() {
     issueDate: receipt?.payment_date || "",
     notes: (receipt as any)?.notes || "",
     fileName: `receipt-${receipt?.receipt_number || "receipt"}.pdf`,
+    tenantId: (receipt as any)?.tenant_id || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
     getPdfBlob: async () => {
       const { pdf } = await import("@react-pdf/renderer")
       const model = buildReceiptPreviewData(receipt)

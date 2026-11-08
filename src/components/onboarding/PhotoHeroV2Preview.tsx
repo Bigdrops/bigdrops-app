@@ -222,7 +222,7 @@ function CompareView() {
               <i className="oh2-vignette" aria-hidden="true" />
               <div className="oh2-mini-brand">
                 <span className="oh2-mini-logo" aria-hidden="true">
-                  <img src={bigdropsLogo} alt="" />
+                  <img src={bigdropsLogo} alt="" aria-hidden="true" />
                 </span>
                 <span>
                   {label} · {appearance === 'light' ? 'Light' : 'Dark'}
@@ -447,7 +447,7 @@ function Carousel({
       <header className="oh2-topbar">
         <div className="oh2-brand">
           <span className="oh2-logo" aria-hidden="true">
-            <img src={bigdropsLogo} alt="" />
+            <img src={bigdropsLogo} alt="" aria-hidden="true" />
           </span>
           BOURXE
         </div>
@@ -899,7 +899,7 @@ function AuthSlide({ active }: { active: boolean }) {
       <div className="oh2-authwrap">
         <div className="oh2-authhead">
           <div className="oh2-authlogo">
-            <img src={bigdropsLogo} alt="BOURXE app icon" />
+            <img src={bigdropsLogo} alt="" aria-hidden="true" />
           </div>
           <h1 className="oh2-rv" style={{ ['--d' as string]: '.05s' } as React.CSSProperties}>
             Create your account

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Network, PanelsTopLeft, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Mail, Network, PanelsTopLeft, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -74,5 +74,14 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/cold-launch',
     icon: Network,
     capabilities: ['Tenant tree', '5 themes', 'Light/Dark', 'Network states', 'Quick Tips'],
+  },
+  {
+    id: 'document-email',
+    name: 'Document Email & Sharing Experience',
+    eyebrow: 'Sharing & Email',
+    description: 'Refrens-inspired streamlined email composer, rich prefilled message, and executive HTML preview with real invoice data.',
+    route: '/design-lab/document-email',
+    icon: Mail,
+    capabilities: ['Real SASINV-000130 data', 'Executive HTML', 'Composer & Recipient views', 'Mobile/Desktop', 'Attachment badge'],
   },
 ]

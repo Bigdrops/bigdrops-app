@@ -48,6 +48,7 @@ export type EntityContextValue = {
   provisioningStatus: ProvisioningStatus | null
   provisioningError: string | null
   tenantClient: TenantClient
+  syncEntityName?: (name: string) => void
   recheckProvisioning: () => void
   refresh: () => Promise<void> | void
 }

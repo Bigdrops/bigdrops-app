@@ -145,6 +145,10 @@ export default function ViewQuotation() {
     validUntil: quotation?.valid_until || quotation?.valid_to || "",
     notes: quotation?.notes || "",
     fileName: `${quotation?.quotation_number || "quotation"}.pdf`,
+    tenantId: quotation?.tenant_id || undefined,
+    recipientAddress: client?.address || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
     getPdfBlob: async () => {
       const res = await getQuotationPdfBlob({
         quotation,

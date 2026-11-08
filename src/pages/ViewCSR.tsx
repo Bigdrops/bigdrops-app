@@ -256,6 +256,11 @@ export default function ViewCSR() {
     issueDate: csr?.service_date || csr?.created_at?.slice(0, 10) || '',
     notes: csr?.engineer_notes || csr?.remarks || '',
     fileName: `${csr?.csr_number || 'csr'}.pdf`,
+    tenantId: csr?.tenant_id || undefined,
+    recipientAddress: client?.address || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
+    equipment: csr?.equipment_description || (csr?.equipment ? `${csr.equipment} ${csr.model || ''}`.trim() : undefined),
     getPdfBlob: async () => {
       if (!previewData) throw new Error('CSR preview not loaded')
       if (isPdfcnCsrTemplate(template)) {

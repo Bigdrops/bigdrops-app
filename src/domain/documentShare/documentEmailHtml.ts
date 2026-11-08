@@ -20,10 +20,117 @@ export interface DocumentEmailTemplateProps {
   issueDate?: string
   dueDate?: string
   validUntil?: string
+  paymentStatus?: string
   shareUrl: string
   message?: string
   fileName?: string
   replyTo?: string | null
+}
+
+export interface BuildEmailContentInput {
+  documentType: string
+  documentNumber: string
+  documentTitle?: string
+  issuerName?: string
+  issuerEmail?: string
+  issuerPhone?: string
+  issuerAddress?: string
+  recipientName?: string
+  recipientAddress?: string
+  totalFormatted?: string
+  issueDate?: string
+  dueDate?: string
+  validUntil?: string
+  notes?: string
+  paymentStatus?: string
+  equipment?: string
+  bankName?: string
+  bankAccountName?: string
+  bankAccountNumber?: string
+}
+
+export function buildDefaultEmailSubject(input: BuildEmailContentInput): string {
+  const typeCapitalized = input.documentType
+    ? input.documentType.charAt(0).toUpperCase() + input.documentType.slice(1)
+    : 'Document'
+  const docNum = input.documentNumber || ''
+  const titlePart =
+    input.documentTitle && input.documentTitle.toLowerCase() !== input.documentType.toLowerCase()
+      ? ` for ${input.documentTitle}`
+      : ''
+  const issuerPart = input.issuerName ? ` from ${input.issuerName}` : ''
+  return `${typeCapitalized} ${docNum}${titlePart}${issuerPart}`.trim()
+}
+
+export function buildDefaultEmailMessage(input: BuildEmailContentInput): string {
+  const greeting = input.recipientName ? `Hi ${input.recipientName},` : 'Hello,'
+
+  const docType = input.documentType ? input.documentType.toLowerCase() : 'document'
+  const docNum = input.documentNumber || ''
+  const titleContext =
+    input.documentTitle && input.documentTitle.toLowerCase() !== docType
+      ? ` for ${input.documentTitle}`
+      : ''
+
+  const lines: string[] = [
+    greeting,
+    '',
+    `Please find attached ${docType} ${docNum}${titleContext}.`,
+    '',
+    `Document No: ${docNum}`,
+  ]
+
+  if (input.issueDate) {
+    lines.push(`Date: ${input.issueDate}`)
+  }
+
+  if (input.recipientName) {
+    const addressSuffix = input.recipientAddress ? ` (${input.recipientAddress})` : ''
+    lines.push(`Billed To: ${input.recipientName}${addressSuffix}`)
+  }
+
+  if (input.totalFormatted) {
+    const label = docType === 'invoice' ? 'Amount Due' : 'Total Amount'
+    lines.push(`${label}: ${input.totalFormatted}`)
+  }
+
+  if (input.paymentStatus) {
+    lines.push(`Payment Status: ${input.paymentStatus}`)
+  }
+
+  if (input.equipment && input.equipment.trim()) {
+    lines.push(`Equipment: ${input.equipment.trim()}`)
+  }
+
+  if (input.notes && input.notes.trim()) {
+    lines.push(`Notes: ${input.notes.trim()}`)
+  }
+
+  if (input.bankName && input.bankAccountNumber) {
+    lines.push('')
+    lines.push('Payment Details:')
+    lines.push(`Bank: ${input.bankName}`)
+    if (input.bankAccountName) {
+      lines.push(`Account Name: ${input.bankAccountName}`)
+    }
+    lines.push(`Account Number: ${input.bankAccountNumber}`)
+  }
+
+  lines.push('')
+  lines.push('Thank you for your business.')
+  lines.push('')
+  lines.push('Warm regards,')
+  if (input.issuerName) {
+    lines.push(input.issuerName)
+  }
+  if (input.issuerAddress) {
+    lines.push(input.issuerAddress)
+  }
+  if (input.issuerPhone) {
+    lines.push(`Phone: ${input.issuerPhone}`)
+  }
+
+  return lines.join('\n')
 }
 
 export function escapeHtml(unsafe: string): string {
@@ -116,6 +223,20 @@ export function buildDocumentEmailHtml(props: DocumentEmailTemplateProps): strin
         <td style="font-size: 13px; font-weight: 600; color: #1a1815; text-align: right; padding: 4px 0;">${escapeHtml(
           props.validUntil,
         )}</td>
+      </tr>`,
+    )
+  }
+
+  if (props.paymentStatus) {
+    const isPaid = props.paymentStatus.toUpperCase() === 'PAID'
+    rows.push(
+      `<tr style="padding: 4px 0;">
+        <td style="font-size: 12px; font-weight: 600; color: #7a7369; width: 40%; padding: 4px 0;">Status:</td>
+        <td style="font-size: 12px; font-weight: 700; color: ${isPaid ? '#166534' : '#991b1b'}; text-align: right; padding: 4px 0;">
+          <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; background-color: ${isPaid ? '#dcfce7' : '#fee2e2'};">${escapeHtml(
+            props.paymentStatus.toUpperCase(),
+          )}</span>
+        </td>
       </tr>`,
     )
   }

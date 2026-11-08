@@ -415,6 +415,9 @@ export default function ViewWaybill() {
     issueDate: waybill?.issue_date || waybill?.created_at?.slice(0, 10) || '',
     notes: waybill?.notes || '',
     fileName: `${waybill?.waybill_number || 'waybill'}.pdf`,
+    tenantId: waybill?.tenant_id || rawWaybill?.tenant_id || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
     getPdfBlob: async () => {
       const { pdf } = await import('@react-pdf/renderer')
       return pdf(<WaybillPDF model={model} designPreset={designPreset} template={template} />).toBlob()

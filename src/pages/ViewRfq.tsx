@@ -302,6 +302,9 @@ export default function ViewRfq() {
     validUntil: rfq?.expiry_date || '',
     notes: rfq?.notes || '',
     fileName: `${rfq?.rfq_number || 'rfq'}.pdf`,
+    tenantId: rfq?.tenant_id || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
     getPdfBlob: async () => {
       const { pdf } = await import('@react-pdf/renderer')
       return pdf(<RfqPdfDocument rfq={rfq} rows={rfq.table_rows} columns={rfq.table_columns} />).toBlob()

@@ -32,7 +32,7 @@ type CustomInfoItem = {
 
 export function CompanySettingsSection() {
   const { settings, loading } = useSettings()
-  const { tenantClient, entity, refresh: refreshEntity } = useEntity()
+  const { tenantClient, entity, refresh: refreshEntity, syncEntityName } = useEntity()
   const { workspace } = useWorkspace()
   const [form, setForm] = useState<CompanyForm>({
     company_name: '',
@@ -93,6 +93,7 @@ export function CompanySettingsSection() {
       })
 
       feedback.success('Company info updated')
+      syncEntityName?.(form.company_name)
       setIsEditing(false)
     } catch (error) {
       feedback.error(getUserFacingMutationMessage(error, { action: 'save' }))

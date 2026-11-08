@@ -200,6 +200,15 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
     dueDate: invoice?.due_date || "",
     notes: invoice?.notes || "",
     fileName: `${invoice?.invoice_number || "invoice"}.pdf`,
+    tenantId: invoice?.tenant_id || undefined,
+    recipientAddress: client?.address || invoice?.client_address || undefined,
+    issuerPhone: settingsData?.phone || undefined,
+    issuerAddress: settingsData?.address || undefined,
+    paymentStatus: invoice?.status || undefined,
+    bankName: bankAccounts?.[0]?.bank_name || undefined,
+    bankAccountName: bankAccounts?.[0]?.account_name || undefined,
+    bankAccountNumber: bankAccounts?.[0]?.account_number || undefined,
+    equipment: invoice?.equipment_notes || invoice?.equipment || undefined,
     getPdfBlob: async () => {
       const res = await getInvoicePdfBlob({
         targetInvoice: invoice,

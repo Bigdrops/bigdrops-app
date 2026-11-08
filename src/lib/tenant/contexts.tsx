@@ -276,6 +276,15 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
     [entities],
   )
 
+  const syncEntityName = useCallback((name: string) => {
+    const trimmed = (name || '').trim()
+    if (!trimmed) return
+    setEntity((prev) => (prev ? { ...prev, name: trimmed } : prev))
+    setEntities((prev) =>
+      prev.map((e) => (e.id === (selectedEntityId.current || entity?.id) ? { ...e, name: trimmed } : e)),
+    )
+  }, [entity?.id])
+
   useEffect(() => {
     let cancelled = false
 
@@ -443,6 +452,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       entities,
       entityCount,
       selectEntity,
+      syncEntityName,
       isLoading,
       error,
       expectedSchema,
@@ -460,6 +470,7 @@ export function EntityProvider({ children }: { children: React.ReactNode }) {
       entities,
       entityCount,
       selectEntity,
+      syncEntityName,
       isLoading,
       error,
       expectedSchema,

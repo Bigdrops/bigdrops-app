@@ -581,10 +581,10 @@ function App() {
                   ? !offlineAccessState.allowed
                     ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                     : offlineAccessLoading
-                      ? withBoundary(<PageLoader variant="startup" tipPathname="/" />)
+                      ? (showColdLaunch ? null : withBoundary(<PageLoader variant="startup" tipPathname="/" />))
                       : withBoundary(<Login />)
                   : waitingForProfileResolution
-                    ? withBoundary(<PageLoader variant="startup" tipPathname="/" />)
+                    ? (showColdLaunch ? null : withBoundary(<PageLoader variant="startup" tipPathname="/" />))
                     : !offlineAccessState.allowed
                       ? withBoundary(<OfflineAccessBlocked accessState={offlineAccessState as any} />)
                       : withBoundary(

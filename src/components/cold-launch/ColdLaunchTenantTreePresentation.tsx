@@ -51,13 +51,20 @@ function resolveAmbientAppearance(): PhotoHeroAppearance {
     const root = document.documentElement
     if (root.classList.contains('dark')) return 'dark'
     if (root.classList.contains('light')) return 'light'
+    const dataTheme = root.getAttribute('data-theme')
+    if (dataTheme === 'dark') return 'dark'
+    if (dataTheme === 'light') return 'light'
+  }
+
+  if (isAndroidNative()) {
+    return 'light'
   }
 
   if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
     return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
   }
 
-  return 'dark'
+  return 'light'
 }
 
 function resolveAmbientFamily(): PhotoHeroFamilyId {
@@ -110,14 +117,14 @@ export default function ColdLaunchTenantTreePresentation({
   const hasConnectionIssue = networkState === 'error' || networkState === 'retrying'
 
   React.useEffect(() => {
-    if (appearance) return
+    if (appearance || isNative) return
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
 
     const media = window.matchMedia('(prefers-color-scheme: light)')
     const onChange = () => setAmbientAppearance(resolveAmbientAppearance())
     media.addEventListener('change', onChange)
     return () => media.removeEventListener('change', onChange)
-  }, [appearance])
+  }, [appearance, isNative])
 
   const setBrandRatio = React.useCallback((ratio: number) => {
     setBrandTop((prev) => (Math.abs(prev - ratio) < 0.002 ? prev : ratio))
@@ -126,9 +133,10 @@ export default function ColdLaunchTenantTreePresentation({
   if (!isNative && !isPreviewMode) {
     return (
       <div
-        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center text-slate-100 select-none overflow-hidden"
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center text-[var(--ink,#f1f5f9)] select-none overflow-hidden"
         style={{
-          backgroundColor: 'var(--scene-intro, var(--bg, #0d1624))',
+          background: 'var(--scene-intro, var(--bg, #0d1624))',
+          backgroundColor: 'var(--bg, #fbf8f5)',
           ...(vars as React.CSSProperties),
         }}
         role="status"
@@ -138,12 +146,12 @@ export default function ColdLaunchTenantTreePresentation({
           <div className="relative size-16 sm:size-20 rounded-[28%] overflow-hidden shadow-2xl ring-1 ring-white/20 animate-pulse">
             <img src={bigdropsLogo} alt="BOURXE" className="size-full object-cover" />
           </div>
-          <span className="text-xl sm:text-2xl font-black tracking-widest text-slate-100 uppercase">
+          <span className="text-xl sm:text-2xl font-black tracking-widest text-[var(--ink,#f1f5f9)] uppercase">
             BOURXE
           </span>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="size-1.5 rounded-full bg-primary animate-ping" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-2,#94a3b8)]">
               Loading
             </span>
           </div>

@@ -7,6 +7,7 @@ import { buildGroups, type LiveSettingsSection } from './settings/settings-confi
 import type { SettingsSession } from './settings/settings-types'
 import { SettingsShell } from '@/components/settings/SettingsShell'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
+import { useSettings } from '@/hooks/useSettings'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
 import { feedback } from '@/lib/feedback'
@@ -53,11 +54,13 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
 }) {
   const { workspace, activeWorkspaces, isLoading: workspaceLoading, error: workspaceError } = useWorkspace()
   const { entity, entities, isLoading: entityLoading, error: entityError } = useEntity()
+  const { settings } = useSettings()
   const team = useTeamMembers(workspace?.id ?? null, session?.user.id ?? null)
   const { preference, save } = useThemePreferenceContext()
   const dark = preference.themeMode === 'dark' || (preference.themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const wsName = workspaceLoading ? 'Loading…' : workspaceError ? 'Unavailable' : workspace?.name ?? '—'
-  const coName = entityLoading ? 'Loading…' : entityError ? 'Unavailable' : entity?.name ?? '—'
+  const activeCoName = settings?.company_name?.trim() || entity?.name || '—'
+  const coName = entityLoading ? 'Loading…' : entityError ? 'Unavailable' : activeCoName
   
   // Note: For a real app, isAdmin and isOperator would be fetched from auth claims or context.
   // Passing true for now to preserve the full inventory explicitly as requested.

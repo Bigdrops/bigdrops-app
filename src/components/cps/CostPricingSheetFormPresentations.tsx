@@ -300,7 +300,7 @@ function PhotoControl({
     <div className="cps-photo-row">
       {row.image_url ? (
         <div className="cps-thumb">
-          <img src={row.image_url} alt="" />
+          <img src={row.image_url} alt="" aria-hidden="true" />
           <button type="button" className="cps-photo-x" onClick={() => onUpdateRow(index, { image_url: null })} aria-label="Remove row photo">
             <X size={8} />
           </button>

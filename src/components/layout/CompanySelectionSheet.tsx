@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Check, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEntity } from '@/lib/tenant/contexts'
+import { useSettings } from '@/hooks/useSettings'
 import { CreateCompanySheet } from './CreateCompanySheet'
 import {
   Sheet,
@@ -69,6 +70,7 @@ export function CompanySelectionSheet({
   onOpenChange,
 }: CompanySelectionSheetProps) {
   const { entity, entities, selectEntity } = useEntity()
+  const { settings } = useSettings()
 
   const handleSelect = React.useCallback(
     (id: string) => {
@@ -121,18 +123,24 @@ export function CompanySelectionSheet({
 
         {/* Company list */}
         <div className="space-y-0.5 overflow-y-auto px-4 pb-6 pt-1">
-          {entities.map((ent, index) => (
-            <React.Fragment key={ent.id}>
-              <CompanyRow
-                name={ent.name || 'Unnamed company'}
-                isSelected={ent.id === entity?.id}
-                onClick={() => handleSelect(ent.id)}
-              />
-              {index < entities.length - 1 ? (
-                <div className="mx-2.5 border-b border-[hsl(var(--line))]" aria-hidden="true" />
-              ) : null}
-            </React.Fragment>
-          ))}
+          {entities.map((ent, index) => {
+            const isSelected = ent.id === entity?.id
+            const displayName = (isSelected && settings?.company_name?.trim())
+              ? settings.company_name.trim()
+              : (ent.name || 'Unnamed company')
+            return (
+              <React.Fragment key={ent.id}>
+                <CompanyRow
+                  name={displayName}
+                  isSelected={isSelected}
+                  onClick={() => handleSelect(ent.id)}
+                />
+                {index < entities.length - 1 ? (
+                  <div className="mx-2.5 border-b border-[hsl(var(--line))]" aria-hidden="true" />
+                ) : null}
+              </React.Fragment>
+            )
+          })}
 
           {/* Divider + Create Company */}
           <div className="mx-2.5 my-2 border-t border-[hsl(var(--line))]" aria-hidden="true" />

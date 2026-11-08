@@ -206,6 +206,9 @@ docs/prd/Taxation-Made-Easy-Engine-Smart-Activity-NRS-Compliance/
 Adaptive UI/UX
 docs/prd/Adaptive Mobile-First UIUX Facelift PRD/
 
+Technical SEO & Metadata Hardening
+docs/prd/Technical-SEO-AND-Metadata-Hardening-PRD/
+
 
 Engineering reports
 docs/reports/
@@ -217,6 +220,21 @@ docs/PROJECTSKILLINDEX.md
 
 
 AGENTS.md at the repository root defines the mandatory workflow and repository rules for coding agents.
+
+Brand & 404 References
+The canonical brand artwork and the 404 design prototype live in the documentation tree. Use these, not generated placeholders:
+
+Asset
+Canonical path
+
+BOUXRE ribbon icon pack (master)
+docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/icons (master PNG: source/proposed-icon.png)
+
+404 page layout prototype
+docs/prd/Technical-SEO-AND-Metadata-Hardening-PRD/Temps/404-v1.html
+
+Derived web icons
+public/favicon.svg, public/apple-touch-icon.png
 Repository Compatibility
 The product is named BOURXE. Parts of the underlying system retain historical `BIGDROPS` / `bigdrops` identifiers.
 
