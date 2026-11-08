@@ -32,7 +32,7 @@ test('PDF shared font registry includes a dedicated Noto Sans entry for locked c
   assert.match(source, /Noto Sans/)
 })
 
-test('PDF production typography contains exactly the four approved families across registries', () => {
+test('PDF production typography contains the approved families across registries', () => {
   // Shared fonts: Inter and Archivo Black
   const sharedFamilies = Object.keys(REGISTERED_SHARED_FONTS)
   assert.deepStrictEqual(sharedFamilies.sort(), ['Archivo Black', 'Inter'].sort())
@@ -46,7 +46,7 @@ test('PDF production typography contains exactly the four approved families acro
   assert.deepStrictEqual(fillableFamilies, ['Caveat'])
 
   // Forme supported families
-  assert.deepStrictEqual([...FORME_SUPPORTED_FAMILIES].sort(), ['Archivo Black', 'Caveat', 'Inter', 'Noto Sans'].sort())
+  assert.deepStrictEqual([...FORME_SUPPORTED_FAMILIES].sort(), ['Archivo Black', 'Caveat', 'Figtree', 'Inter', 'Noto Sans', 'PT Serif', 'Plus Jakarta Sans', 'Public Sans', 'Work Sans'].sort())
 })
 
 test('Retired commercial and handwriting families are purged from production registries', () => {
@@ -98,16 +98,16 @@ test('React-PDF font registry includes Archivo Black as a registered display fon
   assert.ok(fs.existsSync(config.regularSrc))
 })
 
-test('Forme font registration authority registers all four families successfully with static TTF assets', async () => {
+test('Forme font registration authority registers approved families successfully with static TTF assets', async () => {
   resetFormeFontCache()
 
-  for (const family of ['Inter', 'Archivo Black', 'Caveat', 'Noto Sans']) {
+  for (const family of ['Inter', 'Archivo Black', 'Caveat', 'Noto Sans', 'Plus Jakarta Sans', 'Figtree', 'Work Sans', 'Public Sans', 'PT Serif']) {
     const resolved = await ensureFormeFontFamily(family)
     assert.equal(resolved, family, `Forme must register ${family} without falling back to Helvetica`)
   }
 })
 
-test('Static TTF font assets exist in public/fonts for all four families', () => {
+test('Static TTF font assets exist in public/fonts for approved families', () => {
   const requiredFiles = [
     'public/fonts/Inter-Regular.ttf',
     'public/fonts/Inter-Bold.ttf',
@@ -116,6 +116,16 @@ test('Static TTF font assets exist in public/fonts for all four families', () =>
     'public/fonts/Caveat-Bold.ttf',
     'public/fonts/NotoSans-Regular.ttf',
     'public/fonts/NotoSans-Bold.ttf',
+    'public/fonts/PlusJakartaSans-Regular.ttf',
+    'public/fonts/PlusJakartaSans-Bold.ttf',
+    'public/fonts/Figtree-Regular.ttf',
+    'public/fonts/Figtree-Bold.ttf',
+    'public/fonts/WorkSans-Regular.ttf',
+    'public/fonts/WorkSans-Bold.ttf',
+    'public/fonts/PublicSans-Regular.ttf',
+    'public/fonts/PublicSans-Bold.ttf',
+    'public/fonts/PTSerif-Regular.ttf',
+    'public/fonts/PTSerif-Bold.ttf',
   ]
 
   for (const file of requiredFiles) {

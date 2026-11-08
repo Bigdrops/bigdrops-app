@@ -10,6 +10,11 @@ export const FORME_SUPPORTED_FAMILIES = [
   'Archivo Black',
   'Caveat',
   'Noto Sans',
+  'Plus Jakarta Sans',
+  'Figtree',
+  'Work Sans',
+  'Public Sans',
+  'PT Serif',
 ] as const
 export type FormeSupportedFamily = (typeof FORME_SUPPORTED_FAMILIES)[number]
 
@@ -100,6 +105,51 @@ export async function ensureFormeFontFamily(choice: unknown): Promise<string> {
       } catch (err) {
         console.error('[forme/fonts] Greek glyph subset failed to register:', err)
       }
+      return family
+    }
+
+    if (family === 'Plus Jakarta Sans') {
+      const regular = await resolveFontSource('PlusJakartaSans-Regular.ttf')
+      const bold = await resolveFontSource('PlusJakartaSans-Bold.ttf')
+      Font.register({ family, src: regular, fontWeight: 400 })
+      Font.register({ family, src: bold, fontWeight: 700 })
+      registeredFamilies.add(family)
+      return family
+    }
+
+    if (family === 'Figtree') {
+      const regular = await resolveFontSource('Figtree-Regular.ttf')
+      const bold = await resolveFontSource('Figtree-Bold.ttf')
+      Font.register({ family, src: regular, fontWeight: 400 })
+      Font.register({ family, src: bold, fontWeight: 700 })
+      registeredFamilies.add(family)
+      return family
+    }
+
+    if (family === 'Work Sans') {
+      const regular = await resolveFontSource('WorkSans-Regular.ttf')
+      const bold = await resolveFontSource('WorkSans-Bold.ttf')
+      Font.register({ family, src: regular, fontWeight: 400 })
+      Font.register({ family, src: bold, fontWeight: 700 })
+      registeredFamilies.add(family)
+      return family
+    }
+
+    if (family === 'Public Sans') {
+      const regular = await resolveFontSource('PublicSans-Regular.ttf')
+      const bold = await resolveFontSource('PublicSans-Bold.ttf')
+      Font.register({ family, src: regular, fontWeight: 400 })
+      Font.register({ family, src: bold, fontWeight: 700 })
+      registeredFamilies.add(family)
+      return family
+    }
+
+    if (family === 'PT Serif') {
+      const regular = await resolveFontSource('PTSerif-Regular.ttf')
+      const bold = await resolveFontSource('PTSerif-Bold.ttf')
+      Font.register({ family, src: regular, fontWeight: 400 })
+      Font.register({ family, src: bold, fontWeight: 700 })
+      registeredFamilies.add(family)
       return family
     }
 
