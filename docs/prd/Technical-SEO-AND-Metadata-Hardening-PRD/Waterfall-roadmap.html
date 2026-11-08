@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BigDrops ERP - Site Features Waterfall Roadmap</title>
+  <style>
+    :root {
+      --bg: #0f0e17;
+      --bg-secondary: #1a1927;
+      --card: #1f1e2a;
+      --card-hover: #2a293a;
+      --border: #35344a;
+      --text: #e8e6f0;
+      --text-muted: #787591;
+      --accent: #bb86fc;
+      --accent-secondary: #7c3aed;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --info: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ============ kinetics.md motion system ============ */
+    /* CSS-driven micro-interactions and timing */
+    .fade-in { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+    .stagger-1 { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; animation-delay: 0.1s; }
+    .stagger-2 { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; animation-delay: 0.2s; }
+    .stagger-3 { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; animation-delay: 0.3s; }
+    .stagger-4 { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; animation-delay: 0.4s; }
+    .stagger-5 { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; animation-delay: 0.5s; }
+
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes progressBar {
+      from { width: 0%; }
+    }
+
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .slide-up { animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(1rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ============ Refero styles.md component patterns ============ */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-secondary);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--card-hover);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-small {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-pending { background: rgba(251, 191, 36, 0.2); color: var(--warning); }
+    .badge-inprogress { background: rgba(59, 130, 246, 0.2); color: var(--info); }
+    .badge-completed { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+
+    /* ============ water-melon.md color palette ============ */
+    .status-pill {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pill-pending { background: var(--warning); color: var(--bg); }
+    .pill-inprogress { background: var(--info); color: var(--bg); }
+    .pill-completed { background: var(--success); color: var(--bg); }
+
+    /* ============ Layout ============ */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+
+    /* ============ Roadmap Visualization ============ */
+    .roadmap-timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .roadmap-timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1rem;
+      bottom: 1rem;
+      width: 2px;
+      background: linear-gradient(var(--border), var(--card-hover));
+      border-radius: 2px;
+    }
+
+    .roadmap-phase {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 2rem 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .roadmap-phase:hover {
+      gap: 1.5rem;
+    }
+
+    .roadmap-phase.current {
+      color: var(--accent);
+    }
+
+    .roadmap-phase.current .phase-number {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .roadmap-phase.completed .phase-number {
+      background: var(--success);
+      color: var(--bg);
+    }
+
+    .phase-number {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 9999px;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      transition: all 0.3s ease;
+    }
+
+    .phase-info {
+      flex: 1;
+    }
+
+    .phase-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .phase-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ============ Task Items ============ */
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .task-item:hover {
+      color: var(--accent);
+    }
+
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .task-item.completed .task-text::before {
+      content: '☐';
+      color: var(--success);
+      margin-right: 0.5rem;
+    }
+
+    .task-item.pending .task-text::before {
+      content: '☐';
+      color: var(--text-muted);
+      margin-right: 0.5rem;
+    }
+
+    .task-item.inprogress .task-text::before {
+      content: '◼';
+      color: var(--info);
+      margin-right: 0.5rem;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .task-status {
+      width: 1.2rem;
+      height: 1.2rem;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .task-status:hover {
+      border-color: var(--accent);
+    }
+
+    /* ============ Progress Bars ============ */
+    .progress-container {
+      width: 100%;
+      height: 0.5rem;
+      background: var(--card-hover);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+      width: 0%;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-text {
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    /* ============ Filters ============ */
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-tab {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-tab.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .filter-tab:hover:not(.active) {
+      color: var(--text);
+    }
+
+    /* ============ State Persistence ============ */
+    .reset-btn {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    .reset-btn:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="mb-8 fade-in">
+      <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+        BigDrops ERP Site Features
+      </h1>
+      <p style="color: var(--text-muted); font-size: 1rem;">
+        12 "Real Site" Criteria • SEO & Metadata Hardening
+      </p>
+    </header>
+
+    <!-- Status Filters -->
+    <div class="filter-tabs mb-6 fade-in stagger-1">
+      <div class="filter-tab active" data-filter="all">All</div>
+      <div class="filter-tab" data-filter="pending">Pending</div>
+      <div class="filter-tab" data-filter="inprogress">In Progress</div>
+      <div class="filter-tab" data-filter="completed">Completed</div>
+    </div>
+
+    <!-- Phase Overview Cards -->
+    <div class="grid-3 mb-8 gap-3 fade-in stagger-2">
+      <!-- Phase 1 Card -->
+      <div class="card">
+        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem;">Phase 1: Critical SEO & Identity</div>
+        <div class="progress-container">
+          <div class="progress-bar" id="phase1-progress" style="width: 0%;"></div>
+        </div>
+        <div class="progress-text" id="phase1-text">0%</div>
+      </div>
+      <!-- Phase 2 Card -->
+      <div class="card">
+        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem;">Phase 2: UX, Accessibility & Foundations</div>
+        <div class="progress-container">
+          <div class="progress-bar" id="phase2-progress" style="width: 0%;"></div>
+        </div>
+        <div class="progress-text" id="phase2-text">0%</div>
+      </div>
+      <!-- Phase 3 Card -->
+      <div class="card">
+        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem;">Phase 3: Compliance & Observability</div>
+        <div class="progress-bar" id="phase3-progress" style="width: 0%;"></div>
+        <div class="progress-text" id="phase3-text">0%</div>
+      </div>
+    </div>
+
+    <!-- Overall Progress -->
+    <div class="card mb-8" style="grid-column: span 3;">
+      <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem;">Overall Progress</div>
+      <div class="progress-container" style="height: 0.75rem;">
+        <div class="progress-bar" id="overall-progress" style="width: 0%;"></div>
+      </div>
+      <div class="progress-text" id="overall-text">0%</div>
+    </div>
+
+    <!-- Roadmap Timeline -->
+    <section class="mb-8 fade-in stagger-3">
+      <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Implementation Roadmap</h2>
+      <div class="roadmap-timeline">
+        <!-- Phase 1 -->
+        <div class="roadmap-phase" data-phase="1" onclick="setPhaseActive(1)">
+          <div class="phase-number" id="phase1-num">1</div>
+          <div class="phase-info">
+            <div class="phase-title">Phase 1: Critical SEO & Identity</div>
+            <div class="phase-desc">Weeks 1-2 • Items 3-8</div>
+          </div>
+        </div>
+
+        <!-- Phase 2 -->
+        <div class="roadmap-phase" data-phase="2" onclick="setPhaseActive(2)">
+          <div class="phase-number" id="phase2-num">2</div>
+          <div class="phase-info">
+            <div class="phase-title">Phase 2: UX, Accessibility & Foundations</div>
+            <div class="phase-desc">Weeks 3-4 • Items 1, 2, 9, 10</div>
+          </div>
+        </div>
+
+        <!-- Phase 3 -->
+        <div class="roadmap-phase" data-phase="3" onclick="setPhaseActive(3)">
+          <div class="phase-number" id="phase3-num">3</div>
+          <div class="phase-info">
+            <div class="phase-title">Phase 3: Compliance & Observability</div>
+            <div class="phase-desc">Weeks 5-6 • Items 11-12</div>
+          </div>
+        </div>
+
+        <!-- Phase 4 -->
+        <div class="roadmap-phase" data-phase="4" onclick="setPhaseActive(4)">
+          <div class="phase-number" id="phase4-num">4</div>
+          <div class="phase-info">
+            <div class="phase-title">Phase 4: Final Verification</div>
+            <div class="phase-desc">Week 7 • Polish & Audit</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Task Lists -->
+    <section class="mb-8 fade-in stagger-4">
+      <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Task Tracker</h2>
+      <div class="grid-2" id="task-list">
+        <!-- Tasks will be injected by JS -->
+      </div>
+    </section>
+
+    <!-- State Persistence Controls -->
+    <div class="card pt-6">
+      <button class="btn btn-secondary btn-small reset-btn" id="reset-btn">Reset to PRD Defaults</button>
+    </div>
+  </div>
+
+  <script>
+    // ============ State Model (embedded JS) ============
+    // Reflects the 12 PRD items across Phases 1, 2, and 3
+    // Status: 'pending' | 'inprogress' | 'completed'
+    const PRD_TASKS = [
+      // Phase 1: Critical SEO & Identity (Items 3-8)
+      { id: 1, phase: 1, text: 'Meta title per page', status: 'pending' },
+      { id: 2, phase: 1, text: 'Meta description per page', status: 'pending' },
+      { id: 3, phase: 1, text: 'Open Graph image integration', status: 'pending' },
+      { id: 4, phase: 1, text: 'Favicon set (SVG / classic / apple)', status: 'pending' },
+      { id: 5, phase: 1, text: 'robots.txt configuration', status: 'pending' },
+      { id: 6, phase: 1, text: 'sitemap.xml generation', status: 'pending' },
+      // Phase 2: UX, Accessibility & Foundations (Items 1, 2, 9, 10)
+      { id: 7, phase: 2, text: 'Custom branded 404 page', status: 'pending' },
+      { id: 8, phase: 2, text: 'Above-the-fold CTA optimization', status: 'pending' },
+      { id: 9, phase: 2, text: 'Complete image alt-text audit', status: 'pending' },
+      { id: 10, phase: 2, text: 'Unified loading skeletons and states', status: 'pending' },
+      // Phase 3: Compliance & Observability (Items 11-12)
+      { id: 11, phase: 3, text: 'Privacy Policy page & routing', status: 'pending' },
+      { id: 12, phase: 3, text: 'Anonymized analytics & consent flow', status: 'pending' },
+      // Phase 4: Final Verification (optional items)
+      { id: 13, phase: 4, text: 'User testing: 404, privacy policy, cookie consent', status: 'pending' },
+      { id: 14, phase: 4, text: 'Mobile viewport renders all pages correctly', status: 'pending' },
+      { id: 15, phase: 4, text: 'Social media sharing preview verification', status: 'pending' },
+    ];
+
+    // Load state from localStorage or use defaults
+    const loadState = () => {
+      const saved = localStorage.getItem('prd-roadmap-state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Merge saved state with defaults for any missing items
+        PRD_TASKS.forEach(task => {
+          if (saved[task.id] !== undefined) {
+            task.status = saved[task.id];
+          }
+        });
+      }
+    };
+
+    const saveState = () => {
+      const state = {};
+      PRD_TASKS.forEach(task => {
+        state[task.id] = task.status;
+      });
+      localStorage.setItem('prd-roadmap-state', JSON.stringify(state));
+    };
+
+    // ============ Rendering ============
+    const taskListEl = document.getElementById('task-list');
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const phaseBars = {
+      1: { bar: document.getElementById('phase1-progress'), text: document.getElementById('phase1-text') },
+      2: { bar: document.getElementById('phase2-progress'), text: document.getElementById('phase2-text') },
+      3: { bar: document.getElementById('phase3-progress'), text: document.getElementById('phase3-text') },
+    };
+    const overallBar = { bar: document.getElementById('overall-progress'), text: document.getElementById('overall-text') };
+    const phaseNums = { 1: document.getElementById('phase1-num'), 2: document.getElementById('phase2-num'), 3: document.getElementById('phase3-num'), 4: document.getElementById('phase4-num') };
+
+    let currentPhase = 0; // 0 = all, 1-3 = specific phase
+
+    // Calculate progress for a phase
+    const calcPhaseProgress = (phase) => {
+      const tasks = PRD_TASKS.filter(t => t.phase === phase);
+      const completed = tasks.filter(t => t.status === 'completed').length;
+      return tasks.length > 0 ? (completed / tasks.length * 100) : 0;
+    };
+
+    const calcOverallProgress = () => {
+      const total = PRD_TASKS.length;
+      const completed = PRD_TASKS.filter(t => t.status === 'completed').length;
+      return total > 0 ? (completed / total * 100) : 0;
+    };
+
+    // Update progress bars
+    const updateProgress = () => {
+      // Phase progress
+      Object.keys(phaseBars).forEach(phase => {
+        const p = parseInt(phase);
+        const progress = calcPhaseProgress(p);
+        phaseBars[p].bar.style.width = `${progress}%`;
+        phaseBars[p].text.textContent = `${Math.round(progress)}%`;
+      });
+
+      // Overall progress
+      const overall = calcOverallProgress();
+      overallBar.bar.style.width = `${overall}%`;
+      overallBar.text.textContent = `${Math.round(overall)}%`;
+    };
+
+    // Set active phase filter
+    const setPhaseActive = (phase) => {
+      currentPhase = phase;
+      filterTabs.forEach((tab, i) => {
+        if (i === 0) {
+          tab.classList.toggle('active', phase === 0);
+          tab.setAttribute('data-filter', 'all');
+        } else {
+          const filter = phase === i ? 'inprogress' : 'all'; // simplified
+          tab.classList.toggle('active', false);
+          tab.setAttribute('data-filter', phase === i ? 'completed' : 'all');
+        }
+      });
+      renderTasks();
+      updateProgress();
+    };
+
+    // Render task items
+    const renderTasks = () => {
+      const filter = currentPhase === 0 ? 'all' : 
+        (currentPhase === 1 ? 'pending' : currentPhase === 2 ? 'inprogress' : 'completed');
+
+      let tasks = [...PRD_TASKS];
+      
+      // Apply phase filter
+      if (currentPhase > 0) {
+        tasks = tasks.filter(t => t.phase === currentPhase);
+      }
+
+      // Apply status filter
+      if (filter !== 'all') {
+        tasks = tasks.filter(t => t.status === filter);
+      }
+
+      // Sort by phase then id
+      tasks.sort((a, b) => a.phase - b.phase || a.id - b.id);
+
+      // Update phase numbers visual
+      Object.keys(phaseNums).forEach(p => {
+        phaseNums[parseInt(p)].classList.toggle('completed', 
+          PRD_TASKS.filter(t => t.phase === parseInt(p)).every(t => t.status === 'completed')
+        );
+        phaseNums[parseInt(p)].classList.toggle('current', 
+          currentPhase === parseInt(p)
+        );
+      });
+
+      // Render
+      taskListEl.innerHTML = tasks.map(task => {
+        const statusClasses = {
+          pending: 'pending',
+          inprogress: 'inprogress',
+          completed: 'completed'
+        };
+
+        return `
+          <div class="task-item ${statusClasses[task.status]}" data-id="${task.id}" onclick="toggleTask(${task.id})">
+            <div class="task-status" 
+                 style="background: ${task.status === 'completed' ? 'var(--success)' : task.status === 'inprogress' ? 'var(--info)' : 'var(--text-muted)'}; 
+                 border-color: ${task.status === 'completed' ? 'var(--success)' : task.status === 'inprogress' ? 'var(--info)' : 'var(--border)'}">
+            </div>
+            <span class="task-text">${task.text}</span>
+          </div>
+        `;
+      }).join('');
+
+      // Add filter buttons HTML
+      const filterHtml = `
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+          <button class="filter-tab ${currentPhase === 0 || currentPhase === 1 ? 'active' : ''}" onclick="setPhaseActive(0)">All</button>
+          <button class="filter-tab ${currentPhase === 1 ? 'active' : ''}" onclick="setPhaseActive(1)">Phase 1</button>
+          <button class="filter-tab ${currentPhase === 2 ? 'active' : ''}" onclick="setPhaseActive(2)">Phase 2</button>
+          <button class="filter-tab ${currentPhase === 3 ? 'active' : ''}" onclick="setPhaseActive(3)">Phase 3</button>
+        </div>
+      `;
+      
+      // Insert filter after task list header - we'll just update the innerHTML completely
+      // Actually, let's prepend the filter
+      const header = taskListEl.previousElementSibling;
+      if (header && header.tagName === 'H2') {
+        header.insertAdjacentHTML('afterend', filterHtml);
+      }
+    };
+
+    // Toggle task status
+    const toggleTask = (id) => {
+      const task = PRD_TASKS.find(t => t.id === id);
+      if (!task) return;
+
+      // Cycle: pending -> inprogress -> completed -> pending
+      const statuses = ['pending', 'inprogress', 'completed'];
+      const currentIdx = statuses.indexOf(task.status);
+      const nextIdx = (currentIdx + 1) % statuses.length;
+      task.status = statuses[nextIdx];
+
+      saveState();
+      updateProgress();
+      renderTasks();
+    };
+
+    // Reset to PRD defaults
+    const resetToDefaults = () => {
+      PRD_TASKS.forEach(task => {
+        task.status = 'pending';
+      });
+      saveState();
+      updateProgress();
+      renderTasks();
+    };
+
+    // ============ Initialization ============
+    loadState();
+    renderTasks();
+    updateProgress();
+
+    // Keyboard accessibility
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        // Close any open modals, etc.
+      }
+    });
+  </script>
+</body>
+</html>

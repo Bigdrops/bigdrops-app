@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- BigDrops ERP Favicon - Clean vector icon matching branding -->
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="8" fill="#0f0e17"/>
+  <path d="M8 8h48v8H8V8zm0 16h48v8H8v-8zm0 16h48v8H8v-8zm0 16h48v8H8v-8z" fill="#bb86fc"/>
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#7c3aed" stroke-width="2"/>
+  <text x="32" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">BD</text>
+</svg>
