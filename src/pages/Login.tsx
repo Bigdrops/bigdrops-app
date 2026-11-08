@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState, type SVGProps, type ReactNode, type ChangeEvent } from 'react'
 import { Mail, Lock } from 'lucide-react'
 import { supabase } from '../supabase'
@@ -191,7 +192,7 @@ export default function Login() {
         <div className="mb-8 hidden lg:block">
           <div className="max-w-xl">
             <div className="brand-wordmark mb-4 inline-flex rounded-full border border-black/10 bg-white/70 px-4 py-1 text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground backdrop-blur">
-              BigDrops ERP
+              BOUXRE ERP
             </div>
 
             <h1 className="max-w-lg text-5xl font-semibold leading-[1.05] tracking-tight text-foreground">
@@ -261,7 +262,7 @@ export default function Login() {
                 <>
                   <div className="mb-6 text-center lg:text-left">
                     <div className="brand-wordmark text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                      BigDrops ERP
+                      BOUXRE ERP
                     </div>
                     <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
                       {isSignup ? 'Create your account' : 'Sign in to continue'}
@@ -384,6 +385,12 @@ export default function Login() {
               )}
             </CardContent>
           </Card>
+
+          <div className="mt-4 text-center">
+            <Link to="/privacy-policy" className="text-xs text-muted-foreground hover:underline">
+              Privacy Policy
+            </Link>
+          </div>
 
           {/* mobile support copy */}
           <div className="mx-auto mt-6 max-w-md lg:hidden">

@@ -298,4 +298,18 @@ Mobile layout rules relevant to loading (§12): full-screen L4/L5 on phone; fold
 
 **Not done in Phase 2 / deferred:** adding tip dismiss inside `GuidanceTip` (used in shell/chromes) — the dismiss works in the startup loader; L5 stage list and `ProgressBar` primitives remain spec-only; `aria-busy` on the ~17 list skeleton call sites is inherited from the updated `SkeletonRow/Card` wrappers without call-site edits.
 
+### 9.6 Phase 3 execution log (2026-11-08) — Items 11, 12 ✅ COMPLETED
+
+**Item 11 — Privacy Policy: COMPLETE**
+- `src/pages/PrivacyPolicy.tsx` created. All 11 sections ported verbatim (in substance) from `docs/tickets/deferred-work/privacy-policy-proposal.md`: Introduction, Data We Collect (account/business/usage), How We Use Your Data, Data Storage & Security (Supabase PostgreSQL + TLS + RLS), Third-Party Services (Supabase/Vercel/Capacitor table), Data Retention (30-day deletion, 90-day backups), Your Rights, Compliance (**NDPR** — Nigeria Data Protection Regulation), Children's Privacy (16+), Changes, Contact (`privacy@bigdrops.app`, 5-business-day response).
+- Branding aligned to **BOURXE (by BigDrops)**; back-navigation header links to `/`; `usePageMetadata` sets title/description; layout `max-w-4xl mx-auto px-6 py-12`; adaptive Tailwind (`bg-background`/`text-foreground`/`border-border`); semantic `<main>/<article>/<section>/<h2>` hierarchy; table is `overflow-x-auto` for narrow screens.
+- Route `/privacy-policy` registered in `src/App.tsx` as a public, lazy-loaded route (`withBoundary`), alongside `/reset-password` and `/shared/:token` — **outside all auth gates** (verified visually: unauthenticated visitors reach it).
+- Links added: `Login.tsx` (subtle centred link below the auth card) and `onboarding-v5-preview.tsx` (signup fine-print "Privacy Policy" now an active router `Link`; "Terms" deliberately left unlinked — no Terms page exists).
+
+**Item 12 — Cookie Consent & Observability Baseline: COMPLETE (scoped by constraint)**
+- `src/components/compliance/CookieConsentBanner.tsx` created and mounted globally in `src/App.tsx` (inside the root fragment, above the fold layers). `role="region"`, `aria-label="Cookie consent"`, fixed bottom toast, non-blocking. Reads/writes `localStorage['bouxre_cookie_consent']` (`'accepted' | 'declined'`); renders `null` when set; Accept and Decline both persist the choice and dismiss with a 200ms fade/translate. Includes inline link to `/privacy-policy`. No analytics SDKs installed (constraint); telemetry is disclosed as prospective ("to improve BOURXE") without shipping a tracker — an explicit, documented gap vs the original PRD wish-list (Plausible/GA4), which was deliberately de-scoped.
+- **No tracking ships.** If analytics is ever enabled, it must be gated on `bouxre_cookie_consent === 'accepted'`.
+
+**Docs synced:** this file (Items 11, 12 complete) and `Waterfall-roadmap.html` (tasks 11, 12 → completed).
+
 > Verification: scoped `bun x tsc --noEmit` on modified files (0 errors); `bun run build`/`lint` not run (banned); concurrent-agent files untouched (`ColdLaunchTenantTreePresentation.tsx`, `ProvisioningProgress.tsx`, `industryAdapter.ts`, `scratch/*`).

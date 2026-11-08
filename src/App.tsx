@@ -26,6 +26,7 @@ import { AppUpdateProvider } from '@/contexts/AppUpdateContext'
 import UpdateGate from '@/components/app/UpdateGate'
 import UpdateBanner from '@/components/app/UpdateBanner'
 import WebAppPromoBanner from '@/components/app/WebAppPromoBanner'
+import CookieConsentBanner from '@/components/compliance/CookieConsentBanner'
 import { isBiometricLockEnabled } from '@/lib/native/biometric'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
@@ -38,6 +39,7 @@ const Login = lazy(() => import('./pages/Login'))
 const NotFound = lazy(() => import("./pages/NotFound"))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const PublicDocumentViewer = lazy(() => import('./pages/PublicDocumentViewer'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
 
 const RECOVERY_COOLDOWN_MS = 1500
 
@@ -559,6 +561,7 @@ function App() {
             <UpdateBanner update={appUpdate} />
           )}
         {!isAndroidNative() && <WebAppPromoBanner />}
+        <CookieConsentBanner />
         {isAndroidNative() && (
           <>
             <AndroidBackHandler />
@@ -569,6 +572,7 @@ function App() {
           <Routes>
             <Route path="/reset-password" element={withBoundary(<ResetPassword />)} />
             <Route path="/shared/:token" element={withBoundary(<PublicDocumentViewer />)} />
+            <Route path="/privacy-policy" element={withBoundary(<PrivacyPolicy />)} />
             <Route
               path="/*"
               element={

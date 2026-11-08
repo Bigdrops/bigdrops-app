@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { ArrowLeft, ArrowRight, CheckCircle2, Eye, Mail, Moon, Palette, Sun, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { PasswordField } from '@/components/arc/password-field/password-field'
 import {
@@ -36,7 +36,7 @@ interface Chapter {
 }
 
 const SOURCE_REFERENCES = [
-  'BOURXE_Ultimate_Onboarding.html',
+  'BOUXRE_Ultimate_Onboarding.html',
   'claude-v2.html',
   'deepseek.html',
   'cta-index.tsx',
@@ -235,14 +235,14 @@ function ArrivalScreen({ onExplore, onSignIn }: { onExplore: () => void; onSignI
   return (
     <section className="ob5-screen ob5-arrival" aria-labelledby="ob5-arrival-title">
       <div className="ob5-story-copy">
-        <p className="ob5-eyebrow">BOURXE operating system</p>
+        <p className="ob5-eyebrow">BOUXRE operating system</p>
         <h2 id="ob5-arrival-title">Every business has its own work.</h2>
         <p>
-          BOURXE gives separate businesses room for their teams, documents and operations.
+          BOUXRE gives separate businesses room for their teams, documents and operations.
         </p>
         <div className="ob5-actions">
           <button type="button" className="ob5-primary" onClick={onExplore}>
-            Explore BOURXE
+            Explore BOUXRE
             <ArrowRight aria-hidden="true" />
           </button>
           <button type="button" className="ob5-text-action" onClick={onSignIn}>
@@ -390,7 +390,7 @@ function AuthShell({
         <div className="ob5-auth-card">
           <p className="ob5-eyebrow">{isSignup ? 'Create account' : 'Welcome back'}</p>
           <h2 id={isSignup ? 'ob5-signup-title' : 'ob5-signin-title'}>
-            {isSignup ? 'Get started with BOURXE.' : 'Sign in to BOURXE.'}
+            {isSignup ? 'Get started with BOUXRE.' : 'Sign in to BOUXRE.'}
           </h2>
           <p className="ob5-auth-sub">
             {isSignup ? 'Set up the account that will hold your business workspace.' : 'Continue with the workspace your team already uses.'}
@@ -472,7 +472,11 @@ function AuthShell({
               </button>
             ) : (
               <p className="ob5-terms">
-                By continuing you agree to the Terms and Privacy Policy.
+                By continuing you agree to the Terms and{' '}
+                <Link to="/privacy-policy" className="underline underline-offset-2 hover:opacity-80">
+                  Privacy Policy
+                </Link>
+                .
               </p>
             )}
 
@@ -489,7 +493,7 @@ function AuthShell({
           ) : null}
 
           <p className="ob5-auth-switch">
-            {isSignup ? 'Already have an account?' : 'New to BOURXE?'}
+            {isSignup ? 'Already have an account?' : 'New to BOUXRE?'}
             <button type="button" onClick={onSwitch}>
               {isSignup ? 'Sign In' : 'Sign Up'}
             </button>
