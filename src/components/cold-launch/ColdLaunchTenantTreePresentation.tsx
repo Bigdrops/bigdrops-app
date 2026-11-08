@@ -8,6 +8,7 @@ import {
 } from '@/components/cold-launch/PreviewTree'
 import {
   getPhotoHeroVars,
+  isPhotoHeroFamilyId,
   type PhotoHeroAppearance,
   type PhotoHeroFamilyId,
 } from '@/components/onboarding/photo-hero-v2-theme'
@@ -59,6 +60,18 @@ function resolveAmbientAppearance(): PhotoHeroAppearance {
   return 'dark'
 }
 
+function resolveAmbientFamily(): PhotoHeroFamilyId {
+  if (typeof document !== 'undefined') {
+    const themeAttr = document.documentElement.getAttribute('data-theme')
+    if (isPhotoHeroFamilyId(themeAttr)) {
+      return themeAttr
+    }
+    if (themeAttr === 'amber-minimal' || themeAttr === 'warm-cocoa') return 'amber-terracotta'
+    if (themeAttr === 'cleanslate' || themeAttr === 'modern-minimal') return 'slate-navy'
+  }
+  return 'slate-navy'
+}
+
 /**
  * Approved Cold Launch V1 Tenant Tree presentation.
  *
@@ -68,7 +81,7 @@ function resolveAmbientAppearance(): PhotoHeroAppearance {
  * developer controls.
  */
 export default function ColdLaunchTenantTreePresentation({
-  family = 'slate-navy',
+  family: propFamily,
   appearance,
   variant,
   networkState = 'normal',
@@ -85,6 +98,8 @@ export default function ColdLaunchTenantTreePresentation({
   const resolvedVariant = variant ?? (isNative ? 'enhanced' : 'original')
 
   const [brandTop, setBrandTop] = React.useState(0.44)
+  const ambientFamily = React.useMemo(() => resolveAmbientFamily(), [])
+  const family = propFamily ?? ambientFamily
   const [ambientAppearance, setAmbientAppearance] =
     React.useState<PhotoHeroAppearance>(() => resolveAmbientAppearance())
   const resolvedAppearance = appearance ?? ambientAppearance
@@ -111,8 +126,11 @@ export default function ColdLaunchTenantTreePresentation({
   if (!isNative && !isPreviewMode) {
     return (
       <div
-        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0d1624] text-slate-100 select-none overflow-hidden"
-        style={vars as React.CSSProperties}
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center text-slate-100 select-none overflow-hidden"
+        style={{
+          backgroundColor: 'var(--scene-intro, var(--bg, #0d1624))',
+          ...(vars as React.CSSProperties),
+        }}
         role="status"
         aria-live="polite"
       >

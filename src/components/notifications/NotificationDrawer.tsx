@@ -34,10 +34,14 @@ export default function NotificationDrawer({
       await onMarkRead(notification.id)
     }
 
-    const route = getNotificationRoute(notification)
+    const route = notification.route || getNotificationRoute(notification)
     if (route) {
       onOpenChange(false)
-      navigate(route)
+      if (route.startsWith('http://') || route.startsWith('https://')) {
+        window.open(route, '_blank')
+      } else {
+        navigate(route)
+      }
     }
   }
 

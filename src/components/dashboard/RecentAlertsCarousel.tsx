@@ -65,14 +65,18 @@ export function RecentAlertsCarousel() {
   const alerts = notifications.slice(0, 8)
 
   const handleSelect = async (notification: AppNotification) => {
-    const route = getNotificationRoute(notification)
+    const route = notification.route || getNotificationRoute(notification)
     if (!route) return
 
     if (isNotificationUnread(notification)) {
       await markRead(notification.id)
     }
 
-    navigate(route)
+    if (route.startsWith('http://') || route.startsWith('https://')) {
+      window.open(route, '_blank')
+    } else {
+      navigate(route)
+    }
   }
 
   return (
@@ -96,7 +100,7 @@ export function RecentAlertsCarousel() {
         <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch] md:gap-3">
           {alerts.map((notification) => {
                 const Icon = getIcon(notification)
-                const route = getNotificationRoute(notification)
+                const route = notification.route || getNotificationRoute(notification)
                 const unread = isNotificationUnread(notification)
                 const body = notification.message || 'Open the notification to review the linked record.'
                 const time = formatRelativeTime(notification.created_at)

@@ -12,3 +12,7 @@ export function useAppUpdateContext(): UseAppUpdateResult {
   if (!v) throw new Error('useAppUpdateContext: no provider')
   return v
 }
+
+export function useOptionalAppUpdateContext(): UseAppUpdateResult | null {
+  return useContext(Ctx)
+}

@@ -23,14 +23,43 @@ const DEFAULT_PREFERENCE: UserThemePreference = {
 }
 
 const LOCAL_STORAGE_PREFIX = 'bigdrops_user_theme_'
+const ACTIVE_THEME_STORAGE_KEY = 'bigdrops_active_theme'
 const LOCAL_STORAGE_GRACE_MS = 3000
 
 // ────────────────────────────────────────────────────────────────────
-// Helpers — user-scoped localStorage
+// Helpers — user-scoped localStorage & device active theme cache
 // ────────────────────────────────────────────────────────────────────
 
 function localStorageKey(userId: string): string {
   return `${LOCAL_STORAGE_PREFIX}${userId}`
+}
+
+function readActiveThemeCache(): UserThemePreference | null {
+  try {
+    const raw = localStorage.getItem(ACTIVE_THEME_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') {
+      const presetId = parsed.themePresetId
+      const mode = parsed.themeMode
+      const validMode = (mode === 'light' || mode === 'dark' || mode === 'system') ? mode : 'light'
+      return {
+        themePresetId: isThemePresetId(presetId) ? presetId : 'slate-navy',
+        themeMode: validMode,
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+function writeActiveThemeCache(pref: UserThemePreference): void {
+  try {
+    localStorage.setItem(ACTIVE_THEME_STORAGE_KEY, JSON.stringify(pref))
+  } catch {
+    // ignore
+  }
 }
 
 function readLocalCache(userId: string): UserThemePreference | null {
@@ -58,6 +87,7 @@ function readLocalCache(userId: string): UserThemePreference | null {
 function writeLocalCache(userId: string, pref: UserThemePreference): void {
   try {
     localStorage.setItem(localStorageKey(userId), JSON.stringify(pref))
+    writeActiveThemeCache(pref)
   } catch {
     // localStorage full or unavailable — ignore
   }
@@ -108,7 +138,14 @@ export function cleanupStaleThemeCaches(currentUserIds: string[]): void {
  * because it is keyed by user ID.
  */
 export function useUserThemePreferences(userId: string | undefined | null) {
-  const [preference, setPreference] = useState<UserThemePreference>(DEFAULT_PREFERENCE)
+  const [preference, setPreference] = useState<UserThemePreference>(() => {
+    if (userId) {
+      const cached = readLocalCache(userId)
+      if (cached) return cached
+    }
+    const activeCached = readActiveThemeCache()
+    return activeCached ?? DEFAULT_PREFERENCE
+  })
   const [loading, setLoading] = useState(Boolean(userId))
   const lastWriteAtRef = useRef(0)
   const { runLatest, cancel } = useSafeAsyncTask()
@@ -138,7 +175,12 @@ export function useUserThemePreferences(userId: string | undefined | null) {
     if (error || !data) {
       // No row exists yet — use local cache or default
       const cached = readLocalCache(userId)
-      setPreference(cached ?? DEFAULT_PREFERENCE)
+      if (cached) {
+        writeActiveThemeCache(cached)
+        setPreference(cached)
+      } else {
+        setPreference(DEFAULT_PREFERENCE)
+      }
       setLoading(false)
       return
     }

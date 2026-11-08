@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react'
+import { RefreshCw, CheckCircle2, AlertTriangle, AlertCircle, Download, Smartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
 import { useAppUpdateContext } from '@/contexts/AppUpdateContext'
@@ -7,7 +7,74 @@ import { getAppVersionInfo, type AppVersionInfo } from '@/lib/appUpdate/appVersi
 import { isAndroidNative } from '@/lib/native/capacitor'
 import type { CheckResult } from '@/hooks/useAppUpdate'
 import { mapUpdateStatusToSettingsDisplay } from '@/domain/appUpdate/settingsUpdateDisplay'
+import { useWebAndroidApk } from '@/hooks/useWebAndroidApk'
 import UpdateSheet from '@/components/app/UpdateSheet'
+
+function WebAndroidDownloadSection() {
+  const { apkUrl, versionName, versionCode, loading } = useWebAndroidApk()
+
+  return (
+    <div className="space-y-4">
+      <SettingsSummaryCard
+        title="BOURXE for Android"
+        description="Download the native Android app for faster performance, biometric security, and offline support."
+      >
+        <SettingsSummaryRow
+          label="Platform"
+          value={
+            <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <Smartphone className="size-3.5 text-primary" /> Android (APK)
+            </span>
+          }
+        />
+        <SettingsSummaryRow
+          label="Latest Version"
+          value={
+            loading
+              ? 'Checking…'
+              : versionName
+                ? `v${versionName} (${versionCode ?? '—'})`
+                : 'v1.0.24 (Latest)'
+          }
+        />
+        <SettingsSummaryRow
+          label="Distribution"
+          value={
+            <span className="flex items-center gap-1.5 text-bd-status-success-text">
+              <CheckCircle2 className="size-3.5" /> Official Supabase CDN
+            </span>
+          }
+        />
+        <SettingsSummaryRow
+          label="Security"
+          value="Signed Release Build"
+        />
+      </SettingsSummaryCard>
+
+      <Button asChild size="lg" className="w-full shadow-xs">
+        <a href={apkUrl} download="bigdrops-latest.apk">
+          <Download className="size-4" data-icon="inline-start" />
+          Download Android APK
+        </a>
+      </Button>
+
+      <div className="rounded-lg border border-border/60 bg-muted/30 p-3.5 text-xs text-muted-foreground space-y-1.5">
+        <p className="font-semibold text-foreground flex items-center gap-1.5">
+          <Download className="size-3.5 text-primary" /> Installation instructions
+        </p>
+        <p>
+          1. Tap the button above to download the official Android APK directly to your device.
+        </p>
+        <p>
+          2. Open the downloaded file from your browser&apos;s Downloads or notification bar.
+        </p>
+        <p>
+          3. If prompted by Android, allow installation from unknown sources for your browser.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 /**
  * Android-only manual update surface. Renders the exact result of the
@@ -50,7 +117,9 @@ export function AppUpdateSettingsSection() {
     }
   }, [update])
 
-  if (!isAndroidNative()) return null
+  if (!isAndroidNative()) {
+    return <WebAndroidDownloadSection />
+  }
 
   // Single truthful source: the exact manual-check result when present,
   // otherwise the live hook state once its authoritative discovery settled.

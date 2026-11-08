@@ -7,6 +7,52 @@
     <link href="https://fonts.cdnfonts.com/css/geist" rel="stylesheet">
     <link href="https://fonts.cdnfonts.com/css/broken-planet" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <script>
+      (function() {
+        try {
+          var key = 'bigdrops_active_theme';
+          var raw = localStorage.getItem(key);
+          if (!raw) {
+            for (var i = 0; i < localStorage.length; i++) {
+              var k = localStorage.key(i);
+              if (k && k.indexOf('bigdrops_user_theme_') === 0) {
+                raw = localStorage.getItem(k);
+                break;
+              }
+            }
+          }
+          var theme = 'slate-navy';
+          var mode = 'light';
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed) {
+              if (parsed.themePresetId) theme = parsed.themePresetId;
+              if (parsed.themeMode) mode = parsed.themeMode;
+            }
+          }
+          var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          if (isDark) {
+            root.classList.add('dark');
+            root.classList.remove('light');
+          } else {
+            root.classList.add('light');
+            root.classList.remove('dark');
+          }
+          root.setAttribute('data-theme', theme);
+          root.style.colorScheme = isDark ? 'dark' : 'light';
+          var bgColors = {
+            'slate-navy': isDark ? '#0b1524' : '#f8fafc',
+            'amber-terracotta': isDark ? '#161311' : '#faf8f5',
+            'ocean-teal': isDark ? '#0d1716' : '#f4fbf9',
+            'rose-gold': isDark ? '#181114' : '#fdf8f9',
+            'forest-green': isDark ? '#0d1712' : '#f4fbf6'
+          };
+          var bg = bgColors[theme] || (isDark ? '#0b1524' : '#ffffff');
+          root.style.backgroundColor = bg;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
