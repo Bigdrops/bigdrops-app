@@ -10,7 +10,7 @@ import {
 } from '@/components/invoice/mobile/mobileFormPrimitives'
 import { DocumentSectionHead } from './DocumentFormPresentation'
 
-const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
+const Editor = lazy(() => import('@/components/ui/editor'))
 
 function EditorLoadingState() {
   return (
@@ -93,7 +93,7 @@ export function FormNotesTerms({
           <div>
             <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--bd-text3)]">Invoice Notes</div>
             <Suspense fallback={<EditorLoadingState />}>
-              <RichTextEditor
+              <Editor
                 value={invoice.notes || ''}
                 onChange={(value: string) => updateInvoice('notes', value)}
                 placeholder="Notes..."
@@ -104,7 +104,7 @@ export function FormNotesTerms({
           <div>
             <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--bd-text3)]">Terms & Conditions</div>
             <Suspense fallback={<EditorLoadingState />}>
-              <RichTextEditor
+              <Editor
                 value={invoice.terms || ''}
                 onChange={(value: string) => updateInvoice('terms', value)}
                 placeholder="Terms..."

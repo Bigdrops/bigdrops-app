@@ -44,7 +44,7 @@ import { DocumentSectionHead, DocumentTopBar } from '@/components/document/Docum
 import { DateField } from '@/components/ui/date-field'
 import '@/components/document/document-cps-overrides.css'
 
-const RichTextEditor = lazy(() => import('@/components/RichTextEditor'))
+const Editor = lazy(() => import('@/components/ui/editor'))
 const WaybillImportSheet = lazy(() => import('./WaybillImportSheet').then(m => ({ default: m.WaybillImportSheet })))
 import { externalWaybillImportAdapter } from '@/domain/waybill/externalWaybillImportAdapter'
 import { internalWaybillImportAdapter } from '@/domain/waybill/internalWaybillImportAdapter'
@@ -756,7 +756,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
                   placeholder="Notes title"
                 />
                 <Suspense fallback={<div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-10 text-center text-[12px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
-                  <RichTextEditor value={waybill.notes ?? ''} onChange={(v) => updateWaybill('notes', v)} placeholder="Add notes..." />
+                  <Editor value={waybill.notes ?? ''} onChange={(v) => updateWaybill('notes', v)} placeholder="Add notes..." />
                 </Suspense>
               </div>
             </CollapseCard>
@@ -771,7 +771,7 @@ export default function WaybillForm({ type, onSave, onClose, initialData, waybil
               sectionColor="#8b5cf6"
             >
               <Suspense fallback={<div className="rounded-[var(--bd-radius-md)] border border-[var(--bd-border)] bg-[var(--bd-surface)] px-3 py-10 text-center text-[12px] text-[var(--bd-text-muted)]">Loading editor...</div>}>
-                <RichTextEditor value={terms} onChange={setTerms} placeholder="Add terms and conditions..." />
+                <Editor value={terms} onChange={setTerms} placeholder="Add terms and conditions..." />
               </Suspense>
             </CollapseCard>
             )}

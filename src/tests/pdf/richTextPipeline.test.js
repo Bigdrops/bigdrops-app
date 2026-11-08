@@ -167,3 +167,85 @@ test('rich-text security boundary: malformed tags, XSS payloads, and script/styl
   assert.equal(normNested, '<p><strong><em>bold and italic</em></strong></p>')
   assert.equal(richTextToPlainText(normNested), 'bold and italic')
 })
+
+test('editorcn generated markup (H1-H3, bold, italic, underline, lists, linebreaks) normalizes cleanly', () => {
+  const editorCnOutput = [
+    '<h1>Main Section Header</h1>',
+    '<h2>Subsection Header</h2>',
+    '<h3>Minor Subsection</h3>',
+    '<p>Standard paragraph with <strong>bold</strong>, <em>italic</em>, and <u>underlined</u> text.</p>',
+    '<p>Second paragraph with line<br />break.</p>',
+    '<ul><li>First bullet</li><li>Second bullet with <strong>bold</strong></li></ul>',
+    '<ol><li>First step</li><li>Second step</li></ol>',
+  ].join('')
+
+  const normalized = normalizeRichTextHtml(editorCnOutput)
+  const plain = richTextToPlainText(normalized)
+
+  assert.match(normalized, /<h1>Main Section Header<\/h1>/)
+  assert.match(normalized, /<h2>Subsection Header<\/h2>/)
+  assert.match(normalized, /<h3>Minor Subsection<\/h3>/)
+  assert.match(normalized, /<strong>bold<\/strong>/)
+  assert.match(normalized, /<em>italic<\/em>/)
+  assert.match(normalized, /<u>underlined<\/u>/)
+  assert.match(normalized, /<ul><li>First bullet<\/li><li>Second bullet with <strong>bold<\/strong><\/li><\/ul>/)
+  assert.match(normalized, /<ol><li>First step<\/li><li>Second step<\/li><\/ol>/)
+
+  assert.match(plain, /Main Section Header/)
+  assert.match(plain, /Subsection Header/)
+  assert.match(plain, /• First bullet/)
+  assert.match(plain, /1\. First step/)
+})
+
+test('editorcn unsupported markup exclusion: strikethrough, tables, and raw containers are stripped cleanly', () => {
+  // Strikethrough, tables, and raw div/spans should not crash and unsupported wrappers should be stripped
+  const rawWithUnsupported = '<p>Price: <s>$100</s> <strong>$80</strong></p><table><tr><td>Cell</td></tr></table>'
+  const normalized = normalizeRichTextHtml(rawWithUnsupported)
+  const plain = richTextToPlainText(normalized)
+
+  assert.match(normalized, /Price:.*\$100.*<strong>\$80<\/strong>/)
+  assert.doesNotMatch(normalized, /<s\b|<table\b|<tr\b|<td\b/i)
+  assert.match(plain, /Price:/)
+  assert.match(plain, /\$80/)
+})
+
+test('Letter multiline conversion preserves lines and paragraph boundaries cleanly', () => {
+  const letterText = 'Dear Client,\n\nWe are pleased to submit our invoice.\nPlease find details below.\n\nBest regards,\nBourxe Team'
+  
+  // textToHtml behavior (LetterBodyEditor)
+  const html = letterText
+    .split('\n')
+    .map((l) => (l ? `<p>${l}</p>` : '<p><br></p>'))
+    .join('')
+
+  const normalized = normalizeRichTextHtml(html)
+  const plain = richTextToPlainText(normalized)
+
+  assert.match(normalized, /<p>Dear Client,<\/p>/)
+  assert.match(normalized, /<p>We are pleased to submit our invoice\.<\/p>/)
+  assert.match(normalized, /<p>Best regards,<\/p><p>Bourxe Team<\/p>/)
+  assert.match(plain, /Dear Client,/)
+  assert.match(plain, /Bourxe Team/)
+})
+
+test('LetterBodyEditor conversion roundtrip preserves plain text paragraphs and strips inline HTML tags', () => {
+  const originalLetter = 'Formal Notice\n\nThis is to notify you of the delivery date.\nThank you.'
+  
+  // textToHtml
+  const html = originalLetter
+    .split('\n')
+    .map((l) => (l ? `<p>${l}</p>` : '<p><br></p>'))
+    .join('')
+
+  // Simulate user applying bold/underline in the letter editor
+  const userEditedHtml = html.replace('Formal Notice', '<strong><u>Formal Notice</u></strong>')
+
+  // htmlToText (as implemented in LetterBodyEditor)
+  const plainTextStripped = userEditedHtml.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+
+  assert.match(plainTextStripped, /Formal Notice/)
+  assert.doesNotMatch(plainTextStripped, /<strong>|<u>|<p>/)
+  assert.match(plainTextStripped, /This is to notify you of the delivery date\./)
+})
+
+
