@@ -502,8 +502,6 @@ const SharedDocumentForm = React.memo(function SharedDocumentForm(props: any) {
         onCancel={onCancel}
         onOpenColumnManager={() => setShowColumnManager(true)}
         onImport={() => setShowImportSheet(true)}
-        mergeQtyUnit={mergeQtyUnit}
-        onToggleMergeQtyUnit={() => setMergeQtyUnit(!mergeQtyUnit)}
         onAddGroup={onAddGroup}
         onScrollToAdditionalInfo={() => {
           setShowNotesTerms(true)

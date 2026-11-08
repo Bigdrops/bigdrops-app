@@ -11,6 +11,8 @@ const STORAGE_KEY = 'bd-error-registry'
 
 let entries: ErrorRegistryEntry[] = []
 let hydrated = false
+type ErrorListener = (entries: ErrorRegistryEntry[]) => void
+const listeners = new Set<ErrorListener>()
 
 function hydrate(): void {
   if (hydrated) return
@@ -36,6 +38,11 @@ function persist(): void {
   }
 }
 
+function notifyListeners(): void {
+  const current = [...entries]
+  listeners.forEach((fn) => fn(current))
+}
+
 function generateId(): string {
   return `err_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
@@ -43,10 +50,11 @@ function generateId(): string {
 export const errorRegistry = {
   add(title: string, diagnostic: string): string {
     hydrate()
+    const currentRoute = typeof window !== 'undefined' ? window.location.pathname : '/'
     const entry: ErrorRegistryEntry = {
       id: generateId(),
       timestamp: Date.now(),
-      route: window.location.pathname,
+      route: currentRoute,
       title,
       diagnostic,
     }
@@ -55,6 +63,7 @@ export const errorRegistry = {
       entries = entries.slice(0, MAX_ENTRIES)
     }
     persist()
+    notifyListeners()
     return entry.id
   },
 
@@ -71,5 +80,15 @@ export const errorRegistry = {
   clear(): void {
     entries = []
     persist()
+    notifyListeners()
+  },
+
+  subscribe(listener: ErrorListener): () => void {
+    hydrate()
+    listeners.add(listener)
+    listener([...entries])
+    return () => {
+      listeners.delete(listener)
+    }
   },
 }

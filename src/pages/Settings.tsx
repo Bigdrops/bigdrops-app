@@ -26,6 +26,7 @@ import { AppThemeSettingsSection } from './settings/AppThemeSettingsSection'
 import { SecuritySettingsSection } from './settings/SecuritySettingsSection'
 import { AppUpdateSettingsSection } from './settings/AppUpdateSettingsSection'
 import { LocalAISettingsSection } from './settings/LocalAISettingsSection'
+import SystemLogsSettingsSection from './settings/SystemLogsSettingsSection'
 
 export default function Settings() {
   const [session, setSession] = useState<SettingsSession>(null)
@@ -92,6 +93,7 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
     {active === 'security' && <SecuritySettingsSection />}
     {active === 'local-ai' && <LocalAISettingsSection />}
     {active === 'app-update' && <AppUpdateSettingsSection />}
+    {active === 'system-logs' && <SystemLogsSettingsSection />}
     {active === 'tenant-debug' && <div className="p-8 text-center text-sm text-bd-text-muted">Tenant Diagnostics Environment (Operator Only)</div>}
   </SettingsShell>
 }

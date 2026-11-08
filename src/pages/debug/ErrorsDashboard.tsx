@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { errorRegistry, ErrorRegistryEntry } from "@/lib/errorRegistry"
+import { errorRegistry, type ErrorRegistryEntry } from "@/lib/errorRegistry"
 
 export default function ErrorsDashboard() {
   const [logs, setLogs] = useState<ErrorRegistryEntry[]>([])

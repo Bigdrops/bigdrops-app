@@ -34,6 +34,7 @@ export type ActiveSectionId =
   | 'security'
   | 'local-ai'
   | 'app-update'
+  | 'system-logs'
   | 'tenant-debug'
 
 // All sections are live to preserve the 17-destination functional inventory
@@ -109,7 +110,8 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     id: 'system',
     label: 'System',
     items: [
-      { id: 'app-update', label: 'App Update', icon: Smartphone, desc: 'Check for updates and manage versions', androidOnly: true },
+      { id: 'app-update', label: 'App Update', icon: Smartphone, desc: 'Check for updates and manage versions' },
+      { id: 'system-logs', label: 'Diagnostic Logs', icon: Terminal, desc: 'Review errors, copy diagnostics, and export to support' },
       { id: 'local-ai', label: 'Local AI', icon: BrainCircuit, desc: 'Install and verify the on-device review model' },
       { id: 'tenant-debug', label: 'Tenant Debug', icon: Terminal, desc: 'Platform operator diagnostics', adminOnly: true, operatorOnly: true },
     ],
@@ -120,11 +122,22 @@ export function buildGroups(isAdmin?: boolean, isOperator?: boolean): SettingsGr
   const android = isAndroidNative()
   return SETTINGS_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter(
-      (item) =>
-        (!item.adminOnly || isAdmin) &&
-        (!item.operatorOnly || isOperator) &&
-        (!item.androidOnly || android),
-    ),
+    items: group.items
+      .filter(
+        (item) =>
+          (!item.adminOnly || isAdmin) &&
+          (!item.operatorOnly || isOperator) &&
+          (!item.androidOnly || android),
+      )
+      .map((item) => {
+        if (item.id === 'app-update' && !android) {
+          return {
+            ...item,
+            label: 'Android App',
+            desc: 'Download BOURXE APK for Android',
+          }
+        }
+        return item
+      }),
   })).filter(group => group.items.length > 0)
 }

@@ -42,28 +42,28 @@ export type UnifiedActionSheetProps = {
 const TONE_CLASSES = {
   default: {
     iconBg: "bg-bd-action-icon-bg text-bd-action-icon-text",
-    text: "text-bd-surface-action-text",
+    text: "text-bd-text",
     row: "border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover",
   },
   success: {
     iconBg: "bg-bd-status-success-bg text-bd-status-success-text",
-    text: "text-bd-status-success-text",
-    row: "border-bd-status-success-border bg-bd-status-success-bg hover:brightness-95",
+    text: "text-bd-text",
+    row: "border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover",
   },
   warning: {
     iconBg: "bg-bd-status-warning-bg text-bd-status-warning-text",
-    text: "text-bd-status-warning-text",
-    row: "border-bd-status-warning-border bg-bd-status-warning-bg hover:brightness-95",
+    text: "text-bd-text",
+    row: "border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover",
   },
   danger: {
     iconBg: "bg-bd-status-danger-bg text-bd-status-danger-text",
-    text: "text-bd-status-danger-text",
-    row: "border-bd-status-danger-border bg-bd-status-danger-bg hover:brightness-95",
+    text: "text-bd-text",
+    row: "border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover",
   },
   info: {
     iconBg: "bg-bd-status-info-bg text-bd-status-info-text",
-    text: "text-bd-status-info-text",
-    row: "border-bd-status-info-border bg-bd-status-info-bg hover:brightness-95",
+    text: "text-bd-text",
+    row: "border-bd-surface-action-border bg-bd-surface-action hover:bg-bd-surface-action-hover",
   },
 }
 
@@ -137,9 +137,7 @@ export function UnifiedActionSheet({
           isCompact 
             ? "grid-cols-[28px,minmax(0,1fr),auto] px-3 py-2" 
             : "grid-cols-[36px,minmax(0,1fr),auto] px-4 py-2.5",
-          action.isSwitch && action.isActive
-            ? "border-bd-status-success-border bg-bd-status-success-bg ring-1 ring-bd-status-success-border"
-            : tone.row,
+          tone.row,
           action.isLoading && "opacity-70 cursor-not-allowed"
         )}
       >
