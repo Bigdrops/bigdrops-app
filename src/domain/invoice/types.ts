@@ -98,6 +98,7 @@ export function normalizeInvoicePdfTemplateId(value: unknown): InvoicePdfTemplat
   if (value === 'industry-forme' || value === 'industry-react-pdf') return 'industry'
   if (value === 'architectural-frame') return 'architectural'
   if (value === 'heritage-house') return 'heritage'
+  if (value === 'landscape-blueprint' || value === 'blueprint') return 'landscape'
   // Retired Forme variant; saved selections continue as the canonical Minimal design.
   if (value === 'modern-minimal') return 'minimal'
   return isInvoicePdfTemplateId(value) ? value : null

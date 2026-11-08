@@ -235,27 +235,27 @@
 - Verified natural pagination, dynamic page numbering, repeated top accent bar, and zero text/footer collisions across single-page, quotation, and multi-page documents via MuPDF rasterization.
 - Suite of 9 unit tests passing in `src/tests/pdf/formeEvergreenTemplate.test.ts`.
 
-**Next Active Milestone:** **Milestone M8 — Landscape Rebuild from Scratch**.
-
 ---
 
-### Milestone M8: Landscape Rebuild from Scratch ⛔
-- **Objective:** Create a fresh Landscape template implementation using Forme.
+### Milestone M8: Landscape Rebuild from Scratch ✅
+- **Objective:** Create a fresh Commercial Landscape template implementation using Forme, grounded in the CSR Blueprint technical drawing visual aura.
 
-*Status:* ⛔ PENDING
-*% Done:* 0%
+*Status:* ✅ COMPLETE (2026-11-08)
+*% Done:* 100%
 
-**Planned Outcomes:**
+**Delivered Outcomes:**
 
-- Revisit the design and structural requirements.
-- Use the existing Landscape visual direction as a reference where appropriate.
-- Rebuild the template cleanly on Forme. This is a new implementation, not a continuation of incremental fixes to the existing Landscape template.
-- Use actual BOURXE document data contracts and supported fields.
-- Preserve financial-data authority in existing domain projections.
-- Support invoice and quotation rendering, including multipage documents, repeated headers, footer placement, tables, and closing sections.
-- Verify output against representative documents.
-
-**Retirement Condition:** Do not mark the current Landscape implementation as deleted or replaced until the new implementation is verified and the retirement decision is documented.
+- **Visual Reference Authority:** Grounded in CSR Blueprint Technical Drawing (`csr-blueprint-technical-drawinglandscape.html` / `src/components/pdf/pdfcn/csr/CsrLandscapeBlueprintTemplate.tsx`). Preserved the authentic technical drawing identity: 12-cell coordinate rulers (`1..12`) at top and bottom, partitioned title block, BOM schedule styling, technical financial ledger, and dynamic sheet numbering.
+- **Strict Bloat Elimination & Modular Architecture ($\le 600$ Lines):** Monolithic 1416-line `LandscapeFormeDocument.tsx` refactored down to 412 lines, resolving the `[BLOAT]` audit warning and reducing repository oversized file count from 47 to 46. Split cleanly into cohesive modules:
+  - `src/components/pdf/forme/landscape/landscapeTokens.ts` (93 lines): Color tokens, landscape A4 dimensions (841.89 x 595.28 pt), scaling engine.
+  - `src/components/pdf/forme/landscape/landscapeHeader.tsx` (406 lines): 12-cell coordinate rulers, 4-cell partitioned title block, section bands.
+  - `src/components/pdf/forme/landscape/landscapeTable.tsx` (365 lines): Bill-of-Materials table with repeat headers (`<Row header>`), alternating tints, and group subtotals.
+  - `src/components/pdf/forme/landscape/landscapeClosing.tsx` (470 lines): Technical financial ledger, prominent Total Amount Due block with amount in words, bank settlement panel, notes, terms, and 3-column verification block.
+  - `src/components/pdf/forme/LandscapeFormeDocument.tsx` (412 lines): Master document orchestrator.
+- **Data & Commercial Domain Integrity:** Uses authoritative BOURXE data contracts (`CommercialDocumentData`) without inventing non-existent engineering metadata. Respects currency code, deductions in restrained `#B42318` with leading minus, and format-presentation quantities (`"1 set"`).
+- **Template Routing & Normalization:** Added `'landscape-blueprint'` and `'blueprint'` aliases mapping to `'landscape'` in `src/domain/invoice/types.ts`.
+- **Visual & Pixmap Verification:** Verified clean rasterization via MuPDF (`scratch/verify-landscape-rebuild.ts`) across single-page invoice, quotation, and 3-page multi-page documents. Confirmed 14x14 white footer logo badge and natural multi-page flow.
+- **Automated Test Coverage:** Authored `src/tests/pdf/formeLandscapeRebuildTemplate.test.ts` (5 tests passing). Full commercial Forme test suite (66 tests across 9 files) passing. Both `bun run audit:load` and `bun run typecheck` cleanly pass with code 0.
 
 ---
 
@@ -296,8 +296,10 @@
 - Visual inspection confirmed natural multi-page flow, correct margins, and zero collisions across invoices and quotations via MuPDF rasterization.
 
 **Upcoming Migration Identifications:**
-- **Commercial Landscape Rebuild:** Milestone M8 (`commercial-landscape.html`).
+- **Commercial Landscape Rebuild:** Milestone M8 (`commercial-landscape.html`) — ✅ **COMPLETE (100%)**.
 - **Second Landscape Template:** Customer Service Report (CSR) Blueprint Landscape — defined in **Milestone M5, Step 5.2** (Reference: `docs/templates/html-temps/CSR/csr-blueprint-technical-drawinglandscape.html`). Unaffected and preserved.
+
+**Next Active Milestone:** **Milestone M10 — Purchase Order (PO) Template Integration**.
 
 ---
 
