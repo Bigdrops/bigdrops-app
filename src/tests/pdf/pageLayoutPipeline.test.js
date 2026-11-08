@@ -14,9 +14,6 @@ const invoicePreviewCssPath = path.resolve('src/components/document-view/shared/
 const quotationPreviewCssPath = path.resolve('src/components/document-view/quotation/QuotationDocumentPreview.css')
 
 const templatePaths = [
-  path.resolve('src/components/pdf/presentation/industry/IndustryTemplate.tsx'),
-  path.resolve('src/components/pdf/templates/Crest.tsx'),
-  path.resolve('src/components/pdf/templates/Minimal.tsx'),
   path.resolve('src/components/pdf/templates/Evergreen.tsx'),
 ]
 

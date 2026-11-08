@@ -79,9 +79,7 @@ export const INVOICE_PDF_TEMPLATE_IDS = [
   'industrial',
   'industry',
   'industry-forme',
-  'industry-react-pdf',
   'landscape',
-  'crest',
   'minimal',
   'evergreen',
 ] as const
@@ -93,8 +91,8 @@ export function isInvoicePdfTemplateId(value: unknown): value is InvoicePdfTempl
 }
 
 export function normalizeInvoicePdfTemplateId(value: unknown): InvoicePdfTemplateId | null {
-  if (value === 'naijabiz' || value === 'apex' || value === 'ledger' || value === 'bolt' || value === 'ember') return null
-  if (value === 'industry-forme') return 'industry'
+  if (value === 'naijabiz' || value === 'apex' || value === 'ledger' || value === 'bolt' || value === 'ember' || value === 'crest') return null
+  if (value === 'industry-forme' || value === 'industry-react-pdf') return 'industry'
   // Retired Forme variant; saved selections continue as the canonical Minimal design.
   if (value === 'modern-minimal') return 'minimal'
   return isInvoicePdfTemplateId(value) ? value : null

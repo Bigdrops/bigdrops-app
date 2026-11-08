@@ -39,10 +39,6 @@ const templatePreviewById: Record<string, TemplatePreview> = {
     shell: 'bg-white border border-slate-200',
     nodes: ['h-1.5 w-full rounded-full bg-slate-700', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
   },
-  'industry-react-pdf': {
-    shell: 'bg-white border border-slate-200',
-    nodes: ['h-1.5 w-full rounded-full bg-slate-700', 'h-0.5 w-full rounded-full bg-slate-200', 'h-0.5 w-4/5 rounded-full bg-slate-200'],
-  },
   bordered_schedule: {
     shell: 'bg-white border border-slate-300',
     nodes: ['h-1.5 w-full bg-slate-700', 'h-0.5 w-full bg-slate-300', 'h-4 w-full border border-slate-400 bg-white'],

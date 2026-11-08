@@ -6,7 +6,6 @@ import React from 'react'
 import { serialize } from '@formepdf/react'
 
 import { IndustryFormeDocument } from '../../components/pdf/forme/IndustryFormeDocument'
-import IndustryTemplate from '../../components/pdf/presentation/industry/IndustryTemplate'
 import { renderPdfcnToBytes } from '../../components/pdf/pdfcn/adapter'
 import { ensureFormeFontFamily } from '../../components/pdf/forme/fonts'
 import {
@@ -201,26 +200,19 @@ test('Industry Forme document generates valid PDF bytes with approved fonts', as
   assert.equal(header, '%PDF-', 'PDF bytes must start with standard PDF header')
 })
 
-test('Industry original React-PDF implementation remains intact and independently usable', () => {
-  assert.equal(typeof IndustryTemplate, 'function', 'React-PDF IndustryTemplate must remain exported as a component')
-  const data = createSampleCommercialData()
-  const reactPdfElement = React.createElement(IndustryTemplate, { data })
-  assert.ok(reactPdfElement, 'React-PDF IndustryTemplate element can be created')
-})
-
-test('Retained commercial templates include dual Industry options, Crest, Minimal, and Evergreen', () => {
+test('Retained commercial templates include Forme options and Evergreen', () => {
   assert.deepStrictEqual(
     [...INVOICE_PDF_TEMPLATE_IDS].sort(),
-    ['crest', 'evergreen', 'industrial', 'industry', 'industry-forme', 'industry-react-pdf', 'landscape', 'minimal'].sort(),
+    ['evergreen', 'industrial', 'industry', 'industry-forme', 'landscape', 'minimal'].sort(),
   )
 
   assert.equal(normalizeInvoicePdfTemplateId('industrial'), 'industrial')
   assert.equal(normalizeInvoicePdfTemplateId('industry'), 'industry')
   assert.equal(normalizeInvoicePdfTemplateId('industry-forme'), 'industry')
-  assert.equal(normalizeInvoicePdfTemplateId('industry-react-pdf'), 'industry-react-pdf')
+  assert.equal(normalizeInvoicePdfTemplateId('industry-react-pdf'), 'industry')
   assert.equal(normalizeInvoicePdfTemplateId('landscape'), 'landscape')
   assert.equal(normalizeInvoicePdfTemplateId('modern-minimal'), 'minimal')
-  assert.equal(normalizeInvoicePdfTemplateId('crest'), 'crest')
+  assert.equal(normalizeInvoicePdfTemplateId('crest'), null)
   assert.equal(normalizeInvoicePdfTemplateId('minimal'), 'minimal')
   assert.equal(normalizeInvoicePdfTemplateId('evergreen'), 'evergreen')
 
@@ -286,17 +278,17 @@ test('Master Deterministic Resolver resolves Industry template for invoice and q
   assert.equal(quotationFormeResolution.envelope?.templateId, 'industry-forme')
 })
 
-test('Commercial template picker provides distinct options for Industry — Forme and Industry — React-PDF', async () => {
+test('Commercial template picker provides valid options without retired React-PDF templates', async () => {
   const pickerSource = fs.readFileSync(
     path.resolve('src/components/document-view/shared/CommercialTemplatePicker.tsx'),
     'utf8',
   )
 
   assert.match(pickerSource, /label:\s*['"]Industry — Forme['"]/, 'Picker must include exact label "Industry — Forme"')
-  assert.match(pickerSource, /label:\s*['"]Industry — React-PDF['"]/, 'Picker must include exact label "Industry — React-PDF"')
+  assert.doesNotMatch(pickerSource, /label:\s*['"]Industry — React-PDF['"]/, 'Picker must not include "Industry — React-PDF"')
   assert.match(pickerSource, /id:\s*['"]industry['"]/, 'Picker must include id "industry"')
-  assert.match(pickerSource, /id:\s*['"]industry-react-pdf['"]/, 'Picker must include id "industry-react-pdf"')
-  assert.match(pickerSource, /id:\s*['"]crest['"]/, 'Picker must preserve Crest')
+  assert.doesNotMatch(pickerSource, /id:\s*['"]industry-react-pdf['"]/, 'Picker must not include id "industry-react-pdf"')
+  assert.doesNotMatch(pickerSource, /id:\s*['"]crest['"]/, 'Picker must not include Crest')
   assert.match(pickerSource, /id:\s*['"]minimal['"]/, 'Picker must preserve Minimal')
   assert.match(pickerSource, /id:\s*['"]evergreen['"]/, 'Picker must preserve Evergreen')
 })
@@ -310,6 +302,11 @@ test('Retired commercial template files are physically deleted from the codebase
     'EmberStyles.ts',
     'Ledger.tsx',
     'LedgerStyles.ts',
+    'Crest.tsx',
+    'CrestStyles.ts',
+    'Minimal.tsx',
+    'MinimalStyles.ts',
+    'Industry.tsx',
   ]
 
   for (const file of deletedFiles) {
@@ -318,13 +315,8 @@ test('Retired commercial template files are physically deleted from the codebase
   }
 
   const retainedFiles = [
-    'Crest.tsx',
-    'CrestStyles.ts',
     'Evergreen.tsx',
     'EvergreenStyles.ts',
-    'Minimal.tsx',
-    'MinimalStyles.ts',
-    'Industry.tsx',
   ]
 
   for (const file of retainedFiles) {

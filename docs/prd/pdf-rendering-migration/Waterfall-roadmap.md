@@ -10,11 +10,11 @@
 
 ## 1. Master Progress Bar
 
-`[████░░░░░░] 44%` | **Total Milestones:** 9 | **Current Phase:** Phase M1C pending. Phases M2, M3 and M4 have in-flight work.
+`[████░░░░░░] 44%` | **Total Milestones:** 14 | **Current Phase:** Phase M7 pending. Phases M2, M3 and M4 have in-flight work; Phases M5–M11 pending.
 
 - Milestones M0, M1A and M1B are complete.
 - Milestones M2, M3 and M4 have in-flight implementation from the Industrial Forme commercial template pass. Gate 1, Gate 2 and Gate 3 are not signed off.
-- Milestones M1C, M5 and M6 are pending.
+- Milestones M1C, M5, M6 and M7–M11 are pending.
 - The percentage is the mean of the milestone percentages in Section 3. It does not represent gate approval.
 
 ---
@@ -43,6 +43,11 @@
 | **M4** | **Commercial Reference Certification** | Full Quotation, Invoice, and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output. | CRIT | 🔄 IN PROGRESS | 40% | **GATE 3: Pre-Production Approval**. Commercial family certified for live traffic switchover. | M3 |
 | **M5** | **Remaining Document Families** | CPS font fix & resolver integration, CSR delivery integration, Waybill templates (Caveat font), Receipt, and RFQ migration. | HIGH | ⛔ PENDING | 0% | All 8 document types active on Forme; zero React-PDF traffic. | M4 |
 | **M6** | **Legacy Cleanup & Deprecation** | Verify zero React-PDF imports via AST analysis, remove obsolete adapters, uninstall `@react-pdf/renderer` from `package.json`. | MED | ⛔ PENDING | 0% | Repository clean; `@react-pdf/renderer` removed; typecheck clean. | M5 |
+| **M7** | **Evergreen Forme Migration and Legacy Retirement** | Migrate the existing Evergreen PDF template to the Forme architecture; preserve data, behaviour and pagination; verify against legacy output; retire obsolete implementation after verification. | CRIT | ⛔ PENDING | 0% | Legacy deletion gated by successful Forme verification. | M6 |
+| **M8** | **Landscape Rebuild from Scratch** | Rebuild the A4 Landscape template cleanly from scratch on Forme; support invoice and quotation rendering, multipage documents, repeated headers, footer placement, tables and closing sections; verify against representative documents. | HIGH | ⛔ PENDING | 0% | Retirement of the current Landscape implementation gated by fresh-rebuild verification and a documented retirement decision. | M7 |
+| **M9** | **Migrate Three Additional Commercial HTML Templates to Forme** | Migrate the three additional source commercial HTML designs individually to Forme, preserving each design identity; verify invoice and quotation output; retire source implementations only when replacements are verified and retirement is explicitly approved. | CRIT | ⛔ PENDING | 0% | Retire source implementations only when replacements are verified and retirement is explicitly approved. | M8 |
+| **M10** | **Purchase Order (PO) Template Integration** | Extend the migrated commercial template system to support Purchase Orders; reuse the shared Forme rendering architecture; respect PO-specific data, terminology, supplier/vendor relationships and document semantics; verify supported PO templates and document-specific output. | HIGH | ⛔ PENDING | 0% | Must follow completion of the commercial template migrations. | M9 |
+| **M11** | **Cost Pricing Sheet (CPS) Template Integration** | Extend the migrated template system to support Cost Pricing Sheets; reuse the shared Forme infrastructure without forcing CPS into an unsuitable commercial document layout; retain CPS-specific rendering requirements; verify representative CPS documents. | HIGH | ⛔ PENDING | 0% | Follows the commercial template migrations and must not compromise the existing CPS document architecture. | M9 |
 
 > [!NOTE]
 > **Recorded sequence deviation.** Industrial commercial template authoring (M2, M3, M4) started before M1C completed and before Gate 1 and Gate 2 passed. The gates stay closed. Gate 3 stays blocked until Gate 1 and Gate 2 pass.
@@ -211,6 +216,106 @@
 - [ ] **Step 6.3:** Uninstall `@react-pdf/renderer` from `package.json`.
 - [ ] **Step 6.4:** Execute `bun run audit:load` followed by `bun run typecheck` to confirm clean repository state.  
 *Exit Gate:* Clean repository state; legacy dependency removed; migration complete.
+
+---
+
+### Milestone M7: Evergreen Forme Migration and Legacy Retirement ⛔
+- **Objective:** Migrate the existing Evergreen PDF template to the Forme PDF rendering architecture.
+
+*Status:* ⛔ PENDING
+*% Done:* 0%
+
+**Planned Outcomes:**
+
+- Inspect and document the existing Evergreen template's functionality and design.
+- Reimplement Evergreen using Forme.
+- Preserve the required document data, rendering behaviour, and supported pagination.
+- Verify the Forme implementation against the legacy output.
+- After successful verification, permanently delete the obsolete Evergreen implementation and its dead routing/references.
+- Preserve shared dependencies still required by other templates.
+
+**Retirement Condition:** Legacy Evergreen must not be deleted before its Forme replacement has been verified.
+
+---
+
+### Milestone M8: Landscape Rebuild from Scratch ⛔
+- **Objective:** Create a fresh Landscape template implementation using Forme.
+
+*Status:* ⛔ PENDING
+*% Done:* 0%
+
+**Planned Outcomes:**
+
+- Revisit the design and structural requirements.
+- Use the existing Landscape visual direction as a reference where appropriate.
+- Rebuild the template cleanly on Forme. This is a new implementation, not a continuation of incremental fixes to the existing Landscape template.
+- Use actual BOURXE document data contracts and supported fields.
+- Preserve financial-data authority in existing domain projections.
+- Support invoice and quotation rendering, including multipage documents, repeated headers, footer placement, tables, and closing sections.
+- Verify output against representative documents.
+
+**Retirement Condition:** Do not mark the current Landscape implementation as deleted or replaced until the new implementation is verified and the retirement decision is documented.
+
+---
+
+### Milestone M9: Migrate Three Additional Commercial HTML Templates to Forme ⛔
+- **Objective:** Migrate the three additional source commercial HTML designs individually to the Forme PDF rendering architecture.
+
+*Status:* ⛔ PENDING
+*% Done:* 0%
+
+**Source Designs:**
+
+- Commercial Architectural Frame — `docs/templates/html-temps/invoice-templates/commercial-architectural-frame.html`
+- Commercial Executive — `docs/templates/html-temps/invoice-templates/commercial-executive.html`
+- Commercial Heritage House — `docs/templates/html-temps/invoice-templates/commercial-heritage-house.html`
+
+**Planned Outcomes:**
+
+- Inspect each source HTML template.
+- Document its unique visual identity and layout characteristics.
+- Rebuild each as a Forme template.
+- Preserve the individual design identities rather than flattening them into one generic design.
+- Adapt the templates to the existing BOURXE document data contracts.
+- Verify invoice and quotation output, including multipage behaviour where applicable.
+- Retire source implementations only when replacements are verified and retirement is explicitly approved.
+
+---
+
+### Milestone M10: Purchase Order (PO) Template Integration ⛔
+- **Objective:** Extend the migrated commercial template system to support Purchase Orders.
+
+*Status:* ⛔ PENDING
+*% Done:* 0%
+
+**Planned Outcomes:**
+
+- Allow PO documents to use the migrated commercial template designs.
+- Reuse the shared Forme rendering architecture where appropriate.
+- Respect PO-specific data, terminology, supplier/vendor relationships, and document semantics.
+- Do not incorrectly treat a supplier-facing PO as a customer-facing invoice or quotation.
+- Preserve PO-specific business rules and data contracts.
+- Verify all supported PO templates and their document-specific output.
+
+**Dependency:** Must follow completion of the commercial template migrations.
+
+---
+
+### Milestone M11: Cost Pricing Sheet (CPS) Template Integration ⛔
+- **Objective:** Extend the migrated template system to support Cost Pricing Sheets (CPS).
+
+*Status:* ⛔ PENDING
+*% Done:* 0%
+
+**Planned Outcomes:**
+
+- Allow CPS documents to use the planned migrated template system where compatible.
+- Preserve CPS-specific data structures, calculations, and business rules.
+- Reuse shared Forme infrastructure without forcing CPS into an unsuitable commercial document layout.
+- Retain CPS-specific rendering requirements where necessary.
+- Verify representative CPS documents and their output.
+
+**Dependency:** Follows the commercial template migrations and must not compromise the existing CPS document architecture.
 
 ---
 

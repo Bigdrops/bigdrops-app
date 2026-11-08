@@ -5,9 +5,9 @@ import path from 'node:path'
 
 import { normalizeRichTextHtml, richTextToPlainText } from '../../components/pdf/core/richText.ts'
 
-const industryTemplatePath = fs.existsSync(path.resolve('src/components/pdf/presentation/industry/IndustryTemplate.tsx'))
-  ? path.resolve('src/components/pdf/presentation/industry/IndustryTemplate.tsx')
-  : path.resolve('src/components/pdf/templates/Industry.tsx')
+const commercialTemplatePath = fs.existsSync(path.resolve('src/components/pdf/templates/Evergreen.tsx'))
+  ? path.resolve('src/components/pdf/templates/Evergreen.tsx')
+  : path.resolve('src/components/pdf/forme/IndustryFormeDocument.tsx')
 const industryAdapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
 
 const sampleRichText = [
@@ -47,10 +47,10 @@ test('Industry adapter keeps notes and terms on the shared rich-text pipeline in
   assert.doesNotMatch(source, /format:\s*'text'/)
 })
 
-test('Industry template routes notes and terms through the shared rich-text PDF renderer', () => {
-  const source = fs.readFileSync(industryTemplatePath, 'utf8')
+test('Commercial template routes notes and terms through the shared rich-text PDF renderer', () => {
+  const source = fs.readFileSync(commercialTemplatePath, 'utf8')
 
-  assert.match(source, /renderPdfRichText\(/)
+  assert.match(source, /render(?:Pdf|Forme)RichText\(/)
   assert.doesNotMatch(source, /<Text style=\{styles\.optionalText\}>\{data\.notes\.content\}<\/Text>/)
   assert.doesNotMatch(source, /<Text style=\{styles\.optionalText\}>\{data\.terms\.content\}<\/Text>/)
 })

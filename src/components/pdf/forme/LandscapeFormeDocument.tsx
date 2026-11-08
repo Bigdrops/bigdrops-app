@@ -591,7 +591,10 @@ function ItemsTable({
               )
             }
 
-            const text = displayCellValue(value)
+            const rawText = displayCellValue(value)
+            const text = column.key === 'quantity'
+              ? rawText.replace(/^(\d+(?:\.\d+)?)([a-zA-Z]+)$/, '$1 $2')
+              : rawText
             return (
               <Cell key={`cell-${column.key}`} style={cellStyle}>
                 <Text
@@ -923,14 +926,14 @@ function NotesSection({
 
   const notesBox = hasNotes && notes ? (
     <View style={{ borderWidth: 0.8, borderColor: LANDSCAPE_TOKENS.navy, borderTopWidth: 0, padding: scale.pad(7), marginBottom: hasTerms ? scale.gap(7) : 0 }}>
-      <SectionLabel scale={scale}>{notes.title || 'Notes'}</SectionLabel>
+      {hasTerms ? <SectionLabel scale={scale}>{notes.title || 'Notes'}</SectionLabel> : null}
       <NoteBody section={notes} scale={scale} />
     </View>
   ) : null
 
   const termsBox = hasTerms && terms ? (
     <View style={{ borderWidth: 0.8, borderColor: LANDSCAPE_TOKENS.navy, borderTopWidth: 0, padding: scale.pad(7) }}>
-      <SectionLabel scale={scale}>{terms.title || 'Terms & Conditions'}</SectionLabel>
+      {hasNotes ? <SectionLabel scale={scale}>{terms.title || 'Terms & Conditions'}</SectionLabel> : null}
       <NoteBody section={terms} scale={scale} />
     </View>
   ) : null
@@ -1200,7 +1203,7 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
     <Document title={`${data.title} ${data.documentNumber || ''}`.trim()} style={{ fontFamily: font, fontSize: 7, color: LANDSCAPE_TOKENS.navy }}>
       <Page
         size={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
-        margin={{ top: compact ? 24 : 28, right: MARGIN_H, bottom: compact ? 26 : 32, left: MARGIN_H }}
+        margin={{ top: compact ? 24 : 28, right: MARGIN_H, bottom: compact ? 30 : 36, left: MARGIN_H }}
         style={{ backgroundColor: LANDSCAPE_TOKENS.paper }}
       >
         <Fixed position="header">
@@ -1225,6 +1228,24 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
         </Fixed>
 
         <Fixed position="footer">
+          <View style={{ height: 10, borderTopWidth: 0.4, borderTopColor: LANDSCAPE_TOKENS.line, borderBottomWidth: 0.8, borderBottomColor: LANDSCAPE_TOKENS.navy, flexDirection: 'row' }}>
+            {Array.from({ length: 12 }).map((_, index) => (
+              <View
+                key={`footer-ruler-${index}`}
+                style={{
+                  flex: 1,
+                  borderRightWidth: index === 11 ? 0 : 0.3,
+                  borderRightColor: LANDSCAPE_TOKENS.line,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: font, fontSize: 4.2, fontWeight: 700, color: LANDSCAPE_TOKENS.slate }}>
+                  {index + 1}
+                </Text>
+              </View>
+            ))}
+          </View>
           <View
             style={{
               backgroundColor: LANDSCAPE_TOKENS.navy,
@@ -1240,7 +1261,21 @@ export function LandscapeFormeDocument({ data, compact = false }: LandscapeForme
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
               {company?.companyLogoUrl ? (
-                <Image src={company.companyLogoUrl} style={{ width: 10, height: 10, marginRight: 5 }} alt="" />
+                <View
+                  style={{
+                    width: 14,
+                    height: 14,
+                    backgroundColor: '#ffffff',
+                    borderRadius: 2,
+                    borderWidth: 0.3,
+                    borderColor: LANDSCAPE_TOKENS.line,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 6,
+                  }}
+                >
+                  <Image src={company.companyLogoUrl} style={{ width: 11, height: 11, objectFit: 'contain' }} alt="" />
+                </View>
               ) : null}
               <Text style={{ fontFamily: font, fontSize: 5, fontWeight: 700, color: LANDSCAPE_TOKENS.headerInk, textTransform: 'uppercase', letterSpacing: 0.7 }}>
                 {data.footer?.companyName || company?.name || ''}

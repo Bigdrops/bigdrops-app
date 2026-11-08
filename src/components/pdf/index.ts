@@ -8,7 +8,17 @@ import {
 import { adaptCommercialDocumentData } from './industryAdapter'
 import { buildPdfRowCells, buildPdfTableColumns, interpretPdfTableSettings } from './table'
 import type { InvoicePdfModel, PdfDocumentModel, QuotationPdfModel } from './types'
-import type { PdfTemplateRenderer } from './renderers/PdfRenderer'
+
+export type PdfTemplateRendererProps = {
+  data: unknown
+  layout?: {
+    size: 'A4'
+    orientation: 'portrait' | 'landscape'
+  }
+  compact?: boolean
+}
+
+export type PdfTemplateRenderer = React.ComponentType<PdfTemplateRendererProps>
 
 export type PdfGenerationResult = {
   status: 'generated'
@@ -68,22 +78,23 @@ export type CommercialPdfRoute =
  * Resolve which renderer handles a commercial template identifier.
  *
  * - 'industrial' always uses the Forme Industrial renderer.
- * - 'industry' uses the Forme Industry renderer unless the caller forces react-pdf.
+ * - 'industry' always uses the Forme Industry renderer.
  * - 'landscape' and 'minimal' always use their Forme renderers.
  * - Explicit 'industry-forme' normalizes to 'industry' and therefore also uses Forme.
  * - Retired 'modern-minimal' normalizes to 'minimal'.
- * - Everything else keeps the retained React-PDF renderers.
+ * - 'evergreen' uses React-PDF.
+ * - Everything else defaults to Forme Industry.
  */
 export function resolveCommercialPdfRoute(
   templateId: string | null | undefined,
-  engine?: 'forme' | 'react-pdf',
+  _engine?: 'forme' | 'react-pdf',
 ): CommercialPdfRoute {
   const activeTemplateId = normalizeInvoicePdfTemplateId(templateId) || 'industry'
   if (activeTemplateId === 'industrial') return 'industrial-forme'
   if (activeTemplateId === 'landscape') return 'landscape-forme'
   if (activeTemplateId === 'minimal') return 'minimal-forme'
-  if (activeTemplateId === 'industry' && engine !== 'react-pdf') return 'industry-forme'
-  return 'react-pdf'
+  if (activeTemplateId === 'evergreen') return 'react-pdf'
+  return 'industry-forme'
 }
 
 async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>) {
@@ -91,12 +102,6 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
   const filename = resolveFilename(request.model, request.documentNumber)
   const docType = request.model.identity.kind as PdfDocumentType
 
-  // Determine rendering engine:
-  // 1. Explicit 'industrial' routes directly to Forme IndustrialFormeDocument (HTML-based industrial layout).
-  // 2. Explicit 'industry-react-pdf' forces React-PDF IndustryTemplate (cannot be overridden by request.engine).
-  // 3. Explicit 'industry-forme' forces Forme IndustryFormeDocument (cannot be overridden by request.engine).
-  // 4. 'industry' defaults to Forme IndustryFormeDocument, falling back to React-PDF only when request.engine === 'react-pdf'.
-  // 5. Retained templates 'crest' and 'evergreen' route to React-PDF.
   const route = resolveCommercialPdfRoute(request.templateId, request.engine)
   const shouldUseForme = route !== 'react-pdf'
 
@@ -162,47 +167,23 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     }
   }
 
-  // Retained React-PDF Rendering Path (Evergreen, Crest, and Industry React-PDF comparison)
+  // Retained React-PDF Rendering Path (Evergreen)
   const [
-    { PdfRenderer },
-    IndustryModule,
-    CrestModule,
+    { Document },
     EvergreenModule,
   ] = await Promise.all([
-    import('./renderers/PdfRenderer'),
-    import('./templates/Industry'),
-    import('./templates/Crest'),
+    import('@react-pdf/renderer'),
     import('./templates/Evergreen'),
   ])
 
-  const Industry = IndustryModule.default
-  const Crest = CrestModule.default
   const Evergreen = EvergreenModule.default
-
   registerPdfFonts()
 
-  let Template: PdfTemplateRenderer = Industry as PdfTemplateRenderer
-
-  switch (activeTemplateId) {
-    case 'crest':
-      Template = Crest
-      break
-    case 'evergreen':
-      Template = Evergreen
-      break
-    case 'industry-react-pdf':
-    case 'industry':
-    default:
-      Template = Industry
-      break
-  }
-
   const generator = new DefaultPdfGenerator(
-    (model) => React.createElement(PdfRenderer, {
-      data: adaptCommercialDocumentData(model as PdfDocumentModel),
-      Template,
+    () => React.createElement(Document, null, React.createElement(Evergreen, {
+      data: adaptCommercialDocumentData(request.model as PdfDocumentModel),
       compact: request.compact,
-    }),
+    })),
   )
 
   const asset = await generator.generate({
@@ -346,18 +327,11 @@ export { IndustrialFormeDocument } from './forme/IndustrialFormeDocument'
 export { IndustryFormeDocument } from './forme/IndustryFormeDocument'
 export { LandscapeFormeDocument } from './forme/LandscapeFormeDocument'
 export { MinimalFormeDocument } from './forme/MinimalFormeDocument'
-export { default as IndustryTemplate } from './presentation/industry/IndustryTemplate'
-
 export {
   buildPdfRowCells,
   buildPdfTableColumns,
   interpretPdfTableSettings,
 }
-
-export type {
-  PdfTemplateRenderer,
-  PdfTemplateRendererProps,
-} from './renderers/PdfRenderer'
 
 export type {
   InvoicePdfModel,
