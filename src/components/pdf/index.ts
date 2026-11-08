@@ -74,6 +74,7 @@ export type CommercialPdfRoute =
   | 'evergreen-forme'
   | 'architectural-forme'
   | 'executive-forme'
+  | 'heritage-forme'
 
 /**
  * Resolve which renderer handles a commercial template identifier.
@@ -84,6 +85,7 @@ export type CommercialPdfRoute =
  * - 'evergreen' always uses the Forme Evergreen renderer.
  * - 'architectural' always uses the Forme Architectural renderer.
  * - 'executive' always uses the Forme Executive renderer.
+ * - 'heritage' always uses the Forme Heritage House renderer.
  * - Explicit 'industry-forme' normalizes to 'industry' and therefore also uses Forme.
  * - Retired 'modern-minimal' normalizes to 'minimal'.
  * - Everything else defaults to Forme Industry.
@@ -99,6 +101,7 @@ export function resolveCommercialPdfRoute(
   if (activeTemplateId === 'evergreen') return 'evergreen-forme'
   if (activeTemplateId === 'architectural') return 'architectural-forme'
   if (activeTemplateId === 'executive') return 'executive-forme'
+  if (activeTemplateId === 'heritage') return 'heritage-forme'
   return 'industry-forme'
 }
 
@@ -108,7 +111,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
 
   const route = resolveCommercialPdfRoute(request.templateId, request.engine)
 
-  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen, Architectural, Executive)
+  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen, Architectural, Executive, Heritage)
   const [
     IndustrialDocModule,
     IndustryDocModule,
@@ -117,6 +120,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     EvergreenDocModule,
     ArchitecturalDocModule,
     ExecutiveDocModule,
+    HeritageDocModule,
     { renderPdfcnToBytes },
     { ensureFormeFontFamily },
   ] = await Promise.all([
@@ -127,6 +131,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     import('./forme/EvergreenFormeDocument'),
     import('./forme/ArchitecturalFormeDocument'),
     import('./forme/ExecutiveFormeDocument'),
+    import('./forme/HeritageHouseFormeDocument'),
     import('./pdfcn/adapter'),
     import('./forme/fonts'),
   ])
@@ -168,6 +173,11 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     })
   } else if (route === 'executive-forme') {
     element = React.createElement(ExecutiveDocModule.ExecutiveFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  } else if (route === 'heritage-forme') {
+    element = React.createElement(HeritageDocModule.HeritageHouseFormeDocument, {
       data: adaptedData,
       compact: request.compact,
     })

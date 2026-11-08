@@ -45,7 +45,7 @@
 | **M6** | **Legacy Cleanup & Deprecation** | Verify zero React-PDF imports via AST analysis, remove obsolete adapters, uninstall `@react-pdf/renderer` from `package.json`. | MED | ⛔ PENDING | 0% | Repository clean; `@react-pdf/renderer` removed; typecheck clean. | M5 |
 | **M7** | **Evergreen Forme Migration and Legacy Retirement** | Migrate the existing Evergreen PDF template to the Forme architecture; preserve data, behaviour and pagination; verify against legacy output; retire obsolete implementation after verification. | CRIT | ✅ COMPLETE | 100% | Evergreen Forme Document live; legacy files retired; footer anchoring & logo fallbacks remediated. | M6 |
 | **M8** | **Landscape Rebuild from Scratch** | Rebuild the A4 Landscape template cleanly from scratch on Forme; support invoice and quotation rendering, multipage documents, repeated headers, footer placement, tables and closing sections; verify against representative documents. | HIGH | ⛔ PENDING | 0% | Retirement of the current Landscape implementation gated by fresh-rebuild verification and a documented retirement decision. | M7 |
-| **M9** | **Migrate Three Additional Commercial HTML Templates to Forme** | Migrate the three additional source commercial HTML designs individually to Forme, preserving each design identity; verify invoice and quotation output; retire source implementations only when replacements are verified and retirement is explicitly approved. | CRIT | ⛔ PENDING | 0% | Retire source implementations only when replacements are verified and retirement is explicitly approved. | M8 |
+| **M9** | **Migrate Three Additional Commercial HTML Templates to Forme** | Migrate the three additional source commercial HTML designs individually to Forme (Architectural Frame, Executive, Heritage House); verify invoice and quotation output; retain independent design identities. | CRIT | ✅ COMPLETE | 100% | All 3 templates migrated to Forme; test suite passing; picker and resolver integrated. | M8 |
 | **M10** | **Purchase Order (PO) Template Integration** | Extend the migrated commercial template system to support Purchase Orders; reuse the shared Forme rendering architecture; respect PO-specific data, terminology, supplier/vendor relationships and document semantics; verify supported PO templates and document-specific output. | HIGH | ⛔ PENDING | 0% | Must follow completion of the commercial template migrations. | M9 |
 | **M11** | **Cost Pricing Sheet (CPS) Template Integration** | Extend the migrated template system to support Cost Pricing Sheets; reuse the shared Forme infrastructure without forcing CPS into an unsuitable commercial document layout; retain CPS-specific rendering requirements; verify representative CPS documents. | HIGH | ⛔ PENDING | 0% | Follows the commercial template migrations and must not compromise the existing CPS document architecture. | M9 |
 
@@ -259,37 +259,45 @@
 
 ---
 
-### Milestone M9: Migrate Three Additional Commercial HTML Templates to Forme 🔄
+### Milestone M9: Migrate Three Additional Commercial HTML Templates to Forme ✅
 - **Objective:** Migrate the three additional source commercial HTML designs individually to the Forme PDF rendering architecture.
 
-*Status:* 🔄 IN PROGRESS (2026-11-08)
-*% Done:* 67% (2 of 3 templates migrated)
+*Status:* ✅ COMPLETE (2026-11-08)
+*% Done:* 100% (All 3 templates migrated)
 
-**Source Designs & Selection:**
+**Source Designs & Migrated Implementations:**
 
-- **Selected Candidate 1:** Commercial Architectural Frame (`architectural`) — `docs/templates/html-temps/invoice-templates/commercial-architectural-frame.html`
-  - *Identity:* High-precision engineering and architectural drafting visual language.
-  - *Palette:* Charcoal (`#1E2427`), warm ivory paper (`#F6F0E4`), copper and sand accents (`#A4663F`, `#C08a5F`, `#E3D7C3`).
-  - *Key Structural Elements:* Asymmetric header with charcoal company badge, copper technical divider rule, two-column party/project block, clean table with group badge/subtotals, two-column closing with financial ledger and prominent charcoal Total Due box, bank settlement block, notes, terms, and 3-column signature block with document control stamp.
-  - *Implementation:* `src/components/pdf/forme/ArchitecturalFormeDocument.tsx` (583 lines, strictly $\le 600$ lines).
-- **Selected Candidate 2:** Commercial Executive Luxury (`executive`) — `docs/templates/html-temps/invoice-templates/commercial-executive.html`
-  - *Identity:* Prestigious corporate executive and advisory visual language.
-  - *Palette:* Deep forest green (`#173A2C`, `#0F281E`), gold accents (`#A9854F`, `#D8C39C`, `#EFE6D5`), warm cream paper (`#FCF9F2`, `#F6F0E2`).
-  - *Key Structural Elements:* Symmetrical centered masthead, diamond ornament rule (`❖`), serif document title, 4-cell horizontal metadata bar, gold-ruled party block, forest green table headers, alternating row tints, full-width forest green Total Due banner, financial ledger, bank settlement card, and dual executive signatures.
-  - *Implementation:* `src/components/pdf/forme/ExecutiveFormeDocument.tsx` (558 lines, strictly $\le 600$ lines).
-- **Untouched Candidate 3:** Commercial Heritage House — `docs/templates/html-temps/invoice-templates/commercial-heritage-house.html`
-  - Completely untouched as required by two-template migration scope; preserved for subsequent milestone completion.
+1. **Commercial Architectural Frame (`architectural`)** — `docs/templates/html-temps/invoice-templates/commercial-architectural-frame.html`
+   - *Identity:* High-precision engineering and architectural drafting visual language.
+   - *Palette:* Charcoal (`#1E2427`), warm ivory paper (`#F6F0E4`), copper and sand accents (`#A4663F`, `#C08A5F`, `#E3D7C3`).
+   - *Key Structural Elements:* Asymmetric header with charcoal company badge, copper technical divider rule, two-column party/project block, clean table with group badge/subtotals, two-column closing with financial ledger and prominent charcoal Total Due box, bank settlement block, notes, terms, and 3-column signature block with document control stamp.
+   - *Implementation:* `src/components/pdf/forme/ArchitecturalFormeDocument.tsx` (583 lines, strictly $\le 600$ lines).
+
+2. **Commercial Executive Luxury (`executive`)** — `docs/templates/html-temps/invoice-templates/commercial-executive.html`
+   - *Identity:* Prestigious corporate executive and advisory visual language.
+   - *Palette:* Deep forest green (`#173A2C`, `#0F281E`), gold accents (`#A9854F`, `#D8C39C`, `#EFE6D5`), warm cream paper (`#FCF9F2`, `#F6F0E2`).
+   - *Key Structural Elements:* Symmetrical centered masthead, diamond ornament rule (`❖`), serif document title, 4-cell horizontal metadata bar, gold-ruled party block, forest green table headers, alternating row tints, full-width forest green Total Due banner, financial ledger, bank settlement card, and dual executive signatures.
+   - *Implementation:* `src/components/pdf/forme/ExecutiveFormeDocument.tsx` (558 lines, strictly $\le 600$ lines).
+
+3. **Commercial Heritage House (`heritage`)** — `docs/templates/html-temps/invoice-templates/commercial-heritage-house.html`
+   - *Identity:* Formal heritage stationery visual language with traditional double border framing.
+   - *Palette:* Deep burgundy (`#5C1A26`, `#451119`), bronze accents (`#9A7B45`, `#C6AA76`), warm ivory paper (`#F8F2E3`, `#F2E9D4`), ink (`#251E17`), muted (`#7B6E5C`), rule (`#D9CBAC`), white (`#FFFDF7`).
+   - *Key Structural Elements:* Masthead with square company seal initial, burgundy serif brand title, bronze RC/TIN, right-aligned BOUXRE wordmark, large serif DOCTYPE, diamond ornament rule (`❖`), dot-leader particulars block, burgundy table header with bronze top rule, group header bands with italic group letters, group subtotal with double burgundy rules, financial ledger, prominent burgundy Total Amount Due callout with amount in words, boxed bank payment details, notes with bronze dashes, terms & conditions, and 3-column signature block with document control stamp.
+   - *Implementation:* `src/components/pdf/forme/HeritageHouseFormeDocument.tsx` (570 lines, strictly $\le 600$ lines).
 
 **Delivered Outcomes:**
 
-- Implemented both `ArchitecturalFormeDocument.tsx` and `ExecutiveFormeDocument.tsx` with native Forme primitives, responsive column budgeting, and glyph fallback for currency (`₦`).
-- Registered `'architectural'` and `'executive'` template identifiers in `src/domain/invoice/types.ts` (`INVOICE_PDF_TEMPLATE_IDS`, `normalizeInvoicePdfTemplateId`).
-- Updated Master Commercial Resolver in `src/components/pdf/index.ts` to route `'architectural-forme'` and `'executive-forme'`, with dynamic module loading and `PT Serif` font resolution.
-- Updated `CommercialTemplatePicker.tsx` carousel with authentic theme tokens for both new templates.
-- Added comprehensive unit tests in `src/tests/pdf/formeArchitecturalTemplate.test.ts` and `src/tests/pdf/formeExecutiveTemplate.test.ts`.
-- Verified 100% passing test suite (25/25 PDF tests pass), clean `bun run typecheck`, clean `bun run audit:load`, and clean `git diff --check`.
+- Implemented `ArchitecturalFormeDocument.tsx`, `ExecutiveFormeDocument.tsx`, and `HeritageHouseFormeDocument.tsx` with native Forme primitives, responsive column budgeting, and glyph fallback for currency (`₦`).
+- Registered `'architectural'`, `'executive'`, and `'heritage'` template identifiers in `src/domain/invoice/types.ts` (`INVOICE_PDF_TEMPLATE_IDS`, `normalizeInvoicePdfTemplateId` with aliases).
+- Updated Master Commercial Resolver in `src/components/pdf/index.ts` to route `'architectural-forme'`, `'executive-forme'`, and `'heritage-forme'`, with dynamic module loading and `PT Serif` font resolution.
+- Updated `CommercialTemplatePicker.tsx` carousel and `CommercialTemplateMiniature.tsx` with authentic theme tokens and zone miniatures for all 3 templates.
+- Added comprehensive unit tests in `src/tests/pdf/formeArchitecturalTemplate.test.ts`, `src/tests/pdf/formeExecutiveTemplate.test.ts`, and `src/tests/pdf/formeHeritageHouseTemplate.test.ts`.
+- Verified 100% passing test suite (30/30 PDF tests pass), clean `bun run typecheck`, clean `bun run audit:load`, and clean `git diff --check`.
+- Visual inspection confirmed natural multi-page flow, correct margins, and zero collisions across invoices and quotations via MuPDF rasterization.
 
-**Next Active Step:** Migrate Candidate 3 (Heritage House) to complete Milestone M9 (100%).
+**Upcoming Migration Identifications:**
+- **Commercial Landscape Rebuild:** Milestone M8 (`commercial-landscape.html`).
+- **Second Landscape Template:** Customer Service Report (CSR) Blueprint Landscape — defined in **Milestone M5, Step 5.2** (Reference: `docs/templates/html-temps/CSR/csr-blueprint-technical-drawinglandscape.html`). Unaffected and preserved.
 
 ---
 

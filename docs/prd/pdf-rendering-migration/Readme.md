@@ -85,7 +85,7 @@ To ensure technical integrity and prevent unverified claims from becoming false 
 - **Milestones M2–M6:** *Implementation, Certification & Legacy Deprecation* — ⛔ **Pending Execution**.
 - **Milestone M7:** *Evergreen Forme Migration and Legacy Retirement* — ✅ **100% Complete** (Forme implementation live, legacy files deleted, footer & logo remediated).
 - **Milestone M8:** *Landscape Rebuild from Scratch* — ⛔ **Pending Execution**.
-- **Milestone M9:** *Migrate Three Additional Commercial HTML Templates to Forme* — 🔄 **67% In Progress** (Architectural Frame & Executive Luxury live on Forme; Heritage House untouched).
+- **Milestone M9:** *Migrate Three Additional Commercial HTML Templates to Forme* — ✅ **100% Complete** (Architectural Frame, Executive, and Heritage House migrated to Forme, routed, picker/miniature enabled, verified).
 - **Milestone M10:** *Purchase Order (PO) Template Integration* — ⛔ **Pending Execution**.
 - **Milestone M11:** *Cost Pricing Sheet (CPS) Template Integration* — ⛔ **Pending Execution**.
 

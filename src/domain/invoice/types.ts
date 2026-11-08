@@ -84,6 +84,7 @@ export const INVOICE_PDF_TEMPLATE_IDS = [
   'evergreen',
   'architectural',
   'executive',
+  'heritage',
 ] as const
 
 export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
@@ -96,6 +97,7 @@ export function normalizeInvoicePdfTemplateId(value: unknown): InvoicePdfTemplat
   if (value === 'naijabiz' || value === 'apex' || value === 'ledger' || value === 'bolt' || value === 'ember' || value === 'crest') return null
   if (value === 'industry-forme' || value === 'industry-react-pdf') return 'industry'
   if (value === 'architectural-frame') return 'architectural'
+  if (value === 'heritage-house') return 'heritage'
   // Retired Forme variant; saved selections continue as the canonical Minimal design.
   if (value === 'modern-minimal') return 'minimal'
   return isInvoicePdfTemplateId(value) ? value : null
