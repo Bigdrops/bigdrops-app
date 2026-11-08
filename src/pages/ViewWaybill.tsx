@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import type { BaseDocument } from '@/components/document-view/types/documentView'
@@ -25,6 +25,9 @@ import { downloadPdfFromElement } from '@/components/document-view/shared/downlo
 import { useSettings } from '@/hooks/useSettings'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import DocumentShareSheet from '@/components/document-view/shared/DocumentShareSheet'
+import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
+import type { DocumentSharePayload } from '@/domain/documentShare/types'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { usePdfCustomization } from '@/domain/pdf/customization/hooks'
 import {
@@ -111,6 +114,7 @@ export default function ViewWaybill() {
 
   const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
+  const [shareOpen, setShareOpen] = useState(false)
 
   useEffect(() => {
     setInkFont(customFont === 'auto' ? WAYBILL_TEMPLATE_DEFAULTS.handwritingFont : customFont)
@@ -399,6 +403,24 @@ export default function ViewWaybill() {
       })()
     : null
 
+  const waybillSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: 'waybill',
+    documentId: String(waybill?.id || id || ''),
+    documentNumber: String(waybill?.waybill_number || 'Waybill'),
+    documentTitle: waybill?.type === 'internal' ? 'Internal Waybill' : 'Waybill',
+    recipientName: String(waybill?.client_name || ''),
+    recipientEmail: rawWaybill?.recipient_email || '',
+    issuerName: String(settings?.company_name || ''),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || '',
+    issueDate: waybill?.issue_date || waybill?.created_at?.slice(0, 10) || '',
+    notes: waybill?.notes || '',
+    fileName: `${waybill?.waybill_number || 'waybill'}.pdf`,
+    getPdfBlob: async () => {
+      const { pdf } = await import('@react-pdf/renderer')
+      return pdf(<WaybillPDF model={model} designPreset={designPreset} template={template} />).toBlob()
+    },
+  }), [waybill, id, rawWaybill, settings, designPreset, template, model])
+
   const docProps: BaseDocument = {
     id: waybill.id,
     number: waybill.waybill_number,
@@ -421,7 +443,7 @@ export default function ViewWaybill() {
             subtitle={docProps.title}
             backLabel="Waybills"
             onBack={() => navigate('/waybills')}
-            onShare={() => void handleShare()}
+            onShare={() => setShareOpen(true)}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
             customizeIcon={
@@ -550,6 +572,12 @@ export default function ViewWaybill() {
               recordId={String(id || '')}
               documentLabel={docProps.number || 'Waybill'}
               onLinked={() => {}}
+            />
+
+            <DocumentShareSheet
+              open={shareOpen}
+              onClose={() => setShareOpen(false)}
+              payload={waybillSharePayload}
             />
           </>
         }

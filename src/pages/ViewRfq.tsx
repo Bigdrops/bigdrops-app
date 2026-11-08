@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import DocumentConfirmDialog from '@/components/document-view/shared/DocumentConfirmDialog'
@@ -23,6 +23,9 @@ import { feedback } from '@/lib/feedback'
 import { downloadTextFile, userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import DocumentShareSheet from '@/components/document-view/shared/DocumentShareSheet'
+import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
+import type { DocumentSharePayload } from '@/domain/documentShare/types'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import { archiveRFQRecord, convertRFQToQuotation, deleteRFQRecord, duplicateRFQRecord, updateRFQStatus } from './view-rfq-actions'
 import { useSettings } from '@/hooks/useSettings'
@@ -51,6 +54,7 @@ export default function ViewRfq() {
   const [duplicating, setDuplicating] = useState(false)
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [converting, setConverting] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   useEffect(() => {
     const loadRfq = async () => {
@@ -285,6 +289,25 @@ export default function ViewRfq() {
     { label: 'Submission Deadline', value: rfq.expiry_date || 'No deadline', tone: 'amber' as const },
   ]
 
+  const rfqSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: 'rfq',
+    documentId: String(rfq?.id || id || ''),
+    documentNumber: String(rfq?.rfq_number || 'RFQ'),
+    documentTitle: rfq?.title || 'Request for Quotation',
+    recipientName: String(rfq?.vendor_name || ''),
+    recipientEmail: rfq?.vendor_email || '',
+    issuerName: String(settings?.company_name || ''),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || '',
+    issueDate: rfq?.issue_date || rfq?.created_at?.slice(0, 10) || '',
+    validUntil: rfq?.expiry_date || '',
+    notes: rfq?.notes || '',
+    fileName: `${rfq?.rfq_number || 'rfq'}.pdf`,
+    getPdfBlob: async () => {
+      const { pdf } = await import('@react-pdf/renderer')
+      return pdf(<RfqPdfDocument rfq={rfq} rows={rfq.table_rows} columns={rfq.table_columns} />).toBlob()
+    },
+  }), [rfq, id, settings])
+
   return (
     <>
       <DocumentPage
@@ -294,7 +317,7 @@ export default function ViewRfq() {
             subtitle={docProps.title}
             backLabel="RFQs"
             onBack={() => navigate('/rfqs')}
-            onShare={() => void handleShare()}
+            onShare={() => setShareOpen(true)}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
             customizeIcon={
@@ -395,6 +418,12 @@ export default function ViewRfq() {
               recordId={String(id || '')}
               documentLabel={docProps.number || 'RFQ'}
               onLinked={() => { }}
+            />
+
+            <DocumentShareSheet
+              open={shareOpen}
+              onClose={() => setShareOpen(false)}
+              payload={rfqSharePayload}
             />
           </>
         }

@@ -32,7 +32,11 @@ import { PDF_ACCENT_SWATCHES } from "@/lib/pdfDesignPreset";
 import type { PdfDesignPresetDocument } from "@/lib/pdfDesignPreset";
 import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { buildQuotationPreviewModel } from "@/domain/quotation/previewModel";
-import { handleDownloadQuotationPdf } from "@/domain/quotation/pdfDownloadHandler";
+import { handleDownloadQuotationPdf, getQuotationPdfBlob } from "@/domain/quotation/pdfDownloadHandler";
+import DocumentShareSheet from "@/components/document-view/shared/DocumentShareSheet";
+import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
+import { formatNaira } from "@/lib/formatters/money";
+import type { DocumentSharePayload } from "@/domain/documentShare/types";
 
 import styles from "@/components/document-view/quotation/QuotationActionRow.module.css";
 
@@ -100,6 +104,7 @@ export default function ViewQuotation() {
     () => normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry",
   );
   const [draftPdfOutput, setDraftPdfOutput] = useState<PdfOutputSettingsValue>(pdfOutput);
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Resync drafts when the sheet opens so inline page edits are not overwritten.
   const customizeOpen = ui.isSheetOpen(SHEET_CUSTOMIZE);
@@ -125,6 +130,38 @@ export default function ViewQuotation() {
   );
 
   const downloadPdf = buildDownloadHandler(data, actions, previewModel);
+
+  const quotationSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: "quotation",
+    documentId: String(quotation?.id || id || ""),
+    documentNumber: String(quotation?.quotation_number || "Quotation"),
+    documentTitle: quotation?.quotation_title || "Quotation",
+    recipientName: String(quotation?.client_name || client?.name || ""),
+    recipientEmail: client?.email || "",
+    issuerName: String(settings?.company_name || ""),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || "",
+    totalFormatted: formatNaira(Number(quotation?.total ?? quotation?.total_amount ?? 0)),
+    issueDate: quotation?.issue_date || "",
+    validUntil: quotation?.valid_until || quotation?.valid_to || "",
+    notes: quotation?.notes || "",
+    fileName: `${quotation?.quotation_number || "quotation"}.pdf`,
+    getPdfBlob: async () => {
+      const res = await getQuotationPdfBlob({
+        quotation,
+        id: String(quotation?.id || id || ""),
+        items: items || [],
+        settings,
+        customFields,
+        companyPreviewLines: previewModel?.companyPreviewLines || [],
+        clientPreviewLines: previewModel?.clientPreviewLines || [],
+        client,
+        pdfOutput,
+        previewModel,
+        previewTotals: previewModel?.previewTotals || [],
+      });
+      return res.blob;
+    },
+  }), [quotation, id, client, settings, items, customFields, previewModel, pdfOutput]);
 
   const relatedDocuments = useMemo<RelatedDocumentItem[]>(() => {
     const relations = getQuotationDocumentRelations(quotation);
@@ -202,7 +239,7 @@ export default function ViewQuotation() {
             subtitle={quotation.quotation_title || undefined}
             backLabel="Quotations"
             onBack={() => navigate("/quotations")}
-            onShare={() => void actions.handleShare()}
+            onShare={() => setShareOpen(true)}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
             customizeIcon={
@@ -278,6 +315,10 @@ export default function ViewQuotation() {
             </DocumentSheet>
             <QuotationMoreSheet
               open={ui.isSheetOpen(SHEET_MORE)} onClose={ui.closeSheet}
+              onCreateNew={() => {
+                ui.closeSheet();
+                navigate('/quotations/new');
+              }}
               onConvertToInvoice={() => ui.openModal(MODAL_CONVERT)} onLinkProject={() => setProjectLinkOpen(true)}
               onDuplicate={() => void actions.handleDuplicate()} onCopyNumber={actions.handleCopyNumber}
               onExportCsv={actions.handleDownloadCsv} onArchive={() => ui.openModal(MODAL_ARCHIVE)} onDelete={() => ui.openModal(MODAL_DELETE)}
@@ -305,6 +346,11 @@ export default function ViewQuotation() {
               open={projectLinkOpen} onOpenChange={setProjectLinkOpen}
               tableName="quotations" recordId={String(id || "")} documentLabel={docProps.number || "Quotation"}
               onLinked={() => refreshQuotation()}
+            />
+            <DocumentShareSheet
+              open={shareOpen}
+              onClose={() => setShareOpen(false)}
+              payload={quotationSharePayload}
             />
           </>
         }

@@ -255,6 +255,62 @@ export function buildCpsFormeModel(input: {
   }
 }
 
+export async function getCpsPdfBlob(input: {
+  cps: Cps
+  settings: Record<string, unknown>
+}): Promise<{ blob: Blob; filename: string }> {
+  const { cps, settings } = input
+  const { generateCpsFormePdfBlob } = await cpsStage('prepare', () => import('@/components/pdf'))
+  const { LedgerCpsDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/LedgerCpsDocument'))
+  const { CpsIndustryDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsIndustryDocument'))
+  const { ensureFormeFontFamily } = await cpsStage('prepare', () => import('@/components/pdf/forme/fonts'))
+  const React = await cpsStage('prepare', () => import('react'))
+
+  const prefs = await cpsStage('customization', () => readCpsPdfDisplayPreferences())
+  const { customization } = await cpsStage('customization', () => resolveFull(CPS_TEMPLATE_DEFAULTS, CPS_CAPABILITIES, CPS_POLICY, loadSettings('cps_sheets')))
+  const fontFamily = await cpsStage('font', () => ensureFormeFontFamily(customization.documentFont))
+  const accent = customization.accentEnabled ? customization.accentColor : null
+  const columnVisibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
+
+  const logoUrl = resolveCanonicalLogoUrl(settings)
+  const logoDataUri = logoUrl && logoUrl.startsWith('data:') ? logoUrl : logoUrl ? await toDataUri(logoUrl) : null
+
+  const photoDataUris: Record<string, string> = {}
+  for (const row of cps.table_rows || []) {
+    if (row.row_type !== 'item' || !row.image_url) continue
+    const key = row.id || row._uiKey || ''
+    if (!key) continue
+    if (row.image_url.startsWith('data:')) {
+      photoDataUris[key] = row.image_url
+      continue
+    }
+    const dataUri = await toDataUri(row.image_url)
+    if (dataUri) photoDataUris[key] = dataUri
+  }
+
+  const model = await cpsStage('template', () => buildCpsFormeModel({
+    cps,
+    settings,
+    logoDataUri,
+    photoDataUris,
+    fontFamily,
+    accent,
+    orientation: prefs.orientation,
+    columnVisibility,
+  }))
+  const rawName = `${model.number} ${model.title}`.trim() || 'cps'
+  const filename = `${sanitizeFilename(rawName)}.pdf`
+  const SelectedDocument = await cpsStage('template', () => {
+    const selected = selectCpsFormeDocument(prefs.templateId)
+    if (selected === 'industry') return CpsIndustryDocument
+    return LedgerCpsDocument
+  })
+  return generateCpsFormePdfBlob({
+    element: React.createElement(SelectedDocument, { model }),
+    filename,
+  })
+}
+
 export async function handleDownloadCpsPdf(input: {
   cps: Cps
   settings: Record<string, unknown>

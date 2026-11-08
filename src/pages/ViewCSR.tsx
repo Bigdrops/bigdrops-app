@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import type { BaseDocument } from '@/components/document-view/types/documentView'
@@ -33,6 +33,9 @@ import { generateCsrPdfcnPdf, isPdfcnCsrTemplate } from '@/components/pdf'
 import { useSettings } from '@/hooks/useSettings'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
+import DocumentShareSheet from '@/components/document-view/shared/DocumentShareSheet'
+import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
+import type { DocumentSharePayload } from '@/domain/documentShare/types'
 import ProjectLinkDialog from '@/components/document/ProjectLinkDialog'
 import CsrTemplateCarousel from '@/components/csr/CsrTemplateCarousel'
 import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
@@ -107,6 +110,7 @@ export default function ViewCSR() {
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
   const [comments, setComments] = useState('')
+  const [shareOpen, setShareOpen] = useState(false)
 
   // Engine: customization state + persistence
   const {
@@ -240,6 +244,48 @@ export default function ViewCSR() {
   const previewData = csr ? buildCsrPreviewData(csr, { signatories, client }) : null
   const branding = getCsrBranding(settings || {})
 
+  const csrSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: 'csr',
+    documentId: String(csr?.id || id || ''),
+    documentNumber: String(csr?.csr_number || 'CSR'),
+    documentTitle: csr?.job_description || 'Customer Service Report',
+    recipientName: String(csr?.client_name || client?.name || ''),
+    recipientEmail: client?.email || '',
+    issuerName: String(settings?.company_name || ''),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || '',
+    issueDate: csr?.service_date || csr?.created_at?.slice(0, 10) || '',
+    notes: csr?.engineer_notes || csr?.remarks || '',
+    fileName: `${csr?.csr_number || 'csr'}.pdf`,
+    getPdfBlob: async () => {
+      if (!previewData) throw new Error('CSR preview not loaded')
+      if (isPdfcnCsrTemplate(template)) {
+        const { resolvePdfcnDocument } = await import('@/components/pdf/pdfcn')
+        const { renderPdfcnToBytes } = await import('@/components/pdf/pdfcn/adapter')
+        const res = resolvePdfcnDocument({
+          documentType: 'csr',
+          templateId: template,
+          rawDocument: { ...csr, ...previewData },
+          options: {
+            serviceProvider: {
+              name: branding.companyName || undefined,
+              subtitle: branding.companyTagline || undefined,
+              address: branding.addressLine || undefined,
+              contact: branding.phoneEmailLine || undefined,
+              logoUrl: branding.logoUrl || undefined,
+            },
+          },
+        })
+        if (res.element) {
+          const bytes = await renderPdfcnToBytes(res.element)
+          return new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
+        }
+      }
+      const { pdf } = await import('@react-pdf/renderer')
+      const element = getCsrPdfDocument({ csr: previewData, comments, branding, template, designPreset })
+      return pdf(element as any).toBlob()
+    },
+  }), [csr, id, client, settings, previewData, comments, branding, template, designPreset])
+
   const handleDownload = async () => {
     if (!previewData || downloading) return
     setDownloading(true)
@@ -366,7 +412,7 @@ export default function ViewCSR() {
             subtitle={docProps.title}
             backLabel="Service Reports"
             onBack={() => navigate('/csr')}
-            onShare={() => void handleShare()}
+            onShare={() => setShareOpen(true)}
             onCustomize={() => ui.openSheet(SHEET_CUSTOMIZE)}
             onMore={() => ui.openSheet(SHEET_MORE)}
             customizeIcon={
@@ -485,6 +531,12 @@ export default function ViewCSR() {
               recordId={String(id || '')}
               documentLabel={docProps.number || 'Service Report'}
               onLinked={() => {}}
+            />
+
+            <DocumentShareSheet
+              open={shareOpen}
+              onClose={() => setShareOpen(false)}
+              payload={csrSharePayload}
             />
           </>
         }

@@ -334,14 +334,8 @@ export function useInvoiceActions({
     requestAnimationFrame(() => ui.openModal(MODAL_REVERT));
   }, [ui]);
 
-  const handleShare = async () => {
-    try {
-      const { shareDocument } = await import("@/components/document-view/shared/shareDocument");
-      await shareDocument({ title: invoice?.invoice_number || "Invoice", text: invoice?.invoice_title || "Invoice" });
-      showToast("Share successful", "Document link handled.", "success");
-    } catch (err) {
-      showToast("Share failed", "Could not share the document.");
-    }
+  const handleShare = () => {
+    ui.openSheet("share-document");
   };
 
   return {

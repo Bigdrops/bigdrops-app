@@ -25,6 +25,7 @@ import { useAppUpdate } from '@/hooks/useAppUpdate'
 import { AppUpdateProvider } from '@/contexts/AppUpdateContext'
 import UpdateGate from '@/components/app/UpdateGate'
 import UpdateBanner from '@/components/app/UpdateBanner'
+import WebAppPromoBanner from '@/components/app/WebAppPromoBanner'
 import { isBiometricLockEnabled } from '@/lib/native/biometric'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { WorkspaceProvider, EntityProvider } from '@/lib/tenant/contexts'
@@ -34,7 +35,9 @@ import type { TenantGatePhase } from '@/domain/tenant/tenantGate'
 import { isPassiveStartupPhase } from '@/domain/tenant/tenantGate'
 
 const Login = lazy(() => import('./pages/Login'))
+const NotFound = lazy(() => import("./pages/NotFound"))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const PublicDocumentViewer = lazy(() => import('./pages/PublicDocumentViewer'))
 
 const RECOVERY_COOLDOWN_MS = 1500
 
@@ -555,6 +558,7 @@ function App() {
           (appUpdate.state.status === 'grace' || appUpdate.state.status === 'available') && (
             <UpdateBanner update={appUpdate} />
           )}
+        {!isAndroidNative() && <WebAppPromoBanner />}
         {isAndroidNative() && (
           <>
             <AndroidBackHandler />
@@ -564,6 +568,7 @@ function App() {
         <Suspense fallback={<PageLoader variant="startup" tipPathname="/" />}>
           <Routes>
             <Route path="/reset-password" element={withBoundary(<ResetPassword />)} />
+            <Route path="/shared/:token" element={withBoundary(<PublicDocumentViewer />)} />
             <Route
               path="/*"
               element={
@@ -606,6 +611,7 @@ function App() {
                         )
               }
             />
+            <Route path="*" element={withBoundary(<NotFound />)} />
           </Routes>
         </Suspense>
       </BrowserRouter>

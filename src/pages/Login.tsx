@@ -3,6 +3,7 @@ import { Mail, Lock } from 'lucide-react'
 import { supabase } from '../supabase'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { NATIVE_AUTH_REDIRECT_URL } from '@/components/app/NativeAuthRedirect'
+import { getPublicBaseUrl } from '@/lib/publicUrl'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -146,7 +147,7 @@ export default function Login() {
 
     setLoading(true)
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${getPublicBaseUrl()}/reset-password`,
     })
     setLoading(false)
 

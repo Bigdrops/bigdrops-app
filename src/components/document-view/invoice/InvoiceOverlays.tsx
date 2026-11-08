@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DocumentSheet from "@/components/document-view/shared/DocumentSheet";
 import DocumentCustomizeCard from "@/components/document-view/shared/DocumentCustomizeCard";
@@ -6,6 +6,7 @@ import CommercialTemplatePicker from "@/components/document-view/shared/Commerci
 import InvoiceRecordPaymentSheet from "@/components/document-view/invoice/InvoiceRecordPaymentSheet";
 import InvoiceAdvanceSheet from "@/components/invoice/view/InvoiceAdvanceSheet";
 import InvoiceMoreSheet from "@/components/document-view/invoice/InvoiceMoreSheet";
+import DocumentShareSheet from "@/components/document-view/shared/DocumentShareSheet";
 import DocumentConfirmDialog from "@/components/document-view/shared/DocumentConfirmDialog";
 import ProjectLinkDialog from "@/components/document/ProjectLinkDialog";
 import VoidPaymentDialog from "@/components/document-view/invoice/VoidPaymentDialog";
@@ -16,8 +17,18 @@ import { PDF_ACCENT_SWATCHES } from "@/lib/pdfDesignPreset";
 import type { PdfDesignPresetDocument } from "@/lib/pdfDesignPreset";
 import type { PdfOutputSettingsValue } from "@/components/PdfOutputSettings";
 import { normalizeInvoicePdfTemplateId } from "@/domain/invoice";
+import { formatNaira } from "@/lib/formatters/money";
+import { getInvoicePdfBlob } from "@/components/document-view/invoice/invoicePdfActions";
+import { resolveCanonicalLogoUrl } from "@/domain/documentMedia";
+import type { DocumentSharePayload } from "@/domain/documentShare/types";
 
 interface InvoiceOverlaysProps {
+  items?: any[];
+  payments?: any[];
+  client?: any;
+  settingsData?: any;
+  bankAccounts?: any[];
+  signatories?: any[];
   invoice: any;
   ui: any;
   viewModel: any;
@@ -79,12 +90,19 @@ const SHEET_CUSTOMIZE = "customize-output";
 const SHEET_MORE = "more-actions";
 const SHEET_RECORD_PAYMENT = "record-payment";
 const SHEET_ADVANCE = "advance";
+const SHEET_SHARE = "share-document";
 const MODAL_DELETE = "delete";
 const MODAL_ARCHIVE = "archive";
 const MODAL_REVERT = "revert";
 const MODAL_VOID_PAYMENT = "void-payment";
 
 export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
+  items = [],
+  payments = [],
+  client,
+  settingsData,
+  bankAccounts = [],
+  signatories = [],
   invoice,
   ui,
   viewModel,
@@ -167,6 +185,37 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
     await handleSaveCustomization(draftPdfOutput, undefined, draftTemplateId);
     ui.closeSheet();
   };
+
+  const invoiceSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: "invoice",
+    documentId: String(invoice?.id || id || ""),
+    documentNumber: String(invoice?.invoice_number || "Invoice"),
+    documentTitle: invoice?.invoice_title || "Invoice",
+    recipientName: String(invoice?.client_name || client?.name || ""),
+    recipientEmail: client?.email || "",
+    issuerName: String(settingsData?.company_name || ""),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settingsData) || "",
+    totalFormatted: formatNaira(Number(invoice?.total ?? invoice?.total_amount ?? 0)),
+    issueDate: invoice?.issue_date || "",
+    dueDate: invoice?.due_date || "",
+    notes: invoice?.notes || "",
+    fileName: `${invoice?.invoice_number || "invoice"}.pdf`,
+    getPdfBlob: async () => {
+      const res = await getInvoicePdfBlob({
+        targetInvoice: invoice,
+        targetItems: items || [],
+        targetPayments: payments || [],
+        client,
+        settings: settingsData,
+        bankAccounts: bankAccounts || [],
+        signatories: signatories || [],
+        pdfOutput,
+        pdfTemplateId,
+        settingsData,
+      });
+      return res.blob;
+    },
+  }), [invoice, id, client, settingsData, items, payments, bankAccounts, signatories, pdfOutput, pdfTemplateId]);
 
   return (
     <>
@@ -264,6 +313,10 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
       <InvoiceMoreSheet
         open={ui.isSheetOpen(SHEET_MORE)}
         onClose={ui.closeSheet}
+        onCreateNew={() => {
+          ui.closeSheet();
+          navigate("/invoices/new");
+        }}
         onRevert={openRevertFlow}
         onGenerateWaybill={() =>
           navigate("/waybills/new", {
@@ -338,6 +391,12 @@ export const InvoiceOverlays: React.FC<InvoiceOverlaysProps> = ({
         }}
         onConfirm={confirmVoidPayment}
         loading={voiding}
+      />
+
+      <DocumentShareSheet
+        open={ui.isSheetOpen(SHEET_SHARE)}
+        onClose={ui.closeSheet}
+        payload={invoiceSharePayload}
       />
     </>
   );

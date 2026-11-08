@@ -204,6 +204,12 @@ export default function ViewInvoice() {
           customFields={customFields}
           id={id!}
           contractValue={invoice.total || 0}
+          items={items || []}
+          payments={payments || []}
+          client={client}
+          settingsData={settings}
+          bankAccounts={bankAccounts || []}
+          signatories={signatories || []}
           refresh={refresh}
           closeAdvanceSheet={(next: boolean) => {
             if (next) ui.openSheet("advance");

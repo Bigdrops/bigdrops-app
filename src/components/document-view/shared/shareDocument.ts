@@ -1,24 +1,30 @@
+import { toPublicShareUrl } from '@/lib/publicUrl'
+
 type ShareDocumentOptions = {
   title: string
-  text: string
+  text?: string
   url?: string
   fallbackText?: string
 }
 
 export async function shareDocument(options: ShareDocumentOptions) {
-  const shareUrl = options.url || (typeof window !== 'undefined' ? window.location.href : '')
+  const shareUrl = toPublicShareUrl(options.url)
 
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
     await navigator.share({
       title: options.title,
-      text: options.text,
+      text: options.text || undefined,
       url: shareUrl || undefined,
     })
     return 'shared'
   }
 
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(options.fallbackText || shareUrl || `${options.title}\n${options.text}`)
+    const defaultCopyText = [options.title, options.text, shareUrl]
+      .filter((part): part is string => typeof part === 'string' && part.trim() !== '')
+      .join('\n')
+
+    await navigator.clipboard.writeText(options.fallbackText || defaultCopyText || shareUrl)
     return 'copied'
   }
 

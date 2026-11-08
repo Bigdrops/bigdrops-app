@@ -9,6 +9,7 @@ import {
   Palette,
   Pencil,
   Package,
+  PlusCircle,
   Share2,
   Trash2,
   Zap,
@@ -42,10 +43,12 @@ type ViewActions = {
   onBack: () => void
   onEdit: () => void
   onDownload: () => void
+  onShare?: () => void
   downloading: boolean
 }
 
 type CpsDocActions = {
+  onCreateNew?: () => void
   onConvertToQuotation: (options?: CpsConversionOptions) => Promise<void>
   onDuplicate: () => Promise<void>
   onArchive: () => Promise<void>
@@ -531,6 +534,17 @@ function MoreSheet({
       title: 'Document',
       items: [
         {
+          id: 'new-sheet',
+          label: 'New Sheet',
+          description: 'Start a blank cost & pricing sheet',
+          icon: <PlusCircle size={18} />,
+          disabled: busy !== null,
+          onClick: () => {
+            onClose()
+            actions.onCreateNew?.()
+          },
+        },
+        {
           id: 'convert',
           label: 'Convert to Quotation',
           description: 'Create a quotation from this sheet',
@@ -656,7 +670,7 @@ export function CostPricingSheetDesktopView(props: ViewProps) {
         <div className="cps-view-topbar-inner">
           <button type="button" className="cps-view-iconbtn" onClick={props.onBack} aria-label="Back to Cost & Pricing Sheets"><ArrowLeft size={17} /></button>
           <div className="cps-tb-id"><span className="num">{props.data.document.cps_number}</span><span className="cps-status" data-s={props.status.toLowerCase()}>{props.status}</span></div>
-          <button type="button" className="cps-view-iconbtn" aria-label="Share"><Share2 size={17} /></button>
+          <button type="button" className="cps-view-iconbtn" aria-label="Share" onClick={props.onShare}><Share2 size={17} /></button>
           <button type="button" className="cps-view-iconbtn" aria-label="Customize PDF" onClick={() => setCustomizeOpen(true)}><Palette size={17} /></button>
           <button type="button" className="cps-view-iconbtn" aria-label="More actions" onClick={() => setMoreOpen(true)}><MoreHorizontal size={17} /></button>
         </div>
@@ -714,7 +728,7 @@ export function CostPricingSheetMobileFoldView(props: ViewProps) {
         <header className="cps-view-appbar">
           <button type="button" className="cps-view-iconbtn" onClick={props.onBack} aria-label="Back to Cost & Pricing Sheets"><ArrowLeft size={18} /></button>
           <div className="cps-appbar-id"><span className="num">{props.data.document.cps_number}</span><span className="cps-status" data-s={props.status.toLowerCase()}>{props.status}</span></div>
-          <button type="button" className="cps-view-iconbtn" aria-label="Share"><Share2 size={18} /></button>
+          <button type="button" className="cps-view-iconbtn" aria-label="Share" onClick={props.onShare}><Share2 size={18} /></button>
           <button type="button" className="cps-view-iconbtn" aria-label="Customize PDF" onClick={() => setCustomizeOpen(true)}><Palette size={18} /></button>
           <button type="button" className="cps-view-iconbtn" aria-label="More actions" onClick={() => setMoreOpen(true)}><MoreHorizontal size={18} /></button>
         </header>

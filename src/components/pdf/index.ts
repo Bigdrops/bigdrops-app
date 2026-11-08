@@ -86,7 +86,7 @@ export function resolveCommercialPdfRoute(
   return 'react-pdf'
 }
 
-async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
+async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>) {
   const activeTemplateId = normalizeInvoicePdfTemplateId(request.templateId) || 'industry'
   const filename = resolveFilename(request.model, request.documentNumber)
   const docType = request.model.identity.kind as PdfDocumentType
@@ -152,7 +152,7 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     const bytes = await renderPdfcnToBytes(element)
     const blob = new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
 
-    const asset = {
+    return {
       blob,
       filename,
       mimeType: 'application/pdf',
@@ -160,19 +160,6 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
       documentType: docType,
       metadata: {},
     }
-
-    const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
-    const result = await delivery.deliver({ asset, mode: 'download' })
-
-    const feedbackBus = new DefaultFeedbackBus()
-    if (!result.success) {
-      feedbackBus.emit({ kind: 'failed', documentType: docType, timestamp: Date.now(), fileName: filename, error: result.error })
-      throw new Error(result.error ?? 'PDF delivery failed')
-    }
-
-    feedbackBus.emit({ kind: 'downloaded', documentType: docType, timestamp: Date.now(), fileName: filename })
-
-    return { status: 'generated', filename, uri: result.uri }
   }
 
   // Retained React-PDF Rendering Path (Evergreen, Crest, and Industry React-PDF comparison)
@@ -226,26 +213,65 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
     options: { compact: request.compact },
   })
 
+  return asset
+}
+
+export async function generatePdfBlob<TModel extends PdfDocumentModel>(
+  request: PdfGenerationRequest<TModel>,
+): Promise<{ blob: Blob; filename: string }> {
+  const asset = await generatePdfAsset(request)
+  return { blob: asset.blob, filename: asset.filename }
+}
+
+async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerationRequest<TModel>): Promise<PdfGenerationResult> {
+  const asset = await generatePdfAsset(request)
   const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
   const result = await delivery.deliver({ asset, mode: 'download' })
 
   const feedbackBus = new DefaultFeedbackBus()
   if (!result.success) {
-    feedbackBus.emit({ kind: 'failed', documentType: docType, timestamp: Date.now(), fileName: filename, error: result.error })
+    feedbackBus.emit({ kind: 'failed', documentType: asset.documentType, timestamp: Date.now(), fileName: asset.filename, error: result.error })
     throw new Error(result.error ?? 'PDF delivery failed')
   }
 
-  feedbackBus.emit({ kind: 'downloaded', documentType: docType, timestamp: Date.now(), fileName: filename })
+  feedbackBus.emit({ kind: 'downloaded', documentType: asset.documentType, timestamp: Date.now(), fileName: asset.filename })
 
-  return { status: 'generated', filename, uri: result.uri }
+  return { status: 'generated', filename: asset.filename, uri: result.uri }
 }
 
 export async function generateInvoicePdf(request: PdfGenerationRequest<InvoicePdfModel>): Promise<PdfGenerationResult> {
   return generatePdf(request)
 }
 
+export async function generateInvoicePdfBlob(request: PdfGenerationRequest<InvoicePdfModel>): Promise<{ blob: Blob; filename: string }> {
+  return generatePdfBlob(request)
+}
+
 export async function generateQuotationPdf(request: PdfGenerationRequest<QuotationPdfModel>): Promise<PdfGenerationResult> {
   return generatePdf(request)
+}
+
+export async function generateQuotationPdfBlob(request: PdfGenerationRequest<QuotationPdfModel>): Promise<{ blob: Blob; filename: string }> {
+  return generatePdfBlob(request)
+}
+
+export async function generateCpsFormePdfBlob(request: {
+  element: React.ReactElement
+  filename: string
+}): Promise<{ blob: Blob; filename: string }> {
+  const { renderDocument } = await cpsPdfStage('forme-init', () => import('@formepdf/core/browser'))
+
+  const bytes = await cpsPdfStage('render', () => renderDocument(request.element))
+
+  const filename = request.filename
+  const blob = await cpsPdfStage('bytes', () => {
+    if (!(bytes instanceof Uint8Array) || bytes.length === 0) {
+      throw new Error('Forme returned empty or invalid PDF bytes.')
+    }
+    return new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
+  })
+
+  return { blob, filename }
 }
 
 export async function generateCpsFormePdf(request: {

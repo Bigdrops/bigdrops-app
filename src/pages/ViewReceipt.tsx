@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useEntity } from "@/lib/tenant/contexts"
 import type { ReceiptRow } from "@/domain/receipt/types"
 import { buildReceiptPreviewData } from "@/domain/receipt/previewModel"
@@ -18,13 +18,19 @@ import DocumentPage from "@/components/document-view/shared/DocumentPage"
 import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav"
 import FloatingDownloadButton from "@/components/document-view/shared/FloatingDownloadButton"
 import "@/components/document-view/shared/documentViewTheme.css"
+import DocumentShareSheet from "@/components/document-view/shared/DocumentShareSheet"
+import { resolveCanonicalLogoUrl } from "@/domain/documentMedia"
+import type { DocumentSharePayload } from "@/domain/documentShare/types"
+import { useSettings } from "@/hooks/useSettings"
 
 export default function ViewReceipt() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { tenantClient } = useEntity()
+  const { settings } = useSettings()
   const [receipt, setReceipt] = useState<ReceiptRow | null>(null)
   const [loading, setLoading] = useState(true)
+  const [shareOpen, setShareOpen] = useState(false)
   const designPreset = getPdfDesignPreset("receipt")
 
   useEffect(() => {
@@ -98,6 +104,26 @@ export default function ViewReceipt() {
       dateOptions: { day: "2-digit", month: "short", year: "numeric" },
     })
 
+  const receiptSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: "receipt",
+    documentId: String(receipt?.id || id || ""),
+    documentNumber: String(receipt?.receipt_number || "Receipt"),
+    documentTitle: `Payment Receipt for ${receipt?.invoice_number || "Invoice"}`,
+    recipientName: String(receipt?.client_name || ""),
+    recipientEmail: receipt?.client_email || "",
+    issuerName: String(settings?.company_name || ""),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || "",
+    totalFormatted: formatNaira(Number(receipt?.payment_amount ?? 0)),
+    issueDate: receipt?.payment_date || "",
+    notes: (receipt as any)?.notes || "",
+    fileName: `receipt-${receipt?.receipt_number || "receipt"}.pdf`,
+    getPdfBlob: async () => {
+      const { pdf } = await import("@react-pdf/renderer")
+      const model = buildReceiptPreviewData(receipt)
+      return pdf(<ReceiptPdf model={model} designPreset={designPreset} />).toBlob()
+    },
+  }), [receipt, id, settings, designPreset])
+
   return (
     <DocumentPage
       topNav={
@@ -105,12 +131,20 @@ export default function ViewReceipt() {
           title="Payment Receipt"
           subtitle={receipt.receipt_number}
           onBack={() => navigate("/receipts")}
+          onShare={() => setShareOpen(true)}
         />
       }
       floating={
         <FloatingDownloadButton
           label="Download Receipt PDF"
           onClick={handleDownload}
+        />
+      }
+      overlays={
+        <DocumentShareSheet
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          payload={receiptSharePayload}
         />
       }
     >

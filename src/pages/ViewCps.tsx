@@ -7,7 +7,10 @@ import {
   CostPricingSheetMobileFoldView,
 } from '@/components/cps/CostPricingSheetViewPresentations'
 import { normalizeDbCps } from '@/domain/cps/normalize'
-import { handleDownloadCpsPdf } from '@/domain/cps/pdfDownloadHandler'
+import { handleDownloadCpsPdf, getCpsPdfBlob } from '@/domain/cps/pdfDownloadHandler'
+import DocumentShareSheet from '@/components/document-view/shared/DocumentShareSheet'
+import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
+import type { DocumentSharePayload } from '@/domain/documentShare/types'
 import type { Cps } from '@/domain/cps/types'
 import type { CpsConversionOptions } from '@/domain/cps/conversion'
 import { buildCpsViewData } from '@/domain/cps/viewData'
@@ -47,6 +50,7 @@ export default function ViewCps() {
   const [cps, setCps] = useState<Cps | null>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   useEffect(() => {
     if (!tenantClient.isReady) return
@@ -93,6 +97,9 @@ export default function ViewCps() {
   // transition. The in-callback guards below are unreachable in practice
   // (actions render only after load) and exist for type narrowing.
   const actions = useMemo(() => ({
+    onCreateNew: () => {
+      navigate('/cost-pricing-sheets/new')
+    },
     onConvertToQuotation: async (options?: CpsConversionOptions) => {
       if (!cps) return
       const created = await convertCpsToQuotation({ cps, tenantClient, prefixes: settings?.document_prefixes, options })
@@ -142,6 +149,26 @@ export default function ViewCps() {
     )
   }
 
+  const cpsSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: 'cps',
+    documentId: String(cps?.id || cpsId || ''),
+    documentNumber: String(cps?.cps_number || 'Cost & Pricing Sheet'),
+    documentTitle: cps?.title || 'Cost & Pricing Sheet',
+    recipientName: String(cps?.client_name || ''),
+    recipientEmail: '',
+    issuerName: String(settings?.company_name || ''),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || '',
+    totalFormatted: formatMoney(viewData?.totals?.total_selling_price || 0),
+    issueDate: cps?.created_at?.slice(0, 10) || '',
+    notes: (cps as any)?.notes || '',
+    fileName: `${cps?.cps_number || 'cps'}.pdf`,
+    getPdfBlob: async () => {
+      if (!cps) throw new Error('CPS document not loaded')
+      const res = await getCpsPdfBlob({ cps, settings })
+      return res.blob
+    },
+  }), [cps, cpsId, settings, viewData])
+
   const props = {
     data: viewData,
     status,
@@ -149,6 +176,7 @@ export default function ViewCps() {
     onBack: () => navigate('/cost-pricing-sheets'),
     onEdit: () => navigate(`/cost-pricing-sheets/edit/${cps.id}`),
     onDownload: () => void actions.onDownload(),
+    onShare: () => setShareOpen(true),
     downloading,
     actions,
   }
@@ -161,6 +189,11 @@ export default function ViewCps() {
       ) : (
         <CostPricingSheetMobileFoldView {...props} />
       )}
+      <DocumentShareSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        payload={cpsSharePayload}
+      />
     </Layout>
   )
 }
