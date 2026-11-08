@@ -102,8 +102,8 @@ export interface CpsConversionOptions {
 export const DEFAULT_CONVERSION_OPTIONS: CpsConversionOptions = {
   vatRate: 0,
   discountValue: 0,
-  discountType: 'fixed',
-  discountTiming: 'after',
+  discountType: 'percent',
+  discountTiming: 'before',
   extraCharges: [],
 }
 

@@ -26,8 +26,8 @@ function toNumber(value: string): number {
 export function CpsConversionOptionsSheet({ open, onOpenChange, onContinue }: CpsConversionOptionsSheetProps) {
   const [vatRate, setVatRate] = useState('0')
   const [discountValue, setDiscountValue] = useState('0')
-  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
-  const [discountTiming, setDiscountTiming] = useState<'before' | 'after'>('after')
+  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('percent')
+  const [discountTiming, setDiscountTiming] = useState<'before' | 'after'>('before')
   const [charges, setCharges] = useState<ExtraCharge[]>([])
 
   useEffect(() => {
