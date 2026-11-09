@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Check, Download, Globe, Loader2, ShieldCheck } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Check, Download, Globe, Loader2 } from 'lucide-react'
 
 import { BxLogo } from '@/components/layout/bx-logo'
+import { AnimatedCountdown } from '@/components/ui/animated-countdown'
 import { formatVersionLabel } from '@/domain/appUpdate/updateStateMachine'
 import { describeDownloadFailure } from '@/domain/appUpdate/downloadFailure'
 import { formatDownloadProgress } from '@/domain/appUpdate/updateStateMachine'
@@ -69,6 +70,12 @@ export default function AppUpdateFluid({
   const busy = phase === 'installing'
   const failed = phase === 'failed'
   const sizeMb = (release.sizeBytes / (1024 * 1024)).toFixed(1)
+
+  const graceTargetDate = useMemo(() => {
+    const target = new Date()
+    target.setHours(target.getHours() + release.graceRemainingHours)
+    return target
+  }, [release.graceRemainingHours])
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Check,
   Download,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 
 import { BxLogo } from '@/components/layout/bx-logo'
+import { AnimatedCountdown } from '@/components/ui/animated-countdown'
 import { formatVersionLabel } from '@/domain/appUpdate/updateStateMachine'
 import { describeDownloadFailure } from '@/domain/appUpdate/downloadFailure'
 import { formatDownloadProgress } from '@/domain/appUpdate/updateStateMachine'
@@ -26,72 +27,46 @@ const SPRING = 'cubic-bezier(0.34, 1.56, 0.64, 1)'
 const STEPS = ['Get', 'Download', 'Ready'] as const
 
 /**
- * Authentic Countdown Ring from Kinetics effect #22 (`effects-b.css` / `main.js`).
- * Drains a circular SVG ring as the grace period progresses, displaying the days
- * remaining in the center tabular numeral.
+ * Authentic Live Countdown from Kinetics (`effects-b.css` / `main.js`).
+ * Ticks down live second-by-second in real time with animated flip digits and
+ * calm sentence-case grace pill.
  */
 function KineticsCountdownRing({ hours }: { hours: number }) {
-  const fraction = Math.max(0, Math.min(1, hours / GRACE_TOTAL_HOURS))
-  // Kinetics #22 geometry: r=34 => circumference 2 * PI * 34 = 213.628
-  const radius = 34
-  const circumference = 2 * Math.PI * radius
+  const targetDate = useMemo(() => {
+    const target = new Date()
+    target.setHours(target.getHours() + hours)
+    return target
+  }, [hours])
+
   const days = Math.floor(hours / 24)
-  const restHours = hours % 24
 
   return (
     <div
-      className="flex items-center gap-4 rounded-[14px] p-3.5"
+      className="rounded-[16px] p-3.5 space-y-3"
       style={{
         background: 'var(--au-raised)',
         boxShadow: '0 0 0 1px var(--au-hairline)',
       }}
     >
-      <div className="relative grid size-14 shrink-0 place-items-center">
-        <svg viewBox="0 0 80 80" className="size-14 -rotate-90" aria-hidden="true">
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
-            fill="none"
-            strokeWidth="5"
-            stroke="var(--au-muted-surface)"
-          />
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
-            fill="none"
-            strokeWidth="5"
-            strokeLinecap="round"
-            stroke="var(--au-accent)"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - fraction)}
-            style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s ease' }}
-          />
-        </svg>
-        <div
-          className="absolute inset-0 grid place-items-center font-mono text-sm font-bold tracking-tight"
-          style={{ color: 'var(--au-ink)' }}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold" style={{ color: 'var(--au-ink)' }}>
+          Grace period countdown
+        </span>
+        <span
+          className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
+          style={{ background: 'var(--au-accent-soft)', color: 'var(--au-accent)' }}
         >
-          {days}d
-        </div>
+          {days} days remaining
+        </span>
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold" style={{ color: 'var(--au-ink)' }}>
-            Grace period countdown
-          </span>
-          <span
-            className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-            style={{ background: 'var(--au-accent-soft)', color: 'var(--au-accent)' }}
-          >
-            {days} days remaining
-          </span>
-        </div>
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--au-muted)' }}>
-          {days} days and {restHours} hours left to update before BOURXE pauses.
-        </p>
+
+      <div className="flex justify-center py-1">
+        <AnimatedCountdown targetDate={targetDate} variant="modern" size="sm" />
       </div>
+
+      <p className="text-center text-[11px] leading-relaxed" style={{ color: 'var(--au-muted)' }}>
+        After the countdown reaches zero, BOURXE pauses until you install this version.
+      </p>
     </div>
   )
 }
