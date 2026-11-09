@@ -74,19 +74,25 @@ function renderBankRow(label: string, value: string | null | undefined, font: st
   )
 }
 
-function renderTextCard(section: { title?: string; content?: string; plainText?: string } | null | undefined, compact: boolean, font: string, headerFont: string) {
+function renderTextCard(
+  section: { title?: string; content?: string; plainText?: string } | null | undefined,
+  compact: boolean,
+  font: string,
+  headerFont: string,
+  accentColor: string = ARCHITECTURAL_TOKENS.copper,
+) {
   if (!section?.content && !section?.plainText) return null
   return (
     <View style={{ marginTop: compact ? 6 : 8, backgroundColor: ARCHITECTURAL_TOKENS.ivoryPanel, borderRadius: 3, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.rule, padding: compact ? 8 : 10 }}>
       {section.title ? (
-        <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+        <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: accentColor, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
           {safeText(section.title)}
         </Text>
       ) : null}
       {section.content ? renderFormeRichText(section.content, {
         font,
         paragraphStyle: { fontFamily: font, fontSize: 7.5, color: ARCHITECTURAL_TOKENS.grayText, lineHeight: 1.4, marginBottom: 3 },
-        listMarkerStyle: { fontFamily: headerFont, fontSize: 7.5, color: ARCHITECTURAL_TOKENS.copper, width: 10 },
+        listMarkerStyle: { fontFamily: headerFont, fontSize: 7.5, color: accentColor, width: 10 },
         listItemTextStyle: { fontFamily: font, fontSize: 7.5, color: ARCHITECTURAL_TOKENS.grayText, lineHeight: 1.4 },
       }) : (
         <Text style={{ fontFamily: font, fontSize: 7.5, color: ARCHITECTURAL_TOKENS.grayText, lineHeight: 1.4 }}>{safeText(section.plainText)}</Text>
@@ -99,6 +105,8 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
   const tokens = resolveDesignTokens(data.design)
   const font = isFormeSupportedFamily(tokens.bodyFont) ? tokens.bodyFont : 'Inter'
   const headerFont = isFormeSupportedFamily(tokens.headerFont) ? tokens.headerFont : 'Inter'
+  const copper = tokens.accentColor || ARCHITECTURAL_TOKENS.copper
+  const copperLight = tokens.accentColor || ARCHITECTURAL_TOKENS.copperLight
 
   const companyLines = data.company ? buildPartyLines(data.company) : []
   const clientLines = data.client ? buildPartyLines(data.client) : []
@@ -111,7 +119,7 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
   const amountInWords = getAmountInWords(data.totals)
   const advance = buildAdvanceSummary(data.advanceSummary)
   const isAdvanceInvoice = Boolean(advance)
-  const companyLogo = data.company?.companyLogoUrl || (data as any)?.companyLogoUrl || (data as any)?.logoUrl || ''
+  const companyLogo = data.company?.companyLogoUrl || (data as { companyLogoUrl?: string; logoUrl?: string }).companyLogoUrl || (data as { companyLogoUrl?: string; logoUrl?: string }).logoUrl || ''
 
   const footerVisible = Boolean(
     data.footer.extraText || data.showTagline || data.footer.documentNumber || data.footer.companyName || companyLogo,
@@ -139,12 +147,9 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
       <Page size={pageSize} margin={pageMargin} style={{ backgroundColor: ARCHITECTURAL_TOKENS.ivory }}>
         {/* TOP REPEATING TECHNICAL RUN / ACCENT */}
         <Fixed position="header">
-          <View style={{ borderBottomWidth: 1, borderBottomColor: ARCHITECTURAL_TOKENS.copperLight, paddingBottom: 4, marginBottom: compact ? 6 : 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 6.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, letterSpacing: 1, textTransform: 'uppercase' }}>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: copperLight, paddingBottom: 4, marginBottom: compact ? 6 : 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 6.5, fontWeight: 700, color: copper, letterSpacing: 1, textTransform: 'uppercase' }}>
               {`${safeText(data.title)} · ${safeText(data.documentNumber)}`}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.5, color: ARCHITECTURAL_TOKENS.mutedText, letterSpacing: 0.5 }}>
-              {'ARCHITECTURAL SPECIFICATION SHEET'}
             </Text>
           </View>
         </Fixed>
@@ -152,14 +157,14 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
         {/* FIXED FOOTER */}
         {footerVisible ? (
           <Fixed position="footer">
-            <View style={{ borderTopWidth: 1, borderTopColor: ARCHITECTURAL_TOKENS.copperLight, paddingTop: 4 }}>
+            <View style={{ borderTopWidth: 1, borderTopColor: copperLight, paddingTop: 4 }}>
               {data.footer.extraText ? (
                 <Text style={{ fontFamily: font, fontSize: 7, color: ARCHITECTURAL_TOKENS.mutedText, textAlign: 'center', marginBottom: 2 }}>
                   {safeText(data.footer.extraText)}
                 </Text>
               ) : null}
               {data.showTagline && data.company?.tagline ? (
-                <Text style={{ fontFamily: font, fontSize: 7, fontStyle: 'italic', color: ARCHITECTURAL_TOKENS.copper, textAlign: 'center', marginBottom: 2 }}>
+                <Text style={{ fontFamily: font, fontSize: 7, fontStyle: 'italic', color: copper, textAlign: 'center', marginBottom: 2 }}>
                   {safeText(data.company.tagline)}
                 </Text>
               ) : null}
@@ -187,23 +192,29 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'stretch', marginBottom: compact ? 8 : 12 }} wrap={false}>
           {/* Left Charcoal Card */}
           <View style={{ width: '56%', backgroundColor: ARCHITECTURAL_TOKENS.charcoal, borderRadius: 3, padding: compact ? 8 : 10, justifyContent: 'space-between' }}>
-            <View>
-              <Text style={{ fontFamily: headerFont, fontSize: compact ? 12 : 13.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.white, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {safeText(companyLineMap.get('name') || data.company?.name || '')}
-              </Text>
-              {companyTaxInfo ? (
-                <Text style={{ fontFamily: font, fontSize: 6.8, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copperLight, letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 2 }}>
-                  {companyTaxInfo}
-                </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+              {companyLogo ? (
+                <View style={{ width: 40, height: 40, backgroundColor: ARCHITECTURAL_TOKENS.ivory, borderWidth: 0.5, borderColor: copperLight, borderRadius: 2, padding: 5, alignItems: 'center', justifyContent: 'center' }}>
+                  <Image src={companyLogo} href={companyLogo} style={{ width: 30, height: 30 }} />
+                </View>
               ) : null}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: compact ? 12 : 13.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.white, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {safeText(companyLineMap.get('name') || data.company?.name || '')}
+                </Text>
+                {companyTaxInfo ? (
+                  <Text style={{ fontFamily: font, fontSize: 6.8, fontWeight: 700, color: copperLight, letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 2 }}>
+                    {companyTaxInfo}
+                  </Text>
+                ) : null}
+              </View>
             </View>
             <View style={{ marginTop: 6, borderTopWidth: 0.5, borderTopColor: '#3a4449', paddingTop: 4 }}>
-              {companyLineMap.get('address') ? (
-                <Text style={{ fontFamily: font, fontSize: 7.2, color: '#d5cec2', lineHeight: 1.3 }}>
-                  {safeText(companyLineMap.get('address'))}
-                  {companyLineMap.get('cityState') ? `, ${safeText(companyLineMap.get('cityState'))}` : ''}
+              {companyLines.filter((l) => l.type !== 'name' && l.type !== 'phone' && l.type !== 'email').map((line, idx) => (
+                <Text key={`cmp-${idx}`} style={{ fontFamily: font, fontSize: 7, color: '#d5cec2', lineHeight: 1.35 }}>
+                  {safeText(line.value)}
                 </Text>
-              ) : null}
+              ))}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 }}>
                 {companyLineMap.get('phone') ? (
                   <Text style={{ fontFamily: font, fontSize: 7, color: '#d5cec2' }}>
@@ -226,11 +237,11 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                 {safeText(data.title)}
               </Text>
               {data.customTitle ? (
-                <Text style={{ fontFamily: font, fontSize: 8, fontStyle: 'italic', color: ARCHITECTURAL_TOKENS.copper, marginTop: 2, textAlign: 'right' }}>
+                <Text style={{ fontFamily: font, fontSize: 8, fontStyle: 'italic', color: copper, marginTop: 2, textAlign: 'right' }}>
                   {safeText(data.customTitle)}
                 </Text>
               ) : null}
-              <Text style={{ fontFamily: headerFont, fontSize: 8.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, letterSpacing: 0.8, marginTop: 3 }}>
+              <Text style={{ fontFamily: headerFont, fontSize: 8.5, fontWeight: 700, color: copper, letterSpacing: 0.8, marginTop: 3 }}>
                 {`NO. ${safeText(data.documentNumber)}`}
               </Text>
             </View>
@@ -249,7 +260,7 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                   <Text style={{ fontFamily: font, fontSize: 7, color: ARCHITECTURAL_TOKENS.mutedText, textTransform: 'uppercase', letterSpacing: 0.4 }}>
                     {safeText(data.dueDateOrValidityDateLabel || 'Due Date')}
                   </Text>
-                  <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper }}>
+                  <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: copper }}>
                     {safeText(data.dueDateOrValidityDate)}
                   </Text>
                 </View>
@@ -269,10 +280,10 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
         </View>
 
         {/* 2. PARTIES & PARTICULARS */}
-        <View style={{ flexDirection: 'row', gap: 10, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.copperLight, borderRadius: 3, backgroundColor: ARCHITECTURAL_TOKENS.white, padding: compact ? 6 : 8, marginBottom: compact ? 8 : 10 }} wrap={false}>
+        <View style={{ flexDirection: 'row', gap: 10, borderWidth: 0.5, borderColor: copperLight, borderRadius: 3, backgroundColor: ARCHITECTURAL_TOKENS.white, padding: compact ? 6 : 8, marginBottom: compact ? 8 : 10 }} wrap={false}>
           {/* Bill To */}
-          <View style={{ flex: 1, paddingRight: 6 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+          <View style={{ flex: 1, paddingRight: data.customHeaderFields.length > 0 ? 6 : 0 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
               {data.isProcurement ? (data.partyHeaderLabel || 'ORDER FROM · SUPPLIER') : 'BILL TO · CLIENT'}
             </Text>
             {clientLineMap.get('name') ? (
@@ -288,12 +299,12 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
           </View>
 
           {/* Project Details / Particulars */}
-          <View style={{ flex: 1, borderLeftWidth: 0.5, borderLeftColor: ARCHITECTURAL_TOKENS.lightRule, paddingLeft: 8 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-              {'PROJECT & DELIVERY SPECIFICATION'}
-            </Text>
-            {data.customHeaderFields.length > 0 ? (
-              data.customHeaderFields.map((field, idx) => (
+          {data.customHeaderFields.length > 0 ? (
+            <View style={{ flex: 1, borderLeftWidth: 0.5, borderLeftColor: ARCHITECTURAL_TOKENS.lightRule, paddingLeft: 8 }}>
+              <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+                {'PROJECT & DELIVERY SPECIFICATION'}
+              </Text>
+              {data.customHeaderFields.map((field, idx) => (
                 <View key={`chf-${idx}`} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
                   <Text style={{ fontFamily: font, fontSize: 7, color: ARCHITECTURAL_TOKENS.mutedText, textTransform: 'uppercase' }}>
                     {safeText(field.label)}
@@ -302,13 +313,9 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                     {safeText(field.value)}
                   </Text>
                 </View>
-              ))
-            ) : (
-              <Text style={{ fontFamily: font, fontSize: 7.5, color: ARCHITECTURAL_TOKENS.mutedText, fontStyle: 'italic' }}>
-                {'Standard commercial drawing and material specification applies.'}
-              </Text>
-            )}
-          </View>
+              ))}
+            </View>
+          ) : null}
         </View>
 
         {/* 3. LINE ITEMS TABLE */}
@@ -349,9 +356,9 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
               {data.table.rows.map((row, rowIdx) => {
                 if (row.rowType === 'group_header') {
                   return (
-                    <Row key={`gh-${rowIdx}`} style={{ backgroundColor: ARCHITECTURAL_TOKENS.ivoryPanel, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.copperLight }}>
+                    <Row key={`gh-${rowIdx}`} style={{ backgroundColor: ARCHITECTURAL_TOKENS.ivoryPanel, borderBottomWidth: 0.5, borderBottomColor: copperLight }}>
                       <Cell colSpan={tableColumnCount} style={{ paddingVertical: 4, paddingHorizontal: 6 }}>
-                        <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                        <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: copper, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                           {safeText(row.groupLabel || row.groupName)}
                         </Text>
                       </Cell>
@@ -361,7 +368,7 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
 
                 if (row.rowType === 'group_footer') {
                   return (
-                    <Row key={`gf-${rowIdx}`} style={{ backgroundColor: ARCHITECTURAL_TOKENS.ivory, borderBottomWidth: 1.5, borderBottomColor: ARCHITECTURAL_TOKENS.copperLight }}>
+                    <Row key={`gf-${rowIdx}`} style={{ backgroundColor: ARCHITECTURAL_TOKENS.ivory, borderBottomWidth: 1.5, borderBottomColor: copperLight }}>
                       <Cell colSpan={tableColumnCount} style={{ paddingVertical: 4, paddingHorizontal: 6 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
                           <Text style={{ fontFamily: font, fontSize: 7.5, color: ARCHITECTURAL_TOKENS.mutedText, marginRight: 8, textTransform: 'uppercase' }}>
@@ -402,7 +409,7 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                             {row.imageUrl ? (
                               <View style={{ marginTop: 3 }}>
                                 <Image src={row.imageUrl} href={row.imageUrl} style={{ width: 32, height: 32, borderRadius: 2 }} />
-                                <Link href={row.imageUrl} style={{ fontSize: 6.5, color: ARCHITECTURAL_TOKENS.copper, textDecoration: 'underline', marginTop: 1.5 }}>Open image</Link>
+                                <Link href={row.imageUrl} style={{ fontSize: 6.5, color: copper, textDecoration: 'underline', marginTop: 1.5 }}>Open image</Link>
                               </View>
                             ) : null}
                           </Cell>
@@ -436,15 +443,15 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
         <View style={{ flexDirection: 'row', gap: 12, marginTop: compact ? 4 : 8 }} wrap={false}>
           {/* Left Financial Ledger */}
           <View style={{ flex: 1, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.rule, borderRadius: 3, backgroundColor: ARCHITECTURAL_TOKENS.white, padding: compact ? 6 : 8 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.rule, paddingBottom: 2 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: copper, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.rule, paddingBottom: 2 }}>
               {'FINANCIAL LEDGER STATEMENT'}
             </Text>
             {totalsLines.map((line, idx) => (
               <View key={`tot-${idx}`} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.lightRule }}>
-                <Text style={{ fontFamily: font, fontSize: 7.2, color: line.isDeduction ? ARCHITECTURAL_TOKENS.copper : ARCHITECTURAL_TOKENS.grayText }}>
+                <Text style={{ fontFamily: font, fontSize: 7.2, color: line.isDeduction ? copper : ARCHITECTURAL_TOKENS.grayText }}>
                   {safeText(line.label)}
                 </Text>
-                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: line.isDeduction ? ARCHITECTURAL_TOKENS.copper : ARCHITECTURAL_TOKENS.ink }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: line.isDeduction ? copper : ARCHITECTURAL_TOKENS.ink }}>
                   {glyphRuns(safeText(line.value), font)}
                 </Text>
               </View>
@@ -454,14 +461,14 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                 <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
                   {safeText(balanceDue.label || 'Balance Due')}
                 </Text>
-                <Text style={{ fontFamily: headerFont, fontSize: 8, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 8, fontWeight: 700, color: copper }}>
                   {glyphRuns(safeText(balanceDue.value), font)}
                 </Text>
               </View>
             ) : null}
             {isAdvanceInvoice && advance ? (
               <View style={{ marginTop: 4, padding: 4, backgroundColor: ARCHITECTURAL_TOKENS.ivoryPanel, borderRadius: 2 }}>
-                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase' }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: copper, textTransform: 'uppercase' }}>
                   {safeText(advance.primaryLabel || 'Advance Payment')}
                 </Text>
                 <Text style={{ fontFamily: font, fontSize: 7.2, color: ARCHITECTURAL_TOKENS.ink }}>
@@ -474,13 +481,13 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
           {/* Right Charcoal Total Box + Bank Details */}
           <View style={{ width: '46%' }}>
             <View style={{ backgroundColor: ARCHITECTURAL_TOKENS.charcoal, borderRadius: 3, padding: compact ? 8 : 10 }}>
-              <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copperLight, textTransform: 'uppercase', letterSpacing: 1 }}>
+              <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: copperLight, textTransform: 'uppercase', letterSpacing: 1 }}>
                 {safeText(mainTotal?.label || 'TOTAL AMOUNT DUE')}
               </Text>
               <Text style={{ fontFamily: headerFont, fontSize: compact ? 15 : 18, fontWeight: 700, color: ARCHITECTURAL_TOKENS.white, marginVertical: 3 }}>
                 {glyphRuns(safeText(mainTotal?.value || '₦0.00'), font)}
               </Text>
-              <View style={{ height: 0.5, backgroundColor: ARCHITECTURAL_TOKENS.copper, marginVertical: 3 }} />
+              <View style={{ height: 0.5, backgroundColor: copper, marginVertical: 3 }} />
               {amountInWords ? (
                 <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: ARCHITECTURAL_TOKENS.sand, lineHeight: 1.35 }}>
                   {safeText(amountInWords)}
@@ -489,8 +496,8 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
             </View>
 
             {hasBankDetails && data.paymentDetails ? (
-              <View style={{ backgroundColor: ARCHITECTURAL_TOKENS.white, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.copperLight, borderRadius: 3, padding: compact ? 6 : 7, marginTop: 4 }}>
-                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
+              <View style={{ backgroundColor: ARCHITECTURAL_TOKENS.white, borderWidth: 0.5, borderColor: copperLight, borderRadius: 3, padding: compact ? 6 : 7, marginTop: 4 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: copper, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
                   {'BANK SETTLEMENT DETAILS'}
                 </Text>
                 {renderBankRow('Bank', data.paymentDetails.bankName, font, headerFont)}
@@ -499,8 +506,8 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                 {renderBankRow('Sort Code', data.paymentDetails.sortCode, font, headerFont)}
               </View>
             ) : data.isProcurement && data.deliveryDestination ? (
-              <View style={{ backgroundColor: ARCHITECTURAL_TOKENS.white, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.copperLight, borderRadius: 3, padding: compact ? 6 : 7, marginTop: 4 }}>
-                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
+              <View style={{ backgroundColor: ARCHITECTURAL_TOKENS.white, borderWidth: 0.5, borderColor: copperLight, borderRadius: 3, padding: compact ? 6 : 7, marginTop: 4 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: copper, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
                   {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
                 </Text>
                 {data.deliveryDestination.site ? (
@@ -528,12 +535,12 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
           <View style={{ flexDirection: 'row', gap: 10, marginTop: compact ? 4 : 8 }} wrap={false}>
             {data.notes ? (
               <View style={{ flex: 1 }}>
-                {renderTextCard(data.notes, compact, font, headerFont)}
+                {renderTextCard(data.notes, compact, font, headerFont, copper)}
               </View>
             ) : null}
             {data.terms ? (
               <View style={{ flex: 1 }}>
-                {renderTextCard(data.terms, compact, font, headerFont)}
+                {renderTextCard(data.terms, compact, font, headerFont, copper)}
               </View>
             ) : null}
           </View>
@@ -542,66 +549,75 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
         {/* 6. ATTACHMENTS */}
         {attachmentItems.length > 0 ? (
           <View style={{ marginTop: compact ? 4 : 6, backgroundColor: ARCHITECTURAL_TOKENS.ivoryPanel, borderRadius: 3, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.rule, padding: 6 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: ARCHITECTURAL_TOKENS.copper, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: copper, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>
               {'ATTACHMENTS & PROJECT DRAWINGS'}
             </Text>
             {attachmentItems.map((att, idx) => (
               <View key={`att-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1.5 }}>
                 <Text style={{ fontFamily: font, fontSize: 7, color: ARCHITECTURAL_TOKENS.grayText, marginRight: 4 }}>{`• ${safeText(att.label)}`}</Text>
-                {att.url ? <Link href={att.url} style={{ fontSize: 6.8, color: ARCHITECTURAL_TOKENS.copper, textDecoration: 'underline' }}>Open document</Link> : null}
+                {att.url ? <Link href={att.url} style={{ fontSize: 6.8, color: copper, textDecoration: 'underline' }}>Open document</Link> : null}
               </View>
             ))}
           </View>
         ) : null}
 
-        {/* 7. SIGNATURES & DOCUMENT CONTROL */}
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: ARCHITECTURAL_TOKENS.charcoal }} wrap={false}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: ARCHITECTURAL_TOKENS.copper, marginBottom: 2 }}>
-              {data.isProcurement ? (data.procurementSignatories?.requisitioner?.label || 'Purchasing Officer / Requisitioner') : 'Issuer Authorised Signatory'}
-            </Text>
-            {(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) ? (
-              <Image src={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} href={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} style={{ width: 80, height: 26, marginVertical: 2 }} />
-            ) : (
-              <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.charcoal, marginBottom: 2 }} />
-            )}
-            <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.name : data.signature?.name) || companyLineMap.get('name') || 'Authorised Signatory')}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.mutedText }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.title : data.signature?.role) || (data.isProcurement ? 'Purchasing Officer' : 'Authorised Signatory'))}
-            </Text>
-          </View>
+        {/* 7. SIGNATURES — strictly conditional on genuine signature data */}
+        {data.isProcurement && data.procurementSignatories && (data.procurementSignatories.requisitioner || data.procurementSignatories.authorizer) ? (
+          <View style={{ flexDirection: 'row', gap: 16, marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: ARCHITECTURAL_TOKENS.charcoal }} wrap={false}>
+            {data.procurementSignatories.requisitioner ? (
+              <View style={{ width: 180 }}>
+                <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: copper, marginBottom: 2 }}>
+                  {data.procurementSignatories.requisitioner.label || 'Purchasing Officer / Requisitioner'}
+                </Text>
+                {data.procurementSignatories.requisitioner.signatureUrl ? (
+                  <Image src={data.procurementSignatories.requisitioner.signatureUrl} href={data.procurementSignatories.requisitioner.signatureUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+                ) : null}
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
+                  {safeText(data.procurementSignatories.requisitioner.name || 'Authorised Requisitioner')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.mutedText }}>
+                  {safeText(data.procurementSignatories.requisitioner.title || 'Purchasing Officer')}
+                </Text>
+              </View>
+            ) : null}
 
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: ARCHITECTURAL_TOKENS.copper, marginBottom: 2 }}>
-              {data.isProcurement ? (data.procurementSignatories?.authorizer?.label || 'Management / Finance Authorisation') : 'Client Receiving Acknowledgement'}
-            </Text>
-            {(data.isProcurement && data.procurementSignatories?.authorizer?.signatureUrl) ? (
-              <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 80, height: 26, marginVertical: 2 }} />
-            ) : (
-              <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: ARCHITECTURAL_TOKENS.charcoal, marginBottom: 2 }} />
-            )}
-            <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.name : null) || (data.isProcurement ? 'Authorised By' : 'Received & Verified By'))}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.mutedText }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.title : null) || (data.isProcurement ? 'Management Authorisation' : 'Signature & Company Stamp'))}
-            </Text>
+            {data.procurementSignatories.authorizer ? (
+              <View style={{ width: 180 }}>
+                <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: copper, marginBottom: 2 }}>
+                  {data.procurementSignatories.authorizer.label || 'Management / Finance Authorisation'}
+                </Text>
+                {data.procurementSignatories.authorizer.signatureUrl ? (
+                  <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+                ) : null}
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
+                  {safeText(data.procurementSignatories.authorizer.name || 'Authorised By')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.mutedText }}>
+                  {safeText(data.procurementSignatories.authorizer.title || 'Management Authorisation')}
+                </Text>
+              </View>
+            ) : null}
           </View>
-
-          <View style={{ width: 100, borderWidth: 0.5, borderColor: ARCHITECTURAL_TOKENS.copperLight, borderRadius: 2, padding: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: ARCHITECTURAL_TOKENS.ivoryPanel }}>
-            <Text style={{ fontFamily: font, fontSize: 6, color: ARCHITECTURAL_TOKENS.mutedText, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {'DOCUMENT CONTROL'}
+        ) : !data.isProcurement && data.signature && (data.signature.imageUrl || data.signature.name) ? (
+          <View style={{ marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: ARCHITECTURAL_TOKENS.charcoal, width: 180 }} wrap={false}>
+            <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: copper, marginBottom: 2 }}>
+              {'Authorised Signatory'}
             </Text>
-            <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal, marginTop: 1 }}>
-              {safeText(data.documentNumber)}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.2, color: ARCHITECTURAL_TOKENS.copper, marginTop: 1 }}>
-              {'ORIGINAL'}
-            </Text>
+            {data.signature.imageUrl ? (
+              <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+            ) : null}
+            {data.signature.name ? (
+              <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.charcoal }}>
+                {safeText(data.signature.name)}
+              </Text>
+            ) : null}
+            {data.signature.role ? (
+              <Text style={{ fontFamily: font, fontSize: 6.8, color: ARCHITECTURAL_TOKENS.mutedText }}>
+                {safeText(data.signature.role)}
+              </Text>
+            ) : null}
           </View>
-        </View>
+        ) : null}
       </Page>
     </Document>
   )

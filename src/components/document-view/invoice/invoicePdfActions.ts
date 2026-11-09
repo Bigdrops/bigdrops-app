@@ -4,7 +4,7 @@ import {
   normalizeAdditionalFieldEntries,
   parseCustomFields,
 } from "@/domain/invoice";
-import { InvoicePdfTemplateId } from "@/domain/invoice/types";
+import { InvoicePdfTemplateId, isIntrinsicPaletteTemplate } from "@/domain/invoice/types";
 import { computeDocument } from "@/lib/Calculations";
 import { buildInvoicePreviewModel, resolveDocumentSignatory } from "@/domain/invoice/previewModel";
 import { formatNaira } from "@/lib/formatters/money";
@@ -204,7 +204,14 @@ export const buildInvoicePdfPayload = async ({
       footerText: pdfOutput.showFooter ? String(settingsData?.footer_text || "") : "",
       tagline: pdfOutput.showTagline ? String(settingsData?.company_tagline || "") : "",
       metaFooter: { companyName: String(settingsData?.company_name || "") },
-      template: { designPreset: resolveCommercialDesignPreset("invoice") },
+      template: { designPreset: (() => {
+        const rawPreset = resolveCommercialDesignPreset("invoice");
+        // Intrinsic-palette templates own their color scheme. Suppress any
+        // previously saved custom accent so it cannot bleed into their palette.
+        return isIntrinsicPaletteTemplate(targetTemplateId)
+          ? { ...rawPreset, useCustomColors: false }
+          : rawPreset;
+      })() },
     },
     templateId: targetTemplateId,
     compact: pdfOutput.compact === true,
