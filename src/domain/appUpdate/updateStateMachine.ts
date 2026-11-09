@@ -395,3 +395,20 @@ export function formatDownloadProgress(
   const totalMb = formatMegabytes(totalBytes)
   return totalMb ? `${downloadedMb} of ${totalMb}` : downloadedMb
 }
+
+/**
+ * User-facing version label. Prefers the version name, falls back to the
+ * numeric code, and renders "Latest" when neither exists so the UI never
+ * shows a lonely "v" prefix.
+ */
+export function formatVersionLabel(
+  versionName: string | null | undefined,
+  versionCode: number | null | undefined,
+): string {
+  const name = typeof versionName === 'string' ? versionName.trim() : ''
+  if (name) return name.startsWith('v') ? name : `v${name}`
+  if (typeof versionCode === 'number' && Number.isFinite(versionCode) && versionCode > 0) {
+    return `v${versionCode}`
+  }
+  return 'Latest'
+}

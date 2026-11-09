@@ -188,14 +188,18 @@ public class ApkUpdatePlugin extends Plugin {
 
         DownloadManager.Request request;
         try {
+            // VISIBILITY_HIDDEN (2) requires DOWNLOAD_WITHOUT_NOTIFICATION and
+            // throws "Invalid value for visibility: 2" at enqueue without it.
+            // A visible notification needs no extra permission.
             request = new DownloadManager.Request(Uri.parse(url))
                     .setTitle(fileName)
                     .setDescription("BIGDROPS update")
                     .setMimeType("application/vnd.android.package-archive")
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     .setDestinationUri(Uri.fromFile(destination));
         } catch (Exception e) {
-            call.reject("Could not start download: " + safeMessage(e));
+            Log.e(DIAGNOSTIC_TAG, "Download request setup failed: " + safeMessage(e));
+            call.reject("The download could not start on this device. Use the web download instead.");
             return;
         }
 
@@ -210,7 +214,8 @@ public class ApkUpdatePlugin extends Plugin {
         try {
             downloadId = downloadManager.enqueue(request);
         } catch (Exception e) {
-            call.reject("Could not enqueue download: " + safeMessage(e));
+            Log.e(DIAGNOSTIC_TAG, "Download enqueue failed: " + safeMessage(e));
+            call.reject("The download could not start on this device. Use the web download instead.");
             return;
         }
 

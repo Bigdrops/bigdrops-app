@@ -33,6 +33,7 @@ import {
   onApkDownloadProgress,
   hasApkUpdatePlugin,
 } from '@/lib/native/apkUpdate'
+import { describeDownloadFailure } from '@/domain/appUpdate/downloadFailure'
 
 /**
  * Update orchestration hook: discovery, grace-state persistence, and the
@@ -367,6 +368,24 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     }
   }, [])
 
+  const openWebDownload = useCallback(async () => {
+    // Web path: approved destination only. Policy URL wins; GitHub release
+    // page is the fallback. Never fabricate a URL from parts.
+    const webUrl = state.policy?.webReleaseUrl ?? release?.webUrl ?? null
+    if (!webUrl) return
+
+    try {
+      if (isAndroid) {
+        const Browser = (await import('@capacitor/browser')).Browser
+        await Browser.open({ url: webUrl })
+        return
+      }
+      window.open(webUrl, '_blank', 'noopener,noreferrer')
+    } catch {
+      window.open(webUrl, '_blank', 'noopener,noreferrer')
+    }
+  }, [state.policy, release, isAndroid])
+
   const startInAppDownload = useCallback(async () => {
     if (downloadedFileRef.current) {
       await installDownloadedApk()
@@ -389,15 +408,20 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
       downloadedFileRef.current = { fileName: result.fileName, uri: result.uri }
       setDownloadPhase({ kind: 'downloaded', fileName: result.fileName, uri: result.uri })
     } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : 'Download failed. Check your connection and try again.'
-      setDownloadPhase({ kind: 'failed', message })
+      // Legacy native builds reject with raw Java exception text. Never
+      // surface it: map to safe copy and fall back to the web download.
+      const rawMessage = error instanceof Error ? error.message : null
+      const webFallbackAvailable =
+        (state.policy?.webReleaseUrl ?? release?.webUrl ?? null) !== null
+      setDownloadPhase({
+        kind: 'failed',
+        message: describeDownloadFailure(rawMessage, { webFallbackAvailable }),
+      })
+      if (webFallbackAvailable) await openWebDownload()
     } finally {
       downloadingUrlRef.current = null
     }
-  }, [release, state.policy, downloadPhase.kind, registerProgressListener, installDownloadedApk])
+  }, [release, state.policy, downloadPhase.kind, registerProgressListener, installDownloadedApk, openWebDownload])
 
   const cancelInAppDownload = useCallback(async () => {
     downloadingUrlRef.current = null
@@ -408,24 +432,6 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
       // Best-effort cancel
     }
   }, [])
-
-  const openWebDownload = useCallback(async () => {
-    // Web path: approved destination only. Policy URL wins; GitHub release
-    // page is the fallback. Never fabricate a URL from parts.
-    const webUrl = state.policy?.webReleaseUrl ?? release?.webUrl ?? null
-    if (!webUrl) return
-
-    try {
-      if (isAndroid) {
-        const Browser = (await import('@capacitor/browser')).Browser
-        await Browser.open({ url: webUrl })
-        return
-      }
-      window.open(webUrl, '_blank', 'noopener,noreferrer')
-    } catch {
-      window.open(webUrl, '_blank', 'noopener,noreferrer')
-    }
-  }, [state.policy, release, isAndroid])
 
   const cleanupDownload = useCallback(async () => {
     const downloaded = downloadedFileRef.current

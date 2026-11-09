@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import UpdateSheet from '@/components/app/UpdateSheet'
+import { formatVersionLabel } from '@/domain/appUpdate/updateStateMachine'
 import type { UseAppUpdateResult } from '@/hooks/useAppUpdate'
 
 /**
@@ -29,7 +30,7 @@ export default function UpdateBanner({ update }: { update: UseAppUpdateResult })
 
   const daysLeft = expired ? 0 : (graceRemaining?.days ?? 0)
   const hoursLeft = expired ? 0 : (graceRemaining?.hours ?? 0)
-  const targetVersion = state.policy?.versionName || state.policy?.versionCode || ''
+  const versionLabel = formatVersionLabel(state.policy?.versionName, state.policy?.versionCode)
 
   return (
     <>
@@ -38,12 +39,12 @@ export default function UpdateBanner({ update }: { update: UseAppUpdateResult })
           <RefreshCw className="size-4 shrink-0 text-primary" aria-hidden="true" />
           <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             {state.status === 'available' ? (
-              <>Update available: v{targetVersion}</>
+              <>Update available: {versionLabel}</>
             ) : expired ? (
-              <>Update required — install to continue using BOUXRE.</>
+              <>Update required: install to continue using BOUXRE.</>
             ) : (
               <>
-                New version required: v{state.policy?.versionCode ?? ''} · {daysLeft}d {hoursLeft}h
+                New version required: {versionLabel} · {daysLeft}d {hoursLeft}h
                 left to update
               </>
             )}

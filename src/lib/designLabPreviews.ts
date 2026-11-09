@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Mail, Network, PanelsTopLeft, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, Download, FileText, LayoutDashboard, Mail, Network, PanelsTopLeft, ShoppingBag, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -83,5 +83,23 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/document-email',
     icon: Mail,
     capabilities: ['Real SASINV-000130 data', 'Executive HTML', 'Composer & Recipient views', 'Mobile/Desktop', 'Attachment badge'],
+  },
+  {
+    id: 'app-update-modal',
+    name: 'App Update Modal',
+    eyebrow: 'App Update',
+    description: 'Two contrasting update sheet designs with simulated download, install, and web fallback states.',
+    route: '/design-lab/app-update-modal',
+    icon: Download,
+    capabilities: ['2 variants', 'Light/Dark', 'Download states', 'Web fallback', 'Version guard'],
+  },
+  {
+    id: 'po-view',
+    name: 'Purchase Order View Redesign',
+    eyebrow: 'Purchase Order',
+    description: 'Executive document-viewing experience for outgoing procurement commitments with full Onboarding V5 theme and viewport support.',
+    route: '/design-lab/po-view',
+    icon: ShoppingBag,
+    capabilities: ['5 themes', 'Light/Dark', '6 viewports', 'Lifecycle simulation', 'Telemetry strip', 'Audit trail'],
   },
 ]

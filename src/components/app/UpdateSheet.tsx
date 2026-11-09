@@ -7,7 +7,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { formatDownloadProgress } from '@/domain/appUpdate/updateStateMachine'
+import { formatDownloadProgress, formatVersionLabel } from '@/domain/appUpdate/updateStateMachine'
 import type { UseAppUpdateResult } from '@/hooks/useAppUpdate'
 
 /**
@@ -55,24 +55,25 @@ export default function UpdateSheet({
           </SheetTitle>
           <SheetDescription>
             {policy
-              ? `Approved BOUXRE release v${policy.versionCode}${
-                  policy.versionName ? ` (${policy.versionName})` : ''
-                }`
+              ? `Approved BOUXRE release ${formatVersionLabel(policy.versionName, policy.versionCode)}`
               : 'Approved BOUXRE release'}
           </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
           {state.status === 'grace' && graceRemaining && !graceRemaining.expired && (
-            <p className="rounded-2xl bg-muted px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {graceRemaining.days}d {graceRemaining.hours}h {graceRemaining.minutes}m left to
-              update — after that, BOUXRE pauses until you install this version.
+            <p className="rounded-2xl bg-muted px-4 py-3 text-xs font-medium text-muted-foreground">
+              <span className="font-semibold text-foreground">
+                {graceRemaining.days}d {graceRemaining.hours}h left to update.
+              </span>{' '}
+              After that, BOUXRE pauses until you install this version.
             </p>
           )}
 
           {state.status === 'blocked' && (
-            <p className="rounded-2xl bg-muted px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Grace period ended. Install the update to resume normal use.
+            <p className="rounded-2xl bg-muted px-4 py-3 text-xs font-medium text-muted-foreground">
+              <span className="font-semibold text-foreground">Grace period ended.</span>{' '}
+              Install the update to resume normal use.
             </p>
           )}
 
