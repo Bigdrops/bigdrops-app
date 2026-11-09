@@ -141,14 +141,6 @@ export default function ViewCps() {
     },
   }), [cps, cpsId, navigate, status, tenantClient, settings, downloading])
 
-  if (loading || !cps || !viewData) {
-    return (
-      <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader contentClassName="!max-w-none md:!px-0 md:!py-0">
-        <div className="min-h-[60vh] p-12 text-center text-sm text-bd-text-muted">Loading Cost & Pricing Sheet...</div>
-      </Layout>
-    )
-  }
-
   const cpsSharePayload: DocumentSharePayload = useMemo(() => ({
     documentType: 'cps',
     documentId: String(cps?.id || cpsId || ''),
@@ -171,6 +163,14 @@ export default function ViewCps() {
       return res.blob
     },
   }), [cps, cpsId, settings, viewData])
+
+  if (loading || !cps || !viewData) {
+    return (
+      <Layout title="Cost & Pricing Sheet" session={null} hidePageHeader contentClassName="!max-w-none md:!px-0 md:!py-0">
+        <div className="min-h-[60vh] p-12 text-center text-sm text-bd-text-muted">Loading Cost & Pricing Sheet...</div>
+      </Layout>
+    )
+  }
 
   const props = {
     data: viewData,
