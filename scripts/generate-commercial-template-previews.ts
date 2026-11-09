@@ -40,6 +40,11 @@ type TemplateId =
   | 'executive'
   | 'heritage'
 
+/** 1×1 opaque PNG, deterministic offline fixture asset (stretched to fit the
+ *  fixed-square logo/signature slots — proves the slot renders, not fidelity). */
+const FIXTURE_PIXEL_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+
 const TEMPLATES: Array<{
   id: TemplateId
   Component: React.ComponentType<any>
@@ -177,8 +182,12 @@ function buildSampleInvoice(orientation: 'portrait' | 'landscape'): any {
     additionalSections: [],
     additionalFields: [],
     referenceLinks: [],
-    signature: null,
-    logo: { imageUrl: '', altText: '' },
+    signature: {
+      imageUrl: FIXTURE_PIXEL_PNG,
+      name: 'Sample Authorised Signatory',
+      role: 'Managing Director',
+    },
+    logo: { imageUrl: FIXTURE_PIXEL_PNG, altText: 'Sample Motors Ltd' },
     footerText: 'Thank you for your business.',
     tagline: '',
     metaFooter: { companyName: 'Sample Motors Ltd' },

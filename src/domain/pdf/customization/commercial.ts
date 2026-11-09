@@ -22,6 +22,7 @@ import type {
 import type { PdfDesignPreset, PdfDesignPresetDocument } from '@/lib/pdfDesignPreset'
 import { getPdfDesignPreset, hasSavedPdfDesignPreset, setPdfDesignPreset } from '@/lib/pdfDesignPreset'
 import { resolveFull } from './resolver'
+import { isIntrinsicPaletteTemplate } from '@/domain/invoice/types'
 
 const STORAGE_PREFIX = 'bigdrops_pdf_customization_'
 
@@ -138,6 +139,11 @@ export function resolveCommercialDocumentFamily(
  * Use this in PDF download actions (invoicePdfActions, pdfDownloadHandler)
  * where the React hook is not available.
  *
+ * Intrinsic-palette templates (architectural/executive/heritage) own their color scheme:
+ * any saved or engine-bridged custom accent is suppressed for them and their intrinsic
+ * palette always wins. This is the single choke point for the restriction — no call site
+ * needs to re-implement it.
+ *
  * The persisted design preset is the source of truth for the Custom Colors /
  * Custom Fonts toggles. Engine-saved accent/font values are applied on top
  * when present (the customization modal keeps them in sync).
@@ -150,11 +156,15 @@ export function resolveCommercialDocumentFamily(
  */
 export function resolveCommercialDesignPreset(
   documentType: PdfCustomizationDocumentFamily,
+  templateId?: string | null,
 ): PdfDesignPreset {
+  const intrinsicPalette = isIntrinsicPaletteTemplate(templateId)
   const docType: PdfDesignPresetDocument = documentType === 'quotation' ? 'quotation' : 'invoice'
   const base = getPdfDesignPreset(docType)
   const engineSettings = loadEngineSettings(documentType)
-  if (!engineSettings) return base
+  if (!engineSettings) {
+    return intrinsicPalette ? { ...base, useCustomColors: false } : base
+  }
   const { customization, settings } = resolveFull(
     COMMERCIAL_TEMPLATE_DEFAULTS,
     COMMERCIAL_CAPABILITIES,
@@ -165,6 +175,6 @@ export function resolveCommercialDesignPreset(
   if (!hasSavedPdfDesignPreset(docType)) {
     preset.useCustomFonts = true
   }
-  preset.useCustomColors = settings.accentEnabled
+  preset.useCustomColors = intrinsicPalette ? false : settings.accentEnabled
   return preset
 }

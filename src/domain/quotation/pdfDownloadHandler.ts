@@ -8,7 +8,6 @@ import {
   normalizeInvoicePdfTemplateId,
   normalizeAdditionalFieldEntries,
 } from "@/domain/invoice";
-import { isIntrinsicPaletteTemplate } from "@/domain/invoice/types";
 import { resolveCommercialDesignPreset } from "@/domain/pdf/customization/commercial";
 import { userDownloadLocationLabel } from "@/lib/native/fileDownload";
 
@@ -38,12 +37,7 @@ export async function buildQuotationPdfPayload(input: QuotationPdfGenerationPara
   } = await import("@/components/pdf");
   const savedColumns = Array.isArray(customFields?.columnConfig) ? customFields.columnConfig : BUILTIN_COLUMNS;
   const templateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry";
-  const rawDesignPreset = resolveCommercialDesignPreset("quotation");
-  // Intrinsic-palette templates own their color scheme. Suppress any
-  // previously saved custom accent so it cannot bleed into their palette.
-  const pdfDesignPreset = isIntrinsicPaletteTemplate(templateId)
-    ? { ...rawDesignPreset, useCustomColors: false }
-    : rawDesignPreset;
+  const pdfDesignPreset = resolveCommercialDesignPreset("quotation", templateId);
   const resolvedTable = interpretPdfTableSettings(savedColumns as any, {
     mergeQtyUnit: customFields?.mergeQtyUnit === true,
     items: Array.isArray(items) ? items : [],
