@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TemplateMiniPreview, { type TemplateMiniTheme } from './TemplateMiniPreview'
 
@@ -30,16 +30,28 @@ interface TemplatePickerCarouselProps {
   value: string
   onChange: (id: string) => void
   options: TemplatePickerOption[]
+  /**
+   * When true, dedicates the card area entirely to the document preview miniature
+   * by removing title and blurb from the card interior. The active selection details
+   * are presented in an external summary strip below the carousel.
+   */
+  hideCardLabels?: boolean
 }
 
 export default function TemplatePickerCarousel({
   value,
   onChange,
   options,
+  hideCardLabels = false,
 }: TemplatePickerCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const activeOption = useMemo(
+    () => options.find((o) => o.id === value) || options[0],
+    [options, value],
+  )
 
   const updateScrollBounds = useCallback(() => {
     const el = scrollRef.current
@@ -113,7 +125,10 @@ export default function TemplatePickerCarousel({
           type="button"
           onClick={() => scrollByStep('left')}
           aria-label="Scroll templates left"
-          className="absolute -left-1.5 top-[38px] z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 text-foreground shadow-md backdrop-blur-xs transition-all hover:scale-105 hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          className={cn(
+            'absolute -left-1.5 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 text-foreground shadow-md backdrop-blur-xs transition-all hover:scale-105 hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring',
+            hideCardLabels ? 'top-[82px]' : 'top-[38px]',
+          )}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -125,7 +140,10 @@ export default function TemplatePickerCarousel({
           type="button"
           onClick={() => scrollByStep('right')}
           aria-label="Scroll templates right"
-          className="absolute -right-1.5 top-[38px] z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 text-foreground shadow-md backdrop-blur-xs transition-all hover:scale-105 hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+          className={cn(
+            'absolute -right-1.5 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 text-foreground shadow-md backdrop-blur-xs transition-all hover:scale-105 hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring',
+            hideCardLabels ? 'top-[82px]' : 'top-[38px]',
+          )}
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -153,11 +171,22 @@ export default function TemplatePickerCarousel({
               type="button"
               onClick={() => onChange(option.id)}
               aria-pressed={active}
+              aria-label={`${option.label}: ${option.blurb}`}
               className={cn(
-                'flex w-[150px] shrink-0 snap-center flex-col overflow-hidden rounded-[20px] border p-1.5 text-left transition-all duration-200',
-                active
-                  ? 'border-slate-950 bg-slate-950 shadow-lg ring-2 ring-slate-950 ring-offset-2'
-                  : 'border-border bg-card hover:border-slate-400 hover:shadow-sm',
+                'relative flex shrink-0 snap-center flex-col overflow-hidden text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                hideCardLabels
+                  ? cn(
+                      'w-[136px] rounded-[18px] border p-1',
+                      active
+                        ? 'border-primary bg-primary/5 shadow-md ring-2 ring-primary ring-offset-2'
+                        : 'border-border bg-card hover:border-slate-400 hover:shadow-xs',
+                    )
+                  : cn(
+                      'w-[150px] rounded-[20px] border p-1.5',
+                      active
+                        ? 'border-slate-950 bg-slate-950 shadow-lg ring-2 ring-slate-950 ring-offset-2'
+                        : 'border-border bg-card hover:border-slate-400 hover:shadow-xs',
+                    ),
               )}
             >
               {/* Miniature Container */}
@@ -172,13 +201,20 @@ export default function TemplatePickerCarousel({
                   />
                 )}
 
+                {/* Selected Checkmark Indicator (when card labels are hidden) */}
+                {active && hideCardLabels && (
+                  <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
+                    <Check className="h-2.5 w-2.5 stroke-[3]" />
+                  </span>
+                )}
+
                 {/* Optional Badge Pill */}
                 {option.badge && (
                   <span
                     className={cn(
-                      'pointer-events-none absolute right-1.5 top-1.5 rounded-[4px] px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider shadow-xs',
+                      'pointer-events-none absolute right-1.5 top-1.5 z-10 rounded-[4px] px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider shadow-xs',
                       active
-                        ? 'border border-white/40 bg-black/60 text-white backdrop-blur-xs'
+                        ? 'border border-primary/40 bg-slate-900/90 text-white backdrop-blur-xs'
                         : 'border border-slate-700/50 bg-slate-900/80 text-white backdrop-blur-xs',
                     )}
                   >
@@ -187,29 +223,42 @@ export default function TemplatePickerCarousel({
                 )}
               </div>
 
-              {/* Title & Blurb */}
-              <div className="mt-2 px-1 pb-1">
-                <div
-                  className={cn(
-                    'truncate text-xs font-bold',
-                    active ? 'text-white' : 'text-foreground',
-                  )}
-                >
-                  {option.label}
+              {/* Title & Blurb (only rendered when card labels are enabled) */}
+              {!hideCardLabels && (
+                <div className="mt-2 px-1 pb-1">
+                  <div
+                    className={cn(
+                      'truncate text-xs font-bold',
+                      active ? 'text-white' : 'text-foreground',
+                    )}
+                  >
+                    {option.label}
+                  </div>
+                  <div
+                    className={cn(
+                      'mt-0.5 line-clamp-1 text-[10px] leading-tight',
+                      active ? 'text-slate-400' : 'text-muted-foreground',
+                    )}
+                  >
+                    {option.blurb}
+                  </div>
                 </div>
-                <div
-                  className={cn(
-                    'mt-0.5 line-clamp-1 text-[10px] leading-tight',
-                    active ? 'text-slate-400' : 'text-muted-foreground',
-                  )}
-                >
-                  {option.blurb}
-                </div>
-              </div>
+              )}
             </button>
           )
         })}
       </div>
+
+      {/* Active template summary footer when labels are removed from cards */}
+      {hideCardLabels && activeOption && (
+        <div className="mt-1 flex items-center justify-between rounded-[12px] border border-border/50 bg-muted/20 px-3 py-1.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+            <span className="text-xs font-bold text-foreground truncate">{activeOption.label}</span>
+          </div>
+          <span className="text-[11px] font-medium text-muted-foreground shrink-0">{activeOption.blurb}</span>
+        </div>
+      )}
     </div>
   )
 }

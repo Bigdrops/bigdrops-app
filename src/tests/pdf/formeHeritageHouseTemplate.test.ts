@@ -17,7 +17,7 @@ import type { PdfDocumentModel } from '../../components/pdf/types'
 
 const SAMPLE_BASE64_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 
-function buildSampleInvoice(): any {
+function buildSampleInvoice(): Record<string, unknown> {
   return {
     identity: {
       id: 'inv-hh-1',
@@ -180,4 +180,74 @@ test('Heritage House Forme tokens and structure are defined', () => {
   assert.equal(HERITAGE_TOKENS.bronze, '#9a7b45')
   assert.equal(HERITAGE_TOKENS.paper, '#f8f2e3')
   assert.equal(HERITAGE_TOKENS.ivory, '#f2e9d4')
+})
+
+test('Heritage House Forme enforces palette isolation and honors explicit custom accent overrides', () => {
+  const invoiceModel = buildSampleInvoice()
+
+  // 1. Default (useCustomColors: false or absent) -> strictly uses intrinsic bronze and burgundy
+  const defaultData = adaptCommercialDocumentData(invoiceModel as PdfDocumentModel)
+  const defaultElement = HeritageHouseFormeDocument({ data: defaultData })
+  const defaultJson = JSON.stringify(defaultElement)
+  assert.ok(defaultJson.includes(HERITAGE_TOKENS.bronze), 'Must contain intrinsic bronze')
+  assert.ok(defaultJson.includes(HERITAGE_TOKENS.burgundy), 'Must contain intrinsic burgundy')
+
+  // 2. App theme fallback without useCustomColors -> does NOT leak app color
+  const appThemeModel = {
+    ...invoiceModel,
+    template: {
+      id: 'heritage-house',
+      designPreset: {
+        useCustomColors: false,
+        accentColor: '#d97706', // e.g. amber-terracotta app theme
+      },
+    },
+  }
+  const appThemeData = adaptCommercialDocumentData(appThemeModel as unknown as PdfDocumentModel)
+  const appThemeElement = HeritageHouseFormeDocument({ data: appThemeData })
+  const appThemeJson = JSON.stringify(appThemeElement)
+  assert.ok(!appThemeJson.includes('#d97706'), 'Must not leak app theme accent when useCustomColors is false')
+  assert.ok(appThemeJson.includes(HERITAGE_TOKENS.bronze), 'Must retain intrinsic bronze')
+
+  // 3. Explicit custom color enabled -> reflects custom accent
+  const customModel = {
+    ...invoiceModel,
+    template: {
+      id: 'heritage-house',
+      designPreset: {
+        useCustomColors: true,
+        accentColor: '#2563eb',
+      },
+    },
+  }
+  const customData = adaptCommercialDocumentData(customModel as unknown as PdfDocumentModel)
+  const customElement = HeritageHouseFormeDocument({ data: customData })
+  const customJson = JSON.stringify(customElement)
+  assert.ok(customJson.includes('#2563eb'), 'Must reflect custom accent when useCustomColors is true')
+})
+
+test('Heritage House Forme seal renders companyLogo when supplied and omits leaked metadata', () => {
+  const modelWithLogo = buildSampleInvoice()
+  const dataWithLogo = adaptCommercialDocumentData(modelWithLogo as PdfDocumentModel)
+  const elementWithLogo = HeritageHouseFormeDocument({ data: dataWithLogo })
+  const jsonWithLogo = JSON.stringify(elementWithLogo)
+
+  assert.ok(jsonWithLogo.includes(SAMPLE_BASE64_IMAGE), 'Must contain company logo image in seal box')
+  assert.ok(!jsonWithLogo.includes('HERITAGE HOUSE · FORMAL STATIONERY'), 'Must not leak HERITAGE HOUSE · FORMAL STATIONERY')
+  assert.ok(!jsonWithLogo.includes('"BOURXE"'), 'Must not leak hardcoded BOURXE mark above document title')
+  assert.ok(!jsonWithLogo.includes('DOCUMENT CONTROL'), 'Must not leak DOCUMENT CONTROL stamp box')
+  assert.ok(!jsonWithLogo.includes('VERIFIED'), 'Must not leak VERIFIED stamp')
+})
+
+test('Heritage House Forme suppresses all signature furniture when no signature uploaded', () => {
+  const modelNoSig = buildSampleInvoice()
+  modelNoSig.signature = null
+  const dataNoSig = adaptCommercialDocumentData(modelNoSig as PdfDocumentModel)
+  const elementNoSig = HeritageHouseFormeDocument({ data: dataNoSig })
+  const jsonNoSig = JSON.stringify(elementNoSig)
+
+  assert.ok(!jsonNoSig.includes('Issuer Authorised Signatory'), 'Must omit Issuer Authorised Signatory label')
+  assert.ok(!jsonNoSig.includes('Client Receiving Acknowledgement'), 'Must omit Client Receiving Acknowledgement')
+  assert.ok(!jsonNoSig.includes('Received & Acknowledged'), 'Must omit Received & Acknowledged')
+  assert.ok(!jsonNoSig.includes('Signature & Corporate Stamp'), 'Must omit Signature & Corporate Stamp')
 })

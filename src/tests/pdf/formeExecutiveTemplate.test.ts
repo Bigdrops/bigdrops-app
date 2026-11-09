@@ -17,7 +17,7 @@ import type { PdfDocumentModel } from '../../components/pdf/types'
 
 const SAMPLE_BASE64_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 
-function buildSampleInvoice(): any {
+function buildSampleInvoice(): Record<string, unknown> {
   return {
     identity: {
       id: 'inv-exec-1',
@@ -176,4 +176,72 @@ test('Executive Forme tokens and structure are defined', () => {
   assert.equal(EXECUTIVE_TOKENS.forest, '#173a2c')
   assert.equal(EXECUTIVE_TOKENS.gold, '#a9854f')
   assert.equal(EXECUTIVE_TOKENS.paper, '#fcf9f2')
+})
+
+test('Executive Forme enforces palette isolation and honors explicit custom accent overrides', () => {
+  const invoiceModel = buildSampleInvoice()
+
+  // 1. Default (useCustomColors: false or absent) -> strictly uses intrinsic gold and forest
+  const defaultData = adaptCommercialDocumentData(invoiceModel as PdfDocumentModel)
+  const defaultElement = ExecutiveFormeDocument({ data: defaultData })
+  const defaultJson = JSON.stringify(defaultElement)
+  assert.ok(defaultJson.includes(EXECUTIVE_TOKENS.gold), 'Must contain intrinsic gold')
+  assert.ok(defaultJson.includes(EXECUTIVE_TOKENS.forest), 'Must contain intrinsic forest')
+
+  // 2. App theme fallback without useCustomColors -> does NOT leak app color
+  const appThemeModel = {
+    ...invoiceModel,
+    template: {
+      id: 'executive',
+      designPreset: {
+        useCustomColors: false,
+        accentColor: '#d97706', // e.g. amber-terracotta app theme
+      },
+    },
+  }
+  const appThemeData = adaptCommercialDocumentData(appThemeModel as unknown as PdfDocumentModel)
+  const appThemeElement = ExecutiveFormeDocument({ data: appThemeData })
+  const appThemeJson = JSON.stringify(appThemeElement)
+  assert.ok(!appThemeJson.includes('#d97706'), 'Must not leak app theme accent when useCustomColors is false')
+  assert.ok(appThemeJson.includes(EXECUTIVE_TOKENS.gold), 'Must retain intrinsic gold')
+
+  // 3. Explicit custom color enabled -> reflects custom accent
+  const customModel = {
+    ...invoiceModel,
+    template: {
+      id: 'executive',
+      designPreset: {
+        useCustomColors: true,
+        accentColor: '#2563eb',
+      },
+    },
+  }
+  const customData = adaptCommercialDocumentData(customModel as unknown as PdfDocumentModel)
+  const customElement = ExecutiveFormeDocument({ data: customData })
+  const customJson = JSON.stringify(customElement)
+  assert.ok(customJson.includes('#2563eb'), 'Must reflect custom accent when useCustomColors is true')
+})
+
+test('Executive Forme masthead renders companyLogo when supplied and omits leaked metadata', () => {
+  const modelWithLogo = buildSampleInvoice()
+  const dataWithLogo = adaptCommercialDocumentData(modelWithLogo as PdfDocumentModel)
+  const elementWithLogo = ExecutiveFormeDocument({ data: dataWithLogo })
+  const jsonWithLogo = JSON.stringify(elementWithLogo)
+
+  assert.ok(jsonWithLogo.includes(SAMPLE_BASE64_IMAGE), 'Must contain company logo image in masthead')
+  assert.ok(!jsonWithLogo.includes('EXECUTIVE COMMERCIAL FOLIO'), 'Must not leak EXECUTIVE COMMERCIAL FOLIO')
+  assert.ok(!jsonWithLogo.includes('Executive commercial engagement terms apply.'), 'Must not leak hardcoded engagement blurb')
+})
+
+test('Executive Forme suppresses all signature furniture when no signature uploaded', () => {
+  const modelNoSig = buildSampleInvoice()
+  modelNoSig.signature = null
+  const dataNoSig = adaptCommercialDocumentData(modelNoSig as PdfDocumentModel)
+  const elementNoSig = ExecutiveFormeDocument({ data: dataNoSig })
+  const jsonNoSig = JSON.stringify(elementNoSig)
+
+  assert.ok(!jsonNoSig.includes('Executive Authorised Signatory'), 'Must omit Executive Authorised Signatory label')
+  assert.ok(!jsonNoSig.includes('Client Executive Acknowledgment'), 'Must omit Client Executive Acknowledgment')
+  assert.ok(!jsonNoSig.includes('Acknowledged & Counter-signed'), 'Must omit Acknowledged & Counter-signed')
+  assert.ok(!jsonNoSig.includes('Signature & Official Seal'), 'Must omit Signature & Official Seal')
 })

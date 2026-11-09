@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils'
 import TemplatePickerCarousel, { type TemplatePickerOption } from './TemplatePickerCarousel'
 import industrialPreview from '../../../assets/template-previews/industrial.png'
 import industryPreview from '../../../assets/template-previews/industry.png'
@@ -13,14 +14,27 @@ import heritagePreview from '../../../assets/template-previews/heritage.png'
  * renderers (see scripts/generate-commercial-template-previews.ts).
  * No PDF generation or rasterisation happens when the picker opens.
  */
-function Preview({ src, alt }: { src: string; alt: string }) {
+function Preview({
+  src,
+  alt,
+  orientation = 'portrait',
+}: {
+  src: string
+  alt: string
+  orientation?: 'portrait' | 'landscape'
+}) {
   return (
-    <img
-      src={src}
-      alt={alt}
-      className="h-[80px] w-full rounded-[12px] bg-white object-contain"
-      draggable={false}
-    />
+    <div className="flex h-[154px] w-full items-center justify-center rounded-[14px] bg-slate-100/70 p-1 dark:bg-slate-900/50">
+      <img
+        src={src}
+        alt={alt}
+        className={cn(
+          'rounded-[8px] object-contain shadow-xs transition-transform duration-200 group-hover:scale-[1.02]',
+          orientation === 'landscape' ? 'w-full h-auto max-h-[146px]' : 'h-full w-auto max-w-full',
+        )}
+        draggable={false}
+      />
+    </div>
   )
 }
 
@@ -60,7 +74,7 @@ const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
     layout: 'commercial',
     theme: { pageBg: '#ffffff', headerBg: '#07192b', headerFg: '#ffffff', accent: '#1d568a', border: '#9cb4c9', mutedBg: '#edf3f8' },
     badge: 'A4 Landscape',
-    customPreview: <Preview src={landscapePreview} alt="Landscape template preview" />,
+    customPreview: <Preview src={landscapePreview} alt="Landscape template preview" orientation="landscape" />,
   },
   {
     id: 'evergreen',
@@ -103,5 +117,12 @@ interface CommercialTemplatePickerProps {
 
 export default function CommercialTemplatePicker({ value, onChange }: CommercialTemplatePickerProps) {
   const activeValue = value === 'industry-forme' ? 'industry' : value
-  return <TemplatePickerCarousel value={activeValue} onChange={onChange} options={TEMPLATE_OPTIONS} />
+  return (
+    <TemplatePickerCarousel
+      value={activeValue}
+      onChange={onChange}
+      options={TEMPLATE_OPTIONS}
+      hideCardLabels
+    />
+  )
 }

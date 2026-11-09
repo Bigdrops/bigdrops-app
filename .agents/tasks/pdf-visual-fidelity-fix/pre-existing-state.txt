@@ -1,0 +1,53 @@
+== GIT STATUS ==
+On branch main
+Your branch is up to date with 'origin/main'.
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   android/app/src/main/java/com/bigdrops/app/plugins/ApkUpdatePlugin.java
+	modified:   src/assets/template-previews/architectural.png
+	modified:   src/assets/template-previews/executive.png
+	modified:   src/assets/template-previews/heritage.png
+	modified:   src/assets/template-previews/industry.png
+	modified:   src/assets/template-previews/landscape.png
+	modified:   src/components/app/AppShell.tsx
+	modified:   src/components/app/UpdateBanner.tsx
+	modified:   src/components/app/UpdateSheet.tsx
+	modified:   src/components/document-view/shared/CommercialTemplatePicker.tsx
+	modified:   src/components/document-view/shared/TemplatePickerCarousel.tsx
+	modified:   src/components/pdf/forme/ArchitecturalFormeDocument.tsx
+	modified:   src/components/pdf/forme/ExecutiveFormeDocument.tsx
+	modified:   src/components/pdf/forme/HeritageHouseFormeDocument.tsx
+	modified:   src/components/pdf/forme/IndustryFormeDocument.tsx
+	modified:   src/components/pdf/forme/LandscapeFormeDocument.tsx
+	modified:   src/domain/appUpdate/updateStateMachine.ts
+	modified:   src/hooks/useAppUpdate.ts
+	modified:   src/lib/designLabPreviews.ts
+	modified:   src/pages/ViewCps.tsx
+	modified:   src/tests/pdf/formeArchitecturalTemplate.test.ts
+	modified:   src/tests/pdf/formeExecutiveTemplate.test.ts
+	modified:   src/tests/pdf/formeHeritageHouseTemplate.test.ts
+	modified:   src/tests/pdf/formeIndustryRefinement.test.ts
+	modified:   src/tests/pdf/formeLandscapeRebuildTemplate.test.ts
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	docs/reports/android/android-update-download-visibility-fix-and-design-lab-2026-11-09.md
+	scratch/app-update-harness.html
+	scratch/app-update-harness.tsx
+	scratch/output-landscape/
+	scratch/verify-landscape-rebuild.ts
+	src/components/design-lab/app-update-fluid.tsx
+	src/components/design-lab/app-update-modal-preview.tsx
+	src/components/design-lab/app-update-preview-model.ts
+	src/components/design-lab/app-update-structural.tsx
+	src/domain/appUpdate/downloadFailure.ts
+	src/pages/AppUpdateModalExperiment.tsx
+	src/tests/critical/appUpdateDownloadFailure.test.js
+no changes added to commit (use "git add" and/or "git commit -a")
+
+== GIT LOG (last 5) ==
+5b1571bd (HEAD -> main, tag: test-release-run27, origin/main, origin/HEAD) ♻ refactor(brand): rename BigDrops to BOURXRE across app
+b15bbe07 📝 docs(pdf): PO and CPS Forme PDF feasibility audit
+1e179030 📝 docs(document-view): commercial miniature audit implementation log
+9865c358 ✨ feat(pdf): add procurement contract to commercial Forme documents
+49170c03 ♻ refactor(ui): migrate rich text to EditorCN and nuke legacy editor

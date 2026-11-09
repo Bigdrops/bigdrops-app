@@ -1,0 +1,9 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Two-tone copper collapse on custom accent — When a custom accent is explicitly enabled, both `copper` and `copperLight` resolve to the same `tokens.accentColor`, erasing the two-tone copper hierarchy used throughout the Architectural masthead. Derive `copperLight` as a lightened variant of the custom color rather than applying the same value to both variables.",
+    "Procurement signatory name fallbacks render label-like strings — Lines 576 and 593 of ArchitecturalFormeDocument.tsx fall back to 'Authorised Requisitioner' and 'Authorised By' when `name` is absent on a truthy signatory object. Confirm the data contract never creates a signatory object with a missing name, or add a name-presence gate matching the one used for the non-procurement signature path.",
+    "Visual verification blocked — No CLI PDF rasterizer was available; the acceptance criterion requiring visual inspection of actual generated PDFs was not met. Manually verify at least one Architectural and one Executive/Heritage House PDF against their HTML references before treating the fix as fully closed."
+  ],
+  "reviewDoc": "c:\\Users\\DELL\\Desktop\\bigdrops-app\\.agents\\tasks\\pdf-visual-fidelity-fix\\review.md"
+}

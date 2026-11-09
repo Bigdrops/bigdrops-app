@@ -103,24 +103,36 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
       <Page size={pageSize} margin={{ top: compact ? 20 : 28, right: marginH, bottom: compact ? 6 : 8, left: marginH }}>
         {/* Fixed Footer: Permanent Bottom-of-Page Anchoring */}
         <Fixed position="footer">
-          <View style={{ borderTopWidth: 1, borderTopColor: borderColor, paddingTop: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
-              {data.company?.companyLogoUrl ? (
-                <Image src={data.company.companyLogoUrl} href={data.company.companyLogoUrl} style={{ width: 14, height: 14, marginRight: 6 }} />
-              ) : null}
-              <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor }}>
-                {data.footer.companyName || data.company?.name || ''}
+          <View style={{ borderTopWidth: 1, borderTopColor: accentColor, paddingTop: 4 }}>
+            {data.footer.extraText ? (
+              <Text style={{ fontFamily: font, fontSize: 7, color: mutedColor, textAlign: 'center', marginBottom: 2 }}>
+                {data.footer.extraText}
               </Text>
-            </View>
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor, fontWeight: 600 }}>
-                Page {'{{pageNumber}}'} of {'{{totalPages}}'}
+            ) : null}
+            {data.showTagline && data.company?.tagline ? (
+              <Text style={{ fontFamily: font, fontSize: 7, fontStyle: 'italic', color: accentColor, textAlign: 'center', marginBottom: 2 }}>
+                {data.company.tagline}
               </Text>
-            </View>
-            <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'center' }}>
-              <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor }}>
-                {data.footer.documentNumber || data.documentNumber || ''}
-              </Text>
+            ) : null}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                {data.company?.companyLogoUrl ? (
+                  <Image src={data.company.companyLogoUrl} href={data.company.companyLogoUrl} style={{ width: 14, height: 14, marginRight: 6 }} />
+                ) : null}
+                <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor }}>
+                  {data.footer.companyName || data.company?.name || ''}
+                </Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor, fontWeight: 600 }}>
+                  Page {'{{pageNumber}}'} of {'{{totalPages}}'}
+                </Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor }}>
+                  {data.footer.documentNumber || data.documentNumber || ''}
+                </Text>
+              </View>
             </View>
           </View>
         </Fixed>
@@ -577,15 +589,13 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
         ) : null}
 
         {/* Signature Block */}
-        {data.isProcurement && data.procurementSignatories ? (
+        {data.isProcurement && data.procurementSignatories && (data.procurementSignatories.requisitioner || data.procurementSignatories.authorizer) ? (
           <View style={{ marginTop: 14, flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
             {data.procurementSignatories.requisitioner ? (
               <View style={{ width: 160 }}>
                 {data.procurementSignatories.requisitioner.signatureUrl ? (
                   <Image src={data.procurementSignatories.requisitioner.signatureUrl} href={data.procurementSignatories.requisitioner.signatureUrl} style={{ width: 120, height: 44, marginBottom: 2 }} />
-                ) : (
-                  <View style={{ height: 44, justifyContent: 'flex-end', marginBottom: 2 }} />
-                )}
+                ) : null}
                 <View style={{ height: 1, backgroundColor: textColor, marginBottom: 4 }} />
                 <Text style={{ fontFamily: font, fontSize: 8.5, fontWeight: 700, color: textColor }}>
                   {data.procurementSignatories.requisitioner.name || 'Requisitioner'}
@@ -600,9 +610,7 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
               <View style={{ width: 160 }}>
                 {data.procurementSignatories.authorizer.signatureUrl ? (
                   <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 120, height: 44, marginBottom: 2 }} />
-                ) : (
-                  <View style={{ height: 44, justifyContent: 'flex-end', marginBottom: 2 }} />
-                )}
+                ) : null}
                 <View style={{ height: 1, backgroundColor: textColor, marginBottom: 4 }} />
                 <Text style={{ fontFamily: font, fontSize: 8.5, fontWeight: 700, color: textColor }}>
                   {data.procurementSignatories.authorizer.name || 'Authorised By'}
@@ -613,7 +621,7 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
               </View>
             ) : null}
           </View>
-        ) : data.signature && (data.signature.imageUrl || data.signature.name) ? (
+        ) : !data.isProcurement && data.signature && (data.signature.imageUrl || data.signature.name) ? (
           <View style={{ marginTop: 14, width: 160 }}>
             {data.signature.imageUrl ? (
               <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 120, height: 44, marginBottom: 2 }} />

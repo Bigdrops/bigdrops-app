@@ -517,3 +517,12 @@ test('Industry Forme generates valid PDF bytes with refinements applied', async 
   const header = Buffer.from(bytes.slice(0, 5)).toString('utf8')
   assert.equal(header, '%PDF-', 'PDF must begin with %PDF- header')
 })
+
+test('Forme Industry suppresses signature furniture when no signature uploaded', () => {
+  const data = createSampleRefinementData()
+  data.signature = null
+  const element = React.createElement(IndustryFormeDocument, { data })
+  const tree = serialize(element)
+  const json = JSON.stringify(tree)
+  assert.ok(!json.includes('Authorised Signatory'), 'Must omit Authorised Signatory label')
+})

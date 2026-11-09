@@ -76,7 +76,7 @@ const LANDSCAPE_MIN_WIDTHS: Record<string, number> = {
 export function LandscapeFormeDocument({ data, compact = false }: LandscapeFormeDocumentProps): React.JSX.Element {
   const font = resolveFont(data.design?.bodyFont || data.design?.headerFont, 'Inter')
   const scale: LandscapeScale = createScale(font, compact)
-  const accent = data.design?.accentColor || LANDSCAPE_TOKENS.amber
+  const accent = (data.design?.useCustomColors && data.design?.accentColor) ? data.design.accentColor : LANDSCAPE_TOKENS.amber
   const company = data.company
   const client = data.client
 

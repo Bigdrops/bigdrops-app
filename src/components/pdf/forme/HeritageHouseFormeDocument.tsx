@@ -72,19 +72,25 @@ function renderBankRow(label: string, value: string | null | undefined, font: st
   )
 }
 
-function renderTextCard(section: { title?: string; content?: string; plainText?: string } | null | undefined, compact: boolean, font: string, headerFont: string) {
+function renderTextCard(
+  section: { title?: string; content?: string; plainText?: string } | null | undefined,
+  compact: boolean,
+  font: string,
+  headerFont: string,
+  accentColor: string = HERITAGE_TOKENS.bronze,
+) {
   if (!section?.content && !section?.plainText) return null
   return (
     <View style={{ marginTop: compact ? 4 : 6, backgroundColor: HERITAGE_TOKENS.white, borderRadius: 2, borderWidth: 0.5, borderColor: HERITAGE_TOKENS.rule, padding: compact ? 6 : 8 }}>
       {section.title ? (
-        <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.bronze, paddingBottom: 1.5 }}>
+        <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3, borderBottomWidth: 0.5, borderBottomColor: accentColor, paddingBottom: 1.5 }}>
           {safeText(section.title)}
         </Text>
       ) : null}
       {section.content ? renderFormeRichText(section.content, {
         font,
         paragraphStyle: { fontFamily: font, fontSize: 7.2, color: HERITAGE_TOKENS.ink, lineHeight: 1.38, marginBottom: 3 },
-        listMarkerStyle: { fontFamily: headerFont, fontSize: 7.2, color: HERITAGE_TOKENS.bronze, width: 10 },
+        listMarkerStyle: { fontFamily: headerFont, fontSize: 7.2, color: accentColor, width: 10 },
         listItemTextStyle: { fontFamily: font, fontSize: 7.2, color: HERITAGE_TOKENS.ink, lineHeight: 1.38 },
       }) : (
         <Text style={{ fontFamily: font, fontSize: 7.2, color: HERITAGE_TOKENS.ink, lineHeight: 1.38 }}>{safeText(section.plainText)}</Text>
@@ -97,6 +103,8 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
   const tokens = resolveDesignTokens(data.design)
   const font = isFormeSupportedFamily(tokens.bodyFont) ? tokens.bodyFont : 'Inter'
   const headerFont = isFormeSupportedFamily(tokens.headerFont) ? tokens.headerFont : (isFormeSupportedFamily('PT Serif') ? 'PT Serif' : 'Inter')
+  const bronze = tokens.accentColor || HERITAGE_TOKENS.bronze
+  const _bronzeLight = tokens.accentColor || HERITAGE_TOKENS.bronzeLight
 
   const companyLines = data.company ? buildPartyLines(data.company) : []
   const clientLines = data.client ? buildPartyLines(data.client) : []
@@ -109,7 +117,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
   const amountInWords = getAmountInWords(data.totals)
   const advance = buildAdvanceSummary(data.advanceSummary)
   const isAdvanceInvoice = Boolean(advance)
-  const companyLogo = data.company?.companyLogoUrl || (data as any)?.companyLogoUrl || (data as any)?.logoUrl || ''
+  const companyLogo = data.company?.companyLogoUrl || (data as { companyLogoUrl?: string; logoUrl?: string }).companyLogoUrl || (data as { companyLogoUrl?: string; logoUrl?: string }).logoUrl || ''
 
   const footerVisible = Boolean(
     data.footer.extraText || data.showTagline || data.footer.documentNumber || data.footer.companyName || companyLogo,
@@ -144,9 +152,6 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
             <Text style={{ fontFamily: headerFont, fontSize: 6.5, color: HERITAGE_TOKENS.burgundy, letterSpacing: 1, textTransform: 'uppercase' }}>
               {`${safeText(data.title)} · ${safeText(data.documentNumber)}`}
             </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted, letterSpacing: 0.5 }}>
-              {'HERITAGE HOUSE · FORMAL STATIONERY'}
-            </Text>
           </View>
         </Fixed>
 
@@ -160,7 +165,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
                 </Text>
               ) : null}
               {data.showTagline && data.company?.tagline ? (
-                <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, textAlign: 'center', marginBottom: 2 }}>
+                <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: bronze, textAlign: 'center', marginBottom: 2 }}>
                   {safeText(data.company.tagline)}
                 </Text>
               ) : null}
@@ -188,17 +193,21 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: compact ? 6 : 9 }} wrap={false}>
           {/* Left Issuer with Seal Box */}
           <View style={{ flexDirection: 'row', gap: 8, flex: 1, paddingRight: 10 }}>
-            <View style={{ width: 34, height: 34, borderWidth: 1, borderColor: HERITAGE_TOKENS.burgundy, backgroundColor: HERITAGE_TOKENS.white, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontFamily: headerFont, fontSize: 16, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, lineHeight: 1 }}>
-                {companySealLetter}
-              </Text>
+            <View style={{ width: 34, height: 34, borderWidth: 1, borderColor: HERITAGE_TOKENS.burgundy, backgroundColor: HERITAGE_TOKENS.white, alignItems: 'center', justifyContent: 'center', padding: 2 }}>
+              {companyLogo ? (
+                <Image src={companyLogo} href={companyLogo} style={{ width: 30, height: 30 }} />
+              ) : (
+                <Text style={{ fontFamily: headerFont, fontSize: 16, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, lineHeight: 1 }}>
+                  {companySealLetter}
+                </Text>
+              )}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: headerFont, fontSize: compact ? 11 : 12.5, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                 {companyName}
               </Text>
               {companyTaxInfo ? (
-                <Text style={{ fontFamily: font, fontSize: 6.5, fontWeight: 700, color: HERITAGE_TOKENS.bronze, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 1 }}>
+                <Text style={{ fontFamily: font, fontSize: 6.5, fontWeight: 700, color: bronze, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 1 }}>
                   {companyTaxInfo}
                 </Text>
               ) : null}
@@ -221,10 +230,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
 
           {/* Right Wordmark & Document Meta */}
           <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 8.5, color: HERITAGE_TOKENS.bronze, textTransform: 'uppercase', letterSpacing: 2 }}>
-              {'BOURXE'}
-            </Text>
-            <Text style={{ fontFamily: headerFont, fontSize: compact ? 16 : 19, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 1 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: compact ? 16 : 19, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 1.5 }}>
               {safeText(data.title)}
             </Text>
             <Text style={{ fontFamily: font, fontSize: 7.2, color: HERITAGE_TOKENS.muted, letterSpacing: 0.6, marginTop: 2 }}>
@@ -239,11 +245,11 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
 
         {/* Diamond Ornament Divider */}
         <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: compact ? 3 : 5 }}>
-          <View style={{ flex: 1, height: 0.5, backgroundColor: HERITAGE_TOKENS.bronze }} />
-          <Text style={{ fontFamily: headerFont, fontSize: 7, color: HERITAGE_TOKENS.bronze, marginHorizontal: 6 }}>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: bronze }} />
+          <Text style={{ fontFamily: headerFont, fontSize: 7, color: bronze, marginHorizontal: 6 }}>
             {'❖'}
           </Text>
-          <View style={{ flex: 1, height: 0.5, backgroundColor: HERITAGE_TOKENS.bronze }} />
+          <View style={{ flex: 1, height: 0.5, backgroundColor: bronze }} />
         </View>
 
         {data.customTitle ? (
@@ -258,7 +264,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
         <View style={{ flexDirection: 'row', gap: 12, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.rule, paddingTop: compact ? 4 : 6, marginBottom: compact ? 6 : 8 }} wrap={false}>
           {/* Bill To */}
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, letterSpacing: 0.5, marginBottom: 2 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 7, fontStyle: 'italic', color: bronze, letterSpacing: 0.5, marginBottom: 2 }}>
               {data.isProcurement ? (data.partyHeaderLabel || 'Order From · Supplier') : 'Bill To · Client'}
             </Text>
             {clientLineMap.get('name') ? (
@@ -275,7 +281,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
 
           {/* Project Details with Dot Leaders */}
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, letterSpacing: 0.5, marginBottom: 2 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 7, fontStyle: 'italic', color: bronze, letterSpacing: 0.5, marginBottom: 2 }}>
               {'Particulars & References'}
             </Text>
             {data.dueDateOrValidityDate ? (
@@ -313,7 +319,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
                       paddingLeft: 5,
                       paddingRight: 5,
                       borderTopWidth: 0.5,
-                      borderTopColor: HERITAGE_TOKENS.bronze,
+                      borderTopColor: bronze,
                       borderBottomWidth: 1,
                       borderBottomColor: HERITAGE_TOKENS.burgundy,
                       backgroundColor: HERITAGE_TOKENS.white,
@@ -339,7 +345,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
               {data.table.rows.map((row, rowIdx) => {
                 if (row.rowType === 'group_header') {
                   return (
-                    <Row key={`gh-${rowIdx}`} style={{ backgroundColor: HERITAGE_TOKENS.ivory, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.bronze, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule }}>
+                    <Row key={`gh-${rowIdx}`} style={{ backgroundColor: HERITAGE_TOKENS.ivory, borderTopWidth: 0.5, borderTopColor: bronze, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule }}>
                       <Cell colSpan={tableColumnCount} style={{ paddingVertical: 4, paddingHorizontal: 5 }}>
                         <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                           {safeText(row.groupLabel || row.groupName)}
@@ -390,7 +396,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
                             {row.imageUrl ? (
                               <View style={{ marginTop: 2 }}>
                                 <Image src={row.imageUrl} href={row.imageUrl} style={{ width: 32, height: 32, borderRadius: 2 }} />
-                                <Link href={row.imageUrl} style={{ fontSize: 6.5, color: HERITAGE_TOKENS.bronze, textDecoration: 'underline', marginTop: 1 }}>Open image</Link>
+                                <Link href={row.imageUrl} style={{ fontSize: 6.5, color: bronze, textDecoration: 'underline', marginTop: 1 }}>Open image</Link>
                               </View>
                             ) : null}
                           </Cell>
@@ -405,7 +411,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
                             fontFamily: col.key === 'amount' || col.key === 'num' ? headerFont : font,
                             fontSize: 7.5,
                             fontWeight: col.key === 'amount' || col.key === 'num' ? 700 : 400,
-                            color: col.key === 'num' ? HERITAGE_TOKENS.bronze : (col.key === 'amount' ? HERITAGE_TOKENS.burgundy : HERITAGE_TOKENS.ink),
+                            color: col.key === 'num' ? bronze : (col.key === 'amount' ? HERITAGE_TOKENS.burgundy : HERITAGE_TOKENS.ink),
                             textAlign: align, lineHeight: 1.3,
                           }}>
                             {glyphRuns(text, font)}
@@ -435,7 +441,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
               </View>
             ))}
             {balanceDue ? (
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2.5, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.bronze, borderBottomWidth: 1.5, borderBottomColor: HERITAGE_TOKENS.burgundy, marginTop: 2 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2.5, borderTopWidth: 0.5, borderTopColor: bronze, borderBottomWidth: 1.5, borderBottomColor: HERITAGE_TOKENS.burgundy, marginTop: 2 }}>
                 <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.burgundy }}>
                   {safeText(balanceDue.label || 'Balance Due')}
                 </Text>
@@ -465,7 +471,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
               <Text style={{ fontFamily: headerFont, fontSize: compact ? 15 : 18, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, marginVertical: 2 }}>
                 {glyphRuns(safeText(mainTotal?.value || '₦0.00'), font)}
               </Text>
-              <View style={{ width: '100%', height: 1, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.burgundy, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.bronze, marginVertical: 2 }} />
+              <View style={{ width: '100%', height: 1, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.burgundy, borderBottomWidth: 0.5, borderBottomColor: bronze, marginVertical: 2 }} />
               {amountInWords ? (
                 <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: HERITAGE_TOKENS.muted, textAlign: 'right', lineHeight: 1.35 }}>
                   {safeText(amountInWords)}
@@ -474,7 +480,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
             </View>
 
             {hasBankDetails && data.paymentDetails ? (
-              <View style={{ backgroundColor: HERITAGE_TOKENS.white, borderWidth: 0.5, borderColor: HERITAGE_TOKENS.bronze, borderRadius: 2, padding: compact ? 5 : 6 }}>
+              <View style={{ backgroundColor: HERITAGE_TOKENS.white, borderWidth: 0.5, borderColor: bronze, borderRadius: 2, padding: compact ? 5 : 6 }}>
                 <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule, paddingBottom: 1.5 }}>
                   {'BANK PAYMENT DETAILS'}
                 </Text>
@@ -484,7 +490,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
                 {renderBankRow('Sort Code', data.paymentDetails.sortCode, font, headerFont)}
               </View>
             ) : data.isProcurement && data.deliveryDestination ? (
-              <View style={{ backgroundColor: HERITAGE_TOKENS.white, borderWidth: 0.5, borderColor: HERITAGE_TOKENS.bronze, borderRadius: 2, padding: compact ? 5 : 6 }}>
+              <View style={{ backgroundColor: HERITAGE_TOKENS.white, borderWidth: 0.5, borderColor: bronze, borderRadius: 2, padding: compact ? 5 : 6 }}>
                 <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule, paddingBottom: 1.5 }}>
                   {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
                 </Text>
@@ -513,12 +519,12 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
           <View style={{ flexDirection: 'row', gap: 10, marginTop: compact ? 4 : 6, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.rule, paddingTop: 4 }} wrap={false}>
             {data.notes ? (
               <View style={{ flex: 1 }}>
-                {renderTextCard(data.notes, compact, font, headerFont)}
+                {renderTextCard(data.notes, compact, font, headerFont, bronze)}
               </View>
             ) : null}
             {data.terms ? (
               <View style={{ flex: 1 }}>
-                {renderTextCard(data.terms, compact, font, headerFont)}
+                {renderTextCard(data.terms, compact, font, headerFont, bronze)}
               </View>
             ) : null}
           </View>
@@ -533,62 +539,69 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
             {attachmentItems.map((att, idx) => (
               <View key={`att-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1.5 }}>
                 <Text style={{ fontFamily: font, fontSize: 7, color: HERITAGE_TOKENS.ink, marginRight: 4 }}>{`• ${safeText(att.label)}`}</Text>
-                {att.url ? <Link href={att.url} style={{ fontSize: 6.8, color: HERITAGE_TOKENS.bronze, textDecoration: 'underline' }}>Open document</Link> : null}
+                {att.url ? <Link href={att.url} style={{ fontSize: 6.8, color: bronze, textDecoration: 'underline' }}>Open document</Link> : null}
               </View>
             ))}
           </View>
         ) : null}
 
-        {/* 7. SIGNATURES & DOCUMENT CONTROL STAMP */}
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: compact ? 6 : 8, paddingTop: 4, borderTopWidth: 1, borderTopColor: HERITAGE_TOKENS.burgundy }} wrap={false}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, marginBottom: 2 }}>
-              {data.isProcurement ? (data.procurementSignatories?.requisitioner?.label || 'Purchasing Officer / Requisitioner') : 'Issuer Authorised Signatory'}
-            </Text>
-            {(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) ? (
-              <Image src={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} href={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} style={{ width: 80, height: 24, marginVertical: 2 }} />
-            ) : (
-              <View style={{ height: 24, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.burgundy, marginBottom: 2 }} />
-            )}
-            <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.name : data.signature?.name) || companyName || 'Authorised Signatory')}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.title : data.signature?.role) || (data.isProcurement ? 'Purchasing Officer' : 'Authorised Signatory'))}
-            </Text>
-          </View>
+        {/* 7. SIGNATURES — strictly conditional on genuine signature data */}
+        {data.isProcurement && data.procurementSignatories && (data.procurementSignatories.requisitioner || data.procurementSignatories.authorizer) ? (
+          <View style={{ flexDirection: 'row', gap: 16, marginTop: compact ? 6 : 8, paddingTop: 4, borderTopWidth: 1, borderTopColor: HERITAGE_TOKENS.burgundy }} wrap={false}>
+            {data.procurementSignatories.requisitioner ? (
+              <View style={{ width: 180 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: bronze, marginBottom: 2 }}>
+                  {data.procurementSignatories.requisitioner.label || 'Purchasing Officer / Requisitioner'}
+                </Text>
+                {data.procurementSignatories.requisitioner.signatureUrl ? (
+                  <Image src={data.procurementSignatories.requisitioner.signatureUrl} href={data.procurementSignatories.requisitioner.signatureUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+                ) : null}
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>
+                  {safeText(data.procurementSignatories.requisitioner.name || 'Authorised Requisitioner')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted }}>
+                  {safeText(data.procurementSignatories.requisitioner.title || 'Purchasing Officer')}
+                </Text>
+              </View>
+            ) : null}
 
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: HERITAGE_TOKENS.bronze, marginBottom: 2 }}>
-              {data.isProcurement ? (data.procurementSignatories?.authorizer?.label || 'Management / Finance Authorisation') : 'Client Receiving Acknowledgement'}
-            </Text>
-            {(data.isProcurement && data.procurementSignatories?.authorizer?.signatureUrl) ? (
-              <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 80, height: 24, marginVertical: 2 }} />
-            ) : (
-              <View style={{ height: 24, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.burgundy, marginBottom: 2 }} />
-            )}
-            <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.name : null) || (data.isProcurement ? 'Authorised By' : 'Received & Acknowledged'))}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.title : null) || (data.isProcurement ? 'Management Authorisation' : 'Signature & Corporate Stamp'))}
-            </Text>
+            {data.procurementSignatories.authorizer ? (
+              <View style={{ width: 180 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: bronze, marginBottom: 2 }}>
+                  {data.procurementSignatories.authorizer.label || 'Management / Finance Authorisation'}
+                </Text>
+                {data.procurementSignatories.authorizer.signatureUrl ? (
+                  <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+                ) : null}
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>
+                  {safeText(data.procurementSignatories.authorizer.name || 'Authorised By')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted }}>
+                  {safeText(data.procurementSignatories.authorizer.title || 'Management Authorisation')}
+                </Text>
+              </View>
+            ) : null}
           </View>
-
-          <View style={{ width: 95, borderWidth: 1, borderColor: HERITAGE_TOKENS.burgundy, borderRadius: 2, padding: 3, alignItems: 'center', justifyContent: 'center', backgroundColor: HERITAGE_TOKENS.white }}>
-            <Text style={{ fontFamily: font, fontSize: 5.8, color: HERITAGE_TOKENS.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {'DOCUMENT CONTROL'}
+        ) : !data.isProcurement && data.signature && (data.signature.imageUrl || data.signature.name) ? (
+          <View style={{ marginTop: compact ? 6 : 8, paddingTop: 4, borderTopWidth: 1, borderTopColor: HERITAGE_TOKENS.burgundy, width: 180 }} wrap={false}>
+            <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontStyle: 'italic', color: bronze, marginBottom: 2 }}>
+              {'Authorised Signatory'}
             </Text>
-            <Text style={{ fontFamily: headerFont, fontSize: 7.2, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, marginVertical: 1 }}>
-              {safeText(data.documentNumber)}
-            </Text>
-            <View style={{ borderWidth: 0.5, borderColor: HERITAGE_TOKENS.burgundy, paddingHorizontal: 3, paddingVertical: 1 }}>
-              <Text style={{ fontFamily: headerFont, fontSize: 6, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase' }}>
-                {'VERIFIED'}
+            {data.signature.imageUrl ? (
+              <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+            ) : null}
+            {data.signature.name ? (
+              <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>
+                {safeText(data.signature.name)}
               </Text>
-            </View>
+            ) : null}
+            {data.signature.role ? (
+              <Text style={{ fontFamily: font, fontSize: 6.5, color: HERITAGE_TOKENS.muted }}>
+                {safeText(data.signature.role)}
+              </Text>
+            ) : null}
           </View>
-        </View>
+        ) : null}
       </Page>
     </Document>
   )

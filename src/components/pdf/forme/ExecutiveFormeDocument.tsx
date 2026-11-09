@@ -75,19 +75,26 @@ function renderBankRow(label: string, value: string | null | undefined, font: st
   )
 }
 
-function renderTextCard(section: { title?: string; content?: string; plainText?: string } | null | undefined, compact: boolean, font: string, headerFont: string) {
+function renderTextCard(
+  section: { title?: string; content?: string; plainText?: string } | null | undefined,
+  compact: boolean,
+  font: string,
+  headerFont: string,
+  accentColor: string = EXECUTIVE_TOKENS.gold,
+  accentLight: string = EXECUTIVE_TOKENS.goldLight,
+) {
   if (!section?.content && !section?.plainText) return null
   return (
-    <View style={{ marginTop: compact ? 6 : 8, backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderRadius: 3, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, padding: compact ? 8 : 10 }}>
+    <View style={{ marginTop: compact ? 6 : 8, backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderRadius: 3, borderWidth: 0.5, borderColor: accentLight, padding: compact ? 8 : 10 }}>
       {section.title ? (
-        <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+        <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: accentColor, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
           {safeText(section.title)}
         </Text>
       ) : null}
       {section.content ? renderFormeRichText(section.content, {
         font,
         paragraphStyle: { fontFamily: font, fontSize: 7.5, color: EXECUTIVE_TOKENS.grayText, lineHeight: 1.4, marginBottom: 3 },
-        listMarkerStyle: { fontFamily: headerFont, fontSize: 7.5, color: EXECUTIVE_TOKENS.gold, width: 10 },
+        listMarkerStyle: { fontFamily: headerFont, fontSize: 7.5, color: accentColor, width: 10 },
         listItemTextStyle: { fontFamily: font, fontSize: 7.5, color: EXECUTIVE_TOKENS.grayText, lineHeight: 1.4 },
       }) : (
         <Text style={{ fontFamily: font, fontSize: 7.5, color: EXECUTIVE_TOKENS.grayText, lineHeight: 1.4 }}>{safeText(section.plainText)}</Text>
@@ -100,6 +107,8 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
   const tokens = resolveDesignTokens(data.design)
   const font = isFormeSupportedFamily(tokens.bodyFont) ? tokens.bodyFont : 'Inter'
   const headerFont = isFormeSupportedFamily(tokens.headerFont) ? tokens.headerFont : (isFormeSupportedFamily('PT Serif') ? 'PT Serif' : 'Inter')
+  const gold = tokens.accentColor || EXECUTIVE_TOKENS.gold
+  const goldLight = tokens.accentColor || EXECUTIVE_TOKENS.goldLight
 
   const companyLines = data.company ? buildPartyLines(data.company) : []
   const clientLines = data.client ? buildPartyLines(data.client) : []
@@ -112,7 +121,7 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
   const amountInWords = getAmountInWords(data.totals)
   const advance = buildAdvanceSummary(data.advanceSummary)
   const isAdvanceInvoice = Boolean(advance)
-  const companyLogo = data.company?.companyLogoUrl || (data as any)?.companyLogoUrl || (data as any)?.logoUrl || ''
+  const companyLogo = data.company?.companyLogoUrl || (data as { companyLogoUrl?: string; logoUrl?: string }).companyLogoUrl || (data as { companyLogoUrl?: string; logoUrl?: string }).logoUrl || ''
 
   const footerVisible = Boolean(
     data.footer.extraText || data.showTagline || data.footer.documentNumber || data.footer.companyName || companyLogo,
@@ -140,12 +149,9 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
       <Page size={pageSize} margin={pageMargin} style={{ backgroundColor: EXECUTIVE_TOKENS.paper }}>
         {/* TOP ELEGANT GOLD ACCENT RULE */}
         <Fixed position="header">
-          <View style={{ borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldLight, paddingBottom: 3, marginBottom: compact ? 6 : 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 6.5, color: EXECUTIVE_TOKENS.gold, letterSpacing: 1, textTransform: 'uppercase' }}>
+          <View style={{ borderBottomWidth: 0.5, borderBottomColor: goldLight, paddingBottom: 3, marginBottom: compact ? 6 : 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 6.5, color: gold, letterSpacing: 1, textTransform: 'uppercase' }}>
               {`${safeText(data.title)} · ${safeText(data.documentNumber)}`}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.5, color: EXECUTIVE_TOKENS.mutedText, letterSpacing: 0.5 }}>
-              {'EXECUTIVE COMMERCIAL FOLIO'}
             </Text>
           </View>
         </Fixed>
@@ -153,14 +159,14 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
         {/* FIXED FOOTER */}
         {footerVisible ? (
           <Fixed position="footer">
-            <View style={{ borderTopWidth: 0.5, borderTopColor: EXECUTIVE_TOKENS.goldLight, paddingTop: 4 }}>
+            <View style={{ borderTopWidth: 0.5, borderTopColor: goldLight, paddingTop: 4 }}>
               {data.footer.extraText ? (
                 <Text style={{ fontFamily: font, fontSize: 7, color: EXECUTIVE_TOKENS.mutedText, textAlign: 'center', marginBottom: 2 }}>
                   {safeText(data.footer.extraText)}
                 </Text>
               ) : null}
               {data.showTagline && data.company?.tagline ? (
-                <Text style={{ fontFamily: font, fontSize: 7, fontStyle: 'italic', color: EXECUTIVE_TOKENS.gold, textAlign: 'center', marginBottom: 2 }}>
+                <Text style={{ fontFamily: font, fontSize: 7, fontStyle: 'italic', color: gold, textAlign: 'center', marginBottom: 2 }}>
                   {safeText(data.company.tagline)}
                 </Text>
               ) : null}
@@ -186,11 +192,16 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
 
         {/* 1. SYMMETRICAL MASTHEAD */}
         <View style={{ alignItems: 'center', marginBottom: compact ? 8 : 12 }} wrap={false}>
+          {companyLogo ? (
+            <View style={{ marginBottom: 4, alignItems: 'center' }}>
+              <Image src={companyLogo} href={companyLogo} style={{ width: 34, height: 34 }} />
+            </View>
+          ) : null}
           <Text style={{ fontFamily: headerFont, fontSize: compact ? 13 : 15, fontWeight: 700, color: EXECUTIVE_TOKENS.forest, textTransform: 'uppercase', letterSpacing: 2, textAlign: 'center' }}>
             {safeText(companyLineMap.get('name') || data.company?.name || '')}
           </Text>
           {companyTaxInfo ? (
-            <Text style={{ fontFamily: font, fontSize: 6.8, fontWeight: 600, color: EXECUTIVE_TOKENS.gold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2, textAlign: 'center' }}>
+            <Text style={{ fontFamily: font, fontSize: 6.8, fontWeight: 600, color: gold, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2, textAlign: 'center' }}>
               {companyTaxInfo}
             </Text>
           ) : null}
@@ -205,11 +216,11 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
 
           {/* Diamond Rule Separator */}
           <View style={{ flexDirection: 'row', alignItems: 'center', width: '60%', marginVertical: 5 }}>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: EXECUTIVE_TOKENS.goldLight }} />
-            <Text style={{ fontFamily: headerFont, fontSize: 7, color: EXECUTIVE_TOKENS.gold, marginHorizontal: 6 }}>
+            <View style={{ flex: 1, height: 0.5, backgroundColor: goldLight }} />
+            <Text style={{ fontFamily: headerFont, fontSize: 7, color: gold, marginHorizontal: 6 }}>
               {'❖'}
             </Text>
-            <View style={{ flex: 1, height: 0.5, backgroundColor: EXECUTIVE_TOKENS.goldLight }} />
+            <View style={{ flex: 1, height: 0.5, backgroundColor: goldLight }} />
           </View>
 
           {/* Document Title */}
@@ -217,24 +228,24 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
             {safeText(data.title)}
           </Text>
           {data.customTitle ? (
-            <Text style={{ fontFamily: headerFont, fontSize: 8, fontStyle: 'italic', color: EXECUTIVE_TOKENS.gold, marginTop: 1, textAlign: 'center' }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 8, fontStyle: 'italic', color: gold, marginTop: 1, textAlign: 'center' }}>
               {safeText(data.customTitle)}
             </Text>
           ) : null}
 
           {/* 4-Cell Metadata Bar */}
-          <View style={{ flexDirection: 'row', width: '100%', backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, marginTop: 6, overflow: 'hidden' }}>
-            <View style={{ flex: 1, paddingVertical: 4, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: EXECUTIVE_TOKENS.goldLight, alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', width: '100%', backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderWidth: 0.5, borderColor: goldLight, borderRadius: 3, marginTop: 6, overflow: 'hidden' }}>
+            <View style={{ flex: 1, paddingVertical: 4, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: goldLight, alignItems: 'center' }}>
               <Text style={{ fontFamily: font, fontSize: 6.2, color: EXECUTIVE_TOKENS.mutedText, textTransform: 'uppercase', letterSpacing: 0.6 }}>{'DOCUMENT NO'}</Text>
               <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest, marginTop: 1 }}>{safeText(data.documentNumber)}</Text>
             </View>
-            <View style={{ flex: 1, paddingVertical: 4, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: EXECUTIVE_TOKENS.goldLight, alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingVertical: 4, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: goldLight, alignItems: 'center' }}>
               <Text style={{ fontFamily: font, fontSize: 6.2, color: EXECUTIVE_TOKENS.mutedText, textTransform: 'uppercase', letterSpacing: 0.6 }}>{safeText(data.issueDateLabel || 'ISSUE DATE')}</Text>
               <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.ink, marginTop: 1 }}>{safeText(data.issueDate || '—')}</Text>
             </View>
-            <View style={{ flex: 1, paddingVertical: 4, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: EXECUTIVE_TOKENS.goldLight, alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingVertical: 4, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: goldLight, alignItems: 'center' }}>
               <Text style={{ fontFamily: font, fontSize: 6.2, color: EXECUTIVE_TOKENS.mutedText, textTransform: 'uppercase', letterSpacing: 0.6 }}>{safeText(data.dueDateOrValidityDateLabel || 'DUE DATE')}</Text>
-              <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, marginTop: 1 }}>{safeText(data.dueDateOrValidityDate || '—')}</Text>
+              <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: gold, marginTop: 1 }}>{safeText(data.dueDateOrValidityDate || '—')}</Text>
             </View>
             <View style={{ flex: 1, paddingVertical: 4, paddingHorizontal: 6, alignItems: 'center' }}>
               <Text style={{ fontFamily: font, fontSize: 6.2, color: EXECUTIVE_TOKENS.mutedText, textTransform: 'uppercase', letterSpacing: 0.6 }}>{safeText(data.poNumberLabel || 'PO REF')}</Text>
@@ -246,8 +257,8 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
         {/* 2. PARTIES & PARTICULARS */}
         <View style={{ flexDirection: 'row', gap: 12, marginBottom: compact ? 8 : 10 }} wrap={false}>
           {/* Bill To */}
-          <View style={{ flex: 1, backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: compact ? 6 : 8 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldPale, paddingBottom: 2 }}>
+          <View style={{ flex: 1, backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: goldLight, borderRadius: 3, padding: compact ? 6 : 8 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: gold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldPale, paddingBottom: 2 }}>
               {data.isProcurement ? (data.partyHeaderLabel || 'SUPPLIER INFORMATION · ORDER FROM') : 'CLIENT INFORMATION · BILL TO'}
             </Text>
             {clientLineMap.get('name') ? (
@@ -263,12 +274,12 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
           </View>
 
           {/* Project Details */}
-          <View style={{ flex: 1, backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: compact ? 6 : 8 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldPale, paddingBottom: 2 }}>
-              {'ENGAGEMENT & REFERENCE PARTICULARS'}
-            </Text>
-            {data.customHeaderFields.length > 0 ? (
-              data.customHeaderFields.map((field, idx) => (
+          {data.customHeaderFields.length > 0 ? (
+            <View style={{ flex: 1, backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderWidth: 0.5, borderColor: goldLight, borderRadius: 3, padding: compact ? 6 : 8 }}>
+              <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: gold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldPale, paddingBottom: 2 }}>
+                {'ENGAGEMENT & REFERENCE PARTICULARS'}
+              </Text>
+              {data.customHeaderFields.map((field, idx) => (
                 <View key={`chf-${idx}`} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
                   <Text style={{ fontFamily: font, fontSize: 7, color: EXECUTIVE_TOKENS.mutedText, textTransform: 'uppercase' }}>
                     {safeText(field.label)}
@@ -277,13 +288,9 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
                     {safeText(field.value)}
                   </Text>
                 </View>
-              ))
-            ) : (
-              <Text style={{ fontFamily: font, fontSize: 7.5, color: EXECUTIVE_TOKENS.mutedText, fontStyle: 'italic' }}>
-                {'Executive commercial engagement terms apply.'}
-              </Text>
-            )}
-          </View>
+              ))}
+            </View>
+          ) : null}
         </View>
 
         {/* 3. LINE ITEMS TABLE */}
@@ -377,7 +384,7 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
                             {row.imageUrl ? (
                               <View style={{ marginTop: 3 }}>
                                 <Image src={row.imageUrl} href={row.imageUrl} style={{ width: 32, height: 32, borderRadius: 2 }} />
-                                <Link href={row.imageUrl} style={{ fontSize: 6.5, color: EXECUTIVE_TOKENS.gold, textDecoration: 'underline', marginTop: 1.5 }}>Open image</Link>
+                                <Link href={row.imageUrl} style={{ fontSize: 6.5, color: gold, textDecoration: 'underline', marginTop: 1.5 }}>Open image</Link>
                               </View>
                             ) : null}
                           </Cell>
@@ -392,7 +399,7 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
                             fontFamily: col.key === 'amount' || col.key === 'num' ? headerFont : font,
                             fontSize: 7.8,
                             fontWeight: col.key === 'amount' || col.key === 'num' ? 700 : 400,
-                            color: col.key === 'num' ? EXECUTIVE_TOKENS.gold : (col.key === 'amount' ? EXECUTIVE_TOKENS.forest : EXECUTIVE_TOKENS.ink),
+                            color: col.key === 'num' ? gold : (col.key === 'amount' ? EXECUTIVE_TOKENS.forest : EXECUTIVE_TOKENS.ink),
                             textAlign: align, lineHeight: 1.3,
                           }}>
                             {glyphRuns(text, font)}
@@ -409,7 +416,7 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
 
         {/* 4. FULL WIDTH FOREST GREEN TOTAL BAR */}
         <View style={{ backgroundColor: EXECUTIVE_TOKENS.forest, borderRadius: 3, paddingVertical: compact ? 6 : 8, paddingHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} wrap={false}>
-          <Text style={{ fontFamily: headerFont, fontSize: 8, fontWeight: 700, color: EXECUTIVE_TOKENS.goldLight, textTransform: 'uppercase', letterSpacing: 1.2 }}>
+          <Text style={{ fontFamily: headerFont, fontSize: 8, fontWeight: 700, color: goldLight, textTransform: 'uppercase', letterSpacing: 1.2 }}>
             {safeText(mainTotal?.label || 'TOTAL AMOUNT DUE')}
           </Text>
           <Text style={{ fontFamily: headerFont, fontSize: compact ? 14 : 17, fontWeight: 700, color: EXECUTIVE_TOKENS.white }}>
@@ -418,7 +425,7 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
         </View>
 
         {amountInWords ? (
-          <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldLight, marginBottom: 4 }}>
+          <View style={{ paddingVertical: 4, paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: goldLight, marginBottom: 4 }}>
             <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: EXECUTIVE_TOKENS.grayText, textAlign: 'center', lineHeight: 1.35 }}>
               {safeText(amountInWords)}
             </Text>
@@ -429,15 +436,15 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
         <View style={{ flexDirection: 'row', gap: 12, marginTop: compact ? 4 : 6 }} wrap={false}>
           {/* Left Financial Ledger */}
           <View style={{ flex: 1, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.rule, borderRadius: 3, backgroundColor: EXECUTIVE_TOKENS.white, padding: compact ? 6 : 8 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldPale, paddingBottom: 2 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 7, fontWeight: 700, color: gold, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldPale, paddingBottom: 2 }}>
               {'FINANCIAL LEDGER STATEMENT'}
             </Text>
             {totalsLines.map((line, idx) => (
               <View key={`tot-${idx}`} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.lightRule }}>
-                <Text style={{ fontFamily: font, fontSize: 7.2, color: line.isDeduction ? EXECUTIVE_TOKENS.gold : EXECUTIVE_TOKENS.grayText }}>
+                <Text style={{ fontFamily: font, fontSize: 7.2, color: line.isDeduction ? gold : EXECUTIVE_TOKENS.grayText }}>
                   {safeText(line.label)}
                 </Text>
-                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: line.isDeduction ? EXECUTIVE_TOKENS.gold : EXECUTIVE_TOKENS.ink }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: line.isDeduction ? gold : EXECUTIVE_TOKENS.ink }}>
                   {glyphRuns(safeText(line.value), font)}
                 </Text>
               </View>
@@ -447,14 +454,14 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
                 <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
                   {safeText(balanceDue.label || 'Balance Due')}
                 </Text>
-                <Text style={{ fontFamily: headerFont, fontSize: 8, fontWeight: 700, color: EXECUTIVE_TOKENS.gold }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 8, fontWeight: 700, color: gold }}>
                   {glyphRuns(safeText(balanceDue.value), font)}
                 </Text>
               </View>
             ) : null}
             {isAdvanceInvoice && advance ? (
               <View style={{ marginTop: 4, padding: 4, backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderRadius: 2 }}>
-                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase' }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: gold, textTransform: 'uppercase' }}>
                   {safeText(advance.primaryLabel || 'Advance Payment')}
                 </Text>
                 <Text style={{ fontFamily: font, fontSize: 7.2, color: EXECUTIVE_TOKENS.ink }}>
@@ -467,8 +474,8 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
           {/* Right Bank Details */}
           <View style={{ width: '46%' }}>
             {hasBankDetails && data.paymentDetails ? (
-              <View style={{ backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: compact ? 6 : 7 }}>
-                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
+              <View style={{ backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: goldLight, borderRadius: 3, padding: compact ? 6 : 7 }}>
+                <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: gold, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
                   {'BANK SETTLEMENT DETAILS'}
                 </Text>
                 {renderBankRow('Bank', data.paymentDetails.bankName, font, headerFont)}
@@ -478,8 +485,8 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
               </View>
             ) : data.isProcurement ? (
               data.deliveryDestination ? (
-                <View style={{ backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: compact ? 6 : 7 }}>
-                  <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
+                <View style={{ backgroundColor: EXECUTIVE_TOKENS.white, borderWidth: 0.5, borderColor: goldLight, borderRadius: 3, padding: compact ? 6 : 7 }}>
+                  <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: gold, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
                     {data.deliveryDestination.label || 'DELIVERY DESTINATION'}
                   </Text>
                   {data.deliveryDestination.site ? (
@@ -500,7 +507,7 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
                 </View>
               ) : null
             ) : (
-              <View style={{ backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, borderRadius: 3, padding: 8, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderWidth: 0.5, borderColor: goldLight, borderRadius: 3, padding: 8, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
                   {'EXECUTIVE DIRECT SETTLEMENT'}
                 </Text>
@@ -517,12 +524,12 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
           <View style={{ flexDirection: 'row', gap: 10, marginTop: compact ? 4 : 8 }} wrap={false}>
             {data.notes ? (
               <View style={{ flex: 1 }}>
-                {renderTextCard(data.notes, compact, font, headerFont)}
+                {renderTextCard(data.notes, compact, font, headerFont, gold, goldLight)}
               </View>
             ) : null}
             {data.terms ? (
               <View style={{ flex: 1 }}>
-                {renderTextCard(data.terms, compact, font, headerFont)}
+                {renderTextCard(data.terms, compact, font, headerFont, gold, goldLight)}
               </View>
             ) : null}
           </View>
@@ -530,55 +537,76 @@ export function ExecutiveFormeDocument({ data, compact = false }: ExecutiveForme
 
         {/* 7. ATTACHMENTS */}
         {attachmentItems.length > 0 ? (
-          <View style={{ marginTop: compact ? 4 : 6, backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderRadius: 3, borderWidth: 0.5, borderColor: EXECUTIVE_TOKENS.goldLight, padding: 6 }}>
-            <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: EXECUTIVE_TOKENS.gold, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>
+          <View style={{ marginTop: compact ? 4 : 6, backgroundColor: EXECUTIVE_TOKENS.ivoryPanel, borderRadius: 3, borderWidth: 0.5, borderColor: goldLight, padding: 6 }}>
+            <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: gold, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>
               {'DOCUMENT ATTACHMENTS & CONTRACT SCHEDULES'}
             </Text>
             {attachmentItems.map((att, idx) => (
               <View key={`att-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1.5 }}>
                 <Text style={{ fontFamily: font, fontSize: 7, color: EXECUTIVE_TOKENS.grayText, marginRight: 4 }}>{`• ${safeText(att.label)}`}</Text>
-                {att.url ? <Link href={att.url} style={{ fontSize: 6.8, color: EXECUTIVE_TOKENS.gold, textDecoration: 'underline' }}>Open document</Link> : null}
+                {att.url ? <Link href={att.url} style={{ fontSize: 6.8, color: gold, textDecoration: 'underline' }}>Open document</Link> : null}
               </View>
             ))}
           </View>
         ) : null}
 
-        {/* 8. SIGNATURES */}
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 0.5, borderTopColor: EXECUTIVE_TOKENS.goldLight }} wrap={false}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: EXECUTIVE_TOKENS.gold, marginBottom: 2 }}>
-              {data.isProcurement ? (data.procurementSignatories?.requisitioner?.label || 'Purchasing Officer / Requisitioner') : 'Executive Authorised Signatory'}
-            </Text>
-            {(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) ? (
-              <Image src={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} href={(data.isProcurement ? data.procurementSignatories?.requisitioner?.signatureUrl : data.signature?.imageUrl) || ''} style={{ width: 80, height: 26, marginVertical: 2 }} />
-            ) : (
-              <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldLight, marginBottom: 2 }} />
-            )}
-            <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.name : data.signature?.name) || companyLineMap.get('name') || 'Authorised Signatory')}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.mutedText }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.requisitioner?.title : data.signature?.role) || (data.isProcurement ? 'Purchasing Officer' : 'Authorised Executive'))}
-            </Text>
-          </View>
+        {/* 8. SIGNATURES — strictly conditional on genuine signature data */}
+        {data.isProcurement && data.procurementSignatories && (data.procurementSignatories.requisitioner || data.procurementSignatories.authorizer) ? (
+          <View style={{ flexDirection: 'row', gap: 16, marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 0.5, borderTopColor: goldLight }} wrap={false}>
+            {data.procurementSignatories.requisitioner ? (
+              <View style={{ width: 180 }}>
+                <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: gold, marginBottom: 2 }}>
+                  {data.procurementSignatories.requisitioner.label || 'Purchasing Officer / Requisitioner'}
+                </Text>
+                {data.procurementSignatories.requisitioner.signatureUrl ? (
+                  <Image src={data.procurementSignatories.requisitioner.signatureUrl} href={data.procurementSignatories.requisitioner.signatureUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+                ) : null}
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
+                  {safeText(data.procurementSignatories.requisitioner.name || 'Authorised Requisitioner')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.mutedText }}>
+                  {safeText(data.procurementSignatories.requisitioner.title || 'Purchasing Officer')}
+                </Text>
+              </View>
+            ) : null}
 
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: EXECUTIVE_TOKENS.gold, marginBottom: 2 }}>
-              {data.isProcurement ? (data.procurementSignatories?.authorizer?.label || 'Management / Finance Authorisation') : 'Client Executive Acknowledgment'}
-            </Text>
-            {(data.isProcurement && data.procurementSignatories?.authorizer?.signatureUrl) ? (
-              <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 80, height: 26, marginVertical: 2 }} />
-            ) : (
-              <View style={{ height: 26, borderBottomWidth: 0.5, borderBottomColor: EXECUTIVE_TOKENS.goldLight, marginBottom: 2 }} />
-            )}
-            <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.name : null) || (data.isProcurement ? 'Authorised By' : 'Acknowledged & Counter-signed'))}
-            </Text>
-            <Text style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.mutedText }}>
-              {safeText((data.isProcurement ? data.procurementSignatories?.authorizer?.title : null) || (data.isProcurement ? 'Management Authorisation' : 'Signature & Official Seal'))}
-            </Text>
+            {data.procurementSignatories.authorizer ? (
+              <View style={{ width: 180 }}>
+                <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: gold, marginBottom: 2 }}>
+                  {data.procurementSignatories.authorizer.label || 'Management / Finance Authorisation'}
+                </Text>
+                {data.procurementSignatories.authorizer.signatureUrl ? (
+                  <Image src={data.procurementSignatories.authorizer.signatureUrl} href={data.procurementSignatories.authorizer.signatureUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+                ) : null}
+                <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
+                  {safeText(data.procurementSignatories.authorizer.name || 'Authorised By')}
+                </Text>
+                <Text style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.mutedText }}>
+                  {safeText(data.procurementSignatories.authorizer.title || 'Management Authorisation')}
+                </Text>
+              </View>
+            ) : null}
           </View>
-        </View>
+        ) : !data.isProcurement && data.signature && (data.signature.imageUrl || data.signature.name) ? (
+          <View style={{ marginTop: compact ? 6 : 10, paddingTop: 6, borderTopWidth: 0.5, borderTopColor: goldLight, width: 180 }} wrap={false}>
+            <Text style={{ fontFamily: font, fontSize: 6.8, fontStyle: 'italic', color: gold, marginBottom: 2 }}>
+              {'Authorised Signatory'}
+            </Text>
+            {data.signature.imageUrl ? (
+              <Image src={data.signature.imageUrl} href={data.signature.imageUrl} style={{ width: 100, height: 32, marginVertical: 2 }} />
+            ) : null}
+            {data.signature.name ? (
+              <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: EXECUTIVE_TOKENS.forest }}>
+                {safeText(data.signature.name)}
+              </Text>
+            ) : null}
+            {data.signature.role ? (
+              <Text style={{ fontFamily: font, fontSize: 6.8, color: EXECUTIVE_TOKENS.mutedText }}>
+                {safeText(data.signature.role)}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
       </Page>
     </Document>
   )

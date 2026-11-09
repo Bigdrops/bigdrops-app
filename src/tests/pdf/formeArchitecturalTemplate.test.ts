@@ -17,7 +17,7 @@ import type { PdfDocumentModel } from '../../components/pdf/types'
 
 const SAMPLE_BASE64_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 
-function buildSampleInvoice(): any {
+function buildSampleInvoice(): Record<string, unknown> {
   return {
     identity: {
       id: 'inv-arch-1',
@@ -177,4 +177,77 @@ test('Architectural Forme tokens and structure are defined', () => {
   assert.equal(ARCHITECTURAL_TOKENS.charcoal, '#1e2427')
   assert.equal(ARCHITECTURAL_TOKENS.copper, '#a4663f')
   assert.equal(ARCHITECTURAL_TOKENS.ivory, '#f6f0e4')
+})
+
+test('Architectural Forme enforces palette isolation and honors explicit custom accent overrides', () => {
+  const invoiceModel = buildSampleInvoice()
+
+  // 1. Default (useCustomColors: false or absent) -> strictly uses intrinsic copper
+  const defaultData = adaptCommercialDocumentData(invoiceModel as PdfDocumentModel)
+  const defaultElement = ArchitecturalFormeDocument({ data: defaultData })
+  const defaultJson = JSON.stringify(defaultElement)
+  assert.ok(defaultJson.includes(ARCHITECTURAL_TOKENS.copper), 'Must contain intrinsic copper')
+  assert.ok(defaultJson.includes(ARCHITECTURAL_TOKENS.charcoal), 'Must contain intrinsic charcoal')
+
+  // 2. App theme fallback without useCustomColors -> does NOT leak app color
+  const appThemeModel = {
+    ...invoiceModel,
+    template: {
+      id: 'architectural',
+      designPreset: {
+        useCustomColors: false,
+        accentColor: '#d97706', // e.g. amber-terracotta app theme
+      },
+    },
+  }
+  const appThemeData = adaptCommercialDocumentData(appThemeModel as unknown as PdfDocumentModel)
+  const appThemeElement = ArchitecturalFormeDocument({ data: appThemeData })
+  const appThemeJson = JSON.stringify(appThemeElement)
+  assert.ok(!appThemeJson.includes('#d97706'), 'Must not leak app theme accent when useCustomColors is false')
+  assert.ok(appThemeJson.includes(ARCHITECTURAL_TOKENS.copper), 'Must retain intrinsic copper')
+
+  // 3. Explicit custom color enabled -> reflects custom accent
+  const customModel = {
+    ...invoiceModel,
+    template: {
+      id: 'architectural',
+      designPreset: {
+        useCustomColors: true,
+        accentColor: '#2563eb',
+      },
+    },
+  }
+  const customData = adaptCommercialDocumentData(customModel as unknown as PdfDocumentModel)
+  const customElement = ArchitecturalFormeDocument({ data: customData })
+  const customJson = JSON.stringify(customElement)
+  assert.ok(customJson.includes('#2563eb'), 'Must reflect custom accent when useCustomColors is true')
+})
+
+test('Architectural Forme masthead renders companyLogo when supplied and omits leaked metadata', () => {
+  const modelWithLogo = buildSampleInvoice()
+  const dataWithLogo = adaptCommercialDocumentData(modelWithLogo as PdfDocumentModel)
+  const elementWithLogo = ArchitecturalFormeDocument({ data: dataWithLogo })
+  const jsonWithLogo = JSON.stringify(elementWithLogo)
+
+  // Must render logo image in masthead
+  assert.ok(jsonWithLogo.includes(SAMPLE_BASE64_IMAGE), 'Must contain company logo image in masthead')
+
+  // Must NOT leak internal template labels or hardcoded spec strings
+  assert.ok(!jsonWithLogo.includes('ARCHITECTURAL SPECIFICATION SHEET'), 'Must not leak ARCHITECTURAL SPECIFICATION SHEET')
+  assert.ok(!jsonWithLogo.includes('Standard commercial drawing and material specification applies.'), 'Must not leak hardcoded drawing blurb')
+  assert.ok(!jsonWithLogo.includes('DOCUMENT CONTROL'), 'Must not leak DOCUMENT CONTROL stamp box')
+  assert.ok(!jsonWithLogo.includes('ORIGINAL'), 'Must not leak ORIGINAL stamp')
+})
+
+test('Architectural Forme suppresses all signature furniture when no signature uploaded', () => {
+  const modelNoSig = buildSampleInvoice()
+  modelNoSig.signature = null
+  const dataNoSig = adaptCommercialDocumentData(modelNoSig as PdfDocumentModel)
+  const elementNoSig = ArchitecturalFormeDocument({ data: dataNoSig })
+  const jsonNoSig = JSON.stringify(elementNoSig)
+
+  assert.ok(!jsonNoSig.includes('Issuer Authorised Signatory'), 'Must omit Issuer Authorised Signatory label')
+  assert.ok(!jsonNoSig.includes('Client Receiving Acknowledgement'), 'Must omit Client Receiving Acknowledgement')
+  assert.ok(!jsonNoSig.includes('Received & Verified By'), 'Must omit Received & Verified By')
+  assert.ok(!jsonNoSig.includes('Signature & Company Stamp'), 'Must omit Signature & Company Stamp')
 })

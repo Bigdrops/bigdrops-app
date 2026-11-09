@@ -227,3 +227,60 @@ test('Landscape Forme tokens and geometry are mathematically verified', () => {
   assert.equal(LANDSCAPE_TOKENS.amber, '#b84a14')
   assert.equal(LANDSCAPE_TOKENS.paper, '#ffffff')
 })
+
+test('Landscape Forme enforces palette isolation and honors explicit custom accent overrides', () => {
+  const invoiceModel = createSampleLandscapeModel('invoice')
+
+  function extractStyles(node: any, acc: any[] = []): any[] {
+    if (!node || typeof node !== 'object') return acc
+    if (node.props?.style) acc.push(node.props.style)
+    for (const [k, v] of Object.entries(node)) {
+      if (k !== 'data' && k !== 'props') extractStyles(v, acc)
+      else if (k === 'props' && v && typeof v === 'object') {
+        for (const [pk, pv] of Object.entries(v as Record<string, any>)) {
+          if (pk !== 'data') extractStyles(pv, acc)
+        }
+      }
+    }
+    return acc
+  }
+
+  // 1. Default (useCustomColors: false or absent) -> strictly uses intrinsic amber
+  const defaultData = adaptCommercialDocumentData(invoiceModel)
+  const defaultElement = LandscapeFormeDocument({ data: defaultData })
+  const defaultStyles = JSON.stringify(extractStyles(defaultElement))
+  assert.ok(defaultStyles.includes(LANDSCAPE_TOKENS.amber), 'Must contain intrinsic amber')
+
+  // 2. App theme fallback without useCustomColors -> does NOT leak app color
+  const appThemeModel = {
+    ...invoiceModel,
+    template: {
+      id: 'landscape',
+      designPreset: {
+        useCustomColors: false,
+        accentColor: '#10b981', // e.g. emerald app theme
+      },
+    },
+  }
+  const appThemeData = adaptCommercialDocumentData(appThemeModel as any)
+  const appThemeElement = LandscapeFormeDocument({ data: appThemeData })
+  const appThemeStyles = JSON.stringify(extractStyles(appThemeElement))
+  assert.ok(!appThemeStyles.includes('#10b981'), 'Must not leak app theme accent into styles when useCustomColors is false')
+  assert.ok(appThemeStyles.includes(LANDSCAPE_TOKENS.amber), 'Must retain intrinsic amber')
+
+  // 3. Explicit custom color enabled -> reflects custom accent
+  const customModel = {
+    ...invoiceModel,
+    template: {
+      id: 'landscape',
+      designPreset: {
+        useCustomColors: true,
+        accentColor: '#2563eb',
+      },
+    },
+  }
+  const customData = adaptCommercialDocumentData(customModel as any)
+  const customElement = LandscapeFormeDocument({ data: customData })
+  const customStyles = JSON.stringify(extractStyles(customElement))
+  assert.ok(customStyles.includes('#2563eb'), 'Must reflect custom accent when useCustomColors is true')
+})
