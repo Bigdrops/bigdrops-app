@@ -97,9 +97,9 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     id: 'po-view',
     name: 'Purchase Order View Redesign',
     eyebrow: 'Purchase Order',
-    description: 'Executive document-viewing experience for outgoing procurement commitments with full Onboarding V5 theme and viewport support.',
+    description: 'Invoice-view-derived procurement document experience: procurement semantics, lifecycle simulation, and an Invoice reference for comparison.',
     route: '/design-lab/po-view',
     icon: ShoppingBag,
-    capabilities: ['5 themes', 'Light/Dark', '6 viewports', 'Lifecycle simulation', 'Telemetry strip', 'Audit trail'],
+    capabilities: ['5 themes', 'Light/Dark', '6 viewports', 'Lifecycle simulation', 'Invoice comparison', 'Procurement semantics'],
   },
 ]

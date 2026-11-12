@@ -1,13 +1,13 @@
-import PurchaseOrderThemePreview from '@/components/purchase-order-theme/purchase-order-theme-preview'
+import PoDocumentLab from '@/components/purchase-order-theme/PoDocumentLab'
 
 /**
- * Design Lab route: Purchase Order View Redesign (`/design-lab/po-view`).
+ * Design Lab route: Purchase Order Document View (`/design-lab/po-view`).
  *
- * An isolated Design Lab evaluation of the redesigned Purchase Order viewing experience.
- * Sourced from the Onboarding V5 theme engine, CPS and Invoice information architecture,
- * and component primitives from the three design reference prototypes.
- * The production PO routes and their business rules are untouched.
+ * Invoice-view-derived PO concept. Procurement-adapted document presentation,
+ * static specimen data, local-only lifecycle simulation, and an Invoice
+ * reference toggle for side-by-side comparison. The production PO routes and
+ * their business rules are untouched.
  */
 export default function PoThemeExperiment() {
-  return <PurchaseOrderThemePreview />
+  return <PoDocumentLab />
 }

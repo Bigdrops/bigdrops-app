@@ -1,23 +1,25 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import {
-  Archive,
-  ArrowRight,
-  Ban,
-  CheckCheck,
-  ChevronDown,
-  Download,
-  History,
-  Pencil,
-  Plus,
-  RotateCcw,
-} from 'lucide-react'
+/**
+ * Production Purchase Order view.
+ *
+ * Layout promoted from the approved Design Lab concept (two-region workspace,
+ * persistent sidebar, proportioned items table, mobile item cards). Every
+ * read comes from the tenant service; every action goes through the existing
+ * lifecycle/archive services and the shared ConfirmActionDialog. No fixture
+ * data, no local-state simulation.
+ */
 
-import Layout from '../components/Layout'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import DocumentShareSheet from '@/components/document-view/shared/DocumentShareSheet'
+import type { DocumentSharePayload } from '@/domain/documentShare/types'
+import PurchaseOrderDocumentView from '@/components/document-view/purchase-order/PurchaseOrderDocumentView'
+import PurchaseOrderMoreSheet from '@/components/document-view/purchase-order/PurchaseOrderMoreSheet'
+import PurchaseOrderCustomizeSheet, {
+  DEFAULT_PO_CUSTOMIZE,
+  type PoCustomizeState,
+} from '@/components/document-view/purchase-order/PurchaseOrderCustomizeSheet'
 import { SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { feedback } from '@/lib/feedback'
 import { getUserFacingMutationMessage } from '@/lib/userFacingMutationErrors'
@@ -35,48 +37,20 @@ import {
   type PurchaseOrder,
   type PurchaseOrderStatus,
 } from '@/domain/purchase-order/types'
-import { formatCurrency } from '@/components/invoice/mobile/mobileFormPrimitives'
-import { renderRichTextContent } from '@/lib/richText'
 import { useSettings } from '@/hooks/useSettings'
+import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
 import { preparePurchaseOrderDocument } from '@/domain/pdf/resolver/commercial/preparePurchaseOrderDocument'
-import { generatePurchaseOrderPdf } from '@/components/pdf'
-
-const RICH_TEXT_MARKUP = /<\/?(?:p|div|br|strong|b|em|i|u|ul|ol|li|h[1-6])(?:\s[^<>]*)?\/?>/i
-
-const PO_RICH_TEXT_CLASS = [
-  'mt-1 break-words text-bd-text',
-  '[&_p]:my-1 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
-  '[&_h1]:my-1 [&_h2]:my-1 [&_h3]:my-1 [&_h1]:text-sm [&_h2]:text-sm [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold',
-  '[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5',
-].join(' ')
-
-/** Legacy PO records were stored as plain text; keep their line breaks intact
- * while canonical rich-text HTML (imports and the rich-text editor) renders safely. */
-function NotesBody({ value }: { value: string }) {
-  if (!RICH_TEXT_MARKUP.test(value)) {
-    return <div className="mt-1 whitespace-pre-wrap text-bd-text">{value}</div>
-  }
-  return renderRichTextContent(value, PO_RICH_TEXT_CLASS)
-}
+import { generatePurchaseOrderPdf, generatePurchaseOrderPdfBlob } from '@/components/pdf'
+import { formatNaira } from '@/lib/formatters/money'
 
 function isArchived(purchaseOrder: PurchaseOrder): boolean {
   return purchaseOrder.archived_at !== null && purchaseOrder.archived_at !== undefined
 }
 
-function statusBadgeClassName(purchaseOrder: PurchaseOrder): string {
-  if (isArchived(purchaseOrder)) return 'bg-slate-100 text-slate-600'
-  switch (purchaseOrder.status) {
-    case 'draft':
-      return 'bg-amber-100 text-amber-700'
-    case 'issued':
-      return 'bg-cyan-100 text-cyan-700'
-    case 'cancelled':
-      return 'bg-rose-100 text-rose-700'
-    case 'closed':
-      return 'bg-emerald-100 text-emerald-700'
-    default:
-      return 'bg-slate-100 text-slate-600'
-  }
+const sanitizeStr = (value: unknown) => String(value ?? '').trim()
+const nullableStr = (value: unknown) => {
+  const s = sanitizeStr(value)
+  return s.length > 0 ? s : null
 }
 
 type LifecycleConfirm = {
@@ -92,20 +66,25 @@ export default function PurchaseOrderDetail() {
   const { entity, tenantClient } = useEntity()
   const { hasAuthorization } = useAuthorization()
   const canEdit = hasAuthorization('purchase_order', 'edit')
+  const canArchive = hasAuthorization('purchase_order', 'edit')
   const entityId = entity?.id ?? null
 
   const { settings } = useSettings()
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [mutating, setMutating] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [confirmTransition, setConfirmTransition] = useState<LifecycleConfirm>(null)
   const [confirmArchive, setConfirmArchive] = useState(false)
-  const [confirmRestore, setConfirmRestore] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [customizeOpen, setCustomizeOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(true)
+  const [activitySignal, setActivitySignal] = useState(0)
+  const [customize, setCustomize] = useState<PoCustomizeState>(DEFAULT_PO_CUSTOMIZE)
 
-  const { entries: historyEntries, loading: historyLoading, error: historyError } = useAuditTrail({
+  const { entries, loading: historyLoading, error: historyError } = useAuditTrail({
     entityType: 'purchase_order',
     entityId: id ?? '',
     enabled: historyOpen && Boolean(id),
@@ -183,21 +162,24 @@ export default function PurchaseOrderDetail() {
       feedback.error(getUserFacingMutationMessage(error || 'Restore failed', { action: 'save' }))
       return
     }
-    setConfirmRestore(false)
     await refreshAfterMutation(data)
     feedback.success('Purchase order restored with its original status')
   }
 
-  const handleDownloadPdf = async () => {
-    if (!purchaseOrder) return
+  const rawSettings = (settings || {}) as Record<string, unknown>
+  const prepared = useMemo(() => {
+    if (!purchaseOrder) return null
+    return preparePurchaseOrderDocument(purchaseOrder, { settings: rawSettings })
+  }, [purchaseOrder, rawSettings])
+
+  const requestDownload = async () => {
+    if (!prepared) return
     try {
       setDownloadingPdf(true)
-      const prepared = preparePurchaseOrderDocument(purchaseOrder, {
-        settings: (settings || {}) as Record<string, unknown>,
-      })
       await generatePurchaseOrderPdf({
         model: prepared,
-        templateId: (purchaseOrder as any).custom_fields?.pdfTemplateId || 'industry',
+        templateId: customize.templateId,
+        compact: customize.compact,
       })
       feedback.success('Purchase order PDF downloaded')
     } catch (err: any) {
@@ -207,342 +189,212 @@ export default function PurchaseOrderDetail() {
     }
   }
 
+  const poSharePayload: DocumentSharePayload | undefined = useMemo(() => {
+    if (!purchaseOrder || !prepared) return undefined
+    const total = Number(purchaseOrder.total || 0)
+    return {
+      documentType: 'purchase_order',
+      documentId: String(purchaseOrder.id || ''),
+      documentNumber: purchaseOrder.po_number || 'Purchase Order',
+      documentTitle: 'Purchase Order',
+      recipientName: String(purchaseOrder.supplier_name || ''),
+      recipientEmail: '',
+      issuerName: String(rawSettings.company_name || ''),
+      issuerLogoUrl: resolveCanonicalLogoUrl(rawSettings) || '',
+      totalFormatted: formatNaira(total),
+      issueDate: purchaseOrder.po_date || '',
+      notes: purchaseOrder.notes || '',
+      fileName: `${purchaseOrder.po_number || 'purchase-order'}.pdf`,
+      tenantId: undefined,
+      issuerPhone: nullableStr(rawSettings.company_phone) || undefined,
+      issuerAddress: nullableStr(rawSettings.company_address) || undefined,
+      paymentStatus: purchaseOrder.status || undefined,
+      getPdfBlob: async () => {
+        const blobResult = await generatePurchaseOrderPdfBlob({
+          model: prepared,
+          templateId: customize.templateId,
+          compact: customize.compact,
+        })
+        return blobResult.blob
+      },
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchaseOrder, prepared, customize.templateId, customize.compact, entity?.id])
+
+  const handlePrint = () => window.print()
+
+  const handleCopyReference = useCallback(async () => {
+    if (!purchaseOrder) return
+    try {
+      await navigator.clipboard.writeText(purchaseOrder.po_number)
+      feedback.success('PO reference copied')
+    } catch {
+      feedback.info('Clipboard unavailable')
+    }
+  }, [purchaseOrder])
+
   if (loading) {
     return (
-      <Layout title="Purchase Order" session={null} hidePageHeader>
-        <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-6">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      </Layout>
+      <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-6">
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
     )
   }
 
   if (loadError || !purchaseOrder) {
     return (
-      <Layout title="Purchase Order" session={null} hidePageHeader>
-        <div className="mx-auto w-full max-w-2xl px-4 py-16 text-center">
-          <div className="text-sm font-bold text-foreground">Purchase order could not load</div>
-          <div className="mt-1 text-xs text-muted-foreground">{loadError}</div>
-          <button
-            type="button"
-            onClick={() => navigate('/purchase-orders')}
-            className="mt-4 h-10 rounded-xl border border-bd-border bg-bd-surface px-4 text-xs font-bold text-bd-text"
-          >
-            Back to Purchase Orders
-          </button>
-        </div>
-      </Layout>
+      <div className="mx-auto w-full max-w-2xl px-4 py-16 text-center">
+        <div className="text-sm font-bold text-foreground">Purchase order could not load</div>
+        <div className="mt-1 text-xs text-muted-foreground">{loadError}</div>
+        <button
+          type="button"
+          onClick={() => navigate('/purchase-orders')}
+          className="mt-4 h-10 rounded-xl border border-bd-border bg-bd-surface px-4 text-xs font-bold text-bd-text"
+        >
+          Back to Purchase Orders
+        </button>
+      </div>
     )
   }
 
   const archived = isArchived(purchaseOrder)
   const items = purchaseOrder.items ?? []
   const extraCharges = purchaseOrder.extra_charges ?? []
+  const vatPercent = Number(purchaseOrder.calculation_inputs?.vatPercent ?? 0)
+
+  const addressLines = [
+    nullableStr(rawSettings.company_address),
+    [nullableStr(rawSettings.company_city), nullableStr(rawSettings.company_state)].filter(Boolean).join(', '),
+  ].filter(Boolean) as string[]
 
   return (
-    <Layout title={`Purchase Order ${purchaseOrder.po_number}`} session={null} hidePageHeader>
-      <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-6 pb-24">
-        {/* Identity hero */}
-        <Card className="border-bd-border bg-bd-card-bg">
-          <CardContent className="p-5">
-            <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-bd-text-muted">
-              Purchase Order
-            </div>
-            <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-mono text-xl font-black tracking-tight text-bd-text">
-                  {purchaseOrder.po_number}
-                </h1>
-                <Badge className={statusBadgeClassName(purchaseOrder)}>
-                  {archived ? 'Archived' : PURCHASE_ORDER_STATUS_LABELS[purchaseOrder.status]}
-                </Badge>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs font-semibold"
-                  disabled={downloadingPdf}
-                  onClick={() => void handleDownloadPdf()}
-                >
-                  <Download className="h-4 w-4" aria-hidden="true" />
-                  {downloadingPdf ? 'Generating…' : 'Download PDF'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-xs font-semibold"
-                  onClick={() => navigate('/purchase-orders/new')}
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  New Purchase Order
-                </Button>
-              </div>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-              <div>
-                <div className="font-semibold uppercase tracking-wider text-bd-text-muted">Supplier</div>
-                <div className="mt-0.5 truncate font-bold text-bd-text">{purchaseOrder.supplier_name || '—'}</div>
-              </div>
-              <div>
-                <div className="font-semibold uppercase tracking-wider text-bd-text-muted">PO Date</div>
-                <div className="mt-0.5 font-bold text-bd-text">{purchaseOrder.po_date || '—'}</div>
-              </div>
-              <div>
-                <div className="font-semibold uppercase tracking-wider text-bd-text-muted">Currency</div>
-                <div className="mt-0.5 font-bold text-bd-text">{purchaseOrder.currency}</div>
-              </div>
-              <div>
-                <div className="font-semibold uppercase tracking-wider text-bd-text-muted">Total</div>
-                <div className="mt-0.5 font-mono font-bold text-bd-text">{formatCurrency(purchaseOrder.total)}</div>
-              </div>
-            </div>
-            <div className="mt-3 text-[11px] text-bd-text-muted">
-              Supplier snapshot frozen at creation. It never changes when the supplier directory changes.
-            </div>
-          </CardContent>
-        </Card>
+    <>
+      <PurchaseOrderDocumentView
+        vm={{
+          poNumber: purchaseOrder.po_number,
+          poDate: purchaseOrder.po_date,
+          status: purchaseOrder.status,
+          archived,
+          currency: purchaseOrder.currency,
+          notes: purchaseOrder.notes,
+          terms: purchaseOrder.terms,
+          supplierName: purchaseOrder.supplier_name,
+          issuer: {
+            name: sanitizeStr(rawSettings.company_name) || 'Your Company',
+            tagline: nullableStr(rawSettings.company_tagline),
+            tin: nullableStr(rawSettings.company_tax_id || rawSettings.company_tin),
+            addressLines,
+            phone: nullableStr(rawSettings.company_phone),
+            email: nullableStr(rawSettings.company_email),
+            logoUrl: resolveCanonicalLogoUrl(rawSettings),
+          },
+          items: items.map((item) => ({
+            id: item.id,
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unit_cost: Number(item.unit_cost || 0),
+            line_total: Number(item.line_total || 0),
+          })),
+          totals: {
+            subtotal: Number(purchaseOrder.subtotal || 0),
+            discount: Number(purchaseOrder.discount || 0),
+            extraCharges: extraCharges.map((charge) => ({
+              label: charge.label,
+              value: Number(charge.value || 0),
+              withTax: charge.withTax === true,
+            })),
+            vat: Number(purchaseOrder.vat || 0),
+            vatPercent,
+            total: Number(purchaseOrder.total || 0),
+          },
+          activity: { entries, loading: historyLoading, error: historyError },
+          activityOpenSignal: activitySignal,
+          canEdit,
+          showAmountInWords: customize.showAmountInWords,
+          showSignatories: customize.showSignatories,
+        }}
+        handlers={{
+          onBack: () => navigate('/purchase-orders'),
+          onShare: () => setShareOpen(true),
+          onCustomize: () => setCustomizeOpen(true),
+          onMore: () => setMoreOpen(true),
+          onDownloadPdf: () => void requestDownload(),
+          onIssue: () =>
+            setConfirmTransition({
+              toStatus: 'issued',
+              title: 'Issue this purchase order?',
+              description:
+                'Issuing freezes every line, cost, and term. The supplier snapshot and PO number become permanent history. You can still cancel or close it later.',
+              confirmLabel: 'Issue Purchase Order',
+            }),
+          onClose: () =>
+            setConfirmTransition({
+              toStatus: 'closed',
+              title: 'Close this purchase order?',
+              description:
+                'Closing is terminal. A closed purchase order is kept as permanent history and can never be reopened.',
+              confirmLabel: 'Close Purchase Order',
+            }),
+          onCancel: () =>
+            setConfirmTransition({
+              toStatus: 'cancelled',
+              title: 'Cancel this purchase order?',
+              description: 'Cancellation is terminal. A cancelled purchase order can never be reactivated or edited again.',
+              confirmLabel: 'Cancel Purchase Order',
+            }),
+          onArchive: () => setConfirmArchive(true),
+          onRestore: () => void handleRestore(),
+          onEdit: () => navigate(`/purchase-orders/edit/${purchaseOrder.id}`),
+        }}
+      />
 
-        {/* Lifecycle actions */}
-        {canEdit && !archived && purchaseOrder.status === 'draft' && (
-          <Card className="border-bd-border bg-bd-card-bg">
-            <CardContent className="flex flex-wrap gap-2 p-4">
-              <Button type="button" variant="outline" onClick={() => navigate(`/purchase-orders/edit/${purchaseOrder.id}`)}>
-                <Pencil className="h-4 w-4" aria-hidden="true" /> Edit Draft
-              </Button>
-              <Button
-                type="button"
-                onClick={() =>
-                  setConfirmTransition({
-                    toStatus: 'issued',
-                    title: 'Issue this purchase order?',
-                    description:
-                      'Issuing freezes every line, cost, and term. The supplier snapshot and PO number become permanent history. You can still cancel or close it later.',
-                    confirmLabel: 'Issue Purchase Order',
-                  })
-                }
-              >
-                <ArrowRight className="h-4 w-4" aria-hidden="true" /> Issue
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  setConfirmTransition({
-                    toStatus: 'cancelled',
-                    title: 'Cancel this purchase order?',
-                    description:
-                      'Cancellation is terminal. A cancelled purchase order can never be reactivated or edited again.',
-                    confirmLabel: 'Cancel Purchase Order',
-                  })
-                }
-              >
-                <Ban className="h-4 w-4" aria-hidden="true" /> Cancel
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setConfirmArchive(true)}>
-                <Archive className="h-4 w-4" aria-hidden="true" /> Archive
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+      <PurchaseOrderMoreSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        poNumber={purchaseOrder.po_number}
+        archived={archived}
+        canEdit={canArchive}
+        onPrint={handlePrint}
+        onCopyReference={() => void handleCopyReference()}
+        onViewActivity={() => {
+          setHistoryOpen(true)
+          setActivitySignal((n) => n + 1)
+        }}
+        onArchiveToggle={() => {
+          setMoreOpen(false)
+          if (archived) {
+            void handleRestore()
+            return
+          }
+          setConfirmArchive(true)
+        }}
+        onCancel={() =>
+          setConfirmTransition({
+            toStatus: 'cancelled',
+            title: 'Cancel this purchase order?',
+            description: 'Cancellation is terminal. A cancelled purchase order can never be reactivated or edited again.',
+            confirmLabel: 'Cancel Purchase Order',
+          })
+        }
+      />
 
-        {canEdit && !archived && purchaseOrder.status === 'issued' && (
-          <Card className="border-bd-border bg-bd-card-bg">
-            <CardContent className="flex flex-wrap gap-2 p-4">
-              <Button
-                type="button"
-                onClick={() =>
-                  setConfirmTransition({
-                    toStatus: 'closed',
-                    title: 'Close this purchase order?',
-                    description:
-                      'Closing is terminal. A closed purchase order is kept as permanent history and can never be reopened.',
-                    confirmLabel: 'Close Purchase Order',
-                  })
-                }
-              >
-                <CheckCheck className="h-4 w-4" aria-hidden="true" /> Close
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  setConfirmTransition({
-                    toStatus: 'cancelled',
-                    title: 'Cancel this purchase order?',
-                    description:
-                      'Cancellation is terminal. A cancelled purchase order can never be reactivated or edited again.',
-                    confirmLabel: 'Cancel Purchase Order',
-                  })
-                }
-              >
-                <Ban className="h-4 w-4" aria-hidden="true" /> Cancel
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setConfirmArchive(true)}>
-                <Archive className="h-4 w-4" aria-hidden="true" /> Archive
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+      <PurchaseOrderCustomizeSheet
+        open={customizeOpen}
+        onClose={() => setCustomizeOpen(false)}
+        value={customize}
+        onChange={setCustomize}
+        onReset={() => setCustomize(DEFAULT_PO_CUSTOMIZE)}
+      />
 
-        {canEdit && !archived && (purchaseOrder.status === 'cancelled' || purchaseOrder.status === 'closed') && (
-          <Card className="border-bd-border bg-bd-card-bg">
-            <CardContent className="flex flex-wrap items-center gap-2 p-4">
-              <span className="text-xs text-bd-text-muted">
-                This purchase order is {purchaseOrder.status} and terminal. It is kept as permanent history.
-              </span>
-              <Button type="button" variant="outline" onClick={() => setConfirmArchive(true)}>
-                <Archive className="h-4 w-4" aria-hidden="true" /> Archive
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {canEdit && archived && (
-          <Card className="border-bd-border bg-bd-card-bg">
-            <CardContent className="flex flex-wrap items-center gap-2 p-4">
-              <span className="text-xs text-bd-text-muted">
-                Archived purchase orders are read-only until restored. Restore keeps the original status
-                ({PURCHASE_ORDER_STATUS_LABELS[purchaseOrder.status].toLowerCase()}).
-              </span>
-              <Button type="button" variant="outline" onClick={() => setConfirmRestore(true)}>
-                <RotateCcw className="h-4 w-4" aria-hidden="true" /> Restore
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Items */}
-        <Card className="border-bd-border bg-bd-card-bg">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">
-              Line items · {items.length} {items.length === 1 ? 'item' : 'items'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 p-4 pt-0">
-            {items.length === 0 ? (
-              <div className="text-xs text-bd-text-muted">No items on this purchase order.</div>
-            ) : (
-              items.map((item, index) => (
-                <div
-                  key={item.id || `po-item-${index}`}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-bd-border bg-bd-surface px-3 py-2.5"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-bold text-bd-text">
-                      {index + 1}. {item.description || 'Untitled item'}
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-bd-text-muted">
-                      {item.quantity} {item.unit || 'units'} × {formatCurrency(item.unit_cost)}
-                    </div>
-                  </div>
-                  <div className="shrink-0 font-mono text-[13px] font-bold text-bd-text">
-                    {formatCurrency(item.line_total)}
-                  </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Financial summary */}
-        <Card className="border-bd-border bg-bd-card-bg">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Financial summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5 p-4 pt-0 text-xs">
-            <div className="flex justify-between">
-              <span className="text-bd-text-muted">Subtotal</span>
-              <b className="font-mono text-bd-text">{formatCurrency(purchaseOrder.subtotal)}</b>
-            </div>
-            {purchaseOrder.discount > 0 && (
-              <div className="flex justify-between">
-                <span className="text-bd-text-muted">Discount</span>
-                <b className="font-mono text-bd-status-danger-text">-{formatCurrency(purchaseOrder.discount)}</b>
-              </div>
-            )}
-            {extraCharges.map((charge, index) => (
-              <div key={`po-charge-${index}`} className="flex justify-between">
-                <span className="text-bd-text-muted">
-                  {charge.label}
-                  {charge.withTax ? ' · VAT applies' : ''}
-                </span>
-                <b className="font-mono text-bd-text">{formatCurrency(charge.value)}</b>
-              </div>
-            ))}
-            <div className="flex justify-between">
-              <span className="text-bd-text-muted">VAT</span>
-              <b className="font-mono text-bd-text">{formatCurrency(purchaseOrder.vat)}</b>
-            </div>
-            <div className="flex justify-between border-t border-bd-border pt-2 text-sm">
-              <span className="font-bold text-bd-text">Total</span>
-              <b className="font-mono text-bd-text">{formatCurrency(purchaseOrder.total)}</b>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Notes and terms */}
-        {(purchaseOrder.notes || purchaseOrder.terms) && (
-          <Card className="border-bd-border bg-bd-card-bg">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Notes and terms</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 p-4 pt-0 text-xs">
-              {purchaseOrder.notes && (
-                <div>
-                  <div className="font-bold uppercase tracking-wider text-bd-text-muted">Notes</div>
-                  <NotesBody value={purchaseOrder.notes} />
-                </div>
-              )}
-              {purchaseOrder.terms && (
-                <div>
-                  <div className="font-bold uppercase tracking-wider text-bd-text-muted">Terms</div>
-                  <NotesBody value={purchaseOrder.terms} />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Activity history */}
-        <Card className="border-bd-border bg-bd-card-bg">
-          <button
-            type="button"
-            onClick={() => setHistoryOpen((open) => !open)}
-            aria-expanded={historyOpen}
-            className="flex w-full items-center justify-between p-4 text-left"
-          >
-            <span className="flex items-center gap-2 text-sm font-bold text-bd-text">
-              <History className="h-4 w-4" aria-hidden="true" /> Activity and history
-            </span>
-            <ChevronDown className={`h-4 w-4 text-bd-text-muted transition-transform ${historyOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-          </button>
-          {historyOpen && (
-            <CardContent className="space-y-2 p-4 pt-0">
-              {historyLoading && <div className="text-xs text-bd-text-muted">Loading history…</div>}
-              {!historyLoading && historyError && (
-                <div className="text-xs text-bd-status-danger-text">{historyError}</div>
-              )}
-              {!historyLoading && !historyError && historyEntries.length === 0 && (
-                <div className="text-xs text-bd-text-muted">No history recorded yet.</div>
-              )}
-              {!historyLoading &&
-                !historyError &&
-                historyEntries.map((entry) => (
-                  <div key={entry.id} className="flex items-start justify-between gap-3 text-xs">
-                    <span className="text-bd-text">
-                      {entry.actorLabel} {entry.actionLabel}
-                    </span>
-                    <span className="shrink-0 font-mono text-[11px] text-bd-text-muted">{entry.timestamp}</span>
-                  </div>
-                ))}
-            </CardContent>
-          )}
-        </Card>
-      </div>
+      {poSharePayload && (
+        <DocumentShareSheet
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          payload={poSharePayload}
+        />
+      )}
 
       <ConfirmActionDialog
         open={confirmTransition !== null}
@@ -552,6 +404,7 @@ export default function PurchaseOrderDetail() {
         title={confirmTransition?.title ?? ''}
         description={confirmTransition?.description ?? ''}
         confirmLabel={confirmTransition?.confirmLabel ?? 'Confirm'}
+        variant={confirmTransition?.toStatus === 'cancelled' ? 'destructive' : 'default'}
         onConfirm={() => {
           if (confirmTransition) void handleTransition(confirmTransition.toStatus)
         }}
@@ -567,16 +420,6 @@ export default function PurchaseOrderDetail() {
         onConfirm={() => void handleArchive()}
         loading={mutating}
       />
-
-      <ConfirmActionDialog
-        open={confirmRestore}
-        onOpenChange={setConfirmRestore}
-        title="Restore this purchase order?"
-        description="The purchase order returns to active lists with its original lifecycle status."
-        confirmLabel="Restore Purchase Order"
-        onConfirm={() => void handleRestore()}
-        loading={mutating}
-      />
-    </Layout>
+    </>
   )
 }
