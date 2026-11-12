@@ -85,6 +85,7 @@ export const INVOICE_PDF_TEMPLATE_IDS = [
   'architectural',
   'executive',
   'heritage',
+  'mosaic',
 ] as const
 
 export type InvoicePdfTemplateId = (typeof INVOICE_PDF_TEMPLATE_IDS)[number]
@@ -110,7 +111,7 @@ export function normalizeInvoicePdfTemplateId(value: unknown): InvoicePdfTemplat
  * unless the user explicitly enabled it for that template — otherwise any previously saved
  * application-theme color bleeds in via the shared design preset.
  */
-const INTRINSIC_PALETTE_TEMPLATE_IDS = new Set<string>(['architectural', 'executive', 'heritage'])
+const INTRINSIC_PALETTE_TEMPLATE_IDS = new Set<string>(['architectural', 'executive', 'heritage', 'mosaic'])
 
 export function isIntrinsicPaletteTemplate(templateId: string | null | undefined): boolean {
   return INTRINSIC_PALETTE_TEMPLATE_IDS.has(String(templateId ?? ''))

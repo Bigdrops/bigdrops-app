@@ -29,6 +29,7 @@ import { EvergreenFormeDocument } from '../src/components/pdf/forme/EvergreenFor
 import { ArchitecturalFormeDocument } from '../src/components/pdf/forme/ArchitecturalFormeDocument'
 import { ExecutiveFormeDocument } from '../src/components/pdf/forme/ExecutiveFormeDocument'
 import { HeritageHouseFormeDocument } from '../src/components/pdf/forme/HeritageHouseFormeDocument'
+import { MosaicFormeDocument } from '../src/components/pdf/forme/MosaicFormeDocument'
 
 type TemplateId =
   | 'industrial'
@@ -39,6 +40,7 @@ type TemplateId =
   | 'architectural'
   | 'executive'
   | 'heritage'
+  | 'mosaic'
 
 /** 1×1 opaque PNG, deterministic offline fixture asset (stretched to fit the
  *  fixed-square logo/signature slots — proves the slot renders, not fidelity). */
@@ -58,6 +60,7 @@ const TEMPLATES: Array<{
   { id: 'architectural', Component: ArchitecturalFormeDocument, orientation: 'portrait' },
   { id: 'executive', Component: ExecutiveFormeDocument, orientation: 'portrait' },
   { id: 'heritage', Component: HeritageHouseFormeDocument, orientation: 'portrait' },
+  { id: 'mosaic', Component: MosaicFormeDocument, orientation: 'portrait' },
 ]
 
 /**
@@ -119,6 +122,51 @@ function buildSampleInvoice(orientation: 'portrait' | 'landscape'): any {
       },
     },
   ]
+    // Grouped item rows — expose group band leakage and dark-logo-on-charcoal contrast failure.
+    const groupedItems = [
+      {
+        id: 'g1',
+        rowType: 'group_header',
+        groupLabel: 'Group A: Foundations',
+        cells: {
+          description: 'Concrete work',
+          quantity: '5',
+          unit: 'm3',
+          unitPrice: 3000,
+          amount: 15000,
+        },
+      },
+      {
+        id: 'g2',
+        rowType: 'line',
+        description: 'Curing and sealing',
+        subDescription: 'membrane application',
+        quantity: 1,
+        unit: 'batch',
+        unitPrice: 8000,
+        amount: 8000,
+        cells: {
+          num: '4',
+          description: 'Curing and sealing',
+          quantity: '1 batch',
+          unit_price: '8,000',
+          amount: '8,000',
+        },
+      },
+      {
+        id: 'g3',
+        rowType: 'group_footer',
+        groupLabel: 'Group A Subtotal',
+        groupSubtotalValue: 15000,
+        cells: {
+          description: 'Group A total',
+          quantity: '-',
+          unit: '-',
+          unitPrice: '-',
+          amount: 15000,
+        },
+      },
+    ]
 
   return {
     identity: {
@@ -157,7 +205,8 @@ function buildSampleInvoice(orientation: 'portrait' | 'landscape'): any {
     ],
     pageLayout: { size: 'A4', orientation },
     mergeQtyUnit: false,
-    items,
+    // Realistic item set: 3 line items + grouped rows + advance card.
+    items: [...items, ...groupedItems],
     totals: {
       rows: [
         { key: 'subtotal', label: 'Subtotal', amount: 251000 },
@@ -182,12 +231,23 @@ function buildSampleInvoice(orientation: 'portrait' | 'landscape'): any {
     additionalSections: [],
     additionalFields: [],
     referenceLinks: [],
+    advanceSummary: {
+      primaryLabel: 'Advance Payment',
+      advanceAmount: '25,000',
+      balanceRemaining: '75,000',
+    },
     signature: {
       imageUrl: FIXTURE_PIXEL_PNG,
       name: 'Sample Authorised Signatory',
       role: 'Managing Director',
     },
     logo: { imageUrl: FIXTURE_PIXEL_PNG, altText: 'Sample Motors Ltd' },
+    // Advance summary for group-band and contrast exposure.
+    advanceSummary: {
+      primaryLabel: 'Advance Payment',
+      advanceAmount: '25,000',
+      balanceRemaining: '75,000',
+    },
     footerText: 'Thank you for your business.',
     tagline: '',
     metaFooter: { companyName: 'Sample Motors Ltd' },
@@ -217,13 +277,21 @@ async function run() {
     ensureFormeFontFamily('PT Serif'),
     ensureFormeFontFamily('Noto Sans'),
     ensureFormeFontFamily('Caveat'),
+    ensureFormeFontFamily('Plus Jakarta Sans'),
   ])
 
   const mupdf = await import('mupdf')
   const outDir = path.resolve('src/assets/template-previews')
   fs.mkdirSync(outDir, { recursive: true })
 
-  for (const { id, Component, orientation } of TEMPLATES) {
+  // Optional CLI filter: `bun scripts/generate-commercial-template-previews.ts mosaic executive`
+  const requested = new Set(process.argv.slice(2).filter((arg) => !arg.startsWith('-')))
+  const selected = requested.size > 0 ? TEMPLATES.filter((t) => requested.has(t.id)) : TEMPLATES
+  if (requested.size > 0 && selected.length === 0) {
+    throw new Error(`No matching template ids: ${[...requested].join(', ')}`)
+  }
+
+  for (const { id, Component, orientation } of selected) {
     const model = buildSampleInvoice(orientation) as unknown as PdfDocumentModel
     const data = adaptCommercialDocumentData(model)
     const element = React.createElement(Component, { data })

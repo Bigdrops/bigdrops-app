@@ -8,6 +8,7 @@ import evergreenPreview from '../../../assets/template-previews/evergreen.png'
 import architecturalPreview from '../../../assets/template-previews/architectural.png'
 import executivePreview from '../../../assets/template-previews/executive.png'
 import heritagePreview from '../../../assets/template-previews/heritage.png'
+import mosaicPreview from '../../../assets/template-previews/mosaic.png'
 
 /**
  * Static miniature previews generated from the actual production Forme
@@ -95,9 +96,9 @@ const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
   {
     id: 'executive',
     label: 'Executive',
-    blurb: 'Forest & Gold',
+    blurb: 'Forest & Slate',
     layout: 'commercial',
-    theme: { pageBg: '#fcf9f2', headerBg: '#173a2c', headerFg: '#ffffff', accent: '#a9854f', border: '#d8c39c', mutedBg: '#f6f0e2' },
+    theme: { pageBg: '#ffffff', headerBg: '#173a2c', headerFg: '#ffffff', accent: '#527c91', border: '#9db8c6', mutedBg: '#f4f7f9' },
     customPreview: <Preview src={executivePreview} alt="Executive template preview" />,
   },
   {
@@ -105,8 +106,16 @@ const TEMPLATE_OPTIONS: TemplatePickerOption[] = [
     label: 'Heritage House',
     blurb: 'Burgundy & Bronze',
     layout: 'commercial',
-    theme: { pageBg: '#f8f2e3', headerBg: '#5c1a26', headerFg: '#ffffff', accent: '#9a7b45', border: '#d9cbac', mutedBg: '#f2e9d4' },
+    theme: { pageBg: '#ffffff', headerBg: '#5c1a26', headerFg: '#ffffff', accent: '#9a7b45', border: '#d9cbac', mutedBg: '#ffffff' },
     customPreview: <Preview src={heritagePreview} alt="Heritage House template preview" />,
+  },
+  {
+    id: 'mosaic',
+    label: 'Mosaic',
+    blurb: 'Forest & Lime',
+    layout: 'commercial',
+    theme: { pageBg: '#ffffff', headerBg: '#0d2b1d', headerFg: '#ffffff', accent: '#84cc16', border: '#d6dfd9', mutedBg: '#eef4f0' },
+    customPreview: <Preview src={mosaicPreview} alt="Mosaic template preview" />,
   },
 ]
 
