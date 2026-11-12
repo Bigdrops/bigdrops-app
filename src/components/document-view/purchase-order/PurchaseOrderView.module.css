@@ -1,0 +1,660 @@
+/* PO Document View — design system scoped to the lab concept.
+   Shared document-card tokens live in ../document-view/shared/DocumentPreview.module.css.
+   This module owns only what the PO concept adds: the two-region desktop
+   workspace, the items table, the sidebar, mobile item cards, and the
+   compare-caption chrome. */
+
+/* ── Two-region workspace (desktop) ─────────────────────────────── */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 372px;
+  gap: 18px;
+  align-items: start;
+  padding: 16px;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+@media (max-width: 1279px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 336px;
+  }
+}
+@media (max-width: 1023px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px;
+  }
+}
+
+/* Action row column constraint — same max width as the workspace padding edge. */
+.actionInner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: 0 12px;
+}
+@media (min-width: 768px) {
+  .actionInner {
+    padding: 0 16px;
+  }
+}
+
+/* ── Desktop items table ────────────────────────────────────────── */
+.tableWrap {
+  overflow-x: clip;
+  border-top: 1px solid hsl(var(--bd-border) / 0.42);
+}
+
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.itemsTable thead th {
+  padding: 9px 10px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--bd-text-muted));
+  text-align: left;
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.6);
+  white-space: nowrap;
+}
+.itemsTable thead th:first-child {
+  padding-left: 16px;
+}
+.itemsTable thead th.num {
+  text-align: right;
+}
+.itemsTable thead th.center {
+  text-align: center;
+}
+
+.itemsTable tbody td {
+  padding: 11px 10px;
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.35);
+  vertical-align: top;
+  font-size: 13px;
+  color: hsl(var(--bd-text));
+}
+.itemsTable tbody tr:last-child td {
+  border-bottom: none;
+}
+.itemsTable tbody tr:nth-child(even) td {
+  background: hsl(var(--bd-surface-muted) / 0.4);
+}
+.itemsTable tbody td:first-child {
+  padding-left: 16px;
+}
+
+.indexCell {
+  width: 38px;
+  color: hsl(var(--bd-text-muted));
+  font-size: 11px;
+  font-weight: 600;
+  padding-top: 12px !important;
+}
+
+.descCell {
+  min-width: 0;
+}
+.descMain {
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+.descSub {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: hsl(var(--bd-text-muted));
+}
+.descMake {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: hsl(var(--bd-text-muted));
+}
+
+.qtyCell {
+  width: 64px;
+  text-align: center;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.unitCell {
+  width: 140px;
+  text-align: right;
+  white-space: nowrap;
+  color: hsl(var(--bd-text-muted));
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+.amountCell {
+  width: 156px;
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 650;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+@media (max-width: 1279px) {
+  .unitCell { width: 118px; }
+  .amountCell { width: 138px; }
+}
+@media (max-width: 1100px) {
+  .unitCell { display: none; }
+  .itemsTable thead th.unitHeader { display: none; }
+}
+
+/* ── Mobile item cards (alternative to the table) ───────────────── */
+.itemCards {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid hsl(var(--bd-border) / 0.42);
+}
+
+.itemCard {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.35);
+}
+.itemCard:last-child {
+  border-bottom: none;
+}
+
+.itemCardNum {
+  font-size: 11px;
+  font-weight: 600;
+  color: hsl(var(--bd-text-muted));
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.itemCardBody {
+  min-width: 0;
+}
+.itemCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: hsl(var(--bd-text));
+  overflow-wrap: break-word;
+}
+.itemCardSub {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: hsl(var(--bd-text-muted));
+}
+.itemCardMeta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: hsl(var(--bd-text-muted));
+  font-variant-numeric: tabular-nums;
+}
+.itemCardMeta strong {
+  color: hsl(var(--bd-text));
+  font-weight: 600;
+}
+
+.itemCardAmount {
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: hsl(var(--bd-text));
+  white-space: nowrap;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.itemCardUnitCost {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: hsl(var(--bd-text-muted));
+  margin-top: 3px;
+}
+
+/* Visibility split: table on wide, cards on narrow. Same data, one source. */
+.tableLayout { display: block; }
+.cardLayout { display: none; }
+@media (max-width: 719px) {
+  .tableLayout { display: none; }
+  .cardLayout { display: flex; }
+}
+@container dlv (max-width: 719px) {
+  .tableLayout { display: none; }
+  .cardLayout { display: flex; }
+}
+
+/* ── Persistent sidebar ─────────────────────────────────────────── */
+.sidebar {
+  position: sticky;
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100dvh - 108px);
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+@media (max-width: 1023px) {
+  .sidebar {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    order: 2;
+  }
+}
+
+.sideCard {
+  border-radius: var(--bd-radius-lg);
+  border: 1px solid hsl(var(--bd-border) / 0.55);
+  background: hsl(var(--bd-surface));
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.sideLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: hsl(var(--bd-text-muted));
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Status + identity block */
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.statusPillLg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.poNumber {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: hsl(var(--bd-text));
+  letter-spacing: -0.01em;
+  margin-top: 10px;
+}
+.poTitle {
+  font-size: 12px;
+  color: hsl(var(--bd-text-muted));
+  margin-top: 2px;
+  line-height: 1.45;
+}
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid hsl(var(--bd-border) / 0.4);
+}
+.metaItem .metaKey {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--bd-text-muted));
+}
+.metaItem .metaVal {
+  font-size: 12px;
+  font-weight: 600;
+  color: hsl(var(--bd-text));
+  margin-top: 2px;
+}
+.frozenNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 10.5px;
+  color: hsl(var(--bd-text-muted));
+  line-height: 1.4;
+}
+
+/* Sidebar action block */
+.sideActions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid hsl(var(--bd-border) / 0.4);
+}
+
+/* Parties (supplier / issuer) */
+.partyName {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.15px;
+  color: hsl(var(--bd-text));
+  line-height: 1.35;
+}
+.partyLines {
+  margin-top: 8px;
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: hsl(var(--bd-text-muted));
+}
+
+/* Delivery */
+.deliveryLines {
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: hsl(var(--bd-text-muted));
+}
+.deliverySite {
+  font-size: 13px;
+  font-weight: 650;
+  color: hsl(var(--bd-text));
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+.deliveryInstructions {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: hsl(var(--bd-text-muted));
+  border-left: 2px solid hsl(var(--bd-border));
+  padding-left: 8px;
+}
+
+/* Sidebar totals */
+.totalsMini {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.totalsMiniRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: hsl(var(--bd-text-muted));
+}
+.totalsMiniRow.grand {
+  border-top: 1px solid hsl(var(--bd-border) / 0.5);
+  padding-top: 8px;
+  margin-top: 2px;
+  color: hsl(var(--bd-text));
+  font-weight: 700;
+  font-size: 13px;
+}
+.totalsWords {
+  margin-top: 6px;
+  font-size: 10.5px;
+  font-style: italic;
+  line-height: 1.5;
+  color: hsl(var(--bd-text-muted));
+}
+
+/* Sidebar activity */
+.activityMini {
+  display: grid;
+  gap: 0;
+}
+.activityRow {
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.3);
+  font-size: 11.5px;
+  color: hsl(var(--bd-text));
+  line-height: 1.45;
+}
+.activityRow:last-child {
+  border-bottom: none;
+}
+.activityDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: hsl(var(--bd-text-muted) / 0.5);
+  margin-top: 5px;
+}
+.activityRow:first-child .activityDot {
+  background: hsl(var(--bd-status-info-text));
+}
+.activityTime {
+  display: block;
+  font-size: 10px;
+  color: hsl(var(--bd-text-muted));
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  margin-top: 2px;
+}
+.fixtureNote {
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: hsl(var(--bd-text-muted));
+  margin-bottom: 6px;
+}
+
+/* ── Popups shared chrome ───────────────────────────────────────── */
+/* Backdrop treatment for sheet bodies: destroys the ghosted layers behind
+   translucent panels so rows sit on their own surface. */
+.sheetBody {
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+.sheetSectionLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: hsl(var(--bd-text-muted));
+  margin: 16px 0 6px;
+}
+
+.channelRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid hsl(var(--bd-border) / 0.55);
+  background: hsl(var(--bd-surface));
+  border-radius: var(--bd-radius-md);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+  color: inherit;
+}
+.channelRow:hover {
+  border-color: hsl(var(--bd-border-strong, var(--bd-border)));
+}
+.channelRow:active {
+  transform: scale(0.99);
+}
+.channelRow:focus-visible {
+  outline: 2px solid hsl(var(--bd-status-info-text));
+  outline-offset: 2px;
+}
+.channelRow:disabled,
+.channelRow[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.channelTile {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.channelLabel {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: hsl(var(--bd-text));
+}
+.channelCaption {
+  font-size: 11px;
+  color: hsl(var(--bd-text-muted));
+  margin-top: 1px;
+  line-height: 1.4;
+}
+.channelTrailing {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: hsl(var(--bd-text-muted));
+}
+
+.sheetNote {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid hsl(var(--bd-border) / 0.4);
+  font-size: 10px;
+  line-height: 1.5;
+  color: hsl(var(--bd-text-muted));
+}
+
+/* Toggles (customize sheet) */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid hsl(var(--bd-border) / 0.3);
+}
+.toggleRow:last-child {
+  border-bottom: none;
+}
+.toggleLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: hsl(var(--bd-text));
+}
+.toggleHint {
+  font-size: 10.5px;
+  color: hsl(var(--bd-text-muted));
+  margin-top: 1px;
+}
+
+/* Template rail (customize sheet) */
+.templateRail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 84px;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scroll-snap-type: x proximity;
+}
+.templateOpt {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  border: 1px solid hsl(var(--bd-border) / 0.55);
+  border-radius: 12px;
+  padding: 8px 6px 7px;
+  background: hsl(var(--bd-surface));
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+.templateOpt:active {
+  transform: scale(0.97);
+}
+.templateOpt[aria-pressed='true'] {
+  border-color: hsl(var(--bd-status-info-text));
+  box-shadow: 0 0 0 1px hsl(var(--bd-status-info-text)) inset;
+}
+.templateOptThumb {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--bd-border) / 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: hsl(var(--bd-text-muted));
+  background: hsl(var(--bd-surface-muted));
+}
+.templateOptName {
+  font-size: 9px;
+  font-weight: 600;
+  color: hsl(var(--bd-text-muted));
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Parties grid: stack the From/Supplier columns on narrow viewports and simulated widths.
+   Doubled specificity so load order against the shared module cannot outrank this. */
+@media (max-width: 640px) {
+  .workspace .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  .workspace .infoGrid > :first-child {
+    border-right: none;
+    border-bottom: 1px solid hsl(var(--bd-border) / 0.42);
+  }
+}
+@container dlv (max-width: 680px) {
+  .workspace .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  .workspace .infoGrid > :first-child {
+    border-right: none;
+    border-bottom: 1px solid hsl(var(--bd-border) / 0.42);
+  }
+}
+
+/* Dense (compact toggle from the customize sheet). */
+.dense .itemsTable tbody td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: 12px;
+}
+.dense .itemCard {
+  padding: 7px 14px;
+}
+
