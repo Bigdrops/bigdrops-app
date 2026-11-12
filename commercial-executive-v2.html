@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOUXRE — Commercial Documents / Executive Luxury</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --ivory:#F6F0E2;
+    --ivory-deep:#EFE5D1;
+    --ink:#1D2A22;
+    --forest:#173A2C;
+    --forest-deep:#0F281E;
+    --accent:#4a90e2;           /* current complementary colour -- switchable, default slate */
+    --accent-coral:#e65c3c;
+    --accent-slate:#4a90e2;
+    --accent-purple:#6a1b9a;
+    --accent-orange:#a85527;
+    --accent-teal:#009688;
+  }
+  *{box-sizing:border-box}
+  html{background:#C9C4B6}
+  body{
+    margin:0;background:#C9C4B6;color:var(--ink);
+    font-family:"Gill Sans","Gill Sans MT",Optima,"Helvetica Neue",Arial,sans-serif;
+    font-size:8pt;line-height:1.4;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .screen-bar{
+    position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:10px 18px;background:var(--forest-deep);color:#F4EEDF;font-size:11px;letter-spacing:.06em;
+  }
+  .screen-bar .bar-brand{font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  .screen-bar .bar-brand span{font-weight:400;color:#BCAE92;margin-left:10px;letter-spacing:.1em}
+  .screen-bar nav{display:flex;gap:6px;margin-left:auto}
+  .screen-bar button{
+    appearance:none;border:1px solid #55705F;background:transparent;color:#E7DECA;
+    padding:7px 12px;border-radius:0;cursor:pointer;font:inherit;font-size:10px;
+    letter-spacing:.14em;text-transform:uppercase;
+  }
+  .screen-bar button:hover{border-color:#D8C39C;color:#fff}
+  .screen-bar button.active{background:#D8C39C;border-color:#D8C39C;color:#173A2C}
+  .screen-bar button:focus-visible{outline:2px solid #D8C39C;outline-offset:2px}
+  .screen-bar .bar-note{font-size:9px;letter-spacing:.11em;color:#BCAE92;text-transform:uppercase}
+  .doc-set[hidden]{display:none!important}
+  .doc-stack{padding:8mm 0 12mm}
+
+  .page{
+    width:210mm;height:297mm;margin:0 auto 8mm;padding:7mm;
+    background:var(--paper);box-shadow:0 2mm 7mm rgba(20,20,15,.24);
+    overflow:hidden;position:relative;display:flex;
+  }
+  .page-frame{
+    width:100%;height:100%;border:2.8mm solid var(--accent);
+    padding:7mm 7mm 4mm;display:flex;flex-direction:column;position:relative;
+  }
+  .lux-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10mm;padding-top:1mm}
+  .lux-brand{display:flex;align-items:center;gap:3.4mm}
+  .lux-logo{width:11mm;height:11mm;color:var(--forest);fill:currentColor;flex:none}
+  .lux-wordmark{font-family:Georgia,"Times New Roman",serif;font-size:13pt;letter-spacing:.32em;text-transform:uppercase;line-height:1;color:var(--forest)}
+  .lux-brandsub{font-size:5.5pt;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-top:1.4mm}
+  .lux-brandmeta{font-size:5.2pt;line-height:1.5;color:var(--muted);letter-spacing:.02em;margin-top:.9mm}
+  .lux-docmark{text-align:right;font-size:5.5pt;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);line-height:1.6}
+  .lux-docmark strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:10.5pt;font-weight:400;letter-spacing:.08em;color:var(--forest);margin-top:.6mm}
+  .lux-rule{display:flex;align-items:center;gap:3mm;margin:2.5mm 0 0}
+  .lux-rule::before,.lux-rule::after{content:"";height:0.15mm;background:var(--accent);flex:1}
+  .lux-rule i{width:2mm;height:2mm;background:var(--accent);transform:rotate(45deg);flex:none}
+
+  .lux-title{text-align:center;padding:1.8mm 0 1.6mm}
+  .lux-title .eyebrow{font-size:5.8pt;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+  .lux-title h1{
+    font-family:"Didot","Bodoni MT","Playfair Display",Georgia,"Times New Roman",serif;
+    font-weight:400;font-size:24pt;letter-spacing:.12em;text-transform:uppercase;
+    margin:1.2mm 0 1mm;line-height:1;color:var(--forest);
+  }
+  .lux-title .doc-title{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:9.4pt;line-height:1.3;letter-spacing:.02em;color:var(--forest);margin-top:1.2mm}
+  .lux-title .doc-title:empty{display:none}
+
+  .lux-meta{display:grid;grid-template-columns:repeat(4,1fr);border-top:0.15mm solid var(--rule);border-bottom:0.15mm solid var(--rule);margin-bottom:3mm}
+  .lux-meta .cell{padding:2.2mm 3mm;text-align:center}
+  .lux-meta .cell + .cell{border-left:0.15mm solid var(--rule)}
+  .lux-meta .k{font-size:5.1pt;letter-spacing:.17em;text-transform:uppercase;color:var(--muted)}
+  .lux-meta .v{font-size:8.2pt;margin-top:.7mm;color:var(--ink)}
+  .lux-meta .v.hot{color:var(--forest);font-weight:600}
+
+  .lux-parties{display:grid;grid-template-columns:1fr 1fr;gap:10mm;padding:1mm 0 4mm}
+  .lux-party .label{font-size:5.4pt;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border-top:0.3mm solid var(--accent);padding-top:1.4mm}
+  .lux-party h2{font-family:Georgia,"Times New Roman",serif;font-size:11.5pt;font-weight:400;line-height:1.25;margin:1.8mm 0 1.4mm;color:var(--forest)}
+  .lux-party p{margin:0;font-size:6.8pt;line-height:1.55;color:#3B433A}
+  .lux-party p b{color:var(--ink)}
+  .lux-control{display:flex;flex-wrap:wrap;gap:2mm 7mm;border-top:0.15mm solid var(--rule);padding:1.8mm 0;font-size:5.7pt;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .lux-control b{color:var(--ink);font-weight:600}
+
+  .lux-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:1.5mm}
+  .lux-table col.c-no{width:9mm}
+  .lux-table col.c-qty{width:12mm}
+  .lux-table col.c-unit{width:14mm}
+  .lux-table col.c-price{width:25mm}
+  .lux-table col.c-amt{width:28mm}
+  .lux-table thead th{
+    background:var(--forest);color:#F3EAD6;font-size:5.4pt;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;text-align:left;padding:1.9mm 2mm;
+  }
+  .lux-table thead th.r{text-align:right}
+  .lux-table td{padding:1.9mm 2mm;border-bottom:0.12mm solid var(--rule);vertical-align:top}
+  .lux-table tbody tr:nth-child(even) td{background:#FAF5E9}
+  .lux-table .num{font-family:Georgia,"Times New Roman",serif;font-size:8.6pt;color:var(--accent);padding-left:0}
+  .lux-table .iname{font-size:7.4pt;font-weight:600;line-height:1.34;color:#22352A}
+  .lux-table .imake{font-size:5.6pt;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-top:.9mm}
+  .lux-table .ispec{font-size:6.3pt;line-height:1.42;color:#444B42;margin-top:.9mm}
+  .lux-table .ispec i{color:var(--muted)}
+  .lux-thumb{margin-top:1.1mm;width:12mm;height:6mm;box-sizing:border-box;border:0.15mm solid var(--rule);background:#fff;padding:.6mm;display:flex;align-items:center;justify-content:center;break-inside:avoid;page-break-inside:avoid}
+  .lux-thumb img{max-width:100%;max-height:100%;display:block}
+  .lux-table .r{text-align:right;font-variant-numeric:tabular-nums}
+  .lux-table .amt{font-weight:700;color:var(--forest);white-space:nowrap}
+  .lux-table .price{white-space:nowrap}
+  .lux-table tr{break-inside:avoid;page-break-inside:avoid}
+
+  .lux-group td{
+    background:var(--ivory-deep)!important;border-top:0.3mm solid var(--accent);border-bottom:0.15mm solid var(--accent);padding:1.6mm 2mm;
+  }
+  .lux-group .gno{font-family:Georgia,"Times New Roman",serif;font-weight:700;color:var(--accent);font-size:10pt;text-align:left;padding-left:0;line-height:1}
+  .lux-group .gk{font-size:5.3pt;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-right:2.6mm}
+  .lux-group .gtitle{font-size:6.4pt;text-transform:uppercase;letter-spacing:.16em;font-weight:600;color:var(--forest)}
+  .lux-gclose td{background:var(--ivory-deep)!important;border-top:0.15mm solid var(--accent);border-bottom:0.5mm double var(--accent);padding:1.5mm 2mm;font-size:5.6pt;letter-spacing:.16em;text-transform:uppercase;color:var(--forest)}
+  .lux-gclose .gno{font-family:Georgia,"Times New Roman",serif;font-weight:700;color:var(--accent);font-size:9pt;text-align:left;padding-left:0;line-height:1}
+  .lux-gclose .gclose-label{text-align:left}
+  .lux-gclose .gclose-label span{color:var(--muted);letter-spacing:.14em;margin-left:2.6mm;font-size:5.2pt}
+  .lux-gclose .gsum{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:7pt;letter-spacing:0;color:var(--forest);white-space:nowrap;font-family:Georgia,"Times New Roman",serif}
+  .lux-cont td{font-size:5.5pt;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);background:var(--ivory)!important;border-bottom:0.15mm solid var(--rule);padding:1.3mm 2mm}
+  .lux-cont .gno{font-family:Georgia,"Times New Roman",serif;font-weight:700;color:var(--accent);font-size:6.8pt;text-align:left;padding-left:0}
+
+  .lux-run{display:flex;justify-content:space-between;gap:8mm;border-bottom:0.15mm solid var(--rule);padding-bottom:1.6mm;font-size:5.5pt;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .lux-footer{margin-top:auto;padding-top:1.5mm;border-top:0.3mm solid var(--accent);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:4mm;font-size:5.3pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .lux-footer .foot-issuer{grid-column:1;justify-self:start;display:flex;align-items:center;gap:1.8mm;min-width:0}
+  .lux-footer .foot-name{overflow:hidden;text-overflow:ellipsis}
+  .lux-footer .foot-page{grid-column:2;justify-self:center;color:var(--forest);font-weight:600}
+  .lux-footer .foot-ref{grid-column:3;justify-self:end;color:var(--forest);letter-spacing:.1em}
+  .lux-footer .foot-logo{width:4.4mm;height:4.4mm;color:var(--accent);fill:currentColor;flex:none}
+  .lux-summary{display:grid;grid-template-columns:1.2fr .8fr;gap:0;border-bottom:0.2mm solid var(--rule)}
+  .lux-ledger{padding:3mm 5mm 2mm 0;border-right:0.15mm solid var(--rule)}
+  .lux-ledger table{width:100%;border-collapse:collapse}
+  .lux-ledger td{padding:1.5mm 0;border-bottom:0.1mm solid var(--rule);font-size:6.7pt}
+  .lux-ledger td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:4mm}
+  .lux-ledger tr.sum td{font-weight:700;color:var(--forest);border-bottom:0.25mm solid var(--forest)}
+  .lux-ledger tr.ded td{color:#b42318}
+  .lux-bank{padding:3mm 0 2mm 6mm}
+  .lux-notes h3,.lux-terms h3,.lux-terms h3,.lux-sig h3{margin:0;font-size:5.4pt;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);border-top:0.28mm solid var(--accent);padding-top:1.4mm}
+  .lux-acct{padding:1.8mm 0;border-bottom:0.1mm solid var(--rule)}
+  .lux-acct:last-child{border-bottom:0}
+  .lux-acct .bank{font-size:6.9pt;font-weight:600;color:var(--forest)}
+  .lux-acct .no{font-family:Georgia,"Times New Roman",serif;font-size:10pt;letter-spacing:.04em;margin:.4mm 0}
+  .lux-acct .note{font-size:5.7pt;color:var(--muted);line-height:1.4}
+  .lux-anc{font-size:6.2pt;line-height:1.5;color:#3B433A}
+  .lux-anc p{margin:0 0 1.4mm}
+
+  .lux-total{
+    background:var(--forest);color:#F5EDDC;margin:0;padding:4mm 5mm;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:8mm;
+    border-bottom:0.6mm solid var(--accent);
+  }
+  .lux-total .label{font-size:5.8pt;letter-spacing:.2em;text-transform:uppercase;color:#D8C39C}
+  .lux-total .label .due{display:block;font-size:5pt;letter-spacing:.12em;color:#D8C39C;margin-top:1mm}
+  .lux-total .value{font-family:Georgia,"Times New Roman",serif;font-size:22pt;letter-spacing:-.01em;line-height:1;white-space:nowrap}
+  .lux-words{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:7pt;line-height:1.45;color:var(--muted);padding:2mm 0 0;text-align:center}
+
+  .lux-close-cols{display:grid;grid-template-columns:.9fr 1.1fr;gap:9mm;padding:4mm 0 0;border-top:0.2mm solid var(--rule);margin-top:3mm}
+  .lux-notes ul,.lux-terms ol{margin:1.6mm 0 0;padding-left:3.6mm;font-size:6pt;line-height:1.45;color:#3B433A}
+  .lux-notes li,.lux-terms li{margin-bottom:1.2mm}
+  .lux-terms-cols{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+  .lux-notes b,.lux-terms b{color:var(--ink)}
+  .lux-sigs{display:grid;grid-template-columns:1fr 1fr 32mm;gap:9mm;margin-top:4mm;padding-top:3mm;border-top:0.3mm solid var(--accent)}
+  .lux-sig .sig-label{font-size:5.3pt;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);border-bottom:0.15mm solid var(--rule);padding-bottom:1mm}
+  .lux-sig .sig-art{height:12mm;display:flex;align-items:flex-end;padding:1mm 0}
+  .lux-sig .sig-art svg{width:40mm;height:12mm;color:var(--forest);fill:currentColor}
+  .lux-sig .sig-line{height:8.5mm;border-bottom:0.15mm solid var(--accent)}
+  .lux-sig .sig-name{font-family:Georgia,"Times New Roman",serif;font-size:7.4pt;margin-top:1.3mm;color:var(--forest)}
+  .lux-sig .sig-role{font-size:5.4pt;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.5mm}
+  .lux-sig .sig-date{font-size:5.5pt;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:1.4mm}
+
+  /* --- Colour theme switcher --- */
+  #colour-switcher{
+    position:fixed;top:10px;left:10px;z-index:100;
+    display:flex;gap:4px;margin:8px 0;padding:4px;
+    background:rgba(255,255,255,0.5);border-radius:4px;font-size:0;
+    border:1px solid var(--forest);
+  }
+  #colour-switcher .theme-btn{
+    width:28px;height:28px;border:none;border-radius:4px;cursor:pointer;flex-shrink:0;
+    transition:border-color 0.2s,box-shadow 0.2s;
+    background-size:cover;background-position:center;background-repeat:no-repeat;
+  }
+  #colour-switcher .theme-btn:hover{border-color:var(--forest)}
+  #colour-switcher .theme-btn.active{border:2px solid var(--gold-light);box-shadow:0 0 0 3px var(--gold-light)}
+    #colour-switcher .theme-btn.coral{background:#e65c3c}
+  #colour-switcher .theme-btn.slate{background:#4a90e2}
+  #colour-switcher .theme-btn.purple{background:#6a1b9a}
+  #colour-switcher .theme-btn.orange{background:#a85527}
+  #colour-switcher .theme-btn.teal{background:#009688}
+  #colour-switcher .theme-btn{opacity:0.8}
+  #colour-switcher .theme-btn:focus-visible{outline:2px solid var(--gold-light);outline-offset:2px}
+
+  @page{size:A4 portrait;margin:0}
+  @media print{
+    html,body{background:#fff!important}
+    .screen-bar{display:none!important}
+    .doc-stack{padding:0!important}
+    .page{margin:0!important;box-shadow:none!important;break-after:page;page-break-after:always}
+    .page:last-child{break-after:auto;page-break-after:auto}
+    .doc-set[hidden]{display:none!important}
+    #colour-switcher{display:none!important}
+  }
+</style>
+</head>
+
+<body>
+
+  <!-- Colour theme switcher: visible on screen, hidden in print -->
+  <div id="colour-switcher" aria-label="Select colour theme" role="region">
+    <button class="theme-btn slate active" data-theme="slate" title="Slate" tabindex="0"></button>
+    <button class="theme-btn coral" data-theme="coral" title="Coral" tabindex="0"></button>
+    <button class="theme-btn purple" data-theme="purple" title="Royal Purple" tabindex="0"></button>
+    <button class="theme-btn orange" data-theme="orange" title="Burnt Orange" tabindex="0"></button>
+    <button class="theme-btn teal" data-theme="teal" title="Teal" tabindex="0"></button>
+  </div>
+
+<header class="screen-bar" role="navigation" aria-label="Document mode">
+  <div class="bar-brand">BOUXRE <span>Concept 02 · Executive / Luxury</span></div>
+  <nav>
+    <button type="button" data-mode="invoice" class="active">Invoice</button>
+    <button type="button" data-mode="po">Purchase order</button>
+  </nav>
+  <div class="bar-note">Specimen — synthetic test data</div>
+  <button type="button" onclick="window.print()">Print</button>
+</header>
+
+<main class="doc-stack">
+  <section class="doc-set" data-doc="invoice" aria-label="Invoice specimen">
+    <section class="page" data-page="1" aria-label="INVOICE page 1 of 4">
+    <div class="page-frame">
+      <header class="lux-top">
+      <div class="lux-brand"><svg class="lux-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg>
+        <div>
+          <div class="lux-wordmark">BOUXRE</div>
+          <div class="lux-brandsub">Kestrel Industrial Supply Ltd · RC 1928374 · TIN 20384756-0001</div>
+          <div class="lux-brandmeta">Plot 14, Block C, Agbara Industrial Estate, Ogun State<br>+234 800 555 0142 · sales@kestrel-industrial.example</div>
+        </div>
+      </div>
+      <div class="lux-docmark">Document no.<strong>INV-2026-0147</strong>30/10/2026</div>
+    </header>
+    <div class="lux-rule"><i></i></div>
+    <div class="lux-title">
+      <h1 class="">INVOICE</h1>
+      <div class="doc-title" data-field="invoice_title">Materials, Equipment & Supplies — Phase 2</div>
+    </div>
+    <div class="lux-meta"><div class="cell"><div class="k">Issue Date</div><div class="v ">30/10/2026</div></div><div class="cell"><div class="k">Due Date</div><div class="v hot">29/11/2026</div></div><div class="cell"><div class="k">Payment Terms</div><div class="v ">Net 30</div></div><div class="cell"><div class="k">Client PO Ref.</div><div class="v ">NGF-LPO-4471</div></div></div>
+    <div class="lux-parties">
+    <section class="lux-party">
+      <div class="label">Bill to · client</div>
+      <h2>Northgate Foods Processing Nigeria Ltd</h2>
+      <p>Ms. Adaeze Obi — Procurement Lead<br>Km 18, Lagos–Ibadan Expressway, Mowe, Ogun State, Nigeria<br>+234 800 555 0177 · procurement@northgate-foods.example<br><b>TIN 31827465-0001</b></p>
+    </section>
+    <section class="lux-party">
+      <div class="label">Project Information</div>
+      <h2>Northgate Foods Factory — Phase 2 (Production Hall & Utilities)</h2>
+      <p>Site: Km 18, Lagos–Ibadan Expressway, Mowe, Ogun State<br>Contract No.: NGF/CON/2026/P2-014</p>
+    </section>
+  </div>
+    <div class="lux-control"><span>Project Manager <b>Eng. C. Okeke</b></span><span>Delivery Window <b>4–6 weeks</b></span><span>Cost Centre <b>NGF-P2-MEP</b></span></div>
+    <table class="lux-table">
+    <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Line items</caption>
+    <colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup>
+    <thead><tr>
+      <th>#</th>
+      <th>Description / specification</th>
+      <th class="r">Qty</th>
+      <th>Unit</th>
+      <th class="r">Unit Price (₦)</th>
+      <th class="r">Amount</th>
+    </tr></thead>
+    <tbody><tr>
+    <td class="num">1</td>
+    <td><div class="iname">Portland-limestone cement CEM II 42.5R</div><div class="imake">Dangote-grade bulk supply (synthetic spec)</div><div class="ispec">50 kg bags, palletised<br><i>Delivery in 4 tranches</i></div></td>
+    <td class="r qty">1,200</td>
+    <td class="unit">bags</td>
+    <td class="r price">₦10,400.00</td>
+    <td class="r amt">₦12,480,000.00</td>
+  </tr><tr>
+    <td class="num">2</td>
+    <td><div class="iname">High-yield deformed reinforcement bar Y16</div><div class="imake">BS 4449:2005 Grade B500B</div><div class="ispec">12 m lengths, mill-certified<br>Bundled & tagged by heat number<br>Delivery tolerance ±2% on tonnage; weighbridge tickets supplied with every load</div></td>
+    <td class="r qty">85</td>
+    <td class="unit">tonnes</td>
+    <td class="r price">₦1,150,000.00</td>
+    <td class="r amt">₦97,750,000.00</td>
+  </tr><tr>
+    <td class="num">3</td>
+    <td><div class="iname">Hot-dip galvanised structural I-beam IPE 300</div><div class="imake">S275JR — EN 10025</div><div class="ispec">12 m lengths; <b>galvanised to ISO 10025</b><br>Mill test certificates supplied<br><i>Optional:</i> primer plus two-coat polyurethane finish available on request</div></td>
+    <td class="r qty">42</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦486,500.00</td>
+    <td class="r amt">₦20,433,000.00</td>
+  </tr><tr class="lux-group">
+      <td class="gno">A</td>
+      <td colspan="5"><span class="gk">Group A</span><span class="gtitle">Electrical — Power Cables & Distribution</span></td>
+    </tr><tr>
+    <td class="num">4</td>
+    <td><div class="iname">Armoured power cable 4-core 95 mm² Cu/XLPE/SWA/PVC</div><div class="imake">0.6/1 kV — BS 5467</div><div class="ispec">Drum length 250 m; <b>cut-to-length</b> on request<br>Supplied on returnable steel drums</div><div class="lux-thumb"><img src="assets/products/havells.svg" alt="Havells"></div></td>
+    <td class="r qty">1,500</td>
+    <td class="unit">m</td>
+    <td class="r price">₦28,400.00</td>
+    <td class="r amt">₦42,600,000.00</td>
+  </tr><tr>
+    <td class="num">5</td>
+    <td><div class="iname">Main LV distribution board, 800 A, TPN, 36-way</div><div class="imake">Form 2b, IP54 floor-standing</div><div class="ispec">Powder-coated 2 mm sheet steel, 800 A copper busbar<br>Incl. neutral & earth bars; type-tested to IEC 61439<br>Factory-wired with surge protection and metering CT provisions</div><div class="lux-thumb"><img src="assets/products/schneider-electric.svg" alt="Schneider Electric"></div></td>
+    <td class="r qty">6</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦1,850,000.00</td>
+    <td class="r amt">₦11,100,000.00</td>
+  </tr><tr>
+    <td class="num">6</td>
+    <td><div class="iname">MCCB 3-pole 250 A, 36 kA</div><div class="imake">Adjustable thermal-magnetic trip</div><div class="ispec">Breaking capacity 36 kA @ 415 V; rotary handle, terminal shrouds & auxiliary contact included</div></td>
+    <td class="r qty">24</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦142,000.00</td>
+    <td class="r amt">₦3,408,000.00</td>
+  </tr><tr class="lux-gclose"><td class="gno">A</td><td colspan="3" class="gclose-label">End of Group A<span>Group subtotal</span></td><td colspan="2" class="gsum">₦57,108,000.00</td></tr><tr>
+    <td class="num">7</td>
+    <td><div class="iname">Centrifugal end-suction pump set, 7.5 kW</div><div class="imake">50 m³/h @ 32 m head — cast-iron volute</div><div class="ispec"><b>Set includes:</b> 3-phase motor, baseplate, coupling guard, flexible couplings<br><i>2-year manufacturer warranty</i></div><div class="lux-thumb"><img src="assets/products/grundfos.svg" alt="Grundfos"></div></td>
+    <td class="r qty">4</td>
+    <td class="unit">sets</td>
+    <td class="r price">₦1,420,000.00</td>
+    <td class="r amt">₦5,680,000.00</td>
+  </tr></tbody>
+  </table>
+      <footer class="lux-footer">
+    <span class="foot-issuer"><svg class="foot-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="foot-name">Kestrel Industrial Supply Ltd</span></span>
+    <span class="foot-page">Page 1 of 4</span>
+    <span class="foot-ref">INV-2026-0147</span>
+  </footer>
+    </div>
+  </section>
+
+<section class="page" data-page="2" aria-label="INVOICE page 2 of 4">
+    <div class="page-frame">
+      <div class="lux-run"><span>INVOICE · INV-2026-0147</span><span>Northgate Foods Processing Nigeria Ltd</span></div>
+    <table class="lux-table">
+    <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Line items</caption>
+    <colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup>
+    <thead><tr>
+      <th>#</th>
+      <th>Description / specification</th>
+      <th class="r">Qty</th>
+      <th>Unit</th>
+      <th class="r">Unit Price (₦)</th>
+      <th class="r">Amount</th>
+    </tr></thead>
+    <tbody><tr>
+    <td class="num">8</td>
+    <td><div class="iname">Axial roof ventilation fan 900 mm, 1.1 kW</div><div class="imake">IP55, 3-phase, backdraught shutter</div><div class="ispec">Galvanised housing; 18,500 m³/h</div></td>
+    <td class="r qty">12</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦385,000.00</td>
+    <td class="r amt">₦4,620,000.00</td>
+  </tr><tr>
+    <td class="num">9</td>
+    <td><div class="iname">Three-phase induction motor 15 kW, IE3, 4-pole, B3</div><div class="imake">Foot-mounted, 400 V / 50 Hz</div><div class="ispec">Class F insulation; IP55; with PTC thermistors</div><div class="lux-thumb"><img src="assets/products/leroy-somer.svg" alt="Leroy-Somer"></div></td>
+    <td class="r qty">6</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦920,000.00</td>
+    <td class="r amt">₦5,520,000.00</td>
+  </tr><tr>
+    <td class="num">10</td>
+    <td><div class="iname">V-belt, pulley & coupling accessory kit</div><div class="imake">Assorted B-section</div></td>
+    <td class="r qty">30</td>
+    <td class="unit">lots</td>
+    <td class="r price">₦38,500.00</td>
+    <td class="r amt">₦1,155,000.00</td>
+  </tr><tr class="lux-group">
+      <td class="gno">B</td>
+      <td colspan="5"><span class="gk">Group B</span><span class="gtitle">Plumbing & Sanitary Materials</span></td>
+    </tr><tr>
+    <td class="num">11</td>
+    <td><div class="iname">uPVC pressure pipe 110 mm, PN10</div><div class="imake">6 m socketed lengths — water supply</div><div class="ispec">Solvent-weld or rubber-ring joint; includes 10% fitting allowance</div><div class="lux-thumb"><img src="assets/products/comap.svg" alt="Comap"></div></td>
+    <td class="r qty">320</td>
+    <td class="unit">lengths</td>
+    <td class="r price">₦18,600.00</td>
+    <td class="r amt">₦5,952,000.00</td>
+  </tr><tr>
+    <td class="num">12</td>
+    <td><div class="iname">Cast-iron flanged gate valve DN100, PN16</div><div class="imake">Resilient-seated, non-rising stem</div><div class="ispec">Epoxy-coated body; handwheel operated; PN16 drilled flanges</div></td>
+    <td class="r qty">18</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦96,500.00</td>
+    <td class="r amt">₦1,737,000.00</td>
+  </tr><tr>
+    <td class="num">13</td>
+    <td><div class="iname">Industrial sanitary suite — floor-mounted WC with cistern & wall-hung basin</div><div class="imake">Vitreous china, white</div><div class="ispec">Complete with seat, 15 mm angle valves, flexible connectors & waste fittings<br><b>Includes</b> installation pack</div><div class="lux-thumb"><img src="assets/products/kohler.svg" alt="Kohler"></div></td>
+    <td class="r qty">14</td>
+    <td class="unit">sets</td>
+    <td class="r price">₦128,000.00</td>
+    <td class="r amt">₦1,792,000.00</td>
+  </tr><tr>
+    <td class="num">14</td>
+    <td><div class="iname">Safety helmet (hard hat), 6-point ratchet</div><div class="imake">HDPE shell — EN 397</div><div class="ispec">Colour-coded by trade: white / yellow / blue</div></td>
+    <td class="r qty">180</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦4,200.00</td>
+    <td class="r amt">₦756,000.00</td>
+  </tr><tr>
+    <td class="num">15</td>
+    <td><div class="iname">Safety boots, steel toe-cap & midsole, S3</div><div class="imake">Oil-resistant PU outsole — sizes 39–46</div><div class="ispec">Supplied in a size run agreed with site HSE</div></td>
+    <td class="r qty">180</td>
+    <td class="unit">pairs</td>
+    <td class="r price">₦31,500.00</td>
+    <td class="r amt">₦5,670,000.00</td>
+  </tr><tr class="lux-group">
+      <td class="gno">C</td>
+      <td colspan="5"><span class="gk">Group C</span><span class="gtitle">Computers & IT Equipment</span></td>
+    </tr><tr>
+    <td class="num">16</td>
+    <td><div class="iname">Desktop workstation, Core i7 / 16 GB / 512 GB NVMe, with 24″ monitor</div><div class="imake">Business-class tower, Windows 11 Pro</div><div class="ispec"><b>Specification:</b> 12th-gen Core i7, 16 GB DDR4, 512 GB NVMe SSD, 24″ FHD IPS monitor, keyboard & mouse<br>3-year on-site warranty<br><b>Included:</b> Windows 11 Pro licence, wired keyboard & optical mouse, power cable<br>Pre-imaged with the client's standard software build; asset-tagged on delivery<br>Rated for 24/7 operation up to 35 °C ambient</div></td>
+    <td class="r qty">20</td>
+    <td class="unit">units</td>
+    <td class="r price">₦865,000.00</td>
+    <td class="r amt">₦17,300,000.00</td>
+  </tr><tr>
+    <td class="num">17</td>
+    <td><div class="iname">Managed 48-port Gigabit PoE+ switch with 4 × 10G SFP+ uplinks</div><div class="imake">Layer 3 lite; rack-mount 1U</div><div class="ispec">740 W PoE budget; includes rack ears & console cable<br>Dual hot-swap PSU bays (one fitted); front-to-back airflow<br>Supports 802.1X, LACP, IGMP snooping, VLAN and QoS<br>Includes 4 × SFP+ direct-attach cables, 1 m</div></td>
+    <td class="r qty">4</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦1,240,000.00</td>
+    <td class="r amt">₦4,960,000.00</td>
+  </tr></tbody>
+  </table>
+      <footer class="lux-footer">
+    <span class="foot-issuer"><svg class="foot-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="foot-name">Kestrel Industrial Supply Ltd</span></span>
+    <span class="foot-page">Page 2 of 4</span>
+    <span class="foot-ref">INV-2026-0147</span>
+  </footer>
+    </div>
+  </section>
+
+<section class="page" data-page="3" aria-label="INVOICE page 3 of 4">
+    <div class="page-frame">
+      <div class="lux-run"><span>INVOICE · INV-2026-0147</span><span>Northgate Foods Processing Nigeria Ltd</span></div>
+    <table class="lux-table">
+    <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Line items</caption>
+    <colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup>
+    <thead><tr>
+      <th>#</th>
+      <th>Description / specification</th>
+      <th class="r">Qty</th>
+      <th>Unit</th>
+      <th class="r">Unit Price (₦)</th>
+      <th class="r">Amount</th>
+    </tr></thead>
+    <tbody><tr class="lux-cont"><td class="gno">C</td><td colspan="5" class="gclabel">Group C · Computers & IT Equipment — continued</td></tr><tr class="lux-gclose"><td class="gno">C</td><td colspan="3" class="gclose-label">End of Group C<span>Group subtotal</span></td><td colspan="2" class="gsum">₦22,260,000.00</td></tr><tr class="lux-group">
+      <td class="gno">D</td>
+      <td colspan="5"><span class="gk">Group D</span><span class="gtitle">Electrical — Power Systems & Lighting</span></td>
+    </tr><tr>
+    <td class="num">18</td>
+    <td><div class="iname">Online double-conversion UPS 10 kVA, 3-phase in / 1-phase out</div><div class="imake">Rack/tower convertible, with 15-min battery bank</div><div class="ispec">True online topology; <b>N+1 parallel-ready</b>; SNMP card included<br>Battery: 20 × 12 V 9 Ah sealed lead-acid</div><div class="lux-thumb"><img src="assets/products/apc.svg" alt="APC"></div></td>
+    <td class="r qty">3</td>
+    <td class="unit">units</td>
+    <td class="r price">₦2,350,000.00</td>
+    <td class="r amt">₦7,050,000.00</td>
+  </tr><tr>
+    <td class="num">19</td>
+    <td><div class="iname">LED high-bay light 150 W, IP65</div><div class="imake">5000 K, 120 lm/W, 90° optic</div><div class="ispec">Aluminium heat-sink body; 5-year warranty</div><div class="lux-thumb"><img src="assets/products/philips.svg" alt="Philips"></div></td>
+    <td class="r qty">120</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦38,500.00</td>
+    <td class="r amt">₦4,620,000.00</td>
+  </tr><tr>
+    <td class="num">20</td>
+    <td><div class="iname">LED recessed panel 600 × 600 mm, 40 W</div><div class="imake">4000 K, UGR<19</div></td>
+    <td class="r qty">200</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦16,800.00</td>
+    <td class="r amt">₦3,360,000.00</td>
+  </tr><tr>
+    <td class="num">21</td>
+    <td><div class="iname">LED emergency exit sign, 3-hour battery backup</div><div class="imake">Maintained / non-maintained selectable</div></td>
+    <td class="r qty">36</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦14,900.00</td>
+    <td class="r amt">₦536,400.00</td>
+  </tr><tr>
+    <td class="num">22</td>
+    <td><div class="iname">Heavy-gauge PVC conduit 25 mm with standard junction boxes, saddles, bends and couplers (assorted)</div><div class="imake">BS EN 61386 — 3 m lengths</div><div class="ispec">Lengths priced individually; accessories supplied at the ratio 1 : 1</div></td>
+    <td class="r qty">800</td>
+    <td class="unit">lengths</td>
+    <td class="r price">₦1,350.00</td>
+    <td class="r amt">₦1,080,000.00</td>
+  </tr><tr>
+    <td class="num">23</td>
+    <td><div class="iname">13 A twin switched socket outlet, flush-mount, IP20</div><div class="imake">White, with 2 × USB-A charging ports</div><div class="lux-thumb"><img src="assets/products/legrand.svg" alt="Legrand"></div></td>
+    <td class="r qty">260</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦3,900.00</td>
+    <td class="r amt">₦1,014,000.00</td>
+  </tr><tr class="lux-gclose"><td class="gno">D</td><td colspan="3" class="gclose-label">End of Group D<span>Group subtotal</span></td><td colspan="2" class="gsum">₦17,660,400.00</td></tr><tr class="lux-group">
+      <td class="gno">E</td>
+      <td colspan="5"><span class="gk">Group E</span><span class="gtitle">Safety Equipment & PPE</span></td>
+    </tr><tr>
+    <td class="num">24</td>
+    <td><div class="iname">Fire extinguisher 9 kg ABC dry-powder, with wall bracket</div><div class="imake">Rated 55A/233B — EN 3-7</div><div class="ispec">Annual service tag included<br><b>Includes</b> 1 × signage plate per unit</div></td>
+    <td class="r qty">40</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦44,000.00</td>
+    <td class="r amt">₦1,760,000.00</td>
+  </tr><tr>
+    <td class="num">25</td>
+    <td><div class="iname">High-visibility reflective vest, class 2</div><div class="imake">EN ISO 20471 — 120 gsm</div><div class="ispec">Zip front, 2 pockets; sizes M–3XL</div><div class="lux-thumb"><img src="assets/products/honeywell.svg" alt="Honeywell"></div></td>
+    <td class="r qty">220</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦3,800.00</td>
+    <td class="r amt">₦836,000.00</td>
+  </tr><tr class="lux-gclose"><td class="gno">E</td><td colspan="3" class="gclose-label">End of Group E<span>Group subtotal</span></td><td colspan="2" class="gsum">₦2,596,000.00</td></tr><tr>
+    <td class="num">26</td>
+    <td><div class="iname">Exterior weatherproof emulsion paint 20 L</div><div class="imake">Elastomeric, factory grey (RAL 7040)</div><div class="ispec">Two-coat system; coverage ≈ 10 m²/L per coat</div></td>
+    <td class="r qty">160</td>
+    <td class="unit">buckets</td>
+    <td class="r price">₦46,500.00</td>
+    <td class="r amt">₦7,440,000.00</td>
+  </tr></tbody>
+  </table>
+      <footer class="lux-footer">
+    <span class="foot-issuer"><svg class="foot-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="foot-name">Kestrel Industrial Supply Ltd</span></span>
+    <span class="foot-page">Page 3 of 4</span>
+    <span class="foot-ref">INV-2026-0147</span>
+  </footer>
+    </div>
+  </section>
+
+<section class="page" data-page="4" aria-label="INVOICE page 4 of 4">
+    <div class="page-frame">
+      <div class="lux-run"><span>INVOICE · INV-2026-0147</span><span>Northgate Foods Processing Nigeria Ltd</span></div>
+    <div class="lux-summary">
+      <div class="lux-ledger">
+        <table><tr><td>Gross subtotal</td><td>₦270,609,400.00</td></tr><tr><td>Installation / labour</td><td>₦7,600,960.00</td></tr><tr class="ded"><td>Subtotal discount (2.5%)</td><td>−₦6,765,235.00</td></tr><tr class="sum"><td>Net subtotal</td><td>₦271,445,125.00</td></tr><tr><td>VAT (7.5%)</td><td>₦20,358,384.38</td></tr><tr><td>Transportation & logistics</td><td>₦1,850,000.00</td></tr><tr><td>Offloading & handling</td><td>₦420,000.00</td></tr><tr class="ded"><td>WHT (5.0%) — deducted</td><td>−₦13,572,256.25</td></tr></table>
+      </div>
+      <div class="lux-bank">
+        <h3>Bank Payment Details</h3>
+        <div class="lux-acct">
+          <div class="bank">First Meridian Bank (illustrative)</div>
+          <div class="no">0123456789</div>
+          <div class="note">Kestrel Industrial Supply Ltd · Primary — Naira current account</div>
+        </div>
+        <div class="lux-acct">
+          <div class="bank">Atlas Commerce Bank (illustrative)</div>
+          <div class="no">9876543210</div>
+          <div class="note">Kestrel Industrial Supply Ltd · Secondary — Naira collection account</div>
+        </div>
+      </div>
+    </div>
+    <div class="lux-total">
+      <div class="label">Total Amount Due<span class="due">Payment due 29/11/2026 · Net 30</span></div>
+      <div class="value">₦280,501,253.13</div>
+    </div>
+    <div class="lux-words">Two Hundred and Eighty Million, Five Hundred and One Thousand, Two Hundred and Fifty-Three Naira and Thirteen Kobo Only</div>
+    <div class="lux-close-cols">
+      <section class="lux-notes"><h3>Notes</h3><ul><li><b>Scope:</b> materials, equipment and supplies for <b>Phase 2</b> of the Northgate Foods factory (production hall & utilities), awarded under contract <b>NGF/CON/2026/P2-014</b>.</li><li>Items 1–3 and 7–10 were delivered in full on the dates shown on the signed delivery notes; grouped items were delivered per group.</li><li>Installation charges apply only where an installation rate is stated per item. All other items are supply-only.</li><li><i>Tax invoice:</i> VAT is charged at 7.5%. WHT at 5% is deducted at source by the client; a valid WHT credit note must be returned within 30 days.</li></ul></section>
+      <section class="lux-terms"><h3>Terms & conditions</h3><div class="lux-terms-cols"><ol><li><b>Payment:</b> Net 30 days from invoice date. Payment is by electronic transfer to the accounts shown; quote the invoice number as reference.</li><li><b>Late payment:</b> overdue balances attract interest at 1.5% per month on the outstanding amount after the due date.</li><li><b>Retention of title:</b> goods remain the property of the issuer until paid for in full.</li><li><b>Inspection:</b> any shortage, damage or non-conformity must be reported in writing within 7 days of delivery; claims after this period may not be accepted.</li></ol><ol start="5"><li><b>Warranty:</b> manufacturer warranties apply as stated per item; workmanship on installed items is warranted for 12 months.</li><li><b>Returns:</b> special-order and cut-to-length items (e.g. cables, conduit) are non-returnable.</li><li><b>Disputes:</b> unresolved disputes are referred to arbitration in Lagos under the Arbitration and Mediation Act.</li><li><b>Governing law:</b> the laws of the Federal Republic of Nigeria.</li></ol></div></section>
+    </div>
+    <div class="lux-sigs">
+      <div class="lux-sig">
+        <h3>Issuer authorised signatory</h3>
+        <div class="sig-art"><svg viewBox="5.503 51.024 181.748 90.711" role="img" aria-label="Issuer signature"><use href="#g-sig"/></svg></div>
+        <div class="sig-line"></div>
+        <div class="sig-name">Mr. Chukwuemeka Daniels</div>
+        <div class="sig-role">Authorised Signatory</div>
+        <div class="sig-date">Date ____________________</div>
+      </div>
+      <div class="lux-sig">
+        <h3>Client acknowledgement</h3>
+        <div class="sig-line" style="height:17mm"></div>
+        <div class="sig-name">Received by</div>
+        <div class="sig-role">Client receiving / confirmation acknowledgement</div>
+        <div class="sig-date">Date ____________________</div>
+      </div>
+      <div class="lux-sig">
+        <h3>Document control</h3>
+        <div class="sig-line" style="height:17mm"></div>
+        <div class="sig-name">INV-2026-0147</div>
+        <div class="sig-role">Tax document</div>
+        <div class="sig-date">Stamp / received</div>
+      </div>
+    </div>
+      <footer class="lux-footer">
+    <span class="foot-issuer"><svg class="foot-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="foot-name">Kestrel Industrial Supply Ltd</span></span>
+    <span class="foot-page">Page 4 of 4</span>
+    <span class="foot-ref">INV-2026-0147</span>
+  </footer>
+    </div>
+  </section>
+  </section>
+  <section class="doc-set" data-doc="po" aria-label="Purchase order specimen" hidden>
+    <section class="page" data-page="1" aria-label="PURCHASE ORDER page 1 of 4">
+    <div class="page-frame">
+      <header class="lux-top">
+      <div class="lux-brand"><svg class="lux-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg>
+        <div>
+          <div class="lux-wordmark">BOUXRE</div>
+          <div class="lux-brandsub">Kestrel Industrial Supply Ltd · RC 1928374 · TIN 20384756-0001</div>
+          <div class="lux-brandmeta">Plot 14, Block C, Agbara Industrial Estate, Ogun State<br>+234 800 555 0142 · sales@kestrel-industrial.example</div>
+        </div>
+      </div>
+      <div class="lux-docmark">Document no.<strong>PO-2026-0089</strong>30/10/2026</div>
+    </header>
+    <div class="lux-rule"><i></i></div>
+    <div class="lux-title">
+      <h1 class="long">PURCHASE<br>ORDER</h1>
+    </div>
+    <div class="lux-meta"><div class="cell"><div class="k">PO Date</div><div class="v ">30/10/2026</div></div><div class="cell"><div class="k">Required by</div><div class="v hot">20/11/2026</div></div><div class="cell"><div class="k">Project</div><div class="v ">Northgate Factory Ph. 2</div></div><div class="cell"><div class="k">Contract No.</div><div class="v ">NGF/CON/2026/P2-014</div></div></div>
+    <div class="lux-parties">
+    <section class="lux-party">
+      <div class="label">Supplier / vendor</div>
+      <h2>Meridian Industrial Wholesale Ltd</h2>
+      <p>Mr. Tunde Bakare — Sales Manager<br>Warehouse 4, Ikeja Industrial Estate, Ikeja, Lagos State, Nigeria<br>+234 800 555 0199 · orders@meridian-wholesale.example<br><b>TIN 24491830-0001</b></p>
+    </section>
+    <section class="lux-party">
+      <div class="label">Deliver to · site</div>
+      <h2>Northgate Foods Factory — Phase 2 (Production Hall & Utilities)</h2>
+      <p>Km 18, Lagos–Ibadan Expressway, Mowe, Ogun State<br>Site contact: Mr. Ifeanyi Eze — +234 800 555 0120</p>
+    </section>
+  </div>
+    <table class="lux-table">
+    <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Line items</caption>
+    <colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup>
+    <thead><tr>
+      <th>#</th>
+      <th>Description / specification</th>
+      <th class="r">Qty</th>
+      <th>Unit</th>
+      <th class="r">Unit Cost (₦)</th>
+      <th class="r">Amount</th>
+    </tr></thead>
+    <tbody><tr>
+    <td class="num">1</td>
+    <td><div class="iname">Portland-limestone cement CEM II 42.5R</div><div class="imake">Dangote-grade bulk supply (synthetic spec)</div><div class="ispec">50 kg bags, palletised<br><i>Delivery in 4 tranches</i></div></td>
+    <td class="r qty">1,200</td>
+    <td class="unit">bags</td>
+    <td class="r price">₦8,550.00</td>
+    <td class="r amt">₦10,260,000.00</td>
+  </tr><tr>
+    <td class="num">2</td>
+    <td><div class="iname">High-yield deformed reinforcement bar Y16</div><div class="imake">BS 4449:2005 Grade B500B</div><div class="ispec">12 m lengths, mill-certified<br>Bundled & tagged by heat number<br>Delivery tolerance ±2% on tonnage; weighbridge tickets supplied with every load</div></td>
+    <td class="r qty">85</td>
+    <td class="unit">tonnes</td>
+    <td class="r price">₦943,000.00</td>
+    <td class="r amt">₦80,155,000.00</td>
+  </tr><tr>
+    <td class="num">3</td>
+    <td><div class="iname">Hot-dip galvanised structural I-beam IPE 300</div><div class="imake">S275JR — EN 10025</div><div class="ispec">12 m lengths; <b>galvanised to ISO 10025</b><br>Mill test certificates supplied<br><i>Optional:</i> primer plus two-coat polyurethane finish available on request</div></td>
+    <td class="r qty">42</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦398,950.00</td>
+    <td class="r amt">₦16,755,900.00</td>
+  </tr><tr>
+    <td class="num">4</td>
+    <td><div class="iname">Armoured power cable 4-core 95 mm² Cu/XLPE/SWA/PVC</div><div class="imake">0.6/1 kV — BS 5467</div><div class="ispec">Drum length 250 m; <b>cut-to-length</b> on request<br>Supplied on returnable steel drums</div><div class="lux-thumb"><img src="assets/products/havells.svg" alt="Havells"></div></td>
+    <td class="r qty">1,500</td>
+    <td class="unit">m</td>
+    <td class="r price">₦23,300.00</td>
+    <td class="r amt">₦34,950,000.00</td>
+  </tr><tr>
+    <td class="num">5</td>
+    <td><div class="iname">Main LV distribution board, 800 A, TPN, 36-way</div><div class="imake">Form 2b, IP54 floor-standing</div><div class="ispec">Powder-coated 2 mm sheet steel, 800 A copper busbar<br>Incl. neutral & earth bars; type-tested to IEC 61439<br>Factory-wired with surge protection and metering CT provisions</div><div class="lux-thumb"><img src="assets/products/schneider-electric.svg" alt="Schneider Electric"></div></td>
+    <td class="r qty">6</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦1,517,000.00</td>
+    <td class="r amt">₦9,102,000.00</td>
+  </tr><tr>
+    <td class="num">6</td>
+    <td><div class="iname">MCCB 3-pole 250 A, 36 kA</div><div class="imake">Adjustable thermal-magnetic trip</div><div class="ispec">Breaking capacity 36 kA @ 415 V; rotary handle, terminal shrouds & auxiliary contact included</div></td>
+    <td class="r qty">24</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦116,450.00</td>
+    <td class="r amt">₦2,794,800.00</td>
+  </tr><tr>
+    <td class="num">7</td>
+    <td><div class="iname">Centrifugal end-suction pump set, 7.5 kW</div><div class="imake">50 m³/h @ 32 m head — cast-iron volute</div><div class="ispec"><b>Set includes:</b> 3-phase motor, baseplate, coupling guard, flexible couplings<br><i>2-year manufacturer warranty</i></div><div class="lux-thumb"><img src="assets/products/grundfos.svg" alt="Grundfos"></div></td>
+    <td class="r qty">4</td>
+    <td class="unit">sets</td>
+    <td class="r price">₦1,164,400.00</td>
+    <td class="r amt">₦4,657,600.00</td>
+  </tr></tbody>
+  </table>
+      <footer class="lux-footer">
+    <span class="foot-issuer"><svg class="foot-logo" viewBox="0 0 26.927 27" aria-hidden="true"><use href="#g-logo"/></svg><span class="foot-name">Kestrel Industrial Supply Ltd</span></span>
+    <span class="foot-page">Page 1 of 4</span>
+    <span class="foot-ref">PO-2026-0089</span>
+  </footer>
+    </div>
+  </section>
+
+<section class="page" data-page="2" aria-label="PURCHASE ORDER page 2 of 4">
+    <div class="page-frame">
+      <div class="lux-run"><span>PURCHASE ORDER · PO-2026-0089</span><span>Meridian Industrial Wholesale Ltd</span></div>
+    <table class="lux-table">
+    <caption class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Line items</caption>
+    <colgroup><col class="c-no"><col><col class="c-qty"><col class="c-unit"><col class="c-price"><col class="c-amt"></colgroup>
+    <thead><tr>
+      <th>#</th>
+      <th>Description / specification</th>
+      <th class="r">Qty</th>
+      <th>Unit</th>
+      <th class="r">Unit Cost (₦)</th>
+      <th class="r">Amount</th>
+    </tr></thead>
+    <tbody><tr>
+    <td class="num">8</td>
+    <td><div class="iname">Axial roof ventilation fan 900 mm, 1.1 kW</div><div class="imake">IP55, 3-phase, backdraught shutter</div><div class="ispec">Galvanised housing; 18,500 m³/h</div></td>
+    <td class="r qty">12</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦315,700.00</td>
+    <td class="r amt">₦3,788,400.00</td>
+  </tr><tr>
+    <td class="num">9</td>
+    <td><div class="iname">Three-phase induction motor 15 kW, IE3, 4-pole, B3</div><div class="imake">Foot-mounted, 400 V / 50 Hz</div><div class="ispec">Class F insulation; IP55; with PTC thermistors</div><div class="lux-thumb"><img src="assets/products/leroy-somer.svg" alt="Leroy-Somer"></div></td>
+    <td class="r qty">6</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦754,400.00</td>
+    <td class="r amt">₦4,526,400.00</td>
+  </tr><tr>
+    <td class="num">10</td>
+    <td><div class="iname">V-belt, pulley & coupling accessory kit</div><div class="imake">Assorted B-section</div></td>
+    <td class="r qty">30</td>
+    <td class="unit">lots</td>
+    <td class="r price">₦31,550.00</td>
+    <td class="r amt">₦946,500.00</td>
+  </tr><tr>
+    <td class="num">11</td>
+    <td><div class="iname">uPVC pressure pipe 110 mm, PN10</div><div class="imake">6 m socketed lengths — water supply</div><div class="ispec">Solvent-weld or rubber-ring joint; includes 10% fitting allowance</div><div class="lux-thumb"><img src="assets/products/comap.svg" alt="Comap"></div></td>
+    <td class="r qty">320</td>
+    <td class="unit">lengths</td>
+    <td class="r price">₦15,250.00</td>
+    <td class="r amt">₦4,880,000.00</td>
+  </tr><tr>
+    <td class="num">12</td>
+    <td><div class="iname">Cast-iron flanged gate valve DN100, PN16</div><div class="imake">Resilient-seated, non-rising stem</div><div class="ispec">Epoxy-coated body; handwheel operated; PN16 drilled flanges</div></td>
+    <td class="r qty">18</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦79,150.00</td>
+    <td class="r amt">₦1,424,700.00</td>
+  </tr><tr>
+    <td class="num">13</td>
+    <td><div class="iname">Industrial sanitary suite — floor-mounted WC with cistern & wall-hung basin</div><div class="imake">Vitreous china, white</div><div class="ispec">Complete with seat, 15 mm angle valves, flexible connectors & waste fittings<br><b>Includes</b> installation pack</div><div class="lux-thumb"><img src="assets/products/kohler.svg" alt="Kohler"></div></td>
+    <td class="r qty">14</td>
+    <td class="unit">sets</td>
+    <td class="r price">₦104,950.00</td>
+    <td class="r amt">₦1,469,300.00</td>
+  </tr><tr>
+    <td class="num">14</td>
+    <td><div class="iname">Safety helmet (hard hat), 6-point ratchet</div><div class="imake">HDPE shell — EN 397</div><div class="ispec">Colour-coded by trade: white / yellow / blue</div></td>
+    <td class="r qty">180</td>
+    <td class="unit">pcs</td>
+    <td class="r price">₦3,450.00</td>
+    <td class="r amt">₦621,000.00</td>
+  </tr><tr>
+    <td class="num">15</td>
+</tbody></table>
+</div></div>
+  </section>
+  </section>
+</body>
+</html>
+
+<script>
+  // Colour theme switcher — one-click, native HTML/CSS/JS
+  // Reads data-theme from clicked button, sets --accent variable on documentElement
+  const themeMap = {
+    coral: '#e65c3c',
+    slate: '#4a90e2',
+    purple: '#6a1b9a',
+    orange: '#a85527',
+    teal: '#009688'
+  };
+
+  document.querySelectorAll('#colour-switcher .theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active from all buttons
+      document.querySelectorAll('#colour-switcher .theme-btn').forEach(b => b.classList.remove('active'));
+      // Add active to clicked
+      btn.classList.add('active');
+      // Set the CSS variable
+      const theme = btn.dataset.theme;
+      document.documentElement.style.setProperty('--accent', themeMap[theme]);
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -174,18 +174,19 @@ test('Executive Forme renders Quotation with valid PDF bytes', async () => {
 
 test('Executive Forme tokens and structure are defined', () => {
   assert.equal(EXECUTIVE_TOKENS.forest, '#173a2c')
-  assert.equal(EXECUTIVE_TOKENS.gold, '#a9854f')
-  assert.equal(EXECUTIVE_TOKENS.paper, '#fcf9f2')
+  assert.equal(EXECUTIVE_TOKENS.slate, '#527c91')
+  assert.equal(EXECUTIVE_TOKENS.paper, '#ffffff')
+  assert.equal(EXECUTIVE_TOKENS.panel, '#f4f7f9')
 })
 
 test('Executive Forme enforces palette isolation and honors explicit custom accent overrides', () => {
   const invoiceModel = buildSampleInvoice()
 
-  // 1. Default (useCustomColors: false or absent) -> strictly uses intrinsic gold and forest
+  // 1. Default (useCustomColors: false or absent) -> strictly uses intrinsic slate and forest
   const defaultData = adaptCommercialDocumentData(invoiceModel as PdfDocumentModel)
   const defaultElement = ExecutiveFormeDocument({ data: defaultData })
   const defaultJson = JSON.stringify(defaultElement)
-  assert.ok(defaultJson.includes(EXECUTIVE_TOKENS.gold), 'Must contain intrinsic gold')
+  assert.ok(defaultJson.includes(EXECUTIVE_TOKENS.slate), 'Must contain intrinsic slate')
   assert.ok(defaultJson.includes(EXECUTIVE_TOKENS.forest), 'Must contain intrinsic forest')
 
   // 2. App theme fallback without useCustomColors -> does NOT leak app color
@@ -203,7 +204,7 @@ test('Executive Forme enforces palette isolation and honors explicit custom acce
   const appThemeElement = ExecutiveFormeDocument({ data: appThemeData })
   const appThemeJson = JSON.stringify(appThemeElement)
   assert.ok(!appThemeJson.includes('#d97706'), 'Must not leak app theme accent when useCustomColors is false')
-  assert.ok(appThemeJson.includes(EXECUTIVE_TOKENS.gold), 'Must retain intrinsic gold')
+  assert.ok(appThemeJson.includes(EXECUTIVE_TOKENS.slate), 'Must retain intrinsic slate')
 
   // 3. Explicit custom color enabled -> reflects custom accent
   const customModel = {

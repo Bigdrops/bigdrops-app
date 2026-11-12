@@ -203,7 +203,7 @@ test('Industry Forme document generates valid PDF bytes with approved fonts', as
 test('Retained commercial templates include Forme options and Evergreen', () => {
   assert.deepStrictEqual(
     [...INVOICE_PDF_TEMPLATE_IDS].sort(),
-    ['architectural', 'evergreen', 'executive', 'heritage', 'industrial', 'industry', 'industry-forme', 'landscape', 'minimal'].sort(),
+    ['architectural', 'evergreen', 'executive', 'heritage', 'industrial', 'industry', 'industry-forme', 'landscape', 'minimal', 'mosaic'].sort(),
   )
 
   assert.equal(normalizeInvoicePdfTemplateId('industrial'), 'industrial')
@@ -216,6 +216,7 @@ test('Retained commercial templates include Forme options and Evergreen', () => 
   assert.equal(normalizeInvoicePdfTemplateId('executive'), 'executive')
   assert.equal(normalizeInvoicePdfTemplateId('heritage'), 'heritage')
   assert.equal(normalizeInvoicePdfTemplateId('heritage-house'), 'heritage')
+  assert.equal(normalizeInvoicePdfTemplateId('mosaic'), 'mosaic')
   assert.equal(normalizeInvoicePdfTemplateId('crest'), null)
   assert.equal(normalizeInvoicePdfTemplateId('minimal'), 'minimal')
   assert.equal(normalizeInvoicePdfTemplateId('evergreen'), 'evergreen')
@@ -313,19 +314,11 @@ test('Retired commercial template files are physically deleted from the codebase
     'Industry.tsx',
     'Evergreen.tsx',
     'EvergreenStyles.ts',
+    'industryStyles.ts',
   ]
 
   for (const file of deletedFiles) {
     const fullPath = path.join(templatesDir, file)
     assert.ok(!fs.existsSync(fullPath), `Retired file ${file} must not exist on disk`)
-  }
-
-  const retainedFiles = [
-    'industryStyles.ts',
-  ]
-
-  for (const file of retainedFiles) {
-    const fullPath = path.join(templatesDir, file)
-    assert.ok(fs.existsSync(fullPath), `Retained file ${file} must exist on disk`)
   }
 })

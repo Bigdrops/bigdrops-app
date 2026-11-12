@@ -194,8 +194,8 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
           <View style={{ width: '56%', backgroundColor: ARCHITECTURAL_TOKENS.charcoal, borderRadius: 3, padding: compact ? 8 : 10, justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
               {companyLogo ? (
-                <View style={{ width: 40, height: 40, backgroundColor: ARCHITECTURAL_TOKENS.ivory, borderWidth: 0.5, borderColor: copperLight, borderRadius: 2, padding: 5, alignItems: 'center', justifyContent: 'center' }}>
-                  <Image src={companyLogo} href={companyLogo} style={{ width: 30, height: 30 }} />
+                <View style={{ backgroundColor: '#ffffff', width: 36, height: 36, borderRadius: 3, padding: 3 }}>
+                  <Image src={companyLogo} href={companyLogo} width={30} />
                 </View>
               ) : null}
               <View style={{ flex: 1 }}>
@@ -252,7 +252,7 @@ export function ArchitecturalFormeDocument({ data, compact = false }: Architectu
                   {safeText(data.issueDateLabel || 'Date')}
                 </Text>
                 <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: ARCHITECTURAL_TOKENS.ink }}>
-                  {safeText(data.issueDate || '—')}
+                  {safeText(data.issueDate || '')}
                 </Text>
               </View>
               {data.dueDateOrValidityDate ? (

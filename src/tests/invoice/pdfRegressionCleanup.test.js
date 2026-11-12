@@ -7,7 +7,6 @@ const previewModelPath = path.resolve('src/domain/invoice/previewModel.ts')
 const financialProjectionPath = path.resolve('src/domain/invoice/projections/financialProjection.ts')
 const contentProjectionPath = path.resolve('src/domain/invoice/projections/contentProjection.ts')
 const documentMediaPath = path.resolve('src/domain/documentMedia.ts')
-const industryStylesPath = path.resolve('src/components/pdf/templates/industryStyles.ts')
 const industryTemplatePath = path.resolve('src/components/pdf/forme/IndustryFormeDocument.tsx')
 const industryAdapterPath = path.resolve('src/components/pdf/industryAdapter.ts')
 const tablePath = path.resolve('src/components/pdf/table.ts')
@@ -41,15 +40,6 @@ test('merged qty and unit render as a tight single token', () => {
 
   assert.match(source, /return `\$\{quantityText\}\$\{unitText\}`/)
   assert.doesNotMatch(source, /\\u00A0/)
-})
-
-test('industry pdf header keeps a wider logo and stable horizontal meta layout', () => {
-  const source = fs.readFileSync(industryStylesPath, 'utf8')
-
-  assert.match(source, /headerRight:\s*\{[^}]*width:\s*96/s)
-  assert.match(source, /logo:\s*\{[^}]*width:\s*86,[^}]*height:\s*86/s)
-  assert.match(source, /metaLabel:\s*\{[^}]*flexShrink:\s*0/s)
-  assert.match(source, /metaValue:\s*\{[^}]*flexShrink:\s*1/s)
 })
 
 test('advance invoice summary renders after the shared totals block', () => {

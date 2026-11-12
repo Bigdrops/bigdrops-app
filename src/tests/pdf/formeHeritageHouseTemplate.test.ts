@@ -178,7 +178,7 @@ test('Heritage House Forme renders Quotation with valid PDF bytes', async () => 
 test('Heritage House Forme tokens and structure are defined', () => {
   assert.equal(HERITAGE_TOKENS.burgundy, '#5c1a26')
   assert.equal(HERITAGE_TOKENS.bronze, '#9a7b45')
-  assert.equal(HERITAGE_TOKENS.paper, '#f8f2e3')
+  assert.equal(HERITAGE_TOKENS.paper, '#ffffff')
   assert.equal(HERITAGE_TOKENS.ivory, '#f2e9d4')
 })
 

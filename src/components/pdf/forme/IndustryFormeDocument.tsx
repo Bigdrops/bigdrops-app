@@ -2,6 +2,7 @@ import React from 'react'
 import { Cell, Document, Fixed, Image, Link, Page, Row, Table, Text, View } from '@formepdf/react'
 import { INDUSTRY_DEFAULT_ACCENT, INDUSTRY_GROUP_TOKENS, type CommercialDocumentData } from '../industryAdapter'
 import { lightenHex } from '@/lib/pdfDesignPreset'
+import { glyphRuns } from './glyphs'
 import {
   getAccentTint,
   buildPartyLines,
@@ -376,11 +377,11 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
                           {isDesc ? (
                             <View>
                               <Text style={{ fontFamily: font, fontSize: 9, fontWeight: 700, color: textColor, textAlign: align }}>
-                                {mainText}
+                                {glyphRuns(mainText, font)}
                               </Text>
                               {subText ? (
                                 <Text style={{ fontFamily: font, fontSize: 8, color: mutedColor, marginTop: 1, textAlign: align }}>
-                                  {subText}
+                                  {glyphRuns(subText, font)}
                                 </Text>
                               ) : null}
                               {row.imageUrl ? (
@@ -391,7 +392,7 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
                             </View>
                           ) : (
                             <Text style={{ fontFamily: font, fontSize: 9, color: textColor, textAlign: align }}>
-                              {mainText}
+                              {glyphRuns(mainText, font)}
                             </Text>
                           )}
                         </Cell>

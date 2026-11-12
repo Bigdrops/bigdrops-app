@@ -1,5 +1,5 @@
 import React from 'react'
-import { Cell, Document, Fixed, Image, Link, Page, Row, Table, Text, View } from '@formepdf/react'
+import { Cell, Document, Fixed, Image, Link, Page, Row, Svg, Table, Text, View } from '@formepdf/react'
 import type { CommercialDocumentData } from '../industryAdapter'
 import { isFormeSupportedFamily } from './fonts'
 import { glyphRuns } from './glyphs'
@@ -24,9 +24,12 @@ export const HERITAGE_TOKENS = {
   muted: '#7b6e5c',
   rule: '#d9cbac',
   lightRule: '#eae0ca',
-  paper: '#f8f2e3',
+  /* Paper stock: clean white. `page` fills the sheet, and `paper`/`white` are the
+     surface tints, so all three are white. Burgundy, bronze and ivory stay. */
+  paper: '#ffffff',
+  page: '#ffffff',
   ivory: '#f2e9d4',
-  white: '#fffdf7',
+  white: '#ffffff',
 } as const
 
 const PORTRAIT_WIDTH = 595.28
@@ -145,7 +148,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
 
   return (
     <Document title={`${data.title} ${data.documentNumber || ''}`.trim()} style={{ fontFamily: font, fontSize: 8.5, color: HERITAGE_TOKENS.ink }}>
-      <Page size={pageSize} margin={pageMargin} style={{ backgroundColor: HERITAGE_TOKENS.paper }}>
+      <Page size={pageSize} margin={pageMargin} style={{ backgroundColor: HERITAGE_TOKENS.page }}>
         {/* TOP ACCENT RULE */}
         <Fixed position="header">
           <View style={{ borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule, paddingBottom: 3, marginBottom: compact ? 5 : 7, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -238,7 +241,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
               <Text style={{ fontFamily: headerFont, fontWeight: 700, color: HERITAGE_TOKENS.ink }}>{safeText(data.documentNumber)}</Text>
             </Text>
             <Text style={{ fontFamily: font, fontSize: 6.8, color: HERITAGE_TOKENS.muted, letterSpacing: 0.5, marginTop: 1 }}>
-              {`${safeText(data.issueDateLabel || 'Issue Date')} ${safeText(data.issueDate || '—')}`}
+              {`${safeText(data.issueDateLabel || 'Issue Date')} ${safeText(data.issueDate || '')}`.trim()}
             </Text>
           </View>
         </View>
@@ -246,9 +249,15 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
         {/* Diamond Ornament Divider */}
         <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: compact ? 3 : 5 }}>
           <View style={{ flex: 1, height: 0.5, backgroundColor: bronze }} />
-          <Text style={{ fontFamily: headerFont, fontSize: 7, color: bronze, marginHorizontal: 6 }}>
-            {'❖'}
-          </Text>
+          {/* Vector diamond. No font-family glyph is involved, so no fallback can
+              render a missing-glyph box or question mark. */}
+          <Svg
+            width={5}
+            height={5}
+            viewBox="0 0 10 10"
+            style={{ marginHorizontal: 6 }}
+            content={`<path d="M5 0.6 L9.4 5 L5 9.4 L0.6 5 Z" fill="${bronze}" />`}
+          />
           <View style={{ flex: 1, height: 0.5, backgroundColor: bronze }} />
         </View>
 
@@ -345,7 +354,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
               {data.table.rows.map((row, rowIdx) => {
                 if (row.rowType === 'group_header') {
                   return (
-                    <Row key={`gh-${rowIdx}`} style={{ backgroundColor: HERITAGE_TOKENS.ivory, borderTopWidth: 0.5, borderTopColor: bronze, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule }}>
+                    <Row key={`gh-${rowIdx}`} style={{ backgroundColor: HERITAGE_TOKENS.white, borderTopWidth: 0.5, borderTopColor: bronze, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule }}>
                       <Cell colSpan={tableColumnCount} style={{ paddingVertical: 4, paddingHorizontal: 5 }}>
                         <Text style={{ fontFamily: headerFont, fontSize: 7.5, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                           {safeText(row.groupLabel || row.groupName)}
@@ -357,7 +366,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
 
                 if (row.rowType === 'group_footer') {
                   return (
-                    <Row key={`gf-${rowIdx}`} style={{ backgroundColor: HERITAGE_TOKENS.ivory, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.rule, borderBottomWidth: 1.5, borderBottomColor: HERITAGE_TOKENS.burgundy }}>
+                    <Row key={`gf-${rowIdx}`} style={{ backgroundColor: HERITAGE_TOKENS.white, borderTopWidth: 0.5, borderTopColor: HERITAGE_TOKENS.rule, borderBottomWidth: 1.5, borderBottomColor: HERITAGE_TOKENS.burgundy }}>
                       <Cell colSpan={tableColumnCount} style={{ paddingVertical: 4, paddingHorizontal: 5 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
                           <Text style={{ fontFamily: headerFont, fontSize: 7.2, fontStyle: 'italic', color: HERITAGE_TOKENS.burgundy, marginRight: 8 }}>
@@ -372,7 +381,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
                   )
                 }
 
-                const rowBg = rowIdx % 2 === 0 ? HERITAGE_TOKENS.white : HERITAGE_TOKENS.paper
+                const rowBg = HERITAGE_TOKENS.white
                 return (
                   <Row key={`tr-${rowIdx}`} style={{ backgroundColor: rowBg, borderBottomWidth: 0.5, borderBottomColor: HERITAGE_TOKENS.rule }}>
                     {data.table.columns.map((col, colIdx) => {
@@ -451,7 +460,7 @@ export function HeritageHouseFormeDocument({ data, compact = false }: HeritageHo
               </View>
             ) : null}
             {isAdvanceInvoice && advance ? (
-              <View style={{ marginTop: 4, padding: 4, backgroundColor: HERITAGE_TOKENS.ivory, borderRadius: 2 }}>
+              <View style={{ marginTop: 4, padding: 4, backgroundColor: HERITAGE_TOKENS.white, borderRadius: 2 }}>
                 <Text style={{ fontFamily: headerFont, fontSize: 6.8, fontWeight: 700, color: HERITAGE_TOKENS.burgundy, textTransform: 'uppercase' }}>
                   {safeText(advance.primaryLabel || 'Advance Payment')}
                 </Text>
