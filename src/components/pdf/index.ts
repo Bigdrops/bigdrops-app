@@ -75,6 +75,7 @@ export type CommercialPdfRoute =
   | 'architectural-forme'
   | 'executive-forme'
   | 'heritage-forme'
+  | 'mosaic-forme'
 
 /**
  * Resolve which renderer handles a commercial template identifier.
@@ -86,6 +87,7 @@ export type CommercialPdfRoute =
  * - 'architectural' always uses the Forme Architectural renderer.
  * - 'executive' always uses the Forme Executive renderer.
  * - 'heritage' always uses the Forme Heritage House renderer.
+ * - 'mosaic' always uses the Forme Mosaic renderer.
  * - Explicit 'industry-forme' normalizes to 'industry' and therefore also uses Forme.
  * - Retired 'modern-minimal' normalizes to 'minimal'.
  * - Everything else defaults to Forme Industry.
@@ -102,6 +104,7 @@ export function resolveCommercialPdfRoute(
   if (activeTemplateId === 'architectural') return 'architectural-forme'
   if (activeTemplateId === 'executive') return 'executive-forme'
   if (activeTemplateId === 'heritage') return 'heritage-forme'
+  if (activeTemplateId === 'mosaic') return 'mosaic-forme'
   return 'industry-forme'
 }
 
@@ -111,7 +114,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
 
   const route = resolveCommercialPdfRoute(request.templateId, request.engine)
 
-  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen, Architectural, Executive, Heritage)
+  // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen, Architectural, Executive, Heritage, Mosaic)
   const [
     IndustrialDocModule,
     IndustryDocModule,
@@ -121,6 +124,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     ArchitecturalDocModule,
     ExecutiveDocModule,
     HeritageDocModule,
+    MosaicDocModule,
     { renderPdfcnToBytes },
     { ensureFormeFontFamily },
   ] = await Promise.all([
@@ -132,6 +136,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     import('./forme/ArchitecturalFormeDocument'),
     import('./forme/ExecutiveFormeDocument'),
     import('./forme/HeritageHouseFormeDocument'),
+    import('./forme/MosaicFormeDocument'),
     import('./pdfcn/adapter'),
     import('./forme/fonts'),
   ])
@@ -178,6 +183,11 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
     })
   } else if (route === 'heritage-forme') {
     element = React.createElement(HeritageDocModule.HeritageHouseFormeDocument, {
+      data: adaptedData,
+      compact: request.compact,
+    })
+  } else if (route === 'mosaic-forme') {
+    element = React.createElement(MosaicDocModule.MosaicFormeDocument, {
       data: adaptedData,
       compact: request.compact,
     })
@@ -248,7 +258,7 @@ export async function generatePurchaseOrderPdfBlob(request: PdfGenerationRequest
   return generatePdfBlob(request)
 }
 
-export async function generateCpsFormePdfBlob(request: {
+export async function generateCpsCommercialPdfBlob(request: {
   element: React.ReactElement
   filename: string
 }): Promise<{ blob: Blob; filename: string }> {
@@ -275,7 +285,7 @@ export async function generateCpsFormePdfBlob(request: {
   return { blob, filename }
 }
 
-export async function generateCpsFormePdf(request: {
+export async function generateCpsCommercialPdf(request: {
   element: React.ReactElement
   filename: string
 }): Promise<PdfGenerationResult> {

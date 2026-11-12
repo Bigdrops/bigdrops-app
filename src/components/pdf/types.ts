@@ -1,6 +1,6 @@
 import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
 
-export type PdfDocumentKind = 'invoice' | 'quotation' | 'purchase_order'
+export type PdfDocumentKind = 'invoice' | 'quotation' | 'purchase_order' | 'cps'
 
 export type PdfTextAlign = 'left' | 'center' | 'right'
 
@@ -99,6 +99,8 @@ export type PdfTotalRow = {
   amount: number
   emphasis?: boolean
   tone?: 'default' | 'muted' | 'danger' | 'success' | 'primary'
+  /** Defaults to 'money'. 'percent' renders N% — used for the CPS margin line. */
+  format?: 'money' | 'percent' | 'number'
 }
 
 export type PdfAdvanceSummary = {
@@ -219,4 +221,10 @@ export type PurchaseOrderPdfModel = PdfBaseDocumentModel & {
   }
 }
 
-export type PdfDocumentModel = InvoicePdfModel | QuotationPdfModel | PurchaseOrderPdfModel
+export type CpsPdfModel = PdfBaseDocumentModel & {
+  identity: PdfDocumentIdentity & {
+    kind: 'cps'
+  }
+}
+
+export type PdfDocumentModel = InvoicePdfModel | QuotationPdfModel | PurchaseOrderPdfModel | CpsPdfModel

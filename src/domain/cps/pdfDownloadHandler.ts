@@ -1,14 +1,19 @@
 import { resolveCanonicalLogoUrl } from '@/domain/documentMedia'
-import { computeCpsTotals } from '@/domain/cps/calculateCpsTotals'
 import { normalizeCpsColumns } from '@/domain/cps/columns'
 import type { Cps } from '@/domain/cps/types'
-import { buildCpsViewData, buildCpsViewSegments, type CpsViewItemRow } from '@/domain/cps/viewData'
-import type { CpsPdfColumnKey, CpsPdfModel } from '@/components/pdf/cpsPreparedModel'
-import { CPS_CAPABILITIES, CPS_POLICY, CPS_TEMPLATE_DEFAULTS } from '@/domain/pdf/customization/cps'
+import { feedback } from '@/lib/feedback'
+import {
+  CPS_CAPABILITIES,
+  CPS_POLICY,
+  CPS_TEMPLATE_DEFAULTS,
+} from '@/domain/pdf/customization/cps'
 import { loadSettings } from '@/domain/pdf/customization/hooks'
 import { resolveFull } from '@/domain/pdf/customization/resolver'
-import { readCpsPdfDisplayPreferences, type CpsPdfOrientation, type CpsPdfTemplateId } from '@/domain/cps/pdfPreferences'
-import { feedback } from '@/lib/feedback'
+import { readCpsPdfDisplayPreferences, type CpsPdfOrientation } from '@/domain/cps/pdfPreferences'
+import { adaptCommercialDocumentData, type CommercialDocumentData } from '@/components/pdf/industryAdapter'
+import { prepareCpsCommercialDocument } from '@/domain/pdf/resolver/commercial'
+import { resolveCommercialPdfRoute, type CommercialPdfRoute } from '@/components/pdf'
+import type { PdfDocumentModel } from '@/components/pdf/types'
 
 type CpsPdfPipelineStage = 'prepare' | 'customization' | 'font' | 'template'
 type ErrorWithCause = Error & { cause?: unknown }
@@ -33,15 +38,24 @@ async function cpsStage<T>(stage: CpsPdfPipelineStage, operation: () => Promise<
   }
 }
 
-function asText(value: unknown): string {
-  return value === null || value === undefined ? '' : String(value)
-}
+export function resolveCpsPdfColumns(columnConfig: unknown) {
+  const NEVER_AUTO_HIDE = new Set(['description', 'quantity', 'sp'])
+  const columns = normalizeCpsColumns(columnConfig as Array<{ key: string; visibilityMode?: string }>)
 
-function money(value: number): string {
-  return '₦' + Number(value || 0).toLocaleString('en-NG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+  const isColumnShown = (key: string) => {
+    if (NEVER_AUTO_HIDE.has(key)) return true
+    const column = columns.find((entry) => entry.key === key)
+    if (!column) return key === 'make_brand' || key === 'unit'
+    return (column.visibilityMode || 'show') === 'show'
+  }
+
+  const descriptionShown = isColumnShown('description')
+  return {
+    showMake: isColumnShown('make_brand'),
+    showUnit: isColumnShown('unit'),
+    showCp: isColumnShown('cp'),
+    showSpec: descriptionShown,
+  }
 }
 
 async function toDataUri(url: string): Promise<string | null> {
@@ -62,197 +76,67 @@ async function toDataUri(url: string): Promise<string | null> {
   }
 }
 
-export interface CpsPdfColumnVisibility {
-  showMake: boolean
-  showUnit: boolean
-  showCp: boolean
-  showSpec: boolean
-}
-
-const NEVER_AUTO_HIDE = new Set(['description', 'quantity', 'sp'])
-
-function isColumnShown(columns: Array<{ key: string; visibilityMode?: string }>, key: string): boolean {
-  if (NEVER_AUTO_HIDE.has(key)) return true
-  const column = columns.find((entry) => entry.key === key)
-  if (!column) return key === 'make_brand' || key === 'unit'
-  return (column.visibilityMode || 'show') === 'show'
-}
-
-export function resolveCpsPdfColumns(columnConfig: unknown): CpsPdfColumnVisibility {
-  const columns = normalizeCpsColumns(columnConfig)
-  const descriptionShown = isColumnShown(columns, 'description')
-  return {
-    showMake: isColumnShown(columns, 'make_brand'),
-    showUnit: isColumnShown(columns, 'unit'),
-    showCp: isColumnShown(columns, 'cp'),
-    showSpec: descriptionShown,
-  }
-}
-
-export function resolveCpsFormeVisibleColumns(visibility: CpsPdfColumnVisibility): CpsPdfColumnKey[] {
-  const columns: CpsPdfColumnKey[] = ['no', 'description', 'qty']
-  if (visibility.showCp) columns.push('cp')
-  columns.push('sp', 'total')
-  return columns
-}
-
-export function selectCpsFormeDocument(templateId: CpsPdfTemplateId): 'ledger' | 'industry' {
-  if (templateId === 'industry') return 'industry'
-  return 'ledger'
-}
-
-export function resolveExternalImageHref(value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  const candidate = value.trim()
-  if (!candidate) return null
-  let url: URL
-  try {
-    url = new URL(candidate)
-  } catch {
-    return null
-  }
-  if (url.protocol !== 'https:') return null
-  return url.href
-}
-
 function sanitizeFilename(value: string): string {
   return value.replace(/[^a-zA-Z0-9-_]+/g, '_').replace(/^_|_$/g, '')
 }
 
-export function buildCpsFormeModel(input: {
+const TEMPLATE_IMPORTERS: Record<CommercialPdfRoute, () => Promise<any>> = {
+  'industrial-forme': () => import('@/components/pdf/forme/IndustrialFormeDocument'),
+  'industry-forme': () => import('@/components/pdf/forme/IndustryFormeDocument'),
+  'minimal-forme': () => import('@/components/pdf/forme/MinimalFormeDocument'),
+  'landscape-forme': () => import('@/components/pdf/forme/LandscapeFormeDocument'),
+  'evergreen-forme': () => import('@/components/pdf/forme/EvergreenFormeDocument'),
+  'architectural-forme': () => import('@/components/pdf/forme/ArchitecturalFormeDocument'),
+  'executive-forme': () => import('@/components/pdf/forme/ExecutiveFormeDocument'),
+  'heritage-forme': () => import('@/components/pdf/forme/HeritageHouseFormeDocument'),
+  'mosaic-forme': () => import('@/components/pdf/forme/MosaicFormeDocument'),
+}
+
+const TEMPLATE_COMPONENTS: Record<CommercialPdfRoute, (mod: any) => React.ComponentType<{ data: CommercialDocumentData; compact?: boolean }>> = {
+  'industrial-forme': (m) => m.IndustrialFormeDocument,
+  'industry-forme': (m) => m.IndustryFormeDocument,
+  'minimal-forme': (m) => m.MinimalFormeDocument,
+  'landscape-forme': (m) => m.LandscapeFormeDocument,
+  'evergreen-forme': (m) => m.EvergreenFormeDocument,
+  'architectural-forme': (m) => m.ArchitecturalFormeDocument,
+  'executive-forme': (m) => m.ExecutiveFormeDocument,
+  'heritage-forme': (m) => m.HeritageHouseFormeDocument,
+  'mosaic-forme': (m) => m.MosaicFormeDocument,
+}
+
+async function loadCpsTemplateElement(
+  route: CommercialPdfRoute,
+  dataConfig: { model: PdfDocumentModel; compact?: boolean },
+) {
+  const React = await import('react')
+  const mod = await cpsStage('template', () => TEMPLATE_IMPORTERS[route]())
+  const Component = TEMPLATE_COMPONENTS[route](mod)
+  const adapted = adaptCommercialDocumentData(dataConfig.model)
+  return React.createElement(Component, { data: adapted, compact: dataConfig.compact })
+}
+
+export function buildCpsCommercialModel(input: {
   cps: Cps
   settings: Record<string, unknown>
   logoDataUri?: string | null
   photoDataUris?: Record<string, string>
-  fontFamily?: string
-  accent?: string | null
   orientation?: CpsPdfOrientation
-  columnVisibility?: CpsPdfColumnVisibility
-}): CpsPdfModel {
-  const { cps, settings, logoDataUri, photoDataUris } = input
+  columnVisibility?: { showMake: boolean; showUnit: boolean; showCp: boolean; showSpec: boolean }
+}) {
+  const { cps, settings, photoDataUris } = input
   const visibility = input.columnVisibility || resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
-  const fontFamily = input.fontFamily || 'Helvetica'
-  const accent = input.accent === undefined ? null : input.accent
   const orientation: CpsPdfOrientation = input.orientation || 'portrait'
-  const tableRows = cps.table_rows || []
-  const totals = computeCpsTotals(tableRows)
-  const viewData = buildCpsViewData(cps)
-  const segments = buildCpsViewSegments(viewData.rows)
+  const logoDataUri = input.logoDataUri ?? null
 
-  const toItemRow = (row: CpsViewItemRow) => {
-    const unit = visibility.showUnit ? row.unit || '' : ''
-    return {
-      key: row.key,
-      kind: 'item' as const,
-      number: row.number,
-      groupId: row.groupId || null,
-      title: '',
-      description: row.description || '',
-      specification: visibility.showSpec ? row.specification || '' : '',
-      make: visibility.showMake ? row.makeBrand || '' : '',
-      quantityText: `${row.quantity} ${unit}`.trim(),
-      quantityValue: Number(row.quantity) || 0,
-      unitText: unit,
-      cpText: money(row.cp),
-      spText: money(row.sp),
-      totalText: money(row.selling),
-      totalCostText: money(row.cost),
-      imageDataUri: (row.key && photoDataUris?.[row.key]) || null,
-      imageHref: resolveExternalImageHref(row.imageUrl),
-    }
-  }
-
-  const rows: CpsPdfModel['rows'] = []
-  const groups: CpsPdfModel['groups'] = []
-  segments.forEach((segment) => {
-    if (segment.type === 'item') {
-      rows.push(toItemRow(segment.row))
-      return
-    }
-
-    rows.push({
-      key: `${segment.row.key}-heading`,
-      kind: 'group',
-      number: '',
-      groupId: segment.membership,
-      title: segment.row.title,
-      description: '',
-      specification: '',
-      make: '',
-      quantityText: '',
-      quantityValue: 0,
-      unitText: '',
-      cpText: '',
-      spText: '',
-      totalText: '',
-      totalCostText: '',
-      imageDataUri: null,
-      imageHref: null,
-    })
-    segment.items.forEach((row) => rows.push(toItemRow(row)))
-    const groupCost = segment.items.reduce((sum, row) => sum + (Number(row.cost) || 0), 0)
-    rows.push({
-      key: `${segment.row.key}-subtotal`,
-      kind: 'group-subtotal',
-      number: '',
-      groupId: segment.membership,
-      title: `${segment.row.title} subtotal`,
-      description: '',
-      specification: '',
-      make: '',
-      quantityText: '',
-      quantityValue: 0,
-      unitText: '',
-      cpText: '',
-      spText: '',
-      totalText: money(segment.total),
-      totalCostText: money(groupCost),
-      imageDataUri: null,
-      imageHref: null,
-    })
-    groups.push({
-      id: segment.membership,
-      title: segment.row.title,
-      itemCount: String(segment.count),
-      subtotalText: money(segment.total),
-      costSubtotalText: money(groupCost),
-    })
+  const model = prepareCpsCommercialDocument(cps, {
+    settings,
+    columnVisibility: visibility,
+    orientation,
+    logoDataUri,
+    photoDataUris,
   })
 
-
-  const snapshot = (cps.custom_fields?.client_snapshot || {}) as Record<string, unknown>
-  const text = (value: unknown) => (typeof value === 'string' ? value.trim() : asText(value).trim())
-
-  return {
-    title: cps.title?.trim() || 'Cost & Pricing Sheet',
-    number: cps.cps_number || '',
-    issueDate: cps.issue_date || '',
-    status: String((cps as { status?: unknown }).status || 'open').toUpperCase(),
-    currency: 'NGN',
-    companyName: text(settings?.company_name),
-    logoDataUri: logoDataUri || null,
-    companyLines: [text(settings?.company_address)].filter(Boolean),
-    clientName: text(snapshot.name) || text(cps.client_name),
-    clientLines: [text(snapshot.contact_person), text(snapshot.city), text(snapshot.phone), text(snapshot.email)].filter(Boolean),
-    site: text(cps.project_name),
-    notes: text(cps.notes),
-    fontFamily,
-    accent,
-    orientation,
-    visibleColumns: resolveCpsFormeVisibleColumns(visibility),
-    rows,
-    groups,
-    totals: [
-      { label: 'Total Cost (CP × Qty)', display: money(totals.total_cost) },
-      { label: 'Schedule Selling Total (SP × Qty)', display: money(totals.total_selling_price) },
-      { label: 'Gross Profit', display: money(totals.gross_profit) },
-      {
-        label: 'Margin',
-        display: `${Number(totals.margin_percent || 0).toFixed(1)}%`,
-        emphasis: true,
-      },
-    ],
-  }
+  return model
 }
 
 export async function getCpsPdfBlob(input: {
@@ -260,21 +144,19 @@ export async function getCpsPdfBlob(input: {
   settings: Record<string, unknown>
 }): Promise<{ blob: Blob; filename: string }> {
   const { cps, settings } = input
-  const { generateCpsFormePdfBlob } = await cpsStage('prepare', () => import('@/components/pdf'))
-  const { LedgerCpsDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/LedgerCpsDocument'))
-  const { CpsIndustryDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsIndustryDocument'))
+  const { generateCpsCommercialPdfBlob } = await cpsStage('prepare', () => import('@/components/pdf'))
   const { ensureFormeFontFamily } = await cpsStage('prepare', () => import('@/components/pdf/forme/fonts'))
-  const React = await cpsStage('prepare', () => import('react'))
 
   const prefs = await cpsStage('customization', () => readCpsPdfDisplayPreferences())
   const { customization } = await cpsStage('customization', () => resolveFull(CPS_TEMPLATE_DEFAULTS, CPS_CAPABILITIES, CPS_POLICY, loadSettings('cps_sheets')))
-  const [fontFamily] = await cpsStage('font', () => Promise.all([
-    ensureFormeFontFamily(customization.documentFont),
-    ensureFormeFontFamily('Noto Sans'),
-  ]))
-  const accent = customization.accentEnabled ? customization.accentColor : null
-  const columnVisibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
+  await cpsStage('font', () =>
+    Promise.all([
+      ensureFormeFontFamily(customization.documentFont),
+      ensureFormeFontFamily('Noto Sans'),
+    ]),
+  )
 
+  const visibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
   const logoUrl = resolveCanonicalLogoUrl(settings)
   const logoDataUri = logoUrl && logoUrl.startsWith('data:') ? logoUrl : logoUrl ? await toDataUri(logoUrl) : null
 
@@ -291,25 +173,23 @@ export async function getCpsPdfBlob(input: {
     if (dataUri) photoDataUris[key] = dataUri
   }
 
-  const model = await cpsStage('template', () => buildCpsFormeModel({
-    cps,
-    settings,
-    logoDataUri,
-    photoDataUris,
-    fontFamily,
-    accent,
-    orientation: prefs.orientation,
-    columnVisibility,
-  }))
-  const rawName = `${model.number} ${model.title}`.trim() || 'cps'
+  const model = await cpsStage('template', () =>
+    buildCpsCommercialModel({
+      cps,
+      settings,
+      logoDataUri,
+      photoDataUris,
+      orientation: prefs.orientation,
+      columnVisibility: visibility,
+    }),
+  )
+
+  const rawName = `${model.identity.number} ${model.identity.title}`.trim() || 'cps'
   const filename = `${sanitizeFilename(rawName)}.pdf`
-  const SelectedDocument = await cpsStage('template', () => {
-    const selected = selectCpsFormeDocument(prefs.templateId)
-    if (selected === 'industry') return CpsIndustryDocument
-    return LedgerCpsDocument
-  })
-  return generateCpsFormePdfBlob({
-    element: React.createElement(SelectedDocument, { model }),
+  const route = resolveCommercialPdfRoute(prefs.templateId)
+  const element = await loadCpsTemplateElement(route, { model })
+  return generateCpsCommercialPdfBlob({
+    element,
     filename,
   })
 }
@@ -323,21 +203,19 @@ export async function handleDownloadCpsPdf(input: {
 
   setDownloading(true)
   try {
-    const { generateCpsFormePdf } = await cpsStage('prepare', () => import('@/components/pdf'))
-    const { LedgerCpsDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/LedgerCpsDocument'))
-    const { CpsIndustryDocument } = await cpsStage('prepare', () => import('@/components/pdf/forme/CpsIndustryDocument'))
+    const { generateCpsCommercialPdf } = await cpsStage('prepare', () => import('@/components/pdf'))
     const { ensureFormeFontFamily } = await cpsStage('prepare', () => import('@/components/pdf/forme/fonts'))
-    const React = await cpsStage('prepare', () => import('react'))
 
     const prefs = await cpsStage('customization', () => readCpsPdfDisplayPreferences())
     const { customization } = await cpsStage('customization', () => resolveFull(CPS_TEMPLATE_DEFAULTS, CPS_CAPABILITIES, CPS_POLICY, loadSettings('cps_sheets')))
-    const [fontFamily] = await cpsStage('font', () => Promise.all([
-      ensureFormeFontFamily(customization.documentFont),
-      ensureFormeFontFamily('Noto Sans'),
-    ]))
-    const accent = customization.accentEnabled ? customization.accentColor : null
-    const columnVisibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
+    await cpsStage('font', () =>
+      Promise.all([
+        ensureFormeFontFamily(customization.documentFont),
+        ensureFormeFontFamily('Noto Sans'),
+      ]),
+    )
 
+    const visibility = resolveCpsPdfColumns(cps.custom_fields?.columnConfig)
     const logoUrl = resolveCanonicalLogoUrl(settings)
     const logoDataUri = logoUrl && logoUrl.startsWith('data:') ? logoUrl : logoUrl ? await toDataUri(logoUrl) : null
 
@@ -354,25 +232,23 @@ export async function handleDownloadCpsPdf(input: {
       if (dataUri) photoDataUris[key] = dataUri
     }
 
-    const model = await cpsStage('template', () => buildCpsFormeModel({
-      cps,
-      settings,
-      logoDataUri,
-      photoDataUris,
-      fontFamily,
-      accent,
-      orientation: prefs.orientation,
-      columnVisibility,
-    }))
-    const rawName = `${model.number} ${model.title}`.trim() || 'cps'
+    const model = await cpsStage('template', () =>
+      buildCpsCommercialModel({
+        cps,
+        settings,
+        logoDataUri,
+        photoDataUris,
+        orientation: prefs.orientation,
+        columnVisibility: visibility,
+      }),
+    )
+
+    const rawName = `${model.identity.number} ${model.identity.title}`.trim() || 'cps'
     const filename = `${sanitizeFilename(rawName)}.pdf`
-    const SelectedDocument = await cpsStage('template', () => {
-      const selected = selectCpsFormeDocument(prefs.templateId)
-      if (selected === 'industry') return CpsIndustryDocument
-      return LedgerCpsDocument
-    })
-    await generateCpsFormePdf({
-      element: React.createElement(SelectedDocument, { model }),
+    const route = resolveCommercialPdfRoute(prefs.templateId)
+    const element = await loadCpsTemplateElement(route, { model })
+    await generateCpsCommercialPdf({
+      element,
       filename,
     })
     feedback.success('Download ready', { description: `${filename} saved.` })

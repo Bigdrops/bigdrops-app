@@ -19,7 +19,7 @@ import DocumentConfirmDialog from '@/components/document-view/shared/DocumentCon
 import DocumentCustomizeCard from '@/components/document-view/shared/DocumentCustomizeCard'
 import DocumentMoreSheet from '@/components/document-view/shared/DocumentMoreSheet'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
-import TemplatePickerCarousel, { type TemplatePickerOption } from '@/components/document-view/shared/TemplatePickerCarousel'
+import CommercialTemplatePicker from '@/components/document-view/shared/CommercialTemplatePicker'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import { buildCpsViewSegments, type CpsViewData, type CpsViewRow } from '@/domain/cps/viewData'
 import { CpsConversionOptionsSheet } from '@/components/cps/CpsConversionOptionsSheet'
@@ -368,37 +368,6 @@ function DocumentActionRow({
   )
 }
 
-const CPS_TEMPLATE_OPTIONS: TemplatePickerOption[] = [
-  {
-    id: 'ledger',
-    label: 'Ledger',
-    blurb: 'Grouped cost schedule',
-    layout: 'commercial',
-    theme: {
-      pageBg: '#ffffff',
-      headerBg: '#183b52',
-      headerFg: '#ffffff',
-      accent: '#183b52',
-      border: '#dce2e6',
-      mutedBg: '#edf0f2',
-    },
-  },
-  {
-    id: 'industry',
-    label: 'Industry',
-    blurb: 'Industrial schedule',
-    layout: 'commercial',
-    theme: {
-      pageBg: '#ffffff',
-      headerBg: '#7d8a88',
-      headerFg: '#ffffff',
-      accent: '#7d8a88',
-      border: '#e5e7eb',
-      mutedBg: '#e8e8e8',
-    },
-  },
-]
-
 function CpsCustomizeSheet({
   open,
   onClose,
@@ -446,10 +415,9 @@ function CpsCustomizeSheet({
         setInkFont={setInkFont}
         setInkColour={setInkColour}
         templatePicker={
-          <TemplatePickerCarousel
+          <CommercialTemplatePicker
             value={prefs.templateId}
             onChange={(id) => handleTemplateChange(id as CpsPdfTemplateId)}
-            options={CPS_TEMPLATE_OPTIONS}
           />
         }
         colorSwatches={[]}

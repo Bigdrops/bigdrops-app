@@ -1,5 +1,7 @@
 import type React from 'react'
 import type { PdfcnDocumentEnvelope } from '@/domain/pdf/resolver'
+import { ensureFormeFontFamily } from '../forme/fonts'
+import { CURRENCY_GLYPH_FONT, SYMBOL_GLYPH_FONT } from '../forme/glyphs'
 import {
   CompositePdfDelivery,
   NativePdfDelivery,
@@ -46,9 +48,25 @@ async function loadFormeRenderDocument(): Promise<(element: React.ReactElement) 
 }
 
 /**
+ * Locked-coverage families used by per-glyph fallback (Naira, Greek letters,
+ * superscripts, fractions). Registering them here means every render path — app,
+ * previews and tests — has them, so a fallback run can never land on Helvetica.
+ */
+async function ensureGlyphCoverageFonts(): Promise<void> {
+  await Promise.all([
+    ensureFormeFontFamily('Inter'),
+    // Registering Noto Sans also registers the Greek subset used for Ω.
+    ensureFormeFontFamily('Noto Sans'),
+    ensureFormeFontFamily(CURRENCY_GLYPH_FONT),
+    ensureFormeFontFamily(SYMBOL_GLYPH_FONT),
+  ])
+}
+
+/**
  * Render a Forme React document element directly into raw PDF bytes.
  */
 export async function renderPdfcnToBytes(element: React.ReactElement): Promise<Uint8Array> {
+  await ensureGlyphCoverageFonts()
   const renderDocument = await loadFormeRenderDocument()
   try {
     const bytes = await renderDocument(element)

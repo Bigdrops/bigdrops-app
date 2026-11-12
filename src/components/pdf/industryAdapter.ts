@@ -37,7 +37,7 @@ type CommercialDocumentDesign = Pick<
 }
 
 export type CommercialDocumentData = {
-  documentKind?: 'invoice' | 'quotation' | 'purchase_order'
+  documentKind?: 'invoice' | 'quotation' | 'purchase_order' | 'cps'
   isProcurement?: boolean
   partyHeaderLabel?: string
   deliveryDestination?: PurchaseOrderDeliveryDestination | null
@@ -137,11 +137,13 @@ const PDF_MONEY_KEYS = new Set(['unit_price', 'amount', 'install_rate', 'unitCos
 
 function getDocumentNumberLabel(kind: PdfDocumentModel['identity']['kind']) {
   if (kind === 'purchase_order') return 'PO Number'
+  if (kind === 'cps') return 'CPS Number'
   return kind === 'invoice' ? 'Invoice Number' : 'Quotation Number'
 }
 
 function getDateLabel(kind: PdfDocumentModel['identity']['kind']) {
   if (kind === 'purchase_order') return 'PO Date'
+  if (kind === 'cps') return 'Issue Date'
   return kind === 'invoice' ? 'Due Date' : 'Valid Until'
 }
 
@@ -339,6 +341,15 @@ function createIndustryRows(model: PdfDocumentModel, columns: PdfColumnDefinitio
   return filtered
 }
 
+const formatTotalAmount = (line: { amount: number; format?: 'money' | 'percent' | 'number' } | undefined) => {
+  if (!line) return ''
+  if (line.format === 'percent') return `${Number(line.amount || 0).toFixed(1)}%`
+  if (line.format === 'number') {
+    return Number(line.amount || 0).toLocaleString('en-NG', { maximumFractionDigits: 2 })
+  }
+  return formatPdfMoney(line.amount)
+}
+
 export function adaptCommercialDocumentData(model: PdfDocumentModel): CommercialDocumentData {
   const issuerAddress = splitAddressLines(model.issuer?.addressLines || [])
   const recipientAddress = splitAddressLines(model.recipient?.addressLines || [])
@@ -354,7 +365,7 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
         /discount|wht|withholding|deduction/i.test(line.label)
       return {
         label: line.label,
-        value: formatPdfMoney(line.amount),
+        value: formatTotalAmount(line),
         isDeduction,
       }
     })
@@ -377,7 +388,9 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
       ? 'PURCHASE ORDER'
       : model.identity.kind === 'invoice'
         ? 'INVOICE'
-        : 'QUOTATION'
+        : model.identity.kind === 'cps'
+          ? 'COST & PRICING SHEET'
+          : 'QUOTATION'
   const rawTitle = (model.identity.title || '').trim()
   const isDuplicate = rawTitle.toUpperCase() === primaryTitle
   const partyHeaderLabel =
@@ -408,10 +421,15 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
     currency: model.identity.currency || null,
     issueDate: model.identity.issueDate,
     issueDateLabel: isProcurement ? 'PO Date' : 'Issue Date',
-    dueDateOrValidityDate: model.identity.kind === 'invoice' ? model.identity.dueDate : model.identity.validUntil,
-    dueDateOrValidityDateLabel: getDateLabel(model.identity.kind),
-    poNumber: isProcurement ? null : model.identity.poNumber,
-    poNumberLabel: 'PO Number',
+    dueDateOrValidityDate:
+      model.identity.kind === 'cps'
+        ? String(model.identity.status || '')
+        : model.identity.kind === 'invoice'
+          ? model.identity.dueDate
+          : model.identity.validUntil,
+    dueDateOrValidityDateLabel: model.identity.kind === 'cps' ? 'Status' : getDateLabel(model.identity.kind),
+    poNumber: model.identity.kind === 'cps' ? model.identity.currency || null : isProcurement ? null : model.identity.poNumber,
+    poNumberLabel: model.identity.kind === 'cps' ? 'Currency' : 'PO Number',
     customHeaderFields: (model.headerFields || []).filter((field) => !standardHeaderLabels.has(normalizeHeaderLabel(field.label))),
     showTagline: Boolean(model.tagline),
     showBankDetails: Boolean(model.bankDetails),
@@ -472,7 +490,7 @@ export function adaptCommercialDocumentData(model: PdfDocumentModel): Commercial
       mainLine: mainLine
         ? {
             label: mainLine.label,
-            value: formatPdfMoney(mainLine.amount),
+            value: formatTotalAmount(mainLine),
           }
         : null,
       amountInWords: model.totals.amountInWords || '',

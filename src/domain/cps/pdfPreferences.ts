@@ -1,7 +1,25 @@
-export type CpsPdfTemplateId = 'ledger' | 'industry'
+/**
+ * CPS PDF display preferences.
+ *
+ * CPS consumes the same established commercial Forme template inventory as
+ * Invoice and Quotation. The persistent preference mechanism (localStorage
+ * key) is kept; only the template id registry has moved. Retired ids
+ * ('ledger' | 'schedule' | 'compact') migrate to the industry default.
+ */
 
-/** Retired ids. Persisted prefs may still carry these; they fall back to ledger. */
-export type RetiredCpsPdfTemplateId = 'schedule' | 'compact'
+import { normalizeInvoicePdfTemplateId } from '@/domain/invoice/types'
+
+export type CpsPdfTemplateId =
+  | 'industrial'
+  | 'industry'
+  | 'minimal'
+  | 'landscape'
+  | 'evergreen'
+  | 'architectural'
+  | 'executive'
+  | 'heritage'
+  | 'mosaic'
+
 export type CpsPdfOrientation = 'portrait' | 'landscape'
 
 export interface CpsPdfTemplateMeta {
@@ -11,8 +29,15 @@ export interface CpsPdfTemplateMeta {
 }
 
 export const CPS_PDF_TEMPLATES: CpsPdfTemplateMeta[] = [
-  { id: 'ledger', label: 'Ledger', description: 'Portrait cost-sheet presentation with grouped walls.' },
-  { id: 'industry', label: 'Industry', description: 'Industry-family presentation of the same cost schedule.' },
+  { id: 'industrial', label: 'Industrial', description: 'Technical Forme presentation of the cost schedule.' },
+  { id: 'industry', label: 'Industry', description: 'Structured commercial presentation of the cost schedule.' },
+  { id: 'minimal', label: 'Minimal', description: 'Restrained, low-noise cost schedule.' },
+  { id: 'landscape', label: 'Landscape', description: 'Wide-format schedule for dense BOQs.' },
+  { id: 'evergreen', label: 'Evergreen', description: 'Evergreen Forme presentation.' },
+  { id: 'architectural', label: 'Architectural', description: 'Architectural House presentation.' },
+  { id: 'executive', label: 'Executive', description: 'Executive Forme presentation.' },
+  { id: 'heritage', label: 'Heritage House', description: 'Heritage House presentation.' },
+  { id: 'mosaic', label: 'Mosaic', description: 'Mosaic Forme presentation.' },
 ]
 
 export interface CpsPdfDisplayPreferences {
@@ -23,24 +48,28 @@ export interface CpsPdfDisplayPreferences {
 const STORAGE_KEY = 'cps_pdf_display_prefs'
 
 const DEFAULTS: CpsPdfDisplayPreferences = {
-  templateId: 'ledger',
+  templateId: 'industry',
   orientation: 'portrait',
 }
 
-const RETIRED_TEMPLATE_IDS: ReadonlySet<string> = new Set(['schedule', 'compact'])
-
 function isTemplateId(value: unknown): value is CpsPdfTemplateId {
-  return value === 'ledger' || value === 'industry'
+  return (
+    value === 'industrial' ||
+    value === 'industry' ||
+    value === 'minimal' ||
+    value === 'landscape' ||
+    value === 'evergreen' ||
+    value === 'architectural' ||
+    value === 'executive' ||
+    value === 'heritage' ||
+    value === 'mosaic'
+  )
 }
 
-/** Retired ids stay readable so old saved prefs migrate instead of breaking. */
-export function isRetiredTemplateId(value: unknown): value is RetiredCpsPdfTemplateId {
-  return typeof value === 'string' && RETIRED_TEMPLATE_IDS.has(value)
-}
-
-/** Map any stored id to a renderable template. Retired ids fall back to ledger. */
+/** Map any stored id to a renderable template. Retired/unknown ids fall back to the industry default. */
 export function resolveActiveTemplateId(value: unknown): CpsPdfTemplateId {
-  if (isTemplateId(value)) return value
+  const normalized = normalizeInvoicePdfTemplateId(value)
+  if (normalized && isTemplateId(normalized)) return normalized
   return DEFAULTS.templateId
 }
 

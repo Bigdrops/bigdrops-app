@@ -5,10 +5,35 @@ import { GREEK_GLYPH_FONT } from './fonts'
 /** Locked glyph-coverage font for the Naira sign. */
 export const CURRENCY_GLYPH_FONT = 'Noto Sans'
 
+/**
+ * Locked glyph-coverage font for engineering symbols: superscripts, subscripts,
+ * vulgar fractions, the micro sign, Greek letters and comparison signs. Inter,
+ * PT Serif, Archivo Black, Caveat and Noto Sans all lack parts of this set, and a
+ * missing glyph is written to the PDF as `?`.
+ */
+export const SYMBOL_GLYPH_FONT = 'Plus Jakarta Sans'
+
+const GREEK_LETTERS = ['Δ', 'π', 'Ω', '\u2126', 'θ', 'λ', 'φ', 'Σ', 'α', 'β', 'γ', 'δ', 'ε', 'μ']
+const SUPERSCRIPTS = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁻', '⁺', 'ⁿ']
+const SUBSCRIPTS = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉']
+const FRACTIONS = ['¼', '½', '¾', '⅛', '⅜', '⅝', '⅞', '⅓', '⅔', '⁄']
+const MEASURES = ['µ', '°', '±', '×', '÷', '≈', '≠', '≤', '≥', '√', '∞', '∅', 'Ø', '‰', '′', '″']
+
 const FALLBACK_FOR: Record<string, string> = {
   '₦': CURRENCY_GLYPH_FONT,
+  // OHM SIGN is a distinct code point from GREEK CAPITAL OMEGA. Typed data can
+  // contain either; both must leave a Latin-only family for the Greek subset.
   'Ω': GREEK_GLYPH_FONT,
+  '\u2126': GREEK_GLYPH_FONT,
   '−': 'Inter',
+}
+
+for (const char of [...SUPERSCRIPTS, ...SUBSCRIPTS, ...FRACTIONS, ...MEASURES]) {
+  FALLBACK_FOR[char] = SYMBOL_GLYPH_FONT
+}
+for (const char of GREEK_LETTERS) {
+  if (char === 'Ω' || char === '\u2126') continue
+  FALLBACK_FOR[char] = SYMBOL_GLYPH_FONT
 }
 
 const BASE_FONT_MISSING: Record<string, ReadonlySet<string>> = {
@@ -31,6 +56,17 @@ function fontHasChar(font: string, char: string): boolean {
 }
 
 /**
+ * A character with a locked coverage font is always routed to that font, so a
+ * family that lacks the glyph (including ones not enumerated in
+ * BASE_FONT_MISSING, such as the OHM SIGN) can never emit a `?`.
+ */
+function fallbackFor(font: string, char: string): string | null {
+  const target = FALLBACK_FOR[char]
+  if (!target || target === font) return null
+  return target
+}
+
+/**
  * Split a value into runs so every required glyph is drawn by a font that
  * contains it. The base font keeps most text; only glyphs it lacks move to
  * their locked coverage font. Consecutive characters that share a font are
@@ -39,7 +75,7 @@ function fontHasChar(font: string, char: string): boolean {
 export function splitGlyphRuns(value: string, baseFont: string): GlyphRun[] {
   const runs: GlyphRun[] = []
   for (const char of Array.from(value)) {
-    const fontFamily = fontHasChar(baseFont, char) ? baseFont : FALLBACK_FOR[char] || baseFont
+    const fontFamily = fallbackFor(baseFont, char) || (fontHasChar(baseFont, char) ? baseFont : FALLBACK_FOR[char] || baseFont)
     const previous = runs[runs.length - 1]
     if (previous && previous.fontFamily === fontFamily) {
       previous.text += char

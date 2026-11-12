@@ -139,7 +139,7 @@ export function resolveCommercialDocumentFamily(
  * Use this in PDF download actions (invoicePdfActions, pdfDownloadHandler)
  * where the React hook is not available.
  *
- * Intrinsic-palette templates (architectural/executive/heritage) own their color scheme:
+ * Intrinsic-palette templates (architectural/executive/heritage/mosaic) own their color scheme:
  * any saved or engine-bridged custom accent is suppressed for them and their intrinsic
  * palette always wins. This is the single choke point for the restriction — no call site
  * needs to re-implement it.
