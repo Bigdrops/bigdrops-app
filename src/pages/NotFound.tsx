@@ -204,7 +204,7 @@ export default function NotFound() {
         </p>
         <Button
           asChild
-          className="n4-cta inline-flex h-auto w-auto items-center gap-2 rounded-full border-0 bg-[#f5f5f7] px-6 py-3.5 text-[clamp(13px,2.2cqmin,16px)] font-semibold text-black no-underline shadow-none transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.25,.1,.25,1)] hover:bg-[#f5f5f7] hover:text-black hover:shadow-[0_12px_32px_-10px_#f5c77e] hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#f5c77e]"
+          className="n4-cta inline-flex h-auto w-auto items-center gap-2 rounded-full border-0 bg-[#f5f5f7] px-6 py-3.5 text-[clamp(13px,2.2cqmin,16px)] font-semibold text-black no-underline shadow-none transition-[transform,box-shadow] duration-300 [transition-timing-function:cubic-bezier(.25,.1,.25,1)] hover:bg-[#f5f5f7] hover:text-black hover:shadow-[0_12px_32px_-10px_#f5c77e] hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#f5c77e]"
         >
           <Link to="/">Back to home</Link>
         </Button>
