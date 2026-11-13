@@ -1,8 +1,10 @@
-import type { RefObject, UIEvent } from 'react'
-import { ArrowDown, Loader2, Sparkles } from 'lucide-react'
+import { useState, type RefObject, type UIEvent } from 'react'
+import { ArrowDown, Sparkles } from 'lucide-react'
 
 import { SAMPLE_SENTENCE, SUGGESTION, type ChangeCard, type Reply, type TurnId } from './assistant-chat-script'
-import { AssistantMark, ChangeCardView, StatusRow } from './assistant-chat-parts'
+import { ChangeCardView, StatusRow } from './assistant-chat-parts'
+import { ClerkAvatar, type ClerkState } from './assistant-chat-clerk'
+import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
 
 export type UserMessage = { id: string; role: 'user'; text: string }
 export type StatusBlock = { id: string; kind: 'status'; label: string; done: boolean }
@@ -23,6 +25,8 @@ export type ChatMessage = UserMessage | AssistantMessage
 export function AssistantThread({
   messages,
   busy,
+  clerkState,
+  tone,
   showJump,
   logRef,
   onScroll,
@@ -33,6 +37,9 @@ export function AssistantThread({
 }: {
   messages: ChatMessage[]
   busy: boolean
+  clerkState: ClerkState
+  /** Current appearance — drives the ThinkingOrb theme prop. */
+  tone: 'light' | 'dark'
   showJump: boolean
   logRef: RefObject<HTMLDivElement | null>
   onScroll: (event: UIEvent<HTMLDivElement>) => void
@@ -41,6 +48,14 @@ export function AssistantThread({
   onSend: (text: string, turn?: TurnId) => void
   onReset: () => void
 }) {
+  const [readerAway, setReaderAway] = useState(false)
+
+  function handleScroll(event: UIEvent<HTMLDivElement>) {
+    const { scrollHeight, scrollTop, clientHeight } = event.currentTarget
+    setReaderAway(scrollHeight - scrollTop - clientHeight > 48)
+    onScroll(event)
+  }
+
   return (
     <div className="ac-stream">
       <div
@@ -50,12 +65,26 @@ export function AssistantThread({
         aria-live="polite"
         aria-relevant="additions text"
         aria-busy={busy}
-        onScroll={onScroll}
+        onScroll={handleScroll}
       >
         {messages.length === 0 ? (
           <div className="ac-empty">
-            <div className="ac-empty-mark">
-              <AssistantMark size={64} title="BOURXE assistant" />
+            <div className="ac-empty-clerk-slot">
+              {/* Show the ThinkingOrb while active; avatar when idle/success.
+                  The orb carries its own aria-label; the avatar's label is
+                  suppressed when the orb is showing to avoid duplication. */}
+              <BoluOrbIdentity
+                state={clerkState}
+                tone={tone}
+                paused={false}
+              />
+              <ClerkAvatar
+                size={96}
+                state={clerkState}
+                phase={2}
+                className={`ac-empty-clerk${clerkState !== 'idle' && clerkState !== 'success' ? ' ac-empty-clerk--orb-active' : ''}`}
+                label={clerkState === 'idle' || clerkState === 'success' ? `BOURXE clerk, ${clerkState}` : undefined}
+              />
             </div>
             <p className="ac-empty-title">Draft an invoice by talking</p>
             <p className="ac-empty-copy">
@@ -74,14 +103,21 @@ export function AssistantThread({
           </div>
         ) : null}
 
-        {messages.map((message) =>
-          message.role === 'user' ? (
+        {messages.map((message, index) => {
+          const latest = index === messages.length - 1
+          return message.role === 'user' ? (
             <div key={message.id} className="ac-row ac-row--user">
               <p className="ac-bubble">{message.text}</p>
             </div>
           ) : (
             <div key={message.id} className="ac-turn">
-              <AssistantMark size={26} className="ac-turn-mark" />
+              <ClerkAvatar
+                size={32}
+                state={latest ? clerkState : 'idle'}
+                animated={latest}
+                phase={index}
+                className="ac-turn-avatar"
+              />
               <div className="ac-turn-body">
                 {message.blocks.map((block) => {
                   if (block.kind === 'status') {
@@ -112,7 +148,11 @@ export function AssistantThread({
                 {message.thinking && message.blocks.length === 0 ? (
                   <div className="ac-status" data-done={false}>
                     <span className="ac-status-icon" aria-hidden="true">
-                      <Loader2 className="ac-spin size-3.5" />
+                      <BoluOrbInline
+                        state={clerkState}
+                        tone={tone}
+                        paused={!latest}
+                      />
                     </span>
                     <span>Working</span>
                   </div>
@@ -134,13 +174,15 @@ export function AssistantThread({
                 ) : null}
               </div>
             </div>
-          ),
-        )}
+          )
+        })}
       </div>
 
-      {showJump ? (
-        <button type="button" className="ac-jump" onClick={onJump}>
-          <ArrowDown className="size-3.5" aria-hidden="true" /> Latest
+      {showJump || readerAway ? (
+        <button type="button" className="ac-jump" onClick={onJump} aria-label="Jump to latest messages">
+          <ArrowDown className="size-3.5" aria-hidden="true" />
+          <span>Jump to latest</span>
+          {busy ? <span className="ac-jump-live" aria-label="New activity streaming">Streaming</span> : null}
         </button>
       ) : null}
     </div>

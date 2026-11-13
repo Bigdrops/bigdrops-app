@@ -21,6 +21,11 @@
   --ac-sage: hsl(var(--sage));
   --ac-sage-soft: hsl(var(--sage-soft));
   --ac-scrim: color-mix(in srgb, var(--ac-ink) 46%, transparent);
+  --ac-ambient-primary: var(--field-a, var(--ac-accent));
+  --ac-ambient-secondary: var(--primary-bright, var(--field-c, var(--ac-accent)));
+  --ac-glass-bg: var(--glass-bg, color-mix(in srgb, var(--ac-surface) 55%, transparent));
+  --ac-glass-line: var(--glass-line, color-mix(in srgb, var(--ac-accent) 24%, transparent));
+  --ac-glass-shadow: var(--glass-shadow, color-mix(in srgb, var(--ac-ink) 18%, transparent));
   font-family: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -62,8 +67,13 @@
   height: 100%;
   overflow: hidden;
   border-radius: 43px;
-  background: var(--ac-surface);
+  background-color: color-mix(in srgb, var(--ac-surface) 72%, var(--ac-glass-bg));
+  background-image:
+    radial-gradient(ellipse at 8% 18%, color-mix(in srgb, var(--ac-ambient-primary) 10%, transparent), transparent 52%),
+    radial-gradient(ellipse at 96% 76%, color-mix(in srgb, var(--ac-ambient-secondary) 8%, transparent), transparent 48%);
   color: var(--ac-ink);
+  -webkit-backdrop-filter: blur(4px) saturate(115%);
+  backdrop-filter: blur(4px) saturate(115%);
 }
 
 /* ── Status bar ─────────────────────────────────────────────── */
@@ -106,7 +116,14 @@
   align-items: center;
   gap: 9px;
   padding: 10px 14px 9px;
-  border-bottom: 1px solid color-mix(in srgb, var(--ac-line) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ac-accent) 25%, rgba(255, 255, 255, 0.6));
+  border-bottom-color: var(--ac-glass-line);
+  background: color-mix(in srgb, var(--ac-raised) 55%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.72),
+    0 8px 24px -8px color-mix(in srgb, var(--ac-accent) 22%, rgba(0, 0, 0, 0.12));
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
 }
 
 .ac-head-id {
@@ -265,6 +282,28 @@
   border-bottom: 1px solid var(--ac-line);
 }
 
+.ac-menu-search-label {
+  display: block;
+  padding: 8px 9px 4px;
+}
+
+.ac-menu-search {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--ac-line);
+  border-radius: 9px;
+  outline: none;
+  color: var(--ac-ink);
+  background: var(--ac-surface);
+  font: inherit;
+  font-size: 10px;
+}
+
+.ac-menu-search:focus-visible {
+  border-color: var(--ac-accent);
+  box-shadow: 0 0 0 2px var(--ac-accent-soft);
+}
+
 .ac-menu-title {
   font-size: 11px;
   font-weight: 700;
@@ -274,6 +313,19 @@
   margin-top: 1px;
   font-size: 9.5px;
   color: var(--ac-faint);
+}
+
+.ac-simulation-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 5px;
+  padding: 3px 7px;
+  border-radius: 99px;
+  color: var(--ac-attn);
+  background: color-mix(in srgb, var(--ac-attn-soft) 20%, var(--ac-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ac-attn) 26%, transparent);
+  font-size: 8.5px;
+  font-weight: 700;
 }
 
 .ac-menu-list {
@@ -470,10 +522,6 @@
   animation: ac-rise 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.ac-turn-mark {
-  margin-top: 2px;
-}
-
 .ac-turn-body {
   display: flex;
   flex-direction: column;
@@ -531,6 +579,14 @@
 
 .ac-spin {
   animation: ac-spin 900ms linear infinite;
+}
+
+/* ThinkingOrb inside the 17px status-icon slot: constrain to fit without
+   blurring — 17px is within the 3px tolerance the library allows from the
+   20px preset (see thinking-orbs docs). */
+.ac-status-icon canvas {
+  width: 17px !important;
+  height: 17px !important;
 }
 
 /* ── Change cards ───────────────────────────────────────────── */
@@ -751,8 +807,8 @@
   z-index: 4;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
+  gap: 6px;
+  padding: 7px 11px;
   border-radius: 99px;
   font-size: 10px;
   font-weight: 650;
@@ -764,6 +820,15 @@
   transform: translateX(-50%);
 }
 
+.ac-jump-live {
+  padding: 2px 6px;
+  border-radius: 99px;
+  color: var(--ac-accent);
+  background: var(--ac-accent-soft);
+  font-size: 8px;
+  font-weight: 700;
+}
+
 .ac-composer {
   flex: none;
 }
@@ -771,17 +836,21 @@
 .ac-compose {
   margin: 0 12px;
   padding: 7px 9px 7px;
+  border: 1px solid color-mix(in srgb, var(--ac-accent) 25%, rgba(255, 255, 255, 0.6));
   border-radius: 18px;
-  background: var(--ac-raised);
+  background: color-mix(in srgb, var(--ac-raised) 55%, transparent);
   box-shadow:
-    inset 0 0 0 1px var(--ac-line),
-    0 12px 26px -24px var(--ac-ink);
+    inset 0 1px 1px rgba(255, 255, 255, 0.72),
+    0 8px 24px -8px color-mix(in srgb, var(--ac-accent) 22%, rgba(0, 0, 0, 0.12));
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
 }
 
 .ac-input {
   display: block;
   width: 100%;
-  max-height: 84px;
+  max-height: 160px;
+  overflow-y: hidden;
   padding: 5px 2px 7px;
   resize: none;
   border: 0;
@@ -791,6 +860,7 @@
   font-size: 12.5px;
   line-height: 1.45;
   color: var(--ac-ink);
+  transition: height 120ms ease;
 }
 
 .ac-input::placeholder {
@@ -893,19 +963,6 @@
   animation: ac-rise 320ms ease both;
 }
 
-.ac-empty-mark {
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
-  border-radius: 30px;
-  background: color-mix(in srgb, var(--ac-accent-soft) 60%, var(--ac-surface));
-  box-shadow:
-    inset 0 0 0 1px var(--ac-accent-line),
-    0 0 0 8px color-mix(in srgb, var(--ac-accent-soft) 42%, transparent),
-    0 22px 40px -30px var(--ac-accent);
-}
-
 .ac-empty-title {
   margin-top: 16px;
   font-size: 15px;
@@ -932,15 +989,18 @@
   font-size: 11.5px;
   font-weight: 650;
   color: var(--ac-ink);
-  background: var(--ac-surface);
+  border: 1px solid color-mix(in srgb, var(--ac-accent) 25%, rgba(255, 255, 255, 0.6));
+  background: color-mix(in srgb, var(--ac-raised) 55%, transparent);
   box-shadow:
-    inset 0 0 0 1px var(--ac-accent-line),
-    0 10px 22px -18px var(--ac-accent);
+    inset 0 1px 1px rgba(255, 255, 255, 0.72),
+    0 8px 24px -8px color-mix(in srgb, var(--ac-accent) 22%, rgba(0, 0, 0, 0.12));
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
   transition: background-color 140ms ease;
 }
 
 .ac-suggest:hover {
-  background: var(--ac-accent-soft);
+  background: color-mix(in srgb, var(--ac-raised) 68%, transparent);
 }
 
 .ac-suggest svg {
@@ -954,6 +1014,17 @@
   font-style: italic;
   line-height: 1.5;
   color: var(--ac-faint);
+}
+
+.ac-test {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 9px;
+}
+
+.ac-test span {
+  line-height: 1.4;
 }
 
 /* ── Motion ─────────────────────────────────────────────────── */

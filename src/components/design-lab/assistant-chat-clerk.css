@@ -1,0 +1,902 @@
+/* Design Lab: the clerk identity. A layered vector portrait that animates its
+   own parts, a launcher seal, and the dock. Colours for chrome come from the
+   .ac-device alias layer; the character palette is fixed so the person stays
+   the same person across families, themes, and sizes. */
+
+/* ── Avatar ─────────────────────────────────────────────────── */
+
+.ac-clerk {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+}
+
+.ac-clerk > svg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(125% 125% at 30% 18%, #f6f1e7 0%, #e7ddcc 58%, #d5c7b2 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(32, 26, 20, 0.12),
+    0 8px 18px -14px rgba(32, 26, 20, 0.55);
+}
+
+.ac-clerk-glow {
+  position: absolute;
+  inset: -7%;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ac-accent) 34%, transparent), transparent 68%);
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
+.ac-clerk[data-state='listening'] .ac-clerk-glow {
+  opacity: 0.9;
+  animation: ac-clerk-halo 2.6s ease-in-out infinite;
+}
+
+.ac-clerk[data-state='responding'] .ac-clerk-glow {
+  opacity: 0.55;
+  animation: ac-clerk-halo 1.7s ease-in-out infinite;
+}
+
+@keyframes ac-clerk-halo {
+  0%,
+  100% {
+    transform: scale(0.96);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.85;
+  }
+}
+
+/* Idle life: breath in the shoulders, a small head float, and a blink. */
+.ac-clerk .clerk-torso {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: ac-clerk-breathe 6.4s ease-in-out infinite;
+}
+
+.ac-clerk .clerk-head-bob {
+  transform-box: fill-box;
+  transform-origin: 50% 92%;
+  animation: ac-clerk-bob 7.2s ease-in-out infinite;
+}
+
+@keyframes ac-clerk-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.012);
+  }
+}
+
+@keyframes ac-clerk-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45%,
+  55% {
+    transform: translateY(-0.7px);
+  }
+}
+
+.ac-clerk .clerk-head {
+  transform-box: fill-box;
+  transform-origin: 50% 88%;
+  transition: transform 320ms ease;
+}
+
+.ac-clerk[data-state='listening'] .clerk-head {
+  transform: rotate(1.6deg);
+}
+
+.ac-clerk[data-state='thinking'] .clerk-head {
+  transform: rotate(-1.8deg);
+}
+
+.ac-clerk[data-state='responding'] .clerk-head {
+  transform: rotate(0.4deg);
+}
+
+.ac-clerk[data-state='success'] .clerk-head {
+  transform: rotate(-0.8deg);
+}
+
+/* Blink: the open eye fades while a lid line fades in. */
+.ac-clerk .clerk-eye {
+  animation: ac-clerk-eye 5.8s ease-in-out infinite;
+  animation-delay: var(--clerk-delay, 0s);
+}
+
+.ac-clerk .clerk-lid {
+  opacity: 0;
+  animation: ac-clerk-lid 5.8s ease-in-out infinite;
+  animation-delay: var(--clerk-delay, 0s);
+}
+
+@keyframes ac-clerk-eye {
+  0%,
+  92%,
+  97%,
+  100% {
+    opacity: 1;
+  }
+  94%,
+  95% {
+    opacity: 0;
+  }
+}
+
+@keyframes ac-clerk-lid {
+  0%,
+  92%,
+  97%,
+  100% {
+    opacity: 0;
+  }
+  94%,
+  95% {
+    opacity: 1;
+  }
+}
+
+.ac-clerk .clerk-brow {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 260ms ease;
+}
+
+.ac-clerk[data-state='listening'] .clerk-brow {
+  transform: translateY(-1.3px);
+}
+
+.ac-clerk[data-state='thinking'] .clerk-brow--left {
+  transform: translateY(1.1px) rotate(-5deg);
+}
+
+.ac-clerk[data-state='thinking'] .clerk-brow--right {
+  transform: translateY(-1.5px) rotate(4deg);
+}
+
+.ac-clerk[data-state='success'] .clerk-brow {
+  transform: translateY(-1px);
+}
+
+.ac-clerk .clerk-gaze {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 300ms ease;
+}
+
+.ac-clerk[data-state='thinking'] .clerk-gaze {
+  transform: translate(-1.1px, -0.7px);
+}
+
+.ac-clerk[data-state='listening'] .clerk-gaze {
+  transform: translateY(-0.4px);
+}
+
+.ac-clerk[data-state='success'] .clerk-gaze {
+  transform: translateY(0.3px);
+}
+
+.ac-clerk .clerk-cheek {
+  transition: opacity 300ms ease;
+}
+
+.ac-clerk[data-state='thinking'] .clerk-cheek {
+  opacity: 0.18 !important;
+}
+
+.ac-clerk[data-state='success'] .clerk-cheek {
+  opacity: 0.55 !important;
+}
+
+/* One mouth drawn per expression; only the active one is visible. */
+.ac-clerk .clerk-mouth {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.ac-clerk[data-state='idle'] .clerk-mouth--idle,
+.ac-clerk[data-state='listening'] .clerk-mouth--listening,
+.ac-clerk[data-state='thinking'] .clerk-mouth--thinking,
+.ac-clerk[data-state='responding'] .clerk-mouth--responding,
+.ac-clerk[data-state='success'] .clerk-mouth--success {
+  opacity: 1;
+}
+
+.ac-clerk[data-state='responding'] .clerk-mouth--responding {
+  animation: ac-clerk-talk 0.5s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 20%;
+}
+
+@keyframes ac-clerk-talk {
+  0%,
+  100% {
+    transform: scaleY(0.55);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.ac-clerk[data-state='success'] .clerk-eye {
+  animation: none;
+  transform: scaleY(0.72);
+  transform-box: fill-box;
+  transform-origin: 50% 62%;
+}
+
+.ac-clerk[data-state='success'] .clerk-lid {
+  animation: none;
+  opacity: 0;
+}
+
+.ac-clerk .clerk-thought,
+.ac-clerk .clerk-sparkle {
+  opacity: 0;
+}
+
+.ac-clerk[data-state='thinking'] .clerk-thought {
+  opacity: 1;
+}
+
+.ac-clerk[data-state='thinking'] .clerk-thought circle {
+  animation: ac-clerk-thought 2.4s ease-in-out infinite;
+}
+
+.ac-clerk[data-state='thinking'] .clerk-thought circle:nth-child(2) {
+  animation-delay: 0.22s;
+}
+
+.ac-clerk[data-state='thinking'] .clerk-thought circle:nth-child(3) {
+  animation-delay: 0.44s;
+}
+
+@keyframes ac-clerk-thought {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-0.9px);
+  }
+}
+
+.ac-clerk[data-state='success'] .clerk-sparkle {
+  opacity: 1;
+  animation: ac-clerk-sparkle 3.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes ac-clerk-sparkle {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* Older turns hold still; only the latest turn and the dock animate. */
+.ac-clerk[data-static='true'] .clerk-torso,
+.ac-clerk[data-static='true'] .clerk-head-bob,
+.ac-clerk[data-static='true'] .clerk-eye,
+.ac-clerk[data-static='true'] .clerk-lid,
+.ac-clerk[data-static='true'] .clerk-sparkle {
+  animation: none;
+}
+
+.ac-clerk[data-static='true'] .clerk-eye {
+  opacity: 1;
+}
+
+.ac-turn-avatar {
+  margin-top: 1px;
+}
+
+.ac-empty-clerk {
+  box-shadow:
+    0 0 0 8px color-mix(in srgb, var(--ac-accent-soft) 55%, transparent),
+    0 22px 40px -26px color-mix(in srgb, var(--ac-ink) 55%, transparent);
+}
+
+/* ── Empty-state orb slot ───────────────────────────────────── */
+
+/* Fixed-size container so layout does not shift when the orb replaces
+   the avatar or vice versa. The slot is always 96×96 (the avatar's size). */
+.ac-empty-clerk-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 96px;
+  height: 96px;
+}
+
+/* The ThinkingOrb sits in the centre, absolutely positioned so it and the
+   avatar stack on top of each other without changing the slot size. */
+.ac-empty-clerk-slot > canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* When the orb is active, hide the avatar visually but keep it in the DOM
+   so its aria-label is still read by assistive technologies. */
+.ac-empty-clerk--orb-active {
+  visibility: hidden;
+}
+
+/* When no active orb state (idle/success), the canvas is not rendered so
+   the avatar is always visible. No additional rule needed. */
+
+/* ── Launcher: freestanding character ───────────────────────── */
+
+.ac-launcher {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ac-ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ac-launcher:focus-visible {
+  border-radius: 50%;
+  outline: 2px solid var(--ac-accent);
+  outline-offset: 6px;
+}
+
+.ac-launcher-aura {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--ac-accent) 44%, transparent),
+    transparent 100%
+  );
+  opacity: 0.4;
+  animation: ac-launcher-aura 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.ac-launcher[data-state='listening'] .ac-launcher-aura,
+.ac-launcher[data-state='responding'] .ac-launcher-aura {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--ac-accent) 52%, transparent),
+    transparent 100%
+  );
+}
+
+.ac-launcher[data-state='thinking'] .ac-launcher-aura {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--ac-attn) 48%, transparent),
+    transparent 100%
+  );
+}
+
+.ac-launcher[data-state='success'] .ac-launcher-aura {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--ac-sage) 50%, transparent),
+    transparent 100%
+  );
+}
+
+.ac-launcher:hover .ac-launcher-aura {
+  animation-duration: 3.2s;
+}
+
+@keyframes ac-launcher-aura {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 0.68;
+    transform: scale(1.06);
+  }
+}
+
+.ac-launcher-float {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  animation: ac-launcher-bob 4.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
+}
+
+@keyframes ac-launcher-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.ac-launcher-pad {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  transform-origin: 60% 92%;
+  animation: ac-launcher-gesture 9s ease-in-out infinite;
+}
+
+/* A single small nod every few seconds, not a loop of movement. */
+@keyframes ac-launcher-gesture {
+  0%,
+  84%,
+  97%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  87% {
+    transform: rotate(-5deg) translateY(-1px);
+  }
+  91% {
+    transform: rotate(4deg);
+  }
+  94% {
+    transform: rotate(-1.5deg);
+  }
+}
+
+.ac-launcher-body {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(
+    160deg,
+    var(--ac-ink),
+    color-mix(in srgb, var(--ac-ink) 74%, var(--ac-accent))
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  filter: drop-shadow(0 6px 9px color-mix(in srgb, var(--ac-ink) 28%, transparent));
+  transition: filter 200ms ease;
+}
+
+.ac-launcher:hover .ac-launcher-body {
+  filter: drop-shadow(0 9px 13px color-mix(in srgb, var(--ac-ink) 34%, transparent));
+}
+
+.ac-launcher-shadow {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  width: 26px;
+  height: 5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ac-ink) 28%, transparent);
+  filter: blur(3px);
+  transform: translateX(-50%);
+  animation: ac-launcher-shadow 4.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes ac-launcher-shadow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scaleX(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translateX(-50%) scaleX(0.84);
+  }
+}
+
+.ac-launcher-dot {
+  position: absolute;
+  right: 8px;
+  bottom: 12px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--ac-sage);
+  box-shadow:
+    0 0 0 2.5px color-mix(in srgb, var(--ac-surface) 90%, transparent),
+    inset 0 0 0 1px rgb(255 255 255 / 0.4);
+}
+
+.ac-launcher-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ac-sage) 55%, transparent);
+  opacity: 0;
+  animation: ac-launcher-ping 5.4s ease-out infinite;
+}
+
+@keyframes ac-launcher-ping {
+  0%,
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  76% {
+    opacity: 0.75;
+  }
+  92% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+.ac-launcher-dot[data-state='listening'],
+.ac-launcher-dot[data-state='responding'] {
+  background: var(--ac-accent);
+}
+
+.ac-launcher-dot[data-state='thinking'] {
+  background: var(--ac-attn);
+}
+
+.ac-launcher[data-open='true'] .ac-launcher-aura {
+  animation: none;
+  opacity: 0.5;
+}
+
+.ac-launcher-x {
+  width: 17px;
+  height: 17px;
+}
+
+/* Tablet keeps the character but drops the gesture. */
+.ac-stage[data-viewport='tablet'] .ac-launcher-pad {
+  animation: none;
+}
+
+/* Desktop restraint: smaller, still, breathing light only. */
+:is(.ac-stage[data-viewport='desktop'] .ac-launcher, .ac-launcher[data-variant='restrained']) {
+  width: 56px;
+  height: 56px;
+}
+
+:is(.ac-stage[data-viewport='desktop'] .ac-launcher, .ac-launcher[data-variant='restrained'])
+  .ac-launcher-float,
+:is(.ac-stage[data-viewport='desktop'] .ac-launcher, .ac-launcher[data-variant='restrained'])
+  .ac-launcher-pad {
+  animation: none;
+}
+
+:is(.ac-stage[data-viewport='desktop'] .ac-launcher, .ac-launcher[data-variant='restrained'])
+  .ac-launcher-body {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 4px 7px color-mix(in srgb, var(--ac-ink) 26%, transparent));
+}
+
+:is(.ac-stage[data-viewport='desktop'] .ac-launcher, .ac-launcher[data-variant='restrained'])
+  .ac-launcher-aura {
+  inset: 6px;
+  animation-duration: 8s;
+}
+
+:is(.ac-stage[data-viewport='desktop'] .ac-launcher, .ac-launcher[data-variant='restrained'])
+  .ac-launcher-shadow {
+  display: none;
+}
+
+:is(.ac-stage[data-viewport='desktop'] .ac-launcher, .ac-launcher[data-variant='restrained'])
+  .ac-launcher-dot {
+  right: 6px;
+  bottom: 10px;
+  width: 10px;
+  height: 10px;
+}
+
+/* ── Dock ───────────────────────────────────────────────────── */
+
+.ac-clerk-dock {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  border-radius: 18px;
+  background: var(--ac-raised);
+  box-shadow:
+    inset 0 0 0 1px var(--ac-line),
+    0 30px 60px -30px color-mix(in srgb, var(--ac-ink) 55%, transparent);
+  animation: ac-clerk-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  scrollbar-width: none;
+}
+
+.ac-clerk-dock::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes ac-clerk-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ac-clerk-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: none;
+  padding: 11px 10px 8px 14px;
+  border-bottom: 1px solid var(--ac-line);
+}
+
+.ac-clerk-eyebrow {
+  font-size: 8.5px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ac-faint);
+}
+
+.ac-clerk-state {
+  margin-top: 1px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ac-ink);
+}
+
+.ac-clerk-state::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--ac-sage);
+  vertical-align: 1px;
+}
+
+.ac-clerk-state[data-state='listening']::before,
+.ac-clerk-state[data-state='responding']::before {
+  background: var(--ac-accent);
+}
+
+.ac-clerk-state[data-state='thinking']::before {
+  background: var(--ac-attn);
+}
+
+.ac-clerk-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  padding: 14px;
+}
+
+.ac-clerk-intro {
+  min-width: 0;
+}
+
+.ac-clerk-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ac-ink);
+}
+
+.ac-clerk-line {
+  margin-top: 3px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ac-muted);
+}
+
+.ac-clerk-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: none;
+  padding: 0 14px 12px;
+}
+
+.ac-clerk-label {
+  margin-bottom: 1px;
+  font-size: 8.5px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ac-faint);
+}
+
+.ac-clerk-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ac-ink);
+  background: var(--ac-surface);
+  box-shadow: inset 0 0 0 1px var(--ac-line);
+  transition: background-color 140ms ease;
+}
+
+.ac-clerk-action:hover:not(:disabled) {
+  background: var(--ac-accent-soft);
+}
+
+.ac-clerk-action:disabled {
+  opacity: 0.45;
+}
+
+.ac-clerk-action svg {
+  flex: none;
+  color: var(--ac-faint);
+}
+
+.ac-clerk-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  padding: 10px 14px;
+  border-top: 1px solid var(--ac-line);
+  background: color-mix(in srgb, var(--ac-surface) 60%, transparent);
+}
+
+.ac-clerk-foot p {
+  flex: 1;
+  font-size: 8.5px;
+  line-height: 1.4;
+  color: var(--ac-faint);
+}
+
+.ac-clerk-foot button {
+  flex: none;
+  padding: 5px 10px;
+  border-radius: 99px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--ac-cta-ink);
+  background: var(--ac-accent);
+}
+
+/* ── Placement per shell ────────────────────────────────────── */
+
+.ac-main--canvas {
+  position: relative;
+}
+
+.ac-clerk-anchor {
+  position: absolute;
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.ac-clerk-anchor > * {
+  pointer-events: auto;
+}
+
+.ac-clerk-anchor--phone {
+  right: 14px;
+  bottom: 108px;
+}
+
+.ac-clerk-anchor--side {
+  right: 14px;
+  bottom: 108px;
+}
+
+.ac-clerk-anchor--side .ac-clerk-dock {
+  width: 300px;
+}
+
+.ac-clerk-anchor--tablet {
+  right: 16px;
+  bottom: 112px;
+}
+
+.ac-clerk-anchor--tablet .ac-clerk-dock {
+  width: 312px;
+}
+
+.ac-clerk-anchor--desktop {
+  right: 18px;
+  bottom: 124px;
+}
+
+.ac-clerk-anchor--desktop .ac-clerk-dock {
+  width: 316px;
+}
+
+
+.ac-clerk-sheet {
+  max-height: 76%;
+}
+
+.ac-clerk-sheet .ac-clerk-dock {
+  flex: 1;
+  min-height: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--ac-surface);
+  animation: none;
+}
+
+/* ── Motion preferences ─────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .ac-clerk .clerk-torso,
+  .ac-clerk .clerk-head-bob,
+  .ac-clerk .clerk-eye,
+  .ac-clerk .clerk-lid,
+  .ac-clerk .clerk-thought circle,
+  .ac-clerk[data-state='responding'] .clerk-mouth--responding,
+  .ac-clerk[data-state='success'] .clerk-sparkle,
+  .ac-clerk-glow,
+  .ac-launcher-aura,
+  .ac-launcher-float,
+  .ac-launcher-pad,
+  .ac-launcher-shadow,
+  .ac-launcher-dot::after {
+    animation: none;
+  }
+
+  .ac-clerk .clerk-head,
+  .ac-clerk .clerk-brow,
+  .ac-clerk .clerk-gaze,
+  .ac-launcher-body {
+    transition: none;
+  }
+
+  .ac-clerk-dock {
+    animation: none;
+  }
+}

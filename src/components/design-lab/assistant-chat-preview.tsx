@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
 
 import {
   INITIAL_INVOICE,
@@ -10,13 +9,15 @@ import {
   type InvoiceState,
   type TurnId,
 } from './assistant-chat-script'
-import { FamilyPicker, Segmented } from './assistant-chat-parts'
 import { AssistantThread, type AssistantMessage, type Block, type ChatMessage } from './assistant-chat-thread'
 import { AssistantComposer } from './assistant-chat-composer'
 import { ModelPill } from './assistant-chat-model-pill'
 import { InvoicePanel, type PendingCard } from './assistant-chat-panel'
 import { ProviderSettings } from './assistant-chat-settings'
-import { AssistantWorkspace, VIEWPORTS, type ViewportId } from './assistant-chat-layouts'
+import { AssistantWorkspace, type ViewportId } from './assistant-chat-layouts'
+import { ClerkDock, ClerkLauncher, deriveClerkState, type ClerkMode } from './assistant-chat-clerk'
+import { AssistantChatControls, AssistantChatHeader } from './assistant-chat-chrome'
+import { LauncherCoexistence } from './assistant-chat-launcher-lab'
 import {
   IDLE_TEST,
   pickActiveProvider,
@@ -35,6 +36,8 @@ import type { CustomProvider } from '@/lib/ai-assistant/providerRegistry'
 
 import './assistant-chat-preview.css'
 import './assistant-chat-workspace.css'
+import './assistant-chat-clerk.css'
+import './assistant-chat-launcher-lab.css'
 
 const INTER = "'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif"
 
@@ -69,6 +72,8 @@ export default function AssistantChatPreview() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [railCollapsed, setRailCollapsed] = useState(false)
   const [activeThread, setActiveThread] = useState('t-131')
+  const [clerkMode, setClerkMode] = useState<ClerkMode>('auto')
+  const [clerkOpen, setClerkOpen] = useState(false)
 
   const invoiceRef = useRef(invoice)
   const messagesRef = useRef(messages)
@@ -93,17 +98,17 @@ export default function AssistantChatPreview() {
   }, [messages, pinned])
 
   useEffect(() => {
-    if (!settingsOpen && !panelOpen) return
+    if (!settingsOpen && !panelOpen && !clerkOpen) return
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return
-      if (settingsOpen) closeSettings()
+      if (clerkOpen) setClerkOpen(false)
+      else if (settingsOpen) closeSettings()
       else setPanelOpen(false)
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [settingsOpen, panelOpen])
+  }, [settingsOpen, panelOpen, clerkOpen])
 
-  const activeProvider = providers.find((entry) => entry.id === activeId)
   const pending: PendingCard[] = []
   messages.forEach((message) => {
     if (message.role !== 'assistant') return
@@ -113,6 +118,13 @@ export default function AssistantChatPreview() {
         if (card.status === 'pending') pending.push({ messageId: message.id, card })
       })
     })
+  })
+
+  const clerkState = deriveClerkState(clerkMode, {
+    busy,
+    awaiting: awaiting || pending.length > 0,
+    filed: invoice.filed,
+    messages,
   })
 
   function patchAssistant(id: string, patch: (message: AssistantMessage) => AssistantMessage) {
@@ -316,6 +328,7 @@ export default function AssistantChatPreview() {
     setPinned(true)
     setShowJump(false)
     setPanelOpen(false)
+    setClerkOpen(false)
   }
 
   function onSubmit(event: FormEvent) {
@@ -341,11 +354,30 @@ export default function AssistantChatPreview() {
   function openSettings(providerId?: string) {
     setSettingsFocus(providerId)
     setSettingsOpen(true)
+    setClerkOpen(false)
   }
 
   function closeSettings() {
     setSettingsOpen(false)
     setSettingsFocus(undefined)
+  }
+
+  function toggleClerk() {
+    if (clerkOpen) {
+      setClerkOpen(false)
+      return
+    }
+    setSettingsOpen(false)
+    setPanelOpen(false)
+    setClerkOpen(true)
+  }
+
+  function resetAll() {
+    reset()
+    setSettingsOpen(false)
+    setClerkOpen(false)
+    setProviders(seedProviderEntries())
+    setActiveId('openrouter')
   }
 
   function patchProvider(id: string, patch: Partial<ProviderEntry>) {
@@ -402,6 +434,7 @@ export default function AssistantChatPreview() {
 
   const settingsNode = (
     <ProviderSettings
+      key={`settings:${settingsFocus ?? 'active'}`}
       entries={providers}
       activeId={activeId}
       focusId={settingsFocus}
@@ -417,65 +450,44 @@ export default function AssistantChatPreview() {
     />
   )
 
+  const clerk = <ClerkLauncher state={clerkState} open={clerkOpen} onToggle={toggleClerk} />
+
+  const clerkDock = clerkOpen ? (
+    <ClerkDock
+      state={clerkState}
+      busy={busy}
+      onClose={() => setClerkOpen(false)}
+      onPrompt={(text, turn) => {
+        send(text, turn)
+        setClerkOpen(false)
+      }}
+      onOpenChat={() => {
+        setClerkOpen(false)
+        inputRef.current?.focus()
+      }}
+    />
+  ) : null
+
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: INTER }}>
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/design-lab')}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" aria-hidden="true" /> Design Lab
-          </button>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-base font-semibold tracking-tight">Assistant Chat</h1>
-            <p className="text-xs text-muted-foreground">
-              Scripted invoice conversation · four viewports · provider and model settings
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              reset()
-              setSettingsOpen(false)
-              setProviders(seedProviderEntries())
-              setActiveId('openrouter')
-            }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <RefreshCw className="size-3.5" aria-hidden="true" /> Reset all
-          </button>
-        </div>
-      </header>
+      <AssistantChatHeader onBack={() => navigate('/design-lab')} onReset={resetAll} />
 
       <div className="mx-auto max-w-6xl space-y-4 px-4 py-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Segmented<ViewportId>
-            label="Viewport"
-            value={viewport}
-            onChange={(next) => {
-              setViewport(next)
-              setSettingsOpen(false)
-              setPanelOpen(false)
-            }}
-            options={VIEWPORTS.map((item) => ({
-              value: item.id,
-              label: item.label,
-              icon: item.icon,
-            }))}
-          />
-          <Segmented<PhotoHeroAppearance>
-            label="Appearance"
-            value={appearance}
-            onChange={setAppearance}
-            options={[
-              { value: 'light', label: 'Light' },
-              { value: 'dark', label: 'Dark' },
-            ]}
-          />
-          <FamilyPicker family={family} onChange={setFamily} />
-        </div>
+        <AssistantChatControls
+          viewport={viewport}
+          onViewport={(next) => {
+            setViewport(next)
+            setSettingsOpen(false)
+            setPanelOpen(false)
+            setClerkOpen(false)
+          }}
+          appearance={appearance}
+          onAppearance={setAppearance}
+          family={family}
+          onFamily={setFamily}
+          clerkMode={clerkMode}
+          onClerkMode={setClerkMode}
+        />
 
         <div className="ac-device" data-tone={appearance} style={rootStyle}>
           <AssistantWorkspace
@@ -492,6 +504,8 @@ export default function AssistantChatPreview() {
               <AssistantThread
                 messages={messages}
                 busy={busy}
+                clerkState={clerkState}
+                tone={appearance}
                 showJump={showJump}
                 logRef={logRef}
                 onScroll={onLogScroll}
@@ -524,20 +538,19 @@ export default function AssistantChatPreview() {
               />
             }
             panel={
-              <InvoicePanel
-                invoice={invoice}
-                pending={pending}
-                provider={activeProvider}
-                onDecide={decide}
-                onManageProviders={() => openSettings()}
-              />
+              <InvoicePanel invoice={invoice} pending={pending} onDecide={decide} />
             }
             settings={settingsNode}
+            clerk={clerk}
+            clerkDock={clerkDock}
+            clerkOpen={clerkOpen}
+            onCloseClerk={() => setClerkOpen(false)}
             panelOpen={panelOpen}
             settingsOpen={settingsOpen}
             onOpenPanel={() => {
               setPanelOpen(true)
               setSettingsOpen(false)
+              setClerkOpen(false)
             }}
             onClosePanel={() => setPanelOpen(false)}
             onOpenSettings={() => openSettings()}
@@ -549,6 +562,16 @@ export default function AssistantChatPreview() {
             onNewThread={() => {
               reset()
               setActiveThread('t-131')
+            }}
+          />
+
+          <LauncherCoexistence
+            state={clerkState}
+            onOpenAssistant={() => {
+              setClerkOpen(false)
+              setSettingsOpen(false)
+              setPanelOpen(false)
+              inputRef.current?.focus()
             }}
           />
         </div>
