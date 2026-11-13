@@ -107,6 +107,19 @@ export function resolveLocalAIModelForJob(params: {
       return { kind: 'ready', manifest: recommended, status, selected: false }
     }
   }
+
+  // Any installed model is usable. Fall back to it instead of refusing to run.
+  const fallback = LOCAL_AI_MODEL_CATALOG.find((manifest) => {
+    const status = params.statusesById[manifest.modelId]
+    return manifest.enabled && Boolean(status) && isLocalAIModelReady(status)
+  })
+  if (fallback) {
+    const status = params.statusesById[fallback.modelId]
+    if (status) {
+      return { kind: 'ready', manifest: fallback, status, selected: false }
+    }
+  }
+
   return { kind: 'no-selection', recommended: recommended || null }
 }
 

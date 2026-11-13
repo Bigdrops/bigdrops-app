@@ -1,5 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 import {
   BIGDROPS_LOCAL_AI_LITE_MODEL,
@@ -44,6 +46,11 @@ function installedStatus(manifest) {
     expectedSha256: manifest.expectedSha256,
   }
 }
+
+const javaPluginPath = join(
+  process.cwd(),
+  'android/app/src/main/java/com/bigdrops/app/plugins/LocalAIPlugin.java',
+)
 
 test('model catalog holds Lite and Standard entries and no third artifact', () => {
   assert.equal(LOCAL_AI_MODEL_CATALOG.length, 2)
@@ -240,4 +247,42 @@ test('local AI model progress is bounded by the expected size', () => {
   assert.equal(getLocalAIModelProgress({ downloadedBytes: 0, expectedBytes: 100, totalBytes: 100 }), 0)
   assert.equal(getLocalAIModelProgress({ downloadedBytes: 50, expectedBytes: 100, totalBytes: 100 }), 50)
   assert.equal(getLocalAIModelProgress({ downloadedBytes: 150, expectedBytes: 100, totalBytes: 100 }), 100)
+})
+
+test('native plugin pins the catalog download URL, size, and digest for every model', () => {
+  const javaSource = readFileSync(javaPluginPath, 'utf8')
+  const javaSourceWithoutDigitSeparators = javaSource.replace(/_/g, '')
+
+  for (const manifest of LOCAL_AI_MODEL_CATALOG) {
+    assert.ok(
+      javaSource.includes(manifest.downloadUrl),
+      `${manifest.tier} download URL is missing from the native plugin`,
+    )
+    assert.ok(
+      javaSource.includes(manifest.expectedSha256),
+      `${manifest.tier} sha256 is missing from the native plugin`,
+    )
+    assert.ok(
+      javaSourceWithoutDigitSeparators.includes(String(manifest.expectedBytes)),
+      `${manifest.tier} byte count is missing from the native plugin`,
+    )
+  }
+
+  // The download must resolve the URL from the requested model id.
+  assert.match(javaSource, /private static String downloadUrlFor\(/)
+  assert.match(javaSource, /new URL\(downloadUrlFor\(modelId\)\)/)
+})
+
+test('job resolution falls back to any installed model when the recommendation is not installed', () => {
+  const resolved = resolveLocalAIModelForJob({
+    selectedId: null,
+    statusesById: { [BIGDROPS_LOCAL_AI_LITE_MODEL.modelId]: installedStatus(BIGDROPS_LOCAL_AI_LITE_MODEL) },
+    recommendedId: BIGDROPS_LOCAL_AI_POC_MODEL.modelId,
+  })
+
+  assert.equal(resolved.kind, 'ready')
+  assert.equal(
+    resolved.kind === 'ready' && resolved.manifest.modelId,
+    BIGDROPS_LOCAL_AI_LITE_MODEL.modelId,
+  )
 })

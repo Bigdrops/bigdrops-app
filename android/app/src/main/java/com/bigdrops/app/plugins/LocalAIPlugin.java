@@ -45,6 +45,7 @@ public class LocalAIPlugin extends Plugin {
     private static final String POC_MODEL_EXPECTED_SHA256 = "b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897";
     private static final long POC_MODEL_EXPECTED_BYTES = 1_107_409_472L;
     private static final String LEGACY_POC_MODEL_ID = "qwen3-0.6b-instruct-q4-k-m-gguf-poc";
+    private static final String LEGACY_POC_MODEL_DOWNLOAD_URL = "https://huggingface.co/QuantFactory/Qwen3-0.6B-GGUF/resolve/e7e05d713acaa2baccdfb52e967eaba8ba562ba8/Qwen3-0.6B.Q4_K_M.gguf?download=1";
     private static final String LEGACY_POC_MODEL_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.gguf";
     private static final String LEGACY_POC_MODEL_METADATA_FILENAME = "qwen3-0.6b-instruct-q4-k-m-gguf-poc.json";
     private static final String LEGACY_POC_MODEL_EXPECTED_SHA256 = "7af3fdf842f87b24672f8a7f1dd50404043f0bfb71093ff91c31d2b49df4631d";
@@ -534,6 +535,11 @@ public class LocalAIPlugin extends Plugin {
     }
 
     @NonNull
+    private static String downloadUrlFor(@NonNull String modelId) {
+        return isLegacyModelId(modelId) ? LEGACY_POC_MODEL_DOWNLOAD_URL : POC_MODEL_DOWNLOAD_URL;
+    }
+
+    @NonNull
     private File ensureModelDirectory() {
         File directory = new File(getContext().getFilesDir(), MODEL_DIRECTORY);
         if (!directory.isDirectory()) {
@@ -621,7 +627,7 @@ public class LocalAIPlugin extends Plugin {
                 throw new RuntimeException("Could not clear the previous partial model download.");
             }
 
-            URL url = new URL(POC_MODEL_DOWNLOAD_URL);
+            URL url = new URL(downloadUrlFor(modelId));
             if (!"https".equalsIgnoreCase(url.getProtocol())) {
                 throw new RuntimeException("Local AI model download must use HTTPS.");
             }
