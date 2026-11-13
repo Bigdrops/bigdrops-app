@@ -9,6 +9,8 @@ type KpiGridProps = {
   loading: boolean
   cards: KpiCardViewModel[]
   maxCards?: number
+  /** Literal Tailwind grid-cols classes; 6 cards fill 2 rows of 3 on desktop. */
+  gridClass?: string
 }
 
 // V6 tick bar: thin vertical segments
@@ -194,11 +196,11 @@ function KpiCardSkeleton() {
   )
 }
 
-export function KpiGrid({ loading, cards, maxCards = 4 }: KpiGridProps) {
+export function KpiGrid({ loading, cards, maxCards = 4, gridClass = 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3' }: KpiGridProps) {
   const visibleCards = cards.slice(0, maxCards)
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className={cn('grid gap-2', gridClass)}>
       {loading || visibleCards.length === 0
         ? Array.from({ length: maxCards }).map((_, index) => <KpiCardSkeleton key={index} />)
         : visibleCards.map((card) => <KpiCard key={card.id} card={card} />)}

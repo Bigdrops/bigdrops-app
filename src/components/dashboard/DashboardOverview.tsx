@@ -25,6 +25,7 @@ import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
 import { cn } from '@/lib/utils'
+import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { AuditTrailSkeleton } from '@/components/dashboard/AuditTrailSkeleton'
 import { KpiGrid } from '@/components/dashboard/KpiGrid'
 import { PaymentReminderBanner } from '@/components/dashboard/PaymentReminderBanner'
@@ -194,25 +195,26 @@ export function DashboardOverview({
     })
   }, [userId, saveThemePref, isDark, preference.themePresetId])
 
-  // ponytail: inline matchMedia — one state, one listener, no separate file
-  const [isDesktop, setIsDesktop] = React.useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true,
-  )
-  React.useEffect(() => {
-    const mql = window.matchMedia('(min-width: 1024px)')
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
-    mql.addEventListener('change', handler)
-    return () => mql.removeEventListener('change', handler)
-  }, [])
-
-  const kpiMaxCards = isDesktop ? KPI_CARD_COUNT_DESKTOP : KPI_CARD_COUNT_MOBILE
+  const { layoutMode, widthClass, isHalfOpened, isTabletop } = useLayoutMode()
+  // Hook thresholds: desktop ≥1200, tablet 600–1199, mobile <600.
+  // Tablets get the 4-card 2x2 grid so there are no dead cells.
+  const isDesktopLayout = layoutMode === 'desktop'
+  const isWide = widthClass === 'extra_large'
+  const stackSections = !isDesktopLayout || isHalfOpened || isTabletop
+  const kpiMaxCards = isDesktopLayout ? KPI_CARD_COUNT_DESKTOP : KPI_CARD_COUNT_MOBILE
+  // 6 cards fill 2 rows of 3 on desktop; 6-in-one-row only when extra_large.
+  const kpiGridClass = isWide
+    ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'
+    : isDesktopLayout
+      ? 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3'
+      : 'grid-cols-2 md:grid-cols-2'
 
   const mobileChrome = React.useContext(MobileChromeContext)
   const now = new Date()
   const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="mx-auto flex w-full max-w-[var(--bd-layout-content-max,1200px)] flex-col" style={{ paddingBottom: 'max(128px, calc(70px + env(safe-area-inset-bottom, 0px)))' }}>
+    <div className={cn('mx-auto flex w-full flex-col', isWide ? 'max-w-[1640px]' : 'max-w-[var(--bd-layout-content-max,1200px)]')} style={{ paddingBottom: 'max(128px, calc(70px + env(safe-area-inset-bottom, 0px)))' }}>
       {/* V6 Top Bar — solid bg for Android-native feel, matches V6 padding */}
       <header
         className="sticky top-0 z-30 flex items-center justify-between"
@@ -289,10 +291,10 @@ export function DashboardOverview({
         </div>
 
         {/* KPI Metric Grid — 2-col mobile, 4-col desktop */}
-        <KpiGrid loading={loading} cards={kpiCards} maxCards={kpiMaxCards} />
+        <KpiGrid loading={loading} cards={kpiCards} maxCards={kpiMaxCards} gridClass={kpiGridClass} />
 
         {/* Activity + Payment Reminder: stacked mobile, side-by-side md+ */}
-        <div className="mt-[14px] grid gap-[14px] md:mt-5 md:grid-cols-5 md:gap-4 lg:gap-5">
+        <div className={cn('mt-[14px] grid grid-cols-1 gap-[14px] md:mt-5 md:gap-4 lg:gap-5', !stackSections && 'md:grid-cols-5')}>
           {/* Recent Activity — 3/5 on tablet+ */}
           <section className="md:col-span-3">
             <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--bd-ink-muted))] md:mb-3 md:text-[10px]">
@@ -379,7 +381,7 @@ export function DashboardOverview({
         </div>
 
         {/* Alerts + Audit Trail: stacked mobile, side-by-side lg+ */}
-        <div className="mt-[14px] grid gap-[14px] lg:mt-5 lg:grid-cols-2 lg:gap-5">
+        <div className={cn('mt-[14px] grid grid-cols-1 gap-[14px] lg:mt-5 lg:gap-5', !stackSections && 'lg:grid-cols-2')}>
           <section>
             <h2 className="mb-2 px-[2px] text-[9px] font-[800] uppercase tracking-[0.1em] text-[hsl(var(--bd-ink-muted))] lg:mb-3 lg:text-[10px]">
               Recent alerts
