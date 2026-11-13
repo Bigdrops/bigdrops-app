@@ -2,8 +2,9 @@
 
 **Document Version:** 1.0.0  
 **Baseline Date:** October 30, 2026  
-**Status:** Approved Specification Baseline  
-**Scope:** BOUXRE Business Platform — Forme (`@formepdf/react`) & `pdfcn` Unified Document Template System  
+**Status:** Approved Specification Baseline (historical design spec; implementation milestone references below reflect the 2026-11 milestones)
+**Scope:** BOUXRE Business Platform - Forme (`@formepdf/react`) & `pdfcn` Unified Document Template System
+**Status note (2026-11-12):** Invoice/Quotation/PO Forme implementations are live through the commercial pipeline. See `Waterfall-roadmap.md` for current milestones, and `decision-log.md` (DEC-28…DEC-39) for what is certified vs merely migrated vs retired.
 **Source Repository:** `c:\Users\DELL\Desktop\bigdrops-app`  
 
 ---
@@ -54,9 +55,10 @@ This specification is directly grounded in the audited production code:
   - [`src/domain/purchase-order/types.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/domain/purchase-order/types.ts)
   - [`src/domain/purchase-order/formAdapter.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/domain/purchase-order/formAdapter.ts)
   - [`src/domain/purchase-order/calculations.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/domain/purchase-order/calculations.ts)
-- **Legacy PDF Template & Adaptations:**
-  - [`src/components/pdf/presentation/industry/IndustryTemplate.tsx`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/components/pdf/presentation/industry/IndustryTemplate.tsx)
+- **Forme PDF Template & Adaptations (current):**
+  - [`src/components/pdf/forme/IndustryFormeDocument.tsx`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/components/pdf/forme/IndustryFormeDocument.tsx)
   - [`src/components/pdf/industryAdapter.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/components/pdf/industryAdapter.ts)
+  - *Historical reference (pre-migration):* legacy React-PDF `IndustryTemplate.tsx` retired 2026-11-08.
 
 ---
 

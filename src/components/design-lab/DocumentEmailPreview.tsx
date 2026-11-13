@@ -634,7 +634,7 @@ Phone: ${INVOICE_130_DATA.issuerPhone}`
                       <code className="font-mono bg-stone-200 dark:bg-stone-700 px-1 rounded">createOrGetDocumentShare()</code>.
                     </p>
                     <p className="text-stone-600 dark:text-stone-300 leading-relaxed">
-                      2. That function generates the PDF blob using React-PDF in-memory (taking 2–4 seconds) and uploads it to Supabase Storage before returning the link.
+                      2. That function generates the PDF blob in-memory using the Forme renderer (taking 2–4 seconds) and uploads it to Supabase Storage before returning the link.
                     </p>
                     <p className="text-stone-600 dark:text-stone-300 leading-relaxed">
                       3. Modern mobile browsers enforce strict transient user activation timeouts (&lt; 1,000ms). When{' '}

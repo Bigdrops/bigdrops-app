@@ -15,6 +15,8 @@ export const FORME_SUPPORTED_FAMILIES = [
   'Work Sans',
   'Public Sans',
   'PT Serif',
+  'Goeist Sans',
+  'Goeist Mono',
 ] as const
 export type FormeSupportedFamily = (typeof FORME_SUPPORTED_FAMILIES)[number]
 
@@ -149,6 +151,20 @@ export async function ensureFormeFontFamily(choice: unknown): Promise<string> {
       const bold = await resolveFontSource('PTSerif-Bold.ttf')
       Font.register({ family, src: regular, fontWeight: 400 })
       Font.register({ family, src: bold, fontWeight: 700 })
+      registeredFamilies.add(family)
+      return family
+    }
+
+    if (family === 'Goeist Sans' || family === 'Goeist Mono') {
+      const prefix = family === 'Goeist Sans' ? 'GoeistSans' : 'GoeistMono'
+      const regular = await resolveFontSource(`${prefix}-Regular.ttf`)
+      const bold = await resolveFontSource(`${prefix}-Bold.ttf`)
+      const italic = await resolveFontSource(`${prefix}-Italic.ttf`)
+      const boldItalic = await resolveFontSource(`${prefix}-BoldItalic.ttf`)
+      Font.register({ family, src: regular, fontWeight: 400 })
+      Font.register({ family, src: bold, fontWeight: 700 })
+      Font.register({ family, src: italic, fontWeight: 400, fontStyle: 'italic' })
+      Font.register({ family, src: boldItalic, fontWeight: 700, fontStyle: 'italic' })
       registeredFamilies.add(family)
       return family
     }

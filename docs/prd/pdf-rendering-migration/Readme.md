@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-BOUXRE will replace `@react-pdf/renderer` with a deterministic, high-fidelity PDF rendering architecture across all eight in-scope document types:
+BOUXRE replaces `@react-pdf/renderer` with a deterministic, high-fidelity PDF rendering architecture across all eight in-scope document types: *(Engine migration complete as of 2026-11-12; the React-PDF dependency was removed the same day under M14; certification tracked in M12.)*
 - **Commercial:** Invoice, Quotation, Purchase Order (PO), Cost Pricing Sheet (CPS), Receipt
 - **Procurement:** Request for Quotation (RFQ)
 - **Logistics:** Waybill
@@ -25,7 +25,7 @@ The target architecture uses **Forme** as the underlying layout and PDF byte gen
 3. **No Universal Table or Layout Abstraction:** Shared infrastructure does not force identical layouts or table abstractions onto different document families. CSR, Waybill, CPS, and commercial documents retain distinct structures.
 4. **Natural Pagination First:** Natural pagination (Normal Mode) must be verified across the representative document suite before compaction (Compact Mode or Force 1 Page Mode) is implemented. Compaction must never mask broken pagination.
 5. **Text & Data Immutability:** Financial calculations, tax rules, and user input text are immutable in the rendering layer. Silent Unicode sanitization is strictly prohibited; read-only glyph diagnostics report missing characters without altering source text.
-6. **Progressive Rollout:** Document families migrate sequentially. Existing production templates continue running on `@react-pdf/renderer` until their Forme replacements pass all verification gates.
+6. **Progressive Rollout:** Document families migrate sequentially. Existing production templates continue until their Forme replacements pass all verification gates. *(2026-11-12: engine migration of all families complete; rollout now governed by M12 certification and Gate 4.)*
 
 ---
 
@@ -55,7 +55,8 @@ To ensure technical integrity and prevent unverified claims from becoming false 
 - `@formepdf/core` (v0.20.1) and `@formepdf/react` (v0.20.1) are installed in `package.json`.
 - `@formepdf/core` requires raw TrueType (`.ttf`) or OpenType (`.otf`) SFNT streams; it rejects `.woff` and `.woff2` files (confirmed in package source `node_modules/@formepdf/core/dist/index.js` and `browserHelpers.js`).
 - The repository contains only **one** production TrueType font: `public/fonts/ArchivoBlack-Regular.ttf` (90,988 bytes). All `@fontsource/*` packages in `node_modules` ship `.woff`/`.woff2` files only.
-- In `src/components/pdf/forme/fonts.ts`, `FORME_SUPPORTED_FONT_EXTENSIONS = ['.ttf', '.otf']`. Because shared commercial fonts in `src/lib/pdfSharedFonts.ts` are `.woff`, CPS Forme templates silently fall back to `Helvetica`.
+- In `src/components/pdf/forme/fonts.ts`, `FORME_SUPPORTED_FONT_EXTENSIONS = ['.ttf', '.otf']`. Because shared commercial fonts in `src/lib/pdfSharedFonts.ts` are `.woff`, CPS Forme templates silently fall back to `Helvetica`. *(Still open as of 2026-11-12.)*
+- The Letter family (`src/pages/ViewLetter.tsx`, `Letters.tsx`, `LetterFormPage.tsx`, `EditLetter.tsx`) is HTML-only: it renders no PDF and has no React-PDF or Forme code path. Recorded 2026-11-12; Letters are out of PDF scope.
 - In `node_modules/@react-pdf/pdfkit/lib/pdfkit.js`, `encodeText` pushes `char.toString(16)` for unmapped characters. For `U+2033` (8243, `0x2033`), it outputs `'2033'`. In 1-byte WinAnsi text chunks, conforming viewers decode `0x32` (`'2'`), `0x20` (space), and `0x33` (`'3'`), rendering $2''$ as `23`. This confirmed defect occurs when fonts like `Lato` or `Orbitron` lack `U+2033` and bypass glyph checks in `safeText.ts`.
 - `src/lib/native/invoiceCache.ts` caches invoice items and invoices only. It does **not** cache company logos, signatures, or documents in Waybill, CSR, CPS, RFQ, Receipt, or PO families.
 - In `vite.config.js`, `base: './'` is configured. Capacitor packages `dist/` into native apps via `webDir: 'dist'`.
@@ -78,16 +79,26 @@ To ensure technical integrity and prevent unverified claims from becoming false 
 - Schedule and priority for implementing PO's dedicated canonical preparation contract (`preparePurchaseOrderDocument.ts`).
 
 ### 3.5 Migration Milestone Statuses
-- **Milestone M0:** *Discovery, Problem Register & PRD Consolidation* — ✅ **100% Complete**.
-- **Milestone M1A:** *PDF Architecture Contracts & Responsibility Definition* — ✅ **Complete Specification**.
-- **Milestone M1B:** *Shared Font & Image Asset Infrastructure Specification* — ✅ **Complete Specification**.
+- **Milestone M0:** *Discovery, Problem Register & PRD Consolidation* — ✅ **100% Complete** (2026-10-30).
+- **Milestone M1A:** *PDF Architecture Contracts & Responsibility Definition* — ✅ **Complete Specification** (2026-11-01).
+- **Milestone M1B:** *Shared Font & Image Asset Infrastructure Specification* — ✅ **Complete Specification** (2026-11-01).
 - **Milestone M1C:** *PO Canonical Preparation Contract & Commercial Alignment* — ⛔ **Pending Execution**.
-- **Milestones M2–M6:** *Implementation, Certification & Legacy Deprecation* — ⛔ **Pending Execution**.
-- **Milestone M7:** *Evergreen Forme Migration and Legacy Retirement* — ✅ **100% Complete** (Forme implementation live, legacy files deleted, footer & logo remediated).
-- **Milestone M8:** *Landscape Rebuild from Scratch* — ✅ **100% Complete** (Full Forme rebuild based on CSR Blueprint technical aura, modular architecture strictly $\le 600$ lines per file, verified via MuPDF & unit tests).
-- **Milestone M9:** *Migrate Three Additional Commercial HTML Templates to Forme* — ✅ **100% Complete** (Architectural Frame, Executive, and Heritage House migrated to Forme, routed, picker/miniature enabled, verified).
-- **Milestone M10:** *Purchase Order (PO) Template Integration* — ⛔ **Pending Execution**.
-- **Milestone M11:** *Cost Pricing Sheet (CPS) Template Integration* — ⛔ **Pending Execution**.
+- **Milestone M2:** *Natural Pagination (Normal Mode)* — 🔄 **In Progress (As of 2026-11-01, Gate 1 open)**.
+- **Milestone M3:** *Compact & Force 1 Page Modes* — 🔄 **In Progress (Gate 2 open)**.
+- **Milestone M4:** *Commercial Reference Certification* — 🔄 **In Progress (Gate 3 open)**.
+- **Milestone M5:** *Document-Family Forme Migrations* — ✅ **Complete (Engine migration, 2026-11-12)**. Split into M5a (Receipt), M5b (Waybill), M5c (Project Documents), M5d (RFQ), M5e (CSR). Engine migration complete for all five production families plus the pre-existing commercial stack. Certification is explicitly not claimed.
+- **Milestone M6:** *Legacy Cleanup & Deprecation* — ⏭️ **Superseded by M12–M15 as of 2026-11-12**. See `Waterfall-roadmap.md` Section 6.
+- **Milestone M7:** *Evergreen Forme Migration and Legacy Retirement* — ✅ **100% Complete** (Forme implementation live, legacy files deleted, footer & logo remediated, 2026-11-08).
+- **Milestone M8:** *Landscape Rebuild from Scratch* — ✅ **100% Complete** (Full Forme rebuild, modular architecture, verified via MuPDF & unit tests, 2026-11-08).
+- **Milestone M9:** *Migrate Three Additional Commercial HTML Templates to Forme* — ✅ **100% Complete** (Architectural Frame, Executive, Heritage House, 2026-11-08).
+- **Milestone M10:** *Purchase Order (PO) Template Integration* — ⛔ **Pending Execution**. POs render through the commercial Forme pipeline today; the M1C canonical preparation contract and Gate 3 certification are outstanding.
+- **Milestone M11:** *Cost Pricing Sheet (CPS) Template Integration* — ⛔ **Pending Execution**. CPS exports through the commercial Forme pipeline today; the font fallback defect (VER-02) and dedicated CPS design/fit are outstanding.
+- **Milestone M12:** *Document-Family Certification, Visual Parity & Delivery Closeout* — ⛔ **Pending Execution**.
+- **Milestone M13:** *Final React-PDF Consumer Audit & Retirement Plan* — ✅ **Complete** (2026-11-12; retirement matrix published, see `Waterfall-roadmap.md` §5).
+- **Milestone M14:** *Shared-Infrastructure Retirement & Package Purge* — ✅ **Complete** (2026-11-12; `@react-pdf/renderer` removed from `package.json` and `bun.lock`; all registries, adapters and harnesses deleted; delivery contract retained).
+- **Milestone M15:** *Post-Removal Stabilization, Regression & Rollback Gate* — 🔄 **In Progress** (focused regression suite re-run 2026-11-12: 184/192 with 8 failures pre-existing at HEAD; rollback recorded (DEC-38); full stabilization sign-off open).
+
+Evidence label convention (see `Waterfall-roadmap.md` header): **VERIFIED** = inspected in repo · **REPORTED** = supplied report, not revalidated · **PARTIAL** = incomplete · **PENDING** = not started · **BLOCKED** = blocked dependency · **SUPERSEDED** = replaced. Migration ≠ certification. Renderer retirement (M13/M14) is complete.
 
 ---
 

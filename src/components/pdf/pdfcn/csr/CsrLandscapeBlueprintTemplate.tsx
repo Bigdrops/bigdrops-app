@@ -34,7 +34,7 @@ export const CsrLandscapeBlueprintTemplate: React.FC<{
           <BlueprintHeader csr={csr} />
           <BlueprintWorkspace csr={csr} />
           <BlueprintBomSchedule csr={csr} />
-          <BlueprintTitleBlock csr={csr} />
+          <BlueprintTitleBlock csr={csr} envelope={envelope} />
         </View>
       </Page>
     </Document>

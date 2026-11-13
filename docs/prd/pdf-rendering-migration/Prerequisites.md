@@ -36,7 +36,7 @@ Before any template or infrastructure implementation begins in Forme, the follow
 | **G-01** | **Git Working Tree State** | Working directory clean or only contains documented CSR / report files. No collisions. | `git status` | [x] PASSED |
 | **G-02** | **AGENTS.md Understanding** | Review execution rules, safe edit rules, and hardware limits. | Read `AGENTS.md` | [x] PASSED |
 | **G-03** | **Skills Loaded** | Load skills from `docs/PROJECTSKILLINDEX.md` (`pdf-rendering-correctness`, etc.). | Skill review | [x] PASSED |
-| **G-04** | **Engine Dependencies** | Verify `@formepdf/react` (v0.20.1) and `@formepdf/core` (v0.20.1) installed in `package.json`. Confirm `@react-pdf/renderer` (v4.5.1) remains pinned for legacy templates. | Inspect `package.json` | [x] VERIFIED IN REPO |
+| **G-04** | **Engine Dependencies** | Verify `@formepdf/react` (v0.20.1) and `@formepdf/core` (v0.20.1) installed in `package.json`. `@react-pdf/renderer` removed from `package.json`/`bun.lock` on 2026-11-12 (M14). | Inspect `package.json` / `bun.lock` | [x] VERIFIED IN REPO |
 | **G-05** | **Static Font Assets & Sourcing** | Procure static TrueType (`.ttf`) binaries for the four consolidated families: `Inter` (Regular, Bold), `Archivo Black` (Regular — verified in `public/fonts/`), `Caveat` (Regular, Bold), and `Noto Sans` (Regular). Retired fonts (`Patrick Hand`, `Handlee`, `Kalam`, `Reenie Beanie`, `Sue Ellen Francisco`) are excluded from procurement. Verify OFL licenses. | File system, cmap & license audit | [ ] PENDING M1B.1 EXECUTION |
 | **G-06** | **Reference Corpus & Test Suite** | Confirm test files exist in `docs/templates/ref-invquo/`: `SASQUO-000427 (1).pdf`, `SASQUO-000428.pdf`, `SASQUO-430 (1).pdf`. | File system check | [x] PASSED |
 | **G-07** | **Static Typecheck Baseline** | Run `bun run audit:load` followed by `bun run typecheck`. Baseline must pass before code modifications. | Shell command execution | [ ] IMPLEMENTATION GATE |
@@ -101,7 +101,7 @@ The required execution sequence is:
 ## 5. Non-Negotiable Operational Rules
 
 1. **DO NOT run `bun run build`:** The build command is permanently excluded due to host memory constraints.
-2. **DO NOT remove `@react-pdf/renderer`:** Legacy templates must remain operational until all eight document families are migrated and certified.
+2. **DO NOT re-introduce `@react-pdf/renderer`:** It was removed from `package.json`/`bun.lock` on 2026-11-12 (M14). Rollback requires the DEC-38 procedure (revert the purge diff; `bun add @react-pdf/renderer@4.3.2`; re-run `bun install`). Families are migrated (engine complete); certification remains a gate for the commercial family (M4) and all families (M12).
 3. **DO NOT alter business logic:** Tax rates, totals, discounts, document numbering, and Supabase schemas must not be changed.
 4. **Preserve pre-existing work:** Uncommitted files outside the immediate migration scope must be preserved.
 5. **No silent content sanitization:** Text entered by users must not be altered, stripped, or rewritten by automated sanitizers.

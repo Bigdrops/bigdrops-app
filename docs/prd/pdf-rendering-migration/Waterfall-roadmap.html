@@ -664,7 +664,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     <div class="meta fade-up" style="--d:.54s">
       <div class="meta__cell">
         <span class="meta__k">Status</span>
-        <span class="meta__v"><span class="hl">Living</span> — M1C pending, M2–M4 in flight</span>
+        <span class="meta__v"><span class="hl">Living</span> — Migrations + purge done (M0–M14); M1C &amp; gates open; certification pending</span>
       </div>
       <div class="meta__cell">
         <span class="meta__k">Architecture</span>
@@ -676,7 +676,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       </div>
       <div class="meta__cell">
         <span class="meta__k">Last Updated</span>
-        <span class="meta__v">2026-11-01</span>
+        <span class="meta__v">2026-11-12</span>
       </div>
     </div>
   </div>
@@ -695,28 +695,29 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       <div class="prog__row">
         <div>
           <div class="prog__big">
-            <span class="prog__num count" data-to="44">0<sup>%</sup></span>
-            <span class="prog__cap">Overall completion<b>Program execution</b></span>
+            <span class="prog__num count" data-to="8">0</span>
+            <span class="prog__cap">Document families <b>migrated to Forme</b></span>
           </div>
           <div class="segbar bar" aria-hidden="true">
             <span class="seg on" style="--i:0"></span>
             <span class="seg on" style="--i:1"></span>
             <span class="seg on" style="--i:2"></span>
-            <span class="seg" style="--i:3"></span>
-            <span class="seg half" style="--i:4"></span>
-            <span class="seg half" style="--i:5"></span>
+            <span class="seg on" style="--i:3"></span>
+            <span class="seg on" style="--i:4"></span>
+            <span class="seg on" style="--i:5"></span>
             <span class="seg half" style="--i:6"></span>
-            <span class="seg" style="--i:7"></span>
-            <span class="seg" style="--i:8"></span>
+            <span class="seg half" style="--i:7"></span>
+            <span class="seg half" style="--i:8"></span>
+            <span class="seg half" style="--i:9"></span>
           </div>
         </div>
         <div>
           <div class="facts">
-            <span class="fact">Milestones <b>9</b></span>
-            <span class="fact">Current Phase <b>M1C pending</b></span>
+            <span class="fact">Milestones <b>16</b></span>
+            <span class="fact">Current Phase <b>M12 certification</b></span>
           </div>
           <div class="terminal">
-            <span class="term__ascii">[████░░░░░░] 44%</span>
+            <span class="term__ascii">[REACT-PDF REMOVED · GATES OPEN]</span>
             <span class="caret"></span>
           </div>
         </div>
@@ -724,7 +725,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     </div>
 
     <p class="note reveal">
-      <b>Note:</b> M0, M1A and M1B are complete. M2, M3 and M4 have in-flight work from the Industrial Forme commercial template pass. Gate 1, Gate 2 and Gate 3 are not signed off. M1C, M5 and M6 are pending. The percentage is the mean of the milestone values and does not represent gate approval.
+      <b>Note:</b> Milestones M0, M1A, M1B, M5a–M5e, M7, M8, M9, M13 and M14 are complete. M1C, M12 and M15 are open (M15 partially verified); M2, M3 and M4 in flight; Gate 1, Gate 2, Gate 3 and Gate 4 criterion 4 open. The React-PDF dependency was removed 2026-11-12 (M14); purge evidence and rollback are recorded in <code>decision-log.md</code>. Migration ≠ certification; no family is certified. M6 was superseded by M12–M15 on 2026-11-12. No percentage figure is asserted.
     </p>
   </div>
 </section>
@@ -802,13 +803,19 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
         <div class="node__p"><span>Pending</span><b>0%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
+      <li class="node done" data-status="implemented">
+        <span class="node__id">M5</span>
+        <p class="node__t">Family Forme migrations</p>
+        <div class="node__bar" data-p="100"><i></i></div>
+        <div class="node__p"><span>Complete</span><b>100%</b></div>
+      </li>
+      <li class="arrow" aria-hidden="true">→</li>
       <li class="node" data-status="progress">
         <span class="node__id">M2</span>
         <p class="node__t">Natural Pagination</p>
         <div class="node__bar" data-p="35"><i></i></div>
         <div class="node__p"><span>In Progress</span><b>35%</b></div>
       </li>
-      <li class="arrow" aria-hidden="true">→</li>
       <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 1<br>Sign-off</span></li>
       <li class="arrow" aria-hidden="true">→</li>
       <li class="node" data-status="progress">
@@ -817,7 +824,6 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
         <div class="node__bar" data-p="25"><i></i></div>
         <div class="node__p"><span>In Progress</span><b>25%</b></div>
       </li>
-      <li class="arrow" aria-hidden="true">→</li>
       <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 2<br>Compaction</span></li>
       <li class="arrow" aria-hidden="true">→</li>
       <li class="node" data-status="progress">
@@ -827,21 +833,34 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
         <div class="node__p"><span>In Progress</span><b>40%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
-      <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 3<br>Pre-production</span></li>
+      <li class="node done" data-status="implemented">
+        <span class="node__id">M9</span>
+        <p class="node__t">Extra Commercial Templates</p>
+        <div class="node__bar" data-p="100"><i></i></div>
+        <div class="node__p"><span>Complete</span><b>100%</b></div>
+      </li>
       <li class="arrow" aria-hidden="true">→</li>
       <li class="node" data-status="pending">
-        <span class="node__id">M5</span>
-        <p class="node__t">Remaining Document Families</p>
+        <span class="node__id">M12</span>
+        <p class="node__t">Family Certification</p>
         <div class="node__bar" data-p="0"><i></i></div>
         <div class="node__p"><span>Pending</span><b>0%</b></div>
       </li>
       <li class="arrow" aria-hidden="true">→</li>
-      <li class="node" data-status="pending">
-        <span class="node__id">M6</span>
-        <p class="node__t">Legacy Cleanup &amp; Deprecation</p>
-        <div class="node__bar" data-p="0"><i></i></div>
-        <div class="node__p"><span>Pending</span><b>0%</b></div>
+      <li class="node done" data-status="implemented">
+        <span class="node__id">M13</span>
+        <p class="node__t">React-PDF Audit</p>
+        <div class="node__bar" data-p="100"><i></i></div>
+        <div class="node__p"><span>Complete</span><b>100%</b></div>
       </li>
+      <li class="arrow" aria-hidden="true">→</li>
+      <li class="node done" data-status="implemented">
+        <span class="node__id">M14</span>
+        <p class="node__t">Package Purge</p>
+        <div class="node__bar" data-p="100"><i></i></div>
+        <div class="node__p"><span>Complete</span><b>100%</b></div>
+      </li>
+      <li class="gate"><span class="gate__dia"><span>⚑</span></span><span class="gate__l">Gate 4<br>Retirement</span></li>
     </ol>
 
     <div class="table-wrap reveal">
@@ -870,7 +889,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
           <tr class="done" data-status="implemented">
             <td class="id">M1A</td>
             <td class="head-cell">PDF Architecture Contracts</td>
-            <td class="stack" data-label="Scope">Responsibility split across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery. Boundary rules enforced.</td>
+            <td class="stack" data-label="Scope">Responsibility split across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery.</td>
             <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
             <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
@@ -879,7 +898,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
           <tr class="done" data-status="implemented">
             <td class="id">M1B</td>
             <td class="head-cell">Shared Font &amp; Media Infrastructure</td>
-            <td class="stack" data-label="Scope">TrueType SFNT requirement, font inventory, WOFF rejection, CORS reality, Text Preservation Rule, single font authority.</td>
+            <td class="stack" data-label="Scope">TrueType SFNT requirement, font inventory, WOFF rejection, CORS reality, Text Preservation Rule.</td>
             <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
             <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
@@ -897,7 +916,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
           <tr data-status="progress">
             <td class="id">M2</td>
             <td class="head-cell">Natural Pagination (Normal Mode)</td>
-            <td class="stack" data-label="Scope">Calibrated table columns (candidate 72 pt make), adaptive closing layout, repeating headers, dynamic footer, selective keep-together, oversized row handling.</td>
+            <td class="stack" data-label="Scope">Calibrated table columns (candidate 72 pt make), adaptive closing layout, repeating headers, dynamic footer, oversized row handling. As of 2026-11-01; carried forward unchanged.</td>
             <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
             <td data-label="Status"><span class="st st-progress">🔄 In Progress</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="35"><i></i></span><span>35%</span></div></td>
@@ -906,7 +925,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
           <tr data-status="progress">
             <td class="id">M3</td>
             <td class="head-cell">Compact &amp; Force 1 Page Modes</td>
-            <td class="stack" data-label="Scope">Wire 32 candidate compact tokens, two-pass measurement via <code>renderDocumentWithLayout</code>, legibility-first safeguards (candidate 7 pt floor), fallback.</td>
+            <td class="stack" data-label="Scope">Wire 32 candidate compact tokens, two-pass measurement via <code>renderDocumentWithLayout</code>, legibility-first safeguards, fallback. As of 2026-11-01.</td>
             <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
             <td data-label="Status"><span class="st st-progress">🔄 In Progress</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="25"><i></i></span><span>25%</span></div></td>
@@ -915,29 +934,110 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
           <tr data-status="progress">
             <td class="id">M4</td>
             <td class="head-cell">Commercial Reference Certification</td>
-            <td class="stack" data-label="Scope">Full Quotation, Invoice and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output.</td>
+            <td class="stack" data-label="Scope">Quotation, Invoice and PO templates in Forme, Landscape mode, preview parity, visual regression. Commercial routes are Forme-only (verified); named-sample recertification outstanding.</td>
             <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
             <td data-label="Status"><span class="st st-progress">🔄 In Progress</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="40"><i></i></span><span>40%</span></div></td>
             <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 3</b>Pre-Production Approval.</span></td>
           </tr>
-          <tr data-status="pending">
+          <tr class="done" data-status="implemented">
             <td class="id">M5</td>
-            <td class="head-cell">Remaining Document Families</td>
-            <td class="stack" data-label="Scope">CPS font fix and resolver integration, CSR delivery integration, Waybill, Receipt, and RFQ migration.</td>
+            <td class="head-cell">Document-Family Forme Migrations</td>
+            <td class="stack" data-label="Scope">Receipt, Waybill, Project Documents, RFQ, CSR. All five production migrations landed 2026-11-12. Codebase audit confirms Forme-only rendering paths. Engine migration ≠ certification.</td>
+            <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">All 8 families on Forme. Certification tracked in M10–M12.</span></td>
+          </tr>
+          <tr data-status="superseded">
+            <td class="id">M6</td>
+            <td class="head-cell">Legacy Deprecation &amp; Cleanup</td>
+            <td class="stack" data-label="Scope">Superseded 2026-11-12 by M12–M15. The purge now requires Gate 4 &amp; zero active consumers.</td>
+            <td data-label="Priority"><span class="pri MED">MED</span></td>
+            <td data-label="Status"><span class="st st-superseded">⏭️ Superseded</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>n/a</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Replaced by M13–M15.</span></td>
+          </tr>
+          <tr class="done" data-status="implemented">
+            <td class="id">M7</td>
+            <td class="head-cell">Evergreen Forme Migration</td>
+            <td class="stack" data-label="Scope">Evergreen migrated to Forme; legacy React-PDF files retired; footer and logo remediated. Completed 2026-11-08.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Evergreen on Forme.</span></td>
+          </tr>
+          <tr class="done" data-status="implemented">
+            <td class="id">M8</td>
+            <td class="head-cell">Landscape Rebuild from Scratch</td>
+            <td class="stack" data-label="Scope">A4 Landscape template rebuilt cleanly on Forme; MuPDF verified. Completed 2026-11-08.</td>
+            <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Landscape Forme verified.</span></td>
+          </tr>
+          <tr class="done" data-status="implemented">
+            <td class="id">M9</td>
+            <td class="head-cell">Extra Commercial Templates (Forme)</td>
+            <td class="stack" data-label="Scope">Architectural Frame, Executive Luxury, Heritage House migrated to Forme; picker and resolver integrated. Completed 2026-11-08.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">3 templates on Forme.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M10</td>
+            <td class="head-cell">Purchase Order (PO) Template Integration</td>
+            <td class="stack" data-label="Scope">POs route through the commercial Forme pipeline via <code>PurchaseOrderDetail</code> → <code>generatePurchaseOrderPdf</code> (verified). M1C canonical contract and Gate 3 recertification outstanding.</td>
             <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
             <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
-            <td class="stack" data-label="Target Gate"><span class="gatecell">All 8 document types active.</span></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">PO contract + Gate 3 sign-off.</span></td>
           </tr>
           <tr data-status="pending">
-            <td class="id">M6</td>
-            <td class="head-cell">Legacy Cleanup &amp; Deprecation</td>
-            <td class="stack" data-label="Scope">Verify zero React-PDF imports, remove obsolete adapters, uninstall <code>@react-pdf/renderer</code>.</td>
-            <td data-label="Priority"><span class="pri MED">MED</span></td>
+            <td class="id">M11</td>
+            <td class="head-cell">CPS Template Integration</td>
+            <td class="stack" data-label="Scope">CPS exports through the commercial Forme pipeline (verified). VER-02 font fallback (.woff → Helvetica) unresolved; no dedicated CPS design; Gate 3 alignment open.</td>
+            <td data-label="Priority"><span class="pri HIGH">HIGH</span></td>
             <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
             <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
-            <td class="stack" data-label="Target Gate"><span class="gatecell">Package removed.</span></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">CPS font fix + Gate 3 alignment.</span></td>
+          </tr>
+          <tr data-status="pending">
+            <td class="id">M12</td>
+            <td class="head-cell">Family Certification &amp; Parity Closeout</td>
+            <td class="stack" data-label="Scope">Preview ↔ export parity, visual parity vs retired output, regression suites, delivery connectivity per family (incl. CSR blank/field-mode, Waybill/RFQ delivery, CPS delivery). Letters formally out of PDF scope.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-pending">⛔ Pending</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">8/8 families certified.</span></td>
+          </tr>
+          <tr class="done" data-status="implemented">
+            <td class="id">M13</td>
+            <td class="head-cell">Final React-PDF Consumer Audit</td>
+            <td class="stack" data-label="Scope">Repository-wide import analysis executed 2026-11-12. Four live import sites identified and retired; zero test/dev package imports; one static test pin removed; delivery utility retained.</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Signed retirement plan.</span></td>
+          </tr>
+          <tr class="done" data-status="implemented">
+            <td class="id">M14</td>
+            <td class="head-cell">Shared-Infra Retirement &amp; Package Purge</td>
+            <td class="stack" data-label="Scope"><code>@react-pdf/renderer</code> removed from package.json; bun.lock rebuilt (zero @react-pdf/* entries); pdfFontRegistry/DefaultPdfGenerator/pdfCurrency/test-pdf harness deleted; delivery contract pruned to <code>buildBlob</code>. Rollback recorded (DEC-38).</td>
+            <td data-label="Priority"><span class="pri CRIT">CRIT</span></td>
+            <td data-label="Status"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="100"><i></i></span><span>100%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell"><b>GATE 4</b>zero active consumers (criterion 4 open pending M12).</span></td>
+          </tr>
+          <tr data-status="progress">
+            <td class="id">M15</td>
+            <td class="head-cell">Post-Removal Stabilization</td>
+            <td class="stack" data-label="Scope">Regression suite re-run after the purge (184/192; 8 pre-existing failures at HEAD, untouched by the purge). Rollback recorded. Full stabilization sign-off (smoke exports per family, monitoring) open; not claimed.</td>
+            <td data-label="Priority"><span class="pri MED">MED</span></td>
+            <td data-label="Status"><span class="st st-progress">🔄 In Progress</span></td>
+            <td class="stack" data-label="% Done"><div class="mini"><span class="mini__bar" data-p="0"><i></i></span><span>0%</span></div></td>
+            <td class="stack" data-label="Target Gate"><span class="gatecell">Gate 4 fully closed; migration complete.</span></td>
           </tr>
         </tbody>
       </table>
@@ -1368,48 +1468,112 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       </details>
 
       <!-- PHASE 5 -->
-      <details class="phase" data-status="pending">
+      <details class="phase done-phase" data-status="implemented">
         <summary class="phase__head">
           <span class="phase__no">Phase 5 · M5</span>
-          <span class="phase__t">Rollout to Remaining Families</span>
-          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="phase__t">Document-Family Forme Migrations</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <p class="step__note">Completed 2026-11-12 (uncommitted working tree). Engine migration only — certification is tracked in M12.</p>
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.1</span>Receipt. Forme implementation; React-PDF <code>ReceiptPdf.tsx</code> deleted; download/share via <code>renderReceiptPdfBlob</code>.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.2</span>CSR. All five templates on Forme/PDFCN (Industry <code>8</code>, Zinc <code>3</code>, Minimal <code>6</code>, Blueprint Landscape, Portrait Reference). Preview, download, share, blank and post-save downloads use Forme. Ink parity closed.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.3</span>Waybill. Six populated templates + blank template on Forme; React-PDF renderers deleted; <code>ViewWaybill</code>/<code>WaybillFormPage</code> downloads via <code>buildBlob</code>.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.4</span>Project Documents. Forme implementation; <code>ProjectDocumentPDF.tsx</code> deleted; shared <code>renderProjectDocumentPdfBlob</code> helper.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 5.5</span>Request for Quotation (RFQ). Mosaic and Executive Forme templates; legacy mapping <code>modern→mosaic</code>, <code>bordered_schedule→executive</code>. React-PDF renderers deleted.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 7 -->
+      <details class="phase done-phase" data-status="implemented">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 7 · M7</span>
+          <span class="phase__t">Evergreen Forme Migration</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
           <span class="chev" aria-hidden="true">▾</span>
         </summary>
         <div class="phase__body">
           <ul class="steps">
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.1</span>Cost Pricing Sheet (CPS): connect the templates to the static TTF fonts, the Master Deterministic Resolver, and <code>CompositePdfDelivery</code>. This removes the silent Helvetica fallback.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <p class="step__t"><span class="num">Step 7.1</span>Evergreen reimplemented as <code>src/components/pdf/forme/EvergreenFormeDocument.tsx</code>; legacy React-PDF files deleted; footer anchoring and logo fallback remediated.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-08</span></div>
               </div>
             </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 8 -->
+      <details class="phase done-phase" data-status="implemented">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 8 · M8</span>
+          <span class="phase__t">Landscape Rebuild from Scratch</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.2</span>Customer Service Report (CSR): fix the customization picker scrollbar, complete the on-device print verification for both templates, and connect the export path to <code>CompositePdfDelivery</code>.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <p class="step__t"><span class="num">Step 8.1</span>A4 Landscape rebuilt cleanly on Forme with coordinate rulers and partitioned title block; verified via MuPDF rasterization.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-08</span></div>
               </div>
             </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 9 -->
+      <details class="phase done-phase" data-status="implemented">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 9 · M9</span>
+          <span class="phase__t">Extra Commercial Templates (Forme)</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.3</span>Waybill: implement the Forme templates with the Caveat script font and preserve the logistics conditions, transport details, and signature blocks.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.4</span>Receipt: implement the Forme template and enforce strict financial immutability with a clean proof-of-payment layout.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
-              </div>
-            </li>
-            <li class="step" data-status="pending">
-              <span class="check" aria-hidden="true"></span>
-              <div class="step__b">
-                <p class="step__t"><span class="num">Step 5.5</span>Request for Quotation (RFQ): implement the Forme template and preserve the unpriced procurement table semantics.</p>
-                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+                <p class="step__t"><span class="num">Step 9.1</span>Architectural Frame, Executive Luxury and Heritage House migrated to Forme; routed, picker-integrated and tested.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-08</span></div>
               </div>
             </li>
           </ul>
@@ -1417,10 +1581,23 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       </details>
 
       <!-- PHASE 6 -->
-      <details class="phase" data-status="pending">
+      <details class="phase" data-status="superseded">
         <summary class="phase__head">
           <span class="phase__no">Phase 6 · M6</span>
           <span class="phase__t">Legacy Deprecation &amp; Cleanup</span>
+          <span class="st st-superseded phase__status">⏭️ Superseded</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <p class="step__note">Superseded 2026-11-12 by M12–M15. The purge now requires Gate 4 and zero active consumers; see <code>docs/prd/pdf-rendering-migration/Waterfall-roadmap.md</code> §6.</p>
+        </div>
+      </details>
+
+      <!-- PHASE 10 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 10 · M10</span>
+          <span class="phase__t">Purchase Order (PO) Template Integration</span>
           <span class="st st-pending phase__status">⛔ Pending</span>
           <span class="chev" aria-hidden="true">▾</span>
         </summary>
@@ -1429,28 +1606,156 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 6.1</span>Run AST import analysis across <code>src/</code> to confirm zero remaining imports of <code>@react-pdf/renderer</code>.</p>
+                <p class="step__t"><span class="num">Step 10.1</span>Implement <code>preparePurchaseOrderDocument.ts</code> (M1C) and integrate the PO prepared model with the Master Resolver.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 6.2</span>Delete obsolete React-PDF adapters, components, and workaround scripts.</p>
+                <p class="step__t"><span class="num">Step 10.2</span>Verify PO formal integration: supplier-facing semantics, unit cost column, hidden receiving bank details, Buyer authorization signatures, Gate 3 recertification.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+          <p class="step__note">POs render through the commercial Forme pipeline today (<code>generatePurchaseOrderPdf</code> → <code>resolveCommercialPdfRoute</code> → <code>-forme</code> routes). This milestone formalizes the PO against Gate 3.</p>
+        </div>
+      </details>
+
+      <!-- PHASE 11 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 11 · M11</span>
+          <span class="phase__t">CPS Template Integration</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 11.1</span>Fix the CPS font fallback defect (VER-02): link CPS templates to static TTF fonts before claiming parity.</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 6.3</span>Uninstall <code>@react-pdf/renderer</code> from <code>package.json</code>.</p>
+                <p class="step__t"><span class="num">Step 11.2</span>Decide CPS template strategy: commercial Forme templates vs dedicated CPS Forme design; connect the delivery path; verify representative CPS documents.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 12 -->
+      <details class="phase" data-status="pending">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 12 · M12</span>
+          <span class="phase__t">Family Certification &amp; Parity Closeout</span>
+          <span class="st st-pending phase__status">⛔ Pending</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 12.1</span>Preview ↔ export parity per family: CSR (iframe bytes = download bytes), Waybill/RFQ <code>buildBlob</code> path, Receipt, Project Documents, commercial (Invoice/Quotation/PO/CPS).</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
             <li class="step" data-status="pending">
               <span class="check" aria-hidden="true"></span>
               <div class="step__b">
-                <p class="step__t"><span class="num">Step 6.4</span>Run <code>bun run audit:load</code> and <code>bun run typecheck</code> to confirm clean repository state.</p>
+                <p class="step__t"><span class="num">Step 12.2</span>Visual parity evidence vs retired React-PDF output where it exists; focused regression suite per family; delivery contract attestation.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 13 -->
+      <details class="phase done-phase" data-status="implemented">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 13 · M13</span>
+          <span class="phase__t">Final React-PDF Consumer Audit &amp; Retirement Plan</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 13.1</span>Reviewed and executed the 2026-11-12 retirement matrix (<code>Waterfall-roadmap.md</code> §5): 4 live import sites identified and retired; one static test pin (<code>pdfCurrency.test.js</code>) removed; delivery utility retained.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 13.2</span>Recorded the retirement decision (DEC-37) and rollback strategy (DEC-38) in the decision log; converted the matrix into the executed purge diff.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- PHASE 14 -->
+      <details class="phase done-phase" data-status="implemented">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 14 · M14</span>
+          <span class="phase__t">Shared-Infra Retirement &amp; Package Purge</span>
+          <span class="st st-implemented phase__status">✅ Complete</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 14.1</span>Retired <code>pdfFontRegistry.ts</code> + <code>customization/fontRegistry.ts</code> chain, <code>pdfCurrency.tsx</code> (static test updated), <code>DefaultPdfGenerator.ts</code> and the dead <code>PdfGenerator.ts</code> interface. Deleted <code>test-pdf.tsx</code> (React-PDF canary at HEAD).</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="implemented">
+              <span class="check on" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></svg></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 14.2</span>Pruned the <code>element</code> branch of <code>downloadPdf.tsx</code> (delivery contract retained, <code>buildBlob</code> required); removed the <code>_engine</code> dual-renderer switch; uninstalled <code>@react-pdf/renderer</code> via Bun; <code>bun.lock</code> rebuilt clean.</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-implemented">✅ Complete</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+          </ul>
+          <p class="step__note">Verification: typecheck shows only the three pre-existing HEAD errors. PDF suite 184/192 (8 pre-existing failures at HEAD, untouched files). Critical suites 73/73; Forme family suites 37/37 + 3/3. No package removal collateral — <code>pdfSharedFonts</code>, <code>pdfFillableFonts</code> and <code>pdfDesignPreset</code> retained.</p>
+        </div>
+      </details>
+
+      <!-- PHASE 15 -->
+      <details class="phase progress-phase" data-status="progress">
+        <summary class="phase__head">
+          <span class="phase__no">Phase 15 · M15</span>
+          <span class="phase__t">Post-Removal Stabilization &amp; Rollback Gate</span>
+          <span class="st st-progress phase__status">🔄 In Progress</span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </summary>
+        <div class="phase__body">
+          <ul class="steps">
+            <li class="step" data-status="progress">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 15.1</span>Focused regression suite green pre/post purge. Suite re-run after the purge: 184/192 pass; 8 failures all pre-existing at HEAD in purge-untouched files. Rollback strategy recorded (DEC-38: revert list + <code>bun add @react-pdf/renderer@4.3.2</code> + <code>bun install</code>).</p>
+                <div class="statline"><span class="lbl">Status:</span><span class="st st-progress">🔄 Partial</span><span class="date">2026-11-12</span></div>
+              </div>
+            </li>
+            <li class="step" data-status="pending">
+              <span class="check" aria-hidden="true"></span>
+              <div class="step__b">
+                <p class="step__t"><span class="num">Step 15.2</span>One smoke export per family after the next release; monitoring note; final stabilization sign-off (not verified — never run).</p>
                 <div class="statline"><span class="lbl">Status:</span><span class="st st-pending">⛔ Pending</span></div>
               </div>
             </li>
@@ -1470,6 +1775,85 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
       <h2>Work Log</h2>
       <div class="shead__rule"></div>
     </div>
+
+    <details class="acc">
+      <summary class="phase__head">
+        <span class="phase__no">2026-11-12</span>
+        <span class="phase__t">React-PDF retirement executed (M13 + M14)</span>
+        <span class="st st-implemented phase__status">✅ Purged</span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="phase__body">
+        <p class="step__note">Authorized purge task. No certification claims — families remain uncertified (M12 open). Android signed bundle unchanged (build output).</p>
+
+        <p class="step__t"><b>Deleted</b></p>
+        <ul class="sub">
+          <li><code>src/lib/pdfFontRegistry.ts</code> · <code>src/domain/pdf/customization/fontRegistry.ts</code> — the dead font-registry chain.</li>
+          <li><code>src/lib/pdf/DefaultPdfGenerator.ts</code> · <code>src/lib/pdf/PdfGenerator.ts</code> — dead generator + interface.</li>
+          <li><code>src/components/pdf/pdfCurrency.tsx</code> — zero consumers.</li>
+          <li><code>test-pdf.tsx</code> — React-PDF canary at HEAD (unimportable, never ran).</li>
+        </ul>
+
+        <p class="step__t" style="margin-top:10px"><b>Reworked</b></p>
+        <ul class="sub">
+          <li><code>src/components/document-view/shared/downloadPdf.tsx</code> — React-PDF <code>element</code> branch removed; <code>buildBlob</code> now the required contract. Callers unchanged (both use <code>buildBlob</code>).</li>
+          <li><code>src/components/pdf/index.ts</code> — dead dual-renderer <code>engine</code>/<code>_engine</code> parameter removed; resolver behaviour unchanged (Forme-only).</li>
+          <li><code>pdfCurrency.test.js</code> — static pin removed; active-contract assertions retained; passes 2/2.</li>
+          <li><code>dualIndustryRendererRouting.test.ts</code>, <code>cpsCommercialReplacement.test.ts</code> — vestigial 2nd-argument calls removed.</li>
+        </ul>
+
+        <p class="step__t" style="margin-top:10px"><b>Dependency</b></p>
+        <ul class="sub">
+          <li><code>@react-pdf/renderer</code> removed from <code>package.json</code>; <code>bun install</code> rebuilt <code>bun.lock</code> — zero <code>@react-pdf/*</code> entries (fns, font, image, layout, pdfkit, primitives, reconciler, render, renderer, stylesheet, svg, textkit, types).</li>
+          <li>bun.lock prune includes the concurrent font-audit removals (they were already consistent in the working tree).</li>
+        </ul>
+
+        <p class="step__t" style="margin-top:10px"><b>Verification</b></p>
+        <ul class="sub">
+          <li><code>bun run typecheck</code> — 3 errors, all pre-existing at HEAD (<code>forme*Template.test.ts</code> spread-of-Record, TS2698).</li>
+          <li><code>bun test src/tests/pdf</code> — 184 pass, 8 fail; the 8 failures are pre-existing at HEAD in purge-untouched files (git clean at those paths).</li>
+          <li>Critical commercial/CSR/font/routing suites — 73 pass, 0 fail. Forme family suites (CSR/Waybill/RFQ/Receipt) — 37 pass, 0 fail; Project Documents — 3 pass, 0 fail.</li>
+          <li>Repository-wide search — zero runtime/test imports; manifest/lockfile clean; residual mentions are retirement-contract string fixtures and prohibition assertions.</li>
+        </ul>
+        <p class="step__note">Rollback (DEC-38): revert the purge diff; <code>bun add @react-pdf/renderer@4.3.2</code>; <code>bun install</code>; re-run typecheck + PDF suites. Android bundle refreshed by the next authorized Capacitor build (never <code>bun run build</code>). Families: engine-migrated, NOT certified; Gate 4 criterion 4 open.</p>
+      </div>
+    </details>
+
+    <details class="acc" open>
+      <summary class="phase__head">
+        <span class="phase__no">2026-11-12</span>
+        <span class="phase__t">Family Forme migrations complete + React-PDF retirement audit</span>
+        <span class="st st-implemented phase__status">✅ Migrations complete</span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="phase__body">
+        <p class="step__note">Documentation + engine migrations. The same-day purge is the entry above (M13 + M14); retirement decision DEC-37, rollback DEC-38.</p>
+
+        <p class="step__t"><b>Completed migrations (uncommitted working tree)</b></p>
+        <ul class="sub">
+          <li>Receipt — Forme implementation; React-PDF <code>ReceiptPdf.tsx</code> deleted; download/share via <code>renderReceiptPdfBlob</code>.</li>
+          <li>Waybill — 6 populated + blank template migrated; React-PDF renderers deleted; downloads via <code>buildBlob</code>.</li>
+          <li>Project Documents — Forme implementation; <code>ProjectDocumentPDF.tsx</code> deleted; shared <code>renderProjectDocumentPdfBlob</code>.</li>
+          <li>RFQ — Mosaic and Executive Forme templates; legacy mapping <code>modern→mosaic</code>, <code>bordered_schedule→executive</code>; React-PDF renderers deleted.</li>
+          <li>CSR — all five templates (Industry <code>8</code>, Zinc <code>3</code>, Minimal <code>6</code>, Blueprint Landscape, Portrait Reference) render via Forme/PDFCN; HTML preview deleted; <code>CsrFormePreview</code> iframe replaces it; ink parity closed; blank/post-save downloads preserved on template <code>3</code>.</li>
+        </ul>
+
+        <p class="step__t" style="margin-top:14px"><b>React-PDF audit (verified)</b></p>
+        <ul class="sub">
+          <li>Exactly four live import sites: <code>pdfFontRegistry.ts</code>, <code>DefaultPdfGenerator.ts</code>, <code>pdfCurrency.tsx</code>, <code>downloadPdf.tsx</code> (element-only branch).</li>
+          <li>Zero tests import the package. One static test (<code>pdfCurrency.test.js</code>) pins a purge candidate.</li>
+          <li><code>downloadPdfFromElement</code> has exactly two production consumers — both use <code>buildBlob</code>; delivery contract retained, utility not deletable.</li>
+          <li>Letters family formally recorded as out of PDF scope (HTML-only).</li>
+        </ul>
+
+        <p class="step__t" style="margin-top:14px"><b>Document suite updated</b></p>
+        <ul class="sub">
+          <li><code>Waterfall-roadmap.md</code> — new milestones M12–M15, Gate 4, Document-Family Inventory, React-PDF Retirement Matrix; M5 split &amp; completed (M5a–M5e); M6 superseded; no invented percentages.</li>
+          <li><code>Readme.md</code>, <code>architecture.md</code>, <code>functional-req.md</code>, <code>test-plan.md</code>, <code>risk-register.md</code>, <code>Prerequisites.md</code>, <code>decision-log.md</code> — synchronized with the audited state.</li>
+          <li><code>bun run build</code> not run (permanent prohibition). No application source files changed by this audit.</li>
+        </ul>
+      </div>
+    </details>
 
     <details class="acc" open>
       <summary class="phase__head">
@@ -1607,7 +1991,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     <details class="acc">
       <summary class="phase__head">
         <span class="phase__no">Log</span>
-        <span class="phase__t">17 decisions · 2026-10-30 and 2026-11-01</span>
+        <span class="phase__t">27 decisions · 2026-10-30, 2026-11-01 and 2026-11-12</span>
         <span class="chev" aria-hidden="true">▾</span>
       </summary>
       <div class="phase__body">
@@ -1724,6 +2108,66 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
             <td class="status-cell"><span class="st st-corrected">🛠️ Corrected</span></td>
             <td class="dec">Naira routes to Noto Sans and the Ohm sign routes to the internal Greek subset. A rendered-PDF test confirms that no Helvetica or Arial resource is used.</td>
           </tr>
+          <tr data-status="corrected">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Family Migrations</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="dec">Engine migration of Receipt, Waybill, Project Documents, RFQ and CSR is complete. All eight in-scope document families render through Forme or Forme+PDFCN. Migration ≠ certification; no family is certified (Gates 1–3 and M12 remain open).</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Preview Parity</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="dec">CSR preview is an iframe of the identical Forme bytes used by download (<code>CsrFormePreview</code>); parity is structural, not cosmetic. Waybill/RFQ share the same blob builder for preview export and download.</td>
+          </tr>
+          <tr data-status="pending">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Letters Scope</td>
+            <td class="status-cell"><span class="st st-pending">⛔ Out of scope</span></td>
+            <td class="dec">Letters are HTML-only correspondence with no PDF pipeline. No PDFCN/Forme or React-PDF path exists; recorded as out of PDF scope. BOQ remains excluded (DEC-02).</td>
+          </tr>
+          <tr data-status="superseded">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Dual-Renderer Picker</td>
+            <td class="status-cell"><span class="st st-superseded">⏭️ Superseded</span></td>
+            <td class="dec">DEC-26 and DEC-27 (Industry — React-PDF comparison option; retained Minimal/Evergreen/Crest on React-PDF) are SUPERSEDED. The commercial stack is Forme-only; <code>resolveCommercialPdfRoute</code> ignores the engine argument; legacy ids normalize to <code>-forme</code> routes.</td>
+          </tr>
+          <tr data-status="superseded">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Milestone Plan</td>
+            <td class="status-cell"><span class="st st-superseded">⏭️ Superseded</span></td>
+            <td class="dec">M6 (Legacy Cleanup &amp; Deprecation) is SUPERSEDED by M12–M15. Gate 4 (Retirement / Removal) is defined; purge requires zero active consumers, preserved delivery contracts, certified families, a focused regression suite and a rollback strategy.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">React-PDF Audit</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="dec">Exactly four live import sites were found and retired; zero test/dev package imports; one static test pin (<code>pdfCurrency.test.js</code>) was removed and rewritten for the active contract; delivery utility retained (both consumers use <code>buildBlob</code>).</td>
+          </tr>
+          <tr data-status="superseded">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Package Pin</td>
+            <td class="status-cell"><span class="st st-superseded">⏭️ Superseded</span></td>
+            <td class="dec">The package pin decision was implemented: <code>@react-pdf/renderer</code> removed 2026-11-12 via <code>bun install</code> rebuild; lockfile zero <code>@react-pdf/*</code> entries (recorded in decision DEC-37).</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Purge Executed</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="dec">Five files deleted; delivery contract pruned to <code>buildBlob</code>; typecheck clean (3 pre-existing HEAD errors); PDF suite 184/192 (8 failures pre-existing); 73/73 critical suites; 37/37 + 3/3 Forme family suites. Engine-only; no certification claim.</td>
+          </tr>
+          <tr data-status="implemented">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Rollback Strategy</td>
+            <td class="status-cell"><span class="st st-implemented">✅ Complete</span></td>
+            <td class="dec">Rollback = revert the purge diff; <code>bun add @react-pdf/renderer@4.3.2</code>; <code>bun install</code>. Recorded as DEC-38. No browser/WebView/device validation claimed (DEC-39).</td>
+          </tr>
+          <tr data-status="pending">
+            <td class="date">2026-11-12</td>
+            <td class="phase-a">Stabilization</td>
+            <td class="status-cell"><span class="st st-pending">⛔ Open</span></td>
+            <td class="dec">M15 partial: suite green post-purge; smoke exports per family and final stabilization sign-off remain open — not run. Families engine-migrated, NOT certified (M12, Gates 1–3, Gate 4 criterion 4 open).</td>
+          </tr>
         </tbody>
       </table>
       </div>
@@ -1742,7 +2186,7 @@ footer{border-top:1px solid var(--line);margin-top:26px;padding:26px 0 40px;back
     </div>
     <div class="foot__meta">
       Architecture <b>Forme + pdfcn</b> · Standard <b>ASD-STE100</b><br>
-      Updated <b>2026-11-01</b> · Milestones <b>9</b> · Gates <b>3</b>
+      Updated <b>2026-11-12</b> · Milestones <b>16</b> · Gates <b>4</b>
     </div>
   </div>
 </footer>

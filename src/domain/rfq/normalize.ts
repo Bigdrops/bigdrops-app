@@ -1,5 +1,6 @@
 import type { Rfq, DbRfq, RfqItem, DbRfqItem } from './types'
-import { DEFAULT_TABLE_TEMPLATE, getDefaultColumnsForDocument } from '@/domain/table-document/templateRegistry'
+import { getDefaultColumnsForDocument } from '@/domain/table-document/templateRegistry'
+import { DEFAULT_RFQ_TEMPLATE } from '@/domain/rfq/templates'
 import { createEmptyTableRow, ensureTableRowKeys } from '@/domain/table-document/rows'
 import type { TableDocumentRow } from '@/domain/table-document/types'
 import { safeParseJson } from '@/lib/json/safeParseJson'
@@ -44,7 +45,7 @@ export const normalizeDbRfq = (dbRfq: any, dbItems: any[] = []): Rfq => {
 
   return {
     ...dbRfq,
-    template_id: customFields.template_id || DEFAULT_TABLE_TEMPLATE,
+    template_id: customFields.template_id || DEFAULT_RFQ_TEMPLATE,
     issue_date: dbRfq.issue_date || '',
     expiry_date: dbRfq.expiry_date || '',
     show_vendor_identity: customFields.show_vendor_identity ?? false,
@@ -91,7 +92,7 @@ export const denormalizeToDbRfq = (rfq: Rfq): DbRfq => {
   const custom_fields = {
     ...(rfq.custom_fields || {}),
     show_vendor_identity,
-    template_id: template_id || DEFAULT_TABLE_TEMPLATE,
+    template_id: template_id || DEFAULT_RFQ_TEMPLATE,
     table_rows: table_rows || [],
     table_columns: table_columns || getDefaultColumnsForDocument('rfq'),
   }

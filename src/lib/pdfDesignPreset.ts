@@ -2,7 +2,7 @@ import { getRegisteredFillablePdfFontFamily, getRegisteredFillableWebFontFamily 
 import { getRegisteredSharedFontConfig, getRegisteredSharedWebFontFamily, isRegisteredSharedFontChoice } from '@/lib/pdfSharedFonts'
 
 export type PdfDesignPresetDocument = 'invoice' | 'quotation' | 'csr' | 'waybill' | 'cps_sheets' | 'receipt'
-export type PdfFontChoice = 'Inter' | 'Archivo Black'
+export type PdfFontChoice = 'Inter' | 'Archivo Black' | 'Goeist Sans' | 'Goeist Mono'
 export type LegacyPdfFontChoice =
   | 'Roboto'
   | 'Open Sans'
@@ -73,6 +73,8 @@ function readStoredPreset(documentType: PdfDesignPresetDocument): string | null 
 const PDF_FONT_VALUES: PdfFontChoice[] = [
   'Inter',
   'Archivo Black',
+  'Goeist Sans',
+  'Goeist Mono',
 ]
 
 const PDF_FILLABLE_FONT_VALUES: PdfFillableFontChoice[] = [
@@ -82,6 +84,8 @@ const PDF_FILLABLE_FONT_VALUES: PdfFillableFontChoice[] = [
 
 export const PDF_FONT_OPTIONS: Array<{ value: PdfFontChoice; label: string; description: string }> = [
   { value: 'Inter', label: 'Inter', description: 'Neutral modern standard' },
+  { value: 'Goeist Sans', label: 'Goeist Sans', description: 'Rounded Geist — friendly, modern' },
+  { value: 'Goeist Mono', label: 'Goeist Mono', description: 'Rounded monospace for figures' },
 ]
 
 export const PDF_FILLABLE_FONT_OPTIONS: Array<{ value: PdfFillableFontChoice; label: string; description: string }> = [
@@ -188,6 +192,8 @@ function normalizeHexColor(value: unknown, fallback: string) {
 function normalizeFontChoice(value: unknown, fallback: PdfFontChoice = 'Inter'): PdfFontChoice {
   const normalized = String(value || '').trim()
   if (normalized === 'Archivo Black') return 'Archivo Black'
+  if (normalized === 'Goeist Sans') return 'Goeist Sans'
+  if (normalized === 'Goeist Mono') return 'Goeist Mono'
   if (normalized === 'Inter') return 'Inter'
   // All legacy or retired commercial font preferences normalize to Inter
   return fallback
@@ -197,6 +203,8 @@ function normalizeFillableFontChoice(value: unknown, fallback: PdfFillableFontCh
   const normalized = String(value || '').trim()
   if (normalized === 'sans' || normalized === 'Inter') return 'Inter'
   if (normalized === 'Archivo Black') return 'Archivo Black'
+  if (normalized === 'Goeist Sans') return 'Goeist Sans'
+  if (normalized === 'Goeist Mono') return 'Goeist Mono'
   if (
     normalized === 'Caveat' ||
     ([

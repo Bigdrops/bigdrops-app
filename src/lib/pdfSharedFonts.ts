@@ -20,10 +20,9 @@ export const CREST_FONT_FAMILY = 'Inter'
 export const PDF_GLYPH_FONT_FAMILY = 'Noto Sans'
 export const ARCHIVO_BLACK_FONT_FAMILY = 'Archivo Black'
 
-const archivoBlackSrc =
-  typeof window === 'undefined'
-    ? 'public/fonts/ArchivoBlack-Regular.ttf'
-    : '/fonts/ArchivoBlack-Regular.ttf'
+function publicFontSrc(filename: string): string {
+  return typeof window === 'undefined' ? `public/fonts/${filename}` : `/fonts/${filename}`
+}
 
 export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFontConfig> = {
   Inter: {
@@ -37,8 +36,24 @@ export const REGISTERED_SHARED_FONTS: Record<PdfFontChoice, RegisteredSharedFont
   'Archivo Black': {
     family: 'Archivo Black',
     webFamily: 'Archivo Black',
-    regularSrc: archivoBlackSrc,
-    boldSrc: archivoBlackSrc,
+    regularSrc: publicFontSrc('ArchivoBlack-Regular.ttf'),
+    boldSrc: publicFontSrc('ArchivoBlack-Regular.ttf'),
+  },
+  'Goeist Sans': {
+    family: 'Goeist Sans',
+    webFamily: 'Goeist Sans',
+    regularSrc: publicFontSrc('GoeistSans-Regular.ttf'),
+    boldSrc: publicFontSrc('GoeistSans-Bold.ttf'),
+    italicSrc: publicFontSrc('GoeistSans-Italic.ttf'),
+    boldItalicSrc: publicFontSrc('GoeistSans-BoldItalic.ttf'),
+  },
+  'Goeist Mono': {
+    family: 'Goeist Mono',
+    webFamily: 'Goeist Mono',
+    regularSrc: publicFontSrc('GoeistMono-Regular.ttf'),
+    boldSrc: publicFontSrc('GoeistMono-Bold.ttf'),
+    italicSrc: publicFontSrc('GoeistMono-Italic.ttf'),
+    boldItalicSrc: publicFontSrc('GoeistMono-BoldItalic.ttf'),
   },
 }
 

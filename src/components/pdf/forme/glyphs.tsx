@@ -43,6 +43,9 @@ const BASE_FONT_MISSING: Record<string, ReadonlySet<string>> = {
   'Noto Sans': new Set(['Ω', '−', '·', '—', '–', '²', '³', '°', 'µ', 'Ø', '′', '″']),
   'Noto Sans Greek': new Set(['₦', '−']),
   Helvetica: new Set(['₦', 'Ω']),
+  // Both Goeist families lack ₦ (locked to Noto Sans). Goeist Mono also lacks Ω (U+2126, locked to Noto Sans Greek).
+  'Goeist Sans': new Set(['₦']),
+  'Goeist Mono': new Set(['₦', 'Ω']),
 }
 
 export interface GlyphRun {

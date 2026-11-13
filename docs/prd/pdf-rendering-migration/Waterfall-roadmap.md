@@ -1,21 +1,26 @@
 # 🏗️ Waterfall Roadmap & Phased Execution Sequence
 
 - **Status:** AUTHORITATIVE LIVING ROADMAP & RECONCILED EXECUTION SEQUENCE
-- **Revision:** 2026-11-01
+- **Revision:** 2026-11-12
 - **Architecture:** Forme Engine (`@formepdf/react` & `@formepdf/core` v0.20.1) + `pdfcn` Presentation Layer
 - **Writing Standard:** ASD-STE100 Simplified Technical English
 - **Scope:** Eight In-Scope Document Types. BOQ Excluded.
+- **Evidence labels used in this document:** **VERIFIED** = directly inspected in the repository on 2026-11-12 · **REPORTED** = supported by a supplied completion report, not revalidated · **PARTIAL** = implementation exists, acceptance criteria incomplete · **PENDING** = not implemented or not verified · **BLOCKED** = blocked by a known dependency · **SUPERSEDED** = replaced by a newer decision.
 
 ---
 
 ## 1. Master Progress Bar
 
-`[████░░░░░░] 44%` | **Total Milestones:** 14 | **Current Phase:** Phase M7 pending. Phases M2, M3 and M4 have in-flight work; Phases M5–M11 pending.
+**Milestone completion (by table in Section 3, not by gate approval):**
 
-- Milestones M0, M1A and M1B are complete.
-- Milestones M2, M3 and M4 have in-flight implementation from the Industrial Forme commercial template pass. Gate 1, Gate 2 and Gate 3 are not signed off.
-- Milestones M1C, M5, M6 and M7–M11 are pending.
-- The percentage is the mean of the milestone percentages in Section 3. It does not represent gate approval.
+Completed milestone IDs: **M0, M1A, M1B, M5 (sub-tracks M5a–M5e), M7, M8, M9, M13, M14.**
+In flight: **M2, M3, M4.**
+Pending: **M1C, M6 (superseded by M12–M15), M10, M11, M12, M15.**
+
+- **The `@react-pdf/renderer` dependency is retired as of 2026-11-12** — package removed from `package.json`, lockfile resolved clean by Bun, all four live import sites removed or reworked, `test-pdf.tsx` harness deleted. Engine-migration completeness does not certify families; Gate 4 criterion 4 (certification) and Gates 1–3 remain open.
+- **Engine migration of all eight in-scope document families is complete as of 2026-11-12** — every family now renders production PDFs through Forme or Forme+PDFCN. This is an **engine-migration status, not a certification status** (see Sections 3, 4 and 6).
+- Gate 1, Gate 2, Gate 3 remain **OPEN**. Gate 1/2/3 are preconditions to commercial certification (M4). Gate 4 (Retirement / Removal Gate) was newly defined on 2026-11-12; criteria 1–3, 5–8 are met as of the 2026-11-12 purge, criterion 4 (families certified per M12) remains OPEN.
+- Milestones M1C, M2–M4 carry percentage values recorded as of 2026-11-01. This revision adds no new percentage estimates. No overall percentage is asserted.
 
 ---
 
@@ -26,321 +31,151 @@
 - 🛠️ **CORRECTED** — Phase executed, then patched to resolve defects.
 - ⏭️ **SUPERSEDED** — Task or approach replaced by a newer architectural decision.
 - ⛔ **PENDING** — Awaiting execution; blocked until preceding gates pass.
+- ⛔ **OPEN** — Historical gate that is not signed off.
 - `[~]` **PARTIAL** — Sub-step executed. The full exit condition is not met.
+- Evidence: **VERIFIED / REPORTED / PARTIAL / PENDING / BLOCKED** (see header).
 
 ---
 
 ## 3. Milestone Tracker & Gating Table
 
-| ID | Milestone / Phase | Scope Summary | Priority | Status | % Done | Target Deliverables & Gating | Dependencies |
+| ID | Milestone / Phase | Scope Summary | Priority | Status | Evidence | Target Deliverables & Gating | Dependencies |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M0** | **Discovery & Problem Register** | Root cause analysis on `SASQUO-000427`, `SASQUO-000428`, `SASQUO-430`. PRD suite update and baseline freeze. | CRIT | ✅ COMPLETE | 100% | Authoritative PRD suite in `docs/prd/pdf-rendering-migration/`. | None |
-| **M1A** | **PDF Architecture Contracts** | Responsibility definition across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery. | CRIT | ✅ COMPLETE | 100% | Specification: `docs/reports/pdf/m1a-pdf-architecture-contracts-and-responsibility-definition.md`. | M0 |
-| **M1B** | **Shared Font & Media Infrastructure** | TrueType SFNT requirement, font inventory, WOFF rejection, CORS reality, Text Preservation Rule, single font authority. | CRIT | ✅ COMPLETE | 100% | Specification: `docs/reports/pdf/m1b-shared-font-and-image-asset-infrastructure-specification.md`. | M1A |
-| **M1C** | **PO Canonical Preparation Contract** | Author `preparePurchaseOrderDocument.ts`, adapt PO supplier-facing fields and calculations, integrate into commercial group. | HIGH | ⛔ PENDING | 0% | Canonical PO prepared document contract and resolver adapter. | M1A |
-| **M2** | **Natural Pagination (Normal Mode First)** | Calibrated table columns (candidate $\ge 72\text{ pt}$ make), adaptive closing layout, repeating headers, dynamic footers, selective keep-together, oversized rows. | CRIT | 🔄 IN PROGRESS | 35% | **GATE 1: Representative Document Suite Sign-Off**. Premature page breaks eliminated on `SASQUO-000427`. | M1B, M1C |
-| **M3** | **Compact & Force 1 Page Modes** | Wire 32 candidate compact tokens, two-pass measurement via `renderDocumentWithLayout`, legibility-first safeguards (candidate 7 pt floor), fallback. | HIGH | 🔄 IN PROGRESS | 25% | **GATE 2: Compaction Tests**. Deterministic compaction without content loss. | M2 |
-| **M4** | **Commercial Reference Certification** | Full Quotation, Invoice, and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output. | CRIT | 🔄 IN PROGRESS | 40% | **GATE 3: Pre-Production Approval**. Commercial family certified for live traffic switchover. | M3 |
-| **M5** | **Remaining Document Families** | CPS font fix & resolver integration, CSR delivery integration, Waybill templates (Caveat font), Receipt, and RFQ migration. | HIGH | ⛔ PENDING | 0% | All 8 document types active on Forme; zero React-PDF traffic. | M4 |
-| **M6** | **Legacy Cleanup & Deprecation** | Verify zero React-PDF imports via AST analysis, remove obsolete adapters, uninstall `@react-pdf/renderer` from `package.json`. | MED | ⛔ PENDING | 0% | Repository clean; `@react-pdf/renderer` removed; typecheck clean. | M5 |
-| **M7** | **Evergreen Forme Migration and Legacy Retirement** | Migrate the existing Evergreen PDF template to the Forme architecture; preserve data, behaviour and pagination; verify against legacy output; retire obsolete implementation after verification. | CRIT | ✅ COMPLETE | 100% | Evergreen Forme Document live; legacy files retired; footer anchoring & logo fallbacks remediated. | M6 |
-| **M8** | **Landscape Rebuild from Scratch** | Rebuild the A4 Landscape template cleanly from scratch on Forme; support invoice and quotation rendering, multipage documents, repeated headers, footer placement, tables and closing sections; verify against representative documents. | HIGH | ⛔ PENDING | 0% | Retirement of the current Landscape implementation gated by fresh-rebuild verification and a documented retirement decision. | M7 |
-| **M9** | **Migrate Three Additional Commercial HTML Templates to Forme** | Migrate the three additional source commercial HTML designs individually to Forme (Architectural Frame, Executive, Heritage House); verify invoice and quotation output; retain independent design identities. | CRIT | ✅ COMPLETE | 100% | All 3 templates migrated to Forme; test suite passing; picker and resolver integrated. | M8 |
-| **M10** | **Purchase Order (PO) Template Integration** | Extend the migrated commercial template system to support Purchase Orders; reuse the shared Forme rendering architecture; respect PO-specific data, terminology, supplier/vendor relationships and document semantics; verify supported PO templates and document-specific output. | HIGH | ⛔ PENDING | 0% | Must follow completion of the commercial template migrations. | M9 |
-| **M11** | **Cost Pricing Sheet (CPS) Template Integration** | Extend the migrated template system to support Cost Pricing Sheets; reuse the shared Forme infrastructure without forcing CPS into an unsuitable commercial document layout; retain CPS-specific rendering requirements; verify representative CPS documents. | HIGH | ⛔ PENDING | 0% | Follows the commercial template migrations and must not compromise the existing CPS document architecture. | M9 |
+| **M0** | **Discovery & Problem Register** | Root cause analysis on `SASQUO-000427`, `SASQUO-000428`, `SASQUO-430`. PRD suite update and baseline freeze. | CRIT | ✅ COMPLETE | VERIFIED | Authoritative PRD suite in `docs/prd/pdf-rendering-migration/`. | None |
+| **M1A** | **PDF Architecture Contracts** | Responsibility definition across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery. | CRIT | ✅ COMPLETE | VERIFIED | Specification: `docs/reports/pdf/m1a-pdf-architecture-contracts-and-responsibility-definition.md`. | M0 |
+| **M1B** | **Shared Font & Media Infrastructure** | TrueType SFNT requirement, font inventory, WOFF rejection, CORS reality, Text Preservation Rule, single font authority. | CRIT | ✅ COMPLETE | VERIFIED | Specification: `docs/reports/pdf/m1b-shared-font-and-image-asset-infrastructure-specification.md`. | M1A |
+| **M1C** | **PO Canonical Preparation Contract** | Author `preparePurchaseOrderDocument.ts`, adapt PO supplier-facing fields and calculations, integrate into commercial group. | HIGH | ⛔ PENDING | BLOCKED — not started | Canonical PO prepared document contract and resolver adapter. | M1A |
+| **M2** | **Natural Pagination (Normal Mode First)** | Calibrated table columns (candidate ≥ 72 pt make), adaptive closing layout, repeating headers, dynamic footers, selective keep-together, oversized rows. | CRIT | 🔄 IN PROGRESS | PARTIAL (as of 2026-11-01); no new completion claim in this revision | **GATE 1: Representative Document Suite Sign-Off**. Premature page breaks eliminated on `SASQUO-000427`. | M1B, M1C |
+| **M3** | **Compact & Force 1 Page Modes** | Wire 32 candidate compact tokens, two-pass measurement via `renderDocumentWithLayout`, legibility-first safeguards (candidate 7 pt floor), fallback. | HIGH | 🔄 IN PROGRESS | PARTIAL (as of 2026-11-01); no new completion claim in this revision | **GATE 2: Compaction Tests**. Deterministic compaction without content loss. | M2 |
+| **M4** | **Commercial Reference Certification** | Full Quotation, Invoice, and PO templates in Forme, Landscape mode, preview parity, visual regression against legacy output. | CRIT | 🔄 IN PROGRESS | PARTIAL — commercial templates are Forme-only in code (VERIFIED); named-sample recertification is not done | **GATE 3: Pre-Production Approval**. Commercial family certified for live traffic switchover. | M3 |
+| **M5** | **Document-Family Forme Migrations** | Split into sub-tracks M5a–M5e (see below). All five production migrations declared complete by their migration reports; code paths re-verified by this audit (VERIFIED). | HIGH | ✅ COMPLETE (migration only) | VERIFIED / REPORTED — see M5a–M5e | All 8 document families render on Forme or Forme+PDFCN. Certification is tracked in M4, M10, M11 and M12. | None (migration executed outside the gate order) |
+| **M5a** | **Receipt Forme Migration** | Forme Receipt template (`src/components/pdf/forme/ReceiptFormeDocument.tsx`); React-PDF production renderer `src/components/pdf/ReceiptPdf.tsx` deleted; download/share via `renderReceiptPdfBlob`. | HIGH | ✅ COMPLETE (migration) | REPORTED (2026-11-12 report); VERIFIED (dead files absent, template registered) | Receipt family out of React-PDF. Certification pending under M12. | None (executed outside gate order) |
+| **M5b** | **Waybill Forme Migration** | Six populated templates + blank template migrated (`src/components/pdf/forme/waybill/`); React-PDF waybill renderers deleted; download via `buildBlob`. | HIGH | ✅ COMPLETE (migration) | REPORTED (2026-11-12 report); VERIFIED (source tree) | Waybill family out of React-PDF. `downloadPdfFromElement` retained as delivery utility (see Section 5). Certification pending under M12. | None (executed outside gate order) |
+| **M5c** | **Project Documents Forme Migration** | Forme implementation (`src/components/pdf/forme/ProjectDocumentFormeDocument.tsx`); `ProjectDocumentPDF.tsx` deleted; shared helper `renderProjectDocumentPdfBlob`. | MED | ✅ COMPLETE (migration) | REPORTED (2026-11-12 report); VERIFIED (dead files absent) | Project Documents family out of React-PDF. Certification pending under M12. | None (executed outside gate order) |
+| **M5d** | **RFQ Forme Migration** | Two Forme templates (Mosaic, Executive) under `src/components/pdf/forme/rfq/`; legacy ids `modern→mosaic`, `bordered_schedule→executive`; React-PDF RFQ renderers deleted. | HIGH | ✅ COMPLETE (migration) | REPORTED (2026-11-12 report); VERIFIED (template registry & routes) | RFQ family out of React-PDF. Certification pending under M12. | None (executed outside gate order) |
+| **M5e** | **CSR Forme+PDFCN Migration** | All five templates (Industry `8`, Zinc `3`, Minimal `6`, Blueprint Landscape, Portrait Reference) render via pdfcn/Forme; preview, download, share, blank and post-save download use Forme; React-PDF CSR renderers and HTML preview deleted; ink parity closed for handwriting fields. | HIGH | ✅ COMPLETE (migration) | REPORTED (2026-11-12 migration report); VERIFIED (registry `src/components/pdf/pdfcn/csr/index.ts`, migrated sources present) | CSR family out of React-PDF. Physical print verification and picker parity pending under M12. | None (executed outside gate order) |
+| **M6** | **Legacy Deprecation & Cleanup** | Superseded by M12–M15 as of 2026-11-12. See Section 6. | MED | ⏭️ SUPERSEDED | SUPERSEDED | Superseded by Gate 4 & M13. | M5 |
+| **M7** | **Evergreen Forme Migration and Legacy Retirement** | Migrate the existing Evergreen PDF template to the Forme architecture. | CRIT | ✅ COMPLETE | VERIFIED (report; tests) | Evergreen Forme Document live; legacy files retired. | M6 |
+| **M8** | **Landscape Rebuild from Scratch** | Rebuild the A4 Landscape template cleanly on Forme. | HIGH | ✅ COMPLETE | VERIFIED (report; tests) | Landscape rebuild verified via MuPDF rasterization. | M7 |
+| **M9** | **Migrate Three Additional Commercial HTML Templates to Forme** | Architectural Frame, Executive, Heritage House migrated to Forme. | CRIT | ✅ COMPLETE | VERIFIED (report; tests) | All 3 templates live; picker and resolver integrated. | M8 |
+| **M10** | **Purchase Order (PO) Template Integration** | Extend the migrated commercial template system to support Purchase Orders. | HIGH | ⛔ PENDING | PARTIAL — POs render through the commercial Forme pipeline via `PurchaseOrderDetail.tsx` → `generatePurchaseOrderPdf` → `resolveCommercialPdfRoute` → `-forme` routes (VERIFIED). Missing: M1C canonical prep contract; Gate 3 certification. | PO-specific certification + `preparePurchaseOrderDocument.ts`. | M9 (partial), M1C |
+| **M11** | **Cost Pricing Sheet (CPS) Template Integration** | Extend the migrated commercial template system to support CPS. | HIGH | ⛔ PENDING | PARTIAL — CPS exports through the commercial Forme pipeline via `domain/cps/pdfDownloadHandler.ts` (`generateCpsCommercialPdfBlob`) (VERIFIED); CPS-specific font defect (VER-02) and commercial-template fit remain open. | CPS font fix (VER-02), verified delivery path, representative CPS documents, Gate 3 alignment. | M9 (partial) |
+| **M12** | **Document-Family Certification, Visual Parity & Delivery Closeout** | For every migrated family: (a) preview ↔ exported PDF parity, (b) visual parity vs the retired React-PDF output where it exists, (c) regression suite presence, (d) `CompositePdfDelivery` connectivity or documented equivalent, (e) CPS delivery, (f) CSR blank/field-mode and Waybill/RFQ delivery parity, (g) Letter family formally recorded as out of PDF scope. | CRIT | ⛔ PENDING | PENDING | Signed certification checklists per family; no family may claim certification without (a)–(d). | M2, M5, M4 |
+| **M13** | **Final React-PDF Consumer Audit & Retirement Plan** | Repository-wide audit of remaining React-PDF references. Executed 2026-11-12; the audit evidence base is Section 4/5 and decisions DEC-37 (execution) and DEC-38 (rollback). | CRIT | ✅ COMPLETE | VERIFIED | Reviewed retirement matrix (Section 5). The purge executed under an authorized task. | M5, M9 |
+| **M14** | **Shared-Infrastructure Retirement & Package Purge** | Executed 2026-11-12. Deleted: `src/lib/pdf/DefaultPdfGenerator.ts`, `src/lib/pdf/PdfGenerator.ts` (dead interface), `src/lib/pdfFontRegistry.ts`, `src/domain/pdf/customization/fontRegistry.ts`, `src/components/pdf/pdfCurrency.tsx`, root `test-pdf.tsx` (React-PDF harness at HEAD). Removed the `element` branch of `downloadPdf.tsx`; pruned `PdfGenerationRequest.engine`/`_engine` (dead parameter); uninstalled `@react-pdf/renderer`; `bun install` rebuilt `bun.lock` (zero `@react-pdf/*` entries); `pdfCurrency.test.js` rewritten for the Active Contract. | CRIT | ✅ COMPLETE | VERIFIED (this task) | Zero active production/test imports; zero package dependencies; lockfile consistent. Delivery contracts preserved; `downloadPdfFromElement` API retained (`buildBlob` required). | M13 (passed) |
+| **M15** | **Post-Removal Stabilization, Regression & Rollback Gate** | Focused PDF regression suite re-run post-purge (184/192; the 8 failures are pre-existing at HEAD and untouched by the purge). Rollback strategy recorded (DEC-38). Full stabilization sign-off (smoke exports per family after any release, monitoring note) remains open — not claimed here. | MED | 🔄 IN PROGRESS | PARTIAL | Gate 4 criterion 4 closes when M12 closes. | M14 |
 
 > [!NOTE]
-> **Recorded sequence deviation.** Industrial commercial template authoring (M2, M3, M4) started before M1C completed and before Gate 1 and Gate 2 passed. The gates stay closed. Gate 3 stays blocked until Gate 1 and Gate 2 pass.
+> **Recorded sequence deviation (2026-10-30).** Industrial commercial template authoring (M2, M3, M4) started before M1C completed and before Gate 1 and Gate 2 passed. The gates stay closed. Gate 3 stays blocked until Gate 1 and Gate 2 pass.
 
 ---
 
-## 4. Detailed Execution Steps
+## 4. Verified Document-Family Inventory (as of 2026-11-12)
 
-### Milestone M0: Discovery, Architecture Audit & PRD Baseline ✅
-- [x] **Step 0.1:** Audit `IndustryTemplate.tsx`, `table.ts`, `compact.ts`, and `safeText.ts`.  
-  *Status:* ✅ COMPLETE (2026-10-30)
-- [x] **Step 0.2:** Trace pagination failure on `SASQUO-000427 (1).pdf` (113.73 pt closing block breaking over 75.25 pt free space).  
-  *Status:* ✅ COMPLETE (2026-10-30)
-- [x] **Step 0.3:** Trace character corruption on `SASQUO-000428.pdf` (double-prime `″` rendering into digits `23`, `33`, `43`).  
-  *Status:* ✅ COMPLETE (2026-10-30)
-- [x] **Step 0.4:** Update and consolidate PRD documentation suite in `docs/prd/pdf-rendering-migration/`.  
-  *Status:* ✅ COMPLETE (2026-11-01)
+**Reading the columns.** *Engine* = renderer of record for production PDFs. *Preview* = how the user previews the PDF in-app. *Delivery* = download/share path. *Migration* = engine migration task. *Certification* = acceptance criteria of Sections (a)–(d) in M12. **A Forme template existing does not certify a family.**
 
----
+| Family | Engine | PDFCN | Templates | Preview path | Download / share path | React-PDF dependency | Migration | Certification | Evidence | Outstanding work |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Invoice** (`invoice`) | Forme | Direct (`src/components/pdf/forme/`) | `IndustryFormeDocument`, `IndustrialFormeDocument`, `MinimalFormeDocument`, `EvergreenFormeDocument`, `LandscapeFormeDocument`, `ArchitecturalFormeDocument`, `ExecutiveFormeDocument`, `HeritageHouseFormeDocument`, `MosaicFormeDocument` | HTML/Document view + Forme blob; no React-PDF preview | `ViewInvoice` → `generateInvoicePdf`/`generateInvoicePdfBlob` → `resolveCommercialPdfRoute` → `-forme` route (VERIFIED) | None — `@react-pdf/renderer` removed 2026-11-12 | ✅ Forme (pre-existing, predates this audit) | ⛔ Not certified — Gate 3 open | VERIFIED (code, tests) | M4 (Gate 1/2/3), sample recertification, parity sign-off |
+| **Quotation** (`quotation`) | Forme | Direct (`src/components/pdf/forme/`) | Same commercial templates as Invoice | Same as Invoice | `ViewQuotation` → `src/domain/quotation/pdfDownloadHandler.ts` → `generateQuotationPdfBlob` → `-forme` route (VERIFIED) | Same as Invoice — none, `@react-pdf/renderer` removed | ✅ Forme | ⛔ Not certified — Gate 3 open | VERIFIED (code, tests) | M4; `@formepdf` glyph verification (TS-2) |
+| **Purchase Order** (`po`) | Forme | Direct (commercial pipeline) | Same commercial templates; PO identity & counterparties preserve supplier semantics | Same as Invoice (`PurchaseOrderDetail.tsx` preview) | `PurchaseOrderDetail.tsx` → `generatePurchaseOrderPdf` / `generatePurchaseOrderPdfBlob` → `resolveCommercialPdfRoute` → `-forme` route (VERIFIED) | None — `@react-pdf/renderer` removed | ✅ Forme (engine); PO-specific canonical contract missing | ⛔ Not certified | VERIFIED (code); M1C missing (BLOCKED) | **M1C (preparePurchaseOrderDocument.ts)**, M10, Gate 3, PO template preservation QA |
+| **CPS** (`cps`) | Forme | Direct (commercial pipeline) | Same commercial templates routed for CPS (no dedicated CPS Forme template found in source — VERIFIED absent) | HTML presentation view (`ViewCps.tsx` renders `CostPricingSheetViewPresentations`); no in-app PDF preview iframe | `domain/cps/pdfDownloadHandler.ts` → `generateCpsCommercialPdfBlob` → `resolveCommercialPdfRoute` → `-forme` route (VERIFIED) | None (the 2026-11-12 purge removed it; CPS uses Forme fonts) | ✅ Forme via commercial pipeline (pre-existing); no dedicated CPS template | ⛔ Not certified | VERIFIED (code); defect VER-02 (`.woff` → Helvetica fallback) open | **VER-02 font fallback fix**, M11 (commercial-template fit vs dedicated design), M4/Gate 3 |
+| **RFQ** (`rfq`) | Forme | Direct (Forme docs under `forme/rfq/`) | `RfqMosaicDocument`, `RfqExecutiveDocument` (2 templates; legacy `modern→mosaic`, `bordered_schedule→executive`) | `RfqPreview` (preview, Forme-based per Forme report) | `ViewRfq` → `renderRfqPdfBlob` → `downloadPdfFromElement({ buildBlob })` — Forme-only (VERIFIED) | `downloadPdfFromElement` retained (delivery only; `element` branch removed 2026-11-12) | ✅ Forme (2026-11-12) | ⛔ Not certified | REPORTED + VERIFIED (registry `forme/rfq/RfqFormeDocument.tsx`) | M12: delivery parity, unpriced-semantics regression suite |
+| **Waybill** (`waybill`) | Forme | Direct (Forme docs under `forme/waybill/`) | 6 populated templates (`evergreen`, `minimal`, `thermal`, `classic`, `slate`, `premium`) + blank template | `ViewWaybill` page (HTML preview of Forme bytes) | `ViewWaybill` → `renderWaybillPdfBlob` → `downloadPdfFromElement({ buildBlob })` Forme-only (VERIFIED) | `downloadPdfFromElement` retained (delivery only; `element` branch removed 2026-11-12) | ✅ Forme (2026-11-12) | ⛔ Not certified | REPORTED + VERIFIED | M12: visual parity (blank/prefilled), regression tests green, delivery telemetry |
+| **Receipt** (`receipt`) | Forme | Direct (`forme/ReceiptFormeDocument.tsx`) | `ReceiptFormeDocument` (1 template; legacy ids preserved) | `ViewReceipt` page (Forme-based) | `ViewReceipt` → `renderReceiptPdfBlob` (VERIFIED) | None | ✅ Forme (2026-11-12) | ⛔ Not certified | REPORTED + VERIFIED | M12: financial immutability checks, regression suite |
+| **Project Documents** (`project_document` / `generated`) | Forme | Direct (`forme/ProjectDocumentFormeDocument.tsx`) | `ProjectDocumentFormeDocument` (1 template) | `ProjectDocumentView` (Forme-based) | `ProjectDocumentCard`/`ProjectDocumentView` → `renderProjectDocumentPdfBlob` (VERIFIED) | None | ✅ Forme (2026-11-12) | ⛔ Not certified | REPORTED + VERIFIED | M12: contracts parity, project metadata regression |
+| **CSR** (`csr`) | Forme | PDFCN (`pdfcn/csr/`) | `CsrLandscapeBlueprintTemplate`, `CsrPortraitReferenceTemplate`, `CsrIndustryFormeDocument`, `CsrZincFormeDocument`, `CsrMinimalFormeDocument` (2 Forme + 3 migrated Forme + legacy aliases `3`/`6`/`8`) | `CsrFormePreview` — iframe of Forme bytes from the same render path (VERIFIED) | `ViewCSR` download/share and `CsrFormPage` blank/post-save downloads — all via `resolvePdfcnDocument` + `renderPdfcnToBlob` (VERIFIED) | None (blank download path preserves Zinc Light id `3`) | ✅ Forme (2026-11-12, 5/5 templates) | ⛔ Not certified | REPORTED + VERIFIED (10/10 tests; 1-page renders) | M12: blank + field-mode verification, ink parity device check, delivery parity |
+| **Letters** (`letter`) | HTML only | None | None — no PDF renderer exists | HTML document view (`ViewLetter.tsx`) | None — no PDF export found in repository | **No PDF generation in any path** | Not applicable | Not applicable | VERIFIED (grep: zero `react-pdf`, `forme`, `downloadPdf` refs in letter pages) | None for purge. If Letters gains an export, scope it to PDFCN/Forme from birth. Formerly un-inventoried family — added by this audit |
+| **BOQ** | — | — | — | — | — | — | Explicitly excluded per DEC-02 | Not applicable | VERIFIED (PRD scope) | None |
 
-### Milestone M1A: PDF Architecture Contracts & Responsibility Definition ✅
-- [x] **Step 1A.1:** Define explicit ownership across Domain Preparation, Master Resolver, Customization, Presentation, Forme, and Delivery.  
-  *Status:* ✅ COMPLETE (`docs/reports/pdf/m1a-pdf-architecture-contracts-and-responsibility-definition.md`)
-- [x] **Step 1A.2:** Enforce boundary rules: domain preparation owns business math; resolver does not own fonts, branding, or delivery.  
-  *Status:* ✅ COMPLETE
+**Families checked but not found as PDFs:** statements, reminder letters, delivery notes, quotations-designed-by-name (only the commercial set), and all other correspondence — none have a PDF route in `src/` on 2026-11-12.
 
----
-
-### Milestone M1B: Shared Font & Image Asset Infrastructure Specification ✅
-- [x] **Step 1B.1:** Audit physical font inventory and npm packages (revealed 0 TTF files in `@fontsource/*`; confirmed WOFF rejection by Forme).  
-  *Status:* ✅ COMPLETE (`docs/reports/pdf/m1b-shared-font-and-image-asset-infrastructure-specification.md`)
-- [x] **Step 1B.2:** Confirm root cause of $2'' \to 23$ defect in `@react-pdf/pdfkit/lib/pdfkit.js` (4-digit hex serialization in 1-byte WinAnsi text chunks).  
-  *Status:* ✅ COMPLETE
-- [x] **Step 1B.3:** Demystify CORS: base64 conversion does not bypass CORS; client fetch must succeed first. Define 6-step media loading path.  
-  *Status:* ✅ COMPLETE
-- [x] **Step 1B.4:** Reconcile font fallback (no silent mapping to Inter) and establish Text Preservation Rule (sanitizer removed; read-only diagnostics).  
-  *Status:* ✅ COMPLETE
+**Reading the migration column carefully.** Migration and certification are deliberately separated in this table. All families are on Forme today. None are certified.
 
 ---
 
-### Milestone M1C: PO Canonical Preparation Contract & Commercial Alignment ⛔
-- [ ] **Step 1C.1:** Implement `preparePurchaseOrderDocument.ts` in `src/domain/pdf/resolver/commercial/`.
-  - Adapt PO domain entity (`src/domain/purchase-order/types.ts`) into canonical prepared contract.
-  - Adapt supplier snapshot (`supplier_name`, contact, address) and procurement payment terms.
-  - Map procurement unit cost (`unit_cost`) and item lines.
-  - Preserve Buyer authorization signatures and hide receiving bank blocks.
-- [ ] **Step 1C.2:** Connect PO prepared model to the Master Deterministic Resolver.
-- [ ] **Step 1C.3:** Author unit tests in `src/tests/critical/preparePurchaseOrderDocument.test.js` verifying model output without data mutation.  
-*Exit Gate:* PO data contract fully resolved and tested; ready for Forme commercial template integration.
+## 5. React-PDF Retirement Matrix — EXECUTED 2026-11-12
+
+**Classification key.** **A** = Active production dependency · **B** = Active test/dev dependency · **C** = Shared helper with a real remaining consumer · **D** = Unused executable code · **E** = Comment-only / documentation reference · **F** = Historical fixture / compatibility reference · **G** = Package or transitive dependency reference.
+
+| # | Candidate | Class | Disposition after purge (2026-11-12) |
+| :--- | :--- | :--- | :--- |
+| 1 | `@react-pdf/renderer` (`package.json`) | **G** | **REMOVED.** `bun install` rebuilt `bun.lock`; zero `@react-pdf/*` entries remain (fns, font, image, layout, pdfkit, primitives, reconciler, render, renderer, stylesheet, svg, textkit, types). Direct dependency removed; no transitive copy is required by any remaining consumer. |
+| 2 | `src/lib/pdfFontRegistry.ts` | **D** | **DELETED** 2026-11-12 (sole consumer, `customization/fontRegistry.ts`, also deleted). |
+| 3 | `src/lib/pdf/DefaultPdfGenerator.ts` | **D** | **DELETED** 2026-11-12. The dead `src/lib/pdf/PdfGenerator.ts` interface, which implemented nothing after this, was **DELETED** in the same change. `@/lib/pdf` exports remain intact (delivery classes, feedback bus). |
+| 4 | `src/components/pdf/pdfCurrency.tsx` | **B/D** | **DELETED** 2026-11-12 after `pdfCurrency.test.js` was rewritten to drop the static pin and keep the active `industryAdapter`/`formatters`/`pdfSharedFonts` assertions. Test passes (2/2). |
+| 5 | `src/components/document-view/shared/downloadPdf.tsx` | **C** | **RETAINED** unchanged as a delivery utility. The dead `element` branch and `element` prop were **removed**; `buildBlob` is now the required contract. `ViewWaybill` and `ViewRfq` consumers unchanged (both already passed `buildBlob`). Verified by typecheck. |
+| 6 | `src/domain/pdf/customization/fontRegistry.ts` | **D** | **DELETED** 2026-11-12 with row 2. |
+| 7 | `src/components/pdf/industryAdapter.ts` — `industry-react-pdf` string | **F** | **RETAINED** 2026-11-12. Backward-compat normalization; zero runtime dependency. CSR localStorage legacy ids likewise retained. |
+| 8 | Test fixtures naming `industry-react-pdf` (`templateIds.test.js`, `formeIndustryTemplate.test.ts`, `dualIndustryRendererRouting.test.ts`) | **F** | **RETAINED** and field-adjusted 2026-11-12: the dead second-argument `_engine` calls were removed (`resolveCommercialPdfRoute` now takes 1 argument). Assertions unchanged in meaning; suite green (part of 184/192 run, 8 failures pre-existing). |
+| 9 | `src/components/csr/preview-templates/` | — | **Purged** (2026-11-12 CSR migration). No action. |
+| 10 | `docs/` & historical reports mentioning react-pdf | **E** | **RETAINED.** Oct 30 investigations and archive docs describe the pre-migration baseline; updated by this revision without erasing history. |
+| 11 | `tools/`, `scripts/` | — | **None** found (zero matches before and after purge). |
+| 12 | `test-pdf.tsx` (repo root) | **D** | **DELETED** 2026-11-12 — a committed React-PDF-only canary harness importing `@react-pdf/renderer` and long-deleted CSR React-PDF templates. Tracked at HEAD; no replacement; no runtime consumers. |
+
+**Self-check results after the purge (2026-11-12).**
+- Zero active production imports of `@react-pdf/renderer` in `src/` (repository-wide grep).
+- Zero test/development imports of the package in `src/` (remaining matches are retirement-contract string fixtures and prohibition assertions).
+- Zero package dependencies on `@react-pdf/*` in `package.json`/`bun.lock`.
+- `pdfSharedFonts.ts`, `pdfFillableFonts.ts`, `pdfDesignPreset.ts` — **retained**; live Forme-adjacent consumers verified.
+- Delivery contracts preserved: `downloadPdfFromElement({ buildBlob, ... })`, `exportPdfToDevice`, `openExportedPdf`/`shareExportedPdf` fallback, `CompositePdfDelivery`, `DefaultFeedbackBus`, `emitFeedback`.
+- Android signed-build assets (`android/app/src/main/assets/public/assets/`) still embed a pre-purge bundle containing react-pdf; they are build outputs, not source, and will be refreshed by the next authorized Capacitor build.
+
+**Self-check failure modes (per retirement requirements).**
+- Zero marks on `pdfSharedFonts.ts` / `pdfFillableFonts.ts` are not claimed — they remain consumed by `pdfDesignPreset.ts` in production code paths (VERIFIED 2026-11-12). They are **not** purge candidates in M14.
+- Row 4's static test is the only test pinning a react-pdf-touching file. If a task attempts removal without the test update, `pdfCurrency.tsx` cannot go.
+- No retirement recommendation exists for a helper that has a real consumer (rows 4 vs 5 and 7 illustrate the split).
 
 ---
 
-### Milestone M2: Natural Pagination Implementation (Normal Mode First) 🔄
-> [!CRITICAL]
-> **GATE 1 REQUIREMENT: NATURAL PAGINATION ON REPRESENTATIVE SUITE FIRST**  
-> Natural pagination must be verified across the complete Representative Document Suite before Phase M3 begins:
-> 1. Short documents with few line items.
-> 2. The original 13-item `SASQUO-000427` quotation (must fit on 1 page naturally).
-> 3. Documents with long and wrapping descriptions.
-> 4. Documents with large totals and bank details.
-> 5. Documents with notes and commercial terms.
-> 6. Documents with attachments and signatures.
-> 7. Multi-page documents with different content distributions.  
-> Compaction must never be used to mask broken natural pagination.
+## 6. Waterfall Execution Order & Gate 4
 
-- [~] **Step 2.1:** Procure and deploy static TrueType font binaries in `public/fonts/`:
-  - `Inter-Regular.ttf`, `Inter-Bold.ttf`, `Inter-Italic.ttf`, `Inter-BoldItalic.ttf`
-  - `ArchivoBlack-Regular.ttf`
-  - `Caveat-Regular.ttf`, `Caveat-Bold.ttf`
-  - `NotoSans-Regular.ttf`, `NotoSans-Bold.ttf`
-  - `NotoSansGreek-Regular.ttf` (internal Greek subset)
-  - `₦` (`U+20A6`) routes to Noto Sans and is covered by a rendered-PDF test.  
-  *Status:* 🔄 PARTIAL (2026-11-01). The binaries are deployed and `₦` coverage is tested. Prime (`U+2032`) and double-prime (`U+2033`) cmap coverage is not verified.
-- [x] **Step 2.2:** Upgrade `src/components/pdf/forme/fonts.ts` to support dual-runtime path resolution and observable fallback.  
-  *Status:* ✅ COMPLETE (2026-11-01). Server paths use `public/fonts/`, browser paths use `/fonts/`, fetch failure logs and throws, and an unsupported family logs a warning before the Helvetica fallback.
-- [~] **Step 2.3:** Implement the Forme Table component with calibrated column widths and oversized row handling.
-  - The row budget is `contentWidth − 4 × 0.71 pt`. Columns always sum to the budget.
-  - The description column keeps a 120 pt minimum when space allows.
-  - Optional columns shrink toward legible minimums before the description loses space.  
-  *Status:* 🔄 PARTIAL (2026-11-01). Column budgeting is done and tested at the widest combination and at a narrow 420 pt budget. Oversized-row handling is not implemented.
-- [~] **Step 2.4:** Implement native repeating table headers (`<Row header>`) across continuation pages.  
-  *Status:* 🔄 PARTIAL (2026-11-01). The template uses `<Row header>`. Repetition on a continuation page is not verified.
-- [~] **Step 2.5:** Implement adaptive closing layout for Bank Details and Totals:
-  - Display side-by-side when vertical space permits.
-  - Totals prioritise with line items; Bank Details adaptively stack or move to the next page when space is restricted.  
-  *Status:* 🔄 PARTIAL (2026-11-01). Totals and Bank Details render side-by-side. Measured adaptive stacking is not implemented.
-- [x] **Step 2.6:** Replace defensive global page padding (`paddingBottom: 48`) with Forme native `<Fixed position="footer">` dynamic reservation.  
-  *Status:* ✅ COMPLETE (2026-11-01). The footer is a fixed element and the page content uses an 8 pt bottom inset (6 pt in compact mode).
-- [ ] **Step 2.7:** Apply selective keep-together behaviour (protect signatures and single rows; fragment long terms and notes).  
-  *Status:* ⛔ PENDING
-- [ ] **Step 2.8:** Run Gate 1 verification across the complete 7-profile Representative Document Suite.  
-  *Status:* ⛔ PENDING  
-*Exit Gate:* Gate 1 signed off; `SASQUO-000427` fits naturally on 1 page in Normal Mode.
+Dependency-driven order. **Migrating ≠ Certifying ≠ Purging** are three separate activities.
+
+```
+M1C ──► M2 ──Gate 1──► M3 ──Gate 2──► M4 ──Gate 3──► [CERTIFIED COMMERCIAL]
+ │                                                   │
+ │       M5a–M5e ✅ (migration done 2026-11-12)      ▼
+ │                └─────► M12 (per-family certification & parity)
+ │                                                      │
+ ├─────► M10, M11 (PO/CPS formal integration) ─────────┤
+ ▼                                                      ▼
+M13 ✅ ──► M14 ✅ ──Gate 4 (Retirement/Removal) — CRITERION 4 OPEN
+                       (criteria 1–3, 5–8 met 2026-11-12)
+                       │
+                       ▼
+              M15 (post-removal stabilization — in progress)
+```
+
+**Gate 4 (Retirement / Removal) — status as of 2026-11-12.**
+
+1. ✅ **Zero active production consumers** — repository-wide import analysis shows no `src/` runtime import of the package; the four live sites from the pre-purge audit were removed/reworked.
+2. ✅ **Zero test/development consumers** — no test imports the package; remaining mentions are retirement-contract string fixtures and prohibition assertions.
+3. ✅ **Delivery contracts preserved** — `downloadPdfFromElement` keeps `fileName`/`subdirectory`/`buildBlob`, `exportPdfToDevice`, native open/share fallback, `CompositePdfDelivery`, `DefaultFeedbackBus`, `emitFeedback`.
+4. ⛔ **All eight families certified** — OPEN. Families are migrated (engine-only). Certification lives in M12 and is explicitly not claimed.
+5. ✅ **Packages purged in M14** — `@react-pdf/renderer` removed from `package.json`; `bun.lock` rebuilt, zero `@react-pdf/*` entries.
+6. ✅ **Focused regression suite outcome recorded** — 184/192 in `src/tests/pdf` pass; the 8 failures are pre-existing at HEAD (untouched files; verified via git) and unchanged by the purge. 37/37 Forme family suites and 73/73 commercial/CSR/font/routing checks pass pre- and post-purge.
+7. ✅ **Rollback strategy** — see DEC-38. Revert list: this purge's diff (package.json, bun.lock, `src/components/document-view/shared/downloadPdf.tsx`, `src/components/pdf/index.ts`, `src/components/pdf/core/safeText.ts`, `src/components/pdf/pdfCurrency.tsx` (deleted), `src/lib/pdfFontRegistry.ts` (deleted), `src/lib/pdf/DefaultPdfGenerator.ts` and `src/lib/pdf/PdfGenerator.ts` (deleted), `src/domain/pdf/customization/fontRegistry.ts` (deleted), `src/tests/pdf/pdfCurrency.test.js`, `src/tests/pdf/dualIndustryRendererRouting.test.ts`, `src/tests/critical/cpsCommercialReplacement.test.ts`, `test-pdf.tsx` (deleted), `src/components/design-lab/DocumentEmailPreview.tsx`. Rollback = `git show HEAD:<path>` restore of deleted files + `bun add @react-pdf/renderer@4.3.2` + `bun install`.
+8. ✅ **No `bun run build`** — not run (permanent prohibition). `bun run audit:load` not run (no schema/data-layer change).
+
+**Consumers of the retired package have no path back.** Residual risk is confined to the signed Android build bundle and pre-purge native builds — both build outputs, refreshed by the next authorized Capacitor build.
+
+**Next actionable task.** M12 — *Document-Family Certification* (parity, regression, delivery closeout) — with M1C and the CPS VER-02 defect as dependencies for PO/CPS certification readiness. M15 stabilization runs in parallel.
 
 ---
 
-### Milestone M3: Compact Mode & Force 1 Page Mode 🔄
-- [~] **Step 3.1:** Implement Compact Mode:
-  - Wire all 32 candidate styling token overrides from `compact.ts` into the Forme Industry template.
-  - Verify deterministic spacing, margin, and typography reductions without content loss.  
-  *Status:* 🔄 PARTIAL (2026-11-01). The `compact` flag scales padding by 0.72, gaps by 0.7, the top margin from 22.68 pt to 18 pt, the bottom inset from 8 pt to 6 pt, and the display type. The 32-token table is not wired.
-- [ ] **Step 3.2:** Implement the two-pass measurement engine using `renderDocumentWithLayout` from `@formepdf/core`.  
-  *Status:* ⛔ PENDING
-- [ ] **Step 3.3:** Implement the progressive compaction algorithm for Force 1 Page Mode:
-  - Pass 1: Compact mode tokens.
-  - Pass 2: Margin reduction (candidate floor 18 pt) and row padding reduction (candidate floor 2 pt).
-  - Pass 3: Typography scale down to candidate floor 7 pt.  
-  *Status:* ⛔ PENDING
-- [ ] **Step 3.4:** Implement readability safeguards and graceful fallback:
-  - Prioritise commercial legibility over page count. Treat candidate floors (7 pt font, 2 pt padding) as provisional targets subject to testing.
-  - Enforce zero content omission, no overlapping bounding boxes, and no unreadable text.
-  - If the document exceeds 1-page limits, fall back cleanly to a readable 2-page document with an in-app notice.  
-  *Status:* ⛔ PENDING
-- [ ] **Step 3.5:** Run Gate 2 verification on the 1-page and multi-page test corpus.  
-  *Status:* ⛔ PENDING  
-*Exit Gate:* Gate 2 signed off; compaction verified without content loss or legibility degradation.
+## 7. Document Family ↔ Milestone Traceability
+
+- Invoice / Quotation → M4 (certification), M13/M14 (retirement pairing)
+- PO → M1C → M10 → M4/Gate 3 → M13/M14
+- CPS → M11 → M4/Gate 3 → M13/M14 (also blocked by open defect VER-02)
+- RFQ / Waybill / Receipt / Project Documents / CSR → M12 → M13/M14
+- Letters → out of PDF scope (recorded; revisit at M12)
+- BOQ → excluded permanently (DEC-02)
 
 ---
 
-### Milestone M4: Commercial Reference Certification (Quotation, Invoice, PO) 🔄
-> [!IMPORTANT]
-> **GATE 3 REQUIREMENT:** New Forme commercial templates must be certified before production traffic switchover.
-
-- [~] **Step 4.1:** Verify the complete Quotation family against `SASQUO-000427`, `SASQUO-000428`, and `SASQUO-430`.  
-  *Status:* 🔄 PARTIAL (2026-11-01). The Industrial Quotation template is implemented and covered by rendered-PDF tests. The named sample set is not re-certified.
-- [~] **Step 4.2:** Certify the Invoice family (`SASINV`) on the Forme Industry template foundation.  
-  *Status:* 🔄 PARTIAL (2026-11-01). The Industrial Invoice template shares the same component and test suite. `SASINV` certification is pending.
-- [ ] **Step 4.3:** Implement and certify the supplier-facing Purchase Order Forme template:
-  - Ensure supplier snapshot, procurement delivery terms, and unit costs render cleanly.
-  - Verify receiving bank details are hidden and WHT is not deducted.  
-  *Status:* ⛔ PENDING. Blocked by Step 1C.1. `PdfDocumentKind` accepts `invoice` and `quotation` only.
-- [~] **Step 4.4:** Implement and verify A4 Landscape orientation ($297 \times 210\text{ mm}$) with recalculation from first principles.  
-  *Status:* 🔄 PARTIAL (2026-11-01). `layout.orientation` swaps the page dimensions to 841.89 × 595.28 pt and rebuilds the column budget. Portrait and landscape right-edge tests pass. The remaining template tokens are not recalculated.
-- [ ] **Step 4.5:** Verify web preview parity with exported PDF files across desktop and mobile.  
-  *Status:* ⛔ PENDING
-- [ ] **Step 4.6:** Connect commercial export actions to `CompositePdfDelivery`.  
-  *Status:* ⛔ PENDING  
-*Exit Gate:* Gate 3 Pre-Production Approval granted for the Commercial Group.
-
----
-
-### Milestone M5: Progressive Rollout to Remaining Families ⛔
-- [ ] **Step 5.1:** Cost Pricing Sheet (CPS):
-  - Connect CPS templates to M1B static TTF fonts, eliminating the silent Helvetica fallback bug.
-  - Connect CPS to Master Deterministic Resolver and `CompositePdfDelivery`.
-- [ ] **Step 5.2:** Customer Service Report (CSR):
-  - Finalize customization picker scrollbar discoverability fix.
-  - Complete physical on-device print verification for Portrait Reference and Blueprint Landscape templates.
-  - Connect CSR export path to `CompositePdfDelivery`.
-- [ ] **Step 5.3:** Waybill:
-  - Implement Forme Waybill templates using bundled `Caveat` script font.
-  - Preserve logistics item conditions, transport details, and signature blocks.
-  - Connect to Master Resolver and `CompositePdfDelivery`.
-- [ ] **Step 5.4:** Receipt:
-  - Implement Forme Receipt template.
-  - Enforce strict financial immutability and simple, clean proof-of-payment layout.
-- [ ] **Step 5.5:** Request for Quotation (RFQ):
-  - Implement Forme RFQ template preserving procurement unpriced table semantics.  
-*Exit Gate:* 100% of the 8 document families active on Forme; zero production exports running React-PDF.
-
----
-
-### Milestone M6: Legacy Deprecation & Cleanup ⛔
-- [ ] **Step 6.1:** Run AST import analysis across `src/` to confirm zero remaining imports of `@react-pdf/renderer`.
-- [ ] **Step 6.2:** Delete obsolete React-PDF adapters, components, and workaround scripts.
-- [ ] **Step 6.3:** Uninstall `@react-pdf/renderer` from `package.json`.
-- [ ] **Step 6.4:** Execute `bun run audit:load` followed by `bun run typecheck` to confirm clean repository state.  
-*Exit Gate:* Clean repository state; legacy dependency removed; migration complete.
-
----
-
-### Milestone M7: Evergreen Forme Migration and Legacy Retirement ✅
-- **Objective:** Migrate the existing Evergreen PDF template to the Forme PDF rendering architecture, retire obsolete legacy files, and remediate footer positioning and logo rendering.
-
-*Status:* ✅ COMPLETE (2026-11-08)
-*% Done:* 100%
-
-**Delivered Outcomes:**
-
-- Reimplemented Evergreen as `src/components/pdf/forme/EvergreenFormeDocument.tsx` (592 lines, strictly complying with the 600-line audit threshold).
-- Permanently removed legacy React-PDF files `src/components/pdf/templates/Evergreen.tsx` and `EvergreenStyles.ts` from disk and pruned obsolete dynamic imports.
-- Fixed floating footer defect: adjusted `Page margin.bottom` from 42pt to 20pt (compact 16pt), anchoring the footer 18-20pt from the physical bottom edge and eliminating blank margin gap.
-- Added company logo thumbnail (13x13) to fixed footer next to company name, harmonizing with Industry and Landscape Forme templates.
-- Added robust fallback logo resolution in `src/components/pdf/industryAdapter.ts` supporting `model.logo`, `model.issuer.logoUrl`, `model.issuer.companyLogoUrl`, and root `companyLogoUrl`.
-- Verified natural pagination, dynamic page numbering, repeated top accent bar, and zero text/footer collisions across single-page, quotation, and multi-page documents via MuPDF rasterization.
-- Suite of 9 unit tests passing in `src/tests/pdf/formeEvergreenTemplate.test.ts`.
-
----
-
-### Milestone M8: Landscape Rebuild from Scratch ✅
-- **Objective:** Create a fresh Commercial Landscape template implementation using Forme, grounded in the CSR Blueprint technical drawing visual aura.
-
-*Status:* ✅ COMPLETE (2026-11-08)
-*% Done:* 100%
-
-**Delivered Outcomes:**
-
-- **Visual Reference Authority:** Grounded in CSR Blueprint Technical Drawing (`csr-blueprint-technical-drawinglandscape.html` / `src/components/pdf/pdfcn/csr/CsrLandscapeBlueprintTemplate.tsx`). Preserved the authentic technical drawing identity: 12-cell coordinate rulers (`1..12`) at top and bottom, partitioned title block, BOM schedule styling, technical financial ledger, and dynamic sheet numbering.
-- **Strict Bloat Elimination & Modular Architecture ($\le 600$ Lines):** Monolithic 1416-line `LandscapeFormeDocument.tsx` refactored down to 412 lines, resolving the `[BLOAT]` audit warning and reducing repository oversized file count from 47 to 46. Split cleanly into cohesive modules:
-  - `src/components/pdf/forme/landscape/landscapeTokens.ts` (93 lines): Color tokens, landscape A4 dimensions (841.89 x 595.28 pt), scaling engine.
-  - `src/components/pdf/forme/landscape/landscapeHeader.tsx` (406 lines): 12-cell coordinate rulers, 4-cell partitioned title block, section bands.
-  - `src/components/pdf/forme/landscape/landscapeTable.tsx` (365 lines): Bill-of-Materials table with repeat headers (`<Row header>`), alternating tints, and group subtotals.
-  - `src/components/pdf/forme/landscape/landscapeClosing.tsx` (470 lines): Technical financial ledger, prominent Total Amount Due block with amount in words, bank settlement panel, notes, terms, and 3-column verification block.
-  - `src/components/pdf/forme/LandscapeFormeDocument.tsx` (412 lines): Master document orchestrator.
-- **Data & Commercial Domain Integrity:** Uses authoritative BOURXE data contracts (`CommercialDocumentData`) without inventing non-existent engineering metadata. Respects currency code, deductions in restrained `#B42318` with leading minus, and format-presentation quantities (`"1 set"`).
-- **Template Routing & Normalization:** Added `'landscape-blueprint'` and `'blueprint'` aliases mapping to `'landscape'` in `src/domain/invoice/types.ts`.
-- **Visual & Pixmap Verification:** Verified clean rasterization via MuPDF (`scratch/verify-landscape-rebuild.ts`) across single-page invoice, quotation, and 3-page multi-page documents. Confirmed 14x14 white footer logo badge and natural multi-page flow.
-- **Automated Test Coverage:** Authored `src/tests/pdf/formeLandscapeRebuildTemplate.test.ts` (5 tests passing). Full commercial Forme test suite (66 tests across 9 files) passing. Both `bun run audit:load` and `bun run typecheck` cleanly pass with code 0.
-
----
-
-### Milestone M9: Migrate Three Additional Commercial HTML Templates to Forme ✅
-- **Objective:** Migrate the three additional source commercial HTML designs individually to the Forme PDF rendering architecture.
-
-*Status:* ✅ COMPLETE (2026-11-08)
-*% Done:* 100% (All 3 templates migrated)
-
-**Source Designs & Migrated Implementations:**
-
-1. **Commercial Architectural Frame (`architectural`)** — `docs/templates/html-temps/invoice-templates/commercial-architectural-frame.html`
-   - *Identity:* High-precision engineering and architectural drafting visual language.
-   - *Palette:* Charcoal (`#1E2427`), warm ivory paper (`#F6F0E4`), copper and sand accents (`#A4663F`, `#C08A5F`, `#E3D7C3`).
-   - *Key Structural Elements:* Asymmetric header with charcoal company badge, copper technical divider rule, two-column party/project block, clean table with group badge/subtotals, two-column closing with financial ledger and prominent charcoal Total Due box, bank settlement block, notes, terms, and 3-column signature block with document control stamp.
-   - *Implementation:* `src/components/pdf/forme/ArchitecturalFormeDocument.tsx` (583 lines, strictly $\le 600$ lines).
-
-2. **Commercial Executive Luxury (`executive`)** — `docs/templates/html-temps/invoice-templates/commercial-executive.html`
-   - *Identity:* Prestigious corporate executive and advisory visual language.
-   - *Palette:* Deep forest green (`#173A2C`, `#0F281E`), gold accents (`#A9854F`, `#D8C39C`, `#EFE6D5`), warm cream paper (`#FCF9F2`, `#F6F0E2`).
-   - *Key Structural Elements:* Symmetrical centered masthead, diamond ornament rule (`❖`), serif document title, 4-cell horizontal metadata bar, gold-ruled party block, forest green table headers, alternating row tints, full-width forest green Total Due banner, financial ledger, bank settlement card, and dual executive signatures.
-   - *Implementation:* `src/components/pdf/forme/ExecutiveFormeDocument.tsx` (558 lines, strictly $\le 600$ lines).
-
-3. **Commercial Heritage House (`heritage`)** — `docs/templates/html-temps/invoice-templates/commercial-heritage-house.html`
-   - *Identity:* Formal heritage stationery visual language with traditional double border framing.
-   - *Palette:* Deep burgundy (`#5C1A26`, `#451119`), bronze accents (`#9A7B45`, `#C6AA76`), warm ivory paper (`#F8F2E3`, `#F2E9D4`), ink (`#251E17`), muted (`#7B6E5C`), rule (`#D9CBAC`), white (`#FFFDF7`).
-   - *Key Structural Elements:* Masthead with square company seal initial, burgundy serif brand title, bronze RC/TIN, right-aligned BOUXRE wordmark, large serif DOCTYPE, diamond ornament rule (`❖`), dot-leader particulars block, burgundy table header with bronze top rule, group header bands with italic group letters, group subtotal with double burgundy rules, financial ledger, prominent burgundy Total Amount Due callout with amount in words, boxed bank payment details, notes with bronze dashes, terms & conditions, and 3-column signature block with document control stamp.
-   - *Implementation:* `src/components/pdf/forme/HeritageHouseFormeDocument.tsx` (570 lines, strictly $\le 600$ lines).
-
-**Delivered Outcomes:**
-
-- Implemented `ArchitecturalFormeDocument.tsx`, `ExecutiveFormeDocument.tsx`, and `HeritageHouseFormeDocument.tsx` with native Forme primitives, responsive column budgeting, and glyph fallback for currency (`₦`).
-- Registered `'architectural'`, `'executive'`, and `'heritage'` template identifiers in `src/domain/invoice/types.ts` (`INVOICE_PDF_TEMPLATE_IDS`, `normalizeInvoicePdfTemplateId` with aliases).
-- Updated Master Commercial Resolver in `src/components/pdf/index.ts` to route `'architectural-forme'`, `'executive-forme'`, and `'heritage-forme'`, with dynamic module loading and `PT Serif` font resolution.
-- Updated `CommercialTemplatePicker.tsx` carousel and `CommercialTemplateMiniature.tsx` with authentic theme tokens and zone miniatures for all 3 templates.
-- Added comprehensive unit tests in `src/tests/pdf/formeArchitecturalTemplate.test.ts`, `src/tests/pdf/formeExecutiveTemplate.test.ts`, and `src/tests/pdf/formeHeritageHouseTemplate.test.ts`.
-- Verified 100% passing test suite (30/30 PDF tests pass), clean `bun run typecheck`, clean `bun run audit:load`, and clean `git diff --check`.
-- Visual inspection confirmed natural multi-page flow, correct margins, and zero collisions across invoices and quotations via MuPDF rasterization.
-
-**Upcoming Migration Identifications:**
-- **Commercial Landscape Rebuild:** Milestone M8 (`commercial-landscape.html`) — ✅ **COMPLETE (100%)**.
-- **Second Landscape Template:** Customer Service Report (CSR) Blueprint Landscape — defined in **Milestone M5, Step 5.2** (Reference: `docs/templates/html-temps/CSR/csr-blueprint-technical-drawinglandscape.html`). Unaffected and preserved.
-
-**Next Active Milestone:** **Milestone M10 — Purchase Order (PO) Template Integration**.
-
----
-
-### Milestone M10: Purchase Order (PO) Template Integration ⛔
-- **Objective:** Extend the migrated commercial template system to support Purchase Orders.
-
-*Status:* ⛔ PENDING
-*% Done:* 0%
-
-**Planned Outcomes:**
-
-- Allow PO documents to use the migrated commercial template designs.
-- Reuse the shared Forme rendering architecture where appropriate.
-- Respect PO-specific data, terminology, supplier/vendor relationships, and document semantics.
-- Do not incorrectly treat a supplier-facing PO as a customer-facing invoice or quotation.
-- Preserve PO-specific business rules and data contracts.
-- Verify all supported PO templates and their document-specific output.
-
-**Dependency:** Must follow completion of the commercial template migrations.
-
----
-
-### Milestone M11: Cost Pricing Sheet (CPS) Template Integration ⛔
-- **Objective:** Extend the migrated template system to support Cost Pricing Sheets (CPS).
-
-*Status:* ⛔ PENDING
-*% Done:* 0%
-
-**Planned Outcomes:**
-
-- Allow CPS documents to use the planned migrated template system where compatible.
-- Preserve CPS-specific data structures, calculations, and business rules.
-- Reuse shared Forme infrastructure without forcing CPS into an unsuitable commercial document layout.
-- Retain CPS-specific rendering requirements where necessary.
-- Verify representative CPS documents and their output.
-
-**Dependency:** Follows the commercial template migrations and must not compromise the existing CPS document architecture.
-
----
-
-## 5. Work Log
+## 8. Work Log
 
 ### 2026-10-30 — Discovery and problem register (M0)
 - Audited `IndustryTemplate.tsx`, `table.ts`, `compact.ts`, and `safeText.ts`.
@@ -350,6 +185,7 @@
 ### 2026-11-01 — Architecture contracts and media specification (M1A, M1B)
 - Published the responsibility contract across Domain Preparation, Resolver, Customization, Presentation, Forme, and Delivery.
 - Published the font and media infrastructure specification: TrueType SFNT only, WOFF rejected, no silent font mapping, Text Preservation Rule, single font authority.
+- Migration of the first two CSR templates to Forme/pdfcn (Blueprint Landscape, Portrait Reference) and the commercial template pipeline.
 
 ### 2026-11-01 — Industrial Forme commercial template correction (M2, M3, M4 in flight)
 **Implementation**
@@ -390,12 +226,63 @@ The tests inspect the page count, page size, link annotations, font resources, t
 - `src/tests/pdf/index.test.js` — 2 failures at HEAD. The test expects `150,000` and `text`; the committed adapter returns `₦ 150,000` and `rich-text`.
 - `src/tests/pdf/totalsTruthPreview.test.js` — 3 failures at HEAD. The test expects the older `ViewInvoice` and `ViewQuotation` source strings. Those pages were not changed.
 
+### 2026-11-08 — Commercial template migration wave Forme-only (M7, M8, M9 complete)
+- M7: Evergreen reimplemented as `src/components/pdf/forme/EvergreenFormeDocument.tsx`; legacy React-PDF files deleted; footer anchoring and logo fallback remediated. Status 100% complete.
+- M8: Landscape template rebuilt from scratch (`forme/landscape/`) with coordinate rulers; verified via MuPDF rasterization. Status 100% complete.
+- M9: Architectural Frame, Executive Luxury, Heritage House migrated; routed, picker-integrated, tested. Status 100% complete.
+- Commercial stack now resolves every route to `-forme` (`src/components/pdf/index.ts`); `resolveCommercialPdfRoute` ignores the historical `engine` argument.
+
+### 2026-11-12 (second entry) — React-PDF retirement (M13, M14)
+
+**Deleted:** `src/lib/pdfFontRegistry.ts` · `src/domain/pdf/customization/fontRegistry.ts` (dead chain) · `src/lib/pdf/DefaultPdfGenerator.ts` · `src/lib/pdf/PdfGenerator.ts` (dead interface, deleted in the same pass) · `src/components/pdf/pdfCurrency.tsx` · root `test-pdf.tsx` (tracked at HEAD; a committed React-PDF-only canary importing `@react-pdf/renderer` and long-retired CSR React-PDF templates).
+
+**Reworked:** `downloadPdf.tsx` — `element` prop and its React-PDF branch removed; `buildBlob` now required; all callers unchanged. `components/pdf/index.ts` — `PdfGenerationRequest.engine` and `_engine` parameter removed (dead dual-renderer switch; callers and resolver unchanged in behaviour). `pdfCurrency.test.js` — static React-PDF assertions dropped, active-contract assertions retained and passing. `dualIndustryRendererRouting.test.ts`, `cpsCommercialReplacement.test.ts` — vestigial second-argument calls removed. `safeText.ts` — comment reworded to the Forme glyph-routing contract.
+
+**Dependency:** `@react-pdf/renderer` removed from `package.json`; `bun install` rebuilt `bun.lock` — zero `@react-pdf/*` entries. The pre-existing concurrent font-audit edits in `package.json`/`bun.lock` were preserved by using Bun's install, not by overwriting them.
+
+**Verification (this task):** `bun run typecheck` — only the three pre-existing HEAD errors (`forme*Template.test.ts` TS2698). `bun test src/tests/pdf` — 184/192 pass; 8 failures, all in files untouched by the purge and verified pre-existing (git status of those paths clean). Critical commercial/CSR/font/routing suites — 73/73 pass. Forme family suites — 37/37 + 3/3 pass. Repository-wide search — zero runtime/test imports of the package; zero manifest entries; residual mentions are retirement-contract string fixtures, prohibition assertions, historical docs and build artifacts.
+
+**Not verified / not done:** No browser or device runtime validation. `bun run build` not run (permanent prohibition). Families are migrated, not certified — Gates 1–3 open; Gate 4 criterion 4 open. Android signed assets still embed a pre-purge bundle; next authorized Capacitor build refreshes them.
+
+### 2026-11-12 — Family-wide Forme migration completion & React-PDF retirement audit (M5a–M5e)
+**Completed engine migrations (uncommitted working tree at the time of this entry).**
+
+- Receipt: Forme implementation; `src/components/pdf/ReceiptPdf.tsx` deleted; `ViewReceipt` download/share via `renderReceiptPdfBlob`.
+- Waybill: 6 populated + blank template migrated (`forme/waybill/`); `WaybillPDF.tsx` and template-specific React-PDF files deleted; `ViewWaybill`/`WaybillFormPage` downloads via `buildBlob`.
+- Project Documents: Forme implementation; `ProjectDocumentPDF.tsx` deleted; `ProjectDocumentCard`/`ProjectDocumentView` rewired.
+- RFQ: `forme/rfq/RfqMosaicDocument.tsx`, `RfqExecutiveDocument.tsx` (+ shared `kit.tsx`); legacy mapping `modern→mosaic`, `bordered_schedule→executive`; `RfqPdfDocument.tsx`/`TableDocumentPdfDocument.tsx` deleted; 2 template picker.
+- CSR: all five templates (Industry `8`, Zinc Light `3`, Minimal `6`, Blueprint Landscape, Portrait Reference) on Forme/PDFCN; `preview-templates/` and HTML preview deleted; `CsrDocumentPreview.tsx/.css` deleted; `CsrFormePreview` (iframe of Forme bytes) in place; `CsrFormPage` blank and field-mode downloads preserved on template id `3`; ink parity closed (portrait reference + blueprint landscape + the three migrated templates honour `metadata.designPreset`); 10/10 CSR tests pass; TypeScript clean (only three pre-existing HEAD errors).
+- Letters family audited: no PDF generation path exists; formally out of PDF scope.
+
+**Verification results vs this audit (read for the retirement matrix, Section 5).**
+- `src/` imports of `@react-pdf/renderer`: exactly four files (`pdfFontRegistry.ts`, `DefaultPdfGenerator.ts`, `pdfCurrency.tsx`, `downloadPdf.tsx`). No tests import the package. `tools/` and `scripts/` have no matches.
+- `downloadPdfFromElement` consumers: exactly two (`ViewWaybill`, `ViewRfq`); both use `buildBlob`, so the `element` branch is dead.
+- `pdfFontRegistry.ts` sole consumer is the already-unused `customization/fontRegistry.ts`.
+- `DefaultPdfGenerator` has no direct importers; `@/lib/pdf` consumers import delivery classes and types only.
+- `pdfCurrency.test.js` statically requires `pdfCurrency.tsx`; this is the one test pinning a purge candidate.
+- `bun run` commands were **not** run for this documentation revision.
+- Working-tree note: the migration is **uncommitted** on branch `main` (`08d45ed0`). The purge step (M14) must account for the uncommitted baseline.
+- `package.json` and `bun.lock` were already modified by a concurrent font-audit task (removal of 17 unused `@fontsource/*` packages); this audit did not touch them.
+
 ---
 
-## 6. Gate Readiness Snapshot
+## 9. Gate Readiness Snapshot
 
 | Gate | State | Blocking Items |
 | :--- | :--- | :--- |
 | **Gate 1 — Natural Pagination** | ⛔ OPEN | Prime and double-prime cmap verification. Oversized-row handling. Continuation-page header repetition. Measured adaptive closing layout. Selective keep-together. 7-profile suite run. |
 | **Gate 2 — Compaction** | ⛔ OPEN | 32-token compact map. Two-pass measurement. Progressive compaction. Readability safeguards and fallback. 1-page and multi-page corpus run. |
-| **Gate 3 — Pre-Production** | ⛔ OPEN | Gate 1 and Gate 2 sign-off. Named sample recertification. Purchase Order template and contract. Preview parity. `CompositePdfDelivery` connection. |
+| **Gate 3 — Pre-Production** | ⛔ OPEN | Gate 1 and Gate 2 sign-off. Named sample recertification. Purchase Order contract (M1C). CPS font defect (VER-02). `CompositePdfDelivery` / preview parity sign-off. |
+| **Gate 4 — Retirement / Removal** | ⛔ OPEN (criteria 1–3, 5–8 met as of 2026-11-12; only criterion 4 open) | Criterion 4: eight-family certification (M12) per `Waterfall-roadmap.md` §6. |
+
+---
+
+## 10. Decision Log (summary — authoritative source: `decision-log.md`)
+
+- **2026-10-30** — Forme + pdfcn selected as the target engine (DEC-01). BOQ excluded (DEC-02). Gate 1 ordering enforced (DEC-06).
+- **2026-11-01** — Industrial template corrections logged; dual-renderer Industry picker approved (DEC-26/DEC-27) — **SUPERSEDED 2026-11-12**: commercial stack is Forme-only; the `industry-react-pdf` picker option was retired during the migration wave.
+- **2026-11-08** — M7/M8/M9 completed; RECORDED: commercial templates all Forme; Evergreen retired.
+- **2026-11-12** — M5a–M5e engine migrations complete (Receipt, Waybill, Project Documents, RFQ, CSR). Bidirectional preview=export path established (CSR iframe). RECORDED: letters are not a PDF family. RECORDED: `M6` superseded by M12–M15; Gate 4 defined. RECORDED: DEC-26/DEC-27 SUPERSEDED. Packages pinned pending purge.
+- **2026-11-12 (second)** — M13 (consumer audit) and M14 (purge) executed under an authorized task: package removed, five files deleted, delivery contract pruned to `buildBlob`, TypeScript clean (3 pre-existing HEAD errors only), 184/192 PDF suite pass (8 failures pre-existing at HEAD), 73/73 critical suites and 37/37 + 3/3 Forme family suites pass, lockfile clean of `@react-pdf/*`. RECORDED: `test-pdf.tsx` (React-PDF canary) deleted; rollback recorded under DEC-38. Families remain uncertified; Gate 4 criterion 4 open.
+
+*Historical note: the 2026-10-30 investigation remains binding evidence. Its conclusions are not rewritten in this revision; they describe the pre-migration baseline the migration eliminated.*

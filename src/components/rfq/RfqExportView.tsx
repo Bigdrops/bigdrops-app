@@ -3,6 +3,7 @@ import React from 'react'
 import { TableDocumentExportSegment } from '@/components/table-document/TableDocumentExportSegment'
 import type { TableDocumentColumn, TableDocumentRow } from '@/domain/table-document/types'
 import type { Rfq, RfqItem } from '@/domain/rfq/types'
+import { normalizeRfqTemplateId } from '@/domain/rfq/templates'
 
 interface RfqExportSegmentProps {
   rfq: Rfq
@@ -39,7 +40,7 @@ export const RfqExportSegment: React.FC<RfqExportSegmentProps> = ({ rfq, items =
     <TableDocumentExportSegment
       onRef={onRef}
       documentType="rfq"
-      templateId={rfq.template_id || 'modern'}
+      templateId={normalizeRfqTemplateId(rfq.template_id)}
       document={rfq}
       rows={rows || rfq.table_rows || mapItemsToRows(items)}
       columns={columns || rfq.table_columns || []}

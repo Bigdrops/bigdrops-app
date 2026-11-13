@@ -14,7 +14,7 @@
 | **R-01** | Premature Compaction Masking | High | High | Low | Engineering Lead |
 | **R-02** | Indivisible Closing Block Fragmentation | High | High | Low | Template Developer |
 | **R-03** | Table Column Geometry & Oversized Row Inflation | Medium | High | Low | Template Developer |
-| **R-04** | Font Subsetting & Glyph Corruption ($2'' \to 23$) | Critical | High | Low | Core Architect |
+| **R-04** | Font Subsetting & Glyph Corruption ($2'' \to 23$) | Critical | Low | Low | Core Architect |
 | **R-05** | Emoji Rendering Vector Syntax Failures | Medium | Medium | Low | Core Architect |
 | **R-06** | Rich-Text / HTML Tag Ingestion | Medium | Medium | Medium | Template Developer |
 | **R-07** | Company Logo Aspect-Ratio Distortion | Low | Medium | Low | Design Lead |
@@ -33,6 +33,8 @@
 | **R-20** | Duplicate Global Font Registration | Low | Medium | Low | Engine Integrator |
 | **R-21** | Existing Dirty-Worktree Collisions | Medium | High | Low | All Agents |
 | **R-22** | Delivery Subsystem Fragmentation | Medium | Medium | Low | System Architect |
+| **R-23** | Stale Static Tests Pin Purge Candidates | Low | Medium | Low | Engine Integrator |
+| **R-24** | Migration Mistaken for Certification | High | Medium | Low | All Agents |
 
 ---
 
@@ -67,7 +69,8 @@
 
 ### ⚠️ R-04: Font Subsetting & Glyph Corruption ($2'' \to 23$)
 - **Description:** Double-prime (`″`), Naira (`₦`), and engineering symbols (`²`, `×`, `±`, `°`) corrupt into digits (`23`, `33`, `43`) or missing squares.
-- **Root Cause Confirmed:** In `@react-pdf/pdfkit/lib/pdfkit.js`, `encodeText` pushes `char.toString(16)` for unmapped characters. For `U+2033` (8243, `0x2033`), it outputs `'2033'`. In 1-byte WinAnsi text chunks, conforming viewers decode `0x32` (`'2'`), `0x20` (space), and `0x33` (`'3'`), rendering $2''$ as `23`. This defect occurs when Latin-subset fonts (such as `Lato` or `Orbitron`) lack `U+2033` and bypass glyph checks in `safeText.ts`.
+- **Root Cause Confirmed:** In `@react-pdf/pdfkit/lib/pdfkit.js`, `encodeText` pushes `char.toString(16)` for unmapped characters (historical mechanism).
+- **Status (2026-11-12):** MITIGATED FORME-SIDE. All document families render through Forme's Identity-H two-byte font streams, so the WinAnsi 1-byte corruption path cannot occur in production exports. Remaining items: CPS shared commercial fonts (.woff → silent Helvetica fallback, VER-02) and prime cmap verification for Inter TTF (M2 pending). The root cause documented here remains relevant for any residual test or legacy environment and must not be retired from the register.
 - **Mitigation Strategy:**
   1. Procure and embed complete static TrueType (`.ttf`) binaries (Inter TTF, Caveat, Archivo Black, Noto Sans) with verified cmap coverage of `U+2032`, `U+2033`, and `U+20A6`.
   2. Forme embeds Identity-H 2-byte font streams, permanently eliminating WinAnsi 1-byte decoding corruption.
@@ -135,10 +138,11 @@
 ---
 
 ### ⚠️ R-12: Premature Legacy Dependency Retirement
-- **Description:** Uninstalling `@react-pdf/renderer` before all eight document families are migrated breaks production features.
+- **Description:** Uninstalling `@react-pdf/renderer` before certification breaks production features.
+- **Status (2026-11-12):** RESOLVED VIA MIRROR-PHASED CUTOVER. The dependency is removed as of 2026-11-12 (M14), after engine migration of all families was verified Forme-only and after the four live import sites were dealt with (three deleted, one pruned — `downloadPdf.tsx` retains its live Forme delivery contract). Residual risk (low): pre-certification rendering edge cases surface in M12; rollback strategy recorded under DEC-38 (revert the purge diff; `bun add @react-pdf/renderer@4.3.2`; re-run `bun install`).
 - **Mitigation Strategy:**
-  1. `@react-pdf/renderer` remains pinned until Milestone M6.
-  2. Only when AST analysis confirms zero remaining imports of `@react-pdf/renderer` across `src/` may the package be uninstalled.
+  1. The purge executed only after the M13 audit confirmed zero active production/test consumers (see `Waterfall-roadmap.md` §5).
+  2. Restoration remains possible via DEC-38 should M12/Gate 3 reveal a regression requiring the legacy engine.
 
 ---
 
@@ -220,6 +224,17 @@
 
 ### ⚠️ R-22: Delivery Subsystem Fragmentation
 - **Description:** Individual document templates invoking raw Forme rendering functions directly rather than utilizing `CompositePdfDelivery`, causing divergent caching, analytics, and error handling.
+- **Status (2026-11-12):** PARTIAL. CSR, Waybill/RFQ downloads route through `exportPdfToDevice`/`native fallback` (Waybill/RFQ) or `generatePdfcnPdf` → `CompositePdfDelivery` (CSR via `generateCsrPdfcnPdf`). Waybill/RFQ bypass `CompositePdfDelivery` by design (delivery through `downloadPdfFromElement`). This is a documented, shared delivery contract — acceptable until M12 re-validates parity, but not the target end-state if composite delivery is formally required.
 - **Mitigation Strategy:**
-  1. Route all document export actions through `CompositePdfDelivery`.
+  1. Route all document export actions through `CompositePdfDelivery` OR document and accept the `downloadPdfFromElement` contract (retained until M14 decision; see `Waterfall-roadmap.md` §5 row 5).
   2. Standardize PDF byte generation, local caching, download triggers, and error reporting across all eight document families.
+
+---
+
+### ⚠️ R-23: Stale Static Tests Pin Purge Candidates
+- **Description:** `src/tests/pdf/pdfCurrency.test.js` asserted on the contents of the now-deleted `src/components/pdf/pdfCurrency.tsx`.
+- **Status (2026-11-12):** ✅ **RESOLVED.** The static React-PDF pin was removed; the rewritten test keeps the active-contract assertions for the surviving `industryAdapter.ts`, `formatters/pdfCurrency.ts` and `pdfSharedFonts.ts` paths (passes 2/2). The `industry-react-pdf` string fixtures in `templateIds.test.js`, `formeIndustryTemplate.test.ts` and `dualIndustryRendererRouting.test.ts` remain as documentation of the retired routing contract — none of them imports the package.
+
+### ⚠️ R-24: Migration Mistaken for Certification
+- **Description:** Documentation or operators may treat the migration reports ("all families on Forme") as proof of production readiness, shipping without parity, visual, regression or delivery verification.
+- **Mitigation Strategy:** Enforce the language rule in `Waterfall-roadmap.md`/`functional-req.md`: "migrated" = engine only; certification lives in M4/M10/M11/M12. Every gates re-review must state migration and certification status separately.

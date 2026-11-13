@@ -102,25 +102,16 @@ test('resolveCommercialPdfRoute keeps Industrial Forme, Industry Forme and retai
   const { resolveCommercialPdfRoute } = await import('../../components/pdf')
 
   assert.equal(resolveCommercialPdfRoute('industrial'), 'industrial-forme')
-  assert.equal(resolveCommercialPdfRoute('industrial', 'react-pdf'), 'industrial-forme', 'Industrial always uses Forme')
-
   assert.equal(resolveCommercialPdfRoute('industry'), 'industry-forme')
-  assert.equal(resolveCommercialPdfRoute('industry', 'forme'), 'industry-forme')
   assert.equal(resolveCommercialPdfRoute('industry-forme'), 'industry-forme', 'Explicit Forme normalises to industry and stays Forme')
   assert.equal(resolveCommercialPdfRoute('industry-react-pdf'), 'industry-forme', 'Retired Industry React-PDF routes to Industry Forme')
 
   assert.equal(resolveCommercialPdfRoute('evergreen'), 'evergreen-forme')
-  assert.equal(resolveCommercialPdfRoute('evergreen', 'forme'), 'evergreen-forme')
-  assert.equal(resolveCommercialPdfRoute('evergreen', 'react-pdf'), 'evergreen-forme', 'Evergreen is Forme-only')
   assert.equal(resolveCommercialPdfRoute('crest'), 'industry-forme', 'Retired Crest routes to Industry Forme default')
 
   assert.equal(resolveCommercialPdfRoute('landscape'), 'landscape-forme')
-  assert.equal(resolveCommercialPdfRoute('landscape', 'forme'), 'landscape-forme')
-  assert.equal(resolveCommercialPdfRoute('landscape', 'react-pdf'), 'landscape-forme', 'Landscape is Forme-only')
 
   assert.equal(resolveCommercialPdfRoute('minimal'), 'minimal-forme')
-  assert.equal(resolveCommercialPdfRoute('minimal', 'forme'), 'minimal-forme')
-  assert.equal(resolveCommercialPdfRoute('minimal', 'react-pdf'), 'minimal-forme', 'Minimal is Forme-only')
   assert.equal(resolveCommercialPdfRoute('modern-minimal'), 'minimal-forme', 'Retired Modern Minimal resolves to Minimal')
 
   assert.equal(resolveCommercialPdfRoute(null), 'industry-forme', 'Missing template ids keep the Industry Forme default')

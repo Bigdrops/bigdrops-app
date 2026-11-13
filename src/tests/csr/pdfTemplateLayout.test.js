@@ -6,7 +6,7 @@ import {
   resolveMaterialColumnBlocks,
   resolveZincLifecycleStages,
   safeText,
-} from '../../components/csr/preview-templates/layoutModel.ts'
+} from '../../components/csr/layoutModel.ts'
 
 test('formatCommaMaterialsText renders one paragraph with thick pipe separators', () => {
   const text = formatCommaMaterialsText([

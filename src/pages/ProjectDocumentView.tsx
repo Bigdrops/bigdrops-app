@@ -77,13 +77,8 @@ export default function ProjectDocumentView() {
     if (!documentRecord || pdfLoading) return
     setPdfLoading(true)
     try {
-      const [{ pdf }, { default: ProjectDocumentPDF }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('@/components/project/ProjectDocumentPDF'),
-      ])
-      const blob = await pdf(
-        <ProjectDocumentPDF document={documentRecord} projectName={projectName} settings={settings ?? {}} />,
-      ).toBlob()
+      const { renderProjectDocumentPdfBlob } = await import('@/components/project/projectDocumentPdfBlob')
+      const blob = await renderProjectDocumentPdfBlob(documentRecord, { projectName, settings: settings ?? {} })
       const { downloadBlobFile, userDownloadLocationLabel } = await import('@/lib/native/fileDownload')
       await downloadBlobFile({ fileName: getProjectDocumentFileName(documentRecord), blob })
       feedback.success('PDF ready', {

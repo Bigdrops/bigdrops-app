@@ -2,6 +2,7 @@ import type React from 'react'
 import type { PdfcnDocumentEnvelope } from '@/domain/pdf/resolver'
 import { ensureFormeFontFamily } from '../forme/fonts'
 import { CURRENCY_GLYPH_FONT, SYMBOL_GLYPH_FONT } from '../forme/glyphs'
+import { uiSound } from '@/lib/uiSoundEvent'
 import {
   CompositePdfDelivery,
   NativePdfDelivery,
@@ -153,6 +154,7 @@ export async function generatePdfcnPdf(
     timestamp: Date.now(),
     fileName: filename,
   })
+  uiSound('hero.complete')
 
   return {
     status: 'generated',

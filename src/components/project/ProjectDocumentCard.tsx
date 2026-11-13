@@ -67,11 +67,8 @@ export default function ProjectDocumentCard({ document, onDelete }: ProjectDocum
 
   const handleExport = async () => {
     try {
-      const [{ pdf }, { default: ProjectDocumentPDF }] = await Promise.all([
-        import('@react-pdf/renderer'),
-        import('@/components/project/ProjectDocumentPDF'),
-      ])
-      const blob = await pdf(<ProjectDocumentPDF document={document} />).toBlob()
+      const { renderProjectDocumentPdfBlob } = await import('@/components/project/projectDocumentPdfBlob')
+      const blob = await renderProjectDocumentPdfBlob(document)
       const { downloadBlobFile, userDownloadLocationLabel } = await import('@/lib/native/fileDownload')
       await downloadBlobFile({ fileName: getProjectDocumentFileName(document), blob })
       feedback.success('PDF ready', {

@@ -1,18 +1,18 @@
-import type { ReactElement } from 'react'
-
 import { exportPdfToDevice, openExportedPdf, shareExportedPdf } from '@/lib/native/pdfexport'
 import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { isNativePlatform } from '@/lib/native/capacitor'
 import { emitFeedback } from '@/lib/NativeFeedbackBus'
+import { uiSound } from '@/lib/uiSoundEvent'
 
 type DownloadPdfFromElementOptions = {
-  element: ReactElement
+  /** Engine-agnostic blob builder (e.g. a Forme document). */
+  buildBlob: () => Promise<Blob>
   fileName: string
   subdirectory?: string
 }
 
 export async function downloadPdfFromElement({
-  element,
+  buildBlob,
   fileName,
   subdirectory = 'exports',
 }: DownloadPdfFromElementOptions) {
@@ -22,10 +22,7 @@ export async function downloadPdfFromElement({
     const result = await exportPdfToDevice({
       fileName,
       subdirectory,
-      buildBlob: async () => {
-        const { pdf } = await import('@react-pdf/renderer')
-        return pdf(element).toBlob()
-      },
+      buildBlob,
     })
 
     if (isNativePlatform()) {
@@ -44,6 +41,7 @@ export async function downloadPdfFromElement({
       type: 'download:success',
       payload: { fileName: result.fileName, path: result.path, location: userDownloadLocationLabel() },
     })
+    uiSound('hero.complete')
 
     return result
   } catch (err) {

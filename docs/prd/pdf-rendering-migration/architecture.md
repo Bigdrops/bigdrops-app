@@ -82,7 +82,7 @@ To prevent architectural coupling, the PDF generation system enforces strict sep
 - **Canonical Model Independence:** Prepared document models must remain 100% renderer-independent. They must never import Forme, React-PDF, or PDF styling primitives.
 - **Locked Business Calculations:** Financial calculations (subtotals, discounts, VAT, totals, withholding tax) remain strictly in the business domain layer (`src/domain/` and `src/lib/Calculations.ts`). Rendering components are presentation renderers only and must never calculate or mutate financial values.
 - **No Universal Table or Layout Abstraction:** Shared infrastructure does not force identical layouts or universal table abstractions onto all document families. Each document family preserves its own table semantics, column budgets, and pagination rules.
-- **Pre-Production Approval & Progressive Rollout:** Migration occurs progressively by document family. Existing production templates will continue to run on `@react-pdf/renderer` until their Forme replacements pass all functional, mathematical, and visual regression tests.
+- **Pre-Production Approval & Progressive Rollout:** Migration occurs progressively by document family. Existing production templates continue to run until their Forme replacements pass all functional, mathematical, and visual regression tests. *(Status 2026-11-12: engine migration is complete for all eight families; certification remains unfinished — see `Waterfall-roadmap.md` Sections 3, 4 and 9).*
 
 ---
 
@@ -140,7 +140,7 @@ This requirement is mandatory for the BOUXRE platform:
     - **Canonical Preparation Gap:** PO domain calculations exist in `src/domain/purchase-order/calculations.ts`, but its dedicated canonical PDF preparation contract (`preparePurchaseOrderDocument.ts`) is currently incomplete. This gap is recorded as a specific outstanding requirement (Milestone M1C).
 
 ### 2.2 Other Document Families
-- **Cost Pricing Sheet (CPS):** Forme implementations exist (`src/components/pdf/forme/CpsIndustryDocument.tsx`, `LedgerCpsDocument.tsx`). However, they suffer from the WOFF font fallback bug, silently rendering in `Helvetica`. CPS requires integration with M1B static TTF fonts, the master resolver, and delivery pipeline.
+- **Cost Pricing Sheet (CPS):** CPS exports route through the commercial Forme pipeline — `src/domain/cps/pdfDownloadHandler.ts` calls `resolveCommercialPdfRoute` and `generateCpsCommercialPdfBlob` / `generateCpsCommercialPdf`, which dispatch to commercial `*FormeDocument` renderers. No dedicated CPS Forme template exists in the source tree as of 2026-11-12 (the historical references `Forme/CpsIndustryDocument.tsx` and `LedgerCpsDocument.tsx` do not exist in the current repository). The shared commercial font path still trips the WOFF → Helvetica silent fallback (VER-02). CPS requires static TTF fonts, and either a decision to certify on commercial templates or a dedicated CPS design (see M11).
 - **Request for Quotation (RFQ):** Procurement document listing required items, specifications, and quantities without prices. RFQ preserves unpriced procurement semantics and must never be treated as an invoice with blank prices.
 - **Waybill:** Logistics document for goods dispatch. Requires transport mode, sender/receiver details, item condition status, and signature blocks supporting handwritten completion or digital capture.
 - **Receipt:** Proof of payment acknowledging funds received against an invoice. Requires issuer info, payment method, reference, and received amount in words and figures.
@@ -149,6 +149,8 @@ This requirement is mandatory for the BOUXRE platform:
 ---
 
 ## 3. Consolidated Problem Register (Investigation Evidence Baseline)
+
+> **Historical record (2026-10-30).** The defects below describe the legacy React-PDF path and were the input to this architecture. As of 2026-11-12, every document family renders through Forme/Forme+PDFCN; the React-PDF code paths referenced here were retired during the migration wave. The register is retained as evidence, not as a description of current code.
 
 The requirements in this specification resolve verified defects identified during the 2026-10-30 investigations and subsequent audits:
 
@@ -190,7 +192,7 @@ The following architectural directions from previous PRD drafts or exploratory s
 1. **Renderer-Independent Canonical Model:** The application domain layer and prepared document models must never import Forme, React-PDF, or PDF-specific styling primitives.
 2. **Immutable Parent Document Data:** PDF rendering components are renderers only. They must never mutate invoice records, line items, or tax calculations.
 3. **First-Class Landscape Orientation:** Landscape A4 ($297 \times 210\text{ mm}$) must recalculate layout geometry from first principles. CSS/matrix transform hacks are prohibited.
-4. **Progressive Migration by Family:** Documents migrate sequentially. `@react-pdf/renderer` stays installed until all eight document families migrate and pass certification.
+4. **Progressive Migration by Family:** Documents migrate sequentially. `@react-pdf/renderer` stays pinned until all eight document families migrate **and pass certification and Gate 4** (see `Waterfall-roadmap.md`, Sections 5 and 6). Engine migration is complete as of 2026-11-12; certification is not.
 5. **Host Resource Constraints:** `bun run build` must never be run in development or CI environments due to host memory constraints.
 
 ---

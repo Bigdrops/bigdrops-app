@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { pdf } from '@react-pdf/renderer'
+import { renderCsrPdfcnBlob } from '@/components/csr/renderCsrPdfcn'
 import { feedback } from '@/lib/feedback'
 import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { invalidateListCache } from '@/lib/cache/listCache'
@@ -29,7 +29,6 @@ import {
   parseCsrMaterials,
   serializeCsrMaterials,
 } from '../components/csr/csrUtils'
-import { getCsrPdfDocument } from '../components/csr/preview-templates'
 import { canUseAndroidNativeSqlite } from '../lib/native/capacitor'
 import { registerAndroidBackGuard } from '@/lib/native/androidBackGuard'
 import { createOfflineCsrDraft, peekNextOfflineCsrNumber } from '../lib/native/csrOffline'
@@ -43,13 +42,6 @@ import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
 import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import { useEntity } from '@/lib/tenant/contexts'
-
-const EMPTY_BRANDING = {
-  companyName: '',
-  companyTagline: '',
-  contactLine: '',
-  footerText: '',
-}
 
 /** Convert string booleans ('Yes'/'No'/''/etc.) to actual booleans for DB columns */
 function toDbBoolean(value: unknown): boolean | null {
@@ -102,8 +94,7 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
     isCreate
       ? (duplicateState?.materialsRows || [{ ...DEFAULT_MATERIAL_ROW }])
       : [{ ...DEFAULT_MATERIAL_ROW }])
-  const [comments] = useState('')
-  const csrNumberPopulated = useRef(false)
+    const csrNumberPopulated = useRef(false)
   // Last system-generated number shown in the field. A differing field
   // value means the user explicitly typed it (manual identifier).
   const autoNumberRef = useRef('')
@@ -433,7 +424,14 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
         { ...createDefaultCsr(isField), csr_number: blankNumber },
         { technicianSignatory: null },
       )
-      const blob = await pdf(getCsrPdfDocument({ csr: previewData, comments, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
+      const blob = await renderCsrPdfcnBlob({
+        templateId: '3',
+        rawDocument: { ...createDefaultCsr(isField), ...previewData, csr_number: blankNumber },
+        branding: {},
+        designPreset: null,
+        layoutDensity: previewData.layoutDensity ?? 'comfortable',
+        showOperationalReadings: previewData.showOperationalReadings ?? true,
+      })
       const { downloadBlobFile } = await import('@/lib/native/fileDownload')
       await downloadBlobFile({ fileName: `${blankNumber}.pdf`, blob })
       feedback.success(`Blank CSR ${blankNumber} saved to ${userDownloadLocationLabel()}`)
@@ -570,7 +568,14 @@ export default function CsrFormPage({ mode }: CsrFormPageProps) {
                 ).data
               : null
             const previewData = buildCsrPreviewData(csrData, { technicianSignatory })
-            const blob = await pdf(getCsrPdfDocument({ csr: previewData, comments, branding: EMPTY_BRANDING, template: '3', designPreset: {} as any })).toBlob()
+            const blob = await renderCsrPdfcnBlob({
+              templateId: '3',
+              rawDocument: { ...csrData, ...previewData },
+              branding: {},
+              designPreset: null,
+              layoutDensity: previewData.layoutDensity ?? 'comfortable',
+              showOperationalReadings: previewData.showOperationalReadings ?? true,
+            })
             const { downloadBlobFile } = await import('@/lib/native/fileDownload')
             await downloadBlobFile({ fileName: (csrData.csr_number || 'csr') + '.pdf', blob })
           } catch (error) {

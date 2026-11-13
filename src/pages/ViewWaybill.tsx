@@ -38,7 +38,7 @@ import {
 } from '@/domain/pdf/customization/waybill'
 import type { PdfCustomizationSettings } from '@/domain/pdf/customization/types'
 
-import WaybillPDF from '@/components/waybill/WaybillPDF'
+import type { WaybillPdfTemplateId } from '@/components/waybill/waybillUtils'
 import { archiveWaybillRecord, deleteWaybillRecord, duplicateWaybillRecord, updateWaybillStatus } from './view-waybill-actions'
 import { STANDARD_ITEM_COLUMNS } from '@/domain/waybill/contracts/waybillContract'
 import WaybillTemplateSelector from '@/components/waybill/WaybillTemplateSelector'
@@ -48,6 +48,34 @@ import { PDF_FILLABLE_FONT_OPTIONS } from '@/lib/pdfDesignPreset'
 
 const SHEET_MORE = 'more-actions'
 const SHEET_CUSTOMIZE = 'customize-output'
+
+// Download and share render the identical Forme document from the same prepared model.
+async function renderWaybillPdfBlob(
+  model: import('@/domain/waybill/engine/types').WaybillRenderModel | null,
+  designPreset: PdfDesignPreset,
+  template: WaybillPdfTemplateId,
+): Promise<Blob> {
+  if (!model) throw new Error('Waybill PDF could not be prepared: render model is unavailable.')
+  const { safeValidateRenderModel } = await import('@/domain/waybill/renderContract')
+  const validation = safeValidateRenderModel(model)
+  if (!validation.success) {
+    throw new Error('Waybill PDF could not be prepared: the document data failed validation.')
+  }
+  const [{ WaybillFormeDocument }, { renderPdfcnToBlob }, { ensureFormeFontFamily }] = await Promise.all([
+    import('@/components/pdf/forme/waybill/WaybillFormeDocument'),
+    import('@/components/pdf/pdfcn/adapter'),
+    import('@/components/pdf/forme/fonts'),
+  ])
+  // renderPdfcnToBytes registers Inter/Noto Sans/currency/symbol coverage itself;
+  // the waybill ink font (customizable to Caveat) and any stored Archivo Black need explicit registration.
+  await Promise.all([
+    ensureFormeFontFamily(designPreset.headerFont),
+    ensureFormeFontFamily(designPreset.bodyFont),
+    ensureFormeFontFamily('Caveat'),
+  ])
+  const { createElement } = await import('react')
+  return renderPdfcnToBlob(createElement(WaybillFormeDocument, { model, designPreset, template }))
+}
 
 const WAYBILL_TEMPLATE_KEY = 'waybill_view_template'
 const WAYBILL_CUSTOM_FONT_KEY = 'waybill_custom_font_stash'
@@ -291,11 +319,11 @@ export default function ViewWaybill() {
         columns,
         company: companySettings,
       }) : null
-        await downloadPdfFromElement({
-          fileName: waybill.waybill_number || 'waybill',
-          subdirectory: 'waybill',
-          element: <WaybillPDF model={model} designPreset={designPreset} template={template} />,
-        })
+      await downloadPdfFromElement({
+        fileName: waybill.waybill_number || 'waybill',
+        subdirectory: 'waybill',
+        buildBlob: () => renderWaybillPdfBlob(model, designPreset, template),
+      })
       showToast('Download ready', `${waybill.waybill_number || 'Waybill'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the waybill PDF.'
@@ -418,10 +446,7 @@ export default function ViewWaybill() {
     tenantId: waybill?.tenant_id || rawWaybill?.tenant_id || undefined,
     issuerPhone: settings?.phone || undefined,
     issuerAddress: settings?.address || undefined,
-    getPdfBlob: async () => {
-      const { pdf } = await import('@react-pdf/renderer')
-      return pdf(<WaybillPDF model={model} designPreset={designPreset} template={template} />).toBlob()
-    },
+    getPdfBlob: () => renderWaybillPdfBlob(model, designPreset, template),
   }), [waybill, id, rawWaybill, settings, designPreset, template, model])
 
   const docProps: BaseDocument = {

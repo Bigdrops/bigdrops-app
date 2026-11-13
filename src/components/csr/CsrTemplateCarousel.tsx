@@ -5,7 +5,6 @@ import TemplatePickerCarousel, {
 } from '@/components/document-view/shared/TemplatePickerCarousel'
 import type { TemplateMiniTheme } from '@/components/document-view/shared/TemplateMiniPreview'
 import { CSR_TEMPLATE_OPTIONS, CSR_TEMPLATE_VARIANTS } from './CSRPreviewContent'
-import { isPdfcnCsrTemplate } from '@/components/pdf'
 
 type TemplateOption = {
   key: string
@@ -154,14 +153,17 @@ export default function CsrTemplateCarousel({ value, onChange }: CsrTemplateCaro
     })
   }, [])
 
-  const isPdfcn = isPdfcnCsrTemplate(value)
+  const isCadStandard = value === 'csr-blueprint-landscape'
+    || value === 'csr-blueprint-technical-drawinglandscape.html'
+    || value === 'csr-reference-portrait'
+    || value === 'csr-final-pdfcn-reference.html'
 
   return (
     <div className="space-y-2">
       <TemplatePickerCarousel value={value} onChange={onChange} options={options} />
 
       {/* Informative banner for PDFCN High-Precision CAD & Reference standards */}
-      {isPdfcn ? (
+      {isCadStandard ? (
         <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-950 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-200">
           <div className="flex items-start gap-2.5">
             <FileCheck className="mt-0.5 h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
@@ -169,14 +171,13 @@ export default function CsrTemplateCarousel({ value, onChange }: CsrTemplateCaro
               <div className="flex items-center gap-1.5 font-semibold text-sky-900 dark:text-sky-100">
                 <span>
                   {value === 'csr-blueprint-landscape'
-                    ? 'A4 Landscape Technical Blueprint (PDFCN Engine)'
-                    : 'A4 Portrait Reference Standard (PDFCN Engine)'}
+                    ? 'A4 Landscape Technical Blueprint (Forme Engine)'
+                    : 'A4 Portrait Reference Standard (Forme Engine)'}
                 </span>
               </div>
               <p className="text-[11px] leading-relaxed text-sky-800 dark:text-sky-300">
-                Built for physical on-site verification and print compliance. This template uses standardized
-                engineering typography, structured bill-of-materials scheduling, and dedicated ruled lines for
-                physical pen signatures. Fillable web font overrides do not apply to technical CAD standards.
+                Built for physical on-site verification and print compliance. Typography is locked to the technical standard;
+                fillable handwriting areas (print name, designation, date, signature block) honour your ink colour and handwriting font.
               </p>
             </div>
           </div>

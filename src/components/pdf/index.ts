@@ -1,5 +1,6 @@
 import React from 'react'
 import { normalizeInvoicePdfTemplateId } from '@/domain/invoice/types'
+import { uiSound } from '@/lib/uiSoundEvent'
 import {
   CompositePdfDelivery, WebPdfDelivery, NativePdfDelivery, DefaultFeedbackBus,
   type PdfDocumentType,
@@ -31,7 +32,6 @@ export type PdfGenerationRequest<TModel extends PdfDocumentModel> = {
   documentNumber?: string | null
   templateId?: string | null
   compact?: boolean
-  engine?: 'forme' | 'react-pdf'
 }
 
 type CpsPdfStage = 'forme-init' | 'render' | 'bytes' | 'delivery'
@@ -79,22 +79,15 @@ export type CommercialPdfRoute =
 
 /**
  * Resolve which renderer handles a commercial template identifier.
- *
- * - 'industrial' always uses the Forme Industrial renderer.
- * - 'industry' always uses the Forme Industry renderer.
- * - 'landscape' and 'minimal' always use their Forme renderers.
- * - 'evergreen' always uses the Forme Evergreen renderer.
- * - 'architectural' always uses the Forme Architectural renderer.
- * - 'executive' always uses the Forme Executive renderer.
- * - 'heritage' always uses the Forme Heritage House renderer.
- * - 'mosaic' always uses the Forme Mosaic renderer.
- * - Explicit 'industry-forme' normalizes to 'industry' and therefore also uses Forme.
+ * - 'industrial' → Forme Industrial renderer.
+ * - 'landscape', 'minimal' → their Forme renderers.
+ * - 'evergreen', 'architectural', 'executive', 'heritage', 'mosaic' → Forme renderers.
+ * - Explicit 'industry-forme' normalizes to 'industry'.
  * - Retired 'modern-minimal' normalizes to 'minimal'.
  * - Everything else defaults to Forme Industry.
  */
 export function resolveCommercialPdfRoute(
   templateId: string | null | undefined,
-  _engine?: 'forme' | 'react-pdf',
 ): CommercialPdfRoute {
   const activeTemplateId = normalizeInvoicePdfTemplateId(templateId) || 'industry'
   if (activeTemplateId === 'industrial') return 'industrial-forme'
@@ -112,7 +105,7 @@ async function generatePdfAsset<TModel extends PdfDocumentModel>(request: PdfGen
   const filename = resolveFilename(request.model, request.documentNumber)
   const docType = request.model.identity.kind as PdfDocumentType
 
-  const route = resolveCommercialPdfRoute(request.templateId, request.engine)
+  const route = resolveCommercialPdfRoute(request.templateId)
 
   // Forme Commercial Rendering Path (Industrial, Industry, Landscape, Minimal, Evergreen, Architectural, Executive, Heritage, Mosaic)
   const [
@@ -230,6 +223,7 @@ async function generatePdf<TModel extends PdfDocumentModel>(request: PdfGenerati
   }
 
   feedbackBus.emit({ kind: 'downloaded', documentType: asset.documentType, timestamp: Date.now(), fileName: asset.filename })
+  uiSound('hero.complete')
 
   return { status: 'generated', filename: asset.filename, uri: result.uri }
 }
@@ -327,6 +321,7 @@ export async function generateCpsCommercialPdf(request: {
   }
 
   feedbackBus.emit({ kind: 'downloaded', documentType: 'cps_sheets', timestamp: Date.now(), fileName: filename })
+  uiSound('hero.complete')
 
   return { status: 'generated', filename, uri: result.uri }
 }

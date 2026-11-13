@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import type { BaseDocument } from '@/components/document-view/types/documentView'
@@ -15,8 +15,8 @@ import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
-import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
-import { buildCsrPreviewData, getCsrBranding, getCsrPdfDocument } from '@/components/csr/csrUtils'
+import CsrFormePreview from '@/components/document-view/csr/CsrFormePreview'
+import { buildCsrPreviewData, getCsrBranding } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
 import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
 import { getPdfDesignPreset, type PdfFillableFontChoice } from '@/lib/pdfDesignPreset'
@@ -28,8 +28,7 @@ import {
   bridgeToDesignPreset,
 } from '@/domain/pdf/customization/csr'
 import type { PdfCustomizationSettings } from '@/domain/pdf/customization/types'
-import { downloadPdfFromElement } from '@/components/document-view/shared/downloadPdf'
-import { generateCsrPdfcnPdf, isPdfcnCsrTemplate } from '@/components/pdf'
+import { generateCsrPdfcnPdfDownload, renderCsrPdfcnBlob } from '@/components/csr/renderCsrPdfcn'
 import { useSettings } from '@/hooks/useSettings'
 import { useEntity } from '@/lib/tenant/contexts'
 import { shareDocument } from '@/components/document-view/shared/shareDocument'
@@ -109,7 +108,7 @@ export default function ViewCSR() {
   const [customFont, setCustomFont] = useState<'auto' | PdfFillableFontChoice>(getStoredCustomFont)
   const [customColor, setCustomColor] = useState<'auto' | string>(getStoredCustomColor)
   const [projectLinkOpen, setProjectLinkOpen] = useState(false)
-  const [comments, setComments] = useState('')
+
   const [shareOpen, setShareOpen] = useState(false)
 
   // Engine: customization state + persistence
@@ -244,6 +243,18 @@ export default function ViewCSR() {
   const previewData = csr ? buildCsrPreviewData(csr, { signatories, client }) : null
   const branding = getCsrBranding(settings || {})
 
+  const renderCsrPreview = useCallback(async () => {
+    if (!csr || !previewData) throw new Error('CSR preview not loaded')
+    return renderCsrPdfcnBlob({
+      templateId: template,
+      rawDocument: { ...csr, ...previewData },
+      branding,
+      designPreset,
+      layoutDensity: previewData.layoutDensity ?? 'comfortable',
+      showOperationalReadings: previewData.showOperationalReadings ?? true,
+    })
+  }, [csr, previewData, template, branding, designPreset])
+
   const csrSharePayload: DocumentSharePayload = useMemo(() => ({
     documentType: 'csr',
     documentId: String(csr?.id || id || ''),
@@ -261,66 +272,32 @@ export default function ViewCSR() {
     issuerPhone: settings?.phone || undefined,
     issuerAddress: settings?.address || undefined,
     equipment: csr?.equipment_description || (csr?.equipment ? `${csr.equipment} ${csr.model || ''}`.trim() : undefined),
-    getPdfBlob: async () => {
-      if (!previewData) throw new Error('CSR preview not loaded')
-      if (isPdfcnCsrTemplate(template)) {
-        const { resolvePdfcnDocument } = await import('@/components/pdf/pdfcn')
-        const { renderPdfcnToBytes } = await import('@/components/pdf/pdfcn/adapter')
-        const res = resolvePdfcnDocument({
-          documentType: 'csr',
-          templateId: template,
-          rawDocument: { ...csr, ...previewData },
-          options: {
-            serviceProvider: {
-              name: branding.companyName || undefined,
-              subtitle: branding.companyTagline || undefined,
-              address: branding.addressLine || undefined,
-              contact: branding.phoneEmailLine || undefined,
-              logoUrl: branding.logoUrl || undefined,
-            },
-          },
-        })
-        if (res.element) {
-          const bytes = await renderPdfcnToBytes(res.element)
-          return new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' })
-        }
-      }
-      const { pdf } = await import('@react-pdf/renderer')
-      const element = getCsrPdfDocument({ csr: previewData, comments, branding, template, designPreset })
-      return pdf(element as any).toBlob()
+    getPdfBlob: () => {
+      if (!previewData) return Promise.reject(new Error('CSR preview not loaded'))
+      return renderCsrPdfcnBlob({
+        templateId: template,
+        rawDocument: { ...csr, ...previewData },
+        branding,
+        designPreset,
+        layoutDensity: previewData.layoutDensity ?? 'comfortable',
+        showOperationalReadings: previewData.showOperationalReadings ?? true,
+      })
     },
-  }), [csr, id, client, settings, previewData, comments, branding, template, designPreset])
+  }), [csr, id, client, settings, previewData, branding, template, designPreset])
 
   const handleDownload = async () => {
     if (!previewData || downloading) return
     setDownloading(true)
     try {
-      if (isPdfcnCsrTemplate(template)) {
-        await generateCsrPdfcnPdf({
-          rawDocument: {
-            ...csr,
-            ...previewData,
-          },
-          templateId: template,
-          filename: previewData.csr_number || 'csr',
-          deliver: true,
-          options: {
-            serviceProvider: {
-              name: branding.companyName || undefined,
-              subtitle: branding.companyTagline || undefined,
-              address: branding.addressLine || undefined,
-              contact: branding.phoneEmailLine || undefined,
-              logoUrl: branding.logoUrl || undefined,
-            },
-          },
-        })
-      } else {
-        await downloadPdfFromElement({
-          fileName: previewData.csr_number || 'csr',
-          subdirectory: 'csr',
-          element: getCsrPdfDocument({ csr: previewData, comments, branding, template, designPreset }) as any,
-        })
-      }
+      await generateCsrPdfcnPdfDownload({
+        templateId: template,
+        rawDocument: { ...csr, ...previewData },
+        branding,
+        designPreset,
+        layoutDensity: previewData.layoutDensity ?? 'comfortable',
+        showOperationalReadings: previewData.showOperationalReadings ?? true,
+        filename: previewData.csr_number || 'csr',
+      })
       showToast('Download ready', `${previewData.csr_number || 'CSR'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not generate the CSR PDF.'
@@ -549,7 +526,7 @@ export default function ViewCSR() {
         <CsrViewPage
           document={docProps}
           metrics={metrics}
-          documentPreview={<CsrDocumentPreview csr={csr} previewModel={previewData} settingsData={settings} />}
+          documentPreview={<CsrFormePreview render={renderCsrPreview} />}
           activityHistory={<CsrActivityCard documentId={docProps.id} />}
           onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}

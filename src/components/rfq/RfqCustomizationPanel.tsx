@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { pageFormLabelClassName } from '@/components/ui/form-page-styles'
-import { SHARED_TABLE_TEMPLATES } from '@/domain/table-document/templateRegistry'
+import { RFQ_TEMPLATE_OPTIONS, normalizeRfqTemplateId } from '@/domain/rfq/templates'
 
 type RfqCustomizationPanelProps = {
   rfq: Rfq
@@ -88,9 +88,9 @@ export const RfqCustomizationPanel: React.FC<RfqCustomizationPanelProps> = ({
           <Label className={pageFormLabelClassName}>Template</Label>
           <div className="mt-2">
             <DocumentTemplatePicker
-              value={rfq.template_id || 'modern'}
+              value={normalizeRfqTemplateId(rfq.template_id)}
               onChange={(templateId) => onUpdateRfq({ template_id: templateId as any })}
-              templates={SHARED_TABLE_TEMPLATES}
+              templates={RFQ_TEMPLATE_OPTIONS}
             />
           </div>
         </div>

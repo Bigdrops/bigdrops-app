@@ -122,7 +122,7 @@ export default function WaybillFormPage({ mode }: WaybillFormPageProps) {
         if (!logError) {
           const blankSeq = parseTrailingSequence(waybillNumber)
           if (blankSeq !== null) await advanceAutoCursor(db, family, blankSeq)
-          const { downloadBlankWaybillTemplate } = await import('../components/waybill/blankWaybillTemplate')
+          const { downloadBlankWaybillTemplate } = await import('@/components/pdf/forme/waybill/BlankWaybillFormeDocument')
           await downloadBlankWaybillTemplate({
             type: blankType,
             waybillNumber,

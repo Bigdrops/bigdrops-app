@@ -1,8 +1,6 @@
-import { getCsrPdfDocument } from './preview-templates'
 import { buildCsrRenderModel } from '@/domain/csr/csrRenderModel'
 import type { CsrRenderModel } from '@/domain/csr/csrRenderModel'
 
-export { getCsrPdfDocument }
 export { getNextCsrNumber, incrementTrailingLetters } from '@/domain/csr/csrNumbering'
 
 export const CSR_META_PREFIX = '__CSR_META_V1__'

@@ -140,7 +140,7 @@ test('retired ledger / schedule / compact ids migrate to industry', () => {
 test('all nine ids resolve to deterministic Forme routes', () => {
   for (const id of ALL_COMMERCIAL_IDS) {
     assert.match(resolveCommercialPdfRoute(id), /-forme$/)
-    const route = resolveCommercialPdfRoute(id, 'forme')
+    const route = resolveCommercialPdfRoute(id)
     assert.match(route, /-forme$/)
   }
   assert.equal(resolveCommercialPdfRoute('industry-forme'), 'industry-forme')

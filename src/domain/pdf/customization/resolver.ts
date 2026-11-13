@@ -55,7 +55,7 @@ function normalizeResolvedDocumentFont(font: unknown, fallback: string): string 
   if (RETIRED_DOCUMENT_FONTS.includes(normalized)) {
     return 'Inter'
   }
-  if (normalized === 'Inter' || normalized === 'Archivo Black') return normalized
+  if (normalized === 'Inter' || normalized === 'Archivo Black' || normalized === 'Goeist Sans' || normalized === 'Goeist Mono') return normalized
   if (normalized) return 'Inter'
   return fallback
 }

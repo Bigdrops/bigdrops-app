@@ -176,3 +176,31 @@ Verification combines:
   - [ ] **TC-13.1 (Static Typecheck Baseline):** Execute `bun run audit:load` followed by `bun run typecheck`. Assert zero TypeScript compilation errors.
   - [ ] **TC-13.2 (Build Prohibition):** Confirm `bun run build` was **NOT** executed during development or testing.
   - [ ] **TC-13.3 (Git Working Tree):** Execute `git status`. Verify that only files designated in the PRD scope were modified.
+
+---
+
+## 14. Current Status (2026-11-12) — Forme Migration Test Evidence
+
+Evidence-label convention: **REPORTED** = test pass/fail from the migration sessions (not re-run in this documentation task) · **HISTORICAL** = pre-existing failure documented in the migration work.
+
+### 14.1 Suites run during the migration passes (REPORTED)
+
+| Suite | Result | Notes |
+| :--- | :--- | :--- |
+| `src/tests/pdf/csrFormeTemplates.test.ts` (CSR Forme, added in CSR migration) | 10/10 pass | All five templates render; legacy `3`/`6`/`8` aliases resolve; unsupported templates rejected. |
+| `src/tests/pdf/waybillFormeTemplates.test.ts` | 13/13 pass | Includes byte-level `%PDF` assertions. |
+| `src/tests/pdf/receiptFormeDocument.test.ts` | 4/4 pass | Reported. |
+| `src/tests/pdf/rfqFormeTemplates.test.ts` | 10/10 pass | Reported. |
+| Project Documents Forme suite | 3/3 pass | Reported. |
+| `src/tests/critical/pdfcnMasterResolver.test.js` | 10/10 after CSR-pass expectation update | `isPdfcnCsrTemplate('8'/'3'/'6')` flipped to `true` (they are Forme). |
+| `src/tests/csr/pdfTemplateLayout.test.js` | 2 historical failures at HEAD | `formatCommaMaterialsText` (`×` output) and `resolveMaterialColumnBlocks` (row ceiling); test import updated to `src/components/csr/layoutModel.ts`. |
+| `src/tests/csr/csrRenderModel.test.js` | 5 historical failures at HEAD | By design (`resolveCallTypeDisplay` returns empty for WARRANTY/PAID SERVICE/AMC). |
+| `src/tests/pdf/forme*Template.test.ts` (Architectural, Executive, Heritage) | 3 pre-existing TypeScript errors at HEAD | `Record<string, unknown>` spread, unchanged by the CSR migration. |
+
+### 14.2 Environment notes
+- Plain `node --test` cannot load `.tsx` files; Forme-focused suites run under `bun test` (e.g., `bun test src/tests/pdf/csrFormeTemplates.test.ts`).
+- The purge task of 2026-11-12 re-ran the suites post-removal: `bun test src/tests/pdf` — 184 pass, 8 fail; every failure is in a file untouched by the purge and pre-existing at HEAD. Critical commercial/CSR/font/routing suites — 73 pass, 0 fail. Forme family suites (CSR/Waybill/RFQ/Receipt) — 37 pass, 0 fail; Project Documents — 3 pass, 0 fail. `bun run typecheck` — only the three pre-existing HEAD errors (`forme*Template.test.ts`, TS2698).
+- `pdfCurrency.test.js` now asserts only on active implementations (`industryAdapter.ts`, `formatters/pdfCurrency.ts`, `pdfSharedFonts.ts`, `projectDocuments.ts`); passes 2/2.
+
+### 14.3 Certification gap
+No family has closed the suites above as **certified**: TS-1 (Gate 1 suite), TS-6 (landscape), TS-10/TS-11 (family suites) and TS-12 (delivery) remain open for every family. Treat all suite results above as *migration evidence*, not as gates passed.

@@ -33,9 +33,9 @@ test('PDF shared font registry includes a dedicated Noto Sans entry for locked c
 })
 
 test('PDF production typography contains the approved families across registries', () => {
-  // Shared fonts: Inter and Archivo Black
+  // Shared fonts: Inter, Archivo Black and the Goeist family
   const sharedFamilies = Object.keys(REGISTERED_SHARED_FONTS)
-  assert.deepStrictEqual(sharedFamilies.sort(), ['Archivo Black', 'Inter'].sort())
+  assert.deepStrictEqual(sharedFamilies.sort(), ['Archivo Black', 'Goeist Mono', 'Goeist Sans', 'Inter'].sort())
 
   // Locked shared fonts: Noto Sans
   const lockedFamilies = Object.keys(REGISTERED_LOCKED_SHARED_FONTS)
@@ -46,7 +46,7 @@ test('PDF production typography contains the approved families across registries
   assert.deepStrictEqual(fillableFamilies, ['Caveat'])
 
   // Forme supported families
-  assert.deepStrictEqual([...FORME_SUPPORTED_FAMILIES].sort(), ['Archivo Black', 'Caveat', 'Figtree', 'Inter', 'Noto Sans', 'PT Serif', 'Plus Jakarta Sans', 'Public Sans', 'Work Sans'].sort())
+  assert.deepStrictEqual([...FORME_SUPPORTED_FAMILIES].sort(), ['Archivo Black', 'Caveat', 'Figtree', 'Goeist Mono', 'Goeist Sans', 'Inter', 'Noto Sans', 'PT Serif', 'Plus Jakarta Sans', 'Public Sans', 'Work Sans'].sort())
 })
 
 test('Retired commercial and handwriting families are purged from production registries', () => {
@@ -101,7 +101,7 @@ test('React-PDF font registry includes Archivo Black as a registered display fon
 test('Forme font registration authority registers approved families successfully with static TTF assets', async () => {
   resetFormeFontCache()
 
-  for (const family of ['Inter', 'Archivo Black', 'Caveat', 'Noto Sans', 'Plus Jakarta Sans', 'Figtree', 'Work Sans', 'Public Sans', 'PT Serif']) {
+  for (const family of ['Inter', 'Archivo Black', 'Caveat', 'Noto Sans', 'Plus Jakarta Sans', 'Figtree', 'Work Sans', 'Public Sans', 'PT Serif', 'Goeist Sans', 'Goeist Mono']) {
     const resolved = await ensureFormeFontFamily(family)
     assert.equal(resolved, family, `Forme must register ${family} without falling back to Helvetica`)
   }
@@ -126,6 +126,14 @@ test('Static TTF font assets exist in public/fonts for approved families', () =>
     'public/fonts/PublicSans-Bold.ttf',
     'public/fonts/PTSerif-Regular.ttf',
     'public/fonts/PTSerif-Bold.ttf',
+    'public/fonts/GoeistSans-Regular.ttf',
+    'public/fonts/GoeistSans-Bold.ttf',
+    'public/fonts/GoeistSans-Italic.ttf',
+    'public/fonts/GoeistSans-BoldItalic.ttf',
+    'public/fonts/GoeistMono-Regular.ttf',
+    'public/fonts/GoeistMono-Bold.ttf',
+    'public/fonts/GoeistMono-Italic.ttf',
+    'public/fonts/GoeistMono-BoldItalic.ttf',
   ]
 
   for (const file of requiredFiles) {
@@ -140,6 +148,12 @@ test('Empirical Unicode glyph coverage across approved font binaries', () => {
   const archivoFont = fontkit.openSync('public/fonts/ArchivoBlack-Regular.ttf')
   const caveatFont = fontkit.openSync('public/fonts/Caveat-Regular.ttf')
   const notoFont = fontkit.openSync('public/fonts/NotoSans-Regular.ttf')
+  const goeistSansFont = fontkit.openSync('public/fonts/GoeistSans-Regular.ttf')
+  const goeistMonoFont = fontkit.openSync('public/fonts/GoeistMono-Regular.ttf')
+
+  // Goeist ships without the naira sign; glyph splitting must route ₦ to Noto Sans
+  assert.equal(goeistSansFont.hasGlyphForCodePoint(0x20a6), false, 'Goeist Sans lacks ₦ and must not silently render it')
+  assert.equal(goeistMonoFont.hasGlyphForCodePoint(0x20a6), false, 'Goeist Mono lacks ₦')
 
   // 1. Naira ₦ (U+20A6) — verified in Noto Sans currency font
   assert.ok(notoFont.hasGlyphForCodePoint(0x20a6), 'Noto Sans must contain Naira ₦ (U+20A6)')

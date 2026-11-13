@@ -3,6 +3,7 @@ import React from 'react'
 import { TableDocumentPreview } from '@/components/table-document/TableDocumentPreview'
 import type { TableDocumentColumn, TableDocumentRow } from '@/domain/table-document/types'
 import type { Rfq, RfqItem } from '@/domain/rfq/types'
+import { normalizeRfqTemplateId } from '@/domain/rfq/templates'
 
 interface RfqPreviewProps {
   rfq: Rfq
@@ -33,7 +34,7 @@ export const RfqPreview: React.FC<RfqPreviewProps> = ({ rfq, items = [], rows, c
   return (
     <TableDocumentPreview
       documentType="rfq"
-      templateId={rfq.template_id || 'modern'}
+      templateId={normalizeRfqTemplateId(rfq.template_id)}
       document={rfq}
       rows={rows || rfq.table_rows || mapItemsToRows(items)}
       columns={columns || rfq.table_columns || []}

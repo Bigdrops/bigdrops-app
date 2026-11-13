@@ -11,6 +11,7 @@ import {
 } from './csrPdfcnUtils'
 import { CsrPortraitMaterialsSchedule } from './csrPortraitMaterials'
 import { CSR_PORTRAIT_DISPLAY_FONT } from './csrPortraitFonts'
+import { resolveInkFonts } from './csrFormeKit'
 
 /* Industrial control palette: black structure, yellow signal, neutral paper. */
 const C = {
@@ -378,7 +379,7 @@ const Narratives: React.FC<{ csr: CanonicalPreparedCsr }> = ({ csr }) => (
   </View>
 )
 
-const SignLine: React.FC<{ k: string; v?: string | null }> = ({ k, v }) => (
+const SignLine: React.FC<{ k: string; v?: string | null; valueStyle?: Style }> = ({ k, v, valueStyle }) => (
   <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 8, height: 14 }}>
     <Text style={{ ...labelStyle, width: 62, paddingBottom: 2 }}>{k}</Text>
     <View
@@ -391,12 +392,12 @@ const SignLine: React.FC<{ k: string; v?: string | null }> = ({ k, v }) => (
         justifyContent: 'flex-end',
       }}
     >
-      <Text style={{ ...BOLD, fontSize: 7.8 }}>{v || ' '}</Text>
+      <Text style={{ ...BOLD, fontSize: 7.8, ...valueStyle }}>{v || ' '}</Text>
     </View>
   </View>
 )
 
-const SignPanel: React.FC<{ title: string; block: CsrSignOffBlock }> = ({ title, block }) => (
+const SignPanel: React.FC<{ title: string; block: CsrSignOffBlock; valueStyle?: Style }> = ({ title, block, valueStyle }) => (
   <View wrap={false} style={{ flex: 1, borderWidth: 2.2, borderColor: C.ink, paddingBottom: 4 }}>
     <View style={{ backgroundColor: C.ink, paddingHorizontal: 8, paddingVertical: 3 }}>
       <Text style={{ ...BOLD, fontSize: 7, color: C.paper, textTransform: 'uppercase', letterSpacing: 0.7 }}>
@@ -407,9 +408,9 @@ const SignPanel: React.FC<{ title: string; block: CsrSignOffBlock }> = ({ title,
     <View style={{ marginHorizontal: 8 }}>
       <SignatureStage signatureUrl={block.signatureUrl} height={42} lineColor={C.ink} />
     </View>
-    <SignLine k="Full name" v={block.printedName} />
-    <SignLine k="Designation" v={block.designation} />
-    <SignLine k="Date" v={block.signingDate} />
+    <SignLine k="Full name" v={block.printedName} valueStyle={valueStyle} />
+    <SignLine k="Designation" v={block.designation} valueStyle={valueStyle} />
+    <SignLine k="Date" v={block.signingDate} valueStyle={valueStyle} />
   </View>
 )
 
@@ -419,6 +420,8 @@ export const CsrPortraitReferenceTemplate: React.FC<{
   const csr = envelope.data
   const provider = csr.serviceProvider
   const materialCount = csr.materials.length
+  const ink = resolveInkFonts((envelope.metadata?.designPreset as import('@/lib/pdfDesignPreset').PdfDesignPreset | null) ?? null)
+  const valueStyle: Style = { fontFamily: ink.fillableFont, fontWeight: 'bold', color: ink.ink }
 
   return (
     <Document
@@ -488,8 +491,8 @@ export const CsrPortraitReferenceTemplate: React.FC<{
         <View wrap={false} style={{ marginTop: 3 }}>
           <SectionHead no="09" title="Sign-off" />
           <View style={{ display: 'flex', flexDirection: 'row', gap: 14 }}>
-            <SignPanel title="Service Engineer" block={csr.signatories.serviceEngineer} />
-            <SignPanel title="Client Representative" block={csr.signatories.clientRepresentative} />
+            <SignPanel title="Service Engineer" block={csr.signatories.serviceEngineer} valueStyle={valueStyle} />
+            <SignPanel title="Client Representative" block={csr.signatories.clientRepresentative} valueStyle={valueStyle} />
           </View>
         </View>
       </Page>

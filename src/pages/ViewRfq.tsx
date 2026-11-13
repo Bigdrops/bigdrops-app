@@ -15,8 +15,8 @@ import RfqViewPage from '@/components/document-view/rfq/RfqViewPage'
 import '@/components/document-view/shared/documentViewTheme.css'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
 import { RfqCustomizationPanel } from '@/components/rfq/RfqCustomizationPanel'
-import { RfqPdfDocument } from '@/components/rfq/RfqPdfDocument'
 import { RfqPreview } from '@/components/rfq/RfqPreview'
+import { normalizeRfqTemplateId } from '@/domain/rfq/templates'
 import { denormalizeToDbRfq, normalizeDbRfq } from '@/domain/rfq/normalize'
 import type { BaseDocument } from '@/components/document-view/types/documentView'
 import { feedback } from '@/lib/feedback'
@@ -35,6 +35,31 @@ const SHEET_CUSTOMIZE = 'customize-output'
 const MODAL_CONVERT = 'convert'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
+
+type RfqRenderInput = {
+  rfq: any
+  rows: any
+  columns: any
+  settings: Record<string, unknown> | null | undefined
+}
+
+// Download and share render the identical Forme document from the same prepared model.
+async function renderRfqPdfBlob({ rfq, rows, columns, settings }: RfqRenderInput): Promise<Blob> {
+  const [{ RfqFormeDocument }, { renderPdfcnToBlob }, { ensureFormeFontFamily }] = await Promise.all([
+    import('@/components/pdf/forme/rfq/RfqFormeDocument'),
+    import('@/components/pdf/pdfcn/adapter'),
+    import('@/components/pdf/forme/fonts'),
+  ])
+  await Promise.all([
+    ensureFormeFontFamily('Inter'),
+    ensureFormeFontFamily('PT Serif'),
+    ensureFormeFontFamily('Archivo Black'),
+  ])
+  const { createElement } = await import('react')
+  return renderPdfcnToBlob(
+    createElement(RfqFormeDocument, { rfq, rows, columns, settings, template: normalizeRfqTemplateId(rfq?.template_id) }),
+  )
+}
 
 export default function ViewRfq() {
   const navigate = useNavigate()
@@ -124,7 +149,7 @@ export default function ViewRfq() {
       await downloadPdfFromElement({
         fileName: rfq.rfq_number || 'rfq',
         subdirectory: 'rfq',
-        element: <RfqPdfDocument rfq={rfq} rows={rfq.table_rows} columns={rfq.table_columns} />,
+        buildBlob: () => renderRfqPdfBlob({ rfq, rows: rfq.table_rows, columns: rfq.table_columns, settings: settings ?? {} }),
       })
       showToast('Download ready', `${rfq.rfq_number || 'RFQ'} saved to ${userDownloadLocationLabel()}.`, 'success')
     } catch (error) {
@@ -305,10 +330,7 @@ export default function ViewRfq() {
     tenantId: rfq?.tenant_id || undefined,
     issuerPhone: settings?.phone || undefined,
     issuerAddress: settings?.address || undefined,
-    getPdfBlob: async () => {
-      const { pdf } = await import('@react-pdf/renderer')
-      return pdf(<RfqPdfDocument rfq={rfq} rows={rfq.table_rows} columns={rfq.table_columns} />).toBlob()
-    },
+    getPdfBlob: () => renderRfqPdfBlob({ rfq, rows: rfq.table_rows, columns: rfq.table_columns, settings }),
   }), [rfq, id, settings])
 
   return (

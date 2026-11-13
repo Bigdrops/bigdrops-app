@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 // Dark mode: manual class toggle on <html>, persisted in localStorage
 import { OperationProvider } from '@/context/OperationContext'
 import OperationOverlay from '@/components/ui/OperationOverlay'
+import UiSoundProvider from '@/components/UiSoundProvider'
 import '@fontsource-variable/inter'
 import './index.css'
 import './styles/formTheme.css'
@@ -33,8 +34,10 @@ if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
       <OperationProvider>
-        <App />
-        <OperationOverlay />
+        <UiSoundProvider>
+          <App />
+          <OperationOverlay />
+        </UiSoundProvider>
       </OperationProvider>
     </StrictMode>,
   )

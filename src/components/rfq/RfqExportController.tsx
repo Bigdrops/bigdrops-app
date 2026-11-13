@@ -3,6 +3,7 @@ import React from 'react'
 import { TableDocumentExportController } from '@/components/table-document/TableDocumentExportController'
 import type { TableDocumentColumn, TableDocumentRow } from '@/domain/table-document/types'
 import type { Rfq } from '@/domain/rfq/types'
+import { normalizeRfqTemplateId } from '@/domain/rfq/templates'
 
 interface RfqExportControllerProps {
   rfq: Rfq | null
@@ -16,7 +17,7 @@ export const RfqExportController: React.FC<RfqExportControllerProps> = ({ rfq, r
   return (
     <TableDocumentExportController
       documentType="rfq"
-      templateId={rfq?.template_id || 'modern'}
+      templateId={normalizeRfqTemplateId(rfq?.template_id)}
       document={rfq}
       rows={rows}
       columns={columns}

@@ -3,11 +3,21 @@ import type { CanonicalPreparedCsr, CsrSignOffBlock } from '@/domain/pdf/resolve
 import { View, Text } from '../primitives'
 import { BLUEPRINT_PALETTE as C } from './blueprintSections'
 import { SignatureStage, dash, isCompleteStatus } from './csrPdfcnUtils'
+import type { PdfDesignPreset } from '@/lib/pdfDesignPreset'
+import { resolveInkFonts } from './csrFormeKit'
 
-const WriteLine: React.FC<{ label: string; value: string | null; labelWidth?: number }> = ({
+export interface BlueprintTitleBlockProps {
+  csr: CanonicalPreparedCsr
+  envelope?: {
+    metadata?: Record<string, unknown>
+  }
+}
+
+const WriteLine: React.FC<{ label: string; value: string | null; labelWidth?: number; valueStyle?: { fontFamily?: string; color?: string } }> = ({
   label,
   value,
   labelWidth = 66,
+  valueStyle,
 }) => (
   <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end' }}>
     <Text style={{ fontSize: 7, fontWeight: 700, color: C.cobalt, width: labelWidth, paddingBottom: 2.5 }}>{label}</Text>
@@ -21,7 +31,7 @@ const WriteLine: React.FC<{ label: string; value: string | null; labelWidth?: nu
         justifyContent: 'flex-end',
       }}
     >
-      <Text style={{ fontSize: 9.5, color: C.navy, paddingBottom: 2 }}>{value || ' '}</Text>
+      <Text style={{ fontSize: 9.5, color: C.navy, paddingBottom: 2, ...valueStyle }}>{value || ' '}</Text>
     </View>
   </View>
 )
@@ -30,10 +40,11 @@ const WriteLine: React.FC<{ label: string; value: string | null; labelWidth?: nu
  * One sign-off area: a wide signature space beside three write-in lines, so a
  * handwritten signature has room without making the area tall.
  */
-const SignOffArea: React.FC<{ title: string; block: CsrSignOffBlock; borderRight?: boolean }> = ({
+const SignOffArea: React.FC<{ title: string; block: CsrSignOffBlock; borderRight?: boolean; valueStyle?: { fontFamily?: string; color?: string } }> = ({
   title,
   block,
   borderRight,
+  valueStyle,
 }) => (
   <View
     style={{
@@ -55,18 +66,21 @@ const SignOffArea: React.FC<{ title: string; block: CsrSignOffBlock; borderRight
         <SignatureStage signatureUrl={block.signatureUrl} height={40} lineColor={C.lineHeavy} />
       </View>
       <View style={{ flex: 1.15, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <WriteLine label="FULL NAME" value={block.printedName} />
-        <WriteLine label="DESIGNATION" value={block.designation} />
-        <WriteLine label="DATE" value={block.signingDate} />
+        <WriteLine label="FULL NAME" value={block.printedName} valueStyle={valueStyle} />
+        <WriteLine label="DESIGNATION" value={block.designation} valueStyle={valueStyle} />
+        <WriteLine label="DATE" value={block.signingDate} valueStyle={valueStyle} />
       </View>
     </View>
   </View>
 )
 
-export const BlueprintTitleBlock: React.FC<{ csr: CanonicalPreparedCsr }> = ({ csr }) => (
+export const BlueprintTitleBlock: React.FC<BlueprintTitleBlockProps> = ({ csr, envelope }) => {
+  const ink = resolveInkFonts((envelope?.metadata?.designPreset as PdfDesignPreset | null) ?? null)
+  const valueStyle = { fontFamily: ink.fillableFont, color: ink.ink }
+  return (
   <View style={{ display: 'flex', flexDirection: 'row', backgroundColor: C.white }}>
-    <SignOffArea title="SERVICE ENGINEER" block={csr.signatories.serviceEngineer} borderRight />
-    <SignOffArea title="CLIENT REPRESENTATIVE" block={csr.signatories.clientRepresentative} borderRight />
+    <SignOffArea title="SERVICE ENGINEER" block={csr.signatories.serviceEngineer} borderRight valueStyle={valueStyle} />
+    <SignOffArea title="CLIENT REPRESENTATIVE" block={csr.signatories.clientRepresentative} borderRight valueStyle={valueStyle} />
 
     {/* Drawing-style title block */}
     <View
@@ -104,4 +118,5 @@ export const BlueprintTitleBlock: React.FC<{ csr: CanonicalPreparedCsr }> = ({ c
       ) : null}
     </View>
   </View>
-)
+  )
+}

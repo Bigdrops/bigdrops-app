@@ -36,12 +36,11 @@ export function safeText(value: unknown): string {
 /**
  * Glyph-safe text helpers.
  *
- * react-pdf renders a character missing from the active font by falling back
- * to the built-in Helvetica (WinAnsi) font. Characters outside WinAnsi are
- * then encoded as their low byte and corrupt (for example ⅘ U+2158 renders
- * as "X"). The registered shared fonts ship Latin-subset files, so any
- * character outside the ranges below must be routed to a glyph-complete font
- * (DejaVu Sans) instead of being left to the Helvetica fallback.
+ * Characters outside the ranges below must be routed to a glyph-complete font
+ * (DejaVu Sans) instead of being left to any in-engine fallback. Characters
+ * dropped to fallback would render as their low byte and corrupt (for
+ * example ⅘ U+2158 renders as the wrong glyph). The registered shared fonts
+ * ship Latin subsets, so the ranges below are the routing contract.
  */
 
 export type GlyphRun = {

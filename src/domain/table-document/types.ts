@@ -1,6 +1,6 @@
 export type TableDocumentType = 'rfq' | 'cps_sheets'
 
-export type TableTemplateId = 'modern' | 'bordered_schedule'
+export type TableTemplateId = 'modern' | 'bordered_schedule' | 'mosaic' | 'executive'
 
 export type TableRowType = 'item' | 'section'
 

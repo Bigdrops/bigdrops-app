@@ -3,11 +3,11 @@ import { useEffect, useState, useCallback, useMemo } from "react"
 import { useEntity } from "@/lib/tenant/contexts"
 import type { ReceiptRow } from "@/domain/receipt/types"
 import { buildReceiptPreviewData } from "@/domain/receipt/previewModel"
-import ReceiptPdf from "@/components/pdf/ReceiptPdf"
-import { registerPdfFonts } from "@/lib/pdfFontRegistry"
+import type { PdfDesignPreset } from "@/lib/pdfDesignPreset"
 import { getPdfDesignPreset } from "@/lib/pdfDesignPreset"
 import {
-  DefaultPdfGenerator, CompositePdfDelivery, WebPdfDelivery, NativePdfDelivery, DefaultFeedbackBus,
+  CompositePdfDelivery, WebPdfDelivery, NativePdfDelivery, DefaultFeedbackBus,
+  type PdfAsset,
 } from "@/lib/pdf"
 import { formatDisplayDate } from "@/lib/formatters/date"
 import { formatNaira } from "@/lib/formatters/money"
@@ -19,9 +19,25 @@ import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav"
 import FloatingDownloadButton from "@/components/document-view/shared/FloatingDownloadButton"
 import "@/components/document-view/shared/documentViewTheme.css"
 import DocumentShareSheet from "@/components/document-view/shared/DocumentShareSheet"
+import { uiSound } from "@/lib/uiSoundEvent"
 import { resolveCanonicalLogoUrl } from "@/domain/documentMedia"
 import type { DocumentSharePayload } from "@/domain/documentShare/types"
 import { useSettings } from "@/hooks/useSettings"
+
+// Download and share render the identical Forme document from the same prepared model.
+async function renderReceiptPdfBlob(receipt: ReceiptRow, designPreset: PdfDesignPreset): Promise<Blob> {
+  const [{ ReceiptFormeDocument }, { renderPdfcnToBlob }, { ensureFormeFontFamily }] = await Promise.all([
+    import("@/components/pdf/forme/ReceiptFormeDocument"),
+    import("@/components/pdf/pdfcn/adapter"),
+    import("@/components/pdf/forme/fonts"),
+  ])
+  await Promise.all([
+    ensureFormeFontFamily(designPreset.headerFont),
+    ensureFormeFontFamily(designPreset.bodyFont),
+  ])
+  const model = buildReceiptPreviewData(receipt)
+  return renderPdfcnToBlob(<ReceiptFormeDocument model={model} designPreset={designPreset} />)
+}
 
 export default function ViewReceipt() {
   const { id } = useParams<{ id: string }>()
@@ -56,17 +72,16 @@ export default function ViewReceipt() {
   const handleDownload = useCallback(async () => {
     if (!receipt) return
     try {
-      registerPdfFonts()
-      const model = buildReceiptPreviewData(receipt)
       const fileName = `receipt-${receipt.receipt_number}.pdf`
-
-      const generator = new DefaultPdfGenerator(
-        () => <ReceiptPdf model={model} designPreset={designPreset} />,
-      )
-
-      const asset = await generator.generate({
-        template: 'receipt', model, filename: fileName, documentType: 'receipt',
-      })
+      const blob = await renderReceiptPdfBlob(receipt, designPreset)
+      const asset: PdfAsset = {
+        blob,
+        filename: fileName,
+        mimeType: "application/pdf",
+        sizeBytes: blob.size,
+        documentType: "receipt",
+        metadata: {},
+      }
 
       const delivery = new CompositePdfDelivery(new WebPdfDelivery(), new NativePdfDelivery())
       const result = await delivery.deliver({ asset, mode: 'download' })
@@ -77,6 +92,7 @@ export default function ViewReceipt() {
         throw new Error(result.error ?? 'PDF delivery failed')
       }
       feedbackBus.emit({ kind: 'downloaded', documentType: 'receipt', timestamp: Date.now(), fileName })
+      uiSound('hero.complete')
       feedback.success("Download ready", { description: `Receipt PDF saved to ${userDownloadLocationLabel()}.` })
     } catch (error) {
       feedback.error("Download failed", {
@@ -120,11 +136,7 @@ export default function ViewReceipt() {
     tenantId: (receipt as any)?.tenant_id || undefined,
     issuerPhone: settings?.phone || undefined,
     issuerAddress: settings?.address || undefined,
-    getPdfBlob: async () => {
-      const { pdf } = await import("@react-pdf/renderer")
-      const model = buildReceiptPreviewData(receipt)
-      return pdf(<ReceiptPdf model={model} designPreset={designPreset} />).toBlob()
-    },
+    getPdfBlob: () => renderReceiptPdfBlob(receipt, designPreset),
   }), [receipt, id, settings, designPreset])
 
   return (
