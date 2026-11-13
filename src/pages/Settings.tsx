@@ -25,6 +25,7 @@ import { DocumentPrefixesSettingsSection } from './settings/DocumentPrefixesSett
 import { ArchivesSettingsSection } from './settings/ArchivesSettingsSection'
 import { AppThemeSettingsSection } from './settings/AppThemeSettingsSection'
 import { SecuritySettingsSection } from './settings/SecuritySettingsSection'
+import { SoundSettingsSection } from './settings/SoundSettingsSection'
 import { AppUpdateSettingsSection } from './settings/AppUpdateSettingsSection'
 import { LocalAISettingsSection } from './settings/LocalAISettingsSection'
 import SystemLogsSettingsSection from './settings/SystemLogsSettingsSection'
@@ -94,6 +95,7 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
     {active === 'archives' && <ArchivesSettingsSection />}
     {active === 'theme' && <AppThemeSettingsSection userId={session?.user?.id} />}
     {active === 'security' && <SecuritySettingsSection />}
+    {active === 'sound' && <SoundSettingsSection />}
     {active === 'local-ai' && <LocalAISettingsSection />}
     {active === 'app-update' && <AppUpdateSettingsSection />}
     {active === 'system-logs' && <SystemLogsSettingsSection />}

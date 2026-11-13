@@ -1,5 +1,6 @@
 import { Briefcase, Home, MoreHorizontal, TrendingUp, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { uiSound } from '@/lib/uiSoundEvent'
 
 const items = [
   { key: 'home', label: 'Home', icon: Home },
@@ -29,7 +30,10 @@ export default function MobileBottomNav({
           <button
             key={item.key}
             type="button"
-            onClick={() => onSelect(item.key)}
+            onClick={() => {
+              uiSound('navigation.tab')
+              onSelect(item.key)
+            }}
             className={cn(
               "flex flex-col items-center justify-center gap-[2px] rounded-[15px] font-[800] text-[7px] uppercase transition-all duration-200 outline-none active:scale-[0.965]",
               isActive

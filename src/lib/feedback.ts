@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { errorRegistry } from './errorRegistry'
 import { normalizeError } from './errorMessages'
 import { toastStore, type ToastAction, type ToastTone } from './toastStore'
+import { uiSound } from './uiSoundEvent'
 
 export type FeedbackTone = ToastTone
 
@@ -38,6 +39,7 @@ function toToastId(prefix: string, message: string) {
 
 export const feedback = {
   success(message: string, options?: FeedbackOptions): string {
+    uiSound('notification.success')
     return toastStore.add({
       id: options?.id || toToastId('success', message),
       tone: 'success',
@@ -50,6 +52,7 @@ export const feedback = {
   },
 
   error(message: string | Error, options?: FeedbackOptions): string {
+    uiSound('notification.error')
     const normalized = normalizeError(message)
     const registryId = errorRegistry.add(normalized.userSafe, normalized.diagnostic)
 
@@ -76,6 +79,7 @@ export const feedback = {
   },
 
   info(message: string, options?: FeedbackOptions): string {
+    uiSound('notification.info')
     return toastStore.add({
       id: options?.id || toToastId('info', message),
       tone: 'info',
@@ -88,6 +92,7 @@ export const feedback = {
   },
 
   warning(message: string, options?: FeedbackOptions): string {
+    uiSound('notification.warning')
     return toastStore.add({
       id: options?.id || toToastId('warning', message),
       tone: 'warning',
@@ -134,6 +139,7 @@ export const feedback = {
             ? messages.description.success(data)
             : messages.description?.success
 
+        uiSound('notification.success')
         toastStore.add({
           id: loadingId,
           tone: 'success',
@@ -157,6 +163,7 @@ export const feedback = {
 
         const normalized = normalizeError(error)
         errorRegistry.add(errorTitle || normalized.userSafe, normalized.diagnostic)
+        uiSound('notification.error')
 
         toastStore.add({
           id: loadingId,

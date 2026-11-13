@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { uiSound } from '@/lib/uiSoundEvent'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,9 +51,12 @@ export default function ConfirmActionDialog({
           >
             {cancelLabel}
           </AlertDialogCancel>
-          <AlertDialogAction 
-            variant={variant as any} 
-            onClick={onConfirm} 
+          <AlertDialogAction
+            variant={variant as any}
+            onClick={() => {
+              uiSound('interaction.confirm')
+              onConfirm()
+            }}
             loading={loading}
             className={cn(
               "h-12 rounded-2xl px-8 text-sm font-bold transition-all shadow-sm",

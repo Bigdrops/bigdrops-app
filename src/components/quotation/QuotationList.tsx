@@ -51,6 +51,7 @@ import QueryFilterOverlay from '@/components/query/QueryFilterOverlay'
 import { ContextualExportDropdown } from '@/components/export/ContextualExportDropdown'
 import ModuleRowCard from '@/components/layout/ModuleRowCard'
 import { useDocumentSearch } from '@/hooks/useDocumentSearch'
+import { uiSound } from '@/lib/uiSoundEvent'
 import { DocumentSearchResults } from '@/components/search/DocumentSearchResults'
 import { searchResultSummary } from '@/domain/search/summary'
 
@@ -189,6 +190,7 @@ export default function QuotationList() {
       if (!createdInvoice?.id) {
         throw new Error('Conversion succeeded but the invoice ID was not returned.')
       }
+      uiSound('hero.milestone')
       invalidateListCache(QUOTATION_CACHE_KEY)
       setActiveQuotation(null)
       navigate(`/invoices/${createdInvoice.id}`)

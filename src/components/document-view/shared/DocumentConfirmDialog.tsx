@@ -1,5 +1,6 @@
 import DocumentModal from './DocumentModal'
 import { Button } from '@/components/ui/button'
+import { uiSound } from '@/lib/uiSoundEvent'
 
 interface DocumentConfirmDialogProps {
   open: boolean
@@ -54,7 +55,10 @@ export default function DocumentConfirmDialog({
             type="button"
             loading={loading}
             disabled={confirmDisabled || loading}
-            onClick={onConfirm}
+            onClick={() => {
+              uiSound('interaction.confirm')
+              onConfirm()
+            }}
             className={confirmButtonClass}
           >
             {confirmLabel}

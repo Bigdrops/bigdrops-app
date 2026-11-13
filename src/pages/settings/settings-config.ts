@@ -13,6 +13,7 @@ import {
   Smartphone,
   Terminal,
   Users,
+  Volume2,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -32,6 +33,7 @@ export type ActiveSectionId =
   | 'archives'
   | 'theme'
   | 'security'
+  | 'sound'
   | 'local-ai'
   | 'app-update'
   | 'system-logs'
@@ -104,6 +106,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     items: [
       { id: 'theme', label: 'Theme & Appearance', icon: Info, desc: 'Colors, cards, and display preferences' },
       { id: 'security', label: 'App Lock', icon: Lock, desc: 'Biometric lock for device level security' },
+      { id: 'sound', label: 'Sound', icon: Volume2, desc: 'Interface sounds and volume' },
     ],
   },
   {

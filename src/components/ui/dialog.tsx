@@ -7,11 +7,14 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon } from "@hugeicons/core-free-icons"
+import { useUiSoundOpenClose } from "@/hooks/useUiSoundOpenClose"
 
 function Dialog({
+  open,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  useUiSoundOpenClose(open)
+  return <DialogPrimitive.Root data-slot="dialog" open={open} {...props} />
 }
 
 function DialogTrigger({

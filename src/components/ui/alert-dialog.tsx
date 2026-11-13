@@ -5,11 +5,14 @@ import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useUiSoundOpenClose } from "@/hooks/useUiSoundOpenClose"
 
 function AlertDialog({
+  open,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+  useUiSoundOpenClose(open)
+  return <AlertDialogPrimitive.Root data-slot="alert-dialog" open={open} {...props} />
 }
 
 function AlertDialogTrigger({

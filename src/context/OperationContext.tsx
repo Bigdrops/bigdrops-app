@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { createContext, useCallback, useContext, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { uiSound } from '@/lib/uiSoundEvent'
 
 type OperationStatus = 'idle' | 'active' | 'success' | 'error'
 
@@ -25,6 +26,13 @@ const OperationContext = createContext<OperationContextValue | null>(null)
 export function OperationProvider({ children }: { children: React.ReactNode }) {
   const [operation, setOperation] = useState<Operation | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Mirror of `operation` for useCallback closures - finish() needs the id
+  // to route the completion sound (delete → warning, otherwise milestone).
+  const operationRef = useRef<Operation | null>(null)
+
+  useEffect(() => {
+    operationRef.current = operation
+  }, [operation])
 
   const clearDismissTimer = useCallback(() => {
     if (timeoutRef.current) {
@@ -59,6 +67,16 @@ export function OperationProvider({ children }: { children: React.ReactNode }) {
 
   const finish = useCallback(
     (status: 'success' | 'error' = 'success') => {
+      // Every long action (convert, delete, archive, duplicate, save, status)
+      // completes here. Sound the completion: deletes warn, the rest milestone.
+      // Error sound is for the overlay's error state - toast feedback already
+      // covers most error paths, so this only guarantees every exit is heard.
+      if (status === 'error') {
+        uiSound('notification.error')
+      } else {
+        const id = operationRef.current?.id ?? ''
+        uiSound(id.startsWith('delete') ? 'notification.warning' : 'hero.milestone')
+      }
       setOperation((prev) => {
         if (!prev) return null
         const next = { ...prev, status, progress: status === 'success' ? 100 : prev.progress }
