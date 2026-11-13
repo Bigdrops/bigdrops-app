@@ -1,5 +1,6 @@
 import { useEntity } from '@/lib/tenant/contexts'
 import { feedback } from '@/lib/feedback'
+import { uiSound } from '@/lib/uiSoundEvent'
 import { voidInvoicePayment } from '@/modules/invoices/services/paymentService'
 import { fetchInvoiceIdForPayment } from '@/modules/invoices/repositories/paymentRepository'
 import {
@@ -190,6 +191,7 @@ export function useInvoiceMutations({
         customFields: customFieldObject,
         prefixes: settings?.document_prefixes,
       }, tenantClient, entityId)
+      uiSound('hero.milestone')
       navigate(`/quotations/${createdQuotation.id}`)
     } catch (err: any) {
       feedback.error('Revert to quotation failed', {
