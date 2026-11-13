@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, ClipboardList, Download, FileText, LayoutDashboard, Mail, Network, PanelsTopLeft, ShoppingBag, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, Download, FileText, LayoutDashboard, Mail, MessageSquare, Network, PanelsTopLeft, ShoppingBag, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -101,5 +101,14 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/po-view',
     icon: ShoppingBag,
     capabilities: ['5 themes', 'Light/Dark', '6 viewports', 'Lifecycle simulation', 'Invoice comparison', 'Procurement semantics'],
+  },
+  {
+    id: 'assistant-chat',
+    name: 'Assistant Chat',
+    eyebrow: 'AI Assistant',
+    description: 'Scripted invoice conversation with app-computed change cards, four viewport layouts, and a preconfigured provider and model catalog.',
+    route: '/design-lab/assistant-chat',
+    icon: MessageSquare,
+    capabilities: ['4 viewports', 'Provider catalog', 'Model pill', 'Change cards', '5 themes', 'Light/Dark'],
   },
 ]

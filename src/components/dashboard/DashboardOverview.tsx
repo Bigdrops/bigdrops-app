@@ -30,6 +30,7 @@ import { AuditTrailSkeleton } from '@/components/dashboard/AuditTrailSkeleton'
 import { KpiGrid } from '@/components/dashboard/KpiGrid'
 import { PaymentReminderBanner } from '@/components/dashboard/PaymentReminderBanner'
 import { RecentAlertsCarousel } from '@/components/dashboard/RecentAlertsCarousel'
+import { DashboardAssistant } from '@/components/ai-assistant/DashboardAssistant'
 
 type DashboardOverviewProps = {
   workspaceName: string
@@ -270,15 +271,8 @@ export function DashboardOverview({
               <GlobalSearch />
             </div>
           )}
-          {/* V6 AI button — gradient bg, white text, matching V6 spec */}
-          <button
-            type="button"
-            aria-label="Ask AI assistant"
-            className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-[12px] text-[10px] font-[800] tracking-[.01em] text-white shadow-[0_2px_6px_rgba(30,28,24,0.05),inset_0_1px_rgba(255,255,255,0.35)] transition active:scale-95"
-            style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
-          >
-            AI
-          </button>
+          {/* AI button — opens the assistant sheet */}
+          <DashboardAssistant />
         </div>
       </header>
 
