@@ -21,8 +21,152 @@
   position: absolute;
   top: 0;
   left: 50%;
+  isolation: isolate;
   transform-origin: top center;
   will-change: transform;
+}
+
+/* Wide ambient fields sit behind the device shells; screen-mounted orbs do the visible refracting. */
+.ac-stage::before {
+  position: absolute;
+  z-index: -1;
+  inset: -18% -12%;
+  border-radius: 48px;
+  background:
+    radial-gradient(ellipse at 18% 24%, color-mix(in srgb, var(--ac-ambient-primary) 24%, transparent), transparent 46%),
+    radial-gradient(ellipse at 82% 76%, color-mix(in srgb, var(--ac-ambient-secondary) 16%, transparent), transparent 42%);
+  content: '';
+  filter: blur(28px);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.ac-screen {
+  position: relative;
+  isolation: isolate;
+  background-color: color-mix(in srgb, var(--ac-surface) 34%, transparent);
+}
+
+.ac-liquid-bg {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.65;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.lg-orb--1 {
+  top: -15%;
+  left: -10%;
+  width: 55%;
+  height: 55%;
+  background: var(--ac-accent);
+  animation: lgFloat1 18s ease-in-out infinite;
+}
+
+.lg-orb--2 {
+  right: -5%;
+  bottom: -10%;
+  width: 45%;
+  height: 45%;
+  background: color-mix(in srgb, var(--ac-accent) 70%, var(--primary-bright, #ffffff));
+  animation: lgFloat2 22s ease-in-out infinite;
+}
+
+.lg-orb--3 {
+  top: 38%;
+  left: 52%;
+  width: 38%;
+  height: 38%;
+  background: color-mix(in srgb, var(--ac-accent) 45%, var(--ac-surface));
+  transform: translateX(-50%);
+  animation: lgFloat3 15s ease-in-out infinite;
+}
+
+.lg-frost {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--ac-surface) 48%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(1.7);
+  backdrop-filter: blur(28px) saturate(1.7);
+  pointer-events: none;
+}
+
+.ac-screen > :not(.ac-liquid-bg):not(.ac-island):not(.ac-tablet-camera):not(.ac-fold-hinge):not(.ac-settings-overlay):not(.ac-drawer-wrap):not(.ac-sheet-scrim):not(.ac-sheet) {
+  position: relative;
+  z-index: 2;
+}
+
+.ac-screen > .ac-settings-overlay,
+.ac-screen > .ac-drawer-wrap,
+.ac-screen > .ac-sheet-scrim,
+.ac-screen > .ac-sheet {
+  z-index: 40;
+}
+
+.ac-screen > .ac-island,
+.ac-screen > .ac-tablet-camera {
+  z-index: 45;
+}
+
+.ac-screen > .ac-liquid-bg {
+  position: absolute;
+  z-index: 0;
+}
+
+@keyframes lgFloat1 {
+  0%,
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(9%, 12%, 0) scale(1.08); }
+}
+
+@keyframes lgFloat2 {
+  0%,
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-12%, -10%, 0) scale(1.1); }
+}
+
+@keyframes lgFloat3 {
+  0%,
+  100% { transform: translate3d(-50%, 0, 0) scale(1); }
+  50% { transform: translate3d(calc(-50% + 8%), -12%, 0) scale(1.12); }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lg-frost {
+    background: color-mix(in srgb, var(--ac-surface) 64%, transparent);
+  }
+
+  .ac-screen {
+    background-color: var(--ac-surface);
+    background-image: none;
+  }
+
+  .ac-head,
+  .ac-compose,
+  .ac-suggest,
+  .ac-panel,
+  .ac-doc {
+    background: var(--ac-raised);
+    box-shadow: inset 0 0 0 1px var(--ac-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-orb {
+    animation-play-state: paused;
+    will-change: auto;
+  }
 }
 
 .ac-stage-caption {
@@ -42,6 +186,27 @@
   color: var(--ac-muted);
   background: var(--ac-muted-surface);
   box-shadow: inset 0 0 0 1px var(--ac-hairline);
+}
+
+/* A phone header stacks the model control, so the name stays readable. */
+.ac-stage[data-viewport='fold-closed'] .ac-head {
+  flex-wrap: wrap;
+  row-gap: 7px;
+}
+
+.ac-stage[data-viewport='fold-closed'] .ac-model {
+  order: 5;
+  width: 100%;
+}
+
+.ac-stage[data-viewport='fold-closed'] .ac-model-trigger {
+  width: 100%;
+  max-width: none;
+  justify-content: flex-start;
+}
+
+.ac-stage[data-viewport='fold-closed'] .ac-model-text {
+  flex: 1;
 }
 
 /* ── Fold open ──────────────────────────────────────────────── */
@@ -73,6 +238,7 @@
 }
 
 .ac-fold-chat {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -102,7 +268,7 @@
   flex-direction: column;
   min-width: 0;
   border-left: 1px solid var(--ac-line);
-  background: color-mix(in srgb, var(--ac-surface) 94%, var(--ac-ink));
+  background: color-mix(in srgb, var(--ac-surface) 22%, transparent);
 }
 
 .ac-side-bar {
@@ -133,7 +299,13 @@
   flex-direction: column;
   width: 100%;
   min-height: 0;
-  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ac-accent) 25%, rgba(255, 255, 255, 0.6));
+  background: color-mix(in srgb, var(--ac-raised, var(--ac-surface)) 45%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.72),
+    0 8px 24px -8px color-mix(in srgb, var(--ac-accent) 22%, rgba(0, 0, 0, 0.12));
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
 }
 
 .ac-panel-head {
@@ -212,9 +384,14 @@
 
 .ac-doc {
   padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--ac-accent) 25%, rgba(255, 255, 255, 0.6));
   border-radius: 12px;
-  background: var(--ac-raised);
-  box-shadow: inset 0 0 0 1px var(--ac-hairline);
+  background: color-mix(in srgb, var(--ac-raised, var(--ac-surface)) 55%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.72),
+    0 8px 24px -8px color-mix(in srgb, var(--ac-accent) 22%, rgba(0, 0, 0, 0.12));
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
 }
 
 .ac-doc-row {
@@ -638,7 +815,7 @@
 }
 
 .ac-main--canvas {
-  background: var(--ac-surface);
+  background: color-mix(in srgb, var(--ac-surface) 22%, transparent);
 }
 
 .ac-canvas {
@@ -836,7 +1013,58 @@
   flex: none;
   width: 336px;
   border-left: 1px solid var(--ac-line);
-  background: color-mix(in srgb, var(--ac-surface) 94%, var(--ac-ink));
+  background: color-mix(in srgb, var(--ac-surface) 22%, transparent);
+}
+
+/* ── Wide provider settings overlay ─────────────────────────── */
+
+.ac-settings-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ac-settings-overlay-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: var(--ac-scrim);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+}
+
+.ac-settings-drawer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 52%);
+  height: 100%;
+  background: var(--ac-surface);
+  box-shadow: -18px 0 40px -26px color-mix(in srgb, var(--ac-ink) 60%, transparent);
+  animation: ac-slide 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.ac-settings-drawer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  padding: 10px 10px 8px 14px;
+  border-bottom: 1px solid var(--ac-line);
+}
+
+.ac-settings-drawer-bar p {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ac-settings-drawer-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ── Bottom sheet ───────────────────────────────────────────── */
@@ -896,12 +1124,7 @@
   gap: 10px;
   flex: none;
   padding: 12px 12px 10px 14px;
-  padding-right: 44px;
   border-bottom: 1px solid var(--ac-line);
-}
-
-.ac-settings[data-variant='panel'] .ac-set-head {
-  padding-right: 12px;
 }
 
 .ac-set-title {
@@ -1370,8 +1593,20 @@
   }
 }
 
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ac-stage::before {
+    filter: blur(16px);
+    opacity: 0.68;
+  }
+}
+
+.ac-panel-label--pending {
+  color: var(--ac-accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ac-drawer,
+  .ac-settings-drawer,
   .ac-sheet {
     animation: none;
   }

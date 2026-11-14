@@ -472,7 +472,7 @@ export default function AssistantChatPreview() {
     <div className="min-h-screen bg-background text-foreground" style={{ fontFamily: INTER }}>
       <AssistantChatHeader onBack={() => navigate('/design-lab')} onReset={resetAll} />
 
-      <div className="mx-auto max-w-6xl space-y-4 px-4 py-5">
+      <div className="mx-auto max-w-6xl space-y-3 px-4 pb-5 pt-2">
         <AssistantChatControls
           viewport={viewport}
           onViewport={(next) => {

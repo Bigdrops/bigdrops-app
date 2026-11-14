@@ -1,4 +1,4 @@
-import { FileText, KeyRound, Settings2, SlidersHorizontal } from 'lucide-react'
+import { FileText } from 'lucide-react'
 
 import {
   invoiceTotal,
@@ -7,30 +7,33 @@ import {
   type ChangeCard,
   type InvoiceState,
 } from './assistant-chat-script'
-import { ChangeCardView } from './assistant-chat-parts'
-import { maskedKey, type ProviderEntry } from './assistant-chat-providers'
 
 export type PendingCard = { messageId: string; card: ChangeCard }
 
 /**
- * The living document panel. It is the same component in the fold-open split,
- * the tablet drawer, the desktop artifact column, and the phone bottom sheet.
+ * The living document panel — a read-only structured preview of the invoice
+ * state. It shows client, due date, running total, and accepted line items.
+ *
+ * Approval cards are presented in the conversation thread only. This panel
+ * does not duplicate them — doing so would create two simultaneous decision
+ * surfaces for the same action.
+ *
+ * The same component is used in: fold-open split, tablet drawer,
+ * desktop artifact column, and phone bottom sheet.
  * Every number comes from the invoice state, never from assistant prose.
  */
 export function InvoicePanel({
   invoice,
-  pending,
-  provider,
-  onDecide,
-  onManageProviders,
+  pending: _pending,
+  onDecide: _onDecide,
 }: {
   invoice: InvoiceState
+  /** Reserved for future use — pending count is surfaced as a status indicator only. */
   pending: PendingCard[]
-  provider: ProviderEntry | undefined
   onDecide: (messageId: string, cardId: string, accepted: boolean) => void
-  onManageProviders: () => void
 }) {
   const total = invoiceTotal(invoice)
+  const pendingCount = _pending.length
 
   return (
     <div className="ac-panel">
@@ -66,7 +69,7 @@ export function InvoicePanel({
         <div className="ac-panel-section">
           <p className="ac-panel-label">Lines</p>
           {invoice.lines.length === 0 ? (
-            <p className="ac-panel-empty">No line items yet. They appear here as you accept cards.</p>
+            <p className="ac-panel-empty">No line items yet. Accept cards in the conversation to populate the invoice.</p>
           ) : (
             <ul className="ac-lines">
               {invoice.lines.map((line) => (
@@ -94,51 +97,16 @@ export function InvoicePanel({
           ) : null}
         </div>
 
-        <div className="ac-panel-section">
-          <p className="ac-panel-label">
-            {pending.length > 0 ? `Waiting on you · ${pending.length}` : 'No open changes'}
-          </p>
-          {pending.length === 0 ? (
-            <p className="ac-panel-empty">Accepted changes apply here at once. Rejected changes never touch the form.</p>
-          ) : (
-            <div className="ac-panel-cards">
-              {pending.map((entry) => (
-                <ChangeCardView
-                  key={entry.card.id}
-                  card={entry.card}
-                  compact
-                  onDecide={(accepted) => onDecide(entry.messageId, entry.card.id, accepted)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="ac-panel-section">
-          <p className="ac-panel-label">Provider</p>
-          <div className="ac-provider-card">
-            <span className="ac-menu-mark" aria-hidden="true">
-              {provider?.short ?? '—'}
-            </span>
-            <div className="ac-provider-id">
-              <p>{provider?.label ?? 'No provider'}</p>
-              <span>{provider?.model || 'Add a key to start'}</span>
-            </div>
-            <button
-              type="button"
-              className="ac-icon-btn"
-              aria-label="Provider settings"
-              onClick={onManageProviders}
-            >
-              <Settings2 className="size-3.5" aria-hidden="true" />
-            </button>
+        {pendingCount > 0 ? (
+          <div className="ac-panel-section">
+            <p className="ac-panel-label ac-panel-label--pending">
+              {pendingCount === 1 ? '1 decision in conversation' : `${pendingCount} decisions in conversation`}
+            </p>
+            <p className="ac-panel-empty">
+              Review the pending {pendingCount === 1 ? 'card' : 'cards'} above in the chat to continue.
+            </p>
           </div>
-          <button type="button" className="ac-panel-action" onClick={onManageProviders}>
-            <KeyRound className="size-3.5" aria-hidden="true" />
-            {provider?.key ? `Key ${maskedKey(provider.key)}` : 'Paste an API key'}
-            <SlidersHorizontal className="size-3.5 ac-panel-action-end" aria-hidden="true" />
-          </button>
-        </div>
+        ) : null}
       </div>
     </div>
   )
