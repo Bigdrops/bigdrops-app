@@ -68,8 +68,8 @@ export function resolveChatEndpoint(baseUrl: string, protocol: ProviderProtocol)
   return base.endsWith('/chat/completions') ? base : `${base}/chat/completions`
 }
 
-/** Normalizes a base URL to a model-discovery endpoint. */
-export function resolveModelsEndpoint(baseUrl: string, protocol: ProviderProtocol): string {
+/** Normalizes a base URL to a model-discovery endpoint (both protocols use /models). */
+export function resolveModelsEndpoint(baseUrl: string): string {
   let base = trimBase(baseUrl)
   if (base.endsWith('/chat/completions')) base = base.slice(0, -'/chat/completions'.length)
   if (base.endsWith('/messages')) base = base.slice(0, -'/messages'.length)
@@ -274,7 +274,7 @@ function normalizeModelEntry(raw: unknown): DiscoveredModel | null {
 export async function discoverAdapterModels(
   config: AdapterConfig,
 ): Promise<{ ok: boolean; models: DiscoveredModel[]; diagnostics: ProviderDiagnostics }> {
-  const endpoint = resolveModelsEndpoint(config.baseUrl, config.protocol)
+  const endpoint = resolveModelsEndpoint(config.baseUrl)
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), config.timeoutMs || 20000)
   const started = Date.now()

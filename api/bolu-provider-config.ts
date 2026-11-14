@@ -184,9 +184,9 @@ function resolveInlineTarget(body: Record<string, unknown>): { ok: true; target:
 
 async function endpointGuard(baseUrl: string): Promise<Response | null> {
   const syntax = validateEndpointSyntax(baseUrl)
-  if (!syntax.ok) return jsonError(syntax.error, 400, 'endpoint_blocked')
+  if ('error' in syntax) return jsonError(syntax.error, 400, 'endpoint_blocked')
   const resolved = await assertEndpointResolvesSafe(baseUrl)
-  if (!resolved.ok) return jsonError(resolved.error, 400, 'endpoint_blocked')
+  if ('error' in resolved) return jsonError(resolved.error, 400, 'endpoint_blocked')
   return null
 }
 
@@ -196,7 +196,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const auth = await verifyPlatformAdmin(request)
-  if (!auth.ok) {
+  if ('error' in auth) {
     return jsonError(auth.error, auth.status, auth.code)
   }
   const { adminClient, user } = auth
@@ -505,7 +505,7 @@ async function resolveTestTarget(
   }
 
   const inline = resolveInlineTarget(body)
-  if (!inline.ok) return inline
+  if ('response' in inline) return inline
   const blocked = await endpointGuard(inline.target.baseUrl)
   if (blocked) return { ok: false, response: blocked }
   const t = inline.target
@@ -526,7 +526,7 @@ async function resolveTestTarget(
 
 async function handleTest(adminClient: SupabaseClient, body: Record<string, unknown>): Promise<Response> {
   const target = await resolveTestTarget(adminClient, body)
-  if (!target.ok) return target.response
+  if ('response' in target) return target.response
 
   const diagnostics = await testAdapterConnection(target.config)
 
@@ -545,7 +545,7 @@ async function handleTest(adminClient: SupabaseClient, body: Record<string, unkn
 
 async function handleDiscover(adminClient: SupabaseClient, body: Record<string, unknown>): Promise<Response> {
   const target = await resolveTestTarget(adminClient, body)
-  if (!target.ok) return target.response
+  if ('response' in target) return target.response
 
   const entry = getCatalogueEntry(target.config.providerId)
   if (entry && !entry.supportsDiscovery) {

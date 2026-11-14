@@ -1,18 +1,45 @@
+/**
+ * Bolu chat runtime (server-only).
+ *
+ * Configuration precedence:
+ *   1. Activated multi-connection routing (app_ai_provider_routing)
+ *   2. Legacy singleton credential (app_ai_provider_config)
+ *   3. Server environment variables (BOLU_PROVIDER_*)
+ *   4. Deterministic mock mode — only when BOLU_PROVIDER_MODE=mock is explicit
+ *
+ * There is no silent mock fallback: an unconfigured production runtime returns
+ * 503. Fallback routing is disabled by default and only uses administrator-
+ * approved, enabled connections. Decrypted credentials never leave the server.
+ */
+
 import { createClient } from '@supabase/supabase-js'
 import {
-  buildProviderHeaders,
   getBoluProviderConfig,
   validateBoluProviderRequest,
   type BoluProviderMessage,
 } from '../src/lib/ai-assistant/bolu-provider'
 import { loadInAppProviderConfig } from '../src/lib/ai-assistant/bolu-secret-vault'
 import { DETERMINISTIC_FIXTURES, type MockScenario } from '../src/lib/ai-assistant/bolu-mock-provider'
-import { readProviderErrorBody } from '../src/lib/ai-assistant/protocol'
+import { resolveRuntimeConnections } from '../src/lib/ai-assistant/connection-vault'
+import {
+  streamAdapterChat,
+  type AdapterConfig,
+  type AdapterMessage,
+  type ProviderDiagnostics,
+} from '../src/lib/ai-assistant/provider-adapters'
 
 const SYSTEM_PREFIX = 'You are Bolu, a conversational business operations assistant for BOURXE SMEs. Use supplied authorized application facts only. Do not invent records or figures. Do not claim to change business data without explicit user approval. Financial calculations remain authoritative and must not be model-generated.'
 
-function jsonError(message: string, status: number) {
-  return Response.json({ error: message }, { status })
+const CHAT_MAX_TOKENS = 1000
+const CHAT_TEMPERATURE = 0.1
+
+// Fallback is only attempted for transient provider failures. Configuration
+// errors (auth, bad request, missing model) surface to the administrator
+// instead of silently routing business data to another provider.
+const FALLBACK_CATEGORIES = new Set(['provider_rate_limit', 'provider_server', 'network', 'timeout'])
+
+function jsonError(message: string, status: number, code?: string) {
+  return Response.json(code ? { error: message, code } : { error: message }, { status })
 }
 
 async function resolveUser(request: Request) {
@@ -27,76 +54,182 @@ async function resolveUser(request: Request) {
   return data.user
 }
 
-async function resolveInAppConfig() {
+type RuntimePlan = {
+  source: 'connection' | 'legacy' | 'environment'
+  primary: AdapterConfig
+  primaryConnectionId: string | null
+  fallbacks: AdapterConfig[]
+}
+
+async function resolveRuntimePlan(): Promise<RuntimePlan | null> {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceKey) return null
-  try {
-    const adminClient = createClient(url, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-    return await loadInAppProviderConfig(adminClient)
-  } catch (err) {
-    console.error('[bolu-chat] Error checking in-app provider config:', err)
-    return null
+
+  if (url && serviceKey) {
+    try {
+      const adminClient = createClient(url, serviceKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      })
+
+      const routed = await resolveRuntimeConnections(adminClient)
+      if (routed) {
+        return {
+          source: 'connection',
+          primary: routed.primary,
+          primaryConnectionId: routed.primaryConnectionId,
+          fallbacks: routed.fallbacks,
+        }
+      }
+
+      const legacy = await loadInAppProviderConfig(adminClient)
+      if (legacy?.apiKey) {
+        return {
+          source: 'legacy',
+          primary: {
+            providerId: legacy.provider,
+            protocol: 'openai',
+            authScheme: 'bearer',
+            baseUrl: legacy.baseUrl,
+            apiKey: legacy.apiKey,
+            model: legacy.model,
+            timeoutMs: legacy.timeoutMs,
+          },
+          primaryConnectionId: null,
+          fallbacks: [],
+        }
+      }
+    } catch (err) {
+      console.error('[bolu-chat] Runtime resolution failed:', err instanceof Error ? err.message : err)
+    }
+  }
+
+  const envConfig = getBoluProviderConfig(process.env)
+  if (envConfig.apiKey) {
+    return {
+      source: 'environment',
+      primary: {
+        providerId: envConfig.provider,
+        protocol: 'openai',
+        authScheme: 'bearer',
+        baseUrl: envConfig.baseUrl,
+        apiKey: envConfig.apiKey,
+        model: envConfig.model,
+        timeoutMs: envConfig.timeoutMs,
+      },
+      primaryConnectionId: null,
+      fallbacks: [],
+    }
+  }
+
+  return null
+}
+
+function diagnosticsToError(diagnostics: ProviderDiagnostics): Response {
+  switch (diagnostics.category) {
+    case 'provider_auth':
+      return jsonError(
+        'Bolu provider authentication failed. A platform administrator must verify the connection credential in Settings.',
+        502,
+        diagnostics.category,
+      )
+    case 'provider_rate_limit': {
+      const wait = diagnostics.retryAfterSeconds ? ` Retry in about ${diagnostics.retryAfterSeconds}s.` : ''
+      return jsonError(`Bolu is rate-limited by the AI provider.${wait}`, 429, diagnostics.category)
+    }
+    case 'provider_not_found':
+      return jsonError(
+        'The configured Bolu model or endpoint was not found. A platform administrator must review the connection.',
+        502,
+        diagnostics.category,
+      )
+    case 'provider_bad_request':
+      return jsonError(`The AI provider rejected the request: ${diagnostics.message}`, 502, diagnostics.category)
+    case 'timeout':
+      return jsonError('The AI provider request timed out. Please try again.', 504, diagnostics.category)
+    case 'network':
+      return jsonError('Bolu could not reach the AI provider. Please try again.', 502, diagnostics.category)
+    default:
+      return jsonError('Bolu is temporarily unavailable from the provider. Please try again.', 502, diagnostics.category)
   }
 }
 
-async function readProviderStream(response: Response): Promise<Response> {
-  const contentType = response.headers.get('content-type') || ''
+async function streamWithFallback(plan: RuntimePlan, messages: AdapterMessage[]): Promise<Response> {
+  const candidates = [plan.primary, ...plan.fallbacks]
+  let lastDiagnostics: ProviderDiagnostics | null = null
 
-  if (!response.ok) {
-    const raw = await response.text().catch(() => '')
-    const detail = readProviderErrorBody(raw)
-    console.error('[bolu-chat] Provider request failed with status:', response.status)
+  for (let attempt = 0; attempt < candidates.length; attempt++) {
+    const config = candidates[attempt]
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs)
 
-    if (response.status === 401 || response.status === 403) {
-      return jsonError('Bolu provider authentication failed. Check your server API key configuration.', 502)
-    }
-    if (response.status === 429) {
-      return jsonError('Bolu is currently rate-limited by the AI provider. Please wait a moment and try again.', 429)
-    }
-    if (response.status === 400) {
-      return jsonError(`The AI provider rejected the request parameters: ${detail}`, 502)
-    }
-    return jsonError('Bolu is temporarily unavailable from the provider. Please try again.', 502)
-  }
-
-  // Handle standard streaming responses
-  if (contentType.includes('text/event-stream')) {
-    const body = response.body
-    if (!body) return jsonError('Bolu did not return a response body.', 502)
-    return new Response(body, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
-      },
-    })
-  }
-
-  // Handle buffered JSON responses (convert to SSE)
-  if (contentType.includes('application/json')) {
+    let result: Awaited<ReturnType<typeof streamAdapterChat>>
     try {
-      const data = await response.json() as Record<string, unknown>
-      const choices = (data?.choices as Array<{ message?: { content?: string } }>) || []
-      const text = choices[0]?.message?.content || ''
-      const sseBody = `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\ndata: [DONE]\n\n`
-      return new Response(sseBody, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-          Connection: 'keep-alive',
-        },
+      result = await streamAdapterChat(config, messages, {
+        maxTokens: CHAT_MAX_TOKENS,
+        temperature: CHAT_TEMPERATURE,
+        signal: controller.signal,
       })
-    } catch {
-      return jsonError('Failed to parse provider response.', 502)
+    } finally {
+      clearTimeout(timeoutId)
     }
+
+    if ('diagnostics' in result) {
+      lastDiagnostics = result.diagnostics
+      console.error(
+        '[bolu-chat] Provider attempt failed:',
+        JSON.stringify({ providerId: config.providerId, category: result.diagnostics.category, status: result.diagnostics.status }),
+      )
+      const mayFallback = attempt < candidates.length - 1 && FALLBACK_CATEGORIES.has(result.diagnostics.category)
+      if (!mayFallback) break
+      continue
+    }
+
+    const headers = new Headers(result.response.headers)
+    headers.set('X-Bolu-Source', plan.source)
+    if (plan.primaryConnectionId) headers.set('X-Bolu-Connection-Id', plan.primaryConnectionId)
+    if (attempt > 0) headers.set('X-Bolu-Fallback', 'true')
+    return new Response(result.response.body, { status: 200, headers })
   }
 
-  return jsonError('Unsupported provider content-type.', 502)
+  return diagnosticsToError(
+    lastDiagnostics ?? {
+      ok: false,
+      status: 502,
+      category: 'unknown',
+      message: 'No provider response.',
+      suggestedAction: 'Retry the request.',
+      latencyMs: 0,
+    },
+  )
+}
+
+function mockResponse(messages: BoluProviderMessage[]): Response {
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')?.content.toLowerCase() ?? ''
+  let scenario: MockScenario = 'authorized-record-retrieval'
+  if (lastUserMsg.includes('invalid') || lastUserMsg.includes('malformed')) {
+    scenario = 'invalid-operation-payload'
+  } else if (lastUserMsg.includes('change') || lastUserMsg.includes('modify') || lastUserMsg.includes('update notes')) {
+    scenario = 'valid-modification-proposal'
+  } else if (lastUserMsg.includes('create invoice') && (lastUserMsg.includes('cement') || lastUserMsg.includes('dangote'))) {
+    scenario = 'valid-creation-proposal'
+  } else if (lastUserMsg.includes('create') && lastUserMsg.includes('invoice')) {
+    scenario = 'missing-required-fields'
+  } else if (lastUserMsg.includes('unauthorized')) {
+    scenario = 'unauthorized-record'
+  }
+
+  const fixture = DETERMINISTIC_FIXTURES[scenario]
+  const text = fixture ? fixture.text : 'Bolu mock mode response.'
+  const sseBody = `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\ndata: [DONE]\n\n`
+  return new Response(sseBody, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Bolu-Source': 'mock',
+    },
+  })
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -118,64 +251,24 @@ export default async function handler(request: Request): Promise<Response> {
   })
   if (!validation.ok) return jsonError('The message is invalid or too long.', 400)
 
-  // Resolve configuration precedence:
-  // 1. In-app database encrypted credential (admin-configured in application)
-  // 2. Server environment variables (BOLU_PROVIDER_* or BOLU_AMD_API_KEY)
-  // 3. Fallback to mock mode if explicitly requested or unconfigured
-  const inAppConfig = await resolveInAppConfig()
-  const config = inAppConfig
-    ? {
-        provider: inAppConfig.provider,
-        baseUrl: inAppConfig.baseUrl,
-        endpoint: inAppConfig.endpoint,
-        model: inAppConfig.model,
-        apiKey: inAppConfig.apiKey,
-        timeoutMs: inAppConfig.timeoutMs,
-        mode: 'live' as const,
-        isConfigured: true,
-      }
-    : getBoluProviderConfig(process.env)
+  const plan = await resolveRuntimePlan()
 
-  // Support deterministic mock mode when configured
-  if (config.mode === 'mock') {
-    const lastUserMsg = [...validation.messages].reverse().find((m) => m.role === 'user')?.content.toLowerCase() ?? ''
-    let scenario: MockScenario = 'authorized-record-retrieval'
-    if (lastUserMsg.includes('invalid') || lastUserMsg.includes('malformed')) {
-      scenario = 'invalid-operation-payload'
-    } else if (lastUserMsg.includes('change') || lastUserMsg.includes('modify') || lastUserMsg.includes('update notes')) {
-      scenario = 'valid-modification-proposal'
-    } else if (lastUserMsg.includes('create invoice') && (lastUserMsg.includes('cement') || lastUserMsg.includes('dangote'))) {
-      scenario = 'valid-creation-proposal'
-    } else if (lastUserMsg.includes('create') && lastUserMsg.includes('invoice')) {
-      scenario = 'missing-required-fields'
-    } else if (lastUserMsg.includes('unauthorized')) {
-      scenario = 'unauthorized-record'
+  if (!plan) {
+    // Mock mode is only reachable through an explicit server setting.
+    if (getBoluProviderConfig(process.env).mode === 'mock') {
+      return mockResponse(validation.messages)
     }
-
-    const fixture = DETERMINISTIC_FIXTURES[scenario]
-    const text = fixture ? fixture.text : 'Bolu mock mode response.'
-    const sseBody = `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\ndata: [DONE]\n\n`
-    return new Response(sseBody, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
-      },
-    })
+    return jsonError(
+      'Bolu is not configured. A platform administrator must add and activate a provider connection in Settings, or set BOLU_PROVIDER_API_KEY on the server.',
+      503,
+      'unconfigured',
+    )
   }
 
-  // Live provider mode requires an API key
-  if (!config.apiKey) {
-    return jsonError('Bolu is not configured with an API key. Please configure the provider in Settings or set BOLU_PROVIDER_API_KEY on the server.', 503)
-  }
-
-  // Build system prompt respecting approved BOURXE product direction:
-  // - Bolu is a business operations assistant with read and write capabilities
-  // - Application owns tenant scope, permissions, validation, calculations, numbering, and persistence
-  // - Financial calculations are locked to application; model must never calculate or alter them
-  // - Two approval gates are in effect: Gate 1 (proposal review) and Gate 2 (save confirmation)
-  // - Model outputs structured JSON code blocks when proposing invoice create/modify operations
+  // System prompt respects approved BOURXE product direction:
+  // - Application owns tenant scope, permissions, validation, calculations, numbering, persistence
+  // - Financial calculations are locked to the application; the model must never compute them
+  // - Gate 1 (proposal review) and Gate 2 (save confirmation) remain in effect
   const systemPrompt = [
     SYSTEM_PREFIX,
     '',
@@ -201,37 +294,10 @@ export default async function handler(request: Request): Promise<Response> {
     '- Never claim an operation was saved or filed without explicit user confirmation.',
   ].join('\n')
 
-  const messages = [
-    { role: 'system' as const, content: systemPrompt },
+  const messages: AdapterMessage[] = [
+    { role: 'system', content: systemPrompt },
     ...validation.messages,
   ]
 
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs)
-
-  try {
-    const providerResponse = await fetch(config.endpoint, {
-      method: 'POST',
-      headers: buildProviderHeaders(config),
-      body: JSON.stringify({
-        model: config.model,
-        messages,
-        stream: true,
-        max_tokens: 1000,
-        temperature: 0.1,
-      }),
-      signal: controller.signal,
-    })
-    clearTimeout(timeoutId)
-    return await readProviderStream(providerResponse)
-  } catch (error) {
-    clearTimeout(timeoutId)
-    const errorName = error instanceof Error ? error.name : 'unknown'
-    console.error('[bolu-chat] Provider connection failed:', errorName)
-
-    if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
-      return jsonError('The AI provider request timed out. Please try again.', 504)
-    }
-    return jsonError('Bolu is temporarily unavailable from the provider. Please try again.', 502)
-  }
+  return streamWithFallback(plan, messages)
 }

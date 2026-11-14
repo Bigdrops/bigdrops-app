@@ -59,6 +59,11 @@ export function isPrivateAddress(ip: string): boolean {
   return true
 }
 
+/** URL.hostname keeps IPv6 literals bracketed ([::1]); net.isIP needs them bare. */
+function unbracketHost(host: string): string {
+  return host.startsWith('[') && host.endsWith(']') ? host.slice(1, -1) : host
+}
+
 /**
  * Pure syntactic + literal-address validation. No network access, so it is
  * safe to unit test. DNS resolution is checked separately before any fetch.
@@ -86,7 +91,7 @@ export function validateEndpointSyntax(raw: string): EndpointValidation {
   if (BLOCKED_HOSTNAMES.has(host) || BLOCKED_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))) {
     return { ok: false, error: 'Endpoint must not target localhost or internal network names.' }
   }
-  if (net.isIP(host) && isPrivateAddress(host)) {
+  if (net.isIP(unbracketHost(host)) && isPrivateAddress(unbracketHost(host))) {
     return { ok: false, error: 'Endpoint must not target private or internal network addresses.' }
   }
 
@@ -101,7 +106,7 @@ export async function assertEndpointResolvesSafe(rawUrl: string): Promise<Endpoi
   const syntax = validateEndpointSyntax(rawUrl)
   if (!syntax.ok) return syntax
 
-  const host = new URL(syntax.url).hostname
+  const host = unbracketHost(new URL(syntax.url).hostname)
   if (net.isIP(host)) return syntax
 
   try {
