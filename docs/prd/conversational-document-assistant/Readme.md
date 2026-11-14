@@ -8,13 +8,21 @@
 
 ---
 
-## Product Direction Status — 2026-11-13
+## Product Direction Status — Reconciled 2026-11-14
 
-**Approved direction:** Bolu is a conversational business operations assistant. It must understand authorized existing records and support controlled creation and modification of business documents. Read-only Business Intelligence is one capability, not the complete product.
+**Approved direction:** Bolu is a conversational business operations assistant (DEC-28). It must understand authorized existing records and support controlled creation and modification of business documents. Read-only Business Intelligence is one capability, not the complete product.
+
+**Application-Side Operations Implemented (DEC-30):** The conversational create and modify pipeline for the reference Invoice document family is implemented and tested against a deterministic mock provider boundary (49 automated unit and integration tests passing). The architecture enforces two explicit user review gates, locks all calculations to `src/lib/Calculations.ts`, reuses PostgreSQL transactional RPC `save_invoice_with_items_transaction` with fallback rollback cleanup, and protects sequence number allocation with `withUniqueRetry`.
+
+**Live Provider Integration & Invoice Pipeline Activation (DEC-34):** The invoice operation pipeline is connected to a configurable server-side OpenAI-compatible live provider adapter (`api/bolu-chat.ts`, `bolu-provider.ts`). The model outputs structured operation proposals; the application parses, validates, locks calculations via `calculateDocument`, and executes through the two-gate user approval workflow and PostgreSQL persistence. Total test suite expanded to 62 automated tests (0 failures). Production live third-party network calls remain deferred pending owner key custody and terms approval.
 
 The application owns authorization, tenant scope, validation, calculations, persistence, and business execution. A user must explicitly approve each proposed change before the application applies it. The user must separately confirm before the application saves or files a document. Existing document rules and system-owned computed values remain authoritative. Bolu must not invent missing facts or perform unapproved payments or money movement.
 
-**Still under review:** The detailed FR-01–FR-22 requirements, additional operational requirements below, first-release document coverage, provider chain, key custody, privacy consent, trial audience/duration, success measures, and responsive layouts. A disposition in this PRD does not by itself approve these details.
+**Outstanding / Deferred:** Live AI provider credential provisioning in production environments, dynamic multi-model failover pool (DEC-29), remaining 7 document families (Quotation, PO, Waybill, CSR, RFQ, CPS, Letter), and production multi-tenant E2E verification.
+
+**Governance Mandate (DEC-31):** Engineering roadmap maintenance is mandatory for every BOURXE task. Canonical progress is tracked in `Waterfall-roadmap.md` with visual presentation in `roadmap.html`.
+
+**Document-Intelligence Direction (DEC-32 / DEC-33, 2026-11-14):** Bolu must process source documents and attachments through one universal pipeline: application-owned intake and preservation → faithful extraction of source observations → normalization into typed records → cross-document reconciliation with match candidates → deterministic calculations → human review → approved business action. Evidence classification (`extracted` / `calculated` / `inferred` / `matched` / `unverified` / `conflicting`) is separate from workflow status (`not_found` → `information_found` → `possible_match` → `awaiting_confirmation` → `confirmed` → `priced_verified`). Source fidelity, traceability, deterministic arithmetic and human approval are requirements, not options. The solar-pump BOQ scenario is the first acceptance case, not the basis of a BOQ-only architecture. No pipeline stage is implemented. Attachment formats, limits, retention, extraction providers and privacy are open decisions (DEC-33).
 
 The Markdown requirements and roadmap are the maintained source documents. `roadmap.html` is the presentation mirror of `Waterfall-roadmap.md`.
 
@@ -34,10 +42,11 @@ The import path asks a model to produce the app's own JSON contract. That contra
 
 A model that misses one identifier, or copies one block wrongly, produces a rejected import. The user sees an error instead of an invoice.
 
-A conversation avoids this. The model does one narrow job: it understands intent and calls small tools. The app owns the structure, the validation and the money.
+A conversation avoids this. The model interprets intent and proposes typed capability calls. The application owns the structure, validation, authorization, calculations, and persistence.
 
-**Rule 1. The model never produces a document JSON blob. It produces tool calls.**
-**Rule 2. The assistant never computes. The app computes.**
+**Rule 1. The model never produces a document JSON blob. It proposes typed capability calls.**
+**Rule 2. The application validates and authorizes every proposed operation. The application computes.**
+**Rule 3. User approval applies a proposal to a draft. A separate confirmation is required to save or file it.**
 
 ## 3. The User Experience
 
@@ -47,14 +56,15 @@ A conversation avoids this. The model does one narrow job: it understands intent
 2. A chat sheet opens above the form. The form stays visible.
 3. The user types plain text, for example:
    - `invoice for ABC Ltd, 5 pcs cable lug 10mm at 9500, delivery 5000, 50 percent advance`
-4. The assistant replies in text and updates the form at the same time.
-5. The user corrects the assistant in plain text, for example:
+4. The assistant replies in text and presents proposed form changes.
+5. The user reviews and approves or rejects each proposal. Only approved proposals are applied to the draft.
+6. The user corrects the assistant in plain text, for example:
    - `no, price is 95000 not 9500`
-6. The assistant corrects the form and shows what changed.
-7. The assistant proposes a title, notes and terms. The user accepts or rejects each.
-8. The assistant asks for what is missing, for example the due date.
-9. The user says `file it`.
-10. The app shows the final invoice for confirmation and saves it through the normal save path.
+7. The assistant proposes a correction. The user approves or rejects it before it changes the draft.
+8. The assistant may propose a title, notes and terms. Each proposal requires user approval.
+9. The assistant asks for required information that is missing, for example the due date.
+10. The user says `file it`.
+11. The app shows the final invoice for separate confirmation, then saves it through the normal save path.
 
 ### 3.2 What The Assistant Does
 
@@ -81,9 +91,9 @@ A conversation avoids this. The model does one narrow job: it understands intent
 
 The user requires a zero cost solution. The assistant uses free cloud tiers. Three costs apply and the product must state them.
 
-### 4.1 Provider Chain
+### 4.1 Provider Pool
 
-All providers use an OpenAI compatible endpoint. The app holds one client and many base URLs.
+The product direction is DEC-29: one application-owned engine, multiple interchangeable providers and models, automatic selection, automatic bounded failover, free-first among eligible models, paid inference denied by default. The declared catalog below is the current proposal, not a manually ordered shipping chain. Free-tier limits, availability, pricing and terms are dynamic. They are not guarantees. A provider with no key or failing eligibility is skipped automatically. Paid models are not selected without an owner-authorised policy.
 
 | Order | Provider | Model | Free allowance | Verified |
 |---|---|---|---|---|
@@ -98,7 +108,7 @@ All providers use an OpenAI compatible endpoint. The app holds one client and ma
 | 9 | Cerebras | One time 5 US dollar signup credit that needs a payment method | Not a recurring free tier | Documented 2026-11-13 |
 | 10 | Vercel AI Gateway | Small free allowance | Read at signup | Not verified |
 
-The user can reorder the chain and remove providers in Settings. A provider with no key is skipped.
+The engine selects from the eligible pool automatically. The user may exclude providers or models, prefer a model, or pin a model for a session. The user does not maintain the failover order by hand; DEC-09's ordering part is superseded by DEC-29. A model that fails eligibility (terms, capabilities, health, quota) is bypassed without user action.
 
 ### 4.0 NVIDIA NIM
 
@@ -182,7 +192,7 @@ The app must:
 
 ### 4.5 The Preconfigured Provider And Model Catalog
 
-The chain above answers the failover question. The catalog answers the setup question. The user must not hunt for a base URL or a model name.
+The declared pool answers the failover question. The catalog answers the setup question. The user must not hunt for a base URL or a model name. Free-tier status, pricing, quotas and terms change without notice. Each catalog entry is a proposal with a verification date, not a commitment. Admission to the pool is an evidence check, not a signup.
 
 The catalog holds fourteen tier 1 providers: OpenRouter, Anthropic, OpenAI, Google Gemini, Groq, DeepSeek, Mistral, Together AI, Fireworks AI, Cerebras, xAI Grok, Cohere, NVIDIA NIM and AMD Token Factory. Each row carries a base URL, a key prefix, a default model and a declared model list.
 
@@ -202,7 +212,7 @@ The full catalog, the custom form rules, the status badges and the viewport layo
 | Trial | 4 weeks | Daily use by the product owner. |
 | Decision | End of week 4 | Keep, change, or remove. |
 
-The trial runs behind a Settings toggle. The toggle is off by default. The trial period writes no tenant data, no telemetry and no new database table.
+The draft trial proposes a Settings toggle that is off by default. Its audience, duration, consent model, provider custody, and data-retention details remain unapproved. No trial starts until the owner approves those controls.
 
 ## 6. Success Measure
 
@@ -230,7 +240,7 @@ In scope:
 
 Out of scope for the trial:
 
-- Photo, image or scan input.
+- Photo, image or scan input. *(Direction superseded by DEC-32/DEC-33: attachment intake is part of the agreed document-intelligence direction. Supported types, limits, retention, providers and privacy are unresolved. Nothing here is implemented.)*
 - Voice input.
 - Quotation, purchase order, waybill, receipt and CSR. The design must not block them.
 - Automatic sending to a client.
@@ -263,6 +273,14 @@ Out of scope for the trial:
 | `roadmap.html` | The same roadmap as a phone-first page. |
 | `docs/tickets/free-model-failover-stack.md` | The failover research this feature depends on. |
 | `docs/tickets/local-ai-model-swap-and-speedup.md` | The on-device model work. This feature does not need it, but it shares the guardrails. |
+| `docs/reports/2026-11-14-hermes-provider-architecture-audit.md` | Hermes provenance and current provider-architecture status. |
+| `docs/reports/2026-11-14-dynamic-model-routing-reconciliation.md` | Dynamic multi-model engine reconciliation and the unresolved decision list. |
+| `docs/reports/ai/2026-11-14-bolu-prd-roadmap-reconciliation.md` | Dated DEC-28/DEC-29 roadmap reconciliation. |
+| `docs/reports/ai/2026-11-14-bolu-milestone-closeout-reconciliation.md` | Application-side invoice pipeline close-out evidence. |
+| `docs/reports/ai/2026-11-14-bolu-live-provider-activation-report.md` | Live inference activation, stream handling, and two-gate integration. |
+| `docs/reports/ai/2026-11-14-bolu-amd-provider-security-audit.md` | AMD Token Factory compatibility, auto-detection, and server key security. |
+| `docs/reports/ai/2026-11-14-bolu-guided-provider-setup-report.md` | Guided PowerShell setup CLI and Vercel deployment synchronization. |
+| `docs/reports/ai/2026-11-14-bolu-in-app-provider-config-report.md` | In-app administrator provider configuration with AES-256-GCM envelope encryption. |
 
 ## 10. Sources Considered For The Agent User Interface
 

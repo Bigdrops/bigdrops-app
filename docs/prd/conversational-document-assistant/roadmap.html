@@ -138,6 +138,7 @@ ol.timeline>li.on .t-title{color:var(--accent)}
   <a href="#breadth">Breadth gate</a>
   <a href="#trial">Trial</a>
   <a href="#open">Open points</a>
+<a href="#doc-intel">Document intelligence</a>
 </nav>
 
 <section id="scope">
@@ -221,6 +222,7 @@ ol.timeline>li.on .t-title{color:var(--accent)}
         <li>Stream parser separates text from tool calls.<span class="src">FR-02 · C-01–C-07</span></li>
         <li>Failure classifier: 429, 5xx, 401, 403, 404 advance; 400 stops; timeout advances once.<span class="src">DEC-10</span></li>
         <li>Key store in private storage, owner-only mode, one masking helper.<span class="src">DEC-12</span></li>
+        <li>In-app AI provider vault: AES-256-GCM envelope encryption, RLS-denied PostgREST access, serverless admin endpoints, resilient response parser, Vite dev API middleware, Hermes benchmark audit.<span class="src">DEC-37 · DEC-38 · DEC-39</span></li>
         <li>Quota reader reads the provider, never a stored table.<span class="src">DEC-11 · FR-11</span></li>
         <li>Chat sheet takes a tool list and a form adapter. It never knows the document.<span class="src">FR-17 · DEC-14</span></li>
         <li>The form adapter contract: read state, resolve row, apply change, prepare filing.<span class="src">Adapter</span></li>
@@ -381,30 +383,82 @@ bun run lint</pre>
 
 <section>
   <h2>Not in this roadmap</h2>
-  <p class="note">Photo, image or scan input. Voice input. Automatic sending to a client, supplier or consignee. A database table for assistant history. Any change to the calculation file or a PDF renderer. The on-device Local AI work, which is a separate ticket. An Item Library link on a purchase order line.</p>
+  <p class="note">Photo, image or scan input (superseded as a direction by DEC-32/DEC-33: attachment intake is in the agreed document-intelligence direction as a proposed lane; types, limits, retention, providers and privacy are unresolved; not implemented). Voice input. Automatic sending to a client, supplier or consignee. A database table for assistant history. Any change to the calculation file or a PDF renderer. The on-device Local AI work, which is a separate ticket. An Item Library link on a purchase order line.</p>
 </section>
 
 <section id="audit-reconciliation">
-  <h2>PRD compliance audit · 13 November 2026</h2>
-  <p class="note">Static source and test inspection. This draft remains unapproved. The document-creation scope conflicts with the later Bolu read-only Business Intelligence direction. This reconciliation does not resolve that product decision.</p>
+  <h2>PRD compliance audit &amp; operations milestone · 14 November 2026</h2>
+  <p class="note">Static source and test inspection reflecting DEC-28 (business operations with read/write), DEC-29 (dynamic engine architecture), DEC-30 (application-side invoice operations &amp; mock boundary verification), DEC-31 (mandatory task close-out policy), and DEC-34 (live provider integration &amp; invoice activation). The conversational operations pipeline for the reference Invoice family is fully connected to a server-side live provider adapter and verified with 62 tests across 8 test suites. Third-party network calls in production and remaining 7 document families remain outstanding/deferred.</p>
   <table class="modes">
-    <tr><th>Stage</th><th>Evidence status</th></tr>
-    <tr><td>G-0 Readiness</td><td>Blocked · keys, gateway, network proof, baseline, approved consent/defaults and scope decisions are not evidenced.</td></tr>
-    <tr><td>A Engine</td><td>Partial · shared read-only runtime exists; draft provider chain, quota, tool loop, generic form adapter and gates are unmet.</td></tr>
-    <tr><td>B Invoice pack</td><td>Not implemented · existing-record reads do not satisfy invoice authoring.</td></tr>
-    <tr><td>C Quotation pack</td><td>Not implemented · search/read exists; creation pack and conformance gate are absent.</td></tr>
-    <tr><td>D Operations packs</td><td>Not implemented · no PO, waybill or CSR authoring packs.</td></tr>
-    <tr><td>E Text/read packs</td><td>Partial · invoice, quotation and receivables reads exist; remaining packs are absent.</td></tr>
-    <tr><td>F Breadth gate</td><td>Blocked · prior gates and full acceptance evidence are absent.</td></tr>
-    <tr><td>G Trial</td><td>Not implemented · no approved consent, toggle, provider validation or trial measurements.</td></tr>
-    <tr><td>H Decision</td><td>Not implemented · no trial results or keep/change/remove decision.</td></tr>
+    <tr><th>Stage</th><th>Reconciled status</th><th>Verification &amp; Notes</th></tr>
+    <tr><td>G-0 Readiness</td><td>PARTIAL</td><td>Configurable server adapter ready; live provider credentials and terms approval pending</td></tr>
+    <tr><td>A Engine</td><td>IMPLEMENTED &amp; ACTIVATED</td><td>api/bolu-chat.ts, bolu-provider.ts, bolu-runtime.ts active with SSE streaming and mock fallback</td></tr>
+    <tr><td>B Invoice pack</td><td>IMPLEMENTED &amp; ACTIVATED</td><td>Reference pack: live inference proposal, calculateDocument lock, two-gate review, 62 passing tests</td></tr>
+    <tr><td>C Quotation pack</td><td>DEFERRED</td><td>Scope open; scheduled for Phase 2 after invoice trial</td></tr>
+    <tr><td>D Operations packs</td><td>DEFERRED</td><td>PO, Waybill, CSR scheduled for Phase 2</td></tr>
+    <tr><td>E Approval &amp; persistence controls</td><td>IMPLEMENTED &amp; TESTED</td><td>Two-gate approval, save_invoice_with_items_transaction, withUniqueRetry, rollback cleanup</td></tr>
+    <tr><td>F Breadth gate</td><td>DEFERRED</td><td>Breadth suite across 8 document families deferred to Phase 2</td></tr>
+    <tr><td>G Trial</td><td>BLOCKED</td><td>Awaiting live provider selection, key custody, and terms compliance</td></tr>
+    <tr><td>H Decision</td><td>BLOCKED</td><td>Follows completion of 4-week trial</td></tr>
   </table>
   <div class="open">
-    <p class="tag">Blocks the next milestone</p>
-    <h4>Resolve product authority</h4>
-    <p>Project owner must approve the document-creation PRD, amend it to the read-only BI direction, or identify another approved Bolu specification. Do not start a roadmap stage until the scope conflict is resolved.</p>
+    <p class="tag">Milestone Status: Implemented &amp; Activated (Live Adapter)</p>
+    <h4>Live Provider Adapter &amp; Invoice Pipeline Activated</h4>
+    <p>The conversational invoice create and modify pipeline is connected to a configurable OpenAI-compatible server-side streaming adapter (<code>api/bolu-chat.ts</code>). Provider output is strictly validated into typed operation proposals, with model math discarded in favor of authoritative calculations via <code>src/lib/Calculations.ts</code>. Persistence integrates with PostgreSQL RPC <code>save_invoice_with_items_transaction</code> with sequence collision retry (<code>withUniqueRetry</code>) and rollback compensation. The entire pipeline is verified by 62 automated tests.</p>
   </div>
-  <p class="note">Requirement-level findings and evidence references: <code>docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md</code>.</p>
+  <div class="open">
+    <p class="tag">Governance Policy</p>
+    <h4>Mandatory Task Close-Out &amp; Documentation Reconciliation</h4>
+    <p>Per DEC-31, every BOURXE engineering implementation and audit task must conclude by reconciling the canonical roadmap (<code>Waterfall-roadmap.md</code>) and this companion mirror against actual code status, test evidence, blockers, and dependencies. No task is marked complete without roadmap synchronization.</p>
+  </div>
+  <div class="open">
+    <p class="tag">Provider Security &amp; Configuration Audit · 14 November 2026</p>
+    <h4>AMD Token Factory Compatibility &amp; Server-Only Key Path Verified</h4>
+    <p>AMD Token Factory verified as OpenAI-compatible at <code>https://developer.amd.com.cn/radeon/api/v1/chat/completions</code> with model <code>DeepSeek-V4-Flash</code> and key prefix <code>rc-</code>. Key handling is strictly server-side (Vercel environment variables); zero client exposure in bundles, logs, or storage. Smart auto-detection selects AMD defaults automatically when <code>BOLU_AMD_API_KEY</code> or an <code>rc-</code> key is provided. Live inference remains unexecuted pending user key configuration.</p>
+  </div>
+  <div class="open">
+    <p class="tag">Provider Setup Experience · 14 November 2026</p>
+    <h4>Hermes-Inspired Guided PowerShell Setup CLI Delivered</h4>
+    <p>Guided setup CLI delivered (<code>scripts/setup-bolu-provider.ps1</code> / <code>bun run bolu:setup</code>) allowing administrators to securely input, pre-flight test, and rotate AMD API keys without exposing secrets. Synchronizes local <code>.env.local</code> and remote Vercel environment variables via authenticated Vercel CLI integration. Verified by 67 automated tests.</p>
+  </div>
+  <div class="open">
+    <p class="tag">In-App Secret Management · 14 November 2026</p>
+    <h4>In-App Provider Configuration &amp; AES-256-GCM Vault Delivered &amp; Migrated</h4>
+    <p>In-app administrator configuration delivered in Settings (<code>BoluProviderSettingsSection.tsx</code>) with AES-256-GCM envelope encryption. Migration <code>20261114160000_bolu_provider_credentials.sql</code> pushed and independently verified against hosted Supabase (<code>xqlpekpkbszpdgtuwybh</code>) with table <code>app_ai_provider_config</code>, 14 verified columns, RLS enabled (<code>rowsecurity: true</code>), client-deny policy (<code>USING false</code>), and PostgREST cache reloaded. Runtime precedence in <code>api/bolu-chat.ts</code> resolves: In-app database &gt; Environment variables &gt; Mock mode. Verified by 74 automated tests.</p>
+  </div>
+  <div class="open">
+    <p class="tag">Infrastructure UX Redesign · 14 November 2026</p>
+    <h4>Bolu AI Infrastructure Administration Console Redesigned</h4>
+    <p>Redesigned provider administration interface inspired by LibreChat credential clarity and Vercel AI Chatbot component discipline. Introduces a 4-tile operational telemetry strip (Runtime Source, Provider, Model, RLS Boundary), segmented provider cards (AMD ROCm vs Universal Gateway), stored key preview (<code>rc-••••••••••••7766</code>), curated model cards (<code>DeepSeek-V4-Flash</code> 1M context, <code>DeepSeek-R1-Distill-70B</code>, <code>Qwen2.5-72B</code>, custom), collapsible advanced endpoint parameters, and distinct connection testing vs persistence workflows.</p>
+  </div>
+  <p class="note">Requirement-level findings and evidence references: <code>docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md</code>, <code>docs/reports/ai/2026-11-14-bolu-prd-roadmap-reconciliation.md</code>, <code>docs/reports/ai/2026-11-14-bolu-milestone-closeout-reconciliation.md</code>, <code>docs/reports/ai/2026-11-14-bolu-live-provider-activation-report.md</code>, <code>docs/reports/ai/2026-11-14-bolu-amd-provider-security-audit.md</code>, <code>docs/reports/ai/2026-11-14-bolu-guided-provider-setup-report.md</code>, and <code>docs/reports/ai/2026-11-14-bolu-in-app-provider-config-report.md</code>.</p>
+</section>
+
+<section id="doc-intel">
+  <h2>Document intelligence — universal pipeline</h2>
+  <p class="note">DEC-32 / DEC-33 (2026-11-14) record the document-intelligence direction agreed in the design process. One universal pipeline: intake and preservation → faithful extraction → normalization → reconciliation → deterministic calculation → human review → approved action. Evidence classification (extracted / calculated / inferred / matched / unverified / conflicting) is separate from workflow status (not_found → information_found → possible_match → awaiting_confirmation → confirmed → priced_verified). No AI-generated interpretation promotes itself to confirmed. Attachment intake is application-owned; Markdown from external AI is interchange only, never the business data model. The solar-pump BOQ and supplier-message reconciliation is the first acceptance case, not a BOQ-only architecture. NOTHING HERE IS IMPLEMENTED.</p>
+  <table>
+    <tr><th>Milestone</th><th>Content</th><th>Lands in stage</th><th>Status</th></tr>
+    <tr><td>DI-1</td><td>Attachment/source intake, preservation, processing status, identity</td><td>A engine + G-0</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td>DI-2</td><td>Faithful extraction; Markdown interchange; validation/normalization at intake</td><td>A engine</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td>DI-3</td><td>Canonical objects; evidence classification; workflow status contracts</td><td>A engine</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td>DI-4</td><td>Matching/reconciliation engine and match review UX; family-extensible rules</td><td>B/C/D packs</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td>DI-5</td><td>Reproducible Calculation records; provisional vs verified enforced</td><td>B (money guard)</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td>DI-6</td><td>Two-gate approval and persistence for intelligence-derived proposals</td><td>E controls</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td>DI-7</td><td>Document-family extensions: fields, semantics, validation, permissions per family</td><td>C/D/E/F packs</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td>DI-8</td><td>Solar-pump BOQ acceptance suite joined to the conventional suite</td><td>F breadth gate</td><td>NOT IMPLEMENTED</td></tr>
+  </table>
+  <div class="open">
+    <p class="tag">Open — owner decisions required</p>
+    <h4>Attachment formats, limits, retention, extraction providers, privacy, first-release families</h4>
+    <p>Supported file types, size limits, retention and deletion, extraction provider and its terms, external-AI consent, on-device vs server extraction, the per-provider modality matrix, and the first document-family selection are all explicitly unresolved. AMD remains ineligible under its trial/development terms. Gemini and NumeS stay unverified for tenant content. See DEC-29, DEC-32, DEC-33.</p>
+  </div>
+  <div class="open">
+    <p class="tag">Dependency order (proposed, inside existing stages)</p>
+    <h4>A intake/extraction contracts → B reference family coverage → C/D/E family extensions → F breadth (incl. solar-pump BOQ suite) → G trial → H decision</h4>
+    <p>Document intelligence lands inside existing stages. No parallel roadmap, no new stages, no dates. Invoice remains the reference family (DEC-30 boundary). Human approval gates and deterministic calculations are unchanged.</p>
+  </div>
+  <p class="note">Details: <code>Waterfall-roadmap.md</code> §21. Requirements: <code>functional-req.md</code> FR-34 to FR-41. Architecture: <code>architecture.md</code> (Document Intelligence). Decisions: <code>decision-log.md</code> DEC-32/DEC-33. Risks: <code>risk-register.md</code> RISK-30 to RISK-37. Tests: <code>test-plan.md</code> DI-01 to DI-25 and DI-A to DI-E.</p>
 </section>
 
 <footer>

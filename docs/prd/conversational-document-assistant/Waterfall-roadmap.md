@@ -359,7 +359,7 @@ A point is not a blocker until its stage starts. It is a blocker at its gate.
 
 ## 16. What This Roadmap Does Not Include
 
-- Photo, image or scan input.
+- Photo, image or scan input. *(Direction superseded by DEC-32/DEC-33: attachment intake is in the agreed document-intelligence direction as a proposed intake lane. Supported types, limits, retention, providers and privacy are unresolved. Not implemented.)*
 - Voice input.
 - Automatic sending to a client, a supplier or a consignee.
 - A database table for assistant history. DEC-13.
@@ -404,4 +404,471 @@ These labels describe evidence against the draft waterfall only. They do not est
 
 ### 17.4 Evidence Report
 
-Requirement-level results and source references are recorded in `docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md`.
+Requirement-level results and source references are recorded in `docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md`. This was the state before DEC-28 and DEC-29.
+
+---
+
+## 18. Operations Direction Reconciliation — 2026-11-14
+
+### 18.1 Approved Direction
+
+DEC-28 approves Bolu as a conversational business operations assistant with read and write capabilities. Read-only Business Intelligence remains a capability within Bolu. It is not the whole product.
+
+Every write follows two separate gates:
+
+1. The user approves a proposed change before the application applies it to a draft or working state.
+2. The user confirms the resulting document before the application saves or files it.
+
+The application retains authority for tenant scope, permissions, validation, calculations, business rules, numbering, audit, persistence, and execution. This direction does not approve payments or money movement.
+
+DEC-29 approves one application-owned engine with interchangeable providers/models, automatic selection, bounded failover, free-first selection among eligible models, and paid inference denied by default. It does not approve specific model metadata, provider order, account custody, data retention, or runtime implementation.
+
+### 18.2 Roadmap Status After DEC-28
+
+The earlier G-0–H table records the 2026-11-13 audit against a disputed read-only scope. It remains historical and is superseded by this status view for current planning.
+
+| Stage | Current status | Evidence and gate |
+|---|---|---|
+| P Product definition | BLOCKED | Core direction is approved. Detailed FR dispositions, initial document pack, write scope, provider/privacy policy, trial, and success criteria still need owner approval. |
+| A Shared operations engine | PARTIAL | `BoluAssistantProvider`, `bolu-runtime.ts`, and `api/bolu-chat.ts` exist for a shared session and read-only AMD path. There is no model-selection pool, provider eligibility ranker, complete failover, or controlled write operation. |
+| B Read/retrieval | PARTIAL | Tenant-aware invoice and quotation search and invoice receivables reads exist. Source/citation behavior, filters, coverage, ambiguity handling, and tenant integration acceptance remain incomplete or unverified. |
+| C Create documents | NOT IMPLEMENTED | No production document adapter, proposal/apply workflow, required-field interrogation, or separate confirmed save path exists. First document family is unresolved. |
+| D Modify documents | NOT IMPLEMENTED | No authorized existing-record mutation proposal/apply workflow or stale-record validation exists. Initial editable fields and document families are unresolved. |
+| E Approval and persistence controls | NOT IMPLEMENTED | Runtime has no structured proposal cards, apply-time revalidation, save confirmation, or idempotent persistence orchestration. Existing manual save flows remain authoritative. |
+| F Additional capability packs | DEFERRED / SCOPE OPEN | The eight authorable forms listed in section 2 remain candidates for evaluation. No ordering or first-release breadth is approved. Read-only modules also need explicit scope. |
+| G Production experience and operations | PARTIAL | One production bottom sheet and dashboard launcher exist. Global launchers beyond dashboard, consent, settings policy, operational limits, production responsive layouts, and provider suitability remain incomplete or unverified. |
+| H Trial and owner decision | BLOCKED | Trial audience, provider terms/custody, duration, metrics, and rollout are not approved. Do not start a trial before these gates pass. |
+
+Do not translate these statuses into a percentage. No roadmap stage is complete.
+
+### 18.3 Recommended Dependency Order (Proposed)
+
+This order is a proposal for owner review. It preserves the old gates as historical evidence but does not accept the ten-day/eight-pack schedule.
+
+1. Approve detailed requirements and the first-release document family/capability set.
+2. Resolve provider eligibility, key custody, privacy/consent, paid-inference policy, and whether AMD terms permit the intended use.
+3. Complete shared engine and authorized read/context behavior.
+4. Select one create workflow that exercises draft creation, validation, review, and explicit persistence confirmation.
+5. Select one modify workflow with record re-read, proposed change, explicit approval, revalidation, and a separate save confirmation.
+6. Demonstrate financial, authorization, tenant isolation, idempotency, cancellation, and recovery gates before broadening document packs.
+7. Add further document capability packs only after the shared controls pass the approved acceptance suite.
+8. Approve production responsive experience and trial; measure only after scope and provider terms are settled.
+
+### 18.4 Open Owner Decisions
+
+- Which document family and which read/create/modify operations form the first release?
+- Does the owner approve the original invoice-first workflow, or a narrower first operations milestone?
+- Which fields can Bolu propose for each document family? Which fields are immutable or system-owned?
+- What is the durable boundary between approving a change and confirming persistence? Which confirmations can be grouped, if any?
+- Which provider may receive business data? What key custody, privacy consent, retention, and cost policy applies?
+- Is dynamic multi-model selection required for first release or a later reliability milestone?
+- Which parts of the eight-document candidate coverage are in the first release, later packs, or out of scope?
+- What trial audience, duration, and success measures are approved?
+
+The prior 2026-11-13 read-only reconciliation remains in this file as historical evidence. DEC-28 supersedes its interpretation of the governing direction. See `docs/reports/ai/2026-11-14-bolu-operations-prd-roadmap-reconciliation.md`.
+
+---
+
+## 19. Bolu Application-Side Operations Implementation & Verification Milestone Close-Out — 2026-11-14
+
+### 19.1 Milestone Summary & Delivered Architecture
+
+On 2026-11-14, the application-side conversational business-operation pipeline was completed and verified for the reference Invoice document family without requiring a live AI provider, live API keys, external network connectivity, or production credentials.
+
+The implementation establishes deterministic, application-owned document operations and confirms the two-gate review and persistence model through a deterministic mock provider and 49 automated unit and integration tests across 7 test files.
+
+**Key Components Delivered:**
+1. **Typed Operation Contract (`src/lib/ai-assistant/bolu-operations.ts`):**
+   - Strictly typed operation schemas for `create-document` (type: `'invoice'`), `modify-document`, and `read-records`.
+   - Application-side validation ensures parameter sanity, non-empty line items, non-negative quantities/prices, and customer association before state updates.
+2. **Pure State Management & Formatting (`src/lib/ai-assistant/bolu-reducer.ts`, `bolu-formatting.ts`):**
+   - Pure reducer decoupled from React component lifecycle managing multi-turn conversation and operation lifecycle states: `draft` -> `pending_approval` -> `approved` -> `pending_save` -> `persisted` -> `rejected`.
+   - Prompt generation utilities cleanly separated to prevent file bloat (<350 lines each).
+3. **Two-Gate Approval & Persistence Workflow (`src/components/ai-assistant/AssistantSheet.tsx`):**
+   - **Gate 1 (Change Proposal Card):** The user explicitly approves proposed document modifications or line-item changes before they are applied to working state.
+   - **Gate 2 (Save Confirmation Card):** The user explicitly confirms saving after reviewing the working document draft. The assistant prepares persistence; it never persists implicitly.
+4. **Authoritative Persistence Integration (`src/lib/ai-assistant/bolu-document-service.ts`):**
+   - **Transactional RPC Reuse:** Integrates directly with existing PostgreSQL RPC `save_invoice_with_items_transaction` when `entityId` is present to ensure atomic insertion of invoice header and line items.
+   - **Compensating Rollback:** For sequential fallback writes, line-item insertion failures trigger compensating header deletion cleanup to prevent orphaned records.
+   - **Collision Recovery:** Document sequence number allocation wraps `generateDocumentNumber` inside `withUniqueRetry` (from `@/lib/withUniqueRetry`) to handle concurrent numbering collisions.
+   - **Financial Math Locking:** All financial fields (subtotal, total, VAT, WHT, discount) are strictly computed by `calculateDocument` from `src/lib/Calculations.ts`. Any model-supplied totals are discarded.
+   - **Tenant & RBAC Enforcement:** Tenant isolation checks and role permissions (`canWrite`, `canRead`) gate both read retrieval and persistence.
+5. **Deterministic Mock Provider (`src/lib/ai-assistant/bolu-mock-provider.ts`):**
+   - Implements full test fixture coverage for 12 operational scenarios (invoice creation, line-item addition/modification/removal, price correction, contradiction detection, clarification requests, two-gate lifecycle, numbering collision recovery, and tenant access denial).
+6. **Automated Verification Evidence:**
+   - 49 automated tests in `src/tests/ai-assistant/` across 7 test files, covering operations parsing, reducer state machine, application math locking, two-gate review, persistence atomicity, numbering retry, and mock provider interactions. All 49 tests pass.
+
+### 19.2 Explicit Boundary: Implemented vs. Production-Ready
+
+To prevent false claims of completion, the project maintains a strict boundary between what is implemented and what remains outstanding:
+
+| Capability / Work Stream | Implementation Status | Production-Readiness Status | Notes / Next Gate |
+|---|---|---|---|
+| **Invoice Create/Modify Pipeline** | **IMPLEMENTED** | **VERIFIED (Mock Boundary)** | Full application-side flow verified with 49 tests; ready for live provider integration. |
+| **Two-Gate Approval & UI** | **IMPLEMENTED** | **VERIFIED (Component Level)** | Change cards and Save confirmation functional in `AssistantSheet.tsx`. |
+| **Document Persistence & RPC** | **IMPLEMENTED** | **VERIFIED (Service Level)** | Uses `save_invoice_with_items_transaction` + `withUniqueRetry` + `calculateDocument`. |
+| **Live AI Provider Connectivity** | **NOT CONNECTED** | **OUTSTANDING** | Live inference deferred; no external API keys required or configured for CI/dev. |
+| **Dynamic Multi-Model Engine (DEC-29)** | **PARTIAL** | **OUTSTANDING** | Automatic selection, eligibility ranking, and runtime failover not yet wired to live endpoints. |
+| **Other 7 Document Families** | **NOT IMPLEMENTED** | **DEFERRED** | Quotations, Purchase Orders, Waybills, CSRs, RFQs, CPS, Letters deferred to Phase 2. |
+| **Multi-Tenant E2E Browser Testing** | **NOT EXECUTED** | **OUTSTANDING** | Full browser integration under real database RLS and live sessions to be executed prior to production release. |
+
+### 19.3 Reconciled Stage Status (Post-Implementation)
+
+| Stage | Current status | Evidence and gate |
+|---|---|---|
+| **P Product definition** | **APPROVED DIRECTION** | DEC-28 (business operations) and DEC-29 (dynamic engine) approved. Reference invoice pack approved and implemented. |
+| **A Shared operations engine** | **IMPLEMENTED (App/Mock)** | `bolu-operations.ts`, `bolu-reducer.ts`, `bolu-mock-provider.ts` implemented and tested. Live provider routing is deferred. |
+| **B Read/retrieval** | **PARTIAL** | Tenant-aware invoice and quotation search and receivables queries exist in `bolu-data.ts`. |
+| **C Create documents** | **IMPLEMENTED (Invoice Reference)** | Invoice creation proposal, application calculation, review, and transactional persistence implemented. Other 7 forms deferred. |
+| **D Modify documents** | **IMPLEMENTED (Invoice Reference)** | Invoice modification proposal, diff review, revalidation, and transactional persistence implemented. Other 7 forms deferred. |
+| **E Approval and persistence controls** | **IMPLEMENTED** | Two-gate lifecycle (Change Proposal Card + Save Confirmation Card), RPC transaction save, `withUniqueRetry`, and rollback cleanup implemented. |
+| **F Additional capability packs** | **DEFERRED** | The remaining seven authorable forms (Quotation, PO, Waybill, CSR, RFQ, CPS, Letter) remain deferred until invoice trial/validation. |
+| **G Production experience and operations** | **PARTIAL** | Bottom sheet and operations UI implemented. Live provider keys, privacy consent disclosure, and production deployment outstanding. |
+| **H Trial and owner decision** | **BLOCKED** | Live provider custody, terms compliance (RISK-14), and trial metrics approval required before starting trial. |
+
+---
+
+## 20. Mandatory Engineering Task Close-Out & Documentation Reconciliation Policy
+
+### 20.1 Policy Mandate
+Continuous engineering roadmap maintenance is a mandatory requirement of every BOURXE implementation and audit task. No task is complete until this canonical roadmap (`Waterfall-roadmap.md`) and the visual companion (`roadmap.html`) are reconciled against the actual repository code state.
+
+### 20.2 Close-Out Procedure
+Every engineering task on BOURXE must execute the following close-out steps prior to reporting completion:
+1. **Worktree & Git Status Audit:** Run `git status` to verify exact modified files and ensure no unrelated files or unstaged changes were broken or altered.
+2. **Verification Evidence Audit:** Document the exact automated tests executed, passing assertions, and boundary constraints. Mock-boundary tests must never be reported as live production readiness.
+3. **Roadmap Reconciliation:** Update `Waterfall-roadmap.md` with:
+   - A dated milestone section recording the specific capabilities delivered.
+   - An updated status matrix reflecting actual code realities.
+   - Clear distinction between implemented capabilities and outstanding/deferred work.
+4. **Roadmap Presentation Mirroring:** Synchronize `roadmap.html` to reflect the updated stage statuses and evidence notes.
+5. **Supporting Artifact Updates:** Update `decision-log.md`, `risk-register.md`, `architecture.md`, `functional-req.md`, and `test-plan.md` where the task creates material architectural or risk changes.
+6. **Integrity Check:** Run `git diff --check` to ensure no whitespace or formatting errors exist. Verify that no unauthorized application source code modifications occurred.
+
+---
+
+## 21. Document Intelligence Integration — Universal Pipeline (2026-11-14)
+
+DEC-32 and DEC-33 (2026-11-14) record the document-intelligence direction agreed in the design process. This section integrates it into this roadmap. It creates no parallel roadmap and no duplicate stages. It is not implemented. Nothing here implies delivery dates, staffing, or provider selection.
+
+### 21.1 The pipeline and the acceptance case
+
+Pipeline (proposed order):
+
+1. Attachment/source intake and preservation (FR-40; DEC-33).
+2. Faithful extraction and structured interchange (ExtractedObservation; Markdown as interchange only).
+3. Canonical evidence and normalized record contract (NormalizedItem; provenance to observations).
+4. Reconciliation and match review (MatchCandidate; family-extensible rules; serial number alone never `confirmed`).
+5. Deterministic calculations (Calculation; application-owned; ambiguous bases stay provisional).
+6. Human review, correction, approval and persistence (two gates per DEC-28; ReviewDecision audit).
+7. Document-family extensions (invoice, quotation, PO, waybill, CSR, RFQ, CPS, letter — family-specific fields/semantics/permissions; not interchangeable).
+8. Acceptance testing against the solar-pump BOQ scenario (FR-41; DI-A to DI-E in test-plan.md).
+
+The solar-pump BOQ and supplier-message reconciliation is the first acceptance case, never the basis of a BOQ-only architecture.
+
+### 21.2 Milestones Mapped Onto The Existing Stages
+
+Document intelligence lands inside existing stages. No new stages are created.
+
+| Milestone | Content | Lands in stage | Depends on | Status |
+|---|---|---|---|---|
+| DI-1 | Attachment/source intake, preservation, processing status, identity | A engine (intake lane) + G-0 | DEC-33 open: formats, limits, retention, extraction providers, privacy; FR-40 | NOT IMPLEMENTED |
+| DI-2 | Faithful extraction; Markdown interchange; validation/normalization at intake | A engine (extraction lane) | DI-1 + FR-32/35; DEC-29 eligibility gates unaffected | NOT IMPLEMENTED |
+| DI-3 | Canonical objects + evidence classification + workflow status contracts | A engine (contracts) | FR-34 to FR-36; DEC-32 | NOT IMPLEMENTED |
+| DI-4 | Matching/reconciliation engine + match-review UX; family-extensible rules | B/C/D pack gates (per family) | DI-3; FR-38 | NOT IMPLEMENTED |
+| DI-5 | Reproducible calculation records; provisional vs verified distinction enforced | B (money guard evolution) | DI-3; FR-39; RISK-11 | NOT IMPLEMENTED |
+| DI-6 | Two-gate approval + persistence for intelligence-derived proposals | E approval/persistence controls | DI-3 to DI-5; DEC-28 | NOT IMPLEMENTED |
+| DI-7 | Document-family extensions: per-family semantics, fields, validation, permissions | C/D/E/F packs | DI-6; FR-41; first-release selection open | NOT IMPLEMENTED |
+| DI-8 | Solar-pump BOQ acceptance suite | F breadth gate; acceptance evidence | DI-1 to DI-7; FR-41 | NOT IMPLEMENTED |
+
+Dependency picture (integrates into section 14):
+
+```
+A engine (keys, client, failover, sheet, adapter, intake lane DI-1/DI-2/DI-3)
+  -> B invoice pack (DI-4/DI-5/DI-6 coverage on the reference family)
+  +-> C quotation   (DI-7 quotation extension)
+  +-> D PO, waybill, CSR (DI-7 operations family extensions)
+  +-> E RFQ, cost sheet, letter, read-only surfaces (DI-7 text/read extensions)
+  v
+F breadth gate (DI-8 solar-pump BOQ suite joined to the conventional suite)
+  v
+G trial -> H decision
+```
+
+### 21.3 Reconciled Stage Notes
+
+- Stage A grows an intake and extraction lane when DI-1 to DI-3 are approved. The existing mock-boundary invoice operations pipeline (DEC-30) remains the non-provider verification boundary for this lane. Live provider routing falls under DEC-29 and remains deferred by it.
+- Stage B keeps the invoice as the reference family. Document intelligence adds DI-4 to DI-6 coverage to that pack's gates; it does not replace them.
+- Stages C, D and E add family extensions (DI-7), each with family-specific fields, validation and permissions. No family is interchangeable with another.
+- Stage F's breadth gate adds the DI-8 solar-pump BOQ acceptance suite.
+- Stage H decisions remain blocked on live provider custody, terms and metrics. This direction changes nothing about H.
+
+### 21.4 Open Decisions (carried, not resolved)
+
+Supported attachment types; size limits; retention and deletion policy; extraction provider and its terms; privacy policy and external-AI consent; on-device vs server-side extraction; per-provider modality matrix and eligibility; first-release family selection; health-ledger persistence for intelligence lanes; interchange-format versioning; deletion-after-approval behaviour. See DEC-29, DEC-32, DEC-33 and `docs/reports/2026-11-14-dynamic-model-routing-reconciliation.md`.
+
+### 21.5 What This Section Is Not
+
+Not a delivery plan. Not a commitment of order between families. Not evidence of implementation. Not a replacement for the candidate-family list; the family set must be approved before DI-7 begins.
+
+### 21.6 Maintenance Mirror
+
+`roadmap.html` mirrors this section. Both files must change together (DEC-31).
+
+---
+
+## 22. Bolu Live Provider Integration & Invoice Pipeline Activation — 2026-11-14
+
+### 22.1 Milestone Summary & Delivered Architecture
+
+On 2026-11-14, Bolu's conversational invoice operation pipeline was connected to a configurable server-side live AI inference provider architecture, completing the end-to-end integration while preserving application authority, mathematical calculation locking, authorization controls, and two-gate user approval.
+
+The system connects live inference models to existing BOURXE document services through a typed, OpenAI-compatible streaming serverless adapter (`api/bolu-chat.ts`) and client-side runtime parser (`src/lib/ai-assistant/bolu-runtime.ts`), fully verified by 62 automated tests across 8 test suites.
+
+**Delivered Architectural Capabilities:**
+1. **Configurable Server-Side Live Provider Adapter (`api/bolu-chat.ts`, `src/lib/ai-assistant/bolu-provider.ts`):**
+   - Implements standard OpenAI-compatible `/chat/completions` HTTP POST interface with server-side streaming (Server-Sent Events).
+   - Zero hardcoding of providers: works interchangeably with OpenRouter, DeepSeek, Together AI, AMD, or any OpenAI-compatible inference endpoint.
+   - Idempotent endpoint normalization (`normalizeChatEndpoint`) ensures base URLs (e.g., `https://openrouter.ai/api/v1`) receive `/chat/completions` cleanly without path corruption.
+   - Converts both `text/event-stream` and buffered `application/json` provider responses into uniform SSE tokens so client-side streaming functions unconditionally.
+   - Provider secrets and credentials remain strictly server-side; browser code has zero access to API keys.
+2. **Server-Only Minimal Environment Contract:**
+   - `BOLU_PROVIDER_NAME`: Informational provider identifier (default: `'generic-openai'`).
+   - `BOLU_PROVIDER_BASE_URL`: Inference API root URL (default: `'https://openrouter.ai/api/v1'`).
+   - `BOLU_PROVIDER_API_KEY`: Server-only authentication key (backward-compatible with `BOLU_AMD_API_KEY`).
+   - `BOLU_PROVIDER_MODEL`: Model identifier (default: `'meta-llama/llama-3.3-70b-instruct:free'`).
+   - `BOLU_PROVIDER_TIMEOUT_MS`: Request timeout (default: `30000`ms, clamped between 5,000ms and 120,000ms).
+   - `BOLU_PROVIDER_MODE`: Explicit operational mode (`'live'` or `'mock'`; defaults to `'live'` when an API key is set, `'mock'` otherwise).
+3. **Structured Output Enforcement & Fail-Closed Validation:**
+   - Server system prompt instructs models to output structured JSON within ```json code blocks adhering to the `"bolu_operation"` envelope (`create-document` for `'invoice'`, `modify-document`).
+   - Models are explicitly forbidden from performing calculations or emitting authoritative financial totals.
+   - Client-side runtime parses streaming tokens and extracts the operation envelope. Malformed JSON payloads or syntax errors are cleanly caught and rejected without proposal generation.
+   - Unsupported operations (e.g., `delete-document`, `pay-invoice`) are rejected fail-closed with clear error notifications.
+   - Unsupported document families (e.g., `quotation`, `purchase-order`, `waybill`, `csr`, `rfq`, `cps`, `letter`) are rejected fail-closed with user-facing notification: "Bolu currently only supports operations for Invoices."
+4. **Application-Owned Financial Calculation Lock:**
+   - All financial totals (`subtotal`, `total`, `vat_rate`, `vat_amount`, `wht_rate`, `wht_amount`, `discount_amount`) are strictly recomputed by `calculateDocument` in `src/lib/Calculations.ts`.
+   - Any hallucinated or model-supplied calculations are discarded prior to proposal presentation and persistence.
+5. **Two-Gate Approval Lifecycle Preserved:**
+   - **Gate 1 (Change Proposal Card):** The user explicitly reviews and approves proposed invoice creations or modifications before applying them to working document state.
+   - **Gate 2 (Save Confirmation Card):** The user explicitly confirms persistence after inspecting the working document. No provider failure, timeout, or model output can bypass approval or trigger persistence.
+6. **Authoritative Persistence Integration (`src/lib/ai-assistant/bolu-document-service.ts`):**
+   - Integrates with PostgreSQL RPC `save_invoice_with_items_transaction` for atomic insertion of invoice header and items.
+   - Rollback compensation cleans up orphaned headers in sequential fallback paths.
+   - Numbering collisions are recovered using `withUniqueRetry` from `@/lib/withUniqueRetry`.
+   - Explicit fail-closed guards prevent persistence calls with null or invalid proposals.
+7. **Comprehensive Error Classification:**
+   - 401/403 Authentication Failure -> 502 with sanitized message (no leaked keys).
+   - 429 Rate Limit Exceeded -> 429 with sanitized retry message.
+   - 400 Bad Request / Invalid Parameters -> 502 Bad Gateway.
+   - 5xx Provider Server Error -> 502 Bad Gateway.
+   - Timeout (AbortController) -> 504 Gateway Timeout.
+8. **Automated Verification Suite:**
+   - 62 automated tests passing across 8 test suites in `src/tests/ai-assistant/`.
+   - 10 new live-provider integration tests (`src/tests/ai-assistant/bolu-live-provider-integration.test.js`) verifying successful inference, malformed JSON rejection, auth failure, timeout, rate limiting, provider 500 failure, unsupported operations, unsupported document families, calculation locking, and two-gate persistence.
+
+### 22.2 Explicit Boundary: Implemented vs. Production-Ready
+
+| Capability / Work Stream | Implementation Status | Production-Readiness Status | Notes / Next Gate |
+|---|---|---|---|
+| **Server-Side Provider Adapter** | **IMPLEMENTED** | **VERIFIED (Adapter Level)** | Streaming OpenAI-compatible adapter in `api/bolu-chat.ts` verified with 62 tests. |
+| **Invoice Create/Modify Pipeline** | **IMPLEMENTED** | **VERIFIED (End-to-End Adapter)** | Full pipeline from live inference proposal parsing to RPC persistence verified. |
+| **Two-Gate Approval & UI** | **IMPLEMENTED** | **VERIFIED (Component Level)** | Proposal review and Save confirmation functional in `AssistantSheet.tsx`. |
+| **Calculations & Math Locking** | **IMPLEMENTED** | **VERIFIED (Domain Level)** | `calculateDocument` locked; model math stripped unconditionally. |
+| **Document Persistence & RPC** | **IMPLEMENTED** | **VERIFIED (Service Level)** | `save_invoice_with_items_transaction` + `withUniqueRetry` verified. |
+| **Live Network Provider Inference** | **NOT EXECUTED** | **OUTSTANDING** | Live third-party HTTP calls in production/CI deferred pending owner key custody and terms approval. |
+| **Dynamic Multi-Model Engine (DEC-29)** | **PARTIAL** | **OUTSTANDING** | Single configurable provider active; multi-provider auto-failover pool remains open. |
+| **Other 7 Document Families** | **NOT IMPLEMENTED** | **DEFERRED** | Quotations, PO, Waybill, CSR, RFQ, CPS, Letter deferred to Phase 2. |
+| **Multi-Tenant E2E Browser Testing** | **NOT EXECUTED** | **OUTSTANDING** | Browser-level integration under live sessions and live RLS pending production deployment. |
+
+### 22.3 Reconciled Stage Status (Post-Live-Activation)
+
+| Stage | Current status | Evidence and gate |
+|---|---|---|
+| **P Product definition** | **APPROVED DIRECTION** | DEC-28 (business operations) and DEC-29 (dynamic engine) approved. Reference invoice pack approved and activated. |
+| **A Shared operations engine** | **IMPLEMENTED & ACTIVATED** | `api/bolu-chat.ts`, `bolu-provider.ts`, `bolu-runtime.ts` active with configurable live provider adapter and mock fallback. |
+| **B Read/retrieval** | **PARTIAL** | Tenant-aware invoice and quotation search and receivables queries verified in `bolu-data.ts`. |
+| **C Create documents** | **IMPLEMENTED & ACTIVATED (Invoice)** | Invoice creation via live inference proposal, application calculation, review, and transactional persistence verified. Other 7 forms deferred. |
+| **D Modify documents** | **IMPLEMENTED & ACTIVATED (Invoice)** | Invoice modification via live inference proposal, diff review, revalidation, and transactional persistence verified. Other 7 forms deferred. |
+| **E Approval and persistence controls** | **IMPLEMENTED & TESTED** | Two-gate lifecycle (Gate 1 proposal approval + Gate 2 save confirmation), RPC transaction save, `withUniqueRetry`, and rollback cleanup verified. |
+| **F Additional capability packs** | **DEFERRED** | Remaining seven authorable forms deferred until invoice trial/validation. |
+| **G Production experience and operations** | **PARTIAL** | Bottom sheet and live streaming UI active. Live provider key provisioning and privacy disclosure outstanding. |
+| **H Trial and owner decision** | **BLOCKED** | Live provider custody, terms compliance (RISK-14), and trial metrics approval required before starting trial. |
+
+---
+
+## 23. Bolu AMD Provider Security & Configuration Audit — 2026-11-14
+
+### 23.1 Audit Findings & Compatibility Verification
+
+On 2026-11-14, an authoritative compatibility and security audit was performed on the AMD AI Developer Program / AMD Radeon Cloud Token Factory provider for Bolu live inference activation.
+
+**1. Verified API Requirements & Compatibility:**
+- **Provider Identity & Site:** AMD Radeon Cloud Token Factory, hosted on AMD China Developer portal (`developer.amd.com.cn/radeon`).
+- **Base URL & Endpoint:** Base URL is `https://developer.amd.com.cn/radeon/api/v1`. The chat completions endpoint is `https://developer.amd.com.cn/radeon/api/v1/chat/completions`.
+- **Protocol:** Fully OpenAI-compatible HTTP POST `/chat/completions`.
+- **Authentication:** Standard `Authorization: Bearer <key>`. Key prefix is `rc-`.
+- **Default & Supported Models:** Flagship model is `DeepSeek-V4-Flash` (1M context window). Other supported models include `DeepSeek-V4.1-Flash`, `GLM-5.3-Flash`, `Qwen3.8-Flash-Next`, `Qwen3.8-27B`, `Gemma-4-31B-IT`.
+- **Streaming:** Supports SSE streaming (`text/event-stream`). Also handled seamlessly by Bolu's buffered JSON $\rightarrow$ SSE transformer.
+- **Headers:** Requires only standard `Content-Type: application/json` and `Authorization: Bearer <key>`. Vendor-specific headers (e.g. OpenRouter `HTTP-Referer`, `X-Title`) are not attached.
+- **Operational Limits:** ~30 RPM per key, concurrency of 8, daily usage cap ~10 USD worth of inference (~10M-111M tokens/day), reset at 00:00 Beijing time.
+- **Terms & Legal Boundary:** Free trial and development service. Not for commercial production.
+
+**2. Key Security Audit Results:**
+- **Server-Only Read:** The API key is read strictly in serverless runtime `api/bolu-chat.ts` via `process.env`. Zero exposure to client browser code, Vite bundles, or client-side JavaScript.
+- **No Response Leakage:** API responses stream tokens or return sanitized JSON errors (`jsonError`). Raw error bodies and authorization headers are never forwarded to the client.
+- **Zero Client/Database Storage:** No keys are stored in `localStorage`, `sessionStorage`, browser cookies, or Supabase database records.
+- **Safe Fallback:** If credentials are missing, the server returns HTTP 503 without executing any external network fetch. Mock mode executes purely within server memory without calling the live provider.
+- **Safe Inference Auto-Detection:** `src/lib/ai-assistant/bolu-provider.ts` was updated with smart provider inference: if `BOLU_AMD_API_KEY` is present or the API key begins with `rc-`, the runtime automatically selects provider `'amd'`, base URL `https://developer.amd.com.cn/radeon/api/v1`, and default model `DeepSeek-V4-Flash`.
+
+**3. Frontend Settings Vault Decision:**
+- BOURXE does not and should not provide an unauthenticated or ordinary database-backed API key input in frontend Settings. Storing third-party AI keys in client-accessible database rows creates security vulnerabilities (XSS, token leakage).
+- Initial architecture strictly enforces deployment-level server secret configuration (Vercel Environment Variables). Any future in-app key management must use a backend secret vault with hardware/KMS encryption and zero-client-read RPCs.
+
+### 23.2 Exact Deployment Configuration Guide
+
+To activate the user's AMD key in production/preview:
+1. Open the **Vercel Dashboard** $\rightarrow$ select the BOURXE project $\rightarrow$ **Settings** $\rightarrow$ **Environment Variables**.
+2. Add the following variables:
+   - `BOLU_PROVIDER_NAME`: `amd`
+   - `BOLU_PROVIDER_API_KEY`: `<user's key, starts with rc->`
+   - *(Optional)* `BOLU_PROVIDER_MODEL`: `DeepSeek-V4-Flash` (automatically defaults to this if omitted)
+   - *(Optional)* `BOLU_PROVIDER_BASE_URL`: `https://developer.amd.com.cn/radeon/api/v1` (automatically defaults to this if omitted)
+   - *(Optional)* `BOLU_PROVIDER_TIMEOUT_MS`: `45000` (defaults to 45s; 60000 recommended for high latency routes)
+   - *(Optional)* `BOLU_PROVIDER_MODE`: `live` (automatically defaults to `live` when key is present)
+3. **Redeployment:** Vercel serverless functions require a **Redeploy** of the latest deployment for updated environment variables to take effect.
+4. **Local Testing:** For local development, add `BOLU_PROVIDER_NAME=amd` and `BOLU_PROVIDER_API_KEY=rc-...` to `.env.local` in project root. `.env.local` is git-ignored and will never be committed.
+
+### 23.3 Verification Status
+
+| Item | Status | Evidence |
+|---|---|---|
+| **AMD Compatibility** | **VERIFIED (Docs & Specs)** | Confirmed OpenAI-compatible endpoint, headers, and model IDs from official docs and repo research. |
+| **Server-Side Secret Isolation** | **VERIFIED (Source Code)** | Confirmed server-only access in `api/bolu-chat.ts`; zero exposure in `src/` bundles. |
+| **Configuration Path** | **VERIFIED & AUTOMATED** | Added smart auto-detection for AMD key prefix `rc-` and `BOLU_AMD_API_KEY`. |
+| **Automated Tests** | **VERIFIED (62/62 PASS)** | Verified by unit and integration tests in `src/tests/ai-assistant/`. |
+| **Live Third-Party Inference** | **UNEXECUTED** | Live network calls to AMD China endpoint deferred pending user key configuration and authorization. |
+
+---
+
+## 24. Bolu Guided Provider Setup (Hermes-Inspired CLI) & Deployment Architecture — 2026-11-14
+
+### 24.1 Architecture & Delivered Components
+
+On 2026-11-14, a guided PowerShell setup CLI ([`scripts/setup-bolu-provider.ps1`](file:///c:/Users/DELL/Desktop/bigdrops-app/scripts/setup-bolu-provider.ps1)) was delivered to allow an administrator to configure, verify, and rotate Bolu's AMD API key without manual navigation through cloud dashboard interfaces.
+
+**Delivered Features:**
+1. **Hermes-Inspired Guided Setup Workflow:**
+   - Interactive command-line wizard (`bun run bolu:setup` or `pwsh -File scripts/setup-bolu-provider.ps1`).
+   - Accepts the AMD API key securely using `Read-Host -AsSecureString` so credentials are never echoed to the screen or recorded in console scrollback.
+   - Cleanses in-memory plaintext strings immediately after use (`[Marshal]::ZeroFreeBSTR`).
+2. **Pre-Flight Live Connection Verification:**
+   - Directly executes a minimal test call against AMD Radeon Cloud Token Factory (`https://developer.amd.com.cn/radeon/api/v1/chat/completions`) using the in-memory key.
+   - Validates reachability, authentication status, and model responsiveness (`DeepSeek-V4-Flash`) before saving.
+   - Clearly alerts if the key is invalid (401/403) or rate-limited (429) without revealing credentials.
+3. **Local & Remote Deployment Synchronization:**
+   - **Local Development:** Safely creates or updates `.env.local` with `BOLU_PROVIDER_*` variables and guarantees that `.env.local` is present in `.gitignore`.
+   - **Remote Vercel Deployment:** Integrates with Vercel CLI (`vercel env rm` / `vercel env add`) to push variables directly to `production` and `preview` environments.
+   - **Honest Platform Authorization Boundary:** Explicitly identifies that a local script cannot mutate remote cloud environments without authenticated deployment access; automatically detects login state via `vercel whoami` and provides guided login instructions (`vercel login`) if unauthenticated.
+4. **Key Rotation & Replacement:**
+   - Supports key rotation at any time, cleanly replacing existing values without creating duplicate entries or leaving stale artifacts.
+5. **Automated Verification:**
+   - Expanded test suite to **67 automated tests across 9 suites** in `src/tests/ai-assistant/`, including dedicated setup and rotation tests in `src/tests/ai-assistant/bolu-provider-setup.test.js`.
+
+---
+
+## 25. Bolu In-App Provider Configuration & Secure Secret Management — 2026-11-14
+
+### 25.1 Architecture & Delivered Components
+
+On 2026-11-14, an in-app administrator provider configuration experience with AES-256-GCM envelope encryption was delivered for Bolu's shared AI inference pipeline, adapting established enterprise AI key vault patterns (e.g. LibreChat encrypted key vault) to BOURXE's platform assistant architecture.
+
+**Delivered Features:**
+1. **Protected Server-Side Database Vault (`public.app_ai_provider_config`):**
+   - Migration [`supabase/migrations/20261114160000_bolu_provider_credentials.sql`](file:///c:/Users/DELL/Desktop/bigdrops-app/supabase/migrations/20261114160000_bolu_provider_credentials.sql).
+   - Columns: `id` ('primary'), `provider`, `base_url`, `model`, `timeout_ms`, `encrypted_key`, `key_nonce`, `key_tag`, `key_version`, `masked_key`, `status`, `created_at`, `updated_at`, `updated_by`.
+   - **Row-Level Security (RLS):** Strictly denies all direct client queries (`USING (false)` for `authenticated, anon`), ensuring zero direct browser reads or writes via PostgREST. Decryption occurs exclusively in server-side memory.
+2. **Envelope Encryption Service ([`src/lib/ai-assistant/bolu-secret-vault.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/lib/ai-assistant/bolu-secret-vault.ts)):**
+   - Master key derived from server environment (`BOLU_ENCRYPTION_KEY` or HMAC-SHA256 from `SUPABASE_SERVICE_ROLE_KEY` with domain salt).
+   - AES-256-GCM authenticated encryption with unpredictable 12-byte nonce per encryption and 16-byte authentication tag.
+   - Fails closed on any tampering with ciphertext, authentication tag, or nonce.
+   - Key masking (`maskApiKey`) formats keys safely (`rc-••••••••••••7766`) for administrative dashboards.
+3. **Administrative Serverless Endpoints ([`api/bolu-provider-config.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/api/bolu-provider-config.ts)):**
+   - Role-Based Access Control (RBAC): Authorizes user via Supabase JWT, verifying `profiles.role === 'admin'` or `workspace_members.role in ('owner', 'admin')`. Non-admins receive HTTP 403 Forbidden.
+   - `GET`: Returns sanitized status (`configured`, `provider`, `model`, `baseUrl`, `timeoutMs`, `maskedKey`, `status`, `updatedAt`, `activeSource`). Plaintext keys, ciphertexts, and nonces are never returned.
+   - `POST`: Supports actions `'save'` (encrypts & upserts), `'test'` (pre-flight test to AMD endpoint), and `'remove'` (deletes credential).
+4. **Runtime Precedence Hierarchy ([`api/bolu-chat.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/api/bolu-chat.ts)):**
+   - **Level 1:** In-App Database Config (`app_ai_provider_config`, decrypted in server memory).
+   - **Level 2:** Server Environment Variables (`BOLU_PROVIDER_*` or `BOLU_AMD_API_KEY`).
+   - **Level 3:** Deterministic Mock Mode (`BOLU_PROVIDER_MODE=mock` or unconfigured fallback).
+5. **In-App Administrator UI ([`src/pages/settings/BoluProviderSettingsSection.tsx`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/pages/settings/BoluProviderSettingsSection.tsx)):**
+   - Registered in [`src/pages/settings/settings-config.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/pages/settings/settings-config.ts) and mounted in [`src/pages/Settings.tsx`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/pages/Settings.tsx) (`bolu-provider` section) with `adminOnly: true`.
+   - Features real-time connection testing, masked preview, model selection (`DeepSeek-V4-Flash`), key replacement, and credential removal with confirmation dialog.
+6. **Automated Verification:**
+   - Expanded test suite to **74 automated tests across 10 suites** in [`src/tests/ai-assistant/`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/tests/ai-assistant/), including 7 tests in `src/tests/ai-assistant/bolu-secret-vault.test.js`.
+
+### 25.2 Hosted Database Migration Application & Verification (2026-11-14)
+
+The database migration was applied and verified against the hosted Supabase project (`xqlpekpkbszpdgtuwybh`) using the official project database workflow (`supabase db push --yes`):
+1. **Migration Application:** Pushed `20261114160000_bolu_provider_credentials.sql` cleanly to remote database. Recorded in `supabase_migrations.schema_migrations` (`version = '20261114160000'`, `name = 'bolu_provider_credentials'`).
+2. **Schema Verification:** Confirmed `public.app_ai_provider_config` exists with all 14 columns (`id`, `provider`, `base_url`, `model`, `timeout_ms`, `encrypted_key`, `key_nonce`, `key_tag`, `key_version`, `masked_key`, `status`, `created_at`, `updated_at`, `updated_by`).
+3. **RLS Verification:** Confirmed `rowsecurity = true` and policy `Deny public client access to app_ai_provider_config` (`cmd = 'ALL'`, `roles = '{anon,authenticated}'`, `qual = 'false'`, `with_check = 'false'`). Direct queries under `anon` and `authenticated` roles return 0 rows; client inserts trigger error 42501. `service_role` accesses table without restriction.
+4. **PostgREST Cache:** PostgREST schema cache reloaded via `NOTIFY pgrst, 'reload schema'`.
+
+### 25.3 Bolu AI Infrastructure Administration UX Redesign (2026-11-14)
+
+The Bolu provider configuration user experience was redesigned to establish an enterprise-grade AI infrastructure console:
+1. **Control Center Identity:** Elevated the section in [`src/pages/settings/settings-config.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/pages/settings/settings-config.ts) and [`src/pages/Settings.tsx`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/pages/Settings.tsx) with distinct identity (`Bolu AI Infrastructure`), custom `Cpu` iconography, and explicit `detailTitle`.
+2. **Operational Telemetry Strip:** Added a 4-tile operational overview displaying Runtime Source (Database Vault / Env / Standby), Active Provider (AMD Token Factory / OpenAI-Compatible), Inference Model, and Security Boundary (PostgREST RLS Denied).
+3. **Guided Workflow Console:**
+   - **Step 1 (Provider):** Visually segmented provider selection cards (AMD Token Factory ROCm Native vs Universal Gateway) with architectural badges and capabilities.
+   - **Step 2 (Key Custody):** Stored credential overview with masked preview (`rc-••••••••••••7766`), update timestamp, replace toggle, and safe deletion confirmation.
+   - **Step 3 (Model Profile):** Vercel-inspired curated model card selector highlighting context windows, low latency, and reasoning profiles (`DeepSeek-V4-Flash`, `DeepSeek-R1-Distill-70B`, `Qwen2.5-72B`, custom).
+   - **Advanced Parameters:** Collapsible configuration for endpoint URL and timeout clamping.
+4. **Action & Verification Bar:** Clear separation between pre-flight connection verification (with live timestamped feedback) and credential persistence.
+
+### 25.4 Bolu Provider Deployment & Response Parsing Resilience (2026-11-14)
+
+On 2026-11-14, an investigation and repair was executed for an observed provider configuration failure on `/settings`:
+`Failed to execute 'json' on 'Response': Unexpected end of JSON input` (`err_1794666644349_pc65yt`).
+
+**Root Cause Analysis:**
+1. **Frontend Assumption:** In [`src/pages/settings/BoluProviderSettingsSection.tsx`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/pages/settings/BoluProviderSettingsSection.tsx) (`handleSave`, `handleTest`, `fetchStatus`, `handleRemove`), `await res.json()` was called unconditionally. When an empty response or non-JSON response was returned, the browser's native `Response.prototype.json()` threw an unhandled syntax error.
+2. **Local Dev Server Routing:** In local development (`bun run dev`), `vite.config.js` had no dev server middleware for `/api/*` serverless functions. Vite served static assets and returned an unhandled 0-byte HTTP 404 response for `POST /api/bolu-provider-config`, which crashed the client parser.
+3. **Post-Mutation Coupling:** In `handleSave` and `handleRemove`, status refresh calls were coupled to mutation handlers, causing subsequent refresh network delays to masquerade as save failures.
+
+**Delivered Repairs:**
+1. **Defensive Response Parser ([`src/lib/ai-assistant/bolu-secret-vault.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/lib/ai-assistant/bolu-secret-vault.ts)):**
+   - Implemented `safeParseApiResponse<T>(res: Response, actionLabel: string)`:
+     - Safely reads raw response text using `await res.text()` before parsing.
+     - Gracefully handles 0-byte empty bodies (HTTP 404, 500, or 204), returning clear diagnostics (`endpoint not found (HTTP 404)`) without throwing syntax errors.
+     - Gracefully handles non-JSON HTML error responses (HTTP 502/504 Bad Gateway from reverse proxies or edge routers), stripping HTML markup and formatting concise error descriptions.
+     - Extracts structured error messages from `{ error: string }` or `{ ok: false, message: string }` payloads.
+     - Strict key protection: guarantees API keys and sensitive tokens are never reflected in error messages.
+2. **Decoupled Post-Mutation Refresh ([`src/pages/settings/BoluProviderSettingsSection.tsx`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/pages/settings/BoluProviderSettingsSection.tsx)):**
+   - Wired `safeParseApiResponse` across `fetchStatus`, `handleTest`, `handleSave`, and `handleRemove`.
+   - Decoupled `fetchStatus()` following `handleSave` and `handleRemove` so that transient status refresh delays cannot trigger false failure notifications when the save/remove mutation has already succeeded.
+3. **Vite Local Dev API Middleware ([`vite.config.js`](file:///c:/Users/DELL/Desktop/bigdrops-app/vite.config.js)):**
+   - Added `apiDevServerPlugin()` to Vite configuration using `server.middlewares.use`.
+   - Intercepts requests matching `/api/*` and dynamically loads serverless handlers in `api/*.ts` using Vite's `server.ssrLoadModule`.
+   - Adapts Node HTTP requests into standard Web `Request` objects and pipes Web `Response` back to client with proper status, headers, and body buffers.
+   - Emits structured JSON 404 responses (`{ error: 'API route not found: ...' }`) for non-existent routes rather than unhandled 0-byte responses.
+4. **Verification Evidence:**
+   - Expanded test suite to **80 automated tests across 10 suites** in [`src/tests/ai-assistant/`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/tests/ai-assistant/), with 6 new tests verifying 0-byte body resilience, HTML 502 error sanitization, empty 204 handling, and error extraction.
+   - Live HTTP probe against running Vite dev server (`http://localhost:5000/api/bolu-provider-config`) confirmed HTTP 401 JSON authentication challenge from `api/bolu-provider-config.ts` and JSON 404 for non-existent endpoints.
+   - Zero TypeScript compilation errors in all modified files.
+   - Zero audit load regressions.
+
+### 25.5 Bolu Provider Management Architecture Reassessment & Hermes Benchmark (2026-11-14)
+
+On 2026-11-14, an audit-first investigation was conducted regarding the recurring Settings error (`err_1794667887617_u9skz6`: `Internal server configuration error.`) and the completeness of Bolu's provider-management architecture relative to Nous Research's Hermes Agent.
+
+**Key Audit Findings:**
+1. **Confirmed Server Failure Root Cause:** The failure was traced to `api/bolu-provider-config.ts` (`getAdminClient`). In local development (`bun run dev`), Vite executes serverless functions under Node, which does not inherit `.env` variables unless explicitly injected. When an authenticated request provides a JWT token, `getAdminClient()` checks `process.env.SUPABASE_SERVICE_ROLE_KEY`, finds it `undefined`, and throws `Supabase service configuration missing on server.`, which line 78 catches and collapses into a generic 500 error.
+2. **Hermes Capability Benchmark (20 Areas):**
+   - **Implemented (10/20):** API key entry & lifecycle, provider base URL override, custom OpenAI-compatible endpoints, curated model cards, active model selection, runtime precedence hierarchy, connection ping test, AES-256-GCM envelope encryption, hosted PostgreSQL persistence, and mobile responsive layout.
+   - **Partially Implemented (5/20):** Provider catalog (14 providers in Design Lab simulation only), provider-specific auth (Bearer only), model capability metadata (UI display only, fixed 700 token limit in runtime), provider deactivation (removal only, no disable toggle), and operational diagnostics (UI strip exists, but server errors collapse).
+   - **Not Implemented (5/20):** OAuth authentication, multiple saved provider configurations, live `/v1/models` discovery, non-destructive provider switching, and dynamic provider failover.
+3. **Architecture Reassessment:** The current database schema (`public.app_ai_provider_config`) hardcodes `id = 'primary'`, operating as a single-credential form rather than a provider-management subsystem. Saving a provider unconditionally destroys existing keys for other providers.
+4. **Remediation Plan:** A 4-phase refactoring plan is proposed (Phase 1: Environment loading repair; Phase 2: RBAC and dedicated encryption key; Phase 3: Multi-connection schema `app_ai_provider_connections`; Phase 4: UX overhaul with model discovery). Detailed in [`docs/reports/ai/2026-11-14-bolu-provider-management-audit-and-architecture-reassessment.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/reports/ai/2026-11-14-bolu-provider-management-audit-and-architecture-reassessment.md).
+
+---

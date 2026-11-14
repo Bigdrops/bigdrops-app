@@ -4,40 +4,51 @@
 - **Product:** Bolu Conversational Business Operations Assistant
 - **Writing Standard:** ASD-STE100 Simplified Technical English
 
-## Authority and requirement disposition — 2026-11-13
+## Authority and requirement disposition — Reconciled 2026-11-14
 
-The product owner approves Bolu as a conversational business operations assistant with read and write capabilities. Read-only Business Intelligence is one capability, not the complete product. The user must approve each proposed change before it is applied and must separately confirm before a document is saved or filed.
+DEC-28 approves Bolu as a conversational business operations assistant with read and write capabilities. Read-only Business Intelligence is one capability, not the complete product. Users must approve each proposed change before it is applied and separately confirm before a document is saved or filed.
 
-This direction does not approve every detailed requirement below. The existing FR-01–FR-22 remain preserved as proposed requirements pending reconciliation. The following disposition applies:
+On 2026-11-14, DEC-30 records the completed application-side implementation and verification (against a deterministic mock boundary with 49 passing tests) for the reference Invoice document family. Live provider connectivity and other document families remain deferred.
+
+The following disposition applies:
 
 | Requirement | Disposition | Note |
 |---|---|---|
-| FR-01 | REFINED — proposed | Shared assistant access must work from approved surfaces. Exact invoice-form layout and 360 px visibility need UX decision. |
-| FR-02 | PROPOSED | Streaming is a candidate behavior. Provider support and response-time target need evidence. |
-| FR-03 | REFINED — proposed | Use application-owned capabilities for reads and writes. The model may propose structured changes; it does not directly write application state. |
-| FR-04 | APPROVED PRINCIPLE; details proposed | User approval is required before each proposed change is applied. Card layout and exact interaction need acceptance design. |
-| FR-05 | APPROVED PRINCIPLE; details proposed | Existing calculation engines and system-owned values remain authoritative. The exact writable input set is document-specific. |
-| FR-06 | PROPOSED | Contradiction handling is useful, but supported fields and clarification behavior need definition. |
-| FR-07 | PROPOSED | Title, notes, and terms proposals need business-approved defaults and document-specific scope. |
-| FR-08 | APPROVED PRINCIPLE; details proposed | Bolu must not invent missing required values. Existing validators remain authoritative. The required-question flow needs document-specific definition. |
-| FR-09 | REFINED — approved principle | Explicit confirmation is required before persistence. The phrase “file it” must prepare, not save. Exact preview and save-path behavior needs design. |
-| FR-10 | PROPOSED | Provider chain, order, retry policy, and model/tool support remain unapproved and unverified. |
-| FR-11 | PROPOSED | Dynamic quota display requires provider evidence and operational design. |
-| FR-12 | UNRESOLVED | Credential custody, storage, browser support, and provider account ownership require a security/product decision. |
-| FR-13 | UNRESOLVED | External-provider disclosure, consent, default state, and feature availability require approval. |
-| FR-14 | APPROVED PRINCIPLE; details proposed | Manual workflows must remain usable when Bolu is unavailable. Acceptance coverage needs implementation-specific tests. |
-| FR-15 | UNRESOLVED | Trial toggle and rollout audience are not approved by the product direction. |
-| FR-16 | REFINED — approved principles | Calculation authority, authorization, tenant isolation, approval-before-apply, confirmation-before-save, and no unapproved money movement are approved. Per-trial storage rule remains unresolved. |
-| FR-17 | APPROVED PRINCIPLE; details proposed | One shared assistant architecture must support multiple capabilities. Whether all document families ship together is unresolved. |
-| FR-18 | PROPOSED | The 14-provider catalog is not approved for the first release. |
-| FR-19 | PROPOSED | Live model discovery is not approved for the first release. |
-| FR-20 | PROPOSED | Model switching UI is not approved for the first release. |
-| FR-21 | PROPOSED | Custom providers are not approved for the first release. |
-| FR-22 | PROPOSED | Four viewport layouts remain a design proposal; production responsive acceptance must be approved. |
-
-The PRD owner must approve detailed requirements before implementation. “Approved principle” does not approve a specific provider, layout, document pack, trial, or acceptance value.
-
----
+| FR-01 | RETAINED — proposed | Shared assistant access works from dashboard and bottom sheet. Mobile responsive visibility verified. |
+| FR-02 | IMPLEMENTED & TESTED (Live Adapter) | Streaming SSE tokens and buffered JSON normalized in `api/bolu-chat.ts` and `bolu-runtime.ts`. Verified with automated integration tests. |
+| FR-03 | IMPLEMENTED & TESTED (Live & Mock) | Implemented in `bolu-operations.ts` (`create-document`, `modify-document`). Live model returns structured JSON; app validates and executes. |
+| FR-04 | IMPLEMENTED & TESTED (Live & Mock) | Two-gate lifecycle implemented in `AssistantSheet.tsx` and `bolu-reducer.ts`. Gate 1: User explicitly approves proposal card before apply. |
+| FR-05 | IMPLEMENTED & TESTED (Live & Mock) | Existing calculation engine (`Calculations.ts` / `calculateDocument`) strictly authoritative. Model math stripped. |
+| FR-06 | IMPLEMENTED (Mock & Live Prompts) | Contradiction detection handled in prompt rules; model asks for clarification instead of guessing. |
+| FR-07 | PROPOSED — needs definition | Title, notes, and terms proposals need business-approved defaults and document-specific scope. |
+| FR-08 | IMPLEMENTED & TESTED (Live & Mock) | Required field validation implemented. Missing customer or line items trigger explicit questions, never hallucinated values. |
+| FR-09 | IMPLEMENTED & TESTED (Live & Mock) | Gate 2 explicit confirmation required before persistence. "File it" prepares save preview; persistence executes via `bolu-document-service.ts`. |
+| FR-10 | IMPLEMENTED (Configurable Adapter) | Configurable OpenAI-compatible provider adapter (`api/bolu-chat.ts`, `bolu-provider.ts`) with timeout and error classification implemented. |
+| FR-11 | PROPOSED — needs design | Dynamic quota display requires provider evidence and operational design. |
+| FR-12 | IMPLEMENTED (Server-Only Architecture) | Credential custody strictly server-side (`process.env`). Zero exposure to browser code. |
+| FR-13 | UNRESOLVED — product decision | External-provider disclosure, consent, default state, and feature availability require approval. |
+| FR-14 | IMPLEMENTED & TESTED (Live & Mock) | Manual workflows remain completely authoritative and usable when Bolu is off, broken, or rejected. |
+| FR-15 | UNRESOLVED — product decision | Trial toggle and rollout audience are not approved by the product direction. |
+| FR-16 | IMPLEMENTED & TESTED (Live & Mock) | Calculation authority, authorization, tenant isolation, two-gate controls, idempotency, and persistence atomicity implemented & verified. |
+| FR-17 | PARTIAL — invoice reference | Shared assistant architecture implemented for invoices. Remaining seven document families deferred. |
+| FR-18 | PROPOSED — first release scope | The 14-provider catalog is not approved for the first release. |
+| FR-19 | PROPOSED — first release scope | Live model discovery is not approved for the first release. |
+| FR-20 | PROPOSED — first release scope | Model switching UI is not approved for the first release. |
+| FR-21 | PROPOSED — first release scope | Custom providers are not approved for the first release. |
+| FR-22 | PROPOSED — design review | Four viewport layouts remain a design proposal; production responsive acceptance must be approved. |
+| FR-29 | PROPOSED — 2026-11-14 | One application-owned AI engine with interchangeable provider/model pool. Automatic selection and failover. Not approved for first release. |
+| FR-30 | PROPOSED — 2026-11-14 | Dynamic model inventory: add, deprioritise or retire models as availability, cost, reliability or terms change. Not approved for first release. |
+| FR-31 | PROPOSED — 2026-11-14 | Free-first eligibility ranking; paid inference denied by default. Not approved for first release. |
+| FR-32 | PROPOSED — 2026-11-14 | Capability-aware selection; unknown capabilities are not treated as confirmed. Not approved for first release. |
+| FR-33 | PROPOSED — 2026-11-14 | Bounded failover that preserves conversation context; no endless retries. Not approved for first release. |
+| FR-34 | PROPOSED — 2026-11-14 | Universal document-intelligence pipeline (source intake → faithful observation → normalization → reconciliation → calculation → review → approved action). Not approved for first release. |
+| FR-35 | PROPOSED — 2026-11-14 | Canonical objects (SourceDocument, ExtractedObservation, NormalizedItem, MatchCandidate, Calculation, ReviewDecision) and evidence classification (extracted, calculated, inferred, matched, unverified, conflicting). Not approved for first release. |
+| FR-36 | PROPOSED — 2026-11-14 | Workflow status lifecycle (not_found → information_found → possible_match → awaiting_confirmation → confirmed → priced_verified); AI never self-promotes to confirmed. Not approved for first release. |
+| FR-37 | PROPOSED — 2026-11-14 | Source traceability and preservation; conflicting observations retained; no silent overwrite. Not approved for first release. |
+| FR-38 | PROPOSED — 2026-11-14 | Matching considers description, specification, unit, quantity and identifiers; serial number alone never confirms; family-specific extensible rules. Not approved for first release. |
+| FR-39 | APPROVED PRINCIPLE — 2026-11-14; details proposed | Application owns arithmetic; inputs, formula, result and currency/unit basis recorded; no verified extension under unit ambiguity; provisional vs verified amounts distinct. |
+| FR-40 | PROPOSED — 2026-11-14 | Attachment intake, application-owned; external AI to structured Markdown is interchange only; no provider dependence; no invented values; formats, limits, retention, providers and privacy unresolved. Not approved for first release. |
+| FR-41 | PROPOSED — 2026-11-14 | Document-family extensions; solar-pump BOQ is the first acceptance case; no first-release family declared. Not approved for first release. |
 
 ## FR-01 - Conversation Surface On The Invoice Form
 
@@ -299,6 +310,207 @@ The assistant must render in four layouts that share one state model.
 - Enter sends, Shift and Enter adds a line, and an input method editor composition does not send.
 - The money rule does not change with the layout. An accepted card applies once. A rejected card changes nothing.
 
+## FR-29 - One Engine, Interchangeable Providers And Models (Proposed - 2026-11-14)
+
+BOURXE must expose one conversational AI experience. Provider and model details stay behind the provider architecture. Conversation state, business context, authorization and tool permissions must not change when the engine selects a different model.
+
+This requirement records the approved product direction. It does not approve an implementation. What exists today is one Bolu provider path (AMD on a server boundary), a legacy static failover path, and a Design Lab simulation. None of these is the dynamic engine.
+
+**Acceptance criteria (proposed)**
+
+- Provider-specific details stay behind the existing provider architecture.
+- Conversation, context, authorization and tool permissions survive a model switch.
+- The user sees one AI experience.
+
+## FR-30 - Dynamic Model Inventory (Proposed - 2026-11-14)
+
+The engine must maintain an inventory of available models across supported providers. Each entry carries metadata: provider identity, model identifier, availability, context window, modalities, tool-calling support, structured-output support, streaming support, capability limitations, free-tier status when verified, and operational health. Free-tier status, pricing, quotas, availability and terms are dynamic. Providers and models may be added, deprioritised or retired without redesigning the engine.
+
+**Acceptance criteria (proposed)**
+
+- Adding a declared model is a data change, not an architectural project.
+- A model that fails its eligibility or health checks is removed from selection without a release-blocking redesign.
+- Free-tier claims are treatments, not guarantees. Each carries a verification date.
+
+## FR-31 - Free-First, Paid Denied By Default (Proposed - 2026-11-14)
+
+The engine must prefer verified free models that meet the request requirements. Paid models must not be selected unless an owner-authorised policy permits it. Zero token price alone must never decide selection. Advertised cost, account entitlement, quotas, promotions and rate limits are distinct conditions. The engine must treat them as distinct.
+
+**Acceptance criteria (proposed)**
+
+- Selection ranks terms-eligible, healthy, free models first.
+- A paid model is selected only under an explicit owner policy.
+- A zero-price listing with unknown health or terms is not eligible.
+
+## FR-32 - Capability-Aware Selection (Proposed - 2026-11-14)
+
+Selection must consider required capabilities: tools, structured output, modalities, context window and streaming. Unknown capabilities must not count as confirmed. Models without a required capability are ineligible for that request.
+
+**Acceptance criteria (proposed)**
+
+- A request that requires tool calling never selects a model whose tool support is unverified or false.
+- A request that requires a larger context window never selects a model declared below it.
+
+## FR-33 - Bounded Failover (Proposed - 2026-11-14)
+
+When a model fails — connection error, outage, rate limit, repeated timeout, invalid response, or missing capability — the engine must attempt another eligible model. The attempt must be bounded. Retry-After must be respected when supplied. Authorization failures must not retry indefinitely. Malformed user requests must not trigger provider switches. Failover must preserve conversation context where feasible.
+
+**Acceptance criteria (proposed)**
+
+- Every attempt is bounded per turn.
+- A 429 with a Retry-After header cools the model instead of hammering it.
+- A malformed request stops instead of walking the pool.
+- The user can see which model answered and why a failover happened.
+
+## FR-42 - In-App Administrator Secret Management & Protected Storage (Delivered - 2026-11-14)
+
+Platform administrators must be able to configure, verify, rotate, and remove the shared enterprise AI inference credentials directly within the application's Settings interface without accessing cloud deployment consoles. Credentials must be protected at rest using envelope encryption and segregated from ordinary application database access.
+
+**Acceptance criteria**
+
+- **In-App Administration:** An authorized administrator (`profiles.role === 'admin'` or `workspace_members.role in ('owner', 'admin')`) can configure provider base URL, model identifier, and API key in Settings. Non-admin users cannot access or view configuration interfaces.
+- **Envelope Encryption at Rest:** The secret key is encrypted at rest using AES-256-GCM with a server-isolated master key outside the database. Plaintext keys are never stored in database records.
+- **Zero Client Read Exposure:** Row-Level Security explicitly denies all direct browser queries via PostgREST. Decryption occurs exclusively in server-side memory.
+- **Sanitized Public Responses:** Administrative status queries return masked key strings (e.g. `rc-••••••••••••7766`); ciphertexts, nonces, tags, and plaintext keys are never returned to the frontend.
+- **Pre-Flight Connection Test:** Administrators can run live verification tests against the provider endpoint before saving or using active credentials.
+- **Runtime Precedence Hierarchy:** Inference resolution strictly enforces: In-App Database Config > Server Environment Variables > Deterministic Mock Mode.
+
+
+## FR-34 - Universal Document-Intelligence Pipeline (Proposed — 2026-11-14)
+
+Bolu must process business documents and attachments through one consistent pipeline:
+
+1. Source intake: the application accepts source documents and attachments, preserves them, and records their identity and processing status.
+2. Faithful extraction: the system records source observations without embellishment.
+3. Normalization: observations are normalized into typed business records, with explicit nulls for unknown values and references to the supporting observations.
+4. Reconciliation: records are matched across sources; match candidates are proposed for review.
+5. Deterministic calculations: the application computes authoritative arithmetic from recorded inputs.
+6. Human review: a person confirms, corrects, rejects or approves.
+7. Business action: approved creation or modification of business documents.
+
+The pipeline is universal. Document families add extensions. No family gets its own separate architecture.
+
+**Acceptance criteria (proposed)**
+
+- Every stage above is traceable from input to approved output.
+- The canonical objects are conceptual contracts, not schema decisions. Database design is a separate, later decision.
+- Any stage may be entered only with the evidence it requires.
+
+## FR-35 - Canonical Objects And Evidence Classification (Proposed — 2026-11-14)
+
+The pipeline works with six conceptual canonical objects. These are contracts, not tables.
+
+| Object | Meaning |
+|---|---|
+| SourceDocument | Identity, source type, original reference, author/supplier where stated, date where stated, processing status. |
+| ExtractedObservation | Faithful source content: original wording, extracted values, source location/reference, extraction confidence or uncertainty where supported. |
+| NormalizedItem | Standardized business representation. Unknown values are explicit nulls. Each field references the observations that support it. |
+| MatchCandidate | Proposed relationship between records. Matching evidence, unresolved differences, confidence and review state. |
+| Calculation | Explicit inputs, formula, result, currency/unit basis, reproducibility. |
+| ReviewDecision | Human confirmation, rejection, correction or approval. Traceable to affected evidence and records. |
+
+Evidence classification is separate from workflow status. Information items are classified as one of:
+
+- `extracted` — taken from a source as stated.
+- `calculated` — derived by the application from stated inputs.
+- `inferred` — interpreted, not stated.
+- `matched` — proposed relationship between records.
+- `unverified` — present but not confirmed.
+- `conflicting` — sources disagree and the conflict is retained.
+
+Classifications describe the evidential nature of information. They are not workflow statuses.
+
+**Acceptance criteria (proposed)**
+
+- An item carries exactly one evidence classification.
+- Conflicting source observations are retained, side by side, until a human resolves them.
+- An inferred item is never displayed or stored as extracted fact.
+
+## FR-36 - Workflow Status Lifecycle (Proposed — 2026-11-14)
+
+Workflow status describes review progress, not evidence quality. The lifecycle is:
+
+`not_found` → `information_found` → `possible_match` → `awaiting_confirmation` → `confirmed` → `priced_verified`
+
+`priced_verified` additionally requires: the match is confirmed, the price basis and unit are unambiguous, and the calculation inputs are verified.
+
+Transitions require the evidence and the review action their name implies. No AI-generated interpretation may silently promote itself to `confirmed`. Promotion to `confirmed` requires a human review decision. Promotion of a conflicting pair requires the conflict to be resolved by a person and recorded.
+
+**Acceptance criteria (proposed)**
+
+- `confirmed` is never reached without a ReviewDecision.
+- `priced_verified` is never reached while any required input is `unverified`, `conflicting` or unit-ambiguous.
+- Workflow status and evidence classification are queryable separately.
+
+## FR-37 - Source Traceability And Preservation (Proposed — 2026-11-14)
+
+- Original sources are preserved unchanged. The system never overwrites source evidence.
+- Every normalized field traces to its supporting observations.
+- Conflicting observations are retained with their sources.
+- Extracted facts, human corrections and inferred interpretations are distinguishable at every stage.
+- A human correction is a new review decision, recorded alongside the evidence it corrects, never a silent edit of the source.
+
+**Acceptance criteria (proposed)**
+
+- Deleting or altering a source is impossible inside the workflow.
+- A normalized value can be traced back to its source location and original wording.
+- A corrected value shows both the original evidence and the correcting decision.
+
+## FR-38 - Matching And Reconciliation (Proposed — 2026-11-14)
+
+Matching considers descriptions, specifications, units, quantities and source identifiers. A shared serial number alone must not establish `confirmed`. A possible match stays a candidate until the required review or confirmation occurs. Matching rules are document-family-specific and extensible. Candidates carry evidence, differences, confidence and review state.
+
+**Acceptance criteria (proposed)**
+
+- No candidate reaches `confirmed` on one identifier alone.
+- Every candidate lists its supporting evidence and unresolved differences.
+- A low-confidence match is presented as a question to the user, not resolved silently.
+
+## FR-39 - Deterministic Calculations (Approved Principle — 2026-11-14; details proposed)
+
+The application owns authoritative arithmetic. AI may extract or suggest calculation inputs but is never the authority for financial totals. Every Calculation preserves its inputs, formula, result, and currency/unit basis, and is reproducible. Where the unit, quantity basis or price basis is ambiguous, no verified extension may be calculated or claimed — only provisional ones, labelled as such. Provisional amounts are never presented as commercially verified totals.
+
+**Acceptance criteria (proposed)**
+
+- A total is reproducible from its recorded inputs and formula alone.
+- A calculation whose unit basis is ambiguous is labelled provisional and cannot reach `priced_verified`.
+- No model output can overwrite a system calculation.
+
+## FR-40 - Attachment Intake And External-AI Interchange (Proposed — 2026-11-14)
+
+Attachment intake is application-owned and separate from provider capabilities. No provider is assumed to support file upload, image understanding, or document parsing. DEC-33 records the intake direction; these decisions stay unresolved: supported file types, size limits, retention and deletion policy, extraction provider selection, privacy policy, and consent.
+
+External AI may convert attachments into structured Markdown. That Markdown is an interchange representation, not the business data model. Bolu must validate and normalize all incoming information before it enters business workflows. Uncertainty, omissions and source references are preserved; an external model may not invent missing values. Attachment support must not depend on one provider.
+
+**Acceptance criteria (proposed)**
+
+- An attachment that cannot be processed fails loudly and preserves the source.
+- External-Markdown output is validated and normalized before use; invented values are rejected or flagged.
+- The pipeline works with the attachment lane disabled.
+
+## FR-41 - Document-Family Extensions And The Solar-Pump BOQ Acceptance Case (Proposed — 2026-11-14)
+
+The universal contract supports invoice, quotation, purchase order, waybill, CSR, RFQ, cost sheet and letter as candidate families with family-specific semantics, fields, validation and permissions. Similar-looking lines or supplier/customer roles are never interchangeable. No family is declared first-release scope by this requirement.
+
+The solar-pump BOQ and supplier-message reconciliation is the first acceptance case, not the basis of a BOQ-only architecture. Acceptance requires all of the following:
+
+- 300W panel pricing with New and Tokunbo alternatives, including an overwritten New price.
+- Mounting-structure component offers that may relate to a BOQ lot but do not prove the complete scope.
+- 10mm² cable candidate matches with uncertain handwritten specification digits.
+- 4mm cable candidate match requiring specification confirmation.
+- MC4 pricing expressed per individual item where the BOQ quantity is in pairs.
+- Supplier price entries carrying serial numbers without descriptions.
+- Missing price units and ambiguous price bases.
+- Civil materials mentioned without complete pricing.
+- Calculations that remain provisional while the match or unit basis is unverified.
+
+**Acceptance criteria (proposed)**
+
+- The system invents no specification and chooses no product condition silently.
+- Match confidence is never overstated.
+- Provisional amounts are never presented as confirmed commercial totals.
+- The solar-pump case passes without any BOQ-specific redesign of the universal pipeline.
+
 ---
 
 ## FR-23 - Read Authorized Business Records (Approved Capability Principle)
@@ -307,10 +519,10 @@ Bolu must answer supported questions about existing business records. The applic
 
 **Acceptance criteria**
 
-- A read request checks the caller’s current permission before data retrieval.
+- A read request checks the caller's current permission before data retrieval.
 - The application returns only the minimum fields needed for the request.
 - Invoice status and settlement values come from authoritative application or database sources.
-- Quotation and other document status values use the document’s existing status authority.
+- Quotation and other document status values use the document's existing status authority.
 - The response distinguishes retrieved facts, missing information, ambiguity, and unsupported requests.
 - Financial values are not calculated by model output or prompt logic.
 - The initial document families and query coverage remain a product decision.
@@ -379,3 +591,68 @@ The runtime must distinguish retrieval, proposal, apply, and persistence states.
 - A stale record is re-read and revalidated before apply or save.
 - A partial failure reports which stage failed and preserves recoverable draft state.
 - Exact retry and idempotency policy remains an architecture decision.
+
+## FR-29 - One Engine, Interchangeable Providers And Models (Proposed - 2026-11-14)
+
+BOURXE must expose one conversational AI experience. Provider and model details stay behind the provider architecture. Conversation state, business context, authorization and tool permissions must not change when the engine selects a different model.
+
+This requirement records the approved product direction. It does not approve an implementation. What exists today is one Bolu provider path (AMD on a server boundary), a legacy static failover path, and a Design Lab simulation. None of these is the dynamic engine.
+
+**Acceptance criteria (proposed)**
+
+- Provider-specific details stay behind the existing provider architecture.
+- Conversation, context, authorization and tool permissions survive a model switch.
+- The user sees one AI experience.
+
+## FR-30 - Dynamic Model Inventory (Proposed - 2026-11-14)
+
+The engine must maintain an inventory of available models across supported providers. Each entry carries metadata: provider identity, model identifier, availability, context window, modalities, tool-calling support, structured-output support, streaming support, capability limitations, free-tier status when verified, and operational health. Free-tier status, pricing, quotas, availability and terms are dynamic. Providers and models may be added, deprioritised or retired without redesigning the engine.
+
+**Acceptance criteria (proposed)**
+
+- Adding a declared model is a data change, not an architectural project.
+- A model that fails its eligibility or health checks is removed from selection without a release-blocking redesign.
+- Free-tier claims are treatments, not guarantees. Each carries a verification date.
+
+## FR-31 - Free-First, Paid Denied By Default (Proposed - 2026-11-14)
+
+The engine must prefer verified free models that meet the request requirements. Paid models must not be selected unless an owner-authorised policy permits it. Zero token price alone must never decide selection. Advertised cost, account entitlement, quotas, promotions and rate limits are distinct conditions. The engine must treat them as distinct.
+
+**Acceptance criteria (proposed)**
+
+- Selection ranks terms-eligible, healthy, free models first.
+- A paid model is selected only under an explicit owner policy.
+- A zero-price listing with unknown health or terms is not eligible.
+
+## FR-32 - Capability-Aware Selection (Proposed - 2026-11-14)
+
+Selection must consider required capabilities: tools, structured output, modalities, context window and streaming. Unknown capabilities must not count as confirmed. Models without a required capability are ineligible for that request.
+
+**Acceptance criteria (proposed)**
+
+- A request that requires tool calling never selects a model whose tool support is unverified or false.
+- A request that requires a larger context window never selects a model declared below it.
+
+## FR-33 - Bounded Failover (Proposed - 2026-11-14)
+
+When a model fails — connection error, outage, rate limit, repeated timeout, invalid response, or missing capability — the engine must attempt another eligible model. The attempt must be bounded. Retry-After must be respected when supplied. Authorization failures must not retry indefinitely. Malformed user requests must not trigger provider switches. Failover must preserve conversation context where feasible.
+
+**Acceptance criteria (proposed)**
+
+- Every attempt is bounded per turn.
+- A 429 with a Retry-After header cools the model instead of hammering it.
+- A malformed request stops instead of walking the pool.
+- The user can see which model answered and why a failover happened.
+
+## FR-42 - In-App Administrator Secret Management & Protected Storage (Delivered - 2026-11-14)
+
+Platform administrators must be able to configure, verify, rotate, and remove the shared enterprise AI inference credentials directly within the application's Settings interface without accessing cloud deployment consoles. Credentials must be protected at rest using envelope encryption and segregated from ordinary application database access.
+
+**Acceptance criteria**
+
+- **In-App Administration:** An authorized administrator (`profiles.role === 'admin'` or `workspace_members.role in ('owner', 'admin')`) can configure provider base URL, model identifier, and API key in Settings. Non-admin users cannot access or view configuration interfaces.
+- **Envelope Encryption at Rest:** The secret key is encrypted at rest using AES-256-GCM with a server-isolated master key outside the database. Plaintext keys are never stored in database records.
+- **Zero Client Read Exposure:** Row-Level Security explicitly denies all direct browser queries via PostgREST. Decryption occurs exclusively in server-side memory.
+- **Sanitized Public Responses:** Administrative status queries return masked key strings (e.g. `rc-••••••••••••7766`); ciphertexts, nonces, tags, and plaintext keys are never returned to the frontend.
+- **Pre-Flight Connection Test:** Administrators can run live verification tests against the provider endpoint before saving or using active credentials.
+- **Runtime Precedence Hierarchy:** Inference resolution strictly enforces: In-App Database Config > Server Environment Variables > Deterministic Mock Mode.

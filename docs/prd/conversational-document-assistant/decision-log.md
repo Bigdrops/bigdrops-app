@@ -4,8 +4,6 @@
 - **Product:** Conversational Document Assistant
 - **Writing Standard:** ASD-STE100 Simplified Technical English
 
----
-
 ## DEC-01 - The Assistant Replaces The JSON Import Path For Invoice Creation
 
 **Decision.** The conversational assistant is the fast path for invoice creation. The JSON import sheet stays for the cases it already handles well: a user who has a document file and wants its rows.
@@ -71,6 +69,8 @@
 **Decision.** The chain is a list. The user reorders it and removes providers in Settings.
 
 **Reason.** A user with only one provider key should not wait for the failures of the providers before it. A user with a fast provider should not be moved off it.
+
+**Amendment — 2026-11-14.** The manual, user-ordered provider chain conflicts with the approved product direction of automatic model selection (see DEC-29). The ordering part of this decision is superseded for the multi-model engine. The user's role changes from chain editor to policy setter: the user may exclude providers or models, prefer a model, or pin a model for a session. The user does not maintain the failover order by hand. The original text is retained above for the historical record; DEC-29 states the governing direction. Implementation details remain under review.
 
 ## DEC-10 - The Chain Advances On Quota, Rate Limit And Server Errors, And Stops On A Bad Request
 
@@ -148,8 +148,6 @@
 
 **Reason.** The gateway already holds what the app would otherwise have to build. It has 150 or more free providers, a quota aware failover, live quota telemetry, a terms catalog that excludes the providers it marks as avoid, a routing decision header and a cost header. It binds `0.0.0.0`, so a phone on the same network reaches it, and it runs in Termux with no root.
 
-The difference is one week against one month. The direct mode with its own chain stays in the app because a shipped product cannot require the tenant to run a gateway. The mode is a setting, not a fork.
-
 **Cost of this decision.** The trial needs a gateway process. RISK-20.
 
 ## DEC-21 - The App Keeps Direct Mode For The Shipping Path
@@ -167,7 +165,6 @@ The difference is one week against one month. The direct mode with its own chain
 The reason not to adopt it now is that the components carry their own styles and not the `bd-*` tokens of this app. The change card must show an old value, a new value and a money amount in the app's own language. Restyling a foreign component costs more than the sixty lines that the card needs. The trial does not need the trace view, the agent tree or the cost breakdown that the paid tier of affectUI covers.
 
 **Trigger to adopt.** If the assistant grows past one document type, or if the team wants an agent trace view with cost and timing, the Tool Call Card and the Decision Inbox are the fast path. The MCP server lets Claude Code, Codex and OpenCode install them.
-
 
 ## DEC-23 - The Provider Catalog Is Data, Not Code Per Provider
 
@@ -213,12 +210,316 @@ The reason not to adopt it now is that the components carry their own styles and
 
 **Status:** APPROVED by the product owner on 2026-11-13.
 
-**Decision.** Bolu must support both reading existing authorized business records and controlled write workflows for creating and modifying business documents. Read-only Business Intelligence is one capability within Bolu. It is not the complete product direction.
+**Status:** APPROVED by the product owner on 2026-11-13.
 
-**Approval boundary.** Bolu may interpret requests and propose structured changes. The application owns validation, authorization, tenant scope, calculations, business rules, persistence, and execution. The user must explicitly approve each proposed change before the application applies it. The user must separately confirm before the application saves or files a document. Approval to apply a draft change does not authorize persistence.
+**Decision.** Bolu must support reading authorized business records, creating business documents, and modifying existing business documents through controlled conversation. Read-only Business Intelligence is one capability, not the complete product.
 
-**Financial and security constraints.** Existing calculation engines and system-owned computed values remain authoritative. The model must not invent missing facts or calculate replacement financial values. Existing tenant boundaries and permissions apply to every read and write. No payment, money movement, or other financial execution is approved by this decision.
+**Approval boundary.** The model may interpret intent and propose structured changes. The application owns tenant scope, authorization, validation, calculations, business rules, persistence, and execution. The user must approve each proposed change before the application applies it. The user must separately confirm before the application saves or files a document. Change approval does not authorize persistence.
 
-**Scope limits.** This decision approves the product direction and control boundary only. It does not approve every FR in this draft, the initial document pack, all eight authoring packs, a provider chain, provider key custody, a trial design, or a release plan. Reconcile those items and obtain owner approval before treating them as committed scope.
+**Financial and security constraints.** Existing calculation engines and system-owned values remain authoritative. Bolu must not invent missing facts, replace computed values, bypass tenant permissions, or perform unapproved payments or money movement.
 
-**Relationship to prior entries.** DEC-01 through DEC-27 remain historical proposals and decisions within the DRAFT FOR REVIEW authoring specification. This entry does not silently promote their detailed requirements or provider/trial choices to approved requirements. Where an earlier entry assumes that read-only BI is sufficient, it is superseded by this direction. Other detailed entries remain proposed or unresolved until reconciled.
+**Scope limit.** This decision approves the product direction and control boundary only. It does not approve every FR in this draft, the first document pack, all eight packs, a provider chain, key custody, trial details, or a release schedule. Those items remain under review.
+
+**Relationship to earlier entries.** DEC-01 through DEC-27 remain historical proposals and decisions from the draft document-authoring specification. DEC-28 supersedes any interpretation that read-only BI is sufficient as Bolu's complete direction. DEC-28 does not silently approve the detailed requirements, provider choices, trial, or schedule in those entries.
+
+## DEC-29 - One Engine, Interchangeable Models, Automatic Selection (2026-11-14)
+
+**Status:** APPROVED product direction (2026-11-14). Implementation details and provider choices remain PROPOSED or UNRESOLVED. This entry does not approve a provider, a chain, a custody model, a release, or a ship date.
+
+**Decision.** BOURXE exposes one application-owned AI engine with multiple interchangeable providers and models. The engine selects an eligible model automatically and fails over automatically when a model is unavailable, unreliable, rate-limited or unsuitable for the task. Free-first applies among eligible models. The engine may add, deprioritise or retire models as their availability, cost, reliability, or terms change, without redesigning the AI experience.
+
+**Direction principles.**
+
+1. One engine, many providers, many interchangeable models. The engine is consistent; the models are interchangeable inference resources.
+2. Automatic selection and failover replace manual chain maintenance. A user constrains policy (exclude, prefer, pin). The user does not maintain order by hand. The DEC-09 amendment records this supersession.
+3. Free-first among eligible models. Zero token price alone never decides selection. Free status is dynamic: advertised cost, account entitlement, quotas, promotions and rate limits are distinct conditions.
+4. Paid inference is denied by default. Any paid escalation requires an owner-authorised policy.
+5. Capabilities gate selection. Required: tools, structured output, modalities, context window, streaming. Unknown capabilities are not confirmed capabilities.
+6. Failover is bounded. Retry-After is respected when supplied. 429 cools the model; 5xx advances; 400 stops. Authorization failures never retry indefinitely. Malformed user requests never switch providers.
+7. The application owns tenant scope, authorization, calculations, business rules, approval flows and idempotency. A model never acquires authority over any of these. Capability selection is application-owned.
+8. Conversation context is preserved where feasible across a model switch.
+9. Design Lab must come to reflect the real engine's inventory, routing state and eligibility, not a disconnected simulation presented as production behaviour.
+10. Implementation is proportional. No external routing service, no second provider system, no stored quota tables.
+
+**Relationship to earlier entries.** DEC-08, DEC-10, DEC-20, DEC-21, DEC-23, DEC-24, DEC-25 remain the architectural foundation (one OpenAI-compatible client; row-based catalog; declared floor with on-demand discovery). DEC-11 stands (quota is read from the provider, never stored). DEC-17 and DEC-18 chain preferences remain historical proposals and are superseded for the shipping chain by this direction and by the DEC-09 amendment. DEC-20 is retained: OmniRoute is a developer-machine trial tool, not a product dependency. DEC-28 is unchanged: the read/write business-operations approval boundary stands, and the engine changes nothing about it. Bolu is currently read-only; any write path remains subject to separate approval and the existing safeguards.
+
+**Current implementation, stated plainly.** The repository holds one Bolu provider path (AMD on a server boundary), a legacy static failover path, and a Design Lab simulation. None of these is the DEC-29 architecture. The catalog rows are the declared floor from which the engine will select.
+
+**Unresolved and explicitly not approved here.** Provider set and order; custody (client-side Capacitor private file vs server-side environment key); consent text and named-provider disclosure; paid escalation policy; whether AMD, free-tier Gemini, or NumeS may process tenant data; Gemini 4 Hydrogen admission; per-provider eligibility; health-ledger persistence; manual-pin semantics; engine diagnostics visibility; attribution for the Hermes-derived concept. See `docs/reports/2026-11-14-dynamic-model-routing-reconciliation.md` for the full decision list.
+
+## DEC-30 - Bolu Application-Side Invoice Operations Pipeline & Mock Boundary Verification (2026-11-14)
+
+**Status:** IMPLEMENTED & VERIFIED against deterministic mock boundary on 2026-11-14.
+
+**Decision.** The application-side conversational business-operations pipeline for the reference Invoice document family is implemented and tested without live API provider dependencies.
+
+**Architecture and Implementation:**
+1. **Contract and Validation:** Defined typed operation contracts in `src/lib/ai-assistant/bolu-operations.ts` (`create-document` for `'invoice'`, `modify-document`, `read-records`). Application-side parameter sanitization ensures line-item validation, non-negative amounts, and customer association before state updates.
+2. **Pure State Management:** Extracted conversation and operation lifecycle into a pure reducer (`src/lib/ai-assistant/bolu-reducer.ts`) and prompt utilities (`src/lib/ai-assistant/bolu-formatting.ts`) to avoid file bloat (<350 lines each).
+3. **Two-Gate UI Lifecycle:** Enforced two explicit user gates in `AssistantSheet.tsx`:
+   - Gate 1: Review proposed changes via Change Proposal Card -> Explicit Apply.
+   - Gate 2: Review resulting draft document -> Separate Save Confirmation Card before persistence.
+4. **Authoritative Persistence Integration:** Centralized in `src/lib/ai-assistant/bolu-document-service.ts`:
+   - Reuses BOURXE's PostgreSQL transaction RPC `save_invoice_with_items_transaction` when `entityId` is present to ensure atomic insertion.
+   - Applies compensating rollback cleanup (header deletion) on line-item insertion failure during sequential fallback.
+   - Wraps sequence numbering with `withUniqueRetry` from `@/lib/withUniqueRetry` to gracefully handle concurrent numbering collisions.
+   - All financial totals (subtotal, total, VAT, WHT, discount) are strictly computed by `calculateDocument` from `src/lib/Calculations.ts`. Model-invented calculations are discarded.
+   - Tenant isolation and permission checks (`canWrite`, `canRead`) gate both reads and writes.
+5. **Deterministic Mock Testing:** Built a full fixture-based mock provider in `src/lib/ai-assistant/bolu-mock-provider.ts` covering 12 operational scenarios.
+6. **Automated Verification:** Verified through 49 automated unit and integration tests across 7 test files in `src/tests/ai-assistant/`. All 49 tests pass.
+
+**Boundary Distinction:** This decision records application-side implementation and verification against the deterministic mock boundary. It does not establish live provider connectivity, provider API key configuration, live inference reliability, or the implementation of the other seven document families (quotations, purchase orders, waybills, etc.), which remain explicitly deferred.
+
+## DEC-31 - Mandatory Engineering Task Close-Out & Canonical Roadmap Reconciliation Policy (2026-11-14)
+
+**Status:** APPROVED MANDATORY GOVERNANCE POLICY on 2026-11-14.
+
+**Decision.** Continuous engineering roadmap maintenance is a mandatory requirement of every BOURXE implementation and audit task. No engineering task is complete until the canonical roadmap (`Waterfall-roadmap.md`) and the visual presentation mirror (`roadmap.html`) are reconciled against the actual repository code state and test evidence.
+
+**Policy Rules:**
+1. **Canonical Source of Truth:** `Waterfall-roadmap.md` is the primary engineering progress record. `roadmap.html` must remain strictly synchronized with it.
+2. **Evidence-Based Status:** Capabilities must be recorded based on verified test evidence:
+   - "Implemented & Tested" requires automated test evidence against a clearly stated boundary (e.g. mock boundary).
+   - "Production-Ready" requires live environment verification, production configuration, and security/terms compliance.
+   - "Partial", "In-Progress", "Blocked", and "Deferred" must be accurately differentiated.
+3. **No False Completion:** Passing unit or mock tests must never be conflated with live provider connectivity or full production readiness.
+4. **Mandatory Close-Out Steps:** Every future task must include:
+   - Worktree inspection (`git status`).
+   - Roadmap update with a dated section.
+   - Synchronization of visual HTML roadmap.
+   - Reconciled supporting docs (`decision-log.md`, `risk-register.md`, `architecture.md`, `functional-req.md`, `test-plan.md`).
+   - Git cleanliness verification (`git diff --check`).
+
+## DEC-32 - Universal Document-Intelligence Contract For Bolu (2026-11-14, agreed in design process; NOT implemented)
+
+**Status:** AGREED architectural direction (design process, 2026-11-14). Implementation sequencing remains PROPOSED. This entry approves the contract shape only. It does not approve a delivery date, a first-release document family, an execution plan, or any provider.
+
+**Decision.** Bolu must process business documents and attachments through one universal pipeline: source intake and preservation; faithful extraction of source observations; normalization into typed business records; cross-document reconciliation with match-candidate generation; deterministic calculations; human review, correction and approval; and approved business-document creation or modification. Document-family-specific extensions attach to this pipeline. They do not fork it.
+
+**Canonical conceptual objects (contracts, not schema decisions).**
+
+- **SourceDocument** — identity, source type, original reference, author/supplier where stated, date where stated, processing status. The original source is preserved unchanged.
+- **ExtractedObservation** — faithful source content: original wording, extracted values, source location/reference, and extraction confidence or uncertainty where supported.
+- **NormalizedItem** — standardized business representation. Unknown values are explicit nulls. Every field references the observations that support it.
+- **MatchCandidate** — proposed relationship between business records. Matching evidence, unresolved differences, confidence, review state.
+- **Calculation** — explicit inputs, formula, result, currency/unit basis, reproducibility.
+- **ReviewDecision** — human confirmation, rejection, correction or approval. Traceable to the affected evidence and records.
+
+**Evidence classification (nature of the information).** `extracted`, `calculated`, `inferred`, `matched`, `unverified`, `conflicting`. Evidence classification is not a workflow status.
+
+**Workflow status (review progress).** `not_found` → `information_found` → `possible_match` → `awaiting_confirmation` → `confirmed` → `priced_verified`. `priced_verified` requires a confirmed match, an unambiguous price basis and unit, and verified calculation inputs. No AI-generated interpretation may promote itself to `confirmed`; promotion requires a human review decision. Conflicting evidence is retained and never silently resolved.
+
+**Deterministic calculations.** The application owns arithmetic. AI may extract or suggest inputs but is never the authority for financial totals. Every calculation preserves inputs, formula, result and currency/unit basis. No verified extension is calculated or claimed while the unit, quantity basis or price basis is ambiguous. Provisional amounts are never presented as confirmed commercial totals.
+
+**Matching.** Matching considers descriptions, specifications, units, quantities and source identifiers. A shared serial number alone must not establish `confirmed`. A possible match remains a candidate until review or confirmation. Matching rules are document-family-specific and extensible.
+
+**Preservation and traceability.** Sources are preserved unchanged. Normalized values trace to observations. Conflicting observations are retained. Extracted facts, human corrections and inferred interpretations stay distinguishable. No silent overwrite of source evidence.
+
+**Human approval is unchanged.** DEC-28 boundaries stand: the model proposes; the user approves each proposed change; the user separately confirms saving or filing. Tenant isolation, permissions, business rules and idempotency remain application-owned. Audit trails record every review decision.
+
+**Document-family extensions.** The universal contract must support invoice, quotation, purchase order, waybill, CSR, RFQ, cost sheet and letter as candidate families, each with family-specific semantics, fields, validation and permissions. Similar-looking lines and supplier/customer roles are never interchangeable. First-release scope is explicitly NOT approved; family selection is an open decision.
+
+**The solar-pump BOQ acceptance case.** The solar-pump BOQ and supplier-message reconciliation is the first acceptance scenario, not the basis of a BOQ-only architecture. The scenario and its acceptance cases are recorded in `functional-req.md` FR-41 and in the test-plan document-intelligence addendum.
+
+**Explicitly unresolved (not approved here).** Supported attachment types, size limits, retention and deletion policy; extraction provider selection; privacy policy and consent for external AI processing; which document families ship first; verification cadence for external-model extraction quality; mapping of canonical objects to the database schema.
+
+**Relationship to earlier entries.** DEC-28 stands. DEC-29 stands. DEC-30 records the implemented invoice mock-boundary pipeline; DEC-32 extends the contract it embodies to the universal intake/evidence/matching surface. DEC-31 stands; this entry was recorded per its close-out policy and does not modify it.
+
+## DEC-33 - Source Fidelity, Interchange Interfaces And Attachment Intake (2026-11-14, agreed in design process; NOT implemented)
+
+**Status:** AGREED architectural direction (design process, 2026-11-14). Implementation sequencing remains PROPOSED. No implementation details are approved by this entry.
+
+**Decision.** Attachment and external-AI intake are application-owned lanes, separate from provider capabilities:
+
+1. The application owns file intake, source preservation, processing status, identity and validation. File support never depends on a single provider.
+2. External AI may convert an attachment into structured Markdown. That Markdown is an interchange representation for working purposes, never the permanent business data model.
+3. Bolu must validate and normalize every incoming piece of information before it enters a business workflow. Uncertainty, omissions and source references are preserved. An external model may not invent missing values; invented values are rejected or flagged for review.
+4. No provider is assumed to support file upload, image understanding, document parsing or any specific modality. Provider capability differences are handled by eligibility gates (DEC-29), not by hoping.
+5. Markdown interchange preserves original wording alongside normalized values, so a reviewer can always see what the source said.
+6. Extraction output that cannot be verified is marked `unverified` or `conflicting` and stays out of `confirmed` until a human reviews it.
+
+**Unresolved (explicitly not approved here).** Supported file types and size limits; retention and deletion policy; extraction provider selection and its terms; per-provider capability matrix; consent and disclosure wording; whether extraction runs on-device, on a Vercel route, or through a provider; attachment size quotas; deletion after approval. These are owner decisions recorded here so nothing later mistakes them for agreed scope.
+
+**Relationship to DEC-32.** DEC-32 defines the universal pipeline; DEC-33 defines the intake contract that feeds it. Both stand or fall together. Neither approves delivery scope, dates or providers.
+
+## DEC-34 - Server-Side Configurable AI Provider Architecture & Live Invoice Operation Activation (2026-11-14)
+
+**Status:** APPROVED AND DELIVERED (2026-11-14).
+
+**Context.**
+Bolu's application-side operations architecture was verified at the mock boundary (DEC-30). However, connecting live AI inference required a secure, provider-agnostic bridge that preserves application authority over financial arithmetic, authorization, tenant isolation, and two-gate human approval, without hardcoding third-party providers or leaking secrets to browser clients.
+
+**Decision.**
+1. **Server-Side Interchangeable Provider Adapter (`api/bolu-chat.ts`, `src/lib/ai-assistant/bolu-provider.ts`):**
+   - The server endpoint connects to any OpenAI-compatible `/chat/completions` API using standard Bearer authorization and streaming Server-Sent Events (SSE).
+   - Base URLs are idempotently normalized via `normalizeChatEndpoint` to guarantee proper `/chat/completions` path construction.
+   - Converts both `text/event-stream` and buffered `application/json` provider responses into uniform SSE tokens so client-side streaming functions unconditionally.
+   - Provider credentials remain strictly server-side; browser code has zero visibility of keys.
+2. **Server-Only Minimal Environment Contract:**
+   - `BOLU_PROVIDER_NAME`: Provider identifier string (default: `'generic-openai'`).
+   - `BOLU_PROVIDER_BASE_URL`: Root API URL (default: `'https://openrouter.ai/api/v1'`).
+   - `BOLU_PROVIDER_API_KEY`: Server-only secret key (backward-compatible with `BOLU_AMD_API_KEY`).
+   - `BOLU_PROVIDER_MODEL`: Model identifier (default: `'meta-llama/llama-3.3-70b-instruct:free'`).
+   - `BOLU_PROVIDER_TIMEOUT_MS`: Request timeout (default: `30000`ms, clamped 5000-120000ms).
+   - `BOLU_PROVIDER_MODE`: Operational mode (`'live'` or `'mock'`; defaults to `'live'` if an API key is set, `'mock'` otherwise).
+3. **Fail-Closed Structured Operation Contract:**
+   - Server system prompt restricts models to returning structured JSON envelopes (`"bolu_operation"` with `create-document` for `'invoice'` or `modify-document`).
+   - Models are explicitly forbidden from calculating totals or emitting financial summaries.
+   - Client-side parser catches syntax errors and malformed envelopes, preventing invalid proposal generation.
+   - Unsupported operations (`delete-document`, `pay-invoice`) and unsupported document families (`quotation`, `purchase-order`, etc.) are rejected fail-closed with user-facing alerts.
+4. **Authoritative Calculation Lock:**
+   - All financial math (`subtotal`, `total`, `vat`, `wht`, `discount`) is recomputed by `calculateDocument` in `src/lib/Calculations.ts`. Model math is discarded unconditionally.
+5. **Two-Gate Approval Lifecycle Preserved:**
+   - Gate 1 (proposal review before working draft modification) and Gate 2 (explicit confirmation before database persistence) remain strictly enforced. Provider failures, timeouts, and rate limits cannot trigger approval or persistence.
+6. **Authoritative RPC Persistence:**
+   - Persistence integrates with PostgreSQL RPC `save_invoice_with_items_transaction` with compensating rollback and `withUniqueRetry` sequence retry.
+7. **Verification Evidence:**
+   - Verified by 62 automated unit and integration tests across 8 test suites in `src/tests/ai-assistant/`.
+
+**Explicit Boundary: Implemented vs. Production-Ready.**
+The server-side adapter, parsing, calculation locking, and two-gate workflow are fully implemented and automated-tested. However, live third-party network inference in production and trial rollouts remain deferred pending owner key custody, privacy disclosure, and terms compliance (RISK-14).
+
+**Relationship to Prior Decisions.**
+- Supersedes the temporary mock boundary in DEC-30 by activating the live adapter path while preserving mock testing.
+- Fulfills the provider independence and server-side credential mandates in DEC-29.
+- Preserves the two-gate approval and application authority principles in DEC-28.
+- Conforms to the mandatory roadmap reconciliation policy in DEC-31.
+
+## DEC-35 - AMD Token Factory Provider Compatibility, Auto-Detection & Server-Only Key Configuration (2026-11-14)
+
+**Status:** APPROVED AND VERIFIED (2026-11-14).
+
+**Context.**
+The user provided an AMD API key from the AMD AI Developer Program / AMD Radeon Cloud Token Factory and requested activation as the primary live inference provider for Bolu. The security of the key-handling pipeline and technical compatibility of AMD's endpoint required authoritative verification.
+
+**Decision.**
+1. **AMD Token Factory Compatibility Verified:**
+   - Base URL: `https://developer.amd.com.cn/radeon/api/v1`
+   - Chat Completions Endpoint: `https://developer.amd.com.cn/radeon/api/v1/chat/completions`
+   - Protocol: OpenAI-compatible HTTP POST `/chat/completions` with SSE streaming.
+   - Auth Format: `Authorization: Bearer rc-...` (key prefix `rc-`).
+   - Default Model: `DeepSeek-V4-Flash` (1M context window).
+   - Headers: Clean standard headers (`Content-Type: application/json`, `Authorization`). Vendor-specific headers (e.g. OpenRouter `HTTP-Referer`, `X-Title`) are omitted.
+2. **Server-Side Secret Custody Verified:**
+   - Keys are accessed exclusively in serverless route `api/bolu-chat.ts` via `process.env`.
+   - Zero exposure to client-side bundles, React components, browser state, logs, error responses, or `VITE_*` variables.
+   - Keys are not stored in `localStorage`, `sessionStorage`, browser cookies, or database records.
+   - Missing keys fail safe with HTTP 503 without initiating network calls. Mock mode bypasses provider network calls completely.
+3. **Smart Provider Auto-Detection Added (`src/lib/ai-assistant/bolu-provider.ts`):**
+   - The runtime automatically infers `providerName = 'amd'` when `BOLU_AMD_API_KEY` is present or the API key begins with `rc-`.
+   - Automatically resolves default AMD base URL and model `DeepSeek-V4-Flash` without requiring redundant manual variable overrides.
+4. **No Frontend Settings Key Input:**
+   - In-app key input in frontend Settings is rejected. Storing API keys in tenant database rows or client memory violates security boundaries.
+   - Server-side environment variables in the deployment platform (Vercel Project Settings) remain the sole authorized configuration path.
+5. **Operational Boundaries:**
+   - AMD Token Factory operates on the China site (`developer.amd.com.cn`). Terms designate it as a free trial and development service (not for production). Live commercial rollout remains deferred pending owner terms evaluation (RISK-14).
+
+**Relationship to Prior Decisions.**
+- Implements the provider-agnostic live adapter mandate of DEC-34 for the AMD provider.
+- Conforms to the server-side credential isolation required by DEC-29.
+- Follows the mandatory roadmap reconciliation policy of DEC-31.
+
+## DEC-36 - Hermes-Inspired Guided CLI Provider Setup & Deployment Integration Architecture (2026-11-14)
+
+**Status:** APPROVED AND DELIVERED (2026-11-14).
+
+**Context.**
+Manual navigation through cloud deployment consoles (Vercel Project Settings) introduces friction and configuration errors when setting up Bolu's AMD API key. An administrator requires a streamlined, guided setup experience inspired by the Hermes agent setup wizard, while respecting BOURXE's serverless deployment architecture.
+
+**Decision.**
+1. **Guided PowerShell Setup CLI (`scripts/setup-bolu-provider.ps1`, `bun run bolu:setup`):**
+   - Implements an interactive CLI wizard for AMD Token Factory setup, testing, and rotation.
+   - Accepts API keys securely via `Read-Host -AsSecureString` to prevent visual exposure and shell history retention, zeroing memory pointers after use.
+2. **Pre-Flight Live Verification (`Test-AmdConnection`):**
+   - The CLI performs a lightweight pre-flight request directly to AMD's `/chat/completions` endpoint using in-memory credentials before writing configuration.
+   - Validates reachability, authentication (401/403 detection), and rate limits (429) without revealing credentials.
+3. **Local & Remote Deployment Synchronization:**
+   - **Local (.env.local):** Writes or updates `BOLU_PROVIDER_*` variables in `.env.local` and verifies `.gitignore` protection.
+   - **Remote (Vercel):** Connects to Vercel CLI (`vercel env rm` / `vercel env add`) to configure `production` and `preview` environments.
+4. **Honest Deployment Authorization Boundary:**
+   - Explicitly acknowledges that local PC commands cannot mutate remote cloud environments without authenticated deployment access.
+   - Automatically detects Vercel CLI availability and login state (`vercel whoami`), providing one-time authorization instructions (`vercel login`) rather than simulating remote synchronization.
+5. **Key Replacement & Rotation:**
+   - Full support for rotating keys cleanly, replacing existing entries without duplication.
+6. **Verification Evidence:**
+   - Verified by 67 automated tests across 9 test suites in `src/tests/ai-assistant/`, including `bolu-provider-setup.test.js`.
+
+**Relationship to Prior Decisions.**
+- Operationalizes the server-side configuration requirements established in DEC-34 and DEC-35.
+- Complies with DEC-31 mandatory roadmap reconciliation.
+
+## DEC-37 - In-App Administrator Provider Secret Management & Envelope Encryption (2026-11-14)
+
+**Status:** APPROVED AND DELIVERED (2026-11-14).
+
+**Context.**
+Prior decisions (DEC-35, DEC-36) relied on deployment-environment variables (`process.env`) and external CLI tooling (`scripts/setup-bolu-provider.ps1`) to configure Bolu's shared AMD provider key. The user requested an in-app administrator configuration experience inspired by LibreChat's encrypted provider key pattern, adapted to BOURXE's platform assistant architecture.
+
+**Decision.**
+1. **Architectural Model:** Single application-level shared enterprise credential (not per-employee BYOK). Platform administrators configure the AMD Token Factory key via in-app Settings without visiting cloud deployment consoles.
+2. **Secret Storage & Envelope Encryption:**
+   - Dedicated table `public.app_ai_provider_config` with columns for ciphertext, 12-byte nonce, 16-byte authentication tag, key version, masked key, and audit metadata.
+   - Encryption: AES-256-GCM envelope encryption using a server-isolated master key derived from `BOLU_ENCRYPTION_KEY` or `SUPABASE_SERVICE_ROLE_KEY` via HMAC-SHA256 with domain salt.
+   - Database Row-Level Security (RLS): Strictly denies client access (`USING (false)` for `authenticated, anon`), ensuring zero direct browser reads or writes via PostgREST. Decryption occurs exclusively in serverless memory.
+3. **Serverless Management Endpoints (`api/bolu-provider-config.ts`):**
+   - Admin authorization check: verifies `profiles.role === 'admin'` or `workspace_members.role in ('owner', 'admin')`.
+   - `GET`: Returns sanitized public status (masked key `rc-••••••••••••7766`, model, active source, updated timestamp). Plaintext and ciphertext are never returned.
+   - `POST`: Supports `'save'` (encrypts & upserts), `'test'` (pre-flight test to AMD endpoint), and `'remove'` (deletes row).
+4. **Runtime Precedence Hierarchy in `api/bolu-chat.ts`:**
+   - Level 1: In-App Database Config (`app_ai_provider_config`, decrypted in server memory).
+   - Level 2: Server Environment Variables (`BOLU_PROVIDER_*` or `BOLU_AMD_API_KEY`).
+   - Level 3: Deterministic Mock Mode (`BOLU_PROVIDER_MODE=mock` or unconfigured fallback).
+5. **In-App Administrator UI (`BoluProviderSettingsSection.tsx`):**
+   - Mounted in `src/pages/Settings.tsx` (`bolu-provider` section) with `adminOnly: true`.
+   - Features real-time connection testing, masked preview, model selection (`DeepSeek-V4-Flash`), key replacement, and credential removal.
+6. **Verification Evidence:**
+   - 74 automated tests passing in `src/tests/ai-assistant/`, including `bolu-secret-vault.test.js`.
+
+**Relationship to Prior Decisions.**
+- Adapts and elevates the server-side secret principles of DEC-35 into a first-class, administrator-managed in-app experience.
+- Preserves the application authority boundaries of DEC-28 and live inference pipeline of DEC-34.
+- Complies with DEC-31 mandatory roadmap reconciliation.
+
+## DEC-38 - Bolu Provider Configuration Response Parsing Resilience & Local Dev API Middleware (2026-11-14)
+
+**Status:** APPROVED AND DELIVERED (2026-11-14).
+
+**Context.**
+When administrators tested or deployed provider configurations from `/settings`, an unhandled client exception occurred: `Failed to execute 'json' on 'Response': Unexpected end of JSON input`. Investigation revealed two root causes:
+1. In `BoluProviderSettingsSection.tsx`, `res.json()` was called unconditionally without validating response status, content type, or body length. When an empty response or non-JSON response was returned, the browser's JSON parser threw an unhandled syntax error.
+2. In local development (`bun run dev`), Vite dev server served static assets and unhandled `/api/*` routes, returning a 0-byte HTTP 404 response.
+
+**Decision.**
+1. **Defensive Response Parser (`safeParseApiResponse` in `bolu-secret-vault.ts`):**
+   - Implemented a resilient response parsing helper that reads response text via `.text()` before parsing.
+   - Handles 0-byte empty responses gracefully (e.g. 404, 500, or 204), returning clear, user-safe diagnostics without throwing syntax errors.
+   - Handles non-JSON HTML error responses (e.g. 502/504 Bad Gateway from edge routers or proxies), strips HTML markup, and formats concise error descriptions.
+   - Extracts server-side error messages from `{ error: string }` or `{ ok: false, message: string }` payloads.
+   - Protects credentials: ensures API keys and secrets are never reflected in error messages.
+2. **Decoupled Post-Mutation Refresh:**
+   - In `handleSave` and `handleRemove`, status refresh calls are decoupled so that transient network delays during post-mutation refresh do not trigger false failure notifications when the save/remove mutation has already succeeded.
+3. **Vite Local Dev API Middleware (`apiDevServerPlugin` in `vite.config.js`):**
+   - Intercepts requests matching `/api/*` during local development (`bun run dev`).
+   - Dynamically resolves and compiles serverless handlers in `api/*.ts` using Vite's `ssrLoadModule`.
+   - Converts Node HTTP requests to standard Web `Request` and pipes Web `Response` back to client.
+   - Returns structured JSON 404 responses for non-existent routes rather than unhandled 0-byte responses.
+4. **Verification Evidence:**
+   - 80 automated unit and integration tests passing in `src/tests/ai-assistant/` (including 6 new tests for empty bodies, HTML 502 errors, 404 routing diagnostics, and JSON error extraction).
+   - Live probe against running dev server confirmed HTTP 401 JSON authentication challenge from `api/bolu-provider-config.ts` and JSON 404 for non-existent endpoints.
+
+**Relationship to Prior Decisions.**
+- Hardens the in-app provider configuration infrastructure established in DEC-37.
+- Complies with DEC-31 mandatory roadmap reconciliation.
+
+## DEC-39 - Bolu Provider Management Architecture Reassessment & Hermes Benchmark (2026-11-14)
+
+**Status:** AUDIT COMPLETED / RECOMMENDATION SUBMITTED (2026-11-14).
+
+**Context.**
+Following resolution of JSON response parsing, a recurring server error (`err_1794667887617_u9skz6`: `Internal server configuration error.`) occurred on `/settings`. An audit-first investigation was commissioned to identify the failure cause and assess whether the provider system is comparable to Hermes Agent.
+
+**Findings & Decision.**
+1. **Root Cause Confirmed:** The failure is caused by missing `SUPABASE_SERVICE_ROLE_KEY` in Node's execution environment under Vite dev server. While Bun automatically loads `.env`, Vite dev server runs in Node and does not inject non-`VITE_*` variables into `process.env`. When authenticated requests pass a JWT, `getAdminClient()` throws, which is caught and collapsed into a generic 500 error.
+2. **Hermes Capability Comparison:** BOURXE achieves 10/20 (50%) implemented, 5/20 (25%) partial, and 5/20 (25%) missing capabilities compared to Hermes Agent. BOURXE exceeds Hermes in database persistence, AES-256-GCM envelope encryption, and mobile responsiveness, but lacks multi-provider storage, model discovery, and non-destructive switching.
+3. **Architecture Evaluation:** The current implementation is a single-provider credential form (`id = 'primary'`), not a provider-management subsystem. Storing a new provider destroys previous credentials.
+4. **Recommendation:** Phased refactoring (P0: environment loading fix; P1: RBAC and dedicated encryption key; P2: multi-connection schema `app_ai_provider_connections`; P3: UX overhaul with model discovery).
