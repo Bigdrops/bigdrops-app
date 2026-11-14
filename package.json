@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "audit:load": "node scripts/check-load-risk.cjs",
     "audit:supabase-queries": "npx tsx tools/audit-supabase-queries.ts",
+    "bolu:setup": "pwsh -ExecutionPolicy Bypass -File scripts/setup-bolu-provider.ps1",
     "android:debug": "sh scripts/android-debug.sh",
     "android:debug:release": "sh scripts/android-debug-release.sh",
     "android:test-release": "sh scripts/android-test-release.sh"
