@@ -1,0 +1,7 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "`paused={false}` dead prop on `BoluOrbIdentity` — hardcoded in `assistant-chat-thread.tsx` at the empty-state call site. Safe today because `CLERK_TO_ORB` returns `null` for all states that should be paused, but will leave any future mapped state permanently animating. Change to `paused={!busy}` or derive from the same lifecycle pattern as `BoluOrbInline`."
+  ],
+  "reviewDoc": "c:\\Users\\DELL\\Desktop\\bigdrops-app\\.agents\\tasks\\thinking-orbs-design-lab\\review.md"
+}
