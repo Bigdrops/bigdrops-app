@@ -10,6 +10,7 @@ import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import { useSettings } from '@/hooks/useSettings'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
+import { runThemeTransition } from '@/lib/themeTransition'
 import { feedback } from '@/lib/feedback'
 
 import { UserSettingsSection } from './settings/UserSettingsSection'
@@ -28,6 +29,7 @@ import { SecuritySettingsSection } from './settings/SecuritySettingsSection'
 import { SoundSettingsSection } from './settings/SoundSettingsSection'
 import { AppUpdateSettingsSection } from './settings/AppUpdateSettingsSection'
 import { LocalAISettingsSection } from './settings/LocalAISettingsSection'
+import { BoluProviderSettingsSection } from './settings/BoluProviderSettingsSection'
 import SystemLogsSettingsSection from './settings/SystemLogsSettingsSection'
 
 export default function Settings() {
@@ -76,9 +78,9 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
   }) }))
 
   return <SettingsShell groups={groups} activeSection={active} setActiveSection={id => { setShowRoles(false); setActive(id) }} workspaceName={wsName} companyName={coName}
-    detailTitle={active === 'team' && showRoles ? 'Roles & Access' : undefined}
+    detailTitle={active === 'team' && showRoles ? 'Roles & Access' : active === 'bolu-provider' ? 'Bolu AI Infrastructure' : undefined}
     onBack={active === 'team' && showRoles ? () => setShowRoles(false) : undefined}
-    dark={dark} onToggleTheme={() => { void save({ themeMode: dark ? 'light' : 'dark' }).catch(error => feedback.error(String(error))) }}>
+    dark={dark} onToggleTheme={() => { runThemeTransition(() => { void save({ themeMode: dark ? 'light' : 'dark' }).catch(error => feedback.error(String(error))) }) }}>
     
     {active === 'user' && <UserSettingsSection session={session} onToast={(msg) => feedback.success(msg)} />}
     {active === 'notifications' && <NotificationSettingsPage />}
@@ -97,6 +99,7 @@ function SettingsContent({ session, active, setActive, showRoles, setShowRoles }
     {active === 'security' && <SecuritySettingsSection />}
     {active === 'sound' && <SoundSettingsSection />}
     {active === 'local-ai' && <LocalAISettingsSection />}
+    {active === 'bolu-provider' && <BoluProviderSettingsSection />}
     {active === 'app-update' && <AppUpdateSettingsSection />}
     {active === 'system-logs' && <SystemLogsSettingsSection />}
     {active === 'tenant-debug' && <div className="p-8 text-center text-sm text-bd-text-muted">Tenant Diagnostics Environment (Operator Only)</div>}

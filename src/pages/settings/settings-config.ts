@@ -1,8 +1,10 @@
 import { isAndroidNative } from '@/lib/native/capacitor'
 import {
   ArchiveRestore,
+  Bot,
   BrainCircuit,
   Building2,
+  Cpu,
   Hash,
   Info,
   LayoutDashboard,
@@ -35,6 +37,7 @@ export type ActiveSectionId =
   | 'security'
   | 'sound'
   | 'local-ai'
+  | 'bolu-provider'
   | 'app-update'
   | 'system-logs'
   | 'tenant-debug'
@@ -116,6 +119,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { id: 'app-update', label: 'App Update', icon: Smartphone, desc: 'Check for updates and manage versions' },
       { id: 'system-logs', label: 'Diagnostic Logs', icon: Terminal, desc: 'Review errors, copy diagnostics, and export to support' },
       { id: 'local-ai', label: 'Local AI', icon: BrainCircuit, desc: 'Install and verify the on-device review model' },
+      { id: 'bolu-provider', label: 'Bolu AI Infrastructure', icon: Cpu, desc: 'Enterprise inference provider, models & credentials', adminOnly: true },
       { id: 'tenant-debug', label: 'Tenant Debug', icon: Terminal, desc: 'Platform operator diagnostics', adminOnly: true, operatorOnly: true },
     ],
   },
