@@ -50,7 +50,7 @@ export interface SensoryUIConfig {
  */
 export const defaultConfig: SensoryUIConfig = {
   enabled: true,
-  volume: 0.35,
+  volume: 0.8,
   theme: "aero",
   categories: {
     interaction: true,

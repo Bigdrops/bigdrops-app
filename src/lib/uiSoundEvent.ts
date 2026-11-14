@@ -1,5 +1,5 @@
 import type { SoundRole } from '@/components/ui/sensory-ui/config/sound-roles'
-import { mergeConfig, resolveRole } from '@/components/ui/sensory-ui/config/config'
+import { defaultConfig, mergeConfig, resolveRole } from '@/components/ui/sensory-ui/config/config'
 import { playSound } from '@/components/ui/sensory-ui/config/engine'
 import { getUiSoundSettings } from './uiSoundSettings'
 
@@ -20,7 +20,7 @@ export function uiSound(role: SoundRole): void {
       enabled,
       volume,
       theme: 'minimal',
-      categories: { hero: true },
+      categories: { ...defaultConfig.categories, hero: true },
     })
     const source = resolveRole(role, config)
     if (!source) return

@@ -7,7 +7,7 @@ export type UiSoundSettings = {
 }
 
 const STORAGE_KEY = 'bd-ui-sound'
-const DEFAULT_SETTINGS: UiSoundSettings = { enabled: true, volume: 0.35 }
+const DEFAULT_SETTINGS: UiSoundSettings = { enabled: true, volume: 0.8 }
 
 function clampVolume(value: unknown): number {
   const n = Number(value)
