@@ -61,6 +61,10 @@ type WorkspaceProps = {
   composer: ReactNode
   panel: ReactNode
   settings: ReactNode
+  clerk: ReactNode
+  clerkDock: ReactNode | null
+  clerkOpen: boolean
+  onCloseClerk: () => void
   panelOpen: boolean
   settingsOpen: boolean
   onOpenPanel: () => void
@@ -164,6 +168,17 @@ function AssistantHeader({
   )
 }
 
+function LiquidGlassBackground() {
+  return (
+    <div className="ac-liquid-bg" aria-hidden="true">
+      <div className="lg-orb lg-orb--1" />
+      <div className="lg-orb lg-orb--2" />
+      <div className="lg-orb lg-orb--3" />
+      <div className="lg-frost" />
+    </div>
+  )
+}
+
 function PhoneStatusBar() {
   return (
     <div className="ac-statusbar" aria-hidden="true">
@@ -184,6 +199,7 @@ function FoldClosed(props: WorkspaceProps) {
   return (
     <div className="ac-frame">
       <div className="ac-screen">
+        <LiquidGlassBackground />
         <PhoneStatusBar />
         <span className="ac-island" aria-hidden="true" />
         <AssistantHeader
@@ -196,6 +212,7 @@ function FoldClosed(props: WorkspaceProps) {
         />
         {props.thread}
         {props.composer}
+        <div className="ac-clerk-anchor ac-clerk-anchor--phone">{props.clerk}</div>
 
         {sheet ? (
           <>
@@ -207,10 +224,32 @@ function FoldClosed(props: WorkspaceProps) {
             />
             <div className="ac-sheet" role="dialog" aria-modal="true" aria-label={sheet === 'settings' ? 'Providers and models' : 'Invoice context'}>
               <span className="ac-sheet-grab" aria-hidden="true" />
-              <button type="button" className="ac-sheet-close ac-icon-btn" aria-label="Close" onClick={close}>
-                <X className="size-4" aria-hidden="true" />
-              </button>
+              {props.settingsOpen ? null : (
+                <button type="button" className="ac-sheet-close ac-icon-btn" aria-label="Close" onClick={close}>
+                  <X className="size-4" aria-hidden="true" />
+                </button>
+              )}
               <div className="ac-sheet-body">{props.settingsOpen ? props.settings : props.panel}</div>
+            </div>
+          </>
+        ) : null}
+
+        {props.clerkOpen && props.clerkDock ? (
+          <>
+            <button
+              type="button"
+              className="ac-sheet-scrim"
+              aria-label="Close the clerk"
+              onClick={props.onCloseClerk}
+            />
+            <div
+              className="ac-sheet ac-clerk-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label="BOURXE digital clerk"
+            >
+              <span className="ac-sheet-grab" aria-hidden="true" />
+              <div className="ac-sheet-body">{props.clerkDock}</div>
             </div>
           </>
         ) : null}
@@ -223,6 +262,7 @@ function FoldOpen(props: WorkspaceProps) {
   return (
     <div className="ac-fold">
       <div className="ac-screen ac-screen--fold">
+        <LiquidGlassBackground />
         <span className="ac-fold-hinge" aria-hidden="true" />
         <div className="ac-fold-chat">
           <AssistantHeader
@@ -235,14 +275,23 @@ function FoldOpen(props: WorkspaceProps) {
           />
           {props.thread}
           {props.composer}
+          <div className="ac-clerk-anchor ac-clerk-anchor--side">
+            {props.clerkOpen ? props.clerkDock : null}
+            {props.clerk}
+          </div>
         </div>
         <div className="ac-fold-side">
           <div className="ac-side-bar">
             <p>Live document</p>
             <span className="ac-tag">Auto</span>
           </div>
-          <div className="ac-side-body">{props.settingsOpen ? props.settings : props.panel}</div>
+          <div className="ac-side-body">{props.panel}</div>
         </div>
+        {props.settingsOpen ? (
+          <WideSettingsOverlay onClose={props.onCloseSettings}>
+            {props.settings}
+          </WideSettingsOverlay>
+        ) : null}
       </div>
     </div>
   )
@@ -254,6 +303,7 @@ function TabletShell(props: WorkspaceProps) {
     <div className="ac-tablet">
       <span className="ac-tablet-camera" aria-hidden="true" />
       <div className="ac-screen ac-screen--tablet">
+        <LiquidGlassBackground />
         <AssistantRail
           collapsed={props.railCollapsed}
           activeThread={props.activeThread}
@@ -273,6 +323,10 @@ function TabletShell(props: WorkspaceProps) {
           />
           {props.thread}
           {props.composer}
+          <div className="ac-clerk-anchor ac-clerk-anchor--tablet">
+            {props.clerkOpen ? props.clerkDock : null}
+            {props.clerk}
+          </div>
         </div>
 
         {drawerOpen ? (
@@ -315,6 +369,7 @@ function DesktopShell(props: WorkspaceProps) {
         <span className="ac-window-tag">Design Lab</span>
       </div>
       <div className="ac-screen ac-screen--desktop">
+        <LiquidGlassBackground />
         <AssistantRail
           collapsed={props.railCollapsed}
           activeThread={props.activeThread}
@@ -334,22 +389,47 @@ function DesktopShell(props: WorkspaceProps) {
           />
           <div className="ac-canvas">{props.thread}</div>
           <div className="ac-canvas-composer">{props.composer}</div>
+          <div className="ac-clerk-anchor ac-clerk-anchor--desktop">
+            {props.clerkOpen ? props.clerkDock : null}
+            {props.clerk}
+          </div>
         </div>
 
         <aside className="ac-artifact">
           <div className="ac-side-bar">
-            <p>{props.settingsOpen ? 'Providers' : 'Artifact'}</p>
-            {props.settingsOpen ? (
-              <button type="button" className="ac-icon-btn" aria-label="Close settings" onClick={props.onCloseSettings}>
-                <X className="size-4" aria-hidden="true" />
-              </button>
-            ) : (
-              <span className="ac-tag">Live</span>
-            )}
+            <p>Artifact</p>
+            <span className="ac-tag">Live</span>
           </div>
-          <div className="ac-side-body">{props.settingsOpen ? props.settings : props.panel}</div>
+          <div className="ac-side-body">{props.panel}</div>
         </aside>
+        {props.settingsOpen ? (
+          <WideSettingsOverlay onClose={props.onCloseSettings}>
+            {props.settings}
+          </WideSettingsOverlay>
+        ) : null}
       </div>
+    </div>
+  )
+}
+
+function WideSettingsOverlay({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  return (
+    <div className="ac-settings-overlay">
+      <button
+        type="button"
+        className="ac-settings-overlay-scrim"
+        aria-label="Close provider settings"
+        onClick={onClose}
+      />
+      <aside className="ac-settings-drawer" role="dialog" aria-modal="true" aria-label="Providers and models">
+        <div className="ac-settings-drawer-bar">
+          <p>Providers &amp; models</p>
+          <button type="button" className="ac-icon-btn" aria-label="Close provider settings" onClick={onClose}>
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="ac-settings-drawer-body">{children}</div>
+      </aside>
     </div>
   )
 }

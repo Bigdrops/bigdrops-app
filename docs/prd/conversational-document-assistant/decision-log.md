@@ -200,3 +200,25 @@ The reason not to adopt it now is that the components carry their own styles and
 **Alternatives.** One responsive column. A separate desktop product.
 
 **Reason.** A phone needs a sheet, a foldable needs a split, a tablet needs a rail and a desktop needs an artifact column. These are layout differences, not product differences. A single state model keeps the money rule and the card rule the same in every shell.
+
+## DEC-27 - Keep Local Chat Primitives And Do Not Add The assistant-ui Runtime
+
+**Decision.** Keep the BOUXRE chat UI and local Chat-blocks patterns. Do not add `@assistant-ui/react` for this feature.
+
+**Alternatives.** Adopt the full assistant-ui runtime. Copy selected primitive behavior into local components.
+
+**Reason.** BOUXRE must own every document mutation, approval, and financial calculation. Local state and deterministic change cards keep that boundary explicit. The existing four viewport shells and BYOK transport also remain app-owned. The local Shadcn references provide the required scroll, composer, model menu, approval, and status-trace patterns without adding a runtime dependency graph. Current assistant-ui guidance also deprecates `makeAssistantToolUI` and `useAssistantToolUI` in favor of toolkit renderers or inline part overrides. Port only the UX behaviors that are needed.
+
+## DEC-28 - Bolu Is A Conversational Business Operations Assistant
+
+**Status:** APPROVED by the product owner on 2026-11-13.
+
+**Decision.** Bolu must support both reading existing authorized business records and controlled write workflows for creating and modifying business documents. Read-only Business Intelligence is one capability within Bolu. It is not the complete product direction.
+
+**Approval boundary.** Bolu may interpret requests and propose structured changes. The application owns validation, authorization, tenant scope, calculations, business rules, persistence, and execution. The user must explicitly approve each proposed change before the application applies it. The user must separately confirm before the application saves or files a document. Approval to apply a draft change does not authorize persistence.
+
+**Financial and security constraints.** Existing calculation engines and system-owned computed values remain authoritative. The model must not invent missing facts or calculate replacement financial values. Existing tenant boundaries and permissions apply to every read and write. No payment, money movement, or other financial execution is approved by this decision.
+
+**Scope limits.** This decision approves the product direction and control boundary only. It does not approve every FR in this draft, the initial document pack, all eight authoring packs, a provider chain, provider key custody, a trial design, or a release plan. Reconcile those items and obtain owner approval before treating them as committed scope.
+
+**Relationship to prior entries.** DEC-01 through DEC-27 remain historical proposals and decisions within the DRAFT FOR REVIEW authoring specification. This entry does not silently promote their detailed requirements or provider/trial choices to approved requirements. Where an earlier entry assumes that read-only BI is sufficient, it is superseded by this direction. Other detailed entries remain proposed or unresolved until reconciled.

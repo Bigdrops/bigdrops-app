@@ -1,0 +1,7 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Dead `_pending`/`_onDecide` interface contract — `InvoicePanel` accepts `pending: PendingCard[]` and `onDecide` in its public signature but aliases them with underscore prefixes to signal they are unused. Any caller that passes real `onDecide` callbacks expecting them to fire will silently lose those decisions. Document the props as deprecated or narrow the type to `pendingCount: number` only, removing the callback entirely."
+  ],
+  "reviewDoc": "c:\\Users\\DELL\\Desktop\\bigdrops-app\\.agents\\tasks\\assistant-chat-ux\\review.md"
+}

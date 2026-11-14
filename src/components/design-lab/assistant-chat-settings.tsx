@@ -113,6 +113,7 @@ export function ProviderSettings({
           <p className="ac-set-sub">
             {ready} ready · keys stay in memory for this session
           </p>
+          <span className="ac-simulation-badge">Preview simulation · no provider calls</span>
         </div>
         <button type="button" className="ac-icon-btn" onClick={onClose} aria-label="Close settings">
           <X className="size-4" aria-hidden="true" />
@@ -231,7 +232,7 @@ export function ProviderSettings({
                           ) : (
                             <RefreshCw className="size-3.5" aria-hidden="true" />
                           )}
-                          Fetch models
+                          Simulate model list
                         </button>
                       </span>
                     </div>
@@ -277,7 +278,7 @@ export function ProviderSettings({
                           ) : (
                             <Check className="size-3.5" aria-hidden="true" />
                           )}
-                          Test
+                          Simulate test
                         </button>
                         <button
                           type="button"
@@ -434,7 +435,7 @@ function TestLine({ result }: { result: TestResult }) {
     <p className="ac-test" data-status={result.status}>
       {result.status === 'testing' ? <Loader2 className="size-3 ac-spin" aria-hidden="true" /> : null}
       {result.status === 'ok' ? <Check className="size-3" aria-hidden="true" /> : null}
-      {result.message}
+      <span>Simulation · {result.message}</span>
     </p>
   )
 }

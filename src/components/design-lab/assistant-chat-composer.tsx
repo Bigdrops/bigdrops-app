@@ -1,4 +1,5 @@
 import { Sparkles, Square, ArrowUp, Wand2, FileText } from 'lucide-react'
+import { useLayoutEffect } from 'react'
 import type { FormEvent, KeyboardEvent, RefObject } from 'react'
 
 /**
@@ -29,6 +30,15 @@ export function AssistantComposer({
   onStop: () => void
   onInsert: (text: string) => void
 }) {
+  useLayoutEffect(() => {
+    const textarea = inputRef.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    const height = Math.min(textarea.scrollHeight, 160)
+    textarea.style.height = `${height}px`
+    textarea.style.overflowY = textarea.scrollHeight > 160 ? 'auto' : 'hidden'
+  }, [inputRef, value])
+
   return (
     <div className="ac-composer">
       <form className="ac-compose" onSubmit={onSubmit}>
@@ -43,6 +53,7 @@ export function AssistantComposer({
           aria-label="Message the assistant"
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
+          aria-describedby="ac-composer-hint"
         />
 
         <div className="ac-compose-bar">
@@ -72,7 +83,7 @@ export function AssistantComposer({
           )}
         </div>
       </form>
-      <p className="ac-foot">Enter to send · Shift + Enter for a new line · sample script, no data is saved</p>
+      <p className="ac-foot" id="ac-composer-hint">Enter to send · Shift + Enter for a new line · sample script, no data is saved</p>
     </div>
   )
 }

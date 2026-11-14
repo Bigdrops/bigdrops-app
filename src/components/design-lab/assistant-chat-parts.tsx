@@ -1,4 +1,5 @@
 import { Check, Loader2, type LucideIcon } from 'lucide-react'
+import { useEffect, useId, useRef } from 'react'
 
 import type { ChangeCard } from './assistant-chat-script'
 import {
@@ -144,24 +145,44 @@ export function ChangeCardView({
   compact?: boolean
 }) {
   const pending = card.status === 'pending'
+  const titleId = useId()
+  const cardRef = useRef<HTMLElement | null>(null)
+  const rejectRef = useRef<HTMLButtonElement | null>(null)
+  const previousStatus = useRef(card.status)
+
+  useEffect(() => {
+    if (!compact && pending && previousStatus.current !== card.status) {
+      rejectRef.current?.focus()
+    } else if (
+      !compact && !pending && previousStatus.current === 'pending' && document.activeElement === document.body
+    ) {
+      cardRef.current?.focus()
+    }
+    previousStatus.current = card.status
+  }, [card.status, compact, pending])
+  const statusLabel = pending ? 'Waiting for your decision' : card.status === 'accepted' ? 'Applied' : 'Rejected'
   return (
     <article
+      ref={cardRef}
+      tabIndex={-1}
       className={`ac-card${compact ? ' ac-card--compact' : ''}`}
       data-status={card.status}
-      aria-label={`${KIND_LABEL[card.kind]} change`}
+      role="group"
+      aria-labelledby={titleId}
     >
       <div className="ac-card-head">
         <span className="ac-card-kind">{KIND_LABEL[card.kind]}</span>
-        {pending ? (
-          <span className="ac-card-flag">Waiting</span>
-        ) : (
-          <span className="ac-card-flag" data-tone={card.status === 'accepted' ? 'ok' : 'off'}>
-            {card.status === 'accepted' ? 'Applied' : 'Rejected'}
-          </span>
-        )}
+        <span
+          className="ac-card-flag"
+          data-tone={card.status === 'accepted' ? 'ok' : card.status === 'rejected' ? 'off' : undefined}
+          role="status"
+          aria-live="polite"
+        >
+          {statusLabel}
+        </span>
       </div>
 
-      <h3 className="ac-card-title">{card.title}</h3>
+      <h3 className="ac-card-title" id={titleId}>{card.title}</h3>
 
       {card.from !== undefined && card.to !== undefined ? (
         <p className="ac-card-change">
@@ -185,7 +206,7 @@ export function ChangeCardView({
 
       {pending && onDecide ? (
         <div className="ac-card-actions">
-          <button type="button" className="ac-btn ac-btn--ghost" onClick={() => onDecide(false)}>
+          <button ref={rejectRef} type="button" className="ac-btn ac-btn--ghost" onClick={() => onDecide(false)}>
             {card.rejects}
           </button>
           <button type="button" className="ac-btn ac-btn--solid" onClick={() => onDecide(true)}>
