@@ -1,8 +1,7 @@
 import * as React from 'react'
-import { ArrowRight, BellRing, X, CircleDotDashed, Download, Sparkles } from 'lucide-react'
+import { ArrowRight, BellRing, X, CircleDotDashed, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { isAndroidNative } from '@/lib/native/capacitor'
-import { useOptionalAppUpdateContext } from '@/contexts/AppUpdateContext'
 import { useWebAndroidApk } from '@/hooks/useWebAndroidApk'
 
 const PAYMENT_REMINDER_KEY = 'bd:dashboard:payment-reminder-dismissed:v1'
@@ -20,9 +19,13 @@ function readDismissedState(key: string) {
   }
 }
 
+/**
+ * Dashboard reminders for payments and the web APK promo. Android update
+ * messaging is deliberately absent: the update modal owns that prompt and
+ * the Settings card owns the persistent surface.
+ */
 export function PaymentReminderBanner() {
   const navigate = useNavigate()
-  const appUpdate = useOptionalAppUpdateContext()
   const webApk = useWebAndroidApk()
 
   const [paymentReminderDismissed, setPaymentReminderDismissed] = React.useState(() =>
@@ -34,32 +37,17 @@ export function PaymentReminderBanner() {
 
   const isAndroid = isAndroidNative()
 
-  const hasAndroidUpdate =
-    isAndroid &&
-    appUpdate &&
-    (appUpdate.state.status === 'available' ||
-      appUpdate.state.status === 'grace' ||
-      appUpdate.state.status === 'blocked')
-
-  const targetVersionName =
-    appUpdate?.state.policy?.versionName || appUpdate?.release?.versionName
-  const isMandatory =
-    appUpdate?.state.policy?.mandatory === true || appUpdate?.state.status === 'blocked'
-
   const showWebPromo =
     !isAndroid &&
     !webPromoDismissed &&
     !webApk.loading &&
     Boolean(webApk.apkUrl)
 
-  const bannerType: 'android-update' | 'web-promo' | 'payment-reminder' | 'hidden' =
-    hasAndroidUpdate
-      ? 'android-update'
-      : showWebPromo
-        ? 'web-promo'
-        : paymentReminderDismissed
-          ? 'hidden'
-          : 'payment-reminder'
+  const bannerType: 'web-promo' | 'payment-reminder' | 'hidden' = showWebPromo
+    ? 'web-promo'
+    : paymentReminderDismissed
+      ? 'hidden'
+      : 'payment-reminder'
 
   if (bannerType === 'hidden') return null
 
@@ -78,38 +66,22 @@ export function PaymentReminderBanner() {
     }
   }
 
-  const eyebrow =
-    bannerType === 'android-update'
-      ? 'System update'
-      : bannerType === 'web-promo'
-        ? 'Mobile app'
-        : 'Payment reminder'
+  const eyebrow = bannerType === 'web-promo' ? 'Mobile app' : 'Payment reminder'
 
   const title =
-    bannerType === 'android-update'
-      ? `Update available: BOUXRE ${targetVersionName ? 'v' + targetVersionName : ''}`
-      : bannerType === 'web-promo'
-        ? 'Get BOUXRE for Android'
-        : 'Keep payments recorded as they land'
+    bannerType === 'web-promo'
+      ? 'Get BOUXRE for Android'
+      : 'Keep payments recorded as they land'
 
   const description =
-    bannerType === 'android-update'
-      ? 'A new release is available with performance boosts and security updates. Tap to install.'
-      : bannerType === 'web-promo'
-        ? 'Download the official Android APK for faster native performance and offline access.'
-        : 'Record each invoice payment promptly so your books stay accurate.'
+    bannerType === 'web-promo'
+      ? 'Download the official Android APK for faster native performance and offline access.'
+      : 'Record each invoice payment promptly so your books stay accurate.'
 
-  const buttonText =
-    bannerType === 'android-update'
-      ? 'Update Now'
-      : bannerType === 'web-promo'
-        ? 'Download APK'
-        : 'Record payments'
+  const buttonText = bannerType === 'web-promo' ? 'Download APK' : 'Record payments'
 
   const handleAction = () => {
-    if (bannerType === 'android-update') {
-      navigate('/settings?section=app-update')
-    } else if (bannerType === 'web-promo') {
+    if (bannerType === 'web-promo') {
       if (webApk.apkUrl) {
         window.open(webApk.apkUrl, '_blank')
       }
@@ -118,19 +90,10 @@ export function PaymentReminderBanner() {
     }
   }
 
-  const badgeText =
-    bannerType === 'android-update'
-      ? isMandatory
-        ? 'Required'
-        : 'Recommended'
-      : bannerType === 'web-promo'
-        ? 'Android APK'
-        : 'Evergreen'
+  const badgeText = bannerType === 'web-promo' ? 'Android APK' : 'Evergreen'
 
   const icon =
-    bannerType === 'android-update' ? (
-      <Sparkles size={16} strokeWidth={1.9} />
-    ) : bannerType === 'web-promo' ? (
+    bannerType === 'web-promo' ? (
       <Download size={16} strokeWidth={1.9} />
     ) : (
       <BellRing size={16} strokeWidth={1.9} />
@@ -215,19 +178,17 @@ export function PaymentReminderBanner() {
             </div>
           </div>
 
-          {bannerType !== 'android-update' && (
-            <button
-              type="button"
-              aria-label={`Dismiss ${eyebrow}`}
-              onClick={handleDismiss}
-              className="grid h-[28px] w-[28px] shrink-0 place-items-center rounded-full shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.25)] transition hover:scale-105 active:scale-95"
-              style={{
-                color: 'hsl(var(--bd-ink-muted))',
-              }}
-            >
-              <X size={14} strokeWidth={1.9} />
-            </button>
-          )}
+          <button
+            type="button"
+            aria-label={`Dismiss ${eyebrow}`}
+            onClick={handleDismiss}
+            className="grid h-[28px] w-[28px] shrink-0 place-items-center rounded-full shadow-[0_1px_2px_rgba(15,23,42,0.05),inset_0_1px_rgba(255,255,255,0.25)] transition hover:scale-105 active:scale-95"
+            style={{
+              color: 'hsl(var(--bd-ink-muted))',
+            }}
+          >
+            <X size={14} strokeWidth={1.9} />
+          </button>
         </div>
       </section>
     </>

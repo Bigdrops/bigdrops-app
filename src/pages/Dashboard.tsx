@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 
 import Layout from '@/components/Layout'
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview'
+import UpdateModalHost from '@/components/app/UpdateModalHost'
 import { useSettings } from '@/hooks/useSettings'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
@@ -89,6 +90,8 @@ export default function DashboardRedesign({ session, preference, saveThemePref }
         preference={preference}
         saveThemePref={saveThemePref}
       />
+
+      <UpdateModalHost ready={!loading} />
 
       {createOpen && createActions.length > 0 ? (
         <>

@@ -33,11 +33,32 @@ export interface ApkInstallOptions {
   uri: string
 }
 
+/**
+ * Durable download record owned by the native plugin. It survives process
+ * death, so the web layer can rehydrate a background transfer on mount.
+ */
+export interface ApkDownloadState {
+  status: 'idle' | 'downloading' | 'downloaded' | 'failed'
+  downloadedBytes: number
+  /** 0 when DownloadManager has not reported a size yet. */
+  totalBytes: number
+  /** Target versionCode stored with the record; 0 when it was not supplied. */
+  versionCode: number
+  fileName?: string
+  /** FileProvider content:// URI, present only when status is downloaded. */
+  uri?: string
+}
+
 export interface ApkUpdatePlugin {
-  downloadApk(options: { url: string; expectedPrefix?: string }): Promise<ApkDownloadResult>
+  downloadApk(options: {
+    url: string
+    expectedPrefix?: string
+    versionCode: number
+  }): Promise<ApkDownloadResult>
   installApk(options: ApkInstallOptions): Promise<void>
   cancelDownload(): Promise<void>
   deleteDownload(options: { fileName: string }): Promise<void>
+  getDownloadState(): Promise<ApkDownloadState>
   logDiagnostic(options: { message: string }): Promise<void>
   addListener(
     eventName: 'apkDownloadProgress',
@@ -55,8 +76,23 @@ export function hasApkUpdatePlugin(): boolean {
 export async function downloadApkNative(options: {
   url: string
   expectedPrefix?: string
+  versionCode: number
 }): Promise<ApkDownloadResult> {
   return ApkUpdate.downloadApk(options)
+}
+
+/**
+ * Reads the durable native download record. Returns null when the plugin is
+ * unavailable or the bridge call fails, so callers can treat it as "no
+ * recoverable download" without error handling.
+ */
+export async function getDownloadStateNative(): Promise<ApkDownloadState | null> {
+  if (!hasApkUpdatePlugin()) return null
+  try {
+    return await ApkUpdate.getDownloadState()
+  } catch {
+    return null
+  }
 }
 
 /**

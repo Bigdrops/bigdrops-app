@@ -27,6 +27,7 @@ import {
 } from '@/lib/appUpdate/graceState'
 import {
   downloadApkNative,
+  getDownloadStateNative,
   installApkNative,
   cancelDownloadNative,
   deleteDownloadNative,
@@ -346,6 +347,51 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     })
   }, [])
 
+  // Cold-start recovery. DownloadManager keeps running after Android kills
+  // the process, so the native layer holds the only surviving record. Read
+  // it once on mount and adopt that transfer instead of showing idle.
+  const rehydratedRef = useRef(false)
+  useEffect(() => {
+    if (!enabled || !isAndroid) return
+    if (rehydratedRef.current) return
+    rehydratedRef.current = true
+    if (downloadingUrlRef.current !== null) return
+
+    void (async () => {
+      const native = await getDownloadStateNative()
+      if (!native || native.status === 'idle') return
+      // A local download started while the bridge call was in flight wins.
+      if (downloadingUrlRef.current !== null) return
+
+      if (native.status === 'downloading') {
+        setDownloadPhase({
+          kind: 'downloading',
+          downloadedBytes: native.downloadedBytes,
+          totalBytes: native.totalBytes > 0 ? native.totalBytes : null,
+        })
+        await registerProgressListener()
+        return
+      }
+
+      if (native.status === 'downloaded' && native.fileName && native.uri) {
+        downloadedFileRef.current = { fileName: native.fileName, uri: native.uri }
+        setDownloadPhase({
+          kind: 'downloaded',
+          fileName: native.fileName,
+          uri: native.uri,
+        })
+        return
+      }
+
+      if (native.status === 'failed') {
+        setDownloadPhase({
+          kind: 'failed',
+          message: describeDownloadFailure(null, { webFallbackAvailable: false }),
+        })
+      }
+    })()
+  }, [enabled, isAndroid, registerProgressListener])
+
   const installDownloadedApk = useCallback(async () => {
     const downloaded = downloadedFileRef.current
     if (!downloaded) return
@@ -404,6 +450,7 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
       const result = await downloadApkNative({
         url: apkAsset.downloadUrl,
         expectedPrefix: state.policy?.apkAssetPrefix,
+        versionCode: state.policy?.versionCode ?? 0,
       })
       downloadedFileRef.current = { fileName: result.fileName, uri: result.uri }
       setDownloadPhase({ kind: 'downloaded', fileName: result.fileName, uri: result.uri })

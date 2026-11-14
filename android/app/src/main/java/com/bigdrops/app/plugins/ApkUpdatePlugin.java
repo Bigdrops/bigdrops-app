@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -45,6 +46,17 @@ public class ApkUpdatePlugin extends Plugin {
     private static final String FILE_PROVIDER_AUTHORITY_SUFFIX = ".fileprovider";
     private static final String DIAGNOSTIC_TAG = "BIGDROPS/Update";
     private static final int DIAGNOSTIC_MAX_LENGTH = 512;
+    private static final String APK_MIME_TYPE = "application/vnd.android.package-archive";
+
+    // One in-flight download record survives process death. DownloadManager
+    // keeps downloading after Android kills the app, so the record is the
+    // only way to reattach to that transfer on the next cold start.
+    private static final String PREFS_NAME = "bd_update_download";
+    private static final String KEY_DOWNLOAD_ID = "downloadId";
+    private static final String KEY_VERSION_CODE = "versionCode";
+    private static final String KEY_EXPECTED_BYTES = "expectedBytes";
+    private static final String KEY_FILE_NAME = "fileName";
+    private static final String KEY_URL = "url";
 
     private final ConcurrentHashMap<Long, PluginCall> activeDownloadCalls = new ConcurrentHashMap<>();
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
@@ -52,6 +64,8 @@ public class ApkUpdatePlugin extends Plugin {
     private String currentDownloadUrl = null;
     private volatile Long lastEnqueueId = null;
     private volatile String pendingInstallUri = null;
+    private volatile boolean isForeground = false;
+    private volatile boolean expectedBytesRecorded = false;
 
     private File getUpdatesDir(Context context) {
         File dir = context.getExternalCacheDir();
@@ -88,6 +102,16 @@ public class ApkUpdatePlugin extends Plugin {
                         long total = totalIdx >= 0 ? cursor.getLong(totalIdx) : -1L;
                         int status = statusIdx >= 0 ? cursor.getInt(statusIdx) : -1;
 
+                        // DownloadManager reports -1 for the total until the
+                        // transfer connects. Record it once, so a process kill
+                        // can still detect a truncated file later.
+                        if (total > 0 && !expectedBytesRecorded) {
+                            expectedBytesRecorded = true;
+                            downloadPrefs(context).edit()
+                                    .putLong(KEY_EXPECTED_BYTES, total)
+                                    .apply();
+                        }
+
                         if (status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING) {
                             JSObject progress = new JSObject();
                             progress.put("url", currentDownloadUrl);
@@ -122,6 +146,142 @@ public class ApkUpdatePlugin extends Plugin {
         }
     }
 
+    private SharedPreferences downloadPrefs(Context context) {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    }
+
+    private void persistDownloadRecord(
+            Context context,
+            long downloadId,
+            int versionCode,
+            long expectedBytes,
+            String fileName,
+            String url
+    ) {
+        expectedBytesRecorded = expectedBytes > 0;
+        downloadPrefs(context).edit()
+                .putLong(KEY_DOWNLOAD_ID, downloadId)
+                .putInt(KEY_VERSION_CODE, versionCode)
+                .putLong(KEY_EXPECTED_BYTES, expectedBytes)
+                .putString(KEY_FILE_NAME, fileName)
+                .putString(KEY_URL, url)
+                .apply();
+    }
+
+    private void clearDownloadRecord(Context context) {
+        downloadPrefs(context).edit().clear().apply();
+    }
+
+    /**
+     * Reattaches to a download that outlived the process that started it.
+     * Runs when Capacitor creates the plugin, before the first resume.
+     */
+    @Override
+    public void load() {
+        super.load();
+
+        Context context = getContext();
+        if (context == null) return;
+
+        SharedPreferences prefs = downloadPrefs(context);
+        long downloadId = prefs.getLong(KEY_DOWNLOAD_ID, -1L);
+        if (downloadId <= 0) return;
+
+        String fileName = prefs.getString(KEY_FILE_NAME, null);
+        String url = prefs.getString(KEY_URL, null);
+        if (fileName == null || fileName.isEmpty()) {
+            clearDownloadRecord(context);
+            return;
+        }
+
+        File destination = new File(getUpdatesDir(context), fileName);
+        int status = downloadStatus(context, downloadId);
+
+        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+            if (!destination.exists()) {
+                clearDownloadRecord(context);
+                return;
+            }
+            long expectedBytes = prefs.getLong(KEY_EXPECTED_BYTES, 0L);
+            if (expectedBytes > 0 && destination.length() != expectedBytes) {
+                // Truncated file left by an interrupted transfer.
+                //noinspection ResultOfMethodCallIgnored
+                destination.delete();
+                clearDownloadRecord(context);
+                return;
+            }
+            // Routes through the normal auto-install path, so a cold launch
+            // still respects the foreground and unknown-sources rules.
+            autoInstall(buildProviderUri(context, destination));
+            return;
+        }
+
+        if (status == DownloadManager.STATUS_FAILED) {
+            //noinspection ResultOfMethodCallIgnored
+            destination.delete();
+            clearDownloadRecord(context);
+            return;
+        }
+
+        if (status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING) {
+            lastEnqueueId = downloadId;
+            if (url != null && !url.isEmpty()) {
+                startProgressPolling(context, downloadId, url);
+            }
+            registerCompletionReceiver(context, downloadId, destination);
+        }
+    }
+
+    /** Total bytes reported by DownloadManager, or 0 when not yet known. */
+    private long downloadTotalBytes(Context context, long downloadId) {
+        DownloadManager downloadManager =
+                (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (downloadManager == null) return 0L;
+
+        android.database.Cursor cursor = downloadManager.query(
+                new DownloadManager.Query().setFilterById(downloadId));
+        if (cursor == null) return 0L;
+
+        try {
+            if (cursor.moveToFirst()) {
+                int idx = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+                if (idx >= 0) {
+                    long total = cursor.getLong(idx);
+                    return Math.max(total, 0L);
+                }
+            }
+        } finally {
+            cursor.close();
+        }
+        return 0L;
+    }
+
+    /** {downloadedBytes, totalBytes} as reported by DownloadManager. */
+    private long[] downloadByteCounts(Context context, long downloadId) {
+        long[] counts = new long[]{0L, 0L};
+        DownloadManager downloadManager =
+                (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (downloadManager == null) return counts;
+
+        android.database.Cursor cursor = downloadManager.query(
+                new DownloadManager.Query().setFilterById(downloadId));
+        if (cursor == null) return counts;
+
+        try {
+            if (cursor.moveToFirst()) {
+                int bytesIdx = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                int totalIdx = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+                long downloaded = bytesIdx >= 0 ? cursor.getLong(bytesIdx) : 0L;
+                long total = totalIdx >= 0 ? cursor.getLong(totalIdx) : -1L;
+                counts[0] = Math.max(downloaded, 0L);
+                counts[1] = Math.max(total, 0L);
+            }
+        } finally {
+            cursor.close();
+        }
+        return counts;
+    }
+
     @Override
     protected void handleOnDestroy() {
         stopProgressPolling();
@@ -131,23 +291,69 @@ public class ApkUpdatePlugin extends Plugin {
     @Override
     protected void handleOnResume() {
         super.handleOnResume();
-        if (pendingInstallUri != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Context context = getContext();
-            if (context != null && context.getPackageManager().canRequestPackageInstalls()) {
-                String uriToInstall = pendingInstallUri;
-                pendingInstallUri = null;
-                try {
-                    Uri contentUri = Uri.parse(uriToInstall);
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
-                    intent.addFlags(
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                    | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
-                } catch (Exception e) {
-                    Log.e(DIAGNOSTIC_TAG, "Auto-install failed on resume: " + safeMessage(e));
-                }
-            }
+        isForeground = true;
+        // A download that finished while the app was backgrounded could not
+        // launch the installer then (Android 10+ blocks background activity
+        // starts). Resume is the first legal moment to retry the queued URI.
+        if (pendingInstallUri != null) {
+            autoInstall(Uri.parse(pendingInstallUri));
+        }
+    }
+
+    @Override
+    protected void handleOnPause() {
+        isForeground = false;
+        super.handleOnPause();
+    }
+
+    /**
+     * Starts Android's package installer for a completed APK.
+     *
+     * The installer is a normal activity launch, so it only runs while BOURXE
+     * is foregrounded. When the app is backgrounded the URI is queued and
+     * retried from handleOnResume(). Nothing is installed silently: Android
+     * always shows its own install confirmation.
+     */
+    private void autoInstall(Uri uri) {
+        if (uri == null) return;
+
+        Context context = getContext();
+        if (context == null) {
+            pendingInstallUri = uri.toString();
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && !context.getPackageManager().canRequestPackageInstalls()) {
+            // Hold the URI until "Install unknown apps" is granted. installApk()
+            // opens that settings screen, and resume picks the URI back up.
+            pendingInstallUri = uri.toString();
+            JSObject blocked = new JSObject();
+            blocked.put("uri", uri.toString());
+            blocked.put("reason", "unknown-sources-disabled");
+            notifyListeners("apkInstallBlocked", blocked);
+            return;
+        }
+
+        if (!isForeground || getActivity() == null) {
+            // Backgrounded: keep the URI for the next resume.
+            pendingInstallUri = uri.toString();
+            return;
+        }
+
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, APK_MIME_TYPE);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            pendingInstallUri = null;
+            // The installer owns the flow now. Nothing left to recover.
+            clearDownloadRecord(context);
+        } catch (Exception e) {
+            // Do not keep a failing URI queued, or every resume retries it.
+            pendingInstallUri = null;
+            Log.e(DIAGNOSTIC_TAG, "Auto-install failed: " + safeMessage(e));
         }
     }
 
@@ -221,6 +427,21 @@ public class ApkUpdatePlugin extends Plugin {
 
         lastEnqueueId = downloadId;
         activeDownloadCalls.put(downloadId, call);
+
+        // Persist before polling starts: if Android kills the process from
+        // here on, load() must still find this transfer.
+        Integer versionCodeArg = call.getInt("versionCode");
+        int targetVersionCode =
+                versionCodeArg == null || versionCodeArg < 0 ? 0 : versionCodeArg;
+        persistDownloadRecord(
+                context,
+                downloadId,
+                targetVersionCode,
+                downloadTotalBytes(context, downloadId),
+                destination.getName(),
+                url
+        );
+
         startProgressPolling(context, downloadId, url);
         registerCompletionReceiver(context, downloadId, destination);
     }
@@ -242,24 +463,41 @@ public class ApkUpdatePlugin extends Plugin {
                 } catch (IllegalArgumentException ignored) {
                     // Receiver already unregistered.
                 }
-                if (call == null) return;
-
                 int status = downloadStatus(ctx, downloadId);
                 if (status != DownloadManager.STATUS_SUCCESSFUL) {
                     // Partial or failed file must not linger as installable.
                     //noinspection ResultOfMethodCallIgnored
                     destination.delete();
-                    call.reject("Download failed (status " + status + "). You can retry safely.");
+                    clearDownloadRecord(ctx);
+                    if (call != null) {
+                        call.reject("Download failed (status " + status + "). You can retry safely.");
+                    }
                     return;
                 }
 
                 long size = destination.length();
-                JSObject result = new JSObject();
-                result.put("uri", buildProviderUri(ctx, destination).toString());
-                result.put("fileName", destination.getName());
-                result.put("sizeBytes", size);
-                result.put("reusedExisting", false);
-                call.resolve(result);
+                Uri contentUri = buildProviderUri(ctx, destination);
+
+                // Announce the verified asset before the installer takes over
+                // the screen, so the web layer can enter its installing state.
+                JSObject completed = new JSObject();
+                completed.put("uri", contentUri.toString());
+                completed.put("fileName", destination.getName());
+                completed.put("sizeBytes", size);
+                notifyListeners("apkDownloadCompleted", completed);
+
+                if (call != null) {
+                    JSObject result = new JSObject();
+                    result.put("uri", contentUri.toString());
+                    result.put("fileName", destination.getName());
+                    result.put("sizeBytes", size);
+                    result.put("reusedExisting", false);
+                    call.resolve(result);
+                }
+
+                // Fire the system installer. Deferred to the next resume when
+                // BOURXE is not in the foreground.
+                autoInstall(contentUri);
             }
         };
 
@@ -328,7 +566,7 @@ public class ApkUpdatePlugin extends Plugin {
 
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+            intent.setDataAndType(contentUri, APK_MIME_TYPE);
             intent.addFlags(
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                             | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -355,7 +593,9 @@ public class ApkUpdatePlugin extends Plugin {
         if (lastEnqueueId != null) {
             downloadManager.remove(lastEnqueueId);
             activeDownloadCalls.remove(lastEnqueueId);
+            lastEnqueueId = null;
         }
+        clearDownloadRecord(context);
         call.resolve();
     }
 
@@ -377,7 +617,92 @@ public class ApkUpdatePlugin extends Plugin {
             call.reject("Could not delete downloaded file.");
             return;
         }
+        clearDownloadRecord(getContext());
         call.resolve();
+    }
+
+    /**
+     * Current durable download record, so a cold-started web layer can
+     * rehydrate its progress UI. Read-only: it never starts an install.
+     */
+    @PluginMethod
+    public void getDownloadState(PluginCall call) {
+        Context context = getContext();
+        JSObject result = new JSObject();
+        result.put("status", "idle");
+        result.put("downloadedBytes", 0L);
+        result.put("totalBytes", 0L);
+        result.put("versionCode", 0);
+
+        if (context == null) {
+            call.resolve(result);
+            return;
+        }
+
+        SharedPreferences prefs = downloadPrefs(context);
+        long downloadId = prefs.getLong(KEY_DOWNLOAD_ID, -1L);
+        if (downloadId <= 0) {
+            call.resolve(result);
+            return;
+        }
+
+        String fileName = prefs.getString(KEY_FILE_NAME, null);
+        result.put("versionCode", prefs.getInt(KEY_VERSION_CODE, 0));
+        if (fileName != null && !fileName.isEmpty()) {
+            result.put("fileName", fileName);
+        }
+
+        int status = downloadStatus(context, downloadId);
+
+        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+            if (fileName == null || fileName.isEmpty()) {
+                clearDownloadRecord(context);
+                call.resolve(result);
+                return;
+            }
+            File destination = new File(getUpdatesDir(context), fileName);
+            if (!destination.exists()) {
+                clearDownloadRecord(context);
+                call.resolve(result);
+                return;
+            }
+            try {
+                result.put("status", "downloaded");
+                result.put("downloadedBytes", destination.length());
+                result.put("totalBytes", Math.max(
+                        destination.length(),
+                        prefs.getLong(KEY_EXPECTED_BYTES, 0L)));
+                result.put("uri", buildProviderUri(context, destination).toString());
+            } catch (Exception e) {
+                Log.e(DIAGNOSTIC_TAG, "Could not build install URI: " + safeMessage(e));
+                result.put("status", "failed");
+            }
+            call.resolve(result);
+            return;
+        }
+
+        if (status == DownloadManager.STATUS_FAILED) {
+            result.put("status", "failed");
+            call.resolve(result);
+            return;
+        }
+
+        if (status == DownloadManager.STATUS_RUNNING
+                || status == DownloadManager.STATUS_PENDING
+                || status == DownloadManager.STATUS_PAUSED) {
+            long[] counts = downloadByteCounts(context, downloadId);
+            result.put("status", "downloading");
+            result.put("downloadedBytes", counts[0]);
+            result.put("totalBytes", counts[1] > 0
+                    ? counts[1]
+                    : prefs.getLong(KEY_EXPECTED_BYTES, 0L));
+            call.resolve(result);
+            return;
+        }
+
+        // No DownloadManager row for this id: the record is stale.
+        clearDownloadRecord(context);
+        call.resolve(result);
     }
 
     /**

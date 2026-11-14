@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, CheckCircle2, AlertTriangle, AlertCircle, Download, Smartphone } from 'lucide-react'
+import { RefreshCw, CheckCircle2, Download, Smartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
 import { useAppUpdateContext } from '@/contexts/AppUpdateContext'
 import { getAppVersionInfo, type AppVersionInfo } from '@/lib/appUpdate/appVersion'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import type { CheckResult } from '@/hooks/useAppUpdate'
-import { mapUpdateStatusToSettingsDisplay } from '@/domain/appUpdate/settingsUpdateDisplay'
+import { formatVersionLabel } from '@/domain/appUpdate/updateStateMachine'
 import { useWebAndroidApk } from '@/hooks/useWebAndroidApk'
-import UpdateSheet from '@/components/app/UpdateSheet'
+import UpdateModal from '@/components/app/UpdateModal'
+import { DownloadProgress } from '@/components/app/update/DownloadProgress'
 
 function WebAndroidDownloadSection() {
   const { apkUrl, versionName, versionCode, loading } = useWebAndroidApk()
@@ -76,16 +77,33 @@ function WebAndroidDownloadSection() {
   )
 }
 
+function VersionCell({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+  return (
+    <div className="min-w-0 px-5 py-4">
+      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-bd-text-muted">
+        {label}
+      </p>
+      <p
+        className={`mt-1 truncate text-[15px] font-semibold tabular-nums ${
+          muted ? 'text-bd-text-muted' : 'text-bd-text'
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
 /**
  * Android-only manual update surface. Renders the exact result of the
  * awaited forced check — never a timed guess, never policy presence.
- * Only a successfully resolved `up_to_date` shows the green state.
+ * Only a successfully resolved `up_to_date` shows a settled state.
  */
 export function AppUpdateSettingsSection() {
   const update = useAppUpdateContext()
   const [version, setVersion] = useState<AppVersionInfo | null>(null)
   const [checking, setChecking] = useState(false)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [lastCheck, setLastCheck] = useState<CheckResult | null>(null)
 
   useEffect(() => {
@@ -103,15 +121,6 @@ export function AppUpdateSettingsSection() {
     try {
       const result = await update.checkForUpdate()
       setLastCheck(result)
-      if (
-        result &&
-        (result.state.status === 'available' ||
-          result.state.status === 'grace' ||
-          result.state.status === 'blocked') &&
-        result.state.policy
-      ) {
-        setSheetOpen(true)
-      }
     } finally {
       setChecking(false)
     }
@@ -123,71 +132,120 @@ export function AppUpdateSettingsSection() {
 
   // Single truthful source: the exact manual-check result when present,
   // otherwise the live hook state once its authoritative discovery settled.
-  const source = lastCheck?.state ?? (update.ready ? update.state : null)
-  const display = checking ? 'checking' : source ? mapUpdateStatusToSettingsDisplay(source.status) : 'idle'
-  const policy = source?.policy ?? null
-  const targetLabel =
-    policy && (policy.versionName || policy.versionCode) ? `v${policy.versionCode}` : null
-  const graceRemaining = update.graceRemaining
+  const state = lastCheck?.state ?? update.state
+  const settled = Boolean(lastCheck) || update.ready
+  const isPending =
+    state.status === 'available' || state.status === 'grace' || state.status === 'blocked'
+  const targetLabel = state.policy
+    ? formatVersionLabel(state.policy.versionName, state.policy.versionCode)
+    : null
+  const currentValue = version?.versionName
+    ? `v${version.versionName}${version.versionCode ? ` (${version.versionCode})` : ''}`
+    : '—'
+
+  const phase = update.downloadPhase
+  const apkSize = update.release?.assets[0]?.sizeBytes ?? null
+  const totalBytes =
+    phase.kind === 'downloading' ? (phase.totalBytes ?? apkSize ?? undefined) : undefined
+  const downloadedBytes = phase.kind === 'downloading' ? phase.downloadedBytes : undefined
+  const percentage =
+    totalBytes && downloadedBytes !== undefined
+      ? Math.min(100, (downloadedBytes / totalBytes) * 100)
+      : null
 
   return (
     <div className="space-y-4">
-      <SettingsSummaryCard title="App Version" description="Current installation and update status">
-        <SettingsSummaryRow
-          label="Version"
-          value={version?.versionName ? `${version.versionName} (${version.versionCode ?? '—'})` : 'Checking…'}
-        />
-        <SettingsSummaryRow
-          label="Status"
-          value={
-            display === 'checking' ? (
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <RefreshCw className="size-3.5 animate-spin" /> Checking…
-              </span>
-            ) : display === 'up_to_date' ? (
-              <span className="flex items-center gap-1.5 text-bd-status-success-text">
-                <CheckCircle2 className="size-3.5" /> Up to date
-              </span>
-            ) : display === 'available' ? (
-              <span className="flex items-center gap-1.5 text-bd-status-warning-text">
-                <AlertTriangle className="size-3.5" /> Update available{targetLabel ? ` (${targetLabel})` : ''}
-              </span>
-            ) : display === 'grace' ? (
-              <span className="flex items-center gap-1.5 text-bd-status-warning-text">
-                <AlertTriangle className="size-3.5" /> Mandatory update available
-                {targetLabel ? ` (${targetLabel})` : ''}
-                {graceRemaining && !graceRemaining.expired
-                  ? ` · ${graceRemaining.days}d ${graceRemaining.hours}h left`
-                  : ''}
-              </span>
-            ) : display === 'blocked' ? (
-              <span className="flex items-center gap-1.5 text-bd-status-warning-text">
-                <AlertTriangle className="size-3.5" /> Update required
-                {targetLabel ? ` (${targetLabel})` : ''}
-              </span>
-            ) : display === 'unavailable' ? (
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <AlertCircle className="size-3.5" /> Could not check for updates
-              </span>
-            ) : (
-              '—'
-            )
-          }
-        />
-      </SettingsSummaryCard>
+      <div className="overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)]">
+        <div className="flex items-center justify-between gap-3 px-5 pb-1 pt-4">
+          <h3 className="text-sm font-bold text-bd-text">App Version</h3>
+          <button
+            type="button"
+            onClick={() => void handleCheck()}
+            disabled={checking}
+            className="text-[11px] font-medium text-bd-text-muted underline underline-offset-4 transition-colors hover:text-bd-text disabled:opacity-60"
+          >
+            {checking ? 'Checking…' : 'Check again'}
+          </button>
+        </div>
 
-      <Button
-        onClick={() => void handleCheck()}
-        disabled={checking}
-        variant="outline"
-        size="lg"
-        className="w-full"
-      >
-        <RefreshCw className="size-4" data-icon="inline-start" />
-        {checking ? 'Checking…' : display === 'unavailable' ? 'Retry' : 'Check for updates'}
-      </Button>
+        <div className="grid grid-cols-2 divide-x divide-[hsl(var(--bd-border)/0.4)]">
+          <VersionCell label="Current" value={currentValue} />
+          <VersionCell
+            label="Available"
+            value={
+              !settled
+                ? '—'
+                : isPending && targetLabel
+                  ? targetLabel
+                  : state.status === 'up_to_date'
+                    ? 'None'
+                    : 'Not checked'
+            }
+            muted={!isPending}
+          />
+        </div>
+      </div>
 
-      <UpdateSheet open={sheetOpen} onOpenChange={setSheetOpen} update={update} />
+      {phase.kind === 'downloading' ? (
+        <div className="space-y-2">
+          <DownloadProgress
+            percentage={percentage}
+            downloadedBytes={downloadedBytes}
+            totalBytes={totalBytes}
+            status={downloadedBytes ? 'downloading' : 'connecting'}
+            surface="page"
+          />
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => void update.cancelInAppDownload()}
+              className="text-[11px] font-medium text-bd-text-muted underline underline-offset-4 transition-colors hover:text-bd-text"
+            >
+              Cancel download
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="text-[11px] font-medium text-bd-text-muted underline underline-offset-4 transition-colors hover:text-bd-text"
+            >
+              Details
+            </button>
+          </div>
+        </div>
+      ) : phase.kind === 'downloaded' ? (
+        <Button
+          onClick={() => void update.installDownloadedApk()}
+          size="lg"
+          className="w-full"
+        >
+          <Download className="size-4" data-icon="inline-start" />
+          Install update
+        </Button>
+      ) : isPending ? (
+        <Button
+          onClick={() => setModalOpen(true)}
+          size="lg"
+          className="w-full"
+        >
+          <Download className="size-4" data-icon="inline-start" />
+          Install {targetLabel ?? 'update'}
+        </Button>
+      ) : null}
+
+      {settled && state.status === 'unavailable' ? (
+        <Button
+          onClick={() => void handleCheck()}
+          disabled={checking}
+          variant="outline"
+          size="lg"
+          className="w-full"
+        >
+          <RefreshCw className="size-4" data-icon="inline-start" />
+          {checking ? 'Checking…' : 'Retry'}
+        </Button>
+      ) : null}
+
+      <UpdateModal open={modalOpen} onOpenChange={setModalOpen} update={update} />
     </div>
   )
 }

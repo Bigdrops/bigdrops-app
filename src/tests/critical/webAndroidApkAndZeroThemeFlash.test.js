@@ -78,7 +78,7 @@ test('Settings AppUpdateSection renders permanent BOUXRE for Android card on web
   assert.match(settingsSectionSource, /WebAndroidDownloadSection/)
   assert.match(settingsSectionSource, /if \(!isAndroidNative\(\)\) \{\s*return <WebAndroidDownloadSection \/>/)
   assert.match(settingsSectionSource, /BOUXRE for Android/)
-  assert.match(settingsSectionSource, /Download Android APK/)
+  assert.match(settingsSectionSource, /Download BOUXRE APK/)
   assert.match(settingsSectionSource, /download="bouxre-latest\.apk"/)
 
   // settings-config.ts makes app-update available on web with 'Android App' label

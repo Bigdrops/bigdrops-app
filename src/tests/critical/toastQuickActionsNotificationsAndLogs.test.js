@@ -41,14 +41,14 @@ test('Quick Actions rows are unified with neutral surface and mergeQtyUnit is lo
   assert.doesNotMatch(unifiedActionSource, /bg-rose-500\/10/, 'Row background must not have neon red/maroon fill')
 })
 
-test('useNotifications and PaymentReminderBanner prioritize update and web APK promo', () => {
+test('useNotifications synthesizes updates and PaymentReminderBanner owns only payments and the web APK promo', () => {
   const notificationsHook = read('src/hooks/useNotifications.ts')
   assert.match(notificationsHook, /synthetic-android-update/, 'useNotifications must synthesize Android update notification')
   assert.match(notificationsHook, /synthetic-web-apk-promo/, 'useNotifications must synthesize Web APK promo notification')
 
   const reminderBanner = read('src/components/dashboard/PaymentReminderBanner.tsx')
-  assert.match(reminderBanner, /Update available|Update required/i, 'PaymentReminderBanner must prioritize Android update')
-  assert.match(reminderBanner, /Get BOUXRE for Android/, 'PaymentReminderBanner must prioritize Web APK promo')
+  assert.doesNotMatch(reminderBanner, /Update available|Update required/i, 'Android update messaging must live only in the update modal')
+  assert.match(reminderBanner, /Get BOUXRE for Android/, 'PaymentReminderBanner must keep the Web APK promo')
 })
 
 test('Settings includes Diagnostic Logs Center with diagnostic export actions', () => {

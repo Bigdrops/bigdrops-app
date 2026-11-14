@@ -24,7 +24,6 @@ import BiometricGate from '@/components/app/BiometricGate'
 import { useAppUpdate } from '@/hooks/useAppUpdate'
 import { AppUpdateProvider } from '@/contexts/AppUpdateContext'
 import UpdateGate from '@/components/app/UpdateGate'
-import UpdateBanner from '@/components/app/UpdateBanner'
 import WebAppPromoBanner from '@/components/app/WebAppPromoBanner'
 import CookieConsentBanner from '@/components/compliance/CookieConsentBanner'
 import { isBiometricLockEnabled } from '@/lib/native/biometric'
@@ -556,10 +555,6 @@ function App() {
         <Toaster />
         <NativeFeedbackRenderer />
         <NudgeMount />
-        {isAndroidNative() &&
-          (appUpdate.state.status === 'grace' || appUpdate.state.status === 'available') && (
-            <UpdateBanner update={appUpdate} />
-          )}
         {!isAndroidNative() && <WebAppPromoBanner />}
         <CookieConsentBanner />
         {isAndroidNative() && (
