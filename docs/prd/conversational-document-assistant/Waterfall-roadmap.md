@@ -871,4 +871,112 @@ On 2026-11-14, an audit-first investigation was conducted regarding the recurrin
 3. **Architecture Reassessment:** The current database schema (`public.app_ai_provider_config`) hardcodes `id = 'primary'`, operating as a single-credential form rather than a provider-management subsystem. Saving a provider unconditionally destroys existing keys for other providers.
 4. **Remediation Plan:** A 4-phase refactoring plan is proposed (Phase 1: Environment loading repair; Phase 2: RBAC and dedicated encryption key; Phase 3: Multi-connection schema `app_ai_provider_connections`; Phase 4: UX overhaul with model discovery). Detailed in [`docs/reports/ai/2026-11-14-bolu-provider-management-audit-and-architecture-reassessment.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/reports/ai/2026-11-14-bolu-provider-management-audit-and-architecture-reassessment.md).
 
+### 25.6 Native Multi-Account AI Routing Subsystem — Phase 1: Backend Architecture (2026-11-14)
+
+**Status:** ACCEPTED WITH QUALIFICATIONS (Backend Core Implemented; Live Concurrency & Full TS Check Unverified)
+
+#### Implementation & Verification Classification
+1. **Implemented & Verified (Automated Test Suite):**
+   - **Multi-Account Credential Vault:** Table `public.app_ai_provider_connections` with AES-256-GCM envelope encryption (`encrypted_api_key`, `iv`, `auth_tag`, `key_version`), health states (`healthy`, `cooling_down`, `exhausted`, `quarantined`, `unknown`), priority, persistent rotation pointer (`last_selected_at`), and concurrency-safe `model_cooldowns` JSONB.
+   - **Audit Activity Feed:** Table `public.app_ai_routing_events` for redacted routing event feeds.
+   - **Legacy Compatibility:** Preserved `public.app_ai_provider_config` with added `migrated_to_connections boolean NOT NULL DEFAULT false`.
+   - **Row-Level Security:** Strict RLS `USING (false)` denying direct client access; execution granted exclusively to `service_role`.
+   - **Routing Engine Modules:** `bolu-provider-catalog.ts`, `bolu-error-classifier.ts`, `bolu-policy-router.ts`, `bolu-balance-sync.ts`, `bolu-account-pool.ts`.
+   - **Runtime Failover:** Pre-first-token bounded failover (max 4 attempts); post-first-token stream lock-in.
+   - **Automated Test Evidence:** 123 automated tests passing across 16 test suites in `src/tests/ai-assistant/` (0 failures, 427 ms).
+
+2. **Implemented but Unverified (PostgreSQL Live Concurrency):**
+   - Stored procedures (`claim_eligible_ai_connection` with `FOR UPDATE SKIP LOCKED`, etc.) statically verified and unit-tested via mock RPCs; unverified on live hosted database.
+
+3. **Blocked / Failed (TypeScript Static Verification):**
+   - Full repository `tsc --noEmit` blocked by 4 GB RAM hardware gate.
+   - Narrowed static check identified TS errors in `api/bolu-chat.ts` and `bolu-provider-catalog.ts` due to discriminated union narrowing.
+
+4. **Deferred to Phase 2:**
+   - Settings UI redesign (`BoluProviderSettingsSection.tsx`), multi-account management cards, and live model discovery UX.
+
+### 25.7 Bolu AI Routing Subsystem — Phase 1 Defect Remediation & Pre-Phase 2 Gate (2026-11-14)
+
+**Status:** COMPLETE & CLEARED FOR PHASE 2 (Zero TS Compiler Errors; All Regression Tests Passing)
+
+Following the 14 November 2026 verification audit, a targeted defect remediation was executed across the five identified items:
+
+1. **DEF-01 Resolved (TypeScript Union Narrowing in `api/bolu-chat.ts`):**
+   - Replaced un-narrowed `!result.ok` with explicit property discrimination: `if ('diagnostics' in result)` and `if ('response' in result)`.
+   - Guaranteed full type safety across pre-first-token failover loop, legacy runtime, and environment runtime. Zero compiler errors.
+
+2. **DEF-02 Resolved (TypeScript Union Narrowing in `bolu-provider-catalog.ts`):**
+   - Validated custom provider endpoint syntax with explicit property guard `'error' in endpointValidation` under `if (endpointValidation.ok === false)`. Zero compiler errors.
+
+3. **DEF-03 Resolved (Account-Level Failover for HTTP 401 & 402):**
+   - In `bolu-error-classifier.ts`, confirmed `retryable: true` with `requiresQuarantine: true` for 401 (quarantining invalid credential connection while allowing pool rotation to healthy accounts), and `retryable: true` with `requiresCooldown: true` for 402 (cooling down exhausted connection while allowing pool rotation).
+   - In `api/bolu-chat.ts`, updated failover predicate to check `attempt < candidates.length - 1 && classified.retryable && TRANSIENT_FAILOVER_CATEGORIES.has(classified.category)`, ensuring non-retryable 400/403 stop immediately while 401/402 cleanly fail over to secondary connections before first-token delivery.
+
+4. **DEF-04 Resolved (DeepSeek Balance Currency Handling):**
+   - In `bolu-balance-sync.ts`, added explicit currency check on `primary.currency`.
+   - If upstream currency is not USD (e.g. DeepSeek returning CNY), the sync boundary returns `balanceUsd: null, source: 'unsupported'` with descriptive error `DeepSeek returned a CNY balance; USD normalization is not configured.`, strictly preventing nominal CNY contamination of `known_balance_usd`.
+
+5. **DEF-05 Assessed & Documented (Residual DNS Rebinding Risk for Custom Endpoints):**
+   - Evaluated SSRF defense profile: Custom provider endpoints are restricted to authorized platform administrators; `safeProviderFetch` enforces `redirect: 'error'`; standard providers (AMD, OpenRouter, DeepSeek, OpenAI, Anthropic) use hardcoded immutable endpoints immune to DNS rebinding.
+   - Identified that standard runtime fetch relies on host DNS resolution. Assessed as low residual risk for internal multi-account administration; IP-pinning transport agent documented for future tenant BYOK hardening.
+
+#### Verification & Test Evidence
+- **Automated Tests:** Expanded to **127 automated tests across 16 test suites** in `src/tests/ai-assistant/` (100% passing, 0 failures, 1.19s).
+- **TypeScript Static Verification:** `bun x tsc --noEmit --skipLibCheck --esModuleInterop --moduleResolution bundler --target es2020 api/bolu-chat.ts src/lib/ai-assistant/routing/bolu-provider-catalog.ts src/lib/ai-assistant/routing/bolu-error-classifier.ts src/lib/ai-assistant/routing/bolu-balance-sync.ts` passed with **0 errors**.
+- **Audit Load:** `bun run audit:load` passed with 0 regressions.
+- **Git Hygiene:** `git diff --check` passed cleanly without whitespace or line-ending errors.
+- **Phase 2 Gate:** Cleared for Phase 2 UI implementation (`BoluProviderSettingsSection.tsx`).
+
+---
+
+### 25.8 Bolu AI Routing Subsystem — Phase 2 Architecture Normalization & Remediation (2026-11-14)
+
+**Status:** COMPLETE & ACTIVATED ON HOSTED SUPABASE (Migration 20261114170000 Applied & Verified on xqlpekpkbszpdgtuwybh; 168 AI Tests Passing; RLS & RPC Security Gates Verified)
+
+Following the closeout audit (`docs/reports/ai/2026-11-14-bolu-phase-2-architecture-closeout-audit.md`), direct architecture remediation was executed across the database, backend APIs, chat runtime, and settings interface:
+
+1. **Authoritative Persisted Pool & Legacy Fallback Elimination (P0):**
+   - In `api/bolu-chat.ts`, severed all silent fall-through paths to `resolveRuntimeConnections`, legacy singleton `loadInAppProviderConfig`, and process environment variables.
+   - When the authoritative pool returns no eligible connection, Bolu fails closed and returns HTTP 503 (`provider_pool_exhausted`).
+   - Mock mode is explicitly restricted to non-production environments; production environments unconditionally reject mock mode (`isProduction` guard).
+
+2. **Database Migration & Deterministic RPC Selection (P1):**
+   - Corrected `claim_eligible_ai_connection` in `supabase/migrations/20261114170000_bolu_provider_connections.sql`: removed optimistic health mutation at claim time. Claiming a connection marks selection only; health status is restored to `'healthy'` and cooldown cleared exclusively in `record_ai_connection_success` upon verified upstream completion.
+   - Added `c.id ASC` as the deterministic tie-breaker in `ORDER BY c.priority ASC, c.last_selected_at ASC NULLS FIRST, c.consecutive_failures ASC, c.id ASC`.
+   - Clarified platform-level ownership: `app_ai_provider_connections` is internal platform-administrator infrastructure with `CONSTRAINT uq_app_ai_provider_connections_name UNIQUE (name)`, protected by RLS deny policies and service_role execution.
+
+3. **Provider Catalogue Synchronization (P1):**
+   - Synchronized `src/lib/ai-assistant/routing/bolu-provider-catalog.ts` and `bolu-policy-router.ts` with all 15 verified Settings catalogue providers (`openrouter`, `openai`, `anthropic`, `gemini`, `groq`, `deepseek`, `mistral`, `amd`, `qwen`, `together`, `fireworks`, `cerebras`, `xai`, `cohere`, `nvidia`).
+   - `DEFAULT_APPROVED_PROVIDERS` is dynamically derived from `ROUTING_PROVIDER_CATALOGUE`, eliminating manual array desynchronization.
+   - Automated parity tests in `provider-catalog.test.js` and `bolu-phase2-remediation.test.js` prevent catalogue drift.
+
+4. **Provider-Scoped Failover (P2):**
+   - In `api/bolu-chat.ts`, when an upstream error is classified with `scope: 'provider'` (5xx server errors, network drops), the router adds the provider ID to `excludedProviders`, excluding all sibling accounts of that provider from subsequent retry attempts for the request.
+   - Account-scoped errors (401 authentication, 402 quota exhaustion) exclude only the specific failed connection, preserving sibling accounts.
+   - Pre-first-token bounded failover and post-first-token connection lock-in are preserved.
+
+5. **Hermes-Style Provider Management UI:**
+   - `ConnectionDialog.tsx`: Staged setup sheet with provider selection, instant inline testing unblocked by `schemaReady`, searchable/filterable model discovery list, connection naming, priority ranking, pool toggle, and collapsible custom endpoint configuration (585 lines).
+   - `ConnectionCard.tsx`: Added health badge (`healthy`, `cooling_down`, `exhausted`, `quarantined`, `unchecked`), priority adjustment controls, in-pool toggle switch, balance display with sync button, request/failure counters, model selector, and test/models/edit/delete actions (436 lines).
+   - `BoluProviderSettingsSection.tsx`: Live pool overview strip (`X / Y in pool · Z healthy`), dedicated "+ Custom" button, collapsible Recent Routing Activity feed, and verified provider catalogue grid (586 lines).
+
+6. **Hosted Database Migration & Operational Activation:**
+   - **Applied & Verified on Hosted Supabase:** Migration `20261114170000_bolu_provider_connections.sql` applied to hosted project `xqlpekpkbszpdgtuwybh` via `supabase db push`.
+   - **Live Schema Verification:** `app_ai_provider_connections`, `app_ai_provider_routing`, `app_ai_provider_audit`, and `app_ai_routing_events` created with `rowsecurity = true` and explicit client-denial policies.
+   - **RPC Security:** Stored procedures `claim_eligible_ai_connection`, `record_ai_connection_failure`, `record_ai_connection_success`, and `record_ai_request_started` installed with `SECURITY DEFINER` and EXECUTE privileges granted strictly to `service_role` and `postgres`.
+   - **Legacy Compatibility:** Preserves `app_ai_provider_config` with zero data mutations.
+   - **Remaining Deployment Step:** Deploy updated application bundle to Vercel and configure `BOLU_ENCRYPTION_KEY` in Vercel project environment.
+   - Reference: [`docs/reports/ai/2026-11-14-bolu-phase-2-operational-activation-report.md`](file:///c:/Users/DELL/Desktop/bigdrops-app/docs/reports/ai/2026-11-14-bolu-phase-2-operational-activation-report.md).
+
+7. **Operational Safeguards & Emergency Control (Activation Safeguards Finalized):**
+   - **Explicit Versioned Key Strategy:** Enforced explicit resolution per key version: `key_version: 1` uses legacy service-role HMAC key; `key_version: 2` uses dedicated `BOLU_ENCRYPTION_KEY`. Missing keys throw explicit safe errors (`"Legacy encryption key unavailable..."` / `"Dedicated encryption key unavailable..."`). Authentication failures fail closed immediately without attempting arbitrary key fallback. In-memory verified re-encryption preserves original data on any failure.
+   - **Reversible Emergency Routing Shutdown:** Admin-controlled singleton `public.app_ai_provider_routing.routing_enabled` (default `true`). `claim_eligible_ai_connection` checks `routing_enabled = false` at the very start of the RPC and returns 0 rows atomically before locking rows. Chat runtime returns structured HTTP 503 (`provider_pool_exhausted`, `retryable: true`). Zero connection rows are mutated; exact prior topology is restored instantly upon re-enabling (`routing_enabled = true`). Protected by `verifyPlatformAdmin` and strict client RLS deny policies.
+
+#### Verification & Test Evidence
+- **Automated Tests:** **168 automated tests across 18 test suites** in `src/tests/ai-assistant/` passing 100% (0 failures), including 21 operational activation safeguard tests in `bolu-operational-activation-corrections.test.js`.
+- **Load & Bloat Audit:** `bun run audit:load` passed with 0 oversized files among all modified components (all files strictly < 600 lines, `connection-vault.ts` at 587 lines).
+- **Settings Theme Tokens:** Semantic color token compliance verified via `settingsThemeTokens.test.js`.
+- **Hosted Migration Verification:** `supabase migration list` confirms 94/94 migrations applied (0 pending). Schema objects verified via `supabase db query --linked`.
+- **Git Hygiene:** Clean `git diff --check`. No production deployment or commit performed.
+
 ---

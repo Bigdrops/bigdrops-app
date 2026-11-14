@@ -2,41 +2,54 @@
  * Bolu chat runtime (server-only).
  *
  * Configuration precedence:
- *   1. Activated multi-connection routing (app_ai_provider_routing)
+ *   1. Administrator-activated primary connection (app_ai_provider_routing) with explicitly approved fallbacks
  *   2. Legacy singleton credential (app_ai_provider_config)
  *   3. Server environment variables (BOLU_PROVIDER_*)
  *   4. Deterministic mock mode — only when BOLU_PROVIDER_MODE=mock is explicit
  *
- * There is no silent mock fallback: an unconfigured production runtime returns
- * 503. Fallback routing is disabled by default and only uses administrator-
- * approved, enabled connections. Decrypted credentials never leave the server.
+ * Pre-first-token failover:
+ *   Failure before any content is delivered to the client records diagnostics and advances only to
+ *   the administrator-activated primary or its explicitly approved fallbacks. Post-first-token
+ *   generations are locked in and never replayed.
+ *
+ * Security: All decrypted credentials remain exclusively within serverless memory.
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import {
   getBoluProviderConfig,
   validateBoluProviderRequest,
   type BoluProviderMessage,
 } from '../src/lib/ai-assistant/bolu-provider'
-import { loadInAppProviderConfig } from '../src/lib/ai-assistant/bolu-secret-vault'
 import { DETERMINISTIC_FIXTURES, type MockScenario } from '../src/lib/ai-assistant/bolu-mock-provider'
-import { resolveRuntimeConnections } from '../src/lib/ai-assistant/connection-vault'
 import {
   streamAdapterChat,
   type AdapterConfig,
   type AdapterMessage,
   type ProviderDiagnostics,
 } from '../src/lib/ai-assistant/provider-adapters'
+import {
+  claimEligibleConnection,
+  recordAiFailure,
+  recordAiRequestStart,
+  recordAiSuccess,
+} from '../src/lib/ai-assistant/routing/bolu-account-pool'
+import { resolveRoutingPolicy } from '../src/lib/ai-assistant/routing/bolu-policy-router'
+import { classifyProviderError } from '../src/lib/ai-assistant/routing/bolu-error-classifier'
+
+const TRANSIENT_FAILOVER_CATEGORIES = new Set([
+  'rate_limit',
+  'provider_unavailable',
+  'network',
+  'timeout',
+  'authentication',
+  'quota_exhausted',
+])
 
 const SYSTEM_PREFIX = 'You are Bolu, a conversational business operations assistant for BOURXE SMEs. Use supplied authorized application facts only. Do not invent records or figures. Do not claim to change business data without explicit user approval. Financial calculations remain authoritative and must not be model-generated.'
 
 const CHAT_MAX_TOKENS = 1000
 const CHAT_TEMPERATURE = 0.1
-
-// Fallback is only attempted for transient provider failures. Configuration
-// errors (auth, bad request, missing model) surface to the administrator
-// instead of silently routing business data to another provider.
-const FALLBACK_CATEGORIES = new Set(['provider_rate_limit', 'provider_server', 'network', 'timeout'])
 
 function jsonError(message: string, status: number, code?: string) {
   return Response.json(code ? { error: message, code } : { error: message }, { status })
@@ -54,74 +67,13 @@ async function resolveUser(request: Request) {
   return data.user
 }
 
-type RuntimePlan = {
-  source: 'connection' | 'legacy' | 'environment'
-  primary: AdapterConfig
-  primaryConnectionId: string | null
-  fallbacks: AdapterConfig[]
-}
-
-async function resolveRuntimePlan(): Promise<RuntimePlan | null> {
+function getAdminClient(): SupabaseClient | null {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (url && serviceKey) {
-    try {
-      const adminClient = createClient(url, serviceKey, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      })
-
-      const routed = await resolveRuntimeConnections(adminClient)
-      if (routed) {
-        return {
-          source: 'connection',
-          primary: routed.primary,
-          primaryConnectionId: routed.primaryConnectionId,
-          fallbacks: routed.fallbacks,
-        }
-      }
-
-      const legacy = await loadInAppProviderConfig(adminClient)
-      if (legacy?.apiKey) {
-        return {
-          source: 'legacy',
-          primary: {
-            providerId: legacy.provider,
-            protocol: 'openai',
-            authScheme: 'bearer',
-            baseUrl: legacy.baseUrl,
-            apiKey: legacy.apiKey,
-            model: legacy.model,
-            timeoutMs: legacy.timeoutMs,
-          },
-          primaryConnectionId: null,
-          fallbacks: [],
-        }
-      }
-    } catch (err) {
-      console.error('[bolu-chat] Runtime resolution failed:', err instanceof Error ? err.message : err)
-    }
-  }
-
-  const envConfig = getBoluProviderConfig(process.env)
-  if (envConfig.apiKey) {
-    return {
-      source: 'environment',
-      primary: {
-        providerId: envConfig.provider,
-        protocol: 'openai',
-        authScheme: 'bearer',
-        baseUrl: envConfig.baseUrl,
-        apiKey: envConfig.apiKey,
-        model: envConfig.model,
-        timeoutMs: envConfig.timeoutMs,
-      },
-      primaryConnectionId: null,
-      fallbacks: [],
-    }
-  }
-
-  return null
+  if (!url || !serviceKey) return null
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
 }
 
 function diagnosticsToError(diagnostics: ProviderDiagnostics): Response {
@@ -153,54 +105,41 @@ function diagnosticsToError(diagnostics: ProviderDiagnostics): Response {
   }
 }
 
-async function streamWithFallback(plan: RuntimePlan, messages: AdapterMessage[]): Promise<Response> {
-  const candidates = [plan.primary, ...plan.fallbacks]
-  let lastDiagnostics: ProviderDiagnostics | null = null
+/**
+ * Wraps an upstream ReadableStream to enforce the post-first-token lock-in contract
+ * and trigger telemetry success callback upon completion.
+ */
+function wrapStreamForFirstTokenBoundary(
+  upstreamStream: ReadableStream<Uint8Array>,
+  onSuccess: () => void,
+): ReadableStream<Uint8Array> {
+  const reader = upstreamStream.getReader()
+  let firstChunkReceived = false
 
-  for (let attempt = 0; attempt < candidates.length; attempt++) {
-    const config = candidates[attempt]
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs)
-
-    let result: Awaited<ReturnType<typeof streamAdapterChat>>
-    try {
-      result = await streamAdapterChat(config, messages, {
-        maxTokens: CHAT_MAX_TOKENS,
-        temperature: CHAT_TEMPERATURE,
-        signal: controller.signal,
-      })
-    } finally {
-      clearTimeout(timeoutId)
-    }
-
-    if ('diagnostics' in result) {
-      lastDiagnostics = result.diagnostics
-      console.error(
-        '[bolu-chat] Provider attempt failed:',
-        JSON.stringify({ providerId: config.providerId, category: result.diagnostics.category, status: result.diagnostics.status }),
-      )
-      const mayFallback = attempt < candidates.length - 1 && FALLBACK_CATEGORIES.has(result.diagnostics.category)
-      if (!mayFallback) break
-      continue
-    }
-
-    const headers = new Headers(result.response.headers)
-    headers.set('X-Bolu-Source', plan.source)
-    if (plan.primaryConnectionId) headers.set('X-Bolu-Connection-Id', plan.primaryConnectionId)
-    if (attempt > 0) headers.set('X-Bolu-Fallback', 'true')
-    return new Response(result.response.body, { status: 200, headers })
-  }
-
-  return diagnosticsToError(
-    lastDiagnostics ?? {
-      ok: false,
-      status: 502,
-      category: 'unknown',
-      message: 'No provider response.',
-      suggestedAction: 'Retry the request.',
-      latencyMs: 0,
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) {
+            if (firstChunkReceived) {
+              onSuccess()
+            }
+            controller.close()
+            break
+          }
+          if (value && value.length > 0) {
+            firstChunkReceived = true
+          }
+          controller.enqueue(value)
+        }
+      } catch (err) {
+        controller.error(err)
+      } finally {
+        reader.releaseLock()
+      }
     },
-  )
+  })
 }
 
 function mockResponse(messages: BoluProviderMessage[]): Response {
@@ -246,24 +185,10 @@ export default async function handler(request: Request): Promise<Response> {
 
   const validation = validateBoluProviderRequest({
     userId: user.id,
-    messages: Array.isArray(payload.messages) ? payload.messages as BoluProviderMessage[] : [],
+    messages: Array.isArray(payload.messages) ? (payload.messages as BoluProviderMessage[]) : [],
     contextFacts: typeof payload.contextFacts === 'string' ? payload.contextFacts : '',
   })
   if (!validation.ok) return jsonError('The message is invalid or too long.', 400)
-
-  const plan = await resolveRuntimePlan()
-
-  if (!plan) {
-    // Mock mode is only reachable through an explicit server setting.
-    if (getBoluProviderConfig(process.env).mode === 'mock') {
-      return mockResponse(validation.messages)
-    }
-    return jsonError(
-      'Bolu is not configured. A platform administrator must add and activate a provider connection in Settings, or set BOLU_PROVIDER_API_KEY on the server.',
-      503,
-      'unconfigured',
-    )
-  }
 
   // System prompt respects approved BOURXE product direction:
   // - Application owns tenant scope, permissions, validation, calculations, numbering, persistence
@@ -299,5 +224,150 @@ export default async function handler(request: Request): Promise<Response> {
     ...validation.messages,
   ]
 
-  return streamWithFallback(plan, messages)
+  // Priority 1: Multi-Account Connection Pool via Atomic Routing Engine
+  const adminClient = getAdminClient()
+  if (adminClient) {
+    try {
+      const policyDecision = resolveRoutingPolicy({
+        userId: user.id,
+        taskType: 'invoice-chat',
+        allowPaid: true,
+      })
+
+      if (!policyDecision.ok) {
+        return jsonError(policyDecision.error || 'Routing policy denied request.', 403, 'policy_denied')
+      }
+
+      const excludedConnectionIds: string[] = []
+      const excludedProviders: Set<string> = new Set()
+      let lastDiagnostics: ProviderDiagnostics | null = null
+      const maxAttempts = Math.min(policyDecision.maxAttempts || 4, 4)
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const allowed = policyDecision.allowedProviders.filter((p) => !excludedProviders.has(p))
+        if (allowed.length === 0) break
+
+        const claimed = await claimEligibleConnection(
+          adminClient,
+          {
+            allowedProviders: allowed,
+            targetModel: policyDecision.targetModel,
+            allowPaid: policyDecision.allowPaid,
+          },
+          excludedConnectionIds,
+        )
+
+        if (!claimed) break
+
+        const adapterConfig: AdapterConfig = {
+          providerId: claimed.providerId,
+          protocol: claimed.protocol === 'anthropic' ? 'anthropic' : 'openai',
+          authScheme: claimed.protocol === 'anthropic' ? 'x-api-key' : 'bearer',
+          baseUrl: claimed.baseUrl || undefined,
+          apiKey: claimed.apiKey,
+          model: claimed.selectedModel || claimed.defaultModel,
+          timeoutMs: 30000,
+        }
+
+        await recordAiRequestStart(adminClient, claimed.connectionId, adapterConfig.model)
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
+
+        let result: Awaited<ReturnType<typeof streamAdapterChat>>
+        try {
+          result = await streamAdapterChat(adapterConfig, messages, {
+            maxTokens: CHAT_MAX_TOKENS,
+            temperature: CHAT_TEMPERATURE,
+            signal: controller.signal,
+          })
+        } finally {
+          clearTimeout(timeoutId)
+        }
+
+        if ('diagnostics' in result) {
+          lastDiagnostics = result.diagnostics
+          const classified = classifyProviderError(
+            {
+              status: result.diagnostics.status,
+              retryAfterHeader: result.diagnostics.retryAfterSeconds
+                ? String(result.diagnostics.retryAfterSeconds)
+                : null,
+              error: new Error(result.diagnostics.message),
+            },
+            { providerId: adapterConfig.providerId, targetModel: adapterConfig.model },
+          )
+
+          await recordAiFailure(adminClient, {
+            connectionId: claimed.connectionId,
+            modelId: adapterConfig.model,
+            failureCategory: classified.category,
+            failureScope: classified.scope,
+            httpStatus: classified.httpStatus,
+            cooldownSeconds: classified.retryAfterSeconds,
+            reasonSummary: classified.safeSummary,
+          })
+
+          excludedConnectionIds.push(claimed.connectionId)
+          if (classified.scope === 'provider') {
+            excludedProviders.add(adapterConfig.providerId)
+          }
+
+          if (classified.retryable && TRANSIENT_FAILOVER_CATEGORIES.has(classified.category)) {
+            continue
+          }
+          break
+        }
+
+        const headers = new Headers(result.response.headers)
+        headers.set('X-Bolu-Source', 'connection')
+        headers.set('X-Bolu-Connection-Id', claimed.connectionId)
+        if (attempt > 0) headers.set('X-Bolu-Fallback', 'true')
+
+        const bodyStream = result.response.body
+          ? wrapStreamForFirstTokenBoundary(result.response.body, () => {
+              recordAiSuccess(adminClient, claimed.connectionId, adapterConfig.model).catch((err) => {
+                console.error('[bolu-chat] recordAiSuccess error:', err)
+              })
+            })
+          : null
+
+        return new Response(bodyStream, { status: 200, headers })
+      }
+
+      if (lastDiagnostics) {
+        return diagnosticsToError(lastDiagnostics)
+      }
+
+      return jsonError(
+        'No eligible Bolu AI provider connection is currently available in the active pool. A platform administrator must configure or enable connections in Settings, or wait for cooldowns to expire.',
+        503,
+        'provider_pool_exhausted',
+      )
+    } catch (err) {
+      console.error('[bolu-chat] Database runtime execution failed:', err instanceof Error ? err.message : err)
+      return jsonError(
+        'Bolu provider infrastructure is unavailable. Please check database connectivity and configuration.',
+        503,
+        'provider_infrastructure_unavailable',
+      )
+    }
+  }
+
+  // Non-production test & mock mode ONLY
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
+  const envConfig = getBoluProviderConfig(process.env)
+
+  if (envConfig.mode === 'mock') {
+    if (isProduction) {
+      return jsonError('Mock mode is disabled in production environments.', 503, 'unconfigured')
+    }
+    return mockResponse(validation.messages)
+  }
+
+  return jsonError(
+    'Bolu provider infrastructure is not configured. Server environment is missing Supabase service configuration.',
+    503,
+    'unconfigured',
+  )
 }

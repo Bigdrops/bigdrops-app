@@ -1,6 +1,12 @@
 import { useMemo, useState } from 'react'
 import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
+  Clock,
+  Coins,
+  Layers,
   Loader2,
   Pencil,
   RefreshCw,
@@ -36,17 +42,30 @@ import type { ProviderDiagnostics, PublicConnection } from './api'
 import { DiagnosticsNote } from './DiagnosticsNote'
 import { ProviderLogo } from './ProviderLogo'
 
-type BusyAction = 'test' | 'discover' | 'activate' | 'toggle' | 'delete' | 'model' | null
+type BusyAction =
+  | 'test'
+  | 'discover'
+  | 'activate'
+  | 'toggle'
+  | 'pool'
+  | 'priority'
+  | 'balance'
+  | 'delete'
+  | 'model'
+  | null
 
 type Props = {
   connection: PublicConnection
   isPrimary: boolean
-  isFallback: boolean
+  isFallback?: boolean
   diagnostics?: ProviderDiagnostics | null
   onTest: (id: string) => Promise<void>
   onDiscover: (id: string) => Promise<void>
   onEdit: (connection: PublicConnection) => void
   onToggleEnabled: (id: string, enabled: boolean) => Promise<void>
+  onTogglePool: (id: string, inPool: boolean) => Promise<void>
+  onPriorityChange: (id: string, priority: number) => Promise<void>
+  onSyncBalance: (id: string) => Promise<void>
   onActivate: (id: string) => Promise<void>
   onDelete: (id: string) => Promise<void>
   onModelChange: (id: string, model: string) => Promise<void>
@@ -55,12 +74,14 @@ type Props = {
 export function ConnectionCard({
   connection,
   isPrimary,
-  isFallback,
   diagnostics,
   onTest,
   onDiscover,
   onEdit,
   onToggleEnabled,
+  onTogglePool,
+  onPriorityChange,
+  onSyncBalance,
   onActivate,
   onDelete,
   onModelChange,
@@ -94,56 +115,108 @@ export function ConnectionCard({
     }
   }
 
-  const verificationBadge =
-    connection.verificationStatus === 'verified' ? (
-      <Badge variant="secondary" className="gap-1 border-bd-status-success-border bg-bd-status-success-bg text-bd-status-success-text">
-        <ShieldCheck size={11} /> Verified
-      </Badge>
-    ) : connection.verificationStatus === 'failed' ? (
-      <Badge variant="secondary" className="gap-1 border-bd-status-danger-border bg-bd-status-danger-bg text-bd-status-danger-text">
-        <ShieldAlert size={11} /> Test failed
-      </Badge>
-    ) : (
-      <Badge variant="secondary" className="gap-1 text-bd-text-muted">
-        <ShieldQuestion size={11} /> Unverified
-      </Badge>
-    )
+  // Health Status Badge
+  const healthBadge = (() => {
+    switch (connection.healthStatus) {
+      case 'healthy':
+        return (
+          <Badge
+            variant="secondary"
+            className="gap-1 border-bd-status-success-border bg-bd-status-success-bg text-bd-status-success-text text-[10px]"
+          >
+            <CheckCircle2 size={11} /> Healthy
+          </Badge>
+        )
+      case 'cooling_down':
+        return (
+          <Badge
+            variant="secondary"
+            className="gap-1 border-bd-status-warning-border bg-bd-status-warning-bg text-bd-status-warning-text text-[10px]"
+          >
+            <Clock size={11} /> Cooling down
+          </Badge>
+        )
+      case 'exhausted':
+        return (
+          <Badge
+            variant="secondary"
+            className="gap-1 border-bd-status-warning-border bg-bd-status-warning-bg text-bd-status-warning-text text-[10px]"
+          >
+            <AlertCircle size={11} /> Quota exhausted
+          </Badge>
+        )
+      case 'quarantined':
+        return (
+          <Badge
+            variant="secondary"
+            className="gap-1 border-bd-status-danger-border bg-bd-status-danger-bg text-bd-status-danger-text text-[10px]"
+          >
+            <ShieldAlert size={11} /> Quarantined
+          </Badge>
+        )
+      default:
+        return (
+          <Badge variant="secondary" className="gap-1 text-bd-text-muted text-[10px]">
+            <ShieldQuestion size={11} /> Unchecked
+          </Badge>
+        )
+    }
+  })()
+
+  const supportsBalance = connection.providerId === 'openrouter' || connection.providerId === 'deepseek'
 
   return (
     <div
       className={cn(
-        'rounded-xl border bg-bd-surface p-4 transition-colors',
-        isPrimary ? 'border-bd-border-strong' : 'border-bd-border',
-        !connection.isEnabled && 'opacity-70',
+        'rounded-xl border bg-bd-surface p-4 transition-colors shadow-sm',
+        isPrimary ? 'border-bd-border-strong ring-1 ring-bd-primary/20' : 'border-bd-border',
+        !connection.isEnabled && 'opacity-65',
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+      {/* Header Row */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-bd-border bg-bd-surface-muted">
             <ProviderLogo providerId={connection.providerId} size={18} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-bd-text">{connection.name}</p>
-            <p className="truncate text-xs text-bd-text-muted">
-              {providerName} · {connection.protocol === 'anthropic' ? 'Anthropic messages' : 'OpenAI-compatible'}
+            <p className="truncate text-sm font-bold text-bd-text">{connection.name}</p>
+            <p className="truncate text-[11px] text-bd-text-muted">
+              {providerName} · {connection.protocol === 'anthropic' ? 'Anthropic' : 'OpenAI-compatible'}
             </p>
           </div>
         </div>
+
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
           {isPrimary && (
-            <Badge variant="secondary" className="gap-1 border-bd-status-info-border bg-bd-status-info-bg text-bd-status-info-text">
+            <Badge
+              variant="secondary"
+              className="gap-1 border-bd-status-info-border bg-bd-status-info-bg text-bd-status-info-text text-[10px]"
+            >
               <Zap size={11} /> Primary
             </Badge>
           )}
-          {isFallback && (
-            <Badge variant="secondary" className="text-bd-text-muted">Fallback</Badge>
+
+          {connection.inPool ? (
+            <Badge
+              variant="secondary"
+              className="gap-1 border-purple-500/20 bg-purple-500/10 text-purple-600 text-[10px]"
+            >
+              <Layers size={10} /> Pool P{connection.priority}
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="text-bd-text-muted text-[10px]">
+              Standby
+            </Badge>
           )}
-          {verificationBadge}
+
+          {healthBadge}
         </div>
       </div>
 
+      {/* Model Selector & Connection Endpoint */}
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 min-w-0">
           <Select
             value={connection.model}
             onValueChange={(model) => {
@@ -159,22 +232,100 @@ export function ConnectionCard({
                 <SelectItem key={m.id} value={m.id}>
                   <span className="flex items-center gap-2">
                     <span className="font-mono text-xs">{m.label}</span>
-                    <span className="text-[10px] uppercase tracking-wide text-bd-text-soft">{m.source}</span>
+                    <span className="text-[9px] uppercase tracking-wide text-bd-text-soft">({m.source})</span>
                   </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="truncate font-mono text-[11px] text-bd-text-muted" title={connection.baseUrl}>
+          <p className="truncate font-mono text-[10px] text-bd-text-muted" title={connection.baseUrl}>
             {connection.maskedKey} · {connection.baseUrl}
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-bd-text-muted">
-          {busy === 'model' && <Loader2 size={13} className="animate-spin" />}
+
+        <div className="flex items-center gap-2 text-[11px] text-bd-text-muted shrink-0">
+          {busy === 'model' && <Loader2 size={12} className="animate-spin" />}
           <span>{connection.timeoutMs / 1000}s timeout</span>
         </div>
       </div>
 
+      {/* Telemetry & Balance Panel */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-bd-border/70 bg-bd-surface-muted/60 px-3 py-2 text-xs">
+        {/* Pool Participation & Priority Controls */}
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-medium text-bd-text">
+            <Switch
+              size="sm"
+              checked={connection.inPool}
+              disabled={busy !== null}
+              onCheckedChange={(checked) => void run('pool', () => onTogglePool(connection.id, checked))}
+              aria-label="Toggle connection pool participation"
+            />
+            <span>Pool</span>
+          </label>
+
+          <div className="flex items-center gap-1 text-[11px] text-bd-text-muted">
+            <span>Priority:</span>
+            <span className="font-mono font-semibold text-bd-text">{connection.priority}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0"
+              disabled={busy !== null || connection.priority <= 1}
+              onClick={() => void run('priority', () => onPriorityChange(connection.id, Math.max(1, connection.priority - 10)))}
+              title="Increase priority rank (lower number)"
+            >
+              <ArrowUp size={11} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0"
+              disabled={busy !== null || connection.priority >= 990}
+              onClick={() => void run('priority', () => onPriorityChange(connection.id, connection.priority + 10))}
+              title="Decrease priority rank (higher number)"
+            >
+              <ArrowDown size={11} />
+            </Button>
+          </div>
+        </div>
+
+        {/* Balance or Traffic telemetry */}
+        <div className="flex items-center gap-2 text-[11px] text-bd-text-muted">
+          {connection.knownBalanceAmount !== null && (
+            <span className="flex items-center gap-1 font-mono font-medium text-bd-text">
+              <Coins size={12} className="text-amber-500" />
+              {connection.knownBalanceAmount} {connection.knownBalanceCurrency}
+            </span>
+          )}
+
+          {supportsBalance && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 px-1.5 text-[10px] text-bd-text-muted"
+              disabled={busy !== null}
+              onClick={() => void run('balance', () => onSyncBalance(connection.id))}
+              title="Check upstream provider balance"
+            >
+              {busy === 'balance' ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+              <span className="ml-1">Sync</span>
+            </Button>
+          )}
+
+          <span className="hidden sm:inline font-mono text-[10px] text-bd-text-soft">
+            {connection.totalSuccessfulRequests}/{connection.totalRequestsStarted} reqs
+          </span>
+
+          {connection.consecutiveFailures > 0 && (
+            <span className="font-semibold text-bd-status-danger-text text-[10px]">
+              {connection.consecutiveFailures} fail
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Diagnostics / Error Note */}
       {diagnostics ? (
         <DiagnosticsNote diagnostics={diagnostics} className="mt-3" />
       ) : connection.verificationStatus === 'failed' && connection.lastTestMessage ? (
@@ -183,6 +334,7 @@ export function ConnectionCard({
         </div>
       ) : null}
 
+      {/* Action Footer */}
       <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-bd-border pt-3">
         <Button
           variant="outline"
@@ -194,6 +346,7 @@ export function ConnectionCard({
           {busy === 'test' ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
           Test
         </Button>
+
         <Button
           variant="outline"
           size="sm"
@@ -205,6 +358,7 @@ export function ConnectionCard({
           {busy === 'discover' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
           Models
         </Button>
+
         <Button
           variant="ghost"
           size="sm"
@@ -214,22 +368,23 @@ export function ConnectionCard({
         >
           <Pencil size={12} /> Edit
         </Button>
+
         {!isPrimary && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-xs"
+            className="h-7 gap-1 text-xs text-bd-text"
             disabled={busy !== null || !connection.isEnabled}
             onClick={() => void run('activate', () => onActivate(connection.id))}
-            title={connection.isEnabled ? 'Route Bolu through this connection' : 'Enable the connection first'}
+            title={connection.isEnabled ? 'Set as primary connection' : 'Enable the connection first'}
           >
             {busy === 'activate' ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-            Activate
+            Set Primary
           </Button>
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-[11px] text-bd-text-muted">
+          <label className="flex items-center gap-1.5 text-[11px] text-bd-text-muted cursor-pointer">
             <Switch
               size="sm"
               checked={connection.isEnabled}
@@ -239,6 +394,7 @@ export function ConnectionCard({
             />
             {connection.isEnabled ? 'Enabled' : 'Disabled'}
           </label>
+
           <Button
             variant="ghost"
             size="sm"
@@ -258,7 +414,8 @@ export function ConnectionCard({
             <AlertDialogTitle>Delete this connection?</AlertDialogTitle>
             <AlertDialogDescription>
               “{connection.name}” and its stored credential will be permanently removed.
-              {isPrimary && ' It is the active primary connection — Bolu will fall back to the legacy or environment configuration until another connection is activated.'}
+              {isPrimary &&
+                ' It is currently marked as primary (priority 1). Bolu will route inference to remaining eligible connections in the pool according to their priority.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

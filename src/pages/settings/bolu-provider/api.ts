@@ -35,8 +35,54 @@ export type PublicConnection = {
   lastTestMessage: string | null
   discoveredModels: DiscoveredModel[]
   modelsFetchedAt: string | null
+  // Multi-account routing & pool telemetry
+  allowedModels: string[]
+  inPool: boolean
+  priority: number
+  isPaidTier: boolean
+  healthStatus: 'healthy' | 'cooling_down' | 'exhausted' | 'quarantined' | 'unknown'
+  accountCooldownUntil: string | null
+  modelCooldowns: Record<string, string>
+  consecutiveFailures: number
+  lastErrorCode: string | null
+  lastErrorMessage: string | null
+  lastSuccessAt: string | null
+  lastFailureAt: string | null
+  lastSelectedAt: string | null
+  totalSelections: number
+  totalRequestsStarted: number
+  totalSuccessfulRequests: number
+  totalTokens: number
+  knownBalanceAmount: number | null
+  knownBalanceCurrency: string
+  knownBalanceUsd: number | null
+  balanceSource: 'api' | 'unsupported'
+  balanceUpdatedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type RoutingEventRecord = {
+  id: string
+  created_at: string
+  connection_id: string | null
+  provider_id: string | null
+  model_id: string | null
+  event_type: string
+  failure_category: string | null
+  failure_scope: string | null
+  http_status: number | null
+  cooldown_seconds: number | null
+  reason_summary: string | null
+}
+
+export type PoolSummary = {
+  totalCount: number
+  inPoolCount: number
+  healthyCount: number
+  coolingDownCount: number
+  exhaustedCount: number
+  quarantinedCount: number
 }
 
 export type RoutingState = {
@@ -67,6 +113,8 @@ export type ProviderStatusResponse = {
   connections: PublicConnection[]
   routing: RoutingState
   schemaReady: boolean
+  poolSummary?: PoolSummary
+  routingEvents?: RoutingEventRecord[]
   runtime: RuntimeInfo
   inApp: LegacyStatus
   activeSource: string
@@ -87,6 +135,10 @@ export type CreateConnectionInput = {
   apiKey: string
   model?: string
   timeoutMs?: number
+  priority?: number
+  inPool?: boolean
+  allowedModels?: string[]
+  isPaidTier?: boolean
 }
 
 export type UpdateConnectionInput = {
@@ -98,6 +150,10 @@ export type UpdateConnectionInput = {
   model?: string
   timeoutMs?: number
   isEnabled?: boolean
+  priority?: number
+  inPool?: boolean
+  allowedModels?: string[]
+  isPaidTier?: boolean
 }
 
 export type TestTarget =
@@ -173,6 +229,42 @@ export const boluProviderApi = {
     return post<{ ok: boolean; message: string; routing: RoutingState }>('set_routing', {
       fallbackEnabled,
       fallbackConnectionIds,
+    })
+  },
+
+  setPool(connectionId: string, inPool: boolean) {
+    return post<{ ok: boolean; message: string; connection: PublicConnection }>('set_pool', {
+      connectionId,
+      inPool,
+    })
+  },
+
+  setPriority(connectionId: string, priority: number) {
+    return post<{ ok: boolean; message: string; connection: PublicConnection }>('set_priority', {
+      connectionId,
+      priority,
+    })
+  },
+
+  syncBalance(connectionId: string) {
+    return post<{
+      ok: boolean
+      supported: boolean
+      message?: string
+      balance?: {
+        balanceAmount?: number | null
+        currency?: string
+        balanceUsd: number | null
+        source: string
+      }
+      connection?: PublicConnection
+    }>('sync_balance', { connectionId })
+  },
+
+  getRoutingEvents(limit = 20, connectionId?: string) {
+    return post<{ ok: boolean; events: RoutingEventRecord[] }>('get_routing_events', {
+      limit,
+      connectionId,
     })
   },
 }

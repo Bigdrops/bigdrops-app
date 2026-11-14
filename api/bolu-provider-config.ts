@@ -40,15 +40,22 @@ import {
   deleteConnection,
   getRouting,
   listConnections,
+  listRoutingEvents,
   loadConnectionSecret,
+  recordBalanceUpdate,
   recordTestResult,
+  setConnectionPool,
+  setConnectionPriority,
+  setGlobalRoutingEnabled,
   setPrimaryConnection,
   setRouting,
   updateConnection,
   writeAudit,
   type PublicConnection,
+  type RoutingEventRecord,
   type RoutingState,
 } from '../src/lib/ai-assistant/connection-vault'
+import { checkUpstreamBalance } from '../src/lib/ai-assistant/routing/bolu-balance-sync'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type ErrorCode =
@@ -213,11 +220,21 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const action = typeof body.action === 'string' ? body.action.toLowerCase() : ''
-  const mutationActions = ['create', 'update', 'delete', 'activate', 'set_routing']
-  const outboundActions = ['test', 'discover']
+  const mutationActions = [
+    'create',
+    'update',
+    'delete',
+    'activate',
+    'set_routing',
+    'set_global_routing',
+    'set_pool',
+    'set_priority',
+    'sync_balance',
+  ]
+  const outboundActions = ['test', 'discover', 'get_routing_events']
   if (!mutationActions.includes(action) && !outboundActions.includes(action)) {
     return jsonError(
-      'Valid action ("create", "update", "delete", "activate", "test", "discover", "set_routing") is required.',
+      'Valid action ("create", "update", "delete", "activate", "test", "discover", "set_routing", "set_global_routing", "set_pool", "set_priority", "sync_balance", "get_routing_events") is required.',
       400,
       'invalid_request',
     )
@@ -245,6 +262,16 @@ export default async function handler(request: Request): Promise<Response> {
         return await handleDiscover(adminClient, body)
       case 'set_routing':
         return await handleSetRouting(adminClient, user.id, body)
+      case 'set_global_routing':
+        return await handleSetGlobalRouting(adminClient, user.id, body)
+      case 'set_pool':
+        return await handleSetPool(adminClient, user.id, body)
+      case 'set_priority':
+        return await handleSetPriority(adminClient, user.id, body)
+      case 'sync_balance':
+        return await handleSyncBalance(adminClient, user.id, body)
+      case 'get_routing_events':
+        return await handleGetRoutingEvents(adminClient, body)
       default:
         return jsonError('Unsupported action.', 400, 'invalid_request')
     }
@@ -267,11 +294,17 @@ async function handleGet(adminClient: SupabaseClient): Promise<Response> {
   const hasEnvFallback = Boolean(envConfig.apiKey)
 
   let connections: PublicConnection[] = []
-  let routing: RoutingState = { primaryConnectionId: null, fallbackEnabled: false, fallbackConnectionIds: [] }
+  let routing: RoutingState = { primaryConnectionId: null, fallbackEnabled: false, fallbackConnectionIds: [], routingEnabled: true }
+  let routingEvents: RoutingEventRecord[] = []
   let schemaReady = true
   try {
     connections = await listConnections(adminClient)
     routing = await getRouting(adminClient)
+    try {
+      routingEvents = await listRoutingEvents(adminClient, 20)
+    } catch {
+      // Non-fatal if routing events table does not exist or empty
+    }
   } catch (err) {
     schemaReady = false
     console.error('[bolu-provider-config] Connection storage unavailable:', err instanceof Error ? err.message : err)
@@ -289,11 +322,22 @@ async function handleGet(adminClient: SupabaseClient): Promise<Response> {
         ? 'environment'
         : 'unconfigured'
 
+  const poolSummary = {
+    totalCount: connections.length,
+    inPoolCount: connections.filter((c) => c.inPool && c.isEnabled).length,
+    healthyCount: connections.filter((c) => c.healthStatus === 'healthy').length,
+    coolingDownCount: connections.filter((c) => c.healthStatus === 'cooling_down').length,
+    exhaustedCount: connections.filter((c) => c.healthStatus === 'exhausted').length,
+    quarantinedCount: connections.filter((c) => c.healthStatus === 'quarantined').length,
+  }
+
   return jsonResponse({
     catalogue: PROVIDER_CATALOGUE,
     connections,
     routing,
     schemaReady,
+    poolSummary,
+    routingEvents,
     runtime: {
       source: runtimeSource,
       primaryConnectionId: routing.primaryConnectionId,
@@ -353,6 +397,16 @@ async function handleCreate(adminClient: SupabaseClient, userId: string, body: R
     sanitizeConnectionName(body.name) ??
     (entry ? `${entry.name} connection` : 'Custom connection')
 
+  const priority =
+    typeof body.priority === 'number' && Number.isInteger(body.priority) && body.priority >= 1
+      ? body.priority
+      : 100
+  const inPool = typeof body.inPool === 'boolean' ? body.inPool : true
+  const allowedModels = Array.isArray(body.allowedModels)
+    ? body.allowedModels.map(String).filter(Boolean)
+    : []
+  const isPaidTier = typeof body.isPaidTier === 'boolean' ? body.isPaidTier : false
+
   let masterKey: Buffer
   try {
     masterKey = deriveMasterKey()
@@ -371,6 +425,10 @@ async function handleCreate(adminClient: SupabaseClient, userId: string, body: R
       apiKey,
       model,
       timeoutMs: clampTimeout(body.timeoutMs),
+      priority,
+      inPool,
+      allowedModels,
+      isPaidTier,
     },
     userId,
     masterKey,
@@ -380,6 +438,8 @@ async function handleCreate(adminClient: SupabaseClient, userId: string, body: R
     providerId,
     name,
     model,
+    priority,
+    inPool,
   })
 
   return jsonResponse({
@@ -425,6 +485,25 @@ async function handleUpdate(adminClient: SupabaseClient, userId: string, body: R
   if (body.isEnabled !== undefined) {
     if (typeof body.isEnabled !== 'boolean') return jsonError('isEnabled must be a boolean.', 400, 'invalid_request')
     patch.isEnabled = body.isEnabled
+  }
+  if (body.priority !== undefined) {
+    const p = typeof body.priority === 'number' ? Math.floor(body.priority) : NaN
+    if (isNaN(p) || p < 1 || p > 1000) {
+      return jsonError('priority must be an integer between 1 and 1000.', 400, 'invalid_request')
+    }
+    patch.priority = p
+  }
+  if (body.inPool !== undefined) {
+    if (typeof body.inPool !== 'boolean') return jsonError('inPool must be a boolean.', 400, 'invalid_request')
+    patch.inPool = body.inPool
+  }
+  if (body.allowedModels !== undefined) {
+    if (!Array.isArray(body.allowedModels)) return jsonError('allowedModels must be an array of strings.', 400, 'invalid_request')
+    patch.allowedModels = body.allowedModels.map(String).filter(Boolean)
+  }
+  if (body.isPaidTier !== undefined) {
+    if (typeof body.isPaidTier !== 'boolean') return jsonError('isPaidTier must be a boolean.', 400, 'invalid_request')
+    patch.isPaidTier = body.isPaidTier
   }
   if (body.apiKey !== undefined) {
     if (typeof body.apiKey !== 'string' || !body.apiKey.trim() || body.apiKey.trim().length > MAX_API_KEY_LENGTH) {
@@ -596,4 +675,106 @@ async function handleSetRouting(adminClient: SupabaseClient, userId: string, bod
     fallbackCount: routing.fallbackConnectionIds.length,
   })
   return jsonResponse({ ok: true, message: 'Routing updated.', routing })
+}
+
+async function handleSetGlobalRouting(
+  adminClient: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  if (typeof body.routingEnabled !== 'boolean') {
+    return jsonError('"routingEnabled" (boolean) is required.', 400, 'invalid_request')
+  }
+  const routing = await setGlobalRoutingEnabled(adminClient, body.routingEnabled, userId)
+  return jsonResponse({
+    ok: true,
+    message: body.routingEnabled
+      ? 'Global provider routing enabled.'
+      : 'Global provider routing disabled (emergency shutdown).',
+    routing,
+  })
+}
+
+async function handleSetPool(
+  adminClient: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  if (!isConnectionId(body.connectionId)) {
+    return jsonError('A valid connectionId is required.', 400, 'invalid_request')
+  }
+  if (typeof body.inPool !== 'boolean') {
+    return jsonError('inPool must be a boolean.', 400, 'invalid_request')
+  }
+  const connection = await setConnectionPool(adminClient, body.connectionId, body.inPool, userId)
+  await audit(adminClient, userId, 'connection_pool_toggled', body.connectionId, { inPool: body.inPool })
+  return jsonResponse({
+    ok: true,
+    message: `Connection ${body.inPool ? 'added to' : 'removed from'} pool.`,
+    connection,
+  })
+}
+
+async function handleSetPriority(
+  adminClient: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  if (!isConnectionId(body.connectionId)) {
+    return jsonError('A valid connectionId is required.', 400, 'invalid_request')
+  }
+  const priority = typeof body.priority === 'number' ? Math.floor(body.priority) : NaN
+  if (isNaN(priority) || priority < 1 || priority > 1000) {
+    return jsonError('priority must be an integer between 1 and 1000.', 400, 'invalid_request')
+  }
+  const connection = await setConnectionPriority(adminClient, body.connectionId, priority, userId)
+  await audit(adminClient, userId, 'connection_priority_updated', body.connectionId, { priority })
+  return jsonResponse({ ok: true, message: 'Connection priority updated.', connection })
+}
+
+async function handleSyncBalance(
+  adminClient: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  if (!isConnectionId(body.connectionId)) {
+    return jsonError('A valid connectionId is required.', 400, 'invalid_request')
+  }
+  const loaded = await loadConnectionSecret(adminClient, body.connectionId)
+  if (!loaded) {
+    return jsonError('Connection not found or credential cannot be decrypted.', 404, 'not_found')
+  }
+  const result = await checkUpstreamBalance(
+    loaded.config.providerId,
+    loaded.config.apiKey,
+    loaded.config.baseUrl,
+  )
+  if (result.supported && result.balanceAmount !== undefined && result.balanceAmount !== null) {
+    const updated = await recordBalanceUpdate(adminClient, body.connectionId, {
+      amount: result.balanceAmount,
+      currency: result.currency || 'USD',
+      source: result.source || 'api',
+    })
+    await audit(adminClient, userId, 'connection_balance_synced', body.connectionId, {
+      amount: result.balanceAmount,
+      currency: result.currency,
+    })
+    return jsonResponse({ ok: true, supported: true, balance: result, connection: updated })
+  }
+  return jsonResponse({
+    ok: true,
+    supported: result.supported,
+    balance: result,
+    message: result.error || 'Balance inquiry is not supported by this provider protocol.',
+  })
+}
+
+async function handleGetRoutingEvents(
+  adminClient: SupabaseClient,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const limit = typeof body.limit === 'number' ? Math.min(100, Math.max(1, Math.floor(body.limit))) : 20
+  const connectionId = isConnectionId(body.connectionId) ? body.connectionId : undefined
+  const events = await listRoutingEvents(adminClient, limit, connectionId)
+  return jsonResponse({ ok: true, events })
 }

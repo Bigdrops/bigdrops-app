@@ -1,4 +1,4 @@
-import crypto from 'node:crypto'
+import crypto from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { normalizeChatEndpoint } from './bolu-provider'
 
@@ -56,40 +56,75 @@ export type SaveProviderConfigInput = {
   timeoutMs?: number
 }
 
+export const KEY_VERSION_SERVICE_ROLE = 1
+export const KEY_VERSION_DEDICATED = 2
+
 const VAULT_SALT = 'bourxe-bolu-vault-v1'
 
 /**
- * Derives a 32-byte (256-bit) AES key from environment secrets.
+ * Derives a 32-byte master key from explicit BOLU_ENCRYPTION_KEY (version 2).
+ * Returns null if BOLU_ENCRYPTION_KEY is unset or empty.
+ */
+export function deriveDedicatedMasterKey(env: Record<string, string | undefined> = process.env): Buffer | null {
+  const directKey = env.BOLU_ENCRYPTION_KEY?.trim()
+  if (!directKey) return null
+  if (/^[0-9a-fA-F]{64}$/.test(directKey)) {
+    return Buffer.from(directKey, 'hex')
+  }
+  if (/^[A-Za-z0-9+/]{43}=$/.test(directKey) || /^[A-Za-z0-9+/]{44}$/.test(directKey)) {
+    const buf = Buffer.from(directKey, 'base64')
+    if (buf.length === 32) return buf
+  }
+  return crypto.createHash('sha256').update(directKey).digest()
+}
+
+/**
+ * Derives a 32-byte master key from SUPABASE_SERVICE_ROLE_KEY via HMAC-SHA256 (version 1).
+ * Returns null if SUPABASE_SERVICE_ROLE_KEY is unset or empty.
+ */
+export function deriveServiceRoleMasterKey(env: Record<string, string | undefined> = process.env): Buffer | null {
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  if (!serviceRoleKey) return null
+  return crypto.createHmac('sha256', VAULT_SALT).update(serviceRoleKey).digest()
+}
+
+/**
+ * Derives the active master key and corresponding key_version for new encryption operations.
  * Precedence:
- * 1. BOLU_ENCRYPTION_KEY (explicit master encryption secret)
- * 2. SUPABASE_SERVICE_ROLE_KEY (deterministic HKDF/HMAC key derivation)
+ * 1. BOLU_ENCRYPTION_KEY -> Version 2 (Dedicated master key)
+ * 2. SUPABASE_SERVICE_ROLE_KEY -> Version 1 (Legacy service-role HMAC derivation)
+ */
+export function deriveActiveEncryptionKey(env: Record<string, string | undefined> = process.env): {
+  key: Buffer
+  version: number
+} {
+  const dedicated = deriveDedicatedMasterKey(env)
+  if (dedicated) {
+    return { key: dedicated, version: KEY_VERSION_DEDICATED }
+  }
+  const serviceRole = deriveServiceRoleMasterKey(env)
+  if (serviceRole) {
+    return { key: serviceRole, version: KEY_VERSION_SERVICE_ROLE }
+  }
+  throw new Error('Server master key unavailable for Bolu vault. Set BOLU_ENCRYPTION_KEY or SUPABASE_SERVICE_ROLE_KEY.')
+}
+
+/**
+ * Backward-compatible helper returning the active 32-byte master key buffer.
  */
 export function deriveMasterKey(env: Record<string, string | undefined> = process.env): Buffer {
-  const directKey = env.BOLU_ENCRYPTION_KEY?.trim()
-  if (directKey) {
-    if (/^[0-9a-fA-F]{64}$/.test(directKey)) {
-      return Buffer.from(directKey, 'hex')
-    }
-    if (/^[A-Za-z0-9+/]{43}=$/.test(directKey) || /^[A-Za-z0-9+/]{44}$/.test(directKey)) {
-      const buf = Buffer.from(directKey, 'base64')
-      if (buf.length === 32) return buf
-    }
-    return crypto.createHash('sha256').update(directKey).digest()
-  }
-
-  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-  if (serviceRoleKey) {
-    return crypto.createHmac('sha256', VAULT_SALT).update(serviceRoleKey).digest()
-  }
-
-  throw new Error('Server master key unavailable for Bolu vault. Set BOLU_ENCRYPTION_KEY or SUPABASE_SERVICE_ROLE_KEY.')
+  return deriveActiveEncryptionKey(env).key
 }
 
 /**
  * Encrypts an API secret using AES-256-GCM.
  * Generates an unpredictable 12-byte nonce per encryption and returns authentication tag.
  */
-export function encryptSecret(plainText: string, masterKey: Buffer): EncryptedSecret {
+export function encryptSecret(
+  plainText: string,
+  masterKey: Buffer,
+  keyVersion: number = KEY_VERSION_SERVICE_ROLE,
+): EncryptedSecret {
   if (typeof plainText !== 'string' || !plainText.trim()) {
     throw new Error('Cannot encrypt empty secret.')
   }
@@ -106,12 +141,12 @@ export function encryptSecret(plainText: string, masterKey: Buffer): EncryptedSe
     ciphertext: ciphertext.toString('base64'),
     nonce: nonce.toString('base64'),
     tag: tag.toString('base64'),
-    version: 1,
+    version: keyVersion,
   }
 }
 
 /**
- * Decrypts an AES-256-GCM encrypted secret.
+ * Decrypts an AES-256-GCM encrypted secret using a single master key.
  * Validates the 16-byte authentication tag; fails closed if ciphertext or tag was tampered with.
  */
 export function decryptSecret(
@@ -134,6 +169,68 @@ export function decryptSecret(
 
   const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()])
   return decrypted.toString('utf8')
+}
+
+/**
+ * Resolves the exact master key for a specific key_version.
+ * Enforces an explicit versioned key strategy:
+ * - key_version 2 (KEY_VERSION_DEDICATED) requires BOLU_ENCRYPTION_KEY
+ * - key_version 1 (KEY_VERSION_SERVICE_ROLE) or undefined/legacy requires SUPABASE_SERVICE_ROLE_KEY
+ * Missing required keys throw an explicit safe error.
+ * Authentication failures fail closed immediately without arbitrary key fallback.
+ */
+export function resolveDecryptionKey(
+  keyVersion?: number,
+  env: Record<string, string | undefined> = process.env,
+  explicitMasterKey?: Buffer,
+): Buffer {
+  if (explicitMasterKey) {
+    return explicitMasterKey
+  }
+
+  const normalizedVersion = keyVersion ?? KEY_VERSION_SERVICE_ROLE
+
+  if (normalizedVersion === KEY_VERSION_DEDICATED) {
+    const dedicated = deriveDedicatedMasterKey(env)
+    if (!dedicated) {
+      throw new Error('Dedicated encryption key unavailable. Set BOLU_ENCRYPTION_KEY to decrypt key_version 2 credentials.')
+    }
+    return dedicated
+  }
+
+  if (normalizedVersion === KEY_VERSION_SERVICE_ROLE) {
+    const serviceRole = deriveServiceRoleMasterKey(env)
+    if (!serviceRole) {
+      throw new Error('Legacy encryption key unavailable. Set SUPABASE_SERVICE_ROLE_KEY to decrypt key_version 1 credentials.')
+    }
+    return serviceRole
+  }
+
+  throw new Error(`Unsupported credential key_version: ${keyVersion}. Supported versions are 1 (legacy service-role) and 2 (dedicated).`)
+}
+
+/**
+ * Backward-compatible helper returning candidate master key array.
+ */
+export function resolveDecryptionKeys(
+  keyVersion?: number,
+  env: Record<string, string | undefined> = process.env,
+  explicitMasterKey?: Buffer,
+): Buffer[] {
+  return [resolveDecryptionKey(keyVersion, env, explicitMasterKey)]
+}
+
+/**
+ * Decrypts a vault secret strictly using the master key derived for the payload's key_version.
+ * Fails closed immediately if the required key is missing or authentication tag verification fails.
+ */
+export function decryptVaultSecret(
+  payload: { ciphertext: string; nonce: string; tag: string; version?: number },
+  env: Record<string, string | undefined> = process.env,
+  explicitMasterKey?: Buffer,
+): string {
+  const masterKey = resolveDecryptionKey(payload.version, env, explicitMasterKey)
+  return decryptSecret(payload, masterKey)
 }
 
 /**
@@ -174,15 +271,15 @@ export async function loadInAppProviderConfig(
   const record = data as InAppProviderRecord
 
   try {
-    const key = masterKey || deriveMasterKey()
-    const decryptedKey = decryptSecret(
+    const decryptedKey = decryptVaultSecret(
       {
         ciphertext: record.encrypted_key,
         nonce: record.key_nonce,
         tag: record.key_tag,
         version: record.key_version,
       },
-      key,
+      process.env,
+      masterKey,
     )
 
     return {
@@ -245,8 +342,10 @@ export async function saveInAppProviderConfig(
     throw new Error('API key is required.')
   }
 
-  const key = masterKey || deriveMasterKey()
-  const encrypted = encryptSecret(apiKey, key)
+  const activeKeyInfo = masterKey
+    ? { key: masterKey, version: KEY_VERSION_SERVICE_ROLE }
+    : deriveActiveEncryptionKey()
+  const encrypted = encryptSecret(apiKey, activeKeyInfo.key, activeKeyInfo.version)
   const masked = maskApiKey(apiKey)
 
   const inferredProvider = (input.provider || (apiKey.startsWith('rc-') ? 'amd' : 'openrouter')).toLowerCase()

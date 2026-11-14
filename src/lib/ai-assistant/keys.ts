@@ -21,7 +21,7 @@ async function readAll(): Promise<Record<string, string>> {
   try {
     const result = await Filesystem.readFile({
       path: KEYS_PATH,
-      directory: Directory.Private,
+      directory: Directory.Data,
       encoding: Encoding.UTF8,
     })
     const raw = typeof result.data === 'string' ? result.data : ''
@@ -44,7 +44,7 @@ async function writeAll(keys: Record<string, string>): Promise<void> {
   await Filesystem.writeFile({
     path: KEYS_PATH,
     data: JSON.stringify(keys),
-    directory: Directory.Private,
+    directory: Directory.Data,
     encoding: Encoding.UTF8,
     recursive: true,
   })

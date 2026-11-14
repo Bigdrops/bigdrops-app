@@ -1,23 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, Eye, EyeOff, Loader2, RefreshCw, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Eye, EyeOff, Loader2, RefreshCw, Search, Server, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { feedback } from '@/lib/feedback'
 import {
@@ -38,22 +26,34 @@ type Props = {
   onOpenChange: (open: boolean) => void
   connection: PublicConnection | null
   initialProviderId?: string
+  schemaReady: boolean
   onSaved: (connection: PublicConnection) => void
 }
 
-export function ConnectionDialog({ open, onOpenChange, connection, initialProviderId, onSaved }: Props) {
+export function ConnectionDialog({
+  open,
+  onOpenChange,
+  connection,
+  initialProviderId,
+  schemaReady,
+  onSaved,
+}: Props) {
   const isEdit = connection !== null
 
-  const [providerId, setProviderId] = useState(initialProviderId ?? 'amd')
+  const [providerId, setProviderId] = useState(initialProviderId ?? 'openrouter')
   const [name, setName] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [modelChoice, setModelChoice] = useState('')
   const [customModel, setCustomModel] = useState('')
+  const [modelSearch, setModelSearch] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [protocol, setProtocol] = useState<ProviderProtocol>('openai')
   const [authScheme, setAuthScheme] = useState<ProviderAuthScheme>('bearer')
   const [timeoutMs, setTimeoutMs] = useState(45000)
+  const [priority, setPriority] = useState(100)
+  const [inPool, setInPool] = useState(true)
+  const [isPaidTier, setIsPaidTier] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [discovered, setDiscovered] = useState<DiscoveredModel[]>([])
   const [diagnostics, setDiagnostics] = useState<ProviderDiagnostics | null>(null)
@@ -69,6 +69,8 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
     setTesting(false)
     setDiscovering(false)
     setSaving(false)
+    setModelSearch('')
+
     if (connection) {
       setProviderId(connection.providerId)
       setName(connection.name)
@@ -77,8 +79,15 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
       setProtocol(connection.protocol)
       setAuthScheme(connection.authScheme)
       setTimeoutMs(connection.timeoutMs)
+      setPriority(connection.priority ?? 100)
+      setInPool(connection.inPool ?? true)
+      setIsPaidTier(connection.isPaidTier ?? false)
       setDiscovered(connection.discoveredModels ?? [])
-      const known = [...(getCatalogueEntry(connection.providerId)?.curatedModels ?? []), ...(connection.discoveredModels ?? [])]
+
+      const known = [
+        ...(getCatalogueEntry(connection.providerId)?.curatedModels ?? []),
+        ...(connection.discoveredModels ?? []),
+      ]
       if (known.some((m) => m.id === connection.model)) {
         setModelChoice(connection.model)
         setCustomModel('')
@@ -87,24 +96,38 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
         setCustomModel(connection.model)
       }
     } else {
-      const entry = getCatalogueEntry(initialProviderId ?? 'amd')
-      setProviderId(entry?.id ?? CUSTOM_PROVIDER_ID)
+      const entry = getCatalogueEntry(initialProviderId ?? 'openrouter')
+      const targetId = entry?.id ?? (initialProviderId === 'custom' ? CUSTOM_PROVIDER_ID : 'openrouter')
+      setProviderId(targetId)
       setName('')
       setApiKey('')
-      setBaseUrl(entry?.baseUrl ?? '')
-      setProtocol(entry?.protocol ?? 'openai')
-      setAuthScheme(entry?.authScheme ?? 'bearer')
+      setPriority(100)
+      setInPool(true)
+      setIsPaidTier(false)
       setTimeoutMs(45000)
       setDiscovered([])
-      setModelChoice(entry?.defaultModel ?? CUSTOM_MODEL)
-      setCustomModel('')
+
+      if (entry) {
+        setBaseUrl(entry.baseUrl)
+        setProtocol(entry.protocol)
+        setAuthScheme(entry.authScheme)
+        setModelChoice(entry.defaultModel)
+        setCustomModel('')
+      } else {
+        setBaseUrl('')
+        setProtocol('openai')
+        setAuthScheme('bearer')
+        setModelChoice(CUSTOM_MODEL)
+        setCustomModel('')
+        setAdvancedOpen(true)
+      }
     }
   }, [open, connection, initialProviderId])
 
   const entry = getCatalogueEntry(providerId)
   const isCustom = providerId === CUSTOM_PROVIDER_ID
 
-  const modelOptions = useMemo(() => {
+  const allModelOptions = useMemo(() => {
     const seen = new Set<string>()
     const options: { id: string; label: string; source: 'curated' | 'discovered' | 'current' }[] = []
     const push = (id: string, label: string, source: 'curated' | 'discovered' | 'current') => {
@@ -118,12 +141,19 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
     return options
   }, [entry, discovered, connection])
 
+  const filteredModelOptions = useMemo(() => {
+    if (!modelSearch.trim()) return allModelOptions
+    const q = modelSearch.toLowerCase().trim()
+    return allModelOptions.filter((m) => m.id.toLowerCase().includes(q) || m.label.toLowerCase().includes(q))
+  }, [allModelOptions, modelSearch])
+
   const effectiveModel = modelChoice === CUSTOM_MODEL ? customModel.trim() : modelChoice
 
   function applyProvider(nextId: string) {
     setProviderId(nextId)
     setDiagnostics(null)
     setDiscovered([])
+    setModelSearch('')
     const next = getCatalogueEntry(nextId)
     if (next) {
       setBaseUrl(next.baseUrl)
@@ -154,18 +184,25 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
   }
 
   async function handleTest() {
+    if (!isEdit && !apiKey.trim()) {
+      feedback.error('Enter an API key before testing.')
+      return
+    }
     setTesting(true)
     setDiagnostics(null)
     try {
-      const target = isEdit && !apiKey.trim()
-        ? { connectionId: connection.id, model: effectiveModel || undefined }
-        : inlineTarget()
-      if (!isEdit && !apiKey.trim()) {
-        feedback.error('Enter an API key before testing.')
-        return
-      }
+      const target =
+        isEdit && !apiKey.trim()
+          ? { connectionId: connection.id, model: effectiveModel || undefined }
+          : inlineTarget()
+
       const result = await boluProviderApi.test(target)
       setDiagnostics(result.diagnostics)
+      if (result.ok) {
+        feedback.success(`Connection verified (${result.diagnostics.latencyMs}ms).`)
+      } else {
+        feedback.error(`Test failed: ${result.diagnostics.message}`)
+      }
     } catch (err) {
       feedback.error(err instanceof Error ? err.message : 'Connection test failed.')
     } finally {
@@ -174,22 +211,26 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
   }
 
   async function handleDiscover() {
+    if (!isEdit && !apiKey.trim()) {
+      feedback.error('Enter an API key before discovering models.')
+      return
+    }
     setDiscovering(true)
     setDiagnostics(null)
     try {
-      const target = isEdit && !apiKey.trim()
-        ? { connectionId: connection.id }
-        : inlineTarget()
-      if (!isEdit && !apiKey.trim()) {
-        feedback.error('Enter an API key before discovering models.')
-        return
-      }
+      const target =
+        isEdit && !apiKey.trim()
+          ? { connectionId: connection.id }
+          : inlineTarget()
+
       const result = await boluProviderApi.discover(target)
       setDiagnostics(result.diagnostics)
       if (result.ok) {
         setDiscovered(result.models)
         feedback.success(`Discovered ${result.models.length} model${result.models.length === 1 ? '' : 's'}.`)
         if (!effectiveModel && result.models.length > 0) setModelChoice(result.models[0].id)
+      } else {
+        feedback.error(`Discovery failed: ${result.diagnostics.message}`)
       }
     } catch (err) {
       feedback.error(err instanceof Error ? err.message : 'Model discovery failed.')
@@ -199,6 +240,10 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
   }
 
   async function handleSave() {
+    if (!schemaReady) {
+      feedback.info('Apply migration 20261114170000_bolu_provider_connections.sql to enable persistence.')
+      return
+    }
     if (!effectiveModel) {
       feedback.error('Select or enter a model identifier.')
       return
@@ -222,7 +267,11 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
         if (protocol !== connection.protocol) patch.protocol = protocol
         if (authScheme !== connection.authScheme) patch.authScheme = authScheme
         if (timeoutMs !== connection.timeoutMs) patch.timeoutMs = timeoutMs
+        if (priority !== connection.priority) patch.priority = priority
+        if (inPool !== connection.inPool) patch.inPool = inPool
+        if (isPaidTier !== connection.isPaidTier) patch.isPaidTier = isPaidTier
         if (apiKey.trim()) patch.apiKey = apiKey.trim()
+
         if (Object.keys(patch).length === 0) {
           feedback.info('No changes to save.')
           return
@@ -240,6 +289,9 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
           protocol,
           authScheme,
           timeoutMs,
+          priority,
+          inPool,
+          isPaidTier,
         })
         feedback.success('Connection saved. The credential is encrypted at rest.')
         onSaved(result.connection)
@@ -261,20 +313,30 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
           <DialogTitle>{isEdit ? 'Edit connection' : 'Add provider connection'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? 'Update the model, endpoint or credential. Leaving the key blank keeps the stored credential.'
-              : 'Choose a provider, enter its API key, and select a model. Credentials are encrypted on the server.'}
+              ? 'Update configuration, model, or credentials. Blank key keeps the stored credential.'
+              : 'Configure a provider connection for Bolu. Credentials are encrypted on the server with AES-256-GCM.'}
           </DialogDescription>
         </DialogHeader>
 
+        {!schemaReady && (
+          <div className="rounded-lg border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] leading-snug text-bd-status-warning-text">
+            <span className="font-semibold">Setup preview:</span> Database migration is not applied, so saving is disabled. You can still enter your key, run connection tests, and discover models live.
+          </div>
+        )}
+
         <div className="space-y-4">
-          {!isEdit && (
+          {/* Provider Selection */}
+          {!isEdit ? (
             <div className="space-y-1.5">
               <Label>Provider</Label>
               <Select value={providerId} onValueChange={applyProvider}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choose a provider" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-64">
+                  <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-bd-text-soft">
+                    Curated Providers
+                  </div>
                   {PROVIDER_CATALOGUE.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       <span className="flex items-center gap-2">
@@ -283,42 +345,55 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
                       </span>
                     </SelectItem>
                   ))}
+                  <div className="border-t border-bd-border my-1" />
                   <SelectItem value={CUSTOM_PROVIDER_ID}>
-                    <span className="flex items-center gap-2">
-                      <ProviderLogo providerId={CUSTOM_PROVIDER_ID} size={16} />
-                      Custom OpenAI-compatible / Anthropic endpoint
+                    <span className="flex items-center gap-2 font-medium">
+                      <Server size={16} className="text-bd-text-muted" />
+                      Custom endpoint (OpenAI / Anthropic compatible)
                     </span>
                   </SelectItem>
                 </SelectContent>
               </Select>
               {entry?.regionNote && (
-                <p className="text-xs text-bd-text-muted">{entry.regionNote}</p>
+                <p className="text-[11px] text-bd-text-muted">{entry.regionNote}</p>
               )}
             </div>
-          )}
-
-          {isEdit && (
+          ) : (
             <div className="flex items-center gap-2 rounded-lg border border-bd-border bg-bd-surface-muted px-3 py-2">
               <ProviderLogo providerId={providerId} size={18} />
               <span className="text-sm font-medium text-bd-text">{entry?.name ?? 'Custom provider'}</span>
             </div>
           )}
 
+          {/* Connection Name */}
           <div className="space-y-1.5">
             <Label htmlFor="bolu-conn-name">Connection name</Label>
             <Input
               id="bolu-conn-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={entry ? `${entry.name} connection` : 'Production connection'}
+              placeholder={entry ? `${entry.name} account` : 'Custom production connection'}
               maxLength={80}
             />
           </div>
 
+          {/* API Key with visibility & test trigger */}
           <div className="space-y-1.5">
-            <Label htmlFor="bolu-conn-key">
-              {isEdit ? 'Replace API key (optional)' : 'API key'}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="bolu-conn-key">
+                {isEdit ? 'Replace API key (optional)' : 'API key'}
+              </Label>
+              {entry?.docsUrl && (
+                <a
+                  href={entry.docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-bd-primary hover:underline"
+                >
+                  Get API key ↗
+                </a>
+              )}
+            </div>
             <div className="relative">
               <Input
                 id="bolu-conn-key"
@@ -339,14 +414,15 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
               </button>
             </div>
             <p className="flex items-center gap-1 text-[11px] text-bd-text-muted">
-              <ShieldCheck size={12} />
-              Encrypted with AES-256-GCM on the server. Never stored in the browser.
+              <ShieldCheck size={12} className="text-emerald-500" />
+              AES-256-GCM encrypted on the server. Never stored in the browser.
             </p>
           </div>
 
+          {/* Model Selection with live search & discovery */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>Model</Label>
+              <Label>Target Model</Label>
               <Button
                 type="button"
                 variant="ghost"
@@ -354,44 +430,99 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
                 className="h-6 gap-1 px-2 text-[11px]"
                 onClick={handleDiscover}
                 disabled={discovering || !discoverySupported}
-                title={discoverySupported ? 'Query the provider model list' : 'This provider has no documented model-listing endpoint'}
+                title={discoverySupported ? 'Query provider live models endpoint' : 'Provider has no documented model list endpoint'}
               >
                 {discovering ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
                 Discover models
               </Button>
             </div>
+
+            {/* Model Search Input (when many models are present) */}
+            {allModelOptions.length > 5 && (
+              <div className="relative mb-1">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-bd-text-muted" />
+                <Input
+                  value={modelSearch}
+                  onChange={(e) => setModelSearch(e.target.value)}
+                  placeholder="Filter models (e.g. deepseek, llama, flash)..."
+                  className="h-7 pl-7 font-mono text-[11px]"
+                />
+              </div>
+            )}
+
             <Select value={modelChoice} onValueChange={setModelChoice}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full font-mono text-xs">
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
-              <SelectContent>
-                {modelOptions.map((m) => (
+              <SelectContent className="max-h-56">
+                {filteredModelOptions.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     <span className="flex items-center gap-2">
                       <span className="font-mono text-xs">{m.label}</span>
-                      <span className="text-[10px] uppercase tracking-wide text-bd-text-soft">
-                        {m.source === 'discovered' ? 'live' : m.source === 'current' ? 'current' : 'curated'}
+                      <span className="text-[9px] uppercase tracking-wide text-bd-text-soft">
+                        ({m.source})
                       </span>
                     </span>
                   </SelectItem>
                 ))}
-                <SelectItem value={CUSTOM_MODEL}>Custom identifier…</SelectItem>
+                <SelectItem value={CUSTOM_MODEL}>Custom model identifier…</SelectItem>
               </SelectContent>
             </Select>
+
             {modelChoice === CUSTOM_MODEL && (
               <Input
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
-                placeholder="e.g. provider/model-name"
-                className="font-mono text-xs"
+                placeholder="e.g. provider/model-name or deepseek-chat"
+                className="font-mono text-xs mt-1.5"
                 maxLength={200}
               />
             )}
-            {!discoverySupported && (
-              <p className="text-[11px] text-bd-text-muted">
-                No documented model-listing endpoint for this provider. Enter a model identifier from its documentation.
-              </p>
-            )}
+          </div>
+
+          {/* Routing & Pool Participation Controls */}
+          <div className="rounded-lg border border-bd-border bg-bd-surface-muted/60 p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-bd-text">Participate in Routing Pool</p>
+                <p className="text-[11px] text-bd-text-muted">
+                  Bolu automatically selects from the active pool based on priority and health.
+                </p>
+              </div>
+              <Switch checked={inPool} onCheckedChange={setInPool} aria-label="Participate in routing pool" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-bd-border/50">
+              <div className="space-y-1">
+                <Label htmlFor="bolu-conn-priority" className="text-[11px]">Priority Rank</Label>
+                <Input
+                  id="bolu-conn-priority"
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={priority}
+                  onChange={(e) => setPriority(Math.max(1, Math.min(1000, Number(e.target.value) || 100)))}
+                  className="h-8 font-mono text-xs"
+                />
+                <p className="text-[10px] text-bd-text-muted">1 = highest priority</p>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-[11px]">Paid Tier Account</Label>
+                <div className="flex items-center h-8">
+                  <label className="flex items-center gap-2 text-xs text-bd-text cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isPaidTier}
+                      onChange={(e) => setIsPaidTier(e.target.checked)}
+                      className="h-4 w-4 rounded accent-bd-primary"
+                    />
+                    <span>Metered / Paid tier</span>
+                  </label>
+                </div>
+                <p className="text-[10px] text-bd-text-muted">Higher rate limit allowance</p>
+              </div>
+            </div>
           </div>
 
           <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
@@ -402,21 +533,13 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
             <CollapsibleContent className="mt-3 space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="bolu-conn-url">Base URL</Label>
-                <Input
-                  id="bolu-conn-url"
-                  value={baseUrl}
-                  onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://api.provider.com/v1"
-                  className="font-mono text-xs"
-                />
+                <Input id="bolu-conn-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://api.provider.com/v1" className="font-mono text-xs" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Protocol</Label>
                   <Select value={protocol} onValueChange={(v) => setProtocol(v as ProviderProtocol)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="openai">OpenAI-compatible</SelectItem>
                       <SelectItem value="anthropic">Anthropic messages</SelectItem>
@@ -426,9 +549,7 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
                 <div className="space-y-1.5">
                   <Label>Auth scheme</Label>
                   <Select value={authScheme} onValueChange={(v) => setAuthScheme(v as ProviderAuthScheme)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="bearer">Bearer token</SelectItem>
                       <SelectItem value="x-api-key">x-api-key header</SelectItem>
@@ -438,15 +559,7 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="bolu-conn-timeout">Timeout (ms)</Label>
-                <Input
-                  id="bolu-conn-timeout"
-                  type="number"
-                  min={5000}
-                  max={120000}
-                  step={1000}
-                  value={timeoutMs}
-                  onChange={(e) => setTimeoutMs(Number(e.target.value) || 45000)}
-                />
+                <Input id="bolu-conn-timeout" type="number" min={5000} max={120000} step={1000} value={timeoutMs} onChange={(e) => setTimeoutMs(Number(e.target.value) || 45000)} className="h-8 font-mono text-xs" />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -454,16 +567,15 @@ export function ConnectionDialog({ open, onOpenChange, connection, initialProvid
           {diagnostics && <DiagnosticsNote diagnostics={diagnostics} />}
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
-          <Button type="button" variant="outline" onClick={handleTest} disabled={testing || saving}>
-            {testing && <Loader2 size={14} className="animate-spin" />}
+        <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between pt-2">
+          <Button type="button" variant="outline" onClick={handleTest} disabled={testing || saving} className="gap-1.5">
+            {testing ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
             Test connection
           </Button>
           <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleSave} loading={saving}>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+            <Button type="button" onClick={handleSave} disabled={saving || !schemaReady} className="gap-1.5">
+              {saving && <Loader2 size={13} className="animate-spin" />}
               {isEdit ? 'Save changes' : 'Save connection'}
             </Button>
           </div>

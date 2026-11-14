@@ -8,9 +8,13 @@ import {
   isCustomProvider,
   resolveProviderDefaults,
 } from '../../lib/ai-assistant/provider-catalog.ts'
+import {
+  ROUTING_PROVIDER_CATALOGUE,
+  isRoutingApproved,
+} from '../../lib/ai-assistant/routing/bolu-provider-catalog.ts'
 
 test('catalogue contains only verified, https, well-formed provider contracts', () => {
-  assert.equal(PROVIDER_CATALOGUE.length, 20)
+  assert.equal(PROVIDER_CATALOGUE.length, 15)
 
   const ids = new Set()
   for (const entry of PROVIDER_CATALOGUE) {
@@ -48,17 +52,13 @@ test('only Anthropic uses the native messages protocol and x-api-key auth', () =
 })
 
 test('model discovery is honestly flagged per documented contract', () => {
-  // Zhipu does not expose a documented model-listing endpoint.
-  assert.equal(getCatalogueEntry('zhipu').supportsDiscovery, false)
   for (const entry of PROVIDER_CATALOGUE) {
-    if (entry.id === 'zhipu') continue
     assert.equal(entry.supportsDiscovery, true, `${entry.id} supports discovery`)
   }
 })
 
 test('data-routing region notes are present for China-hosted endpoints', () => {
   assert.match(getCatalogueEntry('amd').regionNote, /China|amd\.com\.cn/i)
-  assert.match(getCatalogueEntry('zhipu').regionNote, /China/i)
   assert.ok(getCatalogueEntry('qwen').regionNote)
 })
 
@@ -114,4 +114,23 @@ test('resolveProviderDefaults returns catalogue defaults and honors overrides', 
     'https://developer.amd.com.cn/radeon/api/v1',
   )
   assert.equal(resolveProviderDefaults('unknown-provider'), null)
+})
+
+test('every catalogue provider has an exact verified matching entry in ROUTING_PROVIDER_CATALOGUE and is approved for routing', () => {
+  assert.equal(PROVIDER_CATALOGUE.length, 15)
+  assert.equal(Object.keys(ROUTING_PROVIDER_CATALOGUE).length, 15)
+
+  for (const entry of PROVIDER_CATALOGUE) {
+    const routingEntry = ROUTING_PROVIDER_CATALOGUE[entry.id]
+    assert.ok(routingEntry, `Provider "${entry.id}" must exist in ROUTING_PROVIDER_CATALOGUE`)
+    assert.equal(routingEntry.approvedForRouting, true, `Provider "${entry.id}" must be approved for routing`)
+    assert.equal(isRoutingApproved(entry.id), true, `isRoutingApproved("${entry.id}") must return true`)
+    assert.equal(routingEntry.verifiedEndpoint, entry.baseUrl, `Verified endpoint for "${entry.id}" must match catalogue baseUrl`)
+    assert.equal(routingEntry.authScheme, entry.authScheme, `Auth scheme for "${entry.id}" must match`)
+    assert.ok(routingEntry.verifiedModels.length > 0, `Provider "${entry.id}" must have verified models`)
+    assert.ok(
+      routingEntry.verifiedModels.some((m) => m.id === entry.defaultModel),
+      `Provider "${entry.id}" default model "${entry.defaultModel}" must be in verified models`,
+    )
+  }
 })
