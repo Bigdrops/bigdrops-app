@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -136,7 +136,10 @@ function AppThemeManager({ userId, preference }: { userId: string; preference: U
     isDark: null,
   })
 
-  useEffect(() => {
+  // A layout effect, not a passive one: the theme must be on the DOM before
+  // the browser paints, and before it captures the "new theme" snapshot of the
+  // view transition that `runThemeTransition` starts.
+  useLayoutEffect(() => {
     const root = document.documentElement
     let appliedTokens: ThemeToken[] = []
     let appliedSemanticProps: string[] = []

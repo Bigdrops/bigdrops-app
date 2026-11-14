@@ -57,6 +57,7 @@ import { useInvoiceColumns, type InvoiceColumn } from '@/components/useInvoiceCo
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
 import { nextThemeMode, resolveIsDark } from '@/lib/themeToggle'
+import { runThemeTransition } from '@/lib/themeTransition'
 import { getUnsupportedImageErrorMessage, isSupportedImageFile } from '@/lib/documentImageUploadPolicy'
 import { feedback } from '@/lib/feedback'
 import { uploadItemPhoto } from '@/lib/itemPhotoUpload'
@@ -459,9 +460,11 @@ export function CostPricingSheetEditor({
   )
   const resolvedTheme: 'light' | 'dark' = isDarkTheme ? 'dark' : 'light'
   const handleToggleTheme = () => {
-    void saveThemePreference({
-      themeMode: nextThemeMode(isDarkTheme),
-      themePresetId: themePreference.themePresetId,
+    runThemeTransition(() => {
+      void saveThemePreference({
+        themeMode: nextThemeMode(isDarkTheme),
+        themePresetId: themePreference.themePresetId,
+      })
     })
   }
   const {

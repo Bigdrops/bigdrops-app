@@ -5,6 +5,8 @@ import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
 import { useEntity } from '@/lib/tenant/contexts'
 import { normalizeHexColor } from '@/lib/colorTheme'
 import { BASE_THEME_MODE, THEME_PRESETS, SELECTABLE_THEME_PRESETS, isThemePresetId, type ThemePresetId } from '@/lib/themePresets'
+import { runThemeTransition } from '@/lib/themeTransition'
+import { resolveIsDark } from '@/lib/themeToggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -331,10 +333,26 @@ export function AppThemeSettingsSection({ userId }: { userId?: string | undefine
                   type="button"
                   onClick={() => {
                     if (userId) {
-                      saveThemePref({
-                        themeMode: mode,
-                        themePresetId: preference.themePresetId,
-                      })
+                      const applyMode = () => {
+                        saveThemePref({
+                          themeMode: mode,
+                          themePresetId: preference.themePresetId,
+                        })
+                      }
+                      // Only animate when the appearance actually changes —
+                      // re-picking the current mode, or a mode that resolves to
+                      // it, must not play the reveal.
+                      const prefersDark =
+                        typeof window !== 'undefined' &&
+                        window.matchMedia('(prefers-color-scheme: dark)').matches
+                      const changesAppearance =
+                        resolveIsDark(mode, prefersDark) !==
+                        resolveIsDark(preference.themeMode, prefersDark)
+                      if (changesAppearance) {
+                        runThemeTransition(applyMode)
+                      } else {
+                        applyMode()
+                      }
                     }
                   }}
                   className={cn(

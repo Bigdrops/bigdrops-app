@@ -594,3 +594,64 @@ html[data-keyboard-open="true"] .app-ambient::after {
   from { transform: translateY(6px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* ── Light/dark theme transition — Venetian blinds ────────────────────────
+   The native View Transitions API snapshots the page before and after the
+   theme change. The old snapshot stays put; the new one is revealed through
+   horizontal slats that open one by one.
+
+   Driven by `runThemeTransition` in src/lib/themeTransition.ts. The style is
+   anchored to the viewport, so it does not depend on where the toggle was
+   clicked. Timing is tunable through --tk-theme-duration / --tk-theme-easing.
+   ───────────────────────────────────────────────────────────────────────── */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  animation: none;
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  animation: tk-theme-venetian-blinds var(--tk-theme-duration, 700ms) var(--tk-theme-easing, ease-in-out) both;
+  z-index: 1;
+}
+
+@keyframes tk-theme-venetian-blinds {
+  from {
+    clip-path: polygon(
+      0 0, 100vw 0, 100vw 2vh, 0 2vh,
+      0 12vh, 100vw 12vh, 100vw 14vh, 0 14vh,
+      0 24vh, 100vw 24vh, 100vw 26vh, 0 26vh,
+      0 36vh, 100vw 36vh, 100vw 38vh, 0 38vh,
+      0 48vh, 100vw 48vh, 100vw 50vh, 0 50vh,
+      0 60vh, 100vw 60vh, 100vw 62vh, 0 62vh,
+      0 72vh, 100vw 72vh, 100vw 74vh, 0 74vh,
+      0 84vh, 100vw 84vh, 100vw 86vh, 0 86vh,
+      0 96vh, 100vw 96vh, 100vw 98vh, 0 98vh
+    );
+  }
+  to {
+    clip-path: polygon(
+      0 0, 100vw 0, 100vw 10vh, 0 10vh,
+      0 10vh, 100vw 10vh, 100vw 22vh, 0 22vh,
+      0 22vh, 100vw 22vh, 100vw 34vh, 0 34vh,
+      0 34vh, 100vw 34vh, 100vw 46vh, 0 46vh,
+      0 46vh, 100vw 46vh, 100vw 58vh, 0 58vh,
+      0 58vh, 100vw 58vh, 100vw 70vh, 0 70vh,
+      0 70vh, 100vw 70vh, 100vw 82vh, 0 82vh,
+      0 82vh, 100vw 82vh, 100vw 94vh, 0 94vh,
+      0 94vh, 100vw 94vh, 100vw 100vh, 0 100vh
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

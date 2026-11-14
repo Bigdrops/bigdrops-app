@@ -1,6 +1,7 @@
 import { Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
+import { runThemeTransition } from '@/lib/themeTransition'
 import {
   nextThemeMode,
   resolveIsDark,
@@ -21,6 +22,8 @@ import {
  *   - tapping flips `themeMode` between explicit `light` and `dark`;
  *   - `AppThemeManager` reacts to the preference change and applies the theme
  *     to the DOM, so this button never mutates the DOM itself.
+ *   - the write is wrapped in a Venetian blinds view transition, so the theme
+ *     change is revealed instead of snapping.
  *
  * It renders `type="button"`, so it can never submit a surrounding form, trigger
  * a save, or navigate away from the current page.
@@ -42,9 +45,11 @@ export function ThemeToggleButton({
   )
 
   const handleToggle = () => {
-    void save({
-      themeMode: nextThemeMode(isDark),
-      themePresetId: preference.themePresetId,
+    runThemeTransition(() => {
+      void save({
+        themeMode: nextThemeMode(isDark),
+        themePresetId: preference.themePresetId,
+      })
     })
   }
 

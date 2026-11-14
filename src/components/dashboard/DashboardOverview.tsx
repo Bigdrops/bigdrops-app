@@ -24,6 +24,7 @@ import { KPI_CARD_COUNT_DESKTOP, KPI_CARD_COUNT_MOBILE } from '@/config/kpiCards
 import { formatDisplayDate } from '@/lib/formatters/date'
 import { formatNaira } from '@/lib/formatters/money'
 import { formatStatusLabel } from '@/lib/formatters/status'
+import { runThemeTransition } from '@/lib/themeTransition'
 import { cn } from '@/lib/utils'
 import { useLayoutMode } from '@/hooks/useLayoutMode'
 import { AuditTrailSkeleton } from '@/components/dashboard/AuditTrailSkeleton'
@@ -190,9 +191,11 @@ export function DashboardOverview({
   // AppThemeManager reacts to this state change and applies the theme to the DOM.
   const toggleDark = React.useCallback(() => {
     if (!userId) return
-    saveThemePref({
-      themeMode: isDark ? 'light' : 'dark',
-      themePresetId: preference.themePresetId,
+    runThemeTransition(() => {
+      saveThemePref({
+        themeMode: isDark ? 'light' : 'dark',
+        themePresetId: preference.themePresetId,
+      })
     })
   }, [userId, saveThemePref, isDark, preference.themePresetId])
 
