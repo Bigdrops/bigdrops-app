@@ -17,7 +17,7 @@ import type { PdfDocumentModel } from '../../components/pdf/types'
 
 const SAMPLE_BASE64_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 
-function buildSampleInvoice(): Record<string, unknown> {
+function buildSampleInvoice(): Record<string, unknown> & { identity: Record<string, unknown> } {
   return {
     identity: {
       id: 'inv-hh-1',
