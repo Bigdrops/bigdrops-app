@@ -258,6 +258,14 @@ Higher-order skills for design intelligence, testing, meta-skill creation, and c
 | 7 | gitnexus | .claude/skills/gitnexus/ | C:\Users\DELL\Desktop\bigdrops-app\.claude\skills\gitnexus\ | 6-sub-skill collection — codebase impact analysis, debugging, refactoring, exploring. Entry: `docs/contracts/gitnexus-operations.md` |
 
 ---
+## `.claude/agents/`
+Installed Claude Code agents from [aitmpl.com](https://www.aitmpl.com/) (not skills; excluded from skill counts above).
+
+| # | Agent | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | database-architect | .claude/agents/database-architect.md | C:\Users\DELL\Desktop\bigdrops-app\.claude\agents\database-architect.md | Database schema design/review — multi-tenant RLS, indexes, constraints, online migrations; tested on scratch Postgres |
+
+---
 ## `.opencode/agents/`
 → **Canonical index: `docs/SUBAGENTS.md`** (232 subagent personas, 18 divisions). This file tracks skills only; subagent routing and delegation rules live in `AGENTS.md` §8.
 ---
@@ -309,14 +317,16 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       ├── vercel-react-best-practices/
 │       └── vite/
 ├── .claude/
-│   └── skills/
-│       ├── awesome-claude-skills/   ← ~30 bundled sub-skills
-│       ├── karpathy/                 ← LIVE: Thinking discipline engine
-│       ├── skill-creator/
-│       ├── ui-ux-pro-max/
-│       ├── using-superpowers/
-│       ├── gitnexus/             ← 6 sub-skills
-│       └── webapp-testing/
+│   ├── skills/
+│   │   ├── awesome-claude-skills/   ← ~30 bundled sub-skills
+│   │   ├── karpathy/                 ← LIVE: Thinking discipline engine
+│   │   ├── skill-creator/
+│   │   ├── ui-ux-pro-max/
+│   │   ├── using-superpowers/
+│   │   ├── gitnexus/             ← 6 sub-skills
+│   │   └── webapp-testing/
+│   └── agents/
+│       └── database-architect.md     ← Claude Code agent (not a skill), indexed below
 ├── .opencode/
 │   └── agents/          ← 232 subagents → canonical index: docs/SUBAGENTS.md
 ├── node_modules/
@@ -324,5 +334,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: October 20, 2026 — added `video-shotcraft` (#158) from `Vincentwei1021/video-shotcraft`. Total .agents/skills: 157.*
+*Last updated: November 14, 2026 — installed and indexed Claude Code agent `database-architect` (`.claude/agents/database-architect.md`) from `claude-code-templates`; skills unchanged. Total .agents/skills: 157.*
 ```
