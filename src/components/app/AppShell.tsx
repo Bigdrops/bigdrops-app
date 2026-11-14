@@ -20,6 +20,7 @@ import { ThemePreferenceProvider } from '@/contexts/ThemePreferenceContext'
 import {
   AuthorizationProvider,
 } from '@/lib/tenant/contexts'
+import { BoluAssistantProvider } from '@/components/ai-assistant/BoluAssistantProvider'
 
 const AndroidSystemBars = lazy(() => import('@/components/app/AndroidSystemBars'))
 const AndroidFoldAwareness = lazy(() => import('@/components/app/AndroidFoldAwareness'))
@@ -314,6 +315,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
         <ThemePreferenceProvider value={{ preference, loading: prefLoading, save: saveThemePref, refresh: () => Promise.resolve() }}>
           <AppThemeManager userId={session.user.id} preference={preference} />
         <AuthorizationProvider userId={session.user.id}>
+          <BoluAssistantProvider>
           <Routes>
             <Route path="/" element={withBoundary(<Dashboard session={session} preference={preference} saveThemePref={saveThemePref} />)} />
           <Route path="/invoices" element={withBoundary(<Invoices />)} />
@@ -397,6 +399,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           )}
             </Routes>
             <InitialRouteReadyMarker onReady={markInitialRouteReady} />
+          </BoluAssistantProvider>
           </AuthorizationProvider>
         </ThemePreferenceProvider>
       </Suspense>

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertCircle, ArrowUp, KeyRound, Loader2, ShieldAlert } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { AlertCircle, ArrowUp, Loader2, Search, Square } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,258 +10,211 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { AIAssistantError, sendAssistantChat } from '@/lib/ai-assistant/chat'
-import {
-  hasAnyProviderKey,
-  isPersistentKeyStoreAvailable,
-  setProviderKey,
-} from '@/lib/ai-assistant/keys'
-import { AI_PROVIDER_ROWS, getAIProviderRow } from '@/lib/ai-assistant/providerCatalog'
-import { maskKey, type ChatMessage } from '@/lib/ai-assistant/protocol'
+import { getBoluSuggestions } from '@/lib/ai-assistant/bolu-context'
+import { formatNaira } from '@/lib/formatters/money'
+import type { BoluRuntimeState, createBoluRuntime } from '@/lib/ai-assistant/bolu-runtime'
+
+type BoluRuntime = ReturnType<typeof createBoluRuntime>
 
 type AssistantSheetProps = {
   open: boolean
   onOpenChange: (nextOpen: boolean) => void
+  runtime: BoluRuntime
+  state: BoluRuntimeState | null
 }
 
-export function AssistantSheet({ open, onOpenChange }: AssistantSheetProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+export function AssistantSheet({ open, onOpenChange, runtime, state }: AssistantSheetProps) {
   const [draft, setDraft] = useState('')
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [configured, setConfigured] = useState<boolean | null>(null)
-  const [providerId, setProviderId] = useState(AI_PROVIDER_ROWS[0]?.id ?? 'nvidia')
-  const [keyDraft, setKeyDraft] = useState('')
-  const [savedMask, setSavedMask] = useState<string | null>(null)
-  const [saveError, setSaveError] = useState<string | null>(null)
+  const [pickerQuery, setPickerQuery] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
   const listEndRef = useRef<HTMLDivElement | null>(null)
+  const status = state?.status ?? 'idle'
+  const suggestions = state ? getBoluSuggestions(state.context) : []
 
   useEffect(() => {
     if (!open) return
-    let cancelled = false
-    void hasAnyProviderKey().then((value) => {
-      if (!cancelled) setConfigured(value)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [open])
-
-  useEffect(() => {
     listEndRef.current?.scrollIntoView({ block: 'end' })
-  }, [messages, sending])
+  }, [open, state?.messages, status])
 
-  const handleSaveKey = useCallback(async () => {
-    const key = keyDraft.trim()
-    if (!key) return
-    setSaveError(null)
-    try {
-      await setProviderKey(providerId, key)
-      setSavedMask(maskKey(key))
-      setKeyDraft('')
-      setConfigured(true)
-    } catch {
-      setSaveError('The key could not be saved on this device.')
-    }
-  }, [keyDraft, providerId])
-
-  const handleSend = useCallback(async () => {
+  const submit = (event?: FormEvent) => {
+    event?.preventDefault()
     const text = draft.trim()
-    if (!text || sending) return
-
-    const conversation: ChatMessage[] = [...messages, { role: 'user', content: text }]
-    setMessages([...conversation, { role: 'assistant', content: '' }])
+    if (!text || status !== 'idle') return
     setDraft('')
-    setError(null)
-    setSending(true)
-
-    try {
-      await sendAssistantChat({
-        messages: conversation,
-        onDelta: (delta) => {
-          setMessages((current) => {
-            const next = [...current]
-            const last = next[next.length - 1]
-            if (last && last.role === 'assistant') {
-              next[next.length - 1] = { ...last, content: last.content + delta }
-            }
-            return next
-          })
-        },
-      })
-    } catch (caught) {
-      const message =
-        caught instanceof AIAssistantError
-          ? caught.message
-          : 'The assistant could not answer. Try again.'
-      setError(message)
-      setMessages((current) => {
-        const next = [...current]
-        const last = next[next.length - 1]
-        if (last && last.role === 'assistant' && !last.content) next.pop()
-        return next
-      })
-    } finally {
-      setSending(false)
-    }
-  }, [draft, messages, sending])
-
-  const selectedProvider = getAIProviderRow(providerId)
-  const persistent = isPersistentKeyStoreAvailable()
+    void runtime.submit(text)
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="flex h-[86vh] flex-col gap-0 p-0">
+      <SheetContent side="bottom" className="flex h-[88dvh] flex-col gap-0 p-0 sm:max-h-[760px]">
         <SheetHeader className="border-b border-bd-border px-4 pb-3 pt-4">
-          <SheetTitle className="text-base">AI assistant</SheetTitle>
+          <SheetTitle className="text-base">Bolu</SheetTitle>
           <SheetDescription className="text-[11px] text-bd-text-muted">
-            Answers use a free provider tier. Your text leaves this device.
+            Read-only business intelligence · page context: {state?.context.origin.page ?? 'current page'}
           </SheetDescription>
         </SheetHeader>
 
-        {configured === false ? (
-          <div className="flex-1 overflow-y-auto px-4 py-5">
-            <div className="mb-4 flex items-start gap-2 rounded-xl border border-bd-border bg-bd-surface-muted px-3 py-2.5">
-              <KeyRound className="mt-0.5 size-4 shrink-0 text-bd-text-muted" />
-              <p className="text-[11px] leading-relaxed text-bd-text-muted">
-                The assistant needs one provider key. Create a free key, then paste it here. The key
-                is stored on this device only.
-              </p>
-            </div>
-
-            <label className="mb-1 block text-[11px] font-semibold text-bd-text-muted" htmlFor="ai-provider">
-              Provider
-            </label>
-            <select
-              id="ai-provider"
-              value={providerId}
-              onChange={(event) => setProviderId(event.target.value)}
-              className="mb-3 h-10 w-full rounded-xl border border-bd-border bg-bd-card-bg px-3 text-sm text-bd-text"
-            >
-              {AI_PROVIDER_ROWS.map((row) => (
-                <option key={row.id} value={row.id}>
-                  {row.label}
-                </option>
-              ))}
-            </select>
-
-            {selectedProvider ? (
-              <p className="mb-3 text-[10.5px] leading-relaxed text-bd-text-muted">
-                {selectedProvider.note} Get a key at{' '}
-                <a
-                  href={selectedProvider.signupUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold text-[hsl(var(--primary))] underline"
-                >
-                  {selectedProvider.label}
-                </a>
-                . {selectedProvider.keyHint}.
-              </p>
-            ) : null}
-
-            <label className="mb-1 block text-[11px] font-semibold text-bd-text-muted" htmlFor="ai-key">
-              API key
-            </label>
-            <Input
-              id="ai-key"
-              type="password"
-              value={keyDraft}
-              onChange={(event) => setKeyDraft(event.target.value)}
-              placeholder="Paste the provider key"
-              autoComplete="off"
-              spellCheck={false}
-              className="mb-2"
-            />
-            <Button
-              type="button"
-              onClick={() => void handleSaveKey()}
-              disabled={!keyDraft.trim()}
-              className="w-full"
-            >
-              Save key
+        {state?.pendingContext ? (
+          <div className="flex items-center justify-between gap-3 border-b border-bd-border bg-bd-surface-muted px-4 py-2">
+            <p className="text-xs text-bd-text-muted">
+              New context available: {state.pendingContext.origin.page}
+              {state.pendingContext.record ? ` · ${state.pendingContext.record.kind}` : ''}
+            </p>
+            <Button type="button" size="sm" variant="outline" onClick={() => runtime.applyContext()}>
+              Use this context
             </Button>
-            {saveError ? (
-              <p className="mt-2 flex items-center gap-1.5 text-[11px] text-bd-status-danger-text">
-                <AlertCircle className="size-3.5" /> {saveError}
-              </p>
-            ) : null}
-            {!persistent ? (
-              <p className="mt-3 flex items-start gap-1.5 text-[10.5px] leading-relaxed text-bd-text-muted">
-                <ShieldAlert className="mt-0.5 size-3.5 shrink-0" />
-                This build has no private app storage, so the key is kept for this session only and
-                is never written to browser storage.
-              </p>
-            ) : null}
           </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-y-auto px-4 py-4">
-              {messages.length === 0 ? (
-                <div className="mt-6 text-center">
-                  <p className="text-sm font-semibold text-bd-text">Ask anything</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-bd-text-muted">
-                    This build answers questions only. It cannot read your documents or totals yet,
-                    and it cannot create or change anything.
-                  </p>
-                </div>
-              ) : (
-                <ul className="space-y-3">
-                  {messages.map((message, index) => (
-                    <li
-                      key={`${message.role}-${index}`}
-                      className={
-                        message.role === 'user'
-                          ? 'ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[hsl(var(--primary))] px-3 py-2 text-[13px] leading-relaxed text-white'
-                          : 'mr-auto max-w-[90%] whitespace-pre-wrap text-[13px] leading-relaxed text-bd-text'
-                      }
-                    >
-                      {message.content || (sending ? '…' : '')}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {error ? (
-                <div className="mt-3 flex items-start gap-2 rounded-xl border border-bd-status-danger-border bg-bd-status-danger-bg px-3 py-2">
-                  <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-bd-status-danger-text" />
-                  <p className="text-[11px] leading-relaxed text-bd-status-danger-text">{error}</p>
-                </div>
-              ) : null}
-              <div ref={listEndRef} />
-            </div>
+        ) : null}
 
-            <div className="border-t border-bd-border px-3 py-3">
-              <div className="flex items-end gap-2">
-                <Input
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' && !event.shiftKey) {
-                      event.preventDefault()
-                      void handleSend()
-                    }
-                  }}
-                  placeholder="Type a message"
-                  aria-label="Message the assistant"
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  size="icon-lg"
-                  className="shrink-0"
-                  onClick={() => void handleSend()}
-                  disabled={!draft.trim() || sending}
-                  aria-label="Send message"
-                >
-                  {sending ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
-                </Button>
-              </div>
-              {savedMask ? (
-                <p className="mt-2 text-[10px] text-bd-text-muted">Key saved: {savedMask}</p>
-              ) : null}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {state?.context.record ? (
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-bd-border bg-bd-surface-muted px-3 py-2 text-xs">
+              <span className="text-bd-text-muted">
+                Using selected {state.context.record.kind} · persisted record
+              </span>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setPickerOpen(true)}>
+                Change
+              </Button>
             </div>
-          </>
-        )}
+          ) : null}
+
+          <ul className="space-y-4">
+            {(state?.messages ?? []).map((message) => (
+              <li key={message.id} className="space-y-2">
+                <div
+                  className={message.role === 'user'
+                    ? 'ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-[hsl(var(--primary))] px-3 py-2 text-[13px] leading-relaxed text-white'
+                    : 'mr-auto max-w-[94%] whitespace-pre-wrap text-[13px] leading-relaxed text-bd-text'}
+                >
+                  {message.content}
+                </div>
+                {message.records?.kind === 'records' && message.records.records.length ? (
+                  <div className="ml-1 mr-auto max-w-[96%] space-y-2" aria-label="Matching business records">
+                    {message.records.records.map((record) => (
+                      <button
+                        key={`${record.kind}-${record.id}`}
+                        type="button"
+                        className="flex w-full items-center justify-between gap-3 rounded-xl border border-bd-border bg-bd-card-bg px-3 py-2 text-left transition hover:bg-bd-surface-muted"
+                        onClick={() => void runtime.selectRecord({ kind: record.kind, id: record.id, persistence: 'persisted' })}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-xs font-semibold text-bd-text">
+                            {record.number}{record.clientName ? ` · ${record.clientName}` : ''}
+                          </span>
+                          <span className="block truncate text-[11px] text-bd-text-muted">
+                            {[
+                              record.date,
+                              record.status,
+                              record.total == null ? null : `Total ${formatNaira(record.total)}`,
+                              record.balanceDue == null ? null : `Due ${formatNaira(record.balanceDue)}`,
+                            ].filter(Boolean).join(' · ') || record.title || record.kind}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-[11px] font-semibold text-[hsl(var(--primary))]">Select</span>
+                      </button>
+                    ))}
+                    {message.records.hasMore ? (
+                      <p className="text-[11px] text-bd-text-muted">Showing the closest matches. Refine the search for more specific results.</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+
+          {state?.messages.length === 1 && suggestions.length ? (
+            <div className="mt-4 flex flex-wrap gap-2" aria-label="Suggested questions">
+              {suggestions.map((suggestion) => (
+                <Button
+                  key={suggestion.id}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={status !== 'idle'}
+                  onClick={() => void runtime.suggest(suggestion.id)}
+                >
+                  {suggestion.label}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+
+          {status !== 'idle' ? (
+            <div className="mt-4 flex items-center gap-2 text-xs text-bd-text-muted" role="status" aria-live="polite">
+              <Loader2 className="size-3.5 animate-spin" />
+              {status === 'searching' ? 'Searching business records…' : 'Bolu is reviewing the available information…'}
+            </div>
+          ) : null}
+          {state?.streamingContent ? (
+            <div className="mr-auto mt-3 max-w-[94%] whitespace-pre-wrap text-[13px] leading-relaxed text-bd-text" aria-live="polite">
+              {state.streamingContent}
+            </div>
+          ) : null}
+          {state?.error ? (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-bd-status-danger-border bg-bd-status-danger-bg px-3 py-2" role="alert">
+              <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-bd-status-danger-text" />
+              <p className="text-[11px] leading-relaxed text-bd-status-danger-text">{state.error}</p>
+            </div>
+          ) : null}
+          <div ref={listEndRef} />
+        </div>
+
+        <div className="border-t border-bd-border px-3 py-3">
+          {pickerOpen ? (
+            <form
+              className="mb-3 flex items-center gap-2"
+              onSubmit={(event) => {
+                event.preventDefault()
+                if (pickerQuery.trim().length >= 2) {
+                  void runtime.searchRecords(pickerQuery, state?.context.origin.module === 'quotation' ? 'quotation' : 'invoice')
+                }
+              }}
+            >
+              <Search className="size-4 shrink-0 text-bd-text-muted" />
+              <Input
+                value={pickerQuery}
+                onChange={(event) => setPickerQuery(event.target.value)}
+                placeholder={state?.context.origin.module === 'quotation' ? 'Search quotation number or customer' : 'Search invoice number or customer'}
+                aria-label="Search business records"
+              />
+              <Button type="submit" size="icon" variant="outline" aria-label="Search records" disabled={status !== 'idle'}>
+                <Search className="size-4" />
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setPickerOpen(false)}>Close</Button>
+            </form>
+          ) : null}
+          <div className="mb-2 flex justify-end">
+            <Button type="button" size="sm" variant="ghost" onClick={() => setPickerOpen((value) => !value)}>
+              {pickerOpen ? 'Hide record search' : 'Find a record'}
+            </Button>
+          </div>
+          <form className="flex items-end gap-2" onSubmit={submit}>
+            <Input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault()
+                  submit()
+                }
+              }}
+              placeholder="Ask Bolu about your records"
+              aria-label="Message Bolu"
+              className="flex-1"
+              disabled={status !== 'idle'}
+            />
+            {status !== 'idle' ? (
+              <Button type="button" size="icon-lg" variant="outline" className="shrink-0" onClick={() => runtime.stop()} aria-label="Stop Bolu">
+                <Square className="size-4" />
+              </Button>
+            ) : (
+              <Button type="submit" size="icon-lg" className="shrink-0" disabled={!draft.trim()} aria-label="Send message">
+                <ArrowUp className="size-4" />
+              </Button>
+            )}
+          </form>
+          <p className="mt-2 text-[10px] text-bd-text-muted">Bolu can read records only. He cannot create or change business data.</p>
+        </div>
       </SheetContent>
     </Sheet>
   )
