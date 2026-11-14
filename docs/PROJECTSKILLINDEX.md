@@ -10,10 +10,10 @@
 
 | Location | Count | Purpose |
 | :--- | :--- | :--- |
-| `.agents/skills/` | 157 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs + 38 from the marketing pack + 6 from `plannotator/effective-html` + 2 from `neondatabase/agent-skills` + 1 from `Jakubantalik/Libraries.dev` + 1 from `Vincentwei1021/video-shotcraft`) |
+| `.agents/skills/` | 158 skills | General-purpose dev, UI, infra, and Capacitor skills (49 base + 41 from `softaworks/agent-toolkit` + 1 from `skills.sh/ceorkm/mobile-app-ui-design` + 1 from `appllama/appllama-skills` + 3 from `dpearson2699/swift-ios-skills` + 12 from animation/UI toolkit installs + 2 design installs + 38 from the marketing pack + 6 from `plannotator/effective-html` + 2 from `neondatabase/agent-skills` + 1 from `Jakubantalik/Libraries.dev` + 1 from `Vincentwei1021/video-shotcraft` + 1 from `GoogleChrome/modern-web-guidance`) |
 | `.claude/skills/` | 6 skills | Meta, design, testing, discipline, and skill-discovery skills |
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
-| **Total** | **158 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
+| **Total** | **159 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
 > **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and were purged from `.commandcode/skills/` (not indexed because they already exist in `.agents`/`.claude`).
 
@@ -243,6 +243,13 @@ Installed by the user on 2026-10-20 via `npx skills add Vincentwei1021/video-sho
 | :--- | :--- | :--- | :--- | :--- |
 | 158 | video-shotcraft | .agents/skills/video-shotcraft/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\video-shotcraft\SKILL.md | Cinematic product videos from shot recipe cards + validated Remotion template + code/audio assets — real page screenshots, 2.5D camera moves, beat-synced cuts, sound design; Ink Press template reproduction and single-shot motion |
 
+### Added via `GoogleChrome/modern-web-guidance`
+Installed on 2026-11-14 via `bunx modern-web-guidance@latest install`. Stewarded by the Google Chrome, Microsoft Edge, Mozilla Firefox, and MDN teams. Ships `SKILL.md` plus 209 guide files under `guides/`. The CLI is self-contained and works offline. Mirrored to the user-level root at `C:\Users\DELL\.agents\skills\modern-web-guidance\` (indexed in `C:\Users\DELL\.agents\SKILLS-INDEX.md`).
+
+| # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
+| :--- | :--- | :--- | :--- | :--- |
+| 159 | modern-web-guidance | .agents/skills/modern-web-guidance/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\modern-web-guidance\SKILL.md | Search tool for modern web best practices. **Execute FIRST for all HTML/CSS and client-side JS tasks.** Modern browser APIs, CSS layout (container queries, subgrid, oklch), performance (INP, scheduler.yield, content-visibility), accessibility, forms (Popover, Dialog, `:user-invalid`), built-in AI, and WebAssembly — 250 features and 203 use cases. Query it with `bunx modern-web-guidance@latest search "<query>"`, then `retrieve "<guide-id>"` |
+
 ---
 ## `.claude/skills/`
 Higher-order skills for design intelligence, testing, meta-skill creation, and coding discipline.
@@ -300,6 +307,7 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       ├── mobile-app-ui-design/
 │       ├── material-3/
 │       ├── mobile-android-design/
+│       ├── modern-web-guidance/   ← 209 web best-practice guides (Chrome/Edge/Firefox/MDN)
 │       ├── neon/
 │       ├── neon-postgres/
 │       ├── pdf-rendering-correctness/
@@ -334,5 +342,5 @@ Installed via `opencode.json` plugin entry. Provides 6 agent skills, 6 commands,
 │       └── ponytail/    ← Plugin: 6 skills, 6 commands, 10 hooks
 ```
 ---
-*Last updated: November 14, 2026 — installed and indexed Claude Code agent `database-architect` (`.claude/agents/database-architect.md`) from `claude-code-templates`; skills unchanged. Total .agents/skills: 157.*
+*Last updated: November 14, 2026 — installed and indexed `modern-web-guidance` (#159) from `GoogleChrome/modern-web-guidance` via `bunx modern-web-guidance@latest install`; mirrored to the user-level root `C:\Users\DELL\.agents\skills\` and indexed in `C:\Users\DELL\.agents\SKILLS-INDEX.md`. Total .agents/skills: 158.*
 ```
