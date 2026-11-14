@@ -368,3 +368,40 @@ A point is not a blocker until its stage starts. It is a blocker at its gate.
 - Any change to a PDF renderer. G2.
 - The on-device Local AI work. It is a separate ticket.
 - An Item Library link on a purchase order line. That link is deliberately absent.
+
+---
+
+## 17. PRD Compliance Audit Reconciliation — 2026-11-13
+
+This section records a static source-and-test inspection. It does not approve this draft PRD or its document-creation scope. It does not replace sections 1–16 or change their dependencies.
+
+### 17.1 Authority and Scope Conflict
+
+- `Readme.md` and `functional-req.md` are marked `DRAFT FOR REVIEW`. The decision log and this roadmap are also marked `DRAFT FOR REVIEW`. Repository evidence does not show an approved Bolu PRD.
+- The draft requires invoice creation through conversation, then expands to eight authorable document types. The later product direction provided for this audit identifies Conversational Business Intelligence and read-only questions about existing records as the first capability.
+- These scopes conflict. This reconciliation does not change the PRD, reinterpret its requirements, or treat the implementation as approval of either scope.
+- `roadmap.html` is the synchronized phone-first representation of this Markdown roadmap, as listed in `Readme.md` §9. This file remains the source for roadmap content.
+
+### 17.2 Verified Roadmap State
+
+| Existing stage | Audit status | Evidence and remaining gate |
+|---|---|---|
+| G-0 Readiness | BLOCKED | The required four provider keys, gateway, device network results, JSON-import baseline, approved disclosure/defaults, setter inventory, and decisions are not evidenced. AMD key and live-provider evidence are explicitly absent from the implementation report. |
+| A Engine | PARTIAL | `BoluAssistantProvider`, `bolu-runtime.ts`, `bolu-context.ts`, and `api/bolu-chat.ts` provide a shared in-memory read-only runtime, context, SSE transport, and AMD server boundary. The PRD engine gates for provider chain/failover, quota, provider key catalog, tool-call loop, generic form adapter, and related tests are not met. |
+| B Invoice pack | NOT IMPLEMENTED | The current invoice capability searches and reads existing records. It has no invoice form adapter, tool-call change cards, contradiction handling, proposal flow, filing preview, or save path. Read-only BI does not satisfy invoice authoring. |
+| C Quotation pack | NOT IMPLEMENTED | Quotation search/detail reads exist. There is no quotation creation pack, form adapter, change-card workflow, or conformance gate. |
+| D Operations packs | NOT IMPLEMENTED | No PRD write packs exist for purchase orders, waybills, or CSRs. |
+| E Text and read packs | PARTIAL | Invoice/quotation/receivables read capability exists. RFQ, cost-sheet, letter, receipt, compliance, and tax assistant packs are absent. The draft’s eight-pack gate is not met. |
+| F Breadth gate | BLOCKED | Depends on G-0 and stages A–E. No full PRD test-plan gate or real-phone acceptance evidence exists. Per task restriction, no tests were run during this audit. |
+| G Trial | NOT IMPLEMENTED | No approved trial setup, disclosure/consent, toggle, device/network evidence, baseline measurements, or weekly trial results exist in the inspected evidence. |
+| H Decision | NOT IMPLEMENTED | No trial results or keep/change/remove decision are recorded. |
+
+These labels describe evidence against the draft waterfall only. They do not establish the current approved Bolu milestone.
+
+### 17.3 Next Task and Blocker
+
+**Next task: resolve product authority and approve the governing Bolu specification.** The owner must confirm whether the draft document-creation PRD remains the intended scope, whether it must be amended to match the later read-only BI direction, or whether a separate approved BI specification governs the current milestone. Do not start the next implementation stage until this scope conflict is resolved and the PRD status is approved. The existing decision log remains unchanged.
+
+### 17.4 Evidence Report
+
+Requirement-level results and source references are recorded in `docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md`.

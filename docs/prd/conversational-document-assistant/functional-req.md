@@ -1,8 +1,41 @@
 # Functional Requirements
 
-- **Status:** DRAFT FOR REVIEW
-- **Product:** Conversational Document Assistant
+- **Status:** Core product direction approved; detailed requirements remain under review
+- **Product:** Bolu Conversational Business Operations Assistant
 - **Writing Standard:** ASD-STE100 Simplified Technical English
+
+## Authority and requirement disposition — 2026-11-13
+
+The product owner approves Bolu as a conversational business operations assistant with read and write capabilities. Read-only Business Intelligence is one capability, not the complete product. The user must approve each proposed change before it is applied and must separately confirm before a document is saved or filed.
+
+This direction does not approve every detailed requirement below. The existing FR-01–FR-22 remain preserved as proposed requirements pending reconciliation. The following disposition applies:
+
+| Requirement | Disposition | Note |
+|---|---|---|
+| FR-01 | REFINED — proposed | Shared assistant access must work from approved surfaces. Exact invoice-form layout and 360 px visibility need UX decision. |
+| FR-02 | PROPOSED | Streaming is a candidate behavior. Provider support and response-time target need evidence. |
+| FR-03 | REFINED — proposed | Use application-owned capabilities for reads and writes. The model may propose structured changes; it does not directly write application state. |
+| FR-04 | APPROVED PRINCIPLE; details proposed | User approval is required before each proposed change is applied. Card layout and exact interaction need acceptance design. |
+| FR-05 | APPROVED PRINCIPLE; details proposed | Existing calculation engines and system-owned values remain authoritative. The exact writable input set is document-specific. |
+| FR-06 | PROPOSED | Contradiction handling is useful, but supported fields and clarification behavior need definition. |
+| FR-07 | PROPOSED | Title, notes, and terms proposals need business-approved defaults and document-specific scope. |
+| FR-08 | APPROVED PRINCIPLE; details proposed | Bolu must not invent missing required values. Existing validators remain authoritative. The required-question flow needs document-specific definition. |
+| FR-09 | REFINED — approved principle | Explicit confirmation is required before persistence. The phrase “file it” must prepare, not save. Exact preview and save-path behavior needs design. |
+| FR-10 | PROPOSED | Provider chain, order, retry policy, and model/tool support remain unapproved and unverified. |
+| FR-11 | PROPOSED | Dynamic quota display requires provider evidence and operational design. |
+| FR-12 | UNRESOLVED | Credential custody, storage, browser support, and provider account ownership require a security/product decision. |
+| FR-13 | UNRESOLVED | External-provider disclosure, consent, default state, and feature availability require approval. |
+| FR-14 | APPROVED PRINCIPLE; details proposed | Manual workflows must remain usable when Bolu is unavailable. Acceptance coverage needs implementation-specific tests. |
+| FR-15 | UNRESOLVED | Trial toggle and rollout audience are not approved by the product direction. |
+| FR-16 | REFINED — approved principles | Calculation authority, authorization, tenant isolation, approval-before-apply, confirmation-before-save, and no unapproved money movement are approved. Per-trial storage rule remains unresolved. |
+| FR-17 | APPROVED PRINCIPLE; details proposed | One shared assistant architecture must support multiple capabilities. Whether all document families ship together is unresolved. |
+| FR-18 | PROPOSED | The 14-provider catalog is not approved for the first release. |
+| FR-19 | PROPOSED | Live model discovery is not approved for the first release. |
+| FR-20 | PROPOSED | Model switching UI is not approved for the first release. |
+| FR-21 | PROPOSED | Custom providers are not approved for the first release. |
+| FR-22 | PROPOSED | Four viewport layouts remain a design proposal; production responsive acceptance must be approved. |
+
+The PRD owner must approve detailed requirements before implementation. “Approved principle” does not approve a specific provider, layout, document pack, trial, or acceptance value.
 
 ---
 
@@ -248,7 +281,9 @@ The app must accept an OpenAI compatible endpoint that is not in the catalog.
 - A custom provider uses the same client and the same cards as a catalog provider.
 - A removed custom provider loses its key with the row.
 
-## FR-22 - Four Viewport Layouts
+## FR-22 - Four Viewport Layouts (Proposed)
+
+This is a design proposal, not an approved release requirement. Keep its text for review.
 
 The assistant must render in four layouts that share one state model.
 
@@ -263,3 +298,84 @@ The assistant must render in four layouts that share one state model.
 - The composer is one rounded card with action pills and one send or stop control.
 - Enter sends, Shift and Enter adds a line, and an input method editor composition does not send.
 - The money rule does not change with the layout. An accepted card applies once. A rejected card changes nothing.
+
+---
+
+## FR-23 - Read Authorized Business Records (Approved Capability Principle)
+
+Bolu must answer supported questions about existing business records. The application must retrieve facts through the existing tenant-aware repositories and permission checks. A record id is a reference, not authorization. The model must not select a tenant, entity, schema, or permission scope.
+
+**Acceptance criteria**
+
+- A read request checks the caller’s current permission before data retrieval.
+- The application returns only the minimum fields needed for the request.
+- Invoice status and settlement values come from authoritative application or database sources.
+- Quotation and other document status values use the document’s existing status authority.
+- The response distinguishes retrieved facts, missing information, ambiguity, and unsupported requests.
+- Financial values are not calculated by model output or prompt logic.
+- The initial document families and query coverage remain a product decision.
+
+## FR-24 - Create Documents Through A Controlled Conversation (Approved Capability Principle)
+
+Bolu must support conversational creation of approved business documents. The application must map model intent to a document-specific capability. The model may propose inputs. Existing application validation and business rules remain authoritative.
+
+**Acceptance criteria**
+
+- Every created document starts as an unsaved draft.
+- The application validates all proposed values before it applies them.
+- Missing required values trigger a question. Bolu does not invent them.
+- The application computes system-owned values through the existing calculation engine.
+- No proposal persists until the separate save confirmation in FR-26.
+- The first document family and creation fields remain unresolved until product approval.
+
+## FR-25 - Modify Existing Documents Through A Controlled Conversation (Approved Capability Principle)
+
+Bolu must support proposed changes to an existing document where the user has permission. The application must resolve and re-read the record through its authorized document path before preparing a change.
+
+**Acceptance criteria**
+
+- The interface identifies the document and its persisted or draft state.
+- Each proposed change shows the target field, current value, and proposed value when the field supports comparison.
+- The application rejects fields that are system-owned, calculated, immutable, or outside the approved capability.
+- The user can approve or reject each change. Rejection leaves the document unchanged.
+- The application revalidates the record and permission at apply time.
+- Modification does not imply save or filing. FR-26 controls persistence.
+- The initial modification fields and document families remain unresolved until product approval.
+
+## FR-26 - Separate Change Approval From Persistence Confirmation (Approved Principle)
+
+Bolu must use two distinct approval gates. First, the user approves a proposed change before the application applies it to the draft or in-memory form. Second, the user confirms before the application saves or files the document. One approval must not satisfy both gates.
+
+**Acceptance criteria**
+
+- An unapproved proposal cannot change the form or persisted record.
+- A rejected proposal produces no application-state change.
+- Accepting a proposal applies only the reviewed change and applies it once.
+- Saving requires a separate confirmation view that identifies the document and relevant changes.
+- The confirmation action uses the existing document save path, validation, numbering, and audit behavior.
+- A failed save preserves the draft and reports the failure. Retrying cannot create a duplicate document.
+
+## FR-27 - Preserve Authorization, Tenant Isolation, And Business Rules (Approved Principle)
+
+Every Bolu read and write must use the current tenant, existing authorization rules, and existing business services. Bolu must not bypass row-level security or domain validation.
+
+**Acceptance criteria**
+
+- The model cannot supply or change tenant, entity, schema, or permission scope.
+- The application checks authorization for every requested record and operation.
+- The application validates again before applying a change and before persistence.
+- Read or write denial returns a clear message and makes no unauthorized change.
+- Tests cover another tenant, missing permission, stale record state, and changed permission where the existing test architecture permits.
+
+## FR-28 - Handle Interrupted And Partially Failed Operations (Proposed)
+
+The runtime must distinguish retrieval, proposal, apply, and persistence states. It must handle provider failure, cancellation, duplicate submission, stale context, and partial failure without claiming success.
+
+**Acceptance criteria**
+
+- Cancellation stops pending assistant work where possible and does not apply an unapproved proposal.
+- Duplicate submissions and retries do not apply or persist the same operation twice.
+- A provider failure after retrieval preserves and labels the verified facts. A failure before retrieval does not invent facts.
+- A stale record is re-read and revalidated before apply or save.
+- A partial failure reports which stage failed and preserves recoverable draft state.
+- Exact retry and idempotency policy remains an architecture decision.

@@ -1,20 +1,28 @@
 # Conversational Document Assistant - PRD
 
-- **Status:** DRAFT FOR REVIEW
+- **Status:** Core product direction approved; detailed requirements and delivery scope under review
 - **Owner:** Project Lead
 - **Written:** 2026-11-13
 - **Writing Standard:** ASD-STE100 Simplified Technical English
-- **Scope:** One assistant. Document creation by conversation across every authorable document type, powered by free cloud AI. Trial period of one month.
+- **Scope:** Conversational Business Operations with read and write capabilities. The detailed requirements below remain candidate scope until reconciled and approved.
 
 ---
 
+## Product Direction Status — 2026-11-13
+
+**Approved direction:** Bolu is a conversational business operations assistant. It must understand authorized existing records and support controlled creation and modification of business documents. Read-only Business Intelligence is one capability, not the complete product.
+
+The application owns authorization, tenant scope, validation, calculations, persistence, and business execution. A user must explicitly approve each proposed change before the application applies it. The user must separately confirm before the application saves or files a document. Existing document rules and system-owned computed values remain authoritative. Bolu must not invent missing facts or perform unapproved payments or money movement.
+
+**Still under review:** The detailed FR-01–FR-22 requirements, additional operational requirements below, first-release document coverage, provider chain, key custody, privacy consent, trial audience/duration, success measures, and responsive layouts. A disposition in this PRD does not by itself approve these details.
+
+The Markdown requirements and roadmap are the maintained source documents. `roadmap.html` is the presentation mirror of `Waterfall-roadmap.md`.
+
 ## 1. Objective
 
-An SME owner must be able to create an invoice by typing what they want, in their own words, without leaving the app and without paying an AI provider.
+An SME owner must be able to understand and operate BOURXE business records through natural conversation. Bolu must answer supported questions about existing records and support approved creation and modification workflows.
 
-Today the fast path for a machine-generated invoice is the JSON import sheet. That path requires the user to copy a prompt out of the app, paste it into another AI app, copy the JSON back, paste it in, then review a preview. The user leaves the app twice and copies twice.
-
-This feature replaces that path with a conversation inside the invoice form. The user types. The assistant writes into the live form. The assistant corrects what is wrong, proposes notes, terms and a title, asks for what is missing, and files the invoice only when the user tells it to.
+The invoice conversation in this draft is one proposed workflow. Its exact scope, provider cost model, first-release documents, trial, and success measures remain under review. The approved product direction is operations across read and write capabilities, with user approval before proposed changes are applied and separate confirmation before persistence.
 
 ## 2. Why The JSON Import Path Is The Wrong Shape
 
