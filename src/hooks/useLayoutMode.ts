@@ -12,5 +12,7 @@ export function useLayoutMode() {
     heightClass: info.heightClass,
     hasFold: info.hasSeparatingFold,
     isFoldable: info.isFoldable,
+    isHalfOpened: info.isHalfOpened,
+    isTabletop: info.isTabletop,
   }
 }
