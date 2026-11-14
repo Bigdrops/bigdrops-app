@@ -13,19 +13,22 @@ const BoluContext = createContext<{
 } | null>(null)
 
 export function BoluAssistantProvider({ children }: { children: ReactNode }) {
-  const { tenantClient } = useEntity()
+  const { tenantClient, entity } = useEntity()
   const { hasAuthorization } = useAuthorization()
   const location = useLocation()
   const previousPathname = useRef(location.pathname)
   const [open, setOpen] = useState(false)
   const authorizationRef = useRef(hasAuthorization)
   authorizationRef.current = hasAuthorization
+  const entityId = entity?.id ?? null
   const runtime = useMemo(() => createBoluRuntime({
     tenantClient,
+    entityId,
     canRead: (resource, action) => authorizationRef.current(resource, action),
+    canWrite: (resource, action) => authorizationRef.current(resource, action),
     providerAvailable: true,
     providerSend: sendBoluProviderRequest,
-  }), [tenantClient.schemaName])
+  }), [tenantClient.schemaName, entityId])
   const state = useSyncExternalStore(
     runtime.subscribe,
     runtime.getState,

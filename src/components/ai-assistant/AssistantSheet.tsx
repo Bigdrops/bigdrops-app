@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { AlertCircle, ArrowUp, Loader2, Search, Square } from 'lucide-react'
+import { AlertCircle, ArrowUp, FileText, Loader2, Search, Square } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,7 +50,7 @@ export function AssistantSheet({ open, onOpenChange, runtime, state }: Assistant
         <SheetHeader className="border-b border-bd-border px-4 pb-3 pt-4">
           <SheetTitle className="text-base">Bolu</SheetTitle>
           <SheetDescription className="text-[11px] text-bd-text-muted">
-            Read-only business intelligence · page context: {state?.context.origin.page ?? 'current page'}
+            Conversational business operations · page context: {state?.context.origin.page ?? 'current page'}
           </SheetDescription>
         </SheetHeader>
 
@@ -139,10 +139,123 @@ export function AssistantSheet({ open, onOpenChange, runtime, state }: Assistant
             </div>
           ) : null}
 
+          {state?.activeProposal ? (
+            <div className="mt-4 rounded-xl border border-bd-border bg-bd-card-bg p-4 shadow-sm" aria-label="Structured document proposal">
+              <div className="flex items-center justify-between border-b border-bd-border pb-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="size-4 text-[hsl(var(--primary))]" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-bd-text">
+                    {state.activeProposal.operationType === 'create-document' ? 'Proposed Invoice Creation' : 'Proposed Invoice Modification'}
+                  </span>
+                </div>
+                <span className="rounded-full bg-bd-surface-muted px-2 py-0.5 text-[10px] font-medium text-bd-text-muted">
+                  {state.activeProposal.status === 'pending_approval'
+                    ? 'Gate 1: Review'
+                    : state.activeProposal.status === 'approved_pending_save'
+                    ? 'Gate 2: Save'
+                    : state.activeProposal.status === 'saving'
+                    ? 'Saving'
+                    : 'Completed'}
+                </span>
+              </div>
+
+              {state.activeProposal.operationType === 'create-document' ? (
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between text-bd-text">
+                    <span className="text-bd-text-muted">Customer:</span>
+                    <span className="font-semibold">{state.activeProposal.payload.client_name}</span>
+                  </div>
+                  <div className="mt-2 border-t border-bd-border pt-2">
+                    <span className="text-bd-text-muted text-[11px] block mb-1">Line Items:</span>
+                    <ul className="space-y-1">
+                      {state.activeProposal.payload.items.map((item, idx) => (
+                        <li key={idx} className="flex justify-between text-[11px]">
+                          <span className="truncate max-w-[65%]">{item.description} (x{item.quantity})</span>
+                          <span>{formatNaira(item.quantity * item.unit_price)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-2 border-t border-bd-border pt-2 flex justify-between font-semibold text-bd-text">
+                    <span>Authoritative Total (incl. VAT):</span>
+                    <span className="text-[hsl(var(--primary))]">{formatNaira(state.activeProposal.computedTotals.total)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between text-bd-text">
+                    <span className="text-bd-text-muted">Target Document:</span>
+                    <span className="font-semibold">{state.activeProposal.targetDocumentNumber}</span>
+                  </div>
+                  {state.activeProposal.field ? (
+                    <div className="rounded-md bg-bd-surface-muted p-2 mt-2">
+                      <span className="text-bd-text-muted text-[11px] block">Field: {state.activeProposal.field}</span>
+                      <div className="mt-1 flex items-center gap-2 text-xs">
+                        <span className="line-through text-bd-text-muted">{String(state.activeProposal.oldValue ?? '(empty)')}</span>
+                        <span>→</span>
+                        <span className="font-semibold text-bd-text">{String(state.activeProposal.newValue)}</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {state.activeProposal.status === 'pending_approval' ? (
+                <div className="mt-4 flex gap-2 border-t border-bd-border pt-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => runtime.approveProposal(state?.activeProposal?.opId)}
+                  >
+                    Approve Changes (Gate 1)
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => runtime.rejectProposal(state?.activeProposal?.opId)}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ) : state.activeProposal.status === 'approved_pending_save' ? (
+                <div className="mt-4 flex gap-2 border-t border-bd-border pt-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="flex-1 bg-[hsl(var(--primary))]"
+                    onClick={() => void runtime.confirmSave(state?.activeProposal?.opId)}
+                  >
+                    Confirm & Save Document (Gate 2)
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => runtime.cancelSave()}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {status !== 'idle' ? (
             <div className="mt-4 flex items-center gap-2 text-xs text-bd-text-muted" role="status" aria-live="polite">
               <Loader2 className="size-3.5 animate-spin" />
-              {status === 'searching' ? 'Searching business records…' : 'Bolu is reviewing the available information…'}
+              {status === 'searching'
+                ? 'Searching business records…'
+                : status === 'proposing'
+                ? 'Bolu is proposing changes…'
+                : status === 'awaiting_approval'
+                ? 'Awaiting your approval (Gate 1)…'
+                : status === 'awaiting_save'
+                ? 'Awaiting save confirmation (Gate 2)…'
+                : status === 'saving'
+                ? 'Saving document to business records…'
+                : 'Bolu is reviewing the available information…'}
             </div>
           ) : null}
           {state?.streamingContent ? (
@@ -213,7 +326,7 @@ export function AssistantSheet({ open, onOpenChange, runtime, state }: Assistant
               </Button>
             )}
           </form>
-          <p className="mt-2 text-[10px] text-bd-text-muted">Bolu can read records only. He cannot create or change business data.</p>
+          <p className="mt-2 text-[10px] text-bd-text-muted">Bolu supports read, change proposal, and document saving through explicit approval gates. Accept/reject changes; confirm or cancel save.</p>
         </div>
       </SheetContent>
     </Sheet>

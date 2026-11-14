@@ -30,7 +30,7 @@ export type BoluSuggestion = {
   id: string
   label: string
   prompt: string
-  capability: 'search-invoices' | 'read-receivables' | 'search-quotations'
+  capability: 'search-invoices' | 'read-receivables' | 'search-quotations' | 'propose-change' | 'save-document'
 }
 
 const SUGGESTIONS: Record<BoluModule, BoluSuggestion[]> = {
@@ -129,6 +129,13 @@ const WELCOME: Record<BoluModule, string> = {
 
 const SAFE_PATH = /^\/[a-zA-Z0-9/_-]*$/
 const RECORD_ID = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
+
+export type BoluChangeProposal = {
+  field: string
+  oldValue: string | number | null
+  newValue: string | number | null
+  accepted: boolean
+}
 
 export function buildBoluPageContext(
   pathname: string,

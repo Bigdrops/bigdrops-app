@@ -20,7 +20,16 @@ export type BoluFactResult =
   | { kind: 'records'; records: BoluRecord[]; hasMore: boolean }
   | { kind: 'message'; text: string }
 
-export type BoluReadAuthorization = (resource: 'invoice' | 'quotation', action: 'view') => boolean
+export type BoluReadAuthorization = (resource: 'invoice' | 'quotation', action: 'view' | 'modify') => boolean
+
+export type BoluChangeProposal = {
+  field: string
+  oldValue: string | number | null
+  newValue: string | number | null
+  accepted: boolean
+}
+
+export type BoluWriteAuthorization = (resource: 'invoice' | 'quotation', action: 'save') => boolean
 
 function assertTenantReady(tenantClient: TenantClient) {
   if (!tenantClient.isReady) throw new Error('Business records are not available yet.')
@@ -213,4 +222,37 @@ export async function readBoluContextFacts(
     ? await searchBoluQuotations(tenantClient, query, canRead)
     : await searchBoluInvoices(tenantClient, query, canRead)
   return { kind: 'records', records: result.records, hasMore: result.hasMore }
+}
+
+export async function proposeChange(
+  tenantClient: TenantClient,
+  record: BoluRecord,
+  field: string,
+  oldValue: string | number | null,
+  newValue: string | number | null,
+  canWrite: BoluWriteAuthorization,
+): Promise<{ ok: boolean; proposed: BoluChangeProposal; record: BoluRecord }> {
+  assertTenantReady(tenantClient)
+  if (!canWrite('invoice', 'save') && !canWrite('quotation', 'save')) {
+    return { ok: false, proposed: { field: String(field), oldValue: String(oldValue ?? ''), newValue: String(newValue ?? ''), accepted: false }, record }
+  }
+  return {
+    ok: true,
+    proposed: { field: String(field), oldValue: String(oldValue ?? ''), newValue: String(newValue ?? ''), accepted: false },
+    record: { ...record, [field]: newValue },
+  }
+}
+
+export async function saveDocument(
+  tenantClient: TenantClient,
+  record: BoluRecord,
+  canWrite: BoluWriteAuthorization,
+): Promise<{ ok: boolean; savedRecord: BoluRecord }> {
+  assertTenantReady(tenantClient)
+  if (!canWrite('invoice', 'save') && !canWrite('quotation', 'save')) {
+    return { ok: false, savedRecord: record }
+  }
+  // Application-owned persistence: the actual write is delegated to the form/save handler
+  // which performs the authorized write and returns the persisted state
+  return { ok: true, savedRecord: record }
 }
