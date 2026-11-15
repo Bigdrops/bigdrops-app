@@ -172,3 +172,30 @@ test('Catalogue: 100milionseek is declared as a routable provider', () => {
   assert.equal(routing.approvedForRouting, true)
   assert.equal(routing.verifiedEndpoint, 'https://100milionseek.top/v1')
 })
+
+test('Catalogue: PLaMo is declared with the documented API contract', () => {
+  const entry = getCatalogueEntry('plamo')
+  assert.ok(entry, 'PLaMo must exist in the production catalogue')
+  assert.equal(entry.baseUrl, 'https://api.platform.preferredai.jp/v1')
+  assert.equal(entry.protocol, 'openai')
+  assert.equal(entry.authScheme, 'bearer')
+  assert.equal(entry.supportsDiscovery, true)
+  assert.equal(entry.defaultModel, 'plamo-3.1-prime')
+
+  const curated = entry.curatedModels.map((m) => m.id)
+  assert.deepEqual(curated, ['plamo-3.1-prime', 'plamo-3.0-prime', 'plamo-3.0-fin-beta'])
+
+  const routing = ROUTING_PROVIDER_CATALOGUE['plamo']
+  assert.ok(routing, 'PLaMo must exist in the routing catalogue')
+  assert.equal(routing.approvedForRouting, true)
+  assert.equal(routing.verifiedEndpoint, 'https://api.platform.preferredai.jp/v1')
+  assert.equal(routing.authScheme, 'bearer')
+  assert.ok(routing.supportedCapabilities.includes('chat-completions'))
+  assert.ok(routing.supportedCapabilities.includes('streaming'))
+  assert.ok(routing.supportedCapabilities.includes('tools'))
+  // The API documents json_schema only, so json_object mode stays unverified.
+  assert.ok(
+    !routing.supportedCapabilities.includes('json-mode'),
+    'PLaMo documents json_schema output only; json-mode must not be claimed',
+  )
+})

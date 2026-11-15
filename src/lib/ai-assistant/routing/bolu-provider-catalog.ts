@@ -310,6 +310,23 @@ export const ROUTING_PROVIDER_CATALOGUE: Record<string, RoutingProviderEntry> = 
     approvedForRouting: true,
     notes: 'Pooled third-party endpoint running one upstream key for many accounts. High latency and variable uptime. Keep out of tenant traffic.',
   },
+  plamo: {
+    providerId: 'plamo',
+    displayName: 'PLaMo (Preferred Networks)',
+    protocol: 'openai-compatible',
+    verifiedEndpoint: 'https://api.platform.preferredai.jp/v1',
+    authScheme: 'bearer',
+    verifiedModels: [
+      { id: 'plamo-3.1-prime', label: 'PLaMo 3.1 Prime', isDefault: true },
+      { id: 'plamo-3.0-prime', label: 'PLaMo 3.0 Prime' },
+      { id: 'plamo-3.0-fin-beta', label: 'PLaMo 3.0 Fin Beta' },
+    ],
+    supportedCapabilities: ['chat-completions', 'streaming', 'tools'],
+    modelDiscoverySupport: true,
+    balanceLookupSupport: false,
+    approvedForRouting: true,
+    notes: 'Preferred Networks PLaMo API. Japan-hosted. Free plan has usage limits. plamo-3.0-prime retires on 2027-01-31.',
+  },
 }
 
 export function getRoutingProvider(providerId: string): RoutingProviderEntry | undefined {

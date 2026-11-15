@@ -294,6 +294,24 @@ export const PROVIDER_CATALOGUE: ProviderCatalogueEntry[] = [
     curatedModels: [M('deepseek-v4.1-flash-free', 'DeepSeek V4.1 Flash Free')],
     regionNote: 'Pooled third-party endpoint. High latency and variable uptime. Do not use for tenant data.',
   },
+  {
+    id: 'plamo',
+    name: 'PLaMo (Preferred Networks)',
+    description: 'Japanese foundation model by Preferred Networks. OpenAI-compatible.',
+    protocol: 'openai',
+    authScheme: 'bearer',
+    baseUrl: 'https://api.platform.preferredai.jp/v1',
+    supportsDiscovery: true,
+    docsUrl: 'https://docs.plamo.preferredai.jp/en/api',
+    keyHint: 'PLAMO_API_KEY',
+    defaultModel: 'plamo-3.1-prime',
+    curatedModels: [
+      M('plamo-3.1-prime', 'PLaMo 3.1 Prime'),
+      M('plamo-3.0-prime', 'PLaMo 3.0 Prime'),
+      M('plamo-3.0-fin-beta', 'PLaMo 3.0 Fin Beta'),
+    ],
+    regionNote: 'Japan-hosted. Free plan has usage limits. plamo-3.0-prime retires on 2027-01-31.',
+  },
 ]
 
 export function getCatalogueEntry(id: string): ProviderCatalogueEntry | undefined {

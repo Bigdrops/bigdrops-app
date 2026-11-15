@@ -11,7 +11,7 @@ import { supabase } from '@/supabase'
 import { EntityContext } from '@/lib/tenant/entityContext'
 import { createTenantClient, type TenantClient } from '@/lib/tenantClient'
 import {
-  buildInvoiceCreateProposal, buildInvoiceModifyProposal, isProposalStale,
+  buildDocumentCreateProposal, buildInvoiceModifyProposal, isProposalStale,
   parseStructuredOperationEnvelope, validateInvoiceCreateInput, validateInvoiceModifyInput,
   type BoluProposal,
 } from '../bolu-operations'
@@ -20,7 +20,7 @@ import {
 } from '../bolu-document-service'
 import { sendBoluProviderRequest } from '../bolu-transport'
 import { buildProviderMessages, factsAsPrompt } from '../bolu-formatting'
-import { matchBoluIntent } from '../bolu-capabilities'
+import { extractBoluSearchTerm, matchesBoluSaveIntent, matchBoluIntent } from '../bolu-capabilities'
 import {
   readBoluContextFacts, readBoluInvoice, validateBoluClient,
   type BoluFactResult, type BoluReadAuthorization, type BoluWriteAuthorization,
@@ -50,6 +50,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
   const streamingBufferRef = useRef<string>('')
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const gate2SaveRef = useRef<((opId?: string) => Promise<BoluOperationExecutionResult>) | null>(null)
 
   const defaultPageContext = useMemo(
     () => options.pageContext ?? buildBoluPageContext(window.location.pathname, 'contextual'),
@@ -122,6 +123,16 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       const clean = text.trim()
       if (!clean || isStreaming) return false
 
+      // Gate 2 interception: once a proposal is approved, a natural-language save
+      // command persists it directly instead of re-entering the LLM loop.
+      if (activeProposal?.status === 'approved_pending_save' && matchesBoluSaveIntent(clean)) {
+        const saveApprovedProposal = gate2SaveRef.current
+        if (saveApprovedProposal) {
+          await saveApprovedProposal()
+          return true
+        }
+      }
+
       let targetConversationId = conversationId
 
       if (!targetConversationId) {
@@ -175,12 +186,16 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
           if (capability) {
             const factsContext: BoluPageContext = {
               ...defaultPageContext,
-              filters: { ...defaultPageContext.filters, query: clean },
+              filters: { ...defaultPageContext.filters, query: extractBoluSearchTerm(clean) },
             }
             verifiedFacts = await readBoluContextFacts(resolvedTenantClient, capability, factsContext, canRead)
           }
         } catch (err) {
-          console.warn('[useBoluThread] Intent lookup bypassed:', err)
+          console.warn('[useBoluThread] Intent lookup failed:', err)
+          verifiedFacts = {
+            kind: 'message',
+            text: '[SYSTEM ERROR: The database lookup failed. Inform the user you encountered a technical issue querying their records.]',
+          }
         }
       }
 
@@ -243,7 +258,8 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
           signal: controller.signal,
           onDelta: (delta: string) => {
             setClerkState('responding')
-            streamingBufferRef.current += delta
+            const cleanDelta = delta.replace(/—/g, ' - ').replace(/–/g, '-')
+            streamingBufferRef.current += cleanDelta
 
             if (!flushTimerRef.current) {
               flushTimerRef.current = setTimeout(() => {
@@ -263,7 +279,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
           flushTimerRef.current = null
         }
 
-        let finalText = response.text
+        let finalText = response.text.replace(/—/g, ' - ').replace(/–/g, '-')
         setStreamingContent('')
         setIsStreaming(false)
 
@@ -272,14 +288,18 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
 
         if (envelope.hasOperation && envelope.rawOperation) {
           const rawOp = envelope.rawOperation as Record<string, unknown>
-          if (rawOp.documentFamily === 'invoice') {
+          const documentFamily: 'invoice' | 'quotation' | null =
+            rawOp.documentFamily === 'invoice' || rawOp.documentFamily === 'quotation'
+              ? rawOp.documentFamily
+              : null
+          if (documentFamily) {
             if (rawOp.operationType === 'create-document') {
               const validation = validateInvoiceCreateInput(rawOp.payload)
               if (validation.valid && validation.data) {
                 if (resolvedTenantClient) {
                   const clientValidation = await validateBoluClient(resolvedTenantClient, validation.data.client_name)
                   if (clientValidation.status === 'exact_match') {
-                    parsedProposal = buildInvoiceCreateProposal({
+                    parsedProposal = buildDocumentCreateProposal(documentFamily, {
                       ...validation.data,
                       client_id: clientValidation.client.id,
                       client_name: clientValidation.client.name,
@@ -291,10 +311,10 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
                     finalText = `${finalText}\n\nI couldn't find an existing client named "${validation.data.client_name}" in your business records. Please verify the client name or register them under Clients first.`
                   }
                 } else {
-                  parsedProposal = buildInvoiceCreateProposal(validation.data)
+                  parsedProposal = buildDocumentCreateProposal(documentFamily, validation.data)
                 }
               }
-            } else if (rawOp.operationType === 'modify-document') {
+            } else if (rawOp.operationType === 'modify-document' && documentFamily === 'invoice') {
               const validation = validateInvoiceModifyInput(rawOp.payload)
               if (validation.valid && validation.data) {
                 let targetNum = 'INV-TARGET'
@@ -312,10 +332,9 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
                   field: validation.data.field,
                   oldValue: validation.data.oldValue,
                   newValue: validation.data.newValue,
-                  itemsChange:
-                    validation.data.items && validation.data.oldItems
-                      ? { oldItems: validation.data.oldItems, newItems: validation.data.items }
-                      : undefined,
+                  itemsChange: validation.data.items && validation.data.oldItems
+                    ? { oldItems: validation.data.oldItems, newItems: validation.data.items }
+                    : undefined,
                 })
               }
             }
@@ -324,16 +343,11 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
 
         const { data: savedRow, error: saveError } = await (supabase.from('bolu_messages') as any)
           .insert({
-            conversation_id: targetConversationId,
-            tenant_id: resolvedTenantId,
-            role: 'assistant',
-            content: finalText,
-            status: 'completed',
-            proposal_payload: parsedProposal,
-            records_payload: verifiedFacts,
+            conversation_id: targetConversationId, tenant_id: resolvedTenantId,
+            role: 'assistant', content: finalText, status: 'completed',
+            proposal_payload: parsedProposal, records_payload: verifiedFacts,
           })
-          .select(MESSAGE_COLUMNS)
-          .single()
+          .select(MESSAGE_COLUMNS).single()
 
         if (saveError) throw new Error(saveError.message)
 
@@ -380,7 +394,8 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
     },
     [
       conversationId, resolvedTenantId, resolvedTenantClient, defaultPageContext,
-      canRead, isStreaming, messages, options.onEnsureConversation, options.connectionId, options.modelId,
+      canRead, isStreaming, messages, activeProposal, options.onEnsureConversation,
+      options.connectionId, options.modelId,
     ],
   )
 
@@ -394,14 +409,12 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       const updatedProposal: BoluProposal = { ...activeProposal, status: 'approved_pending_save' }
       try {
         if (activeProposalMessageId) {
-          await (supabase.from('bolu_messages') as any)
+          void (supabase.from('bolu_messages') as any)
             .update({ proposal_payload: updatedProposal, updated_at: new Date().toISOString() })
             .eq('id', activeProposalMessageId)
         }
         setActiveProposal(updatedProposal)
-        setMessages((prev) =>
-          prev.map((m) => (m.id === activeProposalMessageId ? { ...m, proposal: updatedProposal } : m)),
-        )
+        setMessages((prev) => prev.map((m) => (m.id === activeProposalMessageId ? { ...m, proposal: updatedProposal } : m)))
         setClerkState('listening')
         return true
       } catch (err) {
@@ -418,15 +431,13 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       const updatedProposal: BoluProposal = { ...activeProposal, status: 'rejected' }
       try {
         if (activeProposalMessageId) {
-          await (supabase.from('bolu_messages') as any)
+          void (supabase.from('bolu_messages') as any)
             .update({ proposal_payload: updatedProposal, updated_at: new Date().toISOString() })
             .eq('id', activeProposalMessageId)
         }
         setActiveProposal(null)
         setActiveProposalMessageId(null)
-        setMessages((prev) =>
-          prev.map((m) => (m.id === activeProposalMessageId ? { ...m, proposal: updatedProposal } : m)),
-        )
+        setMessages((prev) => prev.map((m) => (m.id === activeProposalMessageId ? { ...m, proposal: updatedProposal } : m)))
         setClerkState('idle')
         return true
       } catch (err) {
@@ -488,14 +499,10 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
 
         const { data: confirmRow } = await (supabase.from('bolu_messages') as any)
           .insert({
-            conversation_id: conversationId,
-            tenant_id: resolvedTenantId,
-            role: 'assistant',
-            content: successContent,
-            status: 'completed',
+            conversation_id: conversationId, tenant_id: resolvedTenantId,
+            role: 'assistant', content: successContent, status: 'completed',
           })
-          .select(MESSAGE_COLUMNS)
-          .single()
+          .select(MESSAGE_COLUMNS).single()
 
         if (confirmRow) {
           const confirmMsg = mapRowToMessage(confirmRow as RawMessageRow)
@@ -533,6 +540,8 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       canRead,
     ],
   )
+
+  gate2SaveRef.current = confirmGate2Save
 
   const cancelGate2Save = useCallback(
     async (opId?: string) => {

@@ -20,6 +20,7 @@ import { toDbItem } from '@/domain/invoice'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { advanceAutoCursor, fetchAutoCursor } from '@/domain/documentNumbering'
+import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
 import type { BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
@@ -57,7 +58,10 @@ function assertTenantAuthorization(
 }
 
 /**
- * Executes persistence for an approved invoice creation proposal.
+ * Executes persistence for an approved document creation proposal.
+ *
+ * Routes by `documentFamily`: quotations write to `quotations` and
+ * `quotation_items`, invoices to `invoices` and `invoice_items`.
  */
 export async function persistInvoiceCreation(
   tenantClient: TenantClient,
@@ -66,6 +70,10 @@ export async function persistInvoiceCreation(
   canRead: BoluReadAuthorization,
   entityId?: string | null,
 ): Promise<BoluOperationExecutionResult> {
+  if (proposal?.documentFamily === 'quotation') {
+    return persistQuotationCreation(tenantClient, proposal, canWrite, canRead, entityId)
+  }
+
   assertTenantAuthorization(tenantClient, canWrite, 'invoice')
 
   if (!proposal || !proposal.opId) {
@@ -220,6 +228,179 @@ export async function persistInvoiceCreation(
     }
 
     // Mark operation as executed to prevent duplicates
+    executedOperationIds.add(proposal.opId)
+
+    return {
+      success: true,
+      documentId: effectiveId,
+      documentNumber: effectiveNumber,
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unexpected persistence error'
+    return { success: false, error: message }
+  }
+}
+
+/**
+ * Executes persistence for an approved quotation creation proposal.
+ *
+ * The quotation payload reuses the invoice payload contract and recomputes
+ * every financial field through `computeAuthoritativeTotals`, so a quotation
+ * can never carry model-generated totals.
+ */
+export async function persistQuotationCreation(
+  tenantClient: TenantClient,
+  proposal: BoluInvoiceCreateProposal,
+  canWrite: BoluWriteAuthorization,
+  canRead: BoluReadAuthorization,
+  entityId?: string | null,
+): Promise<BoluOperationExecutionResult> {
+  assertTenantAuthorization(tenantClient, canWrite, 'quotation')
+
+  if (!proposal || !proposal.opId) {
+    throw new Error('Valid proposal is required for persistence.')
+  }
+
+  if (!canRead('quotation', 'view')) {
+    return { success: false, error: 'Read authorization missing for quotation verification.' }
+  }
+
+  if (executedOperationIds.has(proposal.opId)) {
+    return { success: false, error: 'This operation has already been submitted and executed.' }
+  }
+
+  if (isProposalStale(proposal)) {
+    return { success: false, error: 'This proposal has expired. Please create a new proposal.' }
+  }
+
+  if (proposal.status !== 'approved_pending_save' && proposal.status !== 'saving') {
+    return { success: false, error: 'Operation requires user approval (Gate 1) and save confirmation (Gate 2).' }
+  }
+
+  try {
+    // 1. Authoritative financial recalculation (identical engine to invoices)
+    const calculation = computeAuthoritativeTotals(proposal.payload.items)
+
+    // 2. Authoritative numbering setup with collision retry
+    const quotationPrefix = resolvePrefix(undefined, 'quotation')
+    const quotationFamily = `${quotationPrefix}-`
+    const regenerateQuotationNumber = async () => {
+      const [{ data: rows }, cursor] = await Promise.all([
+        tenantClient.from('quotations').select('quotation_number'),
+        fetchAutoCursor(tenantClient, quotationFamily),
+      ])
+      return getNextQuotationNumber(rows || [], quotationPrefix, cursor)
+    }
+
+    // 3. Prepare database fields matching the quotation save contract
+    const basePayload = {
+      quotation_number: '',
+      po_number: null,
+      quotation_title: null,
+      client_id: proposal.payload.client_id ?? null,
+      client_name: proposal.payload.client_name,
+      project_id: null,
+      issue_date: proposal.payload.issue_date || new Date().toISOString().split('T')[0],
+      valid_until: proposal.payload.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+      status: 'open',
+      notes: proposal.payload.notes || '',
+      terms: proposal.payload.payment_terms || '',
+      workmanship: 0,
+      transportation: 0,
+      shipping: 0,
+      discount: 0,
+      vat: calculation.vat,
+      wht: calculation.wht,
+      subtotal: calculation.subtotal,
+      install_rate_total: 0,
+      total: calculation.totalPayable,
+      amount_in_words: numberToWords(calculation.totalPayable),
+      custom_fields: JSON.stringify({
+        created_via: 'bolu_assistant',
+        operation_id: proposal.opId,
+      }),
+    }
+
+    const itemsToSave = proposal.payload.items.map((item, index) =>
+      toDbItem(
+        {
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          unit: item.unit || '',
+          row_type: 'standard',
+        } as any,
+        null,
+        index,
+      ),
+    )
+
+    // 4. Persistence with collision-safe unique retry
+    const retryResult = await withUniqueRetry(
+      async (candidateNumber: string) => {
+        const payload = { ...basePayload, quotation_number: candidateNumber }
+
+        // Phase 3.5 atomic quotation transaction when entityId is available
+        if (entityId) {
+          const { data, error } = await tenantClient.rpc('save_quotation_with_items_transaction', {
+            p_entity_id: entityId,
+            p_quotation_payload: payload,
+            p_items: itemsToSave,
+            p_mode: 'create',
+            p_cps_feedback: null,
+          })
+          if (error) return { data: null, error: error as any }
+          const rpcResult = Array.isArray(data) ? data[0] : data
+          const resolved = rpcResult?.quotation ?? rpcResult
+          return {
+            data: {
+              id: resolved?.id ?? rpcResult?.id,
+              quotation_number: resolved?.quotation_number ?? payload.quotation_number,
+            },
+            error: null,
+          }
+        }
+
+        // Sequential fallback (pre-cutover or test mock)
+        return (tenantClient.from('quotations') as any)
+          .insert([payload])
+          .select('id, quotation_number')
+          .single() as Promise<{ data: any; error: any }>
+      },
+      regenerateQuotationNumber,
+    )
+
+    if (retryResult.error || !retryResult.data) {
+      return {
+        success: false,
+        error: `Failed to persist quotation: ${retryResult.error?.message || 'Database insert failed'}`,
+      }
+    }
+
+    const effectiveId = retryResult.data.id as string
+    const effectiveNumber = retryResult.data.quotation_number as string
+
+    // 5. Sequential fallback writes items separately, with header rollback on error
+    if (!entityId) {
+      const itemsWithQuotationId = itemsToSave.map((item) => ({ ...item, quotation_id: effectiveId }))
+      const { error: itemsError } = await (tenantClient.from('quotation_items') as any).insert(itemsWithQuotationId)
+
+      if (itemsError) {
+        console.error('[bolu-persistence] Error saving quotation items; rolling back header:', itemsError.message)
+        await (tenantClient.from('quotations') as any).delete().eq('id', effectiveId)
+        return {
+          success: false,
+          error: `Quotation item saving failed: ${itemsError.message}. The draft was rolled back.`,
+        }
+      }
+    }
+
+    // 6. Advance the automatic numbering cursor
+    const seq = parseTrailingSequence(effectiveNumber)
+    if (seq !== null) {
+      await advanceAutoCursor(tenantClient, quotationFamily, seq)
+    }
+
     executedOperationIds.add(proposal.opId)
 
     return {

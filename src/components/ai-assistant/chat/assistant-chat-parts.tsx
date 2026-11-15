@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
-import { Check, Loader2, Sparkles, AlertCircle, FileCheck, ShieldAlert, ArrowRight, type LucideIcon } from 'lucide-react'
+import { Check, Loader2, Sparkles, AlertCircle, FileCheck, FileText, ShieldAlert, ArrowRight, type LucideIcon } from 'lucide-react'
 import type { BoluProposal } from '@/lib/ai-assistant/bolu-operations'
 import { formatNaira } from '@/lib/formatters/money'
 
@@ -158,12 +158,14 @@ export function ProposalCardView({
     statusTone = 'off'
   }
 
-  // Derive display values based on proposal type
+  // Derive display values based on proposal type and document family
   const isCreate = proposal.operationType === 'create-document'
-  const kindLabel = isCreate ? 'New Invoice Proposal' : 'Invoice Modification'
+  const isQuotation = proposal.documentFamily === 'quotation'
+  const documentNoun = isQuotation ? 'Quotation' : 'Invoice'
+  const kindLabel = isCreate ? `New ${documentNoun} Proposal` : `${documentNoun} Modification`
   const title = isCreate
-    ? `Create Invoice for ${proposal.payload.client_name || 'Client'}`
-    : `Update Invoice ${proposal.targetDocumentNumber || 'Document'}`
+    ? `Create ${documentNoun} for ${proposal.payload.client_name || 'Client'}`
+    : `Update ${documentNoun} ${proposal.targetDocumentNumber || 'Document'}`
 
   const items = isCreate
     ? proposal.payload.items
@@ -179,11 +181,17 @@ export function ProposalCardView({
       tabIndex={-1}
       className={`ac-card${compact ? ' ac-card--compact' : ''} border border-[var(--ac-line)] rounded-2xl bg-[var(--ac-surface)] p-4 shadow-sm`}
       data-status={proposal.status}
+      data-family={proposal.documentFamily}
       role="group"
       aria-labelledby={titleId}
     >
       <div className="ac-card-head flex items-center justify-between gap-2 pb-2 border-b border-[var(--ac-line)]">
-        <span className="ac-card-kind text-xs font-semibold tracking-wide uppercase text-[var(--ac-accent)]">
+        <span
+          className={`ac-card-kind inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase ${
+            isQuotation ? 'text-[var(--ac-sage,green)]' : 'text-[var(--ac-accent)]'
+          }`}
+        >
+          {isQuotation ? <FileText className="size-3.5" aria-hidden="true" /> : null}
           {kindLabel}
         </span>
         <span

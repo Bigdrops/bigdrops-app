@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useContext, type FormEvent, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, useContext, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 
@@ -14,6 +14,8 @@ import { useBoluThread } from '@/lib/ai-assistant/hooks/useBoluThread'
 import { exportChatAsMarkdown, exportChatAsJson } from '@/lib/ai-assistant/bolu-export'
 import { getBoluSuggestions } from '@/lib/ai-assistant/bolu-context'
 import { EntityContext } from '@/lib/tenant/entityContext'
+import { useAuthorization } from '@/lib/tenant/contexts'
+import type { BoluReadAuthorization, BoluWriteAuthorization } from '@/lib/ai-assistant/bolu-data'
 import type { BoluChatWorkspaceProps, ViewportId } from './types'
 
 import './assistant-chat.css'
@@ -38,7 +40,20 @@ export function BoluChatWorkspace({
 }: BoluChatWorkspaceProps) {
   const navigate = useNavigate()
   const entityCtx = useContext(EntityContext)
+  const { hasAuthorization } = useAuthorization()
   const resolvedTenantId = tenantId ?? (pageContext as any)?.activeEntityId ?? entityCtx?.entity?.id ?? null
+
+  // Live application authorization, forwarded to the Bolu read/write pipeline
+  const authorizationRef = useRef(hasAuthorization)
+  authorizationRef.current = hasAuthorization
+  const canRead = useCallback<BoluReadAuthorization>(
+    (resource, action) => authorizationRef.current(resource, action),
+    [],
+  )
+  const canWrite = useCallback<BoluWriteAuthorization>(
+    (resource, action) => authorizationRef.current(resource, action),
+    [],
+  )
 
   const [viewport, setViewport] = useState<ViewportId>(initialViewport ?? detectViewport())
   const [railCollapsed, setRailCollapsed] = useState(false)
@@ -184,6 +199,8 @@ export function BoluChatWorkspace({
     tenantId: resolvedTenantId,
     entityId: resolvedTenantId,
     tenantClient: entityCtx?.tenantClient,
+    canRead,
+    canWrite,
     pageContext,
     connectionId: selectedModel?.connectionId ?? null,
     modelId: selectedModel?.modelId ?? null,
@@ -301,6 +318,7 @@ export function BoluChatWorkspace({
     <AssistantComposer
       value={inputDraft}
       busy={isStreaming}
+      disabled={isStreaming || clerkState !== 'idle'}
       awaiting={Boolean(activeProposal && activeProposal.status === 'pending_approval')}
       contextLabel={
         activeProposal
@@ -309,13 +327,11 @@ export function BoluChatWorkspace({
               : activeProposal.targetDocumentNumber)
           : (pageContext?.record?.kind ?? 'Invoice')
       }
-      suggestions={suggestions}
       inputRef={inputRef}
       onChange={setInputDraft}
       onSubmit={handleSubmit}
       onKeyDown={handleKeyDown}
       onStop={stopStreaming}
-      onInsert={handleInsert}
     />
   )
 

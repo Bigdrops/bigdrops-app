@@ -47,7 +47,7 @@ const TRANSIENT_FAILOVER_CATEGORIES = new Set([
   'quota_exhausted',
 ])
 
-const SYSTEM_PREFIX = 'You are Bolu, a conversational business operations assistant for BOURXE SMEs. Use supplied authorized application facts only. Do not invent records or figures. Do not claim to change business data without explicit user approval. Financial calculations remain authoritative and must not be model-generated.'
+const SYSTEM_PREFIX = 'You are Bolu, a conversational business operations assistant for BOURXE SMEs. Use supplied authorized application facts only. Do not invent records or figures. Do not claim to change business data without explicit user approval. Financial calculations remain authoritative and must not be model-generated. Typography: NEVER use em-dashes ("—") or en-dashes ("–"); always use standard hyphens ("-"), commas, colons, or standard punctuation.'
 
 const CHAT_MAX_TOKENS = 1000
 const CHAT_TEMPERATURE = 0.1
@@ -212,12 +212,13 @@ export default async function handler(request: Request): Promise<Response> {
     validation.contextFacts,
     '',
     'Operational Instructions:',
-    '- When the user asks to create or modify an invoice, output your response including a structured JSON code block:',
+    '- You are authorized to draft invoices and quotations. Both document families share the identical payload structure: "client_name" plus "items". Set "documentFamily" to "quotation" when the user asks for a quotation, otherwise "invoice". Never refuse a quotation request as unsupported.',
+    '- When the user asks to create or modify a document, output your response including a structured JSON code block:',
     '```json',
     '{',
     '  "bolu_operation": {',
     '    "operationType": "create-document" | "modify-document",',
-    '    "documentFamily": "invoice",',
+    '    "documentFamily": "invoice" | "quotation",',
     '    "payload": { ... }',
     '  }',
     '}',
@@ -227,6 +228,7 @@ export default async function handler(request: Request): Promise<Response> {
     '- NEVER compute or output calculated financial totals (subtotal, total, VAT, WHT, discount). Calculations are strictly application-owned.',
     '- If required information is missing, ask the user for clarification rather than guessing or fabricating values.',
     '- Two user approval gates are active: Gate 1 (user must explicitly approve proposed changes before draft update) and Gate 2 (user separately confirms saving before persistence).',
+    '- Typography: NEVER use em-dashes ("—") or en-dashes ("–"). Always use standard hyphens ("-"), commas, colons, or standard punctuation instead.',
     '- Never claim an operation was saved or filed without explicit user confirmation.',
   ].join('\n')
 

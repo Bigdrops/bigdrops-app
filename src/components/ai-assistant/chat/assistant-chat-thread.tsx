@@ -5,10 +5,31 @@ import { ProposalCardView, StatusRow } from './assistant-chat-parts'
 import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
 import type { ClerkState, ProductionBoluMessage } from './types'
 
-/** Helper to strip raw JSON operation envelopes from prose display */
-function cleanAssistantProse(text: string): string {
+/**
+ * Strips raw bolu_operation JSON blocks and removes em-dashes from user-facing assistant prose.
+ * The structured ProposalCardView renders the operation visually; raw JSON envelopes
+ * must never leak into the chat bubbles.
+ */
+export function cleanAssistantProse(text: string): string {
   if (!text) return ''
-  return text.replace(/```(?:json)?(?::bolu_operation)?[\s\S]*?```/gi, '').trim()
+
+  // 1. Strip any markdown code blocks containing bolu_operation (```json ... ``` or ``` ... ```)
+  let cleaned = text.replace(/```(?:json)?(?::bolu_operation)?[\s\S]*?"bolu_operation"[\s\S]*?```/gi, '')
+
+  // 2. Also strip any remaining ```json:bolu_operation ... ``` blocks
+  cleaned = cleaned.replace(/```json:bolu_operation[\s\S]*?```/gi, '')
+
+  // 3. Strip any generic operation block envelope: ```json\s*\{\s*"operationType"[\s\S]*?```
+  cleaned = cleaned.replace(/```(?:json)?\s*\{[\s\S]*?"operationType"[\s\S]*?```/gi, '')
+
+  // 4. Strip any raw top-level JSON operation envelope if printed without markdown fences
+  cleaned = cleaned.replace(/\{\s*"bolu_operation"[\s\S]*?\n\}/gi, '')
+
+  // 5. Replace any em-dashes (—) or en-dashes with standard hyphen or clean punctuation
+  cleaned = cleaned.replace(/—/g, ' - ').replace(/–/g, '-')
+
+  // 6. Clean up multiple blank lines and trim
+  return cleaned.replace(/\n{3,}/g, '\n\n').trim()
 }
 
 export function AssistantThread({
@@ -78,20 +99,19 @@ export function AssistantThread({
                 paused={false}
               />
             </div>
-            <p className="ac-empty-title">Draft business documents by talking</p>
+            <p className="ac-empty-title">Hello! I’m Bolu, your BOURXE business operations assistant</p>
             <p className="ac-empty-copy">
-              Bolu interprets your operational requests, prepares structured proposals, and verifies
-              computations via Calculations.ts. You review and approve before any data is saved.
+              I interpret your operational requests, prepare structured proposals, and verify computations via Calculations.ts. You review and approve before any data is saved.
             </p>
-            <div className="flex flex-col gap-2 mt-4 w-full max-w-sm">
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-2 mt-5 w-full max-w-lg">
               {defaultSuggestions.map((sug, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  className="ac-suggest text-left flex items-center gap-2"
+                  className="ac-suggest text-left sm:text-center flex items-center justify-center gap-2 max-w-full"
                   onClick={() => onSend(sug)}
                 >
-                  <Sparkles className="size-3.5 shrink-0" aria-hidden="true" />
+                  <Sparkles className="size-3.5 shrink-0 text-[var(--ac-accent)]" aria-hidden="true" />
                   <span className="truncate">{sug}</span>
                 </button>
               ))}

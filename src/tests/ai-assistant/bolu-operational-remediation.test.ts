@@ -205,3 +205,61 @@ test('Bolu Operational Remediation: useBoluThread.ts passes tenantClient and ent
     'confirmGate2Save must execute persistInvoiceCreation',
   )
 })
+
+test('Bolu Chat UX Polish: assistant-chat-thread.tsx strips raw JSON operations and em-dashes, and presents formal intro', () => {
+  const filePath = path.resolve('src/components/ai-assistant/chat/assistant-chat-thread.tsx')
+  const content = fs.readFileSync(filePath, 'utf-8')
+
+  assert.equal(
+    content.includes('Hello! I’m Bolu, your BOURXE business operations assistant'),
+    true,
+    'Empty state must render Bolu formal intro greeting',
+  )
+  assert.equal(
+    content.includes('replace(/—/g, \' - \')'),
+    true,
+    'cleanAssistantProse must normalize em-dashes to standard spaced hyphens',
+  )
+  assert.equal(
+    content.includes('bolu_operation'),
+    true,
+    'cleanAssistantProse must strip bolu_operation JSON blocks from prose',
+  )
+})
+
+test('Bolu Chat UX Polish: assistant-chat-composer.tsx locks input during active inference and purges chip clutter', () => {
+  const filePath = path.resolve('src/components/ai-assistant/chat/assistant-chat-composer.tsx')
+  const content = fs.readFileSync(filePath, 'utf-8')
+
+  assert.equal(
+    content.includes('disabled?: boolean'),
+    true,
+    'AssistantComposer must accept a disabled prop',
+  )
+  assert.equal(
+    content.includes('const isLocked = busy || Boolean(disabled)'),
+    true,
+    'Composer must compute isLocked based on busy or disabled prop',
+  )
+  assert.equal(
+    content.includes('disabled={isLocked}'),
+    true,
+    'Textarea must be disabled when isLocked is true',
+  )
+  assert.equal(
+    content.includes('suggestions.map'),
+    false,
+    'Composer bar must NOT render inline suggestion chips to prevent mobile clutter',
+  )
+})
+
+test('Bolu Chat UX Polish: api/bolu-chat.ts explicitly forbids em-dashes in system instructions', () => {
+  const filePath = path.resolve('api/bolu-chat.ts')
+  const content = fs.readFileSync(filePath, 'utf-8')
+
+  assert.equal(
+    content.includes('NEVER use em-dashes ("—") or en-dashes ("–")'),
+    true,
+    'api/bolu-chat.ts must forbid em-dashes in SYSTEM_PREFIX and operational instructions',
+  )
+})

@@ -1,35 +1,33 @@
-import { Sparkles, Square, ArrowUp, FileText, Wand2 } from 'lucide-react'
+import { Square, ArrowUp, FileText } from 'lucide-react'
 import { useLayoutEffect, type FormEvent, type KeyboardEvent, type RefObject } from 'react'
 
 /**
  * AssistantComposer — Unified Composer Card
- * Provides auto-resizing input, active document context pill, quick-action chips,
- * and thumb-zone send / stop buttons.
+ * Provides auto-resizing input, active document context pill,
+ * and thumb-zone send / stop buttons with streaming lockout.
  */
 export function AssistantComposer({
   value,
   busy,
+  disabled,
   awaiting,
   contextLabel = 'Active Session',
-  suggestions = [],
   inputRef,
   onChange,
   onSubmit,
   onKeyDown,
   onStop,
-  onInsert,
 }: {
   value: string
   busy: boolean
+  disabled?: boolean
   awaiting?: boolean
   contextLabel?: string
-  suggestions?: string[]
   inputRef: RefObject<HTMLTextAreaElement | null>
   onChange: (value: string) => void
   onSubmit: (event: FormEvent) => void
   onKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void
   onStop: () => void
-  onInsert: (text: string) => void
 }) {
   useLayoutEffect(() => {
     const textarea = inputRef.current
@@ -40,22 +38,19 @@ export function AssistantComposer({
     textarea.style.overflowY = textarea.scrollHeight > 160 ? 'auto' : 'hidden'
   }, [inputRef, value])
 
-  const defaultSuggestions = suggestions.length > 0 ? suggestions : [
-    'Show outstanding invoices',
-    'Find an invoice',
-    'Find a quotation',
-  ]
+  const isLocked = busy || Boolean(disabled)
 
   return (
     <div className="ac-composer">
       <form className="ac-compose" onSubmit={onSubmit}>
         <textarea
           ref={inputRef}
-          className="ac-input"
+          className="ac-input disabled:opacity-60 disabled:cursor-not-allowed"
           rows={1}
           value={value}
+          disabled={isLocked}
           placeholder={
-            busy
+            isLocked
               ? (awaiting ? 'Confirm or reject the card above…' : 'Bolu is working…')
               : 'Ask Bolu or describe an invoice change…'
           }
@@ -71,21 +66,6 @@ export function AssistantComposer({
               <FileText className="size-3" aria-hidden="true" />
               {contextLabel}
             </span>
-            {defaultSuggestions.slice(0, 3).map((sug, idx) => (
-              <button
-                key={idx}
-                type="button"
-                className="ac-pill-btn shrink-0"
-                onClick={() => onInsert(sug)}
-              >
-                {idx === 0 ? (
-                  <Sparkles className="size-3" aria-hidden="true" />
-                ) : (
-                  <Wand2 className="size-3" aria-hidden="true" />
-                )}
-                <span className="truncate max-w-[140px]">{sug}</span>
-              </button>
-            ))}
           </div>
 
           {busy ? (
@@ -100,8 +80,8 @@ export function AssistantComposer({
           ) : (
             <button
               type="submit"
-              className="ac-send"
-              disabled={!value.trim()}
+              className="ac-send disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!value.trim() || isLocked}
               aria-label="Send message"
             >
               <ArrowUp className="size-4" aria-hidden="true" />

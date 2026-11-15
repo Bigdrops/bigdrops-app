@@ -70,9 +70,14 @@ export interface BoluOperationContract {
   expiresAt: string // Stale detection timestamp (15 minutes)
 }
 
-export interface BoluInvoiceCreateProposal extends BoluOperationContract {
+/**
+ * A document creation proposal. Invoices and quotations share the identical
+ * payload and financial contract; only `documentFamily` selects the table row
+ * family that Gate 2 writes to.
+ */
+export interface BoluDocumentCreateProposal extends BoluOperationContract {
   operationType: 'create-document'
-  documentFamily: 'invoice'
+  documentFamily: BoluDocumentFamily
   payload: BoluInvoiceCreatePayload
   computedTotals: {
     subtotal: number
@@ -85,6 +90,8 @@ export interface BoluInvoiceCreateProposal extends BoluOperationContract {
   persistedId?: string
   errorMessage?: string
 }
+
+export type BoluInvoiceCreateProposal = BoluDocumentCreateProposal
 
 export interface BoluInvoiceModifyProposal extends BoluOperationContract {
   operationType: 'modify-document'
@@ -107,7 +114,7 @@ export interface BoluInvoiceModifyProposal extends BoluOperationContract {
   errorMessage?: string
 }
 
-export type BoluProposal = BoluInvoiceCreateProposal | BoluInvoiceModifyProposal
+export type BoluProposal = BoluDocumentCreateProposal | BoluInvoiceModifyProposal
 
 /**
  * Generate a unique, monotonic, stable operation ID.
@@ -308,12 +315,14 @@ export function computeAuthoritativeTotals(
 }
 
 /**
- * Creates an authoritative invoice creation proposal with precomputed financial math.
+ * Creates an authoritative document creation proposal with precomputed
+ * financial math. `documentFamily` selects the invoice or quotation family.
  */
 export function buildInvoiceCreateProposal(
   payload: BoluInvoiceCreatePayload,
   candidateNumber = 'INV-DRAFT',
-): BoluInvoiceCreateProposal {
+  documentFamily: BoluDocumentFamily = 'invoice',
+): BoluDocumentCreateProposal {
   const totals = computeAuthoritativeTotals(payload.items)
   const now = new Date()
   const expiresAt = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
@@ -321,9 +330,9 @@ export function buildInvoiceCreateProposal(
   return {
     opId: generateOperationId(),
     operationType: 'create-document',
-    documentFamily: 'invoice',
+    documentFamily,
     schemaVersion: '1.0',
-    requiredPermission: { resource: 'invoice', action: 'save' },
+    requiredPermission: { resource: documentFamily, action: 'save' },
     sideEffect: 'draft-mutation',
     gate1Required: true,
     gate2Required: true,
@@ -340,6 +349,17 @@ export function buildInvoiceCreateProposal(
       items: totals.items,
     },
   }
+}
+
+/**
+ * Creates a document creation proposal for a model-supplied family.
+ */
+export function buildDocumentCreateProposal(
+  documentFamily: BoluDocumentFamily,
+  payload: BoluInvoiceCreatePayload,
+  candidateNumber = documentFamily === 'quotation' ? 'QTN-DRAFT' : 'INV-DRAFT',
+): BoluDocumentCreateProposal {
+  return buildInvoiceCreateProposal(payload, candidateNumber, documentFamily)
 }
 
 /**

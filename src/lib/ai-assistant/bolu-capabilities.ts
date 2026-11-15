@@ -36,8 +36,15 @@ export function matchBoluIntent(message: string, context?: BoluPageContext): Bol
     return 'read-receivables'
   }
   if (/\b(quotation|quote)\b/.test(normalized)) return 'search-quotations'
-  if (/\b(invoice|invoices|bill)\b|\bINV[-\s]?[A-Z0-9-]+\b/i.test(message)) return 'search-invoices'
+  if (/\b(invoice|invoices|bill)\b|[A-Z]*INV[-\s]?[0-9][A-Z0-9-]*/i.test(message)) return 'search-invoices'
   return null
+}
+
+const BOLU_SAVE_INTENT_PATTERN = /^(save|file|confirm|yes|do it|approve)/i
+
+/** Detects a natural-language Gate 2 confirmation (e.g. "file it", "confirmed"). */
+export function matchesBoluSaveIntent(message: string): boolean {
+  return BOLU_SAVE_INTENT_PATTERN.test(message.trim())
 }
 
 export function extractBoluSearchTerm(message: string): string {
