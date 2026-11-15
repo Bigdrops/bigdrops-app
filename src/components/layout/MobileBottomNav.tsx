@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Briefcase, Home, MoreHorizontal, TrendingUp, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { uiSound } from '@/lib/uiSoundEvent'
+import { getKeyboardViewportState } from '@/lib/appKeyboard'
 
 const items = [
   { key: 'home', label: 'Home', icon: Home },
@@ -17,6 +19,38 @@ export default function MobileBottomNav({
   active: string
   onSelect: (key: string) => void
 }) {
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
+
+  useEffect(() => {
+    function checkKeyboard() {
+      const state = getKeyboardViewportState()
+      setIsKeyboardOpen(Boolean(state.isOpen))
+    }
+
+    checkKeyboard()
+
+    const visualViewport = window.visualViewport
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    function onViewportChange() {
+      if (timer !== undefined) clearTimeout(timer)
+      timer = setTimeout(checkKeyboard, 30)
+    }
+
+    visualViewport?.addEventListener('resize', onViewportChange)
+    window.addEventListener('focusin', onViewportChange)
+    window.addEventListener('focusout', onViewportChange)
+
+    return () => {
+      if (timer !== undefined) clearTimeout(timer)
+      visualViewport?.removeEventListener('resize', onViewportChange)
+      window.removeEventListener('focusin', onViewportChange)
+      window.removeEventListener('focusout', onViewportChange)
+    }
+  }, [])
+
+  if (isKeyboardOpen) return null
+
   return (
     <nav
       data-bd-layout="bottom-nav"

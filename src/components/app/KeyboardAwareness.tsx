@@ -22,10 +22,14 @@ export default function KeyboardAwareness() {
     }
 
     visualViewport?.addEventListener('resize', onViewportChange)
+    window.addEventListener('focusin', onViewportChange)
+    window.addEventListener('focusout', onViewportChange)
 
     return () => {
       if (debounceTimer !== undefined) clearTimeout(debounceTimer)
       visualViewport?.removeEventListener('resize', onViewportChange)
+      window.removeEventListener('focusin', onViewportChange)
+      window.removeEventListener('focusout', onViewportChange)
     }
   }, [])
 
