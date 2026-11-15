@@ -258,7 +258,7 @@ export async function recordInvoicePayment(
               fd.append("method", input.method)
               fd.append("paymentDate", input.date)
 
-              const res = await fetch("/api/upload-payment-attachment", {
+              const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload-payment-attachment`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
                 body: fd,
@@ -447,7 +447,7 @@ export async function recordInvoicePayment(
             fd.append("method", input.method)
             fd.append("paymentDate", input.date)
 
-            const res = await fetch("/api/upload-payment-attachment", {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload-payment-attachment`, {
               method: "POST",
               headers: { Authorization: `Bearer ${token}` },
               body: fd,
@@ -549,7 +549,7 @@ async function editVoidCaptions(paymentId: string): Promise<void> {
   if (!token) return
 
   try {
-    await fetch("/api/edit-payment-caption", {
+    await fetch(`${import.meta.env.VITE_API_URL || ""}/api/edit-payment-caption`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ paymentId }),

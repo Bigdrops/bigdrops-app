@@ -181,7 +181,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 
 async function post<T>(action: string, payload: Record<string, unknown>): Promise<T> {
   const headers = await authHeaders()
-  const res = await fetch('/api/bolu-provider-config', {
+  const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bolu-provider-config`, {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, ...payload }),
@@ -196,7 +196,7 @@ async function post<T>(action: string, payload: Record<string, unknown>): Promis
 export const boluProviderApi = {
   async getStatus(): Promise<ProviderStatusResponse> {
     const headers = await authHeaders()
-    const res = await fetch('/api/bolu-provider-config', { headers })
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bolu-provider-config`, { headers })
     const parsed = await safeParseApiResponse<ProviderStatusResponse>(res, 'Status check')
     if (!parsed.ok || !parsed.data) {
       throw new Error(parsed.errorMessage || 'Failed to load provider status.')

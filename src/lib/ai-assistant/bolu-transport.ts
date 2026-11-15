@@ -16,7 +16,7 @@ export async function sendBoluProviderRequest(params: {
   const accessToken = data.session?.access_token
   if (error || !accessToken) throw new Error('Sign in to use Bolu.')
 
-  const response = await fetch('/api/bolu-chat', {
+  const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bolu-chat`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,

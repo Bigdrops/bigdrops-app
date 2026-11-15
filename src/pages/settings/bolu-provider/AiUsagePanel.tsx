@@ -80,7 +80,7 @@ export function AiUsagePanel() {
         setError('Sign in to view AI usage.')
         return
       }
-      const res = await fetch(`/api/ai-usage?days=${WINDOW_DAYS}&limit=25`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/ai-usage?days=${WINDOW_DAYS}&limit=25`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
       const payload = await res.json().catch(() => null) as
