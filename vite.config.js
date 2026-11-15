@@ -98,10 +98,32 @@ function apiDevServerPlugin() {
   }
 }
 
+function resolveJsToTsPlugin() {
+  return {
+    name: 'resolve-js-to-ts',
+    resolveId(source, importer) {
+      if (source.endsWith('.js') && (source.startsWith('./') || source.startsWith('../') || source.startsWith('@/'))) {
+        const basePath = source.startsWith('@/')
+          ? path.resolve(__dirname, 'src', source.slice(2))
+          : importer
+            ? path.resolve(path.dirname(importer), source)
+            : null
+        if (basePath) {
+          const tsPath = basePath.replace(/\.js$/, '.ts')
+          if (fs.existsSync(tsPath)) return tsPath
+          const tsxPath = basePath.replace(/\.js$/, '.tsx')
+          if (fs.existsSync(tsxPath)) return tsxPath
+        }
+      }
+      return null
+    },
+  }
+}
+
 export default defineConfig({
   // ponytail: wasm() exists only for @formepdf/core's wasm-pack ESM
   // output; remove it if the Forme dependency goes.
-  plugins: [wasm(), react(), apiDevServerPlugin()],
+  plugins: [resolveJsToTsPlugin(), wasm(), react(), apiDevServerPlugin()],
   base: './',
   build: {
     outDir: 'dist',
