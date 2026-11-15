@@ -281,40 +281,63 @@ export default function PurchaseOrderDocumentCard({
         </div>
       )}
 
-      {/* Procurement signatories — pre-printed blanks, nothing simulated */}
-      {showSignatories && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 14,
-            padding: '0 18px 20px',
-          }}
-        >
-          <div style={{ border: '1px solid hsl(var(--bd-border) / 0.5)', borderRadius: 'var(--bd-radius-md)', padding: '14px 14px 12px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'hsl(var(--bd-text-muted))' }}>
-              Procurement authorisation
-            </div>
-            <div style={{ minHeight: 40, display: 'flex', alignItems: 'flex-end', fontFamily: 'Source Serif 4, Georgia, serif', fontStyle: 'italic', fontSize: 18, color: 'hsl(var(--bd-text-muted))' }}>
-              Awaiting signature
-            </div>
-            <div style={{ borderTop: '1px solid hsl(var(--bd-border))', paddingTop: 8, fontSize: 11, color: 'hsl(var(--bd-text-muted))' }}>
-              Authorised signatory
-            </div>
+      {/* Procurement signatories — only rendered if signature data exists */}
+      {(() => {
+        const poAny = po as any
+        const authSignature = poAny?.authorisationSignature || poAny?.authorisation_signature || poAny?.signature || poAny?.signatory_signature_url
+        const recSignature = poAny?.receivingSignature || poAny?.received_signature || poAny?.receiver_signature_url || poAny?.receiverSignature
+        if (!showSignatories || (!authSignature && !recSignature)) return null
+
+        return (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: 14,
+              padding: '0 18px 20px',
+            }}
+          >
+            {authSignature && (
+              <div style={{ border: '1px solid hsl(var(--bd-border) / 0.5)', borderRadius: 'var(--bd-radius-md)', padding: '14px 14px 12px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'hsl(var(--bd-text-muted))' }}>
+                  Procurement authorisation
+                </div>
+                <div style={{ minHeight: 40, display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
+                  {typeof authSignature === 'string' && (authSignature.startsWith('http') || authSignature.startsWith('data:image')) ? (
+                    <img src={authSignature} alt="Authorised signatory" style={{ maxHeight: 36, objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontStyle: 'italic', fontSize: 18, color: 'hsl(var(--bd-text))' }}>
+                      {String(authSignature)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ borderTop: '1px solid hsl(var(--bd-border))', paddingTop: 8, fontSize: 11, color: 'hsl(var(--bd-text-muted))' }}>
+                  Authorised signatory
+                </div>
+              </div>
+            )}
+            {recSignature && (
+              <div style={{ border: '1px solid hsl(var(--bd-border) / 0.5)', borderRadius: 'var(--bd-radius-md)', padding: '14px 14px 12px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'hsl(var(--bd-text-muted))' }}>
+                  Received by
+                </div>
+                <div style={{ minHeight: 40, display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
+                  {typeof recSignature === 'string' && (recSignature.startsWith('http') || recSignature.startsWith('data:image')) ? (
+                    <img src={recSignature} alt="Receiving officer" style={{ maxHeight: 36, objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontStyle: 'italic', fontSize: 18, color: 'hsl(var(--bd-text))' }}>
+                      {String(recSignature)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ borderTop: '1px solid hsl(var(--bd-border))', paddingTop: 8, fontSize: 11, color: 'hsl(var(--bd-text-muted))' }}>
+                  Receiving officer
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{ border: '1px solid hsl(var(--bd-border) / 0.5)', borderRadius: 'var(--bd-radius-md)', padding: '14px 14px 12px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'hsl(var(--bd-text-muted))' }}>
-              Received by
-            </div>
-            <div style={{ minHeight: 40, display: 'flex', alignItems: 'flex-end', fontFamily: 'Source Serif 4, Georgia, serif', fontStyle: 'italic', fontSize: 18, color: 'hsl(var(--bd-text-muted))' }}>
-              Awaiting signature
-            </div>
-            <div style={{ borderTop: '1px solid hsl(var(--bd-border))', paddingTop: 8, fontSize: 11, color: 'hsl(var(--bd-text-muted))' }}>
-              Receiving officer
-            </div>
-          </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
