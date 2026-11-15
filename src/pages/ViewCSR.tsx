@@ -15,7 +15,7 @@ import DocumentTopNav from '@/components/document-view/shared/DocumentTopNav'
 import FloatingDownloadButton from '@/components/document-view/shared/FloatingDownloadButton'
 import DocumentSheet from '@/components/document-view/shared/DocumentSheet'
 import { CenteredSpinner } from '@/components/loading/AppLoadingStates'
-import CsrFormePreview from '@/components/document-view/csr/CsrFormePreview'
+import CsrDocumentPreview from '@/components/document-view/csr/CsrDocumentPreview'
 import { buildCsrPreviewData, getCsrBranding } from '@/components/csr/csrUtils'
 import { feedback } from '@/lib/feedback'
 import { userDownloadLocationLabel } from '@/lib/native/fileDownload'
@@ -242,18 +242,6 @@ export default function ViewCSR() {
 
   const previewData = csr ? buildCsrPreviewData(csr, { signatories, client }) : null
   const branding = getCsrBranding(settings || {})
-
-  const renderCsrPreview = useCallback(async () => {
-    if (!csr || !previewData) throw new Error('CSR preview not loaded')
-    return renderCsrPdfcnBlob({
-      templateId: template,
-      rawDocument: { ...csr, ...previewData },
-      branding,
-      designPreset,
-      layoutDensity: previewData.layoutDensity ?? 'comfortable',
-      showOperationalReadings: previewData.showOperationalReadings ?? true,
-    })
-  }, [csr, previewData, template, branding, designPreset])
 
   const csrSharePayload: DocumentSharePayload = useMemo(() => ({
     documentType: 'csr',
@@ -526,7 +514,13 @@ export default function ViewCSR() {
         <CsrViewPage
           document={docProps}
           metrics={metrics}
-          documentPreview={<CsrFormePreview render={renderCsrPreview} />}
+          documentPreview={
+            <CsrDocumentPreview
+              csr={previewData}
+              settings={settings}
+              logoUrl={resolveCanonicalLogoUrl(settings)}
+            />
+          }
           activityHistory={<CsrActivityCard documentId={docProps.id} />}
           onDuplicate={() => void handleDuplicate()}
           onCopyNumber={handleCopyNumber}

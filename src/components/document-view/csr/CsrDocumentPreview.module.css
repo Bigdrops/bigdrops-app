@@ -160,3 +160,69 @@
   color: var(--bd-text-muted);
   text-transform: uppercase;
 }
+
+.signatureName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bd-text);
+}
+
+.signatureImg {
+  max-height: 48px;
+  max-width: 140px;
+  object-fit: contain;
+}
+
+.logo {
+  max-height: 60px;
+  max-width: 180px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.readingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.readingCard {
+  padding: 8px 12px;
+  background: var(--bd-surface-muted);
+  border-radius: var(--bd-radius-sm);
+  border: 1px solid hsl(var(--bd-border) / 0.5);
+}
+
+.readingLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--bd-text-muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.readingValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bd-text);
+  margin-top: 2px;
+}
+
+.statusBadge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+  background: hsl(var(--bd-status-warning-bg));
+  color: hsl(var(--bd-status-warning-text));
+}
+
+.statusBadge[data-status="completed"] {
+  background: hsl(var(--bd-status-success-bg));
+  color: hsl(var(--bd-status-success-text));
+}
