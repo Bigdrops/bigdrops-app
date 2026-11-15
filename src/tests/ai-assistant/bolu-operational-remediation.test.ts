@@ -34,7 +34,7 @@ test('Bolu Operational Remediation: Chat Export Utility functions exist and prod
         documentFamily: 'invoice',
         schemaVersion: '1.0',
         requiredPermission: { resource: 'invoice', action: 'save' },
-        sideEffect: 'financial-record',
+        sideEffect: 'persistence',
         gate1Required: true,
         gate2Required: true,
         status: 'approved_pending_save',
