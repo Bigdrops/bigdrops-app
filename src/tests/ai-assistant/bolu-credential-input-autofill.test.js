@@ -4,7 +4,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const CONNECTION_DIALOG = path.resolve('src/pages/settings/bolu-provider/ConnectionDialog.tsx')
-const DESIGN_LAB_SETTINGS = path.resolve('src/components/design-lab/assistant-chat-settings.tsx')
 
 /**
  * Provider credential fields must never be treated as browser login fields.
@@ -44,18 +43,5 @@ test('ConnectionDialog: the connection name field must not be treated as a usern
   assert.ok(
     nameField.includes('name="bolu-connection-name"'),
     'The connection name field must carry a non-credential name attribute',
-  )
-})
-
-test('Design Lab settings: the endpoint key field is marked as a new password', () => {
-  const keyField = tagStartingAt(fs.readFileSync(DESIGN_LAB_SETTINGS, 'utf8'), 'type="password"')
-
-  assert.ok(
-    keyField.includes('autoComplete="new-password"'),
-    'The endpoint key field must use autocomplete="new-password"',
-  )
-  assert.ok(
-    !keyField.includes('autoComplete="off"'),
-    'autocomplete="off" is ignored by Chrome on password inputs',
   )
 })

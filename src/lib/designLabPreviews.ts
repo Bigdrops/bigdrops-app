@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, ClipboardList, Download, FileText, LayoutDashboard, Mail, MessageSquare, Network, PanelsTopLeft, ShoppingBag, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Network, PanelsTopLeft, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -74,41 +74,5 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/cold-launch',
     icon: Network,
     capabilities: ['Tenant tree', '5 themes', 'Light/Dark', 'Network states', 'Quick Tips'],
-  },
-  {
-    id: 'document-email',
-    name: 'Document Email & Sharing Experience',
-    eyebrow: 'Sharing & Email',
-    description: 'Refrens-inspired streamlined email composer, rich prefilled message, and executive HTML preview with real invoice data.',
-    route: '/design-lab/document-email',
-    icon: Mail,
-    capabilities: ['Real SASINV-000130 data', 'Executive HTML', 'Composer & Recipient views', 'Mobile/Desktop', 'Attachment badge'],
-  },
-  {
-    id: 'app-update-modal',
-    name: 'App Update Modal',
-    eyebrow: 'App Update',
-    description: 'Two contrasting update sheet designs with simulated download, install, and web fallback states.',
-    route: '/design-lab/app-update-modal',
-    icon: Download,
-    capabilities: ['2 variants', 'Light/Dark', 'Download states', 'Web fallback', 'Version guard'],
-  },
-  {
-    id: 'po-view',
-    name: 'Purchase Order View Redesign',
-    eyebrow: 'Purchase Order',
-    description: 'Invoice-view-derived procurement document experience: procurement semantics, lifecycle simulation, and an Invoice reference for comparison.',
-    route: '/design-lab/po-view',
-    icon: ShoppingBag,
-    capabilities: ['5 themes', 'Light/Dark', '6 viewports', 'Lifecycle simulation', 'Invoice comparison', 'Procurement semantics'],
-  },
-  {
-    id: 'assistant-chat',
-    name: 'Assistant Chat',
-    eyebrow: 'AI Assistant',
-    description: 'Scripted invoice conversation with app-computed change cards, four viewport layouts, and a preconfigured provider and model catalog.',
-    route: '/design-lab/assistant-chat',
-    icon: MessageSquare,
-    capabilities: ['4 viewports', 'Provider catalog', 'Model pill', 'Change cards', '5 themes', 'Light/Dark'],
   },
 ]
