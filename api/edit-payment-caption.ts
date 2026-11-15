@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
-import { editCaption } from "../src/modules/invoices/services/telegramService"
-import type { PaymentAttachment } from "../src/lib/attachmentTypes"
+import { editCaption } from "../src/modules/invoices/services/telegramService.js"
+import type { PaymentAttachment } from "../src/lib/attachmentTypes.js"
 
 const VOID_PREFIX = "\u{1F6AB} VOIDED — This payment has been voided.\n\n"
 

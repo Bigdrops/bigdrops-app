@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
-import { uploadFile, buildPaymentCaption } from "../src/modules/invoices/services/telegramService"
+import { uploadFile, buildPaymentCaption } from "../src/modules/invoices/services/telegramService.js"
 
 const TAG = "[UPLOAD DEBUG]"
 
