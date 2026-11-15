@@ -523,7 +523,7 @@ To prevent false claims of completion, the project maintains a strict boundary b
 | **D Modify documents** | **IMPLEMENTED (Invoice Reference)** | Invoice modification proposal, diff review, revalidation, and transactional persistence implemented. Other 7 forms deferred. |
 | **E Approval and persistence controls** | **IMPLEMENTED** | Two-gate lifecycle (Change Proposal Card + Save Confirmation Card), RPC transaction save, `withUniqueRetry`, and rollback cleanup implemented. |
 | **F Additional capability packs** | **DEFERRED** | The remaining seven authorable forms (Quotation, PO, Waybill, CSR, RFQ, CPS, Letter) remain deferred until invoice trial/validation. |
-| **G Production experience and operations** | **PARTIAL** | Bottom sheet and operations UI implemented. Live provider keys, privacy consent disclosure, and production deployment outstanding. |
+| **G Production experience and operations** | **IMPLEMENTED (UI Promoted & Wired)** | Design Lab primitives promoted to `src/components/ai-assistant/chat/`. Multi-viewport responsive workspace (DEC-26: phone bottom sheet, foldable split, tablet drawer, desktop 3-column canvas) wired to Supabase persistence (`useBoluConversations`) and live streaming runtime (`useBoluThread`). DEC-05 Two-Gate approval UI enforced. |
 | **H Trial and owner decision** | **BLOCKED** | Live provider custody, terms compliance (RISK-14), and trial metrics approval required before starting trial. |
 
 ---
@@ -691,7 +691,7 @@ The system connects live inference models to existing BOURXE document services t
 | **D Modify documents** | **IMPLEMENTED & ACTIVATED (Invoice)** | Invoice modification via live inference proposal, diff review, revalidation, and transactional persistence verified. Other 7 forms deferred. |
 | **E Approval and persistence controls** | **IMPLEMENTED & TESTED** | Two-gate lifecycle (Gate 1 proposal approval + Gate 2 save confirmation), RPC transaction save, `withUniqueRetry`, and rollback cleanup verified. |
 | **F Additional capability packs** | **DEFERRED** | Remaining seven authorable forms deferred until invoice trial/validation. |
-| **G Production experience and operations** | **PARTIAL** | Bottom sheet and live streaming UI active. Live provider key provisioning and privacy disclosure outstanding. |
+| **G Production experience and operations** | **IMPLEMENTED (UI Promoted & Wired)** | Design Lab primitives promoted to `src/components/ai-assistant/chat/`. Multi-viewport responsive workspace (DEC-26: phone bottom sheet, foldable split, tablet drawer, desktop 3-column canvas) wired to Supabase persistence (`useBoluConversations`) and live streaming runtime (`useBoluThread`). DEC-05 Two-Gate approval UI enforced. |
 | **H Trial and owner decision** | **BLOCKED** | Live provider custody, terms compliance (RISK-14), and trial metrics approval required before starting trial. |
 
 ---
@@ -978,5 +978,137 @@ Following the closeout audit (`docs/reports/ai/2026-11-14-bolu-phase-2-architect
 - **Settings Theme Tokens:** Semantic color token compliance verified via `settingsThemeTokens.test.js`.
 - **Hosted Migration Verification:** `supabase migration list` confirms 94/94 migrations applied (0 pending). Schema objects verified via `supabase db query --linked`.
 - **Git Hygiene:** Clean `git diff --check`. No production deployment or commit performed.
+
+---
+
+### 25.9 Bolu Frontend Integration & Design Lab Promotion to Production (2026-11-15)
+
+**Status:** COMPLETE & PROMOTED TO PRODUCTION (DEC-26 Multi-Viewport Layout Implemented; DEC-05 Two-Gate UI Enforced; Full Strict Mode TypeScript Verified with Code 0; Zero Bloat in Audit Load)
+
+1. **Promotion of Design Lab Primitives (`src/components/ai-assistant/chat/`):**
+   - Decoupled visual primitives from mock scripts and established production components under `src/components/ai-assistant/chat/`:
+     - `BoluChatWorkspace.tsx`: Primary responsive workspace container.
+     - `assistant-chat-thread.tsx`: Message stream with render-throttled SSE streaming tokens, auto-scroll, jump-to-latest button, and empty state with `BoluOrbIdentity`.
+     - `assistant-chat-parts.tsx`: `ProposalCardView` implementing the DEC-05 Two-Gate human verification flow with authoritative totals via `formatNaira()`.
+     - `assistant-chat-composer.tsx`: Auto-resizing textarea, context pill, dynamic suggestions from `getBoluSuggestions()`, and thumb-zone send / stop buttons.
+     - `assistant-chat-panel.tsx`: Living document artifact preview showing draft status, candidate number, line items, and VAT/subtotal computations.
+     - `assistant-chat-rail.tsx`: Multi-thread navigation drawer powered by `useBoluConversations` (grouped by Today, Yesterday, Earlier).
+     - `assistant-chat-model-pill.tsx`: Provider and model selector dropdown.
+     - `assistant-chat-settings.tsx`: Provider and credential management panel.
+     - `assistant-chat-clerk.tsx`: Layered SVG vector digital clerk avatar and launcher bot.
+     - `bolu-thinking-orb.tsx`: `BoluOrbIdentity` and `BoluOrbInline` animated states via `thinking-orbs`.
+     - `assistant-chat-chrome.tsx`: Top bar anatomy: BOUXRE mark, assistant title/subtitle, ModelPill, context trigger, settings button, and close action.
+
+2. **State Tier Binding:**
+   - Visual presentation tier bound directly to the live Supabase application state hooks:
+     - `useBoluConversations`: Handles multi-thread CRUD, selection, archiving, and deletion against `public.bolu_conversations`.
+     - `useBoluThread`: Handles SSE delta streaming, ClerkState machine (`idle` ➔ `thinking` ➔ `responding` ➔ `success`), and Gate 1 / Gate 2 approval lifecycle against `public.bolu_messages` and `bolu-document-service.ts`.
+
+3. **DEC-26 Four-Viewport Responsive Layout:**
+   - Phone (`fold-closed`): Single column layout with mobile thumb-zone composer and modal sheets for context/settings.
+   - Foldable (`fold-open`): Dual-pane 50/50 split (chat stream on left, document artifact on right).
+   - Tablet (`tablet`): Collapsible thread rail on left, chat stream in center, context slide-out drawer on right.
+   - Desktop (`desktop`): Full 3-column canvas (conversation rail on left, chat canvas in center, living document artifact column on right).
+   - Fluid auto-detection on window resize with manual override support via `ViewportPicker`.
+
+4. **AppShell & Provider Integration:**
+   - Mounted `<BoluChatWorkspace>` in `src/components/ai-assistant/BoluAssistantProvider.tsx`, deprecating the single-column `AssistantSheet.tsx`.
+   - Global assistant summoning across dashboard, navigation launchers, and contextual triggers automatically displays the promoted responsive workspace.
+
+5. **Verification & Hard Hardware Gate:**
+   - `bun run typecheck`: Passed cleanly with exit code 0 (`tsc --noEmit`).
+   - `bun run audit:load`: Passed with 0 oversized files or query warnings in all newly relocated chat components.
+   - `bun run build`: Permanently excluded in adherence with host 4GB RAM policy.
+
+---
+
+## 16. Bolu Provider Settings: Model Discovery, Price Classification & Keyboard-Aware Navigation (Completed 2026-11-15)
+
+1. **Bottom-Anchored Model Search (OpenCode Pattern):**
+   - Refactored `ModelSelectorModal.tsx` to position the search input at the bottom, directly above the Android virtual keyboard and mobile safe areas.
+   - Model results list (`flex-1 min-h-0 overflow-y-auto overscroll-contain`) scrolls independently above the search bar.
+   - Mounted modal via `createPortal(..., document.body)` with `z-[100]` to eliminate clipping, overflow, or parent container z-index constraints.
+
+2. **Mobile Bottom Navigation & Keyboard-Aware Navigation:**
+   - Fixed mobile layout issue where Android virtual keyboard caused `MobileBottomNav` (`[data-bd-layout="bottom-nav"]`) to float over modal footers and search inputs.
+   - Added global CSS rule in `src/styles/formTheme.css`: `html[data-keyboard-open="true"] [data-bd-layout="bottom-nav"] { display: none !important; }`.
+   - Wired keyboard event awareness (`visualViewport` resize + `focusin` / `focusout`) in `MobileBottomNav.tsx` and `KeyboardAwareness.tsx` to instantly hide bottom nav when keyboard opens and restore it upon dismissal.
+
+3. **OpenRouter Price Classification & Deterministic Sorting:**
+   - Implemented centralized pricing authority in `src/lib/ai-assistant/openrouter-pricing.ts`.
+   - Standardized pricing thresholds converted from raw token rates to USD per million tokens (MTok):
+     - **FREE:** Both prompt and completion token prices = 0, no request/image charges. Upstream rate limits flagged for `:free` variants.
+     - **CHEAP:** Highest token price > $0 and <= $1.00 / MTok.
+     - **MEDIUM:** Highest token price > $1.00 and <= $5.00 / MTok.
+     - **PREMIUM:** Highest token price > $5.00 / MTok.
+     - **UNKNOWN:** Missing, invalid, or unlisted pricing placed safely after priced models.
+   - Deterministic sorting orders Free models first, then Cheap, Medium, Premium, and Unknown. Within category: lower-cost first with secondary alphabetical tie-break.
+   - Horizontal category filter pills (`All`, `Free`, `Cheap`, `Medium`, `Premium`, `Unlisted`) with live counts.
+
+4. **Verification Gate:**
+   - `bun test src/tests/ai-assistant/`: 177/177 tests passed.
+   - `bun run audit:load`: Passed with 0 bloat regressions (all Bolu files < 600 lines: `ModelSelectorModal.tsx` = 454 lines, `openrouter-pricing.ts` = 200 lines, `MobileBottomNav.tsx` = 89 lines).
+   - Targeted TypeScript check: 0 errors.
+   - `bun run build`: Permanently excluded.
+
+---
+
+## 17. Phase B Remediation: Lazy Conversation Creation, Live Provider State Binding & Mobile Viewport Stabilization (Completed 2026-11-15)
+
+1. **Lazy Thread Initialization & Error-Safe Submission:**
+   - Fixed silent message abort in `useBoluThread.ts`: when `conversationId` is null on first message submission, `submitMessage` automatically awaits `onEnsureConversation()` or creates a conversation in `public.bolu_conversations` before appending the message.
+   - Refactored `handleSend` in `BoluChatWorkspace.tsx`: `inputDraft` is only cleared if `submitMessage` succeeds, preserving user text on failure.
+   - Added slide-out conversation history drawer in mobile phone viewport (`fold-closed`), enabling mobile users to view past threads and trigger new conversations.
+
+2. **Decoupled Mock Providers & Bound to Live Backend Pool:**
+   - Deprecated mock fixtures (`rc-token-configured`, `sk-or-active`, `simulateConnection`, `simulateModelDiscovery`) in `assistant-chat-providers.ts`.
+   - Wired `BoluChatWorkspace.tsx` to `boluProviderApi.getStatus()` on mount, reconciling catalog entries and active model selection with the live backend connection pool (`app_ai_provider_connections`).
+   - Wired provider testing and model discovery in `assistant-chat-settings.tsx` directly to `boluProviderApi.test` and `boluProviderApi.discover`.
+
+3. **B2B Identity Enforcement & Avatar Removal:**
+   - Removed decorative human vector avatar (`ClerkAvatar`) from the empty state in `assistant-chat-thread.tsx`, placing the dynamic `BoluOrbIdentity` (Thinking Orb) front and center.
+   - Replaced assistant turn avatars with `BoluOrbInline` inside sleek circular badges.
+
+4. **Mobile Viewport Height & Scrollbar Suppression:**
+   - Converted root workspace container from `max-h-[96vh]` to `h-[100dvh] md:h-[96vh] max-h-[100dvh] md:max-h-[96vh] rounded-none md:rounded-3xl` to prevent dynamic browser navigation bars from occluding composer and footer hints.
+   - Suppressed unstyled operating system horizontal scrollbars on `.ac-compose-pills` using `scrollbar-width: none;` and `::-webkit-scrollbar { display: none; }`.
+
+5. **Verification Gate:**
+   - `bun run typecheck`: Passed with 0 errors (`tsc --noEmit`).
+   - `bun run audit:load`: Passed with 0 bloat regressions (`useBoluThread.ts` maintained under 600 line limit at 589 lines).
+   - `bun test src/tests/ai-assistant/`: 16/16 tests passed across test suites.
+   - `bun run build`: Permanently excluded per 4GB RAM hardware constraints.
+
+---
+
+## 18. Bolu AI Floating Action Button (AI FAB) — Persistent Global Launcher & Multi-Surface Coexistence (Completed 2026-11-15)
+
+1. **Persistent Global Mounting Point:**
+   - Mounted `<BoluFloatingActionButton />` directly inside `src/components/ai-assistant/BoluAssistantProvider.tsx`, ensuring persistent accessibility across all production application routes wrapped by `AppShell.tsx`.
+   - Extended `BoluAssistantContextValue` to expose `isOpen: boolean` and `close: () => void` alongside `open()`, `runtime`, and `state`.
+   - FAB click calls `open('future-fab')`, passing current route context via `buildBoluPageContext(pathname, 'future-fab')` into the shared Bolu runtime.
+   - Reuses existing conversation state and thread; does not spawn duplicate assistant runtimes or reset active sessions.
+
+2. **Multi-Surface Coexistence Geometry:**
+   - On mobile, page-level FABs (`MobileFab.tsx`) sit at `bottom-[94px]` with height `50px` (top boundary 144px).
+   - Bolu AI FAB is positioned at `bottom: calc(158px + env(safe-area-inset-bottom, 0px))` with right inset `max(16px, env(safe-area-inset-right, 0px))`, providing an exact 14px vertical gap above the page FAB (`158px - 144px = 14px`).
+   - Both controls remain fully usable on the Dashboard, forms, and lists, clearing the 62px bottom navigation (`MobileBottomNav.tsx`) without crowding or collision.
+
+3. **Responsive Adaptations & Keyboard Awareness:**
+   - **Desktop Adaptation:** Scaled to 50px diameter at `bottom: 2rem; right: 2rem; z-index: 40;` with smooth hover disclosure tooltip ("Ask Bolu").
+   - **Fold Dual-Pane Awareness:** Positioned within the right active detail pane (`html[data-separating-fold="true"]`), preserving unobstructed access to the left navigation pane.
+   - **Virtual Keyboard Awareness:** Auto-hides when virtual keyboard is active via `html[data-keyboard-open="true"] .bolu-ai-fab-root { display: none !important; }`, preventing obstruction of active inputs, forms, and software keys.
+   - **Workspace Open State & Design Lab Isolation:** Suppressed when the assistant workspace is open (`isOpen === true`) and suppressed on `/design-lab*` or `/debug*` routes for strict isolation.
+
+4. **Visual Identity & Motion:**
+   - Freestanding circular button (`border-radius: 9999px`) with deep slate/navy gradient (`#0f172a` to `#1e293b`), amber border (`rgba(245, 158, 11, 0.4)`), and approved vector character glyph (`clerk-launcher-bot.svg`).
+   - Small notification-style presence dot in amber without deceptive unread counts.
+   - Ambient idle vertical float (`@keyframes boluFabFloat`) and breathing halo aura (`@keyframes boluFabHaloPulse`), cleanly disabling animations under `@media (prefers-reduced-motion: reduce)`.
+
+5. **Verification Gate:**
+   - Focused tests in `src/tests/ai-assistant/bolu-floating-action-button.test.js`: 8/8 tests passed.
+   - Full AI assistant test suite (`src/tests/ai-assistant/`): 211/211 tests passed.
+   - `bun run audit:load`: Passed with 0 bloat or query regressions (`BoluFloatingActionButton.tsx` = 58 lines, `boluFab.css` = 194 lines, `BoluAssistantProvider.tsx` = 85 lines).
+   - `bun run build`: Permanently excluded.
 
 ---

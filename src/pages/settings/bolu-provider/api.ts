@@ -37,6 +37,7 @@ export type PublicConnection = {
   modelsFetchedAt: string | null
   // Multi-account routing & pool telemetry
   allowedModels: string[]
+  metadata?: { enabledModels?: string[]; [key: string]: unknown }
   inPool: boolean
   priority: number
   isPaidTier: boolean
@@ -138,6 +139,7 @@ export type CreateConnectionInput = {
   priority?: number
   inPool?: boolean
   allowedModels?: string[]
+  metadata?: { enabledModels?: string[]; [key: string]: unknown }
   isPaidTier?: boolean
 }
 
@@ -153,6 +155,7 @@ export type UpdateConnectionInput = {
   priority?: number
   inPool?: boolean
   allowedModels?: string[]
+  metadata?: { enabledModels?: string[]; [key: string]: unknown }
   isPaidTier?: boolean
 }
 

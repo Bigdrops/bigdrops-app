@@ -18,6 +18,7 @@ import {
 import { boluProviderApi, type DiscoveredModel, type ProviderDiagnostics, type PublicConnection } from './api'
 import { DiagnosticsNote } from './DiagnosticsNote'
 import { ProviderLogo } from './ProviderLogo'
+import { ModelSelectorModal } from './ModelSelectorModal'
 
 const CUSTOM_MODEL = '__custom__'
 
@@ -46,7 +47,6 @@ export function ConnectionDialog({
   const [showKey, setShowKey] = useState(false)
   const [modelChoice, setModelChoice] = useState('')
   const [customModel, setCustomModel] = useState('')
-  const [modelSearch, setModelSearch] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [protocol, setProtocol] = useState<ProviderProtocol>('openai')
   const [authScheme, setAuthScheme] = useState<ProviderAuthScheme>('bearer')
@@ -59,6 +59,7 @@ export function ConnectionDialog({
   const [diagnostics, setDiagnostics] = useState<ProviderDiagnostics | null>(null)
   const [testing, setTesting] = useState(false)
   const [discovering, setDiscovering] = useState(false)
+  const [modelPickerOpen, setModelPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -69,7 +70,6 @@ export function ConnectionDialog({
     setTesting(false)
     setDiscovering(false)
     setSaving(false)
-    setModelSearch('')
 
     if (connection) {
       setProviderId(connection.providerId)
@@ -127,33 +127,12 @@ export function ConnectionDialog({
   const entry = getCatalogueEntry(providerId)
   const isCustom = providerId === CUSTOM_PROVIDER_ID
 
-  const allModelOptions = useMemo(() => {
-    const seen = new Set<string>()
-    const options: { id: string; label: string; source: 'curated' | 'discovered' | 'current' }[] = []
-    const push = (id: string, label: string, source: 'curated' | 'discovered' | 'current') => {
-      if (!id || seen.has(id)) return
-      seen.add(id)
-      options.push({ id, label, source })
-    }
-    if (connection) push(connection.model, connection.model, 'current')
-    for (const m of entry?.curatedModels ?? []) push(m.id, m.label, 'curated')
-    for (const m of discovered) push(m.id, m.label, 'discovered')
-    return options
-  }, [entry, discovered, connection])
-
-  const filteredModelOptions = useMemo(() => {
-    if (!modelSearch.trim()) return allModelOptions
-    const q = modelSearch.toLowerCase().trim()
-    return allModelOptions.filter((m) => m.id.toLowerCase().includes(q) || m.label.toLowerCase().includes(q))
-  }, [allModelOptions, modelSearch])
-
   const effectiveModel = modelChoice === CUSTOM_MODEL ? customModel.trim() : modelChoice
 
   function applyProvider(nextId: string) {
     setProviderId(nextId)
     setDiagnostics(null)
     setDiscovered([])
-    setModelSearch('')
     const next = getCatalogueEntry(nextId)
     if (next) {
       setBaseUrl(next.baseUrl)
@@ -370,10 +349,14 @@ export function ConnectionDialog({
             <Label htmlFor="bolu-conn-name">Connection name</Label>
             <Input
               id="bolu-conn-name"
+              name="bolu-connection-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={entry ? `${entry.name} account` : 'Custom production connection'}
               maxLength={80}
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
             />
           </div>
 
@@ -397,11 +380,14 @@ export function ConnectionDialog({
             <div className="relative">
               <Input
                 id="bolu-conn-key"
+                name="bolu-api-key"
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder={isEdit ? `Stored: ${connection.maskedKey}` : entry?.keyHint ?? 'API key'}
-                autoComplete="off"
+                autoComplete="new-password"
+                data-1p-ignore
+                data-lpignore="true"
                 className="pr-10 font-mono text-xs"
               />
               <button
@@ -437,37 +423,47 @@ export function ConnectionDialog({
               </Button>
             </div>
 
-            {/* Model Search Input (when many models are present) */}
-            {allModelOptions.length > 5 && (
-              <div className="relative mb-1">
-                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-bd-text-muted" />
-                <Input
-                  value={modelSearch}
-                  onChange={(e) => setModelSearch(e.target.value)}
-                  placeholder="Filter models (e.g. deepseek, llama, flash)..."
-                  className="h-7 pl-7 font-mono text-[11px]"
-                />
-              </div>
-            )}
+            {/* Model Selector Trigger & Modal */}
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => setModelPickerOpen(true)}
+                className="flex items-center justify-between gap-2 rounded-lg border border-bd-border bg-bd-surface-muted/80 px-3 py-2 text-left hover:border-bd-border-strong hover:bg-bd-surface-muted transition-all w-full"
+                title="Search and select from discovered or curated models"
+              >
+                <div className="min-w-0 flex-1 truncate">
+                  <span className="font-mono text-xs font-semibold text-bd-text truncate block">
+                    {effectiveModel || 'Select a model...'}
+                  </span>
+                  <span className="text-[10px] text-bd-text-muted">
+                    {discovered.length > 0
+                      ? `${discovered.length} discovered models`
+                      : `${entry?.curatedModels.length ?? 0} curated models`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-bd-text-muted shrink-0 text-xs">
+                  <span className="text-[10px] text-bd-primary font-semibold">Browse</span>
+                  <Search size={13} />
+                </div>
+              </button>
 
-            <Select value={modelChoice} onValueChange={setModelChoice}>
-              <SelectTrigger className="w-full font-mono text-xs">
-                <SelectValue placeholder="Select a model" />
-              </SelectTrigger>
-              <SelectContent className="max-h-56">
-                {filteredModelOptions.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    <span className="flex items-center gap-2">
-                      <span className="font-mono text-xs">{m.label}</span>
-                      <span className="text-[9px] uppercase tracking-wide text-bd-text-soft">
-                        ({m.source})
-                      </span>
-                    </span>
-                  </SelectItem>
-                ))}
-                <SelectItem value={CUSTOM_MODEL}>Custom model identifier…</SelectItem>
-              </SelectContent>
-            </Select>
+              <ModelSelectorModal
+                open={modelPickerOpen}
+                onOpenChange={setModelPickerOpen}
+                currentModel={effectiveModel}
+                curatedModels={entry?.curatedModels ?? []}
+                discoveredModels={discovered}
+                providerId={providerId}
+                providerName={entry?.name ?? 'Custom Provider'}
+                supportsDiscovery={discoverySupported}
+                onSelect={(modelId) => {
+                  setModelChoice(modelId)
+                  setCustomModel('')
+                }}
+                onRefreshDiscovery={handleDiscover}
+                discovering={discovering}
+              />
+            </div>
 
             {modelChoice === CUSTOM_MODEL && (
               <Input

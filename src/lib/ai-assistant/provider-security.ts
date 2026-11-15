@@ -11,7 +11,7 @@
 
 import net from 'node:net'
 import dns from 'node:dns/promises'
-import type { ProviderAuthScheme, ProviderProtocol } from './provider-catalog'
+import type { ProviderAuthScheme, ProviderProtocol } from './provider-catalog.js'
 
 export type EndpointValidation =
   | { ok: true; url: string }

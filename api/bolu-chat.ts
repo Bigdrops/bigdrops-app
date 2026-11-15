@@ -20,22 +20,23 @@ import {
   getBoluProviderConfig,
   validateBoluProviderRequest,
   type BoluProviderMessage,
-} from '../src/lib/ai-assistant/bolu-provider'
-import { DETERMINISTIC_FIXTURES, type MockScenario } from '../src/lib/ai-assistant/bolu-mock-provider'
+} from '../src/lib/ai-assistant/bolu-provider.js'
+import { DETERMINISTIC_FIXTURES, type MockScenario } from '../src/lib/ai-assistant/bolu-mock-provider.js'
 import {
   streamAdapterChat,
   type AdapterConfig,
   type AdapterMessage,
   type ProviderDiagnostics,
-} from '../src/lib/ai-assistant/provider-adapters'
+} from '../src/lib/ai-assistant/provider-adapters.js'
 import {
   claimEligibleConnection,
+  claimExactConnection,
   recordAiFailure,
   recordAiRequestStart,
   recordAiSuccess,
-} from '../src/lib/ai-assistant/routing/bolu-account-pool'
-import { resolveRoutingPolicy } from '../src/lib/ai-assistant/routing/bolu-policy-router'
-import { classifyProviderError } from '../src/lib/ai-assistant/routing/bolu-error-classifier'
+} from '../src/lib/ai-assistant/routing/bolu-account-pool.js'
+import { resolveRoutingPolicy } from '../src/lib/ai-assistant/routing/bolu-policy-router.js'
+import { classifyProviderError } from '../src/lib/ai-assistant/routing/bolu-error-classifier.js'
 
 const TRANSIENT_FAILOVER_CATEGORIES = new Set([
   'rate_limit',
@@ -176,12 +177,22 @@ export default async function handler(request: Request): Promise<Response> {
   const user = await resolveUser(request)
   if (!user) return jsonError('Sign in to use Bolu.', 401)
 
-  let payload: { messages?: unknown; contextFacts?: unknown }
+  let payload: {
+    messages?: unknown
+    contextFacts?: unknown
+    connectionId?: unknown
+    modelId?: unknown
+  }
   try {
     payload = await request.json()
   } catch {
     return jsonError('Invalid request body.', 400)
   }
+
+  const explicitConnectionId =
+    typeof payload.connectionId === 'string' && payload.connectionId.trim() ? payload.connectionId.trim() : null
+  const explicitModelId =
+    typeof payload.modelId === 'string' && payload.modelId.trim() ? payload.modelId.trim() : null
 
   const validation = validateBoluProviderRequest({
     userId: user.id,
@@ -228,6 +239,71 @@ export default async function handler(request: Request): Promise<Response> {
   const adminClient = getAdminClient()
   if (adminClient) {
     try {
+      // If user explicitly picked a specific connection & model in the chat UI, route directly to it
+      if (explicitConnectionId) {
+        const exactClaimed = await claimExactConnection(adminClient, explicitConnectionId, explicitModelId)
+        if (exactClaimed) {
+          const adapterConfig: AdapterConfig = {
+            providerId: exactClaimed.providerId,
+            protocol: exactClaimed.protocol === 'anthropic' ? 'anthropic' : 'openai',
+            authScheme: exactClaimed.protocol === 'anthropic' ? 'x-api-key' : 'bearer',
+            baseUrl: exactClaimed.baseUrl || undefined,
+            apiKey: exactClaimed.apiKey,
+            model: exactClaimed.selectedModel,
+            timeoutMs: exactClaimed.timeoutMs || 30000,
+          }
+
+          await recordAiRequestStart(adminClient, exactClaimed.connectionId, adapterConfig.model)
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
+
+          try {
+            const result = await streamAdapterChat(adapterConfig, messages, {
+              maxTokens: CHAT_MAX_TOKENS,
+              temperature: CHAT_TEMPERATURE,
+              signal: controller.signal,
+            })
+
+            if ('diagnostics' in result) {
+              const classified = classifyProviderError(
+                {
+                  status: result.diagnostics.status,
+                  retryAfterHeader: result.diagnostics.retryAfterSeconds ? String(result.diagnostics.retryAfterSeconds) : null,
+                  error: new Error(result.diagnostics.message),
+                },
+                { providerId: adapterConfig.providerId, targetModel: adapterConfig.model },
+              )
+              await recordAiFailure(adminClient, {
+                connectionId: exactClaimed.connectionId,
+                modelId: adapterConfig.model,
+                failureCategory: classified.category,
+                failureScope: classified.scope,
+                httpStatus: classified.httpStatus,
+                cooldownSeconds: classified.retryAfterSeconds,
+                reasonSummary: classified.safeSummary,
+              })
+              return diagnosticsToError(result.diagnostics)
+            }
+
+            const headers = new Headers(result.response.headers)
+            headers.set('X-Bolu-Source', 'connection')
+            headers.set('X-Bolu-Connection-Id', exactClaimed.connectionId)
+
+            const bodyStream = result.response.body
+              ? wrapStreamForFirstTokenBoundary(result.response.body, () => {
+                  recordAiSuccess(adminClient, exactClaimed.connectionId, adapterConfig.model).catch((err) => {
+                    console.error('[bolu-chat] recordAiSuccess error:', err)
+                  })
+                })
+              : null
+
+            return new Response(bodyStream, { status: 200, headers })
+          } finally {
+            clearTimeout(timeoutId)
+          }
+        }
+      }
+
       const policyDecision = resolveRoutingPolicy({
         userId: user.id,
         taskType: 'invoice-chat',
@@ -266,7 +342,7 @@ export default async function handler(request: Request): Promise<Response> {
           baseUrl: claimed.baseUrl || undefined,
           apiKey: claimed.apiKey,
           model: claimed.selectedModel || claimed.defaultModel,
-          timeoutMs: 30000,
+          timeoutMs: claimed.timeoutMs || 30000,
         }
 
         await recordAiRequestStart(adminClient, claimed.connectionId, adapterConfig.model)

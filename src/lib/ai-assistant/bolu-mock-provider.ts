@@ -19,7 +19,7 @@
  * 12. Duplicate submission
  */
 
-import type { BoluProviderMessage } from './bolu-provider'
+import type { BoluProviderMessage } from './bolu-provider.js'
 
 export type MockScenario =
   | 'authorized-record-retrieval'

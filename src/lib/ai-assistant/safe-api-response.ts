@@ -61,12 +61,20 @@ export async function safeParseApiResponse<T = Record<string, unknown>>(
         ? dataObj.message
         : null
 
+    // A provider operation that fails at the provider (not the transport) answers
+    // HTTP 200 with ok:false plus diagnostics. Without this the UI shows a
+    // generic failure and the actionable reason is lost.
+    const diagnostics = dataObj?.diagnostics as Record<string, unknown> | undefined
+    const diagnosticError = diagnostics && typeof diagnostics.message === 'string'
+      ? `${diagnostics.message}${typeof diagnostics.suggestedAction === 'string' ? ` ${diagnostics.suggestedAction}` : ''}`
+      : null
+
     const isOk = res.ok && dataObj?.ok !== false && !serverError
     return {
       ok: isOk,
       status,
       data: parsed,
-      errorMessage: serverError || (res.ok ? null : `Server returned HTTP ${status}`),
+      errorMessage: serverError || diagnosticError || (res.ok ? null : `Server returned HTTP ${status}`),
     }
   } catch {
     const cleanSnippet = trimmed

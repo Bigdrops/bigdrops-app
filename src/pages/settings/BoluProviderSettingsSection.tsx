@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { feedback } from '@/lib/feedback'
-import { PROVIDER_CATALOGUE } from '@/lib/ai-assistant/provider-catalog'
 import { cn } from '@/lib/utils'
 import {
   boluProviderApi,
@@ -29,6 +28,8 @@ import {
 import { ConnectionCard } from './bolu-provider/ConnectionCard'
 import { ConnectionDialog } from './bolu-provider/ConnectionDialog'
 import { ProviderLogo } from './bolu-provider/ProviderLogo'
+import { CatalogueGrid } from './bolu-provider/CatalogueGrid'
+import { ModelsManagerSection } from './bolu-provider/ModelsManagerSection'
 
 export function BoluProviderSettingsSection() {
   const [status, setStatus] = useState<ProviderStatusResponse | null>(null)
@@ -209,6 +210,20 @@ export function BoluProviderSettingsSection() {
       await refreshQuietly()
     } catch (err) {
       feedback.error(err instanceof Error ? err.message : 'Failed to update the model.')
+    }
+  }
+
+  async function handleSaveAllowedModels(id: string, allowedModels: string[]) {
+    try {
+      const result = await boluProviderApi.update(id, {
+        allowedModels,
+        metadata: { enabledModels: allowedModels },
+      })
+      upsertConnection(result.connection)
+      feedback.success('Model visibility saved.')
+      await refreshQuietly()
+    } catch (err) {
+      feedback.error(err instanceof Error ? err.message : 'Failed to save model visibility.')
     }
   }
 
@@ -442,6 +457,15 @@ export function BoluProviderSettingsSection() {
         )}
       </div>
 
+      {/* Models Visibility Section - Matches Image 5 */}
+      {connections.length > 0 && (
+        <ModelsManagerSection
+          connections={connections}
+          onSaveAllowedModels={handleSaveAllowedModels}
+          onDiscover={handleDiscover}
+        />
+      )}
+
       {/* Recent Routing Activity (Collapsible) */}
       {routingEvents && routingEvents.length > 0 && (
         <Collapsible open={eventsOpen} onOpenChange={setEventsOpen} className="rounded-xl border border-bd-border bg-bd-surface p-4">
@@ -484,58 +508,7 @@ export function BoluProviderSettingsSection() {
       )}
 
       {/* Provider Catalogue */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-bd-text">Curated Provider Catalogue</h3>
-          <p className="text-[10px] text-bd-text-soft">Verified contracts · Multi-account ready</p>
-        </div>
-
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {PROVIDER_CATALOGUE.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-2.5 rounded-lg border border-bd-border bg-bd-surface p-2.5 shadow-sm hover:border-bd-border-strong transition-colors"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-bd-border bg-bd-surface-muted">
-                <ProviderLogo providerId={p.id} size={18} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold text-bd-text">{p.name}</p>
-                <p className="truncate text-[10px] text-bd-text-muted">
-                  {p.protocol === 'anthropic' ? 'Anthropic' : 'OpenAI-compatible'} · {p.supportsDiscovery ? 'Discovery' : 'Manual'}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 shrink-0 px-2 text-[11px]"
-                onClick={() => openCreate(p.id)}
-              >
-                <Plus size={11} className="mr-1" /> Connect
-              </Button>
-            </div>
-          ))}
-
-          {/* Custom Provider Entry */}
-          <div className="flex items-center gap-2.5 rounded-lg border border-dashed border-bd-border bg-bd-surface p-2.5 shadow-sm hover:border-bd-primary transition-colors">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-bd-border bg-bd-surface-muted">
-              <Server size={18} className="text-bd-primary" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-bold text-bd-text">Custom Endpoint</p>
-              <p className="truncate text-[10px] text-bd-text-muted">OpenAI or Anthropic compatible</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 shrink-0 px-2 text-[11px] text-bd-primary"
-              onClick={() => openCreate('custom')}
-            >
-              <Plus size={11} className="mr-1" /> Add
-            </Button>
-          </div>
-        </div>
-      </div>
+      <CatalogueGrid onSelectProvider={openCreate} />
 
       <ConnectionDialog
         open={dialogOpen}

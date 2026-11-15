@@ -116,8 +116,8 @@ export function buildProviderHeaders(config: BoluProviderConfig): Record<string,
 }
 
 // Re-export routing engine contracts from the dedicated routing subsystem
-export * from './routing/bolu-provider-catalog'
-export * from './routing/bolu-error-classifier'
-export * from './routing/bolu-policy-router'
-export * from './routing/bolu-balance-sync'
-export * from './routing/bolu-account-pool'
+export * from './routing/bolu-provider-catalog.js'
+export * from './routing/bolu-error-classifier.js'
+export * from './routing/bolu-policy-router.js'
+export * from './routing/bolu-balance-sync.js'
+export * from './routing/bolu-account-pool.js'

@@ -8,7 +8,7 @@
  * Security: Node-only or isomorphic. Never expose secrets or permit SSRF.
  */
 
-import { validateEndpointSyntax } from '../provider-security'
+import { validateEndpointSyntax } from '../provider-security.js'
 
 export type RoutingProtocol = 'openai-compatible' | 'anthropic' | 'gemini'
 export type RoutingAuthScheme = 'bearer' | 'x-api-key'
@@ -283,13 +283,32 @@ export const ROUTING_PROVIDER_CATALOGUE: Record<string, RoutingProviderEntry> = 
     verifiedEndpoint: 'https://integrate.api.nvidia.com/v1',
     authScheme: 'bearer',
     verifiedModels: [
-      { id: 'meta/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct', isDefault: true },
+      { id: 'nvidia/nemotron-3.5-lightning-30b-a3b', label: 'Nemotron 3.5 Lightning 30B A3B', isDefault: true },
+      { id: 'nvidia/nemotron-3.5-bolt-e4b', label: 'Nemotron 3.5 Bolt E4B' },
+      { id: 'nvidia/nemotron-3-ultra-550b-a55b', label: 'Nemotron 3 Ultra 550B A55B' },
+      { id: 'meta/muse-glimmer-30b', label: 'Muse Glimmer 30B' },
+      { id: 'mistralai/mistral-large-4-1t-a52b', label: 'Mistral Large 4' },
     ],
-    supportedCapabilities: ['chat-completions', 'streaming'],
+    supportedCapabilities: ['chat-completions', 'streaming', 'tools', 'json-mode'],
     modelDiscoverySupport: true,
     balanceLookupSupport: false,
     approvedForRouting: true,
     notes: 'NVIDIA NIM OpenAI-compatible API.',
+  },
+  '100milionseek': {
+    providerId: '100milionseek',
+    displayName: '100milionseek',
+    protocol: 'openai-compatible',
+    verifiedEndpoint: 'https://100milionseek.top/v1',
+    authScheme: 'bearer',
+    verifiedModels: [
+      { id: 'deepseek-v4.1-flash-free', label: 'DeepSeek V4.1 Flash Free', isDefault: true },
+    ],
+    supportedCapabilities: ['chat-completions', 'streaming', 'tools'],
+    modelDiscoverySupport: true,
+    balanceLookupSupport: false,
+    approvedForRouting: true,
+    notes: 'Pooled third-party endpoint running one upstream key for many accounts. High latency and variable uptime. Keep out of tenant traffic.',
   },
 }
 

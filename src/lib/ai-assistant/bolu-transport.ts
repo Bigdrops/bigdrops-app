@@ -5,6 +5,8 @@ import { supabase } from '@/supabase'
 export async function sendBoluProviderRequest(params: {
   messages: BoluProviderMessage[]
   contextFacts?: string
+  connectionId?: string | null
+  modelId?: string | null
   signal?: AbortSignal
   onDelta?: (delta: string) => void
 }): Promise<{ text: string }> {
@@ -18,7 +20,12 @@ export async function sendBoluProviderRequest(params: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ messages: params.messages, contextFacts: params.contextFacts ?? '' }),
+    body: JSON.stringify({
+      messages: params.messages,
+      contextFacts: params.contextFacts ?? '',
+      connectionId: params.connectionId ?? undefined,
+      modelId: params.modelId ?? undefined,
+    }),
     signal: params.signal,
   })
   if (!response.ok) {

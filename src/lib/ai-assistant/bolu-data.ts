@@ -256,3 +256,68 @@ export async function saveDocument(
   // which performs the authorized write and returns the persisted state
   return { ok: true, savedRecord: record }
 }
+
+export interface BoluClientMatch {
+  id: string
+  name: string
+  email?: string | null
+  phone?: string | null
+}
+
+export type BoluClientValidationResult =
+  | { status: 'exact_match'; client: BoluClientMatch }
+  | { status: 'ambiguous'; matches: BoluClientMatch[] }
+  | { status: 'not_found'; query: string }
+
+/**
+ * Validates a candidate client name against the tenant's clients table before draft creation.
+ * Returns exact_match if an exact case-insensitive match (or solitary partial match) is found,
+ * ambiguous if multiple partial matches exist, or not_found if no records match.
+ */
+export async function validateBoluClient(
+  tenantClient: TenantClient | undefined | null,
+  clientName: string,
+): Promise<BoluClientValidationResult> {
+  const clean = clientName?.trim()
+  if (!clean || !tenantClient || !tenantClient.isReady) {
+    return { status: 'not_found', query: clean || '' }
+  }
+
+  try {
+    const { data, error } = await tenantClient
+      .from('clients')
+      .select('id, name, email, phone')
+      .is('archived_at', null)
+      .ilike('name', `%${clean}%`)
+      .limit(10)
+
+    if (error || !data || data.length === 0) {
+      return { status: 'not_found', query: clean }
+    }
+
+    const matches: BoluClientMatch[] = (data as any[]).map((d) => ({
+      id: d.id,
+      name: d.name ?? '',
+      email: d.email ?? null,
+      phone: d.phone ?? null,
+    }))
+
+    // 1. Exact case-insensitive match test
+    const exact = matches.find((m) => m.name.toLowerCase() === clean.toLowerCase())
+    if (exact) {
+      return { status: 'exact_match', client: exact }
+    }
+
+    // 2. Solitary partial match
+    if (matches.length === 1) {
+      return { status: 'exact_match', client: matches[0] }
+    }
+
+    // 3. Ambiguous multiple candidates
+    return { status: 'ambiguous', matches }
+  } catch (err) {
+    console.warn('[validateBoluClient] Client query failed:', err)
+    return { status: 'not_found', query: clean }
+  }
+}
+

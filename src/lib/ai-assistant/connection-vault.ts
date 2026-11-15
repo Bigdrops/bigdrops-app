@@ -19,13 +19,13 @@ import {
   deriveMasterKey,
   encryptSecret,
   maskApiKey,
-} from './bolu-secret-vault'
-import type { AdapterConfig, DiscoveredModel, ProviderDiagnostics } from './provider-adapters'
-import type { ProviderAuthScheme, ProviderProtocol } from './provider-catalog'
+} from './bolu-secret-vault.js'
+import type { AdapterConfig, DiscoveredModel, ProviderDiagnostics } from './provider-adapters.js'
+import type { ProviderAuthScheme, ProviderProtocol } from './provider-catalog.js'
 
 export type ConnectionRecord = {
   id: string; provider_id: string; name: string; protocol: ProviderProtocol; auth_scheme: ProviderAuthScheme
-  base_url: string; model: string; allowed_models?: string[]; timeout_ms: number
+  base_url: string; model: string; allowed_models?: string[]; metadata?: { enabledModels?: string[]; [key: string]: unknown }; timeout_ms: number
   encrypted_key: string; key_nonce: string; key_tag: string; key_version: number; masked_key: string
   is_enabled: boolean; in_pool?: boolean; priority?: number; is_paid_tier?: boolean
   health_status?: 'healthy' | 'cooling_down' | 'exhausted' | 'quarantined' | 'unknown'
@@ -43,7 +43,7 @@ export type ConnectionRecord = {
 
 export type PublicConnection = {
   id: string; providerId: string; name: string; protocol: ProviderProtocol; authScheme: ProviderAuthScheme
-  baseUrl: string; model: string; allowedModels: string[]; timeoutMs: number; maskedKey: string
+  baseUrl: string; model: string; allowedModels: string[]; metadata?: { enabledModels?: string[]; [key: string]: unknown }; timeoutMs: number; maskedKey: string
   isEnabled: boolean; inPool: boolean; priority: number; isPaidTier: boolean
   healthStatus: 'healthy' | 'cooling_down' | 'exhausted' | 'quarantined' | 'unknown'
   accountCooldownUntil: string | null; modelCooldowns: Record<string, string>; consecutiveFailures: number
@@ -72,21 +72,23 @@ export type CreateConnectionInput = {
 export type UpdateConnectionInput = {
   name?: string; protocol?: ProviderProtocol; authScheme?: ProviderAuthScheme
   baseUrl?: string; model?: string; allowedModels?: string[]
+  metadata?: { enabledModels?: string[]; [key: string]: unknown }
   priority?: number; inPool?: boolean; isPaidTier?: boolean; timeoutMs?: number
   isEnabled?: boolean; apiKey?: string
 }
 
 const CONNECTION_COLUMNS =
-  'id, provider_id, name, protocol, auth_scheme, base_url, model, allowed_models, timeout_ms, encrypted_key, key_nonce, key_tag, key_version, masked_key, is_enabled, in_pool, priority, is_paid_tier, health_status, account_cooldown_until, model_cooldowns, consecutive_failures, last_error_code, last_error_message, last_success_at, last_failure_at, last_selected_at, total_selections, total_requests_started, total_successful_requests, total_tokens, known_balance_amount, known_balance_currency, known_balance_usd, balance_source, balance_updated_at, verification_status, last_verified_at, last_test_status, last_test_message, discovered_models, models_fetched_at, migrated_from, created_at, updated_at, created_by, updated_by'
+  'id, provider_id, name, protocol, auth_scheme, base_url, model, allowed_models, metadata, timeout_ms, encrypted_key, key_nonce, key_tag, key_version, masked_key, is_enabled, in_pool, priority, is_paid_tier, health_status, account_cooldown_until, model_cooldowns, consecutive_failures, last_error_code, last_error_message, last_success_at, last_failure_at, last_selected_at, total_selections, total_requests_started, total_successful_requests, total_tokens, known_balance_amount, known_balance_currency, known_balance_usd, balance_source, balance_updated_at, verification_status, last_verified_at, last_test_status, last_test_message, discovered_models, models_fetched_at, migrated_from, created_at, updated_at, created_by, updated_by'
 
 const PUBLIC_COLUMNS =
-  'id, provider_id, name, protocol, auth_scheme, base_url, model, allowed_models, timeout_ms, masked_key, is_enabled, in_pool, priority, is_paid_tier, health_status, account_cooldown_until, model_cooldowns, consecutive_failures, last_error_code, last_error_message, last_success_at, last_failure_at, last_selected_at, total_selections, total_requests_started, total_successful_requests, total_tokens, known_balance_amount, known_balance_currency, known_balance_usd, balance_source, balance_updated_at, verification_status, last_verified_at, last_test_status, last_test_message, discovered_models, models_fetched_at, created_at, updated_at'
+  'id, provider_id, name, protocol, auth_scheme, base_url, model, allowed_models, metadata, timeout_ms, masked_key, is_enabled, in_pool, priority, is_paid_tier, health_status, account_cooldown_until, model_cooldowns, consecutive_failures, last_error_code, last_error_message, last_success_at, last_failure_at, last_selected_at, total_selections, total_requests_started, total_successful_requests, total_tokens, known_balance_amount, known_balance_currency, known_balance_usd, balance_source, balance_updated_at, verification_status, last_verified_at, last_test_status, last_test_message, discovered_models, models_fetched_at, created_at, updated_at'
 
 export function toPublicConnection(r: ConnectionRecord): PublicConnection {
   return {
     id: r.id, providerId: r.provider_id, name: r.name, protocol: r.protocol, authScheme: r.auth_scheme,
     baseUrl: r.base_url, model: r.model,
     allowedModels: Array.isArray(r.allowed_models) ? r.allowed_models : r.model ? [r.model] : [],
+    metadata: (r.metadata && typeof r.metadata === 'object') ? r.metadata : { enabledModels: r.allowed_models ?? [] },
     timeoutMs: r.timeout_ms, maskedKey: r.masked_key, isEnabled: Boolean(r.is_enabled),
     inPool: r.in_pool !== undefined ? Boolean(r.in_pool) : true,
     priority: typeof r.priority === 'number' ? r.priority : 100, isPaidTier: Boolean(r.is_paid_tier),
@@ -213,7 +215,14 @@ export async function updateConnection(
   if (patch.authScheme !== undefined) row.auth_scheme = patch.authScheme
   if (patch.baseUrl !== undefined) row.base_url = patch.baseUrl
   if (patch.model !== undefined) row.model = patch.model
-  if (patch.allowedModels !== undefined) row.allowed_models = patch.allowedModels
+  if (patch.allowedModels !== undefined) {
+    row.allowed_models = patch.allowedModels
+    row.metadata = { ...(existing.metadata ?? {}), enabledModels: patch.allowedModels }
+  }
+  if (patch.metadata !== undefined) {
+    row.metadata = patch.metadata
+    if (Array.isArray(patch.metadata.enabledModels)) row.allowed_models = patch.metadata.enabledModels
+  }
   if (patch.timeoutMs !== undefined) row.timeout_ms = patch.timeoutMs
   if (patch.isEnabled !== undefined) row.is_enabled = patch.isEnabled
   if (patch.inPool !== undefined) row.in_pool = patch.inPool
@@ -245,10 +254,7 @@ export async function deleteConnection(client: SupabaseClient, connectionId: str
 
   if (routing.fallbackConnectionIds.includes(connectionId)) {
     const remaining = routing.fallbackConnectionIds.filter((id) => id !== connectionId)
-    await client
-      .from('app_ai_provider_routing')
-      .update({ fallback_connection_ids: remaining })
-      .eq('id', 'default')
+    await client.from('app_ai_provider_routing').update({ fallback_connection_ids: remaining }).eq('id', 'default')
   }
 }
 
@@ -291,12 +297,7 @@ export async function setConnectionPriority(
   priority: number,
   userId: string,
 ): Promise<PublicConnection> {
-  const { data, error } = await client
-    .from('app_ai_provider_connections')
-    .update({ priority, updated_by: userId })
-    .eq('id', connectionId)
-    .select(PUBLIC_COLUMNS)
-    .single()
+  const { data, error } = await client.from('app_ai_provider_connections').update({ priority, updated_by: userId }).eq('id', connectionId).select(PUBLIC_COLUMNS).single()
   if (error || !data) throw new Error(`Failed to update priority: ${error?.message ?? 'no row returned'}`)
   return toPublicConnection(data as ConnectionRecord)
 }
@@ -307,12 +308,7 @@ export async function setConnectionPool(
   inPool: boolean,
   userId: string,
 ): Promise<PublicConnection> {
-  const { data, error } = await client
-    .from('app_ai_provider_connections')
-    .update({ in_pool: inPool, updated_by: userId })
-    .eq('id', connectionId)
-    .select(PUBLIC_COLUMNS)
-    .single()
+  const { data, error } = await client.from('app_ai_provider_connections').update({ in_pool: inPool, updated_by: userId }).eq('id', connectionId).select(PUBLIC_COLUMNS).single()
   if (error || !data) throw new Error(`Failed to update pool state: ${error?.message ?? 'no row returned'}`)
   return toPublicConnection(data as ConnectionRecord)
 }

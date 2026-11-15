@@ -14,7 +14,7 @@ import {
 } from '../../lib/ai-assistant/routing/bolu-provider-catalog.ts'
 
 test('catalogue contains only verified, https, well-formed provider contracts', () => {
-  assert.equal(PROVIDER_CATALOGUE.length, 15)
+  assert.equal(PROVIDER_CATALOGUE.length, 16)
 
   const ids = new Set()
   for (const entry of PROVIDER_CATALOGUE) {
@@ -117,8 +117,8 @@ test('resolveProviderDefaults returns catalogue defaults and honors overrides', 
 })
 
 test('every catalogue provider has an exact verified matching entry in ROUTING_PROVIDER_CATALOGUE and is approved for routing', () => {
-  assert.equal(PROVIDER_CATALOGUE.length, 15)
-  assert.equal(Object.keys(ROUTING_PROVIDER_CATALOGUE).length, 15)
+  assert.equal(PROVIDER_CATALOGUE.length, 16)
+  assert.equal(Object.keys(ROUTING_PROVIDER_CATALOGUE).length, 16)
 
   for (const entry of PROVIDER_CATALOGUE) {
     const routingEntry = ROUTING_PROVIDER_CATALOGUE[entry.id]

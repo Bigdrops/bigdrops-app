@@ -4,12 +4,14 @@ import {
   ArrowDown,
   ArrowUp,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Coins,
   Layers,
   Loader2,
   Pencil,
   RefreshCw,
+  Search,
   ShieldAlert,
   ShieldCheck,
   ShieldQuestion,
@@ -19,13 +21,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +46,6 @@ type BusyAction =
   | 'priority'
   | 'balance'
   | 'delete'
-  | 'model'
   | null
 
 type Props = {
@@ -68,7 +62,7 @@ type Props = {
   onSyncBalance: (id: string) => Promise<void>
   onActivate: (id: string) => Promise<void>
   onDelete: (id: string) => Promise<void>
-  onModelChange: (id: string, model: string) => Promise<void>
+  onModelChange?: (id: string, model: string) => Promise<void>
 }
 
 export function ConnectionCard({
@@ -84,27 +78,12 @@ export function ConnectionCard({
   onSyncBalance,
   onActivate,
   onDelete,
-  onModelChange,
 }: Props) {
   const [busy, setBusy] = useState<BusyAction>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const entry = getCatalogueEntry(connection.providerId)
   const providerName = entry?.name ?? 'Custom provider'
-
-  const modelOptions = useMemo(() => {
-    const seen = new Set<string>()
-    const options: { id: string; label: string; source: string }[] = []
-    const push = (id: string, label: string, source: string) => {
-      if (!id || seen.has(id)) return
-      seen.add(id)
-      options.push({ id, label, source })
-    }
-    push(connection.model, connection.model, 'current')
-    for (const m of entry?.curatedModels ?? []) push(m.id, m.label, 'curated')
-    for (const m of connection.discoveredModels ?? []) push(m.id, m.label, 'live')
-    return options
-  }, [connection, entry])
 
   async function run(action: Exclude<BusyAction, null>, fn: () => Promise<void>) {
     setBusy(action)
@@ -214,38 +193,13 @@ export function ConnectionCard({
         </div>
       </div>
 
-      {/* Model Selector & Connection Endpoint */}
-      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div className="space-y-1.5 min-w-0">
-          <Select
-            value={connection.model}
-            onValueChange={(model) => {
-              if (model !== connection.model) void run('model', () => onModelChange(connection.id, model))
-            }}
-            disabled={busy !== null}
-          >
-            <SelectTrigger className="h-8 w-full font-mono text-xs">
-              <SelectValue placeholder="Select model" />
-            </SelectTrigger>
-            <SelectContent>
-              {modelOptions.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  <span className="flex items-center gap-2">
-                    <span className="font-mono text-xs">{m.label}</span>
-                    <span className="text-[9px] uppercase tracking-wide text-bd-text-soft">({m.source})</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="truncate font-mono text-[10px] text-bd-text-muted" title={connection.baseUrl}>
+      {/* Connection Endpoint & Details */}
+      <div className="mt-3 space-y-1.5 min-w-0">
+        <div className="flex items-center justify-between gap-2 text-[11px] text-bd-text-muted">
+          <p className="truncate font-mono text-[10px]" title={connection.baseUrl}>
             {connection.maskedKey} · {connection.baseUrl}
           </p>
-        </div>
-
-        <div className="flex items-center gap-2 text-[11px] text-bd-text-muted shrink-0">
-          {busy === 'model' && <Loader2 size={12} className="animate-spin" />}
-          <span>{connection.timeoutMs / 1000}s timeout</span>
+          <span className="font-mono text-[10px] shrink-0">{connection.timeoutMs / 1000}s timeout</span>
         </div>
       </div>
 

@@ -7,18 +7,18 @@
  * instead of collapsed generic messages.
  */
 
-import { verifyPlatformAdmin } from '../src/lib/ai-assistant/bolu-auth'
-import { getBoluProviderConfig } from '../src/lib/ai-assistant/bolu-provider'
+import { verifyPlatformAdmin } from '../src/lib/ai-assistant/bolu-auth.js'
+import { getBoluProviderConfig } from '../src/lib/ai-assistant/bolu-provider.js'
 import {
   deriveMasterKey,
   getPublicProviderStatus,
-} from '../src/lib/ai-assistant/bolu-secret-vault'
+} from '../src/lib/ai-assistant/bolu-secret-vault.js'
 import {
   PROVIDER_CATALOGUE,
   getCatalogueEntry,
   isCustomProvider,
   resolveProviderDefaults,
-} from '../src/lib/ai-assistant/provider-catalog'
+} from '../src/lib/ai-assistant/provider-catalog.js'
 import {
   assertEndpointResolvesSafe,
   checkRateLimit,
@@ -28,12 +28,12 @@ import {
   sanitizeConnectionName,
   sanitizeModelId,
   validateEndpointSyntax,
-} from '../src/lib/ai-assistant/provider-security'
+} from '../src/lib/ai-assistant/provider-security.js'
 import {
   discoverAdapterModels,
   testAdapterConnection,
   type AdapterConfig,
-} from '../src/lib/ai-assistant/provider-adapters'
+} from '../src/lib/ai-assistant/provider-adapters.js'
 import {
   cacheDiscoveredModels,
   createConnection,
@@ -54,8 +54,8 @@ import {
   type PublicConnection,
   type RoutingEventRecord,
   type RoutingState,
-} from '../src/lib/ai-assistant/connection-vault'
-import { checkUpstreamBalance } from '../src/lib/ai-assistant/routing/bolu-balance-sync'
+} from '../src/lib/ai-assistant/connection-vault.js'
+import { checkUpstreamBalance } from '../src/lib/ai-assistant/routing/bolu-balance-sync.js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type ErrorCode =
@@ -500,6 +500,13 @@ async function handleUpdate(adminClient: SupabaseClient, userId: string, body: R
   if (body.allowedModels !== undefined) {
     if (!Array.isArray(body.allowedModels)) return jsonError('allowedModels must be an array of strings.', 400, 'invalid_request')
     patch.allowedModels = body.allowedModels.map(String).filter(Boolean)
+  }
+  if (body.metadata !== undefined) {
+    if (typeof body.metadata !== 'object' || body.metadata === null) return jsonError('metadata must be an object.', 400, 'invalid_request')
+    patch.metadata = body.metadata as Record<string, unknown>
+    if (Array.isArray(body.metadata.enabledModels)) {
+      patch.allowedModels = body.metadata.enabledModels.map(String).filter(Boolean)
+    }
   }
   if (body.isPaidTier !== undefined) {
     if (typeof body.isPaidTier !== 'boolean') return jsonError('isPaidTier must be a boolean.', 400, 'invalid_request')

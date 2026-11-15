@@ -8,7 +8,7 @@
  * Security: Pure policy logic. Never allows unapproved providers to receive business data.
  */
 
-import { ROUTING_PROVIDER_CATALOGUE } from './bolu-provider-catalog'
+import { ROUTING_PROVIDER_CATALOGUE } from './bolu-provider-catalog.js'
 
 export type BoluTaskType =
   | 'invoice-chat'

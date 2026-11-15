@@ -173,7 +173,9 @@ export function ProviderSettings({
                           type={reveal === entry.id ? 'text' : 'password'}
                           value={entry.key}
                           placeholder={entry.keyHint}
-                          autoComplete="off"
+                          autoComplete="new-password"
+                          data-1p-ignore
+                          data-lpignore="true"
                           spellCheck={false}
                           onChange={(event) => onKeyChange(entry.id, event.target.value)}
                         />
@@ -346,7 +348,9 @@ export function ProviderSettings({
                   className="ac-set-input"
                   type="password"
                   value={draft.key}
-                  autoComplete="off"
+                  autoComplete="new-password"
+                  data-1p-ignore
+                  data-lpignore="true"
                   placeholder="Paste the endpoint key"
                   onChange={(event) => updateDraft({ key: event.target.value })}
                 />

@@ -11,8 +11,8 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { decryptSecret, decryptVaultSecret, deriveMasterKey, encryptSecret, maskApiKey } from '../bolu-secret-vault'
-import type { FailureCategory, FailureScope } from './bolu-error-classifier'
+import { decryptSecret, decryptVaultSecret, deriveMasterKey, encryptSecret, maskApiKey } from '../bolu-secret-vault.js'
+import type { FailureCategory, FailureScope } from './bolu-error-classifier.js'
 
 export type ClaimedConnection = {
   connectionId: string
@@ -22,6 +22,7 @@ export type ClaimedConnection = {
   defaultModel: string
   selectedModel: string
   isPaidTier: boolean
+  timeoutMs: number
   apiKey: string // Decrypted plaintext, exclusively in serverless memory
 }
 
@@ -96,7 +97,7 @@ export async function claimEligibleConnection(
   // 2. Fetch encrypted secret columns directly via trusted service_role
   const { data: secretRow, error: secretError } = await adminClient
     .from('app_ai_provider_connections')
-    .select('encrypted_key, key_nonce, key_tag, key_version')
+    .select('encrypted_key, key_nonce, key_tag, key_version, timeout_ms')
     .eq('id', meta.connection_id)
     .maybeSingle()
 
@@ -126,6 +127,7 @@ export async function claimEligibleConnection(
       defaultModel: meta.default_model,
       selectedModel: meta.selected_model,
       isPaidTier: meta.is_paid_tier,
+      timeoutMs: Number(secretRow.timeout_ms) || 30000,
       apiKey: decryptedKey,
     }
   } catch (err) {
@@ -139,6 +141,59 @@ export async function claimEligibleConnection(
       httpStatus: 500,
       reasonSummary: 'Server failed to decrypt connection credential.',
     })
+    return null
+  }
+}
+
+/**
+ * Claims an exact connection by ID, bypassing pool priority ranking.
+ * Used when the user explicitly targets a connection and model in the chat UI.
+ */
+export async function claimExactConnection(
+  adminClient: SupabaseClient,
+  connectionId: string,
+  modelId?: string | null,
+  masterKey?: Buffer,
+): Promise<ClaimedConnection | null> {
+  if (!connectionId) return null
+
+  const { data: row, error } = await adminClient
+    .from('app_ai_provider_connections')
+    .select('id, provider_id, protocol, base_url, model, timeout_ms, is_enabled, is_paid_tier, encrypted_key, key_nonce, key_tag, key_version')
+    .eq('id', connectionId)
+    .eq('is_enabled', true)
+    .maybeSingle()
+
+  if (error || !row) {
+    console.warn('[bolu-account-pool] Exact connection not found or disabled:', connectionId)
+    return null
+  }
+
+  try {
+    const decryptedKey = decryptVaultSecret(
+      {
+        ciphertext: row.encrypted_key,
+        nonce: row.key_nonce,
+        tag: row.key_tag,
+        version: row.key_version,
+      },
+      process.env,
+      masterKey,
+    )
+
+    return {
+      connectionId: row.id,
+      providerId: row.provider_id,
+      protocol: row.protocol,
+      baseUrl: row.base_url,
+      defaultModel: row.model,
+      selectedModel: modelId?.trim() || row.model,
+      isPaidTier: row.is_paid_tier,
+      timeoutMs: Number(row.timeout_ms) || 30000,
+      apiKey: decryptedKey,
+    }
+  } catch (err) {
+    console.error('[bolu-account-pool] Secret decryption failed for exact connection:', connectionId, err)
     return null
   }
 }

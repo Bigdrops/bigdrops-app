@@ -3,14 +3,19 @@ import { useEntity, useAuthorization } from '@/lib/tenant/contexts'
 import { buildBoluPageContext, type BoluLauncherSource } from '@/lib/ai-assistant/bolu-context'
 import { createBoluRuntime, type BoluRuntimeState } from '@/lib/ai-assistant/bolu-runtime'
 import { sendBoluProviderRequest } from '@/lib/ai-assistant/bolu-transport'
-import { AssistantSheet } from '@/components/ai-assistant/AssistantSheet'
+import { BoluChatWorkspace } from '@/components/ai-assistant/chat'
+import { BoluFloatingActionButton } from '@/components/ai-assistant/BoluFloatingActionButton'
 import { useLocation } from 'react-router-dom'
 
-const BoluContext = createContext<{
+export interface BoluAssistantContextValue {
   open: (launcher?: BoluLauncherSource) => void
+  isOpen: boolean
+  close: () => void
   runtime: ReturnType<typeof createBoluRuntime>
   state: BoluRuntimeState | null
-} | null>(null)
+}
+
+const BoluContext = createContext<BoluAssistantContextValue | null>(null)
 
 export function BoluAssistantProvider({ children }: { children: ReactNode }) {
   const { tenantClient, entity } = useEntity()
@@ -41,18 +46,34 @@ export function BoluAssistantProvider({ children }: { children: ReactNode }) {
     setOpen(true)
   }, [runtime])
 
+  const close = useCallback(() => {
+    setOpen(false)
+  }, [])
+
   useEffect(() => {
     if (previousPathname.current === location.pathname) return
     previousPathname.current = location.pathname
     if (open) runtime.open(buildBoluPageContext(location.pathname, 'contextual'))
   }, [location.pathname, open, runtime])
 
-  const value = useMemo(() => ({ open: summon, runtime, state }), [summon, runtime, state])
+  const value = useMemo(() => ({
+    open: summon,
+    isOpen: open,
+    close,
+    runtime,
+    state,
+  }), [summon, open, close, runtime, state])
 
   return (
     <BoluContext.Provider value={value}>
       {children}
-      <AssistantSheet open={open} onOpenChange={setOpen} runtime={runtime} state={state} />
+      <BoluFloatingActionButton />
+      <BoluChatWorkspace
+        open={open}
+        onClose={close}
+        tenantId={entity?.id}
+        pageContext={buildBoluPageContext(location.pathname, 'contextual')}
+      />
     </BoluContext.Provider>
   )
 }

@@ -1,0 +1,220 @@
+import { useState, type RefObject, type UIEvent } from 'react'
+import { AlertCircle, ArrowDown, Sparkles } from 'lucide-react'
+
+import { ProposalCardView, StatusRow } from './assistant-chat-parts'
+import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
+import type { ClerkState, ProductionBoluMessage } from './types'
+
+/** Helper to strip raw JSON operation envelopes from prose display */
+function cleanAssistantProse(text: string): string {
+  if (!text) return ''
+  return text.replace(/```(?:json)?(?::bolu_operation)?[\s\S]*?```/gi, '').trim()
+}
+
+export function AssistantThread({
+  messages,
+  busy,
+  isStreaming = false,
+  clerkState,
+  tone = 'light',
+  showJump,
+  logRef,
+  onScroll,
+  onJump,
+  onSend,
+  onApproveGate1,
+  onRejectGate1,
+  onConfirmGate2,
+  onCancelGate2,
+  suggestions = [],
+}: {
+  messages: ProductionBoluMessage[]
+  busy: boolean
+  isStreaming?: boolean
+  clerkState: ClerkState
+  tone?: 'light' | 'dark'
+  showJump: boolean
+  logRef: RefObject<HTMLDivElement | null>
+  onScroll: (event: UIEvent<HTMLDivElement>) => void
+  onJump: () => void
+  onSend: (text: string) => void
+  onApproveGate1?: (opId: string) => void
+  onRejectGate1?: (opId: string) => void
+  onConfirmGate2?: (opId: string) => void
+  onCancelGate2?: (opId: string) => void
+  suggestions?: string[]
+}) {
+  const [readerAway, setReaderAway] = useState(false)
+
+  function handleScroll(event: UIEvent<HTMLDivElement>) {
+    const { scrollHeight, scrollTop, clientHeight } = event.currentTarget
+    setReaderAway(scrollHeight - scrollTop - clientHeight > 48)
+    onScroll(event)
+  }
+
+  const defaultSuggestions = suggestions.length > 0 ? suggestions : [
+    'Create an invoice for ABC Ltd with 5 cable lugs at ₦9,500 each',
+    'What overdue invoices do we have right now?',
+    'What are the payment terms for our latest invoice?',
+  ]
+
+  return (
+    <div className="ac-stream">
+      <div
+        className="ac-log"
+        ref={logRef}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        aria-busy={busy}
+        onScroll={handleScroll}
+      >
+        {messages.length === 0 ? (
+          <div className="ac-empty">
+            <div className="ac-empty-clerk-slot flex items-center justify-center">
+              <BoluOrbIdentity
+                state={clerkState}
+                tone={tone}
+                paused={false}
+              />
+            </div>
+            <p className="ac-empty-title">Draft business documents by talking</p>
+            <p className="ac-empty-copy">
+              Bolu interprets your operational requests, prepares structured proposals, and verifies
+              computations via Calculations.ts. You review and approve before any data is saved.
+            </p>
+            <div className="flex flex-col gap-2 mt-4 w-full max-w-sm">
+              {defaultSuggestions.map((sug, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="ac-suggest text-left flex items-center gap-2"
+                  onClick={() => onSend(sug)}
+                >
+                  <Sparkles className="size-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{sug}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {messages.map((message, index) => {
+          const latest = index === messages.length - 1
+          const isUser = message.role === 'user'
+
+          if (isUser) {
+            return (
+              <div key={message.id} className="ac-row ac-row--user">
+                <p className="ac-bubble">{message.content}</p>
+              </div>
+            )
+          }
+
+          const prose = cleanAssistantProse(message.content)
+
+          return (
+            <div key={message.id} className="ac-turn">
+              <div className="ac-turn-avatar flex items-center justify-center size-8 rounded-full bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] shrink-0">
+                {latest && clerkState !== 'idle' ? (
+                  <BoluOrbInline
+                    state={clerkState}
+                    tone={tone}
+                    paused={false}
+                  />
+                ) : (
+                  <Sparkles className="size-3.5 text-[var(--ac-accent)]" aria-hidden="true" />
+                )}
+              </div>
+              <div className="ac-turn-body">
+                {/* Streaming placeholder with orb */}
+                {message.status === 'streaming' && !prose && !message.proposal ? (
+                  <div className="ac-status" data-done={false}>
+                    <span className="ac-status-icon" aria-hidden="true">
+                      <BoluOrbInline
+                        state={clerkState}
+                        tone={tone}
+                        paused={!latest}
+                      />
+                    </span>
+                    <span>Checking business rules…</span>
+                  </div>
+                ) : null}
+
+                {/* Failed Message Error Card */}
+                {message.status === 'failed' ? (
+                  <div className="p-3 my-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2.5">
+                    <AlertCircle className="size-4 shrink-0 text-rose-500 mt-0.5" aria-hidden="true" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-rose-700 dark:text-rose-300">Request Failed</p>
+                      <p className="mt-0.5 text-[11px] leading-relaxed break-words">{message.content || 'Inference request could not be completed.'}</p>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Assistant Prose */}
+                {message.status !== 'failed' && prose ? (
+                  <p className="ac-text whitespace-pre-wrap">
+                    {prose}
+                    {isStreaming && latest && message.status === 'streaming' ? (
+                      <span className="ac-caret" aria-hidden="true" />
+                    ) : null}
+                  </p>
+                ) : null}
+
+                {/* Retrieved Records List */}
+                {message.records && message.records.kind === 'records' && message.records.records.length > 0 ? (
+                  <div className="my-2 space-y-1.5" aria-label="Retrieved business records">
+                    <p className="text-[11px] font-semibold text-[var(--ac-muted)] uppercase tracking-wider">
+                      Authorized Records
+                    </p>
+                    <div className="grid gap-1.5">
+                      {message.records.records.map((rec) => (
+                        <div
+                          key={`${rec.kind}-${rec.id}`}
+                          className="flex items-center justify-between p-2 rounded-xl border border-[var(--ac-line)] bg-[var(--ac-surface)] text-xs"
+                        >
+                          <span className="font-semibold text-[var(--ac-ink)]">{rec.number}</span>
+                          <span className="text-[var(--ac-muted)] truncate max-w-[40%]">{rec.clientName}</span>
+                          <span className="font-medium text-[var(--ac-ink)]">
+                            ₦{rec.total.toLocaleString('en-NG')}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Two-Gate Proposal Card */}
+                {message.proposal ? (
+                  <div className="ac-cards my-2">
+                    <ProposalCardView
+                      proposal={message.proposal}
+                      onApproveGate1={() => onApproveGate1?.(message.proposal!.opId)}
+                      onRejectGate1={() => onRejectGate1?.(message.proposal!.opId)}
+                      onConfirmGate2={() => onConfirmGate2?.(message.proposal!.opId)}
+                      onCancelGate2={() => onCancelGate2?.(message.proposal!.opId)}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {showJump || readerAway ? (
+        <button
+          type="button"
+          className="ac-jump"
+          onClick={onJump}
+          aria-label="Jump to latest messages"
+        >
+          <ArrowDown className="size-3.5" aria-hidden="true" />
+          <span>Jump to latest</span>
+          {busy ? <span className="ac-jump-live" aria-label="New activity streaming">Live</span> : null}
+        </button>
+      ) : null}
+    </div>
+  )
+}

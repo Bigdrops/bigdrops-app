@@ -8,9 +8,9 @@
  * Node-only (outbound fetch). Never import from browser code.
  */
 
-import type { ProviderAuthScheme, ProviderProtocol } from './provider-catalog'
-import { safeProviderFetch } from './provider-security'
-import { readProviderErrorBody } from './protocol'
+import type { ProviderAuthScheme, ProviderProtocol } from './provider-catalog.js'
+import { safeProviderFetch } from './provider-security.js'
+import { readProviderErrorBody } from './protocol.js'
 
 export type AdapterConfig = {
   providerId: string
@@ -155,6 +155,13 @@ export function classifyProviderFailure(
       suggestedAction: 'Check the model identifier and base URL. Use model discovery to list valid models.',
     }
   }
+  if (status === 410) {
+    return {
+      category: 'provider_not_found',
+      message: `Model or endpoint is retired (HTTP 410). ${detail}`.trim(),
+      suggestedAction: 'The model reached end of life. Pick a current model from the provider list, or run model discovery.',
+    }
+  }
   if (status === 429) {
     return {
       category: 'provider_rate_limit',
@@ -253,7 +260,7 @@ export async function testAdapterConnection(config: AdapterConfig): Promise<Prov
   }
 }
 
-function normalizeModelEntry(raw: unknown): DiscoveredModel | null {
+export function normalizeModelEntry(raw: unknown): DiscoveredModel | null {
   if (!raw || typeof raw !== 'object') return null
   const record = raw as Record<string, unknown>
   const id = typeof record.id === 'string' ? record.id.trim() : ''
@@ -264,7 +271,18 @@ function normalizeModelEntry(raw: unknown): DiscoveredModel | null {
       ? record.name.trim()
       : id
   const metadata: Record<string, unknown> = {}
-  for (const field of ['created', 'owned_by', 'type', 'object']) {
+  for (const field of [
+    'created',
+    'owned_by',
+    'type',
+    'object',
+    'context_length',
+    'description',
+    'pricing',
+    'architecture',
+    'top_provider',
+    'per_request_limits',
+  ]) {
     if (record[field] !== undefined) metadata[field] = record[field]
   }
   return { id, label, metadata: Object.keys(metadata).length > 0 ? metadata : undefined }

@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { normalizeChatEndpoint } from './bolu-provider'
+import { normalizeChatEndpoint } from './bolu-provider.js'
 
 export type EncryptedSecret = {
   ciphertext: string
