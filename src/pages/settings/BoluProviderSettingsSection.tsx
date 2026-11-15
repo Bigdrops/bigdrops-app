@@ -30,6 +30,7 @@ import { ConnectionDialog } from './bolu-provider/ConnectionDialog'
 import { ProviderLogo } from './bolu-provider/ProviderLogo'
 import { CatalogueGrid } from './bolu-provider/CatalogueGrid'
 import { ModelsManagerSection } from './bolu-provider/ModelsManagerSection'
+import { AiUsagePanel } from './bolu-provider/AiUsagePanel'
 
 export function BoluProviderSettingsSection() {
   const [status, setStatus] = useState<ProviderStatusResponse | null>(null)
@@ -506,6 +507,9 @@ export function BoluProviderSettingsSection() {
           </CollapsibleContent>
         </Collapsible>
       )}
+
+      {/* AI Usage & Leaderboard (Collapsible, loads on open) */}
+      <AiUsagePanel />
 
       {/* Provider Catalogue */}
       <CatalogueGrid onSelectProvider={openCreate} />

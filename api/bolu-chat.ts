@@ -16,6 +16,7 @@
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getRequestHeader } from '../src/lib/ai-assistant/bolu-auth.js'
 import {
   getBoluProviderConfig,
   validateBoluProviderRequest,
@@ -37,6 +38,14 @@ import {
 } from '../src/lib/ai-assistant/routing/bolu-account-pool.js'
 import { resolveRoutingPolicy } from '../src/lib/ai-assistant/routing/bolu-policy-router.js'
 import { classifyProviderError } from '../src/lib/ai-assistant/routing/bolu-error-classifier.js'
+import {
+  computeCostUsd,
+  createUsageScanner,
+  estimateTokens,
+  recordUsage,
+  type TokenSource,
+  type UsageCounts,
+} from '../src/lib/ai-assistant/bolu-usage-ledger.js'
 
 const TRANSIENT_FAILOVER_CATEGORIES = new Set([
   'rate_limit',
@@ -57,7 +66,7 @@ function jsonError(message: string, status: number, code?: string) {
 }
 
 async function resolveUser(request: Request) {
-  const authorization = request.headers.get('authorization')
+  const authorization = getRequestHeader(request, 'authorization')
   const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY
@@ -107,14 +116,106 @@ function diagnosticsToError(diagnostics: ProviderDiagnostics): Response {
 }
 
 /**
+ * Validates a client-supplied tenant id against the caller's workspace
+ * membership. An unverified tenant is dropped rather than trusted.
+ */
+async function resolveVerifiedTenantId(
+  adminClient: SupabaseClient,
+  tenantId: string | null,
+  userId: string,
+): Promise<string | null> {
+  if (!tenantId) return null
+  try {
+    const { data: entity } = await adminClient
+      .from('entities')
+      .select('id, workspace_id')
+      .eq('id', tenantId)
+      .maybeSingle()
+    if (!entity) return null
+    const { data: isMember } = await adminClient.rpc('is_workspace_member', {
+      p_workspace_id: entity.workspace_id,
+      p_user_id: userId,
+    })
+    return isMember ? tenantId : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Writes one AI consumption row for the caller.
+ *
+ * Never throws and never delays the response: the caller awaits it only after
+ * the upstream stream has already ended.
+ */
+async function logBoluUsage(params: {
+  adminClient: SupabaseClient
+  userId: string
+  userEmail: string | null
+  tenantId: string | null
+  conversationId: string | null
+  providerId: string
+  modelId: string
+  connectionId: string | null
+  isPaidTier?: boolean
+  usage: UsageCounts | null
+  outputText: string
+  promptChars: number
+  success: boolean
+  latencyMs: number
+}): Promise<void> {
+  const counts: UsageCounts = params.usage ?? {
+    promptTokens: estimateTokens('x'.repeat(params.promptChars)),
+    completionTokens: params.outputText ? estimateTokens(params.outputText) : 0,
+    totalTokens: null,
+    source: 'estimated' as TokenSource,
+  }
+  const promptTokens = counts.promptTokens ?? 0
+  const completionTokens = counts.completionTokens ?? 0
+  const totalTokens = counts.totalTokens ?? promptTokens + completionTokens
+
+  const cost = computeCostUsd({
+    isPaidTier: params.isPaidTier,
+    providerId: params.providerId,
+    modelId: params.modelId,
+    promptTokens,
+    completionTokens,
+  })
+
+  const tenantId = await resolveVerifiedTenantId(params.adminClient, params.tenantId, params.userId)
+
+  await recordUsage(params.adminClient, {
+    tenantId,
+    userId: params.userId,
+    userEmail: params.userEmail,
+    conversationId: params.conversationId,
+    providerId: params.providerId,
+    modelId: params.modelId,
+    connectionId: params.connectionId,
+    isPaidTier: params.isPaidTier,
+    counts: { ...counts, totalTokens },
+    costUsd: cost.costUsd,
+    costCurrency: cost.costCurrency,
+    success: params.success,
+    latencyMs: params.latencyMs,
+  })
+}
+
+/**
  * Wraps an upstream ReadableStream to enforce the post-first-token lock-in contract
  * and trigger telemetry success callback upon completion.
+ *
+ * The same pass scans the stream for provider-reported token usage. The scan is
+ * a string search on bytes already in flight and adds no upstream round trip.
  */
 function wrapStreamForFirstTokenBoundary(
   upstreamStream: ReadableStream<Uint8Array>,
   onSuccess: () => void,
+  onComplete?: (usage: UsageCounts | null, outputText: string) => void,
 ): ReadableStream<Uint8Array> {
   const reader = upstreamStream.getReader()
+  const scanner = createUsageScanner()
+  const decoder = new TextDecoder()
   let firstChunkReceived = false
 
   return new ReadableStream<Uint8Array>({
@@ -126,15 +227,20 @@ function wrapStreamForFirstTokenBoundary(
             if (firstChunkReceived) {
               onSuccess()
             }
+            scanner.flush()
+            onComplete?.(scanner.result(), scanner.text())
             controller.close()
             break
           }
           if (value && value.length > 0) {
             firstChunkReceived = true
+            scanner.push(decoder.decode(value, { stream: true }))
           }
           controller.enqueue(value)
         }
       } catch (err) {
+        scanner.flush()
+        onComplete?.(scanner.result(), scanner.text())
         controller.error(err)
       } finally {
         reader.releaseLock()
@@ -182,6 +288,8 @@ export default async function handler(request: Request): Promise<Response> {
     contextFacts?: unknown
     connectionId?: unknown
     modelId?: unknown
+    tenantId?: unknown
+    conversationId?: unknown
   }
   try {
     payload = await request.json()
@@ -193,6 +301,12 @@ export default async function handler(request: Request): Promise<Response> {
     typeof payload.connectionId === 'string' && payload.connectionId.trim() ? payload.connectionId.trim() : null
   const explicitModelId =
     typeof payload.modelId === 'string' && payload.modelId.trim() ? payload.modelId.trim() : null
+  // Untrusted attribution hints. The tenant is re-verified against workspace
+  // membership before it is written to the ledger.
+  const requestedTenantId =
+    typeof payload.tenantId === 'string' && payload.tenantId.trim() ? payload.tenantId.trim() : null
+  const requestedConversationId =
+    typeof payload.conversationId === 'string' && payload.conversationId.trim() ? payload.conversationId.trim() : null
 
   const validation = validateBoluProviderRequest({
     userId: user.id,
@@ -236,6 +350,7 @@ export default async function handler(request: Request): Promise<Response> {
     { role: 'system', content: systemPrompt },
     ...validation.messages,
   ]
+  const promptChars = messages.reduce((total, message) => total + message.content.length, 0)
 
   // Priority 1: Multi-Account Connection Pool via Atomic Routing Engine
   const adminClient = getAdminClient()
@@ -284,6 +399,23 @@ export default async function handler(request: Request): Promise<Response> {
                 cooldownSeconds: classified.retryAfterSeconds,
                 reasonSummary: classified.safeSummary,
               })
+              // A failed attempt still consumes provider allowance.
+              void logBoluUsage({
+                adminClient,
+                userId: user.id,
+                userEmail: user.email ?? null,
+                tenantId: requestedTenantId,
+                conversationId: requestedConversationId,
+                providerId: adapterConfig.providerId,
+                modelId: adapterConfig.model,
+                connectionId: exactClaimed.connectionId,
+                isPaidTier: exactClaimed.isPaidTier,
+                usage: null,
+                outputText: '',
+                promptChars,
+                success: false,
+                latencyMs: result.diagnostics.latencyMs,
+              })
               return diagnosticsToError(result.diagnostics)
             }
 
@@ -291,12 +423,35 @@ export default async function handler(request: Request): Promise<Response> {
             headers.set('X-Bolu-Source', 'connection')
             headers.set('X-Bolu-Connection-Id', exactClaimed.connectionId)
 
+            const startedAt = Date.now()
+
             const bodyStream = result.response.body
-              ? wrapStreamForFirstTokenBoundary(result.response.body, () => {
-                  recordAiSuccess(adminClient, exactClaimed.connectionId, adapterConfig.model).catch((err) => {
-                    console.error('[bolu-chat] recordAiSuccess error:', err)
-                  })
-                })
+              ? wrapStreamForFirstTokenBoundary(
+                  result.response.body,
+                  () => {
+                    recordAiSuccess(adminClient, exactClaimed.connectionId, adapterConfig.model).catch((err) => {
+                      console.error('[bolu-chat] recordAiSuccess error:', err)
+                    })
+                  },
+                  (usage, outputText) => {
+                    void logBoluUsage({
+                      adminClient,
+                      userId: user.id,
+                      userEmail: user.email ?? null,
+                      tenantId: requestedTenantId,
+                      conversationId: requestedConversationId,
+                      providerId: adapterConfig.providerId,
+                      modelId: adapterConfig.model,
+                      connectionId: exactClaimed.connectionId,
+                      isPaidTier: exactClaimed.isPaidTier,
+                      usage,
+                      outputText,
+                      promptChars,
+                      success: true,
+                      latencyMs: Date.now() - startedAt,
+                    })
+                  },
+                )
               : null
 
             return new Response(bodyStream, { status: 200, headers })
@@ -386,6 +541,24 @@ export default async function handler(request: Request): Promise<Response> {
             reasonSummary: classified.safeSummary,
           })
 
+          // A failed attempt still consumes provider allowance.
+          void logBoluUsage({
+            adminClient,
+            userId: user.id,
+            userEmail: user.email ?? null,
+            tenantId: requestedTenantId,
+            conversationId: requestedConversationId,
+            providerId: adapterConfig.providerId,
+            modelId: adapterConfig.model,
+            connectionId: claimed.connectionId,
+            isPaidTier: claimed.isPaidTier,
+            usage: null,
+            outputText: '',
+            promptChars,
+            success: false,
+            latencyMs: result.diagnostics.latencyMs,
+          })
+
           excludedConnectionIds.push(claimed.connectionId)
           if (classified.scope === 'provider') {
             excludedProviders.add(adapterConfig.providerId)
@@ -402,12 +575,35 @@ export default async function handler(request: Request): Promise<Response> {
         headers.set('X-Bolu-Connection-Id', claimed.connectionId)
         if (attempt > 0) headers.set('X-Bolu-Fallback', 'true')
 
+        const startedAt = Date.now()
+
         const bodyStream = result.response.body
-          ? wrapStreamForFirstTokenBoundary(result.response.body, () => {
-              recordAiSuccess(adminClient, claimed.connectionId, adapterConfig.model).catch((err) => {
-                console.error('[bolu-chat] recordAiSuccess error:', err)
-              })
-            })
+          ? wrapStreamForFirstTokenBoundary(
+              result.response.body,
+              () => {
+                recordAiSuccess(adminClient, claimed.connectionId, adapterConfig.model).catch((err) => {
+                  console.error('[bolu-chat] recordAiSuccess error:', err)
+                })
+              },
+              (usage, outputText) => {
+                void logBoluUsage({
+                  adminClient,
+                  userId: user.id,
+                  userEmail: user.email ?? null,
+                  tenantId: requestedTenantId,
+                  conversationId: requestedConversationId,
+                  providerId: adapterConfig.providerId,
+                  modelId: adapterConfig.model,
+                  connectionId: claimed.connectionId,
+                  isPaidTier: claimed.isPaidTier,
+                  usage,
+                  outputText,
+                  promptChars,
+                  success: true,
+                  latencyMs: Date.now() - startedAt,
+                })
+              },
+            )
           : null
 
         return new Response(bodyStream, { status: 200, headers })

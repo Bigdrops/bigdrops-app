@@ -375,8 +375,16 @@ function openAiDeltaEvent(text: string): string {
   return `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`
 }
 
-function bufferedToSse(text: string): Response {
-  return sseResponse(`${openAiDeltaEvent(text)}data: [DONE]\n\n`)
+function bufferedToSse(text: string, usage?: unknown): Response {
+  const delta = openAiDeltaEvent(text)
+  // Preserve the provider's usage block so the caller can account for the
+  // request even when the provider answered without streaming.
+  if (usage && typeof usage === 'object') {
+    const payload = JSON.parse(delta.slice('data: '.length).trim()) as Record<string, unknown>
+    payload.usage = usage
+    return sseResponse(`data: ${JSON.stringify(payload)}\n\ndata: [DONE]\n\n`)
+  }
+  return sseResponse(`${delta}data: [DONE]\n\n`)
 }
 
 /** Translates an Anthropic SSE stream into OpenAI-style delta events. */
@@ -511,7 +519,7 @@ export async function streamAdapterChat(
       const choices = Array.isArray(data.choices) ? (data.choices as Array<Record<string, unknown>>) : []
       const message = choices[0]?.message as Record<string, unknown> | undefined
       const out = typeof message?.content === 'string' ? message.content : ''
-      return { ok: true, response: bufferedToSse(out) }
+      return { ok: true, response: bufferedToSse(out, data.usage) }
     } catch {
       return {
         ok: false,

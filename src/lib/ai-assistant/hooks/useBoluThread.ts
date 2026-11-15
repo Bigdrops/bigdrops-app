@@ -255,6 +255,8 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
           contextFacts: factsPrompt,
           connectionId: options.connectionId,
           modelId: options.modelId,
+          tenantId: resolvedTenantId,
+          conversationId: targetConversationId,
           signal: controller.signal,
           onDelta: (delta: string) => {
             setClerkState('responding')

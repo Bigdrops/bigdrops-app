@@ -7,6 +7,8 @@ export async function sendBoluProviderRequest(params: {
   contextFacts?: string
   connectionId?: string | null
   modelId?: string | null
+  tenantId?: string | null
+  conversationId?: string | null
   signal?: AbortSignal
   onDelta?: (delta: string) => void
 }): Promise<{ text: string }> {
@@ -25,6 +27,8 @@ export async function sendBoluProviderRequest(params: {
       contextFacts: params.contextFacts ?? '',
       connectionId: params.connectionId ?? undefined,
       modelId: params.modelId ?? undefined,
+      tenantId: params.tenantId ?? undefined,
+      conversationId: params.conversationId ?? undefined,
     }),
     signal: params.signal,
   })

@@ -1,0 +1,267 @@
+/**
+ * bolu-usage-ledger.ts — AI consumption capture.
+ *
+ * Records what every user actually consumes from the shared provider pool:
+ * request identity, tenant, provider, model, tokens and cost.
+ *
+ * Design constraints:
+ * - Never blocks or slows the chat response. The ledger write happens after
+ *   the upstream stream ends and is fire-and-forget.
+ * - Never changes the outbound provider request. Usage is read from the
+ *   response when the provider reports it, and estimated locally when it does
+ *   not. The estimate is always labelled, never presented as a provider count.
+ * - Cost is null when the price is unknown. Zero never means "unknown".
+ */
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+export type TokenSource = 'provider' | 'estimated' | 'unavailable'
+
+export type UsageCounts = {
+  promptTokens: number | null
+  completionTokens: number | null
+  totalTokens: number | null
+  source: TokenSource
+}
+
+export type UsageEntry = {
+  tenantId?: string | null
+  userId?: string | null
+  userEmail?: string | null
+  conversationId?: string | null
+  providerId: string
+  modelId: string
+  connectionId?: string | null
+  isPaidTier?: boolean
+  counts: UsageCounts
+  costUsd: number | null
+  costCurrency: string
+  success: boolean
+  latencyMs?: number | null
+}
+
+/**
+ * Rough token estimate for text the provider did not count.
+ * Four characters per token is the standard English approximation.
+ */
+export function estimateTokens(text: string): number {
+  if (!text) return 0
+  return Math.max(1, Math.ceil(text.length / 4))
+}
+
+/**
+ * Reads a usage object out of one OpenAI-compatible SSE frame.
+ * Returns null when the frame carries no usage.
+ */
+export function extractUsageFromSseFrame(frame: string): UsageCounts | null {
+  const trimmed = frame.trim()
+  if (!trimmed.startsWith('data:')) return null
+  const payload = trimmed.slice(5).trim()
+  if (!payload || payload === '[DONE]') return null
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(payload)
+  } catch {
+    return null
+  }
+  if (!parsed || typeof parsed !== 'object') return null
+
+  const usage = (parsed as Record<string, unknown>).usage as Record<string, unknown> | undefined
+  if (!usage || typeof usage !== 'object') return null
+
+  const prompt = toInt(usage.prompt_tokens)
+  const completion = toInt(usage.completion_tokens)
+  const total = toInt(usage.total_tokens) ?? (prompt !== null || completion !== null ? (prompt ?? 0) + (completion ?? 0) : null)
+
+  if (prompt === null && completion === null && total === null) return null
+
+  return {
+    promptTokens: prompt,
+    completionTokens: completion,
+    totalTokens: total,
+    source: 'provider',
+  }
+}
+
+function toInt(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  return Math.max(0, Math.round(value))
+}
+
+/**
+ * Scans a byte stream for provider-reported usage and the generated text.
+ * Usage normally arrives in the final frame, but frames can be split across
+ * chunk boundaries, so the scanner keeps a partial line buffer.
+ */
+export function createUsageScanner(): {
+  push: (chunk: string) => void
+  flush: () => void
+  result: () => UsageCounts | null
+  text: () => string
+} {
+  let buffer = ''
+  let found: UsageCounts | null = null
+  let outputText = ''
+
+  const scanLine = (line: string) => {
+    const trimmed = line.trim()
+    if (!trimmed.startsWith('data:')) return
+    const payload = trimmed.slice(5).trim()
+    if (!payload || payload === '[DONE]') return
+
+    if (!found) {
+      const usage = extractUsageFromSseFrame(line)
+      if (usage) found = usage
+    }
+
+    // Accumulate the generated text for the completion-token estimate.
+    try {
+      const parsed = JSON.parse(payload) as Record<string, unknown>
+      const choices = parsed.choices as Array<Record<string, unknown>> | undefined
+      const delta = choices?.[0]?.delta as Record<string, unknown> | undefined
+      const content = delta?.content
+      if (typeof content === 'string') outputText += content
+    } catch {
+      // A malformed frame is ignored; the stream itself is unaffected.
+    }
+  }
+
+  return {
+    push(chunk: string) {
+      buffer += chunk
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) scanLine(line)
+    },
+    flush() {
+      if (buffer.trim()) scanLine(buffer)
+      buffer = ''
+    },
+    result() {
+      return found
+    },
+    text() {
+      return outputText
+    },
+  }
+}
+
+/**
+ * Prices in USD per million tokens, converted from the published list price.
+ * Each entry carries the date the price was last verified.
+ */
+export type ModelPrice = {
+  promptUsdPerMTok: number
+  completionUsdPerMTok: number
+  currency: string
+  verifiedAt: string
+}
+
+/** Published JPY prices converted to USD. Rate verified 2026-11-15. */
+const JPY_PER_USD = 150
+
+const MODEL_PRICES: Record<string, ModelPrice> = {
+  'plamo:plamo-3.1-prime': {
+    promptUsdPerMTok: 60 / JPY_PER_USD,
+    completionUsdPerMTok: 250 / JPY_PER_USD,
+    currency: 'USD',
+    verifiedAt: '2026-11-15',
+  },
+  'plamo:plamo-3.0-prime': {
+    promptUsdPerMTok: 60 / JPY_PER_USD,
+    completionUsdPerMTok: 250 / JPY_PER_USD,
+    currency: 'USD',
+    verifiedAt: '2026-11-15',
+  },
+  // No token charge on any plan.
+  'plamo:plamo-3.0-fin-beta': {
+    promptUsdPerMTok: 0,
+    completionUsdPerMTok: 0,
+    currency: 'USD',
+    verifiedAt: '2026-11-15',
+  },
+}
+
+export function lookupModelPrice(providerId: string, modelId: string): ModelPrice | null {
+  return MODEL_PRICES[`${providerId}:${modelId}`] ?? null
+}
+
+/**
+ * Computes the cost of one request.
+ *
+ * A connection the administrator marked as a free tier costs nothing. A paid
+ * connection costs its published rate when the price is known. An unknown price
+ * returns null so the report can say "unknown" instead of a false zero.
+ */
+export function computeCostUsd(params: {
+  isPaidTier?: boolean
+  providerId: string
+  modelId: string
+  promptTokens: number | null
+  completionTokens: number | null
+}): { costUsd: number | null; costCurrency: string } {
+  if (params.isPaidTier === false) {
+    return { costUsd: 0, costCurrency: 'USD' }
+  }
+
+  const price = lookupModelPrice(params.providerId, params.modelId)
+  if (!price) {
+    return { costUsd: null, costCurrency: 'USD' }
+  }
+
+  const prompt = params.promptTokens ?? 0
+  const completion = params.completionTokens ?? 0
+  const cost =
+    (prompt / 1_000_000) * price.promptUsdPerMTok +
+    (completion / 1_000_000) * price.completionUsdPerMTok
+
+  return {
+    costUsd: Math.round(cost * 1e8) / 1e8,
+    costCurrency: price.currency,
+  }
+}
+
+/**
+ * Builds the ledger row. Callers pass the counts they already have.
+ */
+export function buildUsageRow(entry: UsageEntry): Record<string, unknown> {
+  return {
+    tenant_id: entry.tenantId ?? null,
+    user_id: entry.userId ?? null,
+    user_email: entry.userEmail ?? null,
+    conversation_id: entry.conversationId ?? null,
+    provider_id: entry.providerId,
+    model_id: entry.modelId,
+    connection_id: entry.connectionId ?? null,
+    prompt_tokens: entry.counts.promptTokens,
+    completion_tokens: entry.counts.completionTokens,
+    total_tokens: entry.counts.totalTokens,
+    cost_usd: entry.costUsd,
+    cost_currency: entry.costCurrency,
+    token_source: entry.counts.source,
+    success: entry.success,
+    latency_ms: entry.latencyMs ?? null,
+  }
+}
+
+/**
+ * Writes one ledger row. Failures are logged and swallowed: a broken ledger
+ * must never break a customer conversation.
+ */
+export async function recordUsage(
+  client: SupabaseClient | null,
+  entry: UsageEntry,
+): Promise<void> {
+  if (!client) return
+  try {
+    const { error } = await client
+      .from('app_ai_usage_ledger')
+      .insert(buildUsageRow(entry))
+    if (error) {
+      console.error('[bolu-usage] ledger insert failed:', error.message)
+    }
+  } catch (err) {
+    console.error('[bolu-usage] ledger insert threw:', err instanceof Error ? err.message : err)
+  }
+}
