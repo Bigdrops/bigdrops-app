@@ -278,7 +278,7 @@ function mockResponse(messages: BoluProviderMessage[]): Response {
   })
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   if (request.method !== 'POST') return jsonError('Method not allowed.', 405)
   const user = await resolveUser(request)
   if (!user) return jsonError('Sign in to use Bolu.', 401)

@@ -4,7 +4,7 @@ import type { PaymentAttachment } from "../src/lib/attachmentTypes.js"
 
 const VOID_PREFIX = "\u{1F6AB} VOIDED — This payment has been voided.\n\n"
 
-export default async function (request: Request): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 })
   }

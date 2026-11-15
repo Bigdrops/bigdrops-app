@@ -70,11 +70,14 @@ function apiDevServerPlugin() {
           })
 
           const mod = await server.ssrLoadModule(filePath)
-          const handler = mod.default
+          // Vercel treats default exports as legacy (req, res) handlers and
+          // ignores returned Web Responses, so routes export named HTTP methods.
+          const method = (req.method || 'GET').toUpperCase()
+          const handler = typeof mod[method] === 'function' ? mod[method] : mod.default
           if (typeof handler !== 'function') {
             res.statusCode = 500
             res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify({ error: `Handler not exported as default in ${routeName}.ts` }))
+            res.end(JSON.stringify({ error: `Handler not exported as ${method} in ${routeName}.ts` }))
             return
           }
 

@@ -197,7 +197,15 @@ async function endpointGuard(baseUrl: string): Promise<Response | null> {
   return null
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  return handleRequest(request)
+}
+
+export async function POST(request: Request): Promise<Response> {
+  return handleRequest(request)
+}
+
+async function handleRequest(request: Request): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'POST') {
     return jsonError('Method not allowed.', 405, 'invalid_request')
   }
@@ -503,9 +511,10 @@ async function handleUpdate(adminClient: SupabaseClient, userId: string, body: R
   }
   if (body.metadata !== undefined) {
     if (typeof body.metadata !== 'object' || body.metadata === null) return jsonError('metadata must be an object.', 400, 'invalid_request')
-    patch.metadata = body.metadata as Record<string, unknown>
-    if (Array.isArray(body.metadata.enabledModels)) {
-      patch.allowedModels = body.metadata.enabledModels.map(String).filter(Boolean)
+    const metadata = body.metadata as Record<string, unknown>
+    patch.metadata = metadata
+    if (Array.isArray(metadata.enabledModels)) {
+      patch.allowedModels = metadata.enabledModels.map(String).filter(Boolean)
     }
   }
   if (body.isPaidTier !== undefined) {

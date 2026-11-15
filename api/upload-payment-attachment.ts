@@ -31,7 +31,7 @@ function stageError(stage: string, message: string, status = 500) {
   return Response.json({ success: false, stage, message }, { status })
 }
 
-export default async function(request: Request): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   console.log(`${TAG} [1] Request received`)
 
   if (request.method !== "POST") {

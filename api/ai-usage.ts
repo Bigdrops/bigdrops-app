@@ -20,7 +20,7 @@ function jsonError(message: string, status: number, code?: string) {
   return Response.json(code ? { error: message, code } : { error: message }, { status })
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonError('Method not allowed.', 405, 'invalid_request')
   }
