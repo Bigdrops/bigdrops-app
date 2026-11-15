@@ -89,7 +89,7 @@ describe('Bolu Secret Vault & Encryption Suite', () => {
 
   it('safely masks API keys for administrative UI display', () => {
     expect(maskApiKey(sampleAmdKey)).toBe('rc-••••••••••••7766')
-    expect(maskApiKey('sk-ant-api03-1234567890abcdef')).toBe('sk-••••••••cdef')
+    expect(maskApiKey('sk-dummy-key-redacted')).toBe('sk-••••••••cted')
     expect(maskApiKey('short123')).toBe('••••23')
     expect(maskApiKey('')).toBe('')
   })
