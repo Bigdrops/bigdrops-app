@@ -195,7 +195,7 @@ export default function SystemLogsSettingsSection() {
           className="flex items-center justify-between rounded-xl border border-bd-border bg-bd-surface p-4 text-left transition hover:border-primary/50 hover:bg-muted/40 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40"
         >
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-bd-status-info-bg text-bd-status-info-text">
               <Mail className="size-4.5" />
             </div>
             <div>
@@ -213,7 +213,7 @@ export default function SystemLogsSettingsSection() {
           className="flex items-center justify-between rounded-xl border border-bd-border bg-bd-surface p-4 text-left transition hover:border-emerald-500/50 hover:bg-muted/40 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-40"
         >
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-bd-status-success-bg text-bd-status-success-text">
               <MessageCircle className="size-4.5" />
             </div>
             <div>
@@ -221,7 +221,7 @@ export default function SystemLogsSettingsSection() {
               <div className="text-[11px] text-bd-text-muted">+234 815 024 0192</div>
             </div>
           </div>
-          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Chat &rarr;</span>
+          <span className="text-xs font-semibold text-bd-status-success-text">Chat &rarr;</span>
         </button>
       </div>
 
@@ -265,7 +265,7 @@ export default function SystemLogsSettingsSection() {
               >
                 <div className="flex items-start justify-between gap-3 p-3.5 sm:p-4">
                   <div className="flex min-w-0 flex-1 items-start gap-3">
-                    <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                    <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-bd-status-danger-bg text-bd-status-danger-text">
                       <AlertCircle className="size-4" />
                     </div>
                     <div className="min-w-0 flex-1">

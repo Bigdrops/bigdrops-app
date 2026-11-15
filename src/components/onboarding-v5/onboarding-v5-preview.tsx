@@ -36,7 +36,7 @@ interface Chapter {
 }
 
 const SOURCE_REFERENCES = [
-  'BOUXRE_Ultimate_Onboarding.html',
+  'BOURXE_Ultimate_Onboarding.html',
   'claude-v2.html',
   'deepseek.html',
   'cta-index.tsx',
@@ -472,9 +472,9 @@ function AuthShell({
               </button>
             ) : (
               <p className="ob5-terms">
-                By continuing you agree to the Terms and{' '}
+                By continuing you agree to the{' '}
                 <Link to="/privacy-policy" className="underline underline-offset-2 hover:opacity-80">
-                  Privacy Policy
+                  Terms and Privacy Policy
                 </Link>
                 .
               </p>
