@@ -20,6 +20,7 @@ import type { BoluChatWorkspaceProps, ViewportId } from './types'
 
 import './assistant-chat.css'
 import './assistant-chat-clerk.css'
+import './assistant-chat-premium-dark.css'
 
 /** Detect viewport preset from window width */
 function detectViewport(): ViewportId {
@@ -359,7 +360,7 @@ export function BoluChatWorkspace({
       aria-label="Bolu Assistant Workspace"
     >
       {/* Root Modal Container */}
-      <div className="relative flex flex-col w-full h-[100dvh] md:h-[96vh] max-h-[100dvh] md:max-h-[96vh] max-w-7xl rounded-none md:rounded-3xl border border-[var(--ac-line)] bg-[var(--ac-surface)] shadow-2xl overflow-hidden">
+      <div className="ac-window relative flex flex-col w-full h-[100dvh] md:h-[96vh] max-h-[100dvh] md:max-h-[96vh] max-w-7xl rounded-none md:rounded-3xl border border-[var(--ac-line)] bg-[var(--ac-surface)] shadow-2xl overflow-hidden">
         {/* DEC-26 Responsive Viewports */}
         <div className="relative flex flex-1 min-h-0 w-full overflow-hidden">
           {/* 1. Phone Viewport ('fold-closed'): Single column + sheets */}

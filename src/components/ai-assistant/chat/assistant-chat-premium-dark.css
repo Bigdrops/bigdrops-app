@@ -1,0 +1,170 @@
+/* assistant-chat-premium-dark.css
+ *
+ * Premium dark treatment for the Bolu assistant chat.
+ *
+ * Scoped two ways on purpose:
+ *   - `.dark`      -> dark mode only (tailwind darkMode: ['class'])
+ *   - `.ac-device` -> the assistant chat surface only
+ * Nothing outside the assistant chat changes. Light mode is untouched, and no
+ * app-wide theme token is modified.
+ *
+ * The reference is morphin.dev's dark theme. The important finding is that its
+ * black is NOT tinted. Every value below is achromatic (R = G = B):
+ *
+ *   page          #000000
+ *   window        #0a0a0a
+ *   raised card   #171717
+ *   muted fill    #1f1f1f
+ *   hairline      #242424
+ *   strong line   #2e2e2e
+ *
+ * The gloss comes from white highlights, not from a tinted black:
+ *
+ *   rim        1px white at 20%  -> the glass edge around a card
+ *   specular   1px white at 13%  -> inset on the top edge, a lit bevel
+ *   drop       0 8px 24px -6px rgba(0,0,0,.55)
+ *
+ * Every class styled here is used by the production chat components in this
+ * directory. Design-lab-only classes are deliberately not targeted.
+ *
+ * To revert: delete this file and remove its one import in
+ * BoluChatWorkspace.tsx.
+ */
+
+/* ── Tokens ─────────────────────────────────────────────────────── */
+
+.dark .ac-device {
+  --ac-ink: #fff;
+  --ac-muted: #a1a1a1;
+  --ac-faint: color-mix(in srgb, var(--ac-muted) 60%, transparent);
+  --ac-surface: #000;
+  --ac-raised: #171717;
+  --ac-muted-surface: #1f1f1f;
+  --ac-line: #242424;
+  --ac-line-strong: #2e2e2e;
+  --ac-hairline: color-mix(in oklab, #fff 10%, transparent);
+
+  /* Glass edges */
+  --ac-rim: color-mix(in oklab, #fff 20%, transparent);
+  --ac-specular: inset 0 1px 0 0 color-mix(in oklab, #fff 13%, transparent);
+  --ac-glass-shadow: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+
+  --ac-accent-soft: color-mix(in srgb, var(--ac-accent) 16%, #171717);
+  --ac-accent-line: color-mix(in srgb, var(--ac-accent) 42%, #242424);
+  --ac-attn-soft: color-mix(in srgb, var(--ac-attn) 16%, #171717);
+}
+
+/* ── Planes ─────────────────────────────────────────────────────── */
+
+/* The chat window itself: a near-black card floating over the dimmed app.
+ * The app sets bg-[var(--ac-surface)] on this element. */
+.dark .ac-window {
+  background: #0a0a0a;
+  border-color: var(--ac-rim);
+  box-shadow:
+    var(--ac-specular),
+    0 0 0 1px var(--ac-rim),
+    0 40px 90px -40px rgb(0 0 0 / 0.9);
+}
+
+/* The rail and the artifact panel sit behind the chat column. */
+.dark .ac-rail,
+.dark .ac-panel {
+  background: #0b0b0b;
+}
+
+/* Structural separators get a faint white hairline, not a grey border. */
+.dark .ac-rail,
+.dark .ac-panel-head,
+.dark .ac-rail-top,
+.dark .ac-composer,
+.dark .ac-clerk-foot,
+.dark .ac-doc-total {
+  border-color: var(--ac-hairline);
+}
+
+.dark .ac-composer {
+  background: transparent;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────── */
+
+/* The floating clerk dock: the largest raised surface in the chat. */
+.dark .ac-clerk-dock {
+  background: var(--ac-raised);
+  box-shadow:
+    var(--ac-specular),
+    0 0 0 1px var(--ac-rim),
+    0 30px 60px -30px rgb(0 0 0 / 0.9);
+}
+
+.dark .ac-compose {
+  background: var(--ac-raised);
+  border-color: var(--ac-rim);
+  box-shadow: var(--ac-specular);
+}
+.dark .ac-compose:focus-within {
+  border-color: var(--ac-accent);
+  box-shadow:
+    var(--ac-specular),
+    0 0 0 1px var(--ac-accent);
+}
+
+.dark .ac-doc {
+  background: var(--ac-raised);
+  border-color: var(--ac-rim);
+  box-shadow: var(--ac-specular);
+}
+
+.dark .ac-jump {
+  background: var(--ac-raised);
+  border-color: var(--ac-rim);
+  box-shadow:
+    var(--ac-specular),
+    0 0 0 1px var(--ac-rim),
+    var(--ac-glass-shadow);
+}
+
+.dark .ac-suggest {
+  background: var(--ac-raised);
+  border-color: var(--ac-rim);
+  box-shadow: var(--ac-specular);
+}
+.dark .ac-suggest:hover {
+  background: var(--ac-accent-soft);
+  border-color: var(--ac-accent);
+}
+
+.dark .ac-clerk-action {
+  background: var(--ac-raised);
+  box-shadow:
+    var(--ac-specular),
+    0 0 0 1px var(--ac-rim);
+}
+.dark .ac-clerk-action:hover:not(:disabled) {
+  background: var(--ac-accent-soft);
+}
+
+.dark .ac-ctx-pill,
+.dark .ac-model-trigger,
+.dark .ac-new {
+  background: var(--ac-raised);
+  border-color: var(--ac-rim);
+  box-shadow: var(--ac-specular);
+}
+
+.dark .ac-thread:hover {
+  background: #141414;
+}
+.dark .ac-thread[data-active='true'] {
+  background: var(--ac-raised);
+  box-shadow:
+    var(--ac-specular),
+    0 0 0 1px var(--ac-rim);
+}
+
+/* ── Message bubble ─────────────────────────────────────────────── */
+
+.dark .ac-bubble {
+  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--ac-accent) 65%, transparent);
+}
