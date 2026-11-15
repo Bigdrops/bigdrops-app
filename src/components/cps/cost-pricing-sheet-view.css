@@ -1039,3 +1039,25 @@
     padding-left: 16px;
   }
 }
+
+@media print {
+  .cps-view,
+  .cps-view-wrap,
+  .cps-doc,
+  .cps-doc-in {
+    width: 100% !important;
+    max-width: 794px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .cps-view-topbar,
+  .cps-view-appbar,
+  .cps-doc-actions,
+  .cps-fab-slot,
+  .cps-view-rail {
+    display: none !important;
+  }
+}
