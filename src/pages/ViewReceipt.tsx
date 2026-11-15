@@ -39,6 +39,28 @@ async function renderReceiptPdfBlob(receipt: ReceiptRow, designPreset: PdfDesign
   return renderPdfcnToBlob(<ReceiptFormeDocument model={model} designPreset={designPreset} />)
 }
 
+function formatPrimitiveText(val: unknown, fallback = "-"): string {
+  if (val == null) return fallback
+  if (typeof val === "string") return val.trim() || fallback
+  if (typeof val === "number") return String(val)
+  if (typeof val === "boolean") return val ? "Yes" : "No"
+  if (typeof val === "object") {
+    if (Array.isArray(val)) {
+      const items = val.map((v) => formatPrimitiveText(v, "")).filter(Boolean)
+      return items.join(", ") || fallback
+    }
+    const obj = val as Record<string, unknown>
+    const parts = [obj.address, obj.street, obj.city, obj.state, obj.name, obj.label, obj.value].filter(Boolean)
+    if (parts.length > 0) return parts.map((p) => formatPrimitiveText(p, "")).join(", ")
+    try {
+      return JSON.stringify(val)
+    } catch {
+      return fallback
+    }
+  }
+  return String(val)
+}
+
 export default function ViewReceipt() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -48,6 +70,30 @@ export default function ViewReceipt() {
   const [loading, setLoading] = useState(true)
   const [shareOpen, setShareOpen] = useState(false)
   const designPreset = getPdfDesignPreset("receipt")
+
+  const previewData = useMemo(() => (receipt ? buildReceiptPreviewData(receipt) : null), [receipt])
+
+  const receiptSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: "receipt",
+    documentId: String(receipt?.id || id || ""),
+    documentNumber: String(receipt?.receipt_number || "Receipt"),
+    documentTitle: `Payment Receipt for ${receipt?.invoice_number || "Invoice"}`,
+    recipientName: String(receipt?.client_name || ""),
+    recipientEmail: receipt?.client_email || "",
+    issuerName: String(settings?.company_name || ""),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || "",
+    totalFormatted: formatNaira(Number(receipt?.payment_amount ?? 0)),
+    issueDate: receipt?.payment_date || "",
+    notes: (receipt as any)?.notes || "",
+    fileName: `receipt-${receipt?.receipt_number || "receipt"}.pdf`,
+    tenantId: (receipt as any)?.tenant_id || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
+    getPdfBlob: () => {
+      if (!receipt) return Promise.reject(new Error("Receipt not loaded"))
+      return renderReceiptPdfBlob(receipt, designPreset)
+    },
+  }), [receipt, id, settings, designPreset])
 
   useEffect(() => {
     if (!id || !tenantClient.isReady) return
@@ -113,31 +159,11 @@ export default function ViewReceipt() {
     )
   }
 
-  const previewData = buildReceiptPreviewData(receipt)
   const formatDate = (value: string | null | undefined) =>
     formatDisplayDate(value, {
       fallback: "-", invalidFallback: "-", locale: "en-GB",
       dateOptions: { day: "2-digit", month: "short", year: "numeric" },
     })
-
-  const receiptSharePayload: DocumentSharePayload = useMemo(() => ({
-    documentType: "receipt",
-    documentId: String(receipt?.id || id || ""),
-    documentNumber: String(receipt?.receipt_number || "Receipt"),
-    documentTitle: `Payment Receipt for ${receipt?.invoice_number || "Invoice"}`,
-    recipientName: String(receipt?.client_name || ""),
-    recipientEmail: receipt?.client_email || "",
-    issuerName: String(settings?.company_name || ""),
-    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || "",
-    totalFormatted: formatNaira(Number(receipt?.payment_amount ?? 0)),
-    issueDate: receipt?.payment_date || "",
-    notes: (receipt as any)?.notes || "",
-    fileName: `receipt-${receipt?.receipt_number || "receipt"}.pdf`,
-    tenantId: (receipt as any)?.tenant_id || undefined,
-    issuerPhone: settings?.phone || undefined,
-    issuerAddress: settings?.address || undefined,
-    getPdfBlob: () => renderReceiptPdfBlob(receipt, designPreset),
-  }), [receipt, id, settings, designPreset])
 
   return (
     <DocumentPage
@@ -173,7 +199,7 @@ export default function ViewReceipt() {
                 : "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400"
             }`}
           >
-            {receipt.status}
+            {formatPrimitiveText(receipt.status)}
           </span>
         </div>
 
@@ -181,7 +207,9 @@ export default function ViewReceipt() {
         <div className="rounded-2xl border border-bd-border bg-bd-surface p-5">
           <p className="text-xs font-medium uppercase tracking-wider text-bd-text-muted">Amount Received</p>
           <p className="mt-1 text-3xl font-black text-bd-text">{formatNaira(receipt.payment_amount)}</p>
-          <p className="mt-1 text-sm text-bd-text-muted italic">{previewData.amountInWords}</p>
+          {previewData?.amountInWords ? (
+            <p className="mt-1 text-sm text-bd-text-muted italic">{formatPrimitiveText(previewData.amountInWords)}</p>
+          ) : null}
         </div>
 
         {/* Receipt details */}
@@ -212,7 +240,7 @@ export default function ViewReceipt() {
         {receipt.status === "voided" && receipt.void_reason && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/20 dark:bg-red-500/5">
             <p className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">Voided</p>
-            <p className="mt-1 text-sm text-red-700 dark:text-red-300">{receipt.void_reason}</p>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-300">{formatPrimitiveText(receipt.void_reason)}</p>
           </div>
         )}
       </div>
@@ -220,11 +248,11 @@ export default function ViewReceipt() {
   )
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="flex justify-between">
       <dt className="text-bd-text-muted">{label}</dt>
-      <dd className="font-medium text-bd-text text-right max-w-[60%] truncate">{value}</dd>
+      <dd className="font-medium text-bd-text text-right max-w-[60%] truncate">{formatPrimitiveText(value)}</dd>
     </div>
   )
 }

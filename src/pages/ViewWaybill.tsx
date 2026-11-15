@@ -103,6 +103,25 @@ const MODAL_DELIVERED = 'delivered'
 const MODAL_DELETE = 'delete'
 const MODAL_ARCHIVE = 'archive'
 
+function toText(val: unknown, fallback = ''): string {
+  if (val == null) return fallback
+  if (typeof val === 'string') return val.trim() || fallback
+  if (typeof val === 'number') return String(val)
+  if (typeof val === 'boolean') return val ? 'Yes' : 'No'
+  if (typeof val === 'object') {
+    if (Array.isArray(val)) return val.map((v) => toText(v, '')).filter(Boolean).join(', ') || fallback
+    const obj = val as Record<string, unknown>
+    const parts = [obj.address, obj.street, obj.city, obj.state, obj.name, obj.label, obj.value].filter(Boolean)
+    if (parts.length > 0) return parts.map((p) => toText(p, '')).join(', ')
+    try {
+      return JSON.stringify(val)
+    } catch {
+      return fallback
+    }
+  }
+  return String(val)
+}
+
 export default function ViewWaybill() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -289,6 +308,7 @@ export default function ViewWaybill() {
     if (!waybill || downloading) return
     setDownloading(true)
     try {
+      const customFields = parseWaybillCustomFields(waybill?.custom_fields)
       const columnVisibility = customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))
       const columnTitles = Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))
       const standardColumns = STANDARD_ITEM_COLUMNS
@@ -388,6 +408,58 @@ export default function ViewWaybill() {
     }
   }
 
+  const model = useMemo(() => {
+    if (!rawWaybill || !settings) return null
+    const customFields = parseWaybillCustomFields(waybill?.custom_fields || rawWaybill.custom_fields)
+    const columnVisibility = customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))
+    const columnTitles = Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))
+    const standardColumns = STANDARD_ITEM_COLUMNS
+      .filter(col => col.key !== 'quantity' && col.key !== 'unit')
+      .filter(col => columnVisibility[col.key] !== false)
+      .map(col => ({ key: col.key, label: columnTitles[col.key] || col.label }))
+    const qtyLabelVisible = columnVisibility.quantity !== false && columnVisibility.unit !== false
+    const qtyLabelCol = qtyLabelVisible ? [{ key: 'qtyLabel', label: 'Qty/Unit' }] : []
+    const customCols = (customFields.customColumns || [])
+      .filter(col => !STANDARD_ITEM_COLUMNS.some(sc => sc.key === col.key))
+      .filter(col => columnVisibility[col.key] !== false)
+      .map(col => ({ key: col.key, label: col.label }))
+    const columns: ResolvedColumn[] = [...standardColumns, ...qtyLabelCol, ...customCols]
+    const company: CompanySettings = {
+      name: toText(settings?.company_name, ''),
+      tagline: settings?.company_tagline ? toText(settings.company_tagline) : null,
+      logo: settings?.company_logo_url || null,
+      address: settings?.company_address ? toText(settings.company_address) : null,
+      phone: settings?.company_phone ? toText(settings.company_phone) : null,
+      email: settings?.company_email ? toText(settings.company_email) : null,
+      website: settings?.company_website ? toText(settings.company_website) : null,
+      customInfo: settings?.custom_info ? JSON.parse(settings.custom_info) : null,
+      city: settings?.company_city ? toText(settings.company_city) : null,
+      state: settings?.company_state ? toText(settings.company_state) : null,
+    }
+    return buildWaybillRenderModel({ waybill: rawWaybill, columns, company })
+  }, [rawWaybill, waybill, settings])
+
+  const waybillSharePayload: DocumentSharePayload = useMemo(() => ({
+    documentType: 'waybill',
+    documentId: String(waybill?.id || id || ''),
+    documentNumber: toText(waybill?.waybill_number, 'Waybill'),
+    documentTitle: waybill?.type === 'internal' ? 'Internal Waybill' : 'Waybill',
+    recipientName: toText(waybill?.client_name, ''),
+    recipientEmail: toText(rawWaybill?.recipient_email, ''),
+    issuerName: toText(settings?.company_name, ''),
+    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || '',
+    issueDate: toText(waybill?.issue_date || waybill?.created_at?.slice(0, 10), ''),
+    notes: toText(waybill?.notes, ''),
+    fileName: `${toText(waybill?.waybill_number, 'waybill')}.pdf`,
+    tenantId: waybill?.tenant_id || rawWaybill?.tenant_id || undefined,
+    issuerPhone: settings?.phone || undefined,
+    issuerAddress: settings?.address || undefined,
+    getPdfBlob: () => {
+      if (!model) return Promise.reject(new Error('Waybill model not loaded'))
+      return renderWaybillPdfBlob(model, designPreset, template)
+    },
+  }), [waybill, id, rawWaybill, settings, designPreset, template, model])
+
   if (loading) {
     return (
       <DocumentPage topNav={<DocumentTopNav title="Opening Waybill..." backLabel="Waybills" onBack={() => navigate('/waybills')} />}>
@@ -398,68 +470,17 @@ export default function ViewWaybill() {
 
   if (!waybill) return null
 
-  const customFields = parseWaybillCustomFields(waybill.custom_fields)
-
-  const model = rawWaybill && settings
-    ? (() => {
-        const columnVisibility = customFields.columnVisibility || Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.defaultVisible]))
-        const columnTitles = Object.fromEntries(STANDARD_ITEM_COLUMNS.map(c => [c.key, c.label]))
-        const standardColumns = STANDARD_ITEM_COLUMNS
-          .filter(col => col.key !== 'quantity' && col.key !== 'unit')
-          .filter(col => columnVisibility[col.key] !== false)
-          .map(col => ({ key: col.key, label: columnTitles[col.key] || col.label }))
-        const qtyLabelVisible = columnVisibility.quantity !== false && columnVisibility.unit !== false
-        const qtyLabelCol = qtyLabelVisible ? [{ key: 'qtyLabel', label: 'Qty/Unit' }] : []
-        const customCols = (customFields.customColumns || [])
-          .filter(col => !STANDARD_ITEM_COLUMNS.some(sc => sc.key === col.key))
-          .filter(col => columnVisibility[col.key] !== false)
-          .map(col => ({ key: col.key, label: col.label }))
-        const columns: ResolvedColumn[] = [...standardColumns, ...qtyLabelCol, ...customCols]
-        const company: CompanySettings = {
-          name: settings?.company_name || '',
-          tagline: settings?.company_tagline || null,
-          logo: settings?.company_logo_url || null,
-          address: settings?.company_address || null,
-          phone: settings?.company_phone || null,
-          email: settings?.company_email || null,
-          website: settings?.company_website || null,
-          customInfo: settings?.custom_info ? JSON.parse(settings.custom_info) : null,
-          city: settings?.company_city || null,
-          state: settings?.company_state || null,
-        }
-        return buildWaybillRenderModel({ waybill: rawWaybill, columns, company })
-      })()
-    : null
-
-  const waybillSharePayload: DocumentSharePayload = useMemo(() => ({
-    documentType: 'waybill',
-    documentId: String(waybill?.id || id || ''),
-    documentNumber: String(waybill?.waybill_number || 'Waybill'),
-    documentTitle: waybill?.type === 'internal' ? 'Internal Waybill' : 'Waybill',
-    recipientName: String(waybill?.client_name || ''),
-    recipientEmail: rawWaybill?.recipient_email || '',
-    issuerName: String(settings?.company_name || ''),
-    issuerLogoUrl: resolveCanonicalLogoUrl(settings) || '',
-    issueDate: waybill?.issue_date || waybill?.created_at?.slice(0, 10) || '',
-    notes: waybill?.notes || '',
-    fileName: `${waybill?.waybill_number || 'waybill'}.pdf`,
-    tenantId: waybill?.tenant_id || rawWaybill?.tenant_id || undefined,
-    issuerPhone: settings?.phone || undefined,
-    issuerAddress: settings?.address || undefined,
-    getPdfBlob: () => renderWaybillPdfBlob(model, designPreset, template),
-  }), [waybill, id, rawWaybill, settings, designPreset, template, model])
-
   const docProps: BaseDocument = {
     id: waybill.id,
-    number: waybill.waybill_number,
+    number: toText(waybill.waybill_number, '—'),
     title: waybill.type === 'internal' ? 'Internal Waybill' : 'External Waybill',
     status: (waybill.status || 'dispatched') as any,
   }
 
   const metrics = [
-    { label: 'Dispatch From', value: waybill.sender_name || 'N/A' },
-    { label: 'Vehicle', value: waybill.vehicle_plate || 'Self Pickup', tone: 'amber' as const },
-    { label: 'Status', value: waybill.status || 'dispatched', tone: waybill.status === 'delivered' ? 'green' as const : 'amber' as const },
+    { label: 'Dispatch From', value: toText(waybill.sender_name, 'N/A') },
+    { label: 'Vehicle', value: toText(waybill.vehicle_plate, 'Self Pickup'), tone: 'amber' as const },
+    { label: 'Status', value: toText(waybill.status, 'dispatched'), tone: waybill.status === 'delivered' ? 'green' as const : 'amber' as const },
   ]
 
   return (
