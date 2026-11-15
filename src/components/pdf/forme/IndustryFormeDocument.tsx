@@ -3,6 +3,7 @@ import { Cell, Document, Fixed, Image, Link, Page, Row, Table, Text, View } from
 import { INDUSTRY_DEFAULT_ACCENT, INDUSTRY_GROUP_TOKENS, type CommercialDocumentData } from '../industryAdapter'
 import { lightenHex } from '@/lib/pdfDesignPreset'
 import { glyphRuns } from './glyphs'
+import { resolveCommercialTableWidths } from './commercialLayout'
 import {
   getAccentTint,
   buildPartyLines,
@@ -23,28 +24,16 @@ const PAGE_WIDTH = 595.28
 const DEFAULT_MARGIN_H = 32
 const COMPACT_MARGIN_H = 24
 
-const FIXED_COLUMN_WIDTHS: Record<string, number> = {
-  num: 28, quantity: 48, unit: 42, make: 58, unit_price: 74, unitCost: 74, unit_cost: 74,
-  amount: 80, install_rate: 72, vat_rate: 36, discount_rate: 42,
+const INDUSTRY_PREFERRED_WIDTHS: Record<string, number> = {
+  num: 24, quantity: 36, unit: 32, make: 54, unit_price: 68, unitCost: 68, unit_cost: 68,
+  unitCp: 68, sp: 68, totalCost: 76,
+  amount: 76, install_rate: 64, vat_rate: 34, discount_rate: 38,
 }
 
-function resolveCommercialTableWidths(
-  columns: CommercialDocumentData['table']['columns'],
-  contentWidth: number,
-): Array<{ width: { fixed: number } }> {
-  let fixedSum = 0
-  for (const col of columns) {
-    if (col.key === 'description') continue
-    const defaultWidth = FIXED_COLUMN_WIDTHS[col.key] ?? 60
-    fixedSum += (col.width && col.width > 0 ? col.width : defaultWidth)
-  }
-  const descWidth = Math.max(120, contentWidth - fixedSum)
-
-  return columns.map((col) => {
-    if (col.key === 'description') return { width: { fixed: descWidth } }
-    const defaultWidth = FIXED_COLUMN_WIDTHS[col.key] ?? 60
-    return { width: { fixed: col.width && col.width > 0 ? col.width : defaultWidth } }
-  })
+const INDUSTRY_MIN_WIDTHS: Record<string, number> = {
+  num: 20, quantity: 28, unit: 26, make: 42, unit_price: 56, unitCost: 56, unit_cost: 56,
+  unitCp: 56, sp: 56, totalCost: 64,
+  amount: 64, install_rate: 52, vat_rate: 30, discount_rate: 32,
 }
 
 function toTitleCase(value: string) {
@@ -81,8 +70,16 @@ export function IndustryFormeDocument({ data, compact = false }: IndustryFormeDo
   const headerFont = (design.useCustomFonts && design.headerFont) ? design.headerFont : 'Inter'
 
   const marginH = compact ? COMPACT_MARGIN_H : DEFAULT_MARGIN_H
-  const contentWidth = PAGE_WIDTH - marginH * 2
-  const tableColumns = resolveCommercialTableWidths(data.table.columns, contentWidth)
+  const isLandscape = data.layout?.orientation === 'landscape'
+  const pageWidth = isLandscape ? 841.89 : PAGE_WIDTH
+  const contentWidth = pageWidth - marginH * 2
+  const tableColumns = resolveCommercialTableWidths(data.table.columns, contentWidth, {
+    preferred: INDUSTRY_PREFERRED_WIDTHS,
+    minimums: INDUSTRY_MIN_WIDTHS,
+    minDescription: 110,
+    fallbackPreferred: 56,
+    fallbackMinimum: 42,
+  })
 
   const metaRows = [
     data.documentNumber ? { label: data.documentNumberLabel, value: data.documentNumber } : null,
