@@ -13,6 +13,7 @@ import {
   ArchiveRestore,
   Ban,
   Copy,
+  FilePlus2,
   History,
   Printer,
 } from 'lucide-react'
@@ -27,6 +28,7 @@ export default function PurchaseOrderMoreSheet({
   archived,
   canEdit,
   onPrint,
+  onCreateNew,
   onCopyReference,
   onViewActivity,
   onArchiveToggle,
@@ -38,6 +40,7 @@ export default function PurchaseOrderMoreSheet({
   archived: boolean
   canEdit: boolean
   onPrint: () => void
+  onCreateNew: () => void
   onCopyReference: () => void
   onViewActivity: () => void
   onArchiveToggle: () => void
@@ -55,6 +58,16 @@ export default function PurchaseOrderMoreSheet({
             <div style={{ minWidth: 0 }}>
               <div className={localStyles.channelLabel}>Print document</div>
               <div className={localStyles.channelCaption}>Opens the print dialog for this order</div>
+            </div>
+          </button>
+
+          <button type="button" className={localStyles.channelRow} onClick={onCreateNew}>
+            <div className={localStyles.channelTile} style={{ background: 'hsl(var(--bd-surface-muted))' }}>
+              <FilePlus2 size={17} aria-hidden="true" />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div className={localStyles.channelLabel}>New Purchase Order</div>
+              <div className={localStyles.channelCaption}>Start a fresh order without leaving this one</div>
             </div>
           </button>
 

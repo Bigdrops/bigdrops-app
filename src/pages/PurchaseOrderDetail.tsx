@@ -259,6 +259,9 @@ export default function PurchaseOrderDetail() {
   }
 
   const archived = isArchived(purchaseOrder)
+  // Edit is a draft-only affordance. Issued, closed and cancelled orders are
+  // immutable; the form independently redirects anything that is not a draft.
+  const editable = canEdit && !archived && purchaseOrder.status === 'draft'
   const items = purchaseOrder.items ?? []
   const extraCharges = purchaseOrder.extra_charges ?? []
   const vatPercent = Number(purchaseOrder.calculation_inputs?.vatPercent ?? 0)
@@ -346,7 +349,9 @@ export default function PurchaseOrderDetail() {
             }),
           onArchive: () => setConfirmArchive(true),
           onRestore: () => void handleRestore(),
-          onEdit: () => navigate(`/purchase-orders/edit/${purchaseOrder.id}`),
+          onEdit: () => {
+            if (editable) navigate(`/purchase-orders/edit/${purchaseOrder.id}`)
+          },
         }}
       />
 
@@ -357,6 +362,10 @@ export default function PurchaseOrderDetail() {
         archived={archived}
         canEdit={canArchive}
         onPrint={handlePrint}
+        onCreateNew={() => {
+          setMoreOpen(false)
+          navigate('/purchase-orders/new')
+        }}
         onCopyReference={() => void handleCopyReference()}
         onViewActivity={() => {
           setHistoryOpen(true)
