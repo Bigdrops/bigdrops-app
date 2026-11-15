@@ -96,10 +96,16 @@ test('Quotation view has Create New Quotation shortcut wired to /quotations/new'
 
 test('Purchase Order detail has New Purchase Order button wired to /purchase-orders/new', () => {
   const detailSource = fs.readFileSync(path.resolve('src/pages/PurchaseOrderDetail.tsx'), 'utf8')
+  const moreSheetSource = fs.readFileSync(
+    path.resolve('src/components/document-view/purchase-order/PurchaseOrderMoreSheet.tsx'),
+    'utf8',
+  )
 
-  assert.match(detailSource, /New Purchase Order/)
-  assert.match(detailSource, /onClick=\{\(\) => navigate\('\/purchase-orders\/new'\)\}/)
-})
+  // The affordance lives in the More actions sheet; the page owns the route.
+  assert.match(moreSheetSource, /New Purchase Order/)
+  assert.match(moreSheetSource, /onClick=\{onCreateNew\}/)
+  assert.match(detailSource, /navigate\('\/purchase-orders\/new'\)/)
+  assert.match(detailSource, /onCreateNew=\{/) })
 
 test('Cost & Pricing Sheet view has New Sheet action wired to /cost-pricing-sheets/new', () => {
   const presSource = fs.readFileSync(path.resolve('src/components/cps/CostPricingSheetViewPresentations.tsx'), 'utf8')

@@ -291,6 +291,9 @@ test('validateFlaggedCleanupImport validates merge groups against export groups'
       response_type: 'flagged_cleanup_result',
       schema_version: 1,
       source_export_type: 'flagged_cleanup',
+      // The result must echo the export snapshot, otherwise the review set may
+      // have changed since the AI ran.
+      snapshot_id: exportPayload.snapshot_id,
       merge_groups: [
         {
           group_id: 'g1',

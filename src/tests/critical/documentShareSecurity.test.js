@@ -30,16 +30,17 @@ test('SECURITY: generateCryptoToken produces 192-bit cryptographic randomness an
     tokens.add(t)
   }
 
-  // 3. Verify fail-closed behavior when crypto is absent
-  const originalCrypto = globalThis.crypto
+  // 3. Verify fail-closed behavior when crypto is absent.
+  // Node exposes `crypto` as a getter-only global, so plain assignment throws
+  // before the assertion runs. Redefine the property and restore it after.
+  const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto')
   try {
-    // @ts-ignore
-    globalThis.crypto = undefined
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true, writable: true })
     assert.throws(() => {
       generateCryptoToken()
     }, /Secure cryptographic randomness is unavailable/)
   } finally {
-    globalThis.crypto = originalCrypto
+    if (originalDescriptor) Object.defineProperty(globalThis, 'crypto', originalDescriptor)
   }
 })
 

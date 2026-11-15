@@ -33,7 +33,8 @@ const formTopBarPath = 'src/components/document/DocumentFormPresentation.tsx'
 const viewNavPath = 'src/components/document-view/shared/DocumentTopNav.tsx'
 const moreOptionsPath = 'src/pages/MoreOptions.tsx'
 const rfqEditorPath = 'src/components/rfq/RfqEditor.tsx'
-const csrFormScreenPath = 'src/components/csr/CsrFormScreen.tsx'
+// The CSR control lives in the presentation layer that renders each header.
+const csrFormScreenPath = 'src/components/csr/CsrFormPresentations.tsx'
 const persistencePath = 'src/hooks/useUserThemePreferences.ts'
 const formHeaderPath = 'src/components/document/FormHeader.tsx'
 const sharedFormPath = 'src/components/document/SharedDocumentForm.tsx'
@@ -146,7 +147,9 @@ test('bespoke RFQ and CSR form headers expose the theme toggle exactly once', ()
   assert.match(rfq, /import \{ ThemeToggleButton \}/)
   assert.match(csr, /import \{ ThemeToggleButton \}/)
   assert.equal(count(rfq, /<ThemeToggleButton/g), 1)
-  assert.equal(count(csr, /<ThemeToggleButton/g), 1)
+  // CSR has two responsive presentations; each header carries exactly one.
+  assert.equal(count(csr, /<header/g), 2)
+  assert.equal(count(csr, /<ThemeToggleButton/g), 2)
 })
 
 // ── Objective 3: list pages expose BOTH sidebar and theme toggles ──────────
@@ -210,7 +213,6 @@ test('every header exposes at most one theme control', () => {
     viewNavPath,
     moreOptionsPath,
     rfqEditorPath,
-    csrFormScreenPath,
   ]) {
     assert.equal(
       count(read(file), /<ThemeToggleButton/g),
@@ -218,6 +220,10 @@ test('every header exposes at most one theme control', () => {
       `${file} must render exactly one theme toggle`,
     )
   }
+  // The CSR presentations file holds two headers, so exactly one per header.
+  const csr = read(csrFormScreenPath)
+  assert.equal(count(csr, /<header/g), 2)
+  assert.equal(count(csr, /<ThemeToggleButton/g), 2)
 })
 
 test('the Dashboard theme control is unchanged and not duplicated', () => {

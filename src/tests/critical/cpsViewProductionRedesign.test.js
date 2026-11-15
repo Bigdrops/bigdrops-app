@@ -27,7 +27,11 @@ const fabCss = readFileSync(
 
 test('CPS view separates document actions from identity', () => {
   assert.match(viewSource, /function DocumentActionRow/)
-  assert.match(viewSource, /<DocumentActionRow onEdit=\{props\.onEdit\} onConvert=\{\(\) => setConvertOpen\(true\)\} \/>/)
+  // Convert now opens the conversion-options gate before anything is created.
+  assert.match(
+    viewSource,
+    /<DocumentActionRow onEdit=\{props\.onEdit\} onConvert=\{\(\) => setOptionsOpen\(true\)\} onDownload=\{props\.onDownload\} downloading=\{props\.downloading\} \/>/,
+  )
   assert.match(viewSource, /<Dossier \{\.\.\.props\}/)
   assert.match(viewCss, /\.cps-doc-actions/)
   assert.ok(
@@ -57,7 +61,9 @@ test('CPS document action order is Convert to Quote, Edit, Download', () => {
   assert.match(viewCss, /\.cps-view-btn\.convert \.cps-action-icon\s*\{[\s\S]*background:\s*hsl\(var\(--bd-button-primary-bg\)\)/)
   assert.match(viewCss, /\.cps-view-btn span:last-child\s*\{[\s\S]*white-space:\s*nowrap/)
   assert.doesNotMatch(cssRule('.cps-view-btn span:last-child'), /text-overflow:\s*ellipsis/)
-  assert.doesNotMatch(viewCss, /\.cps-view-btn\.convert\s*\{[\s\S]*background:\s*var\(--brand\)/)
+  // Scope the check to this rule: an unscoped pattern reaches later rules that
+  // legitimately paint the brand (for example the issuer monogram).
+  assert.doesNotMatch(cssRule('.cps-view-btn.convert'), /background:\s*var\(--brand\)/)
 })
 
 test('CPS action row participates in normal scroll flow', () => {
@@ -65,12 +71,14 @@ test('CPS action row participates in normal scroll flow', () => {
 
   assert.doesNotMatch(mobileActionRule, /position:\s*sticky/)
   assert.doesNotMatch(mobileActionRule, /top:\s*56px/)
-  assert.match(viewCss, /\.cps-view-wrap\s*\{[\s\S]*padding:\s*8px 20px 24px/)
+  // The inset resolves to the canonical 20px gutter.
+  assert.match(viewCss, /\.cps-view-wrap\s*\{[\s\S]*padding:\s*8px var\(--cps-content-inset\) 24px/)
+  assert.match(viewCss, /\.cps-view\s*\{[\s\S]*--cps-content-inset:\s*20px/)
   assert.doesNotMatch(viewCss, /112px/)
 })
 
 test('direct Convert to Quote and More Actions reuse one conversion authority', () => {
-  const conversionCalls = viewSource.match(/props\.actions\.onConvertToQuotation\(\)/g) || []
+  const conversionCalls = viewSource.match(/props\.actions\.onConvertToQuotation\(/g) || []
   assert.equal(conversionCalls.length, 2, 'desktop and mobile wrappers may each call the same page action once')
   assert.match(viewSource, /label: 'Convert to Quotation'[\s\S]*onClick: onRequestConvert/)
   assert.match(viewSource, /Convert to Quote/)
@@ -189,7 +197,7 @@ test('CPS local fake bottom navigation is removed and real app navigation is res
 })
 
 test('CPS download FAB uses canonical download FAB geometry and nav offset', () => {
-  assert.match(viewSource, /<FloatingDownloadButton label="Download Cost & Pricing Sheet" \/>/)
+  assert.match(viewSource, /<FloatingDownloadButton label="Download Cost & Pricing Sheet"[^>]*\/>/)
   assert.match(viewCss, /bottom:\s*calc\(var\(--bd-app-bottom-nav-offset,\s*72px\) \+ env\(safe-area-inset-bottom,\s*0px\) \+ 16px\)/)
   assert.match(fabSource, /DownloadIcon size=\{20\}/)
   assert.match(fabCss, /width:\s*50px/)
