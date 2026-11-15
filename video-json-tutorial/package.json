@@ -1,0 +1,17 @@
+{
+  "name": "video-json-tutorial",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "still": "remotion still src/index.ts",
+    "render": "remotion render src/index.ts InvoiceJsonTutorial out/invoice-json-tutorial.mp4",
+    "capture": "node capture/capture.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.543",
+    "react": "19",
+    "react-dom": "19",
+    "remotion": "^4.0.543"
+  }
+}
