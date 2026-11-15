@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cloudzyro": {
+      "url": "https://api.cloudzyro.com/mcp",
+      "transport": "http"
+    }
+  }
+}
