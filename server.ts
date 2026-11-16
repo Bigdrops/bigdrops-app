@@ -59,6 +59,8 @@ export async function router(req: Request): Promise<Response> {
     try {
       if (routeName === 'bolu-chat') {
         mod = await import('./api/bolu-chat')
+      } else if (routeName === 'bolu-save') {
+        mod = await import('./api/bolu-save')
       } else if (routeName === 'bolu-provider-config') {
         mod = await import('./api/bolu-provider-config')
       } else if (routeName === 'ai-usage') {

@@ -210,41 +210,91 @@ async function logBoluUsage(params: {
  */
 function wrapStreamForFirstTokenBoundary(
   upstreamStream: ReadableStream<Uint8Array>,
-  onSuccess: () => void,
-  onComplete?: (usage: UsageCounts | null, outputText: string) => void,
+  onSuccess: () => Promise<void> | void,
+  onComplete?: (usage: UsageCounts | null, outputText: string) => Promise<void> | void,
 ): ReadableStream<Uint8Array> {
   const reader = upstreamStream.getReader()
   const scanner = createUsageScanner()
   const decoder = new TextDecoder()
   let firstChunkReceived = false
+  let isClosed = false
+
+  const finalizeStream = async (controller: ReadableStreamDefaultController<Uint8Array>) => {
+    if (isClosed) return
+    isClosed = true
+    try {
+      if (firstChunkReceived) {
+        await Promise.resolve(onSuccess()).catch((err) => {
+          console.error('[bolu-chat] onSuccess callback failed:', err)
+        })
+      }
+      scanner.flush()
+      onComplete?.(scanner.result(), scanner.text())
+    } finally {
+      try {
+        controller.close()
+      } catch {}
+    }
+  }
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
         for (;;) {
-          const { done, value } = await reader.read()
+          // Read next chunk with a 25s timeout to avoid indefinite hanging on keep-alive
+          let timeoutId: any
+          const chunkPromise = reader.read()
+          const timeoutPromise = new Promise<{ done: true; value: undefined }>((resolve) => {
+            timeoutId = setTimeout(() => {
+              if (firstChunkReceived) {
+                resolve({ done: true, value: undefined })
+              }
+            }, 25000)
+          })
+
+          const { done, value } = await Promise.race([chunkPromise, timeoutPromise])
+          clearTimeout(timeoutId)
+
           if (done) {
-            if (firstChunkReceived) {
-              onSuccess()
-            }
-            scanner.flush()
-            onComplete?.(scanner.result(), scanner.text())
-            controller.close()
+            await finalizeStream(controller)
             break
           }
+
           if (value && value.length > 0) {
             firstChunkReceived = true
-            scanner.push(decoder.decode(value, { stream: true }))
+            const text = decoder.decode(value, { stream: true })
+            scanner.push(text)
+            controller.enqueue(value)
+
+            // OpenAI / PlaMo / SSE completion detection: close immediately on [DONE]
+            if (text.includes('data: [DONE]') || text.includes('[DONE]')) {
+              await finalizeStream(controller)
+              break
+            }
           }
-          controller.enqueue(value)
         }
       } catch (err) {
-        scanner.flush()
-        onComplete?.(scanner.result(), scanner.text())
-        controller.error(err)
+        console.error('[bolu-chat] Upstream stream read error:', err)
+        try {
+          scanner.flush()
+          if (onComplete) {
+            await Promise.resolve(onComplete(scanner.result(), scanner.text())).catch(() => {})
+          }
+        } finally {
+          try {
+            controller.error(err)
+          } catch {}
+        }
       } finally {
-        reader.releaseLock()
+        try {
+          reader.releaseLock()
+        } catch {}
       }
+    },
+    async cancel() {
+      try {
+        await reader.cancel()
+      } catch {}
     },
   })
 }

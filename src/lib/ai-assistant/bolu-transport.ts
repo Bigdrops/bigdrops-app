@@ -43,26 +43,42 @@ export async function sendBoluProviderRequest(params: {
   const decoder = new TextDecoder()
   let buffer = ''
   let text = ''
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
-    for (const line of lines) {
-      const delta = extractSseText(line)
-      if (delta) {
-        text += delta
-        params.onDelta?.(delta)
+  let isDone = false
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (trimmed === 'data: [DONE]' || trimmed === '[DONE]') {
+          isDone = true
+          break
+        }
+        const delta = extractSseText(line)
+        if (delta) {
+          text += delta
+          params.onDelta?.(delta)
+        }
+      }
+      if (isDone) break
+    }
+    if (buffer && !isDone) {
+      const trimmed = buffer.trim()
+      if (trimmed !== 'data: [DONE]' && trimmed !== '[DONE]') {
+        const delta = extractSseText(buffer)
+        if (delta) {
+          text += delta
+          params.onDelta?.(delta)
+        }
       }
     }
-  }
-  if (buffer) {
-    const delta = extractSseText(buffer)
-    if (delta) {
-      text += delta
-      params.onDelta?.(delta)
-    }
+  } finally {
+    try {
+      reader.releaseLock()
+    } catch {}
   }
   if (!text.trim()) throw new Error('Bolu returned an empty response.')
   return { text }

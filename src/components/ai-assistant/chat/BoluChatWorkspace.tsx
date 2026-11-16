@@ -11,12 +11,17 @@ import { ModelPill, type ActiveModelInfo, type SelectedModelTarget } from './ass
 import { boluProviderApi, type PublicConnection } from '@/pages/settings/bolu-provider/api'
 import { useBoluConversations } from '@/lib/ai-assistant/hooks/useBoluConversations'
 import { useBoluThread } from '@/lib/ai-assistant/hooks/useBoluThread'
+import { useBoluNarration } from '@/lib/ai-assistant/hooks/useBoluNarration'
+import { useBoluInteractionPreferences } from '@/hooks/useBoluInteractionPreferences'
+import { useBoluChatInteractions } from '@/hooks/useBoluChatInteractions'
+import { useBoluResponseHaptics } from '@/hooks/useBoluResponseHaptics'
+import { triggerBoluHaptic } from '@/lib/ai-assistant/bolu-haptics'
 import { exportChatAsMarkdown, exportChatAsJson } from '@/lib/ai-assistant/bolu-export'
 import { getBoluSuggestions } from '@/lib/ai-assistant/bolu-context'
 import { EntityContext } from '@/lib/tenant/entityContext'
 import { useAuthorization } from '@/lib/tenant/contexts'
 import type { BoluReadAuthorization, BoluWriteAuthorization } from '@/lib/ai-assistant/bolu-data'
-import type { BoluChatWorkspaceProps, ViewportId } from './types'
+import type { BoluChatWorkspaceProps, ProductionBoluMessage, ViewportId } from './types'
 
 import './assistant-chat.css'
 import './assistant-chat-clerk.css'
@@ -83,6 +88,8 @@ export function BoluChatWorkspace({
   const [inputDraft, setInputDraft] = useState('')
   const [pinned, setPinned] = useState(true)
   const [showJump, setShowJump] = useState(false)
+  // Id of the user message currently being edited in the composer.
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
 
   const logRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -198,6 +205,8 @@ export function BoluChatWorkspace({
     streamingContent,
     activeProposal,
     submitMessage,
+    editUserMessage,
+    regenerateResponse,
     stopStreaming,
     approveGate1,
     rejectGate1,
@@ -220,6 +229,24 @@ export function BoluChatWorkspace({
       })
     },
   })
+
+  const { preferences } = useBoluInteractionPreferences()
+  const narration = useBoluNarration({ rate: preferences.narrationRate })
+  const stopNarration = narration.stop
+
+  useBoluResponseHaptics({ messages, isStreaming, preferences })
+
+  const { handleBeginEdit, handleCancelEdit, handleRegenerate, handleSpeakResponse, handleSaveEdit, narrationControls } =
+    useBoluChatInteractions({ isStreaming, preferences, narration, editUserMessage, regenerateResponse, setEditingMessageId, setInputDraft, inputRef, stopNarration })
+
+  // Leaving the conversation, closing the workspace or unmounting stops speech.
+  useEffect(() => {
+    stopNarration()
+  }, [activeConversationId, stopNarration])
+
+  useEffect(() => {
+    if (!open) stopNarration()
+  }, [open, stopNarration])
 
   // Automatically open contextual panel when an actionable document proposal arrives
   useEffect(() => {
@@ -244,13 +271,22 @@ export function BoluChatWorkspace({
   // Suggestions derived from context
   const suggestions = pageContext ? getBoluSuggestions(pageContext).map((s) => s.prompt) : []
 
-  // Message submission handler with error-safe draft retention
+  // Message submission handler with error-safe draft retention.
+  // While editing, the same composer saves the edited request instead of
+  // appending a new user message.
   const handleSend = async (text: string) => {
     const clean = text.trim()
     if (!clean || isStreaming) return
+
+    if (editingMessageId) {
+      await handleSaveEdit(editingMessageId, clean)
+      return
+    }
+
     const success = await submitMessage(clean)
     if (success) {
       setInputDraft('')
+      triggerBoluHaptic('impact-light', preferences)
     }
   }
 
@@ -260,6 +296,11 @@ export function BoluChatWorkspace({
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape' && editingMessageId) {
+      e.preventDefault()
+      handleCancelEdit()
+      return
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       void handleSend(inputDraft)
@@ -273,6 +314,8 @@ export function BoluChatWorkspace({
 
   const handleClose = () => {
     setInputDraft('')
+    setEditingMessageId(null)
+    stopNarration()
     selectConversation(null)
     setMobileRailOpen(false)
     onClose?.()
@@ -281,11 +324,16 @@ export function BoluChatWorkspace({
   const handleNewConversation = () => {
     selectConversation(null)
     setInputDraft('')
+    setEditingMessageId(null)
+    stopNarration()
     setMobileRailOpen(false)
     inputRef.current?.focus()
   }
 
   const handleSelectThread = (id: string) => {
+    setEditingMessageId(null)
+    setInputDraft('')
+    stopNarration()
     selectConversation(id)
     setMobileRailOpen(false)
   }
@@ -346,6 +394,9 @@ export function BoluChatWorkspace({
       onRejectGate1={(opId) => void rejectGate1(opId)}
       onConfirmGate2={(opId) => void confirmGate2Save(opId)}
       onCancelGate2={(opId) => void cancelGate2Save(opId)}
+      onEditMessage={handleBeginEdit}
+      onRegenerateMessage={handleRegenerate}
+      narration={narrationControls}
       suggestions={suggestions}
     />
   )
@@ -356,7 +407,12 @@ export function BoluChatWorkspace({
       value={inputDraft}
       busy={isStreaming}
       disabled={isStreaming || clerkState !== 'idle'}
-      awaiting={Boolean(activeProposal && activeProposal.status === 'pending_approval')}
+      awaiting={Boolean(
+        activeProposal &&
+          (activeProposal.status === 'pending_approval' || activeProposal.status === 'approved_pending_save'),
+      )}
+      editing={Boolean(editingMessageId)}
+      onCancelEdit={handleCancelEdit}
       inputRef={inputRef}
       onChange={setInputDraft}
       onSubmit={handleSubmit}

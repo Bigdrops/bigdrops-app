@@ -72,6 +72,28 @@ describe('server.ts — Bun HTTP Server Router & CORS', () => {
     })
     const usageRes = await router(usagePost)
     assert.equal(usageRes.status, 405)
+
+    const saveGet = new Request('http://localhost:8080/api/bolu-save', {
+      method: 'GET',
+    })
+    const saveRes = await router(saveGet)
+    assert.equal(saveRes.status, 405)
+  })
+
+  it('routes POST /api/bolu-save and returns 401 when unauthorized', async () => {
+    const saveReq = new Request('http://localhost:8080/api/bolu-save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        origin: 'https://bigdrops-app.vercel.app',
+      },
+      body: JSON.stringify({ proposal: { opId: 'test-123', status: 'approved_pending_save' } }),
+    })
+    const saveRes = await router(saveReq)
+    assert.equal(saveRes.status, 401)
+    assert.equal(saveRes.headers.get('Access-Control-Allow-Origin'), 'https://bigdrops-app.vercel.app')
+    const body = (await saveRes.json()) as { error: string; code: string }
+    assert.equal(body.code, 'unauthorized')
   })
 
   it('withCors injects CORS headers while preserving status and body', async () => {
