@@ -197,7 +197,6 @@ async function persistSettings(updates, tenantClient) {
 
 export function normalizeSettings(data) {
   if (!data || typeof data !== 'object') return {}
-  console.log('[useSettings] Normalizing raw settings data:', data)
   const nextData = normalizeThemeSettings(data)
 
   /**
@@ -210,17 +209,14 @@ export function normalizeSettings(data) {
   const hasCompanyLogo = typeof nextData.company_logo_url === 'string' && nextData.company_logo_url.trim().length > 0
   
   if (hasLegacyLogo && !hasCompanyLogo) {
-    console.log('[useSettings] Migrating legacy logo_url to company_logo_url:', nextData.logo_url)
     nextData.company_logo_url = nextData.logo_url
   }
   
   // ALWAYS discard logo_url to prevent it from leaking into the app state or back into DB during save
   if ('logo_url' in nextData) {
-    console.log('[useSettings] Discarding legacy logo_url field from app state')
     delete nextData.logo_url
   }
   
-  console.log('[useSettings] Final normalized settings:', nextData)
   return nextData
 }
 
@@ -228,20 +224,16 @@ export async function fetchSettings(options = {}, tenantClient) {
   const { force = false } = options
   const requestStartedAt = Date.now()
   const key = entryKey(tenantClient)
-  console.log('[useSettings] fetchSettings start (force:', force, ')')
   
   // READ path: schema-aware tenant client (Phase 2).
   const { data, error } = await tenantClient.from('settings').select('*').eq('id', 1).single()
   
   if (error) {
     console.error('[useSettings] Fetch error from Supabase:', error)
-  } else {
-    console.log('[useSettings] Fetch success from Supabase, raw data:', data)
   }
 
   const cachedForKey = getEntry(key)
   if (!force && getLastLocalUpdateAt(key) > requestStartedAt) {
-    console.log('[useSettings] Returning cached settings due to recent local update (Cache wins over Stale Fetch)')
     return cachedForKey || {}
   }
   
@@ -252,7 +244,6 @@ export async function fetchSettings(options = {}, tenantClient) {
   const merged = { ...nextData }
 
   if (!force && cachedForKey && (hasLocalTheme || withinThemeGrace)) {
-    console.log('[useSettings] Merging local theme/grace settings into fetched data')
     THEME_KEYS.forEach((k) => {
       const cachedValue = cachedForKey?.[k]
       const incomingValue = nextData?.[k]
@@ -263,7 +254,6 @@ export async function fetchSettings(options = {}, tenantClient) {
   }
 
   const normalized = normalizeThemeSettings(merged)
-  console.log('[useSettings] Update listeners with:', normalized)
   setEntry(key, normalized)
   return normalized
 }
