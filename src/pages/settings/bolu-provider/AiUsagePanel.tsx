@@ -34,6 +34,10 @@ type ProviderRow = {
   completion_tokens: number
   total_tokens: number
   cost_usd: number | null
+  timed_requests: number
+  avg_ttft_ms: number | null
+  avg_tokens_per_second: number | null
+  tokens_per_second: number | null
 }
 
 type DayRow = {
@@ -54,6 +58,9 @@ type UsageTotals = {
   unavailableRows: number
   failedRequests: number
   distinctUsers: number
+  timedRequests: number
+  avgTtftMs: number | null
+  weightedTokensPerSecond: number | null
 }
 
 type UsageSummary = {
@@ -220,10 +227,22 @@ export function AiUsagePanel() {
                       <span className="flex flex-wrap shrink-0 gap-3 text-bd-text-muted">
                         <span>{row.requests} req</span>
                         <span className="font-mono">{formatTokens(row.total_tokens)} tok</span>
+                        <span className="font-mono" title="Average time to first token">
+                          TTFT {row.avg_ttft_ms !== null ? `${row.avg_ttft_ms}ms` : '—'}
+                        </span>
+                        <span className="font-mono" title="Tokens per second, weighted over the generation window">
+                          {row.tokens_per_second !== null
+                            ? `${row.tokens_per_second} tok/s`
+                            : '— tok/s'}
+                        </span>
                       </span>
                     </div>
                   ))}
                 </div>
+                <p className="mt-1 text-[10px] text-bd-text-muted">
+                  TTFT is the wait for the first token. tok/s is weighted over the generation window, so short
+                  answers do not distort it. A provider with no timed request shows no rate.
+                </p>
               </div>
             )}
 
@@ -231,6 +250,10 @@ export function AiUsagePanel() {
               <Activity size={10} aria-hidden="true" />
               {totals?.estimatedRows ?? 0} estimated · {totals?.unavailableRows ?? 0} uncounted · {totals?.unknownCostRows ?? 0}{' '}
               at unknown price
+              {totals?.weightedTokensPerSecond != null && (
+                <> · fleet {totals.weightedTokensPerSecond} tok/s</>
+              )}
+              {totals?.avgTtftMs != null && <> · avg TTFT {totals.avgTtftMs}ms</>}
             </p>
           </>
         )}

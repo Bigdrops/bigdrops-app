@@ -1138,9 +1138,10 @@ Following the closeout audit (`docs/reports/ai/2026-11-14-bolu-phase-2-architect
      - Fold Open (`viewport === 'fold-open'`)
      - Tablets (`viewport === 'tablet'`)
      - Desktop (`viewport === 'desktop'`)
-   - **Responsive Truncation & Popover Direction:**
+   - **Responsive Truncation, Collision-Aware Clamping & Theme-Adaptive Surface:**
      - On narrow screens (down to 320px–360px), `ModelPill` has bounded width with text truncation (`truncate`), preventing Bolu from being pushed off-screen.
-     - The selection popover opens downward (`direction="down"`) with right-alignment (`align="right"` / `right-0`), expanding cleanly into the conversation area.
+     - The selection popover opens downward (`direction="down"`) with dynamic collision-aware viewport clamping: screen boundaries are computed on open and on window resize/scroll, guaranteeing a 10px safe margin from viewport edges so that model names and badges never clip outside the screen on mobile devices.
+     - The dropdown visual surface integrates natively with BOURXE's theme tokens in both Light and Dark modes (`bg-white dark:bg-slate-900`, `border-slate-200/90 dark:border-slate-800`, `text-slate-900 dark:text-slate-100`, amber group titles, theme-adapted active selections and badges), replacing hardcoded non-adaptive dark styling.
 
 3. **Direct AI Infrastructure Navigation:**
    - Updated the More menu action in `assistant-chat-chrome.tsx` to navigate directly to the canonical route `/settings?section=bolu-provider`.
@@ -1240,5 +1241,223 @@ Static review only. The renderer adds no fixed widths. Code blocks and tables ow
 - Visual and interaction validation on live devices was not performed.
 - Attachment presentation has no producer yet: nothing in the current runtime writes `metadata.attachments`. The renderer is ready for a typed payload.
 - `roadmap.html` mirrors section 21 only (DEC-31), so this section has no HTML mirror.
+
+---
+
+## 27. Bolu Chat Interaction: Message Editing, Regeneration, Haptics & Narration (Completed 2026-11-16)
+
+**Status:** IMPLEMENTED & STATICALLY VERIFIED (typecheck 0; 277 assistant tests pass). Device-level Android validation was not performed.
+
+### 27.1 Audit findings
+
+**OBSERVATION - message model.** `ProductionBoluMessage` is one model for live and persisted messages (`src/lib/ai-assistant/hooks/types.ts`). `bolu_messages` stores `conversation_id`, `tenant_id`, `sender_id`, `role`, `content`, `status`, `proposal_payload`, `records_payload`, `metadata`, timestamps. There is no parent, branch or edit column.
+
+**OBSERVATION - submission.** `submitMessage` inserted a user row, then a separate assistant row, and streamed into a temporary assistant message. Nothing reused or replaced an earlier turn. No edit or regenerate path existed.
+
+**OBSERVATION - identity.** The workspace already had `cleanAssistantProse`, Markdown rendering, icon-less response copy, code copy and typed artifact copy from section 26.
+
+**OBSERVATION - haptics.** `@capacitor/haptics` was absent. The Android shell exists. `AndroidManifest.xml` declared no `VIBRATE` permission. The only haptic pattern in the app was a guarded `navigator.vibrate` (`useLongPress`, `SelectableRowCard`).
+
+**OBSERVATION - narration.** No Text-to-Speech bridge existed and no code used `speechSynthesis`.
+
+**REFERENCE.** The four Chat-blocks components and the existing `ac-*` chat surface set the visual language. No new design system was introduced.
+
+**DECISION - persistence.** The current schema cannot express a branch tree. Adding one would need a migration and a product decision. This task therefore marks dependent turns with `metadata.superseded = true` and `status = 'stopped'`, filters them out of the active thread, and keeps every row for audit. No schema change, no deletion, no migration.
+
+**DECISION - regeneration.** A regenerated response reuses its existing assistant row (`replaceAssistantId`). The request row and the response row keep their identifiers and positions, so no duplicate user message is created.
+
+**DECISION - haptics engine.** `@capacitor/haptics` was not added. It would require native plugin registration and a `cap sync`, which needs a `dist` build that the 4GB hardware gate forbids. The repository already standardises on `navigator.vibrate`. The adapter uses that guarded call and declares the normal `android.permission.VIBRATE` that the WebView Vibration API needs. No other permission was added.
+
+**DECISION - narration engine.** Browser `speechSynthesis` is the delivered engine. A native Android TTS bridge is recorded as a proposal because the app has none and adding one cannot be verified on this host.
+
+**PROPOSAL (not implemented).** Branch tree with restore, official Capacitor Haptics plugin, native Android TTS bridge, voice picker, account-scoped interaction preferences.
+
+### 27.2 Delivered architecture
+
+- `src/lib/ai-assistant/bolu-generation.ts` - the single provider turn used by submit, edit and regenerate, plus the facts lookup and the supersession write. Extracted so `useBoluThread.ts` stays inside the 600-line limit.
+- `src/lib/ai-assistant/bolu-thread-actions.ts` - user-message editing and response regeneration, with role, conversation, tenant and sender checks.
+- `src/hooks/useBoluResponseHaptics.ts` - one start pulse and one optional completion pulse per response id.
+- `src/hooks/useBoluChatInteractions.ts` - the workspace edit, cancel, regenerate, narration and save handlers, plus the thread narration contract.
+- `src/lib/ai-assistant/bolu-preferences.ts` - device preference store (haptics on, completion pulse on, narration on, rate), with one change event.
+- `src/hooks/useBoluInteractionPreferences.ts` - React binding via `useSyncExternalStore`.
+- `src/lib/ai-assistant/bolu-haptics.ts` - patterns, support probe, preference gating and the once-per-response guards.
+- `src/lib/ai-assistant/bolu-narration.ts` - Markdown-to-speech preparation, proposal note and support probe.
+- `src/lib/ai-assistant/hooks/useBoluNarration.ts` - one TTS session, pause/resume/stop, cleanup on unmount.
+- `src/components/ai-assistant/chat/assistant-chat-icon-action.tsx` - the shared icon-only action button.
+- `src/pages/settings/bolu-provider/BoluInteractionPreferencesCard.tsx` - toggles and speaking speed inside the existing Bolu settings surface.
+
+Modified: `assistant-chat-thread.tsx` (user Edit/Copy, assistant Regenerate/Copy/Read aloud, narration states), `assistant-chat-composer.tsx` (editing state and cancel), `BoluChatWorkspace.tsx` (edit/regenerate wiring, one-shot response haptics, narration lifecycle), `useBoluThread.ts` (shared generation path, edit, regenerate, supersession), `types.ts` files, `index.ts`, `assistant-chat.css`, `BoluProviderSettingsSection.tsx`, `AndroidManifest.xml`.
+
+### 27.3 User message editing
+
+The composer gains an explicit editing state with a banner and a cancel control. Escape also cancels. `editUserMessage` validates the role, conversation, tenant and sender, supersedes later turns, updates the original row in place, then regenerates from the edited text. The original text stays in the database until the save succeeds. Editing is blocked while streaming.
+
+### 27.4 Response regeneration
+
+`regenerateResponse` finds the preceding user turn, reuses the stored `records_payload` when present, supersedes later turns, and replaces the assistant row through `runGeneration({ replaceAssistantId })`. An aborted or failed regeneration persists `stopped` or `failed` on that row so the interface cannot show a response that no longer exists. Proposals are rebuilt from the new output and always start unapproved.
+
+### 27.5 Branch invalidation
+
+`supersedeDownstreamMessages` writes `metadata.superseded`, `metadata.superseded_at` and `status = 'stopped'` for each later turn and removes it from the active state. `fetchMessages` filters superseded rows, so a reload shows the same active branch. A pending proposal that belonged to an invalidated turn is cleared. If a supersession write fails, the edit or regeneration aborts with an error instead of continuing on a branch that may still hold stale turns.
+
+### 27.6 Icon-only actions
+
+User rows show pencil and copy. Assistant rows show refresh, copy and speaker, and switch to pause/resume plus stop during narration. No visible action words are rendered. Accessible names, `title` tooltips, focus rings and 36px coarse-pointer targets are retained. The code-block copy control and the artifact copy control keep their existing presentation.
+
+### 27.7 Haptics
+
+A single pulse fires when a response first shows output, guarded by the response id so tokens and re-renders cannot repeat it. A completion pulse is separately switchable. Meaningful interactions pulse lightly: send, save edit, regenerate, copy success, narration start, edit start. Every call is gated by the preference and by a support probe, and a rejected call is swallowed. The start and completion guards are pure functions with unit tests.
+
+### 27.8 Narration
+
+One speech session per thread. The speaker action narrates the cleaned response text, prepared by `prepareNarrationText`: Markdown symbols removed, link text kept, URLs dropped, code blocks announced instead of read, table rows read in order. Pause, resume and stop map to the engine. A new response cancels the previous one. Closing the workspace, switching conversation or unmounting cancels speech. Unsupported engines and speech errors surface as states, never as crashes.
+
+### 27.9 Settings
+
+Haptics, completion pulse, narration and speaking speed live in one card in the existing Bolu AI Infrastructure settings page. Haptics and narration are independent. The card states when the device cannot vibrate or speak. No new settings page or settings architecture was created.
+
+### 27.10 Dependencies and native changes
+
+- Added npm dependencies: none.
+- Native: `android.permission.VIBRATE` in `android/app/src/main/AndroidManifest.xml` (normal permission, no runtime prompt). No plugin was added, so no `cap sync` was required.
+
+### 27.11 Verification performed
+
+- `bun run audit:load`: exit 0, 51 oversized files (the pre-existing baseline). `useBoluThread.ts` (569), `BoluChatWorkspace.tsx` (593), `bolu-generation.ts` (347) and `bolu-thread-actions.ts` (188) are all within the limit after the extraction.
+- `bun run typecheck`: exit 0.
+- `bun test src/tests/ai-assistant/`: 278 pass, 0 fail across 30 files. Three older source-contract assertions were repointed at the extracted modules (they assert the same behaviour).
+- New focused suite `src/tests/ai-assistant/bolu-chat-interaction-enhancement.test.ts`: 18 pass. It covers preference defaults and clamping, haptic gating and one-shot guards, pattern length, narration text preparation (Markdown, fence, link, table, proposal note), and source contracts for the action sets, editing state, supersession and settings.
+- Connection Vault baseline: `connection-vault.test.js`, `bolu-connection-key-version.test.js` and `bolu-duplicate-connection-name.test.js` pass 18/18 at this snapshot. The two failures and one error reported in the earlier task came from a concurrent in-progress edit to `src/lib/ai-assistant/connection-vault.ts`; that module is untouched by this task and its tests are green here.
+- `bun run build`: not run, per the permanent 4GB RAM exclusion.
+
+### 27.12 Manual Android verification required
+
+The following were not executed on a device:
+
+1. Install the Android build after a native rebuild so the `VIBRATE` permission is merged.
+2. Send a message and confirm one short pulse at the first visible token, no pulse per token, and one double tap on completion.
+3. Turn haptics off in Settings and confirm no pulse on send, regenerate or completion.
+4. Tap the speaker action and confirm the response is read; test pause, resume and stop.
+5. Start narration on one response, then start another; confirm the first stops.
+6. Close the workspace during narration and confirm speech stops.
+7. On Android System WebView, confirm the speaker action reports unavailable instead of failing silently.
+
+### 27.13 Outstanding work and limitations
+
+- Narration depends on the browser speech engine. Android System WebView coverage is unverified and likely unavailable; a native bridge is a proposal.
+- Branch history is flat: an invalidated branch cannot be restored from the interface.
+- Haptics use the Vibration API, not the official Capacitor plugin. Migration is a proposal.
+- Interaction preferences are device-scoped, not account-scoped.
+- No visual or interaction validation on device sizes, no live narration test and no live clipboard test were performed.
+
+---
+
+## 28. Bolu Interaction Hardening: Native Narration, Haptic Scope, Branch Integrity (2026-11-16)
+
+**Status:** IMPLEMENTED and AUTOMATED-VERIFIED. Physical Android behaviour is NOT VERIFIED. Visual checks are PENDING.
+
+This section records the follow-up pass. It adds to section 27 and does not replace it.
+
+### 28.1 Audit findings
+
+**OBSERVATION - Android speech.** The Android project had four local Capacitor plugins registered in `MainActivity` (`ApkUpdate`, `DownloadBridge`, `FoldAwareness`, `LocalAI`). It had no speech bridge. `@capacitor/android` is 8.3.0, minSdk is 24 and compileSdk is 36. Android System WebView does not reliably implement `speechSynthesis`, so narration was unavailable on the target device.
+
+**OBSERVATION - haptics.** The first pass pulsed on copy, edit, regenerate, send, narration start and save. The intended design is one pulse when a reply starts and one optional pulse when it completes.
+
+**OBSERVATION - branch filtering.** `fetchMessages` filters `metadata.superseded`. The initial load, the conversation change path and the realtime refresh all call `fetchMessages`. No other client path selects `bolu_messages` for display. The export function uses the already-filtered message array.
+
+**OBSERVATION - edit ordering.** The first pass superseded dependent turns before it stored the edited text. A failed text write could therefore leave an unedited request with invalidated answers.
+
+**DECISION - native engine.** Add one small local Capacitor plugin instead of a third-party speech package. This keeps the dependency set unchanged and needs no `dist` build, no Gradle dependency and no credential.
+
+**DECISION - engine selection.** Choose the engine from reported capability, never from the platform name. Keep browser synthesis as the fallback.
+
+**DECISION - haptic scope.** Keep only the response-start and completion pulses. Remove every interaction pulse.
+
+**DECISION - write order.** Store the edited request first, then supersede dependent turns, and restore the original text if the branch write fails.
+
+### 28.2 Native narration architecture
+
+| Layer | File | Responsibility |
+| :--- | :--- | :--- |
+| Android plugin | `android/app/src/main/java/com/bigdrops/app/plugins/BoluSpeechPlugin.java` | Binds `android.speech.tts.TextToSpeech`, applies the speech rate, speaks one prepared chunk, emits `boluSpeechState`, releases the engine on destroy. |
+| Registration | `MainActivity.java` | `registerPlugin(BoluSpeechPlugin.class)` next to the existing plugins. |
+| Manifest | `AndroidManifest.xml` | Declares the `android.intent.action.TTS_SERVICE` query that Android 11 and later require. No permission is added. |
+| Web wrapper | `src/lib/native/boluSpeech.ts` | Capability probe, speak, stop, event listener, and safe fallbacks. Follows the `foldAwareness` convention. |
+| Engine choice | `src/lib/ai-assistant/bolu-narration.ts` | `selectNarrationEngine` and `splitNarrationChunks` are pure functions. |
+| Lifecycle | `src/lib/ai-assistant/hooks/useBoluNarration.ts` | One session, chunk advance, pause/resume/stop, duplicate-tap guard, stale-callback guard, unmount cleanup. |
+| Settings support | `src/hooks/useBoluNarrationSupport.ts` | Engine-aware availability for the settings card. |
+
+No network call exists in the speech path. Message text stays on the device.
+
+### 28.3 Narration lifecycle
+
+- Start: prepare the text, split it into sentence chunks, speak the first chunk.
+- Progress: each `completed` event advances the chunk cursor.
+- Pause: stop the current chunk and keep the cursor. Resume re-sends that chunk, so at most one sentence repeats.
+- Stop: clear the session, release the engine and stop the browser engine.
+- Supersede: starting another response stops the current response first.
+- Conversation change, workspace close and unmount all call stop.
+- A session token discards callbacks from a previous response or a closed conversation.
+- A rejected bridge call becomes an error state. It never throws into the chat.
+
+### 28.4 Haptic refinement
+
+- `BOLU_HAPTIC_PATTERNS` now has two entries: `impact-light` (12ms) and `success` (`[0, 14, 60, 16]`).
+- `useBoluResponseHaptics` is the only haptic caller. It keeps one start pulse and one optional completion pulse per response identifier.
+- Copy, edit, regenerate, send, narration start, pause and resume are silent.
+- The `VIBRATE` permission remains, because the Web Vibration API needs it. It is declared once.
+
+### 28.5 Edit and regeneration integrity
+
+- The edited request is written before dependent turns are superseded.
+- If the supersession write fails, the original text is restored and the operation stops with an error. No response is regenerated on a half-changed branch.
+- Regeneration keeps the assistant row identity and replaces it in place.
+- A regenerated proposal starts unapproved. The two gates are unchanged.
+- Superseded rows are never deleted. No schema change was made.
+
+### 28.6 Files changed by this pass
+
+- New: `BoluSpeechPlugin.java`, `src/lib/native/boluSpeech.ts`, `src/hooks/useBoluNarrationSupport.ts`, `src/tests/ai-assistant/bolu-interaction-hardening.test.ts`.
+- Changed: `MainActivity.java`, `AndroidManifest.xml`, `useBoluNarration.ts`, `bolu-narration.ts`, `bolu-haptics.ts`, `useBoluChatInteractions.ts`, `useBoluResponseHaptics.ts` (unchanged behaviour, reviewed), `BoluChatWorkspace.tsx`, `BoluInteractionPreferencesCard.tsx`, `bolu-thread-actions.ts`, `useBoluThread.ts` (duplicate comment removed).
+- Documentation: FR-54.1, FR-55 engine section, FR-55.2, disposition rows, and this section.
+
+### 28.7 Verification
+
+- `bun run typecheck`: exit 0.
+- `bun test src/tests/ai-assistant/`: 304 pass, 0 fail across 32 files.
+- New hardening suite: 17 pass. It covers engine precedence, chunking limits, hidden-envelope exclusion, haptic scope, native plugin source contracts, manifest and registration wiring, bridge guards, hook lifecycle guards, settings support, edit write order and supersession reload paths.
+- `bun run audit:load`: exit 0, no new oversized file from this pass.
+- `bun run build`: not run, per the hardware policy.
+- Android compilation: NOT RUN. The native plugin was reviewed by hand. A Gradle build was not attempted on this host.
+
+### 28.8 Manual Android validation steps
+
+1. Rebuild and install the Android app so the new plugin and manifest query are included.
+2. Open Bolu and tap Read aloud on a completed response. Speech must start with the device voice.
+3. Confirm the response text is not sent over the network. The bridge has no network code.
+4. Tap Pause. Speech stops. Tap Resume. Speech continues from the current sentence at most one sentence back.
+5. Tap Stop. Speech ends and the action returns to the speaker icon.
+6. Start narration on one response, then start another. The first must stop.
+7. Switch conversation during narration. Speech must stop.
+8. Close Bolu during narration. Speech must stop.
+9. Disable the Android Text-to-Speech engine in system settings, then tap Read aloud. The action must report unavailability and the chat must keep working.
+10. Send a message. Count the vibrations: one short pulse at first visible output, one double tap at completion, none for copy, edit, regenerate, send or narration.
+11. Turn off completion pulse. Repeat step 10. Only the start pulse remains.
+12. Turn off haptic feedback. Repeat step 10. No vibration at all.
+13. Set the phone to silent or vibrate-off mode where the platform suppresses vibration. The app must not fight the system setting.
+
+### 28.9 Visual verification
+
+PENDING. Five viewport presets (mobile, fold closed, fold open, tablet, desktop) and both themes were not rendered for this pass. The changed surfaces are the message action rows, the edit banner and the interaction settings card.
+
+### 28.10 Remaining limitations
+
+- Native narration is NOT VERIFIED on a device. Only source contracts and web-side logic are tested.
+- Pause repeats at most one sentence on Android because the engine has no in-utterance pause.
+- The engine voice follows the device language and settings. There is no voice picker.
+- Android system vibration settings are respected only as far as the Web Vibration API allows.
+- Branch history is still flat. Restoring an invalidated branch needs a schema change.
+- The official Capacitor Haptics plugin remains a proposal. The guarded Vibration API is the delivered mechanism.
 
 ---

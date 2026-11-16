@@ -1,12 +1,13 @@
 import { useState, type RefObject, type UIEvent } from 'react'
-import { AlertCircle, ArrowDown, Sparkles } from 'lucide-react'
+import { AlertCircle, ArrowDown, Pause, Pencil, Play, RefreshCw, Sparkles, Square, Volume2 } from 'lucide-react'
 
 import { ProposalCardView, StatusRow } from './assistant-chat-parts'
 import { AssistantMarkdown } from './assistant-chat-markdown'
 import { CopyButton } from './assistant-chat-copy-button'
+import { IconAction } from './assistant-chat-icon-action'
 import { AssistantAttachments, readMessageAttachments } from './assistant-chat-attachments'
 import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
-import type { ClerkState, ProductionBoluMessage } from './types'
+import type { ClerkState, ProductionBoluMessage, ThreadNarrationControls } from './types'
 
 /**
  * Strips raw bolu_operation JSON blocks and removes em-dashes from user-facing assistant prose.
@@ -50,6 +51,9 @@ export function AssistantThread({
   onRejectGate1,
   onConfirmGate2,
   onCancelGate2,
+  onEditMessage,
+  onRegenerateMessage,
+  narration,
   suggestions = [],
 }: {
   messages: ProductionBoluMessage[]
@@ -66,6 +70,9 @@ export function AssistantThread({
   onRejectGate1?: (opId: string) => void
   onConfirmGate2?: (opId: string) => void
   onCancelGate2?: (opId: string) => void
+  onEditMessage?: (message: ProductionBoluMessage) => void
+  onRegenerateMessage?: (message: ProductionBoluMessage) => void
+  narration: ThreadNarrationControls
   suggestions?: string[]
 }) {
   const [readerAway, setReaderAway] = useState(false)
@@ -130,7 +137,19 @@ export function AssistantThread({
           if (isUser) {
             return (
               <div key={message.id} className="ac-row ac-row--user">
-                <p className="ac-bubble">{message.content}</p>
+                <div className="ac-user-block">
+                  <p className="ac-bubble">{message.content}</p>
+                  {/* User messages: Edit and Copy only, icon-only. */}
+                  <div className="ac-actions ac-actions--user">
+                    <IconAction
+                      icon={Pencil}
+                      label="Edit message"
+                      onClick={() => onEditMessage?.(message)}
+                      disabled={busy}
+                    />
+                    <CopyButton value={message.content} label="Copy" ariaLabel="Copy message" iconOnly />
+                  </div>
+                </div>
               </div>
             )
           }
@@ -140,6 +159,14 @@ export function AssistantThread({
           // Copy is offered for a finished response only, never mid-stream.
           const canCopy =
             (message.status === 'completed' || message.status === 'stopped') && prose.trim().length > 0
+          const isThisSpeaking = narration.messageId === message.id && narration.status === 'speaking'
+          const isThisPaused = narration.messageId === message.id && narration.status === 'paused'
+          const narrationBlocked = !narration.supported || !narration.enabled
+          const narrationHint = !narration.supported
+            ? 'Narration is not available on this device'
+            : !narration.enabled
+              ? 'Narration is turned off in settings'
+              : 'Read response aloud'
 
           return (
             <div key={message.id} className="ac-turn">
@@ -230,10 +257,42 @@ export function AssistantThread({
                 {/* Typed attachments only — no derived or invented files */}
                 <AssistantAttachments attachments={attachments} />
 
-                {/* Response action row */}
+                {/* Response action row: Regenerate, Copy, Read aloud — icon-only. */}
                 {canCopy ? (
                   <div className="ac-actions">
-                    <CopyButton value={prose} label="Copy" ariaLabel="Copy response" />
+                    {onRegenerateMessage ? (
+                      <IconAction
+                        icon={RefreshCw}
+                        label="Regenerate response"
+                        onClick={() => onRegenerateMessage(message)}
+                        disabled={busy}
+                      />
+                    ) : null}
+                    <CopyButton value={prose} label="Copy" ariaLabel="Copy response" iconOnly />
+                    {isThisSpeaking || isThisPaused ? (
+                      <>
+                        <IconAction
+                          icon={isThisPaused ? Play : Pause}
+                          label={isThisPaused ? 'Resume reading' : 'Pause reading'}
+                          onClick={isThisPaused ? narration.onResume : narration.onPause}
+                        />
+                        <IconAction icon={Square} label="Stop reading" onClick={narration.onStop} />
+                      </>
+                    ) : (
+                      <IconAction
+                        icon={Volume2}
+                        label="Read response aloud"
+                        title={narrationHint}
+                        onClick={() => narration.onSpeak(message, prose)}
+                        disabled={narrationBlocked}
+                        active={narration.messageId === message.id && narration.status === 'completed'}
+                      />
+                    )}
+                    {narration.messageId === message.id && narration.error ? (
+                      <span className="ac-sr" role="status" aria-live="polite">
+                        {narration.error}
+                      </span>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

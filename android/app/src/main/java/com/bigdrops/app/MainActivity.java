@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bigdrops.app.plugins.ApkUpdatePlugin;
+import com.bigdrops.app.plugins.BoluSpeechPlugin;
 import com.bigdrops.app.plugins.DownloadBridgePlugin;
 import com.bigdrops.app.plugins.FoldAwarenessPlugin;
 import com.bigdrops.app.plugins.LocalAIPlugin;
@@ -32,6 +33,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(ApkUpdatePlugin.class);
+        registerPlugin(BoluSpeechPlugin.class);
         registerPlugin(DownloadBridgePlugin.class);
         registerPlugin(FoldAwarenessPlugin.class);
         registerPlugin(LocalAIPlugin.class);

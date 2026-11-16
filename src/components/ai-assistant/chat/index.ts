@@ -22,6 +22,7 @@ export {
   safeHref,
 } from './assistant-chat-markdown'
 export { AssistantCodeBlock } from './assistant-chat-code-block'
+export { IconAction } from './assistant-chat-icon-action'
 export { CopyButton, useCopyFeedback } from './assistant-chat-copy-button'
 export {
   AssistantAttachments,

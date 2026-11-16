@@ -15,7 +15,6 @@ import { useBoluNarration } from '@/lib/ai-assistant/hooks/useBoluNarration'
 import { useBoluInteractionPreferences } from '@/hooks/useBoluInteractionPreferences'
 import { useBoluChatInteractions } from '@/hooks/useBoluChatInteractions'
 import { useBoluResponseHaptics } from '@/hooks/useBoluResponseHaptics'
-import { triggerBoluHaptic } from '@/lib/ai-assistant/bolu-haptics'
 import { exportChatAsMarkdown, exportChatAsJson } from '@/lib/ai-assistant/bolu-export'
 import { getBoluSuggestions } from '@/lib/ai-assistant/bolu-context'
 import { EntityContext } from '@/lib/tenant/entityContext'
@@ -286,7 +285,6 @@ export function BoluChatWorkspace({
     const success = await submitMessage(clean)
     if (success) {
       setInputDraft('')
-      triggerBoluHaptic('impact-light', preferences)
     }
   }
 

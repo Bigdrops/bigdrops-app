@@ -47,6 +47,10 @@ export interface UseBoluThreadReturn {
   activeProposalMessageId: string | null
   error: string | null
   submitMessage: (text: string) => Promise<boolean>
+  /** Replaces one user message in place and regenerates the answer from it. */
+  editUserMessage: (messageId: string, text: string) => Promise<boolean>
+  /** Re-runs one assistant response from its original request. */
+  regenerateResponse: (assistantMessageId: string) => Promise<boolean>
   stopStreaming: () => void
   approveGate1: (opId?: string) => Promise<boolean>
   rejectGate1: (opId?: string) => Promise<boolean>

@@ -59,8 +59,69 @@ export function ModelPill({
 }: ModelPillProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
   const rootRef = useRef<HTMLDivElement | null>(null)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Calculate collision-aware dropdown position preventing horizontal clipping
+  const updateDropdownPosition = () => {
+    if (!rootRef.current) return
+    const triggerRect = rootRef.current.getBoundingClientRect()
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight
+    const safeMargin = 10 // safe padding from viewport edge
+
+    // Target width: clamped between 260px and 340px, bounded by available viewport
+    const targetWidth = Math.min(340, Math.max(260, viewportWidth - safeMargin * 2))
+
+    // Default right-alignment with trigger button
+    let idealLeft = triggerRect.right - targetWidth
+
+    // Collision check 1: Left viewport edge
+    if (idealLeft < safeMargin) {
+      idealLeft = safeMargin
+    }
+
+    // Collision check 2: Right viewport edge
+    if (idealLeft + targetWidth > viewportWidth - safeMargin) {
+      idealLeft = viewportWidth - safeMargin - targetWidth
+    }
+
+    // Convert screen coordinates to relative offset within rootRef
+    const relativeLeft = idealLeft - triggerRect.left
+
+    // Collision check 3: Vertical space
+    const spaceBelow = viewportHeight - triggerRect.bottom - safeMargin
+    const spaceAbove = triggerRect.top - safeMargin
+    const isUp = direction === 'up' || (spaceBelow < 260 && spaceAbove > spaceBelow)
+
+    setDropdownStyle({
+      left: `${Math.round(relativeLeft)}px`,
+      width: `${Math.round(targetWidth)}px`,
+      maxWidth: `calc(100vw - ${safeMargin * 2}px)`,
+      ...(isUp
+        ? { bottom: 'calc(100% + 6px)', top: 'auto' }
+        : { top: 'calc(100% + 6px)', bottom: 'auto' }),
+    })
+  }
+
+  // Update position on open and subscribe to resize / scroll events
+  useEffect(() => {
+    if (!open) return
+    updateDropdownPosition()
+
+    const onResizeOrScroll = () => {
+      updateDropdownPosition()
+    }
+
+    window.addEventListener('resize', onResizeOrScroll)
+    window.addEventListener('scroll', onResizeOrScroll, true)
+
+    return () => {
+      window.removeEventListener('resize', onResizeOrScroll)
+      window.removeEventListener('scroll', onResizeOrScroll, true)
+    }
+  }, [open, direction])
 
   // Close on outside pointer or Escape
   useEffect(() => {
@@ -204,7 +265,10 @@ export function ModelPill({
         className="ac-model-trigger max-w-[130px] xs:max-w-[170px] sm:max-w-[240px] min-w-0 shrink"
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          updateDropdownPosition()
+          setOpen((v) => !v)
+        }}
       >
         <span className="ac-model-dot shrink-0" data-ready={isConfigured} aria-hidden="true" />
         <span className="ac-model-text min-w-0 overflow-hidden">
@@ -218,41 +282,40 @@ export function ModelPill({
         <ChevronDown className="size-3.5 shrink-0 text-[var(--ac-muted)]" aria-hidden="true" />
       </button>
 
-      {/* Floating Dropdown Dialog matching Image 6 */}
+      {/* Floating Dropdown Dialog with Collision-Aware Clamping & Theme Surface */}
       {open ? (
         <div
-          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} z-50 w-80 max-w-[calc(100vw-24px)] sm:max-w-[360px] max-h-[min(460px,55vh)] flex flex-col rounded-2xl border border-white/10 bg-[#181622] text-white shadow-2xl overflow-hidden font-sans backdrop-blur-md ${
-            direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
-          }`}
+          style={dropdownStyle}
+          className="absolute z-50 flex flex-col rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl max-h-[min(480px,65vh)] overflow-hidden font-sans backdrop-blur-md"
           role="dialog"
           aria-label="Select AI Model"
         >
           {/* Header Bar with Search & Action Icons */}
-          <div className="flex items-center gap-2 p-2.5 border-b border-white/10 bg-[#14121c]">
-            <Search className="size-3.5 text-white/40 shrink-0 ml-1" aria-hidden="true" />
+          <div className="flex items-center gap-2 p-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80">
+            <Search className="size-3.5 text-slate-400 dark:text-slate-500 shrink-0 ml-1" aria-hidden="true" />
             <input
               ref={searchInputRef}
               type="text"
               placeholder="Search models"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent text-xs text-white placeholder-white/40 focus:outline-none min-w-0"
+              className="flex-1 bg-transparent text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none min-w-0"
             />
-            {query && (
+            {query ? (
               <button
                 type="button"
-                className="text-[10px] text-white/50 hover:text-white px-1"
+                className="text-[10px] text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 px-1 font-medium"
                 onClick={() => setQuery('')}
               >
                 Clear
               </button>
-            )}
+            ) : null}
 
-            {/* Quick action buttons on the right matching Image 6 */}
-            <div className="flex items-center gap-0.5 shrink-0 border-l border-white/10 pl-1.5">
+            {/* Quick action buttons on the right */}
+            <div className="flex items-center gap-0.5 shrink-0 border-l border-slate-200 dark:border-slate-800 pl-1.5">
               <button
                 type="button"
-                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
                 title="Add new AI provider connection"
                 onClick={() => {
                   setOpen(false)
@@ -264,7 +327,7 @@ export function ModelPill({
               </button>
               <button
                 type="button"
-                className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
                 title="Choose which models appear in picker (Settings)"
                 onClick={() => {
                   setOpen(false)
@@ -276,16 +339,16 @@ export function ModelPill({
             </div>
           </div>
 
-          {/* Grouped Model List matching Image 6 */}
-          <div className="flex-1 overflow-y-auto divide-y divide-white/5 p-1.5 space-y-2">
+          {/* Grouped Model List */}
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1.5 space-y-2">
             {filteredGroups.length === 0 ? (
               <div className="py-8 px-4 text-center">
                 {groups.length === 0 ? (
                   <div className="space-y-2">
-                    <p className="text-xs text-white/60">No enabled AI connections found.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">No enabled AI connections found.</p>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:underline font-medium"
+                      className="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium"
                       onClick={() => {
                         setOpen(false)
                         onManage()
@@ -295,14 +358,14 @@ export function ModelPill({
                     </button>
                   </div>
                 ) : (
-                  <p className="text-xs text-white/50">No models match &ldquo;{query}&rdquo;</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">No models match &ldquo;{query}&rdquo;</p>
                 )}
               </div>
             ) : (
               filteredGroups.map((group) => (
                 <div key={group.connectionId} className="pt-1.5 first:pt-0">
-                  {/* Amber Section Header matching Image 6 */}
-                  <div className="text-amber-500 font-semibold text-xs tracking-wide px-2.5 py-1 select-none">
+                  {/* Amber Section Header */}
+                  <div className="text-amber-500 dark:text-amber-400 font-semibold text-xs tracking-wide px-2.5 py-1 select-none">
                     {group.connectionName}
                   </div>
 
@@ -319,26 +382,26 @@ export function ModelPill({
                           type="button"
                           className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
                             isSelected
-                              ? 'bg-white/15 text-white font-medium'
-                              : 'text-white/85 hover:bg-white/10 hover:text-white'
+                              ? 'bg-amber-500/15 dark:bg-amber-500/20 text-amber-950 dark:text-amber-200 font-semibold border border-amber-500/30 dark:border-amber-500/40'
+                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
                           }`}
                           onClick={() => handleSelect(group, model)}
                         >
                           {/* Model Name */}
-                          <span className="truncate flex-1">{model.label}</span>
+                          <span className="truncate flex-1 min-w-0">{model.label}</span>
 
-                          {/* Badges matching Image 6 */}
+                          {/* Badges */}
                           <div className="flex items-center gap-1.5 shrink-0">
                             {model.isFree && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-white/70 border border-white/10">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                 Free
                               </span>
                             )}
                             {model.isDefault && (
-                              <span className="text-[10px] text-white/40">{'Default >'}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{'Default >'}</span>
                             )}
                             {isSelected && (
-                              <Check className="size-3.5 text-amber-400" aria-hidden="true" />
+                              <Check className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
                             )}
                           </div>
                         </button>
@@ -351,13 +414,13 @@ export function ModelPill({
           </div>
 
           {/* Footer Action Bar */}
-          <div className="p-2 border-t border-white/10 bg-[#14121c] flex items-center justify-between text-[11px] text-white/60">
-            <span className="truncate text-[10px]">
+          <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+            <span className="truncate text-[10px] pr-2">
               {selectedModel ? selectedModel.connectionName : 'Priority Pool'} · {displayModel}
             </span>
             <button
               type="button"
-              className="text-amber-400 hover:underline flex items-center gap-1 text-[11px] shrink-0"
+              className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 text-[11px] font-medium shrink-0"
               onClick={() => {
                 setOpen(false)
                 onManage()

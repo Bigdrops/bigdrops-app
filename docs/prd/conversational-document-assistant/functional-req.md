@@ -58,6 +58,11 @@ The following disposition applies:
 | FR-48 | IMPLEMENTED & VERIFIED — 2026-11-16 | Isolated fenced code blocks with independent copy actions. |
 | FR-49 | IMPLEMENTED & VERIFIED — 2026-11-16 | Safe Markdown content handling: no HTML path, safe link schemes, inert code. |
 | FR-50 | IMPLEMENTED & VERIFIED — 2026-11-16 | Structured artifact and attachment presentation on existing typed payloads. |
+| FR-51 | IMPLEMENTED & VERIFIED — 2026-11-16 | User message editing and copying, with in-place update of the original request. |
+| FR-52 | IMPLEMENTED & VERIFIED — 2026-11-16 | Assistant response regeneration and copying; all message actions are icon-only. |
+| FR-53 | IMPLEMENTED & VERIFIED — 2026-11-16 | Conversation branch integrity: dependent turns are superseded, never silently reused. |
+| FR-54 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-16 | Two restrained pulses only: response start and optional completion. No interaction haptics. Android device behaviour not verified. |
+| FR-55 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-16 | Device narration with a native Android engine and a browser fallback. Android device behaviour not verified. |
 
 ## FR-01 - Conversation Surface On The Invoice Form
 
@@ -416,7 +421,8 @@ The vertical workspace hierarchy is strictly defined as:
 - No separate `modelPickerBar` or second vertical row exists between the header and the conversation area.
 - The model picker is not placed inside the message composer, and the message composer remains pinned at the bottom.
 - On narrow viewports (down to 320px–360px), the model picker width is bounded and long model identifiers truncate cleanly with ellipsis without pushing Bolu off-screen.
-- Tapping the model selector opens the model discovery and selection dialog downwards (`direction="down"`) with right alignment (`align="right"` / `right-0`) into the spacious conversation area.
+- Tapping the model selector opens the model discovery and selection dialog with collision-aware viewport clamping: the dialog calculates available viewport boundaries on open and on window resize/scroll, guaranteeing a safe margin (>= 10px) from the screen edges so that model names, group headers, and badges are never clipped on the left or right edges on mobile screens down to 320px.
+- The model picker dropdown visual surface adapts deliberately to the active application theme: in light mode, it renders a crisp slate surface with light borders, dark ink, subtle hover fills, and warm amber accents; in dark mode, it renders an elevated slate-900 surface with dark borders, light ink, and amber accents. Hardcoded non-adaptive dark rectangles are strictly prohibited.
 - All existing header actions (history toggle, document panel toggle, More menu, close control) remain fully accessible and functional.
 - The single-row header configuration is consistently enforced across Mobile Phone, Fold-closed, Fold-open, Tablet, and Desktop viewports.
 
@@ -575,6 +581,203 @@ Structured artifacts and attachments must be visually separate from assistant pr
 - A message with no typed attachments renders no attachment section.
 - A malformed attachment entry is skipped. The remaining entries render.
 - The artifact copy action copies the typed summary only.
+
+## FR-51 - User Message Editing & Copying (Approved & Implemented - 2026-11-16)
+
+A user must be able to correct an earlier request without starting a new conversation.
+
+**User message actions**
+
+- The only actions on a user message are Edit and Copy.
+- Both actions are icon-only. They show a pencil icon and a copy icon from the existing icon library.
+- Each action has an accessible name. A tooltip or a `title` is available. Both actions work with a keyboard.
+- A user message shows no visible action words.
+
+**Edit behaviour**
+
+- Edit is available only on a message with role `user`.
+- Edit loads the original text into the existing composer. The composer shows an explicit editing state and a cancel control.
+- Cancel, and the Escape key, restore the original message. The original text is not changed.
+- Sending the edit updates the original row in place. The row keeps its identifier, its position, its conversation and its tenant.
+- An edit must not insert a second user message.
+- A message from another user, another conversation or another business entity cannot be edited.
+- Editing is not available while a response streams.
+- Copy copies the original user text only. It excludes controls, timestamps and status labels.
+
+**Acceptance criteria**
+
+- The unedited text remains in the database until the edited text is saved.
+- After an edit, the conversation shows the edited request in its original position.
+- The response is regenerated from the edited request.
+
+## FR-52 - Assistant Response Regeneration & Copying, Icon-Only Actions (Approved & Implemented - 2026-11-16)
+
+**Assistant message actions**
+
+- The only actions on a completed assistant response are Regenerate, Copy and Read aloud.
+- An assistant message never has an Edit action.
+- All three actions are icon-only. They use refresh, copy and speaker icons. Pause, resume and stop icons replace the speaker icon while narration is active.
+- Accessible names, tooltips and focus states remain. No visible action words are shown in the action row.
+- Regenerate is disabled while a response streams.
+- Copy copies the complete response source text. It preserves paragraph breaks and Markdown source. It excludes UI controls, timestamps, status labels and internal operation envelopes.
+- Existing code-block copy and artifact copy behaviour is unchanged.
+
+**Regeneration behaviour**
+
+- Regeneration reuses the original user request. It does not append a new user message.
+- Regeneration reuses the conversation context before that request.
+- The selected assistant response is replaced in its existing row. Its identifier and position are preserved.
+- Later dependent turns are invalidated. See FR-53.
+- Regeneration never approves, saves, executes or files a proposal. The two approval gates stay in place.
+- No business document and no external record is deleted or changed by regeneration.
+
+**Acceptance criteria**
+
+- A regenerated response keeps the same row and the same position.
+- The user message count does not increase.
+- A regenerated proposal starts in the pending state and needs both gates again.
+
+## FR-53 - Conversation Branch Integrity (Approved & Implemented - 2026-11-16)
+
+An edited request or a regenerated response changes the answer for every later turn. Dependent later turns must not remain presented as valid answers.
+
+**Approved behaviour**
+
+- When a user message is edited, every later turn in that conversation becomes inactive.
+- When an assistant response is regenerated, every later turn becomes inactive.
+- Inactive turns are not shown in the active conversation branch.
+- Earlier independent context is preserved and is sent to the model.
+- Inactive turns are marked, not deleted. The current schema has no branch column, so this requirement is met with `metadata.superseded = true` and `status = 'stopped'`.
+- A pending proposal that belongs to an invalidated turn is cleared from the active proposal state.
+- Already persisted business documents are never rolled back by this behaviour.
+- If the supersession write fails, the edit or regeneration stops and reports an error. The app does not continue with a branch that may still hold stale turns.
+
+**Acceptance criteria**
+
+- After an edit, no response to the previous wording remains visible below the edited message.
+- Reloading the conversation shows the same active branch.
+- Superseded rows still exist in `bolu_messages` for audit.
+- No migration is required for this behaviour.
+
+**Limitation**
+
+- The model keeps only the active branch. An older branch cannot be restored from the interface in this release. A branch tree needs a schema change and is recorded as a proposal only.
+
+## FR-54 - Haptic Feedback & Preferences (Approved & Implemented - 2026-11-16)
+
+Bolu must give restrained haptic feedback on a device that supports it.
+
+**Approved behaviour**
+
+- Haptics are enabled by default.
+- One short pulse fires when a response starts to show visible output. It fires once per response, never per token, per chunk or per render.
+- A response that is empty or fails before visible output does not pulse.
+- An optional completion pulse is independent from the start pulse. It is enabled by default. It is a short double tap, never a long vibration.
+- Meaningful actions pulse lightly: send, save edit, regenerate, copy success, narration start and edit start.
+- The setting is a device preference. It is stored in `bolu_interaction_preferences` in device storage, following the existing Bolu device-preference convention.
+- A disabled master switch suppresses every Bolu pulse immediately, including the completion pulse.
+- An unsupported device or a rejected native call produces no feedback and no error. Chat is not blocked.
+- No Android permission is added unless the chosen implementation needs it. The browser Vibration API needs `android.permission.VIBRATE` on Android, so that normal permission is declared.
+
+**Acceptance criteria**
+
+- Exactly one start pulse occurs per response.
+- Streaming a long response does not repeat the pulse.
+- Turning haptics off stops all Bolu vibration on the next interaction.
+- The completion pulse can be turned off without turning off the start pulse.
+
+### FR-54.1 Haptic scope refinement (Approved & Implemented - 2026-11-16)
+
+The intended interaction is one pulse when Bolu starts replying, plus one optional pulse when the reply completes. No other interaction vibrates.
+
+- Copy, edit, regenerate, send, narration start, pause and resume do not vibrate.
+- The start pulse fires once per response identifier, after visible output exists. Streaming tokens, chunk flushes and re-renders cannot repeat it.
+- The completion pulse uses a short double tap. It needs the master switch and keeps its own switch.
+- A device without the Vibration API produces no feedback and no error.
+- The application does not override Android system vibration settings and does not request a runtime permission.
+- A native haptics plugin is not required for this behaviour. The guarded Web Vibration API delivers both pulses, and the manifest declares the normal `VIBRATE` permission once.
+- A preference change applies to the next response. Restarting Bolu is not necessary.
+
+**Verification status:** automated tests pass. Device behaviour is NOT VERIFIED.
+
+## FR-55 - Device Text-to-Speech Narration (Approved & Implemented, browser engine - 2026-11-16)
+
+The device speaks the written response. The application does not generate audio and does not use a cloud voice provider.
+
+**Approved behaviour**
+
+- The speaker action starts narration of one completed assistant response.
+- Narration is user-initiated. A response is never read automatically.
+- The action is not offered on a streaming response. It becomes available when the response completes.
+- While narration is active the row shows pause and stop. A paused response shows resume and stop.
+- Starting another response stops the current one. Two responses never speak at the same time.
+- Closing the workspace, changing conversation or unmounting the thread stops narration.
+- Narration can be turned off in settings independently from haptics.
+- The speaking rate is configurable. The voice is the device default for the device language.
+- An unsupported speech engine, a missing voice or a speech error is reported as a state. It never crashes the thread.
+- The narration preference is stored in the same device preference record as haptics.
+
+**Narration text**
+
+- Narration uses the human-readable response only. It excludes internal operation envelopes, tool payloads, hidden metadata, UI labels and internal identifiers.
+- Headings, paragraphs and list items are read as sentences with pauses.
+- Table rows are read cell by cell in row order.
+- Inline code is read as words. Markdown symbols are not read.
+- Link text is read. The URL is dropped. A bare URL is read as "link".
+- A fenced code block is announced in one short sentence. Its source is not read line by line.
+- A response that carries a typed proposal adds one short sentence that a proposal is shown for review. It does not read the payload.
+- Attachments are not described as if their contents had been read.
+
+**Engine selection (Implemented - 2026-11-16)**
+
+The runtime selects the engine from measured capability. It does not assume the engine from the platform name.
+
+| Engine | Selected when | Notes |
+| :--- | :--- | :--- |
+| Native Android Text-to-Speech | The `BoluSpeech` bridge reports a working engine with available language data. | Preferred on Android. Android System WebView does not reliably provide `speechSynthesis`. |
+| Browser Speech Synthesis | The native engine is not usable and the browser exposes `speechSynthesis`. | Keeps desktop browsers and other supported environments working. |
+| None | Neither engine is usable. | The speaker action is disabled and explains why. The rest of the chat keeps working. |
+
+**Native Android bridge**
+
+- A local Capacitor plugin (`BoluSpeechPlugin`) wraps `android.speech.tts.TextToSpeech`.
+- The plugin is registered in `MainActivity` with the existing local plugins. There is no new package dependency, no Gradle change and no third-party speech SDK.
+- The Android manifest declares the `android.intent.action.TTS_SERVICE` query. Android 11 and later require this query to bind a Text-to-Speech engine. The change adds no permission.
+- The bridge speaks only the prepared narration text. It never transmits message text to a network service, never stores audio and needs no credential.
+- The engine is released when the plugin is destroyed, so speech cannot outlive the activity.
+- A missing engine, missing language data and rejected calls become states. They never crash the chat.
+
+**Pause and resume**
+
+- Android has no reliable pause inside one utterance. The web layer therefore sends one sentence-sized chunk at a time.
+- Pause stops the current chunk. Resume sends that chunk again, so at most one sentence repeats.
+- Stop clears the session and releases the engine.
+- Starting another response stops the current response first.
+- A session token discards late callbacks from a previous response, a closed conversation or an unmounted thread.
+
+**Verification status:** engine selection, chunk preparation and lifecycle guards have automated tests. Native speech on a physical Android device is NOT VERIFIED.
+
+**Acceptance criteria**
+
+- The speaker action reads only the selected response.
+- Pause, resume and stop reflect the real speech state.
+- A second response stops the first.
+- No internal JSON is spoken.
+- With narration disabled, the action is disabled and no speech starts.
+
+### FR-55.1 Source classification for FR-51 to FR-55
+
+- **Approved product requirements:** the behaviour and acceptance criteria in FR-51 to FR-55.
+- **Existing implementation observations (2026-11-16 audit):** the thread had no user-message actions and only a text-labelled response copy action. Submission inserted a user message and then a separate assistant message. No edit or regenerate path existed. `bolu_messages` has no parent or branch column. `@capacitor/haptics` was not installed and the Android manifest had no `VIBRATE` permission; the only existing haptic pattern was a guarded `navigator.vibrate`. No Text-to-Speech bridge or `speechSynthesis` usage existed.
+- **Technical implementation decisions:** mark superseded turns in `metadata` instead of changing the schema; replace assistant rows in place for regeneration; use the guarded browser Vibration API with the required normal Android permission; use browser Speech Synthesis as the first available narration engine; store haptics and narration as device preferences.
+- **Optional technical proposals (not approved, not implemented):** a branch tree with restore, the official `@capacitor/haptics` plugin, voice selection, and server-stored interaction preferences. The native Android Text-to-Speech bridge was delivered in the 2026-11-16 hardening pass and is no longer a proposal.
+
+### FR-55.2 Source classification for the hardening pass (2026-11-16)
+
+- **Approved requirements:** reliable Android narration, browser fallback, start/pause/resume/stop, cleanup on conversation change and unmount, silent ordinary interactions, one-shot start pulse.
+- **Observations:** the Android project already had four registered local Capacitor plugins, minSdk 24 and compileSdk 36, and no speech bridge. Android System WebView does not reliably provide `speechSynthesis`. The first implementation also pulsed on copy, edit, regenerate, send, narration and save.
+- **Decisions:** add a small local Capacitor plugin instead of a third-party dependency; keep browser synthesis as the fallback; chunk native speech in the web layer to support pause and resume; restrict vibration to the response-start pulse and the optional completion pulse; store the edited request before superseding dependent turns, and restore the original text if the branch write fails.
+- **Proposals:** native haptics plugin, branch tree with restore, voice selection, account-scoped interaction preferences.
 
 
 

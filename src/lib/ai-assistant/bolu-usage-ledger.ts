@@ -38,6 +38,61 @@ export type UsageEntry = {
   costCurrency: string
   success: boolean
   latencyMs?: number | null
+  /** Milliseconds from the upstream request leaving until the first content token. */
+  ttftMs?: number | null
+  /** Milliseconds between the first and the last generated content token. */
+  generationMs?: number | null
+  /** Generated tokens per second over the generation window. */
+  tokensPerSecond?: number | null
+}
+
+/** Measured speed of one streamed completion. */
+export type StreamMetrics = {
+  ttftMs: number | null
+  generationMs: number | null
+  tokensPerSecond: number | null
+}
+
+/**
+ * Computes time to first token and generation speed from stream timestamps.
+ *
+ * TTFT is measured from the moment the upstream request was sent. The
+ * generation speed uses the window between the first and the last content
+ * token, because the total request time also carries prompt processing and
+ * the wait for the response headers. A missing or unusable measurement
+ * returns null, never a fabricated number.
+ */
+export function computeStreamMetrics(params: {
+  requestStartedAtMs: number | null
+  firstContentAtMs: number | null
+  lastContentAtMs: number | null
+  completionTokens: number | null
+}): StreamMetrics {
+  const { requestStartedAtMs, firstContentAtMs, lastContentAtMs, completionTokens } = params
+
+  let ttftMs: number | null = null
+  if (requestStartedAtMs !== null && firstContentAtMs !== null) {
+    const delta = firstContentAtMs - requestStartedAtMs
+    if (delta >= 0) ttftMs = Math.round(delta)
+  }
+
+  let generationMs: number | null = null
+  if (firstContentAtMs !== null && lastContentAtMs !== null) {
+    const delta = lastContentAtMs - firstContentAtMs
+    if (delta >= 0) generationMs = Math.round(delta)
+  }
+
+  let tokensPerSecond: number | null = null
+  if (
+    completionTokens !== null &&
+    completionTokens > 0 &&
+    generationMs !== null &&
+    generationMs > 0
+  ) {
+    tokensPerSecond = Math.round((completionTokens / (generationMs / 1000)) * 100) / 100
+  }
+
+  return { ttftMs, generationMs, tokensPerSecond }
 }
 
 /**
@@ -90,6 +145,15 @@ function toInt(value: unknown): number | null {
 }
 
 /**
+ * Timestamps of the first and last generated content token in a stream.
+ * A role-only delta or a keep-alive frame is not content, so it does not count.
+ */
+export type StreamTiming = {
+  firstContentAtMs: number | null
+  lastContentAtMs: number | null
+}
+
+/**
  * Scans a byte stream for provider-reported usage and the generated text.
  * Usage normally arrives in the final frame, but frames can be split across
  * chunk boundaries, so the scanner keeps a partial line buffer.
@@ -99,10 +163,15 @@ export function createUsageScanner(): {
   flush: () => void
   result: () => UsageCounts | null
   text: () => string
+  generatedText: () => string
+  timing: () => StreamTiming
 } {
   let buffer = ''
   let found: UsageCounts | null = null
   let outputText = ''
+  let reasoningText = ''
+  let firstContentAtMs: number | null = null
+  let lastContentAtMs: number | null = null
 
   const scanLine = (line: string) => {
     const trimmed = line.trim()
@@ -122,6 +191,25 @@ export function createUsageScanner(): {
       const delta = choices?.[0]?.delta as Record<string, unknown> | undefined
       const content = delta?.content
       if (typeof content === 'string') outputText += content
+
+      // A reasoning model streams its thinking tokens in `reasoning` or
+      // `reasoning_content`. They are generated tokens, and they are what the
+      // caller waits for, so they count towards the timing.
+      const reasoning = delta?.reasoning
+      if (typeof reasoning === 'string') reasoningText += reasoning
+      const reasoningContent = delta?.reasoning_content
+      if (typeof reasoningContent === 'string') reasoningText += reasoningContent
+
+      const generated =
+        (typeof content === 'string' && content.length > 0) ||
+        (typeof reasoning === 'string' && reasoning.length > 0) ||
+        (typeof reasoningContent === 'string' && reasoningContent.length > 0)
+
+      if (generated) {
+        const now = Date.now()
+        if (firstContentAtMs === null) firstContentAtMs = now
+        lastContentAtMs = now
+      }
     } catch {
       // A malformed frame is ignored; the stream itself is unaffected.
     }
@@ -140,6 +228,12 @@ export function createUsageScanner(): {
     },
     result() {
       return found
+    },
+    timing() {
+      return { firstContentAtMs, lastContentAtMs }
+    },
+    generatedText() {
+      return outputText + reasoningText
     },
     text() {
       return outputText
@@ -254,6 +348,9 @@ export function buildUsageRow(entry: UsageEntry): Record<string, unknown> {
     token_source: entry.counts.source,
     success: entry.success,
     latency_ms: entry.latencyMs ?? null,
+    ttft_ms: entry.ttftMs ?? null,
+    generation_ms: entry.generationMs ?? null,
+    tokens_per_second: entry.tokensPerSecond ?? null,
   }
 }
 

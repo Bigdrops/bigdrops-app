@@ -437,7 +437,7 @@ function transformAnthropicStream(body: ReadableStream<Uint8Array>): ReadableStr
 }
 
 export type StreamResult =
-  | { ok: true; response: Response }
+  | { ok: true; response: Response; requestStartedAt: number }
   | { ok: false; diagnostics: ProviderDiagnostics }
 
 /**
@@ -502,9 +502,9 @@ export async function streamAdapterChat(
       }
     }
     if (config.protocol === 'anthropic') {
-      return { ok: true, response: sseResponse(transformAnthropicStream(res.body)) }
+      return { ok: true, response: sseResponse(transformAnthropicStream(res.body)), requestStartedAt: started }
     }
-    return { ok: true, response: sseResponse(res.body) }
+    return { ok: true, response: sseResponse(res.body), requestStartedAt: started }
   }
 
   if (contentType.includes('application/json')) {
@@ -514,12 +514,12 @@ export async function streamAdapterChat(
       if (config.protocol === 'anthropic') {
         const content = Array.isArray(data.content) ? (data.content as Array<Record<string, unknown>>) : []
         const out = content.map((block) => (typeof block.text === 'string' ? block.text : '')).join('')
-        return { ok: true, response: bufferedToSse(out) }
+        return { ok: true, response: bufferedToSse(out), requestStartedAt: started }
       }
       const choices = Array.isArray(data.choices) ? (data.choices as Array<Record<string, unknown>>) : []
       const message = choices[0]?.message as Record<string, unknown> | undefined
       const out = typeof message?.content === 'string' ? message.content : ''
-      return { ok: true, response: bufferedToSse(out, data.usage) }
+      return { ok: true, response: bufferedToSse(out, data.usage), requestStartedAt: started }
     } catch {
       return {
         ok: false,

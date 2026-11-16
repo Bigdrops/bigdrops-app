@@ -188,11 +188,15 @@ test('Bolu Operational Remediation: ProposalCardView handles "saving" state with
 test('Bolu Operational Remediation: useBoluThread.ts passes tenantClient and entityId for authoritative persistence', () => {
   const filePath = path.resolve('src/lib/ai-assistant/hooks/useBoluThread.ts')
   const content = fs.readFileSync(filePath, 'utf-8')
+  // The provider turn moved to bolu-generation.ts to keep the hook under the
+  // 600-line project limit; the behaviour is unchanged.
+  const generation = fs.readFileSync(path.resolve('src/lib/ai-assistant/bolu-generation.ts'), 'utf-8')
+  const turnSource = `${content}\n${generation}`
 
   assert.equal(
-    content.includes('validateBoluClient(resolvedTenantClient'),
+    turnSource.includes('validateBoluClient('),
     true,
-    'useBoluThread must validate client against database before emitting create-document proposal',
+    'the provider turn must validate the client against the database before emitting a create-document proposal',
   )
   assert.equal(
     content.includes('status: \'saving\''),

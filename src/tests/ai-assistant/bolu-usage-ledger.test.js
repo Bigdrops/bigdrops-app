@@ -26,7 +26,10 @@ test('Wiring: the chat route logs usage on both success paths and both failure p
   const calls = source.split('logBoluUsage(').length - 1
   // Two definition-independent call sites per path: exact connection and pool.
   assert.ok(calls >= 4, `Expected at least four logBoluUsage call sites, found ${calls}`)
-  assert.ok(source.includes('onComplete?.(scanner.result(), scanner.text())'), 'The stream must report usage on completion')
+  assert.ok(
+    source.includes('onComplete?.(counts, outputText, metrics)'),
+    'The stream must report usage and the measured speed on completion',
+  )
   assert.ok(source.includes('success: true'), 'A completed request must be logged as a success')
   assert.ok(source.includes('success: false'), 'A failed attempt must be logged')
 })

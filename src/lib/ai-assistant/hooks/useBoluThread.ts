@@ -140,7 +140,6 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
   }, [])
 
   /** Facts lookup shared by new turns, edited turns and regenerated turns. */
-  /** Facts lookup shared by new turns, edited turns and regenerated turns. */
   const resolveFacts = useCallback(
     (text: string) =>
       resolveBoluFacts({

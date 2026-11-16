@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { BoluProposal } from '@/lib/ai-assistant/bolu-operations'
 import type { ClerkState, ProductionBoluMessage } from '@/lib/ai-assistant/hooks/types'
+import type { BoluNarrationStatus } from '@/lib/ai-assistant/bolu-narration'
 import type { BoluConversationSummary } from '@/lib/ai-assistant/hooks/useBoluConversations'
 import type { BoluPageContext } from '@/lib/ai-assistant/bolu-context'
 
@@ -53,6 +54,19 @@ export interface WorkspaceShellProps {
   onSelectThread: (id: string) => void
   onNewThread: () => void
   onCloseWorkspace: () => void
+}
+
+/** Narration controls handed to the thread so it stays free of speech logic. */
+export interface ThreadNarrationControls {
+  supported: boolean
+  enabled: boolean
+  messageId: string | null
+  status: BoluNarrationStatus
+  error: string | null
+  onSpeak: (message: ProductionBoluMessage, text: string) => void
+  onPause: () => void
+  onResume: () => void
+  onStop: () => void
 }
 
 export type { ClerkState, ProductionBoluMessage, BoluConversationSummary, BoluProposal }

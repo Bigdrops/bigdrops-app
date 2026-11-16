@@ -31,6 +31,7 @@ import { ProviderLogo } from './bolu-provider/ProviderLogo'
 import { CatalogueGrid } from './bolu-provider/CatalogueGrid'
 import { ModelsManagerSection } from './bolu-provider/ModelsManagerSection'
 import { AiUsagePanel } from './bolu-provider/AiUsagePanel'
+import { BoluInteractionPreferencesCard } from './bolu-provider/BoluInteractionPreferencesCard'
 
 export function BoluProviderSettingsSection() {
   const [status, setStatus] = useState<ProviderStatusResponse | null>(null)
@@ -507,6 +508,9 @@ export function BoluProviderSettingsSection() {
           </CollapsibleContent>
         </Collapsible>
       )}
+
+      {/* Chat interaction preferences: haptics and narration (device-scoped) */}
+      <BoluInteractionPreferencesCard />
 
       {/* AI Usage & Leaderboard (Collapsible, loads on open) */}
       <AiUsagePanel />

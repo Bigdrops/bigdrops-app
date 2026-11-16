@@ -155,8 +155,14 @@ describe('Bolu UI State Remediation & Lazy Threading', () => {
     // Must NOT drop the assistant turn by filtering it out
     assert.ok(!threadHookSrc.includes('prev.filter((m) => m.id !== tempAssistantId)'))
 
-    // Must mark with status: 'failed'
-    assert.ok(threadHookSrc.includes("status: 'failed'"))
+    // Must mark with status: 'failed'. The stream loop lives in
+    // bolu-generation.ts so the hook stays under the 600-line limit.
+    const generationSrc = readFileSync(
+      join(process.cwd(), 'src/lib/ai-assistant/bolu-generation.ts'),
+      'utf8',
+    )
+    assert.ok(generationSrc.includes("status: 'failed'"))
+    assert.ok(!generationSrc.includes('prev.filter((m) => m.id !== tempAssistantId)'))
   })
 
   it('assistant-chat-thread.tsx renders visible error alert for failed messages', () => {

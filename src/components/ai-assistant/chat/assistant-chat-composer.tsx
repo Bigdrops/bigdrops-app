@@ -1,4 +1,4 @@
-import { Square, ArrowUp } from 'lucide-react'
+import { Square, ArrowUp, Pencil, X } from 'lucide-react'
 import { useLayoutEffect, type FormEvent, type KeyboardEvent, type RefObject } from 'react'
 
 /**
@@ -11,22 +11,26 @@ export function AssistantComposer({
   busy,
   disabled,
   awaiting,
+  editing = false,
   inputRef,
   onChange,
   onSubmit,
   onKeyDown,
   onStop,
+  onCancelEdit,
 }: {
   value: string
   busy: boolean
   disabled?: boolean
   awaiting?: boolean
+  editing?: boolean
   contextLabel?: string
   inputRef: RefObject<HTMLTextAreaElement | null>
   onChange: (value: string) => void
   onSubmit: (event: FormEvent) => void
   onKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void
   onStop: () => void
+  onCancelEdit?: () => void
 }) {
   useLayoutEffect(() => {
     const textarea = inputRef.current
@@ -41,6 +45,23 @@ export function AssistantComposer({
 
   return (
     <div className="ac-composer px-3 py-2.5 sm:px-4 sm:py-3 border-t border-[var(--ac-line)] bg-[var(--ac-surface)]">
+      {editing ? (
+        <div className="ac-edit-banner" role="status">
+          <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate">Editing your message</span>
+          {onCancelEdit ? (
+            <button
+              type="button"
+              className="ac-edit-cancel"
+              aria-label="Cancel editing"
+              title="Cancel editing"
+              onClick={onCancelEdit}
+            >
+              <X className="size-3.5" aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <form className="ac-compose flex items-end gap-2 p-2 rounded-2xl border border-[var(--ac-line)] bg-[var(--ac-muted-surface)] transition-all focus-within:border-[var(--ac-accent)] focus-within:ring-1 focus-within:ring-[var(--ac-accent)]" onSubmit={onSubmit}>
         <textarea
           ref={inputRef}
@@ -51,9 +72,11 @@ export function AssistantComposer({
           placeholder={
             isLocked
               ? (awaiting ? 'Review the proposed card above…' : 'Bolu is working…')
-              : 'Ask Bolu or describe an invoice or quotation change…'
+              : editing
+                ? 'Change your message. Send to regenerate the reply.'
+                : 'Ask Bolu or describe an invoice or quotation change…'
           }
-          aria-label="Message Bolu assistant"
+          aria-label={editing ? 'Edit your message' : 'Message Bolu assistant'}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
           aria-describedby="ac-composer-hint"
@@ -75,8 +98,8 @@ export function AssistantComposer({
               type="submit"
               className="ac-send size-8 sm:size-9 rounded-xl bg-[var(--ac-accent)] text-white flex items-center justify-center transition active:scale-95 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
               disabled={!value.trim() || isLocked}
-              aria-label="Send message"
-              title="Send message"
+              aria-label={editing ? 'Save edited message' : 'Send message'}
+              title={editing ? 'Save edited message' : 'Send message'}
             >
               <ArrowUp className="size-4" aria-hidden="true" />
             </button>
@@ -86,7 +109,9 @@ export function AssistantComposer({
 
       {/* Helper text hidden on mobile, visible on desktop with physical keyboards */}
       <p className="ac-foot hidden sm:block text-center mt-1.5 text-[11px] text-[var(--ac-muted)]" id="ac-composer-hint">
-        Enter to send · Shift + Enter for a new line · Two-Gate human verification enforced
+        {editing
+          ? 'Enter saves the edit · Escape cancels · Two-Gate human verification enforced'
+          : 'Enter to send · Shift + Enter for a new line · Two-Gate human verification enforced'}
       </p>
     </div>
   )

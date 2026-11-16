@@ -40,9 +40,11 @@ import { resolveRoutingPolicy } from '../src/lib/ai-assistant/routing/bolu-polic
 import { classifyProviderError } from '../src/lib/ai-assistant/routing/bolu-error-classifier.js'
 import {
   computeCostUsd,
+  computeStreamMetrics,
   createUsageScanner,
   estimateTokens,
   recordUsage,
+  type StreamMetrics,
   type TokenSource,
   type UsageCounts,
 } from '../src/lib/ai-assistant/bolu-usage-ledger.js'
@@ -163,6 +165,9 @@ async function logBoluUsage(params: {
   promptChars: number
   success: boolean
   latencyMs: number
+  ttftMs?: number | null
+  generationMs?: number | null
+  tokensPerSecond?: number | null
 }): Promise<void> {
   const counts: UsageCounts = params.usage ?? {
     promptTokens: estimateTokens('x'.repeat(params.promptChars)),
@@ -198,6 +203,9 @@ async function logBoluUsage(params: {
     costCurrency: cost.costCurrency,
     success: params.success,
     latencyMs: params.latencyMs,
+    ttftMs: params.ttftMs ?? null,
+    generationMs: params.generationMs ?? null,
+    tokensPerSecond: params.tokensPerSecond ?? null,
   })
 }
 
@@ -211,13 +219,36 @@ async function logBoluUsage(params: {
 function wrapStreamForFirstTokenBoundary(
   upstreamStream: ReadableStream<Uint8Array>,
   onSuccess: () => Promise<void> | void,
-  onComplete?: (usage: UsageCounts | null, outputText: string) => Promise<void> | void,
+  onComplete?: (
+    usage: UsageCounts | null,
+    outputText: string,
+    metrics: StreamMetrics,
+  ) => Promise<void> | void,
+  requestStartedAt: number | null = null,
 ): ReadableStream<Uint8Array> {
   const reader = upstreamStream.getReader()
   const scanner = createUsageScanner()
   const decoder = new TextDecoder()
   let firstChunkReceived = false
   let isClosed = false
+
+  /** Reads the scanner once and derives the speed metrics from it. */
+  const collect = (): { counts: UsageCounts | null; outputText: string; metrics: StreamMetrics } => {
+    const outputText = scanner.text()
+    const counts = scanner.result()
+    const timing = scanner.timing()
+    const generatedText = scanner.generatedText()
+    return {
+      counts,
+      outputText,
+      metrics: computeStreamMetrics({
+        requestStartedAtMs: requestStartedAt,
+        firstContentAtMs: timing.firstContentAtMs,
+        lastContentAtMs: timing.lastContentAtMs,
+        completionTokens: counts?.completionTokens ?? (generatedText ? estimateTokens(generatedText) : null),
+      }),
+    }
+  }
 
   const finalizeStream = async (controller: ReadableStreamDefaultController<Uint8Array>) => {
     if (isClosed) return
@@ -229,7 +260,8 @@ function wrapStreamForFirstTokenBoundary(
         })
       }
       scanner.flush()
-      onComplete?.(scanner.result(), scanner.text())
+      const { counts, outputText, metrics } = collect()
+      onComplete?.(counts, outputText, metrics)
     } finally {
       try {
         controller.close()
@@ -278,7 +310,8 @@ function wrapStreamForFirstTokenBoundary(
         try {
           scanner.flush()
           if (onComplete) {
-            await Promise.resolve(onComplete(scanner.result(), scanner.text())).catch(() => {})
+            const { counts, outputText, metrics } = collect()
+            await Promise.resolve(onComplete(counts, outputText, metrics)).catch(() => {})
           }
         } finally {
           try {
@@ -483,7 +516,7 @@ export async function POST(request: Request): Promise<Response> {
                       console.error('[bolu-chat] recordAiSuccess error:', err)
                     })
                   },
-                  (usage, outputText) => {
+                  (usage, outputText, metrics) => {
                     void logBoluUsage({
                       adminClient,
                       userId: user.id,
@@ -499,8 +532,12 @@ export async function POST(request: Request): Promise<Response> {
                       promptChars,
                       success: true,
                       latencyMs: Date.now() - startedAt,
+                      ttftMs: metrics.ttftMs,
+                      generationMs: metrics.generationMs,
+                      tokensPerSecond: metrics.tokensPerSecond,
                     })
                   },
+                  result.requestStartedAt,
                 )
               : null
 
@@ -635,7 +672,7 @@ export async function POST(request: Request): Promise<Response> {
                   console.error('[bolu-chat] recordAiSuccess error:', err)
                 })
               },
-              (usage, outputText) => {
+              (usage, outputText, metrics) => {
                 void logBoluUsage({
                   adminClient,
                   userId: user.id,
@@ -651,8 +688,12 @@ export async function POST(request: Request): Promise<Response> {
                   promptChars,
                   success: true,
                   latencyMs: Date.now() - startedAt,
+                  ttftMs: metrics.ttftMs,
+                  generationMs: metrics.generationMs,
+                  tokensPerSecond: metrics.tokensPerSecond,
                 })
               },
+              result.requestStartedAt,
             )
           : null
 
