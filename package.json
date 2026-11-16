@@ -6,7 +6,7 @@
   "scripts": {
     "start": "bun run server",
     "dev": "vite",
-    "build": "echo 'Skipping Vite build'",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "test": "node --experimental-loader ./src/tests/resolve-alias.js --test \"src/tests/critical/*.test.js\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
