@@ -144,7 +144,7 @@ export function upsertCustomProvider(
     keyHint: 'Key for this endpoint',
     signupUrl: '',
     note: custom.contextWindow
-      ? `Custom endpoint · ${custom.contextWindow.toLocaleString('en-NG')} token window`
+      ? `Custom endpoint · ${Number(custom.contextWindow || 0).toLocaleString('en-NG')} token window`
       : 'Custom OpenAI compatible endpoint',
     models,
     model: models[0]?.id ?? '',

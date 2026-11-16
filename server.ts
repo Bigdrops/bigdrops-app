@@ -1,13 +1,20 @@
-declare const Bun: any
+export function getCorsHeaders(req?: Request): Record<string, string> {
+  const origin = req?.headers.get('origin') || '*'
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-Bolu-Source',
+    'Access-Control-Expose-Headers': 'X-Bolu-Source, Content-Length',
+    'Access-Control-Max-Age': '86400',
+  }
+}
 
 export function withCors(response: Response, req?: Request): Response {
   const headers = new Headers(response.headers)
-  const origin = req?.headers.get('origin') || '*'
-  headers.set('Access-Control-Allow-Origin', origin)
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-  headers.set('Access-Control-Expose-Headers', 'X-Bolu-Source, Content-Length')
-  headers.set('Access-Control-Max-Age', '86400')
+  const corsHeaders = getCorsHeaders(req)
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    headers.set(key, value)
+  }
 
   return new Response(response.body, {
     status: response.status,
@@ -20,7 +27,10 @@ export async function router(req: Request): Promise<Response> {
   const url = new URL(req.url)
 
   if (req.method === 'OPTIONS') {
-    return withCors(new Response(null, { status: 204 }), req)
+    return new Response(null, {
+      status: 204,
+      headers: getCorsHeaders(req),
+    })
   }
 
   if (url.pathname === '/' || url.pathname === '/health' || url.pathname === '/api/health') {
@@ -64,22 +74,30 @@ export async function router(req: Request): Promise<Response> {
           req,
         )
       }
-    } catch {
+    } catch (importErr: any) {
+      console.error(`[Bourxe API] Failed to import route ${routeName}:`, importErr)
       return withCors(
-        new Response(JSON.stringify({ error: 'Not Found', path: url.pathname }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({
+            error: 'Module Import Failed',
+            message: importErr?.message || String(importErr),
+            path: url.pathname,
+          }),
+          {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
         req,
       )
     }
 
     const method = req.method.toUpperCase()
-    const handler = typeof mod[method] === 'function' ? mod[method] : null
+    const handler = typeof mod[method] === 'function' ? mod[method] : mod.default
 
-    if (!handler) {
+    if (!handler || typeof handler !== 'function') {
       return withCors(
-        new Response(JSON.stringify({ error: `Method ${method} Not Allowed` }), {
+        new Response(JSON.stringify({ error: `Method ${method} Not Allowed on ${routeName}` }), {
           status: 405,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -91,6 +109,7 @@ export async function router(req: Request): Promise<Response> {
       const res = await handler(req)
       return withCors(res, req)
     } catch (err: any) {
+      console.error(`[Bourxe API] Error in handler for ${routeName}:`, err)
       return withCors(
         new Response(
           JSON.stringify({ error: err instanceof Error ? err.message : 'Internal Server Error' }),
@@ -115,13 +134,9 @@ export async function router(req: Request): Promise<Response> {
 
 const port = Number(process.env.PORT) || 3000
 
-if (typeof Bun !== 'undefined' && Bun?.serve) {
-  console.log(`[Bourxe API] Server starting on port ${port}...`)
-  Bun.serve({
-    port,
-    fetch(req: Request) {
-      return router(req)
-    },
-  })
-  console.log(`[Bourxe API] Server running at http://0.0.0.0:${port}`)
+export default {
+  port,
+  fetch(req: Request) {
+    return router(req)
+  },
 }

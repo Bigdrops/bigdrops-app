@@ -197,7 +197,7 @@ export function AssistantThread({
                           <span className="font-semibold text-[var(--ac-ink)]">{rec.number}</span>
                           <span className="text-[var(--ac-muted)] truncate max-w-[40%]">{rec.clientName}</span>
                           <span className="font-medium text-[var(--ac-ink)]">
-                            ₦{rec.total.toLocaleString('en-NG')}
+                            ₦{Number(rec.total || 0).toLocaleString('en-NG')}
                           </span>
                         </div>
                       ))}
