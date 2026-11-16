@@ -260,6 +260,7 @@ export async function recordInvoicePayment(
 
               const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload-payment-attachment`, {
                 method: "POST",
+                credentials: "include",
                 headers: { Authorization: `Bearer ${token}` },
                 body: fd,
               })
@@ -449,6 +450,7 @@ export async function recordInvoicePayment(
 
             const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/upload-payment-attachment`, {
               method: "POST",
+              credentials: "include",
               headers: { Authorization: `Bearer ${token}` },
               body: fd,
             })
@@ -551,6 +553,7 @@ async function editVoidCaptions(paymentId: string): Promise<void> {
   try {
     await fetch(`${import.meta.env.VITE_API_URL || ""}/api/edit-payment-caption`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ paymentId }),
     })

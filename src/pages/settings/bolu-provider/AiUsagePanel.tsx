@@ -75,12 +75,13 @@ export function AiUsagePanel() {
     setLoading(true)
     setError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error || !session?.access_token) {
         setError('Sign in to view AI usage.')
         return
       }
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/ai-usage?days=${WINDOW_DAYS}&limit=25`, {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
       const payload = await res.json().catch(() => null) as
@@ -184,7 +185,7 @@ export function AiUsagePanel() {
                 {summary.leaderboard.map((row, index) => (
                   <div
                     key={row.user_id}
-                    className="flex items-center justify-between gap-2 rounded-md border border-bd-border/50 bg-bd-surface-muted px-2.5 py-1.5"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 rounded-md border border-bd-border/50 bg-bd-surface-muted px-2.5 py-1.5 min-w-0"
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <span className="w-4 shrink-0 text-[10px] font-bold text-bd-text-muted">{index + 1}</span>
@@ -192,7 +193,7 @@ export function AiUsagePanel() {
                         {row.user_label}
                       </span>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3 text-[10px] text-bd-text-muted">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] text-bd-text-muted shrink-0 pl-6 sm:pl-0">
                       <span>{row.requests} req</span>
                       <span className="font-mono">{formatTokens(row.total_tokens)} tok</span>
                       <span className="font-mono">{formatCost(row.cost_usd ?? 0, row.unknown_cost_rows)}</span>
@@ -211,12 +212,12 @@ export function AiUsagePanel() {
                   {summary.byProvider.map((row) => (
                     <div
                       key={`${row.provider_id}:${row.model_id}`}
-                      className="flex items-center justify-between gap-2 rounded-md border border-bd-border/50 bg-bd-surface-muted px-2.5 py-1.5 text-[10px]"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 rounded-md border border-bd-border/50 bg-bd-surface-muted px-2.5 py-1.5 text-[10px] min-w-0"
                     >
-                      <span className="truncate font-mono text-bd-text">
+                      <span className="truncate font-mono text-bd-text" title={`${row.provider_id}/${row.model_id}`}>
                         {row.provider_id}/{row.model_id}
                       </span>
-                      <span className="flex shrink-0 gap-3 text-bd-text-muted">
+                      <span className="flex flex-wrap shrink-0 gap-3 text-bd-text-muted">
                         <span>{row.requests} req</span>
                         <span className="font-mono">{formatTokens(row.total_tokens)} tok</span>
                       </span>

@@ -18,6 +18,7 @@ export async function sendBoluProviderRequest(params: {
 
   const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bolu-chat`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',

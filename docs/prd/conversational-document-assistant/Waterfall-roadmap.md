@@ -1112,3 +1112,133 @@ Following the closeout audit (`docs/reports/ai/2026-11-14-bolu-phase-2-architect
    - `bun run build`: Permanently excluded.
 
 ---
+
+## 19. Bolu 2.0 Header Identity, Model Picker, AI Infrastructure Navigation & Mobile Responsiveness Corrections (Completed 2026-11-16)
+
+1. **Assistant Identity — Bolu Only:**
+   - Cleaned the assistant header in `assistant-chat-chrome.tsx` to display solely "Bolu" without the standalone letter "B" box, the "BOURXE" brand pill, or the secondary subtitle line.
+   - Preserved all functional controls: conversation history drawer toggle, document panel toggle, More menu, and workspace close button.
+
+2. **Active Model Picker Placement Correction (Single Shared Header Row):**
+   - **Historical Evolution & Rejections:**
+     - *Attempt 1 (Bottom Composer Placement):* The initial implementation positioned the model selector directly above the message composer at the bottom of the screen. This was rejected because it crowded the bottom input area and conflicted with mobile software keyboard transitions.
+     - *Attempt 2 (Two-Row Vertical Header):* The model picker was moved beneath the Bolu header into a standalone `modelPickerBar`. This was rejected because consuming two separate vertical rows wasted critical vertical screen space, particularly on mobile devices.
+   - **Approved Remediation & Final Single-Row Header:**
+     - The standalone `modelPickerBar` was completely removed from `BoluChatWorkspace.tsx`.
+     - Bolu identity and the active model picker are now merged into **ONE single compact horizontal header row** in `assistant-chat-chrome.tsx`:
+       - **Left:** Conversation history drawer access (when applicable) and Bolu identity.
+       - **Right:** Active model picker (`ModelPill`) followed by compact action controls (`PanelRight`, `MoreVertical`, `Close`).
+     - Both groups are vertically centered with appropriate horizontal spacing and zero additional vertical containers.
+   - **Strict Three-Level Vertical Layout Hierarchy:**
+     1. One compact combined Bolu/model header (`headerNode`).
+     2. Conversation area / welcome screen / message stream (`threadNode`).
+     3. Message composer pinned at the bottom (`composerNode`).
+   - **Universal Four-Viewport Parity:** This exact vertical hierarchy is consistently enforced across all four supported viewports:
+     - Mobile / Fold Closed (`viewport === 'fold-closed'`)
+     - Fold Open (`viewport === 'fold-open'`)
+     - Tablets (`viewport === 'tablet'`)
+     - Desktop (`viewport === 'desktop'`)
+   - **Responsive Truncation & Popover Direction:**
+     - On narrow screens (down to 320px–360px), `ModelPill` has bounded width with text truncation (`truncate`), preventing Bolu from being pushed off-screen.
+     - The selection popover opens downward (`direction="down"`) with right-alignment (`align="right"` / `right-0`), expanding cleanly into the conversation area.
+
+3. **Direct AI Infrastructure Navigation:**
+   - Updated the More menu action in `assistant-chat-chrome.tsx` to navigate directly to the canonical route `/settings?section=bolu-provider`.
+   - Updated `Settings.tsx` to inspect `useSearchParams` (`section`) on mount and reactively activate the `bolu-provider` section immediately, eliminating intermediate menu traversal.
+
+4. **AI Infrastructure Mobile Responsiveness & Overflow Correction:**
+   - Audited and corrected horizontal overflow on mobile viewports in `BoluProviderSettingsSection.tsx`, `ConnectionCard.tsx`, `ModelsManagerSection.tsx`, and `AiUsagePanel.tsx`.
+   - Removed rigid `shrink-0` constraints on badge rows, permitting Primary, Pool, and Health status badges to wrap within the available card width.
+   - Grouped card action buttons (`Test`, `Models`, `Edit`, `Set Primary`) and toggle controls (`Enabled`, `Trash`) into wrapping flex rows to prevent mobile layout clipping.
+   - Allowed the section header and models manager action bars to stack cleanly on narrow mobile devices (`<360px` to `430px`).
+
+5. **Verification Gate:**
+   - `bun run typecheck`: Passed with 0 errors (`tsc --noEmit`).
+   - `bun run audit:load`: Passed with 0 bloat, query, or architectural regressions.
+   - `bun run build`: Permanently excluded per 4GB RAM hardware policy.
+
+---
+
+## 26. Bolu 2.0 Unified Rich Message Rendering, Response Copy, Isolated Code Blocks, Artifacts & Attachments (Completed 2026-11-16)
+
+**Status:** IMPLEMENTED & STATICALLY VERIFIED (typecheck exit 0). Visual device-width validation was not performed.
+
+### 26.1 Message renderer audit (2026-11-16)
+
+- The assistant turn in `assistant-chat-thread.tsx` rendered `cleanAssistantProse(message.content)` in a single `whitespace-pre-wrap` paragraph. Fenced code was displayed as literal prose with backticks. No response copy action existed.
+- `cleanAssistantProse` already removed `bolu_operation` envelopes and normalised em-dashes. The renderer keeps that function and runs it before parsing, so a raw operation envelope can never become a code block or an artifact.
+- Streaming reaches the thread as `ProductionBoluMessage.status === 'streaming'`. Persisted history arrives through `mapRowToMessage` with the same shape. One renderer therefore covers initial, streamed, reloaded and error states.
+- Artifacts already existed as `BoluProposal` payloads rendered by `ProposalCardView` with the DEC-05 two-gate flow. `assistant-chat-panel.tsx` already presents the living document preview.
+- No typed attachment payload existed on a Bolu message, and the composer had no attachment path.
+- Relevant installed packages: `lucide-react`, `@capacitor/clipboard` through `src/lib/clipboard.ts`, and an unused-by-this-surface `dompurify`. No Markdown parser, syntax highlighter or chat sanitizer was wired in.
+
+### 26.2 Unified renderer (delivered)
+
+New modules under `src/components/ai-assistant/chat/`:
+
+- `assistant-chat-markdown.tsx`: block parser, inline parser, safe href filter and `AssistantMarkdown`.
+- `assistant-chat-code-block.tsx`: one isolated fenced block with a language label and its own copy action.
+- `assistant-chat-copy-button.tsx`: shared copy control and `useCopyFeedback`. Success is reported only when `copyToClipboard` returns true.
+- `assistant-chat-attachments.tsx`: typed attachment reader and presentation.
+
+`assistant-chat-thread.tsx` now calls `AssistantMarkdown` for assistant prose, renders typed attachments and adds the response action row. `assistant-chat-parts.tsx` adds `proposalPlainText()` and a copy action in the artifact header. `assistant-chat.css` adds the `ac-md-`, `ac-code`, `ac-copy`, `ac-actions` and `ac-attach` styles on the existing `--ac-*` tokens, so light and dark themes follow the current variables.
+
+### 26.3 Standard Markdown support
+
+Paragraphs, headings 1 to 4, bold, italic, ordered and unordered lists, one level of nesting, blockquotes, inline code, fenced code, links, tables and horizontal rules. Paragraphs keep `white-space: pre-wrap`, so a single newline in a plain response still breaks the line as before. No extension is enabled: no raw HTML, no MDX, no images, no embedded media.
+
+### 26.4 Response copy action
+
+The action row appears below a completed or stopped assistant response. It copies the cleaned response source text, so paragraph breaks and Markdown formatting are preserved. It never copies the action row, artifact labels, timestamps or record chips. It is not offered during streaming or on a failed response. A failed clipboard write shows `Copy failed`; success shows `Copied` and an `aria-live` status message.
+
+### 26.5 Independent code blocks and code copy
+
+Each fence becomes an `AssistantCodeBlock` with the declared language (or the neutral label `Code`), a bounded horizontal scroll container and a per-block copy action. Copy uses the parsed source string, so indentation, tabs and line breaks are preserved and no label or control is included. No line numbers are rendered. A fence that is still open while streaming disables its copy action. No highlighter dependency was added; code renders as inert monospaced text.
+
+### 26.6 Artifact presentation
+
+`ProposalCardView` remains the artifact component: type label, title, status flag, line items, field change, authoritative totals, candidate reference and the two gates. The header now carries a text copy action built from the typed proposal only. No run, download, share or regenerate action was added, because the backend does not support them on this surface. No prose or JSON-looking text is promoted to an artifact.
+
+### 26.7 Attachment presentation
+
+Attachments appear only when `metadata.attachments` is an array of typed entries with a name. Name, media type and size render only from real values. An open action appears only for `https:` URLs or same-origin absolute paths. A missing URL renders a disabled chip. Malformed entries are skipped. No storage path or credential is displayed.
+
+### 26.8 Streaming and persisted compatibility
+
+Both paths supply `ProductionBoluMessage`. `AssistantMarkdown` is a pure function of `content`, and the caret is driven by `isStreaming && latest`. A reloaded conversation therefore renders the same blocks as the live stream. Partial input cannot throw: an unterminated fence stays an open code block, and an unclosed emphasis marker renders as text.
+
+### 26.9 mdxcn evaluation
+
+`https://www.mdxcn.dev/` was reviewed as an optional reference only. No mdxcn package was installed and no mdxcn component was copied. Reasons:
+
+- Its chat code-block and artifact components require a component library (`@/components/ui/...`) and a highlighter hook (`useHighlightedCode`) that BOURXE does not have. Adopting them means a new syntax-highlighting dependency and a parallel component set.
+- The approved requirements need isolation, exact copy and safe Markdown. Highlighting is not approved. The local modules meet the requirements without new dependencies.
+- The four supplied Chat-blocks components remain the design reference. Generic documentation-oriented components would replace that direction.
+
+Decision: do not use mdxcn in this task. Revisit only if syntax highlighting becomes an approved requirement.
+
+### 26.10 Dependencies
+
+Reused: `lucide-react`, `src/lib/clipboard.ts` (`@capacitor/clipboard`, `navigator.clipboard`, `execCommand` fallback), existing Tailwind and the `ac-*` theme tokens. Added: none. `dompurify` was not needed because no HTML path exists.
+
+### 26.11 Responsive review
+
+Static review only. The renderer adds no fixed widths. Code blocks and tables own their horizontal scroll (`max-width: 100%`, `overflow-x: auto`). Copy controls use the existing compact row height and grow to 36px on coarse pointers. Attachment rows truncate the file name with an ellipsis. One renderer serves all four viewports; no per-viewport renderer exists. Device-width visual validation on phone, fold-closed, fold-open, tablet and desktop was not performed.
+
+### 26.12 Verification evidence
+
+- `bun run typecheck`: exit 0.
+- `bun run audit:load`: exit 0. The new chat modules are below the 600-line limit. The audit still reports its pre-existing oversized files and broad selects.
+- A temporary parser check (created, run, then deleted) confirmed: indentation preserved inside a fence, a missing language stays empty, an unsupported identifier does not throw, an unterminated fence stays open, `javascript:` and `data:` links are rejected, `https:` and `mailto:` are accepted, and bold, inline-code and link runs parse.
+- `bun test src/tests/ai-assistant/`: 250 pass, 2 fail, 1 error. Both failures are the pre-existing Connection Vault test and its `isDuplicateNameError` export error in `src/lib/ai-assistant/connection-vault.ts`; that module was not changed by this task.
+- `bun run build`: not run, per the permanent 4GB RAM exclusion.
+
+### 26.13 Outstanding work and limitations
+
+- Syntax highlighting is not implemented. It remains an optional proposal.
+- No committed automated test covers the new Markdown parser. The temporary check was not kept.
+- Visual and interaction validation on live devices was not performed.
+- Attachment presentation has no producer yet: nothing in the current runtime writes `metadata.attachments`. The renderer is ready for a typed payload.
+- `roadmap.html` mirrors section 21 only (DEC-31), so this section has no HTML mirror.
+
+---

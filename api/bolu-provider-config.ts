@@ -42,6 +42,7 @@ import {
   listConnections,
   listRoutingEvents,
   loadConnectionSecret,
+  isDuplicateNameError,
   recordBalanceUpdate,
   recordTestResult,
   setConnectionPool,
@@ -70,6 +71,7 @@ type ErrorCode =
   | 'endpoint_blocked'
   | 'storage_unavailable'
   | 'discovery_unsupported'
+  | 'duplicate_name'
   | 'operation_failed'
 
 function jsonResponse(data: unknown, status = 200, headers?: Record<string, string>) {
@@ -101,6 +103,18 @@ function storageUnavailableResponse() {
     'Provider connection storage is not available. Apply database migration 20261114170000_bolu_provider_connections.sql, then retry.',
     503,
     'storage_unavailable',
+  )
+}
+
+/**
+ * The connection name carries a UNIQUE constraint. A collision must read as
+ * "that name is taken", not as an opaque storage failure.
+ */
+function duplicateNameResponse(name: string): Response {
+  return jsonError(
+    `A connection named "${name}" already exists. Choose a different name.`,
+    409,
+    'duplicate_name',
   )
 }
 
@@ -405,6 +419,11 @@ async function handleCreate(adminClient: SupabaseClient, userId: string, body: R
     sanitizeConnectionName(body.name) ??
     (entry ? `${entry.name} connection` : 'Custom connection')
 
+  const existingConnections = await listConnections(adminClient)
+  if (existingConnections.some((c) => c.name === name)) {
+    return duplicateNameResponse(name)
+  }
+
   const priority =
     typeof body.priority === 'number' && Number.isInteger(body.priority) && body.priority >= 1
       ? body.priority
@@ -422,25 +441,31 @@ async function handleCreate(adminClient: SupabaseClient, userId: string, body: R
     return jsonError(err instanceof Error ? err.message : 'Server master key unavailable.', 500, 'server_config_missing')
   }
 
-  const connection = await createConnection(
-    adminClient,
-    {
-      providerId,
-      name,
-      protocol: defaults.protocol,
-      authScheme: defaults.authScheme,
-      baseUrl: defaults.baseUrl,
-      apiKey,
-      model,
-      timeoutMs: clampTimeout(body.timeoutMs),
-      priority,
-      inPool,
-      allowedModels,
-      isPaidTier,
-    },
-    userId,
-    masterKey,
-  )
+  let connection: PublicConnection
+  try {
+    connection = await createConnection(
+      adminClient,
+      {
+        providerId,
+        name,
+        protocol: defaults.protocol,
+        authScheme: defaults.authScheme,
+        baseUrl: defaults.baseUrl,
+        apiKey,
+        model,
+        timeoutMs: clampTimeout(body.timeoutMs),
+        priority,
+        inPool,
+        allowedModels,
+        isPaidTier,
+      },
+      userId,
+      masterKey,
+    )
+  } catch (err) {
+    if (isDuplicateNameError(err)) return duplicateNameResponse(name)
+    throw err
+  }
 
   await audit(adminClient, userId, 'connection_created', connection.id, {
     providerId,
@@ -468,6 +493,10 @@ async function handleUpdate(adminClient: SupabaseClient, userId: string, body: R
   if (body.name !== undefined) {
     const name = sanitizeConnectionName(body.name)
     if (!name) return jsonError('Connection name must be 1–80 characters.', 400, 'invalid_request')
+    const existingConnections = await listConnections(adminClient)
+    if (existingConnections.some((c) => c.name === name && c.id !== connectionId)) {
+      return duplicateNameResponse(name)
+    }
     patch.name = name
   }
   if (body.model !== undefined) {
@@ -541,7 +570,13 @@ async function handleUpdate(adminClient: SupabaseClient, userId: string, body: R
     }
   }
 
-  const connection = await updateConnection(adminClient, connectionId, patch, userId, masterKey)
+  let connection: PublicConnection
+  try {
+    connection = await updateConnection(adminClient, connectionId, patch, userId, masterKey)
+  } catch (err) {
+    if (isDuplicateNameError(err)) return duplicateNameResponse(patch.name ?? '')
+    throw err
+  }
   await audit(adminClient, userId, 'connection_updated', connectionId, {
     fields: Object.keys(patch).filter((k) => k !== 'apiKey'),
     credentialReplaced: patch.apiKey !== undefined,

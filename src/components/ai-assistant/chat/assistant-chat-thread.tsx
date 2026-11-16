@@ -2,6 +2,9 @@ import { useState, type RefObject, type UIEvent } from 'react'
 import { AlertCircle, ArrowDown, Sparkles } from 'lucide-react'
 
 import { ProposalCardView, StatusRow } from './assistant-chat-parts'
+import { AssistantMarkdown } from './assistant-chat-markdown'
+import { CopyButton } from './assistant-chat-copy-button'
+import { AssistantAttachments, readMessageAttachments } from './assistant-chat-attachments'
 import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
 import type { ClerkState, ProductionBoluMessage } from './types'
 
@@ -74,9 +77,10 @@ export function AssistantThread({
   }
 
   const defaultSuggestions = suggestions.length > 0 ? suggestions : [
-    'Create an invoice for ABC Ltd with 5 cable lugs at ₦9,500 each',
-    'What overdue invoices do we have right now?',
-    'What are the payment terms for our latest invoice?',
+    'Show outstanding invoices',
+    'Create an invoice for a customer',
+    'Draft a new quotation',
+    'Check recent client balances',
   ]
 
   return (
@@ -101,7 +105,7 @@ export function AssistantThread({
             </div>
             <p className="ac-empty-title">Hello! I’m Bolu, your BOURXE business operations assistant</p>
             <p className="ac-empty-copy">
-              I interpret your operational requests, prepare structured proposals, and verify computations via Calculations.ts. You review and approve before any data is saved.
+              I help you manage business documents, draft invoices and quotations, check customer balances, and track outstanding payments. Select an action below or describe what you need.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-2 mt-5 w-full max-w-lg">
               {defaultSuggestions.map((sug, idx) => (
@@ -132,6 +136,10 @@ export function AssistantThread({
           }
 
           const prose = cleanAssistantProse(message.content)
+          const attachments = readMessageAttachments(message.metadata)
+          // Copy is offered for a finished response only, never mid-stream.
+          const canCopy =
+            (message.status === 'completed' || message.status === 'stopped') && prose.trim().length > 0
 
           return (
             <div key={message.id} className="ac-turn">
@@ -172,14 +180,15 @@ export function AssistantThread({
                   </div>
                 ) : null}
 
-                {/* Assistant Prose */}
+                {/* Assistant Prose — one Markdown renderer for streamed and persisted messages */}
                 {message.status !== 'failed' && prose ? (
-                  <p className="ac-text whitespace-pre-wrap">
-                    {prose}
-                    {isStreaming && latest && message.status === 'streaming' ? (
-                      <span className="ac-caret" aria-hidden="true" />
-                    ) : null}
-                  </p>
+                  <div className="ac-text">
+                    <AssistantMarkdown
+                      text={prose}
+                      streaming={message.status === 'streaming'}
+                      caret={isStreaming && latest && message.status === 'streaming'}
+                    />
+                  </div>
                 ) : null}
 
                 {/* Retrieved Records List */}
@@ -215,6 +224,16 @@ export function AssistantThread({
                       onConfirmGate2={() => onConfirmGate2?.(message.proposal!.opId)}
                       onCancelGate2={() => onCancelGate2?.(message.proposal!.opId)}
                     />
+                  </div>
+                ) : null}
+
+                {/* Typed attachments only — no derived or invented files */}
+                <AssistantAttachments attachments={attachments} />
+
+                {/* Response action row */}
+                {canCopy ? (
+                  <div className="ac-actions">
+                    <CopyButton value={prose} label="Copy" ariaLabel="Copy response" />
                   </div>
                 ) : null}
               </div>

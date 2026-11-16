@@ -304,8 +304,8 @@ export function ModelsManagerSection({
                 {isOpen && (
                   <div className="border-t border-bd-border/50 bg-bd-surface-muted/20 px-3.5 py-2.5 space-y-2">
                     {/* Action Bar inside Expanded Row */}
-                    <div className="flex items-center justify-between text-[11px] text-bd-text-muted pb-1 border-b border-bd-border/40">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-bd-text-muted pb-1 border-b border-bd-border/40">
+                      <div className="flex flex-wrap items-center gap-2">
                         {conn.providerId === 'openrouter' && (
                           <Button
                             type="button"
@@ -337,7 +337,7 @@ export function ModelsManagerSection({
                       {onDiscover && (
                         <button
                           type="button"
-                          className="flex items-center gap-1 hover:text-bd-primary transition-colors"
+                          className="flex items-center gap-1 hover:text-bd-primary transition-colors ml-auto sm:ml-0"
                           onClick={() => void handleDiscoverModels(conn.id)}
                           disabled={isDiscovering}
                           title="Refresh model list from provider endpoint"

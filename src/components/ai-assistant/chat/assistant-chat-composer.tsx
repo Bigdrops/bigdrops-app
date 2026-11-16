@@ -1,17 +1,16 @@
-import { Square, ArrowUp, FileText } from 'lucide-react'
+import { Square, ArrowUp } from 'lucide-react'
 import { useLayoutEffect, type FormEvent, type KeyboardEvent, type RefObject } from 'react'
 
 /**
- * AssistantComposer — Unified Composer Card
- * Provides auto-resizing input, active document context pill,
- * and thumb-zone send / stop buttons with streaming lockout.
+ * AssistantComposer — Bolu 2.0 Unified Composer
+ * Provides auto-resizing input, thumb-zone send/stop buttons with streaming lockout,
+ * safe-area bottom inset padding, and clean responsive helper text.
  */
 export function AssistantComposer({
   value,
   busy,
   disabled,
   awaiting,
-  contextLabel = 'Active Session',
   inputRef,
   onChange,
   onSubmit,
@@ -41,18 +40,18 @@ export function AssistantComposer({
   const isLocked = busy || Boolean(disabled)
 
   return (
-    <div className="ac-composer">
-      <form className="ac-compose" onSubmit={onSubmit}>
+    <div className="ac-composer px-3 py-2.5 sm:px-4 sm:py-3 border-t border-[var(--ac-line)] bg-[var(--ac-surface)]">
+      <form className="ac-compose flex items-end gap-2 p-2 rounded-2xl border border-[var(--ac-line)] bg-[var(--ac-muted-surface)] transition-all focus-within:border-[var(--ac-accent)] focus-within:ring-1 focus-within:ring-[var(--ac-accent)]" onSubmit={onSubmit}>
         <textarea
           ref={inputRef}
-          className="ac-input disabled:opacity-60 disabled:cursor-not-allowed"
+          className="ac-input flex-1 bg-transparent border-0 resize-none outline-none text-xs sm:text-sm text-[var(--ac-ink)] placeholder-[var(--ac-muted)] leading-relaxed min-h-[36px] max-h-[160px] p-1 disabled:opacity-60 disabled:cursor-not-allowed"
           rows={1}
           value={value}
           disabled={isLocked}
           placeholder={
             isLocked
-              ? (awaiting ? 'Confirm or reject the card above…' : 'Bolu is working…')
-              : 'Ask Bolu or describe an invoice change…'
+              ? (awaiting ? 'Review the proposed card above…' : 'Bolu is working…')
+              : 'Ask Bolu or describe an invoice or quotation change…'
           }
           aria-label="Message Bolu assistant"
           onChange={(event) => onChange(event.target.value)}
@@ -60,36 +59,33 @@ export function AssistantComposer({
           aria-describedby="ac-composer-hint"
         />
 
-        <div className="ac-compose-bar">
-          <div className="ac-compose-pills">
-            <span className="ac-ctx-pill shrink-0" title="Current operations scope">
-              <FileText className="size-3" aria-hidden="true" />
-              {contextLabel}
-            </span>
-          </div>
-
+        <div className="flex items-center shrink-0 mb-0.5">
           {busy ? (
             <button
               type="button"
-              className="ac-send ac-send--stop"
+              className="ac-send ac-send--stop size-8 sm:size-9 rounded-xl bg-rose-600 text-white flex items-center justify-center transition active:scale-95 shadow-sm"
               onClick={onStop}
               aria-label="Stop response generation"
+              title="Stop generating"
             >
-              <Square className="size-3.5" aria-hidden="true" />
+              <Square className="size-3.5 fill-current" aria-hidden="true" />
             </button>
           ) : (
             <button
               type="submit"
-              className="ac-send disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ac-send size-8 sm:size-9 rounded-xl bg-[var(--ac-accent)] text-white flex items-center justify-center transition active:scale-95 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
               disabled={!value.trim() || isLocked}
               aria-label="Send message"
+              title="Send message"
             >
               <ArrowUp className="size-4" aria-hidden="true" />
             </button>
           )}
         </div>
       </form>
-      <p className="ac-foot" id="ac-composer-hint">
+
+      {/* Helper text hidden on mobile, visible on desktop with physical keyboards */}
+      <p className="ac-foot hidden sm:block text-center mt-1.5 text-[11px] text-[var(--ac-muted)]" id="ac-composer-hint">
         Enter to send · Shift + Enter for a new line · Two-Gate human verification enforced
       </p>
     </div>

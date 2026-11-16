@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { PanelRight, Settings2, X, Monitor, Tablet, Smartphone, BookOpen, History, MoreVertical, Download } from 'lucide-react'
-
-import { AssistantMark } from './assistant-chat-parts'
+import { PanelRight, Settings2, X, History, MoreVertical, Download, SlidersHorizontal, Sparkles, Smartphone, BookOpen, Tablet, Monitor } from 'lucide-react'
 import type { ViewportId } from './types'
 
 export function AssistantHeader({
@@ -16,8 +14,9 @@ export function AssistantHeader({
   contextOpen,
   showContext = true,
   showRailToggle = false,
+  isMobile = false,
 }: {
-  modelPill: ReactNode
+  modelPill?: ReactNode
   subtitle?: string
   onOpenSettings: () => void
   onOpenContext: () => void
@@ -28,6 +27,7 @@ export function AssistantHeader({
   contextOpen: boolean
   showContext?: boolean
   showRailToggle?: boolean
+  isMobile?: boolean
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -51,24 +51,13 @@ export function AssistantHeader({
   }, [menuOpen])
 
   return (
-    <header className="ac-head flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--ac-line)] bg-[var(--ac-surface)]">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <AssistantMark size={32} tone="solid" />
-        <div className="ac-head-id min-w-0">
-          <p className="ac-head-name text-sm font-bold text-[var(--ac-ink)] truncate leading-none">
-            Bolu
-          </p>
-          <p className="ac-head-sub text-[11px] text-[var(--ac-muted)] truncate mt-0.5">
-            {subtitle}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-1.5 shrink-0">
+    <header className="ac-head flex items-center justify-between gap-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-[var(--ac-line)] bg-[var(--ac-surface)] shrink-0">
+      {/* Left: History toggle & Bolu-only Identity */}
+      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
         {showRailToggle && onOpenRail ? (
           <button
             type="button"
-            className="ac-icon-btn ac-head-btn p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+            className="p-1.5 sm:p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition shrink-0"
             aria-label="Conversation history"
             title="Conversation history"
             onClick={onOpenRail}
@@ -77,13 +66,29 @@ export function AssistantHeader({
           </button>
         ) : null}
 
-        {modelPill}
+        <div className="flex items-center min-w-0">
+          <span className="text-sm sm:text-base font-bold text-[var(--ac-ink)] leading-none truncate select-none">
+            Bolu
+          </span>
+        </div>
+      </div>
 
+      {/* Right Controls: Model Picker + Action Controls in Single Compact Row */}
+      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 shrink">
+        {modelPill ? (
+          <div className="min-w-0 shrink">
+            {modelPill}
+          </div>
+        ) : null}
+
+        {/* Desktop / Tablet Actions */}
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
         {showContext ? (
           <button
             type="button"
-            className="ac-icon-btn ac-head-btn p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+            className="p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
             aria-label="Toggle document artifact panel"
+            title={contextOpen ? 'Hide document panel' : 'Show document panel'}
             aria-pressed={contextOpen}
             onClick={onOpenContext}
           >
@@ -95,7 +100,7 @@ export function AssistantHeader({
           <div className="relative" ref={menuRef}>
             <button
               type="button"
-              className="ac-icon-btn ac-head-btn p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+              className="p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
               aria-label="Chat export actions"
               title="Export conversation"
               aria-expanded={menuOpen}
@@ -144,8 +149,9 @@ export function AssistantHeader({
 
         <button
           type="button"
-          className="ac-icon-btn ac-head-btn p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
-          aria-label="Configure provider &amp; model settings"
+          className="p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+          aria-label="Configure provider & model settings"
+          title="AI Settings"
           onClick={onOpenSettings}
         >
           <Settings2 className="size-4" aria-hidden="true" />
@@ -163,7 +169,104 @@ export function AssistantHeader({
           </button>
         ) : null}
       </div>
-    </header>
+
+      {/* Right Controls: Mobile Compact Overflow */}
+      <div className="flex sm:hidden items-center gap-1 shrink-0">
+        {showContext ? (
+          <button
+            type="button"
+            className="p-1.5 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+            aria-label="Toggle document artifact panel"
+            aria-pressed={contextOpen}
+            onClick={onOpenContext}
+          >
+            <PanelRight className="size-4" aria-hidden="true" />
+          </button>
+        ) : null}
+
+        {/* Mobile Overflow Menu */}
+        <div className="relative" ref={isMobile ? menuRef : undefined}>
+          <button
+            type="button"
+            className="p-1.5 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+            aria-label="More options"
+            aria-expanded={menuOpen}
+            aria-haspopup="true"
+            onClick={() => setMenuOpen((prev) => !prev)}
+          >
+            <MoreVertical className="size-4" aria-hidden="true" />
+          </button>
+          {menuOpen ? (
+            <div
+              className="absolute right-0 top-full mt-1.5 w-52 rounded-xl border border-[var(--ac-line)] bg-[var(--ac-surface)] py-1 shadow-2xl z-50 text-xs divide-y divide-[var(--ac-line)]"
+              role="menu"
+            >
+              {/* Exports */}
+              {(onExportMarkdown || onExportJson) ? (
+                <div className="py-1">
+                  {onExportMarkdown ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onExportMarkdown()
+                      }}
+                    >
+                      <Download className="size-3.5 text-[var(--ac-muted)]" />
+                      <span>Export Markdown (.md)</span>
+                    </button>
+                  ) : null}
+                  {onExportJson ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onExportJson()
+                      }}
+                    >
+                      <Download className="size-3.5 text-[var(--ac-muted)]" />
+                      <span>Export JSON (.json)</span>
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {/* Direct AI Infrastructure Navigation */}
+              <div className="py-1">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onOpenSettings()
+                  }}
+                >
+                  <SlidersHorizontal className="size-3.5 text-[var(--ac-muted)]" />
+                  <span>AI Provider Settings</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {onClose ? (
+          <button
+            type="button"
+            className="p-1.5 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] transition ml-0.5"
+            aria-label="Close Bolu Assistant"
+            onClick={onClose}
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+    </div>
+  </header>
   )
 }
 

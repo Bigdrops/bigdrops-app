@@ -20,6 +20,8 @@ import {
 } from '@lobehub/icons'
 import { Cpu, Server } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import zroMark from '@/assets/providers/zro-mark-black.png'
+import plamoIcon from '@/assets/providers/plamo-icon.png'
 
 type IconComponent = ComponentType<{ size?: number | string; className?: string }>
 
@@ -54,5 +56,29 @@ export function ProviderLogo({
   const Icon = PROVIDER_ICONS[providerId]
   if (Icon) return <Icon size={size} className={className} />
   if (providerId === 'amd') return <Cpu size={size} className={cn('text-bd-text-muted', className)} />
+  if (providerId === 'zro') {
+    // Zro has no icon set entry. Use the official mark and invert it for dark surfaces.
+    return (
+      <img
+        src={zroMark}
+        alt="Zro"
+        width={size}
+        height={size}
+        className={cn('object-contain dark:invert', className)}
+      />
+    )
+  }
+  if (providerId === 'plamo') {
+    // Official PLaMo mark. Full colour on a transparent background, so it needs no dark-mode filter.
+    return (
+      <img
+        src={plamoIcon}
+        alt="PLaMo"
+        width={size}
+        height={size}
+        className={cn('object-contain', className)}
+      />
+    )
+  }
   return <Server size={size} className={cn('text-bd-text-muted', className)} />
 }

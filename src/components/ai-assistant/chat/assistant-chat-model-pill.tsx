@@ -25,6 +25,8 @@ export interface ModelPillProps {
   onSelectModel?: (target: SelectedModelTarget) => void
   onManage: () => void
   onAddConnection?: () => void
+  direction?: 'up' | 'down'
+  align?: 'left' | 'right'
 }
 
 interface GroupedModelOption {
@@ -52,6 +54,8 @@ export function ModelPill({
   onSelectModel,
   onManage,
   onAddConnection,
+  direction = 'down',
+  align = 'right',
 }: ModelPillProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -197,17 +201,17 @@ export function ModelPill({
       {/* Pill Trigger */}
       <button
         type="button"
-        className="ac-model-trigger"
+        className="ac-model-trigger max-w-[130px] xs:max-w-[170px] sm:max-w-[240px] min-w-0 shrink"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="ac-model-dot" data-ready={isConfigured} aria-hidden="true" />
-        <span className="ac-model-text">
-          <span className="ac-model-provider truncate max-w-[130px] font-semibold">
+        <span className="ac-model-dot shrink-0" data-ready={isConfigured} aria-hidden="true" />
+        <span className="ac-model-text min-w-0 overflow-hidden">
+          <span className="ac-model-provider truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[150px] font-semibold">
             {displayConnection}
           </span>
-          <span className="ac-model-name truncate max-w-[130px] text-[10px] opacity-80">
+          <span className="ac-model-name truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[150px] text-[10px] opacity-80">
             {displayModel}
           </span>
         </span>
@@ -217,7 +221,9 @@ export function ModelPill({
       {/* Floating Dropdown Dialog matching Image 6 */}
       {open ? (
         <div
-          className="absolute left-0 mt-2 z-50 w-80 max-w-[92vw] max-h-[460px] flex flex-col rounded-2xl border border-white/10 bg-[#181622] text-white shadow-2xl overflow-hidden font-sans backdrop-blur-md"
+          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} z-50 w-80 max-w-[calc(100vw-24px)] sm:max-w-[360px] max-h-[min(460px,55vh)] flex flex-col rounded-2xl border border-white/10 bg-[#181622] text-white shadow-2xl overflow-hidden font-sans backdrop-blur-md ${
+            direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}
           role="dialog"
           aria-label="Select AI Model"
         >

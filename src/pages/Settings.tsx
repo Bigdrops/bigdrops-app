@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import Layout from '../components/Layout'
 import { TeamSettingsSection } from './settings/AdminSettingsSection'
 import { WorkspaceSwitchSection } from './settings/WorkspaceSwitchSection'
-import { buildGroups, type LiveSettingsSection } from './settings/settings-config'
+import { buildGroups, isLiveSettingsSection, type LiveSettingsSection } from './settings/settings-config'
 import type { SettingsSession } from './settings/settings-types'
 import { SettingsShell } from '@/components/settings/SettingsShell'
 import { useWorkspace, useEntity } from '@/lib/tenant/contexts'
@@ -33,10 +34,21 @@ import { BoluProviderSettingsSection } from './settings/BoluProviderSettingsSect
 import SystemLogsSettingsSection from './settings/SystemLogsSettingsSection'
 
 export default function Settings() {
+  const [searchParams] = useSearchParams()
+  const sectionParam = searchParams.get('section') as LiveSettingsSection | null
   const [session, setSession] = useState<SettingsSession>(null)
-  const [active, setActive] = useState<LiveSettingsSection | null>(null)
+  const [active, setActive] = useState<LiveSettingsSection | null>(() => {
+    const param = new URLSearchParams(window.location.search).get('section') as LiveSettingsSection | null
+    return param && isLiveSettingsSection(param) ? param : null
+  })
   const [showRoles, setShowRoles] = useState(false)
   const { workspace } = useWorkspace()
+
+  useEffect(() => {
+    if (sectionParam && isLiveSettingsSection(sectionParam)) {
+      setActive(sectionParam)
+    }
+  }, [sectionParam])
   useEffect(() => {
     let mounted = true
     void supabase.auth.getSession().then(({ data }) => { if (mounted) setSession(data.session) })

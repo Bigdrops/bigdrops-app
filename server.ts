@@ -1,11 +1,13 @@
 export function getCorsHeaders(req?: Request): Record<string, string> {
-  const origin = req?.headers.get('origin') || '*'
+  const origin = req?.headers.get('origin') || 'https://bigdrops-app.vercel.app'
   return {
     'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-Bolu-Source',
     'Access-Control-Expose-Headers': 'X-Bolu-Source, Content-Length',
     'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
   }
 }
 

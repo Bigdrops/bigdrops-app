@@ -325,7 +325,25 @@ export const ROUTING_PROVIDER_CATALOGUE: Record<string, RoutingProviderEntry> = 
     modelDiscoverySupport: true,
     balanceLookupSupport: false,
     approvedForRouting: true,
-    notes: 'Preferred Networks PLaMo API. Japan-hosted. Free plan has usage limits. plamo-3.0-prime retires on 2027-01-31.',
+    notes:
+      'Preferred Networks PLaMo API. Japan-hosted. The Free plan stores input and output and uses them for training, so it is not for tenant content. The Standard and Provider plans do not retain input or output. plamo-3.0-prime retires on 2027-01-31.',
+  },
+  zro: {
+    providerId: 'zro',
+    displayName: 'Zro (MoonMath)',
+    protocol: 'openai-compatible',
+    verifiedEndpoint: 'https://zro.moonmath.ai/v1',
+    authScheme: 'bearer',
+    verifiedModels: [
+      { id: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash', isDefault: true },
+      { id: 'glm-5.3', label: 'GLM-5.3' },
+    ],
+    supportedCapabilities: ['chat-completions', 'streaming', 'tools', 'json-mode', 'system-prompt'],
+    modelDiscoverySupport: true,
+    balanceLookupSupport: false,
+    approvedForRouting: true,
+    notes:
+      'MoonMath Zro API. Free daily usage on DeepSeek V4.1 Flash, resets every day. Zero request retention and no training on requests. GLM-5.3 needs a paid plan.',
   },
 }
 

@@ -14,6 +14,7 @@ describe('server.ts — Bun HTTP Server Router & CORS', () => {
     const res = await router(req)
     assert.equal(res.status, 204)
     assert.equal(res.headers.get('Access-Control-Allow-Origin'), 'https://bigdrops-app.vercel.app')
+    assert.equal(res.headers.get('Access-Control-Allow-Credentials'), 'true')
     assert.ok(res.headers.get('Access-Control-Allow-Methods')?.includes('POST'))
     assert.ok(res.headers.get('Access-Control-Allow-Headers')?.includes('Authorization'))
     assert.equal(res.headers.get('Access-Control-Max-Age'), '86400')

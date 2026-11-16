@@ -52,6 +52,7 @@ The code source of truth is `src/lib/ai-assistant/providerRegistry.ts`.
 | Cohere | `cohere` | `https://api.cohere.ai/compatibility/v1` | Read at signup | `command-a` |
 | NVIDIA NIM | `nvidia` | `https://integrate.api.nvidia.com/v1` | `nvapi-` | `nvidia/nemotron-3.5-lightning-30b-a3b` |
 | AMD Token Factory | `amd` | `https://developer.amd.com.cn/radeon/api/v1` | `rc-` | `DeepSeek-V4-Flash` |
+| Zro (MoonMath) | `zro` | `https://zro.moonmath.ai/v1` | `sk-` | `deepseek-v4.1-flash` |
 
 Every base URL ends in `/v1` or the provider equivalent. Every row uses the OpenAI chat completions request. The app does not add a provider specific adapter.
 
@@ -73,6 +74,7 @@ Every base URL ends in `/v1` or the provider equivalent. Every row uses the Open
 | Cohere | `command-a`, `command-r-plus`, `command-r7b` |
 | NVIDIA NIM | `nvidia/nemotron-3.5-lightning-30b-a3b` |
 | AMD Token Factory | `DeepSeek-V4-Flash`, `DeepSeek-V4.1-Flash`, `GLM-5.3-Flash`, `Qwen3.8-Flash-Next` |
+| Zro (MoonMath) | `deepseek-v4.1-flash`, `glm-5.3` |
 
 A model label is shown in the dropdown. The model id is sent in the request. The two values differ when the id carries a vendor path.
 
@@ -395,7 +397,26 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 | Admission | NOT ADMITTED |
 | Blockers | Model-by-model verification (id, context, tools, structured output, ToS, data retention); architectural overlap — Numes is itself a routing layer and must not sit on top of the DEC-29 engine; evaluation only as a custom provider via the FR-21 path, never as an engine replacement; key custody; Nigeria reachability untested; legal review of marketplace ToS |
 
-### 10.10 Classification Notes (binding reading)
+### 10.10 DeepSeek V4.1 Flash — Zro (MoonMath)
+
+| Field | Value |
+|---|---|
+| Candidate | DeepSeek V4.1 Flash |
+| Underlying model | `deepseek-v4.1-flash` (open-weight, DeepSeek) — access route, not a distinct model |
+| Access route | Zro by MoonMath, base URL `https://zro.moonmath.ai/v1` (OpenAI-compatible). Bearer `sk-` keys. `GET /v1/models` discovery is documented |
+| Category | General inference |
+| Advertised free offer | A free plan with daily usage on DeepSeek V4.1 Flash. The allowance resets every day. No subscription. Usage packs from $5 |
+| Advertised quota/rate limits | The daily free allowance is not published as a number. The paid rate is $0.30 input, $1.10 output and $0.01 cache read per 1M tokens |
+| Context / modalities | 1M context, 64K max output, text and image input, 220 tokens/second output, 516 ms first token |
+| Tool calling / structured output | Documented: tools, tool_choice, reasoning_effort, JSON mode and logprobs. The model catalogue page lists Tools, Reasoning, JSON mode and Logprobs |
+| Promotional expiry | None claimed. The free plan is a standing offer, not a promotion |
+| Verification status | VERIFIED 2026-11-16 (pricing page, model catalogue, API reference and privacy page fetched. Base URL, bearer scheme, discovery endpoint, model ids, per-token prices, free-plan terms, zero retention and no-training terms confirmed) |
+| Source | https://zro.moonmath.ai/pricing ; https://zro.moonmath.ai/model-catalog ; https://zro.moonmath.ai/docs/api ; https://zro.moonmath.ai/docs/privacy |
+| Last verified | 2026-11-16 |
+| Admission | ADMITTED to the catalogue as a one-paste provider. NOT admitted to the DEC-29 automatic eligible pool |
+| Blockers | FR-13 consent decision is still unresolved, and it applies to every external provider. Nigeria reachability is untested. The daily free allowance has no published size. GLM-5.3 needs a paid plan. The Data Processing Agreement applies to Teams and Enterprise only and needs a countersigned copy |
+
+### 10.11 Classification Notes (binding reading)
 
 - **DeepSeek V4.1 Flash × 3 routes (ModelScope, UnoRouter, Sarvam)** are one underlying model class with three access routes and three different offers (500/2,000 req/day claimed; ~1 req/min plus upstream caps; metered ₹100 signup credit). They are not three independent models and must not be counted as diversity.
 - **Perplexity Decider v1.3** is a specialist decision/classification model whose claimed promotion expires 2026-11-19; its source is 404 today. Not a conversational replacement; not verified.
@@ -404,8 +425,32 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 - **Ling 3.2 Flash** is a separate candidate; its promotion expiry date is unpublished (do not invent one).
 - **Gemini 4 Hydrogen** is the most structurally compatible candidate but stays unadmitted pending account, pricing, ToS and availability verification.
 - **Numes** is a marketplace; each listed model is a separate candidate and the marketplace itself is not a provider for BOURXE's engine.
+- **Zro is a fourth access route to DeepSeek V4.1 Flash**, not a fifth free model. It must not be counted as model diversity on its own. It is the first registered route whose data-handling terms are verified safe for tenant content: the privacy page states zero request retention and no training on customer requests.
+- **Zro adds one distinct model family** under the same key: GLM-5.3. That is the only new model class this register adds.
+- **Zro publishes no balance endpoint.** The balance inquiry stays unsupported, so the connection reports an unknown balance rather than a false zero.
+- **PLaMo retention depends on the plan, not on the provider.** On the Standard and Provider plans, input and output are not retained and are not used for training. On the Free plan they are stored and used for training, and personal information must not be entered. The plan must be checked before any tenant content is sent, because the provider id and base URL do not reveal it.
+- **PLaMo offers `json_schema` structured output only.** `json_object` mode is not offered, so the routing catalogue must not claim `json-mode` for it.
 
-### 10.11 Standing Rules For This Register
+### 10.12 PLaMo — Preferred Networks
+
+| Field | Value |
+|---|---|
+| Candidate | PLaMo Prime (`plamo-3.1-prime`, `plamo-3.0-prime`) and `plamo-3.0-fin-beta` |
+| Underlying model | PLaMo, an open-weight model family developed by Preferred Networks (PFN) |
+| Access route | PLaMo API, base URL `https://api.platform.preferredai.jp/v1` (OpenAI-compatible). Bearer keys. `GET /v1/models` discovery is documented |
+| Category | General inference, strong in Japanese and Japanese-to-English translation |
+| Advertised free offer | No token charge on any plan for `plamo-3.0-fin-beta`. That model is limited to 50 requests per user per 24 hours, shared with PLaMo Chat |
+| Advertised quota/rate limits | 100 requests per minute per API key for the `plamo-3.0-prime` family. Tenant spend ceiling is 1 million yen per month. Ten API keys per tenant |
+| Context / modalities | 262,144 tokens for the Prime models, 20,480 maximum output. `plamo-3.0-fin-beta` has 256,000 tokens |
+| Tool calling / structured output | Tools and tool_choice are documented. `response_format` supports `json_schema` only, so `json_object` mode is not offered |
+| Promotional expiry | None claimed. `plamo-3.0-prime` is discontinued on 2027-01-31, after which requests switch to `plamo-3.1-prime` |
+| Verification status | VERIFIED 2026-11-16 (pricing, API reference, console manual, limitations and data-handling pages fetched. Base URL, bearer scheme, discovery endpoint, model ids, quotas, retirement date and the plan-dependent retention terms confirmed) |
+| Source | https://docs.plamo.preferredai.jp/en/api ; https://docs.plamo.preferredai.jp/en/pricing ; https://docs.plamo.preferredai.jp/en/limit ; https://docs.plamo.preferredai.jp/en/console |
+| Last verified | 2026-11-16 |
+| Admission | ADMITTED to the catalogue as a one-paste provider. NOT admitted to the DEC-29 automatic eligible pool |
+| Blockers | The Free plan stores input and output and uses them for training, and forbids personal information. Tenant content therefore requires the Standard or Provider plan, where input and output are not retained and are not used for training. FR-13 consent is still unresolved. Nigeria reachability is untested. The Data Processing Agreement is a plan question and was not checked |
+
+### 10.13 Standing Rules For This Register
 
 1. No entry is admitted to the DEC-29 eligible pool without: official source fetched within 30 days, ToS and data-handling review, key custody decided, consent decision, and eligibility verification (capability states set from evidence, never from marketing).
 2. Expiry dates claimed by operators are recorded as claims (with the claim date), never as commitments.

@@ -181,6 +181,18 @@ const MODEL_PRICES: Record<string, ModelPrice> = {
     currency: 'USD',
     verifiedAt: '2026-11-15',
   },
+  'zro:deepseek-v4.1-flash': {
+    promptUsdPerMTok: 0.3,
+    completionUsdPerMTok: 1.1,
+    currency: 'USD',
+    verifiedAt: '2026-11-16',
+  },
+  'zro:glm-5.3': {
+    promptUsdPerMTok: 1.4,
+    completionUsdPerMTok: 4.2,
+    currency: 'USD',
+    verifiedAt: '2026-11-16',
+  },
 }
 
 export function lookupModelPrice(providerId: string, modelId: string): ModelPrice | null {

@@ -172,6 +172,33 @@ test('Usage: a paid connection with a known price is costed', () => {
   assert.equal(Math.round(cost.costUsd * 1e6) / 1e6, Math.round(((60 + 250) / 150) * 1e6) / 1e6)
 })
 
+test('Usage: Zro free-tier Flash costs nothing on a free connection', () => {
+  const cost = computeCostUsd({
+    isPaidTier: false,
+    providerId: 'zro',
+    modelId: 'deepseek-v4.1-flash',
+    promptTokens: 1_000_000,
+    completionTokens: 1_000_000,
+  })
+  assert.equal(cost.costUsd, 0)
+})
+
+test('Usage: Zro paid prices come from the published model catalogue', () => {
+  const price = lookupModelPrice('zro', 'deepseek-v4.1-flash')
+  assert.ok(price)
+  assert.equal(price.promptUsdPerMTok, 0.3)
+  assert.equal(price.completionUsdPerMTok, 1.1)
+
+  const cost = computeCostUsd({
+    isPaidTier: true,
+    providerId: 'zro',
+    modelId: 'deepseek-v4.1-flash',
+    promptTokens: 1_000_000,
+    completionTokens: 1_000_000,
+  })
+  assert.equal(Math.round(cost.costUsd * 1e6) / 1e6, 1.4)
+})
+
 test('Usage: an unknown price is null, never a false zero', () => {
   const cost = computeCostUsd({
     isPaidTier: true,

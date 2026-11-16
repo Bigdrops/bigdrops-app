@@ -172,17 +172,19 @@ export type TestTarget =
     }
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) {
+  const { data, error } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (error || !token) {
     throw new Error('Please sign in to manage Bolu provider infrastructure.')
   }
-  return { Authorization: `Bearer ${session.access_token}` }
+  return { Authorization: `Bearer ${token}` }
 }
 
 async function post<T>(action: string, payload: Record<string, unknown>): Promise<T> {
   const headers = await authHeaders()
   const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bolu-provider-config`, {
     method: 'POST',
+    credentials: 'include',
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, ...payload }),
   })
@@ -196,7 +198,10 @@ async function post<T>(action: string, payload: Record<string, unknown>): Promis
 export const boluProviderApi = {
   async getStatus(): Promise<ProviderStatusResponse> {
     const headers = await authHeaders()
-    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bolu-provider-config`, { headers })
+    const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/bolu-provider-config`, {
+      credentials: 'include',
+      headers,
+    })
     const parsed = await safeParseApiResponse<ProviderStatusResponse>(res, 'Status check')
     if (!parsed.ok || !parsed.data) {
       throw new Error(parsed.errorMessage || 'Failed to load provider status.')

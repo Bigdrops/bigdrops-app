@@ -310,7 +310,26 @@ export const PROVIDER_CATALOGUE: ProviderCatalogueEntry[] = [
       M('plamo-3.0-prime', 'PLaMo 3.0 Prime'),
       M('plamo-3.0-fin-beta', 'PLaMo 3.0 Fin Beta'),
     ],
-    regionNote: 'Japan-hosted. Free plan has usage limits. plamo-3.0-prime retires on 2027-01-31.',
+    regionNote:
+      'Japan-hosted. On the Standard and Provider plans, input and output are not retained and are not used for training. On the Free plan, input and output are stored and used for training, so do not send tenant data. plamo-3.0-prime retires on 2027-01-31.',
+  },
+  {
+    id: 'zro',
+    name: 'Zro (MoonMath)',
+    description: 'Open-weight inference by MoonMath. Free daily usage on DeepSeek V4.1 Flash.',
+    protocol: 'openai',
+    authScheme: 'bearer',
+    baseUrl: 'https://zro.moonmath.ai/v1',
+    supportsDiscovery: true,
+    docsUrl: 'https://zro.moonmath.ai/docs',
+    keyHint: 'sk-…',
+    defaultModel: 'deepseek-v4.1-flash',
+    curatedModels: [
+      M('deepseek-v4.1-flash', 'DeepSeek V4.1 Flash'),
+      M('glm-5.3', 'GLM-5.3'),
+    ],
+    regionNote:
+      'Multi-region. Zero request retention and no training on requests. The free plan covers DeepSeek V4.1 Flash only and resets every day. GLM-5.3 needs a paid plan.',
   },
 ]
 

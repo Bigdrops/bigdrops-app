@@ -22,14 +22,20 @@ import './assistant-chat.css'
 import './assistant-chat-clerk.css'
 import './assistant-chat-premium-dark.css'
 
-/** Detect viewport preset from window width */
+/**
+ * Detect viewport preset matching project Design Lab device standards:
+ * - fold-closed: < 768px (Phone / folded device)
+ * - fold-open: 768px - 1023px (Unfolded foldable / wide phone)
+ * - tablet: 1024px - 1279px (Tablet shell)
+ * - desktop: >= 1280px (Desktop full-canvas workspace)
+ */
 function detectViewport(): ViewportId {
   if (typeof window === 'undefined') return 'desktop'
   const width = window.innerWidth
-  if (width < 768) return 'fold-closed' // Mobile phone
-  if (width < 1024) return 'fold-open'  // Foldable split
-  if (width < 1280) return 'tablet'     // Tablet drawer
-  return 'desktop'                      // Desktop 3-column
+  if (width < 768) return 'fold-closed'
+  if (width < 1024) return 'fold-open'
+  if (width < 1280) return 'tablet'
+  return 'desktop'
 }
 
 export function BoluChatWorkspace({
@@ -44,7 +50,6 @@ export function BoluChatWorkspace({
   const { hasAuthorization } = useAuthorization()
   const resolvedTenantId = tenantId ?? (pageContext as any)?.activeEntityId ?? entityCtx?.entity?.id ?? null
 
-  // Live application authorization, forwarded to the Bolu read/write pipeline
   const authorizationRef = useRef(hasAuthorization)
   authorizationRef.current = hasAuthorization
   const canRead = useCallback<BoluReadAuthorization>(
@@ -61,7 +66,7 @@ export function BoluChatWorkspace({
   const [mobileRailOpen, setMobileRailOpen] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
 
-  // Provider & Model state (reconciled dynamically with backend pool; settings managed exclusively in /settings)
+  // Live provider connection & model selection state
   const [activeProvider, setActiveProvider] = useState<ActiveModelInfo | null>(null)
   const [connections, setConnections] = useState<PublicConnection[]>([])
   const [selectedModel, setSelectedModel] = useState<SelectedModelTarget | null>(() => {
@@ -74,7 +79,7 @@ export function BoluChatWorkspace({
     }
   })
 
-  // Composer input draft state
+  // Composer draft & auto-scroll state
   const [inputDraft, setInputDraft] = useState('')
   const [pinned, setPinned] = useState(true)
   const [showJump, setShowJump] = useState(false)
@@ -82,7 +87,7 @@ export function BoluChatWorkspace({
   const logRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // Live provider status synchronization on mount
+  // Live provider status sync
   useEffect(() => {
     let active = true
     async function loadLivePool() {
@@ -161,7 +166,7 @@ export function BoluChatWorkspace({
     } catch {}
   }
 
-  // Window resize listener to automatically adjust viewport
+  // Window resize listener
   useEffect(() => {
     const onResize = () => setViewport(detectViewport())
     window.addEventListener('resize', onResize)
@@ -169,16 +174,19 @@ export function BoluChatWorkspace({
   }, [])
 
   // Multi-thread conversation state via useBoluConversations
+  // autoSelectLatest is false: opening Bolu always initializes a fresh empty session
   const {
     conversations,
+    activeConversations,
+    expiringConversations,
     activeConversationId,
     createConversation,
     selectConversation,
+    restoreConversation,
     deleteConversation,
   } = useBoluConversations({
     tenantId: resolvedTenantId,
-    autoSelectLatest: true,
-    module: pageContext?.origin?.page ?? 'dashboard',
+    autoSelectLatest: false,
     originRecordId: pageContext?.record?.id ?? null,
   })
 
@@ -213,6 +221,13 @@ export function BoluChatWorkspace({
     },
   })
 
+  // Automatically open contextual panel when an actionable document proposal arrives
+  useEffect(() => {
+    if (activeProposal && (activeProposal.status === 'pending_approval' || activeProposal.status === 'approved_pending_save')) {
+      setPanelOpen(true)
+    }
+  }, [activeProposal])
+
   // Auto-scroll when messages update and pinned to bottom
   useEffect(() => {
     const el = logRef.current
@@ -224,7 +239,7 @@ export function BoluChatWorkspace({
   if (!open) return null
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId)
-  const conversationTitle = activeConversation?.title || 'Bolu Conversation'
+  const conversationTitle = activeConversation?.title || 'New Conversation'
 
   // Suggestions derived from context
   const suggestions = pageContext ? getBoluSuggestions(pageContext).map((s) => s.prompt) : []
@@ -251,41 +266,61 @@ export function BoluChatWorkspace({
     }
   }
 
-  const handleInsert = (text: string) => {
-    setInputDraft(text)
+  const handleNavigateToSettings = () => {
+    handleClose()
+    navigate('/settings?section=bolu-provider')
+  }
+
+  const handleClose = () => {
+    setInputDraft('')
+    selectConversation(null)
+    setMobileRailOpen(false)
+    onClose?.()
+  }
+
+  const handleNewConversation = () => {
+    selectConversation(null)
+    setInputDraft('')
+    setMobileRailOpen(false)
     inputRef.current?.focus()
   }
 
-  const handleNavigateToSettings = () => {
-    onClose?.()
-    navigate('/settings')
+  const handleSelectThread = (id: string) => {
+    selectConversation(id)
+    setMobileRailOpen(false)
   }
 
-  // Shared Sub-components
-  const headerNode = (
-    <AssistantHeader
-      modelPill={
-        <ModelPill
-          connections={connections}
-          selectedModel={selectedModel}
-          activeProvider={activeProvider}
-          onSelectModel={handleSelectModel}
-          onManage={handleNavigateToSettings}
-        />
-      }
-      subtitle={`Page: ${pageContext?.origin?.page ?? 'Current Page'} · Two-Gate Verified`}
-      onOpenSettings={handleNavigateToSettings}
-      onOpenContext={() => setPanelOpen((v) => !v)}
-      onOpenRail={() => setMobileRailOpen((v) => !v)}
-      onClose={onClose}
-      onExportMarkdown={() => exportChatAsMarkdown(messages, conversationTitle)}
-      onExportJson={() => exportChatAsJson(messages, conversationTitle)}
-      contextOpen={panelOpen}
-      showContext={viewport === 'fold-closed' || viewport === 'tablet'}
-      showRailToggle={viewport === 'fold-closed'}
+  // Active Model Pill (merged into the single compact header row)
+  const modelPillNode = (
+    <ModelPill
+      connections={connections}
+      selectedModel={selectedModel}
+      activeProvider={activeProvider}
+      onSelectModel={handleSelectModel}
+      onManage={handleNavigateToSettings}
+      direction="down"
     />
   )
 
+  // Header Component (Bolu identity on left, Model Picker & actions on right in ONE shared row)
+  const headerNode = (
+    <AssistantHeader
+      modelPill={modelPillNode}
+      subtitle={`Page: ${pageContext?.origin?.page ?? 'Current Page'}`}
+      onOpenSettings={handleNavigateToSettings}
+      onOpenContext={() => setPanelOpen((v) => !v)}
+      onOpenRail={() => setMobileRailOpen((v) => !v)}
+      onClose={handleClose}
+      onExportMarkdown={() => exportChatAsMarkdown(messages, conversationTitle)}
+      onExportJson={() => exportChatAsJson(messages, conversationTitle)}
+      contextOpen={panelOpen}
+      showContext={true}
+      showRailToggle={viewport === 'fold-closed' || viewport === 'fold-open'}
+      isMobile={viewport === 'fold-closed'}
+    />
+  )
+
+  // Message Thread Component
   const threadNode = (
     <AssistantThread
       messages={messages}
@@ -315,19 +350,13 @@ export function BoluChatWorkspace({
     />
   )
 
+  // Composer Component at Bottom
   const composerNode = (
     <AssistantComposer
       value={inputDraft}
       busy={isStreaming}
       disabled={isStreaming || clerkState !== 'idle'}
       awaiting={Boolean(activeProposal && activeProposal.status === 'pending_approval')}
-      contextLabel={
-        activeProposal
-          ? (activeProposal.operationType === 'create-document'
-              ? activeProposal.candidateNumber
-              : activeProposal.targetDocumentNumber)
-          : (pageContext?.record?.kind ?? 'Invoice')
-      }
       inputRef={inputRef}
       onChange={setInputDraft}
       onSubmit={handleSubmit}
@@ -336,34 +365,41 @@ export function BoluChatWorkspace({
     />
   )
 
+  // Document Panel Component
   const panelNode = (
-    <InvoicePanel proposal={activeProposal} />
+    <InvoicePanel
+      proposal={activeProposal}
+      onClose={() => setPanelOpen(false)}
+    />
   )
 
-  const railNode = (
+  // History Rail Component
+  const railNode = (isMobileDrawerMode: boolean = false) => (
     <AssistantRail
       collapsed={railCollapsed}
       activeThreadId={activeConversationId}
-      conversations={conversations}
+      conversations={activeConversations}
+      expiringConversations={expiringConversations}
       onToggle={() => setRailCollapsed((v) => !v)}
-      onSelect={(id) => selectConversation(id)}
-      onNew={() => void createConversation({ title: 'New Conversation' })}
+      onSelect={handleSelectThread}
+      onNew={handleNewConversation}
+      onRestore={(id) => void restoreConversation(id)}
       onDelete={(id) => void deleteConversation(id)}
+      isMobileDrawer={isMobileDrawerMode}
     />
   )
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-4 ac-device"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-0 lg:p-2 xl:p-3 ac-device"
       role="dialog"
       aria-modal="true"
       aria-label="Bolu Assistant Workspace"
     >
-      {/* Root Modal Container */}
-      <div className="ac-window relative flex flex-col w-full h-[100dvh] md:h-[96vh] max-h-[100dvh] md:max-h-[96vh] max-w-7xl rounded-none md:rounded-3xl border border-[var(--ac-line)] bg-[var(--ac-surface)] shadow-2xl overflow-hidden">
-        {/* DEC-26 Responsive Viewports */}
+      {/* Root Full-Height Enterprise Workspace Container */}
+      <div className="ac-window relative flex flex-col w-full h-[100dvh] md:h-[96vh] max-h-[100dvh] md:max-h-[96vh] max-w-[1600px] rounded-none lg:rounded-2xl border border-[var(--ac-line)] bg-[var(--ac-surface)] shadow-2xl overflow-hidden">
         <div className="relative flex flex-1 min-h-0 w-full overflow-hidden">
-          {/* 1. Phone Viewport ('fold-closed'): Single column + sheets */}
+          {/* 1. Mobile Phone Viewport ('fold-closed'): Single column + slide-out drawer + bottom sheet */}
           {viewport === 'fold-closed' ? (
             <div className="flex flex-col flex-1 h-full min-w-0 overflow-hidden relative">
               {headerNode}
@@ -372,23 +408,20 @@ export function BoluChatWorkspace({
 
               {/* Mobile Rail Drawer */}
               {mobileRailOpen ? (
-                <div className="absolute inset-0 z-50 flex bg-black/40 backdrop-blur-xs">
+                <div className="absolute inset-0 z-50 flex bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
                   <div className="w-[280px] max-w-[85vw] h-full bg-[var(--ac-surface)] shadow-2xl flex flex-col border-r border-[var(--ac-line)]">
                     <div className="flex items-center justify-between p-3 border-b border-[var(--ac-line)]">
                       <p className="text-xs font-bold text-[var(--ac-ink)]">Conversations</p>
                       <button
                         type="button"
-                        className="p-1 rounded-lg hover:bg-[var(--ac-muted-surface)]"
+                        className="p-1 rounded-lg hover:bg-[var(--ac-muted-surface)] text-[var(--ac-muted)]"
                         onClick={() => setMobileRailOpen(false)}
                       >
                         <X className="size-4" />
                       </button>
                     </div>
-                    <div
-                      className="flex-1 overflow-hidden"
-                      onClick={() => setMobileRailOpen(false)}
-                    >
-                      {railNode}
+                    <div className="flex-1 overflow-hidden">
+                      {railNode(true)}
                     </div>
                   </div>
                   <button
@@ -400,26 +433,16 @@ export function BoluChatWorkspace({
                 </div>
               ) : null}
 
-              {/* Document Artifact Sheet */}
+              {/* Document Artifact Bottom Sheet */}
               {panelOpen ? (
-                <div className="absolute inset-0 z-40 flex flex-col justify-end bg-black/40">
+                <div className="absolute inset-0 z-40 flex flex-col justify-end bg-black/40 animate-in fade-in duration-150">
                   <button
                     type="button"
                     className="flex-1 cursor-default"
                     aria-label="Close sheet"
                     onClick={() => setPanelOpen(false)}
                   />
-                  <div className="relative h-[80%] max-h-[640px] w-full rounded-t-3xl bg-[var(--ac-surface)] border-t border-[var(--ac-line)] shadow-2xl flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between p-3 border-b border-[var(--ac-line)]">
-                      <p className="text-xs font-bold text-[var(--ac-ink)]">Document Artifact</p>
-                      <button
-                        type="button"
-                        className="p-1 rounded-lg hover:bg-[var(--ac-muted-surface)]"
-                        onClick={() => setPanelOpen(false)}
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
+                  <div className="relative h-[85%] max-h-[640px] w-full rounded-t-3xl bg-[var(--ac-surface)] border-t border-[var(--ac-line)] shadow-2xl flex flex-col overflow-hidden">
                     <div className="flex-1 overflow-y-auto">
                       {panelNode}
                     </div>
@@ -429,24 +452,55 @@ export function BoluChatWorkspace({
             </div>
           ) : null}
 
-          {/* 2. Foldable Viewport ('fold-open'): Dual Pane Split */}
+          {/* 2. Foldable Viewport ('fold-open'): Wide dual-pane split with history access */}
           {viewport === 'fold-open' ? (
-            <div className="flex flex-1 h-full min-w-0 divide-x divide-[var(--ac-line)]">
+            <div className="flex flex-1 h-full min-w-0 divide-x divide-[var(--ac-line)] relative">
               <div className="flex flex-col flex-1 h-full min-w-0">
                 {headerNode}
                 {threadNode}
                 {composerNode}
               </div>
-              <div className="hidden md:flex flex-col w-[380px] lg:w-[420px] h-full shrink-0">
-                {panelNode}
-              </div>
+
+              {/* Collapsible Document Panel */}
+              {panelOpen ? (
+                <div className="flex flex-col w-[360px] lg:w-[400px] h-full shrink-0">
+                  {panelNode}
+                </div>
+              ) : null}
+
+              {/* Foldable History Rail Drawer */}
+              {mobileRailOpen ? (
+                <div className="absolute inset-0 z-50 flex bg-black/40 backdrop-blur-xs">
+                  <div className="w-[300px] h-full bg-[var(--ac-surface)] shadow-2xl flex flex-col border-r border-[var(--ac-line)]">
+                    <div className="flex items-center justify-between p-3 border-b border-[var(--ac-line)]">
+                      <p className="text-xs font-bold text-[var(--ac-ink)]">Conversations</p>
+                      <button
+                        type="button"
+                        className="p-1 rounded-lg hover:bg-[var(--ac-muted-surface)]"
+                        onClick={() => setMobileRailOpen(false)}
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      {railNode(true)}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="flex-1 cursor-default"
+                    aria-label="Close conversation drawer"
+                    onClick={() => setMobileRailOpen(false)}
+                  />
+                </div>
+              ) : null}
             </div>
           ) : null}
 
-          {/* 3. Tablet Viewport ('tablet'): Rail + Chat + Slide-out Drawer */}
+          {/* 3. Tablet Viewport ('tablet'): Collapsible Rail + Central Chat + Slide-out Panel */}
           {viewport === 'tablet' ? (
             <div className="flex flex-1 h-full min-w-0">
-              {railNode}
+              {railNode(false)}
               <div className="flex flex-col flex-1 h-full min-w-0 border-r border-[var(--ac-line)]">
                 {headerNode}
                 {threadNode}
@@ -454,36 +508,26 @@ export function BoluChatWorkspace({
               </div>
               {panelOpen ? (
                 <aside className="w-[340px] shrink-0 h-full border-l border-[var(--ac-line)] bg-[var(--ac-surface)] flex flex-col">
-                  <div className="flex items-center justify-between p-3 border-b border-[var(--ac-line)]">
-                    <p className="text-xs font-bold text-[var(--ac-ink)]">Document Artifact</p>
-                    <button
-                      type="button"
-                      className="p-1 rounded-lg hover:bg-[var(--ac-muted-surface)]"
-                      onClick={() => setPanelOpen(false)}
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto">
-                    {panelNode}
-                  </div>
+                  {panelNode}
                 </aside>
               ) : null}
             </div>
           ) : null}
 
-          {/* 4. Desktop Viewport ('desktop'): Full 3-Column Canvas */}
+          {/* 4. Desktop Viewport ('desktop'): Full 3-Column Enterprise Workspace */}
           {viewport === 'desktop' ? (
             <div className="flex flex-1 h-full min-w-0 divide-x divide-[var(--ac-line)]">
-              {railNode}
+              {railNode(false)}
               <div className="flex flex-col flex-1 h-full min-w-0">
                 {headerNode}
                 {threadNode}
                 {composerNode}
               </div>
-              <aside className="w-[340px] xl:w-[380px] h-full shrink-0 bg-[var(--ac-surface)]">
-                {panelNode}
-              </aside>
+              {panelOpen ? (
+                <aside className="w-[340px] xl:w-[380px] h-full shrink-0 bg-[var(--ac-surface)]">
+                  {panelNode}
+                </aside>
+              ) : null}
             </div>
           ) : null}
         </div>

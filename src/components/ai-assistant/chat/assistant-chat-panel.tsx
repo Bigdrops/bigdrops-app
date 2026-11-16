@@ -1,4 +1,4 @@
-import { FileText, CheckCircle2, Clock } from 'lucide-react'
+import { FileText, CheckCircle2, Clock, X, EyeOff } from 'lucide-react'
 import type { BoluProposal } from '@/lib/ai-assistant/bolu-operations'
 import { formatNaira } from '@/lib/formatters/money'
 
@@ -17,25 +17,28 @@ export interface DocumentArtifactState {
 }
 
 /**
- * InvoicePanel — Living Document Artifact Panel
- * Displays a structured, read-only preview of the active document draft.
- * Derived from active proposals or context record. Numbers are computed
- * authoritatively by Calculations.ts, never assistant prose.
+ * InvoicePanel — Contextual Document Artifact Surface (Bolu 2.0)
+ * Displays a structured, read-only preview of active proposal or selected document.
+ * When no document is active, displays a clean contextual placeholder and allows collapsing.
  */
 export function InvoicePanel({
   proposal,
   fallbackDocument,
+  onClose,
 }: {
   proposal?: BoluProposal | null
   fallbackDocument?: DocumentArtifactState | null
+  onClose?: () => void
 }) {
+  const hasActiveDocument = Boolean(proposal || fallbackDocument)
+
   // Derive artifact state from live proposal if present, else fallback
   const isCreate = proposal?.operationType === 'create-document'
   const isFiled = proposal?.status === 'persisted' || fallbackDocument?.filed
 
   const number = isCreate
     ? (proposal?.persistedId || proposal?.candidateNumber || 'INV-DRAFT')
-    : (proposal?.targetDocumentNumber || fallbackDocument?.number || 'No document selected')
+    : (proposal?.targetDocumentNumber || fallbackDocument?.number || 'Draft')
 
   const client = isCreate
     ? (proposal?.payload.client_name ?? fallbackDocument?.client ?? 'Not set')
@@ -68,88 +71,135 @@ export function InvoicePanel({
   )
 
   return (
-    <div className="ac-panel">
-      <div className="ac-panel-head">
-        <span className="ac-panel-icon" aria-hidden="true">
-          <FileText className="size-3.5" />
-        </span>
-        <div className="ac-panel-title">
-          <p>Document Artifact</p>
-          <span>{number}</span>
+    <div className="ac-panel h-full flex flex-col bg-[var(--ac-surface)] border-l border-[var(--ac-line)]">
+      {/* Panel Header */}
+      <div className="ac-panel-head flex items-center justify-between gap-2 px-4 py-3 border-b border-[var(--ac-line)]">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="ac-panel-icon size-7 rounded-lg bg-[var(--ac-muted-surface)] flex items-center justify-center shrink-0" aria-hidden="true">
+            <FileText className="size-3.5 text-[var(--ac-ink)]" />
+          </span>
+          <div className="ac-panel-title min-w-0">
+            <p className="text-xs font-bold text-[var(--ac-ink)] truncate leading-tight">Document Artifact</p>
+            <span className="text-[10px] text-[var(--ac-muted)] truncate block">{hasActiveDocument ? number : 'Context Surface'}</span>
+          </div>
         </div>
-        <span className="ac-pill" data-state={isFiled ? 'filed' : 'draft'}>
-          {isFiled ? (
-            <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-              <CheckCircle2 className="size-3" /> Filed
+
+        <div className="flex items-center gap-1">
+          {hasActiveDocument ? (
+            <span className="ac-pill text-[10px] px-2 py-0.5 rounded-full border border-[var(--ac-line)]" data-state={isFiled ? 'filed' : 'draft'}>
+              {isFiled ? (
+                <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                  <CheckCircle2 className="size-3" /> Filed
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
+                  <Clock className="size-3" /> Draft
+                </span>
+              )}
             </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
-              <Clock className="size-3" /> Draft
-            </span>
-          )}
-        </span>
+          ) : null}
+
+          {onClose ? (
+            <button
+              type="button"
+              className="p-1.5 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+              aria-label="Collapse document panel"
+              title="Collapse document panel"
+              onClick={onClose}
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="ac-panel-scroll">
-        <div className="ac-doc">
-          <div className="ac-doc-row">
-            <span>Client</span>
-            <strong>{client}</strong>
-          </div>
-          <div className="ac-doc-row">
-            <span>Due Date</span>
-            <strong>{dueDate}</strong>
-          </div>
-          <div className="ac-doc-total">
-            <span>Authoritative Total</span>
-            <strong>{formatNaira(total)}</strong>
-          </div>
-        </div>
-
-        <div className="ac-panel-section">
-          <p className="ac-panel-label">Line Items</p>
-          {lines.length === 0 ? (
-            <p className="ac-panel-empty">
-              No line items yet. Propose or approve changes in chat to populate this document.
-            </p>
-          ) : (
-            <ul className="ac-lines divide-y divide-[var(--ac-line)]">
-              {lines.map((line, idx) => (
-                <li key={line.id ?? idx} className="ac-line py-2 flex justify-between items-center text-xs">
-                  <div className="ac-line-id">
-                    <p className="font-medium text-[var(--ac-ink)]">{line.description}</p>
-                    <span className="text-[11px] text-[var(--ac-muted)]">
-                      {line.quantity} × {formatNaira(line.unitPrice)}
-                    </span>
-                  </div>
-                  <strong className="font-semibold text-[var(--ac-ink)]">
-                    {formatNaira(line.quantity * line.unitPrice)}
-                  </strong>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {vat > 0 ? (
-          <div className="ac-panel-section border-t border-[var(--ac-line)] pt-3 text-xs space-y-1">
-            <div className="flex justify-between text-[var(--ac-muted)]">
-              <span>Subtotal</span>
-              <span>{formatNaira(subtotal)}</span>
+      {/* Panel Body */}
+      <div className="ac-panel-scroll flex-1 overflow-y-auto p-4 space-y-4">
+        {!hasActiveDocument ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-[var(--ac-muted)] space-y-3">
+            <div className="size-12 rounded-2xl bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] flex items-center justify-center">
+              <FileText className="size-6 text-[var(--ac-muted)] opacity-60" />
             </div>
-            <div className="flex justify-between text-[var(--ac-muted)]">
-              <span>VAT (7.5%)</span>
-              <span>{formatNaira(vat)}</span>
+            <div>
+              <p className="text-xs font-semibold text-[var(--ac-ink)]">No active document</p>
+              <p className="text-[11px] text-[var(--ac-muted)] mt-1 max-w-[220px] leading-relaxed">
+                When you create or modify an invoice or quotation in chat, a live structured preview will appear here.
+              </p>
             </div>
+            {onClose ? (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ac-line)] text-xs text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition mt-2"
+                onClick={onClose}
+              >
+                <EyeOff className="size-3.5" />
+                <span>Hide Panel</span>
+              </button>
+            ) : null}
           </div>
-        ) : null}
+        ) : (
+          <>
+            <div className="ac-doc p-3 rounded-xl bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] space-y-2 text-xs">
+              <div className="ac-doc-row flex justify-between text-[var(--ac-muted)]">
+                <span>Client</span>
+                <strong className="text-[var(--ac-ink)] font-semibold">{client}</strong>
+              </div>
+              <div className="ac-doc-row flex justify-between text-[var(--ac-muted)]">
+                <span>Due Date</span>
+                <strong className="text-[var(--ac-ink)] font-semibold">{dueDate}</strong>
+              </div>
+              <div className="ac-doc-total flex justify-between pt-2 border-t border-[var(--ac-line)] font-bold text-xs text-[var(--ac-ink)]">
+                <span>Authoritative Total</span>
+                <span>{formatNaira(total)}</span>
+              </div>
+            </div>
 
-        {proposal && proposal.status === 'pending_approval' ? (
-          <div className="mt-4 p-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 text-xs text-amber-600 flex items-center gap-2">
-            <Clock className="size-4 shrink-0" />
-            <span>Waiting for your approval on Gate 1 card in chat.</span>
-          </div>
-        ) : null}
+            <div className="ac-panel-section space-y-2">
+              <p className="ac-panel-label text-[10px] font-bold uppercase tracking-wider text-[var(--ac-muted)]">Line Items</p>
+              {lines.length === 0 ? (
+                <p className="ac-panel-empty text-xs text-[var(--ac-muted)] italic">
+                  No line items yet. Propose or approve changes in chat to populate this document.
+                </p>
+              ) : (
+                <ul className="ac-lines divide-y divide-[var(--ac-line)] border border-[var(--ac-line)] rounded-xl bg-[var(--ac-surface)] overflow-hidden">
+                  {lines.map((line, idx) => (
+                    <li key={line.id ?? idx} className="ac-line p-2.5 flex justify-between items-center text-xs">
+                      <div className="ac-line-id min-w-0 pr-2">
+                        <p className="font-medium text-[var(--ac-ink)] truncate">{line.description}</p>
+                        <span className="text-[11px] text-[var(--ac-muted)]">
+                          {line.quantity} × {formatNaira(line.unitPrice)}
+                        </span>
+                      </div>
+                      <strong className="font-semibold text-[var(--ac-ink)] shrink-0">
+                        {formatNaira(line.quantity * line.unitPrice)}
+                      </strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {vat > 0 ? (
+              <div className="ac-panel-section border-t border-[var(--ac-line)] pt-3 text-xs space-y-1">
+                <div className="flex justify-between text-[var(--ac-muted)]">
+                  <span>Subtotal</span>
+                  <span>{formatNaira(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-[var(--ac-muted)]">
+                  <span>VAT (7.5%)</span>
+                  <span>{formatNaira(vat)}</span>
+                </div>
+              </div>
+            ) : null}
+
+            {proposal && proposal.status === 'pending_approval' ? (
+              <div className="p-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                <Clock className="size-4 shrink-0" />
+                <span>Waiting for your review on Gate 1 card in chat.</span>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
     </div>
   )

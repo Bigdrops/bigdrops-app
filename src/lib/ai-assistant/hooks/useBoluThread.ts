@@ -15,9 +15,7 @@ import {
   parseStructuredOperationEnvelope, validateInvoiceCreateInput, validateInvoiceModifyInput,
   type BoluProposal,
 } from '../bolu-operations'
-import {
-  persistInvoiceCreation, persistInvoiceModification, type BoluOperationExecutionResult,
-} from '../bolu-document-service'
+import { persistInvoiceCreation, persistInvoiceModification, type BoluOperationExecutionResult } from '../bolu-document-service'
 import { sendBoluProviderRequest } from '../bolu-transport'
 import { buildProviderMessages, factsAsPrompt } from '../bolu-formatting'
 import { extractBoluSearchTerm, matchesBoluSaveIntent, matchBoluIntent } from '../bolu-capabilities'
@@ -102,6 +100,33 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
   useEffect(() => {
     void fetchMessages()
   }, [fetchMessages])
+
+  // Realtime subscription on bolu_messages for the active conversation
+  useEffect(() => {
+    if (!conversationId) return
+
+    const channel = supabase
+      .channel(`bolu_messages_${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bolu_messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        () => {
+          if (!isStreaming) {
+            void fetchMessages()
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [conversationId, isStreaming, fetchMessages])
 
   const clearError = useCallback(() => setError(null), [])
 
@@ -394,11 +419,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
         abortControllerRef.current = null
       }
     },
-    [
-      conversationId, resolvedTenantId, resolvedTenantClient, defaultPageContext,
-      canRead, isStreaming, messages, activeProposal, options.onEnsureConversation,
-      options.connectionId, options.modelId,
-    ],
+    [conversationId, resolvedTenantId, resolvedTenantClient, defaultPageContext, canRead, isStreaming, messages, activeProposal, options.onEnsureConversation, options.connectionId, options.modelId],
   )
 
   const approveGate1 = useCallback(
@@ -530,17 +551,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       setError(result.error || 'Failed to save document.')
       return result
     },
-    [
-      activeProposal,
-      activeProposalMessageId,
-      resolvedTenantClient,
-      entityCtx?.schemaName,
-      resolvedEntityId,
-      resolvedTenantId,
-      conversationId,
-      canWrite,
-      canRead,
-    ],
+    [activeProposal, activeProposalMessageId, resolvedTenantClient, entityCtx?.schemaName, resolvedEntityId, resolvedTenantId, conversationId, canWrite, canRead],
   )
 
   gate2SaveRef.current = confirmGate2Save

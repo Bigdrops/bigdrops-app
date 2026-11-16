@@ -16,7 +16,6 @@ import {
   decryptVaultSecret,
   deriveActiveEncryptionKey,
   deriveDedicatedMasterKey,
-  deriveMasterKey,
   encryptSecret,
   maskApiKey,
 } from './bolu-secret-vault.js'
@@ -154,6 +153,18 @@ async function loadRecord(client: SupabaseClient, connectionId: string): Promise
   return data as ConnectionRecord
 }
 
+/**
+ * The connection name carries a UNIQUE constraint. A collision must read as
+ * "that name is taken", not as an opaque storage failure.
+ */
+export const DUPLICATE_NAME_CONSTRAINT = 'uq_app_ai_provider_connections_name'
+
+/** True when a storage failure is a name collision rather than a real fault. */
+export function isDuplicateNameError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err)
+  return message.includes(DUPLICATE_NAME_CONSTRAINT)
+}
+
 export async function createConnection(
   client: SupabaseClient,
   input: CreateConnectionInput,
@@ -162,8 +173,11 @@ export async function createConnection(
 ): Promise<PublicConnection> {
   const apiKey = input.apiKey.trim()
   if (!apiKey) throw new Error('API key is required.')
+  // The stamped version must describe the key that encrypts the secret.
+  // deriveMasterKey() returns the active key, which is the dedicated key
+  // (version 2) whenever BOLU_ENCRYPTION_KEY is set, not the service-role key.
   const activeKeyInfo = masterKey
-    ? { key: masterKey, version: KEY_VERSION_SERVICE_ROLE }
+    ? { key: masterKey, version: deriveActiveEncryptionKey().version }
     : deriveActiveEncryptionKey()
   const encrypted = encryptSecret(apiKey, activeKeyInfo.key, activeKeyInfo.version)
   const allowedModels = Array.isArray(input.allowedModels) && input.allowedModels.length > 0
@@ -231,7 +245,7 @@ export async function updateConnection(
 
   if (patch.apiKey?.trim()) {
     const activeKeyInfo = masterKey
-      ? { key: masterKey, version: KEY_VERSION_SERVICE_ROLE }
+      ? { key: masterKey, version: deriveActiveEncryptionKey().version }
       : deriveActiveEncryptionKey()
     const enc = encryptSecret(patch.apiKey.trim(), activeKeyInfo.key, activeKeyInfo.version)
     row.encrypted_key = enc.ciphertext

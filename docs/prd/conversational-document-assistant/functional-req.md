@@ -49,6 +49,15 @@ The following disposition applies:
 | FR-39 | APPROVED PRINCIPLE — 2026-11-14; details proposed | Application owns arithmetic; inputs, formula, result and currency/unit basis recorded; no verified extension under unit ambiguity; provisional vs verified amounts distinct. |
 | FR-40 | PROPOSED — 2026-11-14 | Attachment intake, application-owned; external AI to structured Markdown is interchange only; no provider dependence; no invented values; formats, limits, retention, providers and privacy unresolved. Not approved for first release. |
 | FR-41 | PROPOSED — 2026-11-14 | Document-family extensions; solar-pump BOQ is the first acceptance case; no first-release family declared. Not approved for first release. |
+| FR-42 | IMPLEMENTED & TESTED — 2026-11-14 | In-App Administrator Secret Management & Protected Storage in Settings. |
+| FR-43 | IMPLEMENTED & VERIFIED — 2026-11-16 | Assistant Identity — Bolu Only. Standalone B icon, BOURXE badge, and decorative subtitles removed from header. |
+| FR-44 | IMPLEMENTED & VERIFIED — 2026-11-16 | Unified Bolu Identity & Active Model Picker in Single Compact Header Row (Left: Bolu, Right: Model Picker). |
+| FR-45 | IMPLEMENTED & VERIFIED — 2026-11-16 | Direct AI Infrastructure Navigation from Bolu Assistant More menu to `/settings?section=bolu-provider`. |
+| FR-46 | IMPLEMENTED & VERIFIED — 2026-11-16 | AI Infrastructure Mobile Responsiveness & Overflow Correction across connection cards and models manager. |
+| FR-47 | IMPLEMENTED & VERIFIED — 2026-11-16 | Unified assistant message rendering and complete-response copy action. |
+| FR-48 | IMPLEMENTED & VERIFIED — 2026-11-16 | Isolated fenced code blocks with independent copy actions. |
+| FR-49 | IMPLEMENTED & VERIFIED — 2026-11-16 | Safe Markdown content handling: no HTML path, safe link schemes, inert code. |
+| FR-50 | IMPLEMENTED & VERIFIED — 2026-11-16 | Structured artifact and attachment presentation on existing typed payloads. |
 
 ## FR-01 - Conversation Surface On The Invoice Form
 
@@ -375,6 +384,200 @@ Platform administrators must be able to configure, verify, rotate, and remove th
 - **Pre-Flight Connection Test:** Administrators can run live verification tests against the provider endpoint before saving or using active credentials.
 - **Runtime Precedence Hierarchy:** Inference resolution strictly enforces: In-App Database Config > Server Environment Variables > Deterministic Mock Mode.
 
+## FR-43 - Assistant Identity: Bolu Only (Approved & Implemented - 2026-11-16)
+
+The assistant header must visibly display only "Bolu" as the single identity. Standalone letter monograms, secondary logo marks, and corporate badges must not appear in the header.
+
+**Acceptance criteria**
+
+- The assistant header visibly displays only the text "Bolu".
+- No standalone "B" square or circular badge remains in the header.
+- No "BOURXE" badge or secondary corporate tag is displayed.
+- Subtitle helper text is removed from the mobile and desktop header.
+- The history rail toggle, document panel toggle, More menu, and close action remain accessible.
+
+## FR-44 - Unified Assistant Identity and Active Model Picker in Single Compact Header Row (Approved & Implemented - 2026-11-16)
+
+The active AI model picker must not be hidden inside secondary overflow menus, must not sit inside the composer at the bottom, and must not consume a separate dedicated vertical row beneath the header. The Bolu identity and active model picker must occupy ONE shared horizontal header row across all viewports (`fold-closed`, `fold-open`, `tablet`, `desktop`).
+
+The header layout is arranged horizontally:
+- **Left:** Conversation history drawer access (when applicable) and Bolu identity.
+- **Right:** Active model picker trigger (connection name, model identifier, readiness dot, chevron) followed by compact header action controls (document panel toggle, More menu, close control).
+- Both groups are vertically centered with appropriate horizontal spacing and zero additional vertical containers.
+
+The vertical workspace hierarchy is strictly defined as:
+1. One compact combined Bolu and active model header (`headerNode`).
+2. Conversation stream / welcome screen / message thread (`threadNode`).
+3. Message composer pinned at the bottom (`composerNode`).
+
+**Acceptance criteria**
+
+- The assistant header renders Bolu identity on the left and the active model picker on the right in one shared row.
+- No separate `modelPickerBar` or second vertical row exists between the header and the conversation area.
+- The model picker is not placed inside the message composer, and the message composer remains pinned at the bottom.
+- On narrow viewports (down to 320px–360px), the model picker width is bounded and long model identifiers truncate cleanly with ellipsis without pushing Bolu off-screen.
+- Tapping the model selector opens the model discovery and selection dialog downwards (`direction="down"`) with right alignment (`align="right"` / `right-0`) into the spacious conversation area.
+- All existing header actions (history toggle, document panel toggle, More menu, close control) remain fully accessible and functional.
+- The single-row header configuration is consistently enforced across Mobile Phone, Fold-closed, Fold-open, Tablet, and Desktop viewports.
+
+## FR-45 - Direct AI Infrastructure Navigation (Approved & Implemented - 2026-11-16)
+
+Selecting AI settings from the Bolu assistant interface must navigate directly to the canonical Bolu AI Infrastructure console without requiring intermediate menu traversal.
+
+**Acceptance criteria**
+
+- Clicking "AI Provider Settings" in the More menu navigates directly to `/settings?section=bolu-provider`.
+- The Settings shell inspects URL search parameters and activates the Bolu AI Infrastructure section immediately.
+- Zero intermediate settings landing menu clicks are required.
+
+## FR-46 - Mobile Responsive AI Infrastructure & Overflow Remediation (Approved & Implemented - 2026-11-16)
+
+The Bolu AI Infrastructure console must fit within standard mobile viewports (down to 320px–360px) without unintended horizontal page scrolling or clipped elements.
+
+**Acceptance criteria**
+
+- No unintended horizontal scrolling occurs on mobile viewports.
+- Connection card badges (Primary, Pool P*, Health) wrap within the card boundaries on narrow screens.
+- Connection card action buttons wrap gracefully without forcing overflow.
+- Header title, description, and action buttons stack responsively when horizontal width is constrained.
+- Models manager action bar wraps buttons cleanly without pushing container width out.
+
+## FR-47 - Unified Assistant Message Rendering & Response Copy (Approved & Implemented - 2026-11-16)
+
+Bolu must render every assistant message through one renderer. The renderer must separate four content types: standard text and Markdown, code, structured artifacts and attachments. The renderer must use the existing `ProductionBoluMessage` model. A second message model or a second persisted format must not exist.
+
+The following capabilities are approved.
+
+1. Every completed assistant response supports copying the complete response.
+2. Fenced code in an assistant Markdown response renders as an isolated code block.
+3. Each code block has an independent copy action.
+4. Code copying preserves the source formatting and indentation.
+5. Standard Markdown content receives consistent rendering.
+6. Inline code and fenced code are visually distinct.
+7. Structured artifacts have dedicated rendering.
+8. Attachments have dedicated rendering.
+9. Rendering works for streamed messages and for persisted messages.
+10. The application does not execute untrusted AI-generated content.
+11. Markdown and link rendering follow safe content-handling rules.
+12. The four supplied Chat-blocks components are the primary design references.
+13. mdxcn remains an optional technical reference. It is not an obligatory dependency.
+
+**Acceptance criteria**
+
+- A completed assistant response shows a copy action below the response text.
+- The copy action copies the response text only. It does not copy labels, buttons, timestamps or decorative elements.
+- The copy action reports success only after the clipboard write succeeds.
+- The copy action reports a failure when the clipboard is not available.
+- The copy action is not offered while the response streams.
+- A streamed response and the same persisted response render the same way.
+- A failed response shows the error card. It does not show a copy action.
+- Copy works in the desktop browser, the mobile browser and the native shell through the existing `copyToClipboard` utility.
+
+### FR-47.1 Design reference mapping
+
+The following files are the primary visual and interaction references. They are references, not approved production components. They import components that do not exist in BOURXE. They are not copied directly.
+
+| Reference | Use in BOURXE |
+|---|---|
+| `chat-default.tsx` | Message turn anatomy, the prose and fence split, and the Markdown to code-block handoff. |
+| `code-block-default.tsx` | Code surface, language label, header action row and per-block copy. |
+| `artifact-default.tsx` | Artifact header with type, title, status and an action cluster, then a structured body. |
+| `attachment-default.tsx` | Attachment chip: media identity, name, metadata line and trailing action. |
+
+Line numbers, download actions, wrap toggles, run actions, share actions and regenerate actions from the references are not approved. The current backend does not support them on this surface.
+
+### FR-47.2 Documentation source classification
+
+- **Approved product requirements:** capabilities 1 to 13 and the acceptance criteria above.
+- **Existing implementation observations (2026-11-16 audit):** the assistant turn rendered `message.content` as plain text in a `whitespace-pre-wrap` paragraph, so fenced code appeared as raw prose. No copy action existed for a response or for a code block. Artifacts already rendered through `ProposalCardView` with the DEC-05 two-gate flow. `ProductionBoluMessage` had no typed attachment payload. No Markdown parser, syntax highlighter or sanitizer was wired into the chat surface.
+- **Technical implementation decisions:** a local dependency-free Markdown parser and renderer, one isolated code block component, one shared copy control, typed attachment presentation, and reuse of the existing `copyToClipboard` utility.
+- **Optional technical proposals (not approved):** syntax highlighting, adopting mdxcn components, artifact run, download and share actions, composer attachment upload, and a persisted attachment payload.
+
+## FR-48 - Isolated Code Blocks & Code Copy (Approved & Implemented - 2026-11-16)
+
+Fenced code in an assistant Markdown response must render as an independent code block. It must not render as ordinary inline text.
+
+**Requirements**
+
+- The block shows the declared language identifier when the response declares one.
+- The block uses a monospaced surface with a clear boundary.
+- The block keeps every space, tab and line break of the source.
+- The block has its own copy action.
+- The block scrolls horizontally inside its own container. The conversation must not scroll horizontally.
+- Inline code stays inline. It must not receive the code-block interface.
+- The block accepts any language identifier. An unknown identifier must not stop rendering.
+- The block does not show or copy line numbers.
+- The block does not execute or evaluate code.
+- No syntax highlighter is loaded. The project has no approved highlighter dependency for this surface.
+
+**Acceptance criteria**
+
+- Copying a block copies only that block's source text.
+- The copied text excludes the language label and the copy control.
+- The copied text keeps the original indentation and line breaks.
+- A block with no language identifier shows the neutral label `Code`. The application does not invent a language.
+- A block that is still open while the response streams disables its copy action until the response completes.
+- The copy action uses `copyToClipboard`, so the native shell, the secure browser context and the legacy fallback all work.
+
+## FR-49 - Safe Markdown Content Handling (Approved & Implemented - 2026-11-16)
+
+Assistant responses must render the approved Markdown elements consistently. Rendered content must not become executable content.
+
+**Supported elements**
+
+Paragraphs, headings (levels 1 to 4), bold, italic, ordered lists, unordered lists, one level of list nesting, blockquotes, inline code, fenced code blocks, links, tables and horizontal separators.
+
+**Safety rules**
+
+- The renderer builds text and React elements only. It does not accept HTML input and does not use `dangerouslySetInnerHTML`.
+- A link renders only for `http:`, `https:` or `mailto:` schemes.
+- A link with any other scheme renders as plain text. Protocol-relative links are rejected.
+- An external link opens with `target="_blank"` and `rel="noopener noreferrer nofollow ugc"`.
+- Missing or unsupported syntax renders as text. It must not stop rendering or show an error.
+- No Markdown extension is enabled. Raw HTML, MDX, images and embedded media are not supported.
+- The response copy action copies the response source text. It does not copy rendered HTML.
+
+**Acceptance criteria**
+
+- A response with `javascript:`, `data:` or `vbscript:` links shows no clickable link.
+- A response with an unclosed fence still renders while it streams.
+- The renderer adds no page-level horizontal overflow.
+- The Markdown renderer is the only renderer for assistant prose.
+
+## FR-50 - Structured Artifact & Attachment Presentation (Approved & Implemented - 2026-11-16)
+
+Structured artifacts and attachments must be visually separate from assistant prose. They must use the existing typed payloads.
+
+**Artifacts**
+
+- A structured artifact renders through the artifact component. The visual anatomy follows `artifact-default.tsx`: a header with type, title, status and an action cluster, then a structured body.
+- The artifact keeps its type label and title where the payload provides them.
+- The artifact shows its structured preview: line items, field change and authoritative totals.
+- The artifact keeps the DEC-05 two-gate actions. Gate 1 approval, Gate 1 rejection, Gate 2 confirmation and Gate 2 cancellation must not change.
+- The artifact provides a plain-text copy action. The copy reads only the typed proposal payload. It does not replace a document action.
+- The artifact does not save or modify a business record by itself.
+- The artifact does not show an action that the backend does not support.
+- Arbitrary prose or JSON-looking text must not become an artifact. Only a typed `BoluProposal` payload renders an artifact.
+
+**Attachments**
+
+- An attachment renders only from a typed `metadata.attachments` entry with a non-empty name.
+- The attachment shows the file name. It shows the media type and the size only when the payload provides them.
+- An attachment opens or downloads through its existing URL. The application does not build a storage path.
+- Only `https:` URLs and same-origin absolute paths are openable.
+- A file with no usable URL renders as a disabled identity chip. It does not crash the thread.
+- The application does not invent an attachment URL and does not show a private storage path or a credential.
+
+**Acceptance criteria**
+
+- A persisted message with a proposal payload renders the artifact with both gates intact.
+- A message with no proposal payload renders no artifact.
+- A message with no typed attachments renders no attachment section.
+- A malformed attachment entry is skipped. The remaining entries render.
+- The artifact copy action copies the typed summary only.
+
+
+
 
 ## FR-34 - Universal Document-Intelligence Pipeline (Proposed — 2026-11-14)
 
@@ -592,67 +795,5 @@ The runtime must distinguish retrieval, proposal, apply, and persistence states.
 - A partial failure reports which stage failed and preserves recoverable draft state.
 - Exact retry and idempotency policy remains an architecture decision.
 
-## FR-29 - One Engine, Interchangeable Providers And Models (Proposed - 2026-11-14)
 
-BOURXE must expose one conversational AI experience. Provider and model details stay behind the provider architecture. Conversation state, business context, authorization and tool permissions must not change when the engine selects a different model.
 
-This requirement records the approved product direction. It does not approve an implementation. What exists today is one Bolu provider path (AMD on a server boundary), a legacy static failover path, and a Design Lab simulation. None of these is the dynamic engine.
-
-**Acceptance criteria (proposed)**
-
-- Provider-specific details stay behind the existing provider architecture.
-- Conversation, context, authorization and tool permissions survive a model switch.
-- The user sees one AI experience.
-
-## FR-30 - Dynamic Model Inventory (Proposed - 2026-11-14)
-
-The engine must maintain an inventory of available models across supported providers. Each entry carries metadata: provider identity, model identifier, availability, context window, modalities, tool-calling support, structured-output support, streaming support, capability limitations, free-tier status when verified, and operational health. Free-tier status, pricing, quotas, availability and terms are dynamic. Providers and models may be added, deprioritised or retired without redesigning the engine.
-
-**Acceptance criteria (proposed)**
-
-- Adding a declared model is a data change, not an architectural project.
-- A model that fails its eligibility or health checks is removed from selection without a release-blocking redesign.
-- Free-tier claims are treatments, not guarantees. Each carries a verification date.
-
-## FR-31 - Free-First, Paid Denied By Default (Proposed - 2026-11-14)
-
-The engine must prefer verified free models that meet the request requirements. Paid models must not be selected unless an owner-authorised policy permits it. Zero token price alone must never decide selection. Advertised cost, account entitlement, quotas, promotions and rate limits are distinct conditions. The engine must treat them as distinct.
-
-**Acceptance criteria (proposed)**
-
-- Selection ranks terms-eligible, healthy, free models first.
-- A paid model is selected only under an explicit owner policy.
-- A zero-price listing with unknown health or terms is not eligible.
-
-## FR-32 - Capability-Aware Selection (Proposed - 2026-11-14)
-
-Selection must consider required capabilities: tools, structured output, modalities, context window and streaming. Unknown capabilities must not count as confirmed. Models without a required capability are ineligible for that request.
-
-**Acceptance criteria (proposed)**
-
-- A request that requires tool calling never selects a model whose tool support is unverified or false.
-- A request that requires a larger context window never selects a model declared below it.
-
-## FR-33 - Bounded Failover (Proposed - 2026-11-14)
-
-When a model fails — connection error, outage, rate limit, repeated timeout, invalid response, or missing capability — the engine must attempt another eligible model. The attempt must be bounded. Retry-After must be respected when supplied. Authorization failures must not retry indefinitely. Malformed user requests must not trigger provider switches. Failover must preserve conversation context where feasible.
-
-**Acceptance criteria (proposed)**
-
-- Every attempt is bounded per turn.
-- A 429 with a Retry-After header cools the model instead of hammering it.
-- A malformed request stops instead of walking the pool.
-- The user can see which model answered and why a failover happened.
-
-## FR-42 - In-App Administrator Secret Management & Protected Storage (Delivered - 2026-11-14)
-
-Platform administrators must be able to configure, verify, rotate, and remove the shared enterprise AI inference credentials directly within the application's Settings interface without accessing cloud deployment consoles. Credentials must be protected at rest using envelope encryption and segregated from ordinary application database access.
-
-**Acceptance criteria**
-
-- **In-App Administration:** An authorized administrator (`profiles.role === 'admin'` or `workspace_members.role in ('owner', 'admin')`) can configure provider base URL, model identifier, and API key in Settings. Non-admin users cannot access or view configuration interfaces.
-- **Envelope Encryption at Rest:** The secret key is encrypted at rest using AES-256-GCM with a server-isolated master key outside the database. Plaintext keys are never stored in database records.
-- **Zero Client Read Exposure:** Row-Level Security explicitly denies all direct browser queries via PostgREST. Decryption occurs exclusively in server-side memory.
-- **Sanitized Public Responses:** Administrative status queries return masked key strings (e.g. `rc-••••••••••••7766`); ciphertexts, nonces, tags, and plaintext keys are never returned to the frontend.
-- **Pre-Flight Connection Test:** Administrators can run live verification tests against the provider endpoint before saving or using active credentials.
-- **Runtime Precedence Hierarchy:** Inference resolution strictly enforces: In-App Database Config > Server Environment Variables > Deterministic Mock Mode.

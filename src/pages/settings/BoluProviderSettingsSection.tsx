@@ -280,12 +280,12 @@ export function BoluProviderSettingsSection() {
     : null
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 w-full max-w-full min-w-0 overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
         <div className="min-w-0">
-          <p className="truncate text-xs font-bold text-bd-text">Bolu AI Infrastructure</p>
-          <p className="truncate text-[10px] text-bd-text-muted">
+          <p className="truncate text-xs sm:text-sm font-bold text-bd-text">Bolu AI Infrastructure</p>
+          <p className="text-[10px] text-bd-text-muted leading-tight">
             Multi-account priority routing · Encrypted server-side credentials
           </p>
         </div>

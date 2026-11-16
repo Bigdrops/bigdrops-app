@@ -2,6 +2,55 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { Check, Loader2, Sparkles, AlertCircle, FileCheck, FileText, ShieldAlert, ArrowRight, type LucideIcon } from 'lucide-react'
 import type { BoluProposal } from '@/lib/ai-assistant/bolu-operations'
 import { formatNaira } from '@/lib/formatters/money'
+import { CopyButton } from './assistant-chat-copy-button'
+
+/**
+ * proposalPlainText — deterministic text view of a typed proposal payload.
+ *
+ * Used by the artifact copy action. It reads only the authoritative proposal
+ * fields (the same ones the card renders) and never recalculates money beyond
+ * the quantity × unit price already shown. No prose context is included, so a
+ * copied artifact cannot be confused with the assistant response.
+ */
+export function proposalPlainText(proposal: BoluProposal): string {
+  const isCreate = proposal.operationType === 'create-document'
+  const isQuotation = proposal.documentFamily === 'quotation'
+  const noun = isQuotation ? 'Quotation' : 'Invoice'
+  const lines: string[] = []
+
+  if (isCreate) {
+    lines.push(`New ${noun} proposal for ${proposal.payload.client_name || 'Client'}`)
+  } else {
+    lines.push(`${noun} modification for ${proposal.targetDocumentNumber || 'Document'}`)
+    if (proposal.field) {
+      lines.push(`${proposal.field}: ${String(proposal.oldValue ?? '')} -> ${String(proposal.newValue ?? '')}`)
+    }
+  }
+
+  const items = (isCreate ? proposal.payload.items : proposal.itemsChange?.newItems) ?? []
+  if (items.length > 0) {
+    lines.push('', 'Line items:')
+    for (const item of items) {
+      lines.push(
+        `- ${item.quantity} x ${item.description}: ${formatNaira(item.quantity * item.unit_price)}`,
+      )
+    }
+  }
+
+  const totals = proposal.computedTotals
+  if (totals && totals.total > 0) {
+    lines.push('', `Subtotal: ${formatNaira(totals.subtotal)}`)
+    if (totals.vat > 0) lines.push(`VAT (7.5%): ${formatNaira(totals.vat)}`)
+    lines.push(`Authoritative total: ${formatNaira(totals.total)}`)
+  }
+
+  if (isCreate && proposal.candidateNumber) {
+    lines.push('', `Reference: ${proposal.candidateNumber}`)
+  }
+  lines.push('', `Status: ${proposal.status}`)
+
+  return lines.join('\n')
+}
 
 export function Segmented<T extends string>({
   value,
@@ -187,20 +236,29 @@ export function ProposalCardView({
     >
       <div className="ac-card-head flex items-center justify-between gap-2 pb-2 border-b border-[var(--ac-line)]">
         <span
-          className={`ac-card-kind inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase ${
+          className={`ac-card-kind inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold tracking-wide uppercase ${
             isQuotation ? 'text-[var(--ac-sage,green)]' : 'text-[var(--ac-accent)]'
           }`}
         >
-          {isQuotation ? <FileText className="size-3.5" aria-hidden="true" /> : null}
-          {kindLabel}
+          {isQuotation ? <FileText className="size-3.5 shrink-0" aria-hidden="true" /> : null}
+          <span className="truncate">{kindLabel}</span>
         </span>
-        <span
-          className="ac-card-flag px-2 py-0.5 rounded-full text-[11px] font-bold"
-          data-tone={statusTone}
-          role="status"
-          aria-live="polite"
-        >
-          {statusText}
+        <span className="flex shrink-0 items-center gap-1">
+          <CopyButton
+            value={proposalPlainText(proposal)}
+            label="Copy"
+            ariaLabel="Copy artifact as text"
+            copiedLabel="Copied"
+            iconOnly
+          />
+          <span
+            className="ac-card-flag px-2 py-0.5 rounded-full text-[11px] font-bold"
+            data-tone={statusTone}
+            role="status"
+            aria-live="polite"
+          >
+            {statusText}
+          </span>
         </span>
       </div>
 

@@ -147,18 +147,18 @@ export function ConnectionCard({
   return (
     <div
       className={cn(
-        'rounded-xl border bg-bd-surface p-4 transition-colors shadow-sm',
+        'rounded-xl border bg-bd-surface p-3.5 sm:p-4 transition-colors shadow-sm w-full min-w-0 overflow-hidden',
         isPrimary ? 'border-bd-border-strong ring-1 ring-bd-primary/20' : 'border-bd-border',
         !connection.isEnabled && 'opacity-65',
       )}
     >
       {/* Header Row */}
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 min-w-0">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-bd-border bg-bd-surface-muted">
             <ProviderLogo providerId={connection.providerId} size={18} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold text-bd-text">{connection.name}</p>
             <p className="truncate text-[11px] text-bd-text-muted">
               {providerName} · {connection.protocol === 'anthropic' ? 'Anthropic' : 'OpenAI-compatible'}
@@ -166,11 +166,11 @@ export function ConnectionCard({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
           {isPrimary && (
             <Badge
               variant="secondary"
-              className="gap-1 border-bd-status-info-border bg-bd-status-info-bg text-bd-status-info-text text-[10px]"
+              className="gap-1 border-bd-status-info-border bg-bd-status-info-bg text-bd-status-info-text text-[10px] shrink-0"
             >
               <Zap size={11} /> Primary
             </Badge>
@@ -179,12 +179,12 @@ export function ConnectionCard({
           {connection.inPool ? (
             <Badge
               variant="secondary"
-              className="gap-1 border-purple-500/20 bg-purple-500/10 text-purple-600 text-[10px]"
+              className="gap-1 border-purple-500/20 bg-purple-500/10 text-purple-600 text-[10px] shrink-0"
             >
               <Layers size={10} /> Pool P{connection.priority}
             </Badge>
           ) : (
-            <Badge variant="secondary" className="text-bd-text-muted text-[10px]">
+            <Badge variant="secondary" className="text-bd-text-muted text-[10px] shrink-0">
               Standby
             </Badge>
           )}
@@ -195,8 +195,8 @@ export function ConnectionCard({
 
       {/* Connection Endpoint & Details */}
       <div className="mt-3 space-y-1.5 min-w-0">
-        <div className="flex items-center justify-between gap-2 text-[11px] text-bd-text-muted">
-          <p className="truncate font-mono text-[10px]" title={connection.baseUrl}>
+        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] text-bd-text-muted min-w-0">
+          <p className="truncate font-mono text-[10px] min-w-0 flex-1" title={connection.baseUrl}>
             {connection.maskedKey} · {connection.baseUrl}
           </p>
           <span className="font-mono text-[10px] shrink-0">{connection.timeoutMs / 1000}s timeout</span>
@@ -204,7 +204,7 @@ export function ConnectionCard({
       </div>
 
       {/* Telemetry & Balance Panel */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-bd-border/70 bg-bd-surface-muted/60 px-3 py-2 text-xs">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-bd-border/70 bg-bd-surface-muted/60 px-3 py-2 text-xs min-w-0">
         {/* Pool Participation & Priority Controls */}
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-medium text-bd-text">
@@ -289,56 +289,58 @@ export function ConnectionCard({
       ) : null}
 
       {/* Action Footer */}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-bd-border pt-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 gap-1 text-xs"
-          disabled={busy !== null}
-          onClick={() => void run('test', () => onTest(connection.id))}
-        >
-          {busy === 'test' ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
-          Test
-        </Button>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-bd-border pt-3 min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1 text-xs"
+            disabled={busy !== null}
+            onClick={() => void run('test', () => onTest(connection.id))}
+          >
+            {busy === 'test' ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+            Test
+          </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 gap-1 text-xs"
-          disabled={busy !== null || (!entry?.supportsDiscovery && connection.providerId !== 'custom')}
-          onClick={() => void run('discover', () => onDiscover(connection.id))}
-          title={entry?.supportsDiscovery === false ? 'No documented model-listing endpoint' : 'Refresh model list'}
-        >
-          {busy === 'discover' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-          Models
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1 text-xs"
+            disabled={busy !== null || (!entry?.supportsDiscovery && connection.providerId !== 'custom')}
+            onClick={() => void run('discover', () => onDiscover(connection.id))}
+            title={entry?.supportsDiscovery === false ? 'No documented model-listing endpoint' : 'Refresh model list'}
+          >
+            {busy === 'discover' ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+            Models
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1 text-xs"
-          disabled={busy !== null}
-          onClick={() => onEdit(connection)}
-        >
-          <Pencil size={12} /> Edit
-        </Button>
-
-        {!isPrimary && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-xs text-bd-text"
-            disabled={busy !== null || !connection.isEnabled}
-            onClick={() => void run('activate', () => onActivate(connection.id))}
-            title={connection.isEnabled ? 'Set as primary connection' : 'Enable the connection first'}
+            className="h-7 gap-1 text-xs"
+            disabled={busy !== null}
+            onClick={() => onEdit(connection)}
           >
-            {busy === 'activate' ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-            Set Primary
+            <Pencil size={12} /> Edit
           </Button>
-        )}
 
-        <div className="ml-auto flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-[11px] text-bd-text-muted cursor-pointer">
+          {!isPrimary && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs text-bd-text"
+              disabled={busy !== null || !connection.isEnabled}
+              onClick={() => void run('activate', () => onActivate(connection.id))}
+              title={connection.isEnabled ? 'Set as primary connection' : 'Enable the connection first'}
+            >
+              {busy === 'activate' ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+              Set Primary
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+          <label className="flex items-center gap-1.5 text-[11px] text-bd-text-muted cursor-pointer select-none">
             <Switch
               size="sm"
               checked={connection.isEnabled}
@@ -346,7 +348,7 @@ export function ConnectionCard({
               onCheckedChange={(checked) => void run('toggle', () => onToggleEnabled(connection.id, checked))}
               aria-label={connection.isEnabled ? 'Disable connection' : 'Enable connection'}
             />
-            {connection.isEnabled ? 'Enabled' : 'Disabled'}
+            <span>{connection.isEnabled ? 'Enabled' : 'Disabled'}</span>
           </label>
 
           <Button

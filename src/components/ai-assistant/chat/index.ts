@@ -13,5 +13,19 @@ export { ModelPill } from './assistant-chat-model-pill'
 export { ProviderSettings } from './assistant-chat-settings'
 export { ClerkAvatar, ClerkDock, ClerkLauncher } from './assistant-chat-clerk'
 export { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
-export { AssistantMark, StatusRow, ProposalCardView, Segmented } from './assistant-chat-parts'
+export { AssistantMark, StatusRow, ProposalCardView, Segmented, proposalPlainText } from './assistant-chat-parts'
+export {
+  AssistantMarkdown,
+  normalizeLanguage,
+  parseAssistantMarkdown,
+  parseInlineMarkdown,
+  safeHref,
+} from './assistant-chat-markdown'
+export { AssistantCodeBlock } from './assistant-chat-code-block'
+export { CopyButton, useCopyFeedback } from './assistant-chat-copy-button'
+export {
+  AssistantAttachments,
+  formatAttachmentSize,
+  readMessageAttachments,
+} from './assistant-chat-attachments'
 export * from './assistant-chat-providers'

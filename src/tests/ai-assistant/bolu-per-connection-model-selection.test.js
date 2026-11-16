@@ -199,3 +199,27 @@ test('Catalogue: PLaMo is declared with the documented API contract', () => {
     'PLaMo documents json_schema output only; json-mode must not be claimed',
   )
 })
+
+test('Catalogue: Zro is declared with the documented API contract', () => {
+  const entry = getCatalogueEntry('zro')
+  assert.ok(entry, 'Zro must exist in the production catalogue')
+  assert.equal(entry.baseUrl, 'https://zro.moonmath.ai/v1')
+  assert.equal(entry.protocol, 'openai')
+  assert.equal(entry.authScheme, 'bearer')
+  assert.equal(entry.supportsDiscovery, true)
+  assert.equal(entry.defaultModel, 'deepseek-v4.1-flash')
+
+  const curated = entry.curatedModels.map((m) => m.id)
+  assert.deepEqual(curated, ['deepseek-v4.1-flash', 'glm-5.3'])
+
+  const routing = ROUTING_PROVIDER_CATALOGUE['zro']
+  assert.ok(routing, 'Zro must exist in the routing catalogue')
+  assert.equal(routing.approvedForRouting, true)
+  assert.equal(routing.verifiedEndpoint, 'https://zro.moonmath.ai/v1')
+  assert.equal(routing.authScheme, 'bearer')
+  assert.equal(routing.balanceLookupSupport, false)
+  assert.ok(routing.supportedCapabilities.includes('chat-completions'))
+  assert.ok(routing.supportedCapabilities.includes('streaming'))
+  assert.ok(routing.supportedCapabilities.includes('tools'))
+  assert.ok(routing.supportedCapabilities.includes('json-mode'))
+})

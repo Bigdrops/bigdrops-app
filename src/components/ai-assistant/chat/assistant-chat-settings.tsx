@@ -38,7 +38,7 @@ export function ProviderSettings({
         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--ac-accent)] text-white text-xs font-semibold shadow-sm hover:opacity-90 transition"
         onClick={() => {
           onClose()
-          navigate('/settings')
+          navigate('/settings?section=bolu-provider')
         }}
       >
         <span>Open Settings</span>

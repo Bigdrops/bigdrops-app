@@ -1,14 +1,15 @@
 /**
- * useBoluConversations.ts — Conversation Management Hook for Bolu
+ * useBoluConversations.ts — Conversation Management Hook for Bolu 2.0
  *
- * Manages conversation thread listings, tenant-isolated queries, active
- * conversation selection, thread creation, archiving, and deletion against
+ * Manages conversation thread listings, global user retention, active/expiring
+ * thread queries, thread creation, restoration, and deletion against
  * the Supabase `public.bolu_conversations` table.
  *
  * Architecture:
- * - Application State Tier for Bolu multi-thread navigation (the Rail).
+ * - Application State Tier for Bolu multi-thread navigation.
+ * - Global conversation scope across authorized application routes.
  * - Enforces strict tenant scoping (tenant_id = entity.id).
- * - Avoids broad `select('*')` queries per BOURXE data-layer standards.
+ * - Enforces global 10-conversation limit and 48-hour grace period via backend triggers/RPC.
  * - Subscribes to Supabase Realtime channel for cross-tab sync.
  */
 
@@ -25,6 +26,7 @@ export interface BoluConversationSummary {
   originRecordId: string | null
   status: 'active' | 'archived' | 'deleted'
   lastMessageAt: string
+  scheduledDeletionAt: string | null
   metadata: Record<string, unknown>
   createdAt: string
   updatedAt: string
@@ -46,6 +48,8 @@ export interface UseBoluConversationsOptions {
 
 export interface UseBoluConversationsReturn {
   conversations: BoluConversationSummary[]
+  activeConversations: BoluConversationSummary[]
+  expiringConversations: BoluConversationSummary[]
   activeConversationId: string | null
   activeConversation: BoluConversationSummary | null
   isLoading: boolean
@@ -53,6 +57,7 @@ export interface UseBoluConversationsReturn {
   createConversation: (params?: CreateConversationParams) => Promise<string | null>
   selectConversation: (id: string | null) => void
   archiveConversation: (id: string) => Promise<boolean>
+  restoreConversation: (id: string) => Promise<boolean>
   deleteConversation: (id: string) => Promise<boolean>
   renameConversation: (id: string, newTitle: string) => Promise<boolean>
   refreshConversations: () => Promise<void>
@@ -67,6 +72,7 @@ interface RawConversationRow {
   origin_record_id: string | null
   status: 'active' | 'archived' | 'deleted'
   last_message_at: string
+  scheduled_deletion_at: string | null
   metadata: Record<string, unknown> | null
   created_at: string
   updated_at: string
@@ -82,6 +88,7 @@ function mapRowToSummary(row: RawConversationRow): BoluConversationSummary {
     originRecordId: row.origin_record_id,
     status: row.status,
     lastMessageAt: row.last_message_at,
+    scheduledDeletionAt: row.scheduled_deletion_at ?? null,
     metadata: row.metadata ?? {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -89,7 +96,7 @@ function mapRowToSummary(row: RawConversationRow): BoluConversationSummary {
 }
 
 const CONVERSATION_COLUMNS =
-  'id, tenant_id, user_id, title, module, origin_record_id, status, last_message_at, metadata, created_at, updated_at'
+  'id, tenant_id, user_id, title, module, origin_record_id, status, last_message_at, scheduled_deletion_at, metadata, created_at, updated_at'
 
 export function useBoluConversations(options: UseBoluConversationsOptions = {}): UseBoluConversationsReturn {
   const entityCtx = useContext(EntityContext)
@@ -100,12 +107,24 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Split into active threads and grace-period expiring threads
+  const activeConversations = useMemo(
+    () => conversations.filter((c) => c.status === 'active'),
+    [conversations],
+  )
+
+  const expiringConversations = useMemo(
+    () => conversations.filter((c) => c.status === 'archived' && c.scheduledDeletionAt),
+    [conversations],
+  )
+
   const activeConversation = useMemo(() => {
     if (!activeConversationId) return null
     return conversations.find((c) => c.id === activeConversationId) ?? null
   }, [conversations, activeConversationId])
 
-  const autoSelectLatest = options.autoSelectLatest ?? true
+  // Bolu 2.0: default is FALSE so opening Bolu always initializes a fresh empty session
+  const autoSelectLatest = options.autoSelectLatest ?? false
   const optionsRef = useRef(options)
   optionsRef.current = options
 
@@ -120,18 +139,14 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
     setError(null)
 
     try {
-      let query = (supabase.from('bolu_conversations') as any)
+      // Query both active and grace-period archived conversations for this tenant.
+      // Global route access: Do NOT filter by page module so conversations are accessible everywhere.
+      const query = (supabase.from('bolu_conversations') as any)
         .select(CONVERSATION_COLUMNS)
         .eq('tenant_id', resolvedTenantId)
-        .eq('status', 'active')
+        .in('status', ['active', 'archived'])
         .order('last_message_at', { ascending: false })
         .limit(50)
-
-      if (optionsRef.current.originRecordId) {
-        query = query.eq('origin_record_id', optionsRef.current.originRecordId)
-      } else if (optionsRef.current.module) {
-        query = query.eq('module', optionsRef.current.module)
-      }
 
       const { data, error: queryError } = await query
 
@@ -147,7 +162,8 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
           return prev
         }
         if (autoSelectLatest && mapped.length > 0) {
-          return mapped[0].id
+          const firstActive = mapped.find((c) => c.status === 'active')
+          return firstActive ? firstActive.id : mapped[0].id
         }
         return null
       })
@@ -228,7 +244,8 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
         }
 
         const created = mapRowToSummary(data as RawConversationRow)
-        setConversations((prev) => [created, ...prev])
+        // Refresh conversations to reflect trigger evictions if active count exceeded 10
+        await fetchConversations()
         setActiveConversationId(created.id)
         return created.id
       } catch (err) {
@@ -237,7 +254,7 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
         return null
       }
     },
-    [resolvedTenantId],
+    [resolvedTenantId, fetchConversations],
   )
 
   const selectConversation = useCallback((id: string | null) => {
@@ -248,15 +265,18 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
     async (id: string): Promise<boolean> => {
       try {
         const { error: updateError } = await (supabase.from('bolu_conversations') as any)
-          .update({ status: 'archived', updated_at: new Date().toISOString() })
+          .update({
+            status: 'archived',
+            scheduled_deletion_at: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', id)
 
         if (updateError) {
           throw new Error(updateError.message)
         }
 
-        setConversations((prev) => prev.filter((c) => c.id !== id))
-        setActiveConversationId((prev) => (prev === id ? null : prev))
+        await fetchConversations()
         return true
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to archive conversation.'
@@ -264,7 +284,30 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
         return false
       }
     },
-    [],
+    [fetchConversations],
+  )
+
+  const restoreConversation = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        const { error: rpcError } = await (supabase.rpc('restore_bolu_conversation', {
+          p_conversation_id: id,
+        }) as any)
+
+        if (rpcError) {
+          throw new Error(rpcError.message)
+        }
+
+        await fetchConversations()
+        setActiveConversationId(id)
+        return true
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to restore conversation.'
+        setError(message)
+        return false
+      }
+    },
+    [fetchConversations],
   )
 
   const deleteConversation = useCallback(
@@ -319,6 +362,8 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
 
   return {
     conversations,
+    activeConversations,
+    expiringConversations,
     activeConversationId,
     activeConversation,
     isLoading,
@@ -326,6 +371,7 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
     createConversation,
     selectConversation,
     archiveConversation,
+    restoreConversation,
     deleteConversation,
     renameConversation,
     refreshConversations: fetchConversations,
