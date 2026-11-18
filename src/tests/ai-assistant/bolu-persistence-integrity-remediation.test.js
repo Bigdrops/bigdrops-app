@@ -99,16 +99,16 @@ test('MIGRATION-STATIC: duplicate pre-check identifies schema (not family silent
   assert.doesNotMatch(migration, /DELETE FROM.*operation_id/i)
 })
 
-test('MIGRATION-STATIC: quotation RPC column/placeholder/argument alignment', () => {
-  const migration = readSource('supabase/migrations/20261118120000_bolu_operation_idempotency.sql')
+test('INSTALLER-STATIC: canonical quotation RPC column/placeholder alignment', () => {
+  const migration = readSource('supabase/migrations/20261118130000_bolu_tenant_rpc_installer.sql')
   // Extract the quotation INSERT column list and VALUES placeholders.
-  const colBlock = migration.match(/INSERT INTO %%I\.quotations \(([^)]+)\)/)
+  const colBlock = migration.match(/INSERT INTO %I\.quotations \(([^)]+)\)/)
   assert.ok(colBlock, 'quotation INSERT column list must exist')
   const columns = colBlock[1].split(',').map((c) => c.trim()).filter(Boolean)
   assert.equal(columns.length, 23, 'quotation INSERT must have 23 columns')
   assert.equal(columns[columns.length - 1], 'operation_id', 'operation_id must be last column')
 
-  const valuesBlock = migration.match(/INSERT INTO %%I\.quotations \([\s\S]*?VALUES \(\s*([\s\S]*?)\)\s*RETURNING id/)
+  const valuesBlock = migration.match(/INSERT INTO %I\.quotations \([\s\S]*?VALUES \(\s*([\s\S]*?)\)\s*RETURNING id/)
   assert.ok(valuesBlock, 'quotation VALUES clause must exist')
   const placeholders = valuesBlock[1].match(/\$\d+/g) || []
   assert.equal(placeholders.length, 23, 'quotation VALUES must have 23 placeholders')
@@ -116,24 +116,24 @@ test('MIGRATION-STATIC: quotation RPC column/placeholder/argument alignment', ()
   placeholders.forEach((p, idx) => assert.equal(p, `$${idx + 1}`, `placeholder ${idx} must be $${idx + 1}`))
 })
 
-test('MIGRATION-STATIC: invoice RPC column/placeholder alignment', () => {
-  const migration = readSource('supabase/migrations/20261118120000_bolu_operation_idempotency.sql')
-  const colBlock = migration.match(/INSERT INTO %%I\.invoices \(([^)]+)\)/)
+test('INSTALLER-STATIC: canonical invoice RPC column/placeholder alignment', () => {
+  const migration = readSource('supabase/migrations/20261118130000_bolu_tenant_rpc_installer.sql')
+  const colBlock = migration.match(/INSERT INTO %I\.invoices \(([^)]+)\)/)
   assert.ok(colBlock, 'invoice INSERT column list must exist')
   const columns = colBlock[1].split(',').map((c) => c.trim()).filter(Boolean)
   assert.equal(columns.length, 26, 'invoice INSERT must have 26 columns')
   assert.equal(columns[columns.length - 1], 'operation_id', 'operation_id must be last column')
 
-  const valuesBlock = migration.match(/INSERT INTO %%I\.invoices \([\s\S]*?VALUES \(\s*([\s\S]*?)\)\s*RETURNING id/)
+  const valuesBlock = migration.match(/INSERT INTO %I\.invoices \([\s\S]*?VALUES \(\s*([\s\S]*?)\)\s*RETURNING id/)
   assert.ok(valuesBlock, 'invoice VALUES clause must exist')
   const placeholders = valuesBlock[1].match(/\$\d+/g) || []
   assert.equal(placeholders.length, 26, 'invoice VALUES must have 26 placeholders')
   placeholders.forEach((p, idx) => assert.equal(p, `$${idx + 1}`, `placeholder ${idx} must be $${idx + 1}`))
 })
 
-test('MIGRATION-STATIC: operation_id extraction uses NULLIF on empty string for both families', () => {
-  const migration = readSource('supabase/migrations/20261118120000_bolu_operation_idempotency.sql')
-  const nullifCount = (migration.match(/NULLIF\([^\n]*operation_id[^\n]*, ''''\)/g) || []).length
+test('INSTALLER-STATIC: RPC operation_id extraction uses NULLIF on empty string for both families', () => {
+  const migration = readSource('supabase/migrations/20261118130000_bolu_tenant_rpc_installer.sql')
+  const nullifCount = (migration.match(/NULLIF\([^\n]*operation_id[^\n]*, ''\)/g) || []).length
   assert.ok(nullifCount >= 2, 'both RPCs must map empty operation_id to NULL, not empty string')
 })
 
