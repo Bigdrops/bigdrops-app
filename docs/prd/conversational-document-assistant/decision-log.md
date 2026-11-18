@@ -245,7 +245,7 @@ The reason not to adopt it now is that the components carry their own styles and
 
 **Current implementation, stated plainly.** The repository holds one Bolu provider path (AMD on a server boundary), a legacy static failover path, and a Design Lab simulation. None of these is the DEC-29 architecture. The catalog rows are the declared floor from which the engine will select.
 
-**Unresolved and explicitly not approved here.** Provider set and order; custody (client-side Capacitor private file vs server-side environment key); consent text and named-provider disclosure; paid escalation policy; whether AMD, free-tier Gemini, or NumeS may process tenant data; Gemini 4 Hydrogen admission; per-provider eligibility; health-ledger persistence; manual-pin semantics; engine diagnostics visibility; attribution for the Hermes-derived concept. See `docs/reports/2026-11-14-dynamic-model-routing-reconciliation.md` for the full decision list.
+**Unresolved and explicitly not approved here.** Provider set and order; custody (client-side Capacitor private file vs server-side environment key); consent text and named-provider disclosure; paid escalation policy; whether AMD, free-tier Gemini, or NumeS may process tenant data; Gemini 4 Hydrogen admission; per-provider eligibility; health-ledger persistence; manual-pin semantics; engine diagnostics visibility; attribution for the Hermes-derived concept. See `docs/reports/ai/2026-11-14-dynamic-model-routing-reconciliation.md` for the full decision list.
 
 ## DEC-30 - Bolu Application-Side Invoice Operations Pipeline & Mock Boundary Verification (2026-11-14)
 

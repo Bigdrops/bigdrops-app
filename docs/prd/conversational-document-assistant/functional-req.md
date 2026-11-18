@@ -63,6 +63,15 @@ The following disposition applies:
 | FR-53 | IMPLEMENTED & VERIFIED — 2026-11-16 | Conversation branch integrity: dependent turns are superseded, never silently reused. |
 | FR-54 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-16 | Two restrained pulses only: response start and optional completion. No interaction haptics. Android device behaviour not verified. |
 | FR-55 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-16 | Device narration with a native Android engine and a browser fallback. Android device behaviour not verified. |
+| FR-62 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Write intents retrieve relevant business records before proposal construction. Live provider behaviour not verified. |
+| FR-63 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Client discovery and conservative resolution with a preview-card picker. Hosted-database behaviour not verified. |
+| FR-64 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Reusable contextual clarification for pending operations. Four-viewport visual behaviour not verified. |
+| FR-65 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Invoice and quotation schema parity, including named extra charges and their tax flag. |
+| FR-66 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Custom named extra charges preserve their tax treatment and stay separate from fixed charges and line items. |
+| FR-67 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Quotation modification through the existing authorized update transaction. Not exercised against a hosted database. |
+| FR-68 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Enter inserts a newline, Gate 1 is editable, Gate 2 is confirmation-only and a correction invalidates approval. Four-viewport visual behaviour not verified. |
+| FR-69 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Deterministic commercial parsing and standardization for invoices and quotations. Live-provider compliance not verified. |
+| FR-70 | IMPLEMENTED — HOSTED VERIFICATION PENDING — 2026-11-18 | Gate 2 authorization now requests canonical create/edit actions. Verified against the service contract only. |
 
 ## FR-01 - Conversation Surface On The Invoice Form
 
@@ -779,7 +788,131 @@ The runtime selects the engine from measured capability. It does not assume the 
 - **Decisions:** add a small local Capacitor plugin instead of a third-party dependency; keep browser synthesis as the fallback; chunk native speech in the web layer to support pause and resume; restrict vibration to the response-start pulse and the optional completion pulse; store the edited request before superseding dependent turns, and restore the original text if the branch write fails.
 - **Proposals:** native haptics plugin, branch tree with restore, voice selection, account-scoped interaction preferences.
 
+## FR-56 - Mobile Conversation Experience, Document Preview Redesign & Conversation Titles (Approved & Implemented - 2026-11-17)
 
+Bolu 2.0 mobile conversation and document review surfaces must deliver a cohesive, touch-first assistant experience:
+
+1. **Assistant Message Alignment & Sparkles Avatar:**
+   - The Sparkles indicator is retained in a compact avatar gutter (`size-7`, 28px).
+   - Message text utilizes the full remaining width (`flex-1 min-w-0 w-full`) without decorative laser walls, pseudo-elements, or obstructive rails.
+   - Headings, lists, tables, and code blocks wrap and align consistently.
+
+2. **Document Artifact Preview Redesign:**
+   - Structured document review surface replacing generic modal presentation.
+   - Compact header with document type, draft status, reference number, and close action.
+   - Authoritative total receives strong visual prominence with currency formatting.
+   - Line items render responsively without clipping descriptions or price columns.
+   - Natural sheet height hugging content up to `max-h-[85dvh]` on mobile, eliminating blank void regions.
+
+3. **In-Preview Two-Gate Decision Actions:**
+   - Dedicated sticky action footer inside the document preview exposes Reject and Approve Changes (Gate 1) controls.
+   - Gate 2 exposes Cancel Save and Confirm & Save controls.
+   - Actions call the identical handlers as the in-chat approval card with unified state updates.
+   - Submission lock prevents duplicate rapid submissions. Closing the preview executes no state change.
+
+4. **Conversation History Sidebar & Identity:**
+   - Replaces standalone "B" with approved `BxLogo` and eliminates redundant stacked branding headers.
+   - Groups threads by date: Today, Yesterday, Previous 7 days, Older.
+   - Displays user identity block at bottom with Google profile avatar or initials fallback.
+   - Clean, touch-accessible row actions for selection and deletion.
+
+5. **Topic-Derived Conversation Titles:**
+   - Derives clean topic titles deterministically from the first user message (e.g. "Tecno Power Quotation", "Outstanding Invoices", "Add Transport ₦5,670").
+   - Safe, controlled background backfill for historical generic "New Conversation" titles without touching custom or user-renamed titles.
+
+6. **Mobile Connection Dialog Structural Responsive Layout (Google Modern Web Guidance):**
+   - Dialog viewport geometry: uses `w-[calc(100vw-2rem)] max-w-lg min-w-0 box-border` with horizontal centering (`left-1/2 -translate-x-1/2`) and `max-h-[90dvh] overflow-y-auto overscroll-contain`.
+   - Close button clearance: header enforces `pr-8 sm:pr-10` and `break-words` on descriptions, ensuring close control remains inside the visible header area.
+   - Child intrinsic sizing: every section, input, and select trigger enforces `min-w-0 w-full box-border` so children never demand minimum widths exceeding the viewport.
+   - Form responsiveness: Priority rank, paid tier, protocol, and auth scheme form grids collapse to single-column on mobile (`grid-cols-1 sm:grid-cols-2`), with unclipped readable text.
+   - Target model discovery: header uses `flex flex-wrap items-center justify-between gap-1.5 min-w-0 w-full` so discovery actions never clip on narrow screens (Fold closed).
+   - Component roots: shared `dialog.tsx` and `select.tsx` primitives enforce `min-w-0 box-border` and value truncation at the root level.
+
+7. **Bolu 2.0 Mobile UX Final Remediation (Text Flow, Draggable FAB, Proposal Handlers, Drawer Alignment):**
+   - **Assistant Text Flow Around Orb:** `.ac-turn` uses `display: flow-root;` with `.ac-turn-avatar` floated left (`float: left; margin: 1px 10px 4px 0;`). Markdown prose uses `display: block;` allowing inline text to flow naturally beneath the 28px orb after lines 1–2 to utilize full content width, while block elements (`.ac-card`, `.ac-code`, `.ac-md-table-wrap`, `.ac-actions`) clear both sides.
+   - **Draggable & Repositionable Bolu FAB:** `BoluFloatingActionButton` supports pointer/touch dragging with 6px threshold tap/drag disambiguation, boundary clamping (min 12px viewport and safe area margins), position persistence in `localStorage` under `bolu_fab_position:v1`, window resize/orientation re-clamping, and full keyboard/screen-reader accessibility (`Enter`/`Space`).
+   - **Two-Gate Proposal Operations & Feedback:** Proposal card views (`ProposalCardView`) and `InvoicePanel` wire shared Gate 1 (`approveGate1`, `rejectGate1`) and Gate 2 (`confirmGate2Save`, `cancelGate2Save`) handlers with immediate `feedback` notifications and `submitting` guards preventing duplicate submissions.
+   - **Drawer Geometry & Aesthetics:** Mobile drawer sheets eliminate background color mismatch gaps (`bg-[var(--ac-muted-surface)]`), assign `w-full border-r-0` to the rail within mobile drawers, provide crisp active thread borders (`border border-[var(--ac-accent-line)]`), enhance the New Conversation button, and anchor the Google account footer with safe-area padding.
+
+**Acceptance criteria**
+- No decorative boundary obstructs assistant message width, and text flows under the avatar after lines 1–2.
+- Bolu FAB can be dragged and repositioned smoothly across touch and pointer devices, persisting coordinates across reloads without triggering unwanted launches.
+- Preview and chat cards display functioning Gate 1 and Gate 2 action buttons synchronized with thread state, displaying immediate toast notifications.
+- Conversation drawer renders without blank white strips, highlighting the active thread cleanly.
+- Conversation sidebar uses approved BxLogo, user avatar fallback, and 4-tier date grouping.
+- Conversation titles describe actual topics rather than generic "New Conversation".
+- Custom endpoint connection dialog contains zero horizontal scrolling and zero content clipping across mobile viewports (320px–390px, Fold closed, Fold open).
+
+
+
+
+## FR-57 - Save Diagnostics, Safe Tenant Persistence, Message-Edit Lifecycle & Proposal Payload Integrity (Approved & Implemented - 2026-11-17)
+
+Corrects diagnostic preservation, Gate 2 document save reliability, user-message editing lifecycle, and AI proposal payload validation:
+
+1. **Diagnostic Preservation & Secret Redaction (`feedback.error`):**
+   - Preserves `options.description` diagnostic context into `errorRegistry` entries rather than discarding it.
+   - Automatically sanitizes sensitive data from diagnostics: Bearer tokens (`Bearer [REDACTED]`), API keys (`[REDACTED_KEY]`), JWT credentials (`[REDACTED_JWT]`), PostgreSQL connection URLs with passwords (`postgres://[REDACTED]@`), and sensitive key-value pairs (`[REDACTED]`).
+   - Caps diagnostic length at 4000 characters to prevent `localStorage['bd-error-registry']` storage exhaustion.
+
+2. **Safe Tenant Schema Resolution & Persistence Atomicity (`/api/bolu-save`):**
+   - Server-side persistence strictly resolves the entity's tenant schema (`entities.schema_name`). If unresolved or null, it fails closed with HTTP 422 and code `tenant_schema_unresolved`. It never silently defaults to `'public'`.
+   - Client-side fallback to authenticated tenant client is permitted **only** when the primary operation is known not to have committed (HTTP 404 unmounted endpoint, or `code: 'server_config_missing'` where the server aborted before opening a database transaction).
+   - On database transaction failures, HTTP 500 errors, or interrupted network connections, the client does not execute a second write, preventing duplicate document creation and requiring safe reconciliation.
+
+3. **Bolu User-Message Edit Availability & Error Visibility:**
+   - The Bolu composer remains editable and submittable during user-message editing (`editingMessageId` present), even if an active proposal is pending or a previous save operation failed (`clerkState !== 'idle'`).
+   - Active streaming lockout is strictly preserved: the composer locks during generation to prevent stream corruption.
+   - `BoluChatWorkspace` destructures and surfaces thread errors via `feedback.error('Message update failed', { description: error })`. If edit submission fails, the edited text is preserved in the composer draft for user recovery.
+   - Canceling edit restores the original message and clears the draft.
+
+4. **Quotation Proposal Validation & Extra Charges Integrity:**
+   - Explicitly validates proposal payloads against supported domain models. Model-injected arbitrary keys such as `extra_charges` or `extraCharges` are rejected with clear user guidance: `'The "extra_charges" field is not supported in document proposals. Please include transport or additional charges as standard line items with a description, quantity, and unit price.'`
+   - Preserves authoritative application calculations (`computeAuthoritativeTotals`) and guarantees model arithmetic never overrides business records.
+
+5. **AI Provider Settings Structured Error Classification:**
+   - Preserves structured error codes in `/api/bolu-provider-config`: permission/RLS denial (HTTP 403 `forbidden`), server vault/encryption key missing (HTTP 500 `server_config_missing`), and unreachable remote endpoint/network timeout (HTTP 502 `endpoint_blocked`).
+   - Unknown exceptions fall back safely to generic HTTP 500 `operation_failed` without exposing internal stack traces or secrets to the browser.
+
+**Acceptance criteria**
+- `feedback.error()` retains full diagnostic descriptions in the system error registry with all credentials redacted.
+- `/api/bolu-save` returns `tenant_schema_unresolved` when schema lookup fails; never runs tenant RPCs through `public`.
+- No duplicate persistence writes occur after uncertain server responses or database write failures.
+- Proposals containing `extra_charges` are rejected with actionable guidance; valid line-item transport charges persist cleanly.
+- Users can edit and resubmit their messages when a proposal is pending or a save has failed.
+- Failed message edits retain the draft in the composer and surface immediate actionable feedback.
+- Provider settings errors return accurate HTTP status codes and structured codes for known failure modes.
+
+## FR-58 - Canonical Tenant Schema Resolution & User-Scoped Transaction Authorization (Approved & Implemented - 2026-11-17)
+
+Eliminates Gate 2 document save failures by establishing canonical tenant schema resolution and user-scoped transaction authorization in `/api/bolu-save`:
+
+1. **Canonical Database Tenant Schema Resolution (`_prov_get_schema_name`):**
+   - Resolves tenant schema using the canonical database function `public._prov_get_schema_name(p_entity_id uuid)` via `adminClient.rpc('_prov_get_schema_name', { p_entity_id: targetEntityId })`, eliminating queries for the non-existent `entities.schema_name` column.
+   - Enforces strict regex validation against `TENANT_SCHEMA_PATTERN = /^entity_[a-z0-9-]+_[a-z0-9-]+$/i`.
+   - Rejects `null`, empty, whitespace-only, malformed, or `'public'` values, failing closed with HTTP 422 and structured code `tenant_schema_unresolved`.
+
+2. **Authenticated User-Scoped Client & Dual Authorization (`getUserClient`):**
+   - Resolves the calling user and extracts the verified Bearer token from the `Authorization` request header in `resolveUser(request)`.
+   - Instantiates a user-scoped Supabase client (`getUserClient(token)`) configured with the caller's JWT: `headers: { Authorization: Bearer <token> }`.
+   - Binds the tenant client via `createTenantClient(userClient, schemaName)` so that PostgREST and PostgreSQL assign `auth.uid() = user.id`.
+   - Database transactional RPCs (`save_quotation_with_items_transaction` and `save_invoice_with_items_transaction`) successfully execute their internal permission gate: `public.has_entity_permission(p_entity_id, auth.uid(), '<resource>', '<action>')`.
+   - Maps database error code `42501` (`insufficient_privilege`) and permission denial exceptions to HTTP 403 `forbidden`.
+
+3. **Server-Side Pre-Flight Authorization Check:**
+   - Performs an explicit pre-flight permission check via `adminClient.rpc('has_entity_permission', { p_entity_id: targetEntityId, p_user_id: user.id, p_resource: resource, p_action: action })` before opening tenant transactions.
+   - If pre-flight check returns `false`, execution halts immediately with HTTP 403 `forbidden`.
+
+4. **Preserved Administrative Boundary:**
+   - Retains the service-role client (`adminClient`) exclusively for schema resolution, pre-flight authorization verification, and updating/inserting `bolu_messages` records in the `public` schema.
+
+**Acceptance criteria**
+- `/api/bolu-save` resolves schemas strictly through `public._prov_get_schema_name(p_entity_id)` and validates with `^entity_[a-z0-9-]+_[a-z0-9-]+$`.
+- Requests lacking valid authentication fail with HTTP 401 `unauthorized`.
+- Unresolved or invalid schemas fail with HTTP 422 `tenant_schema_unresolved` and never execute queries against `public`.
+- Forbidden operations fail closed with HTTP 403 `forbidden`.
+- Tenant transactional RPCs receive a user-scoped client carrying `Authorization: Bearer <token>`, ensuring `auth.uid()` evaluates to the authenticated user ID.
+- Message history (`bolu_messages`) updates and confirmation inserts continue through the administrative boundary.
 
 
 ## FR-34 - Universal Document-Intelligence Pipeline (Proposed — 2026-11-14)
@@ -998,5 +1131,315 @@ The runtime must distinguish retrieval, proposal, apply, and persistence states.
 - A partial failure reports which stage failed and preserves recoverable draft state.
 - Exact retry and idempotency policy remains an architecture decision.
 
+## FR-62 - Business Context Discovery On Write Requests (Implemented - 2026-11-18)
 
+Bolu must retrieve the business records a write request needs before it constructs a proposal. A write verb must not disable record discovery.
+
+**Approved behaviour**
+
+- Read-intent classification stays separate from record discovery. A read capability still does not hijack a write request.
+- A create request for a named client searches the client directory before generation.
+- A create request for a quotation searches the client directory before generation.
+- A request that names a document number retrieves that invoice or quotation before generation.
+- A quoted item phrase may retrieve catalog suggestions. A suggestion never links an item and never reserves stock.
+- Only records relevant to the request are retrieved. Results are bounded and contain only the fields the task needs.
+- Every retrieval stays inside the authenticated user's authorized tenant. Another tenant's records are never supplied to the model.
+- Discovery is read-only. It never persists a document, a client or an inventory change.
+
+**Acceptance criteria**
+
+- A write intent retrieves the relevant client or document record.
+- An unrelated message retrieves nothing and fabricates no client.
+- Existing read capabilities keep working.
+- A tenant that is not ready reports a search failure instead of an empty result.
+
+## FR-63 - Client Discovery And Resolution (Implemented - 2026-11-18)
+
+Bolu must resolve a client to a verified record before an invoice or quotation proposal is complete.
+
+**Approved behaviour**
+
+- Search covers client name, phone, email and contact person where the tenant schema supports them. Archived clients are excluded.
+- Matching tolerates letter case, surrounding whitespace, common punctuation and phone formatting. A multi-word phrase is retried by its distinctive words.
+- Matching is conservative. The outcomes are exact match, one plausible match, several plausible matches, no match and search failure.
+- Several plausible matches require the user to choose. Bolu never silently selects one.
+- No match keeps the proposal. The collected document type, items, quantities, prices, dates, notes, terms, fixed charges, custom charges and discounts are preserved.
+- A search failure is reported as a failure. It is never presented as an empty directory.
+- A selected client always resolves to a stable record ID that is read back in the current tenant.
+- The preview card contains a searchable client picker. The picker is the fallback for an unresolved, ambiguous or manually overridden client. It is not a permanent second panel.
+- Selecting a client updates the pending proposal and preserves every other field.
+
+**Acceptance criteria**
+
+- Exact, partial, phone, email and contact-person searches resolve where the schema supports them.
+- Several matches produce a question, not a guess.
+- No match keeps the draft and offers the picker.
+- A search error is reported accurately.
+- Cross-tenant records never appear.
+- Manual selection preserves all pending document fields.
+
+## FR-64 - Reusable Contextual Clarification (Implemented - 2026-11-18)
+
+Bolu must ask a focused question with selectable options when a request is ambiguous or a required decision is missing.
+
+**Approved behaviour**
+
+- Clarification is a reusable conversational capability. It is not a client-only feature.
+- A clarification holds one or several related questions. Each question explains what Bolu needs and offers concise options.
+- A question may allow a free-text answer and may be deferred by leaving the draft unchanged.
+- Bolu does not ask for information it already holds.
+- An answer updates the existing pending proposal. It does not discard the original request, the collected fields or validated data.
+- An answer is not approval. Selecting an option never authorizes client creation, document creation, document modification, inventory reservation or payment.
+- An answer is bound to one operation. An answer for a replaced, approved or cancelled operation is rejected and is never applied to another operation.
+- The controls are compact and keyboard operable. They are not a full-screen questionnaire.
+
+**Acceptance criteria**
+
+- Single-question and multi-question clarifications render.
+- Options and free-text answers both work.
+- The pending proposal survives clarification.
+- A stale answer changes nothing.
+- An answer never changes the proposal out of the review gate.
+- Two pending operations cannot receive each other's answers.
+
+## FR-65 - Invoice And Quotation Field Parity (Implemented - 2026-11-18)
+
+The Bolu operation contract must represent the fields the standard BOURXE document workflows support.
+
+**Supported document fields**
+
+Client identity, issue date, due date (quotation: valid until), notes, payment terms, document title, purchase order number, project reference, work duration, fixed workmanship, fixed transportation, fixed shipping, discount value with type and timing, WHT value with type, global VAT percent, and custom named extra charges.
+
+**Supported line-item fields**
+
+Description, quantity, unit price, unit, sub-description, make, catalog item ID, group name, group ID, discount rate, installation rate and installation taxability. A row type is normalized to a standard item.
+
+**Approved behaviour**
+
+- Invoices and quotations keep separate candidate numbers, permission resources and table families. Their payload is not assumed to be interchangeable at the persistence layer.
+- Every supported field survives operation construction, validation, the Gate 1 proposal, the preview, the Gate 2 payload and persistence.
+- A field that the persistence contract cannot hold is reported, not silently dropped.
+- Document numbering, project linkage, status rules, audit behaviour and tenant authorization are unchanged.
+- No database column is added for the convenience of the model schema.
+
+**Acceptance criteria**
+
+- Invoice and quotation proposals preserve their verified fields.
+- Line-item fields survive validation and proposal construction.
+- Existing non-Bolu form workflows are unchanged.
+
+## FR-66 - Custom Extra Charges And Commercial Correctness (Implemented - 2026-11-18)
+
+A named commercial charge must keep the user's intended classification. Bolu must not convert a charge into an ordinary line item.
+
+**Approved behaviour**
+
+- A custom named charge uses the existing `{ name, amount, withTax }` shape and is stored with the other commercial metadata in `custom_fields`.
+- Fixed workmanship, fixed transportation, fixed shipping, custom named charges and ordinary line items stay distinct.
+- A custom charge keeps its name, amount and taxability flag.
+- The authoritative `calculateDocument` engine computes every total. Bolu does not implement a second calculation path.
+- A taxable custom charge grows the VAT base. A non-taxable custom charge does not. Fixed charges keep the established non-taxable treatment of the form.
+- A charge is never written as a line item to work around a schema gap. If the intended treatment is unclear, Bolu asks.
+
+**Acceptance criteria**
+
+- Taxable and non-taxable custom charges produce the same VAT result as the standard form path.
+- Fixed charges remain separate and untaxed.
+- The preview and the persisted document agree.
+- Validation accepts the canonical and alias charge shapes and rejects invalid entries.
+
+## FR-67 - Quotation Modification (Implemented - 2026-11-18)
+
+Bolu may modify an existing quotation through the same safe path as an invoice.
+
+**Approved behaviour**
+
+- The generation pipeline accepts a `modify-document` operation for a quotation.
+- The target quotation resolves to a verified record ID in the current tenant before the proposal is shown.
+- Gate 1 and Gate 2 remain required.
+- The existing `save_quotation_with_items_transaction` RPC with `p_mode = 'update'` performs the write. No alternate write path is added.
+- A stale proposal is rejected when the stored value changed after the proposal was built.
+- A duplicate submission of the same operation is rejected.
+- If the sequential fallback used outside the RPC replaces items, the previous items are restored when the replacement fails.
+
+**Acceptance criteria**
+
+- An unapproved quotation modification performs no database write.
+- An approved and confirmed modification writes through the authorized transaction.
+- A stale modification is rejected.
+- The original quotation remains available until the approved change is saved.
+
+**Limitation:** the update RPC was not exercised against a hosted database in this change.
+
+## FR-68 - Composer Enter Key And Gate Boundaries (Implemented - 2026-11-18)
+
+The Bolu composer and the two approval gates must match the reviewed lifecycle: an explicit send action, editable Gate 1, confirmation-only Gate 2, and a conversation that stays usable while a document preview exists.
+
+**Approved behaviour**
+
+- Enter in the composer inserts a newline. It never submits. The explicit send button submits, and Escape cancels a message edit.
+- Mobile soft-keyboard Enter therefore composes multiline text, and IME composition and paste are untouched.
+- A pending document proposal never disables or covers the composer. On a phone the in-thread proposal card is the preview; the bottom sheet is opened deliberately.
+- Gate 1 allows document review and correction: client selection, items, prices, dates and commercial charges, through the picker, the clarification card and conversational correction.
+- Gate 2 is confirmation only. It shows the client, the document identity and the final amount, and exposes no editable field and no client replacement.
+- A correction sent while a draft is open updates the same operation (`opId` retained), preserves fields the correction did not mention, replaces the supplied item set, recalculates authoritative totals, and returns the proposal to `pending_approval`.
+- The superseded proposal card is cleared so only one operation has a live preview.
+- Returning to review from Gate 2 clears the earlier approval. The user must approve the edited proposal again before Gate 2 is available.
+- Cancellation remains an explicit user action and is never the only way to reach the composer.
+
+**Acceptance criteria**
+
+- Multi-line text can be composed and Enter never sends a message.
+- A user can create an invoice, see the preview, send a correction and receive an updated preview without cancelling.
+- Gate 2 cannot silently change a document, and a post-Gate-1 change invalidates the approval.
+- The payload sent at Gate 2 is the proposal the user approved at Gate 1.
+
+**Limitation:** the composer, the gate controls and the mobile sheet were typechecked and covered by source-level and behaviour tests. They were not inspected in the four viewport classes.
+
+## FR-69 - Commercial Description Intelligence (Implemented - 2026-11-18)
+
+Invoices and quotations must read commercial shorthand, standardize it, and suggest improvements without interrogating the user or inventing product specifications. The capability is reusable; only invoices and quotations use it today.
+
+**Approved behaviour**
+
+- Deterministic parsing handles pasted WhatsApp-style lists, timestamps, list markers, `15k` amounts, description lines that carry a quantity, and a separate price list.
+- A separate price list is matched to the descriptions in order only when the counts agree. A different count is reported as a mismatch and no price is attached.
+- Standardization normalizes unit notation and casing and expands the approved cable shorthand (`1.5mm green` becomes `1.5mm² Single-Core Cable – Green`). Size and colour are preserved exactly.
+- No brand, manufacturer, grade, packaging, voltage, model, material, extra core count or dimension is added.
+- A sufficient description stays as it is: `Salt` remains `Salt`.
+- Suggestions (unpriced item, missing unit, absent payment terms, unset title) are displayed for the user and are never applied silently.
+- Ordinary goods stay ordinary line items. A custom charge is only used for a named charge the user supplies as a charge.
+- A supplied transaction date becomes the document date instead of today's date.
+- Parsed evidence is supplied to the model as the user's own ordered words, not as instructions.
+
+**Acceptance criteria**
+
+- The reference input (four cable descriptions, four prices, Salt and Charcoal) yields six standardized items, prices paired correctly, and a 192,000 subtotal before any tax or adjustment.
+- No unsupported specification appears in a standardized description.
+- A count mismatch produces a focused question rather than a guessed pairing.
+- The same capability serves invoice and quotation proposals.
+
+**Limitation:** the model still composes the payload. Deterministic standardization and evidence are applied after validation; whether a given provider follows the prompt was not verified against a live provider.
+
+## FR-70 - Gate 2 Save Authorization (Implemented - 2026-11-18, hosted verification pending)
+
+Bolu must save through the same authorization contract as the standard invoice and quotation forms.
+
+**Root cause corrected**
+
+Bolu evaluated write permission with the actions `save` and `modify`. `public.has_entity_permission` matches `resource` and `action` exactly against `entity_permissions`, whose actions are `view`, `create`, `edit` and `delete`. A role without a wildcard therefore failed a check for an action that cannot exist, and the save was reported as a permission denial even though the user could create invoices normally.
+
+**Approved behaviour**
+
+- Bolu requests `create` for a new document and `edit` for a modification, for both invoices and quotations. Reads request `view`.
+- The persisted proposal's `requiredPermission` records the same canonical action.
+- The server route keeps its schema resolution, pre-flight `has_entity_permission` check and tenant client built from the caller's token, so `auth.uid()` and RLS remain authoritative.
+- A genuine denial is still a denial. No RLS, permission function or `SECURITY DEFINER` boundary is weakened, and no service-role write path is introduced.
+- Failures that are not permission denials keep their own classification.
+
+**Acceptance criteria**
+
+- A role holding `invoice/create` can save an invoice through Gate 2.
+- A role without `invoice/create` remains blocked.
+- A quotation requires its own `quotation/create` grant.
+
+**Limitation:** this was verified by unit and regression tests against the service contract, not by an end-to-end save against the hosted database. The deployment's `VITE_API_URL`, service-role configuration and live RLS behaviour were not observable from the repository.
+
+## FR-71 - Canonical Document Numbering for Bolu Documents (Implemented - 2026-11-18, hosted verification pending)
+
+Every document Bolu creates must allocate its number through the same authoritative path as the standard form.
+
+**Root cause corrected**
+
+`bolu-document-service.ts` resolved the document prefix with `resolvePrefix(undefined, 'invoice')` and `resolvePrefix(undefined, 'quotation')`. `resolvePrefix` then falls back to the global default (`INV` / `QTN`) instead of the tenant's `settings.document_prefixes` (`SASINV`, `SASQUO`, ...). Bolu therefore allocated from a different sequence family than manual creation, which is how a tenant running `SASINV-000134` could receive `INV-000001` from Bolu.
+
+**Approved behaviour**
+
+- Bolu reads the tenant's `settings.document_prefixes` through `fetchDocumentPrefixes(tenantClient)` and resolves the prefix with `resolvePrefix(documentPrefixes, family)`.
+- Number generation remains `getNextInvoiceNumber` / `getNextQuotationNumber` plus `fetchAutoCursor`, `withUniqueRetry`, the tenant uniqueness constraint and cursor advance. Bolu does not carry a sequence of its own.
+- A model-supplied or invented number is never accepted. The proposal shows a document number only when it matches the authoritative `{PREFIX}-{serial}` shape; otherwise the card states that the number is assigned on save from the business prefix.
+- Existing prefix configuration, tenant scoping and concurrency protection are unchanged.
+
+**Acceptance criteria**
+
+- A Bolu invoice continues the tenant prefix family and sequence.
+- A Bolu quotation continues the canonical quotation family.
+- Concurrent or retried saves cannot create duplicate numbers or duplicate documents.
+
+**Limitation:** verified by unit tests against the generator, the prefix resolver and a mocked tenant client. Not exercised against the hosted tenant database.
+
+## FR-72 - Co-creation Attribution and Audit Provenance (Implemented - 2026-11-18, hosted verification pending)
+
+A Bolu-assisted creation must be truthfully attributable to Bolu without replacing the authenticated human actor.
+
+**Approved behaviour**
+
+- The document is written by the authenticated user who approved Gate 1 and confirmed Gate 2. The user id comes from the verified bearer token, never from the request body.
+- Creation writes the existing canonical audit event (`record_audit_log`, action `CREATE`) plus the family activity event (`record_invoice_created` / `record_quotation_created`), with `source = bolu` and the real document id, number and timestamp.
+- Modification writes the existing `UPDATE` audit event with the same actor and source.
+- The document's persisted `custom_fields` keeps `created_via = 'bolu_assistant'` and `operation_id`, so provenance survives reload.
+- The invoice and quotation view pages show a restrained "Co-created with Bolu" note only when that persisted marker is present. Manually created documents and unreadable metadata are never labelled.
+- Failed, rejected, cancelled or abandoned proposals write no creation audit event.
+- No second audit system is introduced.
+
+**Limitation:** audit rows were verified by contract and source assertions, not by reading hosted `audit_logs` after a live save.
+
+## FR-73 - Business Context Discovery beyond Documents (Implemented - 2026-11-18)
+
+Bolu must discover the business records a requested operation depends on before constructing it.
+
+**Approved behaviour**
+
+- Read capabilities remain invoices, receivables and quotations. Write-intent discovery continues through `matchBoluWriteContext` and `resolveOperationFacts` rather than loosening read-intent classification.
+- Discovery resolves clients by name, phone, email and contact person; adds the resolved client's recent invoices and quotations as bounded references; searches the item catalogue read-only; and searches suppliers when a supplier or vendor is named.
+- Every lookup is tenant-scoped, archived rows are excluded, and results are bounded.
+- A supplier is never attached to a client field. Catalogue discovery never reserves stock, deducts inventory or starts a purchase.
+- Ambiguous or missing clients preserve the proposal and surface selectable candidates. No client is invented, and a model-supplied client id is trusted only after a read of that exact record.
+
+**Limitation:** supplier and catalogue discovery are contextual grounding only; no supplier or catalogue workflow is added to document creation.
+
+## FR-74 - Document Field Parity (Implemented where the contract allows - 2026-11-18)
+
+Bolu must construct every invoice and quotation field the lifecycle can actually persist.
+
+**Supported end to end:** client identity, title, PO number, project, issue date, due date (quotation validity), payment terms, separate terms and conditions, notes, work duration, fixed workmanship/transportation/shipping charges, custom named charges with a tax flag, discount value/type/timing, VAT rate, WHT value/type, and item description, sub-description, quantity, unit, unit price, make, part number, condition, catalogue id, installation rate and taxability, VAT override, discount override and grouping.
+
+**Deliberately not claimed:** dynamic custom header fields, signatory selection, reference links, per-item custom columns and PDF output settings are stored in document-specific `custom_fields` shapes that Bolu does not yet construct. They are reported as gaps rather than fabricated.
+
+**Limitation:** item part number and condition are persisted in the item's `custom_data` because the item tables have no such columns; this matches the form's extension convention.
+
+## FR-75 - Preview Card Fidelity (Implemented - 2026-11-18)
+
+The proposal card is the user-facing document experience; raw operation JSON is not.
+
+**Approved behaviour**
+
+- The existing `ProposalCardView` remains the renderer. Raw `bolu_operation` envelopes are stripped from assistant prose, while ordinary code blocks still render as code.
+- The card shows document type, client, title, PO number, issue date, due/validity date, payment terms, terms, notes, item quantity, unit, unit price, line total, make, part number, condition, additional charges with tax treatment, discount, VAT, WHT and total due.
+- Every amount comes from `computeAuthoritativeTotals` / `calculateDocument`. When no authoritative total exists the card says the application calculates totals on save.
+- Long documents scroll within the thread without forcing a JSON dump.
+
+## FR-76 - Gate Composer Availability and No Implicit Save (Implemented - 2026-11-18)
+
+A visible approval card must never lock the conversation, and no message may authorize a save.
+
+**Root cause corrected**
+
+Three paths set `clerkState('listening')` while a proposal was open: proposal creation, Gate 1 approval, reopening review, and reloading a thread whose last message held a proposal. The composer treats any non-idle clerk state as locked, so chat was disabled at Gate 1, at Gate 2 and after "Back to review".
+
+**Approved behaviour**
+
+- A parsed proposal lands in `pending_approval` with an idle clerk state, so corrections and questions remain possible.
+- Gate 1 approval opens Gate 2 with an idle clerk state; the user can ask questions before confirming.
+- "Back to review" returns the proposal to `pending_approval`, clears the earlier approval, keeps every field and item, and re-enables the composer.
+- A typed "yes", "confirm", "save" or similar no longer triggers persistence. Gate 2 is the explicit button only.
+- The composer still locks during active streaming and while a save is in flight, and a provider or save failure returns it to idle.
+- A modified proposal always drops to `pending_approval` and needs fresh Gate 1 and Gate 2 approvals.
+
+## FR-77 - Idempotent Gate 2 Persistence (Implemented - 2026-11-18, hosted verification pending)
+
+- Each document stores its `operation_id` in `custom_fields`. Before writing, the service looks up a document already carrying that operation id and returns it instead of allocating a second number.
+- The in-memory executed-operation set remains a fast guard within one instance; the persisted key is the durable guard across retries, reloads and serverless instances.
+- The unique constraint plus `withUniqueRetry` still arbitrates concurrent allocations, and an ambiguous failure is reported rather than retried automatically.
+- The server route scopes its proposal-status update to the resolved tenant and writes no second confirmation message; the thread writes exactly one.
 

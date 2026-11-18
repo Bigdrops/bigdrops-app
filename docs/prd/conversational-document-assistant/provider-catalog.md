@@ -53,6 +53,8 @@ The code source of truth is `src/lib/ai-assistant/providerRegistry.ts`.
 | NVIDIA NIM | `nvidia` | `https://integrate.api.nvidia.com/v1` | `nvapi-` | `nvidia/nemotron-3.5-lightning-30b-a3b` |
 | AMD Token Factory | `amd` | `https://developer.amd.com.cn/radeon/api/v1` | `rc-` | `DeepSeek-V4-Flash` |
 | Zro (MoonMath) | `zro` | `https://zro.moonmath.ai/v1` | `sk-` | `deepseek-v4.1-flash` |
+| Runcrate | `runcrate` | `https://api.runcrate.ai/v1` | `sk-` | `deepseek-ai/DeepSeek-V4.1-Flash` |
+| APInex | `apinex` | `https://api.apinex.bond/v1` | `sk-apx-` | `free/deepseek-v4.1-flash` |
 
 Every base URL ends in `/v1` or the provider equivalent. Every row uses the OpenAI chat completions request. The app does not add a provider specific adapter.
 
@@ -75,6 +77,8 @@ Every base URL ends in `/v1` or the provider equivalent. Every row uses the Open
 | NVIDIA NIM | `nvidia/nemotron-3.5-lightning-30b-a3b` |
 | AMD Token Factory | `DeepSeek-V4-Flash`, `DeepSeek-V4.1-Flash`, `GLM-5.3-Flash`, `Qwen3.8-Flash-Next` |
 | Zro (MoonMath) | `deepseek-v4.1-flash`, `glm-5.3` |
+| Runcrate | `deepseek-ai/DeepSeek-V4.1-Flash`, `zai-org/GLM-5.3-Flash`, `zai-org/GLM-5.3`, `openai/gpt-oss-120b`, `Qwen/Qwen3.8-Flash` |
+| APInex | `free/deepseek-v4.1-flash`, `free/hy4-flash`, `free/glm-5.3`, `free/glm-5.3-flash`, `free/gemini-3.8-flash`, `free/kimi-k3` |
 
 A model label is shown in the dropdown. The model id is sent in the request. The two values differ when the id carries a vendor path.
 
@@ -417,7 +421,6 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 | Blockers | FR-13 consent decision is still unresolved, and it applies to every external provider. Nigeria reachability is untested. The daily free allowance has no published size. GLM-5.3 needs a paid plan. The Data Processing Agreement applies to Teams and Enterprise only and needs a countersigned copy |
 
 ### 10.11 Classification Notes (binding reading)
-
 - **DeepSeek V4.1 Flash × 3 routes (ModelScope, UnoRouter, Sarvam)** are one underlying model class with three access routes and three different offers (500/2,000 req/day claimed; ~1 req/min plus upstream caps; metered ₹100 signup credit). They are not three independent models and must not be counted as diversity.
 - **Perplexity Decider v1.3** is a specialist decision/classification model whose claimed promotion expires 2026-11-19; its source is 404 today. Not a conversational replacement; not verified.
 - **HeyGen Voice Turbo** is a speech service with a documented free window to 2026-11-30 and a shared-capacity caveat. It does not belong in the LLM pool.
@@ -430,8 +433,12 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 - **Zro publishes no balance endpoint.** The balance inquiry stays unsupported, so the connection reports an unknown balance rather than a false zero.
 - **PLaMo retention depends on the plan, not on the provider.** On the Standard and Provider plans, input and output are not retained and are not used for training. On the Free plan they are stored and used for training, and personal information must not be entered. The plan must be checked before any tenant content is sent, because the provider id and base URL do not reveal it.
 - **PLaMo offers `json_schema` structured output only.** `json_object` mode is not offered, so the routing catalogue must not claim `json-mode` for it.
+- **Runcrate is a sixth access route to DeepSeek V4.1 Flash**, and the first whose quota resets on a weekly cycle. Its five free models are DeepSeek V4.1 Flash, GLM-5.3, GLM-5.3 Flash, `openai/gpt-oss-120b` and Qwen3.8 Flash.
+- **APInex is a seventh access route to DeepSeek V4.1 Flash, under a gateway that also sells paid and closed models.** The free tier and the pay-as-you-go tier share one account and one API key. Its free model ids carry the `free/` prefix, and nothing in the account proves which tier a response came from.
+- **Both gateways serve free requests through third-party model providers.** Runcrate states this on its own page. APInex is an aggregator; the providers behind each free model id are not published on a page the audit could fetch.
+- **Both gateways reset on a cycle** (Runcrate weekly, APInex daily). A weekly or daily reset is not a licence to store tenant content.
 
-### 10.12 PLaMo — Preferred Networks
+### 10.12 PLaMo - Preferred Networks
 
 | Field | Value |
 |---|---|
@@ -450,7 +457,45 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 | Admission | ADMITTED to the catalogue as a one-paste provider. NOT admitted to the DEC-29 automatic eligible pool |
 | Blockers | The Free plan stores input and output and uses them for training, and forbids personal information. Tenant content therefore requires the Standard or Provider plan, where input and output are not retained and are not used for training. FR-13 consent is still unresolved. Nigeria reachability is untested. The Data Processing Agreement is a plan question and was not checked |
 
-### 10.13 Standing Rules For This Register
+### 10.13 DeepSeek V4.1 Flash - Runcrate
+
+| Field | Value |
+|---|---|
+| Candidate | DeepSeek V4.1 Flash (includes the 1017 update) |
+| Underlying model | `deepseek-ai/DeepSeek-V4.1-Flash` (open-weight, DeepSeek) |
+| Access route | Runcrate, base URL `https://api.runcrate.ai/v1` (OpenAI-compatible). Bearer keys. `GET /v1/models` discovery is documented. The API returns an OpenAI-shaped `authentication_error` for a bad key (verified against a bad key on 2026-11-17) |
+| Category | General inference; the same protocol serving Claude Code, Codex, OpenCode, Cline, Roo Code and Kilo Code |
+| Advertised free offer | Free weekly tokens shared by the workspace, resets every Monday. No card required if the account signs in with GitHub and is at least 30 days old. If the account signs up with Google, a card on file is required |
+| Advertised quota/rate limits | Weekly allowance size not published. Full catalogue of free models: `deepseek-ai/DeepSeek-V4.1-Flash`, `zai-org/GLM-5.3-Flash`, `zai-org/GLM-5.3`, `openai/gpt-oss-120b`, `Qwen/Qwen3.8-Flash`. Past the free allowance, pay-as-you-go rates apply at half the list price on shared capacity (DeepSeek V4.1 Flash $0.0735 in / $0.221 out per 1M; GLM-5.3 Flash $0.0788 / $0.263; GLM-5.3 $0.295 / $1.31; gpt-oss-120b $0.0194 / $0.0893; Qwen3.8 Flash $0.0593 / $0.201) and full list price when shared capacity is busy |
+| Context / modalities | Not published on the pages fetched by this audit; treated as unverified |
+| Tool calling / structured output | Not stated; OpenCode, Cline and Roo Code integrations are offered, which require tool calling, so tool calling is claimed for coding-agent use and nothing more |
+| Promotional expiry | None claimed. The free tier is a standing offer reset weekly on Monday |
+| Verification status | VERIFIED 2026-11-17 (the free page and the `agents.md` discovery contract were fetched; the base URL, bearer scheme, `/v1/models` route and the 401 error shape were confirmed live) |
+| Source | https://runcrate.ai/inference/free ; https://runcrate.ai/agents.md |
+| Last verified | 2026-11-17 |
+| Admission | ADMITTED to the catalogue as a one-paste provider. NOT admitted to the DEC-29 automatic eligible pool |
+| Blockers | The allowance is shared by every key and member of the workspace. Free requests are served by third-party model providers under their own terms. The upstream providers behind each free model id are not published on a page this audit could fetch. Nigeria reachability is untested. FR-13 consent is unresolved. The region the inference runs in is not stated |
+
+### 10.14 HY 4 and DeepSeek V4.1 Flash - APInex
+
+| Field | Value |
+|---|---|
+| Candidate | HY 4 (free) and DeepSeek V4.1 Flash 1017 (free and paid) |
+| Underlying model | `free/hy4-flash` (Tencent HY4 Flash, 224B total / 12B active, 1M context); `free/deepseek-v4.1-flash` (DeepSeek V4.1 Flash 1017, 1M context) |
+| Access route | APInex aggregator gateway, base URL `https://api.apinex.bond/v1` (OpenAI-compatible; also `/v1/responses` and `/v1/messages`). Bearer `sk-apx…` keys; `GET /v1/models` discovery is documented, and `GET /api/public/models` lists the catalogue without a key |
+| Category | General inference and agent tool calls; the gateway also sells closed models behind the same key |
+| Advertised free offer | Free-category models included. The free-tier page states that every account gets 25M tokens per day on free-category models and that the free allowance resets daily; the referral and free-tier pages claim 10M weighted tokens per day at 5 RPM. The two claims conflict, so no figure is recorded as a commitment |
+| Advertised quota/rate limits | 15 RPM on the free tier. Pay-as-you-go is debited from a prepaid USD wallet. Published flat rates: DeepSeek V4.1 Flash `deepseek-v4.1-flash` $0.06/1M and output $0.06/1M symmetrical; GLM-5.3 Flash `glm-5.3-flash` $0.05; GLM-5.3 `glm-5.3` $0.15; Gemini 4 Carbon `$0.50`; no free/plan card is required to register with a Telegram or Google account |
+| Context / modalities | 1M context on every free model; `free/hy4` supports tools and JSON schema output per the HY4 page; other free models' capabilities unverified |
+| Tool calling / structured output | Tools and vision are supported for every free model except `free/jev-1.13` (the public catalogue lists `supportsTools: true, supportsVision: true`). JSON-schema output is documented for HY 4; support on other free models is unverified |
+| Promotional expiry | None claimed. Free models are a standing offer with a daily reset |
+| Verification status | PARTIALLY VERIFIED 2026-11-17 (the models page, the API reference, the quickstart, the free HY4 page, the free-tier subscription page and the pricing pages were fetched. Base URL, bearer scheme, discovery endpoint and the `sk-apx` key prefix were confirmed; the current free allowance size was not) |
+| Source | https://apinex.bond/developers/models ; https://apinex.bond/docs ; https://apinex.bond/pricing ; https://apinex.bond/models/free-hy4 |
+| Last verified | 2026-11-17 |
+| Admission | ADMITTED to the catalogue as a one-paste provider. NOT admitted to the DEC-29 automatic eligible pool |
+| Blockers | The free allowance size is unverified (10M vs 25M claims conflict). Free models are served by upstream third-party providers and the mapping is not published. The 2–4x model-weight billing of the free tier is reported by the free-tier page but not confirmed by APInex itself. FR-13 consent is unresolved. Nigeria reachability is untested. The inference region is not stated |
+
+### 10.15 Standing Rules For This Register
 
 1. No entry is admitted to the DEC-29 eligible pool without: official source fetched within 30 days, ToS and data-handling review, key custody decided, consent decision, and eligibility verification (capability states set from evidence, never from marketing).
 2. Expiry dates claimed by operators are recorded as claims (with the claim date), never as commitments.

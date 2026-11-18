@@ -605,7 +605,7 @@ G trial -> H decision
 
 ### 21.4 Open Decisions (carried, not resolved)
 
-Supported attachment types; size limits; retention and deletion policy; extraction provider and its terms; privacy policy and external-AI consent; on-device vs server-side extraction; per-provider modality matrix and eligibility; first-release family selection; health-ledger persistence for intelligence lanes; interchange-format versioning; deletion-after-approval behaviour. See DEC-29, DEC-32, DEC-33 and `docs/reports/2026-11-14-dynamic-model-routing-reconciliation.md`.
+Supported attachment types; size limits; retention and deletion policy; extraction provider and its terms; privacy policy and external-AI consent; on-device vs server-side extraction; per-provider modality matrix and eligibility; first-release family selection; health-ledger persistence for intelligence lanes; interchange-format versioning; deletion-after-approval behaviour. See DEC-29, DEC-32, DEC-33 and `docs/reports/ai/2026-11-14-dynamic-model-routing-reconciliation.md`.
 
 ### 21.5 What This Section Is Not
 
@@ -1461,3 +1461,253 @@ PENDING. Five viewport presets (mobile, fold closed, fold open, tablet, desktop)
 - The official Capacitor Haptics plugin remains a proposal. The guarded Vibration API is the delivered mechanism.
 
 ---
+
+## 29. Bolu 2.0 Mobile Conversation Experience, Document Preview Redesign & Conversation Titles (Completed 2026-11-17)
+
+### 29.1 Objectives & Scope
+
+Refines the Bolu 2.0 mobile conversation and document review experience based on production UI/UX audit:
+1. **Assistant Message Alignment:** Ensures assistant message text flows using the full available content width without decorative borders, pseudo-element walls, or excessive avatar gutters.
+2. **Document Artifact Preview Redesign:** Transforms the mobile document bottom sheet into a business document review surface hugging content naturally up to `max-h-[85dvh]` with clear monetary hierarchy and wrapping line-item descriptions.
+3. **In-Preview Two-Gate Decisions:** Exposes Reject Changes and Approve Changes (Gate 1), as well as Cancel Save and Confirm & Save (Gate 2), directly in a sticky action footer within the preview sheet, wired to shared proposal state transitions.
+4. **Conversation Sidebar Redesign & Identity:** Replaces standalone "B" text with approved `BxLogo`, removes duplicate drawer headers, introduces 4-tier date grouping (Today, Yesterday, Previous 7 days, Older), and adds user account identity block with Google avatar support and safe fallback.
+5. **Topic-Derived Conversation Titles:** Introduces deterministic title generation from initial user messages and safe background backfill for historical generic threads.
+
+### 29.2 Architectural Decisions
+
+- **DECISION - Shared Approval Mechanism:** The preview action buttons use the exact same handlers (`handleApproveGate1`, `handleRejectGate1`, `handleConfirmGate2`, `handleCancelGate2`) and mutate the identical proposal state in `useBoluThread`. No secondary approval mechanism is created.
+- **DECISION - Deterministic Title Generation:** Rather than invoking an external LLM call solely for thread naming, titles are generated deterministically in `src/lib/ai-assistant/bolu-titles.ts` via intent pattern matching and normalized sentence capitalization capped at 48 characters.
+- **DECISION - Safe Title Backfill:** Historical conversations titled "New Conversation" or empty are backfilled by retrieving the earliest user message from `bolu_messages`. Meaningful and user-renamed titles are preserved untouched.
+- **DECISION - Logo & User Identity Separation:** Product branding uses the official 192px `BxLogo` in the sidebar header; user identity is rendered in a dedicated account footer using Radix `Avatar` with Google OAuth profile picture support and initial fallbacks.
+
+### 29.3 Files Changed
+
+- New: `src/lib/ai-assistant/bolu-titles.ts`, `src/tests/ai-assistant/bolu-mobile-conversation-experience.test.ts`.
+- Changed: `src/components/ai-assistant/chat/assistant-chat-panel.tsx`, `src/components/ai-assistant/chat/assistant-chat-rail.tsx`, `src/components/ai-assistant/chat/assistant-chat-thread.tsx`, `src/components/ai-assistant/chat/assistant-chat.css`, `src/components/ai-assistant/chat/BoluChatWorkspace.tsx`, `src/lib/ai-assistant/hooks/useBoluConversations.ts`, `src/lib/ai-assistant/hooks/useBoluThread.ts`, `src/pages/settings/bolu-provider/ConnectionDialog.tsx`, `src/components/ui/dialog.tsx`, `src/components/ui/select.tsx`.
+- Documentation: `functional-req.md` (FR-56 updated with structural responsive layout), `Waterfall-roadmap.md` (Section 29 updated).
+
+### 29.4 Verification
+
+- `bun test src/tests/ai-assistant/`: 318 pass, 0 fail across 34 files.
+- New test suite: 9 pass in `bolu-mobile-conversation-experience.test.ts`.
+- `bun run typecheck`: Verified baseline.
+- `bun run build`: Banned per hardware policy.
+
+---
+
+## 30. Bolu 2.0 Remaining Mobile UX Remediation (Completed 2026-11-17)
+
+### 30.1 Objectives & Deliverables
+
+Completes the four outstanding Bolu 2.0 mobile UX deliverables identified in Android testing:
+1. **Assistant Message Text Flow Around Orb:**
+   - Converts `.ac-turn` from a two-column flex container to `display: flow-root;` and floats `.ac-turn-avatar` (`float: left; margin: 1px 10px 4px 0;`).
+   - Converts `.ac-md` to `display: block;` with margin-top sibling spacing so inline message text flows to the right of the 28px orb on lines 1–2, and wraps beneath the orb across full width on subsequent lines.
+   - Clears block items (`.ac-card`, `.ac-code`, `.ac-md-table-wrap`, `.ac-actions`) so they start below the avatar cleanly.
+2. **Draggable & Repositionable Bolu FAB:**
+   - Upgrades `BoluFloatingActionButton` to support pointer and touch dragging.
+   - Disambiguates quick taps (<6px) to open the assistant from deliberate drags (≥6px) to move the button.
+   - Clamps position within safe viewport boundaries (min 12px margins and safe area insets).
+   - Persists coordinates in `localStorage` under `bolu_fab_position:v1` and re-clamps on orientation change/window resize.
+   - Retains full keyboard accessibility (`Enter`/`Space`).
+3. **Repaired Gate 1 / Gate 2 Operations & Feedback:**
+   - Wires shared Gate 1 (`approveGate1`, `rejectGate1`) and Gate 2 (`confirmGate2Save`, `cancelGate2Save`) handlers across chat cards and preview panels.
+   - Surfaces immediate user notifications via `feedback.success`, `feedback.info`, and `feedback.error`.
+   - Prevents duplicate writes on double-tap using `submitting` guards on action buttons.
+4. **Conversation Drawer Geometry & Visual Polish:**
+   - Eliminates the blank white strip beside the drawer by harmonizing sheet background (`bg-[var(--ac-muted-surface)]`) and setting `w-full border-r-0` on mobile drawer rails.
+   - Highlights the active conversation with a refined border (`border border-[var(--ac-accent-line)]`) and elevation.
+   - Polishes the New Conversation action button and anchors the Google profile account footer with safe-area bottom padding.
+
+### 30.2 Verification
+
+- `bun test src/tests/ai-assistant/bolu-mobile-conversation-experience.test.ts`: 12 pass, 0 fail.
+- `bun test src/tests/ai-assistant/`: 318 pass, 0 fail across 34 files.
+- `bun run audit:load`: Passed (all modified files within line and architecture boundaries).
+- `bun run typecheck`: Passed (exit code 0).
+- `bun run build`: Banned per hardware safety policy.
+
+---
+
+## 31. Save Diagnostics, Safe Tenant Persistence, Message-Edit Lifecycle & Proposal Payload Integrity (Completed 2026-11-17)
+
+### 31.1 Objectives & Deliverables
+
+Remediates critical defects identified in the 17 November 2026 forensic investigation:
+1. **Diagnostic Preservation & Sensitive Value Redaction:**
+   - Updates `src/lib/feedback.ts` and `src/lib/errorMessages.ts` to preserve `options.description` inside `errorRegistry` entries instead of stripping the underlying error details.
+   - Enforces automatic redaction of Bearer tokens, API keys, JWT session credentials, PostgreSQL connection strings, and sensitive JSON key-value pairs before writing to `localStorage['bd-error-registry']`.
+   - Restricts maximum diagnostic entry size to 4,000 characters to prevent local storage quota exhaustion.
+2. **Safe Tenant Schema Resolution & Idempotent Persistence:**
+   - Corrects `/api/bolu-save` to fail closed with HTTP 422 `tenant_schema_unresolved` when `entities.schema_name` is missing or resolves to `'public'`. Never attempts tenant RPC execution on the `public` schema.
+   - Restricts client-side fallback in `useBoluThread.ts` to proven non-commit conditions (HTTP 404 unmounted endpoint or `server_config_missing` pre-database aborts). On database transaction failures or network interruptions, duplicate writes are strictly prevented.
+3. **Bolu User-Message Edit Lifecycle & Error Visibility:**
+   - Unlocks the Bolu composer during user-message editing even if a proposal is pending review or a prior save failed (`clerkState !== 'idle'`), while strictly retaining the streaming lockout.
+   - Destructures and surfaces thread errors in `BoluChatWorkspace.tsx` through `feedback.error`. Preserves the edited draft in the composer when an update fails to prevent loss of user input.
+4. **Proposal Payload Validation & Extra Charges Integrity:**
+   - Validates proposal payloads against the supported domain schema in `src/lib/ai-assistant/bolu-operations.ts`.
+   - Rejects proposals containing `extra_charges` or `extraCharges` with explicit user guidance to format fees (such as transport) as standard line items with quantity 1 and unit price. Preserves authoritative application financial calculations.
+5. **AI Provider Settings Structured Error Classification:**
+   - Classifies errors in `api/bolu-provider-config.ts` into structured responses: HTTP 403 `forbidden` (permission/RLS denial), HTTP 500 `server_config_missing` (encryption key configuration), and HTTP 502 `endpoint_blocked` (network reachability/timeout). Unknown errors safely return HTTP 500 `operation_failed` without exposing server stack traces.
+
+### 31.2 Verification
+
+- `bun test src/tests/ai-assistant/bolu-save-diagnostic-edit-remediation.test.ts`: 10 pass, 0 fail.
+- `bun test src/tests/ai-assistant/`: 328 pass, 0 fail across 35 files.
+- `bun run audit:load`: Passed (exit code 0).
+- `bun run typecheck`: Passed (exit code 0).
+- `bun run build`: Banned per hardware safety policy.
+
+---
+
+## 32. Bolu Document Save Remediation: Canonical Tenant Schema Resolution & Authenticated Transaction Authorization (Completed 2026-11-17)
+
+### 32.1 Objectives & Deliverables
+
+Remediates the two root-cause defects identified in the read-only forensic investigation that prevented Gate 2 document saves from succeeding:
+1. **Canonical Database Tenant Schema Resolution (`_prov_get_schema_name`):**
+   - Replaced invalid query on nonexistent column `entities.schema_name` with canonical RPC call `adminClient.rpc('_prov_get_schema_name', { p_entity_id: targetEntityId })`.
+   - Enforced schema format validation against regex `/^entity_[a-z0-9-]+_[a-z0-9-]+$/i`.
+   - Fails closed with HTTP 422 `tenant_schema_unresolved` when schema resolution returns null, empty, malformed, or `'public'`.
+2. **Authenticated User-Scoped Client & Dual Authorization (`getUserClient`):**
+   - Resolved caller identity and extracted Bearer JWT in `resolveUser(request)`.
+   - Introduced `getUserClient(token)` creating a user-scoped Supabase client configured with `Authorization: Bearer ${token}`.
+   - Bound `createTenantClient(userClient, schemaName)` so that PostgREST and PostgreSQL assign `auth.uid() = user.id`.
+   - Enabled tenant transactional RPCs (`save_quotation_with_items_transaction` and `save_invoice_with_items_transaction`) to pass their internal permission gate: `public.has_entity_permission(p_entity_id, auth.uid(), '<resource>', '<action>')`.
+   - Added server-side pre-flight authorization check via `adminClient.rpc('has_entity_permission', { p_entity_id, p_user_id, p_resource, p_action })` before opening tenant transactions, returning HTTP 403 `forbidden` on failure.
+   - Mapped database error code `42501` (`insufficient_privilege`) and permission denial exceptions to HTTP 403 `forbidden`.
+   - Preserved `adminClient` exclusively for administrative operations (schema resolution, pre-flight permission check, and `bolu_messages` table updates).
+
+### 32.2 Verification
+
+- `bun test src/tests/ai-assistant/bolu-save-diagnostic-edit-remediation.test.ts`: 12 pass, 0 fail.
+- `bun run audit:load`: Passed (exit code 0).
+- `bun run typecheck`: Passed (exit code 0).
+- `bun run build`: Banned per hardware safety policy.
+
+---
+
+## 33. Bolu Business Context, Client Resolution, Clarification and Document Parity (Implemented 2026-11-18)
+
+**Status:** IMPLEMENTED in application code with automated tests. Live provider behaviour, hosted-database behaviour and four-viewport visual behaviour were not verified by this change.
+
+### 33.1 Observed defects before this change
+
+These are OBSERVATIONS from the 2026-11-17 capability audit, re-checked against the current source.
+
+- `matchBoluIntent` returned `null` for every message containing a write verb, so no business record was retrieved before generation.
+- Client validation ran only after generation, searched the `name` column only, and discarded the whole proposal on ambiguity or no match.
+- `extra_charges` was rejected, which pushed users to convert a non-taxable transport charge into a taxable line item.
+- Quotation modification was not handled by the generation pipeline.
+- Persistence wrote zeros and nulls for title, PO number, project, work duration, fixed charges, discount, WHT and item attributes.
+
+### 33.2 Implemented behaviour
+
+DECISION - these changes sit inside the approved scope and add no new dependency, component framework or database object.
+
+- **Context discovery on write intents.** `matchBoluIntent` still classifies read intent only. A new `matchBoluWriteContext` derives the document family, a client search seed and a document reference. `resolveOperationFacts` runs before generation for a write request and retrieves the matching client, the referenced document, and catalog suggestions for an explicitly quoted item phrase. Results are bounded and tenant-scoped, and discovery never writes.
+- **Client resolution.** `searchBoluClients` searches name, email, phone and contact person, excludes archived clients, strips PostgREST filter metacharacters, and retries a multi-word phrase by its distinctive words. Outcomes are separated into exact, single, ambiguous, not found and search failure. A model-supplied `client_id` is trusted only after a read of that exact record.
+- **Proposal retention.** An unresolved client no longer discards the draft. `withClientResolution` records the outcome and attaches a clarification question while keeping every collected field.
+- **Preview-card client picker.** `ProposalClientPicker` renders inside the chat proposal card and the document preview panel, not as a permanent second panel. It searches the authorized directory, attaches a verified record ID, and preserves the other fields.
+- **Client creation with separate approval.** The picker can collect a new client, show a preview, and create the record only after an explicit "Create client record" action. A duplicate name reuses the existing record. The document remains an unapproved draft.
+- **Reusable clarification.** `BoluClarification`, `ProposalClarificationCard` and `withClarificationAnswer` provide an option-plus-free-text question card for any pending operation. An answer never changes the proposal status, and an answer for a replaced, approved or cancelled operation is rejected.
+- **Schema parity.** The create payload carries document title, PO number, project, work duration, fixed charges, discount and WHT type/timing, and named extra charges. Line items carry unit, sub-description, make, item ID, group name/ID, discount rate, installation rate and installation taxability. Invoice and quotation keep separate candidate numbers and permission resources.
+- **Commercial correctness.** Fixed workmanship, transportation and shipping stay separate from custom named charges and ordinary line items. The authoritative `calculateDocument` engine is reused; no second calculation path exists.
+- **Quotation modification.** The generation pipeline handles `modify-document` for quotations, and `persistQuotationModification` uses the existing `save_quotation_with_items_transaction` RPC with `p_mode = 'update'`. Gate 1, Gate 2, stale checks and duplicate-operation guards remain in force. The sequential fallback now restores the previous items if the replacement insert fails.
+
+### 33.3 Remaining limits
+
+- Catalog search returns suggestions only. A confirmed catalog link is not yet written to a document, and no inventory reservation, deduction or adjustment is performed.
+- The `save_quotation_with_items_transaction` update contract is used as already present in the repository. It was not exercised against a hosted database in this change.
+- The new picker and clarification controls were typechecked but not inspected in the four viewport classes.
+- Automated tests cover the data and operation layers. No React rendering or device test was added.
+
+### 33.4 Verification
+
+- `bun run audit:load`: passed (exit code 0).
+- `bun run typecheck`: passed (exit code 0).
+- `node --test src/tests/ai-assistant/bolu-data.test.js`: 15 pass, 0 fail.
+- `node --test src/tests/ai-assistant/bolu-business-context-parity.test.js`: 11 pass, 0 fail.
+- `node --test src/tests/ai-assistant/bolu-operations.test.js`: 22 pass, 0 fail (regression).
+- `node --test src/tests/ai-assistant/bolu-capabilities.test.js`: 5 pass, 0 fail (regression).
+- `bun run build`: not run, prohibited on this host.
+
+---
+
+---
+
+## 34. Composer, Gate Boundaries, Commercial Language And Save Authorization (2026-11-18)
+
+### 34.1 Scope
+
+Remediation of the fifth Bolu defect report: mobile Enter submission, a preview that blocked the conversation, Gate 2 exposing an editable client, missing commercial description intelligence, an unexplained preview total, and a Gate 2 invoice save reported as a permission failure.
+
+### 34.2 Implemented behaviour
+
+- Enter inserts a newline in the composer; only the send button submits.
+- A pending proposal never auto-opens the mobile bottom sheet, so the composer stays reachable. The in-thread card is the phone preview.
+- Gate 2 renders no client picker and no editable field. It shows the client, document identity and final amount, plus a "Back to review" action that clears the earlier approval.
+- A conversational correction merges into the open operation: same `opId`, supplied fields replaced, omitted fields preserved, totals recalculated, status back to `pending_approval`, superseded card cleared.
+- `bolu-commercial-language.ts` parses pasted lists, `15k` amounts and separate price lists, standardizes shorthand, and produces optional suggestions. It is document-family agnostic but wired only for invoices and quotations.
+- Standardization is deterministic and cannot invent a specification. A price list is paired only when the counts agree.
+- The preview now lists subtotal, discount, VAT, WHT, fixed charges, custom charges and the total due, so no amount in the total is unexplained.
+- Gate 2 authorization uses the canonical `create`/`edit` actions instead of the non-existent `save`/`modify` actions.
+
+### 34.3 Known limits
+
+- The save path was verified against the service contract, not against the hosted tenant database.
+- The provider prompt was extended; live-provider compliance was not exercised.
+- No four-viewport visual inspection was performed; the composer, gate controls and mobile sheet are unverified visually.
+- Catalog linking still stops at suggestions; no inventory mutation is performed.
+- Row-type parity remains limited to standard rows by the existing item contract.
+
+### 34.4 Verification
+
+- `bun run audit:load`: exit code 0 (pre-existing warnings only).
+- `bun run typecheck`: exit code 0.
+- `node --test` (10 Bolu suites): 125 pass, 0 fail.
+- `bun test` (3 `bun:test` suites): 42 pass, 0 fail.
+- `bun run build`: not run, prohibited on this host.
+## 35. Canonical Persistence, Attribution, Context and Gate Restoration (2026-11-18)
+
+Authorized restoration of Bolu as a conversational interface to existing BOURXE business operations. This section records what the current source confirmed, what changed, and what remains unverified. It does not promote any proposal into a decision.
+
+### 35.1 Confirmed root causes
+
+| Symptom | Root cause in current source |
+| --- | --- |
+| Bolu invoice received `INV-000001` while the tenant used `SASINV` | `persistInvoiceCreation` / `persistQuotationCreation` called `resolvePrefix(undefined, family)`, which falls back to the global default instead of the tenant's `settings.document_prefixes`. |
+| Bolu creations were absent from the expected audit trail | Neither the server route nor the local fallback wrote `record_audit_log` or the family creation activity event. Only `custom_fields` carried a marker. |
+| Write requests had thin context | `matchBoluIntent` returns `null` for write verbs by design; `resolveOperationFacts` covered clients, references and quoted catalogue terms only. No supplier or client-history discovery existed. |
+| Composer unusable at Gate 1, Gate 2 and after Back to review | Four paths set `clerkState('listening')` while a proposal was open: proposal creation, Gate 1 approval, reopening review, and thread reload with a pending proposal. The composer locks on any non-idle clerk state. |
+| A typed "yes/confirm/save" could persist a document | `submitMessage` intercepted save-intent text and called Gate 2 directly, bypassing the explicit confirmation button. |
+| Raw JSON could appear instead of a card | The card and JSON stripping existed, but the card never showed item metadata, dates or terms, and the draft placeholder was presented as a "Target identifier". |
+| Retry could duplicate a document | The duplicate guard was an in-module `Set`, which does not survive a reload or a second serverless instance. |
+
+### 35.2 Changes
+
+- **Numbering:** `fetchDocumentPrefixes(tenantClient)` reads the tenant map; both creation paths resolve their prefix from it. Placeholder numbers stay display-only. The card shows a number only when it matches `{PREFIX}-{serial}`.
+- **Idempotency:** each document persists its `operation_id`; `findPersistedOperation` returns an already written document instead of allocating a second number. The unique constraint and `withUniqueRetry` remain the concurrency authority.
+- **Audit:** new `bolu-audit.ts` writes the canonical `record_audit_log` CREATE/UPDATE event and the family creation activity event with `source = bolu` and the verified token subject as actor. The server route passes that actor; the local fallback resolves it from the current session.
+- **Provenance:** `custom_fields.created_via = 'bolu_assistant'` stays persisted. `ViewInvoice` and `ViewQuotation` show "Co-created with Bolu" only from that saved marker.
+- **Context:** `matchBoluWriteContext` also extracts a supplier hint. `resolveOperationFacts` adds supplier lookup, the resolved client's recent invoices and quotations, and the existing catalogue suggestions. All read-only, tenant-scoped, archived-excluded and bounded.
+- **Field parity:** added a distinct `terms` field and item `part_number` / `condition`, persisted through the item's `custom_data` because the item tables have no such columns. The preview now shows unit, unit price, sub-description, make, part number, condition, issue date, due/validity date, payment terms, terms and notes.
+- **Gates:** proposal creation, Gate 1 approval, Back to review, thread reload and save failure now leave the clerk idle. The composer locks only on active streaming or in-flight work, with message editing exempt.
+- **No implicit save:** the save-intent interception was removed. Gate 2 is the button only.
+- **Server hygiene:** the proposal-status update is tenant-scoped, and the server no longer inserts a second confirmation message.
+
+### 35.3 Known limits
+
+- The hosted tenant database was not available: no live save, no live audit read, no live numbering observation.
+- No four-viewport visual inspection was performed. Mobile/fold-closed, fold-open, tablet and desktop were not viewed.
+- Live-provider compliance with the prompt was not exercised.
+- Dynamic custom header fields, signatory, reference links and PDF output settings remain unsupported by Bolu's operation contract and are documented as gaps.
+- Item part number and condition round-trip through `custom_data`, matching the form convention; they are not first-class columns.
+
+### 35.4 Verification
+
+- `bun run audit:load`: exit code 0 (pre-existing warnings only).
+- `bun run typecheck`: exit code 0.
+- `node --test` across 16 Bolu suites (including the new canonical persistence suite): 195 pass, 0 fail.
+- `bun test` across 3 `bun:test` suites: 42 pass, 0 fail.
+- `bun run build`: not run, prohibited on this host.

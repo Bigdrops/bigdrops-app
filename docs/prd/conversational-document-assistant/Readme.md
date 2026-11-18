@@ -273,8 +273,8 @@ Out of scope for the trial:
 | `roadmap.html` | The same roadmap as a phone-first page. |
 | `docs/tickets/free-model-failover-stack.md` | The failover research this feature depends on. |
 | `docs/tickets/local-ai-model-swap-and-speedup.md` | The on-device model work. This feature does not need it, but it shares the guardrails. |
-| `docs/reports/2026-11-14-hermes-provider-architecture-audit.md` | Hermes provenance and current provider-architecture status. |
-| `docs/reports/2026-11-14-dynamic-model-routing-reconciliation.md` | Dynamic multi-model engine reconciliation and the unresolved decision list. |
+| `docs/reports/ai/2026-11-14-hermes-provider-architecture-audit.md` | Hermes provenance and current provider-architecture status. |
+| `docs/reports/ai/2026-11-14-dynamic-model-routing-reconciliation.md` | Dynamic multi-model engine reconciliation and the unresolved decision list. |
 | `docs/reports/ai/2026-11-14-bolu-prd-roadmap-reconciliation.md` | Dated DEC-28/DEC-29 roadmap reconciliation. |
 | `docs/reports/ai/2026-11-14-bolu-milestone-closeout-reconciliation.md` | Application-side invoice pipeline close-out evidence. |
 | `docs/reports/ai/2026-11-14-bolu-live-provider-activation-report.md` | Live inference activation, stream handling, and two-gate integration. |
