@@ -17,7 +17,7 @@ BOURXE is an operational and financial management platform designed for Nigerian
 This umbrella initiative brings together:
 1. **Application Health & Crash Observability (Sentry):** Real-time frontend exception monitoring, error boundary capture, and privacy-hardened diagnostic context.
 2. **Product Analytics & Behavioral Telemetry (PostHog):** Measurement of user onboarding, feature adoption, workflow drop-offs, and 30-day cohort retention.
-3. **Document Auditability & Regulatory Trails (`src/lib/audit.ts`):** Immutable compliance and document lifecycle audit logs within multi-tenant PostgreSQL schemas.
+3. **Document Auditability & Regulatory Trails (`src/lib/audit.ts`):** Application-level compliance and document lifecycle audit logs within multi-tenant PostgreSQL schemas. Database immutability is not enforced.
 4. **AI Assistant Observability (`src/lib/ai-assistant/bolu-usage-ledger.ts`):** TTFT (Time to First Token), latency, token velocity, and inference cost tracking for Bolu AI interactions.
 5. **In-Browser Diagnostic Resilience (`src/lib/errorRegistry.ts`):** Offline ring-buffer error storage and local administrative log inspectors (`ErrorsDashboard.tsx`).
 6. **User Privacy & Consent Infrastructure (`src/components/compliance/CookieConsentBanner.tsx`):** Transparent user consent management adhering to the Nigeria Data Protection Act (NDPA) and data minimization principles.
@@ -86,7 +86,7 @@ docs/prd/product-intelligence-observability/
 To preserve factual integrity and prevent unverified assumptions from driving engineering decisions, every claim, specification, and finding across this documentation package is classified under one of the following epistemic tags:
 
 - `[VERIFIED]`: Directly proven via repository source code, configuration files, test execution, or package manifests.
-- `[USER-CONFIRMED]`: Explicitly stated by the product owner/user (e.g., active PostHog account ownership).
+- `[USER-CONFIRMED]`: Explicitly stated by the product owner/user. No such confirmation is recorded in the repository for PostHog account ownership.
 - `[COMPLETED]`: A capability or task that is fully implemented, verified, and operational in code.
 - `[PROPOSED]`: A recommended architectural or product design awaiting formal authorization.
 - `[DECISION REQUIRED]`: A critical fork requiring product-owner review and signoff before work can proceed.

@@ -96,7 +96,20 @@ To avoid decision fatigue, each decision clearly distinguishes:
 
 ---
 
-## 4. Master Decision Summary & Signoff Checklist
+## 4. Audit Notes (2026-11-18)
+
+The independent documentation audit found the following unresolved items. These are recorded, not decided:
+
+- PostHog account ownership is asserted by this documentation package but cannot be verified from repository evidence.
+- The seven-day activation milestone remains a proposal. A single universal definition may not fit all BOURXE workflows. Onboarding completion, first meaningful action, first successful workflow, module-specific adoption, repeat usage, and retention should be measured separately before a universal activation rule is approved.
+- PostHog groups are reporting constructs, not tenant security boundaries. Supabase RLS remains authoritative.
+- Consent withdrawal or preference change is not implemented. The banner stores one choice and cannot be reopened.
+- Sentry initializes without consent gating. The legal basis requires qualified review.
+- Audit log immutability and retention are not implemented. These require product-owner and engineering decisions.
+- The Bolu usage ledger stores `user_email` and has no retention policy. Its metrics are operational and billing-related, not product analytics. Never forward prompt text, conversation content, commercial data, user email, or raw ledger rows into PostHog.
+- The historical Sentry privacy audit describes defects that were later fixed. Its verdict is not current test evidence. The privacy test suite was not re-run during this documentation audit.
+
+## 5. Master Decision Summary & Signoff Checklist
 
 | Decision ID | Decision Title | Scope | Recommended Option | Product Owner Signoff |
 | :-: | :--- | :---: | :--- | :---: |

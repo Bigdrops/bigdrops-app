@@ -17,7 +17,7 @@ SMEs operate in fast-paced commercial environments characterized by intermittent
 
 ### 1.2 The Core Problem
 Historically, BOURXE has operated with an asymmetrical operational awareness:
-1. **Document Auditability is Mature:** The platform maintains immutable compliance logs (`src/lib/audit.ts`) for completed business documents in PostgreSQL tenant schemas.
+1. **Document Auditability Exists:** The platform maintains application-level compliance logs (`src/lib/audit.ts`) for completed business documents in PostgreSQL tenant schemas. Database immutability is not enforced.
 2. **AI Inference is Quantified:** The Bolu assistant tracks tokens, latency, TTFT, and dollar costs in `app_ai_usage_ledger`.
 3. **Application Health Was Dark:** Until recent Sentry integration, frontend runtime crashes and unhandled exceptions were lost on user devices.
 4. **Product Experience Remains Completely Dark:** The product team has **zero visibility** into how users discover features, where they stall during multi-step invoice creation, what proportion of draft quotations are converted to finalized invoices, or what causes user churn.
@@ -51,7 +51,7 @@ flowchart TD
         B --> B2[Module Engagement: Feature Utilization]
         B --> B3[Retention: Weekly Active Businesses Cohorts]
 
-        C[Compliance & Specialized Telemetry] --> C1[Audit Trail: Immutable Document Lifecycle Logs]
+        C[Compliance & Specialized Telemetry] --> C1[Audit Trail: Application-Level Document Lifecycle Logs]
         C --> C2[Bolu Ledger: TTFT, Token Velocity & Cost]
         C --> C3[Consent Engine: NDPA Cookie & Telemetry Banner]
     end
@@ -108,7 +108,7 @@ To safeguard system performance and user privacy, the following capabilities are
 
 ### 5.5 AI Assistant & Document Observability
 - `[COMPLETED]` **FR-13:** The Bolu assistant shall track TTFT, total latency, token velocity, and estimated USD cost per inference stream in `app_ai_usage_ledger`.
-- `[COMPLETED]` **FR-14:** Document mutations (create, update, status change) shall generate immutable audit records in tenant database schemas via `src/lib/audit.ts`.
+- `[COMPLETED]` **FR-14:** Document mutations (create, update, status change) shall generate audit records in tenant database schemas via `src/lib/audit.ts`. Database immutability is a separate requirement; it is not implemented.
 - `[PROPOSAL]` **FR-15:** Bolu interaction milestones (`bolu_session_started`, `bolu_proposal_generated`, `bolu_gate1_approved`, `bolu_gate2_confirmed`) shall be captured by product analytics without including prompt or proposal text.
 
 ---
@@ -138,7 +138,7 @@ To safeguard system performance and user privacy, the following capabilities are
 | **Sentry Error Tracking** | `@sentry/react@11.13.0` operational; 48 passing privacy tests; audit approved with conditions. | `[VERIFIED COMPLETED]` |
 | **In-Browser Diagnostics** | `errorRegistry.ts` active; `ErrorsDashboard.tsx` functional. | `[VERIFIED COMPLETED]` |
 | **AI Inference Ledger** | `bolu-usage-ledger.ts` operational; records latency & tokens in DB. | `[VERIFIED COMPLETED]` |
-| **Document Audit Trail** | `src/lib/audit.ts` operational; logs immutable records in tenant schemas. | `[VERIFIED COMPLETED]` |
+| **Document Audit Trail** | `src/lib/audit.ts` operational; logs records in tenant schemas. Immutability not enforced. | `[VERIFIED COMPLETED]` |
 | **Consent Infrastructure** | `CookieConsentBanner.tsx` operational in UI. | `[VERIFIED COMPLETED]` |
 | **Master PRD Signoff** | Product owner approves unified scope, non-goals, and privacy governance. | `[DECISION REQUIRED]` |
 | **PostHog Account Readiness** | PostHog cloud region, project keys, and project separation verified. | `[UNKNOWN / PENDING]` |

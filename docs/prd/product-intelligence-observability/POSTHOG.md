@@ -23,7 +23,7 @@ A forensic audit of the repository confirmed the following:
 - `[VERIFIED]` **0% Initialization:** Zero bootstrap logic exists in `src/main.tsx` or `src/App.tsx`.
 - `[VERIFIED]` **0% Instrumentation:** Zero manual `.capture()` or `.track()` calls exist in `src/`.
 - `[VERIFIED]` **0% Configuration:** No `VITE_POSTHOG_*` variables exist in `.env.example` or `vite-env.d.ts`.
-- `[USER-CONFIRMED]` The user owns an active PostHog account.
+- `[UNVERIFIED CLAIM]` The documentation package asserts user-confirmed ownership of an active PostHog account; repository evidence cannot verify this.
 - `[UNKNOWN]` Ingestion region (US vs EU), project API write keys, and billing tier remain unverified.
 
 ---

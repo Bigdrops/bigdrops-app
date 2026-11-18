@@ -2,7 +2,7 @@
 
 - **Document Version:** 1.0.0
 - **Status:** `[VERIFIED COMPLETED & HARDENED]`
-- **Audit Reference:** `docs/reports/observability/BOURXE_Sentry_Frontend_Privacy_Audit.md`
+- **Audit Reference:** `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`
 - **Installed Package:** `@sentry/react@11.13.0`
 - **Core Implementation:** `src/lib/sentry.ts`
 
@@ -47,7 +47,7 @@ Inside `src/lib/sentry.ts`:
 
 ## 3. Privacy Hardening Engine
 
-Following an independent forensic security audit (`docs/reports/observability/BOURXE_Sentry_Frontend_Privacy_Audit.md`), targeted privacy hardening was implemented in `src/lib/sentry.ts`:
+Following an independent forensic security audit (`docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`), targeted privacy hardening was implemented in `src/lib/sentry.ts`:
 
 ### 3.1 Hardening Defect Remediations
 1. **Compound Key Matching:** Replaced anchored regex (`/^token$/i`) with case-insensitive substring matching:
@@ -56,7 +56,7 @@ Following an independent forensic security audit (`docs/reports/observability/BO
 2. **Console Breadcrumbs Disabled:** The default `Console` integration was disabled to prevent pre-formatted debug logs containing company names and addresses from leaking into breadcrumbs.
 3. **Navigation URL Sanitization:** `sanitizeUrl()` was applied to `breadcrumb.data.from` and `breadcrumb.data.to` for navigation transitions, stripping search query strings and normalizing document/tenant route parameters.
 4. **Context & Tag Scrubbing:** Added deep recursive scrubbing to `event.contexts` and `event.tags` inside `beforeSend`.
-5. **Fail-Closed Depth Cutoff:** Replaced raw object return at `depth > 4` with `'[REDACTED_NESTED_OBJECT]'`.
+5. **Fail-Closed Depth Cutoff:** Replaced raw object return at `depth > 4` with `'[REDACTED_NESTED_STRUCTURE]'`.
 6. **Circular Reference Protection:** Implemented `WeakSet` tracking to prevent recursive stack overflows on cyclic structures.
 7. **Exception Text Masking:** Masked JWTs, Bearer tokens, Nigerian phone numbers (`+234...`), emails, document numbers, and currency figures inside exception messages.
 
@@ -66,7 +66,7 @@ Following an independent forensic security audit (`docs/reports/observability/BO
 
 - **Regression Test Suite:** `src/tests/sentry-privacy.test.js`.
 - **Test Result:** **48 passed, 0 failed** (82 assertions) verified locally with Bun test runner.
-- **Independent Audit Verdict:** **APPROVED WITH CONDITIONS** in `docs/reports/observability/BOURXE_Sentry_Frontend_Privacy_Audit.md`.
+- **Independent Audit Verdict:** **APPROVED WITH CONDITIONS** in `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`. This is a historical finding. The privacy test suite was not re-run during this audit.
 
 ---
 

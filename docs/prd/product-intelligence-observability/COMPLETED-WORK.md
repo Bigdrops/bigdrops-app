@@ -19,7 +19,7 @@ This document establishes the official historical record of all completed observ
 - **Completion Period:** Prior Architecture Baseline (Pre-November 2026).
 - **Implementation File:** `src/lib/audit.ts` (738 lines).
 - **Delivered Capabilities:**
-  - Implements immutable, auditable event generation (`CREATE`, `UPDATE`, `STATUS_CHANGE`, `ARCHIVE`) across commercial documents (Invoices, Quotations, Purchase Orders, Projects, Expenses).
+  - Implements application-level auditable event generation (`CREATE`, `UPDATE`, `STATUS_CHANGE`, `ARCHIVE`) across commercial documents (Invoices, Quotations, Purchase Orders, Projects, Expenses). Database immutability is not enforced.
   - Directly commits audit records to tenant-isolated PostgreSQL database schemas.
   - Exposes audit trails in user-facing views: `src/pages/Reports.tsx`, `ViewInvoice.tsx`, `ViewQuotation.tsx`.
 - **Verification Evidence:** Active in production database schemas; operational in UI.
@@ -70,27 +70,27 @@ This document establishes the official historical record of all completed observ
   - Handled missing `VITE_SENTRY_DSN` gracefully with an informational debug notice.
   - Preserved existing `ErrorBoundary.tsx` fallback UI and local `errorRegistry.ts` logging.
   - Permanently disabled Session Replay and performance tracing (`tracesSampleRate: 0`).
-- **Verification Evidence:** Package resolved in `bun.lock`; live test event delivery verified.
+- **Verification Evidence:** Package resolved in `bun.lock`. No repository evidence verifies live test event delivery.
 - **Status:** **`[VERIFIED COMPLETED]`**
 
 ---
 
 ### 2.5 Workstream E: Sentry Frontend Privacy Hardening
 - **Completion Period:** November 17, 2026.
-- **Audit Reference:** `docs/reports/observability/BOURXE_Sentry_Frontend_Privacy_Audit.md`.
+- **Audit Reference:** `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`.
 - **Implementation File:** `src/lib/sentry.ts`.
 - **Delivered Capabilities:**
   - Broadened sensitive-key matching to unanchored case-insensitive substring regex covering all commercial terms (`invoice`, `quote`, `po_`, `amount`, `total`, `price`, `client`, `customer`, `supplier`, `bank`, `token`, `secret`, `auth`).
   - Disabled Sentry's default `Console` breadcrumb integration to eliminate serialized argument leakage.
   - Applied `sanitizeUrl()` to navigation breadcrumbs (`from` and `to` URLs) and stripped search query strings.
   - Added recursive scrubbing to `event.contexts`, `event.tags`, and `event.extra`.
-  - Replaced raw object return at `depth > 4` with fail-closed `'[REDACTED_NESTED_OBJECT]'` marker.
+  - Replaced raw object return at `depth > 4` with fail-closed `'[REDACTED_NESTED_STRUCTURE]'` marker.
   - Implemented `WeakSet` circular reference protection to prevent maximum call stack overflow errors.
   - Implemented regex masking for JWTs, Bearer tokens, Nigerian phone numbers (`+234...`), emails, document numbers, and currency amounts inside exception messages.
 - **Verification Evidence:**
   - Test Suite: `src/tests/sentry-privacy.test.js`.
   - Result: **48 passed, 0 failed** (82 assertions) verified locally.
-  - Audit Verdict: "APPROVED WITH CONDITIONS" in `docs/reports/observability/BOURXE_Sentry_Frontend_Privacy_Audit.md`.
+  - Audit Verdict: "APPROVED WITH CONDITIONS" in `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md` (historical finding; tests not re-run in this audit).
 - **Status:** **`[VERIFIED COMPLETED]`**
 
 ---
@@ -112,5 +112,5 @@ These items represent minor refinements that do not block production deployment.
 To maintain strict truthfulness:
 - `[VERIFIED]` No PostHog dependency is installed.
 - `[VERIFIED]` Zero analytics initialization or capture code exists in `src/`.
-- `[USER-CONFIRMED]` The user owns an active PostHog account.
+- `[UNVERIFIED CLAIM]` The documentation package asserts user-confirmed ownership of an active PostHog account; repository evidence cannot verify this.
 - **Conclusion:** PostHog Product Analytics is currently in the **discovery, strategy, and PRD specification phase**. Zero implementation code has been written.

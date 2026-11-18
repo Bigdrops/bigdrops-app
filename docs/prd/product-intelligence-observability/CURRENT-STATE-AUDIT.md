@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-This forensic audit establishes the factual baseline of all observability, diagnostic, telemetry, and tracking systems in the BOURXE repository. It synthesizes findings from previous audits (`docs/reports/observability/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md` and `docs/reports/observability/BOURXE_Sentry_Frontend_Privacy_Audit.md`) and direct repository inspection.
+This forensic audit establishes the factual baseline of all observability, diagnostic, telemetry, and tracking systems in the BOURXE repository. It synthesizes findings from previous audits (`docs/reports/SecurityxCompliance/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md` and `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`) and direct repository inspection.
 
 ### High-Level Summary of Findings:
 - **Crash Observability:** Operational on the frontend via Sentry (`@sentry/react@11.13.0`) with targeted privacy hardening.
@@ -35,7 +35,7 @@ This forensic audit establishes the factual baseline of all observability, diagn
 | **React Error Boundary**| `src/components/ErrorBoundary.tsx` invokes `captureReactError(error, errorInfo)`. | `[VERIFIED CONNECTED]` |
 | **Privacy Hardening** | Substring key-matching, console breadcrumb filtering, and navigation URL scrub in `src/lib/sentry.ts`. | `[VERIFIED HARDENED]` |
 | **Regression Tests** | `src/tests/sentry-privacy.test.js`: **48 passed, 0 failed** (82 assertions) verified locally. | `[VERIFIED PASSING]` |
-| **Independent Audit** | Formal report in `docs/reports/observability/BOURXE_Sentry_Frontend_Privacy_Audit.md` with verdict "APPROVED WITH CONDITIONS". | `[VERIFIED APPROVED]` |
+| **Independent Audit** | Formal report in `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md` with verdict "APPROVED WITH CONDITIONS". The report describes defects that were later fixed; it is a historical record, not current-state proof. | `[HISTORICAL]` |
 
 ---
 
@@ -69,7 +69,7 @@ This forensic audit establishes the factual baseline of all observability, diagn
 
 - **Auth Engine (`src/supabase.ts`):** Supabase Auth (`@supabase/supabase-js` v2.112.3) manages user authentication, token refresh, and session persistence.
 - **Biometric Authentication (`src/lib/native/biometric.ts`):** Integrates `@capgo/capacitor-native-biometric` (v8.6.7) for hardware-backed fingerprint and facial recognition on Android/iOS devices, storing encrypted credentials in device keystore/keychain.
-- **Multi-Tenant Schema Isolation (`src/lib/tenantClient.ts`):** Abstracts schema switching via `client.schema(schemaName)`. Postgres Row-Level Security (RLS) policies enforce data isolation using `auth.uid() = user_id`.
+- **Multi-Tenant Schema Isolation (`src/lib/tenantClient.ts`):** Abstracts schema switching via `client.schema(schemaName)`. Business-table RLS policies enforce data isolation using `has_entity_permission(entity_id, auth.uid(), resource, action)`, not a simple `user_id` equality.
 - **Identity Telemetry Intersection:** Currently, there is **zero linkage** between user authentication state and any external analytics system.
 
 ---
@@ -77,7 +77,7 @@ This forensic audit establishes the factual baseline of all observability, diagn
 ## 6. Workstream 5: Document & Compliance Audit Trail
 
 - **Implementation:** `src/lib/audit.ts` (738 lines).
-- **Core Functionality:** Implements immutable compliance logging for all primary business operations:
+- **Core Functionality:** Implements application-level compliance logging for primary business operations. Database immutability is not enforced: UPDATE and DELETE remain granted and permitted by RLS. Retention is not configured.
   - Quotation creation, updates, and status transitions.
   - Invoice issuance, cancellation, and settlement.
   - Purchase order tracking.
@@ -130,7 +130,7 @@ This forensic audit establishes the factual baseline of all observability, diagn
 | **AI Usage Ledger** | `bolu-usage-ledger.ts` active; logs TTFT & cost to PostgreSQL. | `[VERIFIED COMPLETED]` |
 | **Cookie Consent Banner** | `CookieConsentBanner.tsx` operational in UI. | `[VERIFIED COMPLETED]` |
 | **PostHog Code Presence** | 0% in manifests, lockfiles, and application source code. | `[VERIFIED ABSENT]` |
-| **PostHog Account Existence** | User confirmed owning an active PostHog account. | `[USER-CONFIRMED]` |
+| **PostHog Account Existence** | The documentation package asserts user-confirmed ownership of an active PostHog account. No repository evidence verifies this. | `[UNVERIFIED CLAIM]` |
 | **PostHog Cloud Region** | Whether account is on US Cloud or EU Cloud. | `[UNKNOWN]` |
 | **PostHog Project Write Key** | Write key not present in repository or config templates. | `[UNKNOWN]` |
 | **PostHog Plan & Retention** | Event volume tier and account data retention settings. | `[UNKNOWN]` |

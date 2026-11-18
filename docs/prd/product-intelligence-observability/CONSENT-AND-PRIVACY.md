@@ -98,7 +98,7 @@ stateDiagram-v2
 1. **Unset Consent:** When consent is unset, the analytics wrapper buffers events in-memory up to 50 items. No data is written to disk or transmitted to the network until the user interacts with the banner.
 2. **Accepted Consent:** PostHog initializes and flushes any buffered in-memory events.
 3. **Declined Consent:** PostHog calls `posthog.opt_out_capturing()` or remains completely uninitialized. The in-memory buffer is purged.
-4. **Sentry Exception Handling:** Sentry error reporting operates under legitimate interest for system reliability and crash diagnostics. However, it applies deep privacy scrubbing to ensure zero personal or commercial data is ever transmitted.
+4. **Sentry Exception Handling:** Sentry initializes unconditionally at `src/main.tsx:15` and is not gated by the consent banner. It applies deep privacy scrubbing. The legal basis for this processing requires qualified review; this document does not assert compliance.
 
 ---
 
@@ -119,9 +119,10 @@ stateDiagram-v2
 ## 5. Retention & Deletion Governance (NDPA Alignment)
 
 1. **Retention Periods:**
-   - Raw analytics events in PostHog: Configured to rolling 12-month expiration.
-   - Sentry crash reports: Configured to 90-day rolling expiration.
+   - Raw analytics events in PostHog: Proposed rolling 12-month expiration; account configuration is unverified.
+   - Sentry crash reports: Proposed 90-day expiration; account configuration is unverified.
    - Local in-browser error registry: Capped at 200 entries in `localStorage`.
+   - Bolu usage ledger and business audit records: No retention policy is implemented.
 2. **Data Subject Rights (Right to Erasure):**
-   - If an SME user requests deletion of their account under the Nigeria Data Protection Act, their database records are deleted via Supabase.
-   - In PostHog, calling the PostHog Person Deletion API deletes the associated pseudonymous distinct ID and its event history.
+   - `[PROPOSED]` Account deletion via Supabase and PostHog Person Deletion API calls are proposed controls. No implementation exists in the repository.
+   - The Bolu usage ledger retains `user_email` after account deletion (`ON DELETE SET NULL`). This requires product-owner and legal review.

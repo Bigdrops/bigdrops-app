@@ -31,7 +31,7 @@ Building upon the established Sentry privacy regression test suite (`src/tests/s
 2. **False-Positive Controls:**
    - Verify that legitimate technical properties (`app_version`, `timestamp`, `platform`, `module_name`, `step_number`) are **not** falsely redacted.
 3. **Recursive Depth Protection:**
-   - Verify that nested objects deeper than 4 levels fail closed with a safe redaction marker (`[REDACTED_NESTED_OBJECT]`).
+   - Verify that nested objects deeper than 4 levels fail closed with a safe redaction marker (`[REDACTED_NESTED_STRUCTURE]`).
 4. **Circular Reference Protection:**
    - Verify that cyclic JavaScript objects are handled gracefully using `WeakSet` without causing maximum call stack errors.
 5. **PII Regex Scrubbing:**

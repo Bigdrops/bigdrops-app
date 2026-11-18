@@ -12,20 +12,20 @@
 flowchart TD
     subgraph Client Application [React 19 SPA & Capacitor 8 Mobile WebView]
         Main[src/main.tsx] -->|1. Init| SentryInit[initSentry]
-        Main -->|2. Init| PHInit[initPostHog - Conditional]
-        Main -->|3. Render| AppRoot[src/App.tsx]
+        Main -.->|PROPOSED: 2. Init| PHInit[initPostHog - Conditional]
+        Main -->|Render| AppRoot[src/App.tsx]
 
         AppRoot --> EB[src/components/ErrorBoundary.tsx]
         AppRoot --> Banner[src/components/compliance/CookieConsentBanner.tsx]
         AppRoot --> EntityCtx[src/lib/tenant/entityContext.tsx]
 
         EB -->|Runtime Crash| SentryLib[src/lib/sentry.ts]
-        EB -->|Offline Ring Buffer| LocalReg[src/lib/errorRegistry.ts]
+        Feedback[src/lib/feedback.ts] -->|Diagnostic Errors| LocalReg[src/lib/errorRegistry.ts]
 
         Banner -->|Consent Choice| LocalStorage[localStorage: bouxre_cookie_consent]
-        LocalStorage -->|Gate Dispatch| PHLib[src/lib/analytics/posthog.ts]
+        LocalStorage -.->|PROPOSED Gate Dispatch| PHLib[src/lib/analytics/posthog.ts]
 
-        UI[User Workflows & Actions] -->|trackEvent| PHLib
+        UI[User Workflows & Actions] -.->|PROPOSED: trackEvent| PHLib
         UI -->|Document Mutations| AuditTrail[src/lib/audit.ts]
     end
 
@@ -48,11 +48,11 @@ flowchart TD
     end
 
     SentryLib -->|Sanitized POST /envelope/| SentryCloud
-    PHLib -->|Sanitized POST /capture/| PHCloud
+    PHLib -.->|PROPOSED: Sanitized POST /capture/| PHCloud
     AuditTrail -->|Direct Insert| TenantSchemas
     Ledger -->|Direct Insert| CentralTables
-    EntityCtx -->|Sync Group ID| PHLib
-    SupaAuth -->|Sync Auth UUID| PHLib
+    EntityCtx -.->|PROPOSED: Sync Group ID| PHLib
+    SupaAuth -.->|PROPOSED: Sync Auth UUID| PHLib
 ```
 
 ---
@@ -66,7 +66,7 @@ To prevent telemetry pollution, bundle bloat, and conflicting data, each subsyst
 | **Sentry** | Engineering Lead | Unhandled exceptions, React crash component stacks, sanitized URL breadcrumbs. | Sentry Cloud | Feature clicks, user journeys, financial totals, customer PII. |
 | **PostHog** | Product Manager | Pageviews, module navigation, onboarding steps, document lifecycle states. | PostHog Cloud | Error traces, exceptions, invoice prices, customer names, chat prompt text. |
 | **Local Error Registry** | Device / User | Recent 200 frontend errors for local in-app debugging and support inspection. | `localStorage` | Remote network transmissions. |
-| **Document Audit Trail** | Regulatory / SME | Immutable records of document creation, edits, cancellations, and status changes. | Supabase Tenant DB | Third-party analytics clouds. |
+| **Document Audit Trail** | Regulatory / SME | Application-level records of document creation, edits, cancellations, and status changes. Database immutability not enforced. | Supabase Tenant DB | Third-party analytics clouds. |
 | **Bolu AI Ledger** | AI Ops / Finance | Token consumption, inference duration, TTFT, token velocity, estimated USD cost. | Supabase Central DB | Prompt text, document draft contents. |
 | **Cookie Consent** | Compliance Officer | User choice (`accepted` or `declined`) governing analytics activation. | `localStorage` | Remote network transmissions. |
 
@@ -74,7 +74,7 @@ To prevent telemetry pollution, bundle bloat, and conflicting data, each subsyst
 
 ## 3. Client Initialization & Bootstrap Sequence
 
-Initialization timing in `src/main.tsx` guarantees that error monitoring is active before any React code executes, while product analytics initializes only after consent verification:
+Proposed initialization timing. Current `src/main.tsx` initializes Sentry only; PostHog is not installed and the consent banner gates no tracker:
 
 ```typescript
 // 1. Early Sentry initialization (Must run first)
