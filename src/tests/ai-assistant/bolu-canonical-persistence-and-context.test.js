@@ -56,23 +56,26 @@ test('a persisted automatic cursor advances the tenant family', () => {
   assert.equal(getNextInvoiceNumber([{ invoice_number: 'SASINV-000200' }], 'SASINV', 200), 'SASINV-000201')
 })
 
-test('Bolu resolves the tenant prefix map before allocating a number', () => {
+test('Bolu resolves the tenant prefix map before allocating a number and aborts on read failure', () => {
   const service = readSource('src/lib/ai-assistant/bolu-document-service.ts')
 
-  assert.doesNotMatch(service, /resolvePrefix\(undefined,/, 'Bolu must never fall back to the global default prefix')
-  assert.match(service, /fetchDocumentPrefixes\(tenantClient\)/)
-  assert.match(service, /resolvePrefix\(documentPrefixes, 'invoice'\)/)
-  assert.match(service, /resolvePrefix\(documentPrefixes, 'quotation'\)/)
+  // D4 fix: Bolu must use the safe variant that distinguishes a failed read
+  // from a confirmed absence. A failed read must abort, not fall back to INV.
+  assert.match(service, /fetchDocumentPrefixesSafe\(tenantClient\)/)
+  assert.match(service, /prefixResult\.status/)
+  assert.match(service, /resolvePrefix\(prefixResult\.prefixes, 'invoice'\)/)
+  assert.match(service, /resolvePrefix\(prefixResult\.prefixes, 'quotation'\)/)
   assert.match(service, /withUniqueRetry\(/)
 })
 
 test('a replayed Gate 2 confirmation returns the persisted document and writes nothing', async () => {
   const calls = []
+  const proposal = approvedProposal()
   const builder = {
     select: () => builder,
-    filter: () => builder,
+    eq: () => builder,
     limit: () => builder,
-    maybeSingle: async () => ({ data: { id: 'inv-existing', invoice_number: 'SASINV-000134' }, error: null }),
+    maybeSingle: async () => ({ data: { id: 'inv-existing', invoice_number: 'SASINV-000134', operation_id: proposal.opId }, error: null }),
   }
   const tenantClient = {
     isReady: true,
@@ -89,7 +92,7 @@ test('a replayed Gate 2 confirmation returns the persisted document and writes n
 
   const result = await persistInvoiceCreation(
     tenantClient,
-    approvedProposal(),
+    proposal,
     () => true,
     () => true,
     'entity-test',
@@ -105,11 +108,15 @@ test('a replayed Gate 2 confirmation returns the persisted document and writes n
   )
 })
 
-test('the durable idempotency key is the document operation id', () => {
+test('the durable idempotency key is a dedicated operation_id column', () => {
   const service = readSource('src/lib/ai-assistant/bolu-document-service.ts')
-  assert.match(service, /custom_fields->>operation_id/)
-  assert.match(service, /findPersistedOperation\(tenantClient, 'invoice', proposal\.opId\)/)
-  assert.match(service, /findPersistedOperation\(tenantClient, 'quotation', proposal\.opId\)/)
+  // D1 fix: the lookup must use the dedicated operation_id column, not the
+  // custom_fields->>operation_id filter (which fails on invoices because
+  // invoices.custom_fields is text, not jsonb).
+  assert.match(service, /\.eq\('operation_id', opId\)/)
+  assert.doesNotMatch(service, /custom_fields->>operation_id/)
+  assert.match(service, /findVerifiedReplay\(tenantClient, 'invoice', proposal\.opId\)/)
+  assert.match(service, /findVerifiedReplay\(tenantClient, 'quotation', proposal\.opId\)/)
 })
 
 // ─────────────────────────────────────────────────────────────────────────────

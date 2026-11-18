@@ -19,7 +19,7 @@ import type { TenantClient } from '@/lib/tenantClient'
 import { toDbItem } from '@/domain/invoice'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
-import { advanceAutoCursor, fetchAutoCursor, fetchDocumentPrefixes } from '@/domain/documentNumbering'
+import { advanceAutoCursor, fetchAutoCursor, fetchDocumentPrefixesSafe } from '@/domain/documentNumbering'
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
@@ -36,8 +36,76 @@ import {
   type BoluInvoiceModifyProposal,
 } from './bolu-operations'
 
-// Track executed opIds to prevent duplicate submissions or replay attacks
+// Supplementary in-process guard against accidental double-clicks.
+// The database-level unique index on the `operation_id` column is the
+// authoritative concurrency guarantee (see migration 20261118120000).
+// This Set only spans one serverless instance and is not a substitute
+// for the database enforcement.
 const executedOperationIds = new Set<string>()
+
+/**
+ * Exact database constraint identities for the operation-id unique indexes
+ * created by migration 20261118120000. Kept distinct per document family so
+ * a quotation violation can never be classified as an invoice replay (or
+ * vice versa).
+ */
+const OPERATION_ID_CONSTRAINTS = {
+  invoice: 'idx_invoices_operation_id_unique',
+  quotation: 'idx_quotations_operation_id_unique',
+} as const
+
+/**
+ * Returns true when `text` contains `identifier` as a whole word. PostgreSQL
+ * reports the violated constraint name inside the PostgREST error `message`
+ * (e.g. `duplicate key value violates unique constraint
+ * "idx_invoices_operation_id_unique"`). Matching the whole identifier —
+ * not a loose substring — prevents `idx_invoices_invoice_number_unique`
+ * from ever being mistaken for an operation-id violation.
+ */
+function mentionsConstraint(text: string | undefined, identifier: string): boolean {
+  if (typeof text !== 'string') return false
+  const escaped = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(^|[^A-Za-z0-9_])${escaped}([^A-Za-z0-9_]|$)`, 'i').test(text)
+}
+
+/**
+ * Identifies a 23505 that is specifically an operation-id uniqueness
+ * violation for the requested document family.
+ *
+ * Observed error shape (verified from @supabase/postgrest-js PostgrestError):
+ * `code`, `message`, `details`, `hint` only. PostgREST does NOT expose a
+ * typed `constraint` field, so the constraint identity is read from the
+ * `message`/`details` text. We require an exact match of the family's
+ * known constraint name. A narrow fallback accepts PostgreSQL's explicit
+ * `Key (operation_id)=` detail when no constraint name is present, and only
+ * when the other family's constraint is not named.
+ *
+ * Document-number collisions and unrelated unique violations return false
+ * and continue through the normal `withUniqueRetry` number-collision path.
+ */
+export function isOperationIdConflict(
+  error: { code?: string; message?: string; details?: string } | null | undefined,
+  family: 'invoice' | 'quotation',
+): boolean {
+  if (!error || error.code !== '23505') return false
+  const expected = OPERATION_ID_CONSTRAINTS[family]
+  const other = OPERATION_ID_CONSTRAINTS[family === 'invoice' ? 'quotation' : 'invoice']
+  const message = error.message || ''
+  const details = error.details || ''
+
+  // Explicitly the other family's constraint: never a replay for this family.
+  if (mentionsConstraint(message, other) || mentionsConstraint(details, other)) return false
+
+  // Primary: exact constraint identity in PostgREST message or details.
+  if (mentionsConstraint(message, expected) || mentionsConstraint(details, expected)) return true
+
+  // Narrow fallback: PostgreSQL's key detail. Only when no constraint name
+  // was exposed at all, so an unknown named constraint is not guessed at.
+  const anyNamedConstraint = [OPERATION_ID_CONSTRAINTS.invoice, OPERATION_ID_CONSTRAINTS.quotation]
+    .some((name) => mentionsConstraint(message, name) || mentionsConstraint(details, name))
+  if (anyNamedConstraint) return false
+  return /Key\s*\(\s*operation_id\s*\)\s*=/i.test(details)
+}
 
 export interface BoluOperationExecutionResult {
   success: boolean
@@ -100,24 +168,28 @@ function buildBoluCustomFields(
 /**
  * Finds a document already written for this operation.
  *
- * `executedOperationIds` only protects one serverless instance. The document's
- * own persisted `custom_fields.operation_id` is the durable idempotency key, so
- * an ambiguous save that is retried (or replayed through a stale card) returns
- * the existing record instead of allocating a second number.
+ * The dedicated `operation_id` column (added by migration
+ * 20261118120000_bolu_operation_idempotency.sql) is the durable idempotency
+ * key. A partial unique index enforces that at most one row per tenant
+ * schema can carry a given operation_id, so this lookup is backed by a
+ * database guarantee — it is not merely a read-before-write race.
+ *
+ * The in-memory `executedOperationIds` Set only protects one serverless
+ * instance. The database index is the cross-instance authority.
  */
 async function findPersistedOperation(
   tenantClient: TenantClient,
   family: 'invoice' | 'quotation',
   opId: string,
-): Promise<{ id: string; number: string } | null> {
+): Promise<{ id: string; number: string; operationId: string | null } | null> {
   if (!opId) return null
   const table = family === 'invoice' ? 'invoices' : 'quotations'
   const numberColumn = family === 'invoice' ? 'invoice_number' : 'quotation_number'
   try {
     const { data, error } = await tenantClient
       .from(table)
-      .select(`id, ${numberColumn}`)
-      .filter('custom_fields->>operation_id', 'eq', opId)
+      .select(`id, ${numberColumn}, operation_id`)
+      .eq('operation_id', opId)
       .limit(1)
       .maybeSingle()
     if (error || !data) return null
@@ -125,12 +197,39 @@ async function findPersistedOperation(
     return {
       id: String(row.id),
       number: String(row[numberColumn] ?? ''),
+      operationId: row.operation_id == null ? null : String(row.operation_id),
     }
   } catch {
-    // A lookup failure is not proof of absence: the unique retry below still
-    // prevents duplicate numbers, and the caller never trusts this as a write.
+    // A lookup failure is not proof of absence. The caller proceeds to
+    // attempt an insert; the unique index on operation_id is the actual
+    // guarantee — a duplicate insert will raise 23505 and be handled as a
+    // replay by the caller's error-handling path.
     return null
   }
+}
+
+/**
+ * Retrieves an existing document for a CONFIRMED operation-id conflict and
+ * verifies it is the correct replay target before reporting success.
+ *
+ * Verification requires all of:
+ *   - the tenant client is ready and scoped to a concrete schema;
+ *   - a row was found in the correct family table via the tenant client;
+ *   - that row's persisted `operation_id` exactly matches the proposal's.
+ *
+ * Any failed check returns null, so the caller reports a failure rather than
+ * a false successful replay.
+ */
+async function findVerifiedReplay(
+  tenantClient: TenantClient,
+  family: 'invoice' | 'quotation',
+  opId: string,
+): Promise<{ id: string; number: string } | null> {
+  if (!tenantClient || !tenantClient.isReady || !tenantClient.schemaName) return null
+  const existing = await findPersistedOperation(tenantClient, family, opId)
+  if (!existing) return null
+  if (existing.operationId !== opId) return null
+  return { id: existing.id, number: existing.number }
 }
 
 /** Maps a Bolu line item onto the shared database item shape. */
@@ -209,7 +308,8 @@ export async function persistInvoiceCreation(
 
   // A previously committed save for this exact operation is returned as-is.
   // This is the durable guard against a retried or replayed Gate 2 confirmation.
-  const alreadyPersisted = await findPersistedOperation(tenantClient, 'invoice', proposal.opId)
+  // The retrieved row's operation_id is verified before success is reported.
+  const alreadyPersisted = await findVerifiedReplay(tenantClient, 'invoice', proposal.opId)
   if (alreadyPersisted) {
     executedOperationIds.add(proposal.opId)
     return {
@@ -238,11 +338,17 @@ export async function persistInvoiceCreation(
 
     // 2. Authoritative numbering setup with collision retry.
     // The tenant's configured prefix is the same authority the invoice form
-    // uses (`resolvePrefix(settings.document_prefixes, 'invoice')`). Passing
-    // `undefined` would silently fall back to the global `INV` default and
-    // allocate from a different sequence family than manual invoices.
-    const documentPrefixes = await fetchDocumentPrefixes(tenantClient)
-    const invoicePrefix = resolvePrefix(documentPrefixes, 'invoice')
+    // uses (`resolvePrefix(settings.document_prefixes, 'invoice')`). A failed
+    // settings read must abort creation — it must never silently fall back to
+    // the global `INV` default and allocate from a different sequence family.
+    const prefixResult = await fetchDocumentPrefixesSafe(tenantClient)
+    if (prefixResult.status === 'error') {
+      return {
+        success: false,
+        error: prefixResult.reason,
+      }
+    }
+    const invoicePrefix = resolvePrefix(prefixResult.prefixes, 'invoice')
     const invoiceFamily = `${invoicePrefix}-`
     const regenerateInvoiceNumber = async () => {
       const [{ data: rows }, cursor] = await Promise.all([
@@ -273,6 +379,7 @@ export async function persistInvoiceCreation(
       vat: calculation.vat,
       wht: calculation.wht,
       custom_fields: buildBoluCustomFields(proposal),
+      operation_id: proposal.opId,
       work_duration: proposal.payload.work_duration ?? null,
       subtotal: calculation.subtotal,
       install_rate_total: calculation.installRateTotal,
@@ -282,7 +389,13 @@ export async function persistInvoiceCreation(
 
     const itemsToSave = proposal.payload.items.map((item, index) => serializeBoluItem(item, index))
 
-    // 4. Persistence with collision-safe unique retry
+    // 4. Persistence with collision-safe unique retry.
+    // The `operation_id` column has a partial unique index; a 23505 on that
+    // index means the operation was already committed by a concurrent or
+    // retried request. The retry loop below distinguishes this from a
+    // document-number collision: an operation_id 23505 is treated as a
+    // replay (re-read and return the existing document), while an
+    // invoice_number 23505 triggers number regeneration.
     let createdInvoice: { id: string; invoice_number: string } | null = null
 
     const retryResult = await withUniqueRetry(
@@ -297,7 +410,22 @@ export async function persistInvoiceCreation(
             p_items: itemsToSave,
             p_mode: 'create',
           })
-          if (error) return { data: null, error: error as any }
+          if (error) {
+            // A 23505 naming the invoice operation-id constraint means this
+            // operation was already committed. Verify and return the existing
+            // document as a successful replay; all other 23505s propagate.
+            if (isOperationIdConflict(error as any, 'invoice')) {
+              const existing = await findVerifiedReplay(tenantClient, 'invoice', proposal.opId)
+              if (existing) {
+                return {
+                  data: { id: existing.id, invoice_number: existing.number },
+                  error: null,
+                }
+              }
+              return { data: null, error: error as any }
+            }
+            return { data: null, error: error as any }
+          }
           const rpcResult = Array.isArray(data) ? data[0] : data
           const resolved = rpcResult?.invoice ?? rpcResult
           return {
@@ -319,6 +447,24 @@ export async function persistInvoiceCreation(
     )
 
     if (retryResult.error || !retryResult.data) {
+      // A 23505 on the operation_id unique index means this operation was
+      // already committed by a concurrent request. Retrieve the existing
+      // document and return it as a successful replay rather than reporting
+      // a failure.
+      if (isOperationIdConflict(retryResult.error, 'invoice')) {
+        const existing = await findVerifiedReplay(tenantClient, 'invoice', proposal.opId)
+        if (existing) {
+          executedOperationIds.add(proposal.opId)
+          return {
+            success: true,
+            documentId: existing.id,
+            documentNumber: existing.number,
+          }
+        }
+        // Confirmed conflict but the existing document could not be verified.
+        // Never report a false successful replay.
+        return { success: false, error: 'Operation already committed, but the existing document could not be verified.' }
+      }
       return {
         success: false,
         error: `Failed to persist invoice: ${retryResult.error?.message || 'Database insert failed'}`,
@@ -413,7 +559,7 @@ export async function persistQuotationCreation(
     return { success: false, error: 'Operation requires user approval (Gate 1) and save confirmation (Gate 2).' }
   }
 
-  const alreadyPersisted = await findPersistedOperation(tenantClient, 'quotation', proposal.opId)
+  const alreadyPersisted = await findVerifiedReplay(tenantClient, 'quotation', proposal.opId)
   if (alreadyPersisted) {
     executedOperationIds.add(proposal.opId)
     return {
@@ -441,9 +587,17 @@ export async function persistQuotationCreation(
     })
 
     // 2. Authoritative numbering setup with collision retry. The tenant's
-    // configured quotation prefix drives this, exactly as the quotation form does.
-    const documentPrefixes = await fetchDocumentPrefixes(tenantClient)
-    const quotationPrefix = resolvePrefix(documentPrefixes, 'quotation')
+    // configured quotation prefix drives this, exactly as the quotation form
+    // does. A failed settings read must abort creation — it must never
+    // silently fall back to the global `QTN` default.
+    const prefixResult = await fetchDocumentPrefixesSafe(tenantClient)
+    if (prefixResult.status === 'error') {
+      return {
+        success: false,
+        error: prefixResult.reason,
+      }
+    }
+    const quotationPrefix = resolvePrefix(prefixResult.prefixes, 'quotation')
     const quotationFamily = `${quotationPrefix}-`
     const regenerateQuotationNumber = async () => {
       const [{ data: rows }, cursor] = await Promise.all([
@@ -477,12 +631,15 @@ export async function persistQuotationCreation(
       total: calculation.totalPayable,
       amount_in_words: numberToWords(calculation.totalPayable),
       custom_fields: buildBoluCustomFields(proposal),
+      operation_id: proposal.opId,
       work_duration: proposal.payload.work_duration ?? null,
     }
 
     const itemsToSave = proposal.payload.items.map((item, index) => serializeBoluItem(item, index))
 
-    // 4. Persistence with collision-safe unique retry
+    // 4. Persistence with collision-safe unique retry.
+    // Same operation_id unique-index protection as the invoice path: a 23505
+    // on operation_id is a replay, not a number collision.
     const retryResult = await withUniqueRetry(
       async (candidateNumber: string) => {
         const payload = { ...basePayload, quotation_number: candidateNumber }
@@ -496,7 +653,22 @@ export async function persistQuotationCreation(
             p_mode: 'create',
             p_cps_feedback: null,
           })
-          if (error) return { data: null, error: error as any }
+          if (error) {
+            // A 23505 naming the quotation operation-id constraint means this
+            // operation was already committed. Verify and return the existing
+            // document as a successful replay; all other 23505s propagate.
+            if (isOperationIdConflict(error as any, 'quotation')) {
+              const existing = await findVerifiedReplay(tenantClient, 'quotation', proposal.opId)
+              if (existing) {
+                return {
+                  data: { id: existing.id, quotation_number: existing.number },
+                  error: null,
+                }
+              }
+              return { data: null, error: error as any }
+            }
+            return { data: null, error: error as any }
+          }
           const rpcResult = Array.isArray(data) ? data[0] : data
           const resolved = rpcResult?.quotation ?? rpcResult
           return {
@@ -518,6 +690,22 @@ export async function persistQuotationCreation(
     )
 
     if (retryResult.error || !retryResult.data) {
+      // A 23505 on the operation_id unique index means this operation was
+      // already committed by a concurrent request. Retrieve the existing
+      // document and return it as a successful replay.
+      if (isOperationIdConflict(retryResult.error, 'quotation')) {
+        const existing = await findVerifiedReplay(tenantClient, 'quotation', proposal.opId)
+        if (existing) {
+          executedOperationIds.add(proposal.opId)
+          return {
+            success: true,
+            documentId: existing.id,
+            documentNumber: existing.number,
+          }
+        }
+        // Confirmed conflict but the existing document could not be verified.
+        return { success: false, error: 'Operation already committed, but the existing document could not be verified.' }
+      }
       return {
         success: false,
         error: `Failed to persist quotation: ${retryResult.error?.message || 'Database insert failed'}`,
