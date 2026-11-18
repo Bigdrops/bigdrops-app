@@ -24,6 +24,9 @@ export function getAvailableBoluCapabilities(context: BoluPageContext): BoluCapa
 export function matchBoluIntent(message: string, context?: BoluPageContext): BoluCapability | null {
   const normalized = message.toLowerCase()
   if (/\b(create|make|edit|change|update|delete|remove|record|pay|send)\b/.test(normalized)) return null
+  // Advance Invoice configuration is a write workflow on an existing parent
+  // invoice, not a record lookup; without this it fell through to search.
+  if (/\b(advance|configure)\b/.test(normalized)) return null
 
   if (context?.record?.kind === 'invoice' && /\b(this|that|current)\b/.test(normalized)) {
     if (/\b(payment|status|balance|paid|overdue|explain|details?)\b/.test(normalized)) return 'read-receivables'

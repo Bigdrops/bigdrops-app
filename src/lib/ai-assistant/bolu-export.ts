@@ -61,7 +61,7 @@ export function exportChatAsMarkdown(messages: ProductionBoluMessage[], title?: 
       lines.push('```yaml')
       lines.push(`proposal: ${m.proposal.operationType}`)
       lines.push(`status: ${m.proposal.status}`)
-      if (m.proposal.computedTotals?.total) {
+      if (m.proposal.operationType !== 'advance-invoice-config' && m.proposal.computedTotals?.total) {
         lines.push(`total: ₦${m.proposal.computedTotals.total.toLocaleString('en-NG')}`)
       }
       lines.push('```')

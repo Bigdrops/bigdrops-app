@@ -432,7 +432,6 @@ const invalidPayloads = [
   ['invalid uuid', { targetDocumentId: 'not-a-uuid', documentFamily: 'invoice', intent: 'update', newValues: { value: 10 } }],
   ['unknown newValues key', { targetDocumentId: INVOICE_ID, documentFamily: 'invoice', intent: 'update', newValues: { discount: 5 } }],
   ['remove with newValues', { targetDocumentId: INVOICE_ID, documentFamily: 'invoice', intent: 'remove', newValues: { value: 10 }, oldValues: { suffix: 'A', mode: 'percentage', value: 30, primary_label: 'Advance invoice due now', secondary_label: 'Balance upon completion' } }],
-  ['remove missing one gate field', { targetDocumentId: INVOICE_ID, documentFamily: 'invoice', intent: 'remove', oldValues: { suffix: 'A', mode: 'percentage', value: 30, primary_label: 'Advance invoice due now' } }],
   ['oldValues wrong type', { targetDocumentId: INVOICE_ID, documentFamily: 'invoice', intent: 'update', newValues: { value: 10 }, oldValues: { value: { nested: 1 } } }],
 ]
 for (const [name, payload] of invalidPayloads) {

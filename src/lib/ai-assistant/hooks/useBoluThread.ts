@@ -20,7 +20,8 @@ import {
   type BoluDocumentCreateProposal,
   type BoluProposal,
 } from '../bolu-operations'
-import { persistInvoiceCreation, persistInvoiceModification, persistQuotationModification, type BoluOperationExecutionResult } from '../bolu-document-service'
+import { persistInvoiceCreation, persistInvoiceModification, persistQuotationModification, persistAdvanceInvoiceConfig, type BoluOperationExecutionResult } from '../bolu-document-service'
+import { gateTwoExecutionMessage } from '../bolu-gate2-result'
 import { markBoluTurnsSuperseded, resolveBoluFacts, runBoluGeneration } from '../bolu-generation'
 import { editBoluUserMessage, regenerateBoluResponse, type BoluThreadActionContext } from '../bolu-thread-actions'
 import {
@@ -518,9 +519,34 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
           }
         : null
 
-      // Attempt server-side Gate 2 save endpoint when VITE_API_URL is configured
+      const advanceProposal =
+        effectiveProposal.operationType === 'advance-invoice-config' ? effectiveProposal : null
+      const advanceInvoice = advanceProposal ? { intent: advanceProposal.intent } : null
+
+      /** Persists the assistant execution message carrying verbatim warnings, when any exist. */
+      const persistExecutionMessage = async (execResult: BoluOperationExecutionResult) => {
+        const executionMsg = gateTwoExecutionMessage({ result: execResult, advanceInvoice })
+        const { data: row, error: insertErr } = await (supabase.from('bolu_messages') as any)
+          .insert({
+            conversation_id: conversationId, tenant_id: resolvedTenantId,
+            role: 'assistant', content: executionMsg.content, status: executionMsg.status,
+            ...(executionMsg.warnings.length > 0
+              ? { metadata: { warnings: executionMsg.warnings } }
+              : {}),
+          })
+          .select(MESSAGE_COLUMNS).single()
+        if (insertErr) {
+          console.warn('[useBoluThread] Could not persist execution message:', insertErr)
+          return null
+        }
+        return row ? mapRowToMessage(row as RawMessageRow) : null
+      }
+
+      // Attempt server-side Gate 2 save endpoint when VITE_API_URL is configured.
+      // Advance Invoice configuration is not implemented by the server endpoint in
+      // this stage; it persists through the authenticated tenant executor below.
       const apiUrl = import.meta.env.VITE_API_URL
-      if (apiUrl) {
+      if (apiUrl && !advanceProposal) {
         try {
           const token = sessionData?.session?.access_token
           if (token) {
@@ -586,7 +612,10 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
           result = { success: false, error: 'Tenant client is not ready.' }
         } else {
           try {
-            if (effectiveProposal.operationType === 'create-document') {
+            if (advanceProposal) {
+              const saving = savingProposal as typeof advanceProposal
+              result = await persistAdvanceInvoiceConfig(effectiveTenantClient, saving, canWrite, canRead, auditActor)
+            } else if (effectiveProposal.operationType === 'create-document') {
               result = await persistInvoiceCreation(effectiveTenantClient, savingProposal as any, canWrite, canRead, resolvedEntityId, auditActor)
             } else if (effectiveProposal.documentFamily === 'quotation') {
               result = await persistQuotationModification(effectiveTenantClient, savingProposal as any, canWrite, canRead, resolvedEntityId, auditActor)
@@ -613,18 +642,9 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
               .eq('id', effectiveMsgId)
           }
 
-          const docNum = result.documentNumber || 'document'
-          const successContent = `✓ Successfully saved ${docNum} to your business records.`
+          const confirmMsg = await persistExecutionMessage(result)
 
-          const { data: confirmRow } = await (supabase.from('bolu_messages') as any)
-            .insert({
-              conversation_id: conversationId, tenant_id: resolvedTenantId,
-              role: 'assistant', content: successContent, status: 'completed',
-            })
-            .select(MESSAGE_COLUMNS).single()
-
-          if (confirmRow) {
-            const confirmMsg = mapRowToMessage(confirmRow as RawMessageRow)
+          if (confirmMsg) {
             setMessages((prev) => [
               ...prev.map((m) =>
                 (effectiveMsgId ? m.id === effectiveMsgId : m.proposal?.opId === effectiveProposal.opId)
@@ -650,9 +670,15 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
         setActiveProposalMessageId(null)
         setClerkState('success')
         setTimeout(() => setClerkState('idle'), 2500)
-        feedback.success('Document saved', {
-          description: result.documentNumber ? `Saved as record ${result.documentNumber}` : 'Document successfully saved to business records.',
-        })
+        if (advanceInvoice) {
+          feedback.success('Advance Invoice', {
+            description: `Advance Invoice configuration saved for ${result.documentNumber ?? 'the invoice'}.`,
+          })
+        } else {
+          feedback.success('Document saved', {
+            description: result.documentNumber ? `Saved as record ${result.documentNumber}` : 'Document successfully saved to business records.',
+          })
+        }
         return result
       }
 
@@ -668,6 +694,12 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       // A failed save restores an editable proposal and a usable composer.
       setClerkState('idle')
       setError(result.error || 'Failed to save document.')
+      // Persist any warnings the failed save produced on an execution message,
+      // so the assistant reports them verbatim instead of dropping them.
+      if (result.warnings && result.warnings.length > 0) {
+        const failedMsg = await persistExecutionMessage(result)
+        if (failedMsg) setMessages((prev) => [...prev, failedMsg])
+      }
       feedback.error('Save failed', { description: result.error || 'Failed to save document.' })
       return result
     },

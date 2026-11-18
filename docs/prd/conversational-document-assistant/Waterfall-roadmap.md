@@ -1711,3 +1711,58 @@ Authorized restoration of Bolu as a conversational interface to existing BOURXE 
 - `node --test` across 16 Bolu suites (including the new canonical persistence suite): 195 pass, 0 fail.
 - `bun test` across 3 `bun:test` suites: 42 pass, 0 fail.
 - `bun run build`: not run, prohibited on this host.
+## 36. Bolu Document Capability Parity — Advance Invoice & Modification Integrity Milestones (2026-11-18)
+
+Source reports: `docs/reports/bolu-document-capability-parity/` (audit.md, stage-0-independent-verification.md, stage-0.1/0.2 reports, stage-0-scratch-tenant-verification.md, stage-2-advance-invoice-wiring.md). Commits observed: `f99ee2bd`, `fc6d1dd9` (Stage 0 repair/verification artifacts), `1d7d6d75` (Stage 1 implementation).
+
+Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verified implementation or test evidence · **REFERENCE** = supporting material · **PROPOSAL** = future work, not approved scope.
+
+### 36.1 Stage 0 / 0.1 / 0.2 / 0.3 — Document Modification Integrity
+
+**Status: Completed with documented residual Finding F1.**
+
+- OBSERVATION — full-snapshot preservation for invoice and quotation modifications (header, items and custom_fields keys carry through; items merged via matchBoluItems with fail-closed ambiguity; catalog identity verified against the tenant `item_catalog` at the application layer; inactive/malformed IDs discarded with warnings).
+- OBSERVATION — Stage 0.2 behavioral harness: **34/34 tests passing**.
+- OBSERVATION — additive forward-only migration repairs on the disposable project (`svrpqsdagtgtclnrlmbm`): `20261014150000`, `20261014158000`, `20261014159000`, `20261014170000_public_schema_grants.sql`; full chain applied (161/161); migration list 161 local == 161 remote.
+- OBSERVATION — live disposable verification: **23/23 checks passing** through the application path (creation/due-date-only/items-RPC/removal/E3-C/E3-D/stale-rejection/payment_terms split). Reported; not re-verified by Stage 2 and not exhaustive coverage of persistence or concurrency behavior.
+- OBSERVATION — residual **Finding F1**: the deployed tenant `invoice_items` / `quotation_items` lack `item_id → item_catalog(id)` foreign keys (absent from the curated template seed and from the migrated public schema). A direct RPC/database path can accept a well-formed nonexistent catalog UUID (observed on the disposable project). Application-layer validation does **not** establish database-level referential integrity. Production parity has **not** been verified.
+- PROPOSAL — optional migration to restore tenant-table `item_id` FKs after schema, lifecycle, orphan-row and installer-path review; separate authorization required.
+
+### 36.2 Stage 1 — Advance Invoice Service & Operations
+
+**Status: Implementation completed; unit-level verification passing; live database verification outstanding.**
+
+- OBSERVATION — commit `1d7d6d75` (`feat(assistant): Bolu advance invoice configuration`): `BoluAdvanceConfigProposal`, `validateBoluAdvanceConfigInput`, `buildBoluAdvanceConfigProposal`, `persistAdvanceInvoiceConfig`.
+- OBSERVATION — configure/update/remove lifecycle on `custom_fields.advance_invoice` of the parent invoice only; five editable fields (`suffix`, `mode`, `value`, `primary_label`, `secondary_label`); optimistic `oldValue` guard on all five (removal requires the full five-field gate, enforced by the executor before any write).
+- OBSERVATION — financial derivation reuses the shared domain helpers (`buildAdvanceParentInvoiceMetadata`, `mergeAdvanceInvoiceMetadata`, `clearAdvanceInvoiceMetadata`); no parallel calculation engine was introduced.
+- OBSERVATION — **40/40** reported Stage 1 behavioral tests passing; **34/34** reported Stage 0.2 regression tests passing; typecheck exit 0 as reported.
+- OBSERVATION / limit — `executedOperationIds` replay protection is **in-process only**; the metadata-only path persists no durable `operation_id`, so cross-instance replay protection is not implied.
+- OBSERVATION / limit — no live disposable-project execution of the Stage 1 Advance Invoice path was performed; do not label Stage 1 live-database verified.
+
+### 36.3 Stage 2 — Conversational Advance Invoice Wiring & `warnings[]` UI
+
+**Status: Partially completed** (responsive viewport inspection outstanding — see report).
+
+- OBSERVATION — `BoluProposal` widened; every union consumer resolved (generation, runtime, thread hook, card view, artifact panel, export, reducer) with no unsafe casts or broad fallback branches.
+- OBSERVATION — conversational envelope `advance-invoice-config` parsed in both the live path (`bolu-generation.ts`) and the parallel runtime; parent invoice resolved via tenant-scoped `readBoluInvoiceAdvanceConfig`; Gate 1 proposal carries all five persisted `oldValues` (never model-supplied); Gate 2 explicit confirmation routes to `persistAdvanceInvoiceConfig` (client-side tenant executor; the server `bolu-save` endpoint is not implemented for this operation and is bypassed for it client-side).
+- OBSERVATION — Gate 1 preview shows exact before → after for changed fields only, computed advance amount and contract total, and an explicit fixed-mode clamp notice (requested vs effective).
+- OBSERVATION — proposal preview rendered on the thread card, artifact panel and legacy sheet; removal intent is visually unmistakable.
+- OBSERVATION — executor `warnings[]` persist verbatim on the assistant execution message (`metadata.warnings`) and render as a visible banner on the message; both success and failure outcomes produce an execution message; dismissal is presentation-only.
+- OBSERVATION — **22/22** new thread-flow tests pass; **39/39** Stage 1 suite passes; **34/34** Stage 0.2 regression passes; full `src/tests/ai-assistant/` directory: **534 pass / 1 fail / 535 tests** (the 1 failure is pre-existing and unrelated, see 36.4); `bun run audit:load`: no new ❌/🚨; `bun run typecheck`: exit 0.
+- OBSERVATION / limit — **responsive viewport inspection not performed** (375/768/1280/1440 and the four required view classes): no viewport-emulation tool is available in this environment and the dev server I attempted exited before inspection could run; do not cite viewport verification.
+- OBSERVATION / limit — hook-level wiring (`useBoluThread`) is verified by source-inspection and helper-level tests, not by a rendered hook session; the inert `bolu-runtime.ts` path is wired identically for consistency.
+
+### 36.4 Pre-existing, unrelated failures
+
+- `src/tests/ai-assistant/bolu-commercial-and-gate-lifecycle.test.js` — "An authorized create/edit role can save an invoice through Gate 2": `createPersistenceMock().from()` implements `select().then(...)` without `.limit(1)`, while `fetchDocumentPrefixesSafe` (committed, unchanged by this stage) calls `.limit(1)`; the settings read throws and creation aborts. Not caused by Stage 0–2; not fixed (outside authorized file scope). Proposed repair: add `limit` support to the mock — separate authorization.
+
+### 36.5 Stage 3+ — Roadmap (PROPOSED, none approved)
+
+1. Broader business-context awareness for Bolu (suppliers, client history, cross-document reasoning).
+2. CPS and quotation-to-invoice capability parity.
+3. Optional database-level restoration of `item_id` FKs on tenant invoice and quotation item tables — after schema, lifecycle, orphan-row and installer-path review; separate authorization required.
+4. Any further parity gaps discovered through verified production-safe verification.
+5. Fix the pre-existing stale gate-lifecycle mock (36.4) so the suite is green again.
+
+**Not in scope:** Stage 3+ implementation, new migrations, production actions.
+

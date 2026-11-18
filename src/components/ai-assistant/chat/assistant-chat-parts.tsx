@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Check, Loader2, Sparkles, AlertCircle, FileCheck, FileText, ShieldAlert, ArrowRight, Search, UserPlus, X, type LucideIcon } from 'lucide-react'
 import type {
+  BoluAdvanceConfigProposal,
+  BoluAdvanceFieldKey,
   BoluClarification,
   BoluClientResolution,
   BoluProposal,
@@ -13,6 +15,129 @@ import type {
 } from '@/lib/ai-assistant/bolu-data'
 import { formatNaira } from '@/lib/formatters/money'
 import { CopyButton } from './assistant-chat-copy-button'
+import { HandCoins, Trash2 } from 'lucide-react'
+
+/* Advance Invoice proposal helpers (parent-invoice-only metadata). */
+
+const ADVANCE_FIELD_ORDER: readonly BoluAdvanceFieldKey[] = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label']
+const ADVANCE_FIELD_LABELS: Record<BoluAdvanceFieldKey, string> = {
+  suffix: 'Suffix',
+  mode: 'Mode',
+  value: 'Value',
+  primary_label: 'Primary label',
+  secondary_label: 'Secondary label',
+}
+
+function formatAdvanceValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '—'
+  return String(value)
+}
+
+/**
+ * AdvanceConfigPreview - structured before/after view of a parent invoice's
+ * Advance Invoice configuration. It renders the approved proposal payload
+ * only; it never recomputes money itself (preview values were derived by the
+ * domain helpers when the proposal was built).
+ */
+export function AdvanceConfigPreview({ proposal }: { proposal: BoluAdvanceConfigProposal }) {
+  const { intent } = proposal
+  const isRemove = intent === 'remove'
+  const action =
+    intent === 'configure' ? 'Configure Advance Invoice' : intent === 'update' ? 'Update Advance Invoice' : 'Remove Advance Invoice'
+  const changed = ADVANCE_FIELD_ORDER.filter((key) => {
+    const field = proposal.preview.fields[key]
+    return field && field.before !== field.after
+  })
+  const requestedValue = typeof proposal.newValues.value === 'number' ? proposal.newValues.value : null
+  const effectiveMode = proposal.preview.fields.mode?.after
+  const clamped =
+    !isRemove &&
+    effectiveMode === 'fixed' &&
+    requestedValue != null &&
+    proposal.preview.amount != null &&
+    Math.abs(proposal.preview.amount - requestedValue) > 0.004
+
+  return (
+    <section className={`ac-advance${isRemove ? ' ac-advance--remove' : ''}`} aria-label={action}>
+      <div className="ac-advance-head">
+        {isRemove ? (
+          <Trash2 size={12} aria-hidden="true" />
+        ) : (
+          <HandCoins size={12} aria-hidden="true" />
+        )}
+        <span>{action}</span>
+      </div>
+      <p className="ac-advance-target">
+        Advance on invoice <code>{proposal.targetDocumentNumber || '—'}</code>
+      </p>
+      {isRemove ? (
+        <div className="ac-advance-rows" aria-label="Configuration to be removed">
+          {ADVANCE_FIELD_ORDER.map((key) => {
+            const before = proposal.preview.fields[key]?.before ?? null
+            return (
+              <AdvanceRow key={key} label={ADVANCE_FIELD_LABELS[key]} before={before} after={null} removing />
+            )
+          })}
+        </div>
+      ) : changed.length === 0 ? (
+        <p className="ac-advance-noop">No field changes detected; saving would write identical values.</p>
+      ) : (
+        <div className="ac-advance-rows" aria-label="Changed fields">
+          {changed.map((key) => (
+            <AdvanceRow
+              key={key}
+              label={ADVANCE_FIELD_LABELS[key]}
+              before={proposal.preview.fields[key]?.before ?? null}
+              after={proposal.preview.fields[key]?.after ?? null}
+            />
+          ))}
+        </div>
+      )}
+      {!isRemove && proposal.preview.amount != null ? (
+        <div className="ac-advance-amount">
+          <span>Advance amount</span>
+          <strong>{formatNaira(proposal.preview.amount)}</strong>
+          <span>Contract value {formatNaira(proposal.preview.contractValue ?? 0)}</span>
+        </div>
+      ) : null}
+      {clamped ? (
+        <p className="ac-advance-clamp" role="status">
+          Requested {formatNaira(requestedValue ?? 0)} exceeds the contract value; the effective advance is{' '}
+          {formatNaira(proposal.preview.amount ?? 0)}.
+        </p>
+      ) : null}
+    </section>
+  )
+}
+
+function AdvanceRow({
+  label,
+  before,
+  after,
+  removing = false,
+}: {
+  label: string
+  before: string | number | null
+  after: string | number | null
+  removing?: boolean
+}) {
+  return (
+    <>
+      <span className="ac-advance-key">{label}</span>
+      <span className="ac-advance-val">
+        <span className="ac-advance-before">{formatAdvanceValue(before)}</span>
+        {removing ? (
+          <span className="ac-advance-remove-mark">Removed</span>
+        ) : (
+          <>
+            <ArrowRight className="size-3 text-[var(--ac-muted)] shrink-0" aria-hidden="true" />
+            <span className="font-bold text-[var(--ac-ink)]">{formatAdvanceValue(after)}</span>
+          </>
+        )}
+      </span>
+    </>
+  )
+}
 
 /**
  * proposalPlainText — deterministic text view of a typed proposal payload.
@@ -24,12 +149,29 @@ import { CopyButton } from './assistant-chat-copy-button'
  */
 export function proposalPlainText(proposal: BoluProposal): string {
   const isCreate = proposal.operationType === 'create-document'
+  const isAdvance = proposal.operationType === 'advance-invoice-config'
   const isQuotation = proposal.documentFamily === 'quotation'
   const noun = isQuotation ? 'Quotation' : 'Invoice'
   const lines: string[] = []
 
   if (isCreate) {
     lines.push(`New ${noun} proposal for ${proposal.payload.client_name || 'Client'}`)
+  } else if (isAdvance) {
+    const action =
+      proposal.intent === 'configure' ? 'Configure' : proposal.intent === 'update' ? 'Update' : 'Remove'
+    lines.push(`${action} Advance Invoice for ${proposal.targetDocumentNumber || 'Document'}`)
+    for (const key of ADVANCE_FIELD_ORDER) {
+      const change = proposal.preview.fields[key]
+      if (!change) continue
+      if (change.before === change.after) continue
+      lines.push(`${ADVANCE_FIELD_LABELS[key]}: ${formatAdvanceValue(change.before)} -> ${formatAdvanceValue(change.after)}`)
+    }
+    if (proposal.preview.amount != null) {
+      lines.push(`Computed advance amount: ${formatNaira(proposal.preview.amount)}`)
+    }
+    if (proposal.preview.contractValue != null) {
+      lines.push(`Contract value: ${formatNaira(proposal.preview.contractValue)}`)
+    }
   } else {
     lines.push(`${noun} modification for ${proposal.targetDocumentNumber || 'Document'}`)
     if (proposal.field) {
@@ -37,7 +179,11 @@ export function proposalPlainText(proposal: BoluProposal): string {
     }
   }
 
-  const items = (isCreate ? proposal.payload.items : proposal.itemsChange?.newItems) ?? []
+  const items = (isCreate
+    ? proposal.payload.items
+    : proposal.operationType === 'modify-document'
+      ? proposal.itemsChange?.newItems
+      : []) ?? []
   if (items.length > 0) {
     lines.push('', 'Line items:')
     for (const item of items) {
@@ -68,11 +214,12 @@ export function proposalPlainText(proposal: BoluProposal): string {
     }
   }
 
-  const totals = proposal.computedTotals
+  const totals = proposal.operationType === 'advance-invoice-config' ? undefined : proposal.computedTotals
   if (totals && totals.total > 0) {
     lines.push('', `Subtotal: ${formatNaira(totals.subtotal)}`)
-    if ('extraChargesTotal' in totals && totals.extraChargesTotal > 0) {
-      lines.push(`Charges: ${formatNaira(totals.extraChargesTotal)}`)
+    const extraChargesTotal = (totals as { extraChargesTotal?: number }).extraChargesTotal
+    if (typeof extraChargesTotal === 'number' && extraChargesTotal > 0) {
+      lines.push(`Charges: ${formatNaira(extraChargesTotal)}`)
     }
     if (totals.vat > 0) lines.push(`VAT: ${formatNaira(totals.vat)}`)
     lines.push(`Authoritative total: ${formatNaira(totals.total)}`)
@@ -715,22 +862,40 @@ export function ProposalCardView({
 
   // Derive display values based on proposal type and document family
   const isCreate = proposal.operationType === 'create-document'
+  const isAdvance = proposal.operationType === 'advance-invoice-config'
   const isQuotation = proposal.documentFamily === 'quotation'
   const documentNoun = isQuotation ? 'Quotation' : 'Invoice'
-  const kindLabel = isCreate ? `New ${documentNoun} Proposal` : `${documentNoun} Modification`
-  const title = isCreate
-    ? `Create ${documentNoun} for ${proposal.payload.client_name || 'Client'}`
-    : `Update ${documentNoun} ${proposal.targetDocumentNumber || 'Document'}`
+  const advanceAction = isAdvance
+    ? proposal.intent === 'configure'
+      ? 'Configure Advance Invoice'
+      : proposal.intent === 'update'
+        ? 'Update Advance Invoice'
+        : 'Remove Advance Invoice'
+    : null
+  const kindLabel = isAdvance
+    ? String(advanceAction)
+    : isCreate
+      ? `New ${documentNoun} Proposal`
+      : `${documentNoun} Modification`
+  const title = isAdvance
+    ? `${advanceAction} for ${proposal.targetDocumentNumber || 'Document'}`
+    : isCreate
+      ? `Create ${documentNoun} for ${proposal.payload.client_name || 'Client'}`
+      : `Update ${documentNoun} ${proposal.targetDocumentNumber || 'Document'}`
 
   const items = isCreate
     ? proposal.payload.items
-    : proposal.itemsChange?.newItems ?? []
+    : proposal.operationType === 'modify-document'
+      ? proposal.itemsChange?.newItems ?? []
+      : []
 
-  const total = proposal.computedTotals?.total ?? 0
-  const subtotal = proposal.computedTotals?.subtotal ?? 0
-  const vat = proposal.computedTotals?.vat ?? 0
-  const discount = (proposal.computedTotals as { discount?: number } | undefined)?.discount ?? 0
-  const wht = (proposal.computedTotals as { wht?: number } | undefined)?.wht ?? 0
+  const total = isAdvance ? 0 : proposal.computedTotals?.total ?? 0
+  const subtotal = isAdvance ? 0 : proposal.computedTotals?.subtotal ?? 0
+  const vat = isAdvance ? 0 : proposal.computedTotals?.vat ?? 0
+  // A modify proposal carries only subtotal/vat/total; read the extras safely.
+  const totalsForExtras = isAdvance ? undefined : proposal.computedTotals
+  const discount = (totalsForExtras as { discount?: number } | undefined)?.discount ?? 0
+  const wht = (totalsForExtras as { wht?: number } | undefined)?.wht ?? 0
   const vatPercent = isCreate ? (proposal.payload.global_vat_percent ?? 7.5) : 7.5
 
   const [submittingGate1, setSubmittingGate1] = useState(false)
@@ -771,7 +936,7 @@ export function ProposalCardView({
             isQuotation ? 'text-[var(--ac-sage,green)]' : 'text-[var(--ac-accent)]'
           }`}
         >
-          {isQuotation ? <FileText className="size-3.5 shrink-0" aria-hidden="true" /> : null}
+          {isAdvance ? <HandCoins className="size-3.5 shrink-0" aria-hidden="true" /> : isQuotation ? <FileText className="size-3.5 shrink-0" aria-hidden="true" /> : null}
           <span className="truncate">{kindLabel}</span>
         </span>
         <span className="flex shrink-0 items-center gap-1">
@@ -839,8 +1004,13 @@ export function ProposalCardView({
         />
       ) : null}
 
+      {/* Advance Invoice configuration preview (parent invoice only) */}
+      {isAdvance ? (
+        <AdvanceConfigPreview proposal={proposal} />
+      ) : null}
+
       {/* Field changes for modify proposal */}
-      {!isCreate && proposal.field ? (
+      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' && proposal.field ? (
         <div className="ac-card-change my-2 p-2 rounded-lg bg-[var(--ac-muted-surface)] text-xs flex items-center gap-2">
           <span className="font-medium text-[var(--ac-muted)]">{proposal.field}:</span>
           <span className="ac-card-from line-through text-[var(--ac-muted)]">{String(proposal.oldValue ?? '')}</span>
@@ -917,7 +1087,7 @@ export function ProposalCardView({
       ) : null}
 
       {/* Authoritative Financial Totals: every amount that produces the total */}
-      {total > 0 || subtotal > 0 ? (
+      {isAdvance ? null : total > 0 || subtotal > 0 ? (
         <div className="ac-card-money mt-3 pt-2 border-t border-[var(--ac-line)] text-xs space-y-1">
           <div className="flex justify-between text-[var(--ac-muted)]">
             <span>Subtotal</span>
@@ -1070,9 +1240,15 @@ export function ProposalCardView({
       {isPersisted ? (
         <div className="mt-3 pt-2 text-xs text-[var(--ac-sage,green)] flex items-center gap-1.5 font-medium">
           <Check className="size-3.5" />
-          <span>
-            Successfully filed {proposal.persistedId ? `as record ${proposal.persistedId}` : 'to database'}.
-          </span>
+          {isAdvance ? (
+            <span>
+              Advance Invoice configuration saved{proposal.persistedId ? ` for ${proposal.persistedId}` : ''}.
+            </span>
+          ) : (
+            <span>
+              Successfully filed {proposal.persistedId ? `as record ${proposal.persistedId}` : 'to database'}.
+            </span>
+          )}
         </div>
       ) : null}
     </article>

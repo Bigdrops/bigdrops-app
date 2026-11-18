@@ -22,6 +22,8 @@ import { buildProviderMessages, factsAsPrompt } from './bolu-formatting'
 import {
   buildDocumentCreateProposal,
   buildInvoiceModifyProposal,
+  buildBoluAdvanceConfigProposal,
+  validateBoluAdvanceConfigInput,
   clarificationForClientResolution,
   mergeDocumentCreateProposal,
   parseStructuredOperationEnvelope,
@@ -40,6 +42,7 @@ import {
   readBoluClient,
   readBoluContextFacts,
   readBoluInvoice,
+  readBoluInvoiceAdvanceConfig,
   readBoluQuotation,
   resolveOperationFacts,
   searchBoluClients,
@@ -313,7 +316,54 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
         rawOp.documentFamily === 'invoice' || rawOp.documentFamily === 'quotation'
           ? rawOp.documentFamily
           : null
-      if (documentFamily) {
+      if (rawOp.operationType === 'advance-invoice-config') {
+        // One dedicated branch for Advance Invoice configuration. The
+        // persisted snapshot is read fresh here so the proposal's oldValues
+        // guard reflects reality at proposal time, never the model's view.
+        const advPayload =
+          rawOp.payload && typeof rawOp.payload === 'object' && !Array.isArray(rawOp.payload)
+            ? (rawOp.payload as Record<string, unknown>)
+            : {}
+        const validation = validateBoluAdvanceConfigInput({ ...advPayload, documentFamily: 'invoice' })
+        if (validation.valid && validation.data) {
+          let snapshot = null as Awaited<ReturnType<typeof readBoluInvoiceAdvanceConfig>> | null
+          if (options.tenantClient) {
+            try {
+              snapshot = await readBoluInvoiceAdvanceConfig(
+                options.tenantClient,
+                validation.data.targetDocumentId,
+                options.canRead,
+              )
+            } catch (advErr) {
+              console.warn('[bolu-generation] Advance Invoice snapshot lookup failed:', advErr)
+              snapshot = null
+            }
+          }
+          if (snapshot) {
+            const FIVE = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label'] as const
+            const oldValues: Partial<Record<(typeof FIVE)[number], string | number | null>> = {}
+            for (const key of FIVE) oldValues[key] = snapshot.current[key] ?? null
+            parsedProposal = buildBoluAdvanceConfigProposal({
+              targetDocumentId: snapshot.id,
+              targetDocumentNumber: snapshot.number,
+              intent: validation.data.intent,
+              newValues: validation.data.newValues,
+              oldValues,
+              current: snapshot.current,
+              parent: {
+                invoice_number: snapshot.number,
+                issue_date: snapshot.issue_date,
+                due_date: snapshot.due_date,
+                total: snapshot.total,
+              },
+            })
+          } else if (options.tenantClient) {
+            finalText = `${finalText}\n\nI could not locate that parent invoice in your business records. I did not prepare an Advance Invoice proposal.`
+          }
+        } else {
+          finalText = `${finalText}\n\nI could not prepare the Advance Invoice proposal:\n- ${validation.errors.join('\n- ')}`
+        }
+      } else if (documentFamily) {
         if (rawOp.operationType === 'create-document') {
           const validation = validateInvoiceCreateInput(rawOp.payload)
           if (validation.valid && validation.data) {

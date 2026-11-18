@@ -2,6 +2,8 @@ import { matchBoluWriteContext, type BoluCapability } from './bolu-capabilities'
 import type { BoluPageContext } from './bolu-context'
 import type { TenantClient } from '@/lib/tenantClient'
 import { searchDocuments } from '@/modules/search/documentSearchService'
+import { getAdvanceInvoiceMetadata } from '@/domain/invoice/advanceMetadata'
+import type { BoluAdvanceCurrentSnapshot } from './bolu-operations'
 
 export type BoluRecord = {
   id: string
@@ -103,6 +105,60 @@ export async function searchBoluQuotations(
   return {
     records: result.results.map(normalizeSearchRecord).filter((row): row is BoluRecord => row !== null),
     hasMore: result.has_more,
+  }
+}
+
+export interface BoluInvoiceAdvanceConfigSnapshot {
+  id: string
+  number: string
+  issue_date: string | null
+  due_date: string | null
+  total: number
+  /** Current persisted advance_invoice block, or absence; values normalized via the domain helper. */
+  current: BoluAdvanceCurrentSnapshot
+}
+
+/**
+ * Reads the parent invoice's persisted Advance Invoice configuration for
+ * proposal building (Gate 1). The block mirrors the form's metadata exactly
+ * via `getAdvanceInvoiceMetadata`; a block that exists but fails the domain
+ * validity rules is treated as absent, never as authoritative.
+ */
+export async function readBoluInvoiceAdvanceConfig(
+  tenantClient: TenantClient,
+  invoiceId: string,
+  canRead: BoluReadAuthorization,
+): Promise<BoluInvoiceAdvanceConfigSnapshot | null> {
+  assertTenantReady(tenantClient)
+  if (!canRead('invoice', 'view')) throw new Error('You do not have permission to view invoices.')
+  const { data, error } = await tenantClient
+    .from('invoices')
+    .select('id, invoice_number, issue_date, due_date, total, custom_fields')
+    .eq('id', invoiceId)
+    .is('archived_at', null)
+    .maybeSingle()
+  if (error) throw new Error(`Invoice lookup failed: ${error.message}`)
+  if (!data) return null
+
+  const row = data as Record<string, any> & { custom_fields?: unknown }
+  const meta = getAdvanceInvoiceMetadata(row)
+  return {
+    id: String(row.id),
+    number: String(row.invoice_number ?? ''),
+    issue_date: (row.issue_date ?? null) as string | null,
+    due_date: (row.due_date ?? null) as string | null,
+    total: Number(row.total ?? 0),
+    current: {
+      present: Boolean(meta),
+      suffix: meta?.suffix ?? null,
+      mode: meta?.mode ?? null,
+      value: meta?.value ?? null,
+      primary_label: meta?.primary_label ?? null,
+      secondary_label: meta?.secondary_label ?? null,
+      contractValue: meta?.contract_value ?? Number(row.total ?? 0),
+      documentNumber: meta?.document_number ?? null,
+      amount: meta?.amount ?? null,
+    },
   }
 }
 

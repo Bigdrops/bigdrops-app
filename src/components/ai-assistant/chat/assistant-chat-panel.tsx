@@ -8,7 +8,7 @@ import type {
   BoluClientSearchResult,
 } from '@/lib/ai-assistant/bolu-data'
 import { formatNaira } from '@/lib/formatters/money'
-import { ProposalClarificationCard, ProposalClientPicker, ProposalCommercialBreakdown } from './assistant-chat-parts'
+import { ProposalClarificationCard, ProposalClientPicker, ProposalCommercialBreakdown, AdvanceConfigPreview } from './assistant-chat-parts'
 
 export interface DocumentArtifactState {
   number: string
@@ -71,6 +71,7 @@ export function InvoicePanel({
 
   // Derive artifact state from live proposal if present, else fallback
   const isCreate = proposal?.operationType === 'create-document'
+  const isAdvance = proposal?.operationType === 'advance-invoice-config'
   const isFiled = proposal?.status === 'persisted' || fallbackDocument?.filed
   const isQuotation = proposal?.documentFamily === 'quotation'
   const isPendingGate1 = proposal?.status === 'pending_approval'
@@ -106,20 +107,32 @@ export function InvoicePanel({
         quantity: i.quantity,
         unitPrice: i.unit_price,
       })) ?? [])
-    : (proposal?.itemsChange?.newItems?.map((i, idx) => ({
-        id: `mod-line-${idx}`,
-        description: i.description,
-        quantity: i.quantity,
-        unitPrice: i.unit_price,
-      })) ?? fallbackDocument?.lines ?? [])
+    : proposal?.operationType === 'modify-document'
+      ? (proposal.itemsChange?.newItems?.map((i, idx) => ({
+          id: `mod-line-${idx}`,
+          description: i.description,
+          quantity: i.quantity,
+          unitPrice: i.unit_price,
+        })) ?? fallbackDocument?.lines ?? [])
+      : (fallbackDocument?.lines ?? [])
 
-  const subtotal = proposal?.computedTotals?.subtotal ?? 0
-  const vat = proposal?.computedTotals?.vat ?? 0
+  const proposalTotals = isAdvance || !proposal ? undefined : proposal.computedTotals
+  const subtotal = proposalTotals?.subtotal ?? 0
+  const vat = proposalTotals?.vat ?? 0
   // A modify proposal carries only subtotal/vat/total; read the extras safely.
-  const discount = (proposal?.computedTotals as { discount?: number } | undefined)?.discount ?? 0
-  const wht = (proposal?.computedTotals as { wht?: number } | undefined)?.wht ?? 0
+  const discount = (proposalTotals as { discount?: number } | undefined)?.discount ?? 0
+  const wht = (proposalTotals as { wht?: number } | undefined)?.wht ?? 0
   const vatPercent = isCreate ? (proposal?.payload.global_vat_percent ?? 7.5) : 7.5
-  const documentLabel = `${isQuotation ? 'Quotation' : 'Invoice'} ${number}`
+  const advanceAction = isAdvance && proposal?.operationType === 'advance-invoice-config'
+    ? proposal.intent === 'configure'
+      ? 'Configure Advance Invoice'
+      : proposal.intent === 'update'
+        ? 'Update Advance Invoice'
+        : 'Remove Advance Invoice'
+    : null
+  const documentLabel = isAdvance
+    ? `${advanceAction} on ${number}`
+    : `${isQuotation ? 'Quotation' : 'Invoice'} ${number}`
 
   const handleReturnToReview = async () => {
     if (!proposal || submitting || !onReturnToReview) return
@@ -130,11 +143,13 @@ export function InvoicePanel({
       setSubmitting(false)
     }
   }
-  const total = proposal?.computedTotals?.total ?? (
-    fallbackDocument
-      ? fallbackDocument.lines.reduce((acc, l) => acc + l.quantity * l.unitPrice, 0) + fallbackDocument.delivery
-      : 0
-  )
+  const total = isAdvance
+    ? (proposal?.operationType === 'advance-invoice-config' ? proposal.preview.amount ?? 0 : 0)
+    : proposalTotals?.total ?? (
+        fallbackDocument
+          ? fallbackDocument.lines.reduce((acc, l) => acc + l.quantity * l.unitPrice, 0) + fallbackDocument.delivery
+          : 0
+      )
 
   const handleApprove = async () => {
     if (!proposal || submitting) return
@@ -261,7 +276,31 @@ export function InvoicePanel({
         ) : (
           <>
             {/* Document Summary Card */}
-            <div className="ac-doc p-3 rounded-xl bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] space-y-2 text-xs shadow-xs">
+            {isAdvance && proposal?.operationType === 'advance-invoice-config' ? (
+              <div className="ac-doc p-3 rounded-xl bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] space-y-2 text-xs shadow-xs">
+                <div className="ac-doc-row flex justify-between items-center text-[var(--ac-muted)]">
+                  <span className="text-[11px]">Operation</span>
+                  <strong className="text-[var(--ac-ink)] font-semibold text-right">{advanceAction}</strong>
+                </div>
+                <div className="ac-doc-row flex justify-between items-center text-[var(--ac-muted)]">
+                  <span className="text-[11px]">Target Invoice</span>
+                  <strong className="text-[var(--ac-ink)] font-mono font-semibold truncate max-w-[65%] text-right">{number}</strong>
+                </div>
+                {proposal.preview.amount != null ? (
+                  <div className="ac-doc-row flex justify-between items-center text-[var(--ac-muted)]">
+                    <span className="text-[11px]">Advance Amount</span>
+                    <strong className="text-[var(--ac-ink)] font-semibold">{formatNaira(proposal.preview.amount)}</strong>
+                  </div>
+                ) : null}
+                {proposal.preview.contractValue != null ? (
+                  <div className="ac-doc-row flex justify-between items-center text-[var(--ac-muted)]">
+                    <span className="text-[11px]">Contract Value</span>
+                    <strong className="text-[var(--ac-ink)] font-semibold">{formatNaira(proposal.preview.contractValue)}</strong>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="ac-doc p-3 rounded-xl bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] space-y-2 text-xs shadow-xs">
               <div className="ac-doc-row flex justify-between items-center text-[var(--ac-muted)]">
                 <span className="text-[11px]">Client</span>
                 <strong className="text-[var(--ac-ink)] font-semibold truncate max-w-[60%] text-right">{client}</strong>
@@ -274,7 +313,8 @@ export function InvoicePanel({
                 <span className="text-[11px] uppercase tracking-wider text-[var(--ac-muted)]">Authoritative Total</span>
                 <span className="text-sm font-extrabold text-[var(--ac-ink)]">{formatNaira(total)}</span>
               </div>
-            </div>
+              </div>
+            )}
 
             {/* Client resolution: searchable fallback picker inside the preview.
                 Gate 2 confirms a reviewed operation, so no editable field or
@@ -300,6 +340,11 @@ export function InvoicePanel({
               />
             ) : null}
 
+            {/* Advance Invoice configuration preview; line items stay untouched */}
+            {isAdvance && proposal?.operationType === 'advance-invoice-config' ? (
+              <AdvanceConfigPreview proposal={proposal} />
+            ) : (
+            <>
             {/* Line Items Section */}
             <div className="ac-panel-section space-y-1.5">
               <div className="flex items-center justify-between">
@@ -368,6 +413,8 @@ export function InvoicePanel({
 
             {/* Fixed and custom charges, kept distinct from line items */}
             {proposal ? <ProposalCommercialBreakdown proposal={proposal} /> : null}
+            </>
+            )}
 
             {/* Contextual clarification for the pending operation */}
             {proposal && isCreate && isPendingGate1 && proposal.clarification && onAnswerClarification ? (
@@ -400,12 +447,14 @@ export function InvoicePanel({
                     <dt className="text-[var(--ac-muted)]">Saving</dt>
                     <dd className="font-semibold truncate">{documentLabel}</dd>
                   </div>
+                  {!isAdvance ? (
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-[var(--ac-muted)]">Client</dt>
+                      <dd className="font-semibold truncate">{client}</dd>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-2">
-                    <dt className="text-[var(--ac-muted)]">Client</dt>
-                    <dd className="font-semibold truncate">{client}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-[var(--ac-muted)]">Amount</dt>
+                    <dt className="text-[var(--ac-muted)]">{isAdvance ? 'Advance' : 'Amount'}</dt>
                     <dd className="font-bold">{formatNaira(total)}</dd>
                   </div>
                 </dl>

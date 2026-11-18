@@ -62,7 +62,7 @@ export type BoluRuntimeAction =
   | { type: 'GATE1_APPROVE'; opId?: string }
   | { type: 'GATE1_REJECT'; opId?: string }
   | { type: 'GATE2_START_SAVE'; opId?: string }
-  | { type: 'GATE2_SAVE_SUCCESS'; result: BoluOperationExecutionResult }
+  | { type: 'GATE2_SAVE_SUCCESS'; result: BoluOperationExecutionResult; operationType?: BoluProposal['operationType'] }
   | { type: 'GATE2_SAVE_FAILURE'; error: string }
   | { type: 'GATE2_CANCEL_SAVE' }
   | { type: 'APPLY_CHANGE'; field: string; oldValue: string | number | null; newValue: string | number | null }
@@ -223,6 +223,7 @@ export function boluConversationReducer(state: BoluRuntimeState, action: BoluRun
     }
     case 'GATE2_SAVE_SUCCESS': {
       const persistedNum = action.result.documentNumber || 'Document'
+      const isAdvance = action.operationType === 'advance-invoice-config'
       return {
         ...state,
         status: 'idle',
@@ -230,7 +231,9 @@ export function boluConversationReducer(state: BoluRuntimeState, action: BoluRun
         error: null,
         messages: [
           ...state.messages,
-          createBoluMessage('assistant', `✓ Successfully saved ${persistedNum} to your business records.`),
+          createBoluMessage('assistant', isAdvance
+            ? `✓ Advance Invoice configuration saved for ${persistedNum}.`
+            : `✓ Successfully saved ${persistedNum} to your business records.`),
         ],
       }
     }

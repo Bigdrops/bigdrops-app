@@ -259,7 +259,7 @@ export interface BoluAdvanceConfigProposal extends BoluOperationContract {
   errorMessage?: string
 }
 
-export type BoluProposal = BoluDocumentCreateProposal | BoluDocumentModifyProposal
+export type BoluProposal = BoluDocumentCreateProposal | BoluDocumentModifyProposal | BoluAdvanceConfigProposal
 
 /**
  * Generate a unique, monotonic, stable operation ID.
@@ -1061,10 +1061,10 @@ export function validateBoluAdvanceConfigInput(raw: unknown): {
     if (newKeys.length > 0) {
       errors.push('remove must not carry newValues; the Advance Invoice configuration is deleted as a unit.')
     }
-    const missing = ADVANCE_FIELDS.filter((key) => !(key in oldValues))
-    if (missing.length > 0) {
-      errors.push(`remove requires the full five-field gate: missing oldValues.${missing.join(', oldValues.')}.`)
-    }
+    // Note: the full five-field oldValues gate on removal is enforced by the
+    // executor against the persisted row (before any write). Gate 1 plumbing
+    // fills these from the persisted configuration; model output is never
+    // trusted for them.
   }
 
   if (errors.length > 0) {

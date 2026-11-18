@@ -523,3 +523,22 @@ Following resolution of JSON response parsing, a recurring server error (`err_17
 2. **Hermes Capability Comparison:** BOURXE achieves 10/20 (50%) implemented, 5/20 (25%) partial, and 5/20 (25%) missing capabilities compared to Hermes Agent. BOURXE exceeds Hermes in database persistence, AES-256-GCM envelope encryption, and mobile responsiveness, but lacks multi-provider storage, model discovery, and non-destructive switching.
 3. **Architecture Evaluation:** The current implementation is a single-provider credential form (`id = 'primary'`), not a provider-management subsystem. Storing a new provider destroys previous credentials.
 4. **Recommendation:** Phased refactoring (P0: environment loading fix; P1: RBAC and dedicated encryption key; P2: multi-connection schema `app_ai_provider_connections`; P3: UX overhaul with model discovery).
+## DEC-40 - Bolu Document Capability Parity: Advance Invoice Configuration & Modification Integrity (2026-11-18)
+
+**Status:** Stage 0–0.3 COMPLETED with documented residual Finding F1. Stage 1 COMPLETED (unit-level verification; live DB outstanding). Stage 2 PARTIALLY COMPLETED (responsive viewport inspection outstanding). Stage 3+ PROPOSED, not approved.
+
+**Context.**
+The Bolu conversational document pipeline had two integrity gaps verified across three audits: (1) the document modification path could destroy persisted item lineage and ignored tenant catalog state; (2) Advance Invoice existed only as a hard-coded form flow with no conversational path. A bounded, repository-authorized repair sequence on an empty disposable project (`svrpqsdagtgtclnrlmbm`) plus application-layer work on branch `main` addressed these in three stages.
+
+**Decision & disposition.**
+
+1. **Stage 0–0.3 — Document modification integrity.** OBSERVATION: preservation contract implemented and verified at application layer; disposable-project migration chain repaired additively (`20261014150000`, `20261014158000`, `20261014159000`, `20261014170000`); 161/161 migrations applied and matched; scratch tenant provisioned; 23/23 live application-path checks; 34/34 Stage 0.2 tests. RESIDUAL **Finding F1**: tenant `invoice_items`/`quotation_items` lack `item_id` FKs; a direct RPC/database path accepts a well-formed nonexistent catalog UUID. Application-layer guards remain the effective protection. PROPOSED: restore the FKs after schema/lifecycle/orphan-row/installer-path review with separate authorization; production parity not established.
+2. **Stage 1 — Advance Invoice service & operations.** OBSERVATION: `BoluAdvanceConfigProposal` + `persistAdvanceInvoiceConfig`; parent-invoice `custom_fields.advance_invoice` metadata only; configure/update/remove lifecycle; five editable fields; optimistic `oldValue` guard on all five (executor-enforced gate on removal); no child invoice rows; domain helpers reused, no parallel calculation engine; 40/40 reported tests; typecheck exit 0; live disposable execution outstanding. Replay protection is in-process only (`executedOperationIds`); no durable `operation_id` is persisted for this metadata-only path.
+3. **Stage 2 — Conversational wiring & `warnings[]` UI.** OBSERVATION: `advance-invoice-config` envelope routed end-to-end (generation + parallel runtime + thread hook), parent resolution via tenant-scoped `readBoluInvoiceAdvanceConfig`, Gate 1 preview with exact before/after and clamp disclosure, Gate 2 explicit confirmation, executor warnings persisted verbatim onto the assistant execution message and rendered as a visible banner; 22/22 thread-flow tests; full Bolu directory 534 pass / 1 pre-existing unrelated failure (stale mock missing `.limit(1)`); typecheck exit 0. **Responsive viewport inspection was not performed** (no emulation tool; dev server exited before inspection); Stage 2 is recorded as Partially completed, not Completed.
+4. DECISION (unchanged): no new migrations, no production contact, no `bun run build`, no commits by the implementing agents. Any production rollout of these repairs/features requires separate explicit authorization.
+
+**Relationship to Prior Decisions.**
+- Implements the bounded Stage 0–2 program recorded in the bolu-document-capability-parity audit.
+- Complies with DEC-30 (application-owned operations), DEC-31 (roadmap reconciliation; see Waterfall-roadmap.md §36), DEC-32/33 (no pipeline stage claimed implemented).
+- Retains the Stage 0.3 finding F1 explicitly; does not convert the DISPOSABLE verification into a production claim.
+

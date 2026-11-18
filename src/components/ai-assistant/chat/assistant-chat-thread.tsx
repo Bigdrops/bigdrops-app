@@ -5,6 +5,7 @@ import { ProposalCardView, StatusRow } from './assistant-chat-parts'
 import { AssistantMarkdown } from './assistant-chat-markdown'
 import { CopyButton } from './assistant-chat-copy-button'
 import { IconAction } from './assistant-chat-icon-action'
+import { MessageWarnings, readMessageWarnings } from './assistant-chat-warnings'
 import { AssistantAttachments, readMessageAttachments } from './assistant-chat-attachments'
 import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
 import type { ClerkState, ProductionBoluMessage, ThreadNarrationControls } from './types'
@@ -303,6 +304,12 @@ export function AssistantThread({
                     />
                   </div>
                 ) : null}
+
+                {/* Executor warnings, verbatim, associated with this execution message */}
+                {(() => {
+                  const warnings = readMessageWarnings(message.metadata)
+                  return warnings.length > 0 ? <MessageWarnings warnings={warnings} /> : null
+                })()}
 
                 {/* Typed attachments only — no derived or invented files */}
                 <AssistantAttachments attachments={attachments} />

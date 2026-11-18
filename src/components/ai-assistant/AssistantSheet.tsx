@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/sheet'
 import { getBoluSuggestions } from '@/lib/ai-assistant/bolu-context'
 import { formatNaira } from '@/lib/formatters/money'
+import { AdvanceConfigPreview } from '@/components/ai-assistant/chat/assistant-chat-parts'
 import type { BoluRuntimeState, createBoluRuntime } from '@/lib/ai-assistant/bolu-runtime'
 
 type BoluRuntime = ReturnType<typeof createBoluRuntime>
@@ -145,7 +146,11 @@ export function AssistantSheet({ open, onOpenChange, runtime, state }: Assistant
                 <div className="flex items-center gap-2">
                   <FileText className="size-4 text-[hsl(var(--primary))]" />
                   <span className="text-xs font-semibold uppercase tracking-wider text-bd-text">
-                    {state.activeProposal.operationType === 'create-document' ? 'Proposed Invoice Creation' : 'Proposed Invoice Modification'}
+                    {state.activeProposal.operationType === 'create-document'
+                      ? 'Proposed Invoice Creation'
+                      : state.activeProposal.operationType === 'advance-invoice-config'
+                        ? 'Advance Invoice Configuration'
+                        : 'Proposed Invoice Modification'}
                   </span>
                 </div>
                 <span className="rounded-full bg-bd-surface-muted px-2 py-0.5 text-[10px] font-medium text-bd-text-muted">
@@ -181,7 +186,15 @@ export function AssistantSheet({ open, onOpenChange, runtime, state }: Assistant
                     <span className="text-[hsl(var(--primary))]">{formatNaira(state.activeProposal.computedTotals.total)}</span>
                   </div>
                 </div>
-              ) : (
+              ) : state.activeProposal.operationType === 'advance-invoice-config' ? (
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between text-bd-text">
+                    <span className="text-bd-text-muted">Target Document:</span>
+                    <span className="font-semibold">{state.activeProposal.targetDocumentNumber}</span>
+                  </div>
+                  <AdvanceConfigPreview proposal={state.activeProposal} />
+                </div>
+              ) : state.activeProposal.operationType === 'modify-document' ? (
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between text-bd-text">
                     <span className="text-bd-text-muted">Target Document:</span>
@@ -198,7 +211,7 @@ export function AssistantSheet({ open, onOpenChange, runtime, state }: Assistant
                     </div>
                   ) : null}
                 </div>
-              )}
+              ) : null}
 
               {state.activeProposal.status === 'pending_approval' ? (
                 <div className="mt-4 flex gap-2 border-t border-bd-border pt-3">

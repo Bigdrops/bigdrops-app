@@ -4,6 +4,7 @@ import {
   readBoluClient,
   readBoluContextFacts,
   readBoluInvoice,
+  readBoluInvoiceAdvanceConfig,
   readBoluQuotation,
   resolveOperationFacts,
   searchBoluClients,
@@ -18,10 +19,12 @@ import type { TenantClient } from '@/lib/tenantClient'
 import {
   buildDocumentCreateProposal,
   buildInvoiceModifyProposal,
+  buildBoluAdvanceConfigProposal,
   isProposalStale,
   parseStructuredOperationEnvelope,
   validateInvoiceCreateInput,
   validateInvoiceModifyInput,
+  validateBoluAdvanceConfigInput,
   withClientResolution,
   type BoluClientResolution,
 } from './bolu-operations'
@@ -29,6 +32,7 @@ import {
   persistInvoiceCreation,
   persistInvoiceModification,
   persistQuotationModification,
+  persistAdvanceInvoiceConfig,
   type BoluOperationExecutionResult,
 } from './bolu-document-service'
 import {
@@ -213,12 +217,13 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
             '```json',
             '{',
             '  "bolu_operation": {',
-            '    "operationType": "create-document" | "modify-document",',
-            '    "documentFamily": "invoice",',
+            '    "operationType": "create-document" | "modify-document" | "advance-invoice-config",',
+            '    "documentFamily": "invoice" | "quotation",',
             '    "payload": { ... }',
             '  }',
             '}',
             '```',
+            'Advance Invoice configuration lives on the parent invoice only; it never creates a separate advance record. For it use "operationType": "advance-invoice-config" with payload { "targetDocumentId": "<parent invoice UUID>", "intent": "configure" | "update" | "remove", "newValues": { ... } }. Only these fields may be changed: "suffix" (string), "mode" ("percentage" | "percent" | "fixed"), "value" (number; 0-100 for percentage modes), "primary_label" (string), "secondary_label" (string). For "update" include only the fields to change; for "remove" do not include "newValues". Never output "oldValues": the application fills them from the persisted configuration. Target the parent invoice only via its verified UUID from the application facts. Configure/update/remove require Gate 1 review and Gate 2 confirmation.',
             'Authorized application facts:',
             factsPrompt,
           ].join('\n'),
@@ -258,11 +263,11 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
             }
 
             // Reject unsupported operation types
-            if (opType !== 'create-document' && opType !== 'modify-document') {
+            if (opType !== 'create-document' && opType !== 'modify-document' && opType !== 'advance-invoice-config') {
               dispatch({
                 type: 'RESULT',
                 requestId,
-                content: `Unsupported operation type "${String(opType)}". Bolu currently supports creating and modifying invoices.`,
+                content: `Unsupported operation type "${String(opType)}". Bolu supports creating and modifying documents, and Advance Invoice configuration on invoices.`,
               })
               return
             }
@@ -379,6 +384,67 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
               })
               return
             }
+
+            if (opType === 'advance-invoice-config') {
+              const advPayload =
+                rawOp.payload && typeof rawOp.payload === 'object' && !Array.isArray(rawOp.payload)
+                  ? (rawOp.payload as Record<string, unknown>)
+                  : {}
+              const validation = validateBoluAdvanceConfigInput({ ...advPayload, documentFamily: 'invoice' })
+              if (!validation.valid) {
+                dispatch({
+                  type: 'RESULT',
+                  requestId,
+                  content: `I attempted to prepare the Advance Invoice proposal, but the details were invalid:\n- ${validation.errors.join('\n- ')}`,
+                })
+                return
+              }
+
+              let snapshot: Awaited<ReturnType<typeof readBoluInvoiceAdvanceConfig>> | null = null
+              try {
+                snapshot = await readBoluInvoiceAdvanceConfig(
+                  dependencies.tenantClient,
+                  validation.data!.targetDocumentId,
+                  dependencies.canRead,
+                )
+              } catch {
+                snapshot = null
+              }
+              if (!snapshot) {
+                dispatch({
+                  type: 'RESULT',
+                  requestId,
+                  content: `I could not locate that parent invoice in your business records. I did not prepare an Advance Invoice proposal.`,
+                })
+                return
+              }
+
+              const FIVE = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label'] as const
+              const oldValues: Partial<Record<(typeof FIVE)[number], string | number | null>> = {}
+              for (const key of FIVE) oldValues[key] = snapshot.current[key] ?? null
+              const proposal = buildBoluAdvanceConfigProposal({
+                targetDocumentId: snapshot.id,
+                targetDocumentNumber: snapshot.number,
+                intent: validation.data!.intent,
+                newValues: validation.data!.newValues,
+                oldValues,
+                current: snapshot.current,
+                parent: {
+                  invoice_number: snapshot.number,
+                  issue_date: snapshot.issue_date,
+                  due_date: snapshot.due_date,
+                  total: snapshot.total,
+                },
+              })
+
+              dispatch({
+                type: 'RESULT',
+                requestId,
+                content: response.text,
+                proposal,
+              })
+              return
+            }
           }
         }
 
@@ -471,6 +537,13 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
           dependencies.canRead,
           dependencies.entityId,
         )
+      } else if (proposal.operationType === 'advance-invoice-config') {
+        execResult = await persistAdvanceInvoiceConfig(
+          dependencies.tenantClient,
+          proposal,
+          dependencies.canWrite,
+          dependencies.canRead,
+        )
       } else if (proposal.documentFamily === 'quotation') {
         execResult = await persistQuotationModification(
           dependencies.tenantClient,
@@ -490,7 +563,7 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
       }
 
       if (execResult.success) {
-        dispatch({ type: 'GATE2_SAVE_SUCCESS', result: execResult })
+        dispatch({ type: 'GATE2_SAVE_SUCCESS', result: execResult, operationType: proposal.operationType })
       } else {
         dispatch({ type: 'GATE2_SAVE_FAILURE', error: execResult.error || 'Failed to save document' })
       }
