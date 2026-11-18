@@ -45,6 +45,7 @@
     "@lobehub/icons": "^5.10.0",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
+    "@sentry/react": "^11.13.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.3",
     "@takumi-rs/helpers": "^2.13.7",

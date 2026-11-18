@@ -53,7 +53,7 @@ export const feedback = {
 
   error(message: string | Error, options?: FeedbackOptions): string {
     uiSound('notification.error')
-    const normalized = normalizeError(message)
+    const normalized = normalizeError(message, options?.description)
     const registryId = errorRegistry.add(normalized.userSafe, normalized.diagnostic)
 
     const defaultAction: ToastAction | undefined = normalized.diagnostic

@@ -75,9 +75,64 @@ export function extractDiagnostic(error: unknown): string {
   }
 }
 
-export function normalizeError(error: unknown): { userSafe: string; diagnostic: string } {
+export function sanitizeDiagnostic(text: string): string {
+  if (!text) return ''
+  let sanitized = text
+    // Redact Bearer tokens
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
+    // Redact standard API keys (e.g. OpenAI sk-..., Anthropic, etc.)
+    .replace(/\b(?:sk-[a-zA-Z0-9_-]{20,}|ai-[a-zA-Z0-9_-]{20,}|key-[a-zA-Z0-9_-]{20,})\b/gi, '[REDACTED_KEY]')
+    // Redact JWT tokens
+    .replace(/\beyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]+\b/g, '[REDACTED_JWT]')
+    // Redact Postgres / DB connection strings with credentials
+    .replace(/postgres(?:ql)?:\/\/[^:]+:[^@]+@/gi, 'postgres://[REDACTED]@')
+    // Redact sensitive key/value pairs in logs or JSON strings
+    .replace(/(["']?(?:authorization|api[_-]?key|secret|password|token|vault[_-]?key|credential)["']?\s*[:=]\s*["']?)([^"',\s\r\n}]+)(["']?)/gi, '$1[REDACTED]$3')
+
+  // Prevent excessive log bloat in localStorage (max 4000 chars)
+  if (sanitized.length > 4000) {
+    sanitized = `${sanitized.slice(0, 3950)}... [truncated ${sanitized.length - 3950} chars]`
+  }
+  return sanitized
+}
+
+export function extractDescriptionDiagnostic(description: unknown): string {
+  if (description === undefined || description === null) return ''
+  if (typeof description === 'string') return sanitizeDiagnostic(description.trim())
+  if (description instanceof Error) return sanitizeDiagnostic(extractDiagnostic(description))
+  if (typeof description === 'object') {
+    // If it's a React element, try extracting children if string
+    const descObj = description as Record<string, unknown>
+    if (typeof descObj?.props === 'object' && descObj.props && 'children' in (descObj.props as Record<string, unknown>)) {
+      const children = (descObj.props as Record<string, unknown>).children
+      if (typeof children === 'string') return sanitizeDiagnostic(children.trim())
+    }
+    try {
+      return sanitizeDiagnostic(JSON.stringify(description))
+    } catch {
+      return sanitizeDiagnostic(String(description))
+    }
+  }
+  return sanitizeDiagnostic(String(description))
+}
+
+export function normalizeError(
+  error: unknown,
+  description?: unknown,
+): { userSafe: string; diagnostic: string } {
+  const userSafe = toUserSafeMessage(error)
+  const baseDiagnostic = sanitizeDiagnostic(extractDiagnostic(error))
+  const descDiagnostic = extractDescriptionDiagnostic(description)
+
+  let fullDiagnostic = baseDiagnostic
+  if (descDiagnostic && descDiagnostic !== baseDiagnostic && descDiagnostic !== userSafe) {
+    fullDiagnostic = baseDiagnostic
+      ? `${baseDiagnostic}\n\nDetails: ${descDiagnostic}`
+      : descDiagnostic
+  }
+
   return {
-    userSafe: toUserSafeMessage(error),
-    diagnostic: extractDiagnostic(error),
+    userSafe,
+    diagnostic: fullDiagnostic,
   }
 }

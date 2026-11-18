@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   /** Git remote URL, injected at build time; drives GitHub release discovery. */
   readonly VITE_GIT_REPO: string
   readonly VITE_API_URL?: string
+  readonly VITE_SENTRY_DSN?: string
 }
 
 interface ImportMeta {

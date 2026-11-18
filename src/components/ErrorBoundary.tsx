@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { captureReactError } from '@/lib/sentry'
 
 type ErrorBoundaryProps = {
   children: React.ReactNode
@@ -27,6 +28,7 @@ export default class ErrorBoundary extends React.Component<
     if (import.meta.env.DEV) {
       console.error('ErrorBoundary caught an error:', error, errorInfo)
     }
+    captureReactError(error, errorInfo)
   }
 
   handleRetry = () => {

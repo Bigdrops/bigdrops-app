@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOURXE — Product Intelligence & Observability Waterfall Roadmap</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #0284c7;
+      --accent-glow: rgba(2, 132, 199, 0.2);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.15);
+      --pending: #64748b;
+      --pending-bg: rgba(100, 116, 139, 0.15);
+      --gate: #8b5cf6;
+      --gate-bg: rgba(139, 92, 246, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+
+    .badge-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .pill {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+    }
+
+    .pill-accent { background: var(--accent-glow); color: #38bdf8; border-color: #0284c7; }
+    .pill-success { background: var(--success-bg); color: #34d399; border-color: #059669; }
+    .pill-warning { background: var(--warning-bg); color: #fbbf24; border-color: #d97706; }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .summary-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+    }
+
+    .summary-card .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .summary-card .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* Timeline Structure */
+    .timeline {
+      position: relative;
+      margin-left: 1rem;
+      padding-left: 2rem;
+      border-left: 2px solid var(--border);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2.5rem;
+    }
+
+    .timeline-marker {
+      position: absolute;
+      left: -2.65rem;
+      top: 0.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 3px solid var(--pending);
+    }
+
+    .timeline-item.completed .timeline-marker {
+      border-color: var(--success);
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .timeline-item.in-progress .timeline-marker {
+      border-color: var(--warning);
+      background: var(--warning);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+
+    .phase-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    }
+
+    .phase-card.active {
+      border-color: var(--warning);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+    }
+
+    .phase-card.done {
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .phase-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      gap: 0.5rem;
+    }
+
+    .phase-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 0.375rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-completed { background: var(--success-bg); color: #34d399; border: 1px solid #059669; }
+    .status-in-progress { background: var(--warning-bg); color: #fbbf24; border: 1px solid #d97706; }
+    .status-blocked { background: var(--pending-bg); color: #94a3b8; border: 1px solid #475569; }
+
+    .phase-objective {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .detail-section h4 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #38bdf8;
+      margin-bottom: 0.5rem;
+    }
+
+    .detail-section ul {
+      list-style-type: none;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+
+    .detail-section ul li {
+      margin-bottom: 0.35rem;
+      position: relative;
+      padding-left: 1rem;
+    }
+
+    .detail-section ul li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+
+    .gate-box {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--gate-bg);
+      border-left: 3px solid var(--gate);
+      border-radius: 0 0.375rem 0.375rem 0;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .gate-title {
+      font-weight: 700;
+      color: #c4b5fd;
+    }
+
+    .gate-condition {
+      color: #e2e8f0;
+    }
+
+    footer {
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .timeline {
+        padding-left: 1.5rem;
+        margin-left: 0.5rem;
+      }
+      .timeline-marker {
+        left: -2.15rem;
+      }
+      .phase-card {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="badge-bar">
+      <span class="pill pill-accent">Platform: BOURXE</span>
+      <span class="pill pill-success">Phase 0 Audit: Verified</span>
+      <span class="pill pill-warning">Governance Gate: Decision Required</span>
+    </div>
+    <h1>Product Intelligence &amp; Observability: Master Roadmap</h1>
+    <p class="subtitle">Sequential 8-phase implementation roadmap unifying Sentry crash reporting, PostHog product analytics, compliance audit trails, and NDPA privacy governance.</p>
+  </header>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="label">Current Active Phase</div>
+      <div class="value">Phase 1</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Application Code Changes</div>
+      <div class="value">0% (Strict Audit)</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Next Milestone</div>
+      <div class="value">Gate 1 PRD Signoff</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Error Monitoring</div>
+      <div class="value">Sentry Operational</div>
+    </div>
+  </div>
+
+  <div class="timeline">
+
+    <!-- Phase 0 -->
+    <div class="timeline-item completed">
+      <div class="timeline-marker"></div>
+      <div class="phase-card done">
+        <div class="phase-header">
+          <div class="phase-title">Phase 0: Discovery &amp; Technical Audit</div>
+          <span class="status-badge status-completed">Completed</span>
+        </div>
+        <p class="phase-objective">Conduct a forensic, read-only audit of the repository to establish the exact baseline across Sentry error monitoring, local error registries, audit trails, and PostHog analytics.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Verified Deliverables</h4>
+            <ul>
+              <li>CURRENT-STATE-AUDIT.md authored</li>
+              <li>COMPLETED-WORK.md authored</li>
+              <li>Verified 0% PostHog in repository</li>
+              <li>Verified Sentry operational (48 passing tests)</li>
+              <li>Verified audit.ts and bolu-usage-ledger.ts</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Gate Exit Criteria</h4>
+            <ul>
+              <li>Zero application code modified</li>
+              <li>No synthetic events dispatched</li>
+              <li>Sentry/PostHog boundaries separated</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 0: Technical Audit Signoff</span>
+          <span class="gate-condition">Status: PASSED &amp; VERIFIED</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="timeline-item in-progress">
+      <div class="timeline-marker"></div>
+      <div class="phase-card active">
+        <div class="phase-header">
+          <div class="phase-title">Phase 1: PRD &amp; Governance Approval</div>
+          <span class="status-badge status-in-progress">In Progress / Action Required</span>
+        </div>
+        <p class="phase-objective">Review and formally approve the Master Product Requirements Document, event taxonomy, activation definitions, and blacklisted commercial fields before any code changes occur.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Key Deliverables</h4>
+            <ul>
+              <li>Master PRD.md &amp; Strategic Operating Model</li>
+              <li>Unified Observability Architecture Blueprint</li>
+              <li>Standard Event Taxonomy Specification</li>
+              <li>Consent &amp; Privacy Governance Rules</li>
+              <li>Decisions &amp; Open Questions Register</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Required User Decisions</h4>
+            <ul>
+              <li>Confirm activation milestone definition</li>
+              <li>Confirm Session Replay remains disabled</li>
+              <li>Approve financial &amp; commercial data blacklist</li>
+              <li>Approve environment separation strategy</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 1: Governance &amp; Master PRD Approval</span>
+          <span class="gate-condition">Action: Awaiting Product Owner Signoff</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="phase-card">
+        <div class="phase-header">
+          <div class="phase-title">Phase 2: PostHog Account &amp; Project Readiness</div>
+          <span class="status-badge status-blocked">Not Started / Blocked</span>
+        </div>
+        <p class="phase-objective">Prepare external PostHog account settings, provision separate development and production project keys, and verify cloud ingestion endpoints.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Key Deliverables</h4>
+            <ul>
+              <li>PostHog cloud region selected (US/EU)</li>
+              <li>Project API write keys provisioned</li>
+              <li>Environment separation established</li>
+              <li>Account-side Session Recording disabled</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Entry Criteria</h4>
+            <ul>
+              <li>Gate 1 Governance approval signed off</li>
+              <li>User administrative console access</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 2: Account Readiness Signoff</span>
+          <span class="gate-condition">Status: Blocked on Phase 1 Signoff</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="phase-card">
+        <div class="phase-header">
+          <div class="phase-title">Phase 3: Core SDK Integration &amp; Abstraction</div>
+          <span class="status-badge status-blocked">Not Started / Blocked</span>
+        </div>
+        <p class="phase-objective">Install posthog-js via Bun, implement the client wrapper singleton (src/lib/analytics/posthog.ts), and build the automated privacy scrubbing engine.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Key Deliverables</h4>
+            <ul>
+              <li>posthog-js dependency added via Bun</li>
+              <li>Client wrapper singleton implemented</li>
+              <li>Deep payload privacy scrubber built</li>
+              <li>Regression test suite passing 100%</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Verification Gate</h4>
+            <ul>
+              <li>Zero commercial keys escape scrubber</li>
+              <li>No impact on main-thread responsiveness</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 3: Core Integration Review</span>
+          <span class="gate-condition">Status: Blocked on Phase 2 Provisioning</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="phase-card">
+        <div class="phase-header">
+          <div class="phase-title">Phase 4: Core Product Instrumentation</div>
+          <span class="status-badge status-blocked">Not Started / Blocked</span>
+        </div>
+        <p class="phase-objective">Instrument the approved non-sensitive event catalog across onboarding, top-level navigation, manual document creation, and the Bolu AI assistant.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Key Deliverables</h4>
+            <ul>
+              <li>Onboarding checklist events tracked</li>
+              <li>Invoice &amp; quotation creation funnels</li>
+              <li>Bolu Two-Gate interaction milestones</li>
+              <li>Cookie consent banner integration</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Staging Validation</h4>
+            <ul>
+              <li>Network inspection confirms zero PII</li>
+              <li>No duplicate event dispatches</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 4: Staging Instrumentation Signoff</span>
+          <span class="gate-condition">Status: Blocked on Phase 3 Integration</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="phase-card">
+        <div class="phase-header">
+          <div class="phase-title">Phase 5: Analytics, Funnels &amp; Dashboards</div>
+          <span class="status-badge status-blocked">Not Started / Blocked</span>
+        </div>
+        <p class="phase-objective">Construct foundational product dashboards inside PostHog to provide the product owner with real-time visibility into conversion funnels and user retention.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Key Deliverables</h4>
+            <ul>
+              <li>Executive Overview Dashboard</li>
+              <li>Document Generation Funnel Report</li>
+              <li>Onboarding &amp; Activation Funnel</li>
+              <li>Weekly Active Businesses (WAB) Cohorts</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Validation Check</h4>
+            <ul>
+              <li>Funnel drop-off logic verified</li>
+              <li>Document counts reconcile with database</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 5: Dashboard Signoff</span>
+          <span class="gate-condition">Status: Blocked on Phase 4 Validation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 6 -->
+    <div class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="phase-card">
+        <div class="phase-header">
+          <div class="phase-title">Phase 6: Advanced Capabilities &amp; Flags</div>
+          <span class="status-badge status-blocked">Not Started / Blocked</span>
+        </div>
+        <p class="phase-objective">Explore controlled feature rollouts, experimental UI variants, and deeper workflow cohort analyses once baseline telemetry is proven stable.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Key Deliverables</h4>
+            <ul>
+              <li>PostHog Feature Flags evaluation</li>
+              <li>Controlled rollout hook (useFeatureFlag)</li>
+              <li>Optional masked session replay review</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Prerequisites</h4>
+            <ul>
+              <li>Phase 5 operating stably for 30 days</li>
+              <li>Zero privacy or performance incidents</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 6: Experimentation Gate</span>
+          <span class="gate-condition">Status: Blocked on Phase 5 Stability</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 7 -->
+    <div class="timeline-item">
+      <div class="timeline-marker"></div>
+      <div class="phase-card">
+        <div class="phase-header">
+          <div class="phase-title">Phase 7: Production Handover &amp; Verification</div>
+          <span class="status-badge status-blocked">Not Started / Blocked</span>
+        </div>
+        <p class="phase-objective">Deploy analytics to production, perform continuous automated leakage monitoring, and transition long-term ownership to the core team.</p>
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Key Deliverables</h4>
+            <ul>
+              <li>Production deployment &amp; verification</li>
+              <li>Zero-leakage live audit report</li>
+              <li>Operational documentation update</li>
+              <li>Team analytics training</li>
+            </ul>
+          </div>
+          <div class="detail-section">
+            <h4>Exit Criteria</h4>
+            <ul>
+              <li>14 days live operation without defect</li>
+              <li>Zero sensitive data ingestion confirmed</li>
+            </ul>
+          </div>
+        </div>
+        <div class="gate-box">
+          <span class="gate-title">Gate 7: Final Operational Handover</span>
+          <span class="gate-condition">Status: Blocked on Phase 6 Signoff</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>BOURXE Platform Governance &bull; Master Observability Initiative &bull; Strict Phased Waterfall &bull; Generated November 17, 2026</p>
+  </footer>
+</div>
+
+</body>
+</html>
