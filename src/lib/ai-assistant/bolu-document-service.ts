@@ -25,6 +25,12 @@ import { advanceAutoCursor, fetchAutoCursor, fetchDocumentPrefixesSafe } from '@
 import { getNextQuotationNumber } from '@/domain/quotation'
 import { parseTrailingSequence } from '@/domain/prefixConstants'
 import { withUniqueRetry } from '@/lib/withUniqueRetry'
+import {
+  getAdvanceInvoiceMetadata,
+  mergeAdvanceInvoiceMetadata,
+  clearAdvanceInvoiceMetadata,
+} from '@/domain/invoice/advanceMetadata'
+import { buildAdvanceParentInvoiceMetadata } from '@/domain/invoice/advanceChildFlow'
 import type { BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
 import {
   recordBoluDocumentCreationAudit,
@@ -36,6 +42,8 @@ import {
   isProposalStale,
   type BoluInvoiceCreateProposal,
   type BoluInvoiceModifyProposal,
+  type BoluAdvanceConfigProposal,
+  type BoluAdvanceFieldKey,
   type BoluInvoiceItemInput,
 } from './bolu-operations'
 
@@ -1045,6 +1053,14 @@ const QUOTATION_MODIFY_CONFIG: FamilyModifyConfig = {
 }
 
 /**
+ * Preservation snapshot for Advance Invoice configuration writes: the same
+ * full authoritative row the modification path selects, plus `total`, which
+ * the advance derivation needs as the contract value. The write itself never
+ * touches items, columns or sibling custom_fields keys.
+ */
+const ADVANCE_INVOICE_SELECT = INVOICE_MODIFY_CONFIG.select + ', total'
+
+/**
  * Shared implementation for Bolu document modification (invoice and quotation).
  *
  * Preservation contract: the payload passed to the composite RPC is built from
@@ -1380,4 +1396,211 @@ export async function persistQuotationModification(
     entityId,
     actor,
   )
+}
+
+/* ====================================================================== */
+/* Advance Invoice configuration (parent invoice only)                     */
+/* ====================================================================== */
+
+/**
+ * Executes persistence for a Bolu Advance Invoice configuration proposal
+ * (configure / update / remove).
+ *
+ * Contract:
+ * - The parent invoice remains the sole financial source of truth; the advance
+ *   derivation is delegated to the shared domain helpers
+ *   (buildAdvanceParentInvoiceMetadata), never reimplemented here.
+ * - Only `custom_fields.advance_invoice` is added/replaced/removed. The write
+ *   merges onto the persisted custom_fields document, so every sibling key
+ *   (calculationInputs, extraCharges, signatoryId, pdfOutput, …) is preserved
+ *   verbatim. Header columns and line items are never touched or rewritten.
+ * - The five editable fields are verified optimistically against the persisted
+ *   row before any write; removal requires the full five-field old-value gate.
+ * - No child invoice rows are ever created, mutated or deleted.
+ */
+export async function persistAdvanceInvoiceConfig(
+  tenantClient: TenantClient,
+  proposal: BoluAdvanceConfigProposal,
+  canWrite: BoluWriteAuthorization,
+  canRead: BoluReadAuthorization,
+  actor?: BoluAuditActor | null,
+): Promise<BoluOperationExecutionResult> {
+  assertTenantAuthorization(tenantClient, canWrite, 'invoice', 'edit')
+
+  if (!proposal || !proposal.opId) {
+    throw new Error('Valid proposal is required for persistence.')
+  }
+  if (proposal.documentFamily !== 'invoice') {
+    return { success: false, error: 'Advance Invoice configuration applies to the invoice family only.' }
+  }
+  if (!canRead('invoice', 'view')) {
+    return { success: false, error: 'Read authorization missing for this invoice.' }
+  }
+  if (executedOperationIds.has(proposal.opId)) {
+    return { success: false, error: 'This Advance Invoice change has already been submitted and executed.' }
+  }
+  if (isProposalStale(proposal)) {
+    return { success: false, error: 'This proposal has expired. Please propose the change again.' }
+  }
+  if (proposal.status !== 'approved_pending_save' && proposal.status !== 'saving') {
+    return { success: false, error: 'Advance Invoice changes require user approval (Gate 1) and save confirmation (Gate 2).' }
+  }
+
+  const ADVANCE_FIELDS: readonly BoluAdvanceFieldKey[] = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label']
+  const newValues = proposal.newValues ?? {}
+  const oldValues = proposal.oldValues ?? {}
+
+  // Defense in depth: re-check ranges in the executor so callers that bypass
+  // validateBoluAdvanceConfigInput still fail closed.
+  const nvMode = newValues.mode
+  if (nvMode !== undefined && nvMode !== 'percentage' && nvMode !== 'percent' && nvMode !== 'fixed') {
+    return { success: false, error: 'mode must be one of: percentage, percent, fixed.' }
+  }
+  if (newValues.value !== undefined) {
+    if (typeof newValues.value !== 'number' || !Number.isFinite(newValues.value) || newValues.value < 0) {
+      return { success: false, error: 'value must be a finite, non-negative number.' }
+    }
+    if ((nvMode === 'percentage' || nvMode === 'percent') && newValues.value > 100) {
+      return { success: false, error: 'value must be between 0 and 100 for percentage mode.' }
+    }
+  }
+  if (proposal.intent === 'remove') {
+    if (Object.keys(newValues).length > 0) {
+      return { success: false, error: 'remove must not carry newValues; the Advance Invoice configuration is deleted as a unit.' }
+    }
+    const missing = ADVANCE_FIELDS.filter((key) => !(key in oldValues))
+    if (missing.length > 0) {
+      return { success: false, error: `remove requires the full five-field gate: missing oldValues.${missing.join(', oldValues.')}.` }
+    }
+  }
+
+  // 1. Full preservation snapshot of the parent invoice (header + custom_fields,
+  //    plus `total` as the advance contract value). ---------------------------
+  const { data: currentRow, error: fetchError } = await (tenantClient.from('invoices') as any)
+    .select(ADVANCE_INVOICE_SELECT)
+    .eq('id', proposal.targetDocumentId)
+    .is('archived_at', null)
+    .single()
+  if (fetchError || !currentRow) {
+    return { success: false, error: 'Target invoice could not be found or has been archived.' }
+  }
+  const currentDoc = currentRow as Record<string, any>
+  const currentMeta = getAdvanceInvoiceMetadata(currentDoc)
+  const present = Boolean(currentMeta)
+  const documentNumber = String(currentDoc.invoice_number ?? proposal.targetDocumentNumber ?? '')
+
+  // 2. Intent / state gate ----------------------------------------------------
+  if (proposal.intent === 'configure' && present) {
+    return { success: false, error: 'Advance Invoice is already configured on this invoice; use update instead.' }
+  }
+  if (proposal.intent === 'update' && !present) {
+    return { success: false, error: 'No Advance Invoice is configured on this invoice; use configure instead.' }
+  }
+  if (proposal.intent === 'remove' && !present) {
+    return { success: false, error: 'No Advance Invoice is configured on this invoice; nothing was removed.' }
+  }
+  if (proposal.intent === 'update' && Object.keys(newValues).length === 0) {
+    return { success: false, error: 'update requires at least one of: suffix, mode, value, primary_label, secondary_label.' }
+  }
+
+  // 3. Optimistic concurrency guard on the five editable fields. Runs before
+  //    any write; a single mismatch fails the whole operation closed. ---------
+  const currentFields: Record<BoluAdvanceFieldKey, string | number | null> = {
+    suffix: currentMeta?.suffix ?? null,
+    mode: currentMeta?.mode ?? null,
+    value: currentMeta?.value ?? null,
+    primary_label: currentMeta?.primary_label ?? null,
+    secondary_label: currentMeta?.secondary_label ?? null,
+  }
+  for (const [rawKey, expected] of Object.entries(oldValues)) {
+    if (!ADVANCE_FIELDS.includes(rawKey as BoluAdvanceFieldKey)) {
+      return { success: false, error: `Unknown oldValues field "${rawKey}". Only ${ADVANCE_FIELDS.join(', ')} may be guarded.` }
+    }
+    const key = rawKey as BoluAdvanceFieldKey
+    const actual = currentFields[key]
+    const matches = (expected === null && actual === null) || String(expected) === String(actual)
+    if (!matches) {
+      return {
+        success: false,
+        error: `Document has been modified by another process (current ${key}: "${actual}"). Proposal is stale.`,
+      }
+    }
+  }
+
+  // 4. Build the next custom_fields document (parent row only). --------------
+  let nextCustomFields: Record<string, unknown>
+  if (proposal.intent === 'remove') {
+    nextCustomFields = clearAdvanceInvoiceMetadata(currentDoc.custom_fields)
+  } else {
+    const mergedMode = (newValues.mode ?? currentMeta?.mode ?? 'percentage') as 'percentage' | 'percent' | 'fixed'
+    const helperMode = mergedMode === 'fixed' ? 'fixed' : 'percent'
+    const mergedValue = newValues.value ?? currentMeta?.value ?? 30
+    if (!(Number.isFinite(mergedValue) && mergedValue >= 0)) {
+      return { success: false, error: 'value must be a finite, non-negative number.' }
+    }
+    if ((mergedMode === 'percentage' || mergedMode === 'percent') && mergedValue > 100) {
+      return { success: false, error: 'value must be between 0 and 100 for percentage mode.' }
+    }
+    const mergedSuffix = newValues.suffix !== undefined
+      ? newValues.suffix // '' intentionally strips the dash (domain semantics)
+      : currentMeta?.suffix ?? undefined
+    const metadata = buildAdvanceParentInvoiceMetadata({
+      parentInvoice: {
+        id: String(currentDoc.id),
+        invoice_number: documentNumber || null,
+        issue_date: currentDoc.issue_date ?? null,
+        due_date: currentDoc.due_date ?? null,
+        total: currentDoc.total,
+      },
+      mode: helperMode,
+      inputValue: mergedValue,
+      suffix: mergedSuffix,
+      primaryLabel: newValues.primary_label ?? currentMeta?.primary_label ?? '',
+      secondaryLabel: newValues.secondary_label ?? currentMeta?.secondary_label ?? '',
+      legacyChildInvoiceId: currentMeta?.legacy_child_invoice_id || undefined,
+      legacyChildInvoiceNumber: currentMeta?.legacy_child_invoice_number || undefined,
+      legacyChildInvoiceTotal: currentMeta?.legacy_child_invoice_total ?? undefined,
+      issuedAt: currentMeta?.issued_at || undefined,
+      dueAt: currentMeta?.due_at || undefined,
+      status: currentMeta?.status || undefined,
+      printSnapshot: currentMeta?.print_snapshot,
+    })
+    nextCustomFields = mergeAdvanceInvoiceMetadata(currentDoc.custom_fields, metadata)
+  }
+
+  // 5. Single-row write against the parent invoice. ---------------------------
+  const { error: writeError } = await (tenantClient.from('invoices') as any)
+    .update({ custom_fields: JSON.stringify(nextCustomFields) })
+    .eq('id', String(currentDoc.id))
+  if (writeError) {
+    return {
+      success: false,
+      error: `Advance Invoice configuration could not be saved: ${writeError.message ?? 'unknown error'}`,
+    }
+  }
+
+  // 6. Replay-safety marker + audit trail. ------------------------------------
+  executedOperationIds.add(proposal.opId)
+  const beforeSummary = currentMeta
+    ? `advance_invoice present (mode=${currentMeta.mode}, value=${currentMeta.value}, suffix=${currentMeta.suffix ?? '(none)'})`
+    : 'advance_invoice absent'
+  const afterSummary = proposal.intent === 'remove'
+    ? 'advance_invoice removed'
+    : `advance_invoice ${proposal.intent === 'configure' ? 'configured' : 'updated'} (mode=${(newValues.mode ?? currentMeta?.mode) ?? 'percentage'}, value=${newValues.value ?? currentMeta?.value ?? 30})`
+  await recordBoluDocumentModificationAudit(tenantClient, {
+    family: 'invoice',
+    documentId: String(currentDoc.id),
+    documentNumber,
+    opId: proposal.opId,
+    changedField: 'advance_invoice',
+    oldValue: beforeSummary,
+    newValue: afterSummary,
+    actor,
+  })
+
+  return {
+    success: true,
+    documentId: String(currentDoc.id),
+    documentNumber,
+  }
 }

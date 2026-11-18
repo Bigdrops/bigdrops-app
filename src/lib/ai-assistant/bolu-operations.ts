@@ -11,10 +11,16 @@
  */
 
 import { calculateDocument, type ComputedItem, type DocumentResult } from '@/lib/Calculations'
+import {
+  buildAdvanceParentInvoiceMetadata,
+  ADVANCE_PRIMARY_LABEL_DEFAULT,
+  ADVANCE_SECONDARY_LABEL_DEFAULT,
+  ADVANCE_SUFFIX_DEFAULT,
+} from '@/domain/invoice/advanceChildFlow'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BoluClientMatch, BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
 
-export type BoluOperationType = 'create-document' | 'modify-document'
+export type BoluOperationType = 'create-document' | 'modify-document' | 'advance-invoice-config'
 export type BoluDocumentFamily = 'invoice' | 'quotation'
 export type BoluSideEffect = 'draft-mutation' | 'persistence'
 
@@ -206,6 +212,52 @@ export interface BoluDocumentModifyProposal extends BoluOperationContract {
 }
 
 export type BoluInvoiceModifyProposal = BoluDocumentModifyProposal
+
+export type BoluAdvanceFieldKey = 'suffix' | 'mode' | 'value' | 'primary_label' | 'secondary_label'
+export type BoluAdvanceIntent = 'configure' | 'update' | 'remove'
+export type BoluAdvanceModeInput = 'percentage' | 'percent' | 'fixed'
+
+/**
+ * Bolu proposal for the parent invoice's Advance Invoice configuration
+ * (`custom_fields.advance_invoice`). It never creates, mutates or deletes a
+ * child invoice row; other `custom_fields` keys and every persisted column
+ * are carried through untouched by the executor.
+ */
+export interface BoluAdvanceConfigProposal extends BoluOperationContract {
+  operationType: 'advance-invoice-config'
+  /** Restricted to the invoice family; quotations/non-invoices are rejected. */
+  documentFamily: 'invoice'
+  targetDocumentId: string
+  targetDocumentNumber: string
+  intent: BoluAdvanceIntent
+  /**
+   * New values for the five editable fields. Absent keys mean "leave the
+   * persisted value unchanged" - never reset to default. Only meaningful for
+   * `configure`/`update`; must be empty for `remove`.
+   */
+  newValues: {
+    suffix?: string
+    mode?: BoluAdvanceModeInput
+    value?: number
+    primary_label?: string
+    secondary_label?: string
+  }
+  /** Optimistic concurrency snapshot for the five fields, exactly as shown at Gate 1. */
+  oldValues: Partial<Record<BoluAdvanceFieldKey, string | number | null>>
+  /** Structured Gate 1 preview: exact before/after for the five fields plus derived values. */
+  preview: {
+    advance_present_before: boolean
+    advance_present_after: boolean
+    fields: Record<BoluAdvanceFieldKey, { before: string | number | null; after: string | number | null }>
+    /** Derived document number (`<number>-<suffix>`) for configure/update. */
+    documentNumber?: string | null
+    /** Derived advance amount for configure/update. */
+    amount?: number | null
+    contractValue?: number
+  }
+  persistedId?: string
+  errorMessage?: string
+}
 
 export type BoluProposal = BoluDocumentCreateProposal | BoluDocumentModifyProposal
 
@@ -859,10 +911,306 @@ export function buildInvoiceModifyProposal(params: {
 }
 
 /**
- * Checks whether a proposal has expired or is stale.
+ * Checks whether a proposal has expired or is stale. Accepts any proposal
+ * shape that carries an expiry (structural minimum), so dedicated proposal
+ * types need not widen the shared BoluProposal union.
  */
-export function isProposalStale(proposal: BoluProposal): boolean {
+export function isProposalStale(proposal: { expiresAt: string }): boolean {
   return new Date(proposal.expiresAt).getTime() < Date.now()
+}
+
+/**
+ * Validates Advance Invoice configuration input (parent invoice metadata).
+ *
+ * Fail-closed: anything that could produce a write the user did not
+ * explicitly approve is rejected here, before any persistence is attempted.
+ */
+export function validateBoluAdvanceConfigInput(raw: unknown): {
+  valid: boolean
+  errors: string[]
+  data?: {
+    targetDocumentId: string
+    documentFamily: 'invoice'
+    targetDocumentNumber?: string
+    intent: BoluAdvanceIntent
+    newValues: BoluAdvanceConfigProposal['newValues']
+    oldValues: BoluAdvanceConfigProposal['oldValues']
+  }
+} {
+  const errors: string[] = []
+  if (!raw || typeof raw !== 'object') {
+    return { valid: false, errors: ['Payload must be an object.'] }
+  }
+  const payload = raw as Record<string, unknown>
+
+  const documentId = typeof payload.targetDocumentId === 'string' ? payload.targetDocumentId.trim() : ''
+  if (!documentId || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(documentId)) {
+    errors.push('A valid parent invoice UUID is required.')
+  }
+
+  const family = payload.documentFamily === undefined ? 'invoice' : payload.documentFamily
+  if (family !== 'invoice') {
+    errors.push('Advance Invoice configuration applies to the invoice family only; quotations and non-invoice documents are rejected.')
+  }
+
+  const intent = typeof payload.intent === 'string' ? payload.intent : ''
+  if (intent !== 'configure' && intent !== 'update' && intent !== 'remove') {
+    errors.push('Intent must be one of: configure, update, remove.')
+  }
+
+  const targetDocumentNumber = typeof payload.targetDocumentNumber === 'string' ? payload.targetDocumentNumber.trim() || undefined : undefined
+
+  const ADVANCE_FIELDS: readonly BoluAdvanceFieldKey[] = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label']
+  const MODES: readonly BoluAdvanceModeInput[] = ['percentage', 'percent', 'fixed']
+
+  // ---- newValues: type-check each of the five fields --------------------
+  const nvRaw = payload.newValues
+  if (nvRaw !== undefined && (typeof nvRaw !== 'object' || nvRaw === null || Array.isArray(nvRaw))) {
+    errors.push('newValues must be an object.')
+  }
+  const nv = (nvRaw && typeof nvRaw === 'object' && !Array.isArray(nvRaw) ? nvRaw : {}) as Record<string, unknown>
+  for (const key of Object.keys(nv)) {
+    if (!ADVANCE_FIELDS.includes(key as BoluAdvanceFieldKey)) {
+      errors.push(`Unknown Advance Invoice field "${key}". Only ${ADVANCE_FIELDS.join(', ')} may be modified.`)
+    }
+  }
+
+  const newValues: BoluAdvanceConfigProposal['newValues'] = {}
+  const modeInput = nv.mode
+  const modeResolved: BoluAdvanceModeInput | undefined =
+    typeof modeInput === 'string' ? (modeInput as BoluAdvanceModeInput) : undefined
+  if (nv.mode !== undefined) {
+    if (typeof nv.mode !== 'string' || !MODES.includes(nv.mode as BoluAdvanceModeInput)) {
+      errors.push('mode must be one of: percentage, percent, fixed.')
+    } else {
+      newValues.mode = nv.mode as BoluAdvanceModeInput
+    }
+  }
+  if (nv.value !== undefined) {
+    const value = Number(nv.value)
+    if (typeof nv.value !== 'number' || !Number.isFinite(value)) {
+      errors.push('value must be a finite number.')
+    } else if (value < 0) {
+      errors.push('value must be non-negative.')
+    } else if ((modeResolved === 'percentage' || modeResolved === 'percent') && value > 100) {
+      errors.push('value must be between 0 and 100 for percentage mode.')
+    } else {
+      newValues.value = value
+    }
+  }
+  if (nv.suffix !== undefined) {
+    if (typeof nv.suffix !== 'string') {
+      errors.push('suffix must be a string.')
+    } else {
+      newValues.suffix = nv.suffix.trim()
+    }
+  }
+  if (nv.primary_label !== undefined) {
+    if (typeof nv.primary_label !== 'string') {
+      errors.push('primary_label must be a string.')
+    } else {
+      newValues.primary_label = nv.primary_label.trim()
+    }
+  }
+  if (nv.secondary_label !== undefined) {
+    if (typeof nv.secondary_label !== 'string') {
+      errors.push('secondary_label must be a string.')
+    } else {
+      newValues.secondary_label = nv.secondary_label.trim()
+    }
+  }
+
+  // ---- oldValues: strict subset of the five fields, finite numbers --------
+  const ovRaw = payload.oldValues
+  if (ovRaw !== undefined && (typeof ovRaw !== 'object' || ovRaw === null || Array.isArray(ovRaw))) {
+    errors.push('oldValues must be an object.')
+  }
+  const ov = (ovRaw && typeof ovRaw === 'object' && !Array.isArray(ovRaw) ? ovRaw : {}) as Record<string, unknown>
+  for (const key of Object.keys(ov)) {
+    if (!ADVANCE_FIELDS.includes(key as BoluAdvanceFieldKey)) {
+      errors.push(`Unknown oldValues field "${key}". Only ${ADVANCE_FIELDS.join(', ')} may be guarded.`)
+    }
+  }
+  const oldValues: BoluAdvanceConfigProposal['oldValues'] = {}
+  for (const key of ADVANCE_FIELDS) {
+    const value = ov[key]
+    if (value === undefined) continue
+    if (value === null) { oldValues[key] = null; continue }
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) {
+        errors.push(`oldValues.${key} must be a finite number when provided.`)
+      } else {
+        oldValues[key] = value
+      }
+      continue
+    }
+    if (typeof value === 'string') { oldValues[key] = value; continue }
+    errors.push(`oldValues.${key} must be a string, a finite number, or null.`)
+  }
+
+  // ---- intent-specific rules ----------------------------------------------
+  const newKeys = Object.keys(newValues)
+  if (intent === 'configure') {
+    // Configuring from nothing may supply any subset (defaults are allowed),
+    // but empty is still a valid configure (defaults apply).
+  } else if (intent === 'update') {
+    if (newKeys.length === 0) {
+      errors.push('update requires at least one of: suffix, mode, value, primary_label, secondary_label.')
+    }
+  } else if (intent === 'remove') {
+    if (newKeys.length > 0) {
+      errors.push('remove must not carry newValues; the Advance Invoice configuration is deleted as a unit.')
+    }
+    const missing = ADVANCE_FIELDS.filter((key) => !(key in oldValues))
+    if (missing.length > 0) {
+      errors.push(`remove requires the full five-field gate: missing oldValues.${missing.join(', oldValues.')}.`)
+    }
+  }
+
+  if (errors.length > 0) {
+    return { valid: false, errors }
+  }
+  return {
+    valid: true,
+    errors: [],
+    data: {
+      targetDocumentId: documentId,
+      documentFamily: 'invoice',
+      targetDocumentNumber,
+      intent: intent as BoluAdvanceIntent,
+      newValues,
+      oldValues,
+    },
+  }
+}
+
+/** Persisted snapshot of the parent's advance_invoice block, or absence. */
+export interface BoluAdvanceCurrentSnapshot {
+  present: boolean
+  suffix?: string | null
+  /** Persisted (normalized) mode: `percentage` or `fixed`. */
+  mode?: string | null
+  value?: number | null
+  primary_label?: string | null
+  secondary_label?: string | null
+  contractValue?: number
+  documentNumber?: string | null
+  amount?: number | null
+}
+
+/**
+ * Creates the authoritative Advance Invoice configuration proposal.
+ *
+ * `current` is the persisted snapshot the user saw at Gate 1 (or `undefined`
+ * when unknown); the executor re-verifies `oldValues` against the live row
+ * before any write, so a preview built from a stale snapshot fails closed
+ * rather than applying blindly.
+ */
+export function buildBoluAdvanceConfigProposal(params: {
+  targetDocumentId: string
+  targetDocumentNumber: string
+  intent: BoluAdvanceIntent
+  newValues?: BoluAdvanceConfigProposal['newValues']
+  oldValues?: BoluAdvanceConfigProposal['oldValues']
+  current?: BoluAdvanceCurrentSnapshot | null
+  parent?: {
+    invoice_number?: string | null
+    issue_date?: string | null
+    due_date?: string | null
+    total?: number | string | null
+  } | null
+}): BoluAdvanceConfigProposal {
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
+  const intent = params.intent
+  const current = params.current ?? undefined
+  const newValues = params.newValues ?? {}
+  const isRemove = intent === 'remove'
+
+  const beforeOf = (key: BoluAdvanceFieldKey): string | number | null =>
+    current?.[key] ?? null
+
+  const afterOf = (key: BoluAdvanceFieldKey): string | number | null => {
+    if (isRemove) return null
+    if (newValues[key] !== undefined) return newValues[key] ?? null
+    if (current?.present) return current[key] ?? null
+    // Not configured yet: show exactly what the executor will persist.
+    switch (key) {
+      case 'suffix': return ADVANCE_SUFFIX_DEFAULT
+      case 'mode': return 'percentage'
+      case 'value': return 30
+      case 'primary_label': return ADVANCE_PRIMARY_LABEL_DEFAULT
+      case 'secondary_label': return ADVANCE_SECONDARY_LABEL_DEFAULT
+    }
+  }
+
+  const fields = {
+    suffix: { before: beforeOf('suffix'), after: afterOf('suffix') },
+    mode: { before: beforeOf('mode'), after: afterOf('mode') },
+    value: { before: beforeOf('value'), after: afterOf('value') },
+    primary_label: { before: beforeOf('primary_label'), after: afterOf('primary_label') },
+    secondary_label: { before: beforeOf('secondary_label'), after: afterOf('secondary_label') },
+  }
+
+  // Derived preview (document number + amount) via the same domain math the
+  // executor uses; previews are display-only and re-verified at write time.
+  let documentNumber: string | null | undefined
+  let amount: number | null | undefined
+  let contractValue: number | undefined
+  if (!isRemove && params.parent) {
+    const mergedMode = (newValues.mode ?? current?.mode ?? 'percentage') as 'percentage' | 'fixed'
+    const mergedModeForHelper = mergedMode === 'fixed' ? 'fixed' : 'percent'
+    const mergedValue = Number(newValues.value ?? current?.value ?? 30)
+    const mergedSuffix = newValues.suffix !== undefined ? newValues.suffix : (current?.present ? current.suffix ?? undefined : undefined)
+    const mergedPrimary = newValues.primary_label ?? (current?.present ? current.primary_label ?? undefined : undefined) ?? ADVANCE_PRIMARY_LABEL_DEFAULT
+    const mergedSecondary = newValues.secondary_label ?? (current?.present ? current.secondary_label ?? undefined : undefined) ?? ADVANCE_SECONDARY_LABEL_DEFAULT
+    const total = Number(params.parent.total)
+    contractValue = Number.isFinite(total) ? Math.max(0, total) : 0
+    const derived = buildAdvanceParentInvoiceMetadata({
+      parentInvoice: {
+        id: params.targetDocumentId,
+        invoice_number: params.parent.invoice_number ?? null,
+        issue_date: params.parent.issue_date ?? null,
+        due_date: params.parent.due_date ?? null,
+        total: contractValue,
+      },
+      mode: mergedModeForHelper,
+      inputValue: mergedValue,
+      suffix: mergedSuffix,
+      primaryLabel: mergedPrimary,
+      secondaryLabel: mergedSecondary,
+    })
+    documentNumber = derived.document_number ?? null
+    amount = derived.amount
+    contractValue = derived.contract_value
+  }
+
+  return {
+    opId: generateOperationId(),
+    operationType: 'advance-invoice-config',
+    documentFamily: 'invoice',
+    schemaVersion: '1.0',
+    requiredPermission: { resource: 'invoice', action: 'edit' },
+    sideEffect: 'draft-mutation',
+    gate1Required: true,
+    gate2Required: true,
+    status: 'pending_approval',
+    createdAt: now.toISOString(),
+    expiresAt,
+    targetDocumentId: params.targetDocumentId,
+    targetDocumentNumber: params.targetDocumentNumber,
+    intent,
+    newValues,
+    oldValues: params.oldValues ?? {},
+    preview: {
+      advance_present_before: Boolean(current?.present),
+      advance_present_after: !isRemove,
+      fields,
+      documentNumber,
+      amount,
+      contractValue,
+    },
+  }
 }
 
 /**
