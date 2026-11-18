@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { RefreshCw, CheckCircle2, Download, Smartphone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SettingsSummaryCard, SettingsSummaryRow } from '@/components/settings/SettingsSummaryCard'
@@ -16,6 +17,10 @@ function WebAndroidDownloadSection() {
 
   return (
     <div className="space-y-4">
+      <Link to="/whats-new" className="block rounded-lg border border-border/60 bg-muted/30 p-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <span className="text-sm font-semibold text-foreground">What’s New</span>
+        <span className="mt-1 block text-xs text-muted-foreground">Review the current release notes.</span>
+      </Link>
       <SettingsSummaryCard
         title="BOUXRE for Android"
         description="Download the native Android app for faster performance, biometric security, and offline support."
@@ -155,6 +160,10 @@ export function AppUpdateSettingsSection() {
 
   return (
     <div className="space-y-4">
+      <Link to="/whats-new" className="block rounded-lg border border-border/60 bg-muted/30 p-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <span className="text-sm font-semibold text-foreground">What’s New</span>
+        <span className="mt-1 block text-xs text-muted-foreground">Review the current release notes.</span>
+      </Link>
       <div className="overflow-hidden rounded-[var(--bd-radius-xl)] border border-[hsl(var(--bd-border)/0.5)]">
         <div className="flex items-center justify-between gap-3 px-5 pb-1 pt-4">
           <h3 className="text-sm font-bold text-bd-text">App Version</h3>

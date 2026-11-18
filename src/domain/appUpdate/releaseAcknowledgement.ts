@@ -137,13 +137,13 @@ export function createAcknowledgedRelease(params: {
   versionCode: number
   platform: 'web' | 'android'
   userId?: string | null
-}): AcknowledgedRelease => {
+}): AcknowledgedRelease {
   const now = Date.now()
   return {
     id: crypto.randomUUID(),
-    versionCode,
-    platform,
+    versionCode: params.versionCode,
+    platform: params.platform,
     acknowledgedAt: now,
-    userId,
+    userId: params.userId,
   }
 }

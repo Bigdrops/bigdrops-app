@@ -1,115 +1,115 @@
-/**
- * Release acknowledgement client: Supabase-backed persistence for authenticated users.
- *
- * Anonymous users are handled exclusively via device-local localStorage
- * (see releaseAcknowledgementLocalStorage.ts). This module only deals with
- * the authenticated user path, where acknowledgement records synchronize
- * across devices through the user's Supabase profile.
- *
- * Acknowledgement records must never alter mandatory-update grace anchors.
- */
+/** Supabase-backed release acknowledgements for authenticated users only. */
 
 import { supabase } from '@/supabase'
-import type { AcknowledgedRelease } from '@/domain/appUpdate/releaseAcknowledgement'
-import type { ReleasePolicyInput } from '@/domain/appUpdate/updateStateMachine'
+import { isReleaseAcknowledged, type AcknowledgedRelease } from '@/domain/appUpdate/releaseAcknowledgement'
 
-/** Fetch all acknowledgement records for the current user and platform. */
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const { data, error } = await supabase.auth.getUser()
+  if (error) return null
+  return data.user?.id ?? null
+}
+
+/** Fetch acknowledgements for the active user. Null means unavailable/anonymous. */
 export async function fetchAcknowledgedReleases(
   platform: 'web' | 'android',
-): Promise<AcknowledgedRelease[]> {
+): Promise<AcknowledgedRelease[] | null> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return null
+
   const { data, error } = await supabase
     .from('release_acknowledgements')
-    .select('*')
+    .select('id,user_id,version_code,platform,acknowledged_at')
+    .eq('user_id', userId)
     .eq('platform', platform)
     .order('acknowledged_at', { ascending: false })
 
-  if (error) {
-    // Best-effort: if the table doesn't exist or RLS blocks, return empty array.
-    // The caller should fall back to localStorage or treat as unacknowledged.
-    // tslint:disable-next-line:no-console
-    // console.warn('Failed to fetch acknowledged releases:', error)
-    return []
-  }
+  if (error || !data) return null
+  return data.map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    versionCode: row.version_code,
+    platform: row.platform as 'web' | 'android',
+    acknowledgedAt: new Date(row.acknowledged_at).getTime(),
+  }))
+}
 
-  return (data as any[]) || []
+/** Check an acknowledgement only in the current authenticated user's records. */
+export async function isReleaseAcknowledgedByUser(
+  versionCode: number,
+  platform: 'web' | 'android',
+): Promise<{ acknowledged: boolean; record?: AcknowledgedRelease } | null> {
+  const records = await fetchAcknowledgedReleases(platform)
+  if (!records) return null
+  return isReleaseAcknowledged({ versionCode, platform, existingRecords: records })
 }
 
 /**
- * Persist an acknowledgement record for the current authenticated user.
- * If a record for the same versionCode+platform already exists, it is updated.
- * Otherwise, a new record is inserted.
+ * Persist for the currently authenticated user. Reject if the user is absent,
+ * changes during the request, or the database does not confirm the write.
  */
 export async function persistAcknowledgedRelease(
   versionCode: number,
   platform: 'web' | 'android',
+  expectedUserId?: string,
 ): Promise<AcknowledgedRelease> {
-  // Try to insert; on conflict (same user + versionCode + platform), update instead.
+  const userId = await getAuthenticatedUserId()
+  if (!userId || (expectedUserId && userId !== expectedUserId)) {
+    throw new Error('Cannot persist a release acknowledgement for a missing or changed authenticated user.')
+  }
+
   const { data, error } = await supabase
     .from('release_acknowledgements')
     .upsert(
       {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: userId,
         version_code: versionCode,
         platform,
         acknowledged_at: new Date().toISOString(),
       },
       { onConflict: 'user_id,version_code,platform' },
     )
-    .select()
+    .select('id,user_id,version_code,platform,acknowledged_at')
     .single()
 
-  if (error) {
-    // If upsert fails (e.g. RLS, table missing), fall back to returning a local record.
-    // The caller should handle the fallback appropriately.
-    // tslint:disable-next-line:no-console
-    // console.warn('Failed to persist acknowledged release:', error)
-    return {
-      id: crypto.randomUUID(),
-      versionCode,
-      platform,
-      acknowledgedAt: Date.now(),
-      userId: (await supabase.auth.getUser()).data.user?.id,
-    }
+  if (error || !data) {
+    throw new Error('The release acknowledgement could not be saved.')
+  }
+
+  const currentUserId = await getAuthenticatedUserId()
+  if (currentUserId !== userId || data.user_id !== userId) {
+    throw new Error('The authenticated account changed before the acknowledgement was confirmed.')
   }
 
   return {
-    id: (data as any).id,
-    versionCode: (data as any).version_code,
-    platform: (data as any).platform,
-    acknowledgedAt: new Date((data as any).acknowledged_at).getTime(),
-    userId: (data as any).user_id,
+    id: data.id,
+    userId: data.user_id,
+    versionCode: data.version_code,
+    platform: data.platform as 'web' | 'android',
+    acknowledgedAt: new Date(data.acknowledged_at).getTime(),
   }
 }
 
-/**
- * Remove an acknowledgement record for the given versionCode and platform.
- * Used when a user explicitly resets their acknowledgement state.
- */
+/** Remove only the active user's matching acknowledgement. */
 export async function removeAcknowledgedRelease(
   versionCode: number,
   platform: 'web' | 'android',
 ): Promise<boolean> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return false
+
   const { error } = await supabase
     .from('release_acknowledgements')
     .delete()
-    .match({ user_id: (await supabase.auth.getUser()).data.user?.id, version_code: versionCode, platform })
-
-  if (error) {
-    // tslint:disable-next-line:no-console
-    // console.warn('Failed to remove acknowledged release:', error)
-    return false
-  }
-  return true
+    .match({ user_id: userId, version_code: versionCode, platform })
+  return !error
 }
 
-/**
- * Checks whether a release is already acknowledged for the current user/platform,
- * by fetching from Supabase and evaluating with the domain logic. */
-export async function isReleaseAcknowledgedByUser(
+/** Backward-compatible wrapper used by existing feature callers. */
+export async function markReleaseAcknowledgedByUser(
   versionCode: number,
   platform: 'web' | 'android',
-): Promise<{ acknowledged: boolean; record?: AcknowledgedRelease }> {
-  const records = await fetchAcknowledgedReleases(platform)
-  const result = isReleaseAcknowledged({ versionCode, platform, existingRecords: records })
-  return result
+  expectedUserId?: string,
+): Promise<{ acknowledged: boolean; persisted: boolean; record?: AcknowledgedRelease }> {
+  const record = await persistAcknowledgedRelease(versionCode, platform, expectedUserId)
+  return { acknowledged: true, persisted: true, record }
 }

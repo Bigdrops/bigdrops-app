@@ -1,184 +1,260 @@
-/**
- * Release notifications hook: manages auto-presenting "What's New" banners/dialogs
- * for both Web and Android platforms.
- *
- * Features:
- * - Auto-presents when a new eligible, unacknowledged release is detected
- * - Uses existing ChangelogTimeline for release notes rendering
- * - Handles acknowledgement persistence (Supabase for authenticated, localStorage for anonymous)
- * - Prevents repeatedly displaying acknowledged releases
- * - Does not block normal application navigation
- * - Handles network failures gracefully
- * - Integrates with existing useAppUpdate state without modifying existing files
- */
+/** Automatic, non-blocking release-note presentation for Web and Android. */
 
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { useAppUpdateContext } from '@/contexts/AppUpdateContext'
-import { isReleaseAcknowledgedByUser, markReleaseAcknowledgedByUser, isReleaseAcknowledgedLocally, markReleaseAcknowledgedLocally } from '@/lib/appUpdate/releaseAcknowledgementClient'
-import { parseReleaseNotes } from '@/domain/appUpdate/changelog'
-import type { UseAppUpdateResult } from '@/hooks/useAppUpdate'
-import type { ChangelogEntry } from '@/domain/appUpdate/changelog'
+import * as React from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
+import { supabase } from '@/supabase'
+import { useAppUpdateContext } from '@/contexts/AppUpdateContext'
+import { parseReleaseNotes } from '@/domain/appUpdate/changelog'
+import { isReleaseAcknowledgedByUser, markReleaseAcknowledgedByUser } from '@/lib/appUpdate/releaseAcknowledgementClient'
+import {
+  dismissReleaseNotification,
+  isReleaseAcknowledgedLocally,
+  isReleaseNotificationDismissed,
+  markReleaseAcknowledgedLocally,
+  observeInstalledVersion,
+  type InstalledVersionObservation,
+} from '@/lib/appUpdate/releaseAcknowledgementLocalStorage'
+import { getAppVersionInfo } from '@/lib/appUpdate/appVersion'
+import { validateReleasePolicy, type ReleasePolicyInput } from '@/domain/appUpdate/updateStateMachine'
+import type { ChangelogEntry } from '@/domain/appUpdate/changelog'
 
 export interface ReleaseNotificationBannerContent {
-  /** Unique key for this banner (version + platform) */
   key: string
-  /** Version label (e.g. "v1.2.3") */
   versionLabel: string
-  /** Release notes entries */
+  versionCode: number
   entries: ChangelogEntry[]
-  /** Release effective date label */
   releasedLabel: string | null
-  /** Whether this is a mandatory update */
   isMandatory: boolean
 }
 
 export interface UseReleaseNotificationsResult {
-  /** Open/close control for the auto-present banner */
   bannerOpen: boolean
-  /** Toggle the banner open/closed */
-  setBannerOpen: (open: boolean) => void
-  /** Current release notes data, if a banner is active */
   currentBanner: ReleaseNotificationBannerContent | null
-  /** Acknowledge the currently displayed release */
   acknowledgeCurrent: () => Promise<void>
-  /** Dismiss the currently displayed banner without acknowledging */
   dismissCurrent: () => Promise<void>
 }
 
+const emptyReleaseNotifications: UseReleaseNotificationsResult = {
+  bannerOpen: false,
+  currentBanner: null,
+  acknowledgeCurrent: async () => {},
+  dismissCurrent: async () => {},
+}
+
+const ReleaseNotificationsContext = React.createContext<UseReleaseNotificationsResult>(emptyReleaseNotifications)
+
+export function ReleaseNotificationsProvider({ children }: { children: React.ReactNode }) {
+  const value = useReleaseNotifications({ enabled: true })
+  return React.createElement(ReleaseNotificationsContext.Provider, { value }, children)
+}
+
+export function useReleaseNotificationContext() {
+  return React.useContext(ReleaseNotificationsContext)
+}
+
 function getPlatform(): 'web' | 'android' {
-  // Detect platform using Capacitor; fall back to 'web' for non-native environments.
-  // The check is wrapped in a try/catch because Capacitor APIs may not be available
-  // (e.g., when running in a browser-only context or during SSR).
-  try {
-    const platform = Capacitor.getPlatform()
-    if (platform === 'android') return 'android'
-    if (platform === 'web') return 'web'
-  } catch {
-    // Capacitor not available — best-effort fallback to 'web'
-  }
-  return 'web'
+  return Capacitor.getPlatform() === 'android' ? 'android' : 'web'
 }
 
 export function useReleaseNotifications(options: { enabled: boolean }): UseReleaseNotificationsResult {
   const { enabled } = options
+  const { state, ready } = useAppUpdateContext()
   const [bannerOpen, setBannerOpen] = useState(false)
   const [currentBanner, setCurrentBanner] = useState<ReleaseNotificationBannerContent | null>(null)
-  const checkRef = useRef<boolean>(false) // debounce guard against rapid double-fires
+  const [webPolicy, setWebPolicy] = useState<ReleasePolicyInput | null>(null)
+  const [authRevision, setAuthRevision] = useState(0)
+  const [lifecycleRevision, setLifecycleRevision] = useState(0)
+  const evaluationId = useRef(0)
+  const accountId = useRef<string | null | undefined>(undefined)
+  const bannerAccountId = useRef<string | null>(null)
 
-  // Subscribe to update state changes via context (read-only; no modifications to context)
-  const { state, release } = useAppUpdateContext()
-
-  // When update state changes, check if we should present a "What's New" banner.
   useEffect(() => {
-    if (!enabled) return
-
-    const checkAndPresent = async () => {
-      // Prevent rapid double-firing across consecutive effect runs
-      if (checkRef.current) return
-      checkRef.current = true
-
-      try {
-        const platform = getPlatform()
-
-        // No policy = nothing to show
-        if (!state.policy) return
-
-        // Check if this release has already been acknowledged.
-        // Device-local check first (anonymous users), then Supabase (authenticated users).
-        let alreadyAcknowledged = false
-
-        // Device-local check (works for both anon and auth, as a first line of defense)
-        try {
-          alreadyAcknowledged = await isReleaseAcknowledgedLocally(state.policy.versionCode, platform)
-        } catch {
-          // Best-effort only; if check fails, assume not acknowledged to be safe
-        }
-
-        // Supabase check for authenticated users (second line of defense, cross-device sync)
-        if (!alreadyAcknowledged) {
-          try {
-            const { acknowledged } = await isReleaseAcknowledgedByUser(state.policy.versionCode, platform)
-            alreadyAcknowledged = acknowledged
-          } catch {
-            // Best-effort only; if check fails, assume not acknowledged to be safe
-          }
-        }
-
-        // If already acknowledged, don't present the banner again
-        if (alreadyAcknowledged) return
-
-        // Parse release notes from the policy row using the shared domain parser.
-        const notes = parseReleaseNotes(state.policy.releaseNotes)
-        if (notes.entries.length === 0) return // nothing to display
-
-        // Build banner content from the parsed release notes.
-        const versionLabel = state.policy.versionName || `v${state.policy.versionCode}`
-        const releasedLabel = state.policy.effectiveAtMs ? new Date(state.policy.effectiveAtMs).toLocaleDateString('en-GB') : null
-
-        const content: ReleaseNotificationBannerContent = {
-          key: `${state.policy.versionCode}-${platform}`,
-          versionLabel,
-          entries: notes.entries,
-          releasedLabel,
-          isMandatory: state.policy.mandatory,
-        }
-
-        setCurrentBanner(content)
-        setBannerOpen(true)
-      } catch (err) {
-        // Network/DB failure — never block navigation or force banner on error.
-        // tslint:disable-next-line:no-console
-        // console.error('Release notification error:', err)
-      } finally {
-        checkRef.current = false
-      }
-    }
-
-    checkAndPresent()
-  }, [enabled, state, currentBanner, bannerOpen]) // eslint-disable-react-hooks/exhaustive-deps — controlled by checkRef guard
-
-  // When the banner is dismissed without acknowledging, no persistence action is needed.
-  useEffect(() => {
-    if (!bannerOpen && currentBanner) {
-      // intentional no-op: dismiss without acknowledge leaves no state change
-    }
-  }, [bannerOpen, currentBanner])
-
-  /** Acknowledge the currently displayed release. */
-  const acknowledgeCurrent = useCallback(async () => {
-    if (!currentBanner) return
-
-    const platform = getPlatform()
-    const versionCode = parseInt(currentBanner.versionLabel.replace('v', '')) || 0
-
-    try {
-      let persisted = false
-      // Try authenticated (Supabase) path first; fall back to device-local localStorage for anonymous.
-      try {
-        await markReleaseAcknowledgedByUser(versionCode, platform)
-        persisted = true
-      } catch {
-        // Authenticated path failed (maybe not logged in); fall back to localStorage.
-        markReleaseAcknowledgedLocally(versionCode, platform)
-        persisted = true // localStorage persistence succeeded at device level
-      }
-
-      // Hide the banner after successfully acknowledging.
+    const { data } = supabase.auth.onAuthStateChange(() => {
+      accountId.current = undefined
+      bannerAccountId.current = null
       setBannerOpen(false)
       setCurrentBanner(null)
-    } catch (err) {
-      // tslint:disable-next-line:no-console
-      // console.error('Failed to acknowledge release:', err)
+      setAuthRevision((revision) => revision + 1)
+    })
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!enabled || getPlatform() !== 'android') return
+    let active = true
+    let removeListener: (() => void) | undefined
+    void import('@capacitor/app').then(({ App }) =>
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (active && isActive) setLifecycleRevision((revision) => revision + 1)
+      }).then((handle) => {
+        if (active) removeListener = () => void handle.remove()
+        else void handle.remove()
+      }),
+    ).catch(() => {})
+    return () => {
+      active = false
+      removeListener?.()
+    }
+  }, [enabled])
+
+  // Read the authoritative policy for Web. Android's update hook already owns
+  // policy discovery and must remain the only provider for its enforcement state.
+  useEffect(() => {
+    if (!enabled || getPlatform() !== 'web') return
+    let active = true
+    const refresh = async () => {
+      const { data, error } = await supabase.rpc('get_active_android_release_policy')
+      if (!active || error) return
+      const policy = validateReleasePolicy(Array.isArray(data) ? data[0] : data)
+      setWebPolicy(policy)
+    }
+    void refresh()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh()
+    }
+    window.addEventListener('focus', onVisible)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      active = false
+      window.removeEventListener('focus', onVisible)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [enabled])
+
+  useEffect(() => {
+    if (!enabled) return
+    let active = true
+    const id = ++evaluationId.current
+
+    const evaluate = async () => {
+      const platform = getPlatform()
+      let versionCode: number
+      let versionName: string | null
+      let releaseNotes: string | null
+      let effectiveAtMs: number | null
+      let mandatory: boolean
+      let androidTransition: InstalledVersionObservation | null = null
+
+      if (platform === 'android') {
+        // Wait for policy discovery before advancing the durable installed
+        // version baseline; otherwise a slow/failed first fetch could erase
+        // the prior version before a real upgrade is detected.
+        const policy = state.policy
+        if (!ready || !policy) return
+        const version = await getAppVersionInfo()
+        if (!active || version.versionCode === null) return
+        androidTransition = observeInstalledVersion(version.versionCode)
+        if (androidTransition?.kind !== 'upgrade-pending') return
+        if (policy.versionCode !== version.versionCode) return
+        versionCode = policy.versionCode
+        versionName = policy.versionName
+        releaseNotes = policy.releaseNotes
+        effectiveAtMs = policy.effectiveAtMs
+        mandatory = policy.mandatory
+      } else {
+        const policy = webPolicy
+        if (!policy) return
+        versionCode = policy.versionCode
+        versionName = policy.versionName
+        releaseNotes = policy.releaseNotes
+        effectiveAtMs = policy.effectiveAtMs
+        mandatory = policy.mandatory
+      }
+
+      const parsed = parseReleaseNotes(releaseNotes)
+      if (parsed.entries.length === 0 || !active || evaluationId.current !== id) return
+
+      const { data: authData, error: authError } = await supabase.auth.getSession()
+      if (!active || evaluationId.current !== id || authError) return
+      const currentUser = authData.session?.user
+      const userId = currentUser && !currentUser.is_anonymous ? currentUser.id : null
+      if (accountId.current !== userId) {
+        accountId.current = userId
+        bannerAccountId.current = null
+        setBannerOpen(false)
+        setCurrentBanner(null)
+      }
+
+      const acknowledged = userId
+        ? await isReleaseAcknowledgedByUser(versionCode, platform)
+        : isReleaseAcknowledgedLocally(versionCode, platform)
+      if (!active || evaluationId.current !== id) return
+      const isAcknowledged = Boolean(
+        acknowledged && (typeof acknowledged === 'boolean' ? acknowledged : acknowledged.acknowledged),
+      )
+      const key = `${versionCode}-${platform}-${userId ?? 'anonymous'}`
+      const isDismissed = isReleaseNotificationDismissed(versionCode, platform, userId)
+      const banner: ReleaseNotificationBannerContent = {
+        key,
+        versionLabel: versionName || `v${versionCode}`,
+        versionCode,
+        entries: parsed.entries,
+        releasedLabel: effectiveAtMs ? new Date(effectiveAtMs).toLocaleDateString('en-GB') : null,
+        isMandatory: mandatory,
+      }
+      bannerAccountId.current = userId
+      setCurrentBanner(banner)
+      setBannerOpen(!isAcknowledged && !isDismissed)
+    }
+
+    void evaluate().catch(() => {
+      // Release notes are supplemental. Persistence or network failures never
+      // block startup or alter the mandatory-update state machine.
+    })
+
+    return () => {
+      active = false
+    }
+  }, [enabled, webPolicy, authRevision, lifecycleRevision, state.policy, ready])
+
+  const acknowledgeCurrent = useCallback(async () => {
+    const banner = currentBanner
+    if (!banner) return
+    const platform = getPlatform()
+    const { data, error } = await supabase.auth.getSession()
+    if (error) return
+    const currentUser = data.session?.user
+    const userId = currentUser && !currentUser.is_anonymous ? currentUser.id : null
+    if (userId !== bannerAccountId.current) {
+      setBannerOpen(false)
+      setCurrentBanner(null)
+      return
+    }
+
+    try {
+      if (userId) {
+        await markReleaseAcknowledgedByUser(banner.versionCode, platform, userId)
+      } else {
+        const result = markReleaseAcknowledgedLocally(banner.versionCode, platform)
+        if (!result.persisted) return
+      }
+      bannerAccountId.current = null
+      setBannerOpen(false)
+      setCurrentBanner(null)
+    } catch {
+      // Keep the banner available when permanent acknowledgement was not saved.
     }
   }, [currentBanner])
 
-  /** Dismiss the currently displayed banner without acknowledging the release. */
   const dismissCurrent = useCallback(async () => {
-    // Hide the banner without persisting any acknowledgement.
+    if (!currentBanner) return
+    const platform = getPlatform()
+    const { data, error } = await supabase.auth.getSession()
+    if (error) return
+    const currentUser = data.session?.user
+    const userId = currentUser && !currentUser.is_anonymous ? currentUser.id : null
+    if (userId !== bannerAccountId.current) {
+      setBannerOpen(false)
+      setCurrentBanner(null)
+      return
+    }
+    if (!dismissReleaseNotification(currentBanner.versionCode, platform, userId)) return
     setBannerOpen(false)
-    setCurrentBanner(null)
-  }, [bannerOpen, currentBanner])
+  }, [currentBanner])
 
-  return { bannerOpen, setBannerOpen, currentBanner, acknowledgeCurrent, dismissCurrent }
+  return useMemo(
+    () => ({ bannerOpen, currentBanner, acknowledgeCurrent, dismissCurrent }),
+    [bannerOpen, currentBanner, acknowledgeCurrent, dismissCurrent],
+  )
 }

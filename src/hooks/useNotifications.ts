@@ -9,6 +9,7 @@ import {
 } from '@/domain/notifications/notificationScope'
 import { isAndroidNative } from '@/lib/native/capacitor'
 import { useOptionalAppUpdateContext } from '@/contexts/AppUpdateContext'
+import { useReleaseNotificationContext } from '@/hooks/useReleaseNotifications'
 import { useWebAndroidApk } from '@/hooks/useWebAndroidApk'
 
 export type NotificationSeverity = 'info' | 'warning' | 'critical' | 'success' | string
@@ -68,6 +69,7 @@ export function useNotifications(limit = 30): UseNotificationsResult {
   const [error, setError] = React.useState<string | null>(null)
 
   const appUpdate = useOptionalAppUpdateContext()
+  const releaseNotice = useReleaseNotificationContext()
   const webApk = useWebAndroidApk()
 
   const refresh = React.useCallback(async () => {
@@ -117,6 +119,21 @@ export function useNotifications(limit = 30): UseNotificationsResult {
       // Synthetic injects
       const synthetics: AppNotification[] = []
       const now = new Date().toISOString()
+
+      if (releaseNotice.bannerOpen && releaseNotice.currentBanner) {
+        synthetics.push({
+          id: 'synthetic-release-notice',
+          domain: 'system',
+          source: 'release-policy',
+          generator_key: 'app:release:whats-new',
+          title: `What’s new in ${releaseNotice.currentBanner.versionLabel}`,
+          message: `${releaseNotice.currentBanner.entries.length} release note${releaseNotice.currentBanner.entries.length === 1 ? '' : 's'} · Open to review.`,
+          route: '/whats-new',
+          severity: 'info',
+          state: 'active',
+          created_at: now,
+        })
+      }
 
       if (isAndroidNative()) {
         const hasUpdate =
@@ -179,7 +196,7 @@ export function useNotifications(limit = 30): UseNotificationsResult {
     } finally {
       setLoading(false)
     }
-  }, [limit, tenantClient, appUpdate, webApk])
+  }, [limit, tenantClient, appUpdate, releaseNotice, webApk])
 
   React.useEffect(() => {
     void refresh()
@@ -188,6 +205,10 @@ export function useNotifications(limit = 30): UseNotificationsResult {
   const markRead = React.useCallback(
     async (id: string) => {
       const now = new Date().toISOString()
+
+      // Release notices navigate to their dedicated page; opening one does not
+      // acknowledge or persistently dismiss the release.
+      if (id === 'synthetic-release-notice') return
 
       // Handle synthetic notifications locally
       if (id === 'synthetic-web-apk-promo') {
@@ -244,6 +265,10 @@ export function useNotifications(limit = 30): UseNotificationsResult {
       .filter((item) => !item.id.startsWith('synthetic-'))
       .map((item) => item.id)
 
+    if (unreadItems.some((item) => item.id === 'synthetic-release-notice')) {
+      await releaseNotice.dismissCurrent()
+    }
+
     try {
       localStorage.setItem(WEB_APK_DISMISSED_KEY, '1')
       const targetVersion =
@@ -271,7 +296,7 @@ export function useNotifications(limit = 30): UseNotificationsResult {
         throw updateError
       }
     }
-  }, [notifications, refresh, appUpdate])
+  }, [notifications, refresh, appUpdate, releaseNotice])
 
   const unreadCount = React.useMemo(
     () => notifications.filter((item) => isNotificationUnread(item)).length,

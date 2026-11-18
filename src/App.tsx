@@ -24,6 +24,7 @@ import BiometricGate from '@/components/app/BiometricGate'
 import { useAppUpdate } from '@/hooks/useAppUpdate'
 import { AppUpdateProvider } from '@/contexts/AppUpdateContext'
 import UpdateGate from '@/components/app/UpdateGate'
+import { ReleaseNotificationsProvider } from '@/hooks/useReleaseNotifications'
 import WebAppPromoBanner from '@/components/app/WebAppPromoBanner'
 import CookieConsentBanner from '@/components/compliance/CookieConsentBanner'
 import { isBiometricLockEnabled } from '@/lib/native/biometric'
@@ -549,6 +550,7 @@ function App() {
 
   return (
     <AppUpdateProvider value={appUpdate}>
+    <ReleaseNotificationsProvider>
     <>
       <BrowserRouter>
         <PushNotificationRuntime userId={profile?.id} />
@@ -616,6 +618,7 @@ function App() {
       </BrowserRouter>
       {showColdLaunch ? <ColdLaunchTenantTreePresentation tipPathname="/" /> : null}
     </>
+    </ReleaseNotificationsProvider>
     </AppUpdateProvider>
   )
 }

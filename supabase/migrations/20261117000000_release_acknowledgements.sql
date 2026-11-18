@@ -1,58 +1,79 @@
--- Domain: Release Acknowledgement Tracking
--- Table: public.release_acknowledgements
--- Purpose: Track which releases authenticated users have acknowledged,
---          supporting cross-device synchronization without compromising
---          anonymous users (who use device-local persistence).
---
--- Contract (additive, minimal — does not modify existing tables):
---   id                        auto-uuid primary key
---   user_id                   references auth.users on delete cascade
---   version_code              the release version code that was acknowledged
---   platform                  'web' | 'android' — which platform acknowledged this
---   acknowledged_at           when the acknowledgement occurred (server time)
---
--- RLS:
---   Authenticated users: select/insert/update their own rows only (user_id = auth.uid())
---   Anon users: no access to this table (handled via device-local localStorage)
-
--- ============================================================
--- TABLE
--- ============================================================
+-- Additive release acknowledgement storage. Anonymous acknowledgements stay
+-- on-device; authenticated records are isolated by auth.uid() and RLS.
 
 CREATE TABLE IF NOT EXISTS public.release_acknowledgements (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  version_code integer NOT NULL,
+  version_code integer NOT NULL CHECK (version_code > 0),
   platform text NOT NULL CHECK (platform IN ('web', 'android')),
-  acknowledged_at timestamp with time zone DEFAULT now(),
+  acknowledged_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT release_acknowledgements_pkey PRIMARY KEY (id)
 );
 
--- Enable RLS
+CREATE UNIQUE INDEX IF NOT EXISTS release_acknowledgements_user_version_platform_key
+  ON public.release_acknowledgements (user_id, version_code, platform);
+
 ALTER TABLE public.release_acknowledgements ENABLE ROW LEVEL SECURITY;
 
--- Authenticated users: select own rows
-CREATE POLICY release_acknowledgements_auth_select ON public.release_acknowledgements FOR SELECT TO authenticated USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'release_acknowledgements'
+      AND policyname = 'release_acknowledgements_auth_select'
+  ) THEN
+    CREATE POLICY release_acknowledgements_auth_select
+      ON public.release_acknowledgements FOR SELECT TO authenticated
+      USING ((select auth.uid()) = user_id);
+  END IF;
 
--- Authenticated users: insert own rows
-CREATE POLICY release_acknowledgements_auth_insert ON public.release_acknowledgements FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'release_acknowledgements'
+      AND policyname = 'release_acknowledgements_auth_insert'
+  ) THEN
+    CREATE POLICY release_acknowledgements_auth_insert
+      ON public.release_acknowledgements FOR INSERT TO authenticated
+      WITH CHECK ((select auth.uid()) = user_id);
+  END IF;
 
--- Authenticated users: update own rows
-CREATE POLICY release_acknowledgements_auth_update ON public.release_acknowledgements FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'release_acknowledgements'
+      AND policyname = 'release_acknowledgements_auth_update'
+  ) THEN
+    CREATE POLICY release_acknowledgements_auth_update
+      ON public.release_acknowledgements FOR UPDATE TO authenticated
+      USING ((select auth.uid()) = user_id)
+      WITH CHECK ((select auth.uid()) = user_id);
+  END IF;
 
--- ============================================================
--- GRANTS
--- ============================================================
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'release_acknowledgements'
+      AND policyname = 'release_acknowledgements_auth_delete'
+  ) THEN
+    CREATE POLICY release_acknowledgements_auth_delete
+      ON public.release_acknowledgements FOR DELETE TO authenticated
+      USING ((select auth.uid()) = user_id);
+  END IF;
+END
+$$;
 
--- Authenticated users get access via their session; anon access is intentionally
--- omitted so anonymous users rely on device-local localStorage persistence.
+REVOKE ALL ON TABLE public.release_acknowledgements FROM anon, PUBLIC;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.release_acknowledgements TO authenticated;
 
--- ============================================================
--- COMMENT
--- ============================================================
-
-comment on table public.release_acknowledgements is 'Tracks release acknowledgements per authenticated user and platform. Anonymous users use device-local localStorage (bigdrops.app_release_acknowledgements) instead.';
-comment on column public.release_acknowledgements.user_id is 'Link to auth.users; each authenticated user can only access their own acknowledgement records.';
-comment on column public.release_acknowledgements.version_code is 'The release versionCode that was acknowledged.';
-comment on column public.release_acknowledgements.platform is 'Which platform acknowledged this release: ''web'' or ''android''.';
-comment on column public.release_acknowledgements.acknowledged_at is 'When the acknowledgement occurred, using server time.';
+COMMENT ON TABLE public.release_acknowledgements IS
+  'Release acknowledgements for authenticated users; anonymous acknowledgements remain device-local.';
+COMMENT ON COLUMN public.release_acknowledgements.user_id IS
+  'Owner of the acknowledgement; access is restricted to auth.uid() by RLS.';
+COMMENT ON COLUMN public.release_acknowledgements.version_code IS
+  'The acknowledged release version code.';
+COMMENT ON COLUMN public.release_acknowledgements.platform IS
+  'Platform where the release was acknowledged: web or android.';
+COMMENT ON COLUMN public.release_acknowledgements.acknowledged_at IS
+  'Server timestamp when the release was acknowledged.';

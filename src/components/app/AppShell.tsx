@@ -51,6 +51,7 @@ const NewCSR = lazy(() => import('@/pages/NewCSR'))
 const ViewCSR = lazy(() => import('@/pages/ViewCSR'))
 const EditCSR = lazy(() => import('@/pages/EditCSR'))
 const Settings = lazy(() => import('@/pages/Settings'))
+const WhatsNew = lazy(() => import('@/pages/WhatsNew'))
 const Projects = lazy(() => import('@/pages/Projects'))
 const NewProject = lazy(() => import('@/pages/NewProject'))
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'))
@@ -342,6 +343,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/purchase-orders/edit/:id" element={withBoundary(<EditPurchaseOrder />)} />
           <Route path="/purchase-orders/:id" element={withBoundary(<PurchaseOrderDetail />)} />
           <Route path="/settings" element={withBoundary(<Settings />)} />
+          <Route path="/whats-new" element={withBoundary(<WhatsNew />)} />
           <Route path="/settings/notifications" element={withBoundary(<NotificationSettingsPage />)} />
           <Route path="/more" element={withBoundary(<MoreOptions />)} />
           <Route path="/design-lab" element={withBoundary(<DesignLab />)} />
