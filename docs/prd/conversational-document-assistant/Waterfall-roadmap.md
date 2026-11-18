@@ -1766,3 +1766,70 @@ Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verifi
 
 **Not in scope:** Stage 3+ implementation, new migrations, production actions.
 
+## 37. Bolu Document Capability Parity — Stage 3 Implementation Blueprint (2026-11-18)
+
+Source reports: `docs/reports/bolu-document-capability-parity/` (audit.md, stage-0-independent-verification.md, stage-0.1/0.2 reports, stage-0-scratch-tenant-verification.md, stage-2-advance-invoice-wiring.md, stage-2-final-verification.md, stage-3-full-field-parity-audit.md). Commits observed: `f99ee2bd`, `fc6d1dd9` (Stage 0 artifacts), `1d7d6d75` (Stage 1), `e099eab2` (Stage 2).
+
+Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verified implementation or test evidence · **REFERENCE** = supporting material · **PROPOSAL** = future work, not approved scope.
+
+### 37.1 Stage 2 acceptance & qualification
+
+**Status: Accepted with explicit qualifications.**
+
+- OBSERVATION — commit `e099eab2` (`✨ feat(assistant): conversational advance invoice + warnings`, 22 files, +1656/−81; 22 new thread-flow tests; verifier: `docs/reports/bolu-document-capability-parity/stage-2-final-verification.md`).
+- OBSERVATION — four verification baselines: full AI-assistant directory **534 pass / 1 fail / 535 tests** (the 1 failure is pre-existing and unrelated, classified via isolated `git archive 1d7d6d75` comparison); `bun run audit:load` no new ❌/🚨; `bun run typecheck` exit 0; `bun run build` not run.
+- OBSERVATION — Stage 2 surfaces (proposal card, advance preview rows, fixed-mode clamp notice, removal styling, warnings banner, Gate 1/Gate 2 states) verified at **375 / 680 / 768 / 1280 / 1440 px** via local SSR + system Chrome: no horizontal overflow, no clipping, verbatim warning rendering. Qualifications carried forward: (a) full application-shell visual inspection is outstanding (Vite dev server fails to boot: `504 Outdated Optimize Dep`; authenticated bootstrap unavailable); (b) hook-level `useBoluThread` rendering untested in-repo (no React test renderer; not authorized to add dependencies).
+- OBSERVATION — created under DEC-31 reconciliation as a bounded program; production contact and any migrations remain out of scope absent separate authorization.
+- PROPOSAL — remaining verification gap closure requires a bootable environment with non-production credentials (separate authorization).
+
+### 37.2 Stage 3A.1 — Core Contract Integrity & Natural-Language Calculation Behavior (strictly bounded)
+
+**Status: Blueprint agreed — not implemented. No migrations. No widening of the five editable commercial fields; existing-document modifications are Stage 3A.2.**
+
+- DECISION — F3-01: quotation `payment_terms` supplied at creation must be persisted into `custom_fields.payment_terms` (matching the quotation modification path); the current silent drop is removed.
+- DECISION — F3-02: quotation `work_duration` must be rejected or stripped-with-warning; never silently ignored.
+- DECISION — F3-11: the executor must verify `project_id` against the tenant's active `projects` prior to write; invalid/unowned IDs discarded with a warning (mirrors the `item_id` fail-closed pattern), making a PostgreSQL `23503` collision impossible.
+- DECISION — F3-07: `notes` and `terms` must be normalized by the application rich-text normalizer (`parseRichText` / `normalizeRichTextHtml`), supporting structured headings, lists and bold runs; raw/unmatched model HTML is never passed through.
+- DECISION — Prompt: `api/bolu-chat.ts` gains explicit negative-capability refusal rules for unsupported actions (e.g., status transitions) — Bolu refuses or asks in-domain language, never silently fails.
+- DECISION — Natural-Language Business Communication Standard: user-facing calculation responses must not reference internal modules (`calculation.ts` and similar) or expose implementation metadata; Bolu explains business outcomes plainly (e.g., "I've applied the VAT and updated your invoice total").
+- DECISION — Explicit exclusions: broad existing-document commercial field modifications are deferred to Stage 3A.2; item modifications, `custom_fields` families, PDF/signatory authoring, and advance changes are likewise outside 3A.1 scope.
+
+### 37.3 Stage 3A.2 — Existing-Document Field Modifications
+
+**Status: Blueprint agreed — not implemented.**
+
+- DECISION — expand `modify-document` with the same Gate 1 preview / Gate 2 confirmation / `oldValue` optimistic concurrency contract and preservation invariants for the following fields: `terms`, `po_number`, `invoice_title` / `quotation_title`, `project_id`, `work_duration` (invoice only), the fixed charges (`workmanship`, `transportation`, `shipping`), `extraCharges`, and `calculationInputs` (VAT %, discount, WHT).
+- DECISION — field arithmetic must flow through the persisted `calculationInputs` and the domain engine (`computeDocument`) exactly as on create; no model-supplied totals, no parallel calculation engine, no mutation of other persisted calculation inputs beyond those in the proposal.
+- DECISION — every widened field must carry an explicit before/after preview row and stale-guard behavior identical to existing modify operations; unsupported-looking positions (e.g., percentages beyond domain bounds) reject with validation errors, not clamping.
+
+### 37.4 Stage 3B — Custom Document Rows, Group Sections & Direct Preview-Card Item Image Management
+
+**Status: Blueprint agreed — not implemented.**
+
+- DECISION — F3-04: typed create/modify operations for `custom_fields.header` and `custom_fields.additionalFields` as `{ label, value }` pairs: label/value both required (trimmed), label uniqueness enforced within each family, sibling keys merged verbatim (no replacement of foreign keys), PDF detail-row/chip rendering unchanged.
+- DECISION — F3-05, F3-13: typed create/modify support for `row_type: 'group_header'` and `groupMeta` (`name`, `showSubtotal`): deterministic create-from-items flow (groups carry `client_id`-scoped group identity only via the application, never the model), rename/ungroup operations, group subtotals produced by the engine, groups cannot nest, members must be contiguous by construction.
+- DECISION — Direct preview-card item image management: adding, previewing, replacing and removing item `image_url` directly on the invoice and quotation item preview cards, reusing the existing secure tenant storage path (same authorization, same entity scoping as form saves); no round-trip through the document form required; removal clears the reference (object retention is governed by the existing storage lifecycle).
+- DECISION — Item image operations remain item-scoped (no document-level metadata keys), merge-preserving all other item columns, and pass through `custom_data`-adjacent metadata untouched.
+
+### 37.5 Stage 3C — PDF Presentation & Contextual Recommendations
+
+**Status: Blueprint agreed — not implemented.**
+
+- DECISION — verified `signatoryId` resolution against the tenant signatory projection (fail-closed discard with warning, identical semantics to `item_id`/`project_id`), never a silent UUID.
+- DECISION — `notesTitle` / `termsTitle` authoring (section headings), `chargeLabels` overrides (`workmanship` / `transportation` / `shipping`), and `pdfOutput` layout toggles: `showBankDetails`, `bankAccountId` (verified against the tenant bank-accounts projection), `showBalanceDue`, `showAmountInWords`, `compact`.
+- DECISION — F3-09: proactive recommendation guidance in `api/bolu-chat.ts` teaching Bolu *when and why* to suggest custom header rows, site/delivery chips (`additionalFields`), rich-text clauses, group breakdowns, and commercial settings — always grounded in verified context facts, always optional, always Gate-protected. Unverified facts never become recommendations.
+- DECISION — recommendation behavior must respect unresolved-identity abstention (ask one focused question instead of guessing) and must not restate financial results as model-computed values.
+
+### 37.6 Explicitly excluded from this blueprint (PROPOSED — separate authorization)
+
+- Tenant `invoice_items` / `quotation_items` `item_id` foreign-key restoration (Finding F1) — separate migration review of schema, lifecycle, orphan rows and installer paths; separate authorization; production parity not established.
+- Broad CPS ↔ quotation ↔ invoice parity work; crosstab/search indexes; a server-side Gate 2 executor for advance-invoice-config; any production contact, migration, or deployment without separate authorization.
+- Repair of the pre-existing stale gate-lifecycle mock (add `.limit(1)` support) so the suite is green again — separate authorization.
+
+### 37.7 Dependency and verification expectations
+
+- DECISION — execution order: **3A.1 → 3A.2 → 3B → 3C**. 3A.2 builds on 3A.1's executor-guard patterns; 3B stands on the preserve-siblings contract established for Stage 0 modifications; 3C consumes 3A/B outputs plus signatory/bank-account projections.
+- DECISION — every phase ships targeted behavioral tests (create/modify/preserve/adversarial/replay), typecheck exit 0, `audit:load` no new ❌/🚨, no `bun run build`.
+- DECISION — live verification on the disposable project requires separate authorization; production remains untouched absent separate authorization.
+- DECISION — each phase is complete only when Gate 1 preview, Gate 2 confirmation, preservation invariants, stale-guard behavior and executor warnings/result contracts are verified in the report of that phase (`docs/reports/bolu-document-capability-parity/`).
+

@@ -14,10 +14,15 @@ import type {
   BoluClientSearchResult,
 } from '@/lib/ai-assistant/bolu-data'
 import { formatNaira } from '@/lib/formatters/money'
+import { richTextToPlainText } from '@/components/pdf/core/richText'
 import { CopyButton } from './assistant-chat-copy-button'
 import { HandCoins, Trash2 } from 'lucide-react'
 
 /* Advance Invoice proposal helpers (parent-invoice-only metadata). */
+
+function plainTextOf(value: unknown): string {
+  return richTextToPlainText(value)
+}
 
 const ADVANCE_FIELD_ORDER: readonly BoluAdvanceFieldKey[] = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label']
 const ADVANCE_FIELD_LABELS: Record<BoluAdvanceFieldKey, string> = {
@@ -1075,12 +1080,12 @@ export function ProposalCardView({
           ) : null}
           {proposal.payload.terms ? (
             <p className="break-words">
-              Terms: <span className="font-medium text-[var(--ac-ink)]">{proposal.payload.terms}</span>
+              Terms: <span className="font-medium text-[var(--ac-ink)]">{plainTextOf(proposal.payload.terms)}</span>
             </p>
           ) : null}
           {proposal.payload.notes ? (
             <p className="break-words">
-              Notes: <span className="font-medium text-[var(--ac-ink)]">{proposal.payload.notes}</span>
+              Notes: <span className="font-medium text-[var(--ac-ink)]">{plainTextOf(proposal.payload.notes)}</span>
             </p>
           ) : null}
         </div>

@@ -472,9 +472,10 @@ test('End-to-End Invoice Modification updates existing document and respects cur
   assert.equal(result.success, true)
   assert.equal(result.documentNumber, 'INV-000100')
 
-  // Verify updated in store
+  // Verify updated in store (notes are normalized through the application
+  // rich-text subset, so the stored value is a safe paragraph block)
   const doc = tenantClient.store.invoices.find((i) => i.id === '123e4567-e89b-12d3-a456-426614174000')
-  assert.equal(doc.notes, 'Urgent site delivery requested.')
+  assert.equal(doc.notes, '<p>Urgent site delivery requested.</p>')
 })
 
 test('Invoice Modification rejects stale proposals where field changed in database', async () => {

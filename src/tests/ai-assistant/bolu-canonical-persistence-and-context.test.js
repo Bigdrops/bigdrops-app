@@ -265,7 +265,7 @@ test('extension item fields persist through custom_data, never as unknown column
 
 test('terms persist separately from payment terms', () => {
   const service = readSource('src/lib/ai-assistant/bolu-document-service.ts')
-  assert.match(service, /terms: proposal\.payload\.terms \|\| proposal\.payload\.payment_terms \|\| ''/)
+  assert.match(service, /terms: normalizeBoluRichText\(proposal\.payload\.terms \?\? proposal\.payload\.payment_terms\)/)
 })
 
 // ─────────────────────────────────────────────────────────────────────────────

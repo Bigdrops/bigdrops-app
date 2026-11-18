@@ -17,8 +17,35 @@ import {
   ADVANCE_SECONDARY_LABEL_DEFAULT,
   ADVANCE_SUFFIX_DEFAULT,
 } from '@/domain/invoice/advanceChildFlow'
+import type { CommercialRichTextBlock } from '@/lib/commercialRichText'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BoluClientMatch, BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
+
+const RICH_TEXT_BLOCK_TYPES = new Set(['paragraph', 'heading', 'ordered_list', 'unordered_list'])
+
+/**
+ * Accepts the two documented rich-text contracts for notes/terms:
+ * a string (plain text or HTML you may hand to the normalizer) or the
+ * CommercialRichTextBlock[] array. Returns null for anything else.
+ */
+function asRichText(value: unknown): string | CommercialRichTextBlock[] | null {
+  if (typeof value === 'string') {
+    return value
+  }
+  if (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((block) =>
+      block &&
+      typeof block === 'object' &&
+      !Array.isArray(block) &&
+      RICH_TEXT_BLOCK_TYPES.has((block as Record<string, unknown>).type as string),
+    )
+  ) {
+    return value as CommercialRichTextBlock[]
+  }
+  return null
+}
 
 export type BoluOperationType = 'create-document' | 'modify-document' | 'advance-invoice-config'
 export type BoluDocumentFamily = 'invoice' | 'quotation'
@@ -39,7 +66,7 @@ export interface BoluInvoiceItemInput {
   unit_price: number
   unit?: string
   // Extended item fields
-  row_type?: 'standard' | 'group_header'
+  row_type?: 'standard'
   group_id?: string | null
   group_name?: string | null
   item_id?: string | null
@@ -103,10 +130,11 @@ export interface BoluInvoiceCreatePayload {
   items: BoluInvoiceItemInput[]
   issue_date?: string
   due_date?: string
-  notes?: string
+  /** Plain text with newlines, or the structured CommercialRichTextBlock[] contract. */
+  notes?: string | CommercialRichTextBlock[]
   payment_terms?: string
-  /** Terms and conditions, distinct from the payment terms text. */
-  terms?: string | null
+  /** Terms and conditions, distinct from the payment terms text. Plain text or blocks. */
+  terms?: string | CommercialRichTextBlock[] | null
   // Extended fields
   title?: string | null           // invoice_title / quotation_title
   po_number?: string | null
@@ -455,9 +483,9 @@ export function validateInvoiceCreateInput(raw: unknown): {
       items: itemsResult.data,
       issue_date: issueDate,
       due_date: dueDate,
-      notes: typeof payload.notes === 'string' ? payload.notes.trim() : '',
+      notes: (asRichText(payload.notes) ?? '') as BoluInvoiceCreatePayload['notes'],
       payment_terms: typeof payload.payment_terms === 'string' ? payload.payment_terms.trim() : '',
-      terms: typeof payload.terms === 'string' ? payload.terms.trim() || null : null,
+      terms: asRichText(payload.terms),
       title: typeof payload.title === 'string' ? payload.title.trim() || null : null,
       po_number: typeof payload.po_number === 'string' ? payload.po_number.trim() || null : null,
       project_id: typeof payload.project_id === 'string' ? payload.project_id.trim() || null : null,

@@ -31,6 +31,7 @@ import {
   clearAdvanceInvoiceMetadata,
 } from '@/domain/invoice/advanceMetadata'
 import { buildAdvanceParentInvoiceMetadata } from '@/domain/invoice/advanceChildFlow'
+import { normalizeRichTextHtml } from '@/components/pdf/core/richText'
 import type { BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
 import {
   recordBoluDocumentCreationAudit,
@@ -157,9 +158,10 @@ function assertTenantAuthorization(
  */
 function buildBoluCustomFields(
   proposal: BoluInvoiceCreateProposal,
+  family: 'invoice' | 'quotation' = 'invoice',
 ): string {
   const payload = proposal.payload
-  return JSON.stringify({
+  const cf: Record<string, unknown> = {
     created_via: 'bolu_assistant',
     operation_id: proposal.opId,
     extraCharges: (payload.extra_charges ?? []).map((charge) => ({
@@ -179,7 +181,14 @@ function buildBoluCustomFields(
     discountType: payload.discount_type ?? 'percent',
     discountTiming: payload.discount_timing ?? 'before_tax',
     whtType: payload.wht_type ?? 'percent',
-  })
+  }
+  // Quotations have no payment_terms column; the form persists them in
+  // custom_fields.payment_terms. The create path must mirror that so the
+  // value survives and can be stale-checked on later edits.
+  if (family === 'quotation' && payload.payment_terms) {
+    cf.payment_terms = payload.payment_terms
+  }
+  return JSON.stringify(cf)
 }
 
 /**
@@ -571,6 +580,22 @@ export async function persistInvoiceCreation(
   }
 
   try {
+    const createWarnings: string[] = []
+
+    // F3-11: verify a model-supplied project reference before persisting,
+    // mirroring the item_id fail-closed discard semantics.
+    const requestedProjectId = proposal.payload.project_id ?? null
+    let verifiedProjectId = requestedProjectId
+    if (requestedProjectId) {
+      const verified = await verifyProjectReference(tenantClient, String(requestedProjectId))
+      if (!verified) {
+        createWarnings.push(
+          `project_id "${requestedProjectId}" does not reference an active project in this business entity; it was discarded.`,
+        )
+        verifiedProjectId = null
+      }
+    }
+
     // 1. Authoritative financial recalculation using the full commercial payload
     const calculation = computeAuthoritativeTotals(proposal.payload.items, {
       globalVatPercent: proposal.payload.global_vat_percent ?? 7.5,
@@ -597,6 +622,7 @@ export async function persistInvoiceCreation(
       return {
         success: false,
         error: prefixResult.reason,
+        ...(createWarnings.length ? { warnings: createWarnings } : {}),
       }
     }
     const invoicePrefix = resolvePrefix(prefixResult.prefixes, 'invoice')
@@ -615,14 +641,14 @@ export async function persistInvoiceCreation(
       invoice_title: proposal.payload.title ?? null,
       client_id: proposal.payload.client_id ?? null,
       client_name: proposal.payload.client_name,
-      project_id: proposal.payload.project_id ?? null,
+      project_id: verifiedProjectId,
       issue_date: proposal.payload.issue_date || new Date().toISOString().split('T')[0],
       due_date: proposal.payload.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       status: 'unpaid',
       document_type: 'invoice',
       payment_terms: proposal.payload.payment_terms || '',
-      notes: proposal.payload.notes || '',
-      terms: proposal.payload.terms || proposal.payload.payment_terms || '',
+      notes: normalizeBoluRichText(proposal.payload.notes),
+      terms: normalizeBoluRichText(proposal.payload.terms ?? proposal.payload.payment_terms),
       workmanship: proposal.payload.workmanship ?? 0,
       transportation: proposal.payload.transportation ?? 0,
       shipping: proposal.payload.shipping ?? 0,
@@ -710,15 +736,21 @@ export async function persistInvoiceCreation(
             success: true,
             documentId: existing.id,
             documentNumber: existing.number,
+            ...(createWarnings.length ? { warnings: createWarnings } : {}),
           }
         }
         // Confirmed conflict but the existing document could not be verified.
         // Never report a false successful replay.
-        return { success: false, error: 'Operation already committed, but the existing document could not be verified.' }
+        return {
+          success: false,
+          error: 'Operation already committed, but the existing document could not be verified.',
+          ...(createWarnings.length ? { warnings: createWarnings } : {}),
+        }
       }
       return {
         success: false,
         error: `Failed to persist invoice: ${retryResult.error?.message || 'Database insert failed'}`,
+        ...(createWarnings.length ? { warnings: createWarnings } : {}),
       }
     }
 
@@ -737,6 +769,7 @@ export async function persistInvoiceCreation(
         return {
           success: false,
           error: `Invoice item saving failed: ${itemsError.message}. The draft was rolled back.`,
+          ...(createWarnings.length ? { warnings: createWarnings } : {}),
         }
       }
     }
@@ -766,6 +799,7 @@ export async function persistInvoiceCreation(
       success: true,
       documentId: effectiveId,
       documentNumber: effectiveNumber,
+      ...(createWarnings.length ? { warnings: createWarnings } : {}),
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected persistence error'
@@ -821,6 +855,28 @@ export async function persistQuotationCreation(
   }
 
   try {
+    const createWarnings: string[] = []
+
+    // F3-11: verify a model-supplied project reference before persisting,
+    // mirroring the item_id fail-closed discard semantics.
+    const requestedProjectId = proposal.payload.project_id ?? null
+    let verifiedProjectId = requestedProjectId
+    if (requestedProjectId) {
+      const verified = await verifyProjectReference(tenantClient, String(requestedProjectId))
+      if (!verified) {
+        createWarnings.push(
+          `project_id "${requestedProjectId}" does not reference an active project in this business entity; it was discarded.`,
+        )
+        verifiedProjectId = null
+      }
+    }
+
+    // F3-02: work_duration does not exist on quotations; strip with a warning
+    // rather than silently dropping it.
+    if (proposal.payload.work_duration != null && String(proposal.payload.work_duration).trim() !== '') {
+      createWarnings.push('work_duration is not supported on quotations; it was omitted.')
+    }
+
     // 1. Authoritative financial recalculation (identical engine to invoices)
     const calculation = computeAuthoritativeTotals(proposal.payload.items, {
       globalVatPercent: proposal.payload.global_vat_percent ?? 7.5,
@@ -846,6 +902,7 @@ export async function persistQuotationCreation(
       return {
         success: false,
         error: prefixResult.reason,
+        ...(createWarnings.length ? { warnings: createWarnings } : {}),
       }
     }
     const quotationPrefix = resolvePrefix(prefixResult.prefixes, 'quotation')
@@ -865,12 +922,12 @@ export async function persistQuotationCreation(
       quotation_title: proposal.payload.title ?? null,
       client_id: proposal.payload.client_id ?? null,
       client_name: proposal.payload.client_name,
-      project_id: proposal.payload.project_id ?? null,
+      project_id: verifiedProjectId,
       issue_date: proposal.payload.issue_date || new Date().toISOString().split('T')[0],
       valid_until: proposal.payload.due_date || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       status: 'open',
-      notes: proposal.payload.notes || '',
-      terms: proposal.payload.terms || proposal.payload.payment_terms || '',
+      notes: normalizeBoluRichText(proposal.payload.notes),
+      terms: normalizeBoluRichText(proposal.payload.terms ?? proposal.payload.payment_terms),
       workmanship: proposal.payload.workmanship ?? 0,
       transportation: proposal.payload.transportation ?? 0,
       shipping: proposal.payload.shipping ?? 0,
@@ -881,9 +938,8 @@ export async function persistQuotationCreation(
       install_rate_total: calculation.installRateTotal,
       total: calculation.totalPayable,
       amount_in_words: numberToWords(calculation.totalPayable),
-      custom_fields: buildBoluCustomFields(proposal),
+      custom_fields: buildBoluCustomFields(proposal, 'quotation'),
       operation_id: proposal.opId,
-      work_duration: proposal.payload.work_duration ?? null,
     }
 
     const itemsToSave = proposal.payload.items.map((item, index) => serializeBoluItem(item, index))
@@ -952,14 +1008,20 @@ export async function persistQuotationCreation(
             success: true,
             documentId: existing.id,
             documentNumber: existing.number,
+            ...(createWarnings.length ? { warnings: createWarnings } : {}),
           }
         }
         // Confirmed conflict but the existing document could not be verified.
-        return { success: false, error: 'Operation already committed, but the existing document could not be verified.' }
+        return {
+          success: false,
+          error: 'Operation already committed, but the existing document could not be verified.',
+          ...(createWarnings.length ? { warnings: createWarnings } : {}),
+        }
       }
       return {
         success: false,
         error: `Failed to persist quotation: ${retryResult.error?.message || 'Database insert failed'}`,
+        ...(createWarnings.length ? { warnings: createWarnings } : {}),
       }
     }
 
@@ -977,6 +1039,7 @@ export async function persistQuotationCreation(
         return {
           success: false,
           error: `Quotation item saving failed: ${itemsError.message}. The draft was rolled back.`,
+          ...(createWarnings.length ? { warnings: createWarnings } : {}),
         }
       }
     }
@@ -1004,6 +1067,7 @@ export async function persistQuotationCreation(
       success: true,
       documentId: effectiveId,
       documentNumber: effectiveNumber,
+      ...(createWarnings.length ? { warnings: createWarnings } : {}),
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected persistence error'
@@ -1059,6 +1123,32 @@ const QUOTATION_MODIFY_CONFIG: FamilyModifyConfig = {
  * touches items, columns or sibling custom_fields keys.
  */
 const ADVANCE_INVOICE_SELECT = INVOICE_MODIFY_CONFIG.select + ', total'
+
+/**
+ * Normalizes user-facing rich text (plain text, arbitrary HTML, or the
+ * CommercialRichTextBlock[] contract) into the safe TipTap HTML subset.
+ * Unsafe/unsupported markup never reaches the database raw.
+ */
+function normalizeBoluRichText(value: unknown): string {
+  return normalizeRichTextHtml(value)
+}
+
+/** F3-11: project_id must exist as an active (non-archived) project in this
+ * tenant before persistence; otherwise it is discarded with a warning,
+ * never passed through to risk a PostgreSQL FK failure. */
+async function verifyProjectReference(tenantClient: TenantClient, projectId: string): Promise<boolean> {
+  try {
+    const res = await (tenantClient.from('projects') as any)
+      .select('id')
+      .eq('id', projectId)
+      .is('archived_at', null)
+      .limit(1)
+      .maybeSingle()
+    return !res.error && Boolean(res.data)
+  } catch {
+    return false
+  }
+}
 
 /**
  * Shared implementation for Bolu document modification (invoice and quotation).
@@ -1153,7 +1243,10 @@ async function persistDocumentModification(
       }
 
       if (dbField) {
-        updates[dbField] = proposal.newValue
+        // notes/terms are rich text; normalize through the application subset (F3-07)
+        updates[dbField] = (field === 'notes' || field === 'terms')
+          ? normalizeBoluRichText(proposal.newValue)
+          : proposal.newValue
       } else if (cfKey) {
         const cf = parseCustomFields(currentDoc.custom_fields)
         const merged = { ...cf, [cfKey]: proposal.newValue }

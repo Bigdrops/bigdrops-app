@@ -542,3 +542,30 @@ The Bolu conversational document pipeline had two integrity gaps verified across
 - Complies with DEC-30 (application-owned operations), DEC-31 (roadmap reconciliation; see Waterfall-roadmap.md §36), DEC-32/33 (no pipeline stage claimed implemented).
 - Retains the Stage 0.3 finding F1 explicitly; does not convert the DISPOSABLE verification into a production claim.
 
+## DEC-41 - Bolu Document Capability Parity: Stage 3 Implementation Blueprint
+
+**Status:** ADOPTED AS BLUEPRINT — no implementation started. Stage 2 recorded ACCEPTED with explicit qualifications (commit `e099eab2`). Stage 3+ beyond this blueprint remains PROPOSED, not approved scope.
+
+**Stage 0–2 final disposition.** Stage 2 acceptance with qualifications: commit `e099eab2` (22 files, +1656/−81, `✨ feat(assistant): conversational advance invoice + warnings`); verified per `stage-2-final-verification.md` — 22/22 thread-flow tests, full Bolu directory 534 pass / 1 pre-existing unrelated failure (stale gate-lifecycle mock missing `.limit(1)`, classified via isolated `git archive 1d7d6d75` comparison as environment/harness defect, not a regression); typecheck exit 0. Qualifications carried forward: (a) full application-shell visual inspection outstanding (dev server fails to boot: `504 Outdated Optimize Dep`; authenticated bootstrap unavailable); (b) hook-level `useBoluThread` rendering untested in-repo (no React test renderer; adding dependencies not authorized). Stage 2 surfaces were verified at 375/680/768/1280/1440 px with no horizontal overflow. Stage 1 remains completed at unit level; live disposable execution outstanding. Finding F1 retained (tenant `invoice_items`/`quotation_items` lack `item_id` FKs; application-layer guard effective; FK restoration PROPOSED separately, production parity not established).
+
+**Stage 3 outline adopted** — four phases, in order 3A.1 → 3A.2 → 3B → 3C; each phase complete only with Gate 1/Gate 2, preservation invariants, stale guard and executor result/warning contracts verified and reported:
+
+1. **Stage 3A.1 — Core Contract Integrity & Natural-Language Calculation Behavior (strictly bounded).** Approved fixes:
+   - F3-01: quotation `payment_terms` at creation persist into `custom_fields.payment_terms` (mirror of the modification path); the silent drop is removed.
+   - F3-02: quotation `work_duration` is rejected or stripped with warning; never silently ignored.
+   - F3-11: the executor verifies `project_id` against the tenant's active `projects` before write; invalid/unowned IDs are discarded with a warning (same semantics as the `item_id` discard path), precluding PostgreSQL `23503`.
+   - F3-07: `notes` / `terms` are normalized by the application rich-text normalizer (`parseRichText` / `normalizeRichTextHtml`); structured headings/lists/bold runs supported; raw/unmatched model HTML blocked.
+   - Prompt gains explicit negative-capability refusal rules for unsupported actions (e.g., status transitions) — refusal in-domain language, never silent failure.
+   - Natural-Language Business Communication Standard: calculation responses carry business outcomes ("I've applied the VAT and updated your invoice total"), never internal module references.
+   - Explicitly excluded: broad existing-document commercial field modifications (deferred to 3A.2).
+2. **Stage 3A.2 — Existing-Document Field Modifications.** Expand `modify-document` with the established contract (Gate 1 preview, Gate 2 confirmation, `oldValue` optimistic guards, preservation invariants, domain-engine arithmetic only) for: `terms`, `po_number`, `invoice_title` / `quotation_title`, `project_id`, `work_duration` (invoice only), fixed charges (`workmanship`, `transportation`, `shipping`), `extraCharges`, and `calculationInputs` (VAT %, discount, WHT).
+3. **Stage 3B — Custom Document Rows, Group Sections & Direct Preview-Card Item Image Management.** Typed create/modify operations for `custom_fields.header` and `custom_fields.additionalFields` (`{ label, value }` pairs, sibling merge) repairing F3-04; typed `row_type: 'group_header'` and `groupMeta` (`name`, `showSubtotal`) repairing F3-05/F3-13; and direct preview-card item image management (`image_url`) — add/preview/replace/remove on invoice and quotation preview cards via the existing secure tenant storage path, without returning to the document form.
+4. **Stage 3C — PDF Presentation & Contextual Recommendations.** Verified signatory resolution (`signatoryId`); `notesTitle` / `termsTitle`; `chargeLabels`; `pdfOutput` toggles (`showBankDetails`, `bankAccountId` verified against the tenant projection, `showBalanceDue`, `showAmountInWords`, `compact`); proactive recommendation guidance in `api/bolu-chat.ts` teaching Bolu when and why to suggest custom header rows, site/delivery chips, rich-text clauses, group breakdowns and commercial settings (F3-09), grounded in verified facts and always optional under the gates.
+
+**Explicitly out of scope (PROPOSAL, separate authorization).** Finding F1 tenant `item_id` FK restoration (schema/lifecycle/orphan-row/installer-path review); deep CPS ↔ quotation ↔ invoice parity; a server-side Gate 2 executor for advance-invoice-config; the pre-existing stale gate-lifecycle mock failure (`createPersistenceMock()` missing `.limit(1)`) — repair requires separate authorization; all production migration/deployment/contact; any new migration not separately authorized.
+
+**Relationship to Prior Decisions.**
+- DEC-40 recorded Stage 0–2 outcomes; this decision records Stage 2 acceptance and the Stage 3 blueprint.
+- Complies with DEC-30 (application-owned operations), DEC-31 (roadmap reconciliation; `Waterfall-roadmap.md` §37), DEC-32/33 (no pipeline stage claimed implemented; Stage 3 remains bounded to the four phases).
+- Retains Finding F1 explicitly; does not convert disposable verification into a production claim.
+
