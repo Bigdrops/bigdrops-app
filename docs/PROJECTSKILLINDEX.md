@@ -15,7 +15,7 @@
 | `node_modules/@dietrichgebert/ponytail/` | 6 skills + 6 commands + 10 hooks | Ponytail lazy senior dev mode plugin (RAM Safe) |
 | **Total** | **159 skills** | *(+ ~30 bundled inside `awesome-claude-skills` + 232 subagents in `docs/SUBAGENTS.md`)* |
 
-> **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install) and were purged from `.commandcode/skills/` (not indexed because they already exist in `.agents`/`.claude`).
+> **Note:** 4 skills (`appllama-app-design-skill`, `swift-api-design-guidelines`, `swiftui-animation`, `swiftui-gestures`) exist in both `.agents/skills/` and `.claude/skills/` (mirrored install).
 
 ---
 ## `.agents/skills/`
@@ -143,7 +143,7 @@ Installed from `dpearson2699/swift-ios-skills` on 2026-08-19. Swift 6.3 / iOS 26
 | 95 | swiftui-animation | .agents/skills/swiftui-animation/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\swiftui-animation\SKILL.md | SwiftUI motion — explicit/scoped implicit animations, springs, PhaseAnimator, KeyframeAnimator, matchedGeometry, SF Symbol effects |
 | 96 | swiftui-gestures | .agents/skills/swiftui-gestures/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\swiftui-gestures\SKILL.md | SwiftUI gestures — tap/longPress/drag/magnify/rotate, composition (simultaneous/sequenced), @GestureState, custom Gesture protocol |
 
-> **Note:** These 4 skills are mirrored in `.claude/skills/` and were purged from `.commandcode/skills/` by the installer. Index lists the canonical `.agents/skills/` copy; `.commandcode` duplicates are purged (not indexed) because the skills already exist in `.agents`/`.claude`.
+> **Note:** These 4 skills are mirrored in `.claude/skills/`. Index lists the canonical `.agents/skills/` copy.
 
 ### Added via animation and UI toolkit installs
 Installed on 2026-09-01. Animation construction, review, UI library selection, prototyping, Apple design, and Swift skills.
@@ -210,7 +210,7 @@ Installed by the user on 2026-09-10. 38 marketing, growth, and conversion skills
 | 148 | social | .agents/skills/social/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\social\SKILL.md | Social media — content, channels, calendar |
 
 ### Added via `plannotator/effective-html`
-Installed by the user on 2026-09-12. 6 self-contained single-file HTML artifact skills. Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, `.commandcode/skills/`, `.continue/skills/`, `.hermes/skills/`, `.kiro/skills/`, `.roo/skills/`, `.windsurf/skills/`; this index lists the canonical `.agents/skills/` copy.
+Installed by the user on 2026-09-12. 6 self-contained single-file HTML artifact skills. Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, `.hermes/skills/`, and `.kiro/skills/`; this index lists the canonical `.agents/skills/` copy.
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
@@ -230,7 +230,7 @@ Installed by the user on 2026-09-14. 2 Neon / Lakebase Postgres skills. Recorded
 | 156 | neon-postgres | .agents/skills/neon-postgres/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\neon-postgres\SKILL.md | Lakebase Postgres — pooled vs direct connections, branching, migrations on branches, autoscaling, scale-to-zero, instant restore, read replicas, `neon inspect db` diagnostics, Lakebase Search (vector/BM25/hybrid) |
 
 ### Added via `Jakubantalik/Libraries.dev` skill install
-Installed by the user on 2026-09-28 via `bunx skills add Jakubantalik/Libraries.dev`. UI effect libraries for AI-era interfaces (thinking-orbs, border-beam, liquid-gooey, voice-glow, bot-avatars, metal-fx, img-fx). Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, `.commandcode/skills/`, `.continue/skills/`, `.hermes/skills/`, `.kiro/skills/`, `.roo/skills/`, `.windsurf/skills/`; this index lists the canonical `.agents/skills/` copy.
+Installed by the user on 2026-09-28 via `bunx skills add Jakubantalik/Libraries.dev`. UI effect libraries for AI-era interfaces (thinking-orbs, border-beam, liquid-gooey, voice-glow, bot-avatars, metal-fx, img-fx). Recorded in `skills-lock.json`. Mirrored across `.agents/skills/`, `.claude/skills/`, `.hermes/skills/`, and `.kiro/skills/`; this index lists the canonical `.agents/skills/` copy.
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
