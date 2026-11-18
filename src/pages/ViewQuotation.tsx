@@ -19,6 +19,7 @@ import DocumentTopNav from "@/components/document-view/shared/DocumentTopNav";
 import "@/components/document-view/shared/documentViewTheme.css";
 import { CenteredSpinner } from "@/components/loading/AppLoadingStates";
 import { normalizeInvoicePdfTemplateId } from "@/domain/invoice";
+import { isBoluCreatedDocument } from "@/lib/ai-assistant/bolu-audit";
 import type { BaseDocument } from "@/components/document-view/types/documentView";
 import { formatQuotationStatus } from "@/components/quotation/quotationStatus";
 import { getQuotationDocumentRelations } from "@/domain/documentRelationships";
@@ -240,7 +241,10 @@ export default function ViewQuotation() {
         topNav={
           <DocumentTopNav
             title={docProps.number}
-            subtitle={quotation.quotation_title || undefined}
+            subtitle={[
+              quotation.quotation_title || undefined,
+              isBoluCreatedDocument(quotation.custom_fields) ? 'Co-created with Bolu' : undefined,
+            ].filter(Boolean).join(' · ') || undefined}
             backLabel="Quotations"
             onBack={() => navigate("/quotations")}
             onShare={() => setShareOpen(true)}

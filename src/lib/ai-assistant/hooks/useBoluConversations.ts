@@ -16,6 +16,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/supabase'
 import { EntityContext } from '@/lib/tenant/entityContext'
+import { isGenericTitle, deriveConversationTitle } from '../bolu-titles'
 
 export interface BoluConversationSummary {
   id: string
@@ -156,6 +157,52 @@ export function useBoluConversations(options: UseBoluConversationsOptions = {}):
 
       const mapped = ((data as RawConversationRow[]) ?? []).map(mapRowToSummary)
       setConversations(mapped)
+
+      // Safe, controlled background backfill for historical generic titles
+      const genericThreads = mapped.filter((c) => isGenericTitle(c.title))
+      if (genericThreads.length > 0) {
+        const genericIds = genericThreads.map((c) => c.id)
+        void (async () => {
+          try {
+            const { data: firstMsgs } = await (supabase.from('bolu_messages') as any)
+              .select('conversation_id, content, created_at')
+              .in('conversation_id', genericIds)
+              .eq('role', 'user')
+              .order('created_at', { ascending: true })
+
+            if (firstMsgs && firstMsgs.length > 0) {
+              const titlesToUpdate: Array<{ id: string; title: string }> = []
+              const seen = new Set<string>()
+
+              for (const msg of firstMsgs) {
+                if (!seen.has(msg.conversation_id)) {
+                  seen.add(msg.conversation_id)
+                  const derived = deriveConversationTitle(msg.content)
+                  if (!isGenericTitle(derived)) {
+                    titlesToUpdate.push({ id: msg.conversation_id, title: derived })
+                  }
+                }
+              }
+
+              if (titlesToUpdate.length > 0) {
+                setConversations((prev) =>
+                  prev.map((c) => {
+                    const update = titlesToUpdate.find((u) => u.id === c.id)
+                    return update ? { ...c, title: update.title } : c
+                  }),
+                )
+                for (const update of titlesToUpdate) {
+                  void (supabase.from('bolu_conversations') as any)
+                    .update({ title: update.title, updated_at: new Date().toISOString() })
+                    .eq('id', update.id)
+                }
+              }
+            }
+          } catch (backfillErr) {
+            console.warn('[useBoluConversations] Title backfill ignored error:', backfillErr)
+          }
+        })()
+      }
 
       setActiveConversationId((prev) => {
         if (prev && mapped.some((c) => c.id === prev)) {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, ChevronDown, Eye, EyeOff, Loader2, RefreshCw, Search, Server, ShieldCheck } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -287,10 +288,12 @@ export function ConnectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit connection' : 'Add provider connection'}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto overflow-x-hidden overscroll-contain w-[calc(100vw-2rem)] max-w-lg min-w-0 box-border p-4 sm:p-6">
+        <DialogHeader className="min-w-0 pr-8 sm:pr-10">
+          <DialogTitle className="text-base sm:text-lg font-semibold text-bd-text truncate">
+            {isEdit ? 'Edit connection' : 'Add provider connection'}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-bd-text-muted leading-relaxed break-words">
             {isEdit
               ? 'Update configuration, model, or credentials. Blank key keeps the stored credential.'
               : 'Configure a provider connection for Bolu. Credentials are encrypted on the server with AES-256-GCM.'}
@@ -298,54 +301,54 @@ export function ConnectionDialog({
         </DialogHeader>
 
         {!schemaReady && (
-          <div className="rounded-lg border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] leading-snug text-bd-status-warning-text">
+          <div className="rounded-lg border border-bd-status-warning-border bg-bd-status-warning-bg px-3 py-2 text-[11px] leading-snug text-bd-status-warning-text min-w-0 w-full box-border break-words">
             <span className="font-semibold">Setup preview:</span> Database migration is not applied, so saving is disabled. You can still enter your key, run connection tests, and discover models live.
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0 w-full box-border">
           {/* Provider Selection */}
           {!isEdit ? (
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0 w-full">
               <Label>Provider</Label>
               <Select value={providerId} onValueChange={applyProvider}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full min-w-0 max-w-full box-border [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate">
                   <SelectValue placeholder="Choose a provider" />
                 </SelectTrigger>
-                <SelectContent className="max-h-64">
+                <SelectContent className="max-h-64 max-w-[calc(100vw-3rem)]">
                   <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-bd-text-soft">
                     Curated Providers
                   </div>
                   {PROVIDER_CATALOGUE.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      <span className="flex items-center gap-2">
-                        <ProviderLogo providerId={p.id} size={16} />
-                        {p.name}
+                      <span className="flex items-center gap-2 truncate">
+                        <ProviderLogo providerId={p.id} size={16} className="shrink-0" />
+                        <span className="truncate">{p.name}</span>
                       </span>
                     </SelectItem>
                   ))}
                   <div className="border-t border-bd-border my-1" />
                   <SelectItem value={CUSTOM_PROVIDER_ID}>
-                    <span className="flex items-center gap-2 font-medium">
-                      <Server size={16} className="text-bd-text-muted" />
-                      Custom endpoint (OpenAI / Anthropic compatible)
+                    <span className="flex items-center gap-2 font-medium truncate min-w-0">
+                      <Server size={16} className="text-bd-text-muted shrink-0" />
+                      <span className="truncate">Custom endpoint (OpenAI / Anthropic compatible)</span>
                     </span>
                   </SelectItem>
                 </SelectContent>
               </Select>
               {entry?.regionNote && (
-                <p className="text-[11px] text-bd-text-muted">{entry.regionNote}</p>
+                <p className="text-[11px] text-bd-text-muted break-words leading-tight">{entry.regionNote}</p>
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-lg border border-bd-border bg-bd-surface-muted px-3 py-2">
-              <ProviderLogo providerId={providerId} size={18} />
-              <span className="text-sm font-medium text-bd-text">{entry?.name ?? 'Custom provider'}</span>
+            <div className="flex items-center gap-2 rounded-lg border border-bd-border bg-bd-surface-muted px-3 py-2 min-w-0 w-full box-border">
+              <ProviderLogo providerId={providerId} size={18} className="shrink-0" />
+              <span className="text-sm font-medium text-bd-text truncate">{entry?.name ?? 'Custom provider'}</span>
             </div>
           )}
 
           {/* Connection Name */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 min-w-0 w-full">
             <Label htmlFor="bolu-conn-name">Connection name</Label>
             <Input
               id="bolu-conn-name"
@@ -357,13 +360,14 @@ export function ConnectionDialog({
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"
+              className="w-full min-w-0 box-border text-xs sm:text-sm"
             />
           </div>
 
           {/* API Key with visibility & test trigger */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="bolu-conn-key">
+          <div className="space-y-1.5 min-w-0 w-full">
+            <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+              <Label htmlFor="bolu-conn-key" className="min-w-0 truncate">
                 {isEdit ? 'Replace API key (optional)' : 'API key'}
               </Label>
               {entry?.docsUrl && (
@@ -371,13 +375,13 @@ export function ConnectionDialog({
                   href={entry.docsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] text-bd-primary hover:underline"
+                  className="text-[11px] text-bd-primary hover:underline shrink-0"
                 >
                   Get API key ↗
                 </a>
               )}
             </div>
-            <div className="relative">
+            <div className="relative w-full min-w-0">
               <Input
                 id="bolu-conn-key"
                 name="bolu-api-key"
@@ -388,62 +392,64 @@ export function ConnectionDialog({
                 autoComplete="new-password"
                 data-1p-ignore
                 data-lpignore="true"
-                className="pr-10 font-mono text-xs"
+                className="pr-10 font-mono text-xs w-full min-w-0 box-border"
               />
               <button
                 type="button"
                 onClick={() => setShowKey((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-bd-text-muted hover:text-bd-text"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-bd-text-muted hover:text-bd-text p-1"
                 aria-label={showKey ? 'Hide API key' : 'Show API key'}
               >
                 {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-            <p className="flex items-center gap-1 text-[11px] text-bd-text-muted">
-              <ShieldCheck size={12} className="text-emerald-500" />
-              AES-256-GCM encrypted on the server. Never stored in the browser.
+            <p className="flex items-start gap-1.5 text-[11px] text-bd-text-muted min-w-0 w-full">
+              <ShieldCheck size={13} className="text-emerald-500 shrink-0 mt-0.5" />
+              <span className="min-w-0 break-words leading-tight">
+                AES-256-GCM encrypted on the server. Never stored in the browser.
+              </span>
             </p>
           </div>
 
           {/* Model Selection with live search & discovery */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label>Target Model</Label>
+          <div className="space-y-1.5 min-w-0 w-full box-border">
+            <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 min-w-0 w-full">
+              <Label className="shrink-0 text-xs sm:text-sm font-medium">Target Model</Label>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-6 gap-1 px-2 text-[11px]"
+                className="h-6 gap-1 px-2 text-[11px] shrink-0"
                 onClick={handleDiscover}
                 disabled={discovering || !discoverySupported}
                 title={discoverySupported ? 'Query provider live models endpoint' : 'Provider has no documented model list endpoint'}
               >
-                {discovering ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                Discover models
+                {discovering ? <Loader2 size={12} className="animate-spin shrink-0" /> : <RefreshCw size={12} className="shrink-0" />}
+                <span>Discover models</span>
               </Button>
             </div>
 
             {/* Model Selector Trigger & Modal */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0 w-full">
               <button
                 type="button"
                 onClick={() => setModelPickerOpen(true)}
-                className="flex items-center justify-between gap-2 rounded-lg border border-bd-border bg-bd-surface-muted/80 px-3 py-2 text-left hover:border-bd-border-strong hover:bg-bd-surface-muted transition-all w-full"
+                className="flex items-center justify-between gap-2 rounded-lg border border-bd-border bg-bd-surface-muted/80 px-3 py-2 text-left hover:border-bd-border-strong hover:bg-bd-surface-muted transition-all w-full min-w-0 box-border"
                 title="Search and select from discovered or curated models"
               >
-                <div className="min-w-0 flex-1 truncate">
+                <div className="min-w-0 flex-1 overflow-hidden">
                   <span className="font-mono text-xs font-semibold text-bd-text truncate block">
                     {effectiveModel || 'Select a model...'}
                   </span>
-                  <span className="text-[10px] text-bd-text-muted">
+                  <span className="text-[10px] text-bd-text-muted truncate block">
                     {discovered.length > 0
                       ? `${discovered.length} discovered models`
                       : `${entry?.curatedModels.length ?? 0} curated models`}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-bd-text-muted shrink-0 text-xs">
+                <div className="flex items-center gap-1.5 text-bd-text-muted shrink-0 text-xs ml-1">
                   <span className="text-[10px] text-bd-primary font-semibold">Browse</span>
-                  <Search size={13} />
+                  <Search size={13} className="shrink-0" />
                 </div>
               </button>
 
@@ -470,26 +476,26 @@ export function ConnectionDialog({
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
                 placeholder="e.g. provider/model-name or deepseek-chat"
-                className="font-mono text-xs mt-1.5"
+                className="font-mono text-xs mt-1.5 w-full min-w-0 box-border"
                 maxLength={200}
               />
             )}
           </div>
 
           {/* Routing & Pool Participation Controls */}
-          <div className="rounded-lg border border-bd-border bg-bd-surface-muted/60 p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="rounded-lg border border-bd-border bg-bd-surface-muted/60 p-3 sm:p-4 space-y-3 min-w-0 w-full box-border">
+            <div className="flex items-center justify-between gap-3 min-w-0 w-full">
+              <div className="min-w-0 flex-1 pr-1">
                 <p className="text-xs font-semibold text-bd-text">Participate in Routing Pool</p>
-                <p className="text-[11px] text-bd-text-muted">
+                <p className="text-[11px] text-bd-text-muted leading-relaxed break-words">
                   Bolu automatically selects from the active pool based on priority and health.
                 </p>
               </div>
-              <Switch checked={inPool} onCheckedChange={setInPool} aria-label="Participate in routing pool" />
+              <Switch checked={inPool} onCheckedChange={setInPool} aria-label="Participate in routing pool" className="shrink-0" />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-bd-border/50">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-bd-border/50 min-w-0 w-full box-border">
+              <div className="space-y-1 min-w-0 w-full">
                 <Label htmlFor="bolu-conn-priority" className="text-[11px]">Priority Rank</Label>
                 <Input
                   id="bolu-conn-priority"
@@ -498,22 +504,22 @@ export function ConnectionDialog({
                   max={1000}
                   value={priority}
                   onChange={(e) => setPriority(Math.max(1, Math.min(1000, Number(e.target.value) || 100)))}
-                  className="h-8 font-mono text-xs"
+                  className="h-8 font-mono text-xs w-full min-w-0 box-border"
                 />
                 <p className="text-[10px] text-bd-text-muted">1 = highest priority</p>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0 w-full">
                 <Label className="text-[11px]">Paid Tier Account</Label>
                 <div className="flex items-center h-8">
-                  <label className="flex items-center gap-2 text-xs text-bd-text cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-bd-text cursor-pointer min-w-0 select-none">
                     <input
                       type="checkbox"
                       checked={isPaidTier}
                       onChange={(e) => setIsPaidTier(e.target.checked)}
-                      className="h-4 w-4 rounded accent-bd-primary"
+                      className="h-4 w-4 rounded accent-bd-primary shrink-0"
                     />
-                    <span>Metered / Paid tier</span>
+                    <span className="text-xs font-medium text-bd-text leading-tight">Metered / Paid tier</span>
                   </label>
                 </div>
                 <p className="text-[10px] text-bd-text-muted">Higher rate limit allowance</p>
@@ -521,31 +527,31 @@ export function ConnectionDialog({
             </div>
           </div>
 
-          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-            <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-bd-text-muted hover:text-bd-text">
-              <ChevronDown size={14} className={advancedOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
-              Advanced endpoint settings
+          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen} className="min-w-0 w-full box-border">
+            <CollapsibleTrigger className="flex items-center gap-1.5 text-xs font-medium text-bd-text-muted hover:text-bd-text select-none">
+              <ChevronDown size={14} className={cn("shrink-0 transition-transform duration-200", advancedOpen && "rotate-180")} />
+              <span>Advanced endpoint settings</span>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3 space-y-3">
-              <div className="space-y-1.5">
+            <CollapsibleContent className="mt-3 space-y-3 min-w-0 w-full box-border">
+              <div className="space-y-1.5 min-w-0 w-full">
                 <Label htmlFor="bolu-conn-url">Base URL</Label>
-                <Input id="bolu-conn-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://api.provider.com/v1" className="font-mono text-xs" />
+                <Input id="bolu-conn-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://api.provider.com/v1" className="font-mono text-xs w-full min-w-0 box-border" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0 w-full box-border">
+                <div className="space-y-1.5 min-w-0 w-full">
                   <Label>Protocol</Label>
                   <Select value={protocol} onValueChange={(v) => setProtocol(v as ProviderProtocol)}>
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-full min-w-0 max-w-full box-border [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="openai">OpenAI-compatible</SelectItem>
                       <SelectItem value="anthropic">Anthropic messages</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0 w-full">
                   <Label>Auth scheme</Label>
                   <Select value={authScheme} onValueChange={(v) => setAuthScheme(v as ProviderAuthScheme)}>
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-full min-w-0 max-w-full box-border [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="bearer">Bearer token</SelectItem>
                       <SelectItem value="x-api-key">x-api-key header</SelectItem>
@@ -553,24 +559,26 @@ export function ConnectionDialog({
                   </Select>
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0 w-full">
                 <Label htmlFor="bolu-conn-timeout">Timeout (ms)</Label>
-                <Input id="bolu-conn-timeout" type="number" min={5000} max={120000} step={1000} value={timeoutMs} onChange={(e) => setTimeoutMs(Number(e.target.value) || 45000)} className="h-8 font-mono text-xs" />
+                <Input id="bolu-conn-timeout" type="number" min={5000} max={120000} step={1000} value={timeoutMs} onChange={(e) => setTimeoutMs(Number(e.target.value) || 45000)} className="h-8 font-mono text-xs w-full min-w-0 box-border" />
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {diagnostics && <DiagnosticsNote diagnostics={diagnostics} />}
+          {diagnostics && <DiagnosticsNote diagnostics={diagnostics} className="w-full min-w-0 box-border" />}
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between pt-2">
-          <Button type="button" variant="outline" onClick={handleTest} disabled={testing || saving} className="gap-1.5">
+        <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-center pt-3 min-w-0 w-full box-border border-t border-bd-border/50">
+          <Button type="button" variant="outline" onClick={handleTest} disabled={testing || saving} className="w-full sm:w-auto gap-1.5 justify-center shrink-0">
             {testing ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
             Test connection
           </Button>
-          <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
-            <Button type="button" onClick={handleSave} disabled={saving || !schemaReady} className="gap-1.5">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 w-full sm:w-auto">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={saving} className="w-full sm:w-auto justify-center">
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSave} disabled={saving || !schemaReady} className="w-full sm:w-auto gap-1.5 justify-center">
               {saving && <Loader2 size={13} className="animate-spin" />}
               {isEdit ? 'Save changes' : 'Save connection'}
             </Button>

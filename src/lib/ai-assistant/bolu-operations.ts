@@ -12,7 +12,7 @@
 
 import { calculateDocument, type ComputedItem, type DocumentResult } from '@/lib/Calculations'
 import type { TenantClient } from '@/lib/tenantClient'
-import type { BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
+import type { BoluClientMatch, BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
 
 export type BoluOperationType = 'create-document' | 'modify-document'
 export type BoluDocumentFamily = 'invoice' | 'quotation'
@@ -32,6 +32,63 @@ export interface BoluInvoiceItemInput {
   quantity: number
   unit_price: number
   unit?: string
+  // Extended item fields
+  row_type?: 'standard' | 'group_header'
+  group_id?: string | null
+  group_name?: string | null
+  item_id?: string | null
+  install_rate?: number | null
+  install_rate_taxable?: boolean
+  vat_rate?: number | null
+  discount_rate?: number | null
+  sub_description?: string | null
+  make?: string | null
+  /** Stored in the item's `custom_data`, the form's extension field. */
+  part_number?: string | null
+  /** Stored in the item's `custom_data`, the form's extension field. */
+  condition?: string | null
+}
+
+/**
+ * A focused question Bolu asks when a request is ambiguous or incomplete.
+ * Reusable across operations; answers update the pending proposal and never
+ * authorize a database write.
+ */
+export interface BoluClarificationOption {
+  id: string
+  label: string
+  description?: string
+}
+
+export interface BoluClarificationQuestion {
+  id: string
+  prompt: string
+  options: BoluClarificationOption[]
+  allowFreeText?: boolean
+  deferrable?: boolean
+}
+
+export interface BoluClarification {
+  id: string
+  reason: string
+  questions: BoluClarificationQuestion[]
+}
+
+/** Outcome of resolving a client name hint against the tenant directory. */
+export type BoluClientResolution =
+  | { status: 'resolved'; client: BoluClientMatch }
+  | { status: 'ambiguous'; query: string; matches: BoluClientMatch[] }
+  | { status: 'not_found'; query: string }
+  | { status: 'search_error'; query: string; error: string }
+
+/**
+ * A named extra charge that can be attached to a document.
+ * Maps directly to ExtraCharge from @/lib/Calculations.
+ */
+export interface BoluExtraCharge {
+  label: string        // charge name e.g. "Transportation", "Installation fee"
+  value: number        // charge amount (non-negative)
+  vatApplicable: boolean  // whether VAT applies to this charge
 }
 
 export interface BoluInvoiceCreatePayload {
@@ -42,6 +99,23 @@ export interface BoluInvoiceCreatePayload {
   due_date?: string
   notes?: string
   payment_terms?: string
+  /** Terms and conditions, distinct from the payment terms text. */
+  terms?: string | null
+  // Extended fields
+  title?: string | null           // invoice_title / quotation_title
+  po_number?: string | null
+  project_id?: string | null
+  work_duration?: string | null
+  workmanship?: number            // fixed commercial charge
+  transportation?: number         // fixed commercial charge
+  shipping?: number               // fixed commercial charge
+  discount?: number               // global discount value
+  discount_type?: 'fixed' | 'percent'
+  discount_timing?: 'before_tax' | 'after_tax'
+  wht?: number                    // WHT value
+  wht_type?: 'fixed' | 'percent'
+  global_vat_percent?: number     // default 7.5
+  extra_charges?: BoluExtraCharge[] // custom named extra charges
 }
 
 export interface BoluInvoiceModifyPayload {
@@ -60,7 +134,8 @@ export interface BoluOperationContract {
   schemaVersion: '1.0'
   requiredPermission: {
     resource: 'invoice' | 'quotation'
-    action: 'view' | 'modify' | 'save'
+    /** Canonical has_entity_permission action. Never 'save'. */
+    action: 'view' | 'create' | 'edit'
   }
   sideEffect: BoluSideEffect
   gate1Required: true
@@ -84,18 +159,34 @@ export interface BoluDocumentCreateProposal extends BoluOperationContract {
     vat: number
     total: number
     wht: number
+    discount: number
+    extraChargesTotal: number
     items: ComputedItem[]
   }
   candidateNumber: string
   persistedId?: string
   errorMessage?: string
+  /** Client resolution outcome that the preview can surface as a picker. */
+  clientResolution?: BoluClientResolution
+  /** Focused questions the user must answer before the proposal is complete. */
+  clarification?: BoluClarification
+  /**
+   * Answers already given to clarification questions. Recording an answer
+   * updates the draft only; it never approves the document or authorizes a write.
+   */
+  clarificationAnswers?: Record<string, string>
+  /**
+   * Optional, grounded improvements. They are shown for the user to accept by
+   * describing the change in chat; nothing here is applied automatically.
+   */
+  suggestions?: string[]
 }
 
 export type BoluInvoiceCreateProposal = BoluDocumentCreateProposal
 
-export interface BoluInvoiceModifyProposal extends BoluOperationContract {
+export interface BoluDocumentModifyProposal extends BoluOperationContract {
   operationType: 'modify-document'
-  documentFamily: 'invoice'
+  documentFamily: BoluDocumentFamily
   targetDocumentId: string
   targetDocumentNumber: string
   field?: string
@@ -114,7 +205,9 @@ export interface BoluInvoiceModifyProposal extends BoluOperationContract {
   errorMessage?: string
 }
 
-export type BoluProposal = BoluDocumentCreateProposal | BoluInvoiceModifyProposal
+export type BoluInvoiceModifyProposal = BoluDocumentModifyProposal
+
+export type BoluProposal = BoluDocumentCreateProposal | BoluDocumentModifyProposal
 
 /**
  * Generate a unique, monotonic, stable operation ID.
@@ -161,11 +254,28 @@ export function validateInvoiceItems(items: unknown): {
     }
 
     if (description && Number.isFinite(quantity) && quantity > 0 && Number.isFinite(unitPrice) && unitPrice >= 0) {
+      const optionalNumber = (value: unknown): number | null | undefined =>
+        typeof value === 'number' && Number.isFinite(value) ? value : null
+      const optionalString = (value: unknown): string | null | undefined =>
+        typeof value === 'string' && value.trim() ? value.trim() : null
+
       validated.push({
         description,
         quantity,
         unit_price: unitPrice,
         unit: typeof item.unit === 'string' ? item.unit.trim() : undefined,
+        row_type: 'standard',
+        group_id: optionalString(item.group_id),
+        group_name: optionalString(item.group_name),
+        item_id: optionalString(item.item_id),
+        install_rate: optionalNumber(item.install_rate),
+        install_rate_taxable: item.install_rate_taxable === true,
+        vat_rate: optionalNumber(item.vat_rate),
+        discount_rate: optionalNumber(item.discount_rate),
+        sub_description: optionalString(item.sub_description),
+        make: optionalString(item.make),
+        part_number: optionalString(item.part_number ?? item.partNo),
+        condition: optionalString(item.condition),
       })
     }
   }
@@ -175,6 +285,54 @@ export function validateInvoiceItems(items: unknown): {
     errors,
     data: validated,
   }
+}
+
+/**
+ * Validates and normalizes custom named extra charges.
+ * Canonical shape: { name, amount, withTax }. The internal
+ * { label, value, vatApplicable } shape is accepted as an alias.
+ */
+export function validateBoluExtraCharges(raw: unknown): {
+  valid: boolean
+  errors: string[]
+  data: BoluExtraCharge[]
+} {
+  const errors: string[] = []
+  if (!Array.isArray(raw)) {
+    return { valid: false, errors: ['"extra_charges" must be an array.'], data: [] }
+  }
+  if (raw.length > 20) {
+    return { valid: false, errors: ['"extra_charges" must not exceed 20 entries.'], data: [] }
+  }
+
+  const data: BoluExtraCharge[] = []
+  for (let i = 0; i < raw.length; i++) {
+    const charge = raw[i] as Record<string, unknown>
+    if (!charge || typeof charge !== 'object') {
+      errors.push(`extra_charges[${i}] is invalid.`)
+      continue
+    }
+    const label = typeof charge.name === 'string' ? charge.name.trim()
+      : typeof charge.label === 'string' ? charge.label.trim()
+        : ''
+    if (!label) {
+      errors.push(`extra_charges[${i}].name must be a non-empty string.`)
+    }
+
+    const rawAmount = charge.amount !== undefined ? charge.amount : charge.value
+    const value = Number(rawAmount)
+    if (!Number.isFinite(value) || value < 0) {
+      errors.push(`extra_charges[${i}].amount must be a finite non-negative number.`)
+    }
+
+    const vatApplicable = charge.withTax !== undefined ? charge.withTax === true : charge.vatApplicable === true
+
+    if (label && Number.isFinite(value) && value >= 0) {
+      data.push({ label, value, vatApplicable })
+    }
+  }
+
+  return { valid: errors.length === 0, errors, data }
 }
 
 /**
@@ -197,6 +355,18 @@ export function validateInvoiceCreateInput(raw: unknown): {
   }
   if (clientName.length > 120) {
     errors.push('Customer name must not exceed 120 characters.')
+  }
+
+  // Validate extra_charges if provided
+  let validatedExtraCharges: BoluExtraCharge[] | undefined
+  if (payload.extra_charges !== undefined || payload.extraCharges !== undefined) {
+    const rawCharges = payload.extra_charges ?? payload.extraCharges
+    const chargeResult = validateBoluExtraCharges(rawCharges)
+    if (!chargeResult.valid) {
+      errors.push(...chargeResult.errors)
+    } else {
+      validatedExtraCharges = chargeResult.data
+    }
   }
 
   const itemsResult = validateInvoiceItems(payload.items)
@@ -227,6 +397,21 @@ export function validateInvoiceCreateInput(raw: unknown): {
       due_date: dueDate,
       notes: typeof payload.notes === 'string' ? payload.notes.trim() : '',
       payment_terms: typeof payload.payment_terms === 'string' ? payload.payment_terms.trim() : '',
+      terms: typeof payload.terms === 'string' ? payload.terms.trim() || null : null,
+      title: typeof payload.title === 'string' ? payload.title.trim() || null : null,
+      po_number: typeof payload.po_number === 'string' ? payload.po_number.trim() || null : null,
+      project_id: typeof payload.project_id === 'string' ? payload.project_id.trim() || null : null,
+      work_duration: typeof payload.work_duration === 'string' ? payload.work_duration.trim() || null : null,
+      workmanship: typeof payload.workmanship === 'number' && Number.isFinite(payload.workmanship) ? payload.workmanship : undefined,
+      transportation: typeof payload.transportation === 'number' && Number.isFinite(payload.transportation) ? payload.transportation : undefined,
+      shipping: typeof payload.shipping === 'number' && Number.isFinite(payload.shipping) ? payload.shipping : undefined,
+      discount: typeof payload.discount === 'number' && Number.isFinite(payload.discount) ? payload.discount : undefined,
+      discount_type: payload.discount_type === 'fixed' || payload.discount_type === 'percent' ? payload.discount_type : undefined,
+      discount_timing: payload.discount_timing === 'before_tax' || payload.discount_timing === 'after_tax' ? payload.discount_timing : undefined,
+      wht: typeof payload.wht === 'number' && Number.isFinite(payload.wht) ? payload.wht : undefined,
+      wht_type: payload.wht_type === 'fixed' || payload.wht_type === 'percent' ? payload.wht_type : undefined,
+      global_vat_percent: typeof payload.global_vat_percent === 'number' && Number.isFinite(payload.global_vat_percent) ? payload.global_vat_percent : undefined,
+      extra_charges: validatedExtraCharges,
     },
   }
 }
@@ -248,6 +433,12 @@ export function validateInvoiceModifyInput(raw: unknown): {
   const documentId = typeof payload.documentId === 'string' ? payload.documentId.trim() : ''
   if (!documentId || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(documentId)) {
     errors.push('A valid document UUID is required.')
+  }
+
+  // Commercial charges are not part of the modification contract; editing them
+  // requires the document form so the authoritative calculation stays intact.
+  if (payload.extra_charges !== undefined || payload.extraCharges !== undefined) {
+    errors.push('Modifying extra_charges through Bolu is not supported. Open the document to adjust commercial charges.')
   }
 
   const field = typeof payload.field === 'string' ? payload.field : undefined
@@ -294,23 +485,51 @@ export function validateInvoiceModifyInput(raw: unknown): {
  */
 export function computeAuthoritativeTotals(
   items: BoluInvoiceItemInput[],
-  globalVatPercent = 7.5,
+  options?: {
+    globalVatPercent?: number
+    discountType?: 'fixed' | 'percent'
+    discountTiming?: 'before_tax' | 'after_tax'
+    discountValue?: number
+    whtType?: 'fixed' | 'percent'
+    whtValue?: number
+    extraCharges?: BoluExtraCharge[]
+    fixedCharges?: { workmanship?: number; transportation?: number; shipping?: number }
+    visibleRowEffects?: { install: boolean; vat: boolean; discount: boolean }
+  },
 ): DocumentResult {
+  const globalVatPercent = options?.globalVatPercent ?? 7.5
+  // Fixed commercial charges are non-taxable additions in the authoritative
+  // calculation engine; keep them distinct from custom named extra charges.
+  const fixedCharges = options?.fixedCharges ?? {}
+  const fixedExtraCharges: BoluExtraCharge[] = [
+    fixedCharges.workmanship ? { label: 'Workmanship', value: fixedCharges.workmanship, vatApplicable: false } : null,
+    fixedCharges.transportation ? { label: 'Transportation', value: fixedCharges.transportation, vatApplicable: false } : null,
+    fixedCharges.shipping ? { label: 'Shipping', value: fixedCharges.shipping, vatApplicable: false } : null,
+  ].filter((charge): charge is BoluExtraCharge => charge !== null)
+  const extraCharges = [...fixedExtraCharges, ...(options?.extraCharges ?? [])]
+
   return calculateDocument({
     items: items.map((item) => ({
+      id: item.item_id ?? undefined,
       description: item.description,
       quantity: item.quantity,
       unit_price: item.unit_price,
-      row_type: 'standard',
+      row_type: item.row_type ?? 'standard',
+      group_id: item.group_id ?? null,
+      group_name: item.group_name ?? null,
+      install_rate: item.install_rate ?? null,
+      install_rate_taxable: item.install_rate_taxable ?? false,
+      vat_rate: item.vat_rate ?? null,
+      discount_rate: item.discount_rate ?? null,
     })),
     globalVatPercent,
-    discountType: 'percent',
-    discountTiming: 'before_tax',
-    discountValue: 0,
-    whtType: 'percent',
-    whtValue: 0,
-    extraCharges: [],
-    visibleRowEffects: { install: false, vat: true, discount: false },
+    discountType: options?.discountType ?? 'percent',
+    discountTiming: options?.discountTiming ?? 'before_tax',
+    discountValue: options?.discountValue ?? 0,
+    whtType: options?.whtType ?? 'percent',
+    whtValue: options?.whtValue ?? 0,
+    extraCharges,
+    visibleRowEffects: options?.visibleRowEffects ?? { install: false, vat: true, discount: false },
   })
 }
 
@@ -322,8 +541,22 @@ export function buildInvoiceCreateProposal(
   payload: BoluInvoiceCreatePayload,
   candidateNumber = 'INV-DRAFT',
   documentFamily: BoluDocumentFamily = 'invoice',
+  resolution?: BoluClientResolution,
 ): BoluDocumentCreateProposal {
-  const totals = computeAuthoritativeTotals(payload.items)
+  const totals = computeAuthoritativeTotals(payload.items, {
+    globalVatPercent: payload.global_vat_percent ?? 7.5,
+    discountType: payload.discount_type ?? 'percent',
+    discountTiming: payload.discount_timing ?? 'before_tax',
+    discountValue: payload.discount ?? 0,
+    whtType: payload.wht_type ?? 'percent',
+    whtValue: payload.wht ?? 0,
+    extraCharges: payload.extra_charges ?? [],
+    fixedCharges: {
+      workmanship: payload.workmanship,
+      transportation: payload.transportation,
+      shipping: payload.shipping,
+    },
+  })
   const now = new Date()
   const expiresAt = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
 
@@ -332,7 +565,7 @@ export function buildInvoiceCreateProposal(
     operationType: 'create-document',
     documentFamily,
     schemaVersion: '1.0',
-    requiredPermission: { resource: documentFamily, action: 'save' },
+    requiredPermission: { resource: documentFamily, action: 'create' },
     sideEffect: 'draft-mutation',
     gate1Required: true,
     gate2Required: true,
@@ -346,8 +579,11 @@ export function buildInvoiceCreateProposal(
       vat: totals.vat,
       total: totals.totalPayable,
       wht: totals.wht,
+      discount: totals.discount,
+      extraChargesTotal: totals.extraChargesTotal,
       items: totals.items,
     },
+    clientResolution: resolution,
   }
 }
 
@@ -358,8 +594,209 @@ export function buildDocumentCreateProposal(
   documentFamily: BoluDocumentFamily,
   payload: BoluInvoiceCreatePayload,
   candidateNumber = documentFamily === 'quotation' ? 'QTN-DRAFT' : 'INV-DRAFT',
+  resolution?: BoluClientResolution,
 ): BoluDocumentCreateProposal {
-  return buildInvoiceCreateProposal(payload, candidateNumber, documentFamily)
+  return buildInvoiceCreateProposal(payload, candidateNumber, documentFamily, resolution)
+}
+
+/** Fields a correction may replace. Anything the correction omits is kept. */
+const MERGEABLE_PAYLOAD_FIELDS = [
+  'client_id',
+  'client_name',
+  'issue_date',
+  'due_date',
+  'payment_terms',
+  'terms',
+  'notes',
+  'title',
+  'po_number',
+  'project_id',
+  'work_duration',
+  'workmanship',
+  'transportation',
+  'shipping',
+  'discount',
+  'discount_type',
+  'discount_timing',
+  'wht',
+  'wht_type',
+  'global_vat_percent',
+] as const
+
+/**
+ * Applies a conversational correction to an existing draft.
+ *
+ * A correction is the same operation, not a second one: the calling proposal's
+ * `opId` and identity are retained so no duplicate invoice or quotation is
+ * created. Supplied fields replace the previous value; omitted fields are
+ * preserved; supplied items replace the item set. The result is always
+ * `pending_approval`, because a material change invalidates the approval the
+ * user gave to the earlier version.
+ */
+export function mergeDocumentCreateProposal(
+  previous: BoluDocumentCreateProposal,
+  correction: BoluInvoiceCreatePayload,
+  resolution?: BoluClientResolution,
+): BoluDocumentCreateProposal {
+  const merged: BoluInvoiceCreatePayload = { ...previous.payload }
+
+  const mergedRecord = merged as unknown as Record<string, unknown>
+  const correctionRecord = correction as unknown as Record<string, unknown>
+  for (const field of MERGEABLE_PAYLOAD_FIELDS) {
+    const value = correctionRecord[field]
+    if (value !== undefined && value !== null && value !== '') {
+      mergedRecord[field] = value
+    }
+  }
+
+  if (Array.isArray(correction.items) && correction.items.length > 0) {
+    merged.items = correction.items
+  }
+  if (correction.extra_charges !== undefined) {
+    merged.extra_charges = correction.extra_charges
+  }
+
+  const rebuilt = buildInvoiceCreateProposal(
+    merged,
+    previous.candidateNumber,
+    previous.documentFamily,
+    resolution ?? previous.clientResolution,
+  )
+
+  return {
+    ...rebuilt,
+    // The operation identity survives a correction.
+    opId: previous.opId,
+    createdAt: previous.createdAt,
+    status: 'pending_approval',
+    suggestions: undefined,
+  }
+}
+
+/**
+ * Builds a compact clarification card for an unresolved client. The proposal
+ * is retained; the user answers to resolve it.
+ */
+export function clarificationForClientResolution(
+  resolution: BoluClientResolution,
+): BoluClarification | undefined {
+  if (resolution.status === 'ambiguous') {
+    return {
+      id: `clarify-client-${Date.now()}`,
+      reason: `Multiple clients match "${resolution.query}".`,
+      questions: [
+        {
+          id: 'client',
+          prompt: 'Which client is this document for?',
+          options: resolution.matches.slice(0, 6).map((match) => ({
+            id: `client:${match.id}`,
+            label: match.name,
+            description: [match.phone, match.email].filter(Boolean).join(' · ') || undefined,
+          })),
+          allowFreeText: true,
+        },
+      ],
+    }
+  }
+
+  if (resolution.status === 'not_found') {
+    return {
+      id: `clarify-client-${Date.now()}`,
+      reason: `No existing client matches "${resolution.query}".`,
+      questions: [
+        {
+          id: 'client',
+          prompt: 'Search your client directory or enter the exact client name.',
+          options: [],
+          allowFreeText: true,
+        },
+      ],
+    }
+  }
+
+  return undefined
+}
+
+/** Returns a copy of the proposal with a verified client applied. */
+export function withProposalClient(
+  proposal: BoluDocumentCreateProposal,
+  client: BoluClientMatch,
+): BoluDocumentCreateProposal {
+  const payload: BoluInvoiceCreatePayload = {
+    ...proposal.payload,
+    client_id: client.id,
+    client_name: client.name,
+  }
+  const rebuilt = buildInvoiceCreateProposal(payload, proposal.candidateNumber, proposal.documentFamily, {
+    status: 'resolved',
+    client,
+  })
+  // Other clarification questions stay pending; only the client question is answered.
+  const remainingQuestions = (proposal.clarification?.questions ?? []).filter(
+    (question) => question.id !== 'client',
+  )
+  // Preserve the operational identity and lifecycle fields of the pending proposal.
+  return {
+    ...rebuilt,
+    opId: proposal.opId,
+    createdAt: proposal.createdAt,
+    expiresAt: proposal.expiresAt,
+    status: proposal.status,
+    clarificationAnswers: {
+      ...(proposal.clarificationAnswers ?? {}),
+      ...(proposal.clarificationAnswers?.client ? {} : { client: client.name }),
+    },
+    clarification: remainingQuestions.length > 0 && proposal.clarification
+      ? { ...proposal.clarification, questions: remainingQuestions }
+      : undefined,
+  }
+}
+
+/**
+ * Returns a copy of the proposal with a new client-resolution outcome.
+ * Used when an automatic or manual search is ambiguous, empty, or failed.
+ * The collected document fields are preserved.
+ */
+export function withClientResolution(
+  proposal: BoluDocumentCreateProposal,
+  resolution: BoluClientResolution,
+): BoluDocumentCreateProposal {
+  return {
+    ...proposal,
+    clientResolution: resolution,
+    clarification: clarificationForClientResolution(resolution) ?? proposal.clarification,
+  }
+}
+
+/**
+ * Records one clarification answer and removes that question.
+ * Never changes the proposal status, so an answer cannot authorize a write.
+ * Returns the proposal unchanged when the question is not part of it.
+ */
+export function withClarificationAnswer(
+  proposal: BoluDocumentCreateProposal,
+  questionId: string,
+  answerLabel: string,
+): BoluDocumentCreateProposal {
+  const clarification = proposal.clarification
+  if (!clarification?.questions.some((question) => question.id === questionId)) {
+    return proposal
+  }
+  const remaining = clarification.questions.filter((question) => question.id !== questionId)
+  return {
+    ...proposal,
+    clarificationAnswers: { ...(proposal.clarificationAnswers ?? {}), [questionId]: answerLabel },
+    clarification: remaining.length > 0
+      ? { ...clarification, questions: remaining }
+      : undefined,
+  }
+}
+
+/** Removes a resolved question from a proposal's clarification card. */
+export function withoutClarification(
+  proposal: BoluDocumentCreateProposal,
+): BoluDocumentCreateProposal {
+  return { ...proposal, clarification: undefined }
 }
 
 /**
@@ -368,6 +805,7 @@ export function buildDocumentCreateProposal(
 export function buildInvoiceModifyProposal(params: {
   targetDocumentId: string
   targetDocumentNumber: string
+  documentFamily?: BoluDocumentFamily
   field?: 'client_name' | 'notes' | 'payment_terms' | 'due_date' | 'issue_date'
   oldValue?: string | number | null
   newValue?: string | number | null
@@ -376,6 +814,7 @@ export function buildInvoiceModifyProposal(params: {
     newItems: BoluInvoiceItemInput[]
   }
 }): BoluInvoiceModifyProposal {
+  const documentFamily = params.documentFamily ?? 'invoice'
   const now = new Date()
   const expiresAt = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
 
@@ -392,9 +831,9 @@ export function buildInvoiceModifyProposal(params: {
   return {
     opId: generateOperationId(),
     operationType: 'modify-document',
-    documentFamily: 'invoice',
+    documentFamily,
     schemaVersion: '1.0',
-    requiredPermission: { resource: 'invoice', action: 'save' },
+    requiredPermission: { resource: documentFamily, action: 'edit' },
     sideEffect: 'draft-mutation',
     gate1Required: true,
     gate2Required: true,

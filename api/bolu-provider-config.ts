@@ -299,7 +299,19 @@ async function handleRequest(request: Request): Promise<Response> {
     }
   } catch (err) {
     if (isStorageMissingError(err)) return storageUnavailableResponse()
-    console.error(`[bolu-provider-config] ${action} failed:`, err instanceof Error ? err.message : err)
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error(`[bolu-provider-config] ${action} failed:`, msg)
+
+    if (/permission denied|insufficient permissions/i.test(msg) || (err as any)?.code === '42501') {
+      return jsonError('You do not have permission to manage AI provider connections.', 403, 'forbidden')
+    }
+    if (/master key|vault_key|credential_key|encryption key/i.test(msg)) {
+      return jsonError('Server encryption key configuration is unavailable.', 500, 'server_config_missing')
+    }
+    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|network timeout|network error/i.test(msg)) {
+      return jsonError('The remote provider endpoint could not be reached or timed out.', 502, 'endpoint_blocked')
+    }
+
     return jsonError('The operation failed. Retry, or review the server logs.', 500, 'operation_failed')
   }
 }

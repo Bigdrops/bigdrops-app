@@ -22,6 +22,8 @@ import { Cpu, Server } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import zroMark from '@/assets/providers/zro-mark-black.png'
 import plamoIcon from '@/assets/providers/plamo-icon.png'
+import apinexMark from '@/assets/providers/apinex-mark.png'
+import runcrateIcon from '@/assets/providers/runcrate-icon.png'
 
 type IconComponent = ComponentType<{ size?: number | string; className?: string }>
 
@@ -77,6 +79,30 @@ export function ProviderLogo({
         width={size}
         height={size}
         className={cn('object-contain', className)}
+      />
+    )
+  }
+  if (providerId === 'apinex') {
+    // Official APInex mark. Gold x on an opaque black tile; the tile is the brand, keep it as is.
+    return (
+      <img
+        src={apinexMark}
+        alt="APInex"
+        width={size}
+        height={size}
+        className={cn('rounded-sm object-contain', className)}
+      />
+    )
+  }
+  if (providerId === 'runcrate') {
+    // Official Runcrate mark. Blue rounded square with a terminal prompt.
+    return (
+      <img
+        src={runcrateIcon}
+        alt="Runcrate"
+        width={size}
+        height={size}
+        className={cn('rounded-sm object-contain', className)}
       />
     )
   }

@@ -1,26 +1,34 @@
 import { type BoluPageContext, type BoluRecordReference } from './bolu-context'
 import { extractBoluSearchTerm, getAvailableBoluCapabilities, matchBoluIntent } from './bolu-capabilities'
 import {
+  readBoluClient,
   readBoluContextFacts,
   readBoluInvoice,
+  readBoluQuotation,
+  resolveOperationFacts,
+  searchBoluClients,
   searchBoluInvoices,
   searchBoluQuotations,
+  type BoluClientMatch,
   type BoluReadAuthorization,
   type BoluWriteAuthorization,
 } from './bolu-data'
 import { sendBoluProviderRequest } from './bolu-transport'
 import type { TenantClient } from '@/lib/tenantClient'
 import {
-  buildInvoiceCreateProposal,
+  buildDocumentCreateProposal,
   buildInvoiceModifyProposal,
   isProposalStale,
   parseStructuredOperationEnvelope,
   validateInvoiceCreateInput,
   validateInvoiceModifyInput,
+  withClientResolution,
+  type BoluClientResolution,
 } from './bolu-operations'
 import {
   persistInvoiceCreation,
   persistInvoiceModification,
+  persistQuotationModification,
   type BoluOperationExecutionResult,
 } from './bolu-document-service'
 import {
@@ -100,6 +108,16 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
 
       try {
         const capability = matchBoluIntent(clean, state.context)
+
+        // Write/mutation intents still hydrate relevant business records.
+        if (!capability) {
+          verifiedFacts = await resolveOperationFacts({
+            text: clean,
+            tenantClient: dependencies.tenantClient,
+            pageContext: state.context,
+            canRead: dependencies.canRead,
+          })
+        }
 
         // Read intent lookup
         if (capability) {
@@ -223,15 +241,18 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
 
           if (envelope.rawOperation) {
             const rawOp = envelope.rawOperation as Record<string, unknown>
-            const docFamily = rawOp.documentFamily
+            const docFamily: 'invoice' | 'quotation' | undefined =
+              rawOp.documentFamily === 'invoice' || rawOp.documentFamily === 'quotation'
+                ? rawOp.documentFamily
+                : undefined
             const opType = rawOp.operationType
 
-            // Reject unsupported document families (only 'invoice' is supported in this phase)
-            if (docFamily && docFamily !== 'invoice') {
+            // Only invoice and quotation families are supported.
+            if (docFamily && docFamily !== 'invoice' && docFamily !== 'quotation') {
               dispatch({
                 type: 'RESULT',
                 requestId,
-                content: `I detected a proposal for document family "${String(docFamily)}", but Bolu currently only supports operations for Invoices in this phase.`,
+                content: `I detected a proposal for document family "${String(docFamily)}", but Bolu currently only supports invoices and quotations.`,
               })
               return
             }
@@ -257,7 +278,60 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
                 return
               }
 
-              const proposal = buildInvoiceCreateProposal(validation.data!)
+              // A model-supplied client ID is only trusted after verification.
+              let resolvedClient: BoluClientMatch | null = null
+              let resolution: BoluClientResolution = {
+                status: 'not_found',
+                query: validation.data!.client_name,
+              }
+              try {
+                if (validation.data!.client_id) {
+                  resolvedClient = await readBoluClient(
+                    dependencies.tenantClient,
+                    validation.data!.client_id,
+                  )
+                }
+                if (resolvedClient) {
+                  resolution = { status: 'resolved', client: resolvedClient }
+                } else {
+                  const search = await searchBoluClients(
+                    dependencies.tenantClient,
+                    validation.data!.client_name,
+                  )
+                  if (search.status === 'exact_match' || search.status === 'single_match') {
+                    resolvedClient = search.client
+                    resolution = { status: 'resolved', client: search.client }
+                  } else if (search.status === 'ambiguous') {
+                    resolution = { status: 'ambiguous', query: search.query, matches: search.matches }
+                  } else if (search.status === 'search_error') {
+                    resolution = { status: 'search_error', query: search.query, error: search.error }
+                  }
+                }
+              } catch {
+                // A failed lookup is not an empty client directory.
+                resolution = {
+                  status: 'search_error',
+                  query: validation.data!.client_name,
+                  error: 'Client lookup failed.',
+                }
+              }
+
+              // The draft is kept even when the client is unresolved.
+              const proposal = withClientResolution(
+                buildDocumentCreateProposal(
+                  docFamily ?? 'invoice',
+                  resolvedClient
+                    ? {
+                        ...validation.data!,
+                        client_id: resolvedClient.id,
+                        client_name: resolvedClient.name,
+                      }
+                    : validation.data!,
+                  docFamily === 'quotation' ? 'QTN-DRAFT' : 'INV-DRAFT',
+                  resolution,
+                ),
+                resolution,
+              )
               dispatch({
                 type: 'RESULT',
                 requestId,
@@ -278,13 +352,17 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
                 return
               }
 
-              let docNumber = 'INV-TARGET'
-              const target = await readBoluInvoice(dependencies.tenantClient, validation.data!.documentId, dependencies.canRead)
+              const targetFamily = docFamily ?? 'invoice'
+              let docNumber = targetFamily === 'quotation' ? 'QTN-TARGET' : 'INV-TARGET'
+              const target = targetFamily === 'quotation'
+                ? await readBoluQuotation(dependencies.tenantClient, validation.data!.documentId, dependencies.canRead)
+                : await readBoluInvoice(dependencies.tenantClient, validation.data!.documentId, dependencies.canRead)
               if (target) docNumber = target.number
 
               const proposal = buildInvoiceModifyProposal({
                 targetDocumentId: validation.data!.documentId,
                 targetDocumentNumber: docNumber,
+                documentFamily: targetFamily,
                 field: validation.data!.field,
                 oldValue: validation.data!.oldValue,
                 newValue: validation.data!.newValue,
@@ -387,6 +465,14 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
       let execResult: BoluOperationExecutionResult
       if (proposal.operationType === 'create-document') {
         execResult = await persistInvoiceCreation(
+          dependencies.tenantClient,
+          proposal,
+          dependencies.canWrite,
+          dependencies.canRead,
+          dependencies.entityId,
+        )
+      } else if (proposal.documentFamily === 'quotation') {
+        execResult = await persistQuotationModification(
           dependencies.tenantClient,
           proposal,
           dependencies.canWrite,

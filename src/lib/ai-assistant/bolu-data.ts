@@ -1,4 +1,4 @@
-import type { BoluCapability } from './bolu-capabilities'
+import { matchBoluWriteContext, type BoluCapability } from './bolu-capabilities'
 import type { BoluPageContext } from './bolu-context'
 import type { TenantClient } from '@/lib/tenantClient'
 import { searchDocuments } from '@/modules/search/documentSearchService'
@@ -20,7 +20,7 @@ export type BoluFactResult =
   | { kind: 'records'; records: BoluRecord[]; hasMore: boolean }
   | { kind: 'message'; text: string }
 
-export type BoluReadAuthorization = (resource: 'invoice' | 'quotation', action: 'view' | 'modify') => boolean
+export type BoluReadAuthorization = (resource: 'invoice' | 'quotation', action: 'view') => boolean
 
 export type BoluChangeProposal = {
   field: string
@@ -29,7 +29,12 @@ export type BoluChangeProposal = {
   accepted: boolean
 }
 
-export type BoluWriteAuthorization = (resource: 'invoice' | 'quotation', action: 'save') => boolean
+/**
+ * The write vocabulary mirrors public.has_entity_permission exactly. The
+ * canonical actions are view/create/edit/delete; there is no 'save' or
+ * 'modify' action, and asking for one always fails the exact-match lookup.
+ */
+export type BoluWriteAuthorization = (resource: 'invoice' | 'quotation', action: 'create' | 'edit') => boolean
 
 function assertTenantReady(tenantClient: TenantClient) {
   if (!tenantClient.isReady) throw new Error('Business records are not available yet.')
@@ -233,7 +238,7 @@ export async function proposeChange(
   canWrite: BoluWriteAuthorization,
 ): Promise<{ ok: boolean; proposed: BoluChangeProposal; record: BoluRecord }> {
   assertTenantReady(tenantClient)
-  if (!canWrite('invoice', 'save') && !canWrite('quotation', 'save')) {
+  if (!canWrite('invoice', 'edit') && !canWrite('quotation', 'edit')) {
     return { ok: false, proposed: { field: String(field), oldValue: String(oldValue ?? ''), newValue: String(newValue ?? ''), accepted: false }, record }
   }
   return {
@@ -249,7 +254,7 @@ export async function saveDocument(
   canWrite: BoluWriteAuthorization,
 ): Promise<{ ok: boolean; savedRecord: BoluRecord }> {
   assertTenantReady(tenantClient)
-  if (!canWrite('invoice', 'save') && !canWrite('quotation', 'save')) {
+  if (!canWrite('invoice', 'edit') && !canWrite('quotation', 'edit')) {
     return { ok: false, savedRecord: record }
   }
   // Application-owned persistence: the actual write is delegated to the form/save handler
@@ -262,17 +267,178 @@ export interface BoluClientMatch {
   name: string
   email?: string | null
   phone?: string | null
+  contactPerson?: string | null
 }
+
+export type BoluClientSearchResult =
+  | { status: 'exact_match'; client: BoluClientMatch }
+  | { status: 'single_match'; client: BoluClientMatch }
+  | { status: 'ambiguous'; matches: BoluClientMatch[]; query: string }
+  | { status: 'not_found'; query: string }
+  | { status: 'search_error'; query: string; error: string }
 
 export type BoluClientValidationResult =
   | { status: 'exact_match'; client: BoluClientMatch }
   | { status: 'ambiguous'; matches: BoluClientMatch[] }
   | { status: 'not_found'; query: string }
 
+/** Normalize a phone string to digits only for loose matching. */
+function normalizePhone(phone: string): string {
+  return phone.replace(/[\s\-().+]/g, '')
+}
+
+/**
+ * Strips characters that can end or extend a PostgREST filter expression.
+ * A client name is untrusted input and must never add filter predicates.
+ */
+function sanitizeClientTerm(term: string): string {
+  return term
+    .replace(/[,()%_\\"'`;]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80)
+}
+
+/**
+ * One bounded client query over the columns the tenant schema supports.
+ * Archived clients are never discoverable. Read-only.
+ */
+async function queryClientMatches(
+  tenantClient: TenantClient,
+  term: string,
+): Promise<{ clients: BoluClientMatch[]; error: string | null }> {
+  const digits = normalizePhone(term)
+  const orParts: string[] = [
+    `name.ilike.%${term}%`,
+    `email.ilike.%${term}%`,
+    `contact_person.ilike.%${term}%`,
+  ]
+  // A phone search compares digits, so formatting differences do not hide a record.
+  orParts.push(`phone.ilike.%${/^\d{4,}$/.test(digits) ? digits : term}%`)
+
+  let queryBuilder = tenantClient
+    .from('clients')
+    .select('id, name, email, phone, contact_person')
+    .is('archived_at', null)
+
+  if (typeof (queryBuilder as any).or === 'function') {
+    queryBuilder = (queryBuilder as any).or(orParts.join(','))
+  } else {
+    queryBuilder = queryBuilder.ilike('name', `%${term}%`)
+  }
+
+  const { data, error } = await queryBuilder.limit(15)
+  if (error) return { clients: [], error: error.message }
+
+  const clients = (data as Array<{
+    id: string
+    name: string | null
+    email: string | null
+    phone: string | null
+    contact_person: string | null
+  }> | null ?? []).map((d) => ({
+    id: d.id,
+    name: d.name ?? '',
+    email: d.email ?? null,
+    phone: d.phone ?? null,
+    contactPerson: d.contact_person ?? null,
+  }))
+
+  return { clients, error: null }
+}
+
+/**
+ * Searches clients by name, email, phone, and contact_person across the tenant.
+ * Always respects archived_at IS NULL. Never writes.
+ *
+ * Conservative by design: a single plausible record is returned only when one
+ * record matches. Two or more plausible records are reported as ambiguous so the
+ * caller asks the user instead of silently selecting a client.
+ */
+export async function searchBoluClients(
+  tenantClient: TenantClient,
+  term: string,
+): Promise<BoluClientSearchResult> {
+  const clean = term?.trim()
+  if (!clean) return { status: 'not_found', query: '' }
+  const safe = sanitizeClientTerm(clean)
+  if (!safe) return { status: 'not_found', query: clean }
+  if (!tenantClient?.isReady) {
+    return { status: 'search_error', query: clean, error: 'Business records are not available yet.' }
+  }
+
+  try {
+    // The full phrase is tried first. A multi-word phrase that finds nothing is
+    // retried with its distinctive words, so "Tecno Power Ltd" still finds
+    // "Tecno Power Solutions" without inventing an alias.
+    const attempts: string[] = [safe]
+    const tokens = safe.split(' ').filter((token) => token.length >= 3)
+    if (tokens.length > 1) {
+      const ordered = [...tokens].sort((a, b) => b.length - a.length)
+      for (const token of ordered.slice(0, 4)) {
+        if (!attempts.some((attempt) => attempt.toLowerCase() === token.toLowerCase())) {
+          attempts.push(token)
+        }
+      }
+    }
+
+    const byId = new Map<string, BoluClientMatch>()
+    const phrase = safe.toLowerCase()
+    for (const attempt of attempts) {
+      const result = await queryClientMatches(tenantClient, attempt)
+      if (result.error) {
+        return { status: 'search_error', query: clean, error: result.error }
+      }
+      for (const client of result.clients) byId.set(client.id, client)
+      const foundPhrase = [...byId.values()].some((client) =>
+        client.name.toLowerCase().includes(phrase),
+      )
+      if (foundPhrase) break
+      if (byId.size >= 15) break
+    }
+
+    const matches = [...byId.values()]
+    if (matches.length === 0) {
+      return { status: 'not_found', query: clean }
+    }
+
+    // Exact case-insensitive name match
+    const exact = matches.find((m) => m.name.trim().toLowerCase() === phrase)
+    if (exact) return { status: 'exact_match', client: exact }
+
+    // One plausible match only
+    if (matches.length === 1) return { status: 'single_match', client: matches[0] }
+
+    // Multiple plausible matches require the user to choose.
+    return { status: 'ambiguous', matches, query: clean }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn('[searchBoluClients] Client query failed:', err)
+    return { status: 'search_error', query: clean, error: msg }
+  }
+}
+
+/**
+ * Pre-operation client discovery: resolves a client name hint before a write operation.
+ * Returns the search result; never writes.
+ */
+export async function discoverClientForOperation(
+  tenantClient: TenantClient,
+  term: string,
+  _context?: BoluPageContext,
+): Promise<BoluClientSearchResult> {
+  if (!tenantClient.isReady) {
+    return { status: 'search_error', query: term?.trim() ?? '', error: 'Business records are not available yet.' }
+  }
+  return searchBoluClients(tenantClient, term)
+}
+
 /**
  * Validates a candidate client name against the tenant's clients table before draft creation.
  * Returns exact_match if an exact case-insensitive match (or solitary partial match) is found,
  * ambiguous if multiple partial matches exist, or not_found if no records match.
+ *
+ * Backward-compatible wrapper around searchBoluClients.
  */
 export async function validateBoluClient(
   tenantClient: TenantClient | undefined | null,
@@ -283,41 +449,429 @@ export async function validateBoluClient(
     return { status: 'not_found', query: clean || '' }
   }
 
+  const result = await searchBoluClients(tenantClient, clean)
+
+  switch (result.status) {
+    case 'exact_match':
+      return { status: 'exact_match', client: result.client }
+    case 'single_match':
+      // Treat single partial match as exact_match for backward compatibility
+      return { status: 'exact_match', client: result.client }
+    case 'ambiguous':
+      return { status: 'ambiguous', matches: result.matches }
+    case 'not_found':
+      return { status: 'not_found', query: clean }
+    case 'search_error':
+      // Backward compat: swallow errors into not_found (old behaviour)
+      console.warn('[validateBoluClient] search error swallowed for compat:', result.error)
+      return { status: 'not_found', query: clean }
+  }
+}
+
+/**
+ * Reads a single client by stable record ID. Used to verify model-supplied
+ * client IDs before they are trusted for a proposal.
+ */
+export async function readBoluClient(
+  tenantClient: TenantClient,
+  clientId: string,
+): Promise<BoluClientMatch | null> {
+  const clean = clientId?.trim()
+  if (!clean || !tenantClient.isReady) return null
+  const { data, error } = await tenantClient
+    .from('clients')
+    .select('id, name, email, phone, contact_person')
+    .eq('id', clean)
+    .is('archived_at', null)
+    .maybeSingle()
+  if (error || !data) return null
+  return {
+    id: data.id,
+    name: data.name ?? '',
+    email: data.email ?? null,
+    phone: data.phone ?? null,
+    contactPerson: data.contact_person ?? null,
+  }
+}
+
+export interface BoluSupplierMatch {
+  id: string
+  name: string
+  phone?: string | null
+  email?: string | null
+}
+
+/**
+ * Read-only supplier discovery. Suppliers exist in the tenant schema, so this
+ * can ground a purchase-side question without inventing a workflow.
+ */
+export async function searchBoluSuppliers(
+  tenantClient: TenantClient,
+  term: string,
+): Promise<BoluSupplierMatch[]> {
+  const clean = term?.trim()
+  if (!clean || !tenantClient?.isReady) return []
+  try {
+    const { data, error } = await tenantClient
+      .from('suppliers')
+      .select('id, name, phone, email')
+      .is('archived_at', null)
+      .ilike('name', `%${clean}%`)
+      .limit(5)
+    if (error || !data) return []
+    return (data as any[]).map((row) => ({
+      id: row.id,
+      name: row.name ?? '',
+      phone: row.phone ?? null,
+      email: row.email ?? null,
+    }))
+  } catch (err) {
+    console.warn('[searchBoluSuppliers] Supplier search failed:', err)
+    return []
+  }
+}
+
+/**
+ * Reads the most recent documents for a resolved client so a new proposal can
+ * follow the client's real patterns (their last terms, title, item wording).
+ * Bounded and read-only. Never used as a financial source of truth.
+ */
+export async function readRecentClientDocuments(
+  tenantClient: TenantClient,
+  clientId: string,
+): Promise<{ invoices: BoluRecord[]; quotations: BoluRecord[] }> {
+  if (!clientId || !tenantClient?.isReady) return { invoices: [], quotations: [] }
+  try {
+    const [{ data: invoices }, { data: quotations }] = await Promise.all([
+      tenantClient
+        .from('invoices')
+        .select('id, invoice_number, invoice_title, client_name, issue_date, total')
+        .eq('client_id', clientId)
+        .is('archived_at', null)
+        .order('issue_date', { ascending: false })
+        .limit(3),
+      tenantClient
+        .from('quotations')
+        .select('id, quotation_number, quotation_title, client_name, issue_date, total')
+        .eq('client_id', clientId)
+        .is('archived_at', null)
+        .order('issue_date', { ascending: false })
+        .limit(3),
+    ])
+
+    return {
+      invoices: (invoices ?? []).map((row: any) => ({
+        id: row.id,
+        kind: 'invoice' as const,
+        number: row.invoice_number,
+        title: row.invoice_title ?? null,
+        clientName: row.client_name ?? null,
+        date: row.issue_date ?? null,
+        status: null,
+        total: row.total == null ? null : Number(row.total),
+        balanceDue: null,
+        route: `/invoices/${row.id}`,
+      })),
+      quotations: (quotations ?? []).map((row: any) => ({
+        id: row.id,
+        kind: 'quotation' as const,
+        number: row.quotation_number,
+        title: row.quotation_title ?? null,
+        clientName: row.client_name ?? null,
+        date: row.issue_date ?? null,
+        status: null,
+        total: row.total == null ? null : Number(row.total),
+        balanceDue: null,
+        route: `/quotations/${row.id}`,
+      })),
+    }
+  } catch (err) {
+    console.warn('[readRecentClientDocuments] Lookup failed:', err)
+    return { invoices: [], quotations: [] }
+  }
+}
+
+export interface BoluCatalogMatch {
+  id: string
+  name: string
+  standardPrice: number
+  notes?: string | null
+}
+
+export interface BoluClientCreateInput {
+  name: string
+  phone?: string | null
+  email?: string | null
+  contact_person?: string | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  category?: string | null
+  notes?: string | null
+}
+
+/** Result of one client-creation attempt. Flat shape so callers never rely on narrowing. */
+export type BoluClientCreationOutcome = {
+  ok: boolean
+  client: BoluClientMatch | null
+  reused: boolean
+  error: string | null
+}
+
+/**
+ * Creates a new client record in the tenant database after explicit user approval.
+ * Returns the stable, verified record ID. Never mutates without caller authorization.
+ */
+export async function createBoluClient(
+  tenantClient: TenantClient,
+  input: BoluClientCreateInput,
+): Promise<BoluClientCreationOutcome> {
+  assertTenantReady(tenantClient)
+  const name = input.name?.trim()
+  if (!name || name.length < 2) {
+    return { ok: false, client: null, reused: false, error: 'Client name must be at least 2 characters.' }
+  }
+
   try {
     const { data, error } = await tenantClient
       .from('clients')
-      .select('id, name, email, phone')
-      .is('archived_at', null)
-      .ilike('name', `%${clean}%`)
-      .limit(10)
+      .insert({
+        name,
+        phone: input.phone?.trim() || null,
+        email: input.email?.trim() || null,
+        contact_person: input.contact_person?.trim() || null,
+        address: input.address?.trim() || null,
+        city: input.city?.trim() || null,
+        state: input.state?.trim() || null,
+        category: input.category?.trim() || null,
+        notes: input.notes?.trim() || null,
+      })
+      .select('id, name, email, phone, contact_person')
+      .single()
 
-    if (error || !data || data.length === 0) {
-      return { status: 'not_found', query: clean }
+    if (error) {
+      return { ok: false, client: null, reused: false, error: error.message }
     }
-
-    const matches: BoluClientMatch[] = (data as any[]).map((d) => ({
-      id: d.id,
-      name: d.name ?? '',
-      email: d.email ?? null,
-      phone: d.phone ?? null,
-    }))
-
-    // 1. Exact case-insensitive match test
-    const exact = matches.find((m) => m.name.toLowerCase() === clean.toLowerCase())
-    if (exact) {
-      return { status: 'exact_match', client: exact }
+    return {
+      ok: true,
+      reused: false,
+      error: null,
+      client: {
+        id: data.id,
+        name: data.name ?? name,
+        email: data.email ?? null,
+        phone: data.phone ?? null,
+        contactPerson: data.contact_person ?? null,
+      },
     }
-
-    // 2. Solitary partial match
-    if (matches.length === 1) {
-      return { status: 'exact_match', client: matches[0] }
-    }
-
-    // 3. Ambiguous multiple candidates
-    return { status: 'ambiguous', matches }
   } catch (err) {
-    console.warn('[validateBoluClient] Client query failed:', err)
-    return { status: 'not_found', query: clean }
+    return {
+      ok: false,
+      client: null,
+      reused: false,
+      error: err instanceof Error ? err.message : String(err),
+    }
   }
+}
+
+/**
+ * Reads a single quotation record by UUID or quotation_number.
+ * Mirrors readBoluInvoice for quotations.
+ */
+export async function readBoluQuotation(
+  tenantClient: TenantClient,
+  quotationId: string,
+  canRead: BoluReadAuthorization,
+): Promise<BoluRecord | null> {
+  assertTenantReady(tenantClient)
+  if (!canRead('quotation', 'view')) throw new Error('You do not have permission to view quotations.')
+
+  const clean = quotationId.trim()
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean)
+  let query = tenantClient
+    .from('quotations')
+    .select('id, quotation_number, quotation_title, client_name, issue_date, total, status')
+    .is('archived_at', null)
+
+  query = isUuid ? query.eq('id', clean) : query.ilike('quotation_number', `%${clean}%`)
+
+  const { data, error } = await query.limit(1).maybeSingle()
+  if (error) throw new Error(`Quotation lookup failed: ${error.message}`)
+  if (!data) return null
+
+  return {
+    id: data.id,
+    kind: 'quotation',
+    number: data.quotation_number,
+    title: data.quotation_title,
+    clientName: data.client_name,
+    date: data.issue_date,
+    status: data.status,
+    total: data.total == null ? null : Number(data.total),
+    balanceDue: null,
+    route: `/quotations/${data.id}`,
+  }
+}
+
+/**
+ * Searches the item_catalog table for active products.
+ * Read-only discovery; NEVER reserves or mutates inventory.
+ */
+export async function searchBoluCatalog(
+  tenantClient: TenantClient,
+  term: string,
+): Promise<BoluCatalogMatch[]> {
+  const clean = term?.trim()
+  if (!clean || !tenantClient || !tenantClient.isReady) return []
+  try {
+    const { data, error } = await tenantClient
+      .from('item_catalog')
+      .select('id, name, standard_price, notes')
+      .eq('is_active', true)
+      .ilike('name', `%${clean}%`)
+      .limit(5)
+
+    if (error || !data) return []
+    return (data as any[]).map((row) => ({
+      id: row.id,
+      name: row.name ?? '',
+      standardPrice: Number(row.standard_price ?? 0),
+      notes: row.notes ?? null,
+    }))
+  } catch (err) {
+    console.warn('[searchBoluCatalog] Catalog search failed:', err)
+    return []
+  }
+}
+
+/**
+ * Discovers business context facts for write/mutation requests before model generation.
+ * Injects verified client, document, or catalog facts so the model builds accurate proposals.
+ */
+export async function resolveOperationFacts(input: {
+  text: string
+  tenantClient?: TenantClient
+  pageContext: BoluPageContext
+  canRead: BoluReadAuthorization
+}): Promise<BoluFactResult | null> {
+  const { text, tenantClient, canRead } = input
+  if (!tenantClient || !tenantClient.isReady) return null
+
+  const writeContext = matchBoluWriteContext(text)
+  const factsList: string[] = []
+  const recordsFound: BoluRecord[] = []
+
+  // 1. Client resolution if client hint present
+  if (writeContext.clientHint) {
+    try {
+      const clientResult = await searchBoluClients(tenantClient, writeContext.clientHint)
+      if (clientResult.status === 'exact_match' || clientResult.status === 'single_match') {
+        const c = clientResult.client
+        factsList.push(
+          `Verified client in business records:\n- ID: "${c.id}"\n- Name: "${c.name}"${c.phone ? `\n- Phone: "${c.phone}"` : ''}${c.email ? `\n- Email: "${c.email}"` : ''}`,
+        )
+        // The client's own recent documents are real context for a new
+        // proposal. They are references only; no value is copied automatically.
+        const recent = await readRecentClientDocuments(tenantClient, c.id)
+        if (recent.invoices.length > 0) {
+          recordsFound.push(...recent.invoices)
+          factsList.push(
+            `Recent invoices for this client:\n${recent.invoices
+              .map((doc) => `• ${doc.number} (${doc.date || 'no date'}) - ${doc.total ?? 0}`)
+              .join('\n')}`,
+          )
+        }
+        if (recent.quotations.length > 0) {
+          recordsFound.push(...recent.quotations)
+          factsList.push(
+            `Recent quotations for this client:\n${recent.quotations
+              .map((doc) => `• ${doc.number} (${doc.date || 'no date'}) - ${doc.total ?? 0}`)
+              .join('\n')}`,
+          )
+        }
+      } else if (clientResult.status === 'ambiguous') {
+        const matchesSummary = clientResult.matches
+          .slice(0, 5)
+          .map((m) => `• ID: "${m.id}", Name: "${m.name}"${m.phone ? ` (${m.phone})` : ''}`)
+          .join('\n')
+        factsList.push(
+          `Multiple client candidates match "${writeContext.clientHint}":\n${matchesSummary}\nNote: Select the best match or clarify with user.`,
+        )
+      } else if (clientResult.status === 'not_found') {
+        factsList.push(`Client search: No existing client record matches "${writeContext.clientHint}".`)
+      }
+    } catch (err) {
+      console.warn('[resolveOperationFacts] Client discovery failed:', err)
+    }
+  }
+
+  // 1b. Supplier discovery when the user names a supplier or vendor. Read-only.
+  if (writeContext.supplierHint) {
+    const suppliers = await searchBoluSuppliers(tenantClient, writeContext.supplierHint)
+    if (suppliers.length > 0) {
+      factsList.push(
+        `Supplier records matching "${writeContext.supplierHint}":\n${suppliers
+          .map((s) => `• ID: "${s.id}", Name: "${s.name}"${s.phone ? ` (${s.phone})` : ''}`)
+          .join('\n')}\nNote: a supplier is never attached to an invoice or quotation client field.`,
+      )
+    }
+  }
+
+  // 2. Existing document reference if user is asking to modify or refers to a document number
+  if (writeContext.documentRef) {
+    try {
+      if (writeContext.documentRef.type === 'invoice' || writeContext.targetFamily === 'invoice') {
+        if (canRead('invoice', 'view')) {
+          const inv = await readBoluInvoice(tenantClient, writeContext.documentRef.number, canRead)
+          if (inv) {
+            recordsFound.push(inv)
+            factsList.push(
+              `Existing invoice record: Number: "${inv.number}", ID: "${inv.id}", Client: "${inv.clientName}", Total: ${inv.total}, Status: "${inv.status}"`,
+            )
+          }
+        }
+      } else if (writeContext.documentRef.type === 'quotation' || writeContext.targetFamily === 'quotation') {
+        if (canRead('quotation', 'view')) {
+          const qtn = await readBoluQuotation(tenantClient, writeContext.documentRef.number, canRead)
+          if (qtn) {
+            recordsFound.push(qtn)
+            factsList.push(
+              `Existing quotation record: Number: "${qtn.number}", ID: "${qtn.id}", Client: "${qtn.clientName}", Total: ${qtn.total}, Status: "${qtn.status}"`,
+            )
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[resolveOperationFacts] Document reference discovery failed:', err)
+    }
+  }
+
+  // 3. Catalog suggestions for an explicitly quoted item phrase. Read-only:
+  // a suggestion never links an item, reserves stock, or changes inventory.
+  const quotedTerms = [...text.matchAll(/"([^"]{2,60})"|'([^']{2,60})'/g)]
+    .map((match) => (match[1] ?? match[2] ?? '').trim())
+    .filter((value, index, all) => value.length >= 2 && all.indexOf(value) === index)
+    .slice(0, 2)
+  for (const term of quotedTerms) {
+    const catalogMatches = await searchBoluCatalog(tenantClient, term)
+    if (catalogMatches.length > 0) {
+      const summary = catalogMatches
+        .map((item) => `• ID: "${item.id}", Name: "${item.name}", Standard price: ${item.standardPrice}`)
+        .join('\n')
+      factsList.push(
+        `Catalog suggestions for "${term}" (linking is optional, no stock is reserved):\n${summary}\nNote: confirm the intended item with the user before linking it.`,
+      )
+    }
+  }
+
+  if (recordsFound.length > 0) {
+    return { kind: 'records', records: recordsFound, hasMore: false }
+  }
+
+  if (factsList.length > 0) {
+    return { kind: 'message', text: factsList.join('\n\n') }
+  }
+
+  return null
 }
 

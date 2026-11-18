@@ -8,6 +8,12 @@ import { IconAction } from './assistant-chat-icon-action'
 import { AssistantAttachments, readMessageAttachments } from './assistant-chat-attachments'
 import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
 import type { ClerkState, ProductionBoluMessage, ThreadNarrationControls } from './types'
+import type {
+  BoluClientCreateInput,
+  BoluClientCreationOutcome,
+  BoluClientMatch,
+  BoluClientSearchResult,
+} from '@/lib/ai-assistant/bolu-data'
 
 /**
  * Strips raw bolu_operation JSON blocks and removes em-dashes from user-facing assistant prose.
@@ -51,6 +57,11 @@ export function AssistantThread({
   onRejectGate1,
   onConfirmGate2,
   onCancelGate2,
+  onSearchClients,
+  onSelectClient,
+  onCreateClient,
+  onAnswerClarification,
+  onReturnToReview,
   onEditMessage,
   onRegenerateMessage,
   narration,
@@ -70,6 +81,19 @@ export function AssistantThread({
   onRejectGate1?: (opId: string) => void
   onConfirmGate2?: (opId: string) => void
   onCancelGate2?: (opId: string) => void
+  onSearchClients?: (opId: string, term: string) => Promise<BoluClientSearchResult>
+  onSelectClient?: (opId: string, client: BoluClientMatch) => void | Promise<unknown>
+  onCreateClient?: (
+    opId: string,
+    input: BoluClientCreateInput,
+  ) => Promise<BoluClientCreationOutcome>
+  onAnswerClarification?: (
+    opId: string,
+    questionId: string,
+    answer: { optionId?: string; text?: string },
+  ) => void | Promise<unknown>
+  /** Reopens Gate 1 review; the earlier approval no longer authorizes a save. */
+  onReturnToReview?: (opId: string) => void | Promise<unknown>
   onEditMessage?: (message: ProductionBoluMessage) => void
   onRegenerateMessage?: (message: ProductionBoluMessage) => void
   narration: ThreadNarrationControls
@@ -170,7 +194,7 @@ export function AssistantThread({
 
           return (
             <div key={message.id} className="ac-turn">
-              <div className="ac-turn-avatar flex items-center justify-center size-8 rounded-full bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] shrink-0">
+              <div className="ac-turn-avatar flex items-center justify-center size-7 rounded-full bg-[var(--ac-muted-surface)] border border-[var(--ac-line)] shrink-0">
                 {latest && clerkState !== 'idle' ? (
                   <BoluOrbInline
                     state={clerkState}
@@ -250,6 +274,32 @@ export function AssistantThread({
                       onRejectGate1={() => onRejectGate1?.(message.proposal!.opId)}
                       onConfirmGate2={() => onConfirmGate2?.(message.proposal!.opId)}
                       onCancelGate2={() => onCancelGate2?.(message.proposal!.opId)}
+                      onSearchClients={
+                        onSearchClients
+                          ? (term) => onSearchClients(message.proposal!.opId, term)
+                          : undefined
+                      }
+                      onSelectClient={
+                        onSelectClient
+                          ? (client) => onSelectClient(message.proposal!.opId, client)
+                          : undefined
+                      }
+                      onCreateClient={
+                        onCreateClient
+                          ? (input) => onCreateClient(message.proposal!.opId, input)
+                          : undefined
+                      }
+                      onAnswerClarification={
+                        onAnswerClarification
+                          ? (questionId, answer) =>
+                              onAnswerClarification(message.proposal!.opId, questionId, answer)
+                          : undefined
+                      }
+                      onReturnToReview={
+                        onReturnToReview
+                          ? () => onReturnToReview(message.proposal!.opId)
+                          : undefined
+                      }
                     />
                   </div>
                 ) : null}

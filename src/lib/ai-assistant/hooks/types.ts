@@ -2,8 +2,16 @@
  * types.ts — Shared Types for Bolu Assistant Hooks
  */
 
-import type { BoluProposal } from '../bolu-operations'
-import type { BoluFactResult, BoluReadAuthorization, BoluWriteAuthorization } from '../bolu-data'
+import type { BoluClarification, BoluProposal } from '../bolu-operations'
+import type {
+  BoluClientCreateInput,
+  BoluClientCreationOutcome,
+  BoluClientMatch,
+  BoluClientSearchResult,
+  BoluFactResult,
+  BoluReadAuthorization,
+  BoluWriteAuthorization,
+} from '../bolu-data'
 import type { BoluPageContext } from '../bolu-context'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BoluOperationExecutionResult } from '../bolu-document-service'
@@ -38,6 +46,10 @@ export interface UseBoluThreadOptions {
   onEnsureConversation?: () => Promise<string | null>
 }
 
+export type BoluClarificationAnswer = { optionId?: string; text?: string }
+
+export type BoluClientCreationResult = BoluClientCreationOutcome
+
 export interface UseBoluThreadReturn {
   messages: ProductionBoluMessage[]
   clerkState: ClerkState
@@ -56,6 +68,24 @@ export interface UseBoluThreadReturn {
   rejectGate1: (opId?: string) => Promise<boolean>
   confirmGate2Save: (opId?: string) => Promise<BoluOperationExecutionResult>
   cancelGate2Save: (opId?: string) => void
+  /** Reopens Gate 1 review; the earlier approval no longer authorizes a save. */
+  returnGate1ToReview: (opId?: string) => Promise<boolean>
+  /** Searches the authorized client directory for the pending document. Read-only. */
+  searchProposalClients: (term: string) => Promise<BoluClientSearchResult>
+  /** Attaches a verified client record to the pending document. Never saves the document. */
+  selectProposalClient: (client: BoluClientMatch, opId?: string) => Promise<BoluClientMatch | null>
+  /** Resolves a typed client name and updates the pending document or its questions. */
+  resolveProposalClientTerm: (term: string, opId?: string) => Promise<BoluClientSearchResult>
+  /** Creates a client after explicit approval, then attaches the verified ID to the draft. */
+  createProposalClient: (input: BoluClientCreateInput, opId?: string) => Promise<BoluClientCreationResult>
+  /** Records one clarification answer on the pending proposal. Never authorizes persistence. */
+  answerBoluClarification: (
+    opId: string | undefined,
+    questionId: string,
+    answer: BoluClarificationAnswer,
+  ) => Promise<boolean>
+  /** The pending proposal's open questions, for reuse by any surface. */
+  activeClarification: BoluClarification | null
   clearError: () => void
   refreshThread: () => Promise<void>
 }

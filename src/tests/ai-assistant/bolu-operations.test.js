@@ -515,7 +515,8 @@ test('persistInvoiceCreation fails closed when write authorization is missing', 
     async () => {
       await persistInvoiceCreation(tenantClient, proposal, canWrite, canRead)
     },
-    /permission to save/i,
+    // The refusal names the canonical action the tenant RPC actually enforces.
+    /permission to create/i,
   )
 })
 

@@ -41,7 +41,10 @@ export function AssistantComposer({
     textarea.style.overflowY = textarea.scrollHeight > 160 ? 'auto' : 'hidden'
   }, [inputRef, value])
 
-  const isLocked = busy || Boolean(disabled)
+  // A gate card is not a lock: only genuine in-flight work disables typing.
+  // Editing an existing message stays available even while the clerk reports a
+  // non-idle transient state.
+  const isLocked = busy || (Boolean(disabled) && !editing)
 
   return (
     <div className="ac-composer px-3 py-2.5 sm:px-4 sm:py-3 border-t border-[var(--ac-line)] bg-[var(--ac-surface)]">
@@ -71,10 +74,12 @@ export function AssistantComposer({
           disabled={isLocked}
           placeholder={
             isLocked
-              ? (awaiting ? 'Review the proposed card above…' : 'Bolu is working…')
+              ? 'Bolu is working…'
               : editing
                 ? 'Change your message. Send to regenerate the reply.'
-                : 'Ask Bolu or describe an invoice or quotation change…'
+                : awaiting
+                  ? 'Ask about this proposal or describe a change…'
+                  : 'Ask Bolu or describe an invoice or quotation change…'
           }
           aria-label={editing ? 'Edit your message' : 'Message Bolu assistant'}
           onChange={(event) => onChange(event.target.value)}
@@ -110,8 +115,8 @@ export function AssistantComposer({
       {/* Helper text hidden on mobile, visible on desktop with physical keyboards */}
       <p className="ac-foot hidden sm:block text-center mt-1.5 text-[11px] text-[var(--ac-muted)]" id="ac-composer-hint">
         {editing
-          ? 'Enter saves the edit · Escape cancels · Two-Gate human verification enforced'
-          : 'Enter to send · Shift + Enter for a new line · Two-Gate human verification enforced'}
+          ? 'Enter adds a line · Use the send button to save the edit · Escape cancels'
+          : 'Enter adds a line · Use the send button to send · Two-Gate human verification enforced'}
       </p>
     </div>
   )

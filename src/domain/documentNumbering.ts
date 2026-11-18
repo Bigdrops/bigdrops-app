@@ -10,6 +10,32 @@ import { mergeAutoCursor, readAutoCursor } from '@/domain/prefixConstants'
  * cursors cost retries at most, never duplicates.
  */
 
+/**
+ * Reads the tenant's configured `settings.document_prefixes` map.
+ *
+ * Every numbering path must resolve its prefix through this map, exactly as the
+ * document forms do via `useSettings()`. A caller that passes `undefined` to
+ * `resolvePrefix` silently falls back to the global default (`INV`), which is a
+ * different sequence family from the tenant's configured prefix.
+ */
+export async function fetchDocumentPrefixes(
+  tenantClient: TenantClient,
+): Promise<Record<string, string> | undefined> {
+  try {
+    const { data, error } = await tenantClient
+      .from('settings')
+      .select('document_prefixes')
+      .limit(1)
+      .single()
+    if (error || !data) return undefined
+    const raw = (data as { document_prefixes?: unknown })?.document_prefixes
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+    return raw as Record<string, string>
+  } catch {
+    return undefined
+  }
+}
+
 export async function fetchAutoCursor(
   tenantClient: TenantClient,
   family: string,

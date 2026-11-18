@@ -7,11 +7,12 @@ import {
   Trash2,
   Clock,
   RotateCcw,
-  AlertCircle,
   Check,
   X,
 } from 'lucide-react'
 import type { BoluConversationSummary } from '@/lib/ai-assistant/hooks/useBoluConversations'
+import { BxLogo } from '@/components/layout/bx-logo'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 function formatHoursRemaining(scheduledDeletionAt: string | null): string {
   if (!scheduledDeletionAt) return '48h grace'
@@ -34,6 +35,8 @@ export function AssistantRail({
   onRestore,
   onDelete,
   isMobileDrawer = false,
+  onCloseDrawer,
+  user,
 }: {
   collapsed: boolean
   activeThreadId: string | null
@@ -45,19 +48,23 @@ export function AssistantRail({
   onRestore?: (id: string) => void
   onDelete?: (id: string) => void
   isMobileDrawer?: boolean
+  onCloseDrawer?: () => void
+  user?: any
 }) {
   // Confirmation state for deleting a conversation
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
-  // Group active conversations
+  // Group active conversations by date
   const groupedActive = useMemo(() => {
     const today: BoluConversationSummary[] = []
     const yesterday: BoluConversationSummary[] = []
-    const earlier: BoluConversationSummary[] = []
+    const previous7Days: BoluConversationSummary[] = []
+    const older: BoluConversationSummary[] = []
 
     const now = new Date()
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
     const startOfYesterday = startOfToday - 86400000
+    const startOf7Days = startOfToday - 7 * 86400000
 
     // Filter only active conversations
     const activeList = conversations.filter((c) => c.status === 'active')
@@ -68,35 +75,45 @@ export function AssistantRail({
         today.push(conv)
       } else if (time >= startOfYesterday) {
         yesterday.push(conv)
+      } else if (time >= startOf7Days) {
+        previous7Days.push(conv)
       } else {
-        earlier.push(conv)
+        older.push(conv)
       }
     })
 
     return [
       { label: 'Today', list: today },
       { label: 'Yesterday', list: yesterday },
-      { label: 'Earlier', list: earlier },
+      { label: 'Previous 7 days', list: previous7Days },
+      { label: 'Older', list: older },
     ].filter((g) => g.list.length > 0)
   }, [conversations])
 
+  // Extract user profile identity
+  const avatarUrl = (user?.user_metadata?.avatar_url || user?.user_metadata?.picture) as string | undefined
+  const fullName = (user?.user_metadata?.full_name || user?.user_metadata?.name || '') as string
+  const email = (user?.email || '') as string
+  const displayName = fullName || (email ? email.split('@')[0] : 'Signed-in User')
+  const initials = (fullName || email || 'U').charAt(0).toUpperCase()
+
   return (
     <aside
-      className={`ac-rail flex flex-col h-full bg-[var(--ac-muted-surface)] border-r border-[var(--ac-line)] transition-all overflow-hidden ${
-        collapsed && !isMobileDrawer ? 'w-[58px]' : 'w-[260px]'
+      className={`ac-rail flex flex-col h-full bg-[var(--ac-muted-surface)] transition-all overflow-hidden ${
+        isMobileDrawer
+          ? 'w-full border-r-0'
+          : collapsed
+            ? 'w-[58px] border-r border-[var(--ac-line)]'
+            : 'w-[260px] border-r border-[var(--ac-line)]'
       }`}
       data-collapsed={collapsed && !isMobileDrawer}
+      data-mobile-drawer={isMobileDrawer ? 'true' : undefined}
       aria-label="Conversation threads"
     >
       {/* Rail Top Brand & Collapse Toggle */}
       <div className="ac-rail-top flex items-center justify-between p-3 border-b border-[var(--ac-line)] shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="size-7 rounded-lg bg-[var(--ac-accent)]/15 text-[var(--ac-accent)] flex items-center justify-center font-bold text-xs shrink-0 select-none"
-            aria-hidden="true"
-          >
-            B
-          </span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <BxLogo className="size-6 rounded-md shrink-0" />
           {collapsed && !isMobileDrawer ? null : (
             <div className="ac-rail-brand min-w-0">
               <p className="text-xs font-bold text-[var(--ac-ink)] truncate leading-none">BOURXE</p>
@@ -105,8 +122,18 @@ export function AssistantRail({
           )}
         </div>
 
-        {/* Hide collapse toggle inside mobile drawer */}
-        {!isMobileDrawer && onToggle ? (
+        {/* Close action in mobile drawer; expand/collapse toggle on desktop */}
+        {isMobileDrawer ? (
+          <button
+            type="button"
+            className="p-1.5 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-surface)] transition shrink-0"
+            onClick={onCloseDrawer}
+            aria-label="Close conversation drawer"
+            title="Close conversation drawer"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        ) : onToggle ? (
           <button
             type="button"
             className="p-1.5 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-surface)] transition shrink-0"
@@ -127,7 +154,7 @@ export function AssistantRail({
       <div className="p-2 shrink-0">
         <button
           type="button"
-          className="ac-new w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-[var(--ac-line)] bg-[var(--ac-surface)] text-xs font-semibold text-[var(--ac-ink)] hover:border-[var(--ac-accent)] hover:text-[var(--ac-accent)] transition active:scale-98 shadow-xs"
+          className="ac-new w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-[var(--ac-line)] bg-[var(--ac-surface)] hover:bg-[var(--ac-accent-soft)] hover:border-[var(--ac-accent)] text-xs font-semibold text-[var(--ac-ink)] hover:text-[var(--ac-accent)] transition active:scale-[0.98] shadow-xs"
           onClick={onNew}
           aria-label="Start new conversation"
           title="New conversation"
@@ -257,7 +284,9 @@ export function AssistantRail({
                   <div
                     key={thread.id}
                     className={`group relative flex items-center rounded-xl transition ${
-                      active ? 'bg-[var(--ac-surface)] shadow-xs' : 'hover:bg-[var(--ac-surface)]/60'
+                      active
+                        ? 'bg-[var(--ac-surface)] shadow-xs border border-[var(--ac-accent-line)]'
+                        : 'hover:bg-[var(--ac-surface)]/60 border border-transparent'
                     }`}
                   >
                     <button
@@ -334,6 +363,28 @@ export function AssistantRail({
             </div>
           ))
         )}
+      </div>
+
+      {/* User Identity / Account Footer */}
+      <div className="border-t border-[var(--ac-line)] p-2.5 bg-[var(--ac-surface)]/50 pb-[max(10px,env(safe-area-inset-bottom,10px))] shrink-0">
+        <div className={`flex items-center gap-2.5 min-w-0 ${collapsed && !isMobileDrawer ? 'justify-center' : ''}`}>
+          <Avatar className="size-7 rounded-full shrink-0 border border-[var(--ac-line)]">
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={displayName} className="aspect-square h-full w-full object-cover" />
+            ) : null}
+            <AvatarFallback className="bg-[var(--ac-accent-soft)] text-[var(--ac-accent)] text-[10px] font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          {collapsed && !isMobileDrawer ? null : (
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-[var(--ac-ink)] truncate leading-tight">{displayName}</p>
+              <span className="text-[9px] text-[var(--ac-muted)] truncate block">
+                {email || 'Signed in'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </aside>
   )

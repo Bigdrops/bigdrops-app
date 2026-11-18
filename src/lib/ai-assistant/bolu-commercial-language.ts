@@ -1,0 +1,309 @@
+/**
+ * bolu-commercial-language.ts — reusable commercial description intelligence.
+ *
+ * Bolu's contract with the user is UNDERSTAND -> STANDARDIZE -> SUGGEST ->
+ * PREPARE. This module holds the deterministic half of that contract:
+ *
+ * - It parses what the user actually wrote (pasted WhatsApp-style lists, list
+ *   markers, `15k` amounts, description lines, separate price lines).
+ * - It standardizes what is safely implied by the supplied words (unit
+ *   notation, capitalisation, `1.5mm green` -> `1.5mm² Single-Core Cable –
+ *   Green`).
+ * - It suggests improvements without ever applying a change the user did not
+ *   supply.
+ *
+ * Hard rule: it never invents a specification. No brand, manufacturer, grade,
+ * packaging, core count beyond the approved single-core shorthand, voltage,
+ * model, material or dimension is added here. Every value it emits is either
+ * present in the input or a documented interpretation of that input.
+ *
+ * Scope: invoices and quotations. Nothing in this module writes to the
+ * database or mutates inventory.
+ */
+
+export interface CommercialListEntry {
+  /** The description exactly as the user supplied it, before standardization. */
+  rawDescription: string
+  /** Standardized description suitable for a document line. */
+  description: string
+  /** Quantity parsed from the same line, or 1 when the user supplied none. */
+  quantity: number
+  /** Amount supplied on the same line (`15k`, `₦32,000`), or null. */
+  amount: number | null
+  /** True when the line only carried an amount, so pairing is positional. */
+  amountOnly: boolean
+}
+
+export interface CommercialListParse {
+  entries: CommercialListEntry[]
+  /** Description lines that carry no amount, in order. */
+  descriptions: CommercialListEntry[]
+  /** Amount-only lines, in order. */
+  amounts: number[]
+  /** `paired` when every description has an amount, `mismatch` otherwise. */
+  status: 'empty' | 'paired' | 'mismatch'
+  /** Amount lines that could not be matched to a description, in order. */
+  unpairedAmounts: number[]
+}
+
+const COLOUR_WORDS =
+  'green|red|black|blue|yellow|brown|white|grey|gray|orange|purple|pink'
+
+/** `1.5mm green`, `2.5 mm black`, `1.5mm2 red` */
+const CABLE_SHORTHAND = new RegExp(
+  `^(\\d+(?:\\.\\d+)?)\\s*mm\\s*(?:²|2|\\^2)?\\s*[-–,]?\\s*(${COLOUR_WORDS})$`,
+  'i',
+)
+
+/** A bare trailing integer after a measured description is a quantity. */
+const MEASURED_DESCRIPTION = /\b\d+(?:\.\d+)?\s*(?:mm|cm|m|kg|g|ml|l|pcs|bags?|rolls?|packs?)\b/i
+
+const LIST_MARKER = /^\s*(?:\d{1,3}[.)]|[-•*·])\s+/
+const WHATSAPP_STAMP = /^\s*\[?\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?,?\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[APap][Mm])?\]?\s*(?:-\s*)?(?:[^:]{1,40}:)?\s*/
+
+/**
+ * Parses a supplied amount.
+ *
+ * Accepts `32000`, `32,000`, `₦32,000`, `32,000.50`, `15k`, `15 K`, `2.5m`.
+ * Returns null when the token is not an amount at all.
+ */
+export function parseCommercialAmount(raw: string | null | undefined): number | null {
+  if (raw == null) return null
+  const text = String(raw).trim().replace(/[₦#]/g, '').replace(/\s+/g, ' ')
+  if (!text) return null
+  const match = text.match(/^(\d[\d,]*(?:\.\d+)?)\s*(k|m)?$/i)
+  if (!match) return null
+  const base = Number(match[1].replace(/,/g, ''))
+  if (!Number.isFinite(base)) return null
+  const suffix = (match[2] ?? '').toLowerCase()
+  const value = suffix === 'k' ? base * 1_000 : suffix === 'm' ? base * 1_000_000 : base
+  return Number.isFinite(value) ? value : null
+}
+
+/**
+ * Standardizes a supplied description without adding a specification.
+ *
+ * Only presentation is normalized: whitespace, unit notation, casing. Words
+ * the user did not write are never appended here.
+ */
+export function standardizeDescription(raw: string): string {
+  const cleaned = String(raw ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/\bmm\s*(?:2|\^2)\b/gi, 'mm²')
+    .replace(/\bmm2\b/gi, 'mm²')
+    .trim()
+  if (!cleaned) return ''
+
+  // Cable shorthand is the one approved expansion: size + colour on a measured
+  // conductor is sufficient to name the product class without inventing specs.
+  const cable = cleaned.match(CABLE_SHORTHAND)
+  if (cable) {
+    const size = cable[1]
+    const colour = cable[2].toLowerCase().replace(/^gray$/, 'grey')
+    return `${size}mm² Single-Core Cable – ${colour.charAt(0).toUpperCase()}${colour.slice(1)}`
+  }
+
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
+}
+
+/** True when the supplied text is cable shorthand that can be standardized. */
+export function isCableShorthand(raw: string): boolean {
+  return CABLE_SHORTHAND.test(String(raw ?? '').trim())
+}
+
+/** Splits one line into a description and an optional quantity/amount. */
+function parseLine(rawLine: string): CommercialListEntry | null {
+  let line = rawLine.replace(/\r/g, '').trim()
+  if (!line) return null
+  line = line.replace(WHATSAPP_STAMP, '').trim()
+  line = line.replace(LIST_MARKER, '').trim()
+  if (!line || /^(?:invoice|quotation|write|make|create|draft)\b/i.test(line)) return null
+
+  // A line that is only an amount is a positional price entry.
+  const amountOnly = parseCommercialAmount(line)
+  if (amountOnly !== null) {
+    return { rawDescription: '', description: '', quantity: 0, amount: amountOnly, amountOnly: true }
+  }
+
+  // `Salt 15k`, `Cement ₦5,000`, `Cable 32,000`
+  const trailing = line.match(/^(.*?)\s+([₦#]?\d[\d,]*(?:\.\d+)?\s*[kKmM]?)$/)
+  if (trailing) {
+    const tail = trailing[2].trim()
+    const tailIsAmountShape = /[₦#]/i.test(tail) || /[kKmM]$/.test(tail) || /,/.test(tail)
+    const description = trailing[1].trim()
+    if (description && tailIsAmountShape) {
+      const amount = parseCommercialAmount(tail)
+      if (amount !== null) {
+        return {
+          rawDescription: description,
+          description: standardizeDescription(description),
+          quantity: 1,
+          amount,
+          amountOnly: false,
+        }
+      }
+    }
+    // `1.5mm green 1` — a bare integer after a measured description is a quantity.
+    if (description && MEASURED_DESCRIPTION.test(description) && /^\d{1,4}$/.test(tail)) {
+      return {
+        rawDescription: description,
+        description: standardizeDescription(description),
+        quantity: Number(tail),
+        amount: null,
+        amountOnly: false,
+      }
+    }
+  }
+
+  return {
+    rawDescription: line,
+    description: standardizeDescription(line),
+    quantity: 1,
+    amount: null,
+    amountOnly: false,
+  }
+}
+
+/**
+ * Parses pasted or typed commercial input into ordered entries.
+ *
+ * Multiple user messages may contribute to one document: callers concatenate
+ * the user's turns before parsing. Descriptions and amounts are paired in
+ * order when the counts agree; when they do not, `status` is `mismatch` and no
+ * pairing is invented.
+ */
+export function parseCommercialList(text: string): CommercialListParse {
+  const entries: CommercialListEntry[] = []
+  for (const line of String(text ?? '').split('\n')) {
+    const parsed = parseLine(line)
+    if (parsed) entries.push(parsed)
+  }
+
+  const descriptions = entries.filter((entry) => !entry.amountOnly)
+  const amounts = entries.filter((entry) => entry.amountOnly).map((entry) => entry.amount ?? 0)
+
+  if (descriptions.length === 0) {
+    return { entries, descriptions, amounts, status: amounts.length ? 'mismatch' : 'empty', unpairedAmounts: amounts }
+  }
+
+  const missing = descriptions.filter((entry) => entry.amount === null)
+  if (amounts.length === 0) {
+    return {
+      entries,
+      descriptions,
+      amounts,
+      status: missing.length === 0 ? 'paired' : 'empty',
+      unpairedAmounts: [],
+    }
+  }
+
+  // Positional pairing only when the lists line up exactly. A different count
+  // is reported as a mismatch: a guessed price on the wrong line is worse than
+  // one focused question.
+  const paired = amounts.length === missing.length
+  if (paired) {
+    missing.forEach((entry, index) => {
+      entry.amount = amounts[index]
+    })
+  }
+  const stillMissing = missing.filter((entry) => entry.amount === null)
+
+  return {
+    entries,
+    descriptions,
+    amounts,
+    status: paired && stillMissing.length === 0 ? 'paired' : 'mismatch',
+    unpairedAmounts: paired ? [] : amounts,
+  }
+}
+
+/**
+ * Renders parsed evidence for the provider prompt.
+ *
+ * This is evidence, not an instruction to the model to accept it blindly: the
+ * model still has to produce the document, and the user still has to approve.
+ */
+export function formatCommercialEvidence(parsed: CommercialListParse): string {
+  if (parsed.status === 'empty' && parsed.entries.length === 0) return ''
+  const lines: string[] = [
+    'PARSED COMMERCIAL EVIDENCE (deterministic parse of the user\'s own words, in order):',
+  ]
+
+  const ordered = parsed.descriptions
+  ordered.forEach((entry, index) => {
+    const amount = entry.amount == null ? 'not supplied' : String(entry.amount)
+    lines.push(
+      `${index + 1}. supplied: "${entry.rawDescription}" | quantity: ${entry.quantity} | amount: ${amount} | standard description: "${entry.description}"`,
+    )
+  })
+
+  if (parsed.status === 'mismatch') {
+    lines.push(
+      `Amounts and descriptions do not line up (${parsed.descriptions.length} descriptions, ${parsed.amounts.length} standalone amounts). Do not guess the pairing: ask one focused question.`,
+    )
+  } else if (parsed.amounts.length > 0) {
+    lines.push('The supplied amounts were matched to the descriptions in order.')
+  }
+
+  return lines.join('\n')
+}
+
+/**
+ * Standardizes the model's line items deterministically.
+ *
+ * Applied after validation so a shorthand description cannot reach the preview
+ * unresolved. Only the supplied description is rewritten; no value is added.
+ */
+export function standardizeCommercialItems<
+  T extends { description: string; quantity: number; unit_price: number },
+>(items: T[]): T[] {
+  return items.map((item) => {
+    const description = standardizeDescription(item.description)
+    return description && description !== item.description ? { ...item, description } : item
+  })
+}
+
+export interface CommercialSuggestionInput {
+  items: Array<{ description: string; quantity: number; unit_price: number; unit?: string | null }>
+  payment_terms?: string | null
+  title?: string | null
+  notes?: string | null
+}
+
+/**
+ * Builds optional, grounded suggestions.
+ *
+ * Each suggestion names a fact about the supplied draft. None of them is
+ * applied automatically and none of them blocks the proposal.
+ */
+export function buildCommercialSuggestions(input: CommercialSuggestionInput): string[] {
+  const suggestions: string[] = []
+  const items = input.items ?? []
+
+  const shorthand = items.filter((item) => isCableShorthand(item.description))
+  if (shorthand.length > 0) {
+    suggestions.push(
+      `${shorthand[0].description} can be written as ${standardizeDescription(shorthand[0].description)}.`,
+    )
+  }
+
+  const unpriced = items.filter((item) => !item.unit_price)
+  if (unpriced.length > 0) {
+    suggestions.push(`No amount was supplied for ${unpriced[0].description}.`)
+  }
+
+  const unitless = items.filter((item) => !item.unit && /\d/.test(item.description))
+  if (unitless.length > 0) {
+    suggestions.push(`A unit (for example pcs, m or bags) would make ${unitless[0].description} clearer.`)
+  }
+
+  if (!input.payment_terms) {
+    suggestions.push('Payment terms are not set on this draft.')
+  }
+
+  if (!input.title && items.length > 1) {
+    suggestions.push('A short document title would make this invoice easier to identify later.')
+  }
+
+  return suggestions
+}

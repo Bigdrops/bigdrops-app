@@ -287,6 +287,57 @@ const MODEL_PRICES: Record<string, ModelPrice> = {
     currency: 'USD',
     verifiedAt: '2026-11-16',
   },
+  // Runcrate pay-as-you-go rates on shared capacity, quoted 2026-11-17.
+  // A free connection is flagged isPaidTier=false, which costs nothing.
+  'runcrate:deepseek-ai/DeepSeek-V4.1-Flash': {
+    promptUsdPerMTok: 0.0735,
+    completionUsdPerMTok: 0.221,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
+  'runcrate:zai-org/GLM-5.3-Flash': {
+    promptUsdPerMTok: 0.0788,
+    completionUsdPerMTok: 0.263,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
+  'runcrate:zai-org/GLM-5.3': {
+    promptUsdPerMTok: 0.295,
+    completionUsdPerMTok: 1.31,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
+  'runcrate:openai/gpt-oss-120b': {
+    promptUsdPerMTok: 0.0194,
+    completionUsdPerMTok: 0.0893,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
+  'runcrate:Qwen/Qwen3.8-Flash': {
+    promptUsdPerMTok: 0.0593,
+    completionUsdPerMTok: 0.201,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
+  // APInex flat-rate catalogue, free-category ids cost nothing at the time of verification.
+  'apinex:deepseek-v4.1-flash': {
+    promptUsdPerMTok: 0.06,
+    completionUsdPerMTok: 0.06,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
+  'apinex:glm-5.3-flash': {
+    promptUsdPerMTok: 0.05,
+    completionUsdPerMTok: 0.05,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
+  'apinex:glm-5.3': {
+    promptUsdPerMTok: 0.15,
+    completionUsdPerMTok: 0.15,
+    currency: 'USD',
+    verifiedAt: '2026-11-17',
+  },
 }
 
 export function lookupModelPrice(providerId: string, modelId: string): ModelPrice | null {

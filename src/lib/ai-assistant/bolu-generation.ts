@@ -22,15 +22,28 @@ import { buildProviderMessages, factsAsPrompt } from './bolu-formatting'
 import {
   buildDocumentCreateProposal,
   buildInvoiceModifyProposal,
+  clarificationForClientResolution,
+  mergeDocumentCreateProposal,
   parseStructuredOperationEnvelope,
   validateInvoiceCreateInput,
   validateInvoiceModifyInput,
+  type BoluClientResolution,
   type BoluProposal,
 } from './bolu-operations'
 import {
+  buildCommercialSuggestions,
+  formatCommercialEvidence,
+  parseCommercialList,
+  standardizeCommercialItems,
+} from './bolu-commercial-language'
+import {
+  readBoluClient,
   readBoluContextFacts,
   readBoluInvoice,
-  validateBoluClient,
+  readBoluQuotation,
+  resolveOperationFacts,
+  searchBoluClients,
+  type BoluClientMatch,
   type BoluFactResult,
   type BoluReadAuthorization,
 } from './bolu-data'
@@ -76,6 +89,12 @@ export interface BoluGenerationOptions {
   connectionId?: string | null
   modelId?: string | null
   tenantClient?: TenantClient
+  /**
+   * The draft this turn may be correcting. A correction updates this
+   * operation instead of creating a second invoice or quotation.
+   */
+  previousProposal?: BoluProposal | null
+  previousProposalMessageId?: string | null
   canRead: BoluReadAuthorization
   state: BoluGenerationState
   refs: BoluGenerationRefs
@@ -91,7 +110,15 @@ export async function resolveBoluFacts(input: {
   if (!input.tenantClient) return null
   try {
     const capability = matchBoluIntent(input.text, input.pageContext)
-    if (!capability) return null
+    if (!capability) {
+      // Write/mutation intents must still discover relevant business records.
+      return await resolveOperationFacts({
+        text: input.text,
+        tenantClient: input.tenantClient,
+        pageContext: input.pageContext,
+        canRead: input.canRead,
+      })
+    }
     const factsContext: BoluPageContext = {
       ...input.pageContext,
       filters: { ...input.pageContext.filters, query: extractBoluSearchTerm(input.text) },
@@ -102,6 +129,55 @@ export async function resolveBoluFacts(input: {
     return {
       kind: 'message',
       text: '[SYSTEM ERROR: The database lookup failed. Inform the user you encountered a technical issue querying their records.]',
+    }
+  }
+}
+
+/**
+ * Resolves a proposal's client against the tenant directory.
+ *
+ * Order: verify a model-supplied client_id, then search by name. Never invents
+ * an ID. An ambiguous or missing client is returned as a resolution outcome so
+ * the caller can retain the proposal and ask the user.
+ */
+export async function resolveProposalClient(input: {
+  tenantClient?: TenantClient
+  clientName: string
+  clientId?: string | null
+}): Promise<{ client: BoluClientMatch | null; resolution: BoluClientResolution }> {
+  const { tenantClient, clientName, clientId } = input
+
+  if (!tenantClient?.isReady) {
+    return {
+      client: null,
+      resolution: { status: 'search_error', query: clientName, error: 'Business records are not available yet.' },
+    }
+  }
+
+  try {
+    // A model-supplied ID is only trusted after a read of that exact record.
+    if (clientId) {
+      const verified = await readBoluClient(tenantClient, clientId)
+      if (verified) return { client: verified, resolution: { status: 'resolved', client: verified } }
+    }
+
+    const search = await searchBoluClients(tenantClient, clientName)
+    switch (search.status) {
+      case 'exact_match':
+      case 'single_match':
+        return { client: search.client, resolution: { status: 'resolved', client: search.client } }
+      case 'ambiguous':
+        return { client: null, resolution: { status: 'ambiguous', query: search.query, matches: search.matches } }
+      case 'not_found':
+        return { client: null, resolution: { status: 'not_found', query: search.query } }
+      case 'search_error':
+        return { client: null, resolution: { status: 'search_error', query: search.query, error: search.error } }
+    }
+  } catch {
+    // A lookup failure is not an empty client directory.
+    return {
+      client: null,
+      resolution: { status: 'search_error', query: clientName, error: 'Client lookup failed.' },
     }
   }
 }
@@ -166,7 +242,17 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     { id: 'current-user-turn', role: 'user' as const, content: options.userText },
   ])
 
-  const factsPrompt = facts ? factsAsPrompt(facts) : ''
+  // The user may have supplied the commercial details across several turns
+  // (pasted price lists, then names). Parsing the recent user turns keeps that
+  // evidence grounded in the user's own words.
+  const recentUserText = [
+    ...options.history.filter((turn) => turn.role === 'user').slice(-3).map((turn) => turn.content),
+    options.userText,
+  ].join('\n')
+  const commercialEvidence = formatCommercialEvidence(parseCommercialList(recentUserText))
+  const factsPrompt = [facts ? factsAsPrompt(facts) : '', commercialEvidence]
+    .filter(Boolean)
+    .join('\n\n')
   const controller = new AbortController()
   refs.abortController.current = controller
 
@@ -218,6 +304,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     state.setIsStreaming(false)
 
     let parsedProposal: BoluProposal | null = null
+    let mergedFromMessageId: string | null = null
     const envelope = parseStructuredOperationEnvelope(finalText)
 
     if (envelope.hasOperation && envelope.rawOperation) {
@@ -230,31 +317,72 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
         if (rawOp.operationType === 'create-document') {
           const validation = validateInvoiceCreateInput(rawOp.payload)
           if (validation.valid && validation.data) {
-            if (options.tenantClient) {
-              const clientValidation = await validateBoluClient(options.tenantClient, validation.data.client_name)
-              if (clientValidation.status === 'exact_match') {
-                parsedProposal = buildDocumentCreateProposal(documentFamily, {
-                  ...validation.data,
-                  client_id: clientValidation.client.id,
-                  client_name: clientValidation.client.name,
-                })
-              } else if (clientValidation.status === 'ambiguous') {
-                const matchesList = clientValidation.matches.map((m) => `• ${m.name}`).join('\n')
-                finalText = `${finalText}\n\nI found multiple clients matching "${validation.data.client_name}":\n${matchesList}\n\nPlease clarify which client you would like to create this invoice for.`
-              } else {
-                finalText = `${finalText}\n\nI couldn't find an existing client named "${validation.data.client_name}" in your business records. Please verify the client name or register them under Clients first.`
-              }
-            } else {
-              parsedProposal = buildDocumentCreateProposal(documentFamily, validation.data)
+            // Presentation-only standardisation (unit notation, casing, the
+            // approved cable shorthand). No value is added.
+            const suppliedPayload = {
+              ...validation.data,
+              items: standardizeCommercialItems(validation.data.items),
             }
+            const { client, resolution } = await resolveProposalClient({
+              tenantClient: options.tenantClient,
+              clientName: suppliedPayload.client_name,
+              clientId: suppliedPayload.client_id,
+            })
+            const resolvedPayload = client
+              ? { ...suppliedPayload, client_id: client.id, client_name: client.name }
+              : suppliedPayload
+
+            const previous = options.previousProposal
+            const correctsExistingDraft =
+              previous?.operationType === 'create-document' &&
+              previous.documentFamily === documentFamily &&
+              (previous.status === 'pending_approval' || previous.status === 'approved_pending_save')
+
+            // A correction updates the existing operation. It never becomes a
+            // second invoice, and it always drops back to Gate 1 review.
+            const proposal = correctsExistingDraft
+              ? mergeDocumentCreateProposal(previous, resolvedPayload, resolution)
+              : buildDocumentCreateProposal(
+                  documentFamily,
+                  resolvedPayload,
+                  documentFamily === 'quotation' ? 'QTN-DRAFT' : 'INV-DRAFT',
+                  resolution,
+                )
+
+            if (correctsExistingDraft) mergedFromMessageId = options.previousProposalMessageId ?? null
+
+            proposal.suggestions = buildCommercialSuggestions({
+              items: proposal.payload.items,
+              payment_terms: proposal.payload.payment_terms,
+              title: proposal.payload.title,
+            })
+
+            const clarification = clarificationForClientResolution(resolution)
+            if (clarification) {
+              proposal.clarificationAnswers = undefined
+              proposal.clarification = clarification
+              if (resolution.status === 'ambiguous') {
+                const matchesList = resolution.matches.map((m) => `• ${m.name}`).join('\n')
+                finalText = `${finalText}\n\nI found multiple clients matching "${validation.data.client_name}":\n${matchesList}\n\nPlease choose the client below.`
+              } else if (resolution.status === 'not_found') {
+                finalText = `${finalText}\n\nI couldn't find an existing client named "${validation.data.client_name}" in your business records. Search your client directory below or enter the exact name.`
+              } else if (resolution.status === 'search_error') {
+                // A failed search is not an empty directory. Never claim no client exists.
+                finalText = `${finalText}\n\nI could not search your client directory just now, so no client is attached yet. The draft is kept. Try the client search again in a moment.`
+              }
+            }
+
+            parsedProposal = proposal
           }
-        } else if (rawOp.operationType === 'modify-document' && documentFamily === 'invoice') {
+        } else if (rawOp.operationType === 'modify-document') {
           const validation = validateInvoiceModifyInput(rawOp.payload)
           if (validation.valid && validation.data) {
-            let targetNum = 'INV-TARGET'
+            let targetNum = documentFamily === 'quotation' ? 'QTN-TARGET' : 'INV-TARGET'
             if (options.tenantClient) {
               try {
-                const doc = await readBoluInvoice(options.tenantClient, validation.data.documentId, options.canRead)
+                const doc = documentFamily === 'quotation'
+                  ? await readBoluQuotation(options.tenantClient, validation.data.documentId, options.canRead)
+                  : await readBoluInvoice(options.tenantClient, validation.data.documentId, options.canRead)
                 if (doc) targetNum = doc.number
               } catch {
                 // Fallback to placeholder if lookup fails
@@ -263,6 +391,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
             parsedProposal = buildInvoiceModifyProposal({
               targetDocumentId: validation.data.documentId,
               targetDocumentNumber: targetNum,
+              documentFamily,
               field: validation.data.field,
               oldValue: validation.data.oldValue,
               newValue: validation.data.newValue,
@@ -312,10 +441,27 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
 
     state.setMessages((prev) => prev.map((m) => (m.id === tempAssistantId ? finalMsg : m)))
 
+    // A corrected draft lives on this turn only. Clearing the superseded card
+    // keeps one operation with one live preview instead of two proposals.
+    if (parsedProposal && mergedFromMessageId && mergedFromMessageId !== finalMsg.id) {
+      state.setMessages((prev) =>
+        prev.map((m) => (m.id === mergedFromMessageId ? { ...m, proposal: null } : m)),
+      )
+      const { error: clearError } = await (supabase.from('bolu_messages') as any)
+        .update({ proposal_payload: null, updated_at: new Date().toISOString() })
+        .eq('id', mergedFromMessageId)
+      if (clearError) {
+        console.warn('[useBoluThread] Could not clear the superseded proposal:', clearError.message)
+      }
+    }
+
     if (parsedProposal) {
       state.setActiveProposal(parsedProposal)
       state.setActiveProposalMessageId(finalMsg.id)
-      state.setClerkState('listening')
+      // The proposal card is the state indicator at Gate 1. The clerk must be
+      // idle so the composer stays available for corrections and questions;
+      // `listening` here disabled chat for the whole review.
+      state.setClerkState('idle')
     } else {
       state.setClerkState('idle')
     }

@@ -46,6 +46,8 @@ interface InvoiceWorkspaceProps {
   onCustomize: () => void;
   onFabClick: () => void;
   overlays?: React.ReactNode;
+  /** Persisted provenance: the document was co-created through Bolu. */
+  coCreatedWithBolu?: boolean;
 }
 
 export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
@@ -83,15 +85,22 @@ export const InvoiceWorkspace: React.FC<InvoiceWorkspaceProps> = ({
   onCustomize,
   onFabClick,
   overlays,
+  coCreatedWithBolu = false,
 }) => {
   const isPaid = invoice?.status === "paid";
+  // Provenance comes from persisted custom_fields, so it survives reload.
+  const subtitle = [
+    invoice?.invoice_number || "Draft",
+    invoice?.invoice_title || "",
+    coCreatedWithBolu ? "Co-created with Bolu" : "",
+  ].filter(Boolean).join(" · ");
 
   return (
     <DocumentPage
       topNav={
         <InvoiceTopNav
           title="Invoices"
-          subtitle={`${invoice?.invoice_number || "Draft"} · ${invoice?.invoice_title || ""}`}
+          subtitle={subtitle}
           onBack={onBack}
           onShare={onShare}
           onCustomize={onCustomize}

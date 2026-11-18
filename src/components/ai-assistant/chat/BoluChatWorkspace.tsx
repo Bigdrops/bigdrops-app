@@ -17,8 +17,11 @@ import { useBoluChatInteractions } from '@/hooks/useBoluChatInteractions'
 import { useBoluResponseHaptics } from '@/hooks/useBoluResponseHaptics'
 import { exportChatAsMarkdown, exportChatAsJson } from '@/lib/ai-assistant/bolu-export'
 import { getBoluSuggestions } from '@/lib/ai-assistant/bolu-context'
+import { feedback } from '@/lib/feedback'
 import { EntityContext } from '@/lib/tenant/entityContext'
 import { useAuthorization } from '@/lib/tenant/contexts'
+import { supabase } from '@/supabase'
+import { deriveConversationTitle } from '@/lib/ai-assistant/bolu-titles'
 import type { BoluReadAuthorization, BoluWriteAuthorization } from '@/lib/ai-assistant/bolu-data'
 import type { BoluChatWorkspaceProps, ProductionBoluMessage, ViewportId } from './types'
 
@@ -53,6 +56,20 @@ export function BoluChatWorkspace({
   const entityCtx = useContext(EntityContext)
   const { hasAuthorization } = useAuthorization()
   const resolvedTenantId = tenantId ?? (pageContext as any)?.activeEntityId ?? entityCtx?.entity?.id ?? null
+
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setCurrentUser(data.user)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null)
+    })
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   const authorizationRef = useRef(hasAuthorization)
   authorizationRef.current = hasAuthorization
@@ -211,6 +228,13 @@ export function BoluChatWorkspace({
     rejectGate1,
     confirmGate2Save,
     cancelGate2Save,
+    returnGate1ToReview,
+    searchProposalClients,
+    selectProposalClient,
+    createProposalClient,
+    answerBoluClarification,
+    error,
+    clearError,
   } = useBoluThread({
     conversationId: activeConversationId,
     tenantId: resolvedTenantId,
@@ -222,8 +246,9 @@ export function BoluChatWorkspace({
     connectionId: selectedModel?.connectionId ?? null,
     modelId: selectedModel?.modelId ?? null,
     onEnsureConversation: async () => {
+      const initialTitle = inputDraft.trim() ? deriveConversationTitle(inputDraft.trim()) : 'New Conversation'
       return await createConversation({
-        title: 'New Conversation',
+        title: initialTitle,
         module: pageContext?.origin?.page ?? 'dashboard',
       })
     },
@@ -247,12 +272,16 @@ export function BoluChatWorkspace({
     if (!open) stopNarration()
   }, [open, stopNarration])
 
-  // Automatically open contextual panel when an actionable document proposal arrives
+  // Open the side panel when a proposal arrives on a viewport where the panel
+  // sits beside the conversation. On a phone the panel is a bottom sheet that
+  // would cover the composer, so the in-thread proposal card is the preview and
+  // the sheet stays an explicit choice. A pending proposal never locks chat.
   useEffect(() => {
-    if (activeProposal && (activeProposal.status === 'pending_approval' || activeProposal.status === 'approved_pending_save')) {
-      setPanelOpen(true)
-    }
-  }, [activeProposal])
+    const actionable =
+      activeProposal &&
+      (activeProposal.status === 'pending_approval' || activeProposal.status === 'approved_pending_save')
+    if (actionable && viewport !== 'fold-closed') setPanelOpen(true)
+  }, [activeProposal, viewport])
 
   // Auto-scroll when messages update and pinned to bottom
   useEffect(() => {
@@ -270,21 +299,22 @@ export function BoluChatWorkspace({
   // Suggestions derived from context
   const suggestions = pageContext ? getBoluSuggestions(pageContext).map((s) => s.prompt) : []
 
-  // Message submission handler with error-safe draft retention.
-  // While editing, the same composer saves the edited request instead of
-  // appending a new user message.
   const handleSend = async (text: string) => {
     const clean = text.trim()
     if (!clean || isStreaming) return
-
+    clearError()
     if (editingMessageId) {
-      await handleSaveEdit(editingMessageId, clean)
+      const ok = await handleSaveEdit(editingMessageId, clean)
+      if (!ok && error) {
+        feedback.error('Message update failed', { description: error })
+      }
       return
     }
-
     const success = await submitMessage(clean)
     if (success) {
       setInputDraft('')
+    } else if (error) {
+      feedback.error('Message send failed', { description: error })
     }
   }
 
@@ -293,15 +323,18 @@ export function BoluChatWorkspace({
     void handleSend(inputDraft)
   }
 
+  /**
+   * Enter inserts a newline. It never sends.
+   *
+   * On Android the soft keyboard's Enter key is the primary newline key, so
+   * treating it as submit made multiline composition impossible. Sending is
+   * the explicit send button only, which also keeps IME composition and paste
+   * behaviour untouched.
+   */
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Escape' && editingMessageId) {
       e.preventDefault()
       handleCancelEdit()
-      return
-    }
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      void handleSend(inputDraft)
     }
   }
 
@@ -313,6 +346,7 @@ export function BoluChatWorkspace({
   const handleClose = () => {
     setInputDraft('')
     setEditingMessageId(null)
+    clearError()
     stopNarration()
     selectConversation(null)
     setMobileRailOpen(false)
@@ -323,6 +357,7 @@ export function BoluChatWorkspace({
     selectConversation(null)
     setInputDraft('')
     setEditingMessageId(null)
+    clearError()
     stopNarration()
     setMobileRailOpen(false)
     inputRef.current?.focus()
@@ -331,6 +366,7 @@ export function BoluChatWorkspace({
   const handleSelectThread = (id: string) => {
     setEditingMessageId(null)
     setInputDraft('')
+    clearError()
     stopNarration()
     selectConversation(id)
     setMobileRailOpen(false)
@@ -392,6 +428,13 @@ export function BoluChatWorkspace({
       onRejectGate1={(opId) => void rejectGate1(opId)}
       onConfirmGate2={(opId) => void confirmGate2Save(opId)}
       onCancelGate2={(opId) => void cancelGate2Save(opId)}
+      onReturnToReview={(opId) => void returnGate1ToReview(opId)}
+      onSearchClients={(_opId, term) => searchProposalClients(term)}
+      onSelectClient={(opId, client) => selectProposalClient(client, opId)}
+      onCreateClient={(opId, input) => createProposalClient(input, opId)}
+      onAnswerClarification={(opId, questionId, answer) =>
+        answerBoluClarification(opId, questionId, answer)
+      }
       onEditMessage={handleBeginEdit}
       onRegenerateMessage={handleRegenerate}
       narration={narrationControls}
@@ -404,7 +447,7 @@ export function BoluChatWorkspace({
     <AssistantComposer
       value={inputDraft}
       busy={isStreaming}
-      disabled={isStreaming || clerkState !== 'idle'}
+      disabled={isStreaming || (clerkState !== 'idle' && !editingMessageId)}
       awaiting={Boolean(
         activeProposal &&
           (activeProposal.status === 'pending_approval' || activeProposal.status === 'approved_pending_save'),
@@ -424,6 +467,17 @@ export function BoluChatWorkspace({
     <InvoicePanel
       proposal={activeProposal}
       onClose={() => setPanelOpen(false)}
+      onApproveGate1={approveGate1}
+      onRejectGate1={rejectGate1}
+      onConfirmGate2={confirmGate2Save}
+      onCancelGate2={cancelGate2Save}
+      onReturnToReview={returnGate1ToReview}
+      onSearchClients={(_opId, term) => searchProposalClients(term)}
+      onSelectClient={(opId, client) => selectProposalClient(client, opId)}
+      onCreateClient={(opId, input) => createProposalClient(input, opId)}
+      onAnswerClarification={(opId, questionId, answer) =>
+        answerBoluClarification(opId, questionId, answer)
+      }
     />
   )
 
@@ -440,6 +494,8 @@ export function BoluChatWorkspace({
       onRestore={(id) => void restoreConversation(id)}
       onDelete={(id) => void deleteConversation(id)}
       isMobileDrawer={isMobileDrawerMode}
+      onCloseDrawer={() => setMobileRailOpen(false)}
+      user={currentUser}
     />
   )
 
@@ -463,24 +519,12 @@ export function BoluChatWorkspace({
               {/* Mobile Rail Drawer */}
               {mobileRailOpen ? (
                 <div className="absolute inset-0 z-50 flex bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-                  <div className="w-[280px] max-w-[85vw] h-full bg-[var(--ac-surface)] shadow-2xl flex flex-col border-r border-[var(--ac-line)]">
-                    <div className="flex items-center justify-between p-3 border-b border-[var(--ac-line)]">
-                      <p className="text-xs font-bold text-[var(--ac-ink)]">Conversations</p>
-                      <button
-                        type="button"
-                        className="p-1 rounded-lg hover:bg-[var(--ac-muted-surface)] text-[var(--ac-muted)]"
-                        onClick={() => setMobileRailOpen(false)}
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      {railNode(true)}
-                    </div>
+                  <div className="w-[280px] sm:w-[320px] max-w-[85vw] h-full bg-[var(--ac-muted-surface)] shadow-2xl flex flex-col border-r border-[var(--ac-line)] overflow-hidden">
+                    {railNode(true)}
                   </div>
                   <button
                     type="button"
-                    className="flex-1 cursor-default"
+                    className="flex-1 cursor-default bg-transparent"
                     aria-label="Close conversation drawer"
                     onClick={() => setMobileRailOpen(false)}
                   />
@@ -496,7 +540,7 @@ export function BoluChatWorkspace({
                     aria-label="Close sheet"
                     onClick={() => setPanelOpen(false)}
                   />
-                  <div className="relative h-[85%] max-h-[640px] w-full rounded-t-3xl bg-[var(--ac-surface)] border-t border-[var(--ac-line)] shadow-2xl flex flex-col overflow-hidden">
+                  <div className="relative max-h-[85dvh] w-full rounded-t-3xl bg-[var(--ac-surface)] border-t border-[var(--ac-line)] shadow-2xl flex flex-col overflow-hidden">
                     <div className="flex-1 overflow-y-auto">
                       {panelNode}
                     </div>
@@ -524,25 +568,13 @@ export function BoluChatWorkspace({
 
               {/* Foldable History Rail Drawer */}
               {mobileRailOpen ? (
-                <div className="absolute inset-0 z-50 flex bg-black/40 backdrop-blur-xs">
-                  <div className="w-[300px] h-full bg-[var(--ac-surface)] shadow-2xl flex flex-col border-r border-[var(--ac-line)]">
-                    <div className="flex items-center justify-between p-3 border-b border-[var(--ac-line)]">
-                      <p className="text-xs font-bold text-[var(--ac-ink)]">Conversations</p>
-                      <button
-                        type="button"
-                        className="p-1 rounded-lg hover:bg-[var(--ac-muted-surface)]"
-                        onClick={() => setMobileRailOpen(false)}
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      {railNode(true)}
-                    </div>
+                <div className="absolute inset-0 z-50 flex bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+                  <div className="w-[300px] max-w-[85vw] h-full bg-[var(--ac-muted-surface)] shadow-2xl flex flex-col border-r border-[var(--ac-line)] overflow-hidden">
+                    {railNode(true)}
                   </div>
                   <button
                     type="button"
-                    className="flex-1 cursor-default"
+                    className="flex-1 cursor-default bg-transparent"
                     aria-label="Close conversation drawer"
                     onClick={() => setMobileRailOpen(false)}
                   />

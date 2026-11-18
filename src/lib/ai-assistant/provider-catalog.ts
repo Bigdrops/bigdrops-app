@@ -331,6 +331,49 @@ export const PROVIDER_CATALOGUE: ProviderCatalogueEntry[] = [
     regionNote:
       'Multi-region. Zero request retention and no training on requests. The free plan covers DeepSeek V4.1 Flash only and resets every day. GLM-5.3 needs a paid plan.',
   },
+  {
+    id: 'runcrate',
+    name: 'Runcrate',
+    description: 'Free weekly tokens for five open models. Resets every Monday. GitHub sign-in.',
+    protocol: 'openai',
+    authScheme: 'bearer',
+    baseUrl: 'https://api.runcrate.ai/v1',
+    supportsDiscovery: true,
+    docsUrl: 'https://runcrate.ai/inference/free',
+    keyHint: 'Key from runcrate.ai → API keys',
+    defaultModel: 'deepseek-ai/DeepSeek-V4.1-Flash',
+    curatedModels: [
+      M('deepseek-ai/DeepSeek-V4.1-Flash', 'DeepSeek V4.1 Flash'),
+      M('zai-org/GLM-5.3-Flash', 'GLM-5.3 Flash'),
+      M('zai-org/GLM-5.3', 'GLM-5.3'),
+      M('openai/gpt-oss-120b', 'GPT-OSS 120B'),
+      M('Qwen/Qwen3.8-Flash', 'Qwen 3.8 Flash'),
+    ],
+    regionNote:
+      'Free weekly allowance shared by the whole workspace, resets every Monday. GitHub account must be 30+ days old. Free requests are served by third-party model providers under their own terms. Do not use for tenant content.',
+  },
+  {
+    id: 'apinex',
+    name: 'APInex',
+    description: 'Free daily tokens on free-category models. One key routes to many open and closed models.',
+    protocol: 'openai',
+    authScheme: 'bearer',
+    baseUrl: 'https://api.apinex.bond/v1',
+    supportsDiscovery: true,
+    docsUrl: 'https://apinex.bond/docs',
+    keyHint: 'sk-apx…',
+    defaultModel: 'free/deepseek-v4.1-flash',
+    curatedModels: [
+      M('free/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash (free)'),
+      M('free/hy4-flash', 'HY4 Flash (free)'),
+      M('free/glm-5.3', 'GLM 5.3 (free)'),
+      M('free/glm-5.3-flash', 'GLM-5.3 Flash (free)'),
+      M('free/gemini-3.8-flash', 'Gemini 3.8 Flash (free)'),
+      M('free/kimi-k3', 'Kimi K3 (free)'),
+    ],
+    regionNote:
+      'Pooled free-tier gateway. Free-category allowance is reported as ~25M tokens per day per account at 15 RPM (the exact daily weight varies by page). Requests route across third-party upstreams. Do not use for tenant content.',
+  },
 ]
 
 export function getCatalogueEntry(id: string): ProviderCatalogueEntry | undefined {

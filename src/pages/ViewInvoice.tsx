@@ -12,6 +12,7 @@ import {
   normalizeInvoicePdfTemplateId 
 } from "@/domain/invoice";
 import { isAdvanceInvoiceChild } from "@/domain/invoice/advanceMetadata";
+import { isBoluCreatedDocument } from "@/lib/ai-assistant/bolu-audit";
 import { computeDocument } from "@/lib/Calculations";
 import { formatNaira } from "@/lib/formatters/money";
 import { getInvoiceSourceDocument } from "@/domain/documentRelationships";
@@ -51,6 +52,12 @@ export default function ViewInvoice() {
   }, [invoice?.custom_fields]);
 
   const customFields = useMemo(() => parseCustomFields(invoice?.custom_fields), [invoice?.custom_fields]);
+  // Read from saved custom_fields, never from chat state: the attribution must
+  // survive a reload and must be absent for manually created invoices.
+  const coCreatedWithBolu = useMemo(
+    () => isBoluCreatedDocument(invoice?.custom_fields ?? customFields),
+    [invoice?.custom_fields, customFields],
+  );
   const pdfTemplateId = normalizeInvoicePdfTemplateId(customFields?.pdfTemplateId) || "industry";
   const sourceDocument = useMemo(() => getInvoiceSourceDocument(invoice), [invoice]);
   
@@ -194,6 +201,7 @@ export default function ViewInvoice() {
       onToggleMergeQtyUnit={actions.handleToggleMergeQtyUnit}
       onCustomize={() => ui.openSheet("customize-output")}
       onFabClick={actions.handleDownload}
+      coCreatedWithBolu={coCreatedWithBolu}
       overlays={
         <InvoiceOverlays 
           invoice={invoice}

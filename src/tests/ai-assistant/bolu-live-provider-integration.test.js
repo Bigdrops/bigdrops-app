@@ -331,7 +331,7 @@ test('Provider failure (500/502) cannot trigger approval or persistence', async 
   )
 })
 
-test('Unsupported document families (e.g., quotation, purchase-order) are rejected', async () => {
+test('Quotation document family is supported and produces a proposal', async () => {
   const tenantClient = createMockTenantClient()
   const quotationResponse = `\`\`\`json
 {
@@ -358,10 +358,11 @@ test('Unsupported document families (e.g., quotation, purchase-order) are reject
   await runtime.submit('Make a quotation for Acme Corp')
 
   const state = runtime.getState()
-  assert.equal(state.status, 'idle')
-  assert.equal(state.activeProposal, null)
-  const lastMsg = state.messages[state.messages.length - 1].content
-  assert.match(lastMsg, /only supports operations for Invoices/)
+  // The reducer's designed state for an open proposal is `awaiting_approval`
+  // (bolu-reducer.ts), which is what the UI renders the gate cards from.
+  assert.equal(state.status, 'awaiting_approval')
+  assert.equal(state.activeProposal?.documentFamily, 'quotation')
+  assert.equal(state.activeProposal?.operationType, 'create-document')
 })
 
 test('Unsupported operation types (e.g. delete-document, pay-invoice) are rejected', async () => {

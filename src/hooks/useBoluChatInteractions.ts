@@ -1,5 +1,6 @@
 import { useCallback, type RefObject } from 'react'
 
+import { feedback } from '@/lib/feedback'
 import { useBoluNarration } from '@/lib/ai-assistant/hooks/useBoluNarration'
 import { buildNarrationText } from '@/lib/ai-assistant/bolu-narration'
 import type { BoluInteractionPreferences } from '@/lib/ai-assistant/bolu-preferences'
@@ -77,12 +78,18 @@ export function useBoluChatInteractions({
 
   const handleSaveEdit = useCallback(
     async (editingMessageId: string, text: string) => {
-      const success = await editUserMessage(editingMessageId, text)
-      if (success) {
-        setEditingMessageId(null)
-        setInputDraft('')
+      try {
+        const success = await editUserMessage(editingMessageId, text)
+        if (success) {
+          setEditingMessageId(null)
+          setInputDraft('')
+        }
+        return success
+      } catch (err) {
+        const desc = err instanceof Error ? err.message : 'Could not update your message. Please try again.'
+        feedback.error('Message update failed', { description: desc })
+        return false
       }
-      return success
     },
     [editUserMessage, setEditingMessageId, setInputDraft],
   )

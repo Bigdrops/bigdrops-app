@@ -131,25 +131,31 @@
 }
 
 .ac-turn {
-  display: flex;
-  gap: 12px;
+  display: flow-root;
+  position: relative;
   max-width: 100%;
+  width: 100%;
 }
 
 .ac-turn-avatar {
-  flex-shrink: 0;
-  margin-top: 2px;
+  float: left;
+  margin: 1px 10px 4px 0;
+  clear: left;
 }
 
 .ac-turn-body {
-  flex: 1;
+  display: block;
   min-width: 0;
+  width: 100%;
 }
 
 .ac-text {
+  display: block;
   font-size: 0.8125rem;
   line-height: 1.55;
   color: var(--ac-ink);
+  min-width: 0;
+  width: 100%;
 }
 
 .ac-caret {
@@ -333,6 +339,10 @@
 }
 .ac-rail[data-collapsed='true'] {
   width: 58px;
+}
+.ac-rail[data-mobile-drawer='true'] {
+  width: 100%;
+  border-right: none;
 }
 
 .ac-rail-top {
@@ -845,9 +855,7 @@
 /* ── Rich message rendering (Bolu 2.0) ─────────────────────── */
 
 .ac-md {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: block;
   min-width: 0;
   max-width: 100%;
   overflow-wrap: anywhere;
@@ -859,6 +867,10 @@
 .ac-md > * {
   min-width: 0;
   max-width: 100%;
+}
+
+.ac-md > * + * {
+  margin-top: 10px;
 }
 
 .ac-md-p {
@@ -949,6 +961,7 @@
   border: 1px solid var(--ac-line);
   border-radius: 10px;
   -webkit-overflow-scrolling: touch;
+  clear: both;
 }
 
 .ac-md-table {
@@ -988,6 +1001,7 @@
   border-radius: 12px;
   background: var(--ac-muted-surface);
   overflow: hidden;
+  clear: both;
 }
 
 .ac-code-head {
@@ -1095,12 +1109,17 @@
   }
 }
 
+.ac-card {
+  clear: both;
+}
+
 .ac-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   margin-top: 6px;
+  clear: both;
 }
 
 /* ── Attachments ────────────────────────────────────────────── */

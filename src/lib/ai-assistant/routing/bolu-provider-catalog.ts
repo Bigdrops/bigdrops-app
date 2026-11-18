@@ -345,6 +345,47 @@ export const ROUTING_PROVIDER_CATALOGUE: Record<string, RoutingProviderEntry> = 
     notes:
       'MoonMath Zro API. Free daily usage on DeepSeek V4.1 Flash, resets every day. Zero request retention and no training on requests. GLM-5.3 needs a paid plan.',
   },
+  runcrate: {
+    providerId: 'runcrate',
+    displayName: 'Runcrate',
+    protocol: 'openai-compatible',
+    verifiedEndpoint: 'https://api.runcrate.ai/v1',
+    authScheme: 'bearer',
+    verifiedModels: [
+      { id: 'deepseek-ai/DeepSeek-V4.1-Flash', label: 'DeepSeek V4.1 Flash', isDefault: true },
+      { id: 'zai-org/GLM-5.3-Flash', label: 'GLM-5.3 Flash' },
+      { id: 'zai-org/GLM-5.3', label: 'GLM-5.3' },
+      { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B' },
+      { id: 'Qwen/Qwen3.8-Flash', label: 'Qwen 3.8 Flash' },
+    ],
+    supportedCapabilities: ['chat-completions', 'streaming', 'tools'],
+    modelDiscoverySupport: true,
+    balanceLookupSupport: false,
+    approvedForRouting: true,
+    notes:
+      'Runcrate free-tier API. Weekly allowance shared by the workspace, resets every Monday. GitHub account must be 30+ days old. Free requests are served by third-party model providers. Not for tenant content.',
+  },
+  apinex: {
+    providerId: 'apinex',
+    displayName: 'APInex',
+    protocol: 'openai-compatible',
+    verifiedEndpoint: 'https://api.apinex.bond/v1',
+    authScheme: 'bearer',
+    verifiedModels: [
+      { id: 'free/deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash (free)', isDefault: true },
+      { id: 'free/hy4-flash', label: 'HY4 Flash (free)' },
+      { id: 'free/glm-5.3', label: 'GLM 5.3 (free)' },
+      { id: 'free/glm-5.3-flash', label: 'GLM-5.3 Flash (free)' },
+      { id: 'free/gemini-3.8-flash', label: 'Gemini 3.8 Flash (free)' },
+      { id: 'free/kimi-k3', label: 'Kimi K3 (free)' },
+    ],
+    supportedCapabilities: ['chat-completions', 'streaming', 'tools'],
+    modelDiscoverySupport: true,
+    balanceLookupSupport: false,
+    approvedForRouting: true,
+    notes:
+      'APInex aggregator gateway. Free-category allowance of about 25M tokens per day per account at 15 RPM, plus a metered pay-as-you-go catalogue. One key routes to many upstream providers. Not for tenant content.',
+  },
 }
 
 export function getRoutingProvider(providerId: string): RoutingProviderEntry | undefined {

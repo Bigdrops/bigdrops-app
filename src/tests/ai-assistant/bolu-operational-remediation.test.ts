@@ -33,7 +33,7 @@ test('Bolu Operational Remediation: Chat Export Utility functions exist and prod
         operationType: 'create-document',
         documentFamily: 'invoice',
         schemaVersion: '1.0',
-        requiredPermission: { resource: 'invoice', action: 'save' },
+        requiredPermission: { resource: 'invoice', action: 'create' },
         sideEffect: 'persistence',
         gate1Required: true,
         gate2Required: true,
@@ -51,6 +51,8 @@ test('Bolu Operational Remediation: Chat Export Utility functions exist and prod
           vat: 3562.5,
           total: 51062.5,
           wht: 0,
+          discount: 0,
+          extraChargesTotal: 0,
           items: [],
         },
       },
@@ -194,9 +196,9 @@ test('Bolu Operational Remediation: useBoluThread.ts passes tenantClient and ent
   const turnSource = `${content}\n${generation}`
 
   assert.equal(
-    turnSource.includes('validateBoluClient('),
+    turnSource.includes('resolveProposalClient('),
     true,
-    'the provider turn must validate the client against the database before emitting a create-document proposal',
+    'the provider turn must resolve the client against the database before emitting a create-document proposal',
   )
   assert.equal(
     content.includes('status: \'saving\''),
@@ -241,9 +243,14 @@ test('Bolu Chat UX Polish: assistant-chat-composer.tsx locks input during active
     'AssistantComposer must accept a disabled prop',
   )
   assert.equal(
-    content.includes('const isLocked = busy || Boolean(disabled)'),
+    content.includes('const isLocked = busy || (Boolean(disabled) && !editing)'),
     true,
-    'Composer must compute isLocked based on busy or disabled prop',
+    'Composer must lock during active inference while keeping message editing usable',
+  )
+  assert.equal(
+    content.includes('busy ||'),
+    true,
+    'Active inference must always lock the composer',
   )
   assert.equal(
     content.includes('disabled={isLocked}'),

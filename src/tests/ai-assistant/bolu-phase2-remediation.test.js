@@ -24,8 +24,8 @@ import {
 // ============================================================
 
 test('Catalogue Parity: All Settings providers have verified runtime definitions', () => {
-  assert.equal(PROVIDER_CATALOGUE.length, 18)
-  assert.equal(Object.keys(ROUTING_PROVIDER_CATALOGUE).length, 18)
+  assert.equal(PROVIDER_CATALOGUE.length, 20)
+  assert.equal(Object.keys(ROUTING_PROVIDER_CATALOGUE).length, 20)
 
   for (const entry of PROVIDER_CATALOGUE) {
     const routingEntry = getRoutingProvider(entry.id)
@@ -45,7 +45,7 @@ test('Catalogue Parity: All Settings providers have verified runtime definitions
 test('Policy Router: Approves all verified providers and rejects unknown providers', () => {
   const policy = resolveRoutingPolicy({ userId: 'admin-user-1', allowPaid: true })
   assert.equal(policy.ok, true)
-  assert.equal(policy.allowedProviders.length, 18)
+  assert.equal(policy.allowedProviders.length, 20)
 
   for (const entry of PROVIDER_CATALOGUE) {
     assert.ok(
