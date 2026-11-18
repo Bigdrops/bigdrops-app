@@ -93,22 +93,22 @@ Rules:
 - The CLI login token is stored by the CLI itself (Windows Credential Manager); CI uses `SUPABASE_ACCESS_TOKEN`.
 - Console of the disposable project: an access token is scoped to your Supabase organization and can access only the projects you own — still verify §4 before writing.
 
-**Credential status on 2026-11-18 (updated):**
+**Credential status on 2026-11-18 (updated after Stage 0.3 install):**
 
 | Item | State |
 |---|---|
 | Publishable key (client) | **Configured** — gitignored `.env.disposable`; `/auth/v1/settings` returns 200 |
-| Secret API key (service access, `sb_secret_…`) | **Configured** — gitignored `.env.disposable`; authenticates against Data API; public schema currently holds nothing (no migrations applied) |
+| Secret API key (service access, `sb_secret_…`) | **Configured** — gitignored `.env.disposable` |
 | PostgreSQL password (`postgres`) | **Configured** — gitignored `.env.disposable` |
-| Supabase CLI access token for the disposable project's organization | **Missing / different org** — CLI (`supabase projects list`) cannot see `svrpqsdagtgtclnrlmbm` (sees production `xqlpekpkbszpdgtuwybh` and unrelated `wyxtghlfmcitantypobs` only) — linking/push via CLI impossible here |
-| Management API PAT for the disposable organization | **Not supplied** |
-| Disposable project contents | **Empty** — no tables, no RPCs; IPv6-only direct host; no pooler tenant in any tested region |
-| Migration chain applied | **No** — connectivity from this host blocks it (see Stage 0.3 report) |
-| Production link (`supabase/.temp/linked-project.json`) | Unchanged (`xqlpekpkbszpdgtuwybh`) |
+| Supabase CLI access token for the disposable project's organization | **Supplied** — gitignored `.env.disposable` (`SUPABASE_ACCESS_TOKEN`, `sbp_…`); CLI `db push` / `db query --linked` work (e.g. `db query --project-ref svrpqsdagtgtclnrlmbm --linked`). Note: `--project-ref` alone is rejected by `db query` unless paired with `--linked`. Direct `db.svrpqsdagtgtclnrlmbm.supabase.co` still resolves AAAA-only from this host (ENOTFOUND); management-API paths work |
+| Management API PAT for the disposable organization | **Supplied** — same token as CLI access token; used read-only (GET postgrest) and once for the schema-union PATCH described in the Stage 0.3 report |
+| Disposable project contents | **Installed** — 161/161 migrations applied and matched; scratch tenant provisioned (`entity_stage0-verify-dd665862-real_stage0-verify-dd665862-real`, exposed via PostgREST) |
+| Migration chain applied | **Yes** (2026-11-18) — through `20261118130000_bolu_tenant_rpc_installer.sql`, including additive repairs `20261014150000`/`20261014158000`/`20261014159000`/`20261014170000` |
+| Production link (`supabase/.temp/linked-project.json`) | **Unchanged** (`xqlpekpkbszpdgtuwybh`) |
 
-**Verified:** project identity (ref/URL/host), publishable key accepted, secret key accepted (schema answers; nothing installed). IPv6 is not available on this host; the direct host resolves to AAAA only; `aws-0-*.pooler.supabase.com` reports "tenant not found" for `postgres.svrpqsdagtgtclnrlmbm` in all tested regions.
+**Verified:** full migration install, scratch-tenant provisioning path (workspace → entity → `provision_entity` → PostgREST exposure), 23/23 app-path live invoice/quotation checks (create/modify/preserve/adversarial). See `docs/reports/bolu-document-capability-parity/stage-0-scratch-tenant-verification.md`.
 
-**Unverified / not done:** any write, any migration, any tenant provisioning, any RPC, any Stage 0.3 verification. Applying the chain requires IPv4/pooler reachability or an org PAT.
+**Unverified / not done:** harness-vs-deployment EX-FK parity (finding F1 in the Stage 0.3 report); production repair of the same template drift is a separate, separately-authorized decision; JWT secret and PAT shown in tool output should be rotated.
 
 ---
 
@@ -134,21 +134,20 @@ Cleanup: drop scratch tenant artifacts with the approved workflow; never drop sh
 
 ---
 
-## 7. Credential blockers and required setup (as of 2026-11-18, updated)
+## 7. Migration & PostgREST reachability (as of 2026-11-18, updated)
 
-Current status:
-
-| Credential | Status |
+| Path | Status |
 |---|---|
-| Publishable key (client) | **Configured** — present in gitignored `.env.disposable`; verified accepted by `/auth/v1/settings` |
-| Secret API key (service access; `sb_secret_…`) | **Configured** — present in gitignored `.env.disposable`; accepted by Data API; used for read-only probes only |
-| PostgreSQL password (`postgres`) | **Configured** — stored in gitignored `.env.disposable` |
-| Direct Postgres connectivity from this host | **Broken** — IPv6-only direct host (`db.svrpqsdagtgtclnrlmbm.supabase.co` → AAAA `2a05:...`); no IPv4 reachability; no pooler tenant in tested regions |
-| CLI access token for the disposable project's organization | The current CLI token sees only `xqlpekpkbszpdgtuwybh` and an unrelated project; `svrpqsdagtgtclnrlmbm` belongs to a different organization — CLI cannot link/push here |
-| Management API PAT for that organization | **Not supplied** |
-| Migration chain applied on the disposable project | **No** — no Postgres path from this host; project is empty |
+| Direct Postgres (`db.svrpqsdagtgtclnrlmbm.supabase.co:5432`) | **Unreachable from this host** — hostname is IPv6-only; `getaddrinfo ENOTFOUND` (no IPv4/IPv6 route) |
+| CLI + Management API (`--linked`, `db push`) | **Works** — organization PAT supplied and gitignored; full chain pushed successfully |
+| PostgREST tenant-schema exposure | **Done for `entity_stage0-verify-dd665862-real_stage0-verify-dd665862-real`** — applied via a union PATCH on `db_schema` (same semantics as `postgrest-schema-exposure` edge function); required schemas were not removed; no other project setting was changed; queue row marked `processed` |
 
-Until direct/pooler Postgres reachability from this host is provided (IPv4 add-on for the project, or an IPv6/IPv4-capable machine, or an organization PAT for CLI relinking + `db push` from a capable host), agents must not attempt to install schema, push migrations, provision tenants, or claim RPC verification has run. No production credential may be used as a substitute.
+Notes:
+
+- `supabase db push --project-ref svrpqsdagtgtclnrlmbm` is the sanctioned push path for this project. One of the applied migrations (`20261014170000_public_schema_grants.sql`) required `--include-all` because its filename sorts before already-applied remote migrations; it is additive (GRANT-only).
+- Historical migrations were never edited; the template-drift repairs are separate additive migration files.
+- The migration-list check is authoritative: 161 local == 161 remote after the repair sequence.
+- Production (`xqlpekpkbszpdgtuwybh`) remains separately authorized; nothing in this section applies to it.
 
 ---
 
