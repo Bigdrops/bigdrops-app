@@ -17,6 +17,8 @@
 import { numberToWords } from '@/lib/formatters/money'
 import type { TenantClient } from '@/lib/tenantClient'
 import { toDbItem } from '@/domain/invoice'
+import { computeDocument } from '@/lib/Calculations'
+import { inferLegacyCalculationInputs } from '@/domain/invoice'
 import { getNextInvoiceNumber } from '@/domain/documentConversion'
 import { resolvePrefix } from '@/domain/prefixConstants'
 import { advanceAutoCursor, fetchAutoCursor, fetchDocumentPrefixesSafe } from '@/domain/documentNumbering'
@@ -34,6 +36,7 @@ import {
   isProposalStale,
   type BoluInvoiceCreateProposal,
   type BoluInvoiceModifyProposal,
+  type BoluInvoiceItemInput,
 } from './bolu-operations'
 
 // Supplementary in-process guard against accidental double-clicks.
@@ -112,6 +115,12 @@ export interface BoluOperationExecutionResult {
   documentId?: string
   documentNumber?: string
   error?: string
+  /**
+   * Non-fatal integrity notices from the operation (e.g. items that could
+   * not be matched safely and were recreated fresh). Never authoritative;
+   * callers should surface them verbatim rather than infer preservation.
+   */
+  warnings?: string[]
 }
 
 /**
@@ -232,30 +241,264 @@ async function findVerifiedReplay(
   return { id: existing.id, number: existing.number }
 }
 
+/**
+ * Parses the persisted `custom_fields` payload. Invoices store custom_fields
+ * as text, quotations as jsonb; both can also arrive as an object. Returns
+ * a fresh plain object, never the parsed reference.
+ */
+function parseCustomFields(raw: unknown): Record<string, unknown> {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return { ...(raw as Record<string, unknown>) }
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return { ...(parsed as Record<string, unknown>) }
+      }
+    } catch {
+      return {}
+    }
+  }
+  return {}
+}
+
+function parseCustomData(raw: unknown): Record<string, unknown> {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return { ...(raw as Record<string, unknown>) }
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return { ...(parsed as Record<string, unknown>) }
+      }
+    } catch {
+      return {}
+    }
+  }
+  return {}
+}
+
+/** Strict RFC-4122 UUID (version 1–5, variant nibble 8/9/a/b). */
+const STRICT_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const isStrictUuid = (value: unknown): value is string =>
+  typeof value === 'string' && STRICT_UUID_RE.test(value.trim())
+
+/**
+ * Matches incoming (validated) items against the persisted item set.
+ *
+ * Identity contract, applied in order:
+ *   Pass 1 — explicit identity: an incoming row carrying `item_id` matches a
+ *   persisted row with the same identity only when that identity is unique
+ *   among the currently unmatched candidates. A missing or duplicated
+ *   identity is never resolved by position or arbitrary ordering; the row
+ *   abstains from matching entirely and a warning is recorded.
+ *   Pass 2 — similarity floor: each unmatched incoming row may borrow
+ *   persisted metadata only from an unmatched candidate whose normalized
+ *   description is exactly equal (which is what the score-10 floor encodes).
+ *   If exactly one candidate reaches the top qualifying score (>= 10), it is
+ *   used. If two or more tie for that score, the row abstains — nothing is
+ *   borrowed from either candidate — and a warning is recorded. Rows below
+ *   the floor are treated as new and a warning is recorded as well.
+ *
+ * Passes are applied independently and never consume candidates from rows
+ * that abstain, so a tie on row i cannot silently transfer metadata to row j
+ * by order of processing. Unmatched persisted rows are removed by the
+ * caller; an incoming row that cannot borrow metadata is recreated fresh
+ * (never by position).
+ */
+function matchBoluItems(
+  currentItems: Array<Record<string, any>>,
+  newItems: BoluInvoiceItemInput[],
+): { matches: Array<{ current: Record<string, any> | null }>; warnings: string[] } {
+  const used = new Set<number>()
+  const warnings: string[] = []
+  const matched: Array<Record<string, any> | null> = newItems.map(() => null)
+  const abstain = new Set<number>()
+
+  // Pass 1: explicit identity, unique among unmatched candidates.
+  for (let i = 0; i < newItems.length; i++) {
+    const wanted = typeof newItems[i].item_id === 'string' ? newItems[i].item_id.trim() : ''
+    if (!wanted) continue
+    const candidates: number[] = []
+    for (let j = 0; j < currentItems.length; j++) {
+      if (used.has(j)) continue
+      if (String(currentItems[j]?.item_id ?? '').trim() === wanted) candidates.push(j)
+    }
+    if (candidates.length === 1) {
+      used.add(candidates[0])
+      matched[i] = currentItems[candidates[0]]
+    } else {
+      // Zero or duplicated identity: abstain rather than guess or fall
+      // through into a similarity match that would transfer sibling rows'
+      // metadata. A zero-candidate identity is not an error by itself — the
+      // reference is handled by the catalog sanitizer, which emits its own
+      // verdict-specific warning; a DUPLICATED identity is ambiguous and is
+      // flagged here.
+      abstain.add(i)
+      if (candidates.length > 1) {
+        warnings.push(
+          `Item ${i + 1}: identity "${wanted}" could not be uniquely resolved (${candidates.length} candidates); row treated as new and persisted lineage/metadata was not retained.`,
+        )
+      }
+    }
+  }
+
+  const score = (c: Record<string, any>, n: BoluInvoiceItemInput): number => {
+    let s = 0
+    if (String(c?.description ?? '').trim().toLowerCase() === String(n?.description ?? '').trim().toLowerCase()) s += 10
+    if (Number(c?.quantity ?? -1) === Number(n?.quantity ?? -2)) s += 2
+    if (Number(c?.unit_price ?? -1) === Number(n?.unit_price ?? -2)) s += 2
+    if (String(c?.unit ?? '').trim().toLowerCase() === String(n?.unit ?? '').trim().toLowerCase()) s += 1
+    return s
+  }
+
+  // Pass 2: exact-description similarity floor with ambiguity abstention.
+  const FLOOR = 10
+  for (let i = 0; i < newItems.length; i++) {
+    if (matched[i] || abstain.has(i)) continue
+    let bestScore = 0
+    const top: number[] = []
+    for (let j = 0; j < currentItems.length; j++) {
+      if (used.has(j)) continue
+      const s = score(currentItems[j], newItems[i])
+      if (s < FLOOR) continue
+      if (s > bestScore) {
+        bestScore = s
+        top.length = 0
+        top.push(j)
+      } else if (s === bestScore) {
+        top.push(j)
+      }
+    }
+    if (top.length === 1) {
+      used.add(top[0])
+      matched[i] = currentItems[top[0]]
+    } else if (top.length > 1) {
+      // Tied at the floor: deterministic evidence does not distinguish the
+      // candidates. Abstain rather than let position decide; the row is
+      // recreated fresh by the caller.
+      abstain.add(i)
+      warnings.push(
+        `Item ${i + 1}: ${top.length} persisted rows tie for the same item; persisted identity/metadata could not be established safely and the row was treated as new.`,
+      )
+    } else {
+      warnings.push(
+        `Item ${i + 1}: no persisted row could be matched safely (similarity floor not met); the row was recreated fresh and persisted lineage/metadata may have been lost.`,
+      )
+    }
+  }
+
+  return { matches: matched.map((current) => ({ current })), warnings }
+}
+
+/**
+ * Merges a validated incoming item with its persisted counterpart.
+ * Undefined keys keep the persisted value, explicit null clears it,
+ * explicit values overwrite it. Identity (rows, lineage, group-header
+ * status, image_url, overrides) is never regenerated.
+ */
+function mergeBoluItem(
+  item: BoluInvoiceItemInput,
+  current: Record<string, any> | null,
+): Record<string, any> {
+  const pick = <T,>(incoming: T | null | undefined, fallback: T | null | undefined): T | null | undefined =>
+    incoming === undefined ? fallback : incoming
+
+  const base: Record<string, any> = current ? { ...current } : {}
+
+  base.description = item.description
+  base.quantity = item.quantity
+  base.unit_price = item.unit_price
+  base.unit = pick(item.unit, current?.unit) ?? ''
+  // A persisted group header must survive: the validator only emits
+  // 'standard', which cannot express a downgrade request.
+  base.row_type =
+    current?.row_type === 'group_header' && item.row_type === 'standard'
+      ? 'group_header'
+      : (item.row_type ?? current?.row_type ?? 'standard')
+  base.group_id = pick(item.group_id, current?.group_id) ?? null
+  base.group_name = pick(item.group_name, current?.group_name) ?? null
+
+  // Identity and catalog link: persisted wins unless incoming explicitly set one.
+  base.item_id = pick(item.item_id, current?.item_id) ?? null
+
+  // Tri-state commercial fields.
+  base.vat_rate = pick(item.vat_rate, current?.vat_rate) ?? null
+  base.discount_rate = pick(item.discount_rate, current?.discount_rate) ?? null
+  base.install_rate = pick(item.install_rate, current?.install_rate) ?? null
+  base.install_rate_taxable =
+    item.install_rate_taxable !== undefined ? item.install_rate_taxable : (current?.install_rate_taxable ?? false)
+
+  // Install-rate override semantics mirror the form: an explicit install_rate
+  // set flips the override flag.
+  base.install_rate_override = item.install_rate !== undefined ? true : current?.install_rate_override === true
+  base.show_install_rate = current?.show_install_rate ?? false
+  base.formula = current?.formula ?? ''
+
+  base.sub_description = pick(item.sub_description, current?.sub_description) ?? null
+  base.make = pick(item.make, current?.make) ?? null
+  base.image_url = current?.image_url ?? null
+
+  // Lineage is system-owned; never regenerated or inferred.
+  base.source_cps_id = current?.source_cps_id ?? null
+  base.source_cps_row_id = current?.source_cps_row_id ?? null
+  base.source_quotation_id = current?.source_quotation_id ?? null
+  base.source_quotation_item_id = current?.source_quotation_item_id ?? null
+
+  // custom_data is parsed here (unknown keys retained verbatim); the
+  // partNo/condition overrides are applied by serializeBoluItem so the
+  // literal create-time contract stays visible in one place.
+  base.custom_data = parseCustomData(current?.custom_data)
+
+  return base
+}
+
 /** Maps a Bolu line item onto the shared database item shape. */
-function serializeBoluItem(item: BoluInvoiceCreateProposal['payload']['items'][number], index: number) {
+function serializeBoluItem(
+  item: BoluInvoiceItemInput,
+  index: number,
+  current?: Record<string, any> | null,
+) {
   // Part number and condition are not columns on `invoice_items` /
   // `quotation_items`; the document forms store them in `custom_data`.
-  const customData: Record<string, string> = {}
+  // When `current` is provided (modification path), omitted metadata is
+  // merged from the persisted row instead of being discarded.
+  const mergedItem: Record<string, any> =
+    current === undefined ? { ...item } : mergeBoluItem(item, current)
+
+  const customData: Record<string, unknown> = { ...(mergedItem.custom_data ?? {}) }
   if (item.part_number) customData.partNo = item.part_number
+  else if (item.part_number === null) delete customData.partNo
   if (item.condition) customData.condition = item.condition
+  else if (item.condition === null) delete customData.condition
 
   return toDbItem(
     {
-      description: item.description,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      unit: item.unit || '',
-      row_type: 'standard',
-      group_id: item.group_id ?? null,
-      group_name: item.group_name ?? null,
-      item_id: item.item_id ?? null,
-      install_rate: item.install_rate ?? null,
-      install_rate_taxable: item.install_rate_taxable ?? false,
-      vat_rate: item.vat_rate ?? null,
-      discount_rate: item.discount_rate ?? null,
-      sub_description: item.sub_description ?? null,
-      make: item.make ?? null,
+      description: mergedItem.description,
+      quantity: mergedItem.quantity,
+      unit_price: mergedItem.unit_price,
+      unit: mergedItem.unit || '',
+      row_type: mergedItem.row_type ?? 'standard',
+      group_id: mergedItem.group_id ?? null,
+      group_name: mergedItem.group_name ?? null,
+      item_id: mergedItem.item_id ?? null,
+      install_rate: mergedItem.install_rate ?? null,
+      install_rate_taxable: mergedItem.install_rate_taxable ?? false,
+      show_install_rate: mergedItem.show_install_rate ?? false,
+      formula: mergedItem.formula ?? '',
+      install_rate_override: mergedItem.install_rate_override === true,
+      vat_rate: mergedItem.vat_rate ?? null,
+      discount_rate: mergedItem.discount_rate ?? null,
+      sub_description: mergedItem.sub_description ?? null,
+      make: mergedItem.make ?? null,
+      image_url: mergedItem.image_url ?? null,
+      source_cps_id: mergedItem.source_cps_id ?? null,
+      source_cps_row_id: mergedItem.source_cps_row_id ?? null,
+      source_quotation_id: mergedItem.source_quotation_id ?? null,
+      source_quotation_item_id: mergedItem.source_quotation_item_id ?? null,
       custom_data: customData,
     } as any,
     null,
@@ -763,7 +1006,55 @@ export async function persistQuotationCreation(
 /**
  * Executes persistence for an approved invoice modification proposal.
  */
-export async function persistInvoiceModification(
+interface FamilyModifyConfig {
+  family: 'invoice' | 'quotation'
+  table: 'invoices' | 'quotations'
+  itemsTable: 'invoice_items' | 'quotation_items'
+  itemsKey: 'invoice_id' | 'quotation_id'
+  numberColumn: 'invoice_number' | 'quotation_number'
+  select: string
+  rpcName: string
+  rpcPayloadParam: string
+  dueDateField: string
+}
+
+const INVOICE_MODIFY_CONFIG: FamilyModifyConfig = {
+  family: 'invoice',
+  table: 'invoices',
+  itemsTable: 'invoice_items',
+  itemsKey: 'invoice_id',
+  numberColumn: 'invoice_number',
+  select:
+    'id, invoice_number, invoice_title, po_number, client_id, client_name, project_id, issue_date, due_date, status, document_type, payment_terms, notes, terms, workmanship, transportation, shipping, discount, vat, wht, custom_fields, work_duration, subtotal, install_rate_total, total, amount_in_words, archived_at',
+  rpcName: 'save_invoice_with_items_transaction',
+  rpcPayloadParam: 'p_invoice_payload',
+  dueDateField: 'due_date',
+}
+
+const QUOTATION_MODIFY_CONFIG: FamilyModifyConfig = {
+  family: 'quotation',
+  table: 'quotations',
+  itemsTable: 'quotation_items',
+  itemsKey: 'quotation_id',
+  numberColumn: 'quotation_number',
+  select:
+    'id, quotation_number, quotation_title, po_number, client_id, client_name, project_id, issue_date, valid_until, status, notes, terms, workmanship, transportation, shipping, discount, vat, wht, custom_fields, subtotal, install_rate_total, total, amount_in_words, archived_at',
+  rpcName: 'save_quotation_with_items_transaction',
+  rpcPayloadParam: 'p_quotation_payload',
+  dueDateField: 'valid_until',
+}
+
+/**
+ * Shared implementation for Bolu document modification (invoice and quotation).
+ *
+ * Preservation contract: the payload passed to the composite RPC is built from
+ * the FULL persisted row (every column the RPC update branch writes), never
+ * from a reduced snapshot. Unrelated fields are carried through untouched, and
+ * omitted item metadata is merged from the persisted rows via matchBoluItems /
+ * mergeBoluItem. See docs/reports/bolu-modification-integrity/stage-0-modification-integrity.md.
+ */
+async function persistDocumentModification(
+  cfg: FamilyModifyConfig,
   tenantClient: TenantClient,
   proposal: BoluInvoiceModifyProposal,
   canWrite: BoluWriteAuthorization,
@@ -771,85 +1062,200 @@ export async function persistInvoiceModification(
   entityId?: string | null,
   actor?: BoluAuditActor | null,
 ): Promise<BoluOperationExecutionResult> {
-  assertTenantAuthorization(tenantClient, canWrite, 'invoice', 'edit')
+  assertTenantAuthorization(tenantClient, canWrite, cfg.family, 'edit')
 
   if (!proposal || !proposal.opId) {
     throw new Error('Valid proposal is required for persistence.')
   }
 
-  if (!canRead('invoice', 'view')) {
-    return { success: false, error: 'Read authorization missing for this invoice.' }
+  if (!canRead(cfg.family, 'view')) {
+    return { success: false, error: `Read authorization missing for this ${cfg.family}.` }
   }
 
-  // Prevent duplicate execution
   if (executedOperationIds.has(proposal.opId)) {
     return { success: false, error: 'This modification has already been submitted and executed.' }
   }
 
-  // Stale check
   if (isProposalStale(proposal)) {
     return { success: false, error: 'This proposal has expired. Please propose the change again.' }
   }
 
-  // Gate check
   if (proposal.status !== 'approved_pending_save' && proposal.status !== 'saving') {
     return { success: false, error: 'Modification requires user approval (Gate 1) and save confirmation (Gate 2).' }
   }
 
+  let warnings: string[] = []
   try {
-    // 1. Fetch current authoritative document state to verify existence & prevent stale writes
-    const { data: currentDoc, error: fetchError } = await tenantClient
-      .from('invoices')
-      .select('id, invoice_number, client_name, notes, terms, due_date, issue_date, total, archived_at')
+    // 1. Full preservation snapshot. Every field the composite RPC can write
+    //    is selected; absent keys are preserved by explicit override only.
+    const { data: currentRow, error: fetchError } = await tenantClient
+      .from(cfg.table)
+      .select(cfg.select)
       .eq('id', proposal.targetDocumentId)
       .is('archived_at', null)
       .single()
 
-    if (fetchError || !currentDoc) {
-      return { success: false, error: 'Target invoice could not be found or has been archived.' }
+    if (fetchError || !currentRow) {
+      return { success: false, error: `Target ${cfg.family} could not be found or has been archived.`, ...(warnings.length ? { warnings } : {}) }
     }
+    const currentDoc = currentRow as Record<string, any>
 
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
 
-    // 2. Handle field modifications
+    // 2. Field-level modifications, applied only when explicitly requested.
+    //    Quotation payment terms persist in custom_fields (no column); the
+    //    invoice form stores them in the payment_terms column.
     if (proposal.field) {
-      const dbField = proposal.field === 'payment_terms' ? 'terms' : proposal.field
-      const currentValueInDb = (currentDoc as any)[dbField]
+      const field = proposal.field
+      let dbField: string | null
+      let cfKey: string | null = null
+      let currentValueInDb: unknown
 
-      // Concurrency check
-      if (proposal.oldValue !== undefined && proposal.oldValue !== null && String(currentValueInDb) !== String(proposal.oldValue)) {
+      if (field === 'payment_terms' && cfg.family === 'quotation') {
+        dbField = null
+        cfKey = 'payment_terms'
+        currentValueInDb = parseCustomFields(currentDoc.custom_fields)[cfKey]
+      } else {
+        dbField =
+          field === 'payment_terms' ? 'payment_terms'
+            : field === 'due_date' ? cfg.dueDateField
+              : field
+        currentValueInDb = currentDoc[dbField]
+      }
+
+      if (
+        proposal.oldValue !== undefined &&
+        proposal.oldValue !== null &&
+        String(currentValueInDb) !== String(proposal.oldValue)
+      ) {
         return {
           success: false,
-          error: `Document has been modified by another process (current ${proposal.field}: "${currentValueInDb}"). Proposal is stale.`,
+          error: `Document has been modified by another process (current ${field}: "${currentValueInDb}"). Proposal is stale.`,
         }
       }
 
-      updates[dbField] = proposal.newValue
+      if (dbField) {
+        updates[dbField] = proposal.newValue
+      } else if (cfKey) {
+        const cf = parseCustomFields(currentDoc.custom_fields)
+        const merged = { ...cf, [cfKey]: proposal.newValue }
+        updates.custom_fields = cfg.family === 'invoice' ? JSON.stringify(merged) : merged
+      }
     }
 
-    // 3. Handle line item modifications if present
-    let itemsToSave: any[] = []
+    // 3. Line item modifications: merge persisted metadata, never rebuild
+    //    from the reduced payload alone.
+    let currentItems: Array<Record<string, any>> = []
+    let itemsToSave: Array<Record<string, any>> = []
     if (proposal.itemsChange?.newItems) {
-      const calculation = computeAuthoritativeTotals(proposal.itemsChange.newItems)
+      const { data: fetchedItems, error: itemsFetchError } = await (tenantClient.from(cfg.itemsTable) as any)
+        .select('*')
+        .eq(cfg.itemsKey, proposal.targetDocumentId)
+        .order('sort_order', { ascending: true })
+
+      if (itemsFetchError) {
+        const detail = itemsFetchError?.message ? `: ${itemsFetchError.message}` : ''
+        return { success: false, error: `Failed to read current ${cfg.family} items; no changes were made${detail}` }
+      }
+      currentItems = Array.isArray(fetchedItems) ? fetchedItems : []
+
+      const { matches, warnings: matchWarnings } = matchBoluItems(currentItems, proposal.itemsChange.newItems)
+      warnings = [...warnings, ...matchWarnings]
+
+      // Rows matched against persisted document items keep their document
+      // identity (no catalog check). For rows that did NOT match, an explicit
+      // item_id is a potential catalog reference: it must be well-formed and
+      // refer to an ACTIVE record in this tenant's item_catalog, or be
+      // discarded — never passed to the RPC's ::uuid cast unverified.
+      const sanitizedItems = proposal.itemsChange.newItems.map((item) => ({ ...item }))
+      const freshIndexes: number[] = []
+      for (let i = 0; i < sanitizedItems.length; i++) {
+        if (matches[i].current) continue
+        const raw = sanitizedItems[i].item_id
+        if (raw === undefined || raw === null) continue
+        const value = String(raw).trim()
+        if (!isStrictUuid(value)) {
+          sanitizedItems[i].item_id = null
+          warnings.push(
+            `Item ${i + 1}: supplied catalog identity "${value}" is not a well-formed UUID; it was discarded and no catalog reference is retained.`,
+          )
+          continue
+        }
+        freshIndexes.push(i)
+      }
+
+      if (freshIndexes.length > 0) {
+        const wanted = [...new Set(freshIndexes.map((i) => String(sanitizedItems[i].item_id).toLowerCase()))]
+        const active = new Set<string>()
+        let lookupOk = true
+        try {
+          if (!tenantClient.isReady || !tenantClient.schemaName) {
+            lookupOk = false
+          } else {
+            const res = await (tenantClient.from('item_catalog') as any)
+              .select('id')
+              .in('id', wanted)
+              .eq('is_active', true)
+            if (res.error) {
+              lookupOk = false
+            } else {
+              for (const row of Array.isArray(res.data) ? res.data : []) {
+                active.add(String(row.id).toLowerCase())
+              }
+            }
+          }
+        } catch {
+          lookupOk = false
+        }
+
+        for (const i of freshIndexes) {
+          const value = String(sanitizedItems[i].item_id).toLowerCase()
+          if (!active.has(value)) {
+            sanitizedItems[i].item_id = null
+            warnings.push(
+              lookupOk
+                ? `Item ${i + 1}: catalog identity "${value}" is not an active item_catalog record in this business entity; it was discarded.`
+                : `Item ${i + 1}: catalog identity could not be verified (lookup failed or tenant catalog unavailable); the reference was discarded.`,
+            )
+          }
+        }
+      }
+
+      const mergedItemObjects = sanitizedItems.map((item, idx) =>
+        mergeBoluItem(item, matches[idx].current),
+      )
+
+      // Canonical recalculation with the document's PERSISTED inputs.
+      // Documents with saved calculationInputs use them verbatim (identical
+      // to the form). Documents without them fall back to the form's legacy
+      // inference (inferLegacyCalculationInputs), never to blind defaults.
+      let cf = parseCustomFields(currentDoc.custom_fields)
+      if (!cf.calculationInputs && !(cf as any).calculation_inputs) {
+        const derived = inferLegacyCalculationInputs({
+          invoice: currentDoc as any,
+          items: mergedItemObjects,
+          customFields: cf as any,
+        })
+        cf = { ...cf, calculationInputs: derived }
+      }
+      const calculation = computeDocument({
+        items: mergedItemObjects,
+        document: currentDoc,
+        cf,
+        columns: Array.isArray(cf.columnConfig) ? (cf.columnConfig as any) : [],
+      })
       updates.subtotal = calculation.subtotal
+      updates.discount = calculation.discount
       updates.vat = calculation.vat
+      updates.wht = calculation.wht
       updates.total = calculation.totalPayable
+      updates.install_rate_total = calculation.installRateTotal
       updates.amount_in_words = numberToWords(calculation.totalPayable)
 
-      itemsToSave = proposal.itemsChange.newItems.map((item, idx) =>
-        toDbItem(
-          {
-            description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            unit: item.unit || '',
-            row_type: 'standard',
-          } as any,
-          proposal.targetDocumentId,
-          idx,
-        ),
+      itemsToSave = sanitizedItems.map((item, idx) =>
+        serializeBoluItem(item, idx, matches[idx].current),
       )
     }
 
@@ -860,38 +1266,48 @@ export async function persistInvoiceModification(
         ...updates,
         id: proposal.targetDocumentId,
       }
-      const { error: rpcError } = await tenantClient.rpc('save_invoice_with_items_transaction', {
+      const { error: rpcError } = await tenantClient.rpc(cfg.rpcName, {
         p_entity_id: entityId,
-        p_invoice_payload: payload,
+        [cfg.rpcPayloadParam]: payload,
         p_items: itemsToSave,
         p_mode: 'update',
       })
       if (rpcError) {
-        return { success: false, error: `Transactional update failed: ${rpcError.message}` }
+        return { success: false, error: `Transactional update failed: ${rpcError.message}`, ...(warnings.length ? { warnings } : {}) }
       }
     } else {
       // Fallback or non-item update
       if (proposal.itemsChange?.newItems) {
-        await (tenantClient.from('invoice_items') as any).delete().eq('invoice_id', proposal.targetDocumentId)
-        const { error: itemsError } = await (tenantClient.from('invoice_items') as any).insert(itemsToSave)
+        // Replace the item set, restoring the previous rows on failure so a
+        // failed modification cannot empty the document.
+        await (tenantClient.from(cfg.itemsTable) as any).delete().eq(cfg.itemsKey, proposal.targetDocumentId)
+        const { error: itemsError } = await (tenantClient.from(cfg.itemsTable) as any)
+          .insert(itemsToSave.map((item) => ({ ...item, [cfg.itemsKey]: proposal.targetDocumentId })))
         if (itemsError) {
-          return { success: false, error: `Failed to update invoice items: ${itemsError.message}` }
+          if (currentItems.length > 0) {
+            await (tenantClient.from(cfg.itemsTable) as any).insert(currentItems)
+          }
+          return {
+            success: false,
+            error: `Failed to update ${cfg.family} items: ${itemsError.message}. The previous items were restored.`,
+            ...(warnings.length ? { warnings } : {}),
+          }
         }
       }
 
-      const { error: updateError } = await (tenantClient.from('invoices') as any)
+      const { error: updateError } = await (tenantClient.from(cfg.table) as any)
         .update(updates)
         .eq('id', proposal.targetDocumentId)
 
       if (updateError) {
-        return { success: false, error: `Failed to update invoice: ${updateError.message}` }
+        return { success: false, error: `Failed to update ${cfg.family}: ${updateError.message}`, ...(warnings.length ? { warnings } : {}) }
       }
     }
 
     await recordBoluDocumentModificationAudit(tenantClient, {
-      family: 'invoice',
+      family: cfg.family,
       documentId: proposal.targetDocumentId,
-      documentNumber: currentDoc.invoice_number,
+      documentNumber: String(currentDoc[cfg.numberColumn] ?? ''),
       opId: proposal.opId,
       changedField: proposal.field ?? null,
       oldValue: proposal.oldValue,
@@ -906,20 +1322,46 @@ export async function persistInvoiceModification(
     return {
       success: true,
       documentId: proposal.targetDocumentId,
-      documentNumber: currentDoc.invoice_number,
+      documentNumber: String(currentDoc[cfg.numberColumn] ?? ''),
+      ...(warnings.length ? { warnings } : {}),
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected modification persistence error'
-    return { success: false, error: message }
+    return { success: false, error: message, ...(warnings.length ? { warnings } : {}) }
   }
+}
+
+/**
+ * Executes persistence for an approved invoice modification proposal.
+ *
+ * Preserves the persisted document via persistDocumentModification; see that
+ * function for the preservation contract. Uses the existing tenant
+ * `save_invoice_with_items_transaction` RPC with `p_mode = 'update'`.
+ */
+export async function persistInvoiceModification(
+  tenantClient: TenantClient,
+  proposal: BoluInvoiceModifyProposal,
+  canWrite: BoluWriteAuthorization,
+  canRead: BoluReadAuthorization,
+  entityId?: string | null,
+  actor?: BoluAuditActor | null,
+): Promise<BoluOperationExecutionResult> {
+  return persistDocumentModification(
+    INVOICE_MODIFY_CONFIG,
+    tenantClient,
+    proposal,
+    canWrite,
+    canRead,
+    entityId,
+    actor,
+  )
 }
 
 /**
  * Executes persistence for an approved quotation modification proposal.
  *
  * Mirrors the invoice modification path and uses the existing tenant
- * `save_quotation_with_items_transaction` RPC with `p_mode = 'update'`, so the
- * database permission gate and atomic item replacement remain authoritative.
+ * `save_quotation_with_items_transaction` RPC with `p_mode = 'update'`.
  */
 export async function persistQuotationModification(
   tenantClient: TenantClient,
@@ -929,139 +1371,13 @@ export async function persistQuotationModification(
   entityId?: string | null,
   actor?: BoluAuditActor | null,
 ): Promise<BoluOperationExecutionResult> {
-  assertTenantAuthorization(tenantClient, canWrite, 'quotation', 'edit')
-
-  if (!proposal || !proposal.opId) {
-    throw new Error('Valid proposal is required for persistence.')
-  }
-
-  if (!canRead('quotation', 'view')) {
-    return { success: false, error: 'Read authorization missing for this quotation.' }
-  }
-
-  if (executedOperationIds.has(proposal.opId)) {
-    return { success: false, error: 'This modification has already been submitted and executed.' }
-  }
-
-  if (isProposalStale(proposal)) {
-    return { success: false, error: 'This proposal has expired. Please propose the change again.' }
-  }
-
-  if (proposal.status !== 'approved_pending_save' && proposal.status !== 'saving') {
-    return { success: false, error: 'Modification requires user approval (Gate 1) and save confirmation (Gate 2).' }
-  }
-
-  try {
-    const { data: currentDoc, error: fetchError } = await tenantClient
-      .from('quotations')
-      .select('id, quotation_number, client_name, notes, terms, valid_until, issue_date, total, archived_at')
-      .eq('id', proposal.targetDocumentId)
-      .is('archived_at', null)
-      .single()
-
-    if (fetchError || !currentDoc) {
-      return { success: false, error: 'Target quotation could not be found or has been archived.' }
-    }
-
-    const updates: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
-    }
-
-    if (proposal.field) {
-      const dbField =
-        proposal.field === 'payment_terms' ? 'terms'
-          : proposal.field === 'due_date' ? 'valid_until'
-            : proposal.field
-      const currentValueInDb = (currentDoc as any)[dbField]
-
-      if (proposal.oldValue !== undefined && proposal.oldValue !== null && String(currentValueInDb) !== String(proposal.oldValue)) {
-        return {
-          success: false,
-          error: `Document has been modified by another process (current ${proposal.field}: "${currentValueInDb}"). Proposal is stale.`,
-        }
-      }
-
-      updates[dbField] = proposal.newValue
-    }
-
-    let itemsToSave: any[] = []
-    if (proposal.itemsChange?.newItems) {
-      const calculation = computeAuthoritativeTotals(proposal.itemsChange.newItems)
-      updates.subtotal = calculation.subtotal
-      updates.vat = calculation.vat
-      updates.total = calculation.totalPayable
-      updates.install_rate_total = calculation.installRateTotal
-      updates.amount_in_words = numberToWords(calculation.totalPayable)
-
-      itemsToSave = proposal.itemsChange.newItems.map((item, idx) => serializeBoluItem(item, idx))
-    }
-
-    if (entityId && proposal.itemsChange?.newItems) {
-      const payload = {
-        ...currentDoc,
-        ...updates,
-        id: proposal.targetDocumentId,
-      }
-      const { error: rpcError } = await tenantClient.rpc('save_quotation_with_items_transaction', {
-        p_entity_id: entityId,
-        p_quotation_payload: payload,
-        p_items: itemsToSave,
-        p_mode: 'update',
-      })
-      if (rpcError) {
-        return { success: false, error: `Transactional update failed: ${rpcError.message}` }
-      }
-    } else {
-      if (proposal.itemsChange?.newItems) {
-        // Keep the previous rows so a failed replacement cannot empty the quotation.
-        const { data: previousItems } = await (tenantClient.from('quotation_items') as any)
-          .select('description, quantity, unit_price, total, unit, row_order, sub_description, make, discount_rate, install_rate, group_name, group_id, row_type, item_id, install_rate_taxable')
-          .eq('quotation_id', proposal.targetDocumentId)
-
-        await (tenantClient.from('quotation_items') as any).delete().eq('quotation_id', proposal.targetDocumentId)
-        const { error: itemsError } = await (tenantClient.from('quotation_items') as any)
-          .insert(itemsToSave.map((item) => ({ ...item, quotation_id: proposal.targetDocumentId })))
-        if (itemsError) {
-          if (Array.isArray(previousItems) && previousItems.length > 0) {
-            await (tenantClient.from('quotation_items') as any).insert(previousItems)
-          }
-          return {
-            success: false,
-            error: `Failed to update quotation items: ${itemsError.message}. The previous items were restored.`,
-          }
-        }
-      }
-
-      const { error: updateError } = await (tenantClient.from('quotations') as any)
-        .update(updates)
-        .eq('id', proposal.targetDocumentId)
-
-      if (updateError) {
-        return { success: false, error: `Failed to update quotation: ${updateError.message}` }
-      }
-    }
-
-    await recordBoluDocumentModificationAudit(tenantClient, {
-      family: 'quotation',
-      documentId: proposal.targetDocumentId,
-      documentNumber: currentDoc.quotation_number,
-      opId: proposal.opId,
-      changedField: proposal.field ?? null,
-      oldValue: proposal.oldValue,
-      newValue: proposal.newValue,
-      itemsChanged: Boolean(proposal.itemsChange?.newItems),
-      actor,
-    })
-
-    executedOperationIds.add(proposal.opId)
-
-    return {
-      success: true,
-      documentId: proposal.targetDocumentId,
-      documentNumber: currentDoc.quotation_number,
-    }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unexpected modification persistence error'
-    return { success: false, error: message }
-  }
+  return persistDocumentModification(
+    QUOTATION_MODIFY_CONFIG,
+    tenantClient,
+    proposal,
+    canWrite,
+    canRead,
+    entityId,
+    actor,
+  )
 }

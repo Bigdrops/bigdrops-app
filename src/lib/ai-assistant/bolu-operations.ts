@@ -255,9 +255,17 @@ export function validateInvoiceItems(items: unknown): {
 
     if (description && Number.isFinite(quantity) && quantity > 0 && Number.isFinite(unitPrice) && unitPrice >= 0) {
       const optionalNumber = (value: unknown): number | null | undefined =>
-        typeof value === 'number' && Number.isFinite(value) ? value : null
+        // Tri-state: undefined = key absent (caller keeps the existing value);
+        // null = explicit clear request; number = explicit value.
+        value === undefined ? undefined
+          : value === null ? null
+            : typeof value === 'number' && Number.isFinite(value) ? value
+              : undefined
       const optionalString = (value: unknown): string | null | undefined =>
-        typeof value === 'string' && value.trim() ? value.trim() : null
+        value === undefined ? undefined
+          : typeof value !== 'string' ? undefined
+            : value.trim() ? value.trim()
+              : null
 
       validated.push({
         description,
@@ -269,7 +277,7 @@ export function validateInvoiceItems(items: unknown): {
         group_name: optionalString(item.group_name),
         item_id: optionalString(item.item_id),
         install_rate: optionalNumber(item.install_rate),
-        install_rate_taxable: item.install_rate_taxable === true,
+        install_rate_taxable: typeof item.install_rate_taxable === 'boolean' ? item.install_rate_taxable : undefined,
         vat_rate: optionalNumber(item.vat_rate),
         discount_rate: optionalNumber(item.discount_rate),
         sub_description: optionalString(item.sub_description),

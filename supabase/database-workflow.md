@@ -8,6 +8,9 @@ The hosted project reference is `xqlpekpkbszpdgtuwybh`.
 
 The project name is `bigdrops-app`.
 
+> **Permanent disposable development & verification database:** project ref `svrpqsdagtgtclnrlmbm` — see [`supabase/disposable-database.md`](./disposable-database.md). Routine development, migration testing and scratch tenants belong there; `xqlpekpkbszpdgtuwybh` remains production and is separately authorized.
+
+
 ---
 
 ## 1. Important Rules
