@@ -66,6 +66,12 @@ public class ApkUpdatePlugin extends Plugin {
     private volatile String pendingInstallUri = null;
     private volatile boolean isForeground = false;
     private volatile boolean expectedBytesRecorded = false;
+    // Tracked so cancelDownload() can unregister a live completion receiver.
+    private BroadcastReceiver completionReceiver = null;
+    // Guards terminal handling so the broadcast receiver and the progress
+    // poller can never both settle the same transfer or launch the installer.
+    private Long terminalHandledId = null;
+    private volatile String lastLaunchedInstallUri = null;
 
     private File getUpdatesDir(Context context) {
         File dir = context.getExternalCacheDir();
@@ -75,7 +81,7 @@ public class ApkUpdatePlugin extends Plugin {
         return new File(dir, UPDATES_DIR);
     }
 
-    private synchronized void startProgressPolling(Context context, long downloadId, String url) {
+    private synchronized void startProgressPolling(Context context, long downloadId, String url, File destination) {
         stopProgressPolling();
         currentDownloadUrl = url;
         DownloadManager downloadManager =
@@ -122,6 +128,15 @@ public class ApkUpdatePlugin extends Plugin {
                                 progress.put("totalBytes", null);
                             }
                             notifyListeners("apkDownloadProgress", progress);
+                        } else if (status == DownloadManager.STATUS_SUCCESSFUL
+                                || status == DownloadManager.STATUS_FAILED) {
+                            // The completion broadcast can be missed (app
+                            // backgrounded, receiver not yet registered, or a
+                            // stale/racing broadcast). The poller is the
+                            // fallback terminal path: handle it once, then
+                            // stop so a finished transfer never keeps polling.
+                            handleTerminalStatus(context, downloadId, destination, status);
+                            return;
                         }
                     }
                 } catch (Exception ignored) {
@@ -226,7 +241,7 @@ public class ApkUpdatePlugin extends Plugin {
         if (status == DownloadManager.STATUS_RUNNING || status == DownloadManager.STATUS_PENDING) {
             lastEnqueueId = downloadId;
             if (url != null && !url.isEmpty()) {
-                startProgressPolling(context, downloadId, url);
+                startProgressPolling(context, downloadId, url, destination);
             }
             registerCompletionReceiver(context, downloadId, destination);
         }
@@ -285,6 +300,8 @@ public class ApkUpdatePlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         stopProgressPolling();
+        Context context = getContext();
+        if (context != null) unregisterCompletionReceiver(context);
         super.handleOnDestroy();
     }
 
@@ -317,6 +334,11 @@ public class ApkUpdatePlugin extends Plugin {
     private void autoInstall(Uri uri) {
         if (uri == null) return;
 
+        // Idempotency: never launch the package installer twice for the same
+        // completed APK, even if both the receiver and the poller observed it.
+        String uriValue = uri.toString();
+        if (uriValue.equals(lastLaunchedInstallUri)) return;
+
         Context context = getContext();
         if (context == null) {
             pendingInstallUri = uri.toString();
@@ -348,6 +370,7 @@ public class ApkUpdatePlugin extends Plugin {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
             pendingInstallUri = null;
+            lastLaunchedInstallUri = uriValue;
             // The installer owns the flow now. Nothing left to recover.
             clearDownloadRecord(context);
         } catch (Exception e) {
@@ -425,6 +448,11 @@ public class ApkUpdatePlugin extends Plugin {
             return;
         }
 
+        // Fresh transfer: clear any terminal/idempotency state from a prior
+        // download so the new one can complete and launch its own installer.
+        terminalHandledId = null;
+        lastLaunchedInstallUri = null;
+        pendingInstallUri = null;
         lastEnqueueId = downloadId;
         activeDownloadCalls.put(downloadId, call);
 
@@ -442,11 +470,13 @@ public class ApkUpdatePlugin extends Plugin {
                 url
         );
 
-        startProgressPolling(context, downloadId, url);
+        startProgressPolling(context, downloadId, url, destination);
         registerCompletionReceiver(context, downloadId, destination);
     }
 
     private void registerCompletionReceiver(Context context, long downloadId, File destination) {
+        // A prior receiver for an earlier transfer must not linger.
+        unregisterCompletionReceiver(context);
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
@@ -455,49 +485,12 @@ public class ApkUpdatePlugin extends Plugin {
                 long completedId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
                 if (completedId != downloadId) return;
 
-                stopProgressPolling();
-
-                PluginCall call = activeDownloadCalls.remove(downloadId);
-                try {
-                    ctx.unregisterReceiver(this);
-                } catch (IllegalArgumentException ignored) {
-                    // Receiver already unregistered.
-                }
                 int status = downloadStatus(ctx, downloadId);
-                if (status != DownloadManager.STATUS_SUCCESSFUL) {
-                    // Partial or failed file must not linger as installable.
-                    //noinspection ResultOfMethodCallIgnored
-                    destination.delete();
-                    clearDownloadRecord(ctx);
-                    if (call != null) {
-                        call.reject("Download failed (status " + status + "). You can retry safely.");
-                    }
-                    return;
+                if (status != DownloadManager.STATUS_SUCCESSFUL
+                        && status != DownloadManager.STATUS_FAILED) {
+                    return; // Not terminal yet; the poller keeps watching.
                 }
-
-                long size = destination.length();
-                Uri contentUri = buildProviderUri(ctx, destination);
-
-                // Announce the verified asset before the installer takes over
-                // the screen, so the web layer can enter its installing state.
-                JSObject completed = new JSObject();
-                completed.put("uri", contentUri.toString());
-                completed.put("fileName", destination.getName());
-                completed.put("sizeBytes", size);
-                notifyListeners("apkDownloadCompleted", completed);
-
-                if (call != null) {
-                    JSObject result = new JSObject();
-                    result.put("uri", contentUri.toString());
-                    result.put("fileName", destination.getName());
-                    result.put("sizeBytes", size);
-                    result.put("reusedExisting", false);
-                    call.resolve(result);
-                }
-
-                // Fire the system installer. Deferred to the next resume when
-                // BOUXRE is not in the foreground.
-                autoInstall(contentUri);
+                handleTerminalStatus(ctx, downloadId, destination, status);
             }
         };
 
@@ -506,6 +499,96 @@ public class ApkUpdatePlugin extends Plugin {
         } else {
             context.registerReceiver(receiver, filter);
         }
+        completionReceiver = receiver;
+    }
+
+    private void unregisterCompletionReceiver(Context context) {
+        BroadcastReceiver receiver = completionReceiver;
+        if (receiver == null) return;
+        completionReceiver = null;
+        try {
+            context.unregisterReceiver(receiver);
+        } catch (IllegalArgumentException ignored) {
+            // Receiver already unregistered (e.g. process/activity teardown).
+        }
+    }
+
+    /**
+     * Single idempotent terminal path shared by the completion broadcast and
+     * the progress poller. Whichever observes the finished transfer first
+     * settles the pending JS call, emits completion, and triggers the
+     * installer; the second observation is a no-op.
+     */
+    private synchronized void handleTerminalStatus(
+            Context context, long downloadId, File destination, int status) {
+        if (lastEnqueueId == null || lastEnqueueId != downloadId) return;
+        if (terminalHandledId != null && terminalHandledId == downloadId) return;
+        terminalHandledId = downloadId;
+
+        stopProgressPolling();
+        unregisterCompletionReceiver(context);
+
+        PluginCall call = activeDownloadCalls.remove(downloadId);
+        if (status != DownloadManager.STATUS_SUCCESSFUL) {
+            // Partial or failed file must not linger as installable.
+            //noinspection ResultOfMethodCallIgnored
+            destination.delete();
+            clearDownloadRecord(context);
+            if (call != null) {
+                call.reject(downloadFailureMessage(context, downloadId, status));
+            }
+            return;
+        }
+
+        long size = destination.length();
+        Uri contentUri = buildProviderUri(context, destination);
+
+        // Announce the verified asset before the installer takes over
+        // the screen, so the web layer can enter its installing state.
+        JSObject completed = new JSObject();
+        completed.put("uri", contentUri.toString());
+        completed.put("fileName", destination.getName());
+        completed.put("sizeBytes", size);
+        notifyListeners("apkDownloadCompleted", completed);
+
+        if (call != null) {
+            JSObject result = new JSObject();
+            result.put("uri", contentUri.toString());
+            result.put("fileName", destination.getName());
+            result.put("sizeBytes", size);
+            result.put("reusedExisting", false);
+            call.resolve(result);
+        }
+
+        // Fire the system installer. Deferred to the next resume when
+        // BOUXRE is not in the foreground. Idempotent per URI.
+        autoInstall(contentUri);
+    }
+
+    /** Failure detail for the JS promise; includes COLUMN_REASON when present. */
+    private String downloadFailureMessage(Context context, long downloadId, int status) {
+        String reason = null;
+        DownloadManager downloadManager =
+                (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+        if (downloadManager != null) {
+            android.database.Cursor cursor = downloadManager.query(
+                    new DownloadManager.Query().setFilterById(downloadId));
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        int idx = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+                        if (idx >= 0) {
+                            int code = cursor.getInt(idx);
+                            if (code > 0) reason = String.valueOf(code);
+                        }
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        }
+        String message = "Download failed (status " + status + "). You can retry safely.";
+        return reason == null ? message : message + " Reason: " + reason + ".";
     }
 
     private int downloadStatus(Context context, long downloadId) {
@@ -581,19 +664,26 @@ public class ApkUpdatePlugin extends Plugin {
     public void cancelDownload(PluginCall call) {
         stopProgressPolling();
         Context context = getContext();
+        unregisterCompletionReceiver(context);
+
+        // Settle the pending downloadApk() call so the JS `await` never hangs
+        // after a cancel. Rejecting maps to the safe "failed" phase in the
+        // hook; the hook's cancel path overrides it back to idle.
+        Long cancelledId = lastEnqueueId;
+        if (cancelledId != null) {
+            PluginCall pending = activeDownloadCalls.remove(cancelledId);
+            if (pending != null) {
+                pending.reject("Download cancelled.");
+            }
+        }
+        lastEnqueueId = null;
+        terminalHandledId = null;
+        pendingInstallUri = null;
+
         DownloadManager downloadManager =
                 (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        if (downloadManager == null) {
-            call.resolve();
-            return;
-        }
-
-        // Cancels the most recent enqueue. Duplicate downloads are already
-        // prevented at the TypeScript layer, so one slot is sufficient.
-        if (lastEnqueueId != null) {
-            downloadManager.remove(lastEnqueueId);
-            activeDownloadCalls.remove(lastEnqueueId);
-            lastEnqueueId = null;
+        if (downloadManager != null && cancelledId != null) {
+            downloadManager.remove(cancelledId);
         }
         clearDownloadRecord(context);
         call.resolve();

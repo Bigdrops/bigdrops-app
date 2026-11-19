@@ -28,6 +28,16 @@ export interface ApkDownloadProgressEvent {
   totalBytes: number | null
 }
 
+/** Emitted once when a native APK download reaches a verified terminal state. */
+export interface ApkDownloadCompletedEvent {
+  /** FileProvider content:// URI for the downloaded APK. */
+  uri: string
+  /** File name inside the app cache updates/ directory. */
+  fileName: string
+  /** Verified downloaded size in bytes. */
+  sizeBytes: number
+}
+
 export interface ApkInstallOptions {
   /** Absolute content:// URI from downloadApk(). */
   uri: string
@@ -63,6 +73,10 @@ export interface ApkUpdatePlugin {
   addListener(
     eventName: 'apkDownloadProgress',
     listenerFunc: (event: ApkDownloadProgressEvent) => void,
+  ): Promise<PluginListenerHandle>
+  addListener(
+    eventName: 'apkDownloadCompleted',
+    listenerFunc: (event: ApkDownloadCompletedEvent) => void,
   ): Promise<PluginListenerHandle>
 }
 
@@ -130,6 +144,22 @@ export async function onApkDownloadProgress(
   if (!hasApkUpdatePlugin()) return null
   try {
     return await ApkUpdate.addListener('apkDownloadProgress', listener)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Listens for the one-shot native completion event. Kept separate from the
+ * downloadApk() promise so a missed/late promise resolution cannot leave the
+ * UI stuck in "downloading" after the file is actually ready.
+ */
+export async function onApkDownloadCompleted(
+  listener: (event: ApkDownloadCompletedEvent) => void,
+): Promise<PluginListenerHandle | null> {
+  if (!hasApkUpdatePlugin()) return null
+  try {
+    return await ApkUpdate.addListener('apkDownloadCompleted', listener)
   } catch {
     return null
   }

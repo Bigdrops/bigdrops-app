@@ -32,9 +32,19 @@ import {
   cancelDownloadNative,
   deleteDownloadNative,
   onApkDownloadProgress,
+  onApkDownloadCompleted,
   hasApkUpdatePlugin,
 } from '@/lib/native/apkUpdate'
 import { describeDownloadFailure } from '@/domain/appUpdate/downloadFailure'
+import {
+  sampleDownloadSpeed,
+  SPEED_SAMPLE_MIN_MS,
+  type ByteSample,
+} from '@/domain/appUpdate/downloadSpeed'
+
+// Re-exported so existing/test imports from the hook keep working.
+export { sampleDownloadSpeed, SPEED_SAMPLE_MIN_MS }
+export type { ByteSample }
 
 /**
  * Update orchestration hook: discovery, grace-state persistence, and the
@@ -46,11 +56,42 @@ import { describeDownloadFailure } from '@/domain/appUpdate/downloadFailure'
  * depend on fetching.
  */
 export type DownloadPhase =
-  | { kind: 'idle' }
-  | { kind: 'downloading'; downloadedBytes: number; totalBytes: number | null }
+  | {
+      kind: 'downloading'
+      downloadedBytes: number
+      totalBytes: number | null
+      /** Measured from two byte samples >= 300ms apart. Optional for compatibility. */
+      speedBytesPerSec?: number | null
+    }
   | { kind: 'downloaded'; fileName: string; uri: string; message?: string }
   | { kind: 'failed'; message: string }
   | { kind: 'installing' }
+  | { kind: 'idle' }
+
+export interface ByteSample {
+  bytes: number
+  atMs: number
+}
+
+/** Two samples closer than this cannot produce an honest speed readout. */
+export const SPEED_SAMPLE_MIN_MS = 300
+
+/**
+ * Bytes-per-second from two cumulative byte counts. Returns null until a
+ * valid pair exists: no first-frame guess, no non-advancing reading. Kept as
+ * a pure export so it can be verified without mounting React.
+ */
+export function sampleDownloadSpeed(
+  previous: ByteSample | null,
+  current: ByteSample,
+): number | null {
+  if (!previous) return null
+  const elapsedMs = current.atMs - previous.atMs
+  const deltaBytes = current.bytes - previous.bytes
+  if (!Number.isFinite(elapsedMs) || elapsedMs < SPEED_SAMPLE_MIN_MS) return null
+  if (!Number.isFinite(deltaBytes) || deltaBytes <= 0) return null
+  return deltaBytes / (elapsedMs / 1000)
+}
 
 /**
  * Result of one completed update check. Returned directly (not via React
@@ -75,6 +116,8 @@ export interface UseAppUpdateResult {
   /** True once initial discovery has settled (prevents splash flicker). */
   ready: boolean
   downloadPhase: DownloadPhase
+  /** Latest measured transfer speed, or null while downloading/unknown. Optional for compatibility. */
+  speedBytesPerSec?: number | null
   startInAppDownload: () => Promise<void>
   cancelInAppDownload: () => Promise<void>
   installDownloadedApk: () => Promise<void>
@@ -109,6 +152,9 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
   const deviceNowAtServerRef = useRef<number | null>(null)
   const downloadedFileRef = useRef<{ fileName: string; uri: string } | null>(null)
   const progressHandleRef = useRef<PluginListenerHandle | null>(null)
+  const completionHandleRef = useRef<PluginListenerHandle | null>(null)
+  const speedSampleRef = useRef<ByteSample | null>(null)
+  const speedRef = useRef<number | null>(null)
 
   const tick = useCallback(() => setNowMs(Date.now()), [])
 
@@ -339,11 +385,46 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     if (progressHandleRef.current) return
     progressHandleRef.current = await onApkDownloadProgress((event) => {
       if (downloadingUrlRef.current === null) return
+      const current: ByteSample = { bytes: event.downloadedBytes, atMs: Date.now() }
+      const measured = sampleDownloadSpeed(speedSampleRef.current, current)
+      // Advance the sample window only when the pair is honest (>= 300ms and
+      // bytes advanced). A rejected pair keeps the older sample so the next
+      // event can still form a valid measurement.
+      if (measured !== null) {
+        speedSampleRef.current = current
+        speedRef.current = measured
+      } else if (speedSampleRef.current === null) {
+        speedSampleRef.current = current
+      }
       setDownloadPhase({
         kind: 'downloading',
         downloadedBytes: event.downloadedBytes,
         totalBytes: event.totalBytes,
+        speedBytesPerSec: speedRef.current,
       })
+    })
+  }, [])
+
+  /**
+   * Completion-event path: a robust alternative to the downloadApk() promise.
+   * Whichever arrives first transitions to 'downloaded'; the other is a no-op
+   * because the phase is already terminal.
+   */
+  const registerCompletionListener = useCallback(async () => {
+    if (completionHandleRef.current) return
+    completionHandleRef.current = await onApkDownloadCompleted((event) => {
+      // A cancel clears the active URL; ignore a late completion from the
+      // cancelled transfer so the UI does not jump back to 'downloaded'.
+      if (downloadingUrlRef.current === null) return
+      if (!event.uri || !event.fileName) return
+      downloadedFileRef.current = { fileName: event.fileName, uri: event.uri }
+      setDownloadPhase({
+        kind: 'downloaded',
+        fileName: event.fileName,
+        uri: event.uri,
+      })
+      speedSampleRef.current = null
+      speedRef.current = null
     })
   }, [])
 
@@ -442,19 +523,34 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     if (downloadingUrlRef.current !== null) return // duplicate-download guard
     if (downloadPhase.kind === 'downloading') return
 
-    downloadingUrlRef.current = apkAsset.downloadUrl
-    setDownloadPhase({ kind: 'downloading', downloadedBytes: 0, totalBytes: apkAsset.sizeBytes })
+    const activeUrl = apkAsset.downloadUrl
+    downloadingUrlRef.current = activeUrl
+    speedSampleRef.current = null
+    speedRef.current = null
+    setDownloadPhase({
+      kind: 'downloading',
+      downloadedBytes: 0,
+      totalBytes: apkAsset.sizeBytes,
+      speedBytesPerSec: null,
+    })
 
     try {
-      await registerProgressListener()
+      await Promise.all([registerProgressListener(), registerCompletionListener()])
       const result = await downloadApkNative({
-        url: apkAsset.downloadUrl,
+        url: activeUrl,
         expectedPrefix: state.policy?.apkAssetPrefix,
         versionCode: state.policy?.versionCode ?? 0,
       })
-      downloadedFileRef.current = { fileName: result.fileName, uri: result.uri }
-      setDownloadPhase({ kind: 'downloaded', fileName: result.fileName, uri: result.uri })
+      // The completion event may have already settled this transfer. Only the
+      // promise path needs to set the phase; both paths retain the same URI.
+      if (downloadingUrlRef.current === activeUrl) {
+        downloadedFileRef.current = { fileName: result.fileName, uri: result.uri }
+        setDownloadPhase({ kind: 'downloaded', fileName: result.fileName, uri: result.uri })
+      }
     } catch (error) {
+      // A cancel settles the pending call with a rejection. The cancel path
+      // already moved the UI to idle; never resurrect it as a failure.
+      if (downloadingUrlRef.current !== activeUrl) return
       // Legacy native builds reject with raw Java exception text. Never
       // surface it: map to safe copy and fall back to the web download.
       const rawMessage = error instanceof Error ? error.message : null
@@ -466,12 +562,16 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
       })
       if (webFallbackAvailable) await openWebDownload()
     } finally {
-      downloadingUrlRef.current = null
+      if (downloadingUrlRef.current === activeUrl) downloadingUrlRef.current = null
     }
-  }, [release, state.policy, downloadPhase.kind, registerProgressListener, installDownloadedApk, openWebDownload])
+  }, [release, state.policy, downloadPhase.kind, registerProgressListener, registerCompletionListener, installDownloadedApk, openWebDownload])
 
   const cancelInAppDownload = useCallback(async () => {
+    // Clear the active URL first so a late completion event is ignored.
     downloadingUrlRef.current = null
+    speedSampleRef.current = null
+    speedRef.current = null
+    downloadedFileRef.current = null
     setDownloadPhase({ kind: 'idle' })
     try {
       await cancelDownloadNative()
@@ -496,6 +596,8 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     return () => {
       void progressHandleRef.current?.remove()
       progressHandleRef.current = null
+      void completionHandleRef.current?.remove()
+      completionHandleRef.current = null
     }
   }, [])
 
@@ -518,6 +620,7 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     graceRemaining,
     ready,
     downloadPhase,
+    speedBytesPerSec: speedRef.current,
     startInAppDownload,
     cancelInAppDownload,
     installDownloadedApk,
