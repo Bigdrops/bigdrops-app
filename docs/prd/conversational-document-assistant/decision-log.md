@@ -641,3 +641,65 @@ The Bolu conversational document pipeline had two integrity gaps verified across
 - The pre-existing Gate 2 mock `.limit(1)` test failure (`bolu-commercial-and-gate-lifecycle.test.js`) remains unresolved.
 - Live database verification on the hosted/disposable project has not been performed for Stage 3D.
 - Actual browser-based four-viewport visual inspection remains outstanding (static JSX/SSR inspection only).
+
+## DEC-45 - Bolu Product Reconciliation, Roadmap Alignment & Architecture Discovery: Stage 4A (2026-11-19)
+
+**Decision.** Stage 4A brings the authoritative Bolu Product Requirements Document (`Readme.md`, `functional-req.md`), the engineering roadmap (`Waterfall-roadmap.md`), and the actual system architecture back into alignment through a coordinated zero-code reconciliation and read-only discovery audit:
+1. **PRD Reconciliation:** Formally updated `functional-req.md` to incorporate the complete verified requirement baseline from Stage 3A through Stage 3D (FR-71 through FR-87), including custom detail rows/chips (FR-78), line-item grouping (FR-79), bounded photo clearing (FR-80), PDF presentation controls (FR-81), conversational lifecycle management (FR-82), quotation validity independence (FR-83), reference link attachments (FR-84), custom payment terms (FR-85), durable replay protection (FR-86), and grounded operational intelligence (FR-87). Updated `Readme.md` status.
+2. **Definitive Lifecycle Status Resolution:** Schema migrations (`quotations_status_check` in migration `20260820000000_fix_revert_quotation_status_mapping.sql` and `invoices_status_check` in `20260809060000_invoice_financials_tenant_view.sql`), committed implementation (`src/lib/ai-assistant/bolu-intelligence.ts`, `bolu-document-service.ts`), and unit tests (`bolu-stage-3d-capabilities.test.js`) confirm that:
+   - Quotation persisted statuses are exclusively `open`, `converted`, and `archived`. Legacy statuses (`draft`, `sent`, `accepted`, `rejected`) were abolished in earlier database migrations and are rejected at Gate 1. Restoring an archived quotation returns it to `open`.
+   - Invoice payment statuses (`unpaid`, `partially_paid`, `paid`) are derived directly from the payments ledger. Direct conversational scalar updates are blocked. Restoring an archived invoice returns it to `unpaid`.
+   - The contradictory reference to `draft -> sent -> accepted|rejected` in the Stage 3D pre-commit summary notes was a drafting error and does not reflect database constraints or committed source code. DEC-44 was and remains correct.
+3. **Architecture Discovery Findings:**
+   - Identified high-severity architectural redundancy: parallel execution engines exist between `src/lib/ai-assistant/bolu-runtime.ts` (in-memory reducer) and `src/lib/ai-assistant/bolu-generation.ts` (active React stream pipeline via `useBoluThread.ts`).
+   - Identified server endpoint bypass: `POST /api/bolu-save` is bypassed in standard client configurations or 404 fallbacks, executing directly via `tenantClient`.
+   - Confirmed 1 pre-existing unit test failure in `src/tests/ai-assistant/bolu-commercial-and-gate-lifecycle.test.js` caused by `createPersistenceMock()` lacking `.limit(1)` support.
+4. **Proposed Stage 4B Scope:** Recommended prioritizing Stage 4B as a Core Architecture Consolidation & Verification Hardening phase before extending Bolu to additional document families (PO, Waybill, etc.).
+
+**Alternatives.**
+- Proceeding immediately to new document families (e.g. Stage 4 Purchase Orders) without consolidating the core invoice/quotation engine was rejected: adding more document packs on top of the dual-pipeline debt and stale test mock would compound maintenance risk.
+- Changing database migrations or application code during Stage 4A was rejected: this task is strictly an authorized documentation and discovery audit.
+
+**Verification Evidence.**
+- Read-only inspection of migrations, source code, and test suites across all Bolu modules.
+- Full consistency verified across `Readme.md`, `functional-req.md`, `Waterfall-roadmap.md`, and `decision-log.md`.
+- No application source code, tests, or database migrations modified.
+
+## DEC-46 - Unified Execution Architecture & Persistence Parity (Visual Acceptance Deferred): Stage 4B (2026-11-19)
+
+**Decision.** Stage 4B executes the core architectural consolidation and persistence parity roadmap defined in Stage 4A (DEC-45):
+1. **Workstream A — Single Authoritative Execution Engine:**
+   - Unified proposal interpretation, validation, snapshot resolution, and client directory resolution into an authoritative shared engine: `src/lib/ai-assistant/bolu-proposal-engine.ts` (`interpretBoluProposal`, `resolveProposalClient`).
+   - Refactored both `src/lib/ai-assistant/bolu-runtime.ts` (in-memory headless engine) and `src/lib/ai-assistant/bolu-generation.ts` (active React pipeline via `useBoluThread.ts`) to delegate exclusively to `interpretBoluProposal`.
+   - Eliminated dual-pipeline maintenance risk: automated test harnesses and live browser chat now execute identical business rules, Gate 1 snapshot guards, commercial language standardization (`standardizeCommercialItems`), commercial suggestions (`buildCommercialSuggestions`), client clarification prompts, and fail-closed security checks.
+   - Reduced code bloat: both `bolu-runtime.ts` (now ~355 lines) and `bolu-generation.ts` (now ~390 lines) dropped well below the repository's 600-line warning threshold.
+2. **Workstream B — Baseline Test Mock Regression Resolution:**
+   - Fixed the pre-existing test defect in `src/tests/ai-assistant/bolu-commercial-and-gate-lifecycle.test.js`: `createPersistenceMock()` returned an incomplete query chain missing `.limit(1)` and `.single()`, causing `fetchDocumentPrefixesSafe` to throw when reading `settings.document_prefixes`.
+   - Enhanced `createPersistenceMock()` with a chainable fluent query builder supporting `.select()`, `.limit()`, `.single()`, `.maybeSingle()`, and `.then()`. All 18 tests pass.
+   - Resolved metadata comparison regression in `src/tests/ai-assistant/bolu-modify-integrity.test.js` where `semanticJsonEqual` strictly compared `custom_fields` against pre-Stage 3D fixtures lacking `last_operation_id` and `applied_operation_ids`. Added `stripOpMetadata` helper. All 34 tests pass.
+   - Test suite status: 670 pass, 0 fail across all 47 AI assistant test suites.
+3. **Workstream C — Gate 2 Server Persistence Parity & Warning Propagation:**
+   - Extended `api/bolu-save.ts` to support `advance-invoice-config` alongside `create-document` and `modify-document` using `persistAdvanceInvoiceConfig`, matching tenant client permissions, user-scoped transactions, and audit tracking.
+   - Added `warnings: result.warnings` pass-through in `api/bolu-save.ts` response and mapped it into `result.warnings` in `src/lib/ai-assistant/hooks/useBoluThread.ts`, ensuring execution warnings (e.g. from advance clamping or metadata preservation) are faithfully surfaced in confirmation messages regardless of whether execution occurred via the server endpoint or client fallback.
+   - Maintained safe fallback mechanics: transient network errors fail closed and prevent duplicate writes, while unmounted server endpoints fall back cleanly to authenticated `tenantClient` persistence.
+4. **Workstream D — Responsive UI Design Standard Visual Acceptance (Deferred to User):**
+   - The responsive UI architecture across the four viewport classes is codified in CSS and JSX structure per the BOUXRE Responsive UI Design Standard:
+     - **Mobile / Fold Closed (<768px):** Compact single-column view with slide-out conversation drawer, single-row header (Bolu identity and model pill), bottom-pinned composer with safe-area insets, and full-screen bottom-sheet presentation for document previews.
+     - **Fold Open (768px–1023px):** Deliberate wide dual-pane layout utilizing expanded screen real estate without excessive stretching; central thread + composer alongside collapsible side-by-side document panel and drawer history access.
+     - **Tablets (1024px–1279px):** Optimized multi-pane density with persistent/collapsible navigation rail, central chat stream, and slide-out document inspector panel.
+     - **Desktop (>=1280px):** Full 3-column enterprise workspace canvas with persistent left history rail, central conversation thread, and dedicated right-hand document preview panel.
+   - Live visual acceptance in a real authenticated browser is explicitly deferred to the user. No agent visual verification was approved or completed; visual acceptance remains outstanding for later user inspection.
+
+**Alternatives.**
+- Maintaining divergent parsing engines in `bolu-runtime.ts` and `bolu-generation.ts` was rejected: past divergence resulted in tests verifying different logic from what live users executed.
+- Keeping `advance-invoice-config` strictly client-side without server endpoint support was rejected: adding `persistAdvanceInvoiceConfig` to `api/bolu-save.ts` achieves full architectural symmetry across all supported document operations.
+
+**Verification Evidence.**
+- 670/670 tests passing across 47 AI assistant test files (`bun test src/tests/ai-assistant/`).
+- `bun run audit:load` passed with 0 new load violations; `bolu-runtime.ts` and `bolu-generation.ts` removed from oversized list.
+- `bun run typecheck` (`tsc --noEmit`) exited 0.
+
+**Limitations Recorded at Time of Delivery.**
+- Four-viewport visual acceptance is deferred to the user for manual inspection in an authenticated browser environment.
+- Database-level row locking / atomic unique constraint for operation idempotency remains a future database enhancement.
+

@@ -1,36 +1,25 @@
 import { type BoluPageContext, type BoluRecordReference } from './bolu-context'
 import { extractBoluSearchTerm, getAvailableBoluCapabilities, matchBoluIntent } from './bolu-capabilities'
 import {
-  readBoluClient,
   readBoluContextFacts,
   readBoluInvoice,
-  readBoluInvoiceAdvanceConfig,
-  readBoluModifySnapshot,
   readBoluQuotation,
-  resolveBankAccountForPresentation,
   resolveOperationFacts,
-  resolveSignatoryForPresentation,
-  searchBoluClients,
   searchBoluInvoices,
   searchBoluQuotations,
-  type BoluClientMatch,
   type BoluReadAuthorization,
   type BoluWriteAuthorization,
 } from './bolu-data'
 import { sendBoluProviderRequest } from './bolu-transport'
 import type { TenantClient } from '@/lib/tenantClient'
 import {
-  buildDocumentCreateProposal,
-  buildInvoiceModifyProposal,
-  buildBoluAdvanceConfigProposal,
   isProposalStale,
-  parseStructuredOperationEnvelope,
-  validateInvoiceCreateInput,
-  validateInvoiceModifyInput,
-  validateBoluAdvanceConfigInput,
-  withClientResolution,
-  type BoluClientResolution,
 } from './bolu-operations'
+import {
+  interpretBoluProposal,
+} from './bolu-proposal-engine'
+// Architecture note: buildBoluAdvanceConfigProposal and proposal interpretation
+// are unified in bolu-proposal-engine for both bolu-runtime and bolu-generation.
 import {
   persistInvoiceCreation,
   persistInvoiceModification,
@@ -235,316 +224,21 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
         })
 
         // Inspect response for structured operation
-        const envelope = parseStructuredOperationEnvelope(response.text)
+        const interpretation = await interpretBoluProposal({
+          rawText: response.text,
+          tenantClient: dependencies.tenantClient,
+          canRead: dependencies.canRead,
+          previousProposal: state.activeProposal,
+        })
 
-        if (envelope.hasOperation) {
-          if (envelope.error) {
-            dispatch({
-              type: 'RESULT',
-              requestId,
-              content: `I received an operation proposal, but the structured payload was malformed:\n- ${envelope.error}`,
-            })
-            return
-          }
-
-          if (envelope.rawOperation) {
-            const rawOp = envelope.rawOperation as Record<string, unknown>
-            const docFamily: 'invoice' | 'quotation' | undefined =
-              rawOp.documentFamily === 'invoice' || rawOp.documentFamily === 'quotation'
-                ? rawOp.documentFamily
-                : undefined
-            const opType = rawOp.operationType
-
-            // Only invoice and quotation families are supported.
-            if (docFamily && docFamily !== 'invoice' && docFamily !== 'quotation') {
-              dispatch({
-                type: 'RESULT',
-                requestId,
-                content: `I detected a proposal for document family "${String(docFamily)}", but Bolu currently only supports invoices and quotations.`,
-              })
-              return
-            }
-
-            // Reject unsupported operation types
-            if (opType !== 'create-document' && opType !== 'modify-document' && opType !== 'advance-invoice-config') {
-              dispatch({
-                type: 'RESULT',
-                requestId,
-                content: `Unsupported operation type "${String(opType)}". Bolu supports creating and modifying documents, and Advance Invoice configuration on invoices.`,
-              })
-              return
-            }
-
-            if (opType === 'create-document') {
-              const validation = validateInvoiceCreateInput(rawOp.payload)
-              if (!validation.valid) {
-                dispatch({
-                  type: 'RESULT',
-                  requestId,
-                  content: `I attempted to prepare the invoice creation proposal, but required details were invalid or missing:\n- ${validation.errors.join('\n- ')}`,
-                })
-                return
-              }
-
-              // A model-supplied client ID is only trusted after verification.
-              let resolvedClient: BoluClientMatch | null = null
-              let resolution: BoluClientResolution = {
-                status: 'not_found',
-                query: validation.data!.client_name,
-              }
-              try {
-                if (validation.data!.client_id) {
-                  resolvedClient = await readBoluClient(
-                    dependencies.tenantClient,
-                    validation.data!.client_id,
-                  )
-                }
-                if (resolvedClient) {
-                  resolution = { status: 'resolved', client: resolvedClient }
-                } else {
-                  const search = await searchBoluClients(
-                    dependencies.tenantClient,
-                    validation.data!.client_name,
-                  )
-                  if (search.status === 'exact_match' || search.status === 'single_match') {
-                    resolvedClient = search.client
-                    resolution = { status: 'resolved', client: search.client }
-                  } else if (search.status === 'ambiguous') {
-                    resolution = { status: 'ambiguous', query: search.query, matches: search.matches }
-                  } else if (search.status === 'search_error') {
-                    resolution = { status: 'search_error', query: search.query, error: search.error }
-                  }
-                }
-              } catch {
-                // A failed lookup is not an empty client directory.
-                resolution = {
-                  status: 'search_error',
-                  query: validation.data!.client_name,
-                  error: 'Client lookup failed.',
-                }
-              }
-
-              // The draft is kept even when the client is unresolved.
-              const proposal = withClientResolution(
-                buildDocumentCreateProposal(
-                  docFamily ?? 'invoice',
-                  resolvedClient
-                    ? {
-                        ...validation.data!,
-                        client_id: resolvedClient.id,
-                        client_name: resolvedClient.name,
-                      }
-                    : validation.data!,
-                  docFamily === 'quotation' ? 'QTN-DRAFT' : 'INV-DRAFT',
-                  resolution,
-                ),
-                resolution,
-              )
-              dispatch({
-                type: 'RESULT',
-                requestId,
-                content: response.text,
-                proposal,
-              })
-              return
-            }
-
-            if (opType === 'modify-document') {
-              const targetFamily = docFamily ?? 'invoice'
-              const validation = validateInvoiceModifyInput(rawOp.payload, { documentFamily: targetFamily })
-              if (!validation.valid) {
-                dispatch({
-                  type: 'RESULT',
-                  requestId,
-                  content: `I could not prepare that document change:\n- ${validation.errors.join('\n- ')}`,
-                })
-                return
-              }
-
-              let docNumber = targetFamily === 'quotation' ? 'QTN-TARGET' : 'INV-TARGET'
-              let snapshot: Awaited<ReturnType<typeof readBoluModifySnapshot>> | null = null
-              try {
-                snapshot = await readBoluModifySnapshot(
-                  dependencies.tenantClient,
-                  targetFamily,
-                  validation.data!.documentId,
-                  dependencies.canRead,
-                )
-              } catch {
-                snapshot = null
-              }
-              if (!snapshot) {
-                // Fail-closed: no persisted baseline means no stale-gateable proposal.
-                dispatch({
-                  type: 'RESULT',
-                  requestId,
-                  content: `I could not load the current ${targetFamily} with its saved items, so I did not prepare a change proposal. Reopen the document or try again.`,
-                })
-                return
-              }
-              docNumber = snapshot.documentNumber
-
-              let resolvedSignatory: { id: string; name: string; role: string } | null | undefined
-              let resolvedBankAccount: { id: string; label: string } | null | undefined
-              const presentationPatch = validation.data!.presentationChange
-              if (presentationPatch?.signatory) {
-                const resolution = await resolveSignatoryForPresentation(
-                  dependencies.tenantClient,
-                  presentationPatch.signatory,
-                )
-                if (resolution.kind === 'resolved') {
-                  resolvedSignatory = { id: resolution.id, name: resolution.name, role: resolution.role }
-                } else if (resolution.kind === 'ambiguous') {
-                  dispatch({
-                    type: 'RESULT',
-                    requestId,
-                    content: `I found several signatories matching "${resolution.query}":\n${resolution.matches.map((m) => `• ${m.name}${m.role ? `, ${m.role}` : ''}`).join('\n')}\nTell me which one you mean.`,
-                  })
-                  return
-                } else if (resolution.kind === 'not_found') {
-                  dispatch({
-                    type: 'RESULT',
-                    requestId,
-                    content: `I could not find a signatory named "${resolution.query}" in this business. Choose an existing signatory and try again.`,
-                  })
-                  return
-                } else {
-                  dispatch({
-                    type: 'RESULT',
-                    requestId,
-                    content: `I could not check the signatory list just now, so I did not prepare the change. Please try again shortly.`,
-                  })
-                  return
-                }
-              }
-              if (presentationPatch?.pdfOutput?.bankAccountId) {
-                const resolution = await resolveBankAccountForPresentation(
-                  dependencies.tenantClient,
-                  presentationPatch.pdfOutput.bankAccountId,
-                )
-                if (resolution.kind === 'resolved') {
-                  resolvedBankAccount = { id: resolution.id, label: resolution.label }
-                } else if (resolution.kind === 'not_found') {
-                  dispatch({
-                    type: 'RESULT',
-                    requestId,
-                    content: `I could not find that bank account in this business. Choose an existing account and try again.`,
-                  })
-                  return
-                } else {
-                  dispatch({
-                    type: 'RESULT',
-                    requestId,
-                    content: `I could not check the bank accounts just now, so I did not prepare the change. Please try again shortly.`,
-                  })
-                  return
-                }
-              }
-
-              const proposal = buildInvoiceModifyProposal({
-                targetDocumentId: validation.data!.documentId,
-                targetDocumentNumber: docNumber,
-                documentFamily: targetFamily,
-                field: validation.data!.field,
-                oldValue: validation.data!.oldValue,
-                newValue: validation.data!.newValue,
-                itemsChange: validation.data!.items && validation.data!.oldItems
-                  ? { oldItems: validation.data!.oldItems, newItems: validation.data!.items }
-                  : undefined,
-                extraChargesChange: validation.data!.extraChargesChange,
-                calculationInputsChange: validation.data!.calculationInputsChange,
-                customFieldsChange: validation.data!.customFieldsChange,
-                groupsChange: validation.data!.groupsChange,
-                presentationChange: validation.data!.presentationChange,
-                attachmentsChange: validation.data!.attachmentsChange,
-                lifecycleChange: validation.data!.lifecycleChange,
-                resolvedSignatory,
-                resolvedBankAccount,
-                current: { document: snapshot.document, items: snapshot.items },
-              })
-              const fieldErrors = proposal.customFieldsChange?.errors ?? []
-              const groupErrors = proposal.groupsApplication?.errors ?? []
-              const attachmentErrors = proposal.attachmentsChange?.errors ?? []
-              if (fieldErrors.length > 0 || groupErrors.length > 0 || attachmentErrors.length > 0) {
-                // A plan that fails against the persisted snapshot is not a proposal.
-                dispatch({
-                  type: 'RESULT',
-                  requestId,
-                  content: `I could not prepare that change after checking the saved ${targetFamily}:\n- ${[...fieldErrors, ...groupErrors, ...attachmentErrors].join('\n- ')}\n\nPlease check the details and try again.`,
-                })
-                return
-              }
-
-              dispatch({
-                type: 'RESULT',
-                requestId,
-                content: response.text,
-                proposal,
-              })
-              return
-            }
-
-            if (opType === 'advance-invoice-config') {
-              const advPayload =
-                rawOp.payload && typeof rawOp.payload === 'object' && !Array.isArray(rawOp.payload)
-                  ? (rawOp.payload as Record<string, unknown>)
-                  : {}
-              const validation = validateBoluAdvanceConfigInput({ ...advPayload, documentFamily: 'invoice' })
-              if (!validation.valid) {
-                dispatch({
-                  type: 'RESULT',
-                  requestId,
-                  content: `I attempted to prepare the Advance Invoice proposal, but the details were invalid:\n- ${validation.errors.join('\n- ')}`,
-                })
-                return
-              }
-
-              let snapshot: Awaited<ReturnType<typeof readBoluInvoiceAdvanceConfig>> | null = null
-              try {
-                snapshot = await readBoluInvoiceAdvanceConfig(
-                  dependencies.tenantClient,
-                  validation.data!.targetDocumentId,
-                  dependencies.canRead,
-                )
-              } catch {
-                snapshot = null
-              }
-              if (!snapshot) {
-                dispatch({
-                  type: 'RESULT',
-                  requestId,
-                  content: `I could not locate that parent invoice in your business records. I did not prepare an Advance Invoice proposal.`,
-                })
-                return
-              }
-
-              const FIVE = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label'] as const
-              const oldValues: Partial<Record<(typeof FIVE)[number], string | number | null>> = {}
-              for (const key of FIVE) oldValues[key] = snapshot.current[key] ?? null
-              const proposal = buildBoluAdvanceConfigProposal({
-                targetDocumentId: snapshot.id,
-                targetDocumentNumber: snapshot.number,
-                intent: validation.data!.intent,
-                newValues: validation.data!.newValues,
-                oldValues,
-                current: snapshot.current,
-                parent: {
-                  invoice_number: snapshot.number,
-                  issue_date: snapshot.issue_date,
-                  due_date: snapshot.due_date,
-                  total: snapshot.total,
-                },
-              })
-
-              dispatch({
-                type: 'RESULT',
-                requestId,
-                content: response.text,
-                proposal,
-              })
-              return
-            }
-          }
+        if (interpretation.hasOperation) {
+          dispatch({
+            type: 'RESULT',
+            requestId,
+            content: interpretation.finalText,
+            proposal: interpretation.proposal ?? undefined,
+          })
+          return
         }
 
         // Standard text response

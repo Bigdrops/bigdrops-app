@@ -14,9 +14,10 @@ import {
   persistInvoiceCreation,
   persistInvoiceModification,
   persistQuotationModification,
+  persistAdvanceInvoiceConfig,
   type BoluOperationExecutionResult,
 } from '../src/lib/ai-assistant/bolu-document-service.js'
-import type { BoluProposal } from '../src/lib/ai-assistant/bolu-operations.js'
+import type { BoluProposal, BoluAdvanceConfigProposal } from '../src/lib/ai-assistant/bolu-operations.js'
 
 const TENANT_SCHEMA_PATTERN = /^entity_[a-z0-9-]+_[a-z0-9-]+$/i
 
@@ -156,8 +157,9 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     // Pre-flight authorization check: verify user permission for target entity
+    const isAdvance = proposal.operationType === 'advance-invoice-config'
     const resource = proposal.documentFamily === 'quotation' ? 'quotation' : 'invoice'
-    const action = proposal.operationType === 'modify-document' ? 'edit' : 'create'
+    const action = (proposal.operationType === 'modify-document' || isAdvance) ? 'edit' : 'create'
 
     try {
       const { data: hasPermission, error: permErr } = await adminClient.rpc('has_entity_permission', {
@@ -205,6 +207,10 @@ export async function POST(request: Request): Promise<Response> {
       } else if (proposal.operationType === 'modify-document') {
         result = await persistInvoiceModification(
           tenantClient, proposal, canWrite, canRead, targetEntityId, auditActor,
+        )
+      } else if (proposal.operationType === 'advance-invoice-config') {
+        result = await persistAdvanceInvoiceConfig(
+          tenantClient, proposal as BoluAdvanceConfigProposal, canWrite, canRead, auditActor,
         )
       } else {
         return jsonResponse(
@@ -271,6 +277,7 @@ export async function POST(request: Request): Promise<Response> {
         success: true,
         documentId: result.documentId,
         documentNumber: result.documentNumber,
+        warnings: result.warnings,
         persistedProposal,
       },
       200,

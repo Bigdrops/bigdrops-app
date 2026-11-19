@@ -35,7 +35,7 @@ The following disposition applies:
 | FR-19 | PROPOSED — first release scope | Live model discovery is not approved for the first release. |
 | FR-20 | PROPOSED — first release scope | Model switching UI is not approved for the first release. |
 | FR-21 | PROPOSED — first release scope | Custom providers are not approved for the first release. |
-| FR-22 | PROPOSED — design review | Four viewport layouts remain a design proposal; production responsive acceptance must be approved. |
+| FR-22 | IMPLEMENTED IN CODE; VISUAL ACCEPTANCE DEFERRED | Four viewport layout architecture codified in production UI across Mobile/Fold Closed (<768px), Fold Open (768px-1023px), Tablet (1024px-1279px), and Desktop (>=1280px); live visual inspection deferred to user. |
 | FR-29 | PROPOSED — 2026-11-14 | One application-owned AI engine with interchangeable provider/model pool. Automatic selection and failover. Not approved for first release. |
 | FR-30 | PROPOSED — 2026-11-14 | Dynamic model inventory: add, deprioritise or retire models as availability, cost, reliability or terms change. Not approved for first release. |
 | FR-31 | PROPOSED — 2026-11-14 | Free-first eligibility ranking; paid inference denied by default. Not approved for first release. |
@@ -72,6 +72,24 @@ The following disposition applies:
 | FR-68 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Enter inserts a newline, Gate 1 is editable, Gate 2 is confirmation-only and a correction invalidates approval. Four-viewport visual behaviour not verified. |
 | FR-69 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Deterministic commercial parsing and standardization for invoices and quotations. Live-provider compliance not verified. |
 | FR-70 | IMPLEMENTED — HOSTED VERIFICATION PENDING — 2026-11-18 | Gate 2 authorization now requests canonical create/edit actions. Verified against the service contract only. |
+| FR-71 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Canonical document numbering and business prefix resolution via `settings.document_prefixes`. Hosted DB pending. |
+| FR-72 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Co-creation attribution, audit provenance, and "Co-created with Bolu" presentation note. Hosted DB pending. |
+| FR-73 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Business context discovery beyond documents: clients, catalog items, supplier contextual grounding. |
+| FR-74 | IMPLEMENTED & RECONCILED — 2026-11-19 | Document field parity across invoice and quotation lifecycles. Stage 3B-3D extensions reconciled. |
+| FR-75 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Preview card fidelity via `ProposalCardView` with authoritative `calculateDocument` totals. |
+| FR-76 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Gate composer availability without thread lock; explicit button confirmation only (no implicit save on message). |
+| FR-77 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-18 | Idempotent Gate 2 persistence with persistent `operation_id` tracking and unique-retry arbitration. |
+| FR-78 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Custom document detail rows and additional info chips (`customFieldsChange`, Stage 3B, DEC-42). |
+| FR-79 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Line-item group sections and subtotal management (`groupsChange`, Stage 3B, DEC-42). |
+| FR-80 | IMPLEMENTED & BOUNDED — 2026-11-19 | Item photo review and clearing (`image_url: null`, Stage 3B, DEC-42; photo upload blocked on storage). |
+| FR-81 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | PDF presentation controls, column configuration, headings, and signatory resolution (`presentationChange`, Stage 3C, DEC-43). |
+| FR-82 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Conversational document lifecycle management: archive, restore, quotation conversion, ledger-protected status (Stage 3D, DEC-44). |
+| FR-83 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Quotation validity (`valid_until`) independent of invoice due date, with null clearing and business labeling (Stage 3D, DEC-44). |
+| FR-84 | IMPLEMENTED & BOUNDED — 2026-11-19 | Reference link attachments with URL security validation (`custom_fields.attachments`, Stage 3D, DEC-44; binary upload blocked). |
+| FR-85 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Bespoke custom payment terms reachability (`custom_payment_terms`, 500 chars, Stage 3D, DEC-44). |
+| FR-86 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Durable operation replay protection via `custom_fields.last_operation_id` and `applied_operation_ids` (Stage 3D, DEC-44). |
+| FR-87 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Grounded operational intelligence diagnostics separating facts from suggestions (`bolu-intelligence.ts`, Stage 3D, DEC-44). |
+| FR-88 | IMPLEMENTED & AUTOMATED-VERIFIED — 2026-11-19 | Unified proposal execution engine and Gate 2 server/client persistence parity (`bolu-proposal-engine.ts`, `api/bolu-save.ts`, Stage 4B, DEC-46). |
 
 ## FR-01 - Conversation Surface On The Invoice Form
 
@@ -315,9 +333,9 @@ The app must accept an OpenAI compatible endpoint that is not in the catalog.
 - A custom provider uses the same client and the same cards as a catalog provider.
 - A removed custom provider loses its key with the row.
 
-## FR-22 - Four Viewport Layouts (Proposed)
+## FR-22 - Four Viewport Layouts (Implemented in Code; Visual Acceptance Deferred to User - 2026-11-19, Stage 4B, DEC-46)
 
-This is a design proposal, not an approved release requirement. Keep its text for review.
+The responsive layout architecture across the four viewport classes is codified in CSS and JSX structure (`detectViewport()`, `assistant-chat.css`, `boluFab.css`). Live visual acceptance across all four viewports in an authenticated browser is explicitly deferred to the user for manual inspection.
 
 The assistant must render in four layouts that share one state model.
 
@@ -1398,13 +1416,24 @@ Bolu must discover the business records a requested operation depends on before 
 
 **Limitation:** supplier and catalogue discovery are contextual grounding only; no supplier or catalogue workflow is added to document creation.
 
-## FR-74 - Document Field Parity (Implemented where the contract allows - 2026-11-18)
+## FR-74 - Document Field Parity (Implemented where the contract allows - 2026-11-18, Reconciled 2026-11-19)
 
 Bolu must construct every invoice and quotation field the lifecycle can actually persist.
 
 **Supported end to end:** client identity, title, PO number, project, issue date, due date (quotation validity), payment terms, separate terms and conditions, notes, work duration, fixed workmanship/transportation/shipping charges, custom named charges with a tax flag, discount value/type/timing, VAT rate, WHT value/type, and item description, sub-description, quantity, unit, unit price, make, part number, condition, catalogue id, installation rate and taxability, VAT override, discount override and grouping.
 
-**Deliberately not claimed:** dynamic custom header fields, signatory selection, reference links, per-item custom columns and PDF output settings are stored in document-specific `custom_fields` shapes that Bolu does not yet construct. They are reported as gaps rather than fabricated.
+**Reconciled in Stage 4A (Stages 3B, 3C, 3D Deliveries):**
+- Dynamic custom header fields (`custom_fields.header`) and additional info chips (`custom_fields.additionalFields`) are delivered via `customFieldsChange` (FR-78, DEC-42).
+- Line-item grouping and section subtotals are delivered via `groupsChange` (FR-79, DEC-42).
+- PDF presentation settings (`pdfOutput`), headings, charge labels, and verified signatory selection are delivered via `presentationChange` (FR-81, DEC-43).
+- Conversational document lifecycle operations (archive, restore, quotation conversion) are delivered via `lifecycleChange` (FR-82, DEC-44).
+- Quotation validity independence (`valid_until`) is delivered natively (FR-83, DEC-44).
+- Reference link attachments are delivered via `attachmentsChange` under `custom_fields.attachments` (FR-84, DEC-44).
+- Bespoke custom payment terms are delivered via `custom_payment_terms` (FR-85, DEC-44).
+
+**Remaining Gaps / Deliberately not claimed:**
+- Per-item custom column authoring remains outside the current operation contract.
+- Direct binary document file attachments and item photo uploads through Bolu remain blocked on authorized tenant-scoped cloud storage infrastructure.
 
 **Limitation:** item part number and condition are persisted in the item's `custom_data` because the item tables have no such columns; this matches the form's extension convention.
 
@@ -1442,4 +1471,181 @@ Three paths set `clerkState('listening')` while a proposal was open: proposal cr
 - The in-memory executed-operation set remains a fast guard within one instance; the persisted key is the durable guard across retries, reloads and serverless instances.
 - The unique constraint plus `withUniqueRetry` still arbitrates concurrent allocations, and an ambiguous failure is reported rather than retried automatically.
 - The server route scopes its proposal-status update to the resolved tenant and writes no second confirmation message; the thread writes exactly one.
+
+## FR-78 - Custom Document Detail Rows and Additional Information Chips (Implemented - 2026-11-19, Stage 3B, DEC-42)
+
+Bolu must allow conversational creation, modification, and removal of custom key-value details in documents without mutating core table columns.
+
+**Approved behaviour**
+- Supported operations: `add`, `update`, `remove` for two distinct families: `header` (rendered as document detail rows) and `additionalFields` (rendered as additional info chips).
+- Each entry requires `{ label, value }`. Labels must be unique within their family (case-insensitive).
+- Updates and removals match by entry `id` when available, falling back to label matching.
+- Sibling custom field keys and foreign metadata are preserved untouched (sibling merge invariant).
+- Gate 1 proposals snapshot the current field entries; Gate 2 re-verifies the per-family fingerprint before write, failing closed if changed concurrently.
+
+**Acceptance criteria**
+- Adding a detail row (`header`) or chip (`additionalFields`) persists in `custom_fields`.
+- Modifying a row preserves other keys in `custom_fields`.
+- Conflicting or duplicate labels within a family are rejected at Gate 1 validation.
+
+## FR-79 - Line-Item Group Sections and Subtotals (Implemented - 2026-11-19, Stage 3B, DEC-42)
+
+Bolu must support line-item grouping into named sections with optional subtotal calculation.
+
+**Approved behaviour**
+- Group headers are stored as line-item rows with `row_type: 'group_header'`.
+- Supported operations: `create-group`, `add-items`, `rename-group`, `set-subtotal`, `remove-group`, and `reorder-groups`.
+- Group removals require an explicit disposition: `ungroup-items` (retaining members as unassigned line items) or `delete-items` (deleting members with the group).
+- Groups cannot nest. Line-item membership is contiguous by construction.
+- Subtotals are calculated deterministically by the application engine; model math is ignored.
+- Sibling item columns and metadata are preserved untouched.
+
+**Acceptance criteria**
+- Creating a group assigns matching items to the group.
+- Removing a group with `ungroup-items` preserves line items; removing with `delete-items` deletes them.
+- Silent or ambiguous group removals are rejected.
+
+## FR-80 - Item Photo Review and Clearing (Implemented Bounded - 2026-11-19, Stage 3B, DEC-42)
+
+Bolu must support conversational inspection and clearing of item image attachments while respecting storage security constraints.
+
+**Approved behaviour**
+- An existing item photo reference can be removed by submitting `image_url: null` within an item modification.
+- Other item columns, descriptions, quantities, and prices are preserved untouched.
+- Direct conversational photo upload or replacement is explicitly BLOCKED and directs the user to the manual document form.
+
+**Acceptance criteria**
+- Clearing an item photo sets `image_url = null` on the target row and retains the line item.
+- Requests to upload or replace photos return a clear message stating that photo upload is unavailable via Bolu.
+
+**Limitation:** Direct image upload through Bolu is blocked pending an authorized, tenant-scoped storage bucket with authenticated pre-upload validation.
+
+## FR-81 - PDF Presentation Controls and Signatory Resolution (Implemented - 2026-11-19, Stage 3C, DEC-43)
+
+Bolu must allow conversational configuration of document PDF presentation settings, column visibility, section titles, and authorized signatories.
+
+**Approved behaviour**
+- PDF presentation options supported: `showBankDetails`, `bankAccountId`, `showFooter`, `showTagline`, `showBalanceDue`, `showAmountInWords`, `compact`, and `landscapeLayout`.
+- Heading overrides supported: `notesTitle`, `termsTitle`, and charge label overrides (`workmanship`, `transportation`, `shipping`). Setting empty/null restores defaults.
+- Column configuration: column visibility and labels; `hide_full` on tax/discount columns excludes values from calculations matching the standard form.
+- Signatory selection: `signatoryId` is resolved against the tenant's authorized signatories list. Ambiguous or unknown signatories fail closed and prompt for clarification. Explicit removal via `null` is supported.
+- Bank accounts: `bankAccountId` is validated against tenant bank accounts.
+
+**Acceptance criteria**
+- PDF toggles and custom headings persist into `custom_fields`.
+- Unresolved or invalid signatory names are never persisted; Bolu asks for clarification.
+- Presentation changes merge into `custom_fields` without overwriting unrelated metadata.
+
+**Limitation:** PDF rendering output was verified through UI and service tests; headful raster verification was not performed in-repo.
+
+## FR-82 - Conversational Document Lifecycle Management (Implemented - 2026-11-19, Stage 3D, DEC-44)
+
+Bolu must govern document lifecycle transitions according to persisted database constraints and financial ledger boundaries.
+
+**Approved behaviour**
+- Supported operations: `archive`, `restore`, `convert_to_invoice`, and `update_status`.
+- **Quotations:** Valid persisted statuses are `open`, `converted`, and `archived` (enforced by `quotations_status_check`). Legacy statuses (`draft`, `sent`, `accepted`, `rejected`) are strictly rejected. Accepting a quotation triggers conversion to an invoice via `convert_to_invoice`.
+- **Invoices:** Invoices derive payment status (`unpaid`, `partially_paid`, `paid`) strictly from the payments ledger. Direct conversational manipulation of invoice payment status via `update_status` is blocked and directs the user to the payment sheet.
+- **Archive & Restore:** Archiving sets `archived_at` timestamp and `status: 'archived'`. Restoring clears `archived_at` and restores active status (`open` for quotations, `unpaid` for invoices).
+- **Quotation Conversion:** Invokes canonical `convertQuotationToInvoice`, creating a draft invoice linked via `source_quotation_id`, transitioning the quotation to `converted`, and enforcing idempotent retry protections.
+
+**Acceptance criteria**
+- Quotation transitions permit `open` -> `archived`, `archived` -> `open`, and `open` -> `converted`.
+- Direct requests to set invoice status to `paid` or `unpaid` are rejected with business guidance.
+- Archived documents cannot be converted or modified until restored.
+
+## FR-83 - Quotation Validity Independence (Implemented - 2026-11-19, Stage 3D, DEC-44)
+
+Bolu must maintain quotation validity periods independently of invoice payment due dates.
+
+**Approved behaviour**
+- Quotations record offer expiration in `valid_until` (YYYY-MM-DD); invoices record settlement deadlines in `due_date`.
+- Attempting to set `valid_until` on invoices or `due_date` on quotations is rejected with appropriate domain guidance.
+- Explicit clearing of quotation validity via `null` is supported.
+- Proposal cards and copied text label the field as "Quotation validity".
+- Gate 1 derives baselines from persisted `valid_until`; Gate 2 stale checks reject concurrent modifications.
+
+**Acceptance criteria**
+- Setting or clearing `valid_until` on a quotation updates the column.
+- Setting `valid_until` on an invoice returns a validation error.
+- Proposal card displays "Quotation validity".
+
+## FR-84 - Reference Link Attachments (Implemented Bounded - 2026-11-19, Stage 3D, DEC-44)
+
+Bolu must allow conversational attachment and removal of external reference links with strict security validation.
+
+**Approved behaviour**
+- Reference links are stored in `custom_fields.attachments` as `{ label: string, url: string }[]`.
+- URL validation strictly enforces `http:` and `https:` schemes. Dangerous schemes (`javascript:`, `data:`, `file:`, `blob:`), local filesystem paths, and embedded credentials (`user:pass@host`) are rejected.
+- Private network targets (localhost, RFC1918 subnets `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, link-local, loopback) are rejected.
+- Labels are validated as non-empty strings up to 120 characters.
+- Gate 1 computes an order-significant fingerprint; Gate 2 re-verifies before writing to prevent race conditions.
+- Direct binary document file upload through Bolu is explicitly BLOCKED.
+
+**Acceptance criteria**
+- Adding a valid external link appends to `custom_fields.attachments`.
+- URLs pointing to private IPs or dangerous schemes are rejected at Gate 1 validation.
+- Binary upload requests return a message stating file upload is unavailable.
+
+**Limitation:** Binary file uploads remain blocked pending an authorized, tenant-scoped storage bucket.
+
+## FR-85 - Bespoke Custom Payment Terms Reachability (Implemented - 2026-11-19, Stage 3D, DEC-44)
+
+Bolu must allow conversational specification of custom payment terms while preserving persistence asymmetry between document families.
+
+**Approved behaviour**
+- Custom terms are validated as strings up to 500 characters, or `null` to clear.
+- Invoices store predefined terms in `invoices.payment_terms` and bespoke strings in `custom_fields.custom_payment_terms`.
+- Quotations store both in `custom_fields` (`custom_fields.payment_terms` and `custom_fields.custom_payment_terms`).
+- Proposal baseline and Gate 2 stale checks prevent silent overwriting of unrelated custom fields.
+
+**Acceptance criteria**
+- Custom terms longer than 500 characters are rejected at Gate 1.
+- Bespoke terms are written to the appropriate family column/metadata without corrupting predefined terms.
+
+## FR-86 - Durable Operation Replay Protection (Implemented - 2026-11-19, Stage 3D, DEC-44)
+
+Bolu must prevent duplicate operation executions across process restarts, network retries, and distributed serverless invocations.
+
+**Approved behaviour**
+- Fast in-memory guard: `executedOperationIds` (`Set<string>`) blocks immediate duplicate executions within the same runtime process.
+- Durable persistence guard: every modification records `custom_fields.last_operation_id = proposal.opId` and appends to `custom_fields.applied_operation_ids`.
+- Before executing a modification, the service reads the persisted custom fields. If `last_operation_id === proposal.opId` or `applied_operation_ids.includes(proposal.opId)`, execution fails closed with a clear error.
+- Creation operations enforce idempotency via `operation_id` tracking and PostgreSQL unique constraints with `withUniqueRetry`.
+
+**Acceptance criteria**
+- Replaying an already-applied proposal after in-memory cache clearing is rejected by the persisted operation check.
+- Duplicate executions cannot corrupt or append duplicate attachments or re-trigger conversions.
+
+**Limitation:** Application-level read-modify-write check; atomic multi-worker concurrency at the row level requires database-level unique constraints or row locking.
+
+## FR-87 - Grounded Operational Intelligence Diagnostics (Implemented - 2026-11-19, Stage 3D, DEC-44)
+
+Bolu must provide contextual business diagnostics and guidance grounded in actual document state without unsolicited automation.
+
+**Approved behaviour**
+- Implemented in `src/lib/ai-assistant/bolu-intelligence.ts`.
+- Evaluates: customer presence, commercial line item completeness, quotation validity proximity (expired, expiring today, expiring in <= 7 days), invoice overdue status, payment terms, and conversion readiness.
+- Factual observations are strictly separated from optional suggestions.
+- Strict read-only guarantee: operational intelligence produces diagnostics in conversation prose; it never mutates documents automatically or applies unapproved proposals.
+
+**Acceptance criteria**
+- Expired quotations produce factual expiry observations and suggestions to update terms.
+- Invoices past due date produce overdue observations.
+- Diagnostics never trigger automatic document writes or silent updates.
+
+## FR-88 - Authoritative Shared Proposal Execution Engine & Persistence Parity (Implemented - 2026-11-19, Stage 4B, DEC-46)
+
+Bolu must interpret and validate proposals through a single authoritative engine shared identically between headless automated test suites and the active streaming React UI, with Gate 2 persistence parity across serverless and client fallback execution paths.
+
+**Approved behaviour**
+- Unified in `src/lib/ai-assistant/bolu-proposal-engine.ts` (`interpretBoluProposal`, `resolveProposalClient`).
+- Both `bolu-runtime.ts` and `bolu-generation.ts` delegate proposal validation, snapshot lookup, client resolution, and proposal construction to `interpretBoluProposal`.
+- Guarantees that production UI and automated test suites apply identical business rules, Gate 1 snapshot guards, commercial item standardization, commercial suggestions, client clarification questions, and fail-closed security checks.
+- Server persistence endpoint `api/bolu-save.ts` implements `advance-invoice-config` using `persistAdvanceInvoiceConfig`, matching tenant client permissions, user-scoped transactions, audit tracking, and warning propagation to the client confirmation message.
+
+**Acceptance criteria**
+- Both in-memory runtime tests and active React streaming turns execute identical proposal validation and snapshot logic.
+- Both `api/bolu-save.ts` and client tenant persistence surface execution warnings to confirmation messages without loss.
+- Transient network errors fail closed and prevent duplicate writes.
 

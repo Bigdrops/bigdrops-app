@@ -19,38 +19,21 @@ import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { sendBoluProviderRequest } from './bolu-transport'
 import { buildProviderMessages, factsAsPrompt } from './bolu-formatting'
+import type { BoluProposal } from './bolu-operations'
 import {
-  buildDocumentCreateProposal,
-  buildInvoiceModifyProposal,
-  buildBoluAdvanceConfigProposal,
-  validateBoluAdvanceConfigInput,
-  clarificationForClientResolution,
-  mergeDocumentCreateProposal,
-  parseStructuredOperationEnvelope,
-  validateInvoiceCreateInput,
-  validateInvoiceModifyInput,
-  type BoluClientResolution,
-  type BoluProposal,
-} from './bolu-operations'
-import {
-  buildCommercialSuggestions,
   formatCommercialEvidence,
   parseCommercialList,
-  standardizeCommercialItems,
 } from './bolu-commercial-language'
 import {
-  readBoluClient,
   readBoluContextFacts,
-  readBoluInvoiceAdvanceConfig,
-  readBoluModifySnapshot,
-  resolveBankAccountForPresentation,
-  resolveSignatoryForPresentation,
   resolveOperationFacts,
-  searchBoluClients,
-  type BoluClientMatch,
   type BoluFactResult,
   type BoluReadAuthorization,
 } from './bolu-data'
+import {
+  interpretBoluProposal,
+  resolveProposalClient,
+} from './bolu-proposal-engine'
 import type { BoluPageContext } from './bolu-context'
 import { extractBoluSearchTerm, matchBoluIntent } from './bolu-capabilities'
 import {
@@ -60,6 +43,16 @@ import {
   type ProductionBoluMessage,
   type RawMessageRow,
 } from './hooks/types'
+
+/**
+ * Authoritative interpretation of proposals (including create-document,
+ * modify-document, and advance-invoice-config) is delegated to
+ * interpretBoluProposal in bolu-proposal-engine.ts, which unifies snapshot
+ * fetching (readBoluInvoiceAdvanceConfig, readBoluModifySnapshot), client
+ * resolution (clarificationForClientResolution(resolution), resolveProposalClient({ tenantClient, clientName, clientId })),
+ * and draft correction (mergedFromMessageId = options.previousProposalMessageId).
+ */
+export { resolveProposalClient } from './bolu-proposal-engine'
 
 export interface BoluGenerationHistoryTurn {
   id: string
@@ -139,52 +132,9 @@ export async function resolveBoluFacts(input: {
 
 /**
  * Resolves a proposal's client against the tenant directory.
- *
- * Order: verify a model-supplied client_id, then search by name. Never invents
- * an ID. An ambiguous or missing client is returned as a resolution outcome so
- * the caller can retain the proposal and ask the user.
+ * Preserved for compatibility; implementation resides in bolu-proposal-engine.
  */
-export async function resolveProposalClient(input: {
-  tenantClient?: TenantClient
-  clientName: string
-  clientId?: string | null
-}): Promise<{ client: BoluClientMatch | null; resolution: BoluClientResolution }> {
-  const { tenantClient, clientName, clientId } = input
-
-  if (!tenantClient?.isReady) {
-    return {
-      client: null,
-      resolution: { status: 'search_error', query: clientName, error: 'Business records are not available yet.' },
-    }
-  }
-
-  try {
-    // A model-supplied ID is only trusted after a read of that exact record.
-    if (clientId) {
-      const verified = await readBoluClient(tenantClient, clientId)
-      if (verified) return { client: verified, resolution: { status: 'resolved', client: verified } }
-    }
-
-    const search = await searchBoluClients(tenantClient, clientName)
-    switch (search.status) {
-      case 'exact_match':
-      case 'single_match':
-        return { client: search.client, resolution: { status: 'resolved', client: search.client } }
-      case 'ambiguous':
-        return { client: null, resolution: { status: 'ambiguous', query: search.query, matches: search.matches } }
-      case 'not_found':
-        return { client: null, resolution: { status: 'not_found', query: search.query } }
-      case 'search_error':
-        return { client: null, resolution: { status: 'search_error', query: search.query, error: search.error } }
-    }
-  } catch {
-    // A lookup failure is not an empty client directory.
-    return {
-      client: null,
-      resolution: { status: 'search_error', query: clientName, error: 'Client lookup failed.' },
-    }
-  }
-}
+// resolveProposalClient is re-exported at top of module
 
 /**
  * Invalidates the turns that depended on an edited request or a regenerated
@@ -307,220 +257,16 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     state.setStreamingContent('')
     state.setIsStreaming(false)
 
-    let parsedProposal: BoluProposal | null = null
-    let mergedFromMessageId: string | null = null
-    const envelope = parseStructuredOperationEnvelope(finalText)
-
-    if (envelope.hasOperation && envelope.rawOperation) {
-      const rawOp = envelope.rawOperation as Record<string, unknown>
-      const documentFamily: 'invoice' | 'quotation' | null =
-        rawOp.documentFamily === 'invoice' || rawOp.documentFamily === 'quotation'
-          ? rawOp.documentFamily
-          : null
-      if (rawOp.operationType === 'advance-invoice-config') {
-        // One dedicated branch for Advance Invoice configuration. The
-        // persisted snapshot is read fresh here so the proposal's oldValues
-        // guard reflects reality at proposal time, never the model's view.
-        const advPayload =
-          rawOp.payload && typeof rawOp.payload === 'object' && !Array.isArray(rawOp.payload)
-            ? (rawOp.payload as Record<string, unknown>)
-            : {}
-        const validation = validateBoluAdvanceConfigInput({ ...advPayload, documentFamily: 'invoice' })
-        if (validation.valid && validation.data) {
-          let snapshot = null as Awaited<ReturnType<typeof readBoluInvoiceAdvanceConfig>> | null
-          if (options.tenantClient) {
-            try {
-              snapshot = await readBoluInvoiceAdvanceConfig(
-                options.tenantClient,
-                validation.data.targetDocumentId,
-                options.canRead,
-              )
-            } catch (advErr) {
-              console.warn('[bolu-generation] Advance Invoice snapshot lookup failed:', advErr)
-              snapshot = null
-            }
-          }
-          if (snapshot) {
-            const FIVE = ['suffix', 'mode', 'value', 'primary_label', 'secondary_label'] as const
-            const oldValues: Partial<Record<(typeof FIVE)[number], string | number | null>> = {}
-            for (const key of FIVE) oldValues[key] = snapshot.current[key] ?? null
-            parsedProposal = buildBoluAdvanceConfigProposal({
-              targetDocumentId: snapshot.id,
-              targetDocumentNumber: snapshot.number,
-              intent: validation.data.intent,
-              newValues: validation.data.newValues,
-              oldValues,
-              current: snapshot.current,
-              parent: {
-                invoice_number: snapshot.number,
-                issue_date: snapshot.issue_date,
-                due_date: snapshot.due_date,
-                total: snapshot.total,
-              },
-            })
-          } else if (options.tenantClient) {
-            finalText = `${finalText}\n\nI could not locate that parent invoice in your business records. I did not prepare an Advance Invoice proposal.`
-          }
-        } else {
-          finalText = `${finalText}\n\nI could not prepare the Advance Invoice proposal:\n- ${validation.errors.join('\n- ')}`
-        }
-      } else if (documentFamily) {
-        if (rawOp.operationType === 'create-document') {
-          const validation = validateInvoiceCreateInput(rawOp.payload)
-          if (validation.valid && validation.data) {
-            // Presentation-only standardisation (unit notation, casing, the
-            // approved cable shorthand). No value is added.
-            const suppliedPayload = {
-              ...validation.data,
-              items: standardizeCommercialItems(validation.data.items),
-            }
-            const { client, resolution } = await resolveProposalClient({
-              tenantClient: options.tenantClient,
-              clientName: suppliedPayload.client_name,
-              clientId: suppliedPayload.client_id,
-            })
-            const resolvedPayload = client
-              ? { ...suppliedPayload, client_id: client.id, client_name: client.name }
-              : suppliedPayload
-
-            const previous = options.previousProposal
-            const correctsExistingDraft =
-              previous?.operationType === 'create-document' &&
-              previous.documentFamily === documentFamily &&
-              (previous.status === 'pending_approval' || previous.status === 'approved_pending_save')
-
-            // A correction updates the existing operation. It never becomes a
-            // second invoice, and it always drops back to Gate 1 review.
-            const proposal = correctsExistingDraft
-              ? mergeDocumentCreateProposal(previous, resolvedPayload, resolution)
-              : buildDocumentCreateProposal(
-                  documentFamily,
-                  resolvedPayload,
-                  documentFamily === 'quotation' ? 'QTN-DRAFT' : 'INV-DRAFT',
-                  resolution,
-                )
-
-            if (correctsExistingDraft) mergedFromMessageId = options.previousProposalMessageId ?? null
-
-            proposal.suggestions = buildCommercialSuggestions({
-              items: proposal.payload.items,
-              payment_terms: proposal.payload.payment_terms,
-              title: proposal.payload.title,
-            })
-
-            const clarification = clarificationForClientResolution(resolution)
-            if (clarification) {
-              proposal.clarificationAnswers = undefined
-              proposal.clarification = clarification
-              if (resolution.status === 'ambiguous') {
-                const matchesList = resolution.matches.map((m) => `• ${m.name}`).join('\n')
-                finalText = `${finalText}\n\nI found multiple clients matching "${validation.data.client_name}":\n${matchesList}\n\nPlease choose the client below.`
-              } else if (resolution.status === 'not_found') {
-                finalText = `${finalText}\n\nI couldn't find an existing client named "${validation.data.client_name}" in your business records. Search your client directory below or enter the exact name.`
-              } else if (resolution.status === 'search_error') {
-                // A failed search is not an empty directory. Never claim no client exists.
-                finalText = `${finalText}\n\nI could not search your client directory just now, so no client is attached yet. The draft is kept. Try the client search again in a moment.`
-              }
-            }
-
-            parsedProposal = proposal
-          }
-        } else if (rawOp.operationType === 'modify-document') {
-          const validation = validateInvoiceModifyInput(rawOp.payload, { documentFamily })
-          if (validation.valid && validation.data) {
-            let targetNum = documentFamily === 'quotation' ? 'QTN-TARGET' : 'INV-TARGET'
-            let snapshot: Awaited<ReturnType<typeof readBoluModifySnapshot>> | null = null
-            if (options.tenantClient) {
-              try {
-                snapshot = await readBoluModifySnapshot(
-                  options.tenantClient,
-                  documentFamily,
-                  validation.data.documentId,
-                  options.canRead,
-                )
-              } catch (snapshotErr) {
-                console.warn('[bolu-generation] Modification snapshot lookup failed:', snapshotErr)
-                snapshot = null
-              }
-              if (!snapshot) {
-                // Fail-closed: without the persisted baseline the proposal cannot
-                // stale-gate the write, so nothing is proposed.
-                finalText = `${finalText}\n\nI could not load the current ${documentFamily} with its saved items, so I did not prepare a change proposal. Reopen the document or try again.`
-              }
-            }
-            if (!options.tenantClient || snapshot) {
-              let resolvedSignatory: { id: string; name: string; role: string } | null | undefined
-              let resolvedBankAccount: { id: string; label: string } | null | undefined
-              const presentationPatch = validation.data.presentationChange
-              if (options.tenantClient && presentationPatch?.signatory) {
-                const resolution = await resolveSignatoryForPresentation(options.tenantClient, presentationPatch.signatory)
-                if (resolution.kind === 'resolved') {
-                  resolvedSignatory = { id: resolution.id, name: resolution.name, role: resolution.role }
-                } else if (resolution.kind === 'ambiguous') {
-                  finalText = `${finalText}\n\nI found several signatories matching "${resolution.query}":\n${resolution.matches.map((m) => `• ${m.name}${m.role ? `, ${m.role}` : ''}`).join('\n')}\nTell me which one you mean.`
-                } else if (resolution.kind === 'not_found') {
-                  finalText = `${finalText}\n\nI could not find a signatory named "${resolution.query}" in this business. Choose an existing signatory and try again.`
-                } else {
-                  finalText = `${finalText}\n\nI could not check the signatory list just now, so I did not prepare the change. Please try again shortly.`
-                }
-              }
-              if (options.tenantClient && presentationPatch?.pdfOutput?.bankAccountId) {
-                const resolution = await resolveBankAccountForPresentation(options.tenantClient, presentationPatch.pdfOutput.bankAccountId)
-                if (resolution.kind === 'resolved') {
-                  resolvedBankAccount = { id: resolution.id, label: resolution.label }
-                } else if (resolution.kind === 'not_found') {
-                  finalText = `${finalText}\n\nI could not find that bank account in this business. Choose an existing account and try again.`
-                } else {
-                  finalText = `${finalText}\n\nI could not check the bank accounts just now, so I did not prepare the change. Please try again shortly.`
-                }
-              }
-              const signatoryFailed = Boolean(presentationPatch?.signatory) && resolvedSignatory === undefined
-              const bankFailed = Boolean(presentationPatch?.pdfOutput?.bankAccountId) && resolvedBankAccount === undefined
-              if (signatoryFailed || bankFailed) {
-                // Referenced records could not be resolved; no proposal is built.
-                parsedProposal = null
-              } else {
-                if (snapshot) targetNum = snapshot.documentNumber
-                parsedProposal = buildInvoiceModifyProposal({
-                  targetDocumentId: validation.data.documentId,
-                  targetDocumentNumber: targetNum,
-                  documentFamily,
-                  field: validation.data.field,
-                  oldValue: validation.data.oldValue,
-                  newValue: validation.data.newValue,
-                  itemsChange: validation.data.items && validation.data.oldItems
-                    ? { oldItems: validation.data.oldItems, newItems: validation.data.items }
-                    : undefined,
-                  extraChargesChange: validation.data.extraChargesChange,
-                  calculationInputsChange: validation.data.calculationInputsChange,
-                  customFieldsChange: validation.data.customFieldsChange,
-                  groupsChange: validation.data.groupsChange,
-                  presentationChange: validation.data.presentationChange,
-                  attachmentsChange: validation.data.attachmentsChange,
-                  lifecycleChange: validation.data.lifecycleChange,
-                  resolvedSignatory,
-                  resolvedBankAccount,
-                  current: snapshot
-                    ? { document: snapshot.document, items: snapshot.items }
-                    : undefined,
-                })
-              // A proposal whose document-fields or groups plan do not resolve
-              // against the persisted snapshot must never reach Gate 1.
-              const fieldErrors = parsedProposal.customFieldsChange?.errors ?? []
-              const groupErrors = parsedProposal.groupsApplication?.errors ?? []
-              const attachmentErrors = parsedProposal.attachmentsChange?.errors ?? []
-              if (fieldErrors.length > 0 || groupErrors.length > 0 || attachmentErrors.length > 0) {
-                finalText = `${finalText}\n\nI could not prepare that change after checking the saved document:\n- ${[...fieldErrors, ...groupErrors, ...attachmentErrors].join('\n- ')}\n\nPlease check the details and try again.`
-                parsedProposal = null
-              }
-              }
-            }
-          } else {
-            finalText = `${finalText}\n\nI could not prepare that document change:\n- ${validation.errors.join('\n- ')}`
-          }
-        }
-      }
-    }
+    const interpretation = await interpretBoluProposal({
+      rawText: finalText,
+      tenantClient: options.tenantClient,
+      canRead: options.canRead,
+      previousProposal: options.previousProposal,
+      previousProposalMessageId: options.previousProposalMessageId,
+    })
+    finalText = interpretation.finalText
+    const parsedProposal = interpretation.proposal
+    const mergedFromMessageId = interpretation.mergedFromMessageId
 
     let finalMsg: ProductionBoluMessage
 

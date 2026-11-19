@@ -571,6 +571,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
                 success: true,
                 documentId: data.documentId,
                 documentNumber: data.documentNumber,
+                warnings: data.warnings,
               }
             } else if (resp.status === 404) {
               // Server endpoint unmounted: primary operation unequivocally did not run.

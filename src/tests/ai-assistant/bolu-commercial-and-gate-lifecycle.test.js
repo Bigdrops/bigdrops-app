@@ -42,21 +42,38 @@ const REFERENCE_INPUT = [
 ].join('\n')
 
 /** A tenant client that satisfies the persistence service without a database. */
-function createPersistenceMock() {
+function createPersistenceMock(settingsPrefixes = undefined) {
+  const createQueryChain = (resultData = []) => {
+    const chain = {
+      select: () => chain,
+      limit: () => chain,
+      eq: () => chain,
+      is: () => chain,
+      order: () => chain,
+      single: async () => ({
+        data: Array.isArray(resultData) ? (resultData[0] ?? null) : resultData,
+        error: null,
+      }),
+      maybeSingle: async () => ({
+        data: Array.isArray(resultData) ? (resultData[0] ?? null) : resultData,
+        error: null,
+      }),
+      then(settle) {
+        return Promise.resolve({ data: resultData, error: null }).then(settle)
+      },
+    }
+    return chain
+  }
+
   return {
     schemaName: 'tenant_test',
     version: 'phase-1',
     isReady: true,
-    from() {
-      return {
-        select() {
-          return {
-            then(settle) {
-              settle({ data: [], error: null })
-            },
-          }
-        },
+    from(table) {
+      if (table === 'settings') {
+        return createQueryChain(settingsPrefixes ? { document_prefixes: settingsPrefixes } : null)
       }
+      return createQueryChain([])
     },
     rpc: async (_fn, params) => ({
       data: [

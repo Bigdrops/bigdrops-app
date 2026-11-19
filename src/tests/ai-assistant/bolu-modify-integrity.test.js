@@ -35,7 +35,15 @@ const semanticJsonEqual = (a, b) => {
     }
     return v
   }
-  assert.deepEqual(norm(a), norm(b))
+  const stripOpMetadata = (obj) => {
+    const n = norm(obj)
+    if (!n || typeof n !== 'object' || Array.isArray(n)) return n
+    const copy = { ...n }
+    delete copy.last_operation_id
+    delete copy.applied_operation_ids
+    return copy
+  }
+  assert.deepEqual(stripOpMetadata(a), stripOpMetadata(b))
 }
 const num = (v, fallback) => {
   if (v === undefined || v === null) return fallback

@@ -1844,3 +1844,96 @@ Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verifi
 - DECISION — live verification on the disposable project requires separate authorization; production remains untouched absent separate authorization.
 - DECISION — each phase is complete only when Gate 1 preview, Gate 2 confirmation, preservation invariants, stale-guard behavior and executor warnings/result contracts are verified in the report of that phase (`docs/reports/bolu-document-capability-parity/`).
 
+## 38. Bolu Document Capability Parity — Stage 4A Product Reconciliation & Architecture Discovery (2026-11-19)
+
+**Status: Completed** (see `docs/reports/bolu-product-integration/stage-4a-product-reconciliation-and-architecture-discovery.md` and DEC-45). Zero-code documentation and read-only architecture discovery task.
+
+Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verified implementation or test evidence · **REFERENCE** = supporting material · **PROPOSAL** = future work, not approved scope.
+
+### 38.1 Overview and Deliverables
+
+Stage 4A establishes full alignment between the authoritative Bolu Product Requirements Document (`Readme.md`, `functional-req.md`), the engineering roadmap (`Waterfall-roadmap.md`), and the actual implemented codebase. It executes three mandatory deliverables:
+1. Reconciling and updating the authoritative PRD against verified repository implementation.
+2. Reconciling and updating the waterfall roadmap with verified historical stage progress and remaining phase definitions.
+3. Conducting an end-to-end read-only architectural trace of the Bolu execution pipeline, identifying integration gaps, definitively resolving the Stage 3D lifecycle contradiction, and specifying the next implementation phase.
+
+### 38.2 Reconciled Requirements Baseline (FR-71 through FR-87)
+
+- OBSERVATION — Full functional requirement alignment completed for:
+  - **FR-71 (Document Numbering):** `fetchDocumentPrefixesSafe` with tenant sequence allocation and `withUniqueRetry`.
+  - **FR-72 (Co-creation Attribution):** `custom_fields.created_via = 'bolu_assistant'`, audit trail logging, and UI co-creation note.
+  - **FR-73 (Context Discovery):** Tenant-scoped read intents plus write-intent client, invoice, and catalog discovery.
+  - **FR-74 (Document Field Parity):** Core commercial fields, charges, tax options, and Stage 3B–3D extensions.
+  - **FR-75 (Preview Card Fidelity):** `ProposalCardView` with authoritative `calculateDocument` math.
+  - **FR-76 (Gate Composer Availability):** Conversational composer remains unlocked during proposal review; explicit button confirmation only.
+  - **FR-77 (Idempotent Gate 2 Persistence):** Operation ID tracking and deduplication.
+  - **FR-78 (Custom Detail Rows & Chips):** `customFieldsChange` (`header` rows and `additionalFields` chips) via Stage 3B (DEC-42).
+  - **FR-79 (Line-Item Group Sections):** `groupsChange` (`row_type: 'group_header'`) and subtotals via Stage 3B (DEC-42).
+  - **FR-80 (Item Photo Clearing):** `image_url: null` clearing; photo upload honestly reported as BLOCKED (DEC-42).
+  - **FR-81 (PDF Presentation Controls):** Toggles, custom headings, charge labels, and signatory resolution via Stage 3C (DEC-43).
+  - **FR-82 (Conversational Lifecycle):** Archive, restore, quotation conversion, and ledger-derived invoice status via Stage 3D (DEC-44).
+  - **FR-83 (Quotation Validity):** `valid_until` independence, null clearing, and "Quotation validity" business labeling via Stage 3D (DEC-44).
+  - **FR-84 (Reference Link Attachments):** `custom_fields.attachments` URL validation and security; binary uploads BLOCKED via Stage 3D (DEC-44).
+  - **FR-85 (Bespoke Payment Terms):** `custom_payment_terms` 500-character bounding and persistence asymmetry via Stage 3D (DEC-44).
+  - **FR-86 (Durable Replay Protection):** Dual in-memory and persistent `last_operation_id` replay protection via Stage 3D (DEC-44).
+  - **FR-87 (Operational Intelligence):** Grounded diagnostics distinguishing observations from suggestions via Stage 3D (DEC-44).
+
+### 38.3 Resolution of the Stage 3D Lifecycle Status Contradiction
+
+- OBSERVATION — Independent inspection of schema migrations (`supabase/migrations/20260820000000_fix_revert_quotation_status_mapping.sql` and `20260809060000_invoice_financials_tenant_view.sql`), committed source code (`src/lib/ai-assistant/bolu-intelligence.ts` and `bolu-document-service.ts`), and unit test suites (`src/tests/ai-assistant/bolu-stage-3d-capabilities.test.js`) conclusively resolves the contradiction:
+  - **Quotation Statuses:** Live database check constraint `quotations_status_check` permits **only** `'open'`, `'converted'`, and `'archived'`. Legacy statuses (`'draft'`, `'sent'`, `'accepted'`, `'rejected'`, `'void'`, `'cancelled'`) were abolished in earlier database migrations and are rejected at Gate 1 validation by `validateLifecycleTransition`. On restore, an archived quotation returns to `'open'`.
+  - **Invoice Statuses:** Permitted persisted statuses under `invoices_status_check` are `'unpaid'`, `'partially_paid'`, `'paid'`, and `'archived'`. Invoice payment status is derived strictly from recorded payments in the payments ledger (`payments` table / `invoice_financials_v`). Direct conversational manipulation of invoice payment status is rejected and directs the user to the payment sheet. On restore, an archived invoice returns to `'unpaid'`.
+  - **Root Cause of Contradiction:** DEC-44 in `decision-log.md` and the implementation report were accurate; the contradiction arose from a drafting error in the subsequent pre-commit verification prompt and summary notes which inadvertently used the phrase `draft -> sent -> accepted|rejected`. That drafting error is formally superseded by repository evidence.
+
+### 38.4 Architecture Discovery: Request Lifecycle Trace & Integration Gaps
+
+- OBSERVATION — Complete 14-stage end-to-end request lifecycle traced from UI entry (`BoluFloatingActionButton` / `BoluAssistantProvider`), workspace mount (`BoluChatWorkspace`), multi-conversation management (`useBoluConversations`), streaming turn orchestration (`useBoluThread`), context resolution (`resolveBoluFacts`), server routing (`api/bolu-chat.ts`), model execution (`streamAdapterChat`), Gate 1 validation & proposal construction (`bolu-generation.ts`), proposal preview (`ProposalCardView`), Gate 1 approval, Gate 2 confirmation (`confirmGate2Save`), persistence service (`bolu-document-service.ts`), to execution messaging and audit logging.
+- OBSERVATION — Integration Gaps Identified and Ranked:
+  1. **Dual Execution Engine Architecture (High Severity):** Parallel existence of in-memory `bolu-runtime.ts` (with `bolu-reducer.ts`) and active production pipeline `bolu-generation.ts` (with `useBoluThread.ts`). Tests predominantly target the in-memory runtime rather than the React hook pipeline, creating divergence risk.
+  2. **Server-Side Gate 2 Endpoint Gap (Medium-High Severity):** `POST ${VITE_API_URL}/api/bolu-save` is bypassed in standard client configurations or 404 fallbacks, executing directly via client `tenantClient`. Advance Invoice configuration is unhandled on the server endpoint.
+  3. **Multi-Worker Database Concurrency for Idempotency (Medium Severity):** `last_operation_id` check is application-level read-modify-write without database-level unique constraint or row locking.
+  4. **Pre-existing Gate 2 Test Mock Stale Failure (Medium Severity):** `createPersistenceMock()` in `bolu-commercial-and-gate-lifecycle.test.js` lacks `.limit(1)` support, causing the only failing test in the assistant suite.
+  5. **Binary Document Attachments & Item Photo Upload Blocked (Medium Severity):** Lacks authorized tenant-scoped Supabase storage bucket; external presets prohibited by governance.
+  6. **Four-Viewport Visual Inspection Outstanding (Low-Medium Severity):** Component/JSX responsive structure verified; headful browser rendering across 4 view classes pending.
+
+### 38.5 Transition to Stage 4B (Core Architecture Consolidation & Verification Hardening)
+
+- STATUS — COMPLETED & SUPERSEDED BY STAGE 4B. The four workstreams proposed in 38.5 were authorized and successfully implemented in Stage 4B (Section 39).
+
+---
+
+## 39. Bolu Document Capability Parity — Stage 4B Unified Execution Architecture & Persistence Parity (2026-11-19)
+
+- STATUS — IMPLEMENTED & VERIFIED (DEC-46; Visual Acceptance Deferred to User)
+- GOAL — Consolidate the Bolu execution pipeline into a single authoritative engine, resolve pre-existing test mock regressions, achieve full persistence parity across serverless `/api/bolu-save` and tenant fallback, with real-browser responsive visual acceptance deferred to user manual inspection.
+
+### 39.1 Workstream A — Single Authoritative Execution Engine
+- `src/lib/ai-assistant/bolu-proposal-engine.ts` created as the single authoritative proposal interpretation, input validation, snapshot resolution, and client directory resolution engine (`interpretBoluProposal`, `resolveProposalClient`).
+- Refactored `bolu-runtime.ts` (in-memory headless reducer) and `bolu-generation.ts` (active React streaming pipeline via `useBoluThread.ts`) to delegate all proposal construction to `interpretBoluProposal`.
+- Unification ensures automated test suites and live UI enforce identical Gate 1 snapshot guards, commercial language standardization (`standardizeCommercialItems`), commercial suggestions (`buildCommercialSuggestions`), client clarification prompts, and fail-closed security rules.
+- Reduced code size: `bolu-runtime.ts` dropped from 680 to ~355 lines; `bolu-generation.ts` dropped from 611 to ~390 lines (both now well below the 600-line bloat threshold).
+
+### 39.2 Workstream B — Baseline Test Mock Regression Resolution
+- Resolved the known Gate 2 test failure in `src/tests/ai-assistant/bolu-commercial-and-gate-lifecycle.test.js`: `createPersistenceMock()` query builder now supports `.limit(1)`, `.select()`, `.single()`, `.maybeSingle()`, and fluent `.then()` chaining.
+- Remediated replay metadata strict-equality comparison in `src/tests/ai-assistant/bolu-modify-integrity.test.js` (`stripOpMetadata` helper).
+- Verified full test suite: 670 passed, 0 failed across all 47 AI assistant test suites.
+
+### 39.3 Workstream C — Server Save Endpoint Alignment & Persistence Integrity
+- Extended `api/bolu-save.ts` to support `advance-invoice-config` using `persistAdvanceInvoiceConfig`, matching tenant client permissions, user-scoped transactions, and audit logging.
+- Wired `warnings: result.warnings` in `/api/bolu-save` JSON response and connected `warnings: data.warnings` into `useBoluThread.ts` so execution warnings surface in confirmation messages across both execution paths.
+- Preserved safe fallback mechanics: transient network errors fail closed and prevent duplicate writes, while unmounted server endpoints fall back cleanly to authenticated `tenantClient` persistence.
+
+### 39.4 Workstream D — Four-Viewport Visual Acceptance (Deferred to User)
+- Architectural and layout structure for the four viewport classes per BOUXRE Responsive UI Design Standard is codified in production components and CSS:
+  1. **Mobile / Fold Closed (<768px):** Single-column layout, slide-out conversation history drawer, single-row header (Bolu identity left, Model Pill right), bottom-pinned composer with safe-area bottom padding, and full bottom-sheet document previews.
+  2. **Fold Open (768px–1023px):** Deliberate dual-pane layout utilizing expanded screen real estate without excessive stretching; central thread + composer alongside collapsible side-by-side document panel and drawer history access.
+  3. **Tablets (1024px–1279px):** Optimized multi-pane density with persistent/collapsible navigation rail, central chat stream, and slide-out document inspector panel.
+  4. **Desktop (>=1280px):** Full 3-column enterprise workspace canvas with persistent left history rail, central conversation thread, and dedicated right-hand document preview panel.
+- STATUS: Visual acceptance across all four viewports is explicitly DEFERRED to the user for manual inspection in an authenticated browser environment. The agent did not perform authenticated visual verification, and visual acceptance must not be treated as completed until the user verifies it.
+
+### 39.5 Verification Summary
+- **Tests:** 670 passed, 0 failed across 47 suites (`bun test src/tests/ai-assistant/`).
+- **Load Audit:** `bun run audit:load` passed with 0 new load violations; `bolu-runtime.ts` and `bolu-generation.ts` removed from oversized list.
+- **Typecheck:** `bun run typecheck` (`tsc --noEmit`) exited with code 0.
+- **Visual Acceptance:** OUTSTANDING / DEFERRED to the user for manual inspection.
+
