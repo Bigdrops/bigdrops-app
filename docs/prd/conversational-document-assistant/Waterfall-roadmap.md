@@ -1802,9 +1802,9 @@ Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verifi
 - DECISION — field arithmetic must flow through the persisted `calculationInputs` and the domain engine (`computeDocument`) exactly as on create; no model-supplied totals, no parallel calculation engine, no mutation of other persisted calculation inputs beyond those in the proposal.
 - DECISION — every widened field must carry an explicit before/after preview row and stale-guard behavior identical to existing modify operations; unsupported-looking positions (e.g., percentages beyond domain bounds) reject with validation errors, not clamping.
 
-### 37.4 Stage 3B — Custom Document Rows, Group Sections & Direct Preview-Card Item Image Management
+### 37.4 Stage 3B - Custom Document Rows, Group Sections & Direct Preview-Card Item Image Management
 
-**Status: Blueprint agreed — not implemented.**
+**Status: Implemented 2026-11-19** (see `stage-3b-implementation.md` and DEC-42). Custom detail rows/chips and document groups are delivered; item photo clearing is delivered; item photo add/replace through the assistant is NOT delivered (no tenant-scoped storage path exists in the application, and the incumbent unsigned Cloudinary preset cannot meet the authorization bar; a tenant-scoped storage decision is required before that capability can ship). Live verification outstanding.
 
 - DECISION — F3-04: typed create/modify operations for `custom_fields.header` and `custom_fields.additionalFields` as `{ label, value }` pairs: label/value both required (trimmed), label uniqueness enforced within each family, sibling keys merged verbatim (no replacement of foreign keys), PDF detail-row/chip rendering unchanged.
 - DECISION — F3-05, F3-13: typed create/modify support for `row_type: 'group_header'` and `groupMeta` (`name`, `showSubtotal`): deterministic create-from-items flow (groups carry `client_id`-scoped group identity only via the application, never the model), rename/ungroup operations, group subtotals produced by the engine, groups cannot nest, members must be contiguous by construction.

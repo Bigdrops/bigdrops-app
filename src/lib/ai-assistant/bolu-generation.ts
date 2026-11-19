@@ -460,10 +460,20 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
                   : undefined,
                 extraChargesChange: validation.data.extraChargesChange,
                 calculationInputsChange: validation.data.calculationInputsChange,
+                customFieldsChange: validation.data.customFieldsChange,
+                groupsChange: validation.data.groupsChange,
                 current: snapshot
                   ? { document: snapshot.document, items: snapshot.items }
                   : undefined,
               })
+              // A proposal whose document-fields or groups plan do not resolve
+              // against the persisted snapshot must never reach Gate 1.
+              const fieldErrors = parsedProposal.customFieldsChange?.errors ?? []
+              const groupErrors = parsedProposal.groupsApplication?.errors ?? []
+              if (fieldErrors.length > 0 || groupErrors.length > 0) {
+                finalText = `${finalText}\n\nI could not prepare that change after checking the saved document:\n- ${[...fieldErrors, ...groupErrors].join('\n- ')}\n\nPlease check the details and try again.`
+                parsedProposal = null
+              }
             }
           } else {
             finalText = `${finalText}\n\nI could not prepare that document change:\n- ${validation.errors.join('\n- ')}`

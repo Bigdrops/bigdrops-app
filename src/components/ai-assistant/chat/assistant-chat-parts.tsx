@@ -296,6 +296,153 @@ function ModifyDiffPanel({ proposal }: { proposal: BoluProposal & { operationTyp
   )
 }
 
+const FIELD_FAMILY_LABELS: Record<'header' | 'additionalFields', string> = {
+  header: 'Details row',
+  additionalFields: 'Chip',
+}
+
+type ModifyFieldProposal = BoluProposal & { operationType: 'modify-document' }
+
+const sameEntry = (a: { id?: string; label: string; value: string }, b: { id?: string; label: string; value: string }) =>
+  a.id && b.id ? a.id === b.id : a.label.toLowerCase() === b.label.toLowerCase()
+
+/**
+ * ModifyFieldsPanel — the document detail rows and additional-info chips the
+ * user asked to change, matched to the persisted entries by id or label and
+ * rendered as before → after rows. Adding, updating and removing are all
+ * shown explicitly before the user confirms.
+ */
+function ModifyFieldsPanel({ proposal }: { proposal: ModifyFieldProposal }) {
+  const cf = proposal.customFieldsChange
+  if (!cf) return null
+
+  const families: Array<
+    ['header' | 'additionalFields', typeof cf.oldHeader, typeof cf.newHeader]
+  > = [
+    ['header', cf.oldHeader, cf.newHeader],
+    ['additionalFields', cf.oldAdditionalFields, cf.newAdditionalFields],
+  ]
+
+  const rows: Array<{ key: string; noun: string; before: string; after: string; kind: 'added' | 'updated' | 'removed' }> = []
+  for (const [family, oldEntries, newEntries] of families) {
+    const noun = FIELD_FAMILY_LABELS[family]
+    const oldList = oldEntries ?? []
+    const newList = newEntries ?? []
+    for (const after of newList) {
+      const before = oldList.find((entry) => sameEntry(entry, after))
+      if (before) {
+        if (before.label !== after.label || before.value !== after.value) {
+          rows.push({
+            key: `${family}:${after.id ?? after.label}:${after.value}`,
+            noun,
+            before: `${before.label}: ${before.value}`,
+            after: `${after.label}: ${after.value}`,
+            kind: 'updated',
+          })
+        }
+        continue
+      }
+      rows.push({
+        key: `${family}:added:${after.id ?? after.label}:${after.value}`,
+        noun,
+        before: '—',
+        after: `${after.label}: ${after.value}`,
+        kind: 'added',
+      })
+    }
+    for (const before of oldList) {
+      const stillThere = newList.find((entry) => sameEntry(entry, before))
+      if (!stillThere) {
+        rows.push({
+          key: `${family}:removed:${before.id ?? before.label}:${before.value}`,
+          noun,
+          before: `${before.label}: ${before.value}`,
+          after: 'Removed',
+          kind: 'removed',
+        })
+      }
+    }
+  }
+
+  if (rows.length === 0) return null
+
+  const kindBadge: Record<typeof rows[number]['kind'], string> = {
+    added: 'New',
+    updated: 'Changed',
+    removed: 'Removed',
+  }
+
+  return (
+    <section className="ac-advance ac-fields-diff" aria-label="Document details">
+      <p className="ac-advance-target">Document details</p>
+      <div className="ac-advance-rows" aria-label="Detail rows and chips">
+        {rows.map((row) => (
+          <div key={row.key} className="ac-advance-val">
+            <span className="ac-advance-key">
+              {row.noun}
+              <span className="ml-1.5 rounded-full border border-[var(--ac-line)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">
+                {kindBadge[row.kind]}
+              </span>
+            </span>
+            <span className="min-w-0 break-words">
+              <span className="ac-advance-before">{row.before}</span>
+              <ArrowRight className="mx-1 inline size-3 align-[-0.125em] text-[var(--ac-muted)]" aria-hidden="true" />
+              <span className="font-bold text-[var(--ac-ink)]">{row.after}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/**
+ * ModifyGroupsPanel — the planned group structure after the change, with
+ * group headings visually distinct from line items and the subtotal toggle
+ * visible on each heading.
+ */
+function ModifyGroupsPanel({ proposal }: { proposal: ModifyFieldProposal }) {
+  const application = proposal.groupsApplication
+  if (!application) return null
+
+  const { previewRows, summary, errors } = application
+  return (
+    <section className="ac-advance ac-groups" aria-label="Document groups">
+      <p className="ac-advance-target">Document groups</p>
+      {errors.length > 0 ? (
+        <ul className="ac-card-notes" role="alert">
+          {errors.map((error) => (
+            <li key={error} className="text-[var(--ac-accent)]">{error}</li>
+          ))}
+        </ul>
+      ) : null}
+      {summary.length > 0 && errors.length === 0 ? (
+        <ul className="ac-card-notes">
+          {summary.map((line) => (
+            <li key={line} className="break-words">{line}</li>
+          ))}
+        </ul>
+      ) : null}
+      {previewRows.length > 0 ? (
+        <ol className="ac-group-preview" aria-label="Document item order">
+          {previewRows.map((row, index) =>
+            row.type === 'group' ? (
+              <li key={`g-${index}`} className="ac-group-heading" data-subtotal={row.showSubtotal ? 'yes' : 'no'}>
+                <span className="font-extrabold uppercase tracking-wide">{row.text}</span>
+                <span className="ac-group-subtotal">{row.showSubtotal ? 'Subtotal shown' : 'No subtotal'}</span>
+              </li>
+            ) : (
+              <li key={`i-${index}`} className="ac-group-item">
+                <span aria-hidden="true">·</span> {row.text}
+              </li>
+            ),
+          )}
+        </ol>
+      ) : null}
+    </section>
+  )
+}
+
 function AdvanceRow({
   label,
   before,
@@ -389,6 +536,49 @@ export function proposalPlainText(proposal: BoluProposal): string {
         lines.push(`${(before ?? after)?.label ?? label}: ${fmt(before)} -> ${fmt(after)}${tag}`)
       }
     }
+    // Document detail rows and chips — matched by id, then by label.
+    const cf = proposal.customFieldsChange
+    if (cf) {
+      const fieldLines: string[] = []
+      for (const [noun, oldEntries, newEntries] of [
+        ['Details row', cf.oldHeader, cf.newHeader],
+        ['Chip', cf.oldAdditionalFields, cf.newAdditionalFields],
+      ] as const) {
+        const all = new Set<string>([
+          ...(oldEntries ?? []).map((entry) => entry.id ?? `${entry.label}|${entry.value}`),
+          ...(newEntries ?? []).map((entry) => entry.id ?? `${entry.label}|${entry.value}`),
+        ])
+        for (const key of all) {
+          const before = (oldEntries ?? []).find((entry) => (entry.id ?? `${entry.label}|${entry.value}`) === key)
+          const after = (newEntries ?? []).find((entry) => (entry.id ?? `${entry.label}|${entry.value}`) === key)
+          if (before && after) {
+            if (before.label !== after.label || before.value !== after.value) {
+              fieldLines.push(`${noun} "${after.label}": ${before.label}: ${before.value} -> ${after.label}: ${after.value}`)
+            }
+            continue
+          }
+          if (after) {
+            fieldLines.push(`${noun} "${after.label}": (new) ${after.value}`)
+            continue
+          }
+          fieldLines.push(`${noun} "${before?.label}": removed`)
+        }
+      }
+      if (fieldLines.length > 0) {
+        lines.push('', 'Document details:', ...fieldLines)
+      }
+    }
+    const groups = proposal.groupsApplication
+    if (groups && groups.previewRows.length > 0) {
+      lines.push('', 'Document groups:')
+      for (const row of groups.previewRows) {
+        if (row.type === 'group') {
+          lines.push(`Group: ${row.text}${row.showSubtotal ? ' (subtotal shown)' : ''}`)
+        } else {
+          lines.push(`- ${row.text}`)
+        }
+      }
+    }
   }
 
   const items = (isCreate
@@ -402,6 +592,22 @@ export function proposalPlainText(proposal: BoluProposal): string {
       lines.push(
         `- ${item.quantity} x ${item.description}: ${formatNaira(item.quantity * item.unit_price)}`,
       )
+    }
+  }
+  if (
+    proposal.operationType === 'modify-document' &&
+    proposal.itemsChange?.oldItems &&
+    proposal.itemsChange.oldItems.length === items.length
+  ) {
+    const removed: string[] = []
+    for (let i = 0; i < items.length; i++) {
+      const oldRow = proposal.itemsChange.oldItems[i] as { image_url?: unknown }
+      if (oldRow?.image_url && items[i]?.image_url === null) {
+        removed.push(`${items[i].description}'s photo was removed`)
+      }
+    }
+    if (removed.length > 0) {
+      lines.push('', ...removed)
     }
   }
 
@@ -1239,6 +1445,16 @@ export function ProposalCardView({
         <ModifyDiffPanel proposal={proposal} />
       ) : null}
 
+      {/* Document detail rows and additional info chips */}
+      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
+        <ModifyFieldsPanel proposal={proposal} />
+      ) : null}
+
+      {/* Group headings and subtotals */}
+      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
+        <ModifyGroupsPanel proposal={proposal} />
+      ) : null}
+
       {/* Item summary */}
       {items.length > 0 ? (
         <div className="my-2 space-y-1">
@@ -1251,6 +1467,12 @@ export function ProposalCardView({
                 item.part_number ? `Part no: ${item.part_number}` : null,
                 item.condition ? `Condition: ${item.condition}` : null,
               ].filter(Boolean)
+              const imageCleared =
+                proposal.operationType === 'modify-document' &&
+                item.image_url === null &&
+                Array.isArray(proposal.itemsChange?.oldItems) &&
+                proposal.itemsChange.oldItems.length === items.length &&
+                Boolean((proposal.itemsChange.oldItems as Array<{ image_url?: unknown }>)[idx]?.image_url)
               return (
                 <li key={idx} className="py-1.5">
                   <div className="flex items-start justify-between gap-2">
@@ -1265,6 +1487,7 @@ export function ProposalCardView({
                   <p className="mt-0.5 text-[11px] text-[var(--ac-muted)]">
                     {formatNaira(item.unit_price)} each
                     {meta.length > 0 ? ` · ${meta.join(' · ')}` : ''}
+                    {imageCleared ? ' · Photo removed' : ''}
                   </p>
                 </li>
               )

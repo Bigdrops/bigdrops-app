@@ -17,6 +17,13 @@ import {
   ADVANCE_SECONDARY_LABEL_DEFAULT,
   ADVANCE_SUFFIX_DEFAULT,
 } from '@/domain/invoice/advanceChildFlow'
+import {
+  applyFieldOperations,
+  applyGroupOperations,
+  fingerprintFieldFamily,
+  fingerprintItems,
+  normalizeFieldEntry,
+} from './bolu-document-ops'
 import type { CommercialRichTextBlock } from '@/lib/commercialRichText'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BoluClientMatch, BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
@@ -80,6 +87,8 @@ export interface BoluInvoiceItemInput {
   part_number?: string | null
   /** Stored in the item's `custom_data`, the form's extension field. */
   condition?: string | null
+  /** `null` clears the existing item photo; adding/replacing photos is not available through the assistant yet. */
+  image_url?: string | null
 }
 
 /**
@@ -173,6 +182,44 @@ export type BoluModifyFieldKey =
   | 'transportation'
   | 'shipping'
 
+/** A document detail row ({ label, value }) in custom_fields.header or custom_fields.additionalFields. */
+export interface BoluFieldEntry {
+  id?: string
+  label: string
+  value: string
+  [key: string]: unknown
+}
+
+export interface BoluFieldMatch {
+  id?: string
+  label?: string
+}
+
+/**
+ * Operations on one custom-document-field family. Entries are matched by id
+ * when present, or by trimmed, case-insensitive label (unique-match required).
+ * Labels and values are both required and trimmed; empty entries never persist.
+ */
+export type BoluFieldEntryOp =
+  | { op: 'add'; label: string; value: string }
+  | { op: 'update'; match: BoluFieldMatch; set: { label?: string; value?: string } }
+  | { op: 'remove'; match: BoluFieldMatch }
+
+/** Group-of-items operations for custom_fields.groupMeta and row_type: 'group_header' rows. */
+export type BoluGroupOp =
+  | { op: 'create-group'; name: string; showSubtotal?: boolean }
+  | { op: 'rename-group'; group: string; set: { name?: string; showSubtotal?: boolean } }
+  | { op: 'add-items'; group: string | null; items: string[] }
+  | { op: 'set-subtotal'; group: string; showSubtotal: boolean }
+  | { op: 'remove-group'; group: string; disposition: 'ungroup-items' | 'delete-items' }
+  | { op: 'reorder-groups'; order: string[] }
+
+/** Custom detail-row and chip family changes. Both families are independent siblings of payment_terms etc. */
+export interface BoluCustomFieldsChange {
+  header?: BoluFieldEntryOp[]
+  additionalFields?: BoluFieldEntryOp[]
+}
+
 /** Calculation inputs are patched as a block; every field is optional, at least one required. */
 export interface BoluCalculationInputValues {
   vatPercent?: number
@@ -208,6 +255,10 @@ export interface BoluInvoiceModifyPayload {
   extraChargesChange?: BoluExtraChargeInput[]
   /** Partial patch to the document's calculation inputs. */
   calculationInputsChange?: Partial<BoluCalculationInputValues>
+  /** Custom document detail-row / chip edits (F3-04). */
+  customFieldsChange?: BoluCustomFieldsChange
+  /** Structured group operations (F3-05/F3-13); cannot be combined with itemsChange. */
+  groupsChange?: BoluGroupOp[]
 }
 
 export interface BoluOperationContract {
@@ -284,6 +335,33 @@ export interface BoluDocumentModifyProposal extends BoluOperationContract {
     oldExtraCharges: BoluExtraChargeInput[]
     newExtraCharges: BoluExtraChargeInput[]
   }
+  /** Custom document fields family diff, snapshot-derived by the builder. */
+  customFieldsChange?: {
+    oldHeader: BoluFieldEntry[]
+    newHeader: BoluFieldEntry[]
+    oldAdditionalFields: BoluFieldEntry[]
+    newAdditionalFields: BoluFieldEntry[]
+    summary: string[]
+    errors: string[]
+    fingerprintHeader: string
+    fingerprintAdditionalFields: string
+    headerOps?: BoluFieldEntryOp[]
+    additionalOps?: BoluFieldEntryOp[]
+  }
+  /** Group operations carried verbatim; `after` is snapshot-derived for the preview. */
+  groupsChange?: BoluGroupOp[]
+  groupsApplication?: {
+    summary: string[]
+    errors: string[]
+    after: Array<{ name: string; members: number; showSubtotal: boolean }>
+    /** Flat presentation rows in document order, for the preview to render group headings distinctly. */
+    previewRows: Array<
+      | { type: 'group'; text: string; showSubtotal: boolean }
+      | { type: 'item'; text: string }
+    >
+  }
+  /** Fingerprint of the items+groupMeta snapshot, re-checked at Gate 2. */
+  itemsFingerprint?: string
   /** Calculation-inputs patch. old carries every persisted key in play; new carries only requested keys. */
   calculationInputsChange?: {
     old: Partial<BoluCalculationInputValues>
@@ -402,6 +480,12 @@ export function validateInvoiceItems(items: unknown): {
       errors.push(`Item #${i + 1} must have a valid non-negative unit price.`)
     }
 
+    // Conversational image authoring is not available: `null` clears an
+    // existing photo; anything else is refused with honest guidance.
+    if (item.image_url !== undefined && item.image_url !== null) {
+      errors.push(`Item #${i + 1}: adding or replacing item photos is not available through the assistant. Clear the existing photo, or use the document form to upload one.`)
+    }
+
     if (description && Number.isFinite(quantity) && quantity > 0 && Number.isFinite(unitPrice) && unitPrice >= 0) {
       const optionalNumber = (value: unknown): number | null | undefined =>
         // Tri-state: undefined = key absent (caller keeps the existing value);
@@ -433,6 +517,7 @@ export function validateInvoiceItems(items: unknown): {
         make: optionalString(item.make),
         part_number: optionalString(item.part_number ?? item.partNo),
         condition: optionalString(item.condition),
+        image_url: item.image_url === null ? null : undefined,
       })
     }
   }
@@ -442,6 +527,213 @@ export function validateInvoiceItems(items: unknown): {
     errors,
     data: validated,
   }
+}
+
+/** Field-family ops must carry usable match/target data and capped batch sizes. */
+export function validateBoluCustomFieldsChange(raw: unknown): { data?: BoluCustomFieldsChange; errors: string[] } {
+  const errors: string[] = []
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { errors: ['The document fields change must be an object with "header" and/or "additionalFields".'] }
+  }
+  const payload = raw as Record<string, unknown>
+  const ALLOWED_FAMILIES = new Set(['header', 'additionalFields'])
+  for (const key of Object.keys(payload)) {
+    if (!ALLOWED_FAMILIES.has(key)) {
+      errors.push(`"${key}" is not a document field family. Supported families: header and additionalFields.`)
+    }
+  }
+
+  const cleanFamily = (family: 'header' | 'additionalFields') => {
+    const rawOps = payload[family]
+    if (rawOps === undefined) return undefined
+    if (!Array.isArray(rawOps)) {
+      errors.push(`The ${family} change must be a list of operations.`)
+      return undefined
+    }
+    if (rawOps.length > 25) {
+      errors.push(`The ${family} change must not exceed 25 operations.`)
+      return undefined
+    }
+    const ops: BoluFieldEntryOp[] = []
+    const batchLabels = new Set<string>()
+    for (let i = 0; i < rawOps.length; i++) {
+      const op = rawOps[i] as Record<string, unknown>
+      if (!op || typeof op !== 'object' || Array.isArray(op)) {
+        errors.push(`${family}[${i}] is invalid.`)
+        continue
+      }
+      const opName = typeof op.op === 'string' ? op.op : ''
+      if (opName === 'add') {
+        const label = typeof op.label === 'string' ? op.label.trim() : ''
+        const value = typeof op.value === 'string' ? op.value.trim() : ''
+        if (!label || !value) {
+          errors.push(`${family}[${i}]: new entries need both a label and a value.`)
+          continue
+        }
+        const key = label.toLowerCase()
+        if (batchLabels.has(key)) {
+          errors.push(`${family}[${i}]: the same label appears twice in this change. Labels must be unique within each family.`)
+          continue
+        }
+        batchLabels.add(key)
+        ops.push({ op: 'add', label, value })
+        continue
+      }
+      if (opName === 'update') {
+        const match = op.match as Record<string, unknown> | undefined
+        const matchId = match && typeof match.id === 'string' ? match.id.trim() : ''
+        const matchLabel = match && typeof match.label === 'string' ? match.label.trim() : ''
+        if (!matchId && !matchLabel) {
+          errors.push(`${family}[${i}]: which entry should I update? Give me its label (and value, if shared).`)
+          continue
+        }
+        const set = op.set as Record<string, unknown> | undefined
+        const setLabel = set && typeof set.label === 'string' ? set.label.trim() : undefined
+        const setValue = set && typeof set.value === 'string' ? set.value.trim() : undefined
+        if (setLabel === undefined && setValue === undefined) {
+          errors.push(`${family}[${i}]: provide the new label and/or value to set.`)
+          continue
+        }
+        if (setLabel !== undefined && !setLabel) errors.push(`${family}[${i}]: the new label cannot be blank.`)
+        if (setValue !== undefined && !setValue) errors.push(`${family}[${i}]: the new value cannot be blank.`)
+        if (errors.length === 0) {
+          ops.push({ op: 'update', match: { id: matchId || undefined, label: matchLabel || undefined }, set: { label: setLabel, value: setValue } })
+        }
+        continue
+      }
+      if (opName === 'remove') {
+        const match = op.match as Record<string, unknown> | undefined
+        const matchId = match && typeof match.id === 'string' ? match.id.trim() : ''
+        const matchLabel = match && typeof match.label === 'string' ? match.label.trim() : ''
+        if (!matchId && !matchLabel) {
+          errors.push(`${family}[${i}]: which entry should I remove? Give me its label (and value, if shared).`)
+          continue
+        }
+        ops.push({ op: 'remove', match: { id: matchId || undefined, label: matchLabel || undefined } })
+        continue
+      }
+      errors.push(`${family}[${i}]: unknown operation "${opName}". Supported: add, update, remove.`)
+    }
+    return ops.length > 0 ? ops : undefined
+  }
+
+  const header = cleanFamily('header')
+  const additionalFields = cleanFamily('additionalFields')
+  if (header === undefined && additionalFields === undefined) {
+    return { errors: ['The document fields change must name at least one operation to apply.'] }
+  }
+  return { data: { ...(header ? { header } : {}), ...(additionalFields ? { additionalFields } : {}) }, errors }
+}
+
+/** Group ops must carry usable identifiers and enum dispositions; counts bounded. */
+export function validateBoluGroupOps(raw: unknown): { data?: BoluGroupOp[]; errors: string[] } {
+  const errors: string[] = []
+  if (!Array.isArray(raw)) {
+    return { errors: ['The groups change must be a list of operations.'] }
+  }
+  if (raw.length > 15) {
+    return { errors: ['The groups change must not exceed 15 operations.'] }
+  }
+
+  const data: BoluGroupOp[] = []
+  for (let i = 0; i < raw.length; i++) {
+    const op = raw[i] as Record<string, unknown>
+    if (!op || typeof op !== 'object' || Array.isArray(op)) {
+      errors.push(`Group operation ${i + 1} is invalid.`)
+      continue
+    }
+    const cleanName = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+    const opName = typeof op.op === 'string' ? op.op : ''
+
+    if (opName === 'create-group') {
+      const name = cleanName(op.name)
+      if (!name || name.length > 60) {
+        errors.push(`Group operation ${i + 1}: give the group a name of 60 characters or fewer.`)
+        continue
+      }
+      data.push({ op: 'create-group', name, showSubtotal: op.showSubtotal === true })
+      continue
+    }
+    if (opName === 'rename-group') {
+      const group = cleanName(op.group)
+      if (!group) {
+        errors.push(`Group operation ${i + 1}: which group should I rename?`)
+        continue
+      }
+      const set = op.set as Record<string, unknown> | undefined
+      const name = set && set.name !== undefined ? cleanName(set.name) : undefined
+      const showSubtotal = set && typeof set.showSubtotal === 'boolean' ? set.showSubtotal : undefined
+      if (name === undefined && showSubtotal === undefined) {
+        errors.push(`Group operation ${i + 1}: rename-group needs "set" with a new name and/or showSubtotal.`)
+        continue
+      }
+      if (name !== undefined && !name) {
+        errors.push(`Group operation ${i + 1}: the new group name cannot be blank.`)
+        continue
+      }
+      data.push({ op: 'rename-group', group, set: { ...(name !== undefined ? { name } : {}), ...(showSubtotal !== undefined ? { showSubtotal } : {}) } })
+      continue
+    }
+    if (opName === 'add-items') {
+      const group = op.group === null ? null : cleanName(op.group)
+      if (op.group !== null && !group) {
+        errors.push(`Group operation ${i + 1}: which group should those items go into?`)
+        continue
+      }
+      if (!Array.isArray(op.items) || op.items.length === 0 || op.items.length > 30) {
+        errors.push(`Group operation ${i + 1}: list 1 to 30 item descriptions to assign.`)
+        continue
+      }
+      const items: string[] = []
+      for (const item of op.items) {
+        const description = cleanName(item)
+        if (description) items.push(description)
+      }
+      if (items.length === 0) {
+        errors.push(`Group operation ${i + 1}: the item list must carry non-empty descriptions.`)
+        continue
+      }
+      data.push({ op: 'add-items', group, items })
+      continue
+    }
+    if (opName === 'set-subtotal') {
+      const group = cleanName(op.group)
+      if (!group || typeof op.showSubtotal !== 'boolean') {
+        errors.push(`Group operation ${i + 1}: set-subtotal needs the group name and a true/false showSubtotal.`)
+        continue
+      }
+      data.push({ op: 'set-subtotal', group, showSubtotal: op.showSubtotal })
+      continue
+    }
+    if (opName === 'remove-group') {
+      const group = cleanName(op.group)
+      const disposition = op.disposition === 'ungroup-items' || op.disposition === 'delete-items' ? op.disposition : null
+      if (!group || !disposition) {
+        errors.push(`Group operation ${i + 1}: remove-group needs the group name and a disposition ("ungroup-items" or "delete-items").`)
+        continue
+      }
+      data.push({ op: 'remove-group', group, disposition })
+      continue
+    }
+    if (opName === 'reorder-groups') {
+      if (!Array.isArray(op.order) || op.order.length === 0 || op.order.length > 12) {
+        errors.push(`Group operation ${i + 1}: reorder-groups needs 1 to 12 group names, each exactly once.`)
+        continue
+      }
+      const order = op.order.map((name) => cleanName(name)).filter((name) => name.length > 0)
+      if (order.length !== op.order.length) {
+        errors.push(`Group operation ${i + 1}: reorder-groups order must carry non-empty group names.`)
+        continue
+      }
+      data.push({ op: 'reorder-groups', order })
+      continue
+    }
+    errors.push(`Group operation ${i + 1}: unknown operation "${opName}".`)
+  }
+
+  if (errors.length > 0) return { errors }
+  if (data.length === 0) return { errors: ['The groups change must name at least one operation.'] }
+  return { data, errors: [] }
 }
 
 /**
@@ -755,6 +1047,37 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
     }
   }
 
+  // Custom document fields change — structural validation only; the snapshot
+  // is required at the builder to resolve entries by id/label.
+  let validatedCustomFieldsChange: BoluCustomFieldsChange | undefined
+  const rawCustomFields = payload.custom_fields ?? payload.customFieldsChange
+  if (rawCustomFields !== undefined) {
+    const validated = validateBoluCustomFieldsChange(rawCustomFields)
+    if (validated.errors.length > 0) {
+      errors.push(...validated.errors)
+    } else {
+      validatedCustomFieldsChange = validated.data
+    }
+  }
+
+  // Group operations — structural validation only; semantic resolution
+  // happens against the persisted snapshot at the builder/executor.
+  let validatedGroupsChange: BoluGroupOp[] | undefined
+  const rawGroups = payload.groups ?? payload.groupsChange
+  if (rawGroups !== undefined) {
+    const validated = validateBoluGroupOps(rawGroups)
+    if (validated.errors.length > 0) {
+      errors.push(...validated.errors)
+    } else {
+      validatedGroupsChange = validated.data
+    }
+  }
+
+  // One item-set concern per proposal: items cannot be combined with groups.
+  if (validatedItems && validatedGroupsChange) {
+    errors.push('Change items and groups in one request only within the same scope — I cannot apply both at once.')
+  }
+
   // Desired extra-charges list (full set after the edit) — optional
   let validatedExtraChargesChange: BoluExtraChargeInput[] | undefined
   const rawCharges = payload.extra_charges ?? payload.extraCharges ?? payload.extraChargesChange
@@ -866,8 +1189,9 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
     }
   }
 
-  if (!field && !validatedItems && !validatedExtraChargesChange && !validatedCalculationInputsChange) {
-    errors.push('Modification must specify a field, items, extra charges, or calculation inputs.')
+  if (!field && !validatedItems && !validatedExtraChargesChange && !validatedCalculationInputsChange
+    && !validatedCustomFieldsChange && !validatedGroupsChange) {
+    errors.push('Modification must specify a field, items, extra charges, calculation inputs, document fields, or groups.')
   }
 
   if (errors.length > 0) {
@@ -887,6 +1211,8 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
       oldItems: Array.isArray(payload.oldItems) ? (payload.oldItems as BoluInvoiceItemInput[]) : undefined,
       extraChargesChange: validatedExtraChargesChange,
       calculationInputsChange: validatedCalculationInputsChange,
+      customFieldsChange: validatedCustomFieldsChange,
+      groupsChange: validatedGroupsChange,
     },
   }
 }
@@ -1255,12 +1581,14 @@ function modifyParseCustomFieldsOf(raw: unknown): Record<string, unknown> {
 function toBoluItemsFromPersisted(items: Array<Record<string, unknown>>): BoluInvoiceItemInput[] {
   return items.map((row): BoluInvoiceItemInput => {
     const qty = Number(row.quantity ?? 1)
+    const isGroupHeader = row.row_type === 'group_header'
     return {
       description: String(row.description ?? ''),
-      quantity: Number.isFinite(qty) ? qty : 1,
+      // Group headers are not commercial items; they carry no quantity for the engine.
+      quantity: isGroupHeader ? 0 : Number.isFinite(qty) ? qty : 1,
       unit_price: Number(row.unit_price ?? 0) || 0,
       unit: typeof row.unit === 'string' ? row.unit : undefined,
-      row_type: 'standard',
+      row_type: isGroupHeader ? ('group_header' as unknown as 'standard') : 'standard',
       group_id: typeof row.group_id === 'string' ? row.group_id : null,
       group_name: typeof row.group_name === 'string' ? row.group_name : null,
       item_id: typeof row.item_id === 'string' ? row.item_id : null,
@@ -1297,6 +1625,8 @@ export function buildInvoiceModifyProposal(params: {
   }
   extraChargesChange?: BoluExtraChargeInput[]
   calculationInputsChange?: Partial<BoluCalculationInputValues>
+  customFieldsChange?: BoluCustomFieldsChange
+  groupsChange?: BoluGroupOp[]
   current?: BoluModifyCurrentSnapshot
 }): BoluInvoiceModifyProposal {
   const documentFamily = params.documentFamily ?? 'invoice'
@@ -1378,6 +1708,61 @@ export function buildInvoiceModifyProposal(params: {
       }
     : undefined
 
+  const persistedGroupMeta = (persistedCf.groupMeta as Record<string, { name?: string; showSubtotal?: boolean }> | undefined)
+    ?? {}
+  const persistedHeader = (Array.isArray(persistedCf.header) ? persistedCf.header : []) as Record<string, unknown>[]
+  const persistedAdditional = (Array.isArray(persistedCf.additionalFields) ? persistedCf.additionalFields : []) as Record<string, unknown>[]
+
+  // Custom fields: normalize the persisted families, then apply the proposed
+  // operations for the preview. Errors ride the proposal for the preview to
+  // show; the executor re-derives and re-checks everything at save time.
+  let customFieldsChange: BoluDocumentModifyProposal['customFieldsChange']
+  if (params.customFieldsChange) {
+    const headerApp = applyFieldOperations(persistedHeader, params.customFieldsChange.header ?? [], 'details row')
+    const additionalApp = applyFieldOperations(persistedAdditional, params.customFieldsChange.additionalFields ?? [], 'chip')
+    customFieldsChange = {
+      oldHeader: (persistedHeader ?? []).map((entry) => normalizeFieldEntry(entry)),
+      newHeader: headerApp.entries,
+      oldAdditionalFields: (persistedAdditional ?? []).map((entry) => normalizeFieldEntry(entry)),
+      newAdditionalFields: additionalApp.entries,
+      summary: [...headerApp.summary, ...additionalApp.summary],
+      errors: [...headerApp.errors, ...additionalApp.errors],
+      fingerprintHeader: fingerprintFieldFamily(persistedHeader),
+      fingerprintAdditionalFields: fingerprintFieldFamily(persistedAdditional),
+      headerOps: params.customFieldsChange.header,
+      additionalOps: params.customFieldsChange.additionalFields,
+    }
+  }
+
+  // Groups: apply against the persisted rows for the preview (Gate 1 must
+  // show which groups/items will change and refuse impossible plans).
+  let groupsApplication: BoluDocumentModifyProposal['groupsApplication']
+  let groupsAppliedRows: Array<Record<string, any>> | undefined
+  let itemsFingerprint: string | undefined
+  if (params.groupsChange && current) {
+    itemsFingerprint = fingerprintItems(persistedItems, persistedGroupMeta)
+    const applied = applyGroupOperations(
+      persistedItems as Array<Record<string, any>>,
+      persistedGroupMeta as Record<string, { name: string; showSubtotal: boolean }>,
+      params.groupsChange,
+    )
+    groupsApplication = {
+      summary: applied.summary,
+      errors: applied.errors,
+      after: applied.after,
+      previewRows: applied.rows.map((row) => (
+        row.row_type === 'group_header'
+          ? {
+              type: 'group' as const,
+              text: String(row.group_name ?? row.description ?? 'Group'),
+              showSubtotal: applied.groupMeta[String(row.group_id ?? '')]?.showSubtotal === true,
+            }
+          : { type: 'item' as const, text: String(row.description ?? '') }
+      )),
+    }
+    groupsAppliedRows = applied.rows
+  }
+
   // Calculation inputs: old snapshot covers every key the patch touches, plus the
   // full default set the app would otherwise be unknown to the diff layer.
   let calculationInputsChange: { old: Partial<BoluCalculationInputValues>; new: Partial<BoluCalculationInputValues> } | undefined
@@ -1418,11 +1803,13 @@ export function buildInvoiceModifyProposal(params: {
     ...(params.calculationInputsChange ?? {}),
   }
   const effectiveExtraCharges = extraChargesChange ? extraChargesChange.newExtraCharges : persistedExtraCharges
-  const recalcItems = params.itemsChange?.newItems ?? persistedItemsBolu
+  const groupRecalcItems = groupsAppliedRows ? toBoluItemsFromPersisted(groupsAppliedRows) : undefined
+  const recalcItems = groupRecalcItems ?? params.itemsChange?.newItems ?? persistedItemsBolu
 
   let computedTotals: BoluInvoiceModifyProposal['computedTotals']
   const recalcRelevant =
     Boolean(params.itemsChange) ||
+    Boolean(params.groupsChange) ||
     params.field === 'workmanship' ||
     params.field === 'transportation' ||
     params.field === 'shipping' ||
@@ -1477,6 +1864,10 @@ export function buildInvoiceModifyProposal(params: {
     newValue: resolvedNewValue,
     itemsChange: params.itemsChange,
     extraChargesChange,
+    customFieldsChange,
+    groupsChange: params.groupsChange,
+    groupsApplication,
+    itemsFingerprint,
     calculationInputsChange,
     computedTotals,
     chargesSnapshot: { ...effectiveCharges },

@@ -1506,3 +1506,78 @@
   color: var(--ac-muted);
   border-top: 1px solid var(--ac-line);
 }
+
+/* -------- Stage 3B: modify panels (fields, chips, groups, images) -------- */
+
+.ac-card-notes {
+  margin: 4px 0 0;
+  padding: 4px 10px 8px 20px;
+  border-top: 1px solid var(--ac-line);
+  font-size: 0.6875rem;
+  color: var(--ac-muted);
+  list-style: disc;
+  display: grid;
+  row-gap: 2px;
+}
+
+.ac-fields-diff .ac-advance-val {
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ac-fields-diff .ac-advance-val > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ac-group-preview {
+  margin: 4px 0 0;
+  padding: 6px 10px 8px;
+  border-top: 1px solid var(--ac-line);
+  list-style: none;
+  display: grid;
+  row-gap: 2px;
+  font-size: 0.6875rem;
+}
+
+.ac-group-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ac-accent) 10%, var(--ac-surface));
+  border: 1px solid color-mix(in srgb, var(--ac-accent) 25%, var(--ac-line));
+  color: var(--ac-ink);
+  overflow-wrap: anywhere;
+}
+
+.ac-group-item {
+  display: flex;
+  gap: 6px;
+  padding: 2px 8px 2px 18px;
+  color: var(--ac-muted);
+  overflow-wrap: anywhere;
+}
+
+.ac-group-subtotal {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ac-accent);
+}
+
+.ac-group-heading[data-subtotal="no"] .ac-group-subtotal {
+  color: var(--ac-muted);
+}
+
+@media (max-width: 420px) {
+  .ac-group-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}

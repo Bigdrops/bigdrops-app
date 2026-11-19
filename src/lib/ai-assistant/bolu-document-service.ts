@@ -49,6 +49,12 @@ import {
   type BoluExtraChargeInput,
   type BoluCalculationInputValues,
 } from './bolu-operations'
+import {
+  applyFieldOperations,
+  applyGroupOperations,
+  fingerprintFieldFamily,
+  fingerprintItems,
+} from './bolu-document-ops'
 
 // Supplementary in-process guard against accidental double-clicks.
 // The database-level unique index on the `operation_id` column is the
@@ -459,7 +465,8 @@ function mergeBoluItem(
 
   base.sub_description = pick(item.sub_description, current?.sub_description) ?? null
   base.make = pick(item.make, current?.make) ?? null
-  base.image_url = current?.image_url ?? null
+  // `null` here means an explicit conversational removal request; omit keeps it.
+  base.image_url = item.image_url === null ? null : current?.image_url ?? null
 
   // Lineage is system-owned; never regenerated or inferred.
   base.source_cps_id = current?.source_cps_id ?? null
@@ -1478,16 +1485,67 @@ async function persistDocumentModification(
       : persistedInputs
 
     if (extraChargesChanged || inputsChanged) {
-      const base = pendingCustomFields ?? parseCustomFields(currentDoc.custom_fields)
+      const base = pendingCustomFields ?? persistedCf
       const nextCf = { ...base }
       if (extraChargesChanged) nextCf.extraCharges = mergedExtraCharges
       if (inputsChanged) nextCf.calculationInputs = mergedInputs
       pendingCustomFields = nextCf
     }
-    if (pendingCustomFields) {
-      updates.custom_fields = cfg.family === 'invoice'
-        ? JSON.stringify(pendingCustomFields)
-        : pendingCustomFields
+
+    // 2.3 Custom document fields — detail rows and additional-info chips. The
+    //     full family list is fingerprinted before any write.
+    const persistedHeaderEntries = Array.isArray(persistedCf.header)
+      ? (persistedCf.header as Array<Record<string, unknown>>)
+      : []
+    const persistedAdditionalEntries = Array.isArray(persistedCf.additionalFields)
+      ? (persistedCf.additionalFields as Array<Record<string, unknown>>)
+      : []
+    const customFieldsChanged = proposal.customFieldsChange !== undefined
+
+    if (customFieldsChanged) {
+      if (
+        proposal.customFieldsChange!.fingerprintHeader
+        !== fingerprintFieldFamily(persistedHeaderEntries)
+      ) {
+        return {
+          success: false,
+          error: 'The document details changed after this proposal was prepared. Please review and try again.',
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+      if (
+        proposal.customFieldsChange!.fingerprintAdditionalFields
+        !== fingerprintFieldFamily(persistedAdditionalEntries)
+      ) {
+        return {
+          success: false,
+          error: 'The additional info changed after this proposal was prepared. Please review and try again.',
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+
+      const headerApp = applyFieldOperations(
+        persistedHeaderEntries,
+        proposal.customFieldsChange!.headerOps ?? [],
+        'details row',
+      )
+      const additionalApp = applyFieldOperations(
+        persistedAdditionalEntries,
+        proposal.customFieldsChange!.additionalOps ?? [],
+        'chip',
+      )
+      const customFieldErrors = [...headerApp.errors, ...additionalApp.errors]
+      if (customFieldErrors.length > 0) {
+        return {
+          success: false,
+          error: customFieldErrors.join(' '),
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+      const mergedHeader = headerApp.entries.map((entry) => ({ ...entry }))
+      const mergedAdditional = additionalApp.entries.map((entry) => ({ ...entry }))
+      const base = pendingCustomFields ?? persistedCf
+      pendingCustomFields = { ...base, header: mergedHeader, additionalFields: mergedAdditional }
     }
 
     // 3. Line item modifications: merge persisted metadata, never rebuild
@@ -1496,35 +1554,43 @@ async function persistDocumentModification(
       proposal.field === 'workmanship' ||
       proposal.field === 'transportation' ||
       proposal.field === 'shipping'
-    const needsRecalc = Boolean(proposal.itemsChange?.newItems) || chargeFieldChanged || extraChargesChanged || inputsChanged
+    const groupsChanged = Array.isArray(proposal.groupsChange) && proposal.groupsChange.length > 0
+    const needsRecalc =
+      Boolean(proposal.itemsChange?.newItems) || chargeFieldChanged || extraChargesChanged || inputsChanged || groupsChanged
+    const shouldReplaceItems = Boolean(proposal.itemsChange?.newItems) || groupsChanged
     let currentItems: Array<Record<string, any>> = []
     let itemsToSave: Array<Record<string, any>> = []
     let mergedItemObjects: Array<Record<string, any>> | null = null
 
-    // Only charges/inputs changed — read the persisted items so totals can be recomputed.
-    if (needsRecalc && !proposal.itemsChange?.newItems) {
-      const { data: persistedItems, error: itemsFetchError } = await (tenantClient.from(cfg.itemsTable) as any)
+    // Shared read (also used by total recalculation and the groups path).
+    const readPersistedItems = async (): Promise<{ rows?: Array<Record<string, any>>; error?: string }> => {
+      const { data: persistedItemsRows, error: itemsFetchError } = await (tenantClient.from(cfg.itemsTable) as any)
         .select('*')
         .eq(cfg.itemsKey, proposal.targetDocumentId)
         .order('sort_order', { ascending: true })
-
       if (itemsFetchError) {
-        return { success: false, error: modificationReadFailure(cfg.family, 'reading the saved items', itemsFetchError), ...(warnings.length ? { warnings } : {}) }
+        return { error: modificationReadFailure(cfg.family, 'reading the saved items', itemsFetchError) }
       }
-      currentItems = Array.isArray(persistedItems) ? persistedItems : []
+      return { rows: Array.isArray(persistedItemsRows) ? persistedItemsRows : [] }
+    }
+
+    // Only charges/inputs changed — read the persisted items so totals can be recomputed.
+    if (needsRecalc && !proposal.itemsChange?.newItems && !groupsChanged) {
+      const { rows: persistedRowItems, error: readError } = await readPersistedItems()
+      if (readError) {
+        return { success: false, error: readError, ...(warnings.length ? { warnings } : {}) }
+      }
+      currentItems = persistedRowItems ?? []
       mergedItemObjects = currentItems
     }
 
     if (proposal.itemsChange?.newItems) {
-      const { data: fetchedItems, error: itemsFetchError } = await (tenantClient.from(cfg.itemsTable) as any)
-        .select('*')
-        .eq(cfg.itemsKey, proposal.targetDocumentId)
-        .order('sort_order', { ascending: true })
+      const { rows: fetchedRowItems, error: itemsReadError } = await readPersistedItems()
 
-      if (itemsFetchError) {
-        return { success: false, error: modificationReadFailure(cfg.family, 'reading the saved items', itemsFetchError), ...(warnings.length ? { warnings } : {}) }
+      if (itemsReadError) {
+        return { success: false, error: itemsReadError, ...(warnings.length ? { warnings } : {}) }
       }
-      currentItems = Array.isArray(fetchedItems) ? fetchedItems : []
+      currentItems = fetchedRowItems ?? []
 
       const { matches, warnings: matchWarnings } = matchBoluItems(currentItems, proposal.itemsChange.newItems)
       warnings = [...warnings, ...matchWarnings]
@@ -1597,6 +1663,51 @@ async function persistDocumentModification(
       )
     }
 
+    // 3.3 Group changes — re-apply against the freshly read rows, with the
+    //     same deterministic engine used for the Gate 1 preview.
+    if (groupsChanged) {
+      const { rows: groupRowItems, error: groupReadError } = await readPersistedItems()
+      if (groupReadError) {
+        return { success: false, error: groupReadError, ...(warnings.length ? { warnings } : {}) }
+      }
+      const persistedGroupMeta = persistedCf.groupMeta && typeof persistedCf.groupMeta === 'object' && !Array.isArray(persistedCf.groupMeta)
+        ? { ...(persistedCf.groupMeta as Record<string, any>) }
+        : {}
+
+      const currentFingerprint = fingerprintItems(
+        (groupRowItems ?? []) as Array<Record<string, unknown>>,
+        persistedGroupMeta as Record<string, { name?: string; showSubtotal?: boolean }>,
+      )
+      if (!proposal.itemsFingerprint || proposal.itemsFingerprint !== currentFingerprint) {
+        return {
+          success: false,
+          error: 'The document items changed after this proposal was prepared. Please review and try again.',
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+
+      const applied = applyGroupOperations(
+        (groupRowItems ?? []) as Array<Record<string, any>>,
+        persistedGroupMeta as Record<string, { name: string; showSubtotal: boolean }>,
+        proposal.groupsChange!,
+      )
+      if (applied.errors.length > 0) {
+        return {
+          success: false,
+          error: applied.errors.join(' '),
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+      currentItems = groupRowItems ?? []
+      mergedItemObjects = applied.rows
+      itemsToSave = applied.rows.map((row, index) =>
+        toDbItem({ ...row, custom_data: parseCustomData(row.custom_data) } as any, null, index),
+      )
+      // GroupMeta rides on the persisted custom_fields document.
+      const base = pendingCustomFields ?? persistedCf
+      pendingCustomFields = { ...base, groupMeta: applied.groupMeta }
+    }
+
     // 3.1 Canonical recalculation with the document's PERSISTED inputs.
     //     Documents with saved calculationInputs use them verbatim (identical
     //     to the form). Documents without them fall back to the form's legacy
@@ -1629,8 +1740,29 @@ async function persistDocumentModification(
       updates.amount_in_words = numberToWords(calculation.totalPayable)
     }
 
-    // 4. Atomic RPC update when entityId is present and items are modified
-    if (entityId && proposal.itemsChange?.newItems) {
+    // 3.2 Keep showItemImages truthful; only a document that already carries
+    //     the flag gets it updated. A missing flag is left alone: Bolu-created
+    //     documents never set it, and we do not add siblings silently.
+    if (needsRecalc || groupsChanged) {
+      const finalRows = (mergedItemObjects ?? currentItems) as Array<Record<string, any>>
+      const show = finalRows.some((row) => row && row.row_type !== 'group_header' && row.image_url)
+      const hasFlag = Object.prototype.hasOwnProperty.call(persistedCf, 'showItemImages')
+      if (hasFlag && (persistedCf.showItemImages === true) !== show) {
+        const base = pendingCustomFields ?? persistedCf
+        pendingCustomFields = { ...base, showItemImages: show }
+      }
+    }
+
+    // Serialize the assembled custom_fields document exactly once.
+    if (pendingCustomFields) {
+      updates.custom_fields = cfg.family === 'invoice'
+        ? JSON.stringify(pendingCustomFields)
+        : pendingCustomFields
+    }
+
+    // 4. Atomic RPC update when entityId is present and the item set changed
+    const rpcUpdate = entityId && shouldReplaceItems
+    if (rpcUpdate) {
       const payload = {
         ...currentDoc,
         ...updates,
@@ -1647,7 +1779,7 @@ async function persistDocumentModification(
       }
     } else {
       // Fallback or non-item update
-      if (proposal.itemsChange?.newItems) {
+      if (shouldReplaceItems) {
         // Replace the item set, restoring the previous rows on failure so a
         // failed modification cannot empty the document.
         await (tenantClient.from(cfg.itemsTable) as any).delete().eq(cfg.itemsKey, proposal.targetDocumentId)
@@ -1681,11 +1813,19 @@ async function persistDocumentModification(
       opId: proposal.opId,
       changedField:
         proposal.field
-        ?? (proposal.extraChargesChange ? 'extra_charges' : proposal.calculationInputsChange ? 'calculation_inputs' : null),
-      itemsChanged: Boolean(proposal.itemsChange?.newItems),
-      // Carry scalar diffs only; rich-text arrays are summarized for the audit trail.
-      oldValue: typeof proposal.oldValue === 'object' && proposal.oldValue !== null ? '[structured text]' : proposal.oldValue as string | number | null,
-      newValue: typeof proposal.newValue === 'object' && proposal.newValue !== null ? '[structured text]' : proposal.newValue as string | number | null,
+        ?? (proposal.extraChargesChange ? 'extra_charges'
+          : proposal.calculationInputsChange ? 'calculation_inputs'
+            : proposal.customFieldsChange ? 'custom_fields'
+              : proposal.groupsChange ? 'groups' : null),
+      itemsChanged:
+        Boolean(proposal.itemsChange?.newItems) || groupsChanged,
+      // Name-only audit markers for block-only changes.
+      oldValue: typeof proposal.oldValue === 'object' && proposal.oldValue !== null
+        ? (proposal.customFieldsChange ? '[document fields]' : proposal.groupsChange ? '[groups]' : '[structured text]')
+        : proposal.oldValue as string | number | null,
+      newValue: typeof proposal.newValue === 'object' && proposal.newValue !== null
+        ? (proposal.customFieldsChange ? '[document fields]' : proposal.groupsChange ? '[groups]' : '[structured text]')
+        : proposal.newValue as string | number | null,
       actor,
     })
 
