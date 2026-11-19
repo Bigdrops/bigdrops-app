@@ -17,6 +17,10 @@ import {
 } from '@/lib/appUpdate/releaseAcknowledgementLocalStorage'
 import { getAppVersionInfo } from '@/lib/appUpdate/appVersion'
 import { validateReleasePolicy, type ReleasePolicyInput } from '@/domain/appUpdate/updateStateMachine'
+import {
+  resolveReleaseDiscovery,
+  type ReleaseDiscoveryState,
+} from '@/domain/appUpdate/releaseDiscovery'
 import type { ChangelogEntry } from '@/domain/appUpdate/changelog'
 
 export interface ReleaseNotificationBannerContent {
@@ -28,9 +32,17 @@ export interface ReleaseNotificationBannerContent {
   isMandatory: boolean
 }
 
+export type { ReleaseDiscoveryState }
+
 export interface UseReleaseNotificationsResult {
   bannerOpen: boolean
   currentBanner: ReleaseNotificationBannerContent | null
+  /** Discovery outcome for the current release. */
+  discovery: ReleaseDiscoveryState
+  /** True when the current release is permanently acknowledged. */
+  acknowledged: boolean
+  /** True when the notice is dismissed for this device and account. */
+  dismissed: boolean
   acknowledgeCurrent: () => Promise<void>
   dismissCurrent: () => Promise<void>
 }
@@ -38,11 +50,16 @@ export interface UseReleaseNotificationsResult {
 const emptyReleaseNotifications: UseReleaseNotificationsResult = {
   bannerOpen: false,
   currentBanner: null,
+  discovery: 'loading',
+  acknowledged: false,
+  dismissed: false,
   acknowledgeCurrent: async () => {},
   dismissCurrent: async () => {},
 }
 
-const ReleaseNotificationsContext = React.createContext<UseReleaseNotificationsResult>(emptyReleaseNotifications)
+export const ReleaseNotificationsContext = React.createContext<UseReleaseNotificationsResult>(
+  emptyReleaseNotifications,
+)
 
 export function ReleaseNotificationsProvider({ children }: { children: React.ReactNode }) {
   const value = useReleaseNotifications({ enabled: true })
@@ -62,6 +79,9 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
   const { state, ready } = useAppUpdateContext()
   const [bannerOpen, setBannerOpen] = useState(false)
   const [currentBanner, setCurrentBanner] = useState<ReleaseNotificationBannerContent | null>(null)
+  const [discovery, setDiscovery] = useState<ReleaseDiscoveryState>('loading')
+  const [acknowledged, setAcknowledged] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
   const [webPolicy, setWebPolicy] = useState<ReleasePolicyInput | null>(null)
   const [authRevision, setAuthRevision] = useState(0)
   const [lifecycleRevision, setLifecycleRevision] = useState(0)
@@ -75,6 +95,9 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
       bannerAccountId.current = null
       setBannerOpen(false)
       setCurrentBanner(null)
+      setDiscovery('loading')
+      setAcknowledged(false)
+      setDismissed(false)
       setAuthRevision((revision) => revision + 1)
     })
     return () => data.subscription.unsubscribe()
@@ -105,9 +128,24 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
     let active = true
     const refresh = async () => {
       const { data, error } = await supabase.rpc('get_active_android_release_policy')
-      if (!active || error) return
+      if (!active) return
+      if (error) {
+        // A transport failure is not "no release". Report it as an error so
+        // the page does not claim the release is absent.
+        setDiscovery((current) =>
+          current === 'available'
+            ? current
+            : resolveReleaseDiscovery({ pending: false, failed: true, applicable: false, entryCount: 0 }),
+        )
+        return
+      }
       const policy = validateReleasePolicy(Array.isArray(data) ? data[0] : data)
       setWebPolicy(policy)
+      // A resolved fetch with no valid policy is genuinely "no release",
+      // not an unresolved discovery.
+      if (!policy) {
+        setDiscovery(resolveReleaseDiscovery({ pending: false, failed: false, applicable: false, entryCount: 0 }))
+      }
     }
     void refresh()
     const onVisible = () => {
@@ -141,12 +179,36 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
         // version baseline; otherwise a slow/failed first fetch could erase
         // the prior version before a real upgrade is detected.
         const policy = state.policy
-        if (!ready || !policy) return
+        if (!ready) return
+        if (!policy) {
+          if (!active || evaluationId.current !== id) return
+          setDiscovery(
+            resolveReleaseDiscovery({
+              pending: false,
+              failed: state.status === 'unavailable',
+              applicable: false,
+              entryCount: 0,
+            }),
+          )
+          return
+        }
         const version = await getAppVersionInfo()
         if (!active || version.versionCode === null) return
         androidTransition = observeInstalledVersion(version.versionCode)
-        if (androidTransition?.kind !== 'upgrade-pending') return
-        if (policy.versionCode !== version.versionCode) return
+        if (androidTransition?.kind !== 'upgrade-pending') {
+          // Not a post-upgrade launch: there is no release to announce yet.
+          // This is a settled outcome, never an unresolved discovery.
+          if (active && evaluationId.current === id) {
+            setDiscovery(resolveReleaseDiscovery({ pending: false, failed: false, applicable: false, entryCount: 0 }))
+          }
+          return
+        }
+        if (policy.versionCode !== version.versionCode) {
+          if (active && evaluationId.current === id) {
+            setDiscovery(resolveReleaseDiscovery({ pending: false, failed: false, applicable: false, entryCount: 0 }))
+          }
+          return
+        }
         versionCode = policy.versionCode
         versionName = policy.versionName
         releaseNotes = policy.releaseNotes
@@ -163,7 +225,17 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
       }
 
       const parsed = parseReleaseNotes(releaseNotes)
-      if (parsed.entries.length === 0 || !active || evaluationId.current !== id) return
+      if (!active || evaluationId.current !== id) return
+      if (parsed.entries.length === 0) {
+        // A release exists but carries no parseable notes. This is not the
+        // same as having no release, and it is not an error.
+        setCurrentBanner(null)
+        setBannerOpen(false)
+        setAcknowledged(false)
+        setDismissed(false)
+        setDiscovery(resolveReleaseDiscovery({ pending: false, failed: false, applicable: true, entryCount: 0 }))
+        return
+      }
 
       const { data: authData, error: authError } = await supabase.auth.getSession()
       if (!active || evaluationId.current !== id || authError) return
@@ -195,12 +267,29 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
       }
       bannerAccountId.current = userId
       setCurrentBanner(banner)
+      setDiscovery(
+        resolveReleaseDiscovery({
+          pending: false,
+          failed: false,
+          applicable: true,
+          entryCount: parsed.entries.length,
+        }),
+      )
+      setAcknowledged(isAcknowledged)
+      setDismissed(isDismissed)
       setBannerOpen(!isAcknowledged && !isDismissed)
     }
 
     void evaluate().catch(() => {
       // Release notes are supplemental. Persistence or network failures never
       // block startup or alter the mandatory-update state machine.
+      if (active && evaluationId.current === id) {
+        setDiscovery((current) =>
+          current === 'available'
+            ? current
+            : resolveReleaseDiscovery({ pending: false, failed: true, applicable: false, entryCount: 0 }),
+        )
+      }
     })
 
     return () => {
@@ -230,6 +319,7 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
         if (!result.persisted) return
       }
       bannerAccountId.current = null
+      setAcknowledged(true)
       setBannerOpen(false)
       setCurrentBanner(null)
     } catch {
@@ -250,11 +340,20 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
       return
     }
     if (!dismissReleaseNotification(currentBanner.versionCode, platform, userId)) return
+    setDismissed(true)
     setBannerOpen(false)
   }, [currentBanner])
 
   return useMemo(
-    () => ({ bannerOpen, currentBanner, acknowledgeCurrent, dismissCurrent }),
-    [bannerOpen, currentBanner, acknowledgeCurrent, dismissCurrent],
+    () => ({
+      bannerOpen,
+      currentBanner,
+      discovery,
+      acknowledged,
+      dismissed,
+      acknowledgeCurrent,
+      dismissCurrent,
+    }),
+    [bannerOpen, currentBanner, discovery, acknowledged, dismissed, acknowledgeCurrent, dismissCurrent],
   )
 }
