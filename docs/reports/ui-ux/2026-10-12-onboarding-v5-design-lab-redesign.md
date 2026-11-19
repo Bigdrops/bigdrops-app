@@ -26,7 +26,7 @@ Documentation standard: ASD-STE100 Simplified Technical English
 - Replaced the shared isometric SVG floor with a separate environment for each chapter. Each scene mounts only for its active chapter.
 - Added three sample businesses to the workspaces scene: Activa Electrical, Northline Fleet, and Marketline Supply. Each has its own workspace boundary, team state, operating records, and environment. A short focus sequence moves across the business contexts without moving records between them.
 - Added a tax workflow to the existing finance chapter. A commercial record enters separate VAT and WHT lanes. The scene then shows reconciliation, an obligation timeline, tax documents, and a retained filing confirmation. All tax content is illustrative. No rate, deadline, or automatic filing claim is present.
-- Added a document workroom for commercial work, a dispatch yard and moving vehicle for logistics, a service bay and report for field work, and a BOURXE brand resolution for conversion.
+- Added a document workroom for commercial work, a dispatch yard and moving vehicle for logistics, a service bay and report for field work, and a BOUXRE brand resolution for conversion.
 - Changed the chapter rail to a compact text marker. Moved Design Lab controls to the top edge, away from the story actions.
 - Added a narrow tax layout that changes the desktop lanes into a vertical workflow. Scene layouts use the existing Design Lab container breakpoints. Scene colours use the selected theme tokens.
 - Added separate entrance timings for the scenes. Reduced motion removes these animations and leaves complete static scenes.

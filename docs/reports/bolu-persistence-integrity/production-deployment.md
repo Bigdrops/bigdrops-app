@@ -1,4 +1,4 @@
-# BOURXE — Production Deployment: Bolu Operation ID Integrity Migrations
+# BOUXRE — Production Deployment: Bolu Operation ID Integrity Migrations
 
 This report was written by Tencent Hunyuan Hy on 2026-11-18 via WorkBuddy Agent.
 
@@ -9,7 +9,7 @@ Documentation standard: ASD-STE100 Simplified Technical English
 
 ## 1. Executive result
 
-All authorized migrations were applied to the BOURXE production Supabase database. Immediate post-deployment verification passed.
+All authorized migrations were applied to the BOUXRE production Supabase database. Immediate post-deployment verification passed.
 
 The original task authorized two Bolu migrations. Preflight found a third pending migration. The user then explicitly selected `Authorize all three`. The final authorized set was:
 

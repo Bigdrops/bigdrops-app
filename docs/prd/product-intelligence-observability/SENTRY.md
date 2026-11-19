@@ -1,8 +1,8 @@
-# BOURXE Workstream Specification: Sentry Frontend Crash Monitoring
+# BOUXRE Workstream Specification: Sentry Frontend Crash Monitoring
 
 - **Document Version:** 1.0.0
 - **Status:** `[VERIFIED COMPLETED & HARDENED]`
-- **Audit Reference:** `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`
+- **Audit Reference:** `docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md`
 - **Installed Package:** `@sentry/react@11.13.0`
 - **Core Implementation:** `src/lib/sentry.ts`
 
@@ -10,7 +10,7 @@
 
 ## 1. Workstream Overview
 
-Frontend error monitoring in BOURXE is powered by Sentry (`@sentry/react@11.13.0`). Its sole purpose is to provide real-time visibility into unhandled JavaScript exceptions, React component crashes, and Capacitor Android runtime errors so engineering can diagnose and fix defects before users report them.
+Frontend error monitoring in BOUXRE is powered by Sentry (`@sentry/react@11.13.0`). Its sole purpose is to provide real-time visibility into unhandled JavaScript exceptions, React component crashes, and Capacitor Android runtime errors so engineering can diagnose and fix defects before users report them.
 
 Sentry operates under strict privacy constraints designed to prevent commercial and personal data from ever leaving user devices.
 
@@ -47,7 +47,7 @@ Inside `src/lib/sentry.ts`:
 
 ## 3. Privacy Hardening Engine
 
-Following an independent forensic security audit (`docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`), targeted privacy hardening was implemented in `src/lib/sentry.ts`:
+Following an independent forensic security audit (`docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md`), targeted privacy hardening was implemented in `src/lib/sentry.ts`:
 
 ### 3.1 Hardening Defect Remediations
 1. **Compound Key Matching:** Replaced anchored regex (`/^token$/i`) with case-insensitive substring matching:
@@ -66,7 +66,7 @@ Following an independent forensic security audit (`docs/reports/SecurityxComplia
 
 - **Regression Test Suite:** `src/tests/sentry-privacy.test.js`.
 - **Test Result:** **48 passed, 0 failed** (82 assertions) verified locally with Bun test runner.
-- **Independent Audit Verdict:** **APPROVED WITH CONDITIONS** in `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`. This is a historical finding. The privacy test suite was not re-run during this audit.
+- **Independent Audit Verdict:** **APPROVED WITH CONDITIONS** in `docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md`. This is a historical finding. The privacy test suite was not re-run during this audit.
 
 ---
 

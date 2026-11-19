@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     Guided secure setup script for Bolu AI Provider (AMD Radeon Cloud Token Factory).
@@ -54,7 +54,7 @@ $ProjectRoot = Split-Path -Parent $ScriptRoot
 function Write-Header {
     Write-Host ""
     Write-Host "==============================================================" -ForegroundColor Cyan
-    Write-Host "   BOURXE Bolu AI Provider Setup (Hermes-Inspired Wizard)    " -ForegroundColor Cyan
+    Write-Host "   BOUXRE Bolu AI Provider Setup (Hermes-Inspired Wizard)    " -ForegroundColor Cyan
     Write-Host "==============================================================" -ForegroundColor Cyan
     Write-Host "Target Provider: AMD Radeon Cloud Token Factory" -ForegroundColor Yellow
     Write-Host "Endpoint:        https://developer.amd.com.cn/radeon/api/v1" -ForegroundColor Gray

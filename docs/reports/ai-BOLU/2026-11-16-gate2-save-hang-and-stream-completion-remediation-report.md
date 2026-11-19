@@ -15,7 +15,7 @@ Remediate the indefinite hang during the Bolu Gate 2 "Confirm & Save" workflow, 
 - Dedicated Gate 2 document save API route in `api/bolu-save.ts`
 - HTTP router in `server.ts`
 - Server test suite in `src/tests/ai-assistant/server.test.ts`
-- Cloudzyro backend deployment for site `bourxe-api`
+- Cloudzyro backend deployment for site `bouxre-api`
 
 Skills used: NONE
 Documentation standard: ASD-STE100 Simplified Technical English
@@ -92,7 +92,7 @@ Two interacting defects caused the interface to show "Bolu is working..." indefi
 - `bun test src/tests/ai-assistant/server.test.ts`: passed (6 passed, 0 failed)
 - `bun run audit:load`: passed (0 regressions)
 - `bun run build`: skipped due to hardware policy
-- Cloudzyro backend deployment: packaged sanitized archive and triggered Version 7 build (`dpc51ec2ebbbf8fbf4`) for site `bourxe-api`
+- Cloudzyro backend deployment: packaged sanitized archive and triggered Version 7 build (`dpc51ec2ebbbf8fbf4`) for site `bouxre-api`
 
 ## Supabase Push Status
 

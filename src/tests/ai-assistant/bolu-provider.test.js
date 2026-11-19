@@ -108,8 +108,8 @@ test('buildProviderHeaders sets authorization and provider-specific headers', ()
   const openRouterHeaders = buildProviderHeaders(openRouterConfig)
   assert.equal(openRouterHeaders['Content-Type'], 'application/json')
   assert.equal(openRouterHeaders['Authorization'], 'Bearer sk-or-test-key-1234')
-  assert.equal(openRouterHeaders['HTTP-Referer'], 'https://bourxe.com')
-  assert.equal(openRouterHeaders['X-Title'], 'BOURXE Bolu')
+  assert.equal(openRouterHeaders['HTTP-Referer'], 'https://bouxre.com')
+  assert.equal(openRouterHeaders['X-Title'], 'BOUXRE Bolu')
 
   const amdConfig = getBoluProviderConfig({
     BOLU_PROVIDER_NAME: 'amd',

@@ -116,7 +116,7 @@ export function AssistantRail({
           <BxLogo className="size-6 rounded-md shrink-0" />
           {collapsed && !isMobileDrawer ? null : (
             <div className="ac-rail-brand min-w-0">
-              <p className="text-xs font-bold text-[var(--ac-ink)] truncate leading-none">BOURXE</p>
+              <p className="text-xs font-bold text-[var(--ac-ink)] truncate leading-none">BOUXRE</p>
               <span className="text-[10px] text-[var(--ac-muted)] truncate block mt-0.5">Operations Assistant</span>
             </div>
           )}

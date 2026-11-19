@@ -4,7 +4,7 @@ This report was written by Inkling 2 Small Free (OpenCode) on 2026-11-14.
 
 Skills consulted (from `docs/PROJECTSKILLINDEX.md`): `typescript-advanced-types`, `react-dev`, `writing-clearly-and-concisely` (inspected for conformity; none applied — no code was changed). Documentation standard: ASD-STE100 Simplified Technical English.
 
-**Scope:** strict read-only audit of Bolu's conversational runtime and its integration with BOURXE business data. Attachment intake, OCR, PDF/Excel/image extraction and document parsing are deliberately out of scope. No new ingestion pipeline, MCP, LangGraph, Mastra, Vercel AI SDK or similar framework is proposed or required.
+**Scope:** strict read-only audit of Bolu's conversational runtime and its integration with BOUXRE business data. Attachment intake, OCR, PDF/Excel/image extraction and document parsing are deliberately out of scope. No new ingestion pipeline, MCP, LangGraph, Mastra, Vercel AI SDK or similar framework is proposed or required.
 
 Evidence class tags: **[REPO]** repository evidence; **[PRD]** canonical PRD under `docs/prd/conversational-document-assistant/`; **[REPORT]** sibling 2026-11-14 audits (cross-check only, not proof without source); **[ESTIMATE]** static estimate from source; **[UNKNOWN]** needs runtime instrumentation.
 

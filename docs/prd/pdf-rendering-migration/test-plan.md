@@ -90,7 +90,7 @@ Verification combines:
 - **Objective:** Verify interactive hyperlinks embedded over images and custom coordinate overlays, and verify explicit image sizing in Forme.
 - **Test Cases:**
   - [ ] **TC-5.1 (Direct Image Link):** Render an invoice with a clickable header logo (`<Image href="https://example.com">`). Inspect PDF objects using MuPDF. Assert `/Annots` contains `/Subtype /Link` with `/URI (https://example.com)`.
-  - [ ] **TC-5.2 (Coordinate Overlay Link):** Place an absolute `<View href="https://verify.bourxe.com">` over a signature badge. Click the badge in Adobe Acrobat and Google Chrome PDF viewers. Assert browser navigates to the target URL.
+  - [ ] **TC-5.2 (Coordinate Overlay Link):** Place an absolute `<View href="https://verify.bouxre.com">` over a signature badge. Click the badge in Adobe Acrobat and Google Chrome PDF viewers. Assert browser navigates to the target URL.
   - [ ] **TC-5.3 (Coordinate Alignment):** Verify link annotation bounding box matches image dimensions exactly in both Portrait and Landscape orientations.
   - [ ] **TC-5.4 (Forme Explicit Sizing):** Confirm all `<Image>` primitives specify explicit numeric `width` and `height` props. Confirm zero usage of invalid `objectFit` style properties.
 

@@ -1,4 +1,4 @@
-# BOURXE: Master Acceptance Criteria & Verification Protocol
+# BOUXRE: Master Acceptance Criteria & Verification Protocol
 
 - **Document Version:** 1.0.0
 - **Status:** Master Quality Assurance Specification (`[PROPOSAL]` / Under Review)

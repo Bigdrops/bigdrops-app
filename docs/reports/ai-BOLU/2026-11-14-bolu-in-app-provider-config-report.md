@@ -1,7 +1,7 @@
 # Bolu In-App Provider Configuration & Secure Secret Management Report
 
 - **Date:** 2026-11-14
-- **Product:** BOURXE — Bolu Conversational Business Operations Assistant
+- **Product:** BOUXRE — Bolu Conversational Business Operations Assistant
 - **Standard:** ASD-STE100 Simplified Technical English
 - **Status:** COMPLETED & VERIFIED
 
@@ -54,7 +54,7 @@ Created the protected table `public.app_ai_provider_config`:
 ### 3.2 Secret Vault Module ([`src/lib/ai-assistant/bolu-secret-vault.ts`](file:///c:/Users/DELL/Desktop/bigdrops-app/src/lib/ai-assistant/bolu-secret-vault.ts))
 
 Implements authenticated AES-256-GCM envelope encryption and decryption:
-- `deriveMasterKey(env)`: Derives a 32-byte master encryption key from `process.env.BOLU_ENCRYPTION_KEY` or derives deterministically from `process.env.SUPABASE_SERVICE_ROLE_KEY` via HMAC-SHA256 with domain salt (`bourxe-bolu-vault-v1`).
+- `deriveMasterKey(env)`: Derives a 32-byte master encryption key from `process.env.BOLU_ENCRYPTION_KEY` or derives deterministically from `process.env.SUPABASE_SERVICE_ROLE_KEY` via HMAC-SHA256 with domain salt (`bouxre-bolu-vault-v1`).
 - `encryptSecret(plainText, masterKey)`: Generates an unpredictable 12-byte nonce, encrypts via `aes-256-gcm`, and captures 16-byte authentication tag.
 - `decryptSecret(payload, masterKey)`: Validates authentication tag; fails closed if ciphertext, nonce, or tag was tampered with.
 - `maskApiKey(apiKey)`: Safely masks keys for UI display (`rc-••••••••••••7766`).

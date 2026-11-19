@@ -88,8 +88,8 @@ export function buildAdapterHeaders(config: AdapterConfig): Record<string, strin
   }
 
   if (config.providerId === 'openrouter' || config.baseUrl.includes('openrouter.ai')) {
-    headers['HTTP-Referer'] = 'https://bourxe.com'
-    headers['X-Title'] = 'BOURXE Bolu'
+    headers['HTTP-Referer'] = 'https://bouxre.com'
+    headers['X-Title'] = 'BOUXRE Bolu'
   }
 
   return headers

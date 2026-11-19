@@ -78,14 +78,14 @@ test('Custom Provider Validation: enforces HTTPS, models, and blocks SSRF target
     providerId: 'custom-corp',
     displayName: 'Corporate AI Gateway',
     protocol: 'openai-compatible',
-    endpoint: 'https://ai.bourxe-partner.com/v1',
+    endpoint: 'https://ai.bouxre-partner.com/v1',
     authScheme: 'bearer',
     defaultModel: 'partner-large',
   })
   assert.equal(valid.ok, true)
   if (valid.ok) {
     assert.equal(valid.config.providerId, 'custom-corp')
-    assert.equal(valid.config.endpoint, 'https://ai.bourxe-partner.com/v1')
+    assert.equal(valid.config.endpoint, 'https://ai.bouxre-partner.com/v1')
   }
 
   // Reject HTTP (insecure)

@@ -305,7 +305,7 @@ test('the preview shows authoritative amounts and never fabricates a total', () 
   const card = readSource('src/components/ai-assistant/chat/assistant-chat-parts.tsx')
   assert.match(card, /proposal\.computedTotals\?\.total/)
   assert.match(card, /AUTHORITATIVE_DOCUMENT_NUMBER/)
-  assert.match(card, /BOURXE calculates the authoritative totals when this document is saved\./)
+  assert.match(card, /BOUXRE calculates the authoritative totals when this document is saved\./)
   assert.match(card, /formatNaira\(item\.unit_price\)/)
 })
 

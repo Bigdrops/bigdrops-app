@@ -8,7 +8,7 @@ logic.
 
 ## 1. Summary
 
-A previous agent left an independent BOURXE Onboarding V2 in Design Lab. The
+A previous agent left an independent BOUXRE Onboarding V2 in Design Lab. The
 route failed at render with:
 
 ```
@@ -168,7 +168,7 @@ The logistics truck now also carries the official BX mark. The approved
 PhotoHero reference truck
 (`BIGDROPS_Onboarding-PhotoHero-v2.html`) draws the official launcher artwork on
 the cab, and the previous agent's own report claimed the same reuse, but the
-code had only the BOURXE wordmark. The mark is the existing official asset from
+code had only the BOUXRE wordmark. The mark is the existing official asset from
 `src/components/layout/bx-logo.tsx` (`bxLogoSrc`), placed on the cab door as an
 SVG image inside a rounded clip path at the reference proportions. The artwork
 is sized and clipped only. It is never recoloured or distorted.
@@ -233,7 +233,7 @@ Measured results:
 - Journey: welcome → five slides (distinct artwork per slide, counts 1/5 to
   5/5) → sign up → sign in → back to welcome; skip works; the password toggle
   switches the input type.
-- Truck: the logistics slide renders a visible branded BOURXE vehicle with a
+- Truck: the logistics slide renders a visible branded BOUXRE vehicle with a
   live drive-in and bob transform, two wheels under a running `ob2-spin`, a
   moving road, and an animating waybill progress bar.
 - Official BX mark: present on the cab, about 20 by 20 CSS pixels at the current

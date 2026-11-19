@@ -2,7 +2,7 @@
 
 This report was written by Inkling 2 Small Free (OpenCode) on 2026-11-14.
 
-Audit task: AUDIT AND RECONCILE THE HERMES-DERIVED AI PROVIDER ARCHITECTURE ACROSS THE BOURXE PRD AND DESIGN LAB.
+Audit task: AUDIT AND RECONCILE THE HERMES-DERIVED AI PROVIDER ARCHITECTURE ACROSS THE BOUXRE PRD AND DESIGN LAB.
 Strictly zero-code audit. No application, test, configuration, migration or documentation file was modified by this audit. The only file created by this audit is this report.
 
 Skills consulted (from `docs/PROJECTSKILLINDEX.md`): `typescript-advanced-types`, `openapi-to-typescript`, `react-dev` (inspected for conformity; none applied, because no code was changed). No AI-architecture-specific skill exists in the index; the index was read as required.
@@ -21,13 +21,13 @@ Writing note: the task requires this report under `docs/Reports/`. The project a
 Two evidence classes are used throughout:
 
 - **[REPO]** — found by static inspection of this repository on 2026-11-14.
-- **[EXT-DOC]** — from external provider or project documentation consulted for this audit (Google DeepMind model card and Google blog, Cursor model list, Google AI developer blog, Hermes Agent repository and docs). External documentation describes provider capabilities, not BOURXE behaviour. Provider limits and availability change; external findings are marked as of 2026-11-14 and must not be treated as permanent.
+- **[EXT-DOC]** — from external provider or project documentation consulted for this audit (Google DeepMind model card and Google blog, Cursor model list, Google AI developer blog, Hermes Agent repository and docs). External documentation describes provider capabilities, not BOUXRE behaviour. Provider limits and availability change; external findings are marked as of 2026-11-14 and must not be treated as permanent.
 
 ---
 
 ## 1. Executive Summary
 
-BOURXE holds a layered AI provider architecture. It is not one system. It is three related artifacts that were never reconciled:
+BOUXRE holds a layered AI provider architecture. It is not one system. It is three related artifacts that were never reconciled:
 
 1. **The runtime chain** (`src/lib/ai-assistant/providerCatalog.ts`, `chat.ts`, `protocol.ts`, `keys.ts`) — used by the legacy invoice-assistant prototype in the browser/native client. Four preconfigured rows (NVIDIA NIM, OpenRouter, AMD Token Factory, Google AI Studio), static failover, keys in native app-private storage or browser session memory.
 2. **The wide catalog** (`src/lib/ai-assistant/providerRegistry.ts`) — a 14-provider tier-1 catalog plus a custom-provider form and validator. It is consumed only by the Design Lab provider-settings simulation. It is never imported by the runtime client.
@@ -73,37 +73,37 @@ Recommended direction: keep the OpenAI-chat-completions abstraction, keep the ca
 
 | Hermes concept ([EXT-DOC]) | Repository counterpart | Relationship | Label |
 |---|---|---|---|
-| Provider entry = base URL + key + declared models + optional live list ([EXT-DOC] concept; PRD line 10 states it as the source) | `AIProviderDefinition` in `providerRegistry.ts` (name, baseUrl, keyPrefix, defaultModel, models[], supportsModelList) | **Adapted.** Field set is similar but re-typed in TypeScript with BOURXE tiers (`first-party` / `aggregator` / `custom`), `keyHint`, `signupUrl`, `note`, optional `authScheme`. No Hermes code was found verbatim. | PARTIALLY VERIFIED |
-| Custom / named OpenAI-compatible endpoint (name, base URL, key, model; [EXT-DOC] "api_mode") | `CustomProviderDraft` + `validateCustomProvider()` (lines ~294–409): display name, `https://…/v1` base URL, key, model IDs (comma/newline), optional JSON extra headers, optional context window ≥ 1000. `custom:<slug>` id scheme. | **Adapted and extended.** Validation rules (HTTPS-only, path ends `/v1`, ≥ 1 model id, string-valued JSON headers, context window minimum) are BOURXE-specific. No extra api_mode equivalent exists. | VERIFIED [REPO] |
-| `base_url` override precedence / auth wiring per provider ([EXT-DOC]) | No equivalent. BOURXE keeps one bearer header per request (`Authorization: Bearer <key>`) in `chat.ts` and `api/bolu-chat.ts`. `authScheme` exists in the type but is never read. | **Not implemented.** | VERIFIED [REPO] |
-| Fallback / model routing (`fallback_chain`, `fallbacks` arrays, `MODEL_FALLBACKS` in sister tools) | Not Hermes-derived. BOURXE `chat.ts` walks `AI_PROVIDER_ORDER` on every call. No stickiness, no retry-after, no benching, no per-provider cooldown. | **Independent implementation.** Not faithful to either Hermes or the failover research in `docs/tickets/free-model-failover-stack.md` (which documents our-free-model `classify.js` benching behaviour — also not implemented). | VERIFIED [REPO] |
+| Provider entry = base URL + key + declared models + optional live list ([EXT-DOC] concept; PRD line 10 states it as the source) | `AIProviderDefinition` in `providerRegistry.ts` (name, baseUrl, keyPrefix, defaultModel, models[], supportsModelList) | **Adapted.** Field set is similar but re-typed in TypeScript with BOUXRE tiers (`first-party` / `aggregator` / `custom`), `keyHint`, `signupUrl`, `note`, optional `authScheme`. No Hermes code was found verbatim. | PARTIALLY VERIFIED |
+| Custom / named OpenAI-compatible endpoint (name, base URL, key, model; [EXT-DOC] "api_mode") | `CustomProviderDraft` + `validateCustomProvider()` (lines ~294–409): display name, `https://…/v1` base URL, key, model IDs (comma/newline), optional JSON extra headers, optional context window ≥ 1000. `custom:<slug>` id scheme. | **Adapted and extended.** Validation rules (HTTPS-only, path ends `/v1`, ≥ 1 model id, string-valued JSON headers, context window minimum) are BOUXRE-specific. No extra api_mode equivalent exists. | VERIFIED [REPO] |
+| `base_url` override precedence / auth wiring per provider ([EXT-DOC]) | No equivalent. BOUXRE keeps one bearer header per request (`Authorization: Bearer <key>`) in `chat.ts` and `api/bolu-chat.ts`. `authScheme` exists in the type but is never read. | **Not implemented.** | VERIFIED [REPO] |
+| Fallback / model routing (`fallback_chain`, `fallbacks` arrays, `MODEL_FALLBACKS` in sister tools) | Not Hermes-derived. BOUXRE `chat.ts` walks `AI_PROVIDER_ORDER` on every call. No stickiness, no retry-after, no benching, no per-provider cooldown. | **Independent implementation.** Not faithful to either Hermes or the failover research in `docs/tickets/free-model-failover-stack.md` (which documents our-free-model `classify.js` benching behaviour — also not implemented). | VERIFIED [REPO] |
 | Live `/models` discovery (`GET /v1/models`, [EXT-DOC]; ticket `free-model-failover-stack.md` Not-verified section) | `supportsModelList` flags in registry; `simulateModelDiscovery` in Design Lab (650 ms fake delay, canned lists, includes an OpenRouter row inventing `nousresearch/hermes-4-70b` and `qwen/qwen3-coder-480b`). No production discovery code. | **Simulated only.** | VERIFIED [REPO] |
 | Desktop provider-settings UI (Hermes `custom-endpoints-settings.tsx`, [EXT-DOC]) | Design Lab `assistant-chat-settings.tsx` + `assistant-chat-model-pill.tsx` (badges, key field, test, model dropdown, custom form). Comments and layout differ; local `ac-*` CSS. | **Inspired by, re-implemented.** No Hermes component or markup found. | PARTIALLY VERIFIED |
 
-### 2.3 Faithfulness and changes for BOURXE
+### 2.3 Faithfulness and changes for BOUXRE
 
 **Faithful to the source:** only the *idea* that a provider is a declarative entry (base URL + key rule + default model + declared models) and that a custom endpoint is the same shape with a user-supplied base URL. That is the entire Hermes footprint.
 
-**Changed for BOURXE:**
+**Changed for BOUXRE:**
 
-- Request path is fixed to OpenAI chat completions with `stream: true` and `max_tokens: 700` (`protocol.ts`). Hermes supports `api_mode` auto-detection and an Anthropic Messages path; BOURXE does not.
+- Request path is fixed to OpenAI chat completions with `stream: true` and `max_tokens: 700` (`protocol.ts`). Hermes supports `api_mode` auto-detection and an Anthropic Messages path; BOUXRE does not.
 - Failover is a flat static order with HTTP-status classification in `protocol.ts` (429/401/403/404/5xx advance; others stop). No `Retry-After` handling, no exponential backoff, no provider benching.
 - Key custody is split: native Capacitor `Directory.Private` file (unencrypted, path `ai-assistant/keys.json`) for the legacy client path, or server-side environment key for the uncommitted Bolu path. Neither is a Hermes mechanism.
-- 14 declared provider rows with Nigeria-oriented notes (AMD on China site, OpenRouter free-tier rules). These are BOURXE research artifacts, not Hermes content.
+- 14 declared provider rows with Nigeria-oriented notes (AMD on China site, OpenRouter free-tier rules). These are BOUXRE research artifacts, not Hermes content.
 - Design Lab preview scaffolding, four viewport shells, scripted invoice demo. No Hermes equivalent.
 
-**What is missing relative to Hermes ([EXT-DOC]):** named-provider precedence and per-endpoint key handling, `api_mode` selection, cached `/models` merge with failure preservation (BOURXE has the *declared-list-survives-failure* rule only in docs/PRD and in the Design Lab simulation), and any attribution. Hermes is MIT, which requires retention of the copyright notice only for copied substantial portions; no substantial verbatim copy was found, so MIT is probably not triggered, but see §8.4 and §11.
+**What is missing relative to Hermes ([EXT-DOC]):** named-provider precedence and per-endpoint key handling, `api_mode` selection, cached `/models` merge with failure preservation (BOUXRE has the *declared-list-survives-failure* rule only in docs/PRD and in the Design Lab simulation), and any attribution. Hermes is MIT, which requires retention of the copyright notice only for copied substantial portions; no substantial verbatim copy was found, so MIT is probably not triggered, but see §8.4 and §11.
 
 ### 2.4 Attribution and licensing
 
 - No `LICENSE`, `NOTICE`, `COPYING` or `THIRD_PARTY` file in the repository root or `docs/` mentions Hermes or Nous Research. **NOT FOUND [REPO].**
-- The three code comments name "Hermes" without a URL, version or licence. If a future contributor copies Hermes code into BOURXE, MIT requires that the copyright notice be preserved. The current comments are not sufficient attribution and are not a substitute for it.
+- The three code comments name "Hermes" without a URL, version or licence. If a future contributor copies Hermes code into BOUXRE, MIT requires that the copyright notice be preserved. The current comments are not sufficient attribution and are not a substitute for it.
 - Recommendation (no action without approval): add a one-line provenance note in the next provider-catalog documentation update stating the concept source and its MIT licence, or remove the Hermes name from comments if the team cannot confirm the derivation.
 - REQUIRES APPROVAL: whether to add a `THIRD_PARTY_NOTICES` entry for Hermes Agent (MIT) as a precaution.
 
 ---
 
-## 3. Existing BOURXE Provider Architecture (as implemented)
+## 3. Existing BOUXRE Provider Architecture (as implemented)
 
 ### 3.1 Two runtimes, one UI lab
 
@@ -205,7 +205,7 @@ PRD set under audit: `docs/prd/conversational-document-assistant/{Readme.md, fun
 | Chain order (code) | `providerCatalog.ts` keeps nvidia→openrouter→amd→gemini and its own comment flags DEC-17 vs DEC-18 as "that conflict is unresolved, so this list keeps the PRD order and does not invent a third answer" | `architecture.md` §6.3 table lists OmniRoute gateway first, Cloudflare second… | CONFLICTING |
 | Provider catalog authority | `provider-catalog.md`: "The code source of truth is `src/lib/ai-assistant/providerRegistry.ts`" | `architecture.md` §6.7: "`providerCatalog.ts` holds the catalog… The runtime chain in `providerCatalog.ts`" | CONFLICTING — two "source of truth" files that are never kept in sync (registry = 14 rows, catalog = 4) |
 | OmniRoute gateway (DEC-20/DEC-21) | `architecture.md` §6.2; Readme §11 measured setup (OmniRoute 3.8.51 on dev machine) | No OmniRoute code, config, scripts or dependency anywhere in the repository | NOT FOUND — the gateway exists only as a developer-machine experiment and PRD text |
-| Key custody | FR-12 draft + DEC-12: Capacitor private file, browser out of scope | `api/bolu-chat.ts` + `bolu-provider.ts`: server-side env key, all callers share it | CONFLICTING — FR-12 marked UNRESOLVED; BOURXE has shipped (uncommitted) both custody models |
+| Key custody | FR-12 draft + DEC-12: Capacitor private file, browser out of scope | `api/bolu-chat.ts` + `bolu-provider.ts`: server-side env key, all callers share it | CONFLICTING — FR-12 marked UNRESOLVED; BOUXRE has shipped (uncommitted) both custody models |
 | Read-only BI vs draft invoice authoring | `functional-req.md` disposition (2026-11-13): direction = read + controlled write, Bolu; FR-23…28 approved principles | `architecture.md`/`Readme.md` still describe invoice creation assistant with tool calls | CONFLICTING — known; tracked by prior audit; not resolved here |
 | AMD provider production eligibility | DEC-18: trial only, "A release to tenants is not [inside the terms]"; RISK-14 | Bolu production path uses AMD as its only provider | CONFLICTING — REQUIRES APPROVAL |
 | Gemini data handling | providerRegistry note: "The free tier may use content to improve its products."; Readme §4.4 requires disclosure | FR-13 NOT implemented; Bolu has no disclosure | CONFLICTING (docs vs code) — REQUIRES APPROVAL |
@@ -274,7 +274,7 @@ Two layers must be kept apart: the **Gemini API as an OpenAI-compatible row** (e
 
 | Item | Source | Finding |
 |---|---|---|
-| OpenAI-compatibility endpoint | Google AI developer blog / Google AI Studio docs; community forum confirming base path `https://generativelanguage.googleapis.com/v1beta/openai` | VERIFIED — Chat Completions and embeddings are supported; **partial coverage** of the OpenAI surface (limited structured output / multimodal); not all OpenAI features exist. BOURXE's request body (model, messages, stream, max_tokens) is inside the supported subset. |
+| OpenAI-compatibility endpoint | Google AI developer blog / Google AI Studio docs; community forum confirming base path `https://generativelanguage.googleapis.com/v1beta/openai` | VERIFIED — Chat Completions and embeddings are supported; **partial coverage** of the OpenAI surface (limited structured output / multimodal); not all OpenAI features exist. BOUXRE's request body (model, messages, stream, max_tokens) is inside the supported subset. |
 | Key type | AI Studio API keys (`AIza…`) | VERIFIED — matches the repo's `AIza` prefix rule |
 | Gemini 4 Hydrogen | Google DeepMind model card ("Gemini 4 Hydrogen"), Google blog "Introducing Gemini 4 Hydrogen", Google Cloud developer guide, Cursor model list | VERIFIED — official model id `gemini-4-hydrogen`; 1M-token unified context window; 64K default synchronous output (up to 1M via background long decode); four thinking levels (low/medium/high/xhigh, default high); built for agentic tool loops; rolling out across Google AI Studio, the Gemini API and the Gemini app |
 | Gemini 4 Hydrogen tool calling | Model card / Google blog position it for "agentic workflows… tool-heavy work" | PARTIALLY VERIFIED — strongly implied by launch positioning; tool-schema behaviour through the OpenAI-compat layer for this exact model was **not** independently verified by this audit, and must be probed before FR-03 tool calls are planned against it |
@@ -288,9 +288,9 @@ Two layers must be kept apart: the **Gemini API as an OpenAI-compatible row** (e
 |---|---|
 | Can Gemini 4 Hydrogen reuse the existing abstraction? | **Yes.** It is a new declared row/model id on the existing OpenAI-compatible `gemini` entry. No new adapter, no new client, no new parsing path. The `supportsModelList: true` flag means a `/v1/models` refresh (if implemented) would surface it automatically when Google lists it. |
 | Needs a narrowly scoped extension? | **Yes, two small ones (not to be built now):** (1) a per-model capability metadata block (context window, max output, tool support, tier) so FR-19/FR-11 can enforce and display limits; (2) verification of the AI Studio free tier and the PRD/FR-13 consent text naming Gemini as the provider. Neither requires a new provider architecture. |
-| Does OpenAI compatibility imply full OpenAI support? | **No.** [EXT-DOC] confirms partial coverage. Concrete limits: embeddings/chat only on the compat path historically; structured outputs "only limited support"; image upload limited. BOURXE's 4-parameter body is safe; tool calling and structured outputs must be verified per-model, not assumed. |
+| Does OpenAI compatibility imply full OpenAI support? | **No.** [EXT-DOC] confirms partial coverage. Concrete limits: embeddings/chat only on the compat path historically; structured outputs "only limited support"; image upload limited. BOUXRE's 4-parameter body is safe; tool calling and structured outputs must be verified per-model, not assumed. |
 | Free-tier quota handling | Do not store numbers. Read 429 body / AI Studio. The `readProviderErrorBody` helper already surfaces the provider message safely; the chain advances on 429 today (legacy path only). |
-| Data-governance fit for BOURXE tenant data | **REQUIRES APPROVAL.** Free AI Studio usage likely permits training on submitted content. Invoice content includes client PII and amounts. This is the same exposure RISK-01 covers. |
+| Data-governance fit for BOUXRE tenant data | **REQUIRES APPROVAL.** Free AI Studio usage likely permits training on submitted content. Invoice content includes client PII and amounts. This is the same exposure RISK-01 covers. |
 
 **Bottom line:** Gemini 4 Hydrogen is the cheapest possible extension — one declared model id plus optional capability metadata plus a verified disclosure. It is not a reason to extend the architecture in any other way.
 
@@ -305,7 +305,7 @@ Two layers must be kept apart: the **Gemini API as an OpenAI-compatible row** (e
 | "NumeS" as a provider | **NOT FOUND** in repository, in the PRD, in tickets, in Git history, or in official public documentation reachable during this audit. Searches for `NumeS`, `Numes`, `Nume.sh` return no recognised LLM-hosting service. | NOT FOUND |
 | Described offering | Requester describes: OpenAI-compatible API endpoint; provider-specific authentication and base URL; free hosted models including GLM, Kimi, DeepSeek and Nemotron variants | Given by requester; unverified |
 | Similar known offerings ([EXT-DOC], 2026-11-14) | The free hosted open-model families named (GLM, Kimi, DeepSeek, Nemotron) are served by NVIDIA NIM (`build.nvidia.com`), OpenRouter, and other OpenAI-compatible hosts. If "NumeS" is such a host, the existing catalog-row pattern applies unchanged. It may also be a misremembered name for one of these. | PARTIALLY VERIFIED |
-| Model identifiers | Unknown. GLM ids look like `glm-4.x` / zai-org paths; Kimi ids like `moonshot/kimi-k2.x`; DeepSeek `deepseek-…`; Nemotron `nvidia/nemotron-…` — but BOURXE must take exact ids from the provider's own model list or documentation | Requires operator input |
+| Model identifiers | Unknown. GLM ids look like `glm-4.x` / zai-org paths; Kimi ids like `moonshot/kimi-k2.x`; DeepSeek `deepseek-…`; Nemotron `nvidia/nemotron-…` — but BOUXRE must take exact ids from the provider's own model list or documentation | Requires operator input |
 | Rate limits / availability | Unknown and variable; free tiers change without notice (see ticket: OpenRouter free list changes, Ampersand free window ended 2026-11-14, Our Free Model registry numbers stale within a week) | VERIFIED for the class of provider [REPO: ticket] |
 | Tool-calling / structured-output compatibility | Unknown per model; OpenAI compatibility is endpoint-level, not feature-level | Do not assume |
 | Data handling | Unknown; likely logged/training-use like comparable free tiers | REQUIRES ToS review |
@@ -461,7 +461,7 @@ The repository already contains the right shape: one request builder, one SSE pa
 
 1. Product owner answers §10.2 A–J; record dispositions in the PRD decision log (not in this report).
 2. Security review of FR-13 disclosure copy and the Bolu server function; decide custody (B).
-3. Verify in AI Studio: `gemini-4-hydrogen` listing, free-tier limits, key creation for the BOURXE project; record dated evidence in the PRD (no numbers in code).
+3. Verify in AI Studio: `gemini-4-hydrogen` listing, free-tier limits, key creation for the BOUXRE project; record dated evidence in the PRD (no numbers in code).
 4. Request NumeS operator pack: docs URL, base URL, auth scheme, model ids, rate limits, ToS, privacy stance, contact.
 5. Reconcile `providerCatalog.ts` vs `providerRegistry.ts` into one declared artifact **after** approval E — one file, no code duplication.
 6. Only then implement: consent gate (D/C), Hydrogen row (F), NumeS custom row (G), `/models` merge (FR-19), capability metadata (E).
@@ -524,9 +524,9 @@ The repository already contains the right shape: one request builder, one SSE pa
 
 ### 12.5 Prior audits and reports (consulted for cross-checks; not duplicated)
 - `docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md`
-- `docs/reports/ai/2026-11-13-bourxe-assistant-prototype-experience-audit.md`
+- `docs/reports/ai/2026-11-13-bouxre-assistant-prototype-experience-audit.md`
 - `docs/reports/ai/2026-11-13-bolu-production-runtime-implementation.md` (existence; not re-read in full)
-- `docs/reports/ai/bourxe-assistant-technical-capability-audit-2026-11-13.md` (existence)
+- `docs/reports/ai/bouxre-assistant-technical-capability-audit-2026-11-13.md` (existence)
 
 ### 12.6 External documentation ([EXT-DOC]; not repository evidence)
 - `https://github.com/NousResearch/hermes-agent` — MIT licence; Nous Research; custom endpoint/named provider concepts; `hermes model` wizard; issue #62213 (`custom-endpoints-settings.tsx`); docs on providers and `model.base_url`. (Consulted 2026-11-14.)
@@ -535,7 +535,7 @@ The repository already contains the right shape: one request builder, one SSE pa
 - `https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen` and `…/build-with-gemini-4-hydrogen` — availability across Google AI Studio / Gemini API; agentic positioning. (Consulted 2026-11-14.)
 - `https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/guides/gemini-4-hydrogen` and Cursor model list `…/docs/models/gemini-4-hydrogen` — model id `gemini-4-hydrogen`, 200k window default / 1M max. (Consulted 2026-11-14.)
 - Google AI Studio OpenAI-compatibility: Google Developers Blog (2024) "Developers can access Gemini models via the OpenAI Library", community forum confirmation of base path, third-party summaries of partial coverage. (Consulted 2026-11-14.)
-- Free-model ecosystem context (OpenRouter limits, NVIDIA NIM free endpoints, AMD China endpoint): ticket `free-model-failover-stack.md`, cross-checked against public listings 2026-11-14. **No quota number from any of these is to be coded into BOURXE.**
+- Free-model ecosystem context (OpenRouter limits, NVIDIA NIM free endpoints, AMD China endpoint): ticket `free-model-failover-stack.md`, cross-checked against public listings 2026-11-14. **No quota number from any of these is to be coded into BOUXRE.**
 
 ### 12.7 Not inspected / limitations
 - `.env` contents not opened. `video-json-tutorial/`, `backend/`, `tools/`, `unused/` not inspected. Design Lab CSS not read line-by-line. No tests, builds, lint, migrations, typecheck, network or provider calls were executed. No live provider verification of Gemini, AMD, OpenRouter or NumeS was performed. Repository evidence is static.
@@ -601,7 +601,7 @@ nothing added to commit but untracked files present (use "git add" to track)
 |---|---|
 | 1 Executive summary | §1 |
 | 2 Hermes provenance and implementation mapping | §2 |
-| 3 Existing BOURXE provider architecture | §3 |
+| 3 Existing BOUXRE provider architecture | §3 |
 | 4 PRD vs implementation reconciliation | §4 |
 | 5 Design Lab vs production reconciliation | §5 |
 | 6 Gemini compatibility assessment | §6 |

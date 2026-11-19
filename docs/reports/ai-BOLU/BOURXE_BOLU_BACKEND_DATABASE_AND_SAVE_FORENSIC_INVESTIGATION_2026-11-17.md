@@ -1,4 +1,4 @@
-# BOURXE Forensic Investigation: Bolu Backend, Database State, Save Lifecycle, and Provider Configuration
+# BOUXRE Forensic Investigation: Bolu Backend, Database State, Save Lifecycle, and Provider Configuration
 
 **Date:** 17 November 2026  
 **Investigator:** Antigravity Architecture & Diagnostics Agent  
@@ -19,7 +19,7 @@ This forensic investigation was authorized to independently verify recent remedi
 ### Critical Investigation Findings
 
 1. **The Fundamental Save Failure Root Cause (Confirmed):**
-   In PostgreSQL, table `public.entities` **does not have a `schema_name` column**. Tenant schemas in BOURXE are formatted as `entity_<workspace_slug>_<entity_slug>` and resolved via the PostgreSQL function `public._prov_get_schema_name(p_entity_id)` or table joins across `entities` and `workspaces`.
+   In PostgreSQL, table `public.entities` **does not have a `schema_name` column**. Tenant schemas in BOUXRE are formatted as `entity_<workspace_slug>_<entity_slug>` and resolved via the PostgreSQL function `public._prov_get_schema_name(p_entity_id)` or table joins across `entities` and `workspaces`.
    In `api/bolu-save.ts`, the code executed:
    ```typescript
    const { data: entityRow, error: entityErr } = await adminClient
@@ -37,7 +37,7 @@ This forensic investigation was authorized to independently verify recent remedi
    `save_quotation_with_items_transaction` enforces `public.has_entity_permission(p_entity_id, auth.uid(), 'quotation', 'create')`. When executed via `adminClient` (Supabase service role), `auth.uid()` evaluates to `NULL`. In PostgreSQL, `ep.user_id = NULL` evaluates to `FALSE`. Consequently, calling this RPC via service role without setting session authorization or checking permissions application-side triggers `insufficient_privilege`.
 
 3. **Bolu VPS / PaaS Cold Sleep (Confirmed):**
-   The persistent Bun backend is hosted at `https://bourxe-api.cloudzyro.app` on Cloudzyro's free tier. Direct HTTP probes revealed:
+   The persistent Bun backend is hosted at `https://bouxre-api.cloudzyro.app` on Cloudzyro's free tier. Direct HTTP probes revealed:
    ```http
    HTTP/1.1 503 Service Unavailable
    Retry-After: 10
@@ -75,7 +75,7 @@ This forensic investigation was authorized to independently verify recent remedi
 3. **`docs/integrations/persistent-bun-vps-deployment.md`:**
    - Architecture document defining the persistent Bun backend entry point (`server.ts`), packaging rules (`package.backend.json`), port bindings, and frontend `VITE_API_URL` routing.
 4. **`docs/reports/ai/2026-11-16-cross-origin-authentication-and-cors-credentials-report.md`:**
-   - Operational record documenting the production backend deployment on Cloudzyro (`https://bourxe-api.cloudzyro.app`), CORS dynamic origin echo, and session token injection.
+   - Operational record documenting the production backend deployment on Cloudzyro (`https://bouxre-api.cloudzyro.app`), CORS dynamic origin echo, and session token injection.
 
 ---
 
@@ -208,11 +208,11 @@ Because `auth.uid()` requires an active user JWT context, calling `save_quotatio
 
 ### 7.1 Architecture Overview
 - **Frontend:** Hosted on Vercel as a Single Page Application (`https://bigdrops-app.vercel.app`).
-- **Backend Service:** Persistent Bun server (`server.ts`) deployed on Cloudzyro (`https://bourxe-api.cloudzyro.app`).
-- **Routing:** Configured via `VITE_API_URL=https://bourxe-api.cloudzyro.app`. Requests to `/api/bolu-chat`, `/api/bolu-save`, and `/api/bolu-provider-config` route across origins to Cloudzyro.
+- **Backend Service:** Persistent Bun server (`server.ts`) deployed on Cloudzyro (`https://bouxre-api.cloudzyro.app`).
+- **Routing:** Configured via `VITE_API_URL=https://bouxre-api.cloudzyro.app`. Requests to `/api/bolu-chat`, `/api/bolu-save`, and `/api/bolu-provider-config` route across origins to Cloudzyro.
 
 ### 7.2 Cloudzyro Runtime State
-Direct non-mutating HTTP probing of `https://bourxe-api.cloudzyro.app/health` returned:
+Direct non-mutating HTTP probing of `https://bouxre-api.cloudzyro.app/health` returned:
 - **HTTP Status:** `503 Service Unavailable`
 - **Response Header:** `Retry-After: 10`
 - **Response Body:** `"Waking up: this free app rests after an hour without visitors. Try again in a few seconds."`
@@ -227,7 +227,7 @@ The repository was analyzed to reconcile disparate environment variable referenc
 | Environment Variable | Target Service | Purpose & Source of Truth |
 | :--- | :--- | :--- |
 | `BOLU_ENCRYPTION_KEY` | Server (Cloudzyro / Vercel Serverless) | **Primary Dedicated Master Key (Version 2).** 32-byte hex/base64 key used by `deriveDedicatedMasterKey()` in `bolu-secret-vault.ts` to encrypt/decrypt connection credentials via AES-256-GCM. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server (Cloudzyro / Vercel Serverless) | **Legacy Master Key Fallback (Version 1).** Used by `deriveServiceRoleMasterKey()` to derive a 32-byte key via HMAC-SHA256 with salt `'bourxe-bolu-vault-v1'`. Also used by `getAdminClient()` for service-role database access. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server (Cloudzyro / Vercel Serverless) | **Legacy Master Key Fallback (Version 1).** Used by `deriveServiceRoleMasterKey()` to derive a 32-byte key via HMAC-SHA256 with salt `'bouxre-bolu-vault-v1'`. Also used by `getAdminClient()` for service-role database access. |
 | `SUPABASE_URL` / `VITE_SUPABASE_URL` | Client & Server | Supabase project endpoint URL (`https://xqlpekpkbszpdgtuwybh.supabase.co`). |
 | `VITE_SUPABASE_ANON_KEY` | Client & Server | Supabase public anonymous API key. |
 | `BOLU_VAULT_KEY` | None | **Obsolete/Hypothetical.** Not referenced in codebase. |
@@ -310,7 +310,7 @@ Static inspection of `src/tests/ai-assistant/bolu-save-diagnostic-edit-remediati
 | **Save Failed at Gate 2** | `err_1794910170270_sue4zm`<br>`err_1794910166693_qsgyhk` | **CONFIRMED** | 1. `entities.schema_name` does not exist in PostgreSQL, making `schemaName` null.<br>2. Pre-remediation defaulted to `public`. Table `public.quotations` does not exist.<br>3. `feedback.error()` stripped the diagnostic description ("relation public.quotations does not exist"). |
 | **Provider Settings Operation Failed** | `err_1794810223811_knlf41`<br>`err_1794810144570_5tr83b`<br>`err_1794810142001_wytz5q` | **CONFIRMED** | `api/bolu-provider-config.ts` catch block previously caught upstream exceptions (such as network timeouts to RunCrate or validation rejections) and unconditionally emitted `'The operation failed. Retry, or review the server logs.'`. |
 | **User Message Edit Blocked** | N/A (User report on mobile) | **CONFIRMED** | `isLocked = busy \|\| Boolean(disabled)` in `assistant-chat-composer.tsx` kept the textarea and send button disabled when `clerkState === 'listening'`. |
-| **Backend 503 Errors** | N/A (Intermittent mobile timeouts) | **CONFIRMED** | Probed `bourxe-api.cloudzyro.app/health` returned `503 Service Unavailable` due to Cloudzyro free tier container sleep after 60 minutes of inactivity. |
+| **Backend 503 Errors** | N/A (Intermittent mobile timeouts) | **CONFIRMED** | Probed `bouxre-api.cloudzyro.app/health` returned `503 Service Unavailable` due to Cloudzyro free tier container sleep after 60 minutes of inactivity. |
 
 ---
 
@@ -356,7 +356,7 @@ Static inspection of `src/tests/ai-assistant/bolu-save-diagnostic-edit-remediati
 
 ### Category B: Infrastructure & VPS Actions (Operational)
 1. **Cloudzyro Container Keep-Alive:**
-   Implement an automated uptime ping (e.g., via Cron or external monitor) targeting `https://bourxe-api.cloudzyro.app/health` every 15 minutes to prevent container sleep, or upgrade Cloudzyro to an always-on tier.
+   Implement an automated uptime ping (e.g., via Cron or external monitor) targeting `https://bouxre-api.cloudzyro.app/health` every 15 minutes to prevent container sleep, or upgrade Cloudzyro to an always-on tier.
 2. **Confirm Environment Secrets:**
    Verify in the Cloudzyro dashboard that `SUPABASE_SERVICE_ROLE_KEY` and `BOLU_ENCRYPTION_KEY` are present and match Supabase project `xqlpekpkbszpdgtuwybh`.
 
@@ -442,11 +442,11 @@ Static inspection of `src/tests/ai-assistant/bolu-save-diagnostic-edit-remediati
  M vite-env.d.ts
 ?? docs/integrations/Architect.md
 ?? docs/prd/product-intelligence-observability/
-?? docs/reports/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md
-?? docs/reports/BOURXE_Google_Web_Guidance_Skill_Audit.md
-?? docs/reports/BOURXE_Governance_Documentation_and_Modern_Web_Intelligence_Audit.md
-?? docs/reports/BOURXE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md
-?? docs/reports/BOURXE_Sentry_Frontend_Privacy_Audit.md
+?? docs/reports/BOUXRE_Existing_Observability_Analytics_Authentication_Audit.md
+?? docs/reports/BOUXRE_Google_Web_Guidance_Skill_Audit.md
+?? docs/reports/BOUXRE_Governance_Documentation_and_Modern_Web_Intelligence_Audit.md
+?? docs/reports/BOUXRE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md
+?? docs/reports/BOUXRE_Sentry_Frontend_Privacy_Audit.md
 ?? docs/reports/android/2026-11-17-unified-release-notifications.md
 ?? src/assets/providers/apinex-mark.png
 ?? src/assets/providers/runcrate-icon.png
@@ -462,7 +462,7 @@ Static inspection of `src/tests/ai-assistant/bolu-save-diagnostic-edit-remediati
 
 ### 18.2 Status After Investigation
 ```text
-?? docs/reports/BOURXE_BOLU_BACKEND_DATABASE_AND_SAVE_FORENSIC_INVESTIGATION_2026-11-17.md
+?? docs/reports/BOUXRE_BOLU_BACKEND_DATABASE_AND_SAVE_FORENSIC_INVESTIGATION_2026-11-17.md
 ```
 *(All pre-existing tracked and untracked files preserved exactly as found; no application code, tests, configurations, or database migrations were modified).*
 

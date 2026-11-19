@@ -4,7 +4,7 @@ This report was written by Antigravity on 2026-11-16 via Antigravity Agent.
 
 ## Objective
 
-Fix the `401 Unauthorized` and `invalid_session` errors during cross-origin communication between the Vercel frontend (`https://bigdrops-app.vercel.app`) and the persistent Bun backend on Cloudzyro (`https://bourxe-api.cloudzyro.app`). Inject active Supabase authentication session tokens into frontend API requests, update backend CORS headers to echo origins dynamically without wildcarding, enable cross-origin credentials, and deploy both services.
+Fix the `401 Unauthorized` and `invalid_session` errors during cross-origin communication between the Vercel frontend (`https://bigdrops-app.vercel.app`) and the persistent Bun backend on Cloudzyro (`https://bouxre-api.cloudzyro.app`). Inject active Supabase authentication session tokens into frontend API requests, update backend CORS headers to echo origins dynamically without wildcarding, enable cross-origin credentials, and deploy both services.
 
 ## Scope
 
@@ -72,7 +72,7 @@ Verification:
 - bun run audit:load: passed
 - bun test src/tests/ai-assistant/server.test.ts: passed (5 tests)
 - bun test src/tests/ai-assistant/: passed (259 tests)
-- Cloudzyro Version 6 deployment: passed (live at https://bourxe-api.cloudzyro.app)
+- Cloudzyro Version 6 deployment: passed (live at https://bouxre-api.cloudzyro.app)
 - curl OPTIONS http://localhost:5000: passed (HTTP 204, credentials: true, origin echoed)
 - curl OPTIONS http://192.168.100.8:5000: passed (HTTP 204, credentials: true, origin echoed)
 - curl OPTIONS https://bigdrops-app.vercel.app: passed (HTTP 204, credentials: true, origin echoed)

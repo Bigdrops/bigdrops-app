@@ -1,10 +1,10 @@
 # Diagnostic Audit: Bolu Production UI Artifacts, Catalog Spam & Silent AI Drop
 
 **Date:** 2026-11-15  
-**Auditor:** BOURXE AI Agent / Lead Systems Architect  
+**Auditor:** BOUXRE AI Agent / Lead Systems Architect  
 **Scope:** `src/components/ai-assistant/chat/`, `src/lib/ai-assistant/hooks/useBoluThread.ts`, `src/components/ai-assistant/chat/BoluChatWorkspace.tsx`, `src/components/ai-assistant/chat/assistant-chat-model-pill.tsx`  
 **Target Deliverable:** Zero-code diagnostic report identifying the root causes, component paths, and exact line numbers for surviving Design Lab debugging artifacts, provider catalog spam, and silent inference API failures.  
-**Standard:** ASD-STE100 (Simplified Technical English) & BOURXE Architecture Standards  
+**Standard:** ASD-STE100 (Simplified Technical English) & BOUXRE Architecture Standards  
 
 ---
 

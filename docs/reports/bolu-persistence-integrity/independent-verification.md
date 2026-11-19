@@ -1,4 +1,4 @@
-# BOURXE — Independent Verification of Bolu Migration-Pair Correction
+# BOUXRE — Independent Verification of Bolu Migration-Pair Correction
 
 **Date:** 2026-11-18  
 **Review type:** Independent, read-only implementation review and deployment-readiness assessment  

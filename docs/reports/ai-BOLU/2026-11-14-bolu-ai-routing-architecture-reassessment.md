@@ -1,7 +1,7 @@
-# BOURXE AI — Bolu AI Routing Architecture Reassessment: Comparative Technical Investigation
+# BOUXRE AI — Bolu AI Routing Architecture Reassessment: Comparative Technical Investigation
 
 - **Date:** 2026-11-14
-- **Author:** BOURXE AI Engineering Agent
+- **Author:** BOUXRE AI Engineering Agent
 - **Audit Type:** STRICT ZERO-CODE-EDIT COMPARATIVE AUDIT
 - **Document Status:** COMPLETED AND VERIFIED
 - **Writing Standard:** ASD-STE100 Simplified Technical English
@@ -9,7 +9,7 @@
   1. **OmniRoute** (`https://github.com/cheaper-inference/OmniRoute`)
   2. **New-API** (`https://github.com/QuantumNous/new-api`)
   3. **Bifrost** (`https://github.com/maximhq/bifrost`)
-  4. **Native TypeScript Router** (Existing BOURXE Implementation Extended)
+  4. **Native TypeScript Router** (Existing BOUXRE Implementation Extended)
 - **Secondary Candidates:**
   1. **ezRouter** (`https://github.com/namhv94/ezRouter`)
   2. **LiteLLM** (`https://github.com/BerriAI/litellm`)
@@ -24,7 +24,7 @@
 Bolu requires reliable, cost-effective AI inference for Nigerian SME business operations (invoice authoring, line-item modification, quotation drafting, customer statement queries). The core challenge is managing AI inference providers across multiple free tiers and commercial endpoints, preventing quota exhaustion, handling HTTP 429 rate limits, and rotating multiple accounts automatically—without violating enterprise multi-tenancy, financial integrity, or operational budgets.
 
 ### 1.2 Primary Recommendation
-**RECOMMENDATION: Option D — Build a Native TypeScript Router inside the existing BOURXE Vercel + Supabase architecture, with Option A (OmniRoute) retained strictly as an optional, developer-only local proxy (DEC-20 / DEC-21 alignment).**
+**RECOMMENDATION: Option D — Build a Native TypeScript Router inside the existing BOUXRE Vercel + Supabase architecture, with Option A (OmniRoute) retained strictly as an optional, developer-only local proxy (DEC-20 / DEC-21 alignment).**
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -100,7 +100,7 @@ The existing Bolu AI infrastructure comprises:
 - **Hosting & Cloudzyro Launch Feasibility (1 vCPU, 512 MB RAM, Ephemeral Disk):**
   - **FATAL HOSTING DEFECT 1 (Memory Out of Bounds):** Next.js App Router in standalone mode requires 250 MB to 400 MB baseline RSS. Under burst traffic, concurrent streaming, or token compression buffer allocation, memory consumption exceeds 512 MB, resulting in immediate Linux OOM (Out Of Memory) process termination.
   - **FATAL HOSTING DEFECT 2 (Ephemeral Data Loss):** Cloudzyro Launch wipes local container storage upon restart or redeployment. SQLite database files, WAL logs, account rotation pointers, and cooldown timestamps are permanently erased unless paired with an external block volume or S3 replication mechanism.
-- **Integration with BOURXE:**
+- **Integration with BOUXRE:**
   - Requires maintaining an external 24/7 web server, securing its public endpoint, managing TLS certificates, and configuring network failover.
   - If OmniRoute goes down, Bolu goes down completely unless complex fallback logic is written in `bolu-chat.ts`.
 
@@ -116,13 +116,13 @@ The existing Bolu AI infrastructure comprises:
 - **Storage & State:**
   - Supports SQLite, MySQL (≥5.7.8), and PostgreSQL (≥9.6).
   - Optional Redis for distributed rate-limiting and cache synchronization.
-  - Can connect directly to BOURXE's existing hosted Supabase PostgreSQL instance via `DATABASE_URL`.
+  - Can connect directly to BOUXRE's existing hosted Supabase PostgreSQL instance via `DATABASE_URL`.
 - **Hosting & Cloudzyro Launch Feasibility:**
   - **Memory:** Compiled Go binary is very lightweight (~40 MB to 90 MB RAM idle). Fits comfortably within 512 MB RAM.
   - **Storage:** Bypasses ephemeral disk issues by storing channel state in Supabase PostgreSQL.
 - **FATAL DEFECT: AGPL-3.0 Licensing Risk:**
   - AGPL-3.0 is a viral copyleft license specifically crafted for network-accessible software.
-  - Integrating New-API as an architectural component of BOURXE's commercial B2B platform creates substantial legal exposure. Under strict interpretations, interacting over a network with an AGPL-3.0 service may trigger source-disclosure obligations for adjacent proprietary backend services.
+  - Integrating New-API as an architectural component of BOUXRE's commercial B2B platform creates substantial legal exposure. Under strict interpretations, interacting over a network with an AGPL-3.0 service may trigger source-disclosure obligations for adjacent proprietary backend services.
 - **Feature Bloat:**
   - Designed as an AI API reselling and billing platform. Over 80% of its codebase consists of user billing, top-up vouchers, token consumption quotas, user registration, and multi-tier reseller portals—none of which are needed or desirable for Bolu's internal assistant.
 
@@ -137,19 +137,19 @@ The existing Bolu AI infrastructure comprises:
   - Native OpenAI-compatible interface with streaming support.
 - **Storage & State:**
   - Supports SQLite, PostgreSQL, and ClickHouse (for analytical request logs).
-  - Can bind directly to BOURXE's hosted Supabase PostgreSQL.
+  - Can bind directly to BOUXRE's hosted Supabase PostgreSQL.
 - **Hosting & Cloudzyro Launch Feasibility:**
   - **Memory:** Extremely efficient compiled Go binary (<50 MB RAM). Easily runs on Cloudzyro Launch (1 vCPU, 512 MB RAM).
   - **Storage:** Persists state via Supabase PostgreSQL, avoiding ephemeral container disk wipes.
-- **Evaluation for BOURXE:**
+- **Evaluation for BOUXRE:**
   - The strongest external gateway candidate. However, it still introduces an external operational dependency: a separate standalone service that must be deployed, monitored, patched, and kept alive 24/7 on a secondary hosting provider.
 
-### 3.4 Candidate 4: Native TypeScript Router (Existing BOURXE Implementation Extended)
+### 3.4 Candidate 4: Native TypeScript Router (Existing BOUXRE Implementation Extended)
 - **Repository:** Internal to `bigdrops-app` (`api/bolu-chat.ts`, `src/lib/ai-assistant/bolu-provider.ts`, `src/lib/ai-assistant/bolu-secret-vault.ts`).
 - **Core Technology:** TypeScript, Vercel Serverless / Edge Runtime, Supabase PostgreSQL.
-- **Licensing:** **Proprietary BOURXE Code** (Zero third-party licensing or copyleft exposure).
+- **Licensing:** **Proprietary BOUXRE Code** (Zero third-party licensing or copyleft exposure).
 - **Architecture & Capabilities:**
-  - Executes directly within the existing BOURXE backend infrastructure.
+  - Executes directly within the existing BOUXRE backend infrastructure.
   - Expands the database model from a single row (`app_ai_provider_config`) to a multi-connection table (`app_ai_provider_connections`).
   - Supports multiple accounts per provider (e.g., 3 AMD keys, 2 OpenRouter keys) with automated account rotation.
   - Implements lightweight, stateful cooldown tracking in PostgreSQL (`cooldown_until timestamptz`, `failure_count integer`).
@@ -161,14 +161,14 @@ The existing Bolu AI infrastructure comprises:
   - **Zero Cloudzyro Infrastructure Needed:** Executes 100% serverless on Vercel and Supabase.
   - **Zero OOM Risk:** Serverless function memory scales automatically on demand.
   - **Zero Ephemeral Storage Risk:** All credentials and health states are stored in durable PostgreSQL tables.
-- **Evaluation for BOURXE:**
+- **Evaluation for BOUXRE:**
   - Eliminates secondary infrastructure entirely. Delivers 100% of the required account rotation, rate-limit resilience, and multi-provider failover without external servers.
 
 ---
 
 ## 4. Secondary Candidates: Technical Findings
 
-| Candidate | Tech Stack | License | Core Focus | Assessment for BOURXE |
+| Candidate | Tech Stack | License | Core Focus | Assessment for BOUXRE |
 |---|---|---|---|---|
 | **ezRouter** (`namhv94/ezRouter`) | Rust + embedded Web UI | MIT | Ultra-fast local developer proxy for Cursor/Claude Code; prompt token compression (RTK); multi-account pooling | High performance (<15 MB RAM), but architected as a local desktop developer utility on localhost. Lacks enterprise multi-tenant database integration and serverless compatibility. |
 | **LiteLLM** (`BerriAI/litellm`) | Python + Rust core | Split (Open Core / Commercial Enterprise) | 100+ LLM unified interface; virtual key management; spend tracking; load balancing | Heavy Python runtime (300 MB to 600 MB RAM). Guaranteed OOM crashes on Cloudzyro Launch 512 MB. Requires PostgreSQL + Redis. Enterprise features have split licensing terms. |
@@ -200,7 +200,7 @@ The candidates are evaluated against the 20 criteria established in the mission 
 | 15 | **Bolu inference compatibility** | 100% (OpenAI `/chat`) | 100% (OpenAI `/chat`) | 100% (OpenAI `/chat`) | **100% (Direct native client)** |
 | 16 | **Vercel / Supabase integration** | External network call | External network call | External network call | **100% Native Serverless In-Tree** |
 | 17 | **Additional hosting requirement** | 1 Node.js server (persistent) | 1 Go server (persistent) | 1 Go server (persistent) | **ZERO additional servers** |
-| 18 | **Commercial licensing risk** | None (MIT) | **CRITICAL RISK (AGPL-3.0)** | None (Apache 2.0) | **Zero (100% Proprietary BOURXE)** |
+| 18 | **Commercial licensing risk** | None (MIT) | **CRITICAL RISK (AGPL-3.0)** | None (Apache 2.0) | **Zero (100% Proprietary BOUXRE)** |
 | 19 | **Operational complexity** | High (monitoring 24/7) | High (admin reseller UI) | Medium (Go proxy ops) | **Lowest (Unified CI/CD & Deploy)** |
 | 20 | **Integration effort** | Medium (proxy config) | High (DB/channel setup) | Medium (proxy config) | **Low (Refactor existing vault)** |
 
@@ -210,17 +210,17 @@ The candidates are evaluated against the 20 criteria established in the mission 
 
 ### 6.1 Commercial Licensing Assessment
 - **New-API (AGPL-3.0) — SEVERE RISK:**
-  AGPL-3.0 mandates that anyone interacting with the software remotely through a computer network is entitled to receive a complete copy of the corresponding source code. Deploying New-API as an internal gateway in a proprietary, commercial enterprise management suite (BOURXE) presents unacceptable legal and intellectual property exposure.
+  AGPL-3.0 mandates that anyone interacting with the software remotely through a computer network is entitled to receive a complete copy of the corresponding source code. Deploying New-API as an internal gateway in a proprietary, commercial enterprise management suite (BOUXRE) presents unacceptable legal and intellectual property exposure.
 - **OmniRoute & ezRouter (MIT) / Bifrost & RouteLLM (Apache 2.0) — SAFE:**
   Permissive open-source licenses allowing commercial incorporation without copyleft obligations.
-- **Native TypeScript Router (BOURXE Proprietary) — OPTIMAL:**
+- **Native TypeScript Router (BOUXRE Proprietary) — OPTIMAL:**
   100% owned codebase with zero external intellectual property encumbrances.
 
 ### 6.2 Secret Custody and Cryptographic Boundaries
 - **External Gateways (OmniRoute, Bifrost, New-API):**
   Require transferring enterprise API keys to an external server. The external server becomes an additional high-value target holding plaintext or locally encrypted keys.
 - **Native Router:**
-  Keys remain securely inside BOURXE's existing database vault (`public.app_ai_provider_connections`). Encryption uses AES-256-GCM, PostgREST denies client access via RLS (`USING (false)`), and decryption occurs strictly in Vercel serverless memory for the duration of the inference call. Keys never touch external disks or third-party gateways.
+  Keys remain securely inside BOUXRE's existing database vault (`public.app_ai_provider_connections`). Encryption uses AES-256-GCM, PostgREST denies client access via RLS (`USING (false)`), and decryption occurs strictly in Vercel serverless memory for the duration of the inference call. Keys never touch external disks or third-party gateways.
 
 ---
 
@@ -262,7 +262,7 @@ The candidates are evaluated against the 20 criteria established in the mission 
 
 ## 8. Critical Bolu Business & Governance Guardrails Alignment
 
-A non-negotiable requirement of BOURXE is that an AI gateway must **never** circumvent platform guardrails:
+A non-negotiable requirement of BOUXRE is that an AI gateway must **never** circumvent platform guardrails:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐

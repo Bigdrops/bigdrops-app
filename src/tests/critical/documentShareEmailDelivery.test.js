@@ -507,7 +507,7 @@ test('BEHAVIORAL: Provider confirmed rejection returns 422 with ambiguous=false'
       send: async () => {
         return {
           data: null,
-          error: { message: 'Domain not verified. Unable to send from notifications@bourxe.com' },
+          error: { message: 'Domain not verified. Unable to send from notifications@bouxre.com' },
         }
       },
     },

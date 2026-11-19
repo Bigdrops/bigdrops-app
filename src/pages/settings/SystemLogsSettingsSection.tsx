@@ -91,7 +91,7 @@ export default function SystemLogsSettingsSection() {
       const downloadAnchor = document.createElement('a')
       const dateStr = new Date().toISOString().slice(0, 10)
       downloadAnchor.setAttribute('href', dataStr)
-      downloadAnchor.setAttribute('download', `bourxe-diagnostic-logs-${dateStr}.json`)
+      downloadAnchor.setAttribute('download', `bouxre-diagnostic-logs-${dateStr}.json`)
       document.body.appendChild(downloadAnchor)
       downloadAnchor.click()
       downloadAnchor.remove()

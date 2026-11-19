@@ -1,15 +1,15 @@
-# BOURXE: Comprehensive Current-State Observability & Telemetry Audit
+# BOUXRE: Comprehensive Current-State Observability & Telemetry Audit
 
 - **Audit Date:** November 17, 2026
 - **Auditor:** Antigravity Forensic Engineering Agent (Strict Read-Only Mode)
-- **Scope:** Entire BOURXE Repository (`bigdrops-app`)
+- **Scope:** Entire BOUXRE Repository (`bigdrops-app`)
 - **Focus:** Complete Baseline of Error Monitoring, Product Analytics, Audit Trails, AI Telemetry, Authentication, and Consent Systems
 
 ---
 
 ## 1. Executive Summary
 
-This forensic audit establishes the factual baseline of all observability, diagnostic, telemetry, and tracking systems in the BOURXE repository. It synthesizes findings from previous audits (`docs/reports/SecurityxCompliance/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md` and `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`) and direct repository inspection.
+This forensic audit establishes the factual baseline of all observability, diagnostic, telemetry, and tracking systems in the BOUXRE repository. It synthesizes findings from previous audits (`docs/reports/SecurityxCompliance/BOUXRE_Existing_Observability_Analytics_Authentication_Audit.md` and `docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md`) and direct repository inspection.
 
 ### High-Level Summary of Findings:
 - **Crash Observability:** Operational on the frontend via Sentry (`@sentry/react@11.13.0`) with targeted privacy hardening.
@@ -35,7 +35,7 @@ This forensic audit establishes the factual baseline of all observability, diagn
 | **React Error Boundary**| `src/components/ErrorBoundary.tsx` invokes `captureReactError(error, errorInfo)`. | `[VERIFIED CONNECTED]` |
 | **Privacy Hardening** | Substring key-matching, console breadcrumb filtering, and navigation URL scrub in `src/lib/sentry.ts`. | `[VERIFIED HARDENED]` |
 | **Regression Tests** | `src/tests/sentry-privacy.test.js`: **48 passed, 0 failed** (82 assertions) verified locally. | `[VERIFIED PASSING]` |
-| **Independent Audit** | Formal report in `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md` with verdict "APPROVED WITH CONDITIONS". The report describes defects that were later fixed; it is a historical record, not current-state proof. | `[HISTORICAL]` |
+| **Independent Audit** | Formal report in `docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md` with verdict "APPROVED WITH CONDITIONS". The report describes defects that were later fixed; it is a historical record, not current-state proof. | `[HISTORICAL]` |
 
 ---
 
@@ -61,7 +61,7 @@ This forensic audit establishes the factual baseline of all observability, diagn
 | `vite-env.d.ts` | `VITE_POSTHOG_*` | **0** | `[VERIFIED ABSENT]` No TypeScript typing for PostHog environment variables. |
 | `index.html` | `<script ... posthog` | **0** | `[VERIFIED ABSENT]` Zero external tracking snippets. |
 
-> **Conclusion:** PostHog Product Analytics is currently **0% implemented** in the BOURXE repository.
+> **Conclusion:** PostHog Product Analytics is currently **0% implemented** in the BOUXRE repository.
 
 ---
 
@@ -111,7 +111,7 @@ This forensic audit establishes the factual baseline of all observability, diagn
 
 ## 9. Workstream 8: Cloudzyro Backend Server & Infrastructure
 
-- **Implementation:** `server.ts` executing on persistent Cloudzyro VPS (`https://bourxe-api.cloudzyro.app`).
+- **Implementation:** `server.ts` executing on persistent Cloudzyro VPS (`https://bouxre-api.cloudzyro.app`).
 - **Core Functionality:** Handles streaming AI endpoints (`/api/bolu-chat`), Gate 2 transactional persistence (`/api/bolu-save`), provider configuration (`/api/bolu-provider-config`), and payment attachment management.
 - **Health Monitoring:** Exposes `GET /health` and `GET /api/health` returning JSON uptime and status payloads.
 - **Logging Reality:** Relies on standard `console.error` and `console.log`. No log shipping or APM agent is installed on the backend.

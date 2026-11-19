@@ -4,9 +4,9 @@ This report was written by Codex on 2026-10-12 via Codex Desktop.
 
 ## Objective
 
-Implement BOURXE Onboarding V4 as a standalone Design Lab experiment.
+Implement BOUXRE Onboarding V4 as a standalone Design Lab experiment.
 
-Use `docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOURXE_Ultimate_Onboarding.html` as the design source of truth.
+Use `docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOUXRE_Ultimate_Onboarding.html` as the design source of truth.
 
 ## Scope
 
@@ -47,7 +47,7 @@ The implementation preserves these source sections:
 - Chapter 1: independent business workspaces and living tree animation.
 - Chapter 2: commercial engine and kinetic paperwork press.
 - Chapter 3: finance circuitry with VAT and WHT endpoints.
-- Chapter 4: logistics road scene with moving three-wheeled BOURXE vehicle.
+- Chapter 4: logistics road scene with moving three-wheeled BOUXRE vehicle.
 - Chapter 5: field service generator and technician scene.
 - Dedicated Sign In screen.
 - Dedicated Sign Up screen.

@@ -1,11 +1,11 @@
-# BOURXE Brand Identity (Phase 1)
+# BOUXRE Brand Identity (Phase 1)
 
-BOURXE is the official public-facing product name of the platform formerly known as BIGDROPS. This document defines the brand. It changes no code, no routes, and no data.
+BOUXRE is the official public-facing product name of the platform formerly known as BIGDROPS. This document defines the brand. It changes no code, no routes, and no data.
 
 ## 1. Official identity
 
-- **Product name:** BOURXE
-- **Capitalization:** always all capitals. Never `Bourxe`, `bourxe`, or `BourXe`.
+- **Product name:** BOUXRE
+- **Capitalization:** always all capitals. Never `Bouxre`, `bouxre`, or `BOUXRE`.
 - **What it is:** an integrated business operations platform for Nigerian SMEs (invoicing, logistics, project tracking, accounting, compliance, reporting).
 - **Official acronym:** Business Operations, Unified Resources & eXecution Engine.
 
@@ -30,7 +30,7 @@ BOURXE is the official public-facing product name of the platform formerly known
 
 ## 4. Brand voice
 
-BOURXE is enterprise-grade business software: modern, capable, and technically ambitious.
+BOUXRE is enterprise-grade business software: modern, capable, and technically ambitious.
 
 | Context | Voice |
 |---|---|
@@ -47,7 +47,7 @@ Inappropriate: humour in invoices, receipts, quotations, waybills, legal text, f
 
 ## 6. Legacy BIGDROPS references
 
-- Use **BOURXE** for the current public identity: README title, new documentation, customer-facing copy.
+- Use **BOUXRE** for the current public identity: README title, new documentation, customer-facing copy.
 - Retain **BIGDROPS** / **bigdrops** wherever it is technically or historically required: repository name and clone URL, environment variables, database objects and migrations, routes, API contracts, storage identifiers and paths, historical reports and PRD filenames.
 - Do not do a global search-and-replace of BIGDROPS. Change a legacy reference only when its owning system is formally migrated.
 

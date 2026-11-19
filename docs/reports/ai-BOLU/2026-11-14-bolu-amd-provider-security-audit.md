@@ -16,7 +16,7 @@ This audit establishes the security, compatibility, and exact configuration requ
 1. **Compatibility Confirmed:** AMD Radeon Cloud Token Factory is **100% compatible** with Bolu's existing server-side OpenAI-compatible adapter (`api/bolu-chat.ts`). It exposes a standard `/chat/completions` endpoint supporting Bearer authentication, SSE streaming, and OpenAI request/response schemas.
 2. **Key Security Verified:** Bolu's API key custody is **strictly server-side**. The API key is read exclusively in `api/bolu-chat.ts` via `process.env`. The key is **never exposed** in client-side bundles, React components, browser storage (`localStorage`/`sessionStorage`), cookies, database rows, or error responses.
 3. **Smart Auto-Detection Added:** A minor defect in provider defaulting was resolved. Previously, setting `BOLU_AMD_API_KEY` without `BOLU_PROVIDER_NAME=amd` defaulted to OpenRouter. `src/lib/ai-assistant/bolu-provider.ts` now automatically infers provider `'amd'`, base URL `https://developer.amd.com.cn/radeon/api/v1`, and model `DeepSeek-V4-Flash` whenever `BOLU_AMD_API_KEY` is present or an `rc-` prefixed key is used.
-4. **Configuration Destination Clarified:** API keys **must NOT** be entered into BOURXE frontend Settings, source files, Git commits, or ordinary database tables. The key belongs in the **deployment platform's secure environment variable settings (Vercel Project Settings)** or local `.env.local`.
+4. **Configuration Destination Clarified:** API keys **must NOT** be entered into BOUXRE frontend Settings, source files, Git commits, or ordinary database tables. The key belongs in the **deployment platform's secure environment variable settings (Vercel Project Settings)** or local `.env.local`.
 5. **Readiness Determination:** **Bolu is fully ready for the user to configure the AMD key.**
 
 ---
@@ -74,7 +74,7 @@ A line-by-line inspection of the key-handling lifecycle confirmed strict complia
 ### 4.1 Production & Preview Deployment (Vercel)
 The user should enter the AMD key directly into Vercel Project Settings:
 
-1. Log into **Vercel** and select the BOURXE project (`bourxe-app` / `bigdrops-app`).
+1. Log into **Vercel** and select the BOUXRE project (`bouxre-app` / `bigdrops-app`).
 2. Go to **Settings** $\rightarrow$ **Environment Variables**.
 3. Add the following variables:
 
@@ -108,11 +108,11 @@ To test locally on a developer workstation:
 
 ## 5. Architectural Assessment: Frontend Settings vs. Deployment Variables
 
-**Why an API Key Input was NOT added to BOURXE Settings:**
-1. **Multi-Tenant Security Invariant:** BOURXE is a multi-tenant business suite. Storing plaintext or client-decryptable third-party AI keys in tenant database tables allows any authenticated user or XSS vector to extract commercial API credentials.
+**Why an API Key Input was NOT added to BOUXRE Settings:**
+1. **Multi-Tenant Security Invariant:** BOUXRE is a multi-tenant business suite. Storing plaintext or client-decryptable third-party AI keys in tenant database tables allows any authenticated user or XSS vector to extract commercial API credentials.
 2. **Current Architecture:** Bolu is currently configured as an application-managed platform capability where the platform provides inference to authorized SME users.
 3. **Prerequisites for Future In-App BYOK (Bring Your Own Key):**
-   If BOURXE later supports tenant-owned keys, the following backend infrastructure is mandatory before exposing any UI:
+   If BOUXRE later supports tenant-owned keys, the following backend infrastructure is mandatory before exposing any UI:
    - Server-side envelope encryption via KMS / `pgsodium` (Supabase Vault).
    - Write-only RPCs: tenant admins can submit/rotate keys, but neither users nor API responses can ever read decrypted keys back.
    - Per-tenant secret resolution: `/api/bolu-chat` queries the encrypted vault per tenant ID rather than reading a static environment variable.

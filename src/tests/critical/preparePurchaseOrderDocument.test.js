@@ -236,7 +236,7 @@ test('preparePurchaseOrderDocument: strict absence of bank details and WHT on ou
   const po = createSamplePO()
   const options = {
     settings: {
-      company_name: 'Bourxe Contracting Nigeria Ltd',
+      company_name: 'Bouxre Contracting Nigeria Ltd',
       company_address: '10 Marina Street',
       company_city: 'Lagos Island',
       company_state: 'Lagos',

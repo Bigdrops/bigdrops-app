@@ -31,11 +31,11 @@ const ALL_COMMERCIAL_IDS = [
 ] as const
 
 const settings = {
-  company_name: 'BOURXE Procurement Ltd',
+  company_name: 'BOUXRE Procurement Ltd',
   company_address: '14 Marina, Lagos',
   company_city: 'Lagos',
   company_state: 'Lagos',
-  company_email: 'procurement@bourxe.example',
+  company_email: 'procurement@bouxre.example',
   company_phone: '+234 1 234 5678',
   company_tin: 'TIN 20384847',
 }

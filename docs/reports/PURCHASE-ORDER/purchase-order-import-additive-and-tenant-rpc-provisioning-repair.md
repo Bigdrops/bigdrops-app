@@ -54,7 +54,7 @@ PostgREST failed with error:
 
 Root cause:
 - `save_purchase_order_with_items_transaction` and `transition_purchase_order_status` were defined in `public` in migration `20261016120000_purchase_order_lifecycle_hardening.sql`.
-- In BOURXE multi-tenancy, the frontend `tenantClient` is schema-scoped (`client.schema(tenantSchema)`), which sends the PostgREST header `Accept-Profile: entity_bigdrops-main_main`.
+- In BOUXRE multi-tenancy, the frontend `tenantClient` is schema-scoped (`client.schema(tenantSchema)`), which sends the PostgREST header `Accept-Profile: entity_bigdrops-main_main`.
 - PostgREST evaluates calls in the selected schema.
 - Tenant routines are installed into each tenant schema by `public._prov_install_tenant_rpcs(p_schema_name text)`.
 - The installer previously contained routines 1 through 30 (ending with `save_quotation_with_items_transaction`), but omitted the Purchase Order routines.

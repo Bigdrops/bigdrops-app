@@ -210,7 +210,7 @@ test('editorcn unsupported markup exclusion: strikethrough, tables, and raw cont
 })
 
 test('Letter multiline conversion preserves lines and paragraph boundaries cleanly', () => {
-  const letterText = 'Dear Client,\n\nWe are pleased to submit our invoice.\nPlease find details below.\n\nBest regards,\nBourxe Team'
+  const letterText = 'Dear Client,\n\nWe are pleased to submit our invoice.\nPlease find details below.\n\nBest regards,\nBouxre Team'
   
   // textToHtml behavior (LetterBodyEditor)
   const html = letterText
@@ -223,9 +223,9 @@ test('Letter multiline conversion preserves lines and paragraph boundaries clean
 
   assert.match(normalized, /<p>Dear Client,<\/p>/)
   assert.match(normalized, /<p>We are pleased to submit our invoice\.<\/p>/)
-  assert.match(normalized, /<p>Best regards,<\/p><p>Bourxe Team<\/p>/)
+  assert.match(normalized, /<p>Best regards,<\/p><p>Bouxre Team<\/p>/)
   assert.match(plain, /Dear Client,/)
-  assert.match(plain, /Bourxe Team/)
+  assert.match(plain, /Bouxre Team/)
 })
 
 test('LetterBodyEditor conversion roundtrip preserves plain text paragraphs and strips inline HTML tags', () => {

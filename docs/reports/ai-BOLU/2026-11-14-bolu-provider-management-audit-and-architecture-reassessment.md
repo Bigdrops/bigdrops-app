@@ -1,7 +1,7 @@
 # Bolu Provider Management — Failure Investigation & Architecture Reassessment Report
 
 - **Date:** 2026-11-14
-- **Author:** BOURXE AI Engineering Agent
+- **Author:** BOUXRE AI Engineering Agent
 - **Document Status:** COMPLETED AND VERIFIED AUDIT
 - **Audit Type:** STRICT ZERO-CODE-EDIT AUDIT
 - **Primary Error Under Investigation:** `err_1794667887617_u9skz6` (`Internal server configuration error.` on `/settings`)
@@ -41,7 +41,7 @@ The error is caused by **missing server environment variables in the execution c
 2. **Local vs Cloud Parity:** The local dev server middleware (`vite.config.js`) executes serverless handlers in Node without loading `.env` into `process.env`, creating a divergence between local testing and production.
 
 ### 1.4 Overall Provider-Management Architecture Assessment
-The current BOURXE implementation is **a single-provider credential storage form, not a true provider-management system**.
+The current BOUXRE implementation is **a single-provider credential storage form, not a true provider-management system**.
 - The database schema (`public.app_ai_provider_config`) hardcodes `id = 'primary'`.
 - Saving a new provider (e.g., OpenRouter) unconditionally overwrites the existing provider (e.g., AMD Token Factory).
 - There is no support for storing multiple provider credentials, multi-model routing, live `/v1/models` discovery, or zero-loss provider switching.
@@ -133,9 +133,9 @@ To confirm the root cause empirically without modifying code, probe requests wer
 
 ## 3. Hermes Provider-Management Benchmark
 
-The BOURXE implementation was audited against the provider-management architecture of Nous Research's **Hermes Agent** (`NousResearch/hermes-agent`). All 20 capability areas specified in the mission have been independently classified:
+The BOUXRE implementation was audited against the provider-management architecture of Nous Research's **Hermes Agent** (`NousResearch/hermes-agent`). All 20 capability areas specified in the mission have been independently classified:
 
-| # | Capability Area | Hermes Agent Benchmark | BOURXE Implementation | Classification | Evidence & File References |
+| # | Capability Area | Hermes Agent Benchmark | BOUXRE Implementation | Classification | Evidence & File References |
 |---|---|---|---|---|---|
 | 1 | Provider catalogue & onboarding | Declarative catalog (OpenAI, Anthropic, OpenRouter, Groq, Ollama, Custom) with endpoints & metadata | 14-provider catalog in `providerRegistry.ts` exists only in Design Lab simulation. Runtime is limited to AMD & OpenRouter | **Partially Implemented** | `src/lib/ai-assistant/providerRegistry.ts` (simulated); `api/bolu-chat.ts` (hardcoded AMD/OpenRouter) |
 | 2 | Provider-specific auth methods | Supports Bearer tokens, Anthropic `x-api-key`, AWS SigV4, Azure API keys, custom headers | Only HTTP Bearer authentication supported. `authScheme` in types is ignored by runtime | **Partially Implemented** | `src/lib/ai-assistant/bolu-provider.ts` (`buildProviderHeaders`); `api/bolu-chat.ts` |
@@ -156,7 +156,7 @@ The BOURXE implementation was audited against the provider-management architectu
 | 17 | Credential masking & secret isolation | Keys masked in UI and stored in local files / keychain | AES-256-GCM envelope encryption. Database RLS denies all client reads (`USING (false)`). Masked UI preview | **Implemented and Evidenced** | `bolu-secret-vault.ts`; `supabase/migrations/20261114160000_bolu_provider_credentials.sql` |
 | 18 | Persistence across sessions | Persisted in local config files; requires manual cross-device sync | Persisted in hosted PostgreSQL database. Available across all enterprise sessions and client devices | **Implemented and Evidenced** | `app_ai_provider_config` table in Supabase |
 | 19 | Admin authorization & ownership | Single-user personal agent; no enterprise RBAC | Enterprise RBAC gates config to `profiles.role === 'admin'` or `workspace_members.role in ('owner', 'admin')` | **Implemented and Evidenced** | `api/bolu-provider-config.ts` (`verifyAdminUser`) |
-| 20 | Mobile & desktop management UX | Desktop web UI & CLI; no mobile-responsive layout | Mobile-responsive Tailwind UI with touch targets and safe area spacing in BOURXE AppShell | **Implemented and Evidenced** | `BoluProviderSettingsSection.tsx` |
+| 20 | Mobile & desktop management UX | Desktop web UI & CLI; no mobile-responsive layout | Mobile-responsive Tailwind UI with touch targets and safe area spacing in BOUXRE AppShell | **Implemented and Evidenced** | `BoluProviderSettingsSection.tsx` |
 
 **Summary Scores:**
 - **Implemented and Evidenced:** 10 / 20 (50%)
@@ -165,7 +165,7 @@ The BOURXE implementation was audited against the provider-management architectu
 
 ---
 
-## 4. Current BOURXE Architecture
+## 4. Current BOUXRE Architecture
 
 ### 4.1 Data Model
 The current database model consists of a single table defined in `supabase/migrations/20261114160000_bolu_provider_credentials.sql`:
@@ -237,7 +237,7 @@ To evolve Bolu from a single-credential form into a genuine, enterprise-grade AI
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        BOURXE AI Provider Subsystem                    │
+│                        BOUXRE AI Provider Subsystem                    │
 └────────────────────────────────────────────────────────────────────────┘
                                    │
          ┌─────────────────────────┼─────────────────────────┐
@@ -330,7 +330,7 @@ WHERE is_active = true;
 
 ## 9. Open Questions for Product Owner
 
-1. **Multi-Provider Scope:** Does BOURXE require multi-provider failover for production release, or is a single active provider with mock fallback sufficient for the initial milestone?
+1. **Multi-Provider Scope:** Does BOUXRE require multi-provider failover for production release, or is a single active provider with mock fallback sufficient for the initial milestone?
 2. **Authorization Boundary:** Should workspace owners ever be allowed to configure AI providers, or should this strictly be reserved for platform super-administrators (`profiles.role === 'admin'`)?
 3. **Data Residency & Terms:** Has legal approval been granted for tenant business data to pass through AMD Token Factory endpoints (hosted in China) or free-tier OpenRouter models?
 

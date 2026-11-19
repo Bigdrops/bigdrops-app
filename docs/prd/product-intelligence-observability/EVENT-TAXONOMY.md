@@ -1,4 +1,4 @@
-# BOURXE: Event Taxonomy & Data Dictionary Specification
+# BOUXRE: Event Taxonomy & Data Dictionary Specification
 
 - **Document Version:** 1.0.0
 - **Status:** Data Governance Specification (`[PROPOSAL]` / Under Review)
@@ -9,7 +9,7 @@
 
 ## 1. Event Governance Principles
 
-To maintain data cleanliness, avoid duplicate tracking, and guarantee privacy, all future analytics events instrumented in BOURXE must conform to this taxonomy.
+To maintain data cleanliness, avoid duplicate tracking, and guarantee privacy, all future analytics events instrumented in BOUXRE must conform to this taxonomy.
 
 ### 1.1 Strict Naming Rules
 1. **Object-Action Format:** Every event name must be formatted as `[object]_[action]` in lowercase snake_case (e.g., `document_created`, not `created_document` or `DocumentCreated`).

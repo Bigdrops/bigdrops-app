@@ -1,4 +1,4 @@
-# BOURXE Master Initiative: Product Intelligence & Observability
+# BOUXRE Master Initiative: Product Intelligence & Observability
 
 - **Master Directory:** `docs/prd/product-intelligence-observability/`
 - **Initiative Category:** Core Platform Infrastructure, Telemetry & Observability
@@ -10,9 +10,9 @@
 
 ## 1. Initiative Executive Overview
 
-The **BOURXE Product Intelligence & Observability** initiative establishes the unified, authoritative strategy and architecture for understanding, monitoring, measuring, and optimizing the BOURXE platform.
+The **BOUXRE Product Intelligence & Observability** initiative establishes the unified, authoritative strategy and architecture for understanding, monitoring, measuring, and optimizing the BOUXRE platform.
 
-BOURXE is an operational and financial management platform designed for Nigerian Small and Medium Enterprises (SMEs), handling invoice creation, quotation generation, purchase order tracking, inventory management, customer records, and AI-assisted workflows (Bolu).
+BOUXRE is an operational and financial management platform designed for Nigerian Small and Medium Enterprises (SMEs), handling invoice creation, quotation generation, purchase order tracking, inventory management, customer records, and AI-assisted workflows (Bolu).
 
 This umbrella initiative brings together:
 1. **Application Health & Crash Observability (Sentry):** Real-time frontend exception monitoring, error boundary capture, and privacy-hardened diagnostic context.
@@ -65,7 +65,7 @@ docs/prd/product-intelligence-observability/
 | [`PRD.md`](PRD.md) | Master PRD | High-level business goals, product objectives, user personas, non-goals, and core capabilities. |
 | [`CURRENT-STATE-AUDIT.md`](CURRENT-STATE-AUDIT.md) | Technical Baseline | Forensic investigation of Sentry, PostHog, Supabase Auth, Bolu Ledger, Error Registry, and Consent. |
 | [`COMPLETED-WORK.md`](COMPLETED-WORK.md) | Historical Record | Factual timeline of verified implementations, independent audits, regression tests, and minor follow-ups. |
-| [`PRODUCT-INTELLIGENCE-STRATEGY.md`](PRODUCT-INTELLIGENCE-STRATEGY.md) | Strategic Vision | Core questions BOURXE must answer, user journey models, activation definitions, and decision feedback loops. |
+| [`PRODUCT-INTELLIGENCE-STRATEGY.md`](PRODUCT-INTELLIGENCE-STRATEGY.md) | Strategic Vision | Core questions BOUXRE must answer, user journey models, activation definitions, and decision feedback loops. |
 | [`OBSERVABILITY-ARCHITECTURE.md`](OBSERVABILITY-ARCHITECTURE.md) | Architecture Design | Interaction model between client SPA, Cloudzyro backend, Supabase DB, Sentry, and PostHog. |
 | [`SENTRY.md`](SENTRY.md) | Error Monitoring | `@sentry/react@11.13.0` integration, privacy scrubbing, 48 regression tests, and follow-up items. |
 | [`POSTHOG.md`](POSTHOG.md) | Product Analytics | PostHog technical audit (0% installed), account readiness requirements, wrapper design, and plan limits. |

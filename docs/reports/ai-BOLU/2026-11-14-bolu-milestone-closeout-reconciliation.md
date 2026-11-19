@@ -12,9 +12,9 @@
 
 This report completes the mandatory engineering task close-out and roadmap reconciliation for the Bolu invoice-operations implementation milestone.
 
-In prior phases, Bolu's conversational create and modify operations for the reference Invoice document family were implemented and verified on the application side without live AI provider credentials or external API network calls. All financial calculations were locked to the existing application calculation engine, two-gate user approval controls were established, and persistence was wired into BOURXE's PostgreSQL transaction infrastructure with sequence collision retry.
+In prior phases, Bolu's conversational create and modify operations for the reference Invoice document family were implemented and verified on the application side without live AI provider credentials or external API network calls. All financial calculations were locked to the existing application calculation engine, two-gate user approval controls were established, and persistence was wired into BOUXRE's PostgreSQL transaction infrastructure with sequence collision retry.
 
-This close-out reconciles the canonical roadmap (`Waterfall-roadmap.md`), presentation mirror (`roadmap.html`), and supporting PRD documentation (`decision-log.md`, `risk-register.md`, `architecture.md`, `functional-req.md`, `test-plan.md`, `Readme.md`) against actual code realities and test evidence. Furthermore, it codifies DEC-31, establishing continuous roadmap reconciliation as a mandatory requirement for all future BOURXE tasks.
+This close-out reconciles the canonical roadmap (`Waterfall-roadmap.md`), presentation mirror (`roadmap.html`), and supporting PRD documentation (`decision-log.md`, `risk-register.md`, `architecture.md`, `functional-req.md`, `test-plan.md`, `Readme.md`) against actual code realities and test evidence. Furthermore, it codifies DEC-31, establishing continuous roadmap reconciliation as a mandatory requirement for all future BOUXRE tasks.
 
 ---
 

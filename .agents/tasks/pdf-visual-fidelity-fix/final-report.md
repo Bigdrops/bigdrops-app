@@ -1,4 +1,4 @@
-# BOURXE PDF Visual Fidelity Fix — Final Report
+# BOUXRE PDF Visual Fidelity Fix — Final Report
 
 **Task:** PDF palette isolation and Architectural logo fix  
 **Commit:** `f094443a` — `fix(pdf): isolate intrinsic-palette templates from app-theme accent bleed; fix Architectural logo cramping`  
@@ -169,7 +169,7 @@ The acceptance criterion "Actual generated PDFs have been visually inspected" wa
 
 **What was not verified:** Actual rendered page appearance, color rendering pipeline fidelity, logo aspect-ratio preservation with a real uploaded image, and comparative visual match against the HTML references.
 
-**Remediation required:** A human operator must open the BOURXE app, generate at least one Architectural PDF and one Executive or Heritage House PDF with a previously saved amber custom accent, and confirm that:
+**Remediation required:** A human operator must open the BOUXRE app, generate at least one Architectural PDF and one Executive or Heritage House PDF with a previously saved amber custom accent, and confirm that:
 1. No amber appears in the rendered output
 2. The Architectural logo has adequate breathing room and proportionate dimensions
 3. The three templates present their intrinsic palettes (charcoal/copper/ivory, forest/gold/paper, burgundy/bronze/paper)
@@ -194,7 +194,7 @@ All commands were run against commit `f094443a`. Results are drawn from the comm
 
 ## 5. Acceptance Criteria Status
 
-- [x] Architectural, Executive, Heritage House PDFs no longer inherit BOURXE amber theme colors
+- [x] Architectural, Executive, Heritage House PDFs no longer inherit BOUXRE amber theme colors
   — Guard in `invoicePdfActions.ts` and `pdfDownloadHandler.ts` forces `useCustomColors: false` for all three templates; confirmed structurally by focused tests
 
 - [x] Each template matches its HTML reference palette and visual hierarchy

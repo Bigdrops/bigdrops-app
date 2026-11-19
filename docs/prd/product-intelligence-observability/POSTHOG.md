@@ -1,4 +1,4 @@
-# BOURXE Workstream Specification: PostHog Product Analytics
+# BOUXRE Workstream Specification: PostHog Product Analytics
 
 - **Document Version:** 1.0.0
 - **Status:** Strategic Workstream Specification (`[PROPOSAL]` / Under Review)
@@ -10,7 +10,7 @@
 
 ## 1. Workstream Overview
 
-PostHog is designated as the future product analytics engine for BOURXE. Its purpose is to provide the product team with behavioral visibility into how Nigerian SMEs navigate the platform, adopt new features, complete or abandon document creation workflows, and retain over 30-day cycles.
+PostHog is designated as the future product analytics engine for BOUXRE. Its purpose is to provide the product team with behavioral visibility into how Nigerian SMEs navigate the platform, adopt new features, complete or abandon document creation workflows, and retain over 30-day cycles.
 
 PostHog is an analytics component within the broader Product Intelligence initiative; it does not replace Sentry for error tracking, nor does it ingest financial or personal records.
 
@@ -38,8 +38,8 @@ Before any code integration can begin, the external PostHog account must be prep
 
 ### 3.2 Environment Separation Strategy
 To prevent developer tests from distorting real business conversion metrics, the PostHog organization must configure two separate projects:
-1. `BOURXE-Production` (Generates production write key `VITE_POSTHOG_KEY`).
-2. `BOURXE-Development` (Generates development write key for local staging).
+1. `BOUXRE-Production` (Generates production write key `VITE_POSTHOG_KEY`).
+2. `BOUXRE-Development` (Generates development write key for local staging).
 
 ### 3.3 Account-Side Feature Configuration
 - **Session Recording:** Verified **DISABLED** in project settings.
@@ -131,6 +131,6 @@ export function trackEvent<T extends Record<string, unknown>>(
 ## 5. Unresolved Decisions Requiring Product Owner Signoff
 
 1. **Host Ingestion Region:** Which cloud region does the user's existing account reside in (US vs EU)?
-2. **Environment Separation:** Authorize creating two distinct projects (`BOURXE-Prod` and `BOURXE-Dev`).
+2. **Environment Separation:** Authorize creating two distinct projects (`BOUXRE-Prod` and `BOUXRE-Dev`).
 3. **Session Replay Policy:** Confirm that Session Replay remains permanently disabled.
 4. **Activation Definition:** Confirm that activation is defined as issuing at least one document within 7 days.

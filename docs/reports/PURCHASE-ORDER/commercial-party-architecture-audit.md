@@ -17,7 +17,7 @@ No skill for multi-tenancy, domain modeling, or systematic debugging is register
 
 ## Objective
 
-Determine the correct Commercial Party Architecture for BOURXE.
+Determine the correct Commercial Party Architecture for BOUXRE.
 
 A product requirement is now clear: one business entity can act as both a client and a supplier. These two roles must not create conflicting identities or mix financial transactions.
 

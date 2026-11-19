@@ -1,4 +1,4 @@
-# BOURXE / BOLU — PHASE 1 VERIFICATION & CLOSE-OUT AUDIT
+# BOUXRE / BOLU — PHASE 1 VERIFICATION & CLOSE-OUT AUDIT
 **Document Identifier:** `docs/reports/ai/2026-11-14-bolu-phase-1-routing-verification-and-closeout.md`  
 **Execution Type:** Strict Zero-Application-Code-Edit Audit  
 **Phase:** 1 — Native Multi-Account AI Routing  
@@ -135,7 +135,7 @@ The schema matches the locked Phase 1 specification:
 1. **AES-256-GCM Envelope Encryption:**
    - Random 12-byte initialization vector generated per encryption via `crypto.randomBytes(12)`.
    - 16-byte authentication tag generated via `cipher.getAuthTag()` and verified on read via `decipher.setAuthTag(tag)`.
-   - Master key derived deterministically via HMAC-SHA256 from `SUPABASE_SERVICE_ROLE_KEY` with constant salt `bourxe-bolu-vault-v1` (or direct 32-byte `BOLU_ENCRYPTION_KEY`).
+   - Master key derived deterministically via HMAC-SHA256 from `SUPABASE_SERVICE_ROLE_KEY` with constant salt `bouxre-bolu-vault-v1` (or direct 32-byte `BOLU_ENCRYPTION_KEY`).
 2. **Serverless Boundary:**
    - Decryption occurs strictly inside `src/lib/ai-assistant/routing/bolu-account-pool.ts` within serverless execution.
    - Plaintext keys never leave the serverless process and are never echoed in logs or API responses.
@@ -326,7 +326,7 @@ Both roadmap records were inspected and synchronized to reflect actual audited f
 ### **DECISION: READY WITH EXPLICITLY ACCEPTED LIMITATIONS**
 
 **Rationale:**  
-The backend foundation is structurally sound, adheres to all core BOURXE guardrails, passes 123 automated tests, and completely segregates secrets from client code. The five identified defects are surgical, localized, and well-understood. None of them compromise database integrity, financial calculations, or tenant isolation.
+The backend foundation is structurally sound, adheres to all core BOUXRE guardrails, passes 123 automated tests, and completely segregates secrets from client code. The five identified defects are surgical, localized, and well-understood. None of them compromise database integrity, financial calculations, or tenant isolation.
 
 Phase 2 (Settings UI redesign and multi-account administrative console) can proceed safely, provided that the surgical TypeScript narrowing and 401/402 failover patch is applied at the beginning of the Phase 2 worktree.
 

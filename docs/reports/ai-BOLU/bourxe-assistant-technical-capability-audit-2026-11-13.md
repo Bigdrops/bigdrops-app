@@ -1,10 +1,10 @@
-# BOURXE Assistant — Technical Capability Audit of the Existing Application
+# BOUXRE Assistant — Technical Capability Audit of the Existing Application
 
 This report was written by Buffy on 2026-11-13 via Freebuff.
 
 ## Objective
 
-Record what the existing BOURXE application can do today, so the first assistant capability can be chosen from evidence. This report does not design the assistant and does not propose an implementation plan.
+Record what the existing BOUXRE application can do today, so the first assistant capability can be chosen from evidence. This report does not design the assistant and does not propose an implementation plan.
 
 ## Scope
 
@@ -47,7 +47,7 @@ Every material statement below carries one of these labels.
 | Label | Meaning |
 |---|---|
 | USER-STATED DIRECTION | Direction given by the project owner in this conversation. |
-| REFERENCE | Material used for evaluation only. Not a BOURXE requirement. |
+| REFERENCE | Material used for evaluation only. Not a BOUXRE requirement. |
 | OBSERVATION | Verified fact from repository files. |
 | INFERENCE | Conclusion drawn from observations. Labelled as such. |
 | PROPOSAL | Suggestion for later evaluation. Not approved. |
@@ -508,13 +508,13 @@ These are evidence-based suggestions. None is approved. None is a design.
 
 The following directions are established and were not re-litigated here.
 
-1. The assistant is a general BOURXE AI experience, comparable to ChatGPT or Gemini on Android. It is not a document-form chatbot.
+1. The assistant is a general BOUXRE AI experience, comparable to ChatGPT or Gemini on Android. It is not a document-form chatbot.
 2. It is not a JSON generator, JSON importer, or schema-filling tool. JSON and structured arguments are internal implementation, never user-facing.
-3. Small Drops is reference material from the owner's personal ChatGPT instructions. It is not a BOURXE requirement.
+3. Small Drops is reference material from the owner's personal ChatGPT instructions. It is not a BOUXRE requirement.
 4. Assistant identity (name, avatar, personality) stays open.
 5. Cloud AI is primary, using free provider tiers. Offline is an emergency backup only.
 6. The assistant asks the user a question only when it genuinely cannot continue.
-7. The assistant must respect BOURXE permissions, business logic, the calculation engine, and persistence rules.
+7. The assistant must respect BOUXRE permissions, business logic, the calculation engine, and persistence rules.
 8. The first milestone must deliver one genuine end-to-end capability.
 9. The assistant must not modify application architecture to fit itself.
 10. Evidence must lead the work. Assumptions are not requirements.
@@ -530,7 +530,7 @@ The following directions are established and were not re-litigated here.
 
 - REFERENCE: Small Drops personal ChatGPT instructions. Evaluation only.
 - REFERENCE: The reference PDF and HTML invoice templates under `docs/templates/` (many now deleted in the working tree). Not application behaviour.
-- REFERENCE: Prior local-AI reports under `docs/reports/ai/`. They describe the cleanup feature, which is committed behaviour; they are not requirements for the BOURXE assistant.
+- REFERENCE: Prior local-AI reports under `docs/reports/ai/`. They describe the cleanup feature, which is committed behaviour; they are not requirements for the BOUXRE assistant.
 
 ## 16. DECISION section (corrected)
 
@@ -567,7 +567,7 @@ Recorded counts: 193 entries in total; 84 deletions; 3 modified files; the rest 
 
 The only entry added by this audit is:
 
-`?? docs/reports/ai/bourxe-assistant-technical-capability-audit-2026-11-13.md`
+`?? docs/reports/ai/bouxre-assistant-technical-capability-audit-2026-11-13.md`
 
 All other entries match the pre-audit snapshot: the same 84 deletions, the same three modified files (`AppShell.tsx`, `DashboardOverview.tsx`, `designLabPreviews.ts`), and the same untracked directories listed in §1. No pre-existing modification, deletion, or untracked file was touched.
 

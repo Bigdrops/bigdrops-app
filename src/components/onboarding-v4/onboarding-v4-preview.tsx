@@ -13,12 +13,12 @@ import { useThemePreferenceContext } from '@/contexts/ThemePreferenceContext'
 import { useDesignLabViewport } from '@/lib/designLabViewports'
 import { resolveAppearance, useExperimentThemeStyle } from '@/components/design-lab/design-lab-theme'
 
-import sourceHtml from '../../../docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOURXE_Ultimate_Onboarding.html?raw'
+import sourceHtml from '../../../docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOUXRE_Ultimate_Onboarding.html?raw'
 
 type UltimateThemeId = 'navy' | 'amber' | 'teal' | 'rose' | 'forest'
 
 const SOURCE_REFERENCE =
-  'docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOURXE_Ultimate_Onboarding.html'
+  'docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOUXRE_Ultimate_Onboarding.html'
 
 const FAMILY_TO_SOURCE_THEME: Record<PhotoHeroFamilyId, UltimateThemeId> = {
   'slate-navy': 'navy',
@@ -29,7 +29,7 @@ const FAMILY_TO_SOURCE_THEME: Record<PhotoHeroFamilyId, UltimateThemeId> = {
 }
 
 const SOURCE_STYLE_ADAPTER = `
-<style id="bourxe-v4-design-lab-adapter">
+<style id="bouxre-v4-design-lab-adapter">
   .theme-trigger,
   #themePanel {
     display: none !important;
@@ -58,7 +58,7 @@ function buildSourceDocument(theme: UltimateThemeId, appearance: PhotoHeroAppear
       `<html lang="en" data-theme="${theme}" data-mode="${appearance}">`,
     )
     .replace(
-      /applyTheme\(readPref\('bourxe-ultimate-theme','navy'\)\);applyMode\(readPref\('bourxe-ultimate-mode','dark'\)\);/,
+      /applyTheme\(readPref\('bouxre-ultimate-theme','navy'\)\);applyMode\(readPref\('bouxre-ultimate-mode','dark'\)\);/,
       `applyTheme('${theme}');applyMode('${appearance}');`,
     )
     .replace('</head>', `${SOURCE_STYLE_ADAPTER}</head>`)

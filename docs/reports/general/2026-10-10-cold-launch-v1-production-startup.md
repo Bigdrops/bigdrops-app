@@ -4,7 +4,7 @@ This report was written by Codex on 2026-10-10 via Codex desktop.
 
 ## Objective
 
-Promote the approved Cold Launch V1 Tenant Tree into the real BOURXE startup lifecycle. Retire the rejected Cold Launch V2 Paper and Delivery candidate. Preserve authentication, tenant readiness, routing, theme persistence, and ordinary route loading behavior.
+Promote the approved Cold Launch V1 Tenant Tree into the real BOUXRE startup lifecycle. Retire the rejected Cold Launch V2 Paper and Delivery candidate. Preserve authentication, tenant readiness, routing, theme persistence, and ordinary route loading behavior.
 
 ## Skills used
 
@@ -68,7 +68,7 @@ The shared presentation reuses `getPhotoHeroVars` from Onboarding V2. The five a
 ## Preserved contracts
 
 - Official BX launcher artwork remains the center logo.
-- Public brand text remains BOURXE.
+- Public brand text remains BOUXRE.
 - Tenant Tree topology, workspace labels, product-document labels, animated connection paths, Quick Tips, Replay, Connection Error, and Retry remain in preview.
 - Production contains no preview controls.
 - Production startup completion is still driven by existing readiness state, not animation timing.

@@ -2,7 +2,7 @@
 
 This report was written by Inkling 2 Small Free (OpenCode) on 2026-11-14.
 
-Task: RECONCILE THE BOURXE AI PRD, PRODUCTION CODE AND DESIGN LAB AROUND THE DYNAMIC MULTI-MODEL ROUTING ARCHITECTURE.
+Task: RECONCILE THE BOUXRE AI PRD, PRODUCTION CODE AND DESIGN LAB AROUND THE DYNAMIC MULTI-MODEL ROUTING ARCHITECTURE.
 This is an architecture investigation and specification reconciliation. No implementation is performed. No application, test, configuration or documentation file is modified by this audit other than this report.
 
 Skills consulted (from `docs/PROJECTSKILLINDEX.md`): `typescript-advanced-types`, `openapi-to-typescript`, `react-dev`, `shadcn`, `ui-ux-pro-max` (inspected for conformity; none applied, because no code was changed). Documentation standard: ASD-STE100 Simplified Technical English.
@@ -10,7 +10,7 @@ Skills consulted (from `docs/PROJECTSKILLINDEX.md`): `typescript-advanced-types`
 Two evidence classes are used:
 
 - **[REPO]** — static inspection of this repository on 2026-11-14 (HEAD `cdfca468`, branch `main`, 16 commits ahead of `origin/main`).
-- **[EXT-DOC]** — external provider or project documentation consulted for this audit. External facts describe provider offerings, not BOURXE behaviour, and are marked as of 2026-11-14; they are not permanent.
+- **[EXT-DOC]** — external provider or project documentation consulted for this audit. External facts describe provider offerings, not BOUXRE behaviour, and are marked as of 2026-11-14; they are not permanent.
 
 Evidence labels: **IMPLEMENTED** · **PARTIALLY IMPLEMENTED** · **DOCUMENTED ONLY** · **SIMULATION ONLY** · **NOT IMPLEMENTED** · **CONFLICTING** · **REQUIRES PRODUCT-OWNER APPROVAL**. They are used as classification for every finding.
 
@@ -24,7 +24,7 @@ Working-tree note: five PRD files (`architecture.md`, `decision-log.md`, `provid
 
 **The product direction in one line.** One engine, many interchangeable models, automatic selection, automatic failover, continuous model replacement, free-first where verified — the gun stays, the ammunition changes.
 
-**The repository today.** BOURXE does not have a dynamic multi-model engine. It has:
+**The repository today.** BOUXRE does not have a dynamic multi-model engine. It has:
 
 - a **legacy client-side runtime** (`providerCatalog.ts` rows → `chat.ts` failover walk → `protocol.ts` SSE parsing → `keys.ts` custody) — static order, fixed model per row, no health tracking, no capability metadata, no model selection;
 - a **14-row declared catalog** (`providerRegistry.ts`) — data only, consumed exclusively by the Design Lab simulation, never by a runtime;
@@ -153,11 +153,11 @@ DEC-28 approves the read/write business-operations direction but expressly does 
 | Selection by availability | `providerAvailable: true` hardcoded (Bolu); no probe in client | NOT IMPLEMENTED | Health ledger + cheap availability probe |
 | Selection by reliability | none | NOT IMPLEMENTED | Rolling success/failure counters per model |
 | Selection by rate limits | none — 429 only discovered on demand | NOT IMPLEMENTED | Cooldown windows from 429/`Retry-After` |
-| Selection by context capacity | none — BOURXE never sends the model's window; `.slice(-12)` hides it | NOT IMPLEMENTED | Per-model window in declared metadata; truncation policy keyed to it |
+| Selection by context capacity | none — BOUXRE never sends the model's window; `.slice(-12)` hides it | NOT IMPLEMENTED | Per-model window in declared metadata; truncation policy keyed to it |
 | Free-first preference | chain order encodes a human's preference; no enforcement or expiry | DOCUMENTED ONLY | Free-first ranker over verified-free eligible set |
 | Spending restrictions | none | NOT IMPLEMENTED (no paid policy approved) | Policy gate before any paid selection; all-free default |
 | Model-specific limitations | `note` free-text only; `authScheme` dead field; AMD "accepted parameters" documented in tickets but never read | PARTIALLY IMPLEMENTED (documentary) | Structured `limitations` metadata + request-parameter shaping or eligibility exclusion |
-| "Not selection by zero token price alone" | chain partly does pick by perceived allowance (AMD first) — AMD is **not** verified for BOURXE networks/terms | CONFLICTING with the direction's safety clause | Zero-price is a signal, never a criterion; eligibility must include health, terms, tools, window |
+| "Not selection by zero token price alone" | chain partly does pick by perceived allowance (AMD first) — AMD is **not** verified for BOUXRE networks/terms | CONFLICTING with the direction's safety clause | Zero-price is a signal, never a criterion; eligibility must include health, terms, tools, window |
 | Model-of-the-moment rotation for resilience | static order only | PARTIALLY IMPLEMENTED | Dynamic pool with cooldown + sticky last-good |
 
 **Assessment.** No automatic routing exists. The only router embryo is `sendAssistantChat()`'s static order walk, which is (a) on the legacy path only, (b) provider-granular not model-granular, (c) unaware of capability, health, or entitlement. Zero changes to selection logic are possible without new metadata — which is why §11 and §13 sequence metadata first.
@@ -276,7 +276,7 @@ Recommended for approval: (1) for the first step; (2) only when cross-device con
 
 ## 9. Business-operation safety
 
-BOURXE supports conversational business operations (DEC-28). Current Bolu is read-only. The direction requires:
+BOUXRE supports conversational business operations (DEC-28). Current Bolu is read-only. The direction requires:
 
 | Safety property (task §D.6) | Status today | Requirement in the pool architecture |
 |---|---|---|
@@ -372,7 +372,7 @@ Reusing and extending the audit's decision list; all REQUIRES PRODUCT-OWNER APPR
 | F | DEC-09 amendment: manual chain order → policy-constrained automatic selection (**the** direction conflict) | §3.2; §4 |
 | G | Paid escalation: may the engine ever select a paid model, under what per-user policy and consent | §7 |
 | H | Health-ledger home: memory-only first, or Supabase table now (RLS, retention, purge) | §6.3 |
-| I | `gemini-4-hydrogen` and other Hydrogen-class models: eligible only after AI Studio verification of the free tier for the BOURXE project, or defer | §6(extended);[EXT-DOC] |
+| I | `gemini-4-hydrogen` and other Hydrogen-class models: eligible only after AI Studio verification of the free tier for the BOUXRE project, or defer | §6(extended);[EXT-DOC] |
 | J | NumeS admission: supply docs/URL/auth/model ids/ToS; interim = custom provider only, no declared row | §7 |
 | K | Write path (DEC-28) sequencing vs pool work — pool first (read-only, low risk), then tools; two gates preserved | §9 |
 | L | Attribution/provenance note for Hermes-derived concept (MIT) | [SELF §2.4] |
@@ -426,7 +426,7 @@ Phase order is gated on §12 answers; nothing starts before B, C, D, and F.
 ### 14.4 PRD and tickets
 - `docs/prd/conversational-document-assistant/{Readme.md, functional-req.md, architecture.md, decision-log.md, provider-catalog.md, risk-register.md, test-plan.md, Waterfall-roadmap.md}` (+5 pre-existing owner edits quoted verbatim by file)
 - `docs/tickets/free-model-failover-stack.md` (OpenRouter/Our Free Model/registry-rot evidence), `docs/tickets/local-ai-model-swap-and-speedup.md`, `docs/tickets/free-claude-code-evaluation.md`
-- `docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md`, `docs/reports/ai/2026-11-13-bourxe-assistant-prototype-experience-audit.md`, `docs/reports/ai/2026-11-13-bolu-production-runtime-implementation.md` (existence/roles), `docs/reports/ai/bigdrops-local-ai-llamacpp-android-poc-2026-09-27.md`
+- `docs/reports/ai/2026-11-13-bolu-prd-compliance-audit.md`, `docs/reports/ai/2026-11-13-bouxre-assistant-prototype-experience-audit.md`, `docs/reports/ai/2026-11-13-bolu-production-runtime-implementation.md` (existence/roles), `docs/reports/ai/bigdrops-local-ai-llamacpp-android-poc-2026-09-27.md`
 
 ### 14.5 External documentation ([EXT-DOC], 2026-11-14; provider facts — not permanent)
 - NousResearch/hermes-agent (MIT) — provider/base-URL/custom-endpoint model (see [SELF] §2)
@@ -475,7 +475,7 @@ Exactly one new file: `docs/reports/2026-11-14-dynamic-model-routing-reconciliat
 
 ## Final determination
 
-**The existing BOURXE architecture supports the product owner's intended model-switching experience through incremental extensions. A fundamental architectural gap does not exist — but an implementation gap and a decision gap do.**
+**The existing BOUXRE architecture supports the product owner's intended model-switching experience through incremental extensions. A fundamental architectural gap does not exist — but an implementation gap and a decision gap do.**
 
 Concretely:
 

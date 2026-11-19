@@ -33,10 +33,10 @@ In the Hermes Agent ecosystem (`NousResearch/hermes-agent`), provider setup is h
 - Configuration is written to a designated local config without leaking secrets into logs or source control.
 - Key rotation cleanly updates existing entries.
 
-**How BOURXE Adapted This to Serverless Architecture:**
+**How BOUXRE Adapted This to Serverless Architecture:**
 - Hermes runs as a standalone Python process on the user's computer where local config files directly feed inference.
-- BOURXE, by contrast, executes Bolu inference in a deployed **Vercel Serverless Function** (`api/bolu-chat.ts`).
-- Therefore, BOURXE's setup CLI bridges both environments:
+- BOUXRE, by contrast, executes Bolu inference in a deployed **Vercel Serverless Function** (`api/bolu-chat.ts`).
+- Therefore, BOUXRE's setup CLI bridges both environments:
   - For local developers: it configures `.env.local` (ensuring `.gitignore` protection).
   - For deployed production: it interfaces with the deployment platform CLI (`vercel env`) to set remote environment variables securely.
 

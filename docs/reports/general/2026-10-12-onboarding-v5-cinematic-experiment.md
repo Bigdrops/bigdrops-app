@@ -1,10 +1,10 @@
-# BOURXE Onboarding V5 Cinematic Experiment
+# BOUXRE Onboarding V5 Cinematic Experiment
 
 ## Reference analysis
 
 Required files inspected:
 
-- `BOURXE_Ultimate_Onboarding.html`: strongest source for business-specific SVG scenes, chapter wipe, logistics vehicle, document press, finance processor, field-service equipment and auth form structure.
+- `BOUXRE_Ultimate_Onboarding.html`: strongest source for business-specific SVG scenes, chapter wipe, logistics vehicle, document press, finance processor, field-service equipment and auth form structure.
 - `claude-v2.html`: useful compact mobile stage, tab rail, interruptible chapter movement, safe-area handling and form scroll behavior.
 - `deepseek.html`: useful drag-aware carousel, richer auth validation states, reduced-motion checks and polished state-driven scene controls.
 - `cta-index.tsx`: useful phone-shell CTA composition and tactile button treatment, but not reused as a card layout.
@@ -31,7 +31,7 @@ Reduced motion keeps the full scene visible and disables continuous movement.
 
 ## Navigation and auth
 
-The welcome screen has one primary story action: `Explore BOURXE`. A separate `Sign In` entry is available for returning users. Story navigation supports previous, next, chapter revisit and explicit skip. `Get Started` only appears at the conversion stage and opens Sign Up.
+The welcome screen has one primary story action: `Explore BOUXRE`. A separate `Sign In` entry is available for returning users. Story navigation supports previous, next, chapter revisit and explicit skip. `Get Started` only appears at the conversion stage and opens Sign Up.
 
 Sign In and Sign Up are separate presentation screens. Both include `Continue with Google`. All auth actions are local to the preview and call no Supabase methods, OAuth redirects or data mutations. Google OAuth is therefore an integration dependency for production wiring, not active in V5.
 

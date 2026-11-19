@@ -26,7 +26,7 @@ test('production startup renders approved Cold Launch V1 without preview control
   assert.doesNotMatch(appSource, /Tree Original|Tree \+ Beams|Connection Error|Replay|V2 - Paper/)
 
   assert.match(presentationSource, /PreviewTree/)
-  assert.match(presentationSource, /BOURXE/)
+  assert.match(presentationSource, /BOUXRE/)
   assert.match(presentationSource, /bigdropsLogo/)
   assert.match(presentationSource, /useLoadingTip/)
 })

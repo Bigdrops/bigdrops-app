@@ -3,7 +3,7 @@
 Status: **implemented, verified locally**. Migration is **not applied to any database**.
 Date: 2026-10-15. Branch: `main` (shared checkout, uncommitted).
 
-A Supplier Purchase Order is an outgoing procurement commitment. BOURXE issues it
+A Supplier Purchase Order is an outgoing procurement commitment. BOUXRE issues it
 to a supplier to request goods or services at agreed costs. It is not a sales
 invoice, not a quotation, not a customer order, not an expense posting, not a
 goods receipt, and not a supplier payment.

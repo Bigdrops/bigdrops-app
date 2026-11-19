@@ -4,7 +4,7 @@ This report was written by Antigravity on 2026-11-14 via Local Runner.
 
 ## Metadata & Control Block
 
-- **Objective:** Zero-code inspection of existing backend contracts, API request/response schemas, conversation persistence (Supabase state), structured operation payloads, and frontend integration state for Bolu (BOURXE's AI business operations assistant).
+- **Objective:** Zero-code inspection of existing backend contracts, API request/response schemas, conversation persistence (Supabase state), structured operation payloads, and frontend integration state for Bolu (BOUXRE's AI business operations assistant).
 - **Scope:** `api/bolu-chat.ts`, `api/bolu-provider-config.ts`, `src/lib/ai-assistant/*`, `supabase/migrations/*`, `src/components/ai-assistant/*`, `src/components/design-lab/*`.
 - **Files Changed:** `docs/reports/bolu-phase-a-audit-2026-11-14.md` (only this report created).
 - **Skills Used:** `typescript-advanced-types`
@@ -15,7 +15,7 @@ This report was written by Antigravity on 2026-11-14 via Local Runner.
 
 ## 1. Executive Summary
 
-This architecture audit establishes the exact technical baseline for Bolu (BOURXE AI business operations assistant) prior to constructing any frontend user interface components.
+This architecture audit establishes the exact technical baseline for Bolu (BOUXRE AI business operations assistant) prior to constructing any frontend user interface components.
 
 ### Core Findings
 

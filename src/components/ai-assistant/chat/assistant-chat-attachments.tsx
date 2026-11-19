@@ -5,7 +5,7 @@ import { Download, FileCode, FileImage, FileText } from 'lucide-react'
  *
  * Design reference: docs/prd/conversational-document-assistant/Chat-blocks/
  * attachment-default.tsx. The reference chips (media, title, description,
- * trailing action) are adapted to the BOURXE `ac-` token surface.
+ * trailing action) are adapted to the BOUXRE `ac-` token surface.
  *
  * Only typed attachment payloads are read. This module never derives an
  * attachment from prose or from JSON-looking text, never builds a storage path

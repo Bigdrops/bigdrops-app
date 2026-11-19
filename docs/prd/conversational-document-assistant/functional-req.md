@@ -50,7 +50,7 @@ The following disposition applies:
 | FR-40 | PROPOSED — 2026-11-14 | Attachment intake, application-owned; external AI to structured Markdown is interchange only; no provider dependence; no invented values; formats, limits, retention, providers and privacy unresolved. Not approved for first release. |
 | FR-41 | PROPOSED — 2026-11-14 | Document-family extensions; solar-pump BOQ is the first acceptance case; no first-release family declared. Not approved for first release. |
 | FR-42 | IMPLEMENTED & TESTED — 2026-11-14 | In-App Administrator Secret Management & Protected Storage in Settings. |
-| FR-43 | IMPLEMENTED & VERIFIED — 2026-11-16 | Assistant Identity — Bolu Only. Standalone B icon, BOURXE badge, and decorative subtitles removed from header. |
+| FR-43 | IMPLEMENTED & VERIFIED — 2026-11-16 | Assistant Identity — Bolu Only. Standalone B icon, BOUXRE badge, and decorative subtitles removed from header. |
 | FR-44 | IMPLEMENTED & VERIFIED — 2026-11-16 | Unified Bolu Identity & Active Model Picker in Single Compact Header Row (Left: Bolu, Right: Model Picker). |
 | FR-45 | IMPLEMENTED & VERIFIED — 2026-11-16 | Direct AI Infrastructure Navigation from Bolu Assistant More menu to `/settings?section=bolu-provider`. |
 | FR-46 | IMPLEMENTED & VERIFIED — 2026-11-16 | AI Infrastructure Mobile Responsiveness & Overflow Correction across connection cards and models manager. |
@@ -335,7 +335,7 @@ The assistant must render in four layouts that share one state model.
 
 ## FR-29 - One Engine, Interchangeable Providers And Models (Proposed - 2026-11-14)
 
-BOURXE must expose one conversational AI experience. Provider and model details stay behind the provider architecture. Conversation state, business context, authorization and tool permissions must not change when the engine selects a different model.
+BOUXRE must expose one conversational AI experience. Provider and model details stay behind the provider architecture. Conversation state, business context, authorization and tool permissions must not change when the engine selects a different model.
 
 This requirement records the approved product direction. It does not approve an implementation. What exists today is one Bolu provider path (AMD on a server boundary), a legacy static failover path, and a Design Lab simulation. None of these is the dynamic engine.
 
@@ -406,7 +406,7 @@ The assistant header must visibly display only "Bolu" as the single identity. St
 
 - The assistant header visibly displays only the text "Bolu".
 - No standalone "B" square or circular badge remains in the header.
-- No "BOURXE" badge or secondary corporate tag is displayed.
+- No "BOUXRE" badge or secondary corporate tag is displayed.
 - Subtitle helper text is removed from the mobile and desktop header.
 - The history rail toggle, document panel toggle, More menu, and close action remain accessible.
 
@@ -490,9 +490,9 @@ The following capabilities are approved.
 
 ### FR-47.1 Design reference mapping
 
-The following files are the primary visual and interaction references. They are references, not approved production components. They import components that do not exist in BOURXE. They are not copied directly.
+The following files are the primary visual and interaction references. They are references, not approved production components. They import components that do not exist in BOUXRE. They are not copied directly.
 
-| Reference | Use in BOURXE |
+| Reference | Use in BOUXRE |
 |---|---|
 | `chat-default.tsx` | Message turn anatomy, the prose and fence split, and the Markdown to code-block handoff. |
 | `code-block-default.tsx` | Code surface, language label, header action row and per-block copy. |
@@ -1204,7 +1204,7 @@ Bolu must ask a focused question with selectable options when a request is ambig
 
 ## FR-65 - Invoice And Quotation Field Parity (Implemented - 2026-11-18)
 
-The Bolu operation contract must represent the fields the standard BOURXE document workflows support.
+The Bolu operation contract must represent the fields the standard BOUXRE document workflows support.
 
 **Supported document fields**
 

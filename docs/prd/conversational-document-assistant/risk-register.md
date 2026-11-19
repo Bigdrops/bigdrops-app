@@ -276,7 +276,7 @@ Concurrent invoice creations by the assistant or other users can attempt to allo
 
 Writing an invoice header and multiple line items as disconnected operations can leave orphaned parent headers if line-item insertion fails, corrupting business financial records.
 
-**Mitigation.** In `src/lib/ai-assistant/bolu-document-service.ts`, the persistence service integrates directly with BOURXE's existing PostgreSQL transaction RPC `save_invoice_with_items_transaction` when `entityId` is present, guaranteeing all-or-nothing atomicity. In fallback sequential execution, if line-item insertion fails, a compensating delete operation cleans up the newly inserted header record.
+**Mitigation.** In `src/lib/ai-assistant/bolu-document-service.ts`, the persistence service integrates directly with BOUXRE's existing PostgreSQL transaction RPC `save_invoice_with_items_transaction` when `entityId` is present, guaranteeing all-or-nothing atomicity. In fallback sequential execution, if line-item insertion fails, a compensating delete operation cleans up the newly inserted header record.
 
 **Residual.** Multi-tenant database RLS independently verifies tenant isolation and prevents unauthorized writes.
 
@@ -313,7 +313,7 @@ Attachments (PDF, images, scans, spreadsheets, photographs of handwritten notes,
 
 **Mitigation.** DEC-33: attachment intake is application-owned; unsupported types fail loudly with the source preserved untouched; no partial parse is used for business decisions without an explicit reviewer acknowledgement.
 
-**Residual.** Users may send formats BOURXE cannot read; the lane must always say so, never approximate. Supported format list stays an unresolved owner decision (FR-40).
+**Residual.** Users may send formats BOUXRE cannot read; the lane must always say so, never approximate. Supported format list stays an unresolved owner decision (FR-40).
 
 ## RISK-31 - Extraction Errors Presented As Source Fact (Proposed - 2026-11-14)
 
@@ -412,7 +412,7 @@ Supplier documents contain pricing, terms, client identities and sometimes banki
 **Severity:** critical
 **Likelihood:** low
 
-**Description.** Defaulting to commercial inference endpoints or unvetted provider configurations could incur unbudgeted API billing or commit BOURXE to recurring operational costs without explicit business owner sign-off.
+**Description.** Defaulting to commercial inference endpoints or unvetted provider configurations could incur unbudgeted API billing or commit BOUXRE to recurring operational costs without explicit business owner sign-off.
 
 **Mitigation.** `src/lib/ai-assistant/bolu-provider.ts` and `api/bolu-chat.ts` enforce safe defaults:
 1. Default model is pinned to free-tier open routing (`meta-llama/llama-3.3-70b-instruct:free`).

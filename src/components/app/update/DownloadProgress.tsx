@@ -33,7 +33,7 @@ export function DownloadProgress({
 
   const getStatusLabel = () => {
     if (status === "error") return errorMessage || "Download failed."
-    if (status === "connecting") return "Connecting to BOURXE release server..."
+    if (status === "connecting") return "Connecting to BOUXRE release server..."
     if (status === "installing") return "Download complete. Launching installer..."
     if (status === "downloading" && downloadedBytes !== undefined && totalBytes) {
       return `Downloading: ${formatMB(downloadedBytes)} MB / ${formatMB(totalBytes)} MB`

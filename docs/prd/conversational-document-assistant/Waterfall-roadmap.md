@@ -531,10 +531,10 @@ To prevent false claims of completion, the project maintains a strict boundary b
 ## 20. Mandatory Engineering Task Close-Out & Documentation Reconciliation Policy
 
 ### 20.1 Policy Mandate
-Continuous engineering roadmap maintenance is a mandatory requirement of every BOURXE implementation and audit task. No task is complete until this canonical roadmap (`Waterfall-roadmap.md`) and the visual companion (`roadmap.html`) are reconciled against the actual repository code state.
+Continuous engineering roadmap maintenance is a mandatory requirement of every BOUXRE implementation and audit task. No task is complete until this canonical roadmap (`Waterfall-roadmap.md`) and the visual companion (`roadmap.html`) are reconciled against the actual repository code state.
 
 ### 20.2 Close-Out Procedure
-Every engineering task on BOURXE must execute the following close-out steps prior to reporting completion:
+Every engineering task on BOUXRE must execute the following close-out steps prior to reporting completion:
 1. **Worktree & Git Status Audit:** Run `git status` to verify exact modified files and ensure no unrelated files or unstaged changes were broken or altered.
 2. **Verification Evidence Audit:** Document the exact automated tests executed, passing assertions, and boundary constraints. Mock-boundary tests must never be reported as live production readiness.
 3. **Roadmap Reconciliation:** Update `Waterfall-roadmap.md` with:
@@ -623,7 +623,7 @@ Not a delivery plan. Not a commitment of order between families. Not evidence of
 
 On 2026-11-14, Bolu's conversational invoice operation pipeline was connected to a configurable server-side live AI inference provider architecture, completing the end-to-end integration while preserving application authority, mathematical calculation locking, authorization controls, and two-gate user approval.
 
-The system connects live inference models to existing BOURXE document services through a typed, OpenAI-compatible streaming serverless adapter (`api/bolu-chat.ts`) and client-side runtime parser (`src/lib/ai-assistant/bolu-runtime.ts`), fully verified by 62 automated tests across 8 test suites.
+The system connects live inference models to existing BOUXRE document services through a typed, OpenAI-compatible streaming serverless adapter (`api/bolu-chat.ts`) and client-side runtime parser (`src/lib/ai-assistant/bolu-runtime.ts`), fully verified by 62 automated tests across 8 test suites.
 
 **Delivered Architectural Capabilities:**
 1. **Configurable Server-Side Live Provider Adapter (`api/bolu-chat.ts`, `src/lib/ai-assistant/bolu-provider.ts`):**
@@ -721,13 +721,13 @@ On 2026-11-14, an authoritative compatibility and security audit was performed o
 - **Safe Inference Auto-Detection:** `src/lib/ai-assistant/bolu-provider.ts` was updated with smart provider inference: if `BOLU_AMD_API_KEY` is present or the API key begins with `rc-`, the runtime automatically selects provider `'amd'`, base URL `https://developer.amd.com.cn/radeon/api/v1`, and default model `DeepSeek-V4-Flash`.
 
 **3. Frontend Settings Vault Decision:**
-- BOURXE does not and should not provide an unauthenticated or ordinary database-backed API key input in frontend Settings. Storing third-party AI keys in client-accessible database rows creates security vulnerabilities (XSS, token leakage).
+- BOUXRE does not and should not provide an unauthenticated or ordinary database-backed API key input in frontend Settings. Storing third-party AI keys in client-accessible database rows creates security vulnerabilities (XSS, token leakage).
 - Initial architecture strictly enforces deployment-level server secret configuration (Vercel Environment Variables). Any future in-app key management must use a backend secret vault with hardware/KMS encryption and zero-client-read RPCs.
 
 ### 23.2 Exact Deployment Configuration Guide
 
 To activate the user's AMD key in production/preview:
-1. Open the **Vercel Dashboard** $\rightarrow$ select the BOURXE project $\rightarrow$ **Settings** $\rightarrow$ **Environment Variables**.
+1. Open the **Vercel Dashboard** $\rightarrow$ select the BOUXRE project $\rightarrow$ **Settings** $\rightarrow$ **Environment Variables**.
 2. Add the following variables:
    - `BOLU_PROVIDER_NAME`: `amd`
    - `BOLU_PROVIDER_API_KEY`: `<user's key, starts with rc->`
@@ -780,7 +780,7 @@ On 2026-11-14, a guided PowerShell setup CLI ([`scripts/setup-bolu-provider.ps1`
 
 ### 25.1 Architecture & Delivered Components
 
-On 2026-11-14, an in-app administrator provider configuration experience with AES-256-GCM envelope encryption was delivered for Bolu's shared AI inference pipeline, adapting established enterprise AI key vault patterns (e.g. LibreChat encrypted key vault) to BOURXE's platform assistant architecture.
+On 2026-11-14, an in-app administrator provider configuration experience with AES-256-GCM envelope encryption was delivered for Bolu's shared AI inference pipeline, adapting established enterprise AI key vault patterns (e.g. LibreChat encrypted key vault) to BOUXRE's platform assistant architecture.
 
 **Delivered Features:**
 1. **Protected Server-Side Database Vault (`public.app_ai_provider_config`):**
@@ -1116,7 +1116,7 @@ Following the closeout audit (`docs/reports/ai/2026-11-14-bolu-phase-2-architect
 ## 19. Bolu 2.0 Header Identity, Model Picker, AI Infrastructure Navigation & Mobile Responsiveness Corrections (Completed 2026-11-16)
 
 1. **Assistant Identity — Bolu Only:**
-   - Cleaned the assistant header in `assistant-chat-chrome.tsx` to display solely "Bolu" without the standalone letter "B" box, the "BOURXE" brand pill, or the secondary subtitle line.
+   - Cleaned the assistant header in `assistant-chat-chrome.tsx` to display solely "Bolu" without the standalone letter "B" box, the "BOUXRE" brand pill, or the secondary subtitle line.
    - Preserved all functional controls: conversation history drawer toggle, document panel toggle, More menu, and workspace close button.
 
 2. **Active Model Picker Placement Correction (Single Shared Header Row):**
@@ -1141,7 +1141,7 @@ Following the closeout audit (`docs/reports/ai/2026-11-14-bolu-phase-2-architect
    - **Responsive Truncation, Collision-Aware Clamping & Theme-Adaptive Surface:**
      - On narrow screens (down to 320px–360px), `ModelPill` has bounded width with text truncation (`truncate`), preventing Bolu from being pushed off-screen.
      - The selection popover opens downward (`direction="down"`) with dynamic collision-aware viewport clamping: screen boundaries are computed on open and on window resize/scroll, guaranteeing a 10px safe margin from viewport edges so that model names and badges never clip outside the screen on mobile devices.
-     - The dropdown visual surface integrates natively with BOURXE's theme tokens in both Light and Dark modes (`bg-white dark:bg-slate-900`, `border-slate-200/90 dark:border-slate-800`, `text-slate-900 dark:text-slate-100`, amber group titles, theme-adapted active selections and badges), replacing hardcoded non-adaptive dark styling.
+     - The dropdown visual surface integrates natively with BOUXRE's theme tokens in both Light and Dark modes (`bg-white dark:bg-slate-900`, `border-slate-200/90 dark:border-slate-800`, `text-slate-900 dark:text-slate-100`, amber group titles, theme-adapted active selections and badges), replacing hardcoded non-adaptive dark styling.
 
 3. **Direct AI Infrastructure Navigation:**
    - Updated the More menu action in `assistant-chat-chrome.tsx` to navigate directly to the canonical route `/settings?section=bolu-provider`.
@@ -1212,7 +1212,7 @@ Both paths supply `ProductionBoluMessage`. `AssistantMarkdown` is a pure functio
 
 `https://www.mdxcn.dev/` was reviewed as an optional reference only. No mdxcn package was installed and no mdxcn component was copied. Reasons:
 
-- Its chat code-block and artifact components require a component library (`@/components/ui/...`) and a highlighter hook (`useHighlightedCode`) that BOURXE does not have. Adopting them means a new syntax-highlighting dependency and a parallel component set.
+- Its chat code-block and artifact components require a component library (`@/components/ui/...`) and a highlighter hook (`useHighlightedCode`) that BOUXRE does not have. Adopting them means a new syntax-highlighting dependency and a parallel component set.
 - The approved requirements need isolation, exact copy and safe Markdown. Highlighting is not approved. The local modules meet the requirements without new dependencies.
 - The four supplied Chat-blocks components remain the design reference. Generic documentation-oriented components would replace that direction.
 
@@ -1670,7 +1670,7 @@ Remediation of the fifth Bolu defect report: mobile Enter submission, a preview 
 - `bun run build`: not run, prohibited on this host.
 ## 35. Canonical Persistence, Attribution, Context and Gate Restoration (2026-11-18)
 
-Authorized restoration of Bolu as a conversational interface to existing BOURXE business operations. This section records what the current source confirmed, what changed, and what remains unverified. It does not promote any proposal into a decision.
+Authorized restoration of Bolu as a conversational interface to existing BOUXRE business operations. This section records what the current source confirmed, what changed, and what remains unverified. It does not promote any proposal into a decision.
 
 ### 35.1 Confirmed root causes
 

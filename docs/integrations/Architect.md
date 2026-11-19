@@ -32,7 +32,7 @@ Classify the request and separate analysis, recommendation, and authorized imple
 
 Preserve higher authority and protected data, behavior, and scope. If conflict or missing authority blocks a safe decision, ask the user. Never turn a proposal into a decision.
 
-6 BOURXE governance
+6 BOUXRE governance
 
 Coding agents MUST read root AGENTS.md and only relevant subordinate instructions; never point them to Architect.md as governance. Preserve legacy BIGDROPS/bigdrops identifiers unless an approved migration covers them.
 

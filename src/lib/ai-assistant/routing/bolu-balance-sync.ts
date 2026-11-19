@@ -62,8 +62,8 @@ export async function checkUpstreamBalance(
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${key}`,
-          'HTTP-Referer': 'https://bourxe.com',
-          'X-Title': 'BOURXE Bolu',
+          'HTTP-Referer': 'https://bouxre.com',
+          'X-Title': 'BOUXRE Bolu',
         },
         signal: controller.signal,
       })

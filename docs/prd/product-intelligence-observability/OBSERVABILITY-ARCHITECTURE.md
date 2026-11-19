@@ -1,4 +1,4 @@
-# BOURXE: Unified Observability & Telemetry Architecture
+# BOUXRE: Unified Observability & Telemetry Architecture
 
 - **Document Version:** 1.0.0
 - **Status:** Architectural Blueprint (`[PROPOSAL]` / Under Review)
@@ -108,7 +108,7 @@ if (container) {
 
 ## 5. Multi-Tenant Group Attribution Model
 
-BOURXE operates multi-tenancy where a single user account can access or own multiple business entities. 
+BOUXRE operates multi-tenancy where a single user account can access or own multiple business entities. 
 
 - **Tenant Isolation:** Postgres Row-Level Security (RLS) enforces database isolation.
 - **Analytics Mapping:** PostHog Group Analytics maps entity context:

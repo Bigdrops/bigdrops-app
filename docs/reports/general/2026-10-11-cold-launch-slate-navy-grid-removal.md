@@ -137,7 +137,7 @@ The task did not change:
 - Workspace nodes.
 - Document nodes.
 - BX logo.
-- BOURXE wordmark.
+- BOUXRE wordmark.
 - Quick Tips.
 - Tip rotation.
 - Startup lifecycle.

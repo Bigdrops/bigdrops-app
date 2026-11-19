@@ -4,7 +4,7 @@
 
 ## Final status: **Blocked — scratch isolation cannot be positively established**
 
-The available environment offers exactly one database: the BOURXE **production** Supabase project `xqlpekpkbszpdgtuwybh`. No isolated scratch tenant is configured, documented, or reachable here, and the task's own isolation rules prohibit using it. No query, RPC call, migration or write of any kind was made.
+The available environment offers exactly one database: the BOUXRE **production** Supabase project `xqlpekpkbszpdgtuwybh`. No isolated scratch tenant is configured, documented, or reachable here, and the task's own isolation rules prohibit using it. No query, RPC call, migration or write of any kind was made.
 
 ## Evidence establishing what the environment actually points at
 
@@ -13,7 +13,7 @@ The available environment offers exactly one database: the BOURXE **production**
 | `.env` `SUPABASE_URL` / `VITE_SUPABASE_URL` | `https://xqlpekpkbszpdgtuwybh.supabase.co` |
 | `.env` `DATABASE_URL` | host `db.xqlpekpkbszpdgtuwybh.supabase.co`, port `5432`, database `postgres` |
 | `.env` contains | `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — service-role production credentials |
-| `docs/reports/bolu-persistence-integrity/production-deployment.md` (pre-existing report) | "**All authorized migrations were applied to the BOURXE production Supabase database**" and `| Project ref | `xqlpekpkbszpdgtuwybh` |` |
+| `docs/reports/bolu-persistence-integrity/production-deployment.md` (pre-existing report) | "**All authorized migrations were applied to the BOUXRE production Supabase database**" and `| Project ref | `xqlpekpkbszpdgtuwybh` |` |
 | Repository tickets (`docs/tickets/pending-migrations-push.md`, `docs/tickets/postgrest-schema-overwrite-bug.md`) | refer to `xqlpekpkbszpdgtuwybh` as "the hosted project"; the incident of the wrong project was `bigdrops-main` |
 | `supabase/.temp/` CLI link metadata | points to `xqlpekpkbszpdgtuwybh`; the Stage 0.2 independent verification explicitly warned this proves CLI linkage only |
 | Search for any scratch/test tenant in this repo (docs, reports, configs) | **none found** — no second project ref, no `supabase start` local config for a scratch instance, no documented test tenant |

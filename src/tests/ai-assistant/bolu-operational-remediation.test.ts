@@ -217,7 +217,7 @@ test('Bolu Chat UX Polish: assistant-chat-thread.tsx strips raw JSON operations 
   const content = fs.readFileSync(filePath, 'utf-8')
 
   assert.equal(
-    content.includes('Hello! I’m Bolu, your BOURXE business operations assistant'),
+    content.includes('Hello! I’m Bolu, your BOUXRE business operations assistant'),
     true,
     'Empty state must render Bolu formal intro greeting',
   )

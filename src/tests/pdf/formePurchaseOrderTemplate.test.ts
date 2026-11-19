@@ -83,11 +83,11 @@ test('IndustryFormeDocument: renders canonical Purchase Order with procurement s
     signatories: { requisitioner, authorizer },
     delivery,
     settings: {
-      company_name: 'BOURXE Procurement Ltd',
+      company_name: 'BOUXRE Procurement Ltd',
       company_address: '14 Commercial Avenue',
       company_city: 'Yaba',
       company_state: 'Lagos',
-      company_email: 'procurement@bourxe.example',
+      company_email: 'procurement@bouxre.example',
       company_phone: '+234 1 234 5678',
     },
   })
@@ -223,7 +223,7 @@ test('Regression: Invoice and Quotation rendering through IndustryFormeDocument 
       currency: 'NGN',
     },
     issuer: {
-      name: 'BOURXE Engineering Ltd',
+      name: 'BOUXRE Engineering Ltd',
       addressLines: ['Plot 14 Victoria Island', 'Lagos'],
     },
     recipient: {
@@ -260,7 +260,7 @@ test('Regression: Invoice and Quotation rendering through IndustryFormeDocument 
     },
     bankDetails: {
       bankName: 'Access Bank Plc',
-      accountName: 'BOURXE Engineering Ltd',
+      accountName: 'BOUXRE Engineering Ltd',
       accountNumber: '0123456789',
       sortCode: '044150149',
     },
@@ -325,11 +325,11 @@ test('All 7 remaining Commercial Forme Templates render Purchase Orders with pro
     signatories: { requisitioner, authorizer },
     delivery,
     settings: {
-      company_name: 'BOURXE Procurement Ltd',
+      company_name: 'BOUXRE Procurement Ltd',
       company_address: '14 Commercial Avenue',
       company_city: 'Yaba',
       company_state: 'Lagos',
-      company_email: 'procurement@bourxe.example',
+      company_email: 'procurement@bouxre.example',
       company_phone: '+234 1 234 5678',
     },
   })

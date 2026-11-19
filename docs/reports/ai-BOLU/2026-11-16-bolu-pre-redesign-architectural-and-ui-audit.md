@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-This audit evaluates the production Bolu conversational business operations assistant in BOURXE before architectural redesign and visual refactoring.
+This audit evaluates the production Bolu conversational business operations assistant in BOUXRE before architectural redesign and visual refactoring.
 
 The audit team conducted a zero-code static inspection across all layers:
 - User interface presentation and responsiveness (`src/components/ai-assistant/*`, `src/components/design-lab/*`, `src/pages/settings/bolu-provider/*`).
@@ -502,7 +502,7 @@ supabase/
 
 ## 11. Redesign Opportunities
 
-Opportunities are classified according to BOURXE governance standards:
+Opportunities are classified according to BOUXRE governance standards:
 
 ### 11.1 OBSERVATION
 - **OBS-01:** The assistant workspace is currently a modal dialog (`role="dialog"`). On desktop, this isolates the assistant from the underlying page, preventing users from viewing table data while chatting.
@@ -510,7 +510,7 @@ Opportunities are classified according to BOURXE governance standards:
 - **OBS-03:** The "Enter to send" footer text in the composer is Desktop-centric and adds no value on mobile devices.
 
 ### 11.2 PROBLEM
-- **PRB-01 (Header Saturation):** Six action buttons in the mobile header cause visual clipping and squish the BOURXE mark into the History icon.
+- **PRB-01 (Header Saturation):** Six action buttons in the mobile header cause visual clipping and squish the BOUXRE mark into the History icon.
 - **PRB-02 (Foldable Navigation Lockout):** Fold-open viewports completely lack conversation rail controls.
 - **PRB-03 (Module Scoping):** Filtering conversations by page module causes conversations to disappear when navigating routes.
 - **PRB-04 (Deceptive Attachment Pill):** The composer context pill appears interactive but has zero functionality.

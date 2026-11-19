@@ -3,7 +3,7 @@
 -- ============================================================
 -- Purpose: Provision an authoritative, document-scoped public
 --          sharing mechanism and dedicated storage bucket for
---          BOURXE generated document PDFs.
+--          BOUXRE generated document PDFs.
 -- Domain: Document Platform / External Sharing
 -- Security: RLS-gated table public.document_shares with
 --           token-scoped anonymous read access, revocable by creators.

@@ -309,7 +309,7 @@ public class ApkUpdatePlugin extends Plugin {
     /**
      * Starts Android's package installer for a completed APK.
      *
-     * The installer is a normal activity launch, so it only runs while BOURXE
+     * The installer is a normal activity launch, so it only runs while BOUXRE
      * is foregrounded. When the app is backgrounded the URI is queued and
      * retried from handleOnResume(). Nothing is installed silently: Android
      * always shows its own install confirmation.
@@ -496,7 +496,7 @@ public class ApkUpdatePlugin extends Plugin {
                 }
 
                 // Fire the system installer. Deferred to the next resume when
-                // BOURXE is not in the foreground.
+                // BOUXRE is not in the foreground.
                 autoInstall(contentUri);
             }
         };
@@ -557,7 +557,7 @@ public class ApkUpdatePlugin extends Plugin {
                     } catch (Exception ignored) {
                     }
                 }
-                call.reject("Please allow 'Install unknown apps' for BOURXE in Settings, then tap 'Install update' again.");
+                call.reject("Please allow 'Install unknown apps' for BOUXRE in Settings, then tap 'Install update' again.");
                 return;
             }
         }

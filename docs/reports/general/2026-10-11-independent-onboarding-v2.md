@@ -4,7 +4,7 @@ Date: 2026-10-11
 
 ## Summary
 
-Implemented a separate BOURXE Onboarding V2 preview experience. The existing PhotoHero onboarding carousel and its experimental candidate selector remain available as the V1 comparison surface. The new V2 has its own slide state, navigation, progress indicators, theme controls, animation lifecycle, and authentication presentation.
+Implemented a separate BOUXRE Onboarding V2 preview experience. The existing PhotoHero onboarding carousel and its experimental candidate selector remain available as the V1 comparison surface. The new V2 has its own slide state, navigation, progress indicators, theme controls, animation lifecycle, and authentication presentation.
 
 ## Architecture
 
@@ -25,15 +25,15 @@ No Supabase, production auth routing, tenant logic, Cold Launch, or dashboard co
 
 V2 contains exactly five introduction slides:
 
-1. Multitenancy & Teamwork: separate tenant workspaces and role teams enter one BOURXE operating environment without implying shared tenant data.
+1. Multitenancy & Teamwork: separate tenant workspaces and role teams enter one BOUXRE operating environment without implying shared tenant data.
 2. Sales & Procurement: RFQ, Quotation, Item Library, Cost & Pricing Sheets, Invoice, and Payment move through one commercial workflow.
-3. Logistics & Operations: a branded BOURXE vehicle moves through a Waybill route with shipment progress.
+3. Logistics & Operations: a branded BOUXRE vehicle moves through a Waybill route with shipment progress.
 4. Tax & Finance: VAT and WHT are prominent in an invoice, payment, and reporting workflow.
-5. Connected Business: Sales, Procurement, Logistics, Projects, Service, Finance, and Teams converge into one BOURXE workspace.
+5. Connected Business: Sales, Procurement, Logistics, Projects, Service, Finance, and Teams converge into one BOUXRE workspace.
 
 ## Truck Reuse
 
-The logistics slide adapts the approved PhotoHero truck visual language: branded vehicle body, official BX mark, BOURXE lettering, wheel motion, route context, and delivery progress. It is implemented inside V2 rather than importing or altering the existing V1 slide controller.
+The logistics slide adapts the approved PhotoHero truck visual language: branded vehicle body, official BX mark, BOUXRE lettering, wheel motion, route context, and delivery progress. It is implemented inside V2 rather than importing or altering the existing V1 slide controller.
 
 ## Authentication Separation
 

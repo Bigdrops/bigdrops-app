@@ -149,7 +149,7 @@ export async function handleSendDocumentEmail(
   const serviceRoleKey = deps.serviceRoleKey || getEnvVar("SUPABASE_SERVICE_ROLE_KEY");
   const resendApiKey = deps.resendApiKey || getEnvVar("RESEND_API_KEY");
   const documentEmailFrom =
-    deps.documentEmailFrom || getEnvVar("DOCUMENT_EMAIL_FROM") || "BOURXE Documents <notifications@bourxe.com>";
+    deps.documentEmailFrom || getEnvVar("DOCUMENT_EMAIL_FROM") || "BOUXRE Documents <notifications@bouxre.com>";
   const appPublicUrl = deps.appPublicUrl || getEnvVar("APP_PUBLIC_URL") || "https://bouxre.com";
 
   let adminClient = deps.adminClient;
@@ -402,7 +402,7 @@ export async function handleSendDocumentEmail(
       documentType: share.document_type || "Document",
       documentNumber: share.document_number || "DOC-001",
       documentTitle: share.document_title || undefined,
-      issuerName: metadata.issuerName || "BOURXE",
+      issuerName: metadata.issuerName || "BOUXRE",
       issuerEmail: trustedReplyTo || undefined,
       recipientName: metadata.recipientName || undefined,
       totalFormatted: metadata.totalFormatted || undefined,

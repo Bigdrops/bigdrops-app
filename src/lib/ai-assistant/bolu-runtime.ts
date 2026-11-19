@@ -207,7 +207,7 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
         const response = await dependencies.providerSend({
           messages: providerMessages,
           contextFacts: [
-            'You are Bolu, a BOURXE conversational business operations assistant.',
+            'You are Bolu, a BOUXRE conversational business operations assistant.',
             'You support reading authorized business records, preparing structured document proposals, and guiding document persistence.',
             'Two approval gates are in effect:',
             '  1. User must explicitly approve proposed changes before application applies them.',

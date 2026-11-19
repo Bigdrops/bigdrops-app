@@ -1,6 +1,6 @@
 # PDF palette isolation and Architectural logo fix
 
-Three commercial invoice templates (Architectural, Executive, Heritage House) were inheriting the BOURXE application theme's amber accent through a shared localStorage design-preset that forwarded `useCustomColors: true` to all templates regardless of which one was active. A second defect caused the Architectural template's issuer logo to appear cramped inside the charcoal masthead. Both defects are fixed in this commit.
+Three commercial invoice templates (Architectural, Executive, Heritage House) were inheriting the BOUXRE application theme's amber accent through a shared localStorage design-preset that forwarded `useCustomColors: true` to all templates regardless of which one was active. A second defect caused the Architectural template's issuer logo to appear cramped inside the charcoal masthead. Both defects are fixed in this commit.
 
 The amber bleed was traced to the action/handler layer, not the Forme components — the Forme components' existing `|| TEMPLATE_TOKEN` fallback patterns were already correct; the bug was that the preset entered with `useCustomColors: true` so those fallbacks never fired. The fix inserts a guard at the correct upstream point. The logo fix matches the HTML reference's ~80% image-to-container fill ratio. The commit also removes two pre-existing content problems: a hardcoded "ARCHITECTURAL SPECIFICATION SHEET" internal label in the fixed page header, and an unconditional signature block that rendered empty furniture when no signature was uploaded.
 

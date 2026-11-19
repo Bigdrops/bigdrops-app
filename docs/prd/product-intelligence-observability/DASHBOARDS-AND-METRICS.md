@@ -1,4 +1,4 @@
-# BOURXE: Dashboards, Funnels & Product Metrics Specification
+# BOUXRE: Dashboards, Funnels & Product Metrics Specification
 
 - **Document Version:** 1.0.0
 - **Status:** Metrics Specification (`[PROPOSAL]` / Under Review)
@@ -9,7 +9,7 @@
 
 ## 1. Metrics Framework & Hierarchy
 
-To ensure that reporting provides clear operational direction, BOURXE structures metrics into a three-tiered hierarchy:
+To ensure that reporting provides clear operational direction, BOUXRE structures metrics into a three-tiered hierarchy:
 
 ```mermaid
 flowchart TD

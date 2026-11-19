@@ -120,5 +120,5 @@ test('cold launch preview page is retired while V1 production presentation remai
   }
 
   assert.match(presentationSource, /ColdLaunchTenantTreePresentation/)
-  assert.match(presentationSource, /BOURXE/)
+  assert.match(presentationSource, /BOUXRE/)
 })

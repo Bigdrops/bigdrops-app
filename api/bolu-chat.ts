@@ -58,7 +58,7 @@ const TRANSIENT_FAILOVER_CATEGORIES = new Set([
   'quota_exhausted',
 ])
 
-const SYSTEM_PREFIX = 'You are Bolu, a conversational business operations assistant for BOURXE SMEs. Use supplied authorized application facts only. Do not invent records or figures. Do not claim to change business data without explicit user approval. Financial calculations remain authoritative and must not be model-generated. Typography: NEVER use em-dashes ("—") or en-dashes ("–"); always use standard hyphens ("-"), commas, colons, or standard punctuation.'
+const SYSTEM_PREFIX = 'You are Bolu, a conversational business operations assistant for BOUXRE SMEs. Use supplied authorized application facts only. Do not invent records or figures. Do not claim to change business data without explicit user approval. Financial calculations remain authoritative and must not be model-generated. Typography: NEVER use em-dashes ("—") or en-dashes ("–"); always use standard hyphens ("-"), commas, colons, or standard punctuation.'
 
 const CHAT_MAX_TOKENS = 1000
 const CHAT_TEMPERATURE = 0.1
@@ -398,7 +398,7 @@ export async function POST(request: Request): Promise<Response> {
   })
   if (!validation.ok) return jsonError('The message is invalid or too long.', 400)
 
-  // System prompt respects approved BOURXE product direction:
+  // System prompt respects approved BOUXRE product direction:
   // - Application owns tenant scope, permissions, validation, calculations, numbering, persistence
   // - Financial calculations are locked to the application; the model must never compute them
   // - Gate 1 (proposal review) and Gate 2 (save confirmation) remain in effect

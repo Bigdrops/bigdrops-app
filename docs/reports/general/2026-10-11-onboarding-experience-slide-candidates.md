@@ -60,7 +60,7 @@ Candidates render inside the existing full-screen onboarding shell and reuse its
 
 ## Branding Changes
 
-Visible onboarding preview branding now uses BOURXE:
+Visible onboarding preview branding now uses BOUXRE:
 
 - Top-bar app name.
 - Logistics truck lettering.

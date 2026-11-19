@@ -48,7 +48,7 @@ export function usePageMetadata(metadata: SeoMetadata): {
  * Tags added by this utility carry BOUXRE-branded content. Match both the
  * current brand string and the legacy one so re-apply/reset removes stale tags.
  */
-function isBourxeTag(content: string | null): boolean {
+function isBouxreTag(content: string | null): boolean {
   const value = content ?? ''
   return value.includes('BOUXRE') || value.includes('BigDrops')
 }
@@ -68,7 +68,7 @@ function applyMetadata(metadata: SeoMetadata): void {
     // Remove any existing custom descriptions added by this utility
     const descEls = document.querySelectorAll('meta[name="description"]')
     descEls.forEach(el => {
-      if (isBourxeTag(el.getAttribute('content'))) {
+      if (isBouxreTag(el.getAttribute('content'))) {
         el.remove()
       }
     })
@@ -83,7 +83,7 @@ function applyMetadata(metadata: SeoMetadata): void {
     // Remove any existing custom og:image added by this utility
     const existingOg = document.querySelector('meta[property="og:image"]')
     if (existingOg) {
-      if (isBourxeTag(existingOg.getAttribute('content'))) {
+      if (isBouxreTag(existingOg.getAttribute('content'))) {
         existingOg.remove()
       }
     }
@@ -98,7 +98,7 @@ function applyMetadata(metadata: SeoMetadata): void {
     // Remove any existing custom twitter:image added by this utility
     const existingTwitter = document.querySelector('meta[name="twitter:image"]')
     if (existingTwitter) {
-      if (isBourxeTag(existingTwitter.getAttribute('content'))) {
+      if (isBouxreTag(existingTwitter.getAttribute('content'))) {
         existingTwitter.remove()
       }
     }
@@ -119,7 +119,7 @@ function resetMetadata(): void {
   // Remove all meta description elements added by this utility
   const descEls = document.querySelectorAll('meta[name="description"]')
   descEls.forEach(el => {
-    if (isBourxeTag(el.getAttribute('content'))) {
+    if (isBouxreTag(el.getAttribute('content'))) {
       el.remove()
     }
   })
@@ -127,7 +127,7 @@ function resetMetadata(): void {
   // Remove all og:image elements added by this utility
   const ogImgs = document.querySelectorAll('meta[property="og:image"]')
   ogImgs.forEach(el => {
-    if (isBourxeTag(el.getAttribute('content'))) {
+    if (isBouxreTag(el.getAttribute('content'))) {
       el.remove()
     }
   })
@@ -135,7 +135,7 @@ function resetMetadata(): void {
   // Remove all twitter:image elements added by this utility
   const twitterImgs = document.querySelectorAll('meta[name="twitter-image"]')
   twitterImgs.forEach(el => {
-    if (isBourxeTag(el.getAttribute('content'))) {
+    if (isBouxreTag(el.getAttribute('content'))) {
       el.remove()
     }
   })

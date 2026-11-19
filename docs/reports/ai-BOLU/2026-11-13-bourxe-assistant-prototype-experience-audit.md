@@ -1,4 +1,4 @@
-# BOURXE Assistant — Existing Prototype and Experience Audit
+# BOUXRE Assistant — Existing Prototype and Experience Audit
 
 This report was written by GPT-6 Luna on 2026-11-13 via DeepAI Code (Pi).
 
@@ -7,7 +7,7 @@ Documentation standard: ASD-STE100 Simplified Technical English
 
 ## Objective
 
-Inspect the existing BOURXE assistant implementation, Design Lab work, suggestions, and AMD provider configuration. Assess how they can support the approved Conversational Business Intelligence direction.
+Inspect the existing BOUXRE assistant implementation, Design Lab work, suggestions, and AMD provider configuration. Assess how they can support the approved Conversational Business Intelligence direction.
 
 This is a static, zero-code-change audit. The prior conversational document-assistant PRD was inspected only where needed to assess the requested suggestion demo. It is not treated as the approved specification.
 
@@ -194,7 +194,7 @@ Safe default proposal: preserve one conversation within the shared mounted inter
 - The response reader consumes SSE `data:` lines and extracts OpenAI-style `choices[0].delta.content` (or message content). It is streaming code, but AMD stream compatibility has not been live-tested in this audit.
 - Provider rows are attempted in static order: NVIDIA, OpenRouter, AMD, Gemini. The request tries configured keys in that order and returns the first non-empty answer. Therefore AMD may serve as a fallback rather than the first choice when earlier providers have keys and succeed.
 - HTTP 429, 401, 403, 404, and 5xx errors advance to the next configured provider. Other non-OK statuses stop. Network errors also advance. This is application behavior, not validation of AMD-specific responses.
-- Keys are read from an app-private Capacitor file on native builds and kept in memory only in browser builds. Requests are made directly from the client to provider endpoints; no BOURXE server proxy appears in this path.
+- Keys are read from an app-private Capacitor file on native builds and kept in memory only in browser builds. Requests are made directly from the client to provider endpoints; no BOUXRE server proxy appears in this path.
 
 ### What is not verified
 
@@ -237,7 +237,7 @@ The existing integration demonstrates a configurable text-generation transport o
 - Confusing page metadata with business facts can produce answers that appear grounded but have no authorized data behind them.
 - Automatically changing context on navigation can cause a prior question to be answered against a different record than the user expects.
 - Passing full record objects to a model can expose unnecessary data and amplify prompt-injection or data-handling risks.
-- The direct-client key/provider model has no BOURXE server-side request control in the inspected path. Evaluate this against the approved deployment, tenant, privacy, abuse, and cost requirements before attaching business context.
+- The direct-client key/provider model has no BOUXRE server-side request control in the inspected path. Evaluate this against the approved deployment, tenant, privacy, abuse, and cost requirements before attaching business context.
 - Static AMD configuration and comments do not establish provider capability, latency, quota, or suitability.
 - The Design Lab’s invoice action cards and acceptance flow could be mistaken for production behavior. Keep simulation and real app operations clearly separated.
 
@@ -278,7 +278,7 @@ These are not decided by this audit:
 - Application code changed: none.
 - Experimental assistant files changed: none.
 - Supabase migrations or database changes: none; push not applicable.
-- Report created: `docs/reports/ai/2026-11-13-bourxe-assistant-prototype-experience-audit.md` only.
+- Report created: `docs/reports/ai/2026-11-13-bouxre-assistant-prototype-experience-audit.md` only.
 - Git status after: `main` remains 7 commits ahead of `origin/main`. The final snapshot includes modified Design Lab files `assistant-chat-composer.tsx`, `assistant-chat-layouts.tsx`, `assistant-chat-model-pill.tsx`, `assistant-chat-parts.tsx`, `assistant-chat-preview.css`, `assistant-chat-preview.tsx`, `assistant-chat-settings.tsx`, `assistant-chat-thread.tsx`, and `assistant-chat-workspace.css`; untracked `src/tests/critical/assistantChatUxContracts.test.js`; untracked scratch artifacts and `video-json-tutorial/`; and this report. The initial snapshot showed only three modified Design Lab files and did not show the test file. The additional Design Lab modifications and test file appeared during the audit. They were not edited by this audit and were left untouched.
 
 ## Deferred work

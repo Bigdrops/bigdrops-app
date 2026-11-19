@@ -234,7 +234,7 @@ test('Heritage House Forme seal renders companyLogo when supplied and omits leak
 
   assert.ok(jsonWithLogo.includes(SAMPLE_BASE64_IMAGE), 'Must contain company logo image in seal box')
   assert.ok(!jsonWithLogo.includes('HERITAGE HOUSE · FORMAL STATIONERY'), 'Must not leak HERITAGE HOUSE · FORMAL STATIONERY')
-  assert.ok(!jsonWithLogo.includes('"BOURXE"'), 'Must not leak hardcoded BOURXE mark above document title')
+  assert.ok(!jsonWithLogo.includes('"BOUXRE"'), 'Must not leak hardcoded BOUXRE mark above document title')
   assert.ok(!jsonWithLogo.includes('DOCUMENT CONTROL'), 'Must not leak DOCUMENT CONTROL stamp box')
   assert.ok(!jsonWithLogo.includes('VERIFIED'), 'Must not leak VERIFIED stamp')
 })

@@ -1,4 +1,4 @@
-# BOURXE Master Waterfall Roadmap: Product Intelligence & Observability
+# BOUXRE Master Waterfall Roadmap: Product Intelligence & Observability
 
 - **Document Version:** 1.0.0
 - **Status:** Active Roadmap & Master Delivery Plan
@@ -9,7 +9,7 @@
 
 ## 1. Governance Rules & Phased Gating
 
-To safeguard BOURXE from architectural regressions, unverified assumptions, and privacy violations, this roadmap enforces strict **sequential phase gating**:
+To safeguard BOUXRE from architectural regressions, unverified assumptions, and privacy violations, this roadmap enforces strict **sequential phase gating**:
 
 1. **No Out-of-Order Execution:** A downstream phase may not begin until all entry criteria are satisfied and the prior phase's approval gate has been formally signed off.
 2. **Approval Gate Authority:** Phase gates require explicit signoff from the product owner or designated engineering lead.

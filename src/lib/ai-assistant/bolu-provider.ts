@@ -109,8 +109,8 @@ export function buildProviderHeaders(config: BoluProviderConfig): Record<string,
     headers['Authorization'] = `Bearer ${config.apiKey}`
   }
   if (config.provider === 'openrouter' || config.baseUrl.includes('openrouter.ai')) {
-    headers['HTTP-Referer'] = 'https://bourxe.com'
-    headers['X-Title'] = 'BOURXE Bolu'
+    headers['HTTP-Referer'] = 'https://bouxre.com'
+    headers['X-Title'] = 'BOUXRE Bolu'
   }
   return headers
 }

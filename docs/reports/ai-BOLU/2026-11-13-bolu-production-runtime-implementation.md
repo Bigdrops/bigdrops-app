@@ -63,7 +63,7 @@ Establish one shared Bolu assistant runtime and connect the production assistant
 - No live AMD request was made. The audit did not verify AMD authentication acceptance, CORS, actual streaming response shape, model quality, context limits, latency, quota, availability, terms, or production reliability.
 - The local environment did not contain a `BOLU_AMD_API_KEY` variable name. No credential value was read or reported. Deployment must add this secret before model-generated responses can work.
 - The provider route uses OpenAI-compatible chat completions only. It does not use tool/function calling. Application-side intent matching and data retrieval handle business access.
-- No account-wide rate limit, spend cap, or durable request quota was added. The route requires a valid BOURXE session and bounds each request, but production traffic controls remain a deployment concern.
+- No account-wide rate limit, spend cap, or durable request quota was added. The route requires a valid BOUXRE session and bounds each request, but production traffic controls remain a deployment concern.
 
 ## Files created
 

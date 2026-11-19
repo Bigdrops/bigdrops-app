@@ -26,7 +26,7 @@ describe('Bolu Secret Vault & Encryption Suite', () => {
     expect(derivedHex.toString('hex')).toBe(hexKey)
 
     // 2. From arbitrary passphrase string (hashed with SHA-256)
-    const passKey = 'super-secret-bourxe-passphrase-2026'
+    const passKey = 'super-secret-bouxre-passphrase-2026'
     const derivedPass = deriveMasterKey({ BOLU_ENCRYPTION_KEY: passKey })
     expect(derivedPass.length).toBe(32)
     const expectedHash = crypto.createHash('sha256').update(passKey).digest()

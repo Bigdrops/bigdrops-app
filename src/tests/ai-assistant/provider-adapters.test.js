@@ -57,8 +57,8 @@ test('buildAdapterHeaders is provider-aware (bearer vs x-api-key) and adds routi
   assert.equal(anthropic['Authorization'], undefined)
 
   const openrouter = buildAdapterHeaders({ ...openaiConfig, providerId: 'openrouter', baseUrl: 'https://openrouter.ai/api/v1' })
-  assert.equal(openrouter['HTTP-Referer'], 'https://bourxe.com')
-  assert.equal(openrouter['X-Title'], 'BOURXE Bolu')
+  assert.equal(openrouter['HTTP-Referer'], 'https://bouxre.com')
+  assert.equal(openrouter['X-Title'], 'BOUXRE Bolu')
 })
 
 test('buildChatPayload separates Anthropic system prompts and keeps OpenAI turns intact', () => {

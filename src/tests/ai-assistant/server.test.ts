@@ -33,7 +33,7 @@ describe('server.ts — Bun HTTP Server Router & CORS', () => {
 
       const body = (await res.json()) as { status: string; service: string; uptime: number; timestamp: string }
       assert.equal(body.status, 'ok')
-      assert.equal(body.service, 'bourxe-ai-backend')
+      assert.equal(body.service, 'bouxre-ai-backend')
       assert.equal(typeof body.uptime, 'number')
       assert.equal(typeof body.timestamp, 'string')
     }
@@ -42,12 +42,12 @@ describe('server.ts — Bun HTTP Server Router & CORS', () => {
   it('returns 404 for unknown routes with CORS headers', async () => {
     const req = new Request('http://localhost:8080/api/unknown-endpoint', {
       method: 'GET',
-      headers: { origin: 'https://bourxe.com' },
+      headers: { origin: 'https://bouxre.com' },
     })
 
     const res = await router(req)
     assert.equal(res.status, 404)
-    assert.equal(res.headers.get('Access-Control-Allow-Origin'), 'https://bourxe.com')
+    assert.equal(res.headers.get('Access-Control-Allow-Origin'), 'https://bouxre.com')
 
     const body = (await res.json()) as { error: string; path: string }
     assert.equal(body.error, 'Not Found')

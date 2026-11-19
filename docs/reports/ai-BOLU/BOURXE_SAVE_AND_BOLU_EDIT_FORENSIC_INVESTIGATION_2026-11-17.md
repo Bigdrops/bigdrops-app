@@ -1,8 +1,8 @@
-# BOURXE Forensic Investigation Report: Save Failures, Settings Operation Failures, and Bolu User Message Edit Lifecycle
+# BOUXRE Forensic Investigation Report: Save Failures, Settings Operation Failures, and Bolu User Message Edit Lifecycle
 
 **Investigation Date:** 17 November 2026  
 **Investigator:** Antigravity Forensic Engineering  
-**Application Target:** BOURXE Business Operations Platform (including Bolu 2.0 Conversational Assistant)  
+**Application Target:** BOUXRE Business Operations Platform (including Bolu 2.0 Conversational Assistant)  
 **Investigation Authorization:** Strict Read-Only Audit (Zero Code Changes, Zero Database Mutations)  
 **Deliverable File:** `docs/reports/BOUXRE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md`  
 
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-This forensic investigation was commissioned to determine the root causes of two critical failures in the BOURXE platform:
+This forensic investigation was commissioned to determine the root causes of two critical failures in the BOUXRE platform:
 1. **Issue 1:** Repeated document save failures logged on the Dashboard (`/`) on 17 November 2026, alongside persistent settings operation failures logged on `/settings` on 16 November 2026.
 2. **Issue 2:** Failure of the Bolu conversational assistant to submit, process, or regenerate responses when a user edits a previously submitted message in the chat thread.
 
@@ -35,7 +35,7 @@ This forensic investigation was commissioned to determine the root causes of two
 ## 2. Scope and Investigation Methodology
 
 ### Scope
-- Full codebase audit of BOURXE frontend, serverless API routes, domain logic, and Supabase migrations.
+- Full codebase audit of BOUXRE frontend, serverless API routes, domain logic, and Supabase migrations.
 - Direct analysis of user diagnostic events from 16 November and 17 November 2026.
 - End-to-end tracing of document persistence (Gate 1 & Gate 2), AI provider settings API, and message editing lifecycle.
 - Zero modifications to source files, database tables, or runtime environments.
@@ -76,7 +76,7 @@ The user diagnostic export contained 5 key events:
 3. **Primary Save Attempt (`/api/bolu-save`):**
    - The client performs a `POST /api/bolu-save` with `{ proposal, tenantId, entityId, conversationId, proposalMessageId }`.
    - In [api/bolu-save.ts#L59-L65](file:///c:/Users/DELL/Desktop/bigdrops-app/api/bolu-save.ts#L59-L65): If `SUPABASE_SERVICE_ROLE_KEY` is not present in Vercel environment variables, `getAdminClient()` returns `null`, and the endpoint responds with HTTP 500 `{ error: 'Server configuration error: missing Supabase admin client.', code: 'server_config_missing' }`.
-   - In [api/bolu-save.ts#L112-L115](file:///c:/Users/DELL/Desktop/bigdrops-app/api/bolu-save.ts#L112-L115): If `entities` lookup fails or returns no schema, `schemaName` defaults to `'public'`. In BOURXE, `save_quotation_with_items_transaction` does **not** reside in `public`; it is installed inside the tenant-specific schema (`tenant_...`). Attempting to call `.schema('public').rpc('save_quotation_with_items_transaction')` fails with PostgreSQL error `function public.save_quotation_with_items_transaction does not exist`.
+   - In [api/bolu-save.ts#L112-L115](file:///c:/Users/DELL/Desktop/bigdrops-app/api/bolu-save.ts#L112-L115): If `entities` lookup fails or returns no schema, `schemaName` defaults to `'public'`. In BOUXRE, `save_quotation_with_items_transaction` does **not** reside in `public`; it is installed inside the tenant-specific schema (`tenant_...`). Attempting to call `.schema('public').rpc('save_quotation_with_items_transaction')` fails with PostgreSQL error `function public.save_quotation_with_items_transaction does not exist`.
 4. **Client Response Handling:**
    - In [useBoluThread.ts#L524-L530](file:///c:/Users/DELL/Desktop/bigdrops-app/src/lib/ai-assistant/hooks/useBoluThread.ts#L524-L530): Because the server returned HTTP 400 or 500 (not 404), `result` is assigned `{ success: false, error: errData?.error }`.
    - In [useBoluThread.ts#L538](file:///c:/Users/DELL/Desktop/bigdrops-app/src/lib/ai-assistant/hooks/useBoluThread.ts#L538): The local fallback block begins with `if (!result)`. Because `result` is defined (holding the server error), **the local Supabase client fallback is skipped entirely**.
@@ -398,10 +398,10 @@ The two reported problems are directly interconnected through Bolu's conversatio
  M vite-env.d.ts
 ?? docs/integrations/Architect.md
 ?? docs/prd/product-analytics-posthog/
-?? docs/reports/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md
-?? docs/reports/BOURXE_Google_Web_Guidance_Skill_Audit.md
-?? docs/reports/BOURXE_Governance_Documentation_and_Modern_Web_Intelligence_Audit.md
-?? docs/reports/BOURXE_Sentry_Frontend_Privacy_Audit.md
+?? docs/reports/BOUXRE_Existing_Observability_Analytics_Authentication_Audit.md
+?? docs/reports/BOUXRE_Google_Web_Guidance_Skill_Audit.md
+?? docs/reports/BOUXRE_Governance_Documentation_and_Modern_Web_Intelligence_Audit.md
+?? docs/reports/BOUXRE_Sentry_Frontend_Privacy_Audit.md
 ?? docs/reports/android/2026-11-17-unified-release-notifications.md
 ?? src/assets/providers/apinex-mark.png
 ?? src/assets/providers/runcrate-icon.png
@@ -458,11 +458,11 @@ The two reported problems are directly interconnected through Bolu's conversatio
  M vite-env.d.ts
 ?? docs/integrations/Architect.md
 ?? docs/prd/product-analytics-posthog/
-?? docs/reports/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md
-?? docs/reports/BOURXE_Google_Web_Guidance_Skill_Audit.md
-?? docs/reports/BOURXE_Governance_Documentation_and_Modern_Web_Intelligence_Audit.md
-?? docs/reports/BOURXE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md
-?? docs/reports/BOURXE_Sentry_Frontend_Privacy_Audit.md
+?? docs/reports/BOUXRE_Existing_Observability_Analytics_Authentication_Audit.md
+?? docs/reports/BOUXRE_Google_Web_Guidance_Skill_Audit.md
+?? docs/reports/BOUXRE_Governance_Documentation_and_Modern_Web_Intelligence_Audit.md
+?? docs/reports/BOUXRE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md
+?? docs/reports/BOUXRE_Sentry_Frontend_Privacy_Audit.md
 ?? docs/reports/android/2026-11-17-unified-release-notifications.md
 ?? src/assets/providers/apinex-mark.png
 ?? src/assets/providers/runcrate-icon.png
@@ -475,4 +475,4 @@ The two reported problems are directly interconnected through Bolu's conversatio
 ?? src/tests/sentry-privacy.test.js
 ```
 
-**Audit Verification Result:** Strictly compliant. Exactly one file (`docs/reports/BOURXE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md`) was created. Zero application code, database migrations, configuration files, or tests were modified.
+**Audit Verification Result:** Strictly compliant. Exactly one file (`docs/reports/BOUXRE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md`) was created. Zero application code, database migrations, configuration files, or tests were modified.

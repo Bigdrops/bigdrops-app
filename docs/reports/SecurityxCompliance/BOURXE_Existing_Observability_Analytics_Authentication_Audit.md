@@ -1,7 +1,7 @@
-# BOURXE: Zero-Code Infrastructure & Capability Audit
+# BOUXRE: Zero-Code Infrastructure & Capability Audit
 ## Observability, Application Analytics, and Authentication Architecture
 
-- **Document Path:** `docs/reports/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md`
+- **Document Path:** `docs/reports/BOUXRE_Existing_Observability_Analytics_Authentication_Audit.md`
 - **Audit Date:** November 17, 2026
 - **System Stack:** React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase (PostgreSQL 15+), Bun 1.x runtime, Capacitor 8 (Android/iOS), Vercel SPA Hosting, Cloudzyro Persistent VPS.
 - **Audit Type:** Strict Read-Only Forensic Architecture & Capability Investigation (Zero Code Edits).
@@ -11,7 +11,7 @@
 ## 1. Executive Summary
 
 ### 1.1 Infrastructure Readiness
-BOURXE is an established, production-grade B2B business management suite serving Nigerian SMEs across invoicing, quotations, field job management (CSR), waybills, purchase orders, and AI assistance (Bolu). The application's architectural baseline is split across a static SPA edge frontend hosted on Vercel, a persistent Bun server hosted on Cloudzyro (`https://bourxe-api.cloudzyro.app`), and an operational Supabase PostgreSQL cluster implementing schema-based multi-tenancy with PostgreSQL Row Level Security (RLS).
+BOUXRE is an established, production-grade B2B business management suite serving Nigerian SMEs across invoicing, quotations, field job management (CSR), waybills, purchase orders, and AI assistance (Bolu). The application's architectural baseline is split across a static SPA edge frontend hosted on Vercel, a persistent Bun server hosted on Cloudzyro (`https://bouxre-api.cloudzyro.app`), and an operational Supabase PostgreSQL cluster implementing schema-based multi-tenancy with PostgreSQL Row Level Security (RLS).
 
 From an infrastructure perspective, **core identity and compliance logging are highly mature and operational**. However, **frontend crash observability, distributed error monitoring, and product telemetry represent genuine, unaddressed operational gaps**.
 
@@ -32,7 +32,7 @@ From an infrastructure perspective, **core identity and compliance logging are h
 - **Better Auth:** **REJECT (Redundant & Destructive).** Introducing Better Auth would duplicate identity management, fracture native biometric authentication, and invalidate 100+ SQL Row Level Security policies and schema routing mechanisms tied to Supabase `auth.uid()`.
 - **Sentry:** **ADD (High Necessity / P0).** Resolves the single highest operational risk in the codebase: silent client crashes in production and unmonitored runtime exceptions on Capacitor Android.
 - **PostHog:** **ADD (High Necessity / P1).** Bridges the complete absence of product analytics, feature adoption metrics, and workflow drop-off analysis. Can also absorb lightweight web traffic analytics, eliminating the need for a separate visitor tracker.
-- **Plausible:** **REJECT (Redundant).** BOURXE is an authenticated business application, not a public content blog. PostHog covers web pageviews and marketing attribution with zero additional bundle overhead.
+- **Plausible:** **REJECT (Redundant).** BOUXRE is an authenticated business application, not a public content blog. PostHog covers web pageviews and marketing attribution with zero additional bundle overhead.
 
 ---
 
@@ -66,7 +66,7 @@ From an infrastructure perspective, **core identity and compliance logging are h
   - `src/lib/ai-assistant/bolu-usage-ledger.ts`
   - `docs/prd/Technical-SEO-AND-Metadata-Hardening-PRD/site-features-prd.md`
 - **Consent Mechanism:** `CookieConsentBanner.tsx` displays an accessible banner managing `localStorage['bouxre_cookie_consent']` (`'accepted' | 'declined'`).
-- **Telemetry Reality:** No analytics SDK is installed. As documented in `site-features-prd.md`: *"No analytics SDKs installed (constraint); telemetry is disclosed as prospective ('to improve BOURXE') without shipping a tracker — an explicit, documented gap vs the original PRD wish-list (Plausible/GA4), which was deliberately de-scoped."*
+- **Telemetry Reality:** No analytics SDK is installed. As documented in `site-features-prd.md`: *"No analytics SDKs installed (constraint); telemetry is disclosed as prospective ('to improve BOUXRE') without shipping a tracker — an explicit, documented gap vs the original PRD wish-list (Plausible/GA4), which was deliberately de-scoped."*
 - **Status:** **DOES NOT EXIST (Consent UI exists, but tracking engine is absent).**
 
 ### 2.4 Performance and Latency Monitoring
@@ -85,7 +85,7 @@ From an infrastructure perspective, **core identity and compliance logging are h
   ```json
   {
     "status": "ok",
-    "service": "bourxe-ai-backend",
+    "service": "bouxre-ai-backend",
     "uptime": 123.45,
     "timestamp": "2026-11-17T09:00:00.000Z"
   }
@@ -165,7 +165,7 @@ PostHog fills the total absence of product analytics. It provides conversion fun
 | **Bundle & Network Overhead** | Zero. | ~1-2 KB script tag, additional DNS lookup and HTTP beacon per page transition. | Unnecessary duplicate network traffic for mobile users on metered connections. |
 
 **Verdict on Plausible:** **REJECT AS REDUNDANT.**
-PostHog already provides pageview tracking and referrer attribution. Because BOURXE is primarily an authenticated application, running a separate marketing analytics script alongside PostHog provides zero incremental value.
+PostHog already provides pageview tracking and referrer attribution. Because BOUXRE is primarily an authenticated application, running a separate marketing analytics script alongside PostHog provides zero incremental value.
 
 ---
 
@@ -177,7 +177,7 @@ PostHog already provides pageview tracking and referrer attribution. Because BOU
 - **Repository Verification:**
   - `package.backend.json` exists and matches the documented specification (only server dependencies: `@supabase/supabase-js`, `resend`, `pdf-lib`, etc.).
   - `server.ts` exists as the single entry point (`port: process.env.PORT || 3000`).
-  - Active Cloudzyro URL in production is `https://bourxe-api.cloudzyro.app`.
+  - Active Cloudzyro URL in production is `https://bouxre-api.cloudzyro.app`.
   - CORS handling in `server.ts:1-12` supports origin reflection for `https://bigdrops-app.vercel.app` and local development hosts with `Access-Control-Allow-Credentials: 'true'`.
 
 ### 4.2 Relationship with Bolu AI Subsystem
@@ -210,7 +210,7 @@ Cloudzyro is the dedicated, stateful backend host for Bolu AI:
 - All persistent state must continue to reside in **Supabase PostgreSQL** via service-role API calls over HTTPS.
 
 ### 4.7 Security Boundaries and Operational Risks
-- **CORS & Origin Reflection:** `server.ts:1-12` reflects the incoming `Origin` header. While necessary for credentialed fetches across Vercel previews and local dev, it must be restricted in production to known domains (`bigdrops-app.vercel.app`, custom BOURXE domains) to prevent unauthorized cross-origin request forging.
+- **CORS & Origin Reflection:** `server.ts:1-12` reflects the incoming `Origin` header. While necessary for credentialed fetches across Vercel previews and local dev, it must be restricted in production to known domains (`bigdrops-app.vercel.app`, custom BOUXRE domains) to prevent unauthorized cross-origin request forging.
 - **Service Role Key Security:** Cloudzyro holds `SUPABASE_SERVICE_ROLE_KEY` in environment variables to execute Gate 2 saves. Telemetry SDKs initialized on Cloudzyro must be scrubbed so that this key is never exposed in error breadcrumbs or request dumps.
 
 ---
@@ -289,7 +289,7 @@ flowchart TD
 ```
 
 ### 6.2 Component Placement Breakdown
-1. **BOURXE Application (Frontend SPA & Capacitor Mobile):**
+1. **BOUXRE Application (Frontend SPA & Capacitor Mobile):**
    - **Retain:** Supabase Auth client, `TenantClient` schema switcher, `errorRegistry.ts` (for local user diagnostic support), `CookieConsentBanner.tsx`.
    - **Add:** `@sentry/react` (configured in `src/main.tsx` with `beforeSend` financial data scrubbing) and `posthog-js` (configured in `src/App.tsx`, conditionally activated only when `localStorage['bouxre_cookie_consent'] === 'accepted'`).
 2. **Cloudzyro (Persistent Bun VPS):**
@@ -303,7 +303,7 @@ flowchart TD
    - **PostHog Cloud:** Ingests sanitized UI events, conversion funnels, and feature engagement.
 
 ### 6.3 Data Privacy & Financial Data Scrubbing Protocol
-To protect SME confidentiality and adhere strictly to BOURXE security guardrails:
+To protect SME confidentiality and adhere strictly to BOUXRE security guardrails:
 - **Zero Financial Data Transmission:** Invoices, line items, unit prices, total amounts, and customer contact information must NEVER be sent as event properties or breadcrumbs.
 - **Session Replay Hardening:** If PostHog Session Replay is enabled, it must configure `maskAllInputs: true` and `maskTextSelector: ".financial-value, [data-sensitive='true'], input, textarea"` to prevent invoice and banking information from appearing on screen recordings.
 - **AI Chat Privacy:** Prompts and responses sent to Bolu must NEVER be passed to PostHog or Sentry. Telemetry is restricted to provider name, model ID, latency, and token count.
@@ -330,7 +330,7 @@ To protect SME confidentiality and adhere strictly to BOURXE security guardrails
   - *Developer Free Tier:* 5,000 errors/month, 10,000 performance transactions/month. Ample for current SME traffic volume.
   - *Cost at Scale:* \$26/month (Team tier) only if transaction volume expands significantly.
 - **PostHog Cloud:**
-  - *Free Tier:* 1,000,000 events/month, 5,000 session replays/month. Covers all current BOURXE business workflows with zero platform cost.
+  - *Free Tier:* 1,000,000 events/month, 5,000 session replays/month. Covers all current BOUXRE business workflows with zero platform cost.
 - **Plausible Cloud:**
   - *No Free Tier:* Starts at \$9/month. Completely avoidable by leveraging PostHog.
 - **Better Auth:**
@@ -363,7 +363,7 @@ To protect SME confidentiality and adhere strictly to BOURXE security guardrails
 ### 9.2 Add
 1. **Sentry Error Tracking:** Install `@sentry/react` on the frontend and `@sentry/node` (or Bun equivalent) on Cloudzyro. Enable source-map uploading in the Vercel build pipeline. Implement strict financial PII scrubbing in `beforeSend`.
 2. **PostHog Product Analytics:** Install `posthog-js` on the frontend. Connect it to `CookieConsentBanner.tsx` so tracking only activates upon user acceptance. Define core conversion funnels (Client Creation $\rightarrow$ Quotation $\rightarrow$ Invoice $\rightarrow$ Receipt).
-3. **External Synthetic Uptime Monitoring:** Configure a free external monitor (e.g., BetterStack, UptimeRobot) targeting `https://bourxe-api.cloudzyro.app/health`.
+3. **External Synthetic Uptime Monitoring:** Configure a free external monitor (e.g., BetterStack, UptimeRobot) targeting `https://bouxre-api.cloudzyro.app/health`.
 
 ### 9.3 Reject as Redundant
 1. **Better Auth:** **REJECT.** Duplicates Supabase Auth, breaks PostgreSQL RLS security policies, and complicates multi-tenant schema switching.
@@ -421,5 +421,5 @@ Zero application code files, dependencies, lockfiles, or configurations were mod
 
 ### 11.3 Post-Creation Confirmation
 Only the requested audit report:
-`docs/reports/BOURXE_Existing_Observability_Analytics_Authentication_Audit.md`
+`docs/reports/BOUXRE_Existing_Observability_Analytics_Authentication_Audit.md`
 was authored. Zero application source files, configuration files, migrations, or dependencies were altered.

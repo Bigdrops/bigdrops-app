@@ -4,7 +4,7 @@ This report was written by Codex on 2026-10-09.
 
 ## Objective
 
-Remove the rejected PhotoHero V3 candidate. Keep PhotoHero V2 as the only PhotoHero preview. Improve Cold Launch theme contrast without changing the approved Tenant Tree structure. Remove developer preview links and obsolete footer branding from ordinary navigation. Set the Android launcher label to BOURXE.
+Remove the rejected PhotoHero V3 candidate. Keep PhotoHero V2 as the only PhotoHero preview. Improve Cold Launch theme contrast without changing the approved Tenant Tree structure. Remove developer preview links and obsolete footer branding from ordinary navigation. Set the Android launcher label to BOUXRE.
 
 ## Files Changed
 
@@ -22,11 +22,11 @@ Remove the rejected PhotoHero V3 candidate. Keep PhotoHero V2 as the only PhotoH
 
 ## Removed V3 Artifacts
 
-- Removed `src/components/onboarding/BourxePhotoHeroV3Preview.tsx`.
-- Removed `docs/reports/general/2026-10-09-bourxe-photohero-v3-app-preview.md`.
+- Removed `src/components/onboarding/BouxrePhotoHeroV3Preview.tsx`.
+- Removed `docs/reports/general/2026-10-09-bouxre-photohero-v3-app-preview.md`.
 - Removed the V2/V3 selector from `/photohero-preview`.
 - Removed the rejected V3 candidate section from the app-entry and onboarding PRD.
-- No standalone `BOURXE_Onboarding-PhotoHero-v3.html` file was present in the onboarding design folder.
+- No standalone `BOUXRE_Onboarding-PhotoHero-v3.html` file was present in the onboarding design folder.
 
 ## PhotoHero V2 Preservation
 
@@ -37,7 +37,7 @@ Remove the rejected PhotoHero V3 candidate. Keep PhotoHero V2 as the only PhotoH
 
 ## Cold Launch Theme and Contrast Changes
 
-- The central public brand label now reads `BOURXE`.
+- The central public brand label now reads `BOUXRE`.
 - The official BX launcher artwork remains unchanged.
 - The tree geometry, workspace/product topology, signal paths, failure state, retry state, tips hook, and preview controls were not structurally changed.
 - The preview now derives accent, border, surface, text, and status colors from the existing `--bd-*` theme tokens.
@@ -52,12 +52,12 @@ Remove the rejected PhotoHero V3 candidate. Keep PhotoHero V2 as the only PhotoH
 - Removed Cold Launch Preview and PhotoHero Preview from the mobile drawer management list.
 - Removed Cold Launch Preview and PhotoHero Preview from the More Options page.
 - Removed the redundant mobile drawer footer identity block that showed the workspace initials/name at the bottom.
-- Kept the top BX + BOURXE header, company switcher, and Sign Out action.
+- Kept the top BX + BOUXRE header, company switcher, and Sign Out action.
 - Kept `/cold-launch-preview` and `/photohero-preview` routes registered in the authenticated app shell.
 
 ## Android Label Change
 
-- Changed `@string/app_name` and `@string/title_activity_main` from `BigDrops` to `BOURXE`.
+- Changed `@string/app_name` and `@string/title_activity_main` from `BigDrops` to `BOUXRE`.
 - Did not change `applicationId`, namespace, package name, MainActivity, signing configuration, version code, version name, permissions, app links, or launcher artwork.
 
 ## Static Verification Results

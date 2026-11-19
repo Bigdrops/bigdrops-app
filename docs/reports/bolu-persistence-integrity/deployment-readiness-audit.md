@@ -1,4 +1,4 @@
-# BOURXE — Bolu Operation ID Deployment-Readiness and Installer Blast-Radius Audit
+# BOUXRE — Bolu Operation ID Deployment-Readiness and Installer Blast-Radius Audit
 
 This report was written by Tencent Hunyuan Hy on 2026-11-18 via WorkBuddy Agent.
 

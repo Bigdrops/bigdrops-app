@@ -1,4 +1,4 @@
-# BOURXE Product Intelligence & Observability: Independent Documentation Audit
+# BOUXRE Product Intelligence & Observability: Independent Documentation Audit
 
 This report was written by Saffron on 2026-11-18 via Perch Desktop.
 
@@ -34,8 +34,8 @@ The three-layer concept is sound and the package is useful as a proposal. The or
 
 The initiative connects three distinct objectives:
 
-1. Application observability: does BOURXE work? Sentry and the local registry serve this layer.
-2. Product intelligence: do people successfully use BOURXE? PostHog is proposed for this layer. It is not installed.
+1. Application observability: does BOUXRE work? Sentry and the local registry serve this layer.
+2. Product intelligence: do people successfully use BOUXRE? PostHog is proposed for this layer. It is not installed.
 3. Business and compliance auditability: are business operations recorded? `src/lib/audit.ts` serves this layer in the tenant database.
 
 The layers should remain connected at the initiative level but separate in storage, security, retention, and governance. The corrected package now reflects that separation more accurately.
@@ -146,7 +146,7 @@ Implemented: package, bootstrap, guard, DSN fallback, scrubbing, breadcrumb filt
 
 Tested: A 48-case static suite exists. It was not run in this audit.
 
-Independently audited: A historical report exists at `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`. It describes defects that were later fixed.
+Independently audited: A historical report exists at `docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md`. It describes defects that were later fixed.
 
 Remaining work: Three minor refinements are listed in SENTRY.md:77-79. No implementation was authorized.
 
@@ -180,7 +180,7 @@ Supabase Auth is authoritative. Sessions persist by configuration. Multiple work
 
 ## 14. Product Metrics and Activation Assessment
 
-The seven-day activation milestone is a proposal, not an approved requirement. BOURXE has multiple workflows, so a universal definition is premature. The measurement framework should keep onboarding completion, first meaningful action, first successful workflow, module-specific adoption, repeat usage, and retention as separate measurements. All metrics in EVENT-TAXONOMY.md and DASHBOARDS-AND-METRICS.md are proposed. None has an existing verified measurement in the repository.
+The seven-day activation milestone is a proposal, not an approved requirement. BOUXRE has multiple workflows, so a universal definition is premature. The measurement framework should keep onboarding completion, first meaningful action, first successful workflow, module-specific adoption, repeat usage, and retention as separate measurements. All metrics in EVENT-TAXONOMY.md and DASHBOARDS-AND-METRICS.md are proposed. None has an existing verified measurement in the repository.
 
 ## 15. Historical Consolidation and Git Integrity
 

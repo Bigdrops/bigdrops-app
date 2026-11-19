@@ -1,7 +1,7 @@
-# BOURXE — Bolu AI Provider Deployment Failure: Response Parsing Investigation & Repair Report
+# BOUXRE — Bolu AI Provider Deployment Failure: Response Parsing Investigation & Repair Report
 
 - **Date:** 2026-11-14
-- **Author:** BOURXE AI Engineering Agent
+- **Author:** BOUXRE AI Engineering Agent
 - **Status:** COMPLETED AND VERIFIED
 - **Related Error ID:** `err_1794666644349_pc65yt`
 - **Route:** `/settings`
@@ -47,7 +47,7 @@ When a server returns:
 the browser engine throws `SyntaxError: Unexpected end of JSON input` or `Unexpected token '<'`. This halted the UI and triggered the error boundary without actionable feedback for the administrator.
 
 ### Factor 2: Local Vite Development Server Route Handling
-The BOURXE local development command (`bun run dev`) executes Vite (`vite.config.js`). In production (Vercel), routes in `/api/*` execute as serverless Edge/Node functions. In local development, however, Vite had no server middleware for `/api/*` requests.
+The BOUXRE local development command (`bun run dev`) executes Vite (`vite.config.js`). In production (Vercel), routes in `/api/*` execute as serverless Edge/Node functions. In local development, however, Vite had no server middleware for `/api/*` requests.
 When the browser issued `POST /api/bolu-provider-config`, Vite treated it as an unhandled static asset route and returned an HTTP 404 response with an empty 0-byte body. This immediately triggered Factor 1.
 
 ### Factor 3: Coupled Post-Mutation Status Refreshes

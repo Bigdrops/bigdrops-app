@@ -4,7 +4,7 @@ This report was written by Saffron on 2026-11-18 via Perch Desktop.
 
 ## 1. Objective
 
-Remove Continue, Roo Code, Windsurf, and CommandCode from the Windows workstation and the `C:\Users\DELL\Desktop\bigdrops-app` repository without damaging BOURXE, unrelated AI tooling, IDE configuration, or existing user work.
+Remove Continue, Roo Code, Windsurf, and CommandCode from the Windows workstation and the `C:\Users\DELL\Desktop\bigdrops-app` repository without damaging BOUXRE, unrelated AI tooling, IDE configuration, or existing user work.
 
 Skills used: workspace, github, documents
 Documentation standard: ASD-STE100 Simplified Technical English
@@ -85,7 +85,7 @@ No credentials were read into this report. No shared provider credential was rev
 - `.cursor/`, `.agents/`, `.claude/`, `.hermes/`, `.kiro/`, `.opencode/`, and other unrelated AI tooling.
 - Canonical skills in `.agents/skills` and `.claude/skills`.
 - Shared npm directory and all unrelated global packages.
-- BOURXE application code, tests, database files, and Git history.
+- BOUXRE application code, tests, database files, and Git history.
 - Pre-existing modified and untracked work.
 
 ## 8. Items Not Removable

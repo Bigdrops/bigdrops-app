@@ -1,7 +1,7 @@
 /**
  * OpenRouter Model Price Classification & Sorting Authority
  *
- * Classifies model pricing into standard BOURXE cost bands:
+ * Classifies model pricing into standard BOUXRE cost bands:
  * - FREE: 0 cost for prompt, completion and request
  * - CHEAP: Highest token price > $0 and <= $1.00 per million tokens
  * - MEDIUM: Highest token price > $1.00 and <= $5.00 per million tokens

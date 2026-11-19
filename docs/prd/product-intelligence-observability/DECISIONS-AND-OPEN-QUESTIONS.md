@@ -1,4 +1,4 @@
-# BOURXE: Master Decisions & Open Questions Register
+# BOUXRE: Master Decisions & Open Questions Register
 
 - **Document Version:** 1.0.0
 - **Status:** `[DECISION REQUIRED]`
@@ -8,7 +8,7 @@
 
 ## 1. Overview & Decision Governance
 
-Before BOURXE can transition from **Phase 1 (Governance Approval)** to **Phase 2 (Account Readiness)** and subsequent technical integration, the product owner must review and resolve the key architectural, product, and operational decisions cataloged below.
+Before BOUXRE can transition from **Phase 1 (Governance Approval)** to **Phase 2 (Account Readiness)** and subsequent technical integration, the product owner must review and resolve the key architectural, product, and operational decisions cataloged below.
 
 To avoid decision fatigue, each decision clearly distinguishes:
 - **Phase 1 Blockers:** Decisions that must be approved before Phase 2 can proceed.
@@ -31,7 +31,7 @@ To avoid decision fatigue, each decision clearly distinguishes:
 ### Decision 1.2: Environment Separation Strategy
 - **Context:** Test telemetry from local developer machines and staging builds can distort production conversion funnels if sent to the same PostHog project.
 - **Options:**
-  - **Option A (Dual Projects - Recommended):** Provision two separate projects inside the PostHog organization: `BOURXE-Production` and `BOURXE-Development`. Each receives its own write key (`VITE_POSTHOG_KEY`).
+  - **Option A (Dual Projects - Recommended):** Provision two separate projects inside the PostHog organization: `BOUXRE-Production` and `BOUXRE-Development`. Each receives its own write key (`VITE_POSTHOG_KEY`).
   - **Option B (Single Project with Property Filtering):** Use one project and filter by `environment: 'production' | 'development'`.
 - **Trade-Offs:** Option A completely eliminates the risk of test data polluting production funnel statistics or auto-populating active business counts.
 - **Recommendation:** **Option A (Dual Projects)**.
@@ -63,12 +63,12 @@ To avoid decision fatigue, each decision clearly distinguishes:
 ---
 
 ### Decision 1.5: Definition of the "Activation" Milestone
-- **Context:** To measure onboarding success and calculate 30-day cohort retention, BOURXE must formally define when a new user becomes an "Activated Business".
+- **Context:** To measure onboarding success and calculate 30-day cohort retention, BOUXRE must formally define when a new user becomes an "Activated Business".
 - **Options:**
   - **Option A (Document Issuance - Recommended):** An SME is activated when they **complete their business profile and issue/export their first invoice or quotation within 7 days of registration**.
   - **Option B (Profile Completion Only):** An SME is activated once they complete the onboarding checklist.
   - **Option C (Client & Item Creation):** An SME is activated once they save their first client and first inventory item.
-- **Trade-Offs:** Option A ties activation directly to real commercial value. An SME that issues an invoice has experienced the core utility of BOURXE.
+- **Trade-Offs:** Option A ties activation directly to real commercial value. An SME that issues an invoice has experienced the core utility of BOUXRE.
 - **Recommendation:** **Option A (First Document Issued within 7 Days)**.
 - **Status:** `[DECISION REQUIRED]`
 
@@ -77,7 +77,7 @@ To avoid decision fatigue, each decision clearly distinguishes:
 ## 3. Downstream Decisions (Deferred to Phases 3–6)
 
 ### Decision 2.1: Multi-Tenant Attribution: PostHog Groups vs. Property Fallback
-- **Context:** BOURXE allows a user to manage multiple business entities. PostHog offers "Group Analytics" to aggregate metrics by company/entity rather than individual user.
+- **Context:** BOUXRE allows a user to manage multiple business entities. PostHog offers "Group Analytics" to aggregate metrics by company/entity rather than individual user.
 - **Options:**
   - **Option A (Group Analytics):** Utilize `posthog.group('tenant', entityId)`. Requires PostHog Teams/Paid plan or Free tier allowance.
   - **Option B (Property Fallback):** Pass `tenant_id` as a standard property on every event. Supported on all PostHog plans.
@@ -101,7 +101,7 @@ To avoid decision fatigue, each decision clearly distinguishes:
 The independent documentation audit found the following unresolved items. These are recorded, not decided:
 
 - PostHog account ownership is asserted by this documentation package but cannot be verified from repository evidence.
-- The seven-day activation milestone remains a proposal. A single universal definition may not fit all BOURXE workflows. Onboarding completion, first meaningful action, first successful workflow, module-specific adoption, repeat usage, and retention should be measured separately before a universal activation rule is approved.
+- The seven-day activation milestone remains a proposal. A single universal definition may not fit all BOUXRE workflows. Onboarding completion, first meaningful action, first successful workflow, module-specific adoption, repeat usage, and retention should be measured separately before a universal activation rule is approved.
 - PostHog groups are reporting constructs, not tenant security boundaries. Supabase RLS remains authoritative.
 - Consent withdrawal or preference change is not implemented. The banner stores one choice and cannot be reopened.
 - Sentry initializes without consent gating. The legal basis requires qualified review.

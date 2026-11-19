@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="BOURXE — unified business operations. Onboarding prototype.">
-<title>BOURXE — Business operations, unified</title>
+<meta name="description" content="BOUXRE — unified business operations. Onboarding prototype.">
+<title>BOUXRE — Business operations, unified</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -1050,14 +1050,14 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
 <body>
 
 <a class="skip-link" href="#tourViewport">Skip to content</a>
-<p class="vh" role="status" id="live" aria-live="polite">BOURXE onboarding. Welcome.</p>
+<p class="vh" role="status" id="live" aria-live="polite">BOUXRE onboarding. Welcome.</p>
 
 <div class="app">
   <div class="ambient" aria-hidden="true"></div>
 
   <!-- ══════════ TOPBAR ══════════ -->
   <header class="topbar">
-    <a class="brand" href="#" id="brandLink" aria-label="BOURXE home">
+    <a class="brand" href="#" id="brandLink" aria-label="BOUXRE home">
       <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M5 3h8.2a4.4 4.4 0 0 1 1.6 8.5A4.6 4.6 0 0 1 13.6 21H5V3Z" fill="#fff" fill-opacity=".95"/>
@@ -1065,7 +1065,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
           <path d="M9.4 13.2h4.4a1.9 1.9 0 0 1 0 3.8H9.4v-3.8Z" fill="var(--brand)"/>
         </svg>
       </span>
-      BOURXE
+      BOUXRE
     </a>
 
     <div class="top-actions">
@@ -1094,7 +1094,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
   <div class="views">
 
     <!-- ───────── WELCOME ───────── -->
-    <section class="view view-welcome is-active" id="view-welcome" aria-label="Welcome to BOURXE">
+    <section class="view view-welcome is-active" id="view-welcome" aria-label="Welcome to BOUXRE">
       <div class="welcome-grid">
         <div class="welcome-copy">
           <span class="w-eyebrow">Unified operations</span>
@@ -1142,7 +1142,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
     <!-- ───────── TOUR ───────── -->
     <section class="view view-tour" id="view-tour" aria-label="Product tour">
       <div class="tour-shell">
-        <div class="tour-viewport" id="tourViewport" aria-roledescription="carousel" aria-label="BOURXE product tour">
+        <div class="tour-viewport" id="tourViewport" aria-roledescription="carousel" aria-label="BOUXRE product tour">
           <div class="tour-track" id="tourTrack">
 
             <!-- SLIDE 1 · WORKSPACES -->
@@ -1342,7 +1342,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
                               font-size="20" font-weight="800" fill="var(--on-brand)">B</text>
                         <rect x="16" y="-106" width="224" height="34" rx="11" fill="var(--brand)"/>
                         <text x="128" y="-82" text-anchor="middle" font-family="'Plus Jakarta Sans',sans-serif"
-                              font-size="18" font-weight="800" letter-spacing="4.5" fill="var(--on-brand)">BOURXE</text>
+                              font-size="18" font-weight="800" letter-spacing="4.5" fill="var(--on-brand)">BOUXRE</text>
                         <rect x="16" y="-62" width="120" height="7" rx="3.5" fill="#c9d6e6"/>
 
                         <!-- cab -->
@@ -1555,7 +1555,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
             </button>
           </form>
 
-          <p class="auth-switch">New to BOURXE? <button type="button" data-nav="signup">Create an account</button></p>
+          <p class="auth-switch">New to BOUXRE? <button type="button" data-nav="signup">Create an account</button></p>
         </div>
 
         <aside class="auth-aside" aria-hidden="true">
@@ -1653,7 +1653,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
             </button>
           </form>
 
-          <p class="legal">By continuing you agree to the BOURXE terms of service and privacy policy.</p>
+          <p class="legal">By continuing you agree to the BOUXRE terms of service and privacy policy.</p>
           <p class="auth-switch">Already have an account? <button type="button" data-nav="signin">Sign in</button></p>
         </div>
 
@@ -1706,8 +1706,8 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
     set: function(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
   };
 
-  var currentTheme = storage.get('bourxe-theme') || 'slate';
-  var currentAppearance = storage.get('bourxe-appearance') || 'dark';
+  var currentTheme = storage.get('bouxre-theme') || 'slate';
+  var currentAppearance = storage.get('bouxre-appearance') || 'dark';
 
   function buildThemeList(){
     THEMES.forEach(function(t){
@@ -1722,7 +1722,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
       b.addEventListener('click', function(){
         currentTheme = t.id;
         applyTheme();
-        storage.set('bourxe-theme', t.id);
+        storage.set('bouxre-theme', t.id);
       });
       themeList.appendChild(b);
     });
@@ -1748,7 +1748,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
     if (!b) return;
     currentAppearance = b.dataset.appearance;
     applyTheme();
-    storage.set('bourxe-appearance', currentAppearance);
+    storage.set('bouxre-appearance', currentAppearance);
   });
 
   themeBtn.addEventListener('click', function(e){
@@ -1802,10 +1802,10 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
     if (v) v.scrollTop = 0;
 
     var titles = {
-      welcome: 'Welcome to BOURXE.',
+      welcome: 'Welcome to BOUXRE.',
       tour: 'Product tour, step ' + (currentSlide + 1) + ' of ' + slides.length + '.',
-      signin: 'Sign in to BOURXE.',
-      signup: 'Create your BOURXE account.'
+      signin: 'Sign in to BOUXRE.',
+      signup: 'Create your BOUXRE account.'
     };
     live.textContent = titles[name] || '';
   }
@@ -2138,7 +2138,7 @@ html[data-appearance="light"] .aside-inner{color:var(--ink)}
       if (first){ first.focus(); return; }
       var btn = signupForm.querySelector('.auth-submit');
       busy(btn, 'Setting up your workspace…', function(){
-        live.textContent = 'Workspace created. Welcome to BOURXE.';
+        live.textContent = 'Workspace created. Welcome to BOUXRE.';
       });
     });
   }

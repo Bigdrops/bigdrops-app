@@ -223,7 +223,7 @@ test('po import: preserves item metadata (sub_description, image_url, item_id, c
       quantity: 10,
       unit: 'pieces',
       unit_cost: 2500,
-      image_url: 'https://cdn.bourxe.com/items/widget.png',
+      image_url: 'https://cdn.bouxre.com/items/widget.png',
       item_id: 'inv-item-778',
       custom_data: { serialPrefix: 'DX' },
     },
@@ -237,7 +237,7 @@ test('po import: preserves item metadata (sub_description, image_url, item_id, c
   assert.equal(item.quantity, 10)
   assert.equal(item.unit, 'pieces')
   assert.equal(item.unit_cost, 2500)
-  assert.equal(item.image_url, 'https://cdn.bourxe.com/items/widget.png')
+  assert.equal(item.image_url, 'https://cdn.bouxre.com/items/widget.png')
   assert.equal(item.item_id, 'inv-item-778')
   assert.deepEqual(item.custom_data, { serialPrefix: 'DX' })
 })

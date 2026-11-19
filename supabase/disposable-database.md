@@ -1,6 +1,6 @@
-# BOURXE Disposable Development & Verification Database
+# BOUXRE Disposable Development & Verification Database
 
-**Environment designation:** Permanent BOURXE disposable development and verification database.
+**Environment designation:** Permanent BOUXRE disposable development and verification database.
 
 **Status:** Designated 2026-11-18 by the project owner. **Credentials are not yet present in this repository or its `.env`.** This document is the source of truth for which Supabase project agents must target for development, migration testing, scratch tenants and RPC verification until told otherwise. Do not require the user to repeat these identifiers.
 

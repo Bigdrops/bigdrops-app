@@ -434,7 +434,7 @@ bun run lint</pre><div class="gate"><strong>Gate F</strong><ul><li><label class=
       <div class="scroll-x"><table class="audit-table"><tr><th>Stage</th><th>Status</th><th>Verification &amp; notes</th></tr><tr><td>G-0 Readiness</td><td><span class="status partial">Partial</span></td><td>Configurable server adapter ready; live provider credentials and terms approval pending</td></tr><tr><td>A Engine</td><td><span class="status implemented">Implemented</span></td><td>`api/bolu-chat.ts`, `bolu-provider.ts`, `bolu-runtime.ts` active with SSE streaming and mock fallback</td></tr><tr><td>B Invoice pack</td><td><span class="status implemented">Implemented</span></td><td>Reference pack: live inference proposal, calculateDocument lock, two-gate review</td></tr><tr><td>C Quotation pack</td><td><span class="status deferred">Deferred</span></td><td>Scope open; scheduled for Phase 2 after invoice trial</td></tr><tr><td>D Operations packs</td><td><span class="status deferred">Deferred</span></td><td>PO, Waybill, CSR scheduled for Phase 2</td></tr><tr><td>E Approval &amp; persistence controls</td><td><span class="status implemented">Implemented</span></td><td>Two-gate approval, save_invoice_with_items_transaction, retry/rollback controls</td></tr><tr><td>F Breadth gate</td><td><span class="status deferred">Deferred</span></td><td>Eight-document breadth suite deferred to Phase 2</td></tr><tr><td>G Trial</td><td><span class="status blocked">Blocked</span></td><td>Awaiting live provider selection, key custody, and terms compliance</td></tr><tr><td>H Decision</td><td><span class="status blocked">Blocked</span></td><td>Follows the four-week trial</td></tr></table></div>
       <div class="open-grid" style="margin-top:9px">
         <article class="milestone-card"><span class="tag">Milestone status</span><h4>Live Provider Adapter &amp; Invoice Pipeline Activated</h4><p>The conversational invoice create and modify pipeline is connected to a configurable OpenAI-compatible server-side streaming adapter. Provider output is strictly validated into typed proposals; model math is discarded in favor of authoritative calculations via <code>Calculations.ts</code>.</p></article>
-        <article class="milestone-card"><span class="tag">Governance</span><h4>Mandatory task close-out</h4><p>Per DEC-31, every BOURXE engineering implementation and audit task must conclude by reconciling the canonical roadmap and this companion mirror against actual code status, evidence, blockers and dependencies.</p></article>
+        <article class="milestone-card"><span class="tag">Governance</span><h4>Mandatory task close-out</h4><p>Per DEC-31, every BOUXRE engineering implementation and audit task must conclude by reconciling the canonical roadmap and this companion mirror against actual code status, evidence, blockers and dependencies.</p></article>
         <article class="milestone-card"><span class="tag">Provider security</span><h4>AMD Token Factory path verified</h4><p>AMD Token Factory is OpenAI-compatible at <code>https://developer.amd.com.cn/radeon/api/v1/chat/completions</code>, model <code>DeepSeek-V4-Flash</code>, key prefix <code>rc-</code>. Key handling is server-only; zero client exposure in bundles, logs, or storage. Live inference remains unexecuted pending user key configuration.</p></article>
         <article class="milestone-card"><span class="tag">Provider setup</span><h4>Guided PowerShell setup CLI delivered</h4><p>Administrators can securely input, pre-flight test and rotate provider keys via <code>scripts/setup-bolu-provider.ps1</code> / <code>bun run bolu:setup</code>. It synchronizes local and remote environment variables without exposing secrets.</p></article>
         <article class="milestone-card"><span class="tag">In-app vault</span><h4>Configuration &amp; AES-256-GCM vault delivered</h4><p>Settings provider administration uses AES-256-GCM envelope encryption and RLS-denied persistence. Runtime precedence resolves in-app database before environment variables before mock mode.</p></article>
@@ -477,10 +477,10 @@ bun run lint</pre><div class="gate"><strong>Gate F</strong><ul><li><label class=
     root.dataset.theme = next;
     themeButton.textContent = next === 'dark' ? '☾' : '☀';
     themeButton.setAttribute('aria-label', next === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-    try { localStorage.setItem('bourxe-roadmap-theme', next); } catch {}
+    try { localStorage.setItem('bouxre-roadmap-theme', next); } catch {}
   }
   let saved = 'dark';
-  try { saved = localStorage.getItem('bourxe-roadmap-theme') || saved; } catch {}
+  try { saved = localStorage.getItem('bouxre-roadmap-theme') || saved; } catch {}
   setTheme(saved);
   themeButton.addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
 
@@ -488,7 +488,7 @@ bun run lint</pre><div class="gate"><strong>Gate F</strong><ul><li><label class=
   const progressCounts = [...document.querySelectorAll('.progress-count')];
   const progressFills = [...document.querySelectorAll('[data-progress-fill]')];
   const progressBars = [...document.querySelectorAll('[role="progressbar"]')];
-  const progressKey = 'bourxe-roadmap-progress-v1';
+  const progressKey = 'bouxre-roadmap-progress-v1';
   let savedProgress = {};
   try { savedProgress = JSON.parse(localStorage.getItem(progressKey) || '{}') || {}; } catch {}
 

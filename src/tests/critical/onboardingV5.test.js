@@ -40,7 +40,7 @@ test('V5 is independent from V4 and does not embed source HTML', () => {
   assert.ok(appShellSource.includes('<Route path="/design-lab/onboarding-v4"'), 'V4 route must remain')
   assert.ok(appShellSource.includes('<Route path="/photohero-preview"'), 'PhotoHero V1 route must remain')
   for (const banned of [
-    'BOURXE_Ultimate_Onboarding.html?raw',
+    'BOUXRE_Ultimate_Onboarding.html?raw',
     '<iframe',
     'srcDoc',
     "from '@/supabase'",
@@ -54,7 +54,7 @@ test('V5 is independent from V4 and does not embed source HTML', () => {
 
 test('all eight references are recorded as inspected inputs', () => {
   for (const file of [
-    'BOURXE_Ultimate_Onboarding.html',
+    'BOUXRE_Ultimate_Onboarding.html',
     'claude-v2.html',
     'deepseek.html',
     'cta-index.tsx',

@@ -32,7 +32,7 @@ export default function CsrDocumentPreview({ csr, settings, logoUrl }: CsrDocume
   if (!csr) return null
 
   const resolvedLogo = logoUrl || settings?.company_logo_url || null
-  const companyName = safeText(settings?.company_name, 'BOURXE')
+  const companyName = safeText(settings?.company_name, 'BOUXRE')
   const companyLines = [
     settings?.company_address,
     settings?.company_city,

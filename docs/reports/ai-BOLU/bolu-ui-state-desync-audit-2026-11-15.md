@@ -1,10 +1,10 @@
 # Diagnostic Audit: Bolu UI State Desynchronization & Template Remediation
 
 **Date:** 2026-11-15  
-**Auditor:** BOURXE AI Agent / System Architect  
+**Auditor:** BOUXRE AI Agent / System Architect  
 **Scope:** `src/components/ai-assistant/chat/`, `src/lib/ai-assistant/hooks/`, `src/pages/settings/bolu-provider/`, `api/bolu-chat.ts`, `api/bolu-provider-config.ts`  
 **Target Deliverable:** Root-cause mapping of message drop, provider state desync, and mobile viewport clipping  
-**Standard:** ASD-STE100 (Simplified Technical English) & BOURXE Architecture Standards  
+**Standard:** ASD-STE100 (Simplified Technical English) & BOUXRE Architecture Standards  
 
 ---
 

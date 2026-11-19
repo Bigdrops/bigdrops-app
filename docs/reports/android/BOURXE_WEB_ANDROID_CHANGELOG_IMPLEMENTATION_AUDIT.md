@@ -1,8 +1,8 @@
-# BOURXE Web and Android Changelog Implementation Audit
+# BOUXRE Web and Android Changelog Implementation Audit
 
 ## Executive Summary
 
-This audit investigates the existing BOURXE changelog and release-notification implementation across the Web application and native Android application. The objective is to determine whether existing users are informed of new product releases, whether Android users on older APKs can detect newer versions, and whether acknowledgement persistence prevents duplicate notifications.
+This audit investigates the existing BOUXRE changelog and release-notification implementation across the Web application and native Android application. The objective is to determine whether existing users are informed of new product releases, whether Android users on older APKs can detect newer versions, and whether acknowledgement persistence prevents duplicate notifications.
 
 **Key finding: The release infrastructure is well-defined at the metadata level (Supabase `app_release_policy` table), but the user-facing notification mechanisms are underdeveloped. Web users receive no automatic "What's New" notifications when a new release is published. Android users discover updates only on app launch/resume via a throttled 6-hour check, and the `UpdateGate` blocks navigation when the 3-day grace period expires. There is no shared acknowledgement persistence between platforms, and no web-equivalent of the Android `UpdateGate`.
 
@@ -57,7 +57,7 @@ The published GitHub Actions workflow (`.github/workflows/build-android-test-rel
    - `version_code`, `version_name`
    - `web_release_url` = public Supabase Storage URL `?v=<VERSION_CODE>`
    - `effective_at` = ISO timestamp of upload
-   - `release_notes` = e.g. `"BOURXE v1.0.24 (build 1024) maintenance and performance update."`
+   - `release_notes` = e.g. `"BOUXRE v1.0.24 (build 1024) maintenance and performance update."`
    - `mandatory` = `true` (for test releases) or `false`
    - `apk_asset_prefix` = `BIGDROPS-test-release-`
 
@@ -412,7 +412,7 @@ Changes not staged for commit:
 ```
 
 **Git status immediately after audit (this report only):**
-- The only new file created is `docs/Reports/BOURXE_WEB_ANDROID_CHANGELOG_IMPLEMENTATION_AUDIT.md`.
+- The only new file created is `docs/Reports/BOUXRE_WEB_ANDROID_CHANGELOG_IMPLEMENTATION_AUDIT.md`.
 - No application source files, Android source files, configuration files, database files, or release metadata files were modified.
 - No git commits, pushes, or deployments were performed.
 

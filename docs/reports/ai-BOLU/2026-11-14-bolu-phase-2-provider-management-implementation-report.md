@@ -1,7 +1,7 @@
 # Bolu AI Architecture Normalization & Provider Management Implementation Report
 
 - **Date:** 14 November 2026
-- **Author:** BOURXE AI Platform Engineering
+- **Author:** BOUXRE AI Platform Engineering
 - **Scope:** Phase 2 Architecture Normalization and Hermes Provider Management UI
 - **Status:** COMPLETE & VERIFIED
 - **Specification Standard:** ASD-STE100 Simplified Technical English
@@ -180,7 +180,7 @@ All modified source files strictly respect the 600-line limit. The AI test suite
 - "+ Custom Provider" primary header action for non-catalogue endpoints.
 - Collapsible Recent Routing Activity feed rendering audit events from `app_ai_routing_events`.
 - Verified Provider Catalogue grid allowing instant "+ Connect" configuration.
-- Strict compliance with BOURXE semantic token rules (`text-bd-status-success-text`, `text-bd-status-warning-text`) without mode-branching `dark:` color classes.
+- Strict compliance with BOUXRE semantic token rules (`text-bd-status-success-text`, `text-bd-status-warning-text`) without mode-branching `dark:` color classes.
 
 ---
 

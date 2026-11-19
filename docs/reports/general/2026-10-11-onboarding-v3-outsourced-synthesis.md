@@ -4,7 +4,7 @@ Date: 2026-10-11
 
 ## Scope
 
-Created a new Design Lab-only BOURXE Onboarding V3 experience. V3 does not replace production onboarding, the existing PhotoHero preview, or the independent Onboarding V2 route.
+Created a new Design Lab-only BOUXRE Onboarding V3 experience. V3 does not replace production onboarding, the existing PhotoHero preview, or the independent Onboarding V2 route.
 
 ## Outsourced Files Inspected
 
@@ -45,7 +45,7 @@ V3 is a separate onboarding journey with:
 - Exactly five introduction slides:
   1. Multitenancy and independent business workspaces.
   2. RFQ, quotations, item library, Cost & Pricing Sheets, invoices, and payments.
-  3. Logistics and operations with a visibly moving BOURXE waybill vehicle.
+  3. Logistics and operations with a visibly moving BOUXRE waybill vehicle.
   4. Finance and tax with VAT and WHT prominence.
   5. Connected business operations across sales, procurement, logistics, projects, service, finance, and teams.
 - A dedicated Sign In screen.

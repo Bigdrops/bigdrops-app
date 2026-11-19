@@ -1,7 +1,7 @@
 /**
  * Purchase Order — Customize sheet (production).
  *
- * Uses the same global BOURXE customization surface as the other commercial
+ * Uses the same global BOUXRE customization surface as the other commercial
  * document families (DocumentCustomizeCard + CommercialTemplatePicker backed
  * by the PDF Customization Engine at family key 'purchase_order').
  *

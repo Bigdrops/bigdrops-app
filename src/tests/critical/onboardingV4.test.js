@@ -15,7 +15,7 @@ const read = (path) => readFileSync(resolve(path), 'utf8')
 const V4_ID = 'onboarding-v4-source'
 const V4_ROUTE = '/design-lab/onboarding-v4'
 const SOURCE_PATH =
-  'docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOURXE_Ultimate_Onboarding.html'
+  'docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/onboarding/outsourced-samples/BOUXRE_Ultimate_Onboarding.html'
 
 const previewSource = read('src/components/onboarding-v4/onboarding-v4-preview.tsx')
 const pageSource = read('src/pages/OnboardingV4Preview.tsx')
@@ -40,8 +40,8 @@ test('V4 is registered as a separate Design Lab experiment and route', () => {
 
 test('V4 keeps the original source HTML as its authority', () => {
   assert.ok(existsSync(resolve(SOURCE_PATH)), 'the required reference HTML must exist')
-  assert.match(previewSource, /BOURXE_Ultimate_Onboarding\.html\?raw/)
-  assert.match(previewSource, /SOURCE_REFERENCE =\s*\n?\s*'docs\/prd\/Adaptive Mobile-First UIUX Facelift PRD\/Design-direction\/onboarding\/outsourced-samples\/BOURXE_Ultimate_Onboarding\.html'/)
+  assert.match(previewSource, /BOUXRE_Ultimate_Onboarding\.html\?raw/)
+  assert.match(previewSource, /SOURCE_REFERENCE =\s*\n?\s*'docs\/prd\/Adaptive Mobile-First UIUX Facelift PRD\/Design-direction\/onboarding\/outsourced-samples\/BOUXRE_Ultimate_Onboarding\.html'/)
   assert.match(previewSource, /data-ob4-source=\{SOURCE_REFERENCE\}/)
   assert.ok(!previewSource.includes("from '@/supabase'"), 'the preview must not import Supabase')
   assert.ok(!previewSource.includes('signInWithOAuth'), 'the preview must not call Google OAuth')
@@ -58,8 +58,8 @@ test('the complete source scene sequence and motion vocabulary are preserved', (
     'Finance and tax visibility',
     'Logistics and waybills',
     'Projects field service and teamwork',
-    'Sign in to BOURXE',
-    'Create your BOURXE account',
+    'Sign in to BOUXRE',
+    'Create your BOUXRE account',
   ]) {
     assert.ok(sourceHtml.includes(label), `source must retain ${label}`)
   }

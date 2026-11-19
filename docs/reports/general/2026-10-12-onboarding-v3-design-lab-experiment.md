@@ -4,7 +4,7 @@ This report was written by Buffy on 2026-10-12 via Freebuff Desktop.
 
 ## Objective
 
-Build a new BOURXE onboarding experiment for the Design Lab at `/design-lab/onboarding-v3`. The experiment must not replace production onboarding, the PhotoHero preview, or the independent Onboarding V2 route.
+Build a new BOUXRE onboarding experiment for the Design Lab at `/design-lab/onboarding-v3`. The experiment must not replace production onboarding, the PhotoHero preview, or the independent Onboarding V2 route.
 
 ## Scope
 

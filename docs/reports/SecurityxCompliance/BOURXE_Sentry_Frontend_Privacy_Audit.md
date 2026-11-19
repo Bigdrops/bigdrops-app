@@ -1,9 +1,9 @@
-# BOURXE: Sentry Frontend Privacy & Implementation Audit
+# BOUXRE: Sentry Frontend Privacy & Implementation Audit
 ## Independent Forensic Security, Data Leakage, and SDK Compliance Investigation
 
-- **Document Path:** `docs/reports/BOURXE_Sentry_Frontend_Privacy_Audit.md`
+- **Document Path:** `docs/reports/BOUXRE_Sentry_Frontend_Privacy_Audit.md`
 - **Audit Date:** November 17, 2026
-- **Audited Target:** BOURXE Frontend Sentry Integration (`@sentry/react@11.13.0`)
+- **Audited Target:** BOUXRE Frontend Sentry Integration (`@sentry/react@11.13.0`)
 - **Repository Architecture:** React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase (PostgreSQL 15+), Bun 1.x runtime, Capacitor 8 (Android/iOS), Vercel SPA Hosting.
 - **Audit Type:** Strict Read-Only Security & Privacy Audit (Zero Code Modifications).
 - **Final Verdict:** **APPROVED WITH CONDITIONS**
@@ -13,14 +13,14 @@
 ## 1. Executive Summary
 
 ### 1.1 Objective & Context
-Following the integration of `@sentry/react@11.13.0` into the BOURXE React application, this independent forensic audit was conducted to verify all architectural, functional, and privacy claims. Specifically, the audit evaluates whether the current implementation can inadvertently transmit sensitive commercial, personal, financial, or authentication information to Sentry servers under real-world runtime exceptions.
+Following the integration of `@sentry/react@11.13.0` into the BOUXRE React application, this independent forensic audit was conducted to verify all architectural, functional, and privacy claims. Specifically, the audit evaluates whether the current implementation can inadvertently transmit sensitive commercial, personal, financial, or authentication information to Sentry servers under real-world runtime exceptions.
 
 ### 1.2 Core Audit Conclusions
 1. **SDK Mechanics & Lifecycle (VERIFIED SAFE):** Sentry initializes prior to React DOM mounting in `src/main.tsx`. Duplicate initialization is guarded via `Sentry.isInitialized()`. Missing or empty `VITE_SENTRY_DSN` values are handled gracefully without breaking development or production bootstrapping.
 2. **Replay & Performance Footprint (VERIFIED SAFE):** Session Replay (`replayIntegration`), browser profiling (`browserProfilingIntegration`), and performance tracing (`browserTracingIntegration`) are **confirmed inactive**. `tracesSampleRate: 0` is explicitly set, eliminating unnecessary client bandwidth and CPU overhead.
 3. **Existing Error Boundary & Local Registry (VERIFIED SAFE):** `src/components/ErrorBoundary.tsx` preserves its fallback UI card, state management, and retry handling. The in-browser offline diagnostic ring buffer (`src/lib/errorRegistry.ts` in `localStorage['bd-error-registry']`) and diagnostic pages (`ErrorsDashboard.tsx`, `SystemLogsSettingsSection.tsx`) remain fully functional.
 4. **Data Privacy & Redaction Engine (DEFICIENCIES IDENTIFIED):** While basic JWT, Supabase Bearer token, email, and Nigerian phone number regexes operate as designed, **four confirmed data leakage vectors were uncovered in the scrubbing pipeline**:
-   - **Compound Key Regex Failure:** `SENSITIVE_KEY_PATTERN` uses strict exact-match anchors (`^...$`), causing standard BOURXE compound keys (e.g., `invoice_number`, `invoiceId`, `client_name`, `customer_name`, `total_amount`, `unit_price`, `bank_account`, `po_number`) to bypass redaction entirely.
+   - **Compound Key Regex Failure:** `SENSITIVE_KEY_PATTERN` uses strict exact-match anchors (`^...$`), causing standard BOUXRE compound keys (e.g., `invoice_number`, `invoiceId`, `client_name`, `customer_name`, `total_amount`, `unit_price`, `bank_account`, `po_number`) to bypass redaction entirely.
    - **Console Breadcrumb String Leakage:** Sentry's default `Console` integration captures `console.log` arguments and serializes them into `breadcrumb.message`. Because `scrubText()` only checks for JWTs, emails, and phone numbers, serialized objects containing company addresses, customer names, or financial figures logged to the console leak intact into breadcrumbs.
    - **Navigation Breadcrumb Query Strings:** `sanitizeUrl()` in `beforeBreadcrumb` is restricted strictly to `xhr` and `fetch` categories, leaving `navigation` breadcrumbs with raw query parameters and route parameters unscrubbed.
    - **Unscrubbed Event Contexts & Tags:** `beforeSend` deep-scrubs `event.extra` but completely ignores `event.contexts` and `event.tags`.
@@ -127,7 +127,7 @@ The regular expression uses **strict start and end anchors** (`^...$`).
   - `bolu_prompt`, `bolu_response`, `chat_message`
 
 **Forensic Proof:**
-When evaluated against realistic BOURXE data models (`src/lib/audit.ts:4-112`), every single primary domain field (`invoice_number`, `client_name`, `subtotal`, `po_number`, `equipment_type`, `delivery_location`) returns `false` against `SENSITIVE_KEY_PATTERN` and is transmitted unredacted.
+When evaluated against realistic BOUXRE data models (`src/lib/audit.ts:4-112`), every single primary domain field (`invoice_number`, `client_name`, `subtotal`, `po_number`, `equipment_type`, `delivery_location`) returns `false` against `SENSITIVE_KEY_PATTERN` and is transmitted unredacted.
 
 ### 5.3 Recursive Object Traversal (`scrubObject`)
 Implemented in `src/lib/sentry.ts:53-71`:
@@ -387,4 +387,4 @@ All remediations are strictly localized to `src/lib/sentry.ts` and require zero 
 - **Initial State:** Recorded at 09:45:54 UTC. Pre-existing unstaged modifications were noted on `.env.example`, `bun.lock`, `package.json`, `src/App.tsx`, `src/components/ErrorBoundary.tsx`, `src/main.tsx`, and `vite-env.d.ts`.
 - **Final State:** Recorded post-audit.
 - **Confirmation:** **Zero application source files, configurations, package manifests, or environment files were modified or created by this audit.** The only file created is this audit report:
-  `docs/reports/BOURXE_Sentry_Frontend_Privacy_Audit.md`
+  `docs/reports/BOUXRE_Sentry_Frontend_Privacy_Audit.md`

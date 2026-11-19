@@ -1,4 +1,4 @@
-# BOURXE: Product Intelligence Strategy & Behavioral Operating Model
+# BOUXRE: Product Intelligence Strategy & Behavioral Operating Model
 
 - **Document Version:** 1.0.0
 - **Status:** Strategic Architecture Specification (`[PROPOSAL]` / Under Review)
@@ -8,9 +8,9 @@
 
 ## 1. Vision & Strategic Operating Model
 
-Product intelligence at BOURXE exists to answer one fundamental question: **How do we make Nigerian SMEs more efficient, resilient, and commercially successful?**
+Product intelligence at BOUXRE exists to answer one fundamental question: **How do we make Nigerian SMEs more efficient, resilient, and commercially successful?**
 
-Historically, software development has relied on anecdotal feedback or trial-and-error. By establishing a structured product intelligence operating model, BOURXE replaces speculation with empirical evidence.
+Historically, software development has relied on anecdotal feedback or trial-and-error. By establishing a structured product intelligence operating model, BOUXRE replaces speculation with empirical evidence.
 
 ```mermaid
 flowchart LR
@@ -24,12 +24,12 @@ flowchart LR
 ### 1.1 Core Strategic Principles
 1. **Decision-Driven Instrumentation:** We do not track events for curiosity. Every instrumented event must link directly to an operational question and an actionable roadmap decision.
 2. **Quality Over Quantity:** A small, well-governed catalog of 16 events is vastly superior to 200 noisy, unmaintained clicks.
-3. **Data Minimization as Trust:** Nigerian SMEs entrust BOURXE with their proprietary pricing and customer lists. We measure behavioral actions, never commercial contents.
+3. **Data Minimization as Trust:** Nigerian SMEs entrust BOUXRE with their proprietary pricing and customer lists. We measure behavioral actions, never commercial contents.
 4. **Actionable Metrics vs. Vanity Numbers:** Total pageviews and raw button clicks do not prove business health. We measure completed workflows, activation velocity, and weekly active business retention.
 
 ---
 
-## 2. Core Operational Questions BOURXE Must Answer
+## 2. Core Operational Questions BOUXRE Must Answer
 
 | Operational Question | Telemetry Required | Informed Product Decision |
 | :--- | :--- | :--- |
@@ -69,12 +69,12 @@ flowchart LR
 ## 4. Activation & Retention Framework
 
 ### 4.1 Proposed Activation Milestone (`[PROPOSAL]`)
-In BOURXE, an account is not considered "activated" simply by registering or confirming an email address.
+In BOUXRE, an account is not considered "activated" simply by registering or confirming an email address.
 
 > **Proposed Definition of Activation:**
 > An SME is considered **Activated** when they **complete their business profile and issue at least one finalized invoice or quotation within their first 7 days.**
 
-**Rationale:** An SME that completes a real commercial transaction has experienced BOURXE's core value proposition and is dramatically more likely to become a long-term retained user.
+**Rationale:** An SME that completes a real commercial transaction has experienced BOUXRE's core value proposition and is dramatically more likely to become a long-term retained user.
 
 ### 4.2 Retention Metrics & Cohorts
 - **Weekly Active Businesses (WAB):** Number of distinct business entities that issue at least one document or update records within a rolling 7-day window.

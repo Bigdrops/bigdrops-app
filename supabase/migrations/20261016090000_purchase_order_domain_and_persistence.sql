@@ -2,7 +2,7 @@
 -- PHASE C1 — SUPPLIER PURCHASE ORDER DOMAIN AND PERSISTENCE
 -- ============================================================
 -- A Supplier Purchase Order is an OUTGOING procurement commitment:
--- BOURXE issues it TO a supplier to request goods or services at agreed
+-- BOUXRE issues it TO a supplier to request goods or services at agreed
 -- costs. It is not a sales invoice, not a quotation, not a customer
 -- order, not an expense posting, not a goods receipt, and not a
 -- supplier payment.

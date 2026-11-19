@@ -221,8 +221,8 @@ describe('Sentry Frontend Privacy Hardening Test Suite', () => {
     })
 
     it('sanitizes fetch/XHR URLs and strips query strings', () => {
-      const networkUrl = 'https://bourxe-api.cloudzyro.app/api/bolu-chat?token=secret123&session=999'
-      expect(sanitizeUrl(networkUrl)).toBe('https://bourxe-api.cloudzyro.app/api/bolu-chat')
+      const networkUrl = 'https://bouxre-api.cloudzyro.app/api/bolu-chat?token=secret123&session=999'
+      expect(sanitizeUrl(networkUrl)).toBe('https://bouxre-api.cloudzyro.app/api/bolu-chat')
     })
   })
 
@@ -234,18 +234,18 @@ describe('Sentry Frontend Privacy Hardening Test Suite', () => {
       const technicalMsg = "TypeError: Cannot read properties of undefined (reading 'map')"
       expect(scrubText(technicalMsg)).toBe(technicalMsg)
 
-      const networkMsg = 'NetworkError: Failed to fetch at https://bourxe-api.cloudzyro.app/api/bolu-chat'
+      const networkMsg = 'NetworkError: Failed to fetch at https://bouxre-api.cloudzyro.app/api/bolu-chat'
       expect(scrubText(networkMsg)).toBe(networkMsg)
     })
 
     it('redacts JWTs, Bearer tokens, emails, and Nigerian phone numbers', () => {
-      const msg = 'Auth failure with token eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoxfQ.sig and Bearer sbp_abc123 for user admin@bourxe.ng (tel: 08031234567)'
+      const msg = 'Auth failure with token eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoxfQ.sig and Bearer sbp_abc123 for user admin@bouxre.ng (tel: 08031234567)'
       const cleaned = scrubText(msg)
       expect(cleaned).toContain('[REDACTED_JWT]')
       expect(cleaned).toContain('Bearer [REDACTED_TOKEN]')
       expect(cleaned).toContain('[REDACTED_EMAIL]')
       expect(cleaned).toContain('[REDACTED_PHONE]')
-      expect(cleaned).not.toContain('admin@bourxe.ng')
+      expect(cleaned).not.toContain('admin@bouxre.ng')
       expect(cleaned).not.toContain('08031234567')
     })
 

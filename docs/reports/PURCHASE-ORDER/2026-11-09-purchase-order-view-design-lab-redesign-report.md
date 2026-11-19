@@ -43,12 +43,12 @@ The following inventory specifies every component used in the redesigned PO View
 
 | Component | Source | Original Purpose | PO Application | Reuse Strategy | Dependencies |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Table, TableHeader, TableRow, TableHead, TableCell** | `Water-melon` (`src/components/ui/table.tsx`) | Clean tabular layout with row borders and cell alignment | Main procurement line-item table for desktop, tablet, fold-open, and mobile-landscape viewports | Adapted with BOURXE token variables (`--line`, `--surface`, `--ink`, font-variant tabular numbers) | `po-theme.css`, formatters |
-| **Badge** | `Water-melon` (`src/components/ui/badge.tsx`) | Status badge with variant background and border pills | Lifecycle status indicator (Draft, Issued, Closed, Cancelled, Archived) and snapshot tags | Adapted with semantic status colors matching BOURXE theme presets | `PURCHASE_ORDER_STATUS_LABELS` |
+| **Table, TableHeader, TableRow, TableHead, TableCell** | `Water-melon` (`src/components/ui/table.tsx`) | Clean tabular layout with row borders and cell alignment | Main procurement line-item table for desktop, tablet, fold-open, and mobile-landscape viewports | Adapted with BOUXRE token variables (`--line`, `--surface`, `--ink`, font-variant tabular numbers) | `po-theme.css`, formatters |
+| **Badge** | `Water-melon` (`src/components/ui/badge.tsx`) | Status badge with variant background and border pills | Lifecycle status indicator (Draft, Issued, Closed, Cancelled, Archived) and snapshot tags | Adapted with semantic status colors matching BOUXRE theme presets | `PURCHASE_ORDER_STATUS_LABELS` |
 | **Item Card** (`Item`, `ItemTitle`, `ItemDescription`) | `Water-melon` (`src/components/ui/item.tsx`) | Mobile card row primitive for item lists | Mobile-portrait and fold-closed line-item presentation with quantity badge and rate callout | Adapted to procurement line items | `formatCurrency` |
-| **Empty State** | `Water-melon` (`src/components/ui/empty.tsx`) | Minimal state container with icon and prompt | Zero line-item fallback and empty audit trail fallback | Rebuilt with BOURXE tokens | Lucide icons |
+| **Empty State** | `Water-melon` (`src/components/ui/empty.tsx`) | Minimal state container with icon and prompt | Zero line-item fallback and empty audit trail fallback | Rebuilt with BOUXRE tokens | Lucide icons |
 | **SpringCard & Damped Transition** | `Kinetics` (`src/content/body.html` lines 331–385, `public/css/effects-a.css`) | Critically damped spring transition (`cubic-bezier(0.34, 1.56, 0.64, 1)`) for zero-jank expansion | Expandable Activity History & Document Trail disclosure container | Adapted for CSS collapsible transitions | CSS custom properties |
-| **Parameter Readout Strip** (`hero-readout`, `card-param`) | `Kinetics` (`src/content/body.html` lines 241–246, `public/css/hero.css`) | Monospace telemetry readout for physics properties (`damping`, `stiffness`) | Procurement telemetry strip displaying Line Items count, Subtotal, VAT rate, and Total Commitment | Rebuilt with BOURXE surface tokens and font-mono figures | Typography tokens |
+| **Parameter Readout Strip** (`hero-readout`, `card-param`) | `Kinetics` (`src/content/body.html` lines 241–246, `public/css/hero.css`) | Monospace telemetry readout for physics properties (`damping`, `stiffness`) | Procurement telemetry strip displaying Line Items count, Subtotal, VAT rate, and Total Commitment | Rebuilt with BOUXRE surface tokens and font-mono figures | Typography tokens |
 | **Tactile Copy Action** (`copy-btn`) | `Kinetics` (`src/content/body.html` lines 355, 413, `effects-a.css`) | Tactile spring press and copy confirmation | One-click copy for PO Number and Vendor Email with checkmark feedback | Adapted with `navigator.clipboard` and toast state | `navigator.clipboard`, toast |
 | **Device Frame Wrapper** (`Frame`) | `BigDrops Free` (`components/reui/frame.tsx`) | Multi-device simulation frame with bezel shadow | Outer preview stage frame inside Design Lab | Adapted to harmonize with `ViewportStage` | `ViewportStage` |
 | **Separator** | `BigDrops Free` (`components/ui/separator.tsx`) | Semantic division rule | Section division between masthead, party cards, line items, and totals | Rebuilt as CSS border dividers using `--line` | `po-theme.css` |
@@ -69,7 +69,7 @@ The following inventory specifies every component used in the redesigned PO View
 ## Design Decisions & Adaptations
 
 1. **Procurement Semantics vs Sales Invoicing**:
-   - A Purchase Order is an outgoing procurement commitment issued by BOURXE to a vendor. It is not customer-facing.
+   - A Purchase Order is an outgoing procurement commitment issued by BOUXRE to a vendor. It is not customer-facing.
    - Replaced customer labels with **Supplier / Vendor**.
    - Added explicit **Frozen Snapshot** indicator on the supplier card. The PO preserves vendor identity as frozen history.
    - Used `unit_cost` exclusively. Never interchanged with `unit_price`.

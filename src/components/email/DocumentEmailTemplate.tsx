@@ -22,7 +22,7 @@ export const DocumentEmailTemplate: React.FC<DocumentEmailProps> = (props) => {
 
   return (
     <div
-      className="bourxe-document-email-preview-host"
+      className="bouxre-document-email-preview-host"
       style={{ width: '100%' }}
       dangerouslySetInnerHTML={{ __html: html }}
     />

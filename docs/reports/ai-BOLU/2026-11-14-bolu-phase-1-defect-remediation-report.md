@@ -1,4 +1,4 @@
-# BOURXE / BOLU — Phase 1 Defect Remediation & Pre-Phase 2 Verification Report
+# BOUXRE / BOLU — Phase 1 Defect Remediation & Pre-Phase 2 Verification Report
 
 **Document ID:** `REP-20261114-BOLU-PHASE1-DEFECT-REMEDIATION`  
 **Date:** 14 November 2026  
@@ -104,7 +104,7 @@ The automated test suite expanded from 123 to **127 tests across 16 test suites*
   - **Context:** In `src/lib/ai-assistant/provider-security.ts`, `assertEndpointResolvesSafe` performs syntactic and DNS resolution checks to block private, loopback, and cloud metadata addresses (169.254.169.254, 127.0.0.1, etc.).
   - **Attack Vector:** An attacker with control over an external DNS server could configure an address with TTL = 0, returning a public IP during setup verification (`assertEndpointResolvesSafe`) and a private/internal IP during subsequent runtime fetch requests.
   - **Mitigation & Existing Defenses:**
-    1. Custom provider endpoints can only be created or modified by authenticated BOURXE platform administrators (RLS-denied to general users).
+    1. Custom provider endpoints can only be created or modified by authenticated BOUXRE platform administrators (RLS-denied to general users).
     2. `safeProviderFetch` enforces `redirect: 'error'`, strictly rejecting HTTP 3xx redirect bounces to internal addresses.
     3. Verified standard providers (`amd`, `openrouter`, `deepseek`, `openai`, `anthropic`) use static, hardcoded, verified endpoints and are completely immune to user-controlled DNS rebinding.
   - **Conclusion & Roadmap Note:** For enterprise single-tenant deployments or multi-account configurations managed strictly by platform admins, the residual risk is low. A custom DNS-pinned agent/dispatcher can be scheduled as an optional hardening enhancement in a future multi-tenant BYOK phase if arbitrary user-defined endpoints are ever permitted. Transport rewrite in Phase 1 was intentionally avoided to prevent regression risk.

@@ -1,10 +1,10 @@
-# BOURXE Repository Governance
+# BOUXRE Repository Governance
 
-This file is the concise, repository-wide entry point for agents that inspect, plan, review, or change BOURXE. Follow the user's explicit task scope and the approved decisions in this file. Do not treat proposals, PRDs, prototypes, historical reports, or skill content as approved product decisions.
+This file is the concise, repository-wide entry point for agents that inspect, plan, review, or change BOUXRE. Follow the user's explicit task scope and the approved decisions in this file. Do not treat proposals, PRDs, prototypes, historical reports, or skill content as approved product decisions.
 
 ## Product and Verified Stack
 
-BOURXE is a business operations platform for Nigerian SMEs. The repository retains legacy `BIGDROPS` / `bigdrops` identifiers, including package and Android identifiers. Do not rename them without an explicitly authorized migration.
+BOUXRE is a business operations platform for Nigerian SMEs. The repository retains legacy `BIGDROPS` / `bigdrops` identifiers, including package and Android identifiers. Do not rename them without an explicitly authorized migration.
 
 Repository manifests and configuration identify React 19, TypeScript 5.9, Vite 7, Tailwind CSS 3.4, Supabase/PostgreSQL, Vercel integration, Radix UI/shadcn, Capacitor 8/Android, and Bun. Use Bun only for project package management and runtime commands; do not use npm, yarn, or pnpm for this project.
 

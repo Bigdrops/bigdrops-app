@@ -1,4 +1,4 @@
-# BOURXE Governance Specification: Consent, Privacy & Data Minimization
+# BOUXRE Governance Specification: Consent, Privacy & Data Minimization
 
 - **Document Version:** 1.0.0
 - **Status:** Privacy Architecture Specification (`[PROPOSAL]` / Under Review)
@@ -9,7 +9,7 @@
 
 ## 1. Privacy Principles & Commitment
 
-At BOURXE, data privacy is an architectural requirement, not an afterthought. Nigerian SMEs entrust BOURXE with their proprietary pricing structures, client lists, invoice documents, and daily transactions. Any leakage of this commercial data into third-party analytics or monitoring platforms would violate customer trust, contractual confidentiality, and statutory data protection laws.
+At BOUXRE, data privacy is an architectural requirement, not an afterthought. Nigerian SMEs entrust BOUXRE with their proprietary pricing structures, client lists, invoice documents, and daily transactions. Any leakage of this commercial data into third-party analytics or monitoring platforms would violate customer trust, contractual confidentiality, and statutory data protection laws.
 
 ### 1.1 Core Principles
 1. **Strict Data Minimization:** Collect only the minimum behavioral data necessary to answer approved product questions. Never collect data simply because it is technically possible.
@@ -74,7 +74,7 @@ flowchart TD
 
 ## 3. Consent Management Lifecycle (`CookieConsentBanner.tsx`)
 
-BOURXE includes an accessible, non-blocking consent UI in `src/components/compliance/CookieConsentBanner.tsx`. It manages state in `localStorage['bouxre_cookie_consent']`.
+BOUXRE includes an accessible, non-blocking consent UI in `src/components/compliance/CookieConsentBanner.tsx`. It manages state in `localStorage['bouxre_cookie_consent']`.
 
 ```mermaid
 stateDiagram-v2
@@ -112,7 +112,7 @@ stateDiagram-v2
 ### 4.2 PostHog Autocapture
 - **Policy:** **AUTOCAPTURE IS DISABLED.**
 - **Rationale:** Default autocapture records all DOM clicks and element text. In financial forms, button text or adjacent input values can easily leak commercial numbers.
-- **Enforcement:** BOURXE relies exclusively on explicit, typed manual instrumentation via `trackEvent()`.
+- **Enforcement:** BOUXRE relies exclusively on explicit, typed manual instrumentation via `trackEvent()`.
 
 ---
 

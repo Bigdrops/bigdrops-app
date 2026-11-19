@@ -155,7 +155,7 @@ npx polyfork search "worker" --json
 
 ## 9. Current BIGDROPS Implementation
 
-Polyfork assets are actively utilized in the BOURXE / BIGDROPS codebase:
+Polyfork assets are actively utilized in the BOUXRE / BIGDROPS codebase:
 
 ### Integrated Characters in Onboarding Experience V5 (`src/components/onboarding-v5/`)
 

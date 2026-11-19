@@ -1,4 +1,4 @@
-# BOURXE / BOLU — Phase 2 Operational Activation Report
+# BOUXRE / BOLU — Phase 2 Operational Activation Report
 **Document ID:** REP-BOLU-PHASE2-ACTIVATION-20261114  
 **Date:** 14 November 2026  
 **Status:** Operational Activation Complete · Migration Applied and Verified on Hosted Supabase  
@@ -185,7 +185,7 @@ All 15 providers present in the Settings UI catalogue and `src/lib/ai-assistant/
 
 ### 4.1 Master Encryption Key & Explicit Versioned Key Strategy
 - **Supported Key Versions:**
-  - `key_version: 1` (Legacy): Master key derived from `SUPABASE_SERVICE_ROLE_KEY` via HMAC-SHA256 (`bourxe-bolu-vault-v1`).
+  - `key_version: 1` (Legacy): Master key derived from `SUPABASE_SERVICE_ROLE_KEY` via HMAC-SHA256 (`bouxre-bolu-vault-v1`).
     - *Missing Key Behavior:* If `SUPABASE_SERVICE_ROLE_KEY` is missing in server environment, throws actionable error: `"Legacy encryption key unavailable. Set SUPABASE_SERVICE_ROLE_KEY to decrypt key_version 1 credentials."`
   - `key_version: 2` (Dedicated): 32-byte dedicated master key derived from `BOLU_ENCRYPTION_KEY`.
     - *Missing Key Behavior:* If `BOLU_ENCRYPTION_KEY` is missing in server environment, throws actionable error: `"Dedicated encryption key unavailable. Set BOLU_ENCRYPTION_KEY to decrypt key_version 2 credentials."`
@@ -406,7 +406,7 @@ In the Vercel Dashboard -> Project Settings -> Environment Variables:
 2. Verify `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are present for Production and Preview environments.
 
 ### Action Category D — Post-Deployment Verification (REQUIRES REAL CREDENTIALS)
-1. Open BOURXE application settings -> **Bolu AI Infrastructure**.
+1. Open BOUXRE application settings -> **Bolu AI Infrastructure**.
 2. Confirm the warning banner *"Vault not ready"* is **gone** (`schemaReady: true`).
 3. Click **+ Connect** on **AMD Token Factory** or **OpenRouter**.
 4. Enter a valid provider API key and click **Test**.

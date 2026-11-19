@@ -1,6 +1,6 @@
-# BOURXE
+# BOUXRE
 
-**BOURXE** is a business operations platform for Nigerian SMEs. The repository and integrations retain legacy `BIGDROPS` / `bigdrops` identifiers. This README uses the product name without an acronym expansion because no independent source for the expansion was verified.
+**BOUXRE** is a business operations platform for Nigerian SMEs. The repository and integrations retain legacy `BIGDROPS` / `bigdrops` identifiers. This README uses the product name without an acronym expansion because no independent source for the expansion was verified.
 
 > **Compatibility:** Do not rename legacy identifiers, package names, Android IDs, database objects, routes, APIs, or storage paths without an explicitly authorized migration.
 
@@ -29,7 +29,7 @@ The codebase contains implementation areas for commercial documents, procurement
 
 ### Bolu and Cloudzyro
 
-Bolu is BOURXE's conversational business-operations assistant. Repository code provides Bolu chat API handlers, including streaming chat, and a persistent Bun backend entry point in `server.ts`. An integration report dated 2026-11-16 records deployment of that backend as Cloudzyro service `bourxe-api` at `https://bourxe-api.cloudzyro.app`; a later report records triggering a Version 7 build. These are historical repository records, not verification of the current live deployment. See [`docs/integrations/persistent-bun-vps-deployment.md`](docs/integrations/persistent-bun-vps-deployment.md) for the documented deployment approach.
+Bolu is BOUXRE's conversational business-operations assistant. Repository code provides Bolu chat API handlers, including streaming chat, and a persistent Bun backend entry point in `server.ts`. An integration report dated 2026-11-16 records deployment of that backend as Cloudzyro service `bouxre-api` at `https://bouxre-api.cloudzyro.app`; a later report records triggering a Version 7 build. These are historical repository records, not verification of the current live deployment. See [`docs/integrations/persistent-bun-vps-deployment.md`](docs/integrations/persistent-bun-vps-deployment.md) for the documented deployment approach.
 
 ## Technology
 
@@ -136,7 +136,7 @@ PRDs, designs, roadmaps, prototypes, and historical reports can contain proposal
 
 The existing brand artwork and design references are documented under `docs/prd/Adaptive Mobile-First UIUX Facelift PRD/Design-direction/`. The 404 prototype is under `docs/prd/Technical-SEO-AND-Metadata-Hardening-PRD/Temps/404-v1.html`. These are design references, not proof that every screen matches them.
 
-The product is BOURXE, while technical and historical identifiers can remain `BIGDROPS` or `bigdrops`. Preserve compatibility unless a separately authorized migration explicitly covers the affected identifiers and systems.
+The product is BOUXRE, while technical and historical identifiers can remain `BIGDROPS` or `bigdrops`. Preserve compatibility unless a separately authorized migration explicitly covers the affected identifiers and systems.
 
 ## License
 

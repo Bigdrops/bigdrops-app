@@ -1,9 +1,9 @@
-# BOURXE Master Product Requirements Document (PRD): Product Intelligence & Observability
+# BOUXRE Master Product Requirements Document (PRD): Product Intelligence & Observability
 
-- **Initiative Title:** BOURXE Product Intelligence, Observability & Analytics Infrastructure
+- **Initiative Title:** BOUXRE Product Intelligence, Observability & Analytics Infrastructure
 - **Document Version:** 1.0.0
 - **Status:** Master PRD Specification (`[PROPOSAL]` / Under Review)
-- **Target Platform:** BOURXE (Nigerian SME Business Operations Suite)
+- **Target Platform:** BOUXRE (Nigerian SME Business Operations Suite)
 - **Runtime Environment:** React 19, Vite 7, TypeScript 5.9, Tailwind CSS 3.4, Supabase (PostgreSQL 15+), Bun, Capacitor 8 (Android/iOS), Vercel, Cloudzyro VPS.
 
 ---
@@ -11,12 +11,12 @@
 ## 1. Executive Summary
 
 ### 1.1 The Operational Context
-BOURXE serves Nigerian Small and Medium Enterprises (SMEs) with critical business tools: quotation creation, tax-compliant invoicing, purchase orders, client correspondence, inventory management, and conversational document drafting via the Bolu AI assistant. 
+BOUXRE serves Nigerian Small and Medium Enterprises (SMEs) with critical business tools: quotation creation, tax-compliant invoicing, purchase orders, client correspondence, inventory management, and conversational document drafting via the Bolu AI assistant. 
 
 SMEs operate in fast-paced commercial environments characterized by intermittent mobile connectivity, shared desktop terminals, and strict requirements for financial confidentiality.
 
 ### 1.2 The Core Problem
-Historically, BOURXE has operated with an asymmetrical operational awareness:
+Historically, BOUXRE has operated with an asymmetrical operational awareness:
 1. **Document Auditability Exists:** The platform maintains application-level compliance logs (`src/lib/audit.ts`) for completed business documents in PostgreSQL tenant schemas. Database immutability is not enforced.
 2. **AI Inference is Quantified:** The Bolu assistant tracks tokens, latency, TTFT, and dollar costs in `app_ai_usage_ledger`.
 3. **Application Health Was Dark:** Until recent Sentry integration, frontend runtime crashes and unhandled exceptions were lost on user devices.
@@ -26,7 +26,7 @@ Historically, BOURXE has operated with an asymmetrical operational awareness:
 This master initiative establishes **Product Intelligence & Observability** as a first-class platform capability. The objective is to combine **system health monitoring** (knowing when code breaks) with **product behavioral intelligence** (understanding how users work) while strictly upholding **SME commercial confidentiality and data minimization**.
 
 > **Plain-Language Summary for Non-Technical Stakeholders:**
-> We are building the tools needed to understand how BOURXE performs and how people use it. Sentry alerts us when an error occurs so we can fix bugs before users complain. PostHog tells us how users move through the app—such as whether they complete their first invoice or get stuck on tax calculations. Local registries allow users to review system logs on their own devices. **All of this is done without ever collecting customer names, invoice prices, bank account details, or business conversation text.**
+> We are building the tools needed to understand how BOUXRE performs and how people use it. Sentry alerts us when an error occurs so we can fix bugs before users complain. PostHog tells us how users move through the app—such as whether they complete their first invoice or get stuck on tax calculations. Local registries allow users to review system logs on their own devices. **All of this is done without ever collecting customer names, invoice prices, bank account details, or business conversation text.**
 
 ---
 
@@ -42,7 +42,7 @@ This master initiative establishes **Product Intelligence & Observability** as a
 
 ```mermaid
 flowchart TD
-    subgraph BOURXE Product Intelligence & Observability
+    subgraph BOUXRE Product Intelligence & Observability
         A[Application Health & Stability] --> A1[Sentry: Unhandled Exceptions & Crash Context]
         A --> A2[In-Browser Error Registry: Offline Ring Buffer]
         A --> A3[Cloudzyro Server: Uptime & Route Health]

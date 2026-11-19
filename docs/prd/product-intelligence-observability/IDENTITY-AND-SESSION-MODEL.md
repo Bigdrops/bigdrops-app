@@ -1,4 +1,4 @@
-# BOURXE Architecture Specification: Identity, Multi-Tenancy & Session Model
+# BOUXRE Architecture Specification: Identity, Multi-Tenancy & Session Model
 
 - **Document Version:** 1.0.0
 - **Status:** Architecture Specification (`[PROPOSAL]` / Under Review)
@@ -8,7 +8,7 @@
 
 ## 1. Identity Architecture Overview
 
-In BOURXE, identity operates across three distinct architectural layers:
+In BOUXRE, identity operates across three distinct architectural layers:
 1. **Authoritative Authentication Layer:** Supabase Auth (`@supabase/supabase-js` v2.112.3) managing secure credentials, JWT token lifecycles, and hardware-backed native biometrics.
 2. **Multi-Tenant Authorization Layer:** PostgreSQL Row-Level Security (RLS) enforcing tenant schema boundaries via `TenantClient` (`client.schema(schemaName)`).
 3. **Analytics Telemetry Layer (Proposed):** Pseudonymous identity mapping using opaque UUIDs to measure user and business activity without collecting personal identifiers.
@@ -38,7 +38,7 @@ flowchart TD
 ## 2. Authentication Lifecycle & Analytics Synchronization
 
 ### 2.1 First-Time / Anonymous Visitors
-- Before authentication, visitors to BOURXE receive a randomly generated UUID distinct ID managed by `posthog-js`.
+- Before authentication, visitors to BOUXRE receive a randomly generated UUID distinct ID managed by `posthog-js`.
 - Anonymous events (`session_started`, `marketing_page_viewed`) are associated with this temporary ID.
 
 ### 2.2 User Login & Identification
@@ -66,7 +66,7 @@ In Nigerian commercial environments, office computers and retail POS terminals a
 
 ## 3. Multi-Tenant Entity Context & Group Analytics
 
-BOURXE supports multi-tenancy where a single user account can access or manage multiple business entities.
+BOUXRE supports multi-tenancy where a single user account can access or manage multiple business entities.
 
 ### 3.1 Entity Context Tracking (`EntityContext.tsx`)
 When a user selects or switches their active business entity in `src/lib/tenant/entityContext.tsx`:

@@ -40,7 +40,7 @@ export async function router(req: Request): Promise<Response> {
       new Response(
         JSON.stringify({
           status: 'ok',
-          service: 'bourxe-ai-backend',
+          service: 'bouxre-ai-backend',
           uptime: process.uptime(),
           timestamp: new Date().toISOString(),
         }),
@@ -79,7 +79,7 @@ export async function router(req: Request): Promise<Response> {
         )
       }
     } catch (importErr: any) {
-      console.error(`[Bourxe API] Failed to import route ${routeName}:`, importErr)
+      console.error(`[Bouxre API] Failed to import route ${routeName}:`, importErr)
       return withCors(
         new Response(
           JSON.stringify({
@@ -113,7 +113,7 @@ export async function router(req: Request): Promise<Response> {
       const res = await handler(req)
       return withCors(res, req)
     } catch (err: any) {
-      console.error(`[Bourxe API] Error in handler for ${routeName}:`, err)
+      console.error(`[Bouxre API] Error in handler for ${routeName}:`, err)
       return withCors(
         new Response(
           JSON.stringify({ error: err instanceof Error ? err.message : 'Internal Server Error' }),

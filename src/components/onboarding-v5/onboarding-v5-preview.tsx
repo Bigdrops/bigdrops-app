@@ -36,7 +36,7 @@ interface Chapter {
 }
 
 const SOURCE_REFERENCES = [
-  'BOURXE_Ultimate_Onboarding.html',
+  'BOUXRE_Ultimate_Onboarding.html',
   'claude-v2.html',
   'deepseek.html',
   'cta-index.tsx',

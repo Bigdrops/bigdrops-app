@@ -226,7 +226,7 @@ The reason not to adopt it now is that the components carry their own styles and
 
 **Status:** APPROVED product direction (2026-11-14). Implementation details and provider choices remain PROPOSED or UNRESOLVED. This entry does not approve a provider, a chain, a custody model, a release, or a ship date.
 
-**Decision.** BOURXE exposes one application-owned AI engine with multiple interchangeable providers and models. The engine selects an eligible model automatically and fails over automatically when a model is unavailable, unreliable, rate-limited or unsuitable for the task. Free-first applies among eligible models. The engine may add, deprioritise or retire models as their availability, cost, reliability, or terms change, without redesigning the AI experience.
+**Decision.** BOUXRE exposes one application-owned AI engine with multiple interchangeable providers and models. The engine selects an eligible model automatically and fails over automatically when a model is unavailable, unreliable, rate-limited or unsuitable for the task. Free-first applies among eligible models. The engine may add, deprioritise or retire models as their availability, cost, reliability, or terms change, without redesigning the AI experience.
 
 **Direction principles.**
 
@@ -260,7 +260,7 @@ The reason not to adopt it now is that the components carry their own styles and
    - Gate 1: Review proposed changes via Change Proposal Card -> Explicit Apply.
    - Gate 2: Review resulting draft document -> Separate Save Confirmation Card before persistence.
 4. **Authoritative Persistence Integration:** Centralized in `src/lib/ai-assistant/bolu-document-service.ts`:
-   - Reuses BOURXE's PostgreSQL transaction RPC `save_invoice_with_items_transaction` when `entityId` is present to ensure atomic insertion.
+   - Reuses BOUXRE's PostgreSQL transaction RPC `save_invoice_with_items_transaction` when `entityId` is present to ensure atomic insertion.
    - Applies compensating rollback cleanup (header deletion) on line-item insertion failure during sequential fallback.
    - Wraps sequence numbering with `withUniqueRetry` from `@/lib/withUniqueRetry` to gracefully handle concurrent numbering collisions.
    - All financial totals (subtotal, total, VAT, WHT, discount) are strictly computed by `calculateDocument` from `src/lib/Calculations.ts`. Model-invented calculations are discarded.
@@ -274,7 +274,7 @@ The reason not to adopt it now is that the components carry their own styles and
 
 **Status:** APPROVED MANDATORY GOVERNANCE POLICY on 2026-11-14.
 
-**Decision.** Continuous engineering roadmap maintenance is a mandatory requirement of every BOURXE implementation and audit task. No engineering task is complete until the canonical roadmap (`Waterfall-roadmap.md`) and the visual presentation mirror (`roadmap.html`) are reconciled against the actual repository code state and test evidence.
+**Decision.** Continuous engineering roadmap maintenance is a mandatory requirement of every BOUXRE implementation and audit task. No engineering task is complete until the canonical roadmap (`Waterfall-roadmap.md`) and the visual presentation mirror (`roadmap.html`) are reconciled against the actual repository code state and test evidence.
 
 **Policy Rules:**
 1. **Canonical Source of Truth:** `Waterfall-roadmap.md` is the primary engineering progress record. `roadmap.html` must remain strictly synchronized with it.
@@ -424,7 +424,7 @@ The user provided an AMD API key from the AMD AI Developer Program / AMD Radeon 
 **Status:** APPROVED AND DELIVERED (2026-11-14).
 
 **Context.**
-Manual navigation through cloud deployment consoles (Vercel Project Settings) introduces friction and configuration errors when setting up Bolu's AMD API key. An administrator requires a streamlined, guided setup experience inspired by the Hermes agent setup wizard, while respecting BOURXE's serverless deployment architecture.
+Manual navigation through cloud deployment consoles (Vercel Project Settings) introduces friction and configuration errors when setting up Bolu's AMD API key. An administrator requires a streamlined, guided setup experience inspired by the Hermes agent setup wizard, while respecting BOUXRE's serverless deployment architecture.
 
 **Decision.**
 1. **Guided PowerShell Setup CLI (`scripts/setup-bolu-provider.ps1`, `bun run bolu:setup`):**
@@ -453,7 +453,7 @@ Manual navigation through cloud deployment consoles (Vercel Project Settings) in
 **Status:** APPROVED AND DELIVERED (2026-11-14).
 
 **Context.**
-Prior decisions (DEC-35, DEC-36) relied on deployment-environment variables (`process.env`) and external CLI tooling (`scripts/setup-bolu-provider.ps1`) to configure Bolu's shared AMD provider key. The user requested an in-app administrator configuration experience inspired by LibreChat's encrypted provider key pattern, adapted to BOURXE's platform assistant architecture.
+Prior decisions (DEC-35, DEC-36) relied on deployment-environment variables (`process.env`) and external CLI tooling (`scripts/setup-bolu-provider.ps1`) to configure Bolu's shared AMD provider key. The user requested an in-app administrator configuration experience inspired by LibreChat's encrypted provider key pattern, adapted to BOUXRE's platform assistant architecture.
 
 **Decision.**
 1. **Architectural Model:** Single application-level shared enterprise credential (not per-employee BYOK). Platform administrators configure the AMD Token Factory key via in-app Settings without visiting cloud deployment consoles.
@@ -520,7 +520,7 @@ Following resolution of JSON response parsing, a recurring server error (`err_17
 
 **Findings & Decision.**
 1. **Root Cause Confirmed:** The failure is caused by missing `SUPABASE_SERVICE_ROLE_KEY` in Node's execution environment under Vite dev server. While Bun automatically loads `.env`, Vite dev server runs in Node and does not inject non-`VITE_*` variables into `process.env`. When authenticated requests pass a JWT, `getAdminClient()` throws, which is caught and collapsed into a generic 500 error.
-2. **Hermes Capability Comparison:** BOURXE achieves 10/20 (50%) implemented, 5/20 (25%) partial, and 5/20 (25%) missing capabilities compared to Hermes Agent. BOURXE exceeds Hermes in database persistence, AES-256-GCM envelope encryption, and mobile responsiveness, but lacks multi-provider storage, model discovery, and non-destructive switching.
+2. **Hermes Capability Comparison:** BOUXRE achieves 10/20 (50%) implemented, 5/20 (25%) partial, and 5/20 (25%) missing capabilities compared to Hermes Agent. BOUXRE exceeds Hermes in database persistence, AES-256-GCM envelope encryption, and mobile responsiveness, but lacks multi-provider storage, model discovery, and non-destructive switching.
 3. **Architecture Evaluation:** The current implementation is a single-provider credential form (`id = 'primary'`), not a provider-management subsystem. Storing a new provider destroys previous credentials.
 4. **Recommendation:** Phased refactoring (P0: environment loading fix; P1: RBAC and dedicated encryption key; P2: multi-connection schema `app_ai_provider_connections`; P3: UX overhaul with model discovery).
 ## DEC-40 - Bolu Document Capability Parity: Advance Invoice Configuration & Modification Integrity (2026-11-18)

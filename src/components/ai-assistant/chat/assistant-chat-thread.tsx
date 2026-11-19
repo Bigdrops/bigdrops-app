@@ -135,7 +135,7 @@ export function AssistantThread({
                 paused={false}
               />
             </div>
-            <p className="ac-empty-title">Hello! I’m Bolu, your BOURXE business operations assistant</p>
+            <p className="ac-empty-title">Hello! I’m Bolu, your BOUXRE business operations assistant</p>
             <p className="ac-empty-copy">
               I help you manage business documents, draft invoices and quotations, check customer balances, and track outstanding payments. Select an action below or describe what you need.
             </p>

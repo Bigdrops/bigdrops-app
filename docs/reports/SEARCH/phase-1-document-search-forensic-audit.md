@@ -6,7 +6,7 @@ This report was written by Claude Sonnet 4.5 on 2026-10-14 via Kiro.
 
 ## Objective
 
-Determine how document search currently works across all document types in the BOURXE platform. Identify coverage gaps, pagination defects, data authority boundaries, Item Library dependencies, and PostgreSQL search capabilities. Produce a concrete Phase 2 architecture recommendation for full-content cross-document search.
+Determine how document search currently works across all document types in the BOUXRE platform. Identify coverage gaps, pagination defects, data authority boundaries, Item Library dependencies, and PostgreSQL search capabilities. Produce a concrete Phase 2 architecture recommendation for full-content cross-document search.
 
 ## Scope
 

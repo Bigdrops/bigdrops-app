@@ -8,7 +8,7 @@
 
 ## 1. Architectural Overview
 
-The BOURXE application uses two distinct hosting environments:
+The BOUXRE application uses two distinct hosting environments:
 - **Frontend:** Hosted on Vercel as a static Single Page Application (SPA).
 - **Backend:** Hosted on a Platform as a Service (PaaS) or Virtual Private Server (VPS) as a persistent Bun container.
 
@@ -130,7 +130,7 @@ CMD ["bun", "run", "server.ts"]
 
 After the backend container is operational:
 
-1. Copy the public backend URL (for example, `https://bourxe-api.cloudzyro.app`).
+1. Copy the public backend URL (for example, `https://bouxre-api.cloudzyro.app`).
 2. Open the Vercel project settings for the frontend application.
 3. Update the `VITE_API_URL` environment variable with the backend domain.
 4. Redeploy the frontend on Vercel to apply the updated configuration.

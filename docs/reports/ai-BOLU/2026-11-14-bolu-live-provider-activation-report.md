@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-This report documents the completion of the live AI provider integration and activation of Bolu's conversational invoice operation pipeline on the BOURXE platform.
+This report documents the completion of the live AI provider integration and activation of Bolu's conversational invoice operation pipeline on the BOUXRE platform.
 
 The architectural objective was to connect Bolu's existing application-side conversational business-operation pipeline to a real AI inference provider while preserving:
 1. Application ownership of financial calculations, document numbering, authorization, tenant isolation, and validation.
@@ -48,7 +48,7 @@ The serverless route inspects the following bounded environment variables:
 - **Unsupported Document Family Rejection:** Proposals targeting document families other than `'invoice'` (e.g. `quotation`, `purchase-order`, `waybill`, `csr`, `rfq`, `cps`, `letter`) are rejected fail-closed with clear notifications: *"Bolu currently only supports operations for Invoices."*
 
 ### 2.4 Authoritative Financial Calculation Locking (`src/lib/Calculations.ts`)
-- All line item extensions, discounts, VAT amounts, WHT amounts, subtotals, and total invoice sums are recomputed strictly by BOURXE's application-owned `calculateDocument` function.
+- All line item extensions, discounts, VAT amounts, WHT amounts, subtotals, and total invoice sums are recomputed strictly by BOUXRE's application-owned `calculateDocument` function.
 - Any model-hallucinated or third-party calculated values are stripped unconditionally prior to proposal review and database persistence.
 
 ### 2.5 Two-Gate Approval Lifecycle Preserved (`src/components/ai-assistant/AssistantSheet.tsx`)

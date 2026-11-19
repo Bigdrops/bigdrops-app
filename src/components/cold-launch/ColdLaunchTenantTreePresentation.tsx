@@ -144,10 +144,10 @@ export default function ColdLaunchTenantTreePresentation({
       >
         <div className="flex flex-col items-center gap-4 animate-in fade-in duration-200">
           <div className="relative size-16 sm:size-20 rounded-[28%] overflow-hidden shadow-2xl ring-1 ring-white/20 animate-pulse">
-            <img src={bigdropsLogo} alt="BOURXE" className="size-full object-cover" />
+            <img src={bigdropsLogo} alt="BOUXRE" className="size-full object-cover" />
           </div>
           <span className="text-xl sm:text-2xl font-black tracking-widest text-[var(--ink,#f1f5f9)] uppercase">
-            BOURXE
+            BOUXRE
           </span>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="size-1.5 rounded-full bg-primary animate-ping" />
@@ -416,7 +416,7 @@ export default function ColdLaunchTenantTreePresentation({
           <div className="clp-logo">
             <img src={bigdropsLogo} alt="" />
           </div>
-          <div className="clp-word">BOURXE</div>
+          <div className="clp-word">BOUXRE</div>
         </div>
       </div>
 

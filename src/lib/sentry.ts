@@ -1,7 +1,7 @@
 /**
  * Sentry Frontend Error Monitoring Configuration
  *
- * Implements privacy-hardened, minimal error monitoring for the BOURXE React application.
+ * Implements privacy-hardened, minimal error monitoring for the BOUXRE React application.
  *
  * Privacy & Security Guardrails:
  * - Session Replay is permanently disabled.

@@ -1,4 +1,4 @@
-# BOURXE: Historical Record of Completed Observability & Telemetry Work
+# BOUXRE: Historical Record of Completed Observability & Telemetry Work
 
 - **Document Version:** 1.0.0
 - **Status:** `[VERIFIED FACTUAL RECORD]`
@@ -9,7 +9,7 @@
 
 ## 1. Overview & Timeline
 
-This document establishes the official historical record of all completed observability, diagnostic, telemetry, and tracking workstreams in the BOURXE platform. It provides an empirical timeline of verified deliverables, distinguishing completed implementations from proposals.
+This document establishes the official historical record of all completed observability, diagnostic, telemetry, and tracking workstreams in the BOUXRE platform. It provides an empirical timeline of verified deliverables, distinguishing completed implementations from proposals.
 
 ---
 
@@ -77,7 +77,7 @@ This document establishes the official historical record of all completed observ
 
 ### 2.5 Workstream E: Sentry Frontend Privacy Hardening
 - **Completion Period:** November 17, 2026.
-- **Audit Reference:** `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md`.
+- **Audit Reference:** `docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md`.
 - **Implementation File:** `src/lib/sentry.ts`.
 - **Delivered Capabilities:**
   - Broadened sensitive-key matching to unanchored case-insensitive substring regex covering all commercial terms (`invoice`, `quote`, `po_`, `amount`, `total`, `price`, `client`, `customer`, `supplier`, `bank`, `token`, `secret`, `auth`).
@@ -90,7 +90,7 @@ This document establishes the official historical record of all completed observ
 - **Verification Evidence:**
   - Test Suite: `src/tests/sentry-privacy.test.js`.
   - Result: **48 passed, 0 failed** (82 assertions) verified locally.
-  - Audit Verdict: "APPROVED WITH CONDITIONS" in `docs/reports/SecurityxCompliance/BOURXE_Sentry_Frontend_Privacy_Audit.md` (historical finding; tests not re-run in this audit).
+  - Audit Verdict: "APPROVED WITH CONDITIONS" in `docs/reports/SecurityxCompliance/BOUXRE_Sentry_Frontend_Privacy_Audit.md` (historical finding; tests not re-run in this audit).
 - **Status:** **`[VERIFIED COMPLETED]`**
 
 ---

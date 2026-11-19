@@ -216,17 +216,17 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 
 ## 10. Free Model & API Opportunity Register
 
-**Status:** Tracking register. Not an integration plan, not a production admission, and not evidence that any entry works for BOURXE.
+**Status:** Tracking register. Not an integration plan, not a production admission, and not evidence that any entry works for BOUXRE.
 **Written:** 2026-11-14. **Governing decision:** DEC-29 — one application-owned engine, multiple interchangeable providers and models, automatic selection and failover, free-first among *verified-eligible* models, paid inference denied by default, dynamic add/deprioritise/retire of models. This register changes nothing about that decision and admits nothing into production.
 **Use:** review before architecture discussions. Delete stale entries. Never cite this register as a quota guarantee.
 
 ### 10.0 How To Read This Register
 
 - **Model identity is not provider identity.** ModelScope, UnoRouter and Sarvam are access routes to DeepSeek V4.1 Flash, not three separate models. Counting them as three free models is an error.
-- **Votes of confidence required.** Admission to the DEC-29 eligible pool requires the same checks for every entry: official documentation, terms-of-use review (especially training on submitted content), reachability from the user network, capability verification (tools, structured output, streaming, context window), and a BOURXE account with key custody decided (FR-12). None of these is complete today.
+- **Votes of confidence required.** Admission to the DEC-29 eligible pool requires the same checks for every entry: official documentation, terms-of-use review (especially training on submitted content), reachability from the user network, capability verification (tools, structured output, streaming, context window), and a BOUXRE account with key custody decided (FR-12). None of these is complete today.
 - **Free-tier status is dynamic.** Every free claim carries a discovery date. Expiry, quotas, models and plans change without notice. No figure in this register is permanent. Verify before every architecture discussion; purge or re-mark stale entries.
 - **Unknown capabilities are unconfirmed capabilities.** Tool calling and structured output are recorded only when this audit verified them against official pages on 2026-11-14, or the model specification states them. Otherwise UNVERIFIED.
-- **Verification grades:** `VERIFIED 2026-11-14` = official page fetched and confirmed by this audit. `PARTIALLY VERIFIED 2026-11-14` = official source exists and confirms the offer or model id, but entitlement, quotas, availability for BOURXE, or the promotion window is not confirmed. `UNVERIFIED` = not confirmed by this audit; treat as absent.
+- **Verification grades:** `VERIFIED 2026-11-14` = official page fetched and confirmed by this audit. `PARTIALLY VERIFIED 2026-11-14` = official source exists and confirms the offer or model id, but entitlement, quotas, availability for BOUXRE, or the promotion window is not confirmed. `UNVERIFIED` = not confirmed by this audit; treat as absent.
 - **Specialist notes.** Perplexity Decider is a specialist reasoning/classification model; HeyGen is a speech service, not an LLM; Numes is a routing marketplace, not a model. None of the three substitutes for the general conversational pool.
 - **Time-sensitivity is the default.** Any entry not re-verified within 30 days must be treated as unproven.
 
@@ -262,7 +262,7 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 | Context / modalities | Not confirmed by this audit |
 | Tool calling / structured output | UNVERIFIED |
 | Promotional expiry | None claimed; free tiers dynamic |
-| Verification status | PARTIALLY VERIFIED 2026-11-14 (official site fetched; model id and free suffix listed; BOURXE entitlement and live behaviour unverified) |
+| Verification status | PARTIALLY VERIFIED 2026-11-14 (official site fetched; model id and free suffix listed; BOUXRE entitlement and live behaviour unverified) |
 | Source | https://unorouter.com (models list; platform docs) |
 | Last verified | 2026-11-14 |
 | Admission | NOT ADMITTED |
@@ -323,7 +323,7 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 | Source | https://developers.heygen.com/docs/voices/heygen-voice-speech |
 | Last verified | 2026-11-14 |
 | Admission | NOT ADMITTED |
-| Blockers | Out of scope for the LLM engine pool by design; separate evaluation required if BOURXE wants voice output; offer expires 2026-11-30 |
+| Blockers | Out of scope for the LLM engine pool by design; separate evaluation required if BOUXRE wants voice output; offer expires 2026-11-30 |
 
 ### 10.6 Cloudflare Workers AI — DeepSeek V4.1 Flash
 
@@ -372,11 +372,11 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 | Access route | Google AI Studio / Gemini API (`generativelanguage.googleapis.com/v1beta/openai` for OpenAI-compatible calls) |
 | Category | General inference; agentic tool-heavy work |
 | Advertised free offer | Zero-price/free-tier candidate (claimed); rolling out across Google AI Studio |
-| Advertised quota/rate limits | No stable published figures; Google requires reading the limit in AI Studio per account — no BOURXE thresholds may be stored |
+| Advertised quota/rate limits | No stable published figures; Google requires reading the limit in AI Studio per account — no BOUXRE thresholds may be stored |
 | Context / modalities | 1M unified context window; text/image/audio/video input (per model card); up to 64K default synchronous output (up to 1M via background long decode) |
 | Tool calling / structured output | Positioned for agentic tool loops; OpenAI-compat layer coverage remains **partial** — tools and structured output must be verified for this model before eligibility |
 | Promotional expiry | Not applicable (model launch); pricing and free tier subject to change |
-| Verification status | PARTIALLY VERIFIED 2026-11-14 (existence, id, context and AI Studio distribution verified via DeepMind model card, blog.google and Cursor list; free-tier naming for the BOURXE project, pricing and account quota are UNVERIFIED; free-tier content may be used to improve Google products — data-handling decision required) |
+| Verification status | PARTIALLY VERIFIED 2026-11-14 (existence, id, context and AI Studio distribution verified via DeepMind model card, blog.google and Cursor list; free-tier naming for the BOUXRE project, pricing and account quota are UNVERIFIED; free-tier content may be used to improve Google products — data-handling decision required) |
 | Source | https://ai.google.dev/ ; https://deepmind.google/models/model-cards/gemini-4-hydrogen |
 | Last verified | 2026-11-14 |
 | Admission | NOT ADMITTED |
@@ -427,7 +427,7 @@ The preview starts with two demo keys so the top bar and the badges are visible.
 - **Cloudflare Workers AI — DeepSeek V4.1 Flash** is a paid alternative under current plan requirements; it is not free under the free plan.
 - **Ling 3.2 Flash** is a separate candidate; its promotion expiry date is unpublished (do not invent one).
 - **Gemini 4 Hydrogen** is the most structurally compatible candidate but stays unadmitted pending account, pricing, ToS and availability verification.
-- **Numes** is a marketplace; each listed model is a separate candidate and the marketplace itself is not a provider for BOURXE's engine.
+- **Numes** is a marketplace; each listed model is a separate candidate and the marketplace itself is not a provider for BOUXRE's engine.
 - **Zro is a fourth access route to DeepSeek V4.1 Flash**, not a fifth free model. It must not be counted as model diversity on its own. It is the first registered route whose data-handling terms are verified safe for tenant content: the privacy page states zero request retention and no training on customer requests.
 - **Zro adds one distinct model family** under the same key: GLM-5.3. That is the only new model class this register adds.
 - **Zro publishes no balance endpoint.** The balance inquiry stays unsupported, so the connection reports an unknown balance rather than a false zero.

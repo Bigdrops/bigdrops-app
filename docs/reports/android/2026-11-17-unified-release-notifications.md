@@ -1,4 +1,4 @@
-# Unified BOURXE Release Notifications Report
+# Unified BOUXRE Release Notifications Report
 
 ## Objective
 Replace the intrusive release-note overlay with an integrated notification and an independently accessible What’s New page for Web and Android. Keep dismissal separate from acknowledgement and preserve mandatory-update behavior.

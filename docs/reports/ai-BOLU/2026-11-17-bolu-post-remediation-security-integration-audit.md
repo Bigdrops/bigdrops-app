@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-This report provides an independent post-remediation security and integration audit of the Bolu Gate 2 document save pipeline in the BOURXE platform. 
+This report provides an independent post-remediation security and integration audit of the Bolu Gate 2 document save pipeline in the BOUXRE platform. 
 
 The audit inspected the latest changes in `api/bolu-save.ts`, `src/lib/ai-assistant/bolu-document-service.ts`, `src/lib/ai-assistant/hooks/useBoluThread.ts`, `src/lib/tenantClient.ts`, and `src/domain/tenant/tenantGate.ts`. The audit also evaluated live PostgreSQL catalog metadata on linked Supabase project `xqlpekpkbszpdgtuwybh`.
 
@@ -282,7 +282,7 @@ The test file `src/tests/ai-assistant/bolu-save-diagnostic-edit-remediation.test
  M docs/prd/conversational-document-assistant/provider-catalog.md
  D docs/reports/2026-11-14-dynamic-model-routing-reconciliation.md
  D docs/reports/2026-11-14-hermes-provider-architecture-audit.md
- D docs/reports/BOURXE_WEB_ANDROID_CHANGELOG_IMPLEMENTATION_AUDIT.md
+ D docs/reports/BOUXRE_WEB_ANDROID_CHANGELOG_IMPLEMENTATION_AUDIT.md
  M docs/reports/ai/2026-11-14-bolu-application-document-intelligence-reconciliation.md
  D docs/reports/bolu-design-lab-reconciliation-2026-11-14.md
  D docs/reports/bolu-phase-a-audit-2026-11-14.md
@@ -332,14 +332,14 @@ The test file `src/tests/ai-assistant/bolu-save-diagnostic-edit-remediation.test
 ?? docs/reports/ai/2026-11-14-dynamic-model-routing-reconciliation.md
 ?? docs/reports/ai/2026-11-14-hermes-provider-architecture-audit.md
 ?? docs/reports/ai/2026-11-17-bolu-post-remediation-security-integration-audit.md
-?? docs/reports/ai/BOURXE_BOLU_BACKEND_DATABASE_AND_SAVE_FORENSIC_INVESTIGATION_2026-11-17.md
-?? docs/reports/ai/BOURXE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md
+?? docs/reports/ai/BOUXRE_BOLU_BACKEND_DATABASE_AND_SAVE_FORENSIC_INVESTIGATION_2026-11-17.md
+?? docs/reports/ai/BOUXRE_SAVE_AND_BOLU_EDIT_FORENSIC_INVESTIGATION_2026-11-17.md
 ?? docs/reports/ai/bolu-design-lab-reconciliation-2026-11-14.md
 ?? docs/reports/ai/bolu-phase-a-audit-2026-11-14.md
 ?? docs/reports/ai/bolu-ui-artifact-audit-2026-11-15.md
 ?? docs/reports/ai/bolu-ui-state-desync-audit-2026-11-15.md
 ?? docs/reports/android/2026-11-17-unified-release-notifications.md
-?? docs/reports/android/BOURXE_WEB_ANDROID_CHANGELOG_IMPLEMENTATION_AUDIT.md
+?? docs/reports/android/BOUXRE_WEB_ANDROID_CHANGELOG_IMPLEMENTATION_AUDIT.md
 ?? docs/reports/governance/
 ?? docs/reports/observability/
 ?? src/assets/providers/apinex-mark.png

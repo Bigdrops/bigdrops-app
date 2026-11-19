@@ -68,7 +68,7 @@ The following active PhotoHero parts remain:
 - Original moving truck and `oh2-wheelspin` animation.
 - Existing PhotoHero authentication preview.
 - Official BX logo usage.
-- BOURXE public branding.
+- BOUXRE public branding.
 - Five theme families.
 - Light and Dark support.
 
@@ -78,7 +78,7 @@ Verification:
 
 - Explicit deleted file existence check: all seven files returned `False`.
 - Active source reference search for rejected modules, routes, and candidate branch symbols: no active component/page/lib references found.
-- Original PhotoHero preservation search: `PhotoHeroV2Preview`, `LogisticsSlide`, `KJA-459XY`, `oh2-wheelspin`, and `BOURXE` remain.
+- Original PhotoHero preservation search: `PhotoHeroV2Preview`, `LogisticsSlide`, `KJA-459XY`, `oh2-wheelspin`, and `BOUXRE` remain.
 - `bun run typecheck`: passed.
 - `bun test src/tests/critical/photoHeroV2LightMode.test.js src/tests/critical/designLab.test.js src/tests/critical/moreNavigation.test.js src/tests/critical/dashboardThemeExperiment.test.js src/tests/critical/invoiceThemeExperiment.test.js src/tests/critical/productionComposition.test.js`: passed, 76 tests.
 

@@ -59,7 +59,7 @@ export type SaveProviderConfigInput = {
 export const KEY_VERSION_SERVICE_ROLE = 1
 export const KEY_VERSION_DEDICATED = 2
 
-const VAULT_SALT = 'bourxe-bolu-vault-v1'
+const VAULT_SALT = 'bouxre-bolu-vault-v1'
 
 /**
  * Derives a 32-byte master key from explicit BOLU_ENCRYPTION_KEY (version 2).
@@ -430,8 +430,8 @@ export async function testProviderConnection(config: {
     'Authorization': `Bearer ${config.apiKey.trim()}`,
   }
   if (config.provider === 'openrouter' || config.baseUrl.includes('openrouter.ai')) {
-    headers['HTTP-Referer'] = 'https://bourxe.com'
-    headers['X-Title'] = 'BOURXE Bolu'
+    headers['HTTP-Referer'] = 'https://bouxre.com'
+    headers['X-Title'] = 'BOUXRE Bolu'
   }
 
   try {

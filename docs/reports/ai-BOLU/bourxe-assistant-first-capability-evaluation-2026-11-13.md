@@ -1,10 +1,10 @@
-# BOURXE Assistant — First Capability Evaluation
+# BOUXRE Assistant — First Capability Evaluation
 
 This report was written by Buffy on 2026-11-13 via Freebuff.
 
 ## Objective
 
-Evaluate candidate first capabilities for the BOURXE AI assistant and recommend one for review. The recommendation uses the completed technical audit as primary evidence.
+Evaluate candidate first capabilities for the BOUXRE AI assistant and recommend one for review. The recommendation uses the completed technical audit as primary evidence.
 
 This is a product and architecture evaluation. It is not an implementation task and it does not issue an implementation prompt.
 
@@ -26,7 +26,7 @@ Out of scope:
 
 ## Evidence base
 
-Primary source: `docs/reports/ai/bourxe-assistant-technical-capability-audit-2026-11-13.md`.
+Primary source: `docs/reports/ai/bouxre-assistant-technical-capability-audit-2026-11-13.md`.
 
 Specific files re-checked for this evaluation, because the candidate comparison depends on them:
 
@@ -57,7 +57,7 @@ Boundary checks:
 
 **Recommendation: make the first milestone a read-only, grounded business assistant that answers questions about existing documents and receivables, cites the records it used, and opens them.** Label: PROPOSAL. This is not a decision.
 
-Working name for this report only: "Ask BOURXE".
+Working name for this report only: "Ask BOUXRE".
 
 The user asks a question in natural language. The assistant retrieves the relevant tenant records, quotes stored values, and links to the documents. It does not create, change, or send anything.
 
@@ -299,7 +299,7 @@ The milestone is complete when all of these pass on a seeded tenant with at leas
 
 These are for the owner. This report does not decide them.
 
-1. Assistant identity: name, avatar, tone, and whether it is branded BOURXE.
+1. Assistant identity: name, avatar, tone, and whether it is branded BOUXRE.
 2. Key custody: per-device keys for a pilot, or a server proxy with owner-funded keys and a quota.
 3. Whether answers may aggregate across all clients or only within a selected client or project.
 4. Whether the assistant may read WHT, VAT, and bank details, or only headline amounts.
