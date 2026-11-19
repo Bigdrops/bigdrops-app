@@ -35,6 +35,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref || github.ref }}
+          # Full history and tags are required to diff this release against the
+          # previous test-release tag when generating release notes.
+          fetch-depth: 0
 
       # ── 2. Compute release tag ───────────────────────────────────────────
       # For tag-triggered runs: use the triggering tag (already exists).
@@ -91,6 +94,105 @@ jobs:
           echo "VersionName : $VERSION_NAME"
           echo "Actor       : ${{ github.actor }}"
           echo "Build Time  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "────────────────────────────────────────────"
+
+      # ── 3b. Generate release notes from commit history ───────────────────
+      # Single source of truth for release-note content. The same file feeds
+      # the GitHub Release body and app_release_policy.release_notes, so the
+      # two destinations can never disagree.
+      #
+      # Content is derived only from commits between the previous test-release
+      # tag and this build. Nothing is invented: when no user-facing commit is
+      # found, the note says so explicitly instead of claiming generic work.
+      - name: Generate release notes
+        id: notes
+        env:
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag_name }}
+          VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          NOTES_FILE="$RUNNER_TEMP/release-notes.txt"
+
+          # Previous release tag, excluding the tag this run is publishing.
+          PREV_TAG=$(git tag --list 'test-release-*' --sort=-creatordate \
+            | grep -vx "$RELEASE_TAG" | head -1 || true)
+
+          # A tag that is not on this commit's history cannot bound a range:
+          # `git log prev..HEAD` would then list unrelated commits. Manual runs
+          # can build an older ref, so verify ancestry before trusting the tag.
+          if [ -n "$PREV_TAG" ] && git merge-base --is-ancestor "$PREV_TAG" HEAD 2>/dev/null; then
+            RANGE="${PREV_TAG}..HEAD"
+            LOG_ARGS="$RANGE"
+            echo "Collecting commits in $RANGE"
+          else
+            # First release, or no usable previous tag: bound the window
+            # instead of dumping the entire repository history.
+            RANGE="HEAD"
+            LOG_ARGS="-n 40 HEAD"
+            echo "No usable previous test-release tag; using the 40 most recent commits."
+          fi
+
+          # Strip leading emoji/decoration (twice: an emoji sequence can leave a
+          # variation selector behind), then keep only commit types that assert
+          # a user-facing change. docs/chore/ci/test/build/style/refactor/
+          # remove/deps/wip/merge are excluded by omission rather than by a
+          # denylist, so an unlisted type cannot slip through as a "change".
+          RAW=$(git log $LOG_ARGS --no-merges --pretty=format:'%s' || true)
+          STRIPPED=$(printf '%s\n' "$RAW" \
+            | sed -E 's/^[^[:alnum:]]+//' \
+            | sed -E 's/^[^[:alnum:]]+//')
+          KEPT=$(printf '%s\n' "$STRIPPED" \
+            | grep -iE '^(feat|fix|perf|revert)(\([^)]*\))?!?:' || true)
+
+          # Drop the conventional-commit type prefix, then reduce each subject to
+          # one bullet-safe line: separators the parser would split on become a
+          # plain colon, whitespace runs collapse, and a trailing period goes.
+          ENTRIES=$(printf '%s\n' "$KEPT" \
+            | sed -E 's/^(feat|fix|perf|revert)(\([^)]*\))?!?:[[:space:]]*//' \
+            | sed -E 's/[[:space:]]+/ /g; s/^[[:space:]]+//; s/[[:space:]]+$//' \
+            | sed -E 's/ — /: /g; s/ - /: /g' \
+            | sed -E 's/\.$//' \
+            | grep -v '^$' \
+            | awk '!seen[$0]++' || true)
+
+          TOTAL=$(printf '%s\n' "$ENTRIES" | grep -c . || true)
+          # Keep the note readable; the count line keeps it honest when capped.
+          MAX_ENTRIES=12
+
+          {
+            echo "BOUXRE v${VERSION_NAME} (build ${VERSION_CODE})"
+            echo ""
+            if [ -z "$ENTRIES" ]; then
+              # Honest empty state, emitted as a bullet so the parser yields
+              # exactly one clean entry. No fabricated changes, no generic
+              # "performance and maintenance" claim.
+              echo "- No user-facing changes were recorded for this build."
+            else
+              # sed reads the whole stream: `head` would close the pipe early
+              # and SIGPIPE would fail the step under pipefail.
+              printf '%s\n' "$ENTRIES" | sed -n "1,${MAX_ENTRIES}p" | sed 's/^/- /'
+              if [ "$TOTAL" -gt "$MAX_ENTRIES" ]; then
+                REMAINING=$((TOTAL - MAX_ENTRIES))
+                echo "- ...and ${REMAINING} more change(s) in this build."
+              fi
+            fi
+            echo ""
+            echo "App ID com.bigdrops.app. Signed with the stable test-release key. First install over an old random-debug APK may need one final uninstall; later test releases update in place."
+          } > "$NOTES_FILE"
+
+          # An annotation is a workflow command for the run log. Writing it into
+          # $NOTES_FILE would publish "::warning::..." verbatim as the GitHub
+          # Release body and as app_release_policy.release_notes.
+          if [ -z "$ENTRIES" ]; then
+            echo "::warning::No user-facing commits found in range $RANGE; release notes state that explicitly."
+          fi
+
+          echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=${PREV_TAG:-none}" >> "$GITHUB_OUTPUT"
+          echo "entry_count=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "────────────── Release Notes ───────────────"
+          cat "$NOTES_FILE"
           echo "────────────────────────────────────────────"
 
       # ── 3. Set up Java 21 ────────────────────────────────────────────────
@@ -165,6 +267,11 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Absolute API origin for the native build. Without it the bundle
+          # falls back to a relative /api/... path, which the Capacitor WebView
+          # resolves against https://localhost and serves as index.html.
+          # Public base URL only: no provider, encryption or service-role key.
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           # ponytail: full remote URL form matches releaseDiscovery regex and
           # .env.example; bare github.repository (owner/repo) would not parse.
           VITE_GIT_REPO: https://github.com/${{ github.repository }}.git
@@ -173,6 +280,12 @@ jobs:
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
             echo "::error::Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY secrets. Add them in repo Settings → Secrets and variables → Actions."
             exit 1
+          fi
+          # Report presence only. The value is never echoed.
+          if [ -z "$VITE_API_URL" ]; then
+            echo "::warning::VITE_API_URL secret is empty. The APK will fall back to a relative API path and native API calls will resolve against the WebView local origin."
+          else
+            echo "✅ VITE_API_URL is set; API calls will use an absolute origin."
           fi
           bun run build
 
@@ -318,9 +431,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.release_tag.outputs.tag_name }}"
+          # Same file as app_release_policy.release_notes, published below.
           gh release create "$TAG" "${{ steps.find-apk.outputs.apk_path }}" \
             --title "BIGDROPS test release ${{ steps.meta.outputs.version_name }} ($TAG)" \
-            --notes "BIGDROPS Android test-release APK. App ID com.bigdrops.app, versionCode ${{ steps.meta.outputs.version_code }}, versionName ${{ steps.meta.outputs.version_name }}. Signed with the stable test-release key. First install over an old random-debug APK may need one final uninstall; later test releases update in place."
+            --notes-file "${{ steps.notes.outputs.notes_file }}"
 
       # ── 23. Upload APK to Supabase Storage & Update Release Policy ──────
       - name: Upload to Supabase Storage & Update Release Policy
@@ -330,6 +444,7 @@ jobs:
           VERSION_CODE: ${{ steps.meta.outputs.version_code }}
           VERSION_NAME: ${{ steps.meta.outputs.version_name }}
           APK_PATH: ${{ steps.find-apk.outputs.apk_path }}
+          NOTES_FILE: ${{ steps.notes.outputs.notes_file }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             echo "::error::Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. Cannot publish release binary to Supabase Storage or update app_release_policy."
@@ -358,8 +473,25 @@ jobs:
           fi
 
           echo "Updating public.app_release_policy (id = 1) via PostgREST..."
-          RELEASE_NOTES="BOURXE v${VERSION_NAME} (build ${VERSION_CODE}) maintenance and performance update."
-          PATCH_PAYLOAD="{\"version_code\":$VERSION_CODE,\"version_name\":\"$VERSION_NAME\",\"web_release_url\":\"$PUBLIC_APK_URL\",\"effective_at\":\"$ISO_NOW\",\"release_notes\":\"$RELEASE_NOTES\",\"updated_at\":\"$ISO_NOW\"}"
+          if [ ! -f "$NOTES_FILE" ]; then
+            echo "::error::Release notes file not found at $NOTES_FILE."
+            exit 1
+          fi
+          # jq builds the JSON so newlines and quotes in the notes are escaped
+          # correctly. String interpolation would corrupt multi-line notes.
+          PATCH_PAYLOAD=$(jq -n \
+            --argjson vc "$VERSION_CODE" \
+            --arg vn "$VERSION_NAME" \
+            --arg url "$PUBLIC_APK_URL" \
+            --arg ts "$ISO_NOW" \
+            --rawfile notes "$NOTES_FILE" \
+            '{version_code: $vc, version_name: $vn, web_release_url: $url, effective_at: $ts, release_notes: $notes, updated_at: $ts}')
+
+          # Never send a malformed body to the live policy row.
+          if ! printf '%s' "$PATCH_PAYLOAD" | jq -e . >/dev/null 2>&1; then
+            echo "::error::Generated policy payload is not valid JSON. Aborting before the policy update."
+            exit 1
+          fi
 
           PATCH_HTTP_CODE=$(curl -s -o /tmp/patch_response.json -w "%{http_code}" -X PATCH \
             "${CLEAN_SUPABASE_URL}/rest/v1/app_release_policy?id=eq.1" \
