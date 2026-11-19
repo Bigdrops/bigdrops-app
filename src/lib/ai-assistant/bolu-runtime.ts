@@ -5,6 +5,7 @@ import {
   readBoluContextFacts,
   readBoluInvoice,
   readBoluInvoiceAdvanceConfig,
+  readBoluModifySnapshot,
   readBoluQuotation,
   resolveOperationFacts,
   searchBoluClients,
@@ -347,22 +348,39 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
             }
 
             if (opType === 'modify-document') {
-              const validation = validateInvoiceModifyInput(rawOp.payload)
+              const targetFamily = docFamily ?? 'invoice'
+              const validation = validateInvoiceModifyInput(rawOp.payload, { documentFamily: targetFamily })
               if (!validation.valid) {
                 dispatch({
                   type: 'RESULT',
                   requestId,
-                  content: `I attempted to prepare the invoice modification proposal, but the details were invalid:\n- ${validation.errors.join('\n- ')}`,
+                  content: `I could not prepare that document change:\n- ${validation.errors.join('\n- ')}`,
                 })
                 return
               }
 
-              const targetFamily = docFamily ?? 'invoice'
               let docNumber = targetFamily === 'quotation' ? 'QTN-TARGET' : 'INV-TARGET'
-              const target = targetFamily === 'quotation'
-                ? await readBoluQuotation(dependencies.tenantClient, validation.data!.documentId, dependencies.canRead)
-                : await readBoluInvoice(dependencies.tenantClient, validation.data!.documentId, dependencies.canRead)
-              if (target) docNumber = target.number
+              let snapshot: Awaited<ReturnType<typeof readBoluModifySnapshot>> | null = null
+              try {
+                snapshot = await readBoluModifySnapshot(
+                  dependencies.tenantClient,
+                  targetFamily,
+                  validation.data!.documentId,
+                  dependencies.canRead,
+                )
+              } catch {
+                snapshot = null
+              }
+              if (!snapshot) {
+                // Fail-closed: no persisted baseline means no stale-gateable proposal.
+                dispatch({
+                  type: 'RESULT',
+                  requestId,
+                  content: `I could not load the current ${targetFamily} with its saved items, so I did not prepare a change proposal. Reopen the document or try again.`,
+                })
+                return
+              }
+              docNumber = snapshot.documentNumber
 
               const proposal = buildInvoiceModifyProposal({
                 targetDocumentId: validation.data!.documentId,
@@ -374,6 +392,9 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
                 itemsChange: validation.data!.items && validation.data!.oldItems
                   ? { oldItems: validation.data!.oldItems, newItems: validation.data!.items }
                   : undefined,
+                extraChargesChange: validation.data!.extraChargesChange,
+                calculationInputsChange: validation.data!.calculationInputsChange,
+                current: { document: snapshot.document, items: snapshot.items },
               })
 
               dispatch({

@@ -152,13 +152,62 @@ export interface BoluInvoiceCreatePayload {
   extra_charges?: BoluExtraCharge[] // custom named extra charges
 }
 
+/**
+ * One scalar-ish modification field — the complete catalog of the modify
+ * contract. Numeric commercial charges carry numbers; text fields carry
+ * strings; notes/terms carry the rich-text contract; `"<name>_removal"` is
+ * not a field — use the blocks below.
+ */
+export type BoluModifyFieldKey =
+  | 'client_name'
+  | 'notes'
+  | 'payment_terms'
+  | 'due_date'
+  | 'issue_date'
+  | 'terms'
+  | 'po_number'
+  | 'title'
+  | 'project_id'
+  | 'work_duration'
+  | 'workmanship'
+  | 'transportation'
+  | 'shipping'
+
+/** Calculation inputs are patched as a block; every field is optional, at least one required. */
+export interface BoluCalculationInputValues {
+  vatPercent?: number
+  discountValue?: number
+  discountType?: 'fixed' | 'percent'
+  discountTiming?: 'before_tax' | 'after_tax'
+  whtValue?: number
+  whtType?: 'fixed' | 'percent'
+}
+
+export type BoluExtraChargeInput = {
+  label: string
+  value: number
+  withTax: boolean
+}
+
+/** Persisted snapshot carried by a proposal so the executor and preview share one authority. */
+export interface BoluModifyCurrentSnapshot {
+  document: Record<string, unknown>
+  items: Array<Record<string, unknown>>
+}
+
 export interface BoluInvoiceModifyPayload {
   documentId: string
-  field?: 'client_name' | 'notes' | 'payment_terms' | 'due_date' | 'issue_date'
+  /** Resolved family the request targets; the envelope carries the caller's explicit family when present. */
+  documentFamily?: 'invoice' | 'quotation'
+  field?: BoluModifyFieldKey
   oldValue?: string | number | null
-  newValue?: string | number | null
+  newValue?: string | number | CommercialRichTextBlock[] | null
   items?: BoluInvoiceItemInput[]
   oldItems?: BoluInvoiceItemInput[]
+  /** Desired extra-charges set for the parent document, validated and normalized at input time. */
+  extraChargesChange?: BoluExtraChargeInput[]
+  /** Partial patch to the document's calculation inputs. */
+  calculationInputsChange?: Partial<BoluCalculationInputValues>
 }
 
 export interface BoluOperationContract {
@@ -223,17 +272,37 @@ export interface BoluDocumentModifyProposal extends BoluOperationContract {
   documentFamily: BoluDocumentFamily
   targetDocumentId: string
   targetDocumentNumber: string
-  field?: string
+  field?: BoluModifyFieldKey
   oldValue?: string | number | null
-  newValue?: string | number | null
+  newValue?: string | number | CommercialRichTextBlock[] | null
   itemsChange?: {
     oldItems: BoluInvoiceItemInput[]
     newItems: BoluInvoiceItemInput[]
+  }
+  /** Full-list desired extra-charges set. old/new are contract-normalized by the builder. */
+  extraChargesChange?: {
+    oldExtraCharges: BoluExtraChargeInput[]
+    newExtraCharges: BoluExtraChargeInput[]
+  }
+  /** Calculation-inputs patch. old carries every persisted key in play; new carries only requested keys. */
+  calculationInputsChange?: {
+    old: Partial<BoluCalculationInputValues>
+    new: Partial<BoluCalculationInputValues>
   }
   computedTotals?: {
     subtotal: number
     vat: number
     total: number
+    discount?: number
+    wht?: number
+    installRateTotal?: number
+    extraChargesTotal?: number
+  }
+  /** Fixed commercial charges after the requested change (persisted snapshot carry-through for preview/executor). */
+  chargesSnapshot?: {
+    workmanship: number
+    transportation: number
+    shipping: number
   }
   persistedId?: string
   errorMessage?: string
@@ -504,10 +573,25 @@ export function validateInvoiceCreateInput(raw: unknown): {
   }
 }
 
+function validateModifyFieldString(raw: unknown): { value: string | null; ok: boolean } {
+  if (raw === undefined || raw === null) return { value: null, ok: true }
+  if (typeof raw !== 'string') return { value: null, ok: false }
+  const trimmed = raw.trim()
+  return { value: trimmed.length > 0 ? trimmed : null, ok: true }
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
+
 /**
- * Validates invoice modification input.
+ * Validates a Bolu modification request.
+ *
+ * Every scalar field maps one-to-one onto a persisted column or custom_fields
+ * key; the plain-text and rich-text contracts are both honoured; commercial
+ * charges, named extra charges and calculation inputs are supported. Old
+ * values are not trusted from the model here — the Gate 1 builder replaces
+ * them with the persisted snapshot before the proposal is shown.
  */
-export function validateInvoiceModifyInput(raw: unknown): {
+export function validateInvoiceModifyInput(raw: unknown, options?: { documentFamily?: BoluDocumentFamily }): {
   valid: boolean
   errors: string[]
   data?: BoluInvoiceModifyPayload
@@ -519,22 +603,126 @@ export function validateInvoiceModifyInput(raw: unknown): {
 
   const payload = raw as Record<string, unknown>
   const documentId = typeof payload.documentId === 'string' ? payload.documentId.trim() : ''
-  if (!documentId || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(documentId)) {
+  if (!documentId || !UUID_PATTERN.test(documentId)) {
     errors.push('A valid document UUID is required.')
   }
 
-  // Commercial charges are not part of the modification contract; editing them
-  // requires the document form so the authoritative calculation stays intact.
-  if (payload.extra_charges !== undefined || payload.extraCharges !== undefined) {
-    errors.push('Modifying extra_charges through Bolu is not supported. Open the document to adjust commercial charges.')
+  const family =
+    payload.documentFamily === 'quotation' || payload.documentFamily === 'invoice'
+      ? payload.documentFamily
+      : options?.documentFamily
+
+  const documentFamily = family ?? 'invoice'
+
+  const ALLOWED_FIELDS: readonly BoluModifyFieldKey[] = [
+    'client_name',
+    'notes',
+    'payment_terms',
+    'due_date',
+    'issue_date',
+    'terms',
+    'po_number',
+    'title',
+    'project_id',
+    'work_duration',
+    'workmanship',
+    'transportation',
+    'shipping',
+  ]
+  const field =
+    typeof payload.field === 'string' && (ALLOWED_FIELDS as readonly string[]).includes(payload.field)
+      ? (payload.field as BoluModifyFieldKey)
+      : undefined
+  if (typeof payload.field === 'string' && !field) {
+    errors.push(`Modifying field "${payload.field}" directly is not allowed.`)
   }
 
-  const field = typeof payload.field === 'string' ? payload.field : undefined
-  const allowedFields = ['client_name', 'notes', 'payment_terms', 'due_date', 'issue_date']
-  if (field && !allowedFields.includes(field)) {
-    errors.push(`Modifying field "${field}" directly is not allowed. Only non-computed fields can be modified.`)
+  const hasRichTextField = field === 'notes' || field === 'terms'
+
+  if (field === 'work_duration' && documentFamily === 'quotation') {
+    errors.push('work_duration applies to invoices only; quotations do not carry a work duration.')
   }
 
+  // A modification to an existing document must state the value explicitly.
+  // Omitted is rejected; explicit null clears an optional field. (F-01)
+  if (field && payload.newValue === undefined) {
+    errors.push(`Provide a value for "${field}" — the change is incomplete without one. Use null to clear it.`)
+  }
+
+  let newValue: BoluInvoiceModifyPayload['newValue']
+  if (field === 'workmanship' || field === 'transportation' || field === 'shipping') {
+    const rawValue = payload.newValue
+    // Strict numerics only: finite number or a non-empty numeric string >= 0.
+    // Booleans, arrays, objects and blank strings are refused. (F-02)
+    if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+      if (rawValue < 0) {
+        errors.push(`${field} must be a finite non-negative number.`)
+      } else {
+        newValue = rawValue
+      }
+    } else if (typeof rawValue === 'string') {
+      const trimmed = rawValue.trim()
+      if (trimmed === '') {
+        errors.push(`${field} must be a finite non-negative number; the blank string is not accepted.`)
+      } else {
+        const parsed = Number(trimmed)
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          errors.push(`${field} must be a finite non-negative number.`)
+        } else {
+          newValue = parsed
+        }
+      }
+    } else {
+      errors.push(`${field} must be a finite non-negative number.`)
+    }
+  } else if (field === 'project_id') {
+    const candidate = payload.newValue
+    if (candidate === null || candidate === '') {
+      newValue = null // explicit clear
+    } else if (candidate === undefined) {
+      // caught by the uniform missing-value check above
+      newValue = undefined
+    } else if (typeof candidate === 'string' && UUID_PATTERN.test(candidate.trim())) {
+      newValue = candidate.trim()
+    } else {
+      errors.push('project_id must be a valid project UUID or null to clear the project.')
+    }
+  } else if (field && hasRichTextField) {
+    const candidate = payload.newValue
+    if (candidate === null) {
+      newValue = null // explicit clear
+    } else {
+      const parsed = asRichText(candidate)
+      if (parsed !== null) {
+        newValue = parsed
+      } else {
+        errors.push(`${field} must be plain text or structured rich-text content.`)
+      }
+    }
+  } else if (field === 'client_name') {
+    if (payload.newValue === undefined) {
+      newValue = undefined // uniform missing-value error already recorded above
+    } else {
+    // The customer name is required to identify the document; renaming is
+    // supported, clearing it is not (the document form requires it too).
+    const str = validateModifyFieldString(payload.newValue)
+    if (!str.ok) {
+      errors.push('client_name must be a string.')
+    } else if (!str.value) {
+      errors.push('client_name cannot be cleared. Provide the corrected customer name.')
+    } else {
+      newValue = str.value
+    }
+    }
+  } else if (field) {
+    const str = validateModifyFieldString(payload.newValue)
+    newValue = str.ok ? (str.value ?? null) : undefined
+    if (!str.ok) {
+      errors.push(`${field} must be a string.`)
+    }
+  }
+
+  // Items still validate exactly as before
   let validatedItems: BoluInvoiceItemInput[] | undefined
   if (payload.items !== undefined) {
     const itemsResult = validateInvoiceItems(payload.items)
@@ -545,8 +733,119 @@ export function validateInvoiceModifyInput(raw: unknown): {
     }
   }
 
-  if (!field && !validatedItems) {
-    errors.push('Modification must specify either a valid field or items to update.')
+  // Desired extra-charges list (full set after the edit) — optional
+  let validatedExtraChargesChange: BoluExtraChargeInput[] | undefined
+  const rawCharges = payload.extra_charges ?? payload.extraCharges ?? payload.extraChargesChange
+  if (rawCharges !== undefined) {
+    const chargeResult = validateBoluExtraCharges(rawCharges)
+    if (!chargeResult.valid) {
+      errors.push(...chargeResult.errors)
+    } else {
+      // Desired set must have unique labels — the modification path updates by label.
+      const seen = new Set<string>()
+      for (const charge of chargeResult.data) {
+        const key = charge.label.toLowerCase()
+        if (seen.has(key)) {
+          errors.push(`Duplicate extra charge label "${charge.label}" — labels must be unique in the resulting list.`)
+        }
+        seen.add(key)
+      }
+      if (errors.length === 0 || seen.size === chargeResult.data.length) {
+        validatedExtraChargesChange = chargeResult.data.map((charge) => ({
+          label: charge.label,
+          value: charge.value,
+          withTax: charge.vatApplicable,
+        }))
+      }
+    }
+  }
+
+  // Calculation input patch — optional
+  let validatedCalculationInputsChange: BoluCalculationInputValues | undefined
+  const rawInputs = payload.calculation_inputs ?? payload.calculationInputs ?? payload.calculationInputsChange
+  if (rawInputs !== undefined) {
+    if (!rawInputs || typeof rawInputs !== 'object' || Array.isArray(rawInputs)) {
+      errors.push('calculationInputs must be an object.')
+    } else {
+      const input = rawInputs as Record<string, unknown>
+      const patch: BoluCalculationInputValues = {}
+      const allowed = ['vatPercent', 'discountValue', 'discountType', 'discountTiming', 'whtValue', 'whtType'] as const
+      for (const key of Object.keys(input)) {
+        if (!(allowed as readonly string[]).includes(key)) {
+          errors.push(`Unknown calculation input "${key}". Supported: ${allowed.join(', ')}.`)
+        }
+      }
+      const numOrNull = (v: unknown): number | 'invalid' | undefined => {
+        if (v === undefined) return undefined
+        if (typeof v !== 'number' || !Number.isFinite(v)) return 'invalid'
+        return v
+      }
+      const vatPercent = numOrNull(input.vatPercent)
+      if (vatPercent !== undefined) {
+        if (vatPercent === 'invalid' || vatPercent < 0 || vatPercent > 100) {
+          errors.push('vatPercent must be a number between 0 and 100.')
+        } else {
+          patch.vatPercent = vatPercent
+        }
+      }
+      const discountValue = numOrNull(input.discountValue)
+      if (discountValue !== undefined) {
+        if (discountValue === 'invalid' || discountValue < 0) {
+          errors.push('discountValue must be a finite non-negative number.')
+        } else {
+          patch.discountValue = discountValue
+        }
+      }
+      const discountType = input.discountType
+      if (discountType !== undefined) {
+        if (discountType === 'fixed' || discountType === 'percent') {
+          patch.discountType = discountType
+        } else {
+          errors.push('discountType must be "fixed" or "percent".')
+        }
+      }
+      const discountTiming = input.discountTiming
+      if (discountTiming !== undefined) {
+        if (discountTiming === 'before_tax' || discountTiming === 'after_tax') {
+          patch.discountTiming = discountTiming
+        } else {
+          errors.push('discountTiming must be "before_tax" or "after_tax".')
+        }
+      }
+      const whtValue = numOrNull(input.whtValue)
+      if (whtValue !== undefined) {
+        if (whtValue === 'invalid' || whtValue < 0) {
+          errors.push('whtValue must be a finite non-negative number.')
+        } else {
+          patch.whtValue = whtValue
+        }
+      }
+      const whtType = input.whtType
+      if (whtType !== undefined) {
+        if (whtType === 'fixed' || whtType === 'percent') {
+          patch.whtType = whtType
+        } else {
+          errors.push('whtType must be "fixed" or "percent".')
+        }
+      }
+      // Percentage-bounded combos — percent discounts/WHT must stay in range
+      const effectiveDiscountType = patch.discountType
+      if (effectiveDiscountType === 'percent' && patch.discountValue !== undefined && patch.discountValue > 100) {
+        errors.push('discountValue must be between 0 and 100 for percentage discounts.')
+      }
+      if (patch.whtType === 'percent' && patch.whtValue !== undefined && patch.whtValue > 100) {
+        errors.push('whtValue must be between 0 and 100 for percentage WHT.')
+      }
+      if (Object.keys(patch).length === 0) {
+        errors.push('calculationInputs must contain at least one supported key.')
+      } else {
+        validatedCalculationInputsChange = patch
+      }
+    }
+  }
+
+  if (!field && !validatedItems && !validatedExtraChargesChange && !validatedCalculationInputsChange) {
+    errors.push('Modification must specify a field, items, extra charges, or calculation inputs.')
   }
 
   if (errors.length > 0) {
@@ -558,11 +857,14 @@ export function validateInvoiceModifyInput(raw: unknown): {
     errors: [],
     data: {
       documentId,
-      field: field as BoluInvoiceModifyPayload['field'],
+      documentFamily,
+      field,
       oldValue: payload.oldValue as string | number | null | undefined,
-      newValue: payload.newValue as string | number | null | undefined,
+      newValue,
       items: validatedItems,
       oldItems: Array.isArray(payload.oldItems) ? (payload.oldItems as BoluInvoiceItemInput[]) : undefined,
+      extraChargesChange: validatedExtraChargesChange,
+      calculationInputsChange: validatedCalculationInputsChange,
     },
   }
 }
@@ -887,32 +1189,250 @@ export function withoutClarification(
   return { ...proposal, clarification: undefined }
 }
 
+interface ModifySnapshotRow {
+  id?: string | null
+  invoice_number?: string | null
+  quotation_number?: string | null
+  invoice_title?: string | null
+  quotation_title?: string | null
+  po_number?: string | null
+  project_id?: string | null
+  work_duration?: string | null
+  workmanship?: number | string | null
+  transportation?: number | string | null
+  shipping?: number | string | null
+  custom_fields?: unknown
+}
+
+function modifyChargesOf(row: ModifySnapshotRow | null | undefined) {
+  return {
+    workmanship: Number(row?.workmanship ?? 0) || 0,
+    transportation: Number(row?.transportation ?? 0) || 0,
+    shipping: Number(row?.shipping ?? 0) || 0,
+  }
+}
+
+/** Reads the persisted extra charges / calculation inputs without ever mutating them. */
+function modifyParseCustomFieldsOf(raw: unknown): Record<string, unknown> {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return { ...(raw as Record<string, unknown>) }
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw)
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? { ...(parsed as Record<string, unknown>) }
+        : {}
+    } catch {
+      return {}
+    }
+  }
+  return {}
+}
+
+function toBoluItemsFromPersisted(items: Array<Record<string, unknown>>): BoluInvoiceItemInput[] {
+  return items.map((row): BoluInvoiceItemInput => {
+    const qty = Number(row.quantity ?? 1)
+    return {
+      description: String(row.description ?? ''),
+      quantity: Number.isFinite(qty) ? qty : 1,
+      unit_price: Number(row.unit_price ?? 0) || 0,
+      unit: typeof row.unit === 'string' ? row.unit : undefined,
+      row_type: 'standard',
+      group_id: typeof row.group_id === 'string' ? row.group_id : null,
+      group_name: typeof row.group_name === 'string' ? row.group_name : null,
+      item_id: typeof row.item_id === 'string' ? row.item_id : null,
+      install_rate: row.install_rate == null ? null : Number(row.install_rate),
+      install_rate_taxable: row.install_rate_taxable === true,
+      vat_rate: row.vat_rate == null ? null : Number(row.vat_rate),
+      discount_rate: row.discount_rate == null ? null : Number(row.discount_rate),
+      sub_description: typeof row.sub_description === 'string' ? row.sub_description : null,
+      make: typeof row.make === 'string' ? row.make : null,
+      part_number: null,
+      condition: null,
+    }
+  })
+}
+
 /**
  * Creates an authoritative invoice modification proposal.
+ *
+ * When `current` is supplied (the persisted snapshot the caller loaded immediately
+ * before proposing), every scalar baseline and every block old-value is taken from
+ * that snapshot. Callers that persist a modification must always supply `current` —
+ * the model's claimed old values are never trusted over the persisted state.
  */
 export function buildInvoiceModifyProposal(params: {
   targetDocumentId: string
   targetDocumentNumber: string
   documentFamily?: BoluDocumentFamily
-  field?: 'client_name' | 'notes' | 'payment_terms' | 'due_date' | 'issue_date'
+  field?: BoluModifyFieldKey
   oldValue?: string | number | null
-  newValue?: string | number | null
+  newValue?: string | number | CommercialRichTextBlock[] | null
   itemsChange?: {
     oldItems: BoluInvoiceItemInput[]
     newItems: BoluInvoiceItemInput[]
   }
+  extraChargesChange?: BoluExtraChargeInput[]
+  calculationInputsChange?: Partial<BoluCalculationInputValues>
+  current?: BoluModifyCurrentSnapshot
 }): BoluInvoiceModifyProposal {
   const documentFamily = params.documentFamily ?? 'invoice'
   const now = new Date()
   const expiresAt = new Date(now.getTime() + 15 * 60 * 1000).toISOString()
+  const current = params.current
 
-  let computedTotals: { subtotal: number; vat: number; total: number } | undefined
-  if (params.itemsChange?.newItems) {
-    const calc = computeAuthoritativeTotals(params.itemsChange.newItems)
+  // 1. Persisted baselines for the requested changes.
+  const row = (current?.document ?? null) as ModifySnapshotRow | null
+  const persistedCf = row ? modifyParseCustomFieldsOf(row.custom_fields) : {}
+  const persistedExtraCharges: BoluExtraChargeInput[] = Array.isArray(persistedCf.extraCharges)
+    ? persistedCf.extraCharges.map((charge: any) => ({
+        label: String(charge?.label ?? '').trim(),
+        value: Number(charge?.value ?? 0) || 0,
+        withTax: charge?.withTax === true || charge?.vatApplicable === true,
+      })).filter((charge: BoluExtraChargeInput) => charge.label.length > 0)
+    : []
+  const persistedInputs = (persistedCf.calculationInputs ?? {}) as Partial<BoluCalculationInputValues>
+
+  let resolvedField = params.field
+  let resolvedOldValue = params.oldValue
+  let resolvedNewValue = params.newValue
+  const persistedItems = current?.items ?? []
+  const persistedItemsBolu = toBoluItemsFromPersisted(persistedItems)
+  const currentCharges = modifyChargesOf(row)
+
+  if (current && params.field) {
+    // Scalar-field baseline always comes from the snapshot. Keys that differ
+    // between the two families (quotation payment_terms in custom_fields,
+    // quotation validity stored as valid_until) are resolved explicitly.
+    const rowObj = (row ?? null) as Record<string, unknown> | null
+    switch (params.field) {
+      case 'workmanship':
+      case 'transportation':
+      case 'shipping':
+        resolvedOldValue = Number(rowObj?.[params.field] ?? 0) || 0
+        break
+      case 'po_number':
+        resolvedOldValue = (row?.po_number as string | null) ?? null
+        break
+      case 'title':
+        resolvedOldValue = (documentFamily === 'quotation'
+          ? (row?.quotation_title as string | null)
+          : (row?.invoice_title as string | null)) ?? null
+        break
+      case 'project_id':
+        resolvedOldValue = (row?.project_id as string | null) ?? null
+        break
+      case 'work_duration':
+        resolvedOldValue = (row?.work_duration as string | null) ?? null
+        break
+      case 'payment_terms':
+        resolvedOldValue = documentFamily === 'quotation'
+          ? ((persistedCf.payment_terms as string | null) ?? null)
+          : ((rowObj?.payment_terms as string | null) ?? null)
+        break
+      case 'due_date':
+        resolvedOldValue = documentFamily === 'quotation'
+          ? ((rowObj?.valid_until as string | null) ?? null)
+          : ((rowObj?.due_date as string | null) ?? null)
+        break
+      case 'issue_date':
+        resolvedOldValue = (rowObj?.issue_date as string | null) ?? null
+        break
+      case 'client_name':
+        resolvedOldValue = (rowObj?.client_name as string | null) ?? null
+        break
+      case 'notes':
+      case 'terms':
+        resolvedOldValue = (rowObj?.[params.field] as string | null) ?? null
+        break
+    }
+  }
+
+  const extraChargesChange = params.extraChargesChange !== undefined
+    ? {
+        oldExtraCharges: persistedExtraCharges,
+        newExtraCharges: params.extraChargesChange,
+      }
+    : undefined
+
+  // Calculation inputs: old snapshot covers every key the patch touches, plus the
+  // full default set the app would otherwise be unknown to the diff layer.
+  let calculationInputsChange: { old: Partial<BoluCalculationInputValues>; new: Partial<BoluCalculationInputValues> } | undefined
+  if (params.calculationInputsChange) {
+    const defaults: Partial<BoluCalculationInputValues> = {
+      vatPercent: 7.5,
+      discountValue: 0,
+      discountType: 'percent',
+      discountTiming: 'before_tax',
+      whtValue: 0,
+      whtType: 'percent',
+    }
+    const old: Record<string, number | string> = {}
+    for (const key of Object.keys(params.calculationInputsChange) as Array<keyof BoluCalculationInputValues>) {
+      const persisted = persistedInputs[key]
+      const defaulted = (defaults as Record<string, unknown>)[key]
+      old[key as string] = (persisted ?? defaulted) as number | string
+    }
+    calculationInputsChange = { old: old as Partial<BoluCalculationInputValues>, new: { ...params.calculationInputsChange } }
+  }
+
+  // 2. Authoritative calculation preview — app owns the math; never the model.
+  const effectiveCharges = { ...currentCharges }
+  if (params.field === 'workmanship' || params.field === 'transportation' || params.field === 'shipping') {
+    const num = Number(params.newValue)
+    if (Number.isFinite(num)) {
+      effectiveCharges[params.field] = num
+    }
+  }
+  const effectiveInputs: BoluCalculationInputValues = {
+    vatPercent: 7.5,
+    discountValue: 0,
+    discountType: 'percent',
+    discountTiming: 'before_tax',
+    whtValue: 0,
+    whtType: 'percent',
+    ...(persistedInputs as BoluCalculationInputValues),
+    ...(params.calculationInputsChange ?? {}),
+  }
+  const effectiveExtraCharges = extraChargesChange ? extraChargesChange.newExtraCharges : persistedExtraCharges
+  const recalcItems = params.itemsChange?.newItems ?? persistedItemsBolu
+
+  let computedTotals: BoluInvoiceModifyProposal['computedTotals']
+  const recalcRelevant =
+    Boolean(params.itemsChange) ||
+    params.field === 'workmanship' ||
+    params.field === 'transportation' ||
+    params.field === 'shipping' ||
+    Boolean(extraChargesChange) ||
+    Boolean(calculationInputsChange)
+  if (recalcRelevant) {
+    const calc = computeAuthoritativeTotals(recalcItems, {
+      globalVatPercent: effectiveInputs.vatPercent,
+      discountType: effectiveInputs.discountType,
+      discountTiming: effectiveInputs.discountTiming,
+      discountValue: effectiveInputs.discountValue,
+      whtType: effectiveInputs.whtType,
+      whtValue: effectiveInputs.whtValue,
+      fixedCharges: {
+        workmanship: effectiveCharges.workmanship,
+        transportation: effectiveCharges.transportation,
+        shipping: effectiveCharges.shipping,
+      },
+      extraCharges: effectiveExtraCharges.map((charge) => ({
+        label: charge.label,
+        value: charge.value,
+        vatApplicable: charge.withTax,
+      })),
+    })
     computedTotals = {
       subtotal: calc.subtotal,
       vat: calc.vat,
       total: calc.totalPayable,
+      discount: calc.discount,
+      wht: calc.wht,
+      installRateTotal: calc.installRateTotal,
+      extraChargesTotal: calc.extraChargesTotal,
     }
   }
 
@@ -930,11 +1450,14 @@ export function buildInvoiceModifyProposal(params: {
     expiresAt,
     targetDocumentId: params.targetDocumentId,
     targetDocumentNumber: params.targetDocumentNumber,
-    field: params.field,
-    oldValue: params.oldValue,
-    newValue: params.newValue,
+    field: resolvedField,
+    oldValue: resolvedOldValue,
+    newValue: resolvedNewValue,
     itemsChange: params.itemsChange,
+    extraChargesChange,
+    calculationInputsChange,
     computedTotals,
+    chargesSnapshot: { ...effectiveCharges },
   }
 }
 

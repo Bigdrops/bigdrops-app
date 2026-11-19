@@ -41,9 +41,8 @@ import {
 import {
   readBoluClient,
   readBoluContextFacts,
-  readBoluInvoice,
   readBoluInvoiceAdvanceConfig,
-  readBoluQuotation,
+  readBoluModifySnapshot,
   resolveOperationFacts,
   searchBoluClients,
   type BoluClientMatch,
@@ -425,30 +424,49 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
             parsedProposal = proposal
           }
         } else if (rawOp.operationType === 'modify-document') {
-          const validation = validateInvoiceModifyInput(rawOp.payload)
+          const validation = validateInvoiceModifyInput(rawOp.payload, { documentFamily })
           if (validation.valid && validation.data) {
             let targetNum = documentFamily === 'quotation' ? 'QTN-TARGET' : 'INV-TARGET'
+            let snapshot: Awaited<ReturnType<typeof readBoluModifySnapshot>> | null = null
             if (options.tenantClient) {
               try {
-                const doc = documentFamily === 'quotation'
-                  ? await readBoluQuotation(options.tenantClient, validation.data.documentId, options.canRead)
-                  : await readBoluInvoice(options.tenantClient, validation.data.documentId, options.canRead)
-                if (doc) targetNum = doc.number
-              } catch {
-                // Fallback to placeholder if lookup fails
+                snapshot = await readBoluModifySnapshot(
+                  options.tenantClient,
+                  documentFamily,
+                  validation.data.documentId,
+                  options.canRead,
+                )
+              } catch (snapshotErr) {
+                console.warn('[bolu-generation] Modification snapshot lookup failed:', snapshotErr)
+                snapshot = null
+              }
+              if (!snapshot) {
+                // Fail-closed: without the persisted baseline the proposal cannot
+                // stale-gate the write, so nothing is proposed.
+                finalText = `${finalText}\n\nI could not load the current ${documentFamily} with its saved items, so I did not prepare a change proposal. Reopen the document or try again.`
               }
             }
-            parsedProposal = buildInvoiceModifyProposal({
-              targetDocumentId: validation.data.documentId,
-              targetDocumentNumber: targetNum,
-              documentFamily,
-              field: validation.data.field,
-              oldValue: validation.data.oldValue,
-              newValue: validation.data.newValue,
-              itemsChange: validation.data.items && validation.data.oldItems
-                ? { oldItems: validation.data.oldItems, newItems: validation.data.items }
-                : undefined,
-            })
+            if (!options.tenantClient || snapshot) {
+              if (snapshot) targetNum = snapshot.documentNumber
+              parsedProposal = buildInvoiceModifyProposal({
+                targetDocumentId: validation.data.documentId,
+                targetDocumentNumber: targetNum,
+                documentFamily,
+                field: validation.data.field,
+                oldValue: validation.data.oldValue,
+                newValue: validation.data.newValue,
+                itemsChange: validation.data.items && validation.data.oldItems
+                  ? { oldItems: validation.data.oldItems, newItems: validation.data.items }
+                  : undefined,
+                extraChargesChange: validation.data.extraChargesChange,
+                calculationInputsChange: validation.data.calculationInputsChange,
+                current: snapshot
+                  ? { document: snapshot.document, items: snapshot.items }
+                  : undefined,
+              })
+            }
+          } else {
+            finalText = `${finalText}\n\nI could not prepare that document change:\n- ${validation.errors.join('\n- ')}`
           }
         }
       }

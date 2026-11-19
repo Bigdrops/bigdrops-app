@@ -83,14 +83,33 @@ describe('Quotation proposal validation and extra_charges handling', () => {
     assert.ok(result.errors.some((e) => e.includes('extra_charges')))
   })
 
-  it('rejects modification proposals containing extra_charges', () => {
+  it('accepts extra charges in modification proposals as the desired full list', () => {
     const result = validateInvoiceModifyInput({
       documentId: '11111111-2222-3333-4444-555555555555',
-      extraCharges: [{ label: 'transport', value: 5670 }],
+      extraCharges: [
+        { label: 'Transportation', value: 5670, withTax: false },
+        { label: 'Handling', value: 1000, withTax: true },
+      ],
+    })
+
+    assert.strictEqual(result.valid, true)
+    assert.deepStrictEqual(result.data?.extraChargesChange, [
+      { label: 'Transportation', value: 5670, withTax: false },
+      { label: 'Handling', value: 1000, withTax: true },
+    ])
+  })
+
+  it('rejects duplicate charge labels in a modification extra_charges list', () => {
+    const result = validateInvoiceModifyInput({
+      documentId: '11111111-2222-3333-4444-555555555555',
+      extraCharges: [
+        { label: 'Transport', value: 5670 },
+        { label: 'transport', value: 200 },
+      ],
     })
 
     assert.strictEqual(result.valid, false)
-    assert.ok(result.errors.some((e) => e.includes('extra_charges')))
+    assert.ok(result.errors.some((e) => /[Dd]uplicate extra charge label/.test(e)))
   })
 
   it('accepts transport represented cleanly as a standard line item', () => {

@@ -115,6 +115,187 @@ export function AdvanceConfigPreview({ proposal }: { proposal: BoluAdvanceConfig
   )
 }
 
+const MODIFY_FIELD_LABELS: Record<string, string> = {
+  client_name: 'Customer',
+  notes: 'Notes',
+  payment_terms: 'Payment terms',
+  due_date: 'Due date',
+  issue_date: 'Issue date',
+  terms: 'Terms',
+  po_number: 'PO number',
+  title: 'Title',
+  project_id: 'Project',
+  work_duration: 'Work duration',
+  workmanship: 'Workmanship',
+  transportation: 'Transportation',
+  shipping: 'Shipping',
+}
+
+const MODIFY_CHARGE_FIELDS = new Set(['workmanship', 'transportation', 'shipping'])
+
+/** Readable cell for a modify diff value — rich text summarized, charges as naira. */
+function formatModifyCell(field: string | undefined, value: unknown): string {
+  if (value === undefined) return '—'
+  if (value === null) return '—'
+  if (typeof value === 'object') return plainTextOf(value).trim() || '—'
+  if (field && MODIFY_CHARGE_FIELDS.has(field)) return formatNaira(Number(value) || 0)
+  const text = String(value).trim()
+  return text.length > 0 ? text : '—'
+}
+
+const CALC_INPUT_LABELS: Record<string, string> = {
+  vatPercent: 'VAT rate (%)',
+  discountValue: 'Discount',
+  discountType: 'Discount type',
+  discountTiming: 'Discount timing',
+  whtValue: 'WHT',
+  whtType: 'WHT type',
+}
+
+function formatCalcCell(key: string, value: unknown): string {
+  if (value === undefined || value === null) return '—'
+  if (key === 'discountType' || key === 'whtType') {
+    return value === 'percent' ? 'Percentage' : value === 'fixed' ? 'Fixed amount' : String(value)
+  }
+  if (key === 'discountTiming') {
+    return value === 'before_tax' ? 'Before tax' : value === 'after_tax' ? 'After tax' : String(value)
+  }
+  return String(value)
+}
+
+function ModifyDiffRow({ label, before, after, clearing = false }: { label: string; before: string; after: string; clearing?: boolean }) {
+  return (
+    <>
+      <span className="ac-advance-key">{label}</span>
+      <span className="ac-advance-val">
+        <span className="ac-advance-before">{before}</span>
+        <ArrowRight className="size-3 text-[var(--ac-muted)] shrink-0" aria-hidden="true" />
+        <span className="font-bold text-[var(--ac-ink)]">{after}</span>
+        {clearing ? (
+          <span className="rounded-full border border-[var(--ac-accent)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--ac-accent)]">
+            Cleared
+          </span>
+        ) : null}
+      </span>
+    </>
+  )
+}
+
+/**
+ * ModifyDiffPanel — the full before→after picture for a modification proposal:
+ * the scalar field (if any), fixed-charge edits flagged when they clear to
+ * zero, the desired extra-charges set (added / changed / removed), and the
+ * calculation inputs the user changed. Rendering only; all values were
+ * produced by the proposal builder from the persisted snapshot.
+ */
+function ModifyDiffPanel({ proposal }: { proposal: BoluProposal & { operationType: 'modify-document' } }) {
+  const scalarIsCharge = proposal.field !== undefined && MODIFY_CHARGE_FIELDS.has(proposal.field)
+  const clearingToZero =
+    scalarIsCharge &&
+    typeof proposal.oldValue === 'number' && proposal.oldValue > 0 &&
+    typeof proposal.newValue === 'number' && proposal.newValue === 0
+
+  const oldCharges = proposal.extraChargesChange?.oldExtraCharges ?? null
+  const newCharges = proposal.extraChargesChange?.newExtraCharges ?? null
+
+  const chargeRows: Array<{ key: string; before: string; after: string; added: boolean; removed: boolean }> = []
+  if (oldCharges || newCharges) {
+    const norm = (list: typeof oldCharges) =>
+      (list ?? []).map((charge) => ({
+        label: charge.label,
+        value: Number(charge.value) || 0,
+        withTax: charge.withTax === true,
+      }))
+    const oldList = norm(oldCharges)
+    const newList = norm(newCharges)
+    const keys = new Set<string>([
+      ...oldList.map((c) => c.label.toLowerCase()),
+      ...newList.map((c) => c.label.toLowerCase()),
+    ])
+    for (const key of keys) {
+      const before = oldList.find((c) => c.label.toLowerCase() === key) ?? null
+      const after = newList.find((c) => c.label.toLowerCase() === key) ?? null
+      const fmt = (charge: typeof before) =>
+        charge ? `${formatNaira(charge.value)}${charge.withTax ? ' · VAT' : ''}` : '—'
+      chargeRows.push({
+        key,
+        before: fmt(before),
+        after: fmt(after),
+        added: !before && Boolean(after),
+        removed: Boolean(before) && !after,
+      })
+    }
+  }
+
+  const calcChanges = proposal.calculationInputsChange
+  const calcRows = calcChanges
+    ? (Object.keys(calcChanges.new) as Array<keyof typeof calcChanges.new>).map((key) => ({
+        key: String(key),
+        label: CALC_INPUT_LABELS[String(key)] ?? String(key),
+        before: formatCalcCell(String(key), calcChanges.old[key]),
+        after: formatCalcCell(String(key), calcChanges.new[key]),
+      }))
+    : []
+
+  const anything =
+    Boolean(proposal.field) || chargeRows.length > 0 || calcRows.length > 0
+  if (!anything) return null
+
+  const documentNoun = proposal.documentFamily === 'quotation' ? 'quotation' : 'invoice'
+
+  return (
+    <section className="ac-advance ac-modify-diff" aria-label="Document changes">
+      <p className="ac-advance-target">
+        On {documentNoun} <code className="font-mono">{proposal.targetDocumentNumber || '—'}</code>
+      </p>
+      <div className="ac-advance-rows" aria-label="Document changes">
+        {proposal.field ? (
+          <ModifyDiffRow
+            label={MODIFY_FIELD_LABELS[proposal.field] ?? proposal.field}
+            before={formatModifyCell(proposal.field, proposal.oldValue)}
+            after={formatModifyCell(proposal.field, proposal.newValue)}
+            clearing={clearingToZero}
+          />
+        ) : null}
+        {calcRows.map((row) => (
+          <ModifyDiffRow key={row.key} label={row.label} before={row.before} after={row.after} />
+        ))}
+      </div>
+      {chargeRows.length > 0 ? (
+        <div className="ac-advance-rows" aria-label="Named charges">
+          {chargeRows.map((row) => (
+            <div key={row.key} className="contents">
+              <span className="ac-advance-key">
+                {row.key.charAt(0).toUpperCase() + row.key.slice(1)}
+                {row.added ? (
+                  <span className="ml-1.5 rounded-full border border-[var(--ac-line)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">
+                    New
+                  </span>
+                ) : null}
+                {row.removed ? (
+                  <span className="ml-1.5 rounded-full border border-[var(--ac-accent)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--ac-accent)]">
+                    Removed
+                  </span>
+                ) : null}
+              </span>
+              <span className="ac-advance-val">
+                <span className="ac-advance-before">{row.before}</span>
+                <ArrowRight className="size-3 text-[var(--ac-muted)] shrink-0" aria-hidden="true" />
+                <span className="font-bold text-[var(--ac-ink)]">{row.after}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {clearingToZero ? (
+        <p className="ac-advance-clamp" role="status">
+          This clears the {MODIFY_FIELD_LABELS[proposal.field!]} to zero — the charge will no longer be applied on this document.
+        </p>
+      ) : null}
+    </section>
+  )
+}
+
 function AdvanceRow({
   label,
   before,
@@ -180,7 +361,33 @@ export function proposalPlainText(proposal: BoluProposal): string {
   } else {
     lines.push(`${noun} modification for ${proposal.targetDocumentNumber || 'Document'}`)
     if (proposal.field) {
-      lines.push(`${proposal.field}: ${String(proposal.oldValue ?? '')} -> ${String(proposal.newValue ?? '')}`)
+      const label = MODIFY_FIELD_LABELS[proposal.field] ?? proposal.field
+      const cleared =
+        MODIFY_CHARGE_FIELDS.has(proposal.field) &&
+        typeof proposal.oldValue === 'number' && proposal.oldValue > 0 &&
+        typeof proposal.newValue === 'number' && proposal.newValue === 0
+      lines.push(`${label}: ${formatModifyCell(proposal.field, proposal.oldValue)} -> ${formatModifyCell(proposal.field, proposal.newValue)}${cleared ? ' (cleared)' : ''}`)
+    }
+    if (proposal.calculationInputsChange) {
+      for (const key of Object.keys(proposal.calculationInputsChange.new)) {
+        const label = CALC_INPUT_LABELS[key] ?? key
+        lines.push(`${label}: ${formatCalcCell(key, proposal.calculationInputsChange.old[key])} -> ${formatCalcCell(key, proposal.calculationInputsChange.new[key])}`)
+      }
+    }
+    if (proposal.extraChargesChange) {
+      const oldList = proposal.extraChargesChange.oldExtraCharges
+      const newList = proposal.extraChargesChange.newExtraCharges
+      const labels = Array.from(
+        new Set<string>([...oldList, ...newList].map((charge) => charge.label.toLowerCase())),
+      )
+      for (const label of labels) {
+        const before = oldList.find((charge) => charge.label.toLowerCase() === label)
+        const after = newList.find((charge) => charge.label.toLowerCase() === label)
+        const fmt = (charge: typeof before) =>
+          charge ? `${formatNaira(charge.value)}${charge.withTax ? ' (VAT)' : ''}` : '—'
+        const tag = !before ? ' [new]' : !after ? ' [removed]' : ''
+        lines.push(`${(before ?? after)?.label ?? label}: ${fmt(before)} -> ${fmt(after)}${tag}`)
+      }
     }
   }
 
@@ -226,7 +433,15 @@ export function proposalPlainText(proposal: BoluProposal): string {
     if (typeof extraChargesTotal === 'number' && extraChargesTotal > 0) {
       lines.push(`Charges: ${formatNaira(extraChargesTotal)}`)
     }
+    const discount = typeof (totals as { discount?: number }).discount === 'number'
+      ? (totals as { discount?: number }).discount as number
+      : 0
+    const wht = typeof (totals as { wht?: number }).wht === 'number'
+      ? (totals as { wht?: number }).wht as number
+      : 0
+    if (discount > 0) lines.push(`Discount: -${formatNaira(discount)}`)
     if (totals.vat > 0) lines.push(`VAT: ${formatNaira(totals.vat)}`)
+    if (wht > 0) lines.push(`WHT: -${formatNaira(wht)}`)
     lines.push(`Authoritative total: ${formatNaira(totals.total)}`)
   }
 
@@ -901,7 +1116,12 @@ export function ProposalCardView({
   const totalsForExtras = isAdvance ? undefined : proposal.computedTotals
   const discount = (totalsForExtras as { discount?: number } | undefined)?.discount ?? 0
   const wht = (totalsForExtras as { wht?: number } | undefined)?.wht ?? 0
-  const vatPercent = isCreate ? (proposal.payload.global_vat_percent ?? 7.5) : 7.5
+  const vatPercent = isCreate
+    ? (proposal.payload.global_vat_percent ?? 7.5)
+    : proposal.operationType === 'modify-document' &&
+        typeof proposal.calculationInputsChange?.new.vatPercent === 'number'
+      ? proposal.calculationInputsChange.new.vatPercent
+      : 7.5
 
   const [submittingGate1, setSubmittingGate1] = useState(false)
 
@@ -1014,14 +1234,9 @@ export function ProposalCardView({
         <AdvanceConfigPreview proposal={proposal} />
       ) : null}
 
-      {/* Field changes for modify proposal */}
-      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' && proposal.field ? (
-        <div className="ac-card-change my-2 p-2 rounded-lg bg-[var(--ac-muted-surface)] text-xs flex items-center gap-2">
-          <span className="font-medium text-[var(--ac-muted)]">{proposal.field}:</span>
-          <span className="ac-card-from line-through text-[var(--ac-muted)]">{String(proposal.oldValue ?? '')}</span>
-          <ArrowRight className="size-3 text-[var(--ac-muted)]" />
-          <span className="ac-card-to font-bold text-[var(--ac-ink)]">{String(proposal.newValue ?? '')}</span>
-        </div>
+      {/* Before→after diff for modify proposals (field, calc inputs, named charges) */}
+      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
+        <ModifyDiffPanel proposal={proposal} />
       ) : null}
 
       {/* Item summary */}

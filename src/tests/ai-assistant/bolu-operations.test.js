@@ -223,7 +223,7 @@ test('validateInvoiceModifyInput rejects computed fields or invalid document UUI
     newValue: 999999,
   })
   assert.equal(forbidden.valid, false)
-  assert.match(forbidden.errors[0], /computed fields/i)
+  assert.match(forbidden.errors[0], /directly is not allowed/i)
 })
 
 test('validateInvoiceModifyInput accepts valid non-computed field changes', () => {

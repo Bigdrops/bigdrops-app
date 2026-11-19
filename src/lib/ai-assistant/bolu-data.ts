@@ -162,6 +162,71 @@ export async function readBoluInvoiceAdvanceConfig(
   }
 }
 
+export interface BoluModifySnapshot {
+  documentFamily: 'invoice' | 'quotation'
+  documentId: string
+  documentNumber: string
+  /** Persisted row, verbatim — scalar and custom_fields baselines for the proposal. */
+  document: Record<string, unknown>
+  /** Persisted line items in persisted column shape — basis for Gate 1 previews and executor merges. */
+  items: Array<Record<string, unknown>>
+}
+
+const INVOICE_MODIFY_SELECT =
+  'id, invoice_number, invoice_title, po_number, client_id, client_name, project_id, issue_date, due_date, status, document_type, payment_terms, notes, terms, workmanship, transportation, shipping, discount, vat, wht, custom_fields, work_duration, subtotal, install_rate_total, total, amount_in_words, archived_at'
+
+const QUOTATION_MODIFY_SELECT =
+  'id, quotation_number, quotation_title, po_number, client_id, client_name, project_id, issue_date, valid_until, status, notes, terms, workmanship, transportation, shipping, discount, vat, wht, custom_fields, subtotal, install_rate_total, total, amount_in_words, archived_at'
+
+/**
+ * Reads the persisted state a modification proposal must be based on (Gate 1).
+ * The scalar baselines and the extra-charge / calculation-input blocks are all
+ * captured here so the executor can fail closed on any concurrent change.
+ */
+export async function readBoluModifySnapshot(
+  tenantClient: TenantClient,
+  documentFamily: 'invoice' | 'quotation',
+  documentId: string,
+  canRead: BoluReadAuthorization,
+): Promise<BoluModifySnapshot | null> {
+  assertTenantReady(tenantClient)
+  if (!canRead(documentFamily, 'view')) {
+    throw new Error(`You do not have permission to view ${documentFamily}s.`)
+  }
+  const table = documentFamily === 'quotation' ? 'quotations' : 'invoices'
+  const itemsTable = documentFamily === 'quotation' ? 'quotation_items' : 'invoice_items'
+  const itemsKey = documentFamily === 'quotation' ? 'quotation_id' : 'invoice_id'
+  const numberColumn = documentFamily === 'quotation' ? 'quotation_number' : 'invoice_number'
+
+  // Branch per family so the typed client resolves one table at a time.
+  const snapshotQuery = documentFamily === 'quotation'
+    ? tenantClient.from('quotations').select(QUOTATION_MODIFY_SELECT)
+    : tenantClient.from('invoices').select(INVOICE_MODIFY_SELECT)
+  const { data, error } = await snapshotQuery
+    .eq('id', documentId)
+    .is('archived_at', null)
+    .maybeSingle()
+  if (error) throw new Error(`${documentFamily === 'quotation' ? 'Quotation' : 'Invoice'} lookup failed: ${error.message}`)
+  if (!data) return null
+
+  const { data: items, error: itemsError } = await (tenantClient.from(itemsTable) as any)
+    .select('*')
+    .eq(itemsKey, documentId)
+    .order('sort_order', { ascending: true })
+  if (itemsError) {
+    throw new Error(`${documentFamily === 'quotation' ? 'Quotation' : 'Invoice'} items lookup failed: ${itemsError.message}`)
+  }
+
+  const row = data as Record<string, unknown>
+  return {
+    documentFamily,
+    documentId: String(row.id),
+    documentNumber: String(row[numberColumn] ?? ''),
+    document: row,
+    items: Array.isArray(items) ? (items as Array<Record<string, unknown>>) : [],
+  }
+}
+
 export async function readBoluInvoice(
   tenantClient: TenantClient,
   invoiceId: string,

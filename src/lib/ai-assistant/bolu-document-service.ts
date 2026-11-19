@@ -46,6 +46,8 @@ import {
   type BoluAdvanceConfigProposal,
   type BoluAdvanceFieldKey,
   type BoluInvoiceItemInput,
+  type BoluExtraChargeInput,
+  type BoluCalculationInputValues,
 } from './bolu-operations'
 
 // Supplementary in-process guard against accidental double-clicks.
@@ -1084,6 +1086,7 @@ interface FamilyModifyConfig {
   itemsTable: 'invoice_items' | 'quotation_items'
   itemsKey: 'invoice_id' | 'quotation_id'
   numberColumn: 'invoice_number' | 'quotation_number'
+  titleField: 'invoice_title' | 'quotation_title'
   select: string
   rpcName: string
   rpcPayloadParam: string
@@ -1096,6 +1099,7 @@ const INVOICE_MODIFY_CONFIG: FamilyModifyConfig = {
   itemsTable: 'invoice_items',
   itemsKey: 'invoice_id',
   numberColumn: 'invoice_number',
+  titleField: 'invoice_title',
   select:
     'id, invoice_number, invoice_title, po_number, client_id, client_name, project_id, issue_date, due_date, status, document_type, payment_terms, notes, terms, workmanship, transportation, shipping, discount, vat, wht, custom_fields, work_duration, subtotal, install_rate_total, total, amount_in_words, archived_at',
   rpcName: 'save_invoice_with_items_transaction',
@@ -1109,6 +1113,7 @@ const QUOTATION_MODIFY_CONFIG: FamilyModifyConfig = {
   itemsTable: 'quotation_items',
   itemsKey: 'quotation_id',
   numberColumn: 'quotation_number',
+  titleField: 'quotation_title',
   select:
     'id, quotation_number, quotation_title, po_number, client_id, client_name, project_id, issue_date, valid_until, status, notes, terms, workmanship, transportation, shipping, discount, vat, wht, custom_fields, subtotal, install_rate_total, total, amount_in_words, archived_at',
   rpcName: 'save_quotation_with_items_transaction',
@@ -1131,6 +1136,83 @@ const ADVANCE_INVOICE_SELECT = INVOICE_MODIFY_CONFIG.select + ', total'
  */
 function normalizeBoluRichText(value: unknown): string {
   return normalizeRichTextHtml(value)
+}
+
+/**
+ * Default calculation inputs used when a document has no persisted
+ * calculationInputs yet (legacy rows) — mirrors the form defaults.
+ */
+/** Business labels for calculation inputs — stale-guard refusals never speak in payload keys. (F-05) */
+const CALC_INPUT_BUSINESS_LABELS: Record<string, string> = {
+  vatPercent: 'VAT rate',
+  discountValue: 'Discount',
+  discountType: 'Discount type',
+  discountTiming: 'Discount timing',
+  whtValue: 'WHT',
+  whtType: 'WHT type',
+}
+const calcInputLabel = (key: unknown): string =>
+  CALC_INPUT_BUSINESS_LABELS[String(key)] ?? String(key)
+
+const DEFAULT_CALCULATION_INPUTS: BoluCalculationInputValues = {
+  vatPercent: 7.5,
+  discountValue: 0,
+  discountType: 'percent',
+  discountTiming: 'before_tax',
+  whtValue: 0,
+  whtType: 'percent',
+}
+
+/** Canonical value for comparing persisted calculation inputs across audits. */
+function canonicalCalcValue(value: unknown): unknown {
+  if (value === undefined || value === null) return null
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'boolean') return value
+  return String(value)
+}
+
+/** Canonical normalized shape for persisted/provided extra charges. */
+function normalizeExtraChargesList(list: Array<Record<string, unknown>>): Array<{ label: string; value: number; withTax: boolean }> {
+  return list
+    .map((row) => ({
+      label: String(row?.label ?? '').trim(),
+      value: Number(row?.value) || 0,
+      withTax: row?.withTax === true || row?.vatApplicable === true,
+    }))
+    .filter((charge) => charge.label.length > 0)
+    .sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
+}
+
+function extraChargesEqual(a: Array<{ label: string; value: number; withTax: boolean }>, b: Array<{ label: string; value: number; withTax: boolean }>): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/**
+ * Merge a desired extra-charges list onto the persisted rows, keeping fields
+ * the new set does not know about verbatim. Matching by label; the input is
+ * already validated to have unique labels, and this function preserves that
+ * invariant without silently dropping unrelated persisted entries.
+ */
+function mergeExtraChargesKeepUnknowns(
+  persisted: Array<Record<string, unknown>>,
+  desired: Array<Record<string, unknown>>,
+): Array<Record<string, unknown>> {
+  const byKey = new Map<string, Record<string, unknown>>()
+  for (const row of persisted) {
+    const key = String(row?.label ?? '').trim().toLowerCase()
+    if (key && !byKey.has(key)) byKey.set(key, row)
+  }
+  return desired.map((charge) => {
+    const key = String(charge?.label ?? '').trim().toLowerCase()
+    const current = key ? byKey.get(key) : undefined
+    const base = current ? { ...current } : {}
+    return {
+      ...base,
+      label: String(charge?.label ?? '').trim(),
+      value: Number(charge?.value ?? 0) || 0,
+      withTax: charge?.withTax === true || (charge as Record<string, unknown>)?.vatApplicable === true,
+    }
+  })
 }
 
 /** F3-11: project_id must exist as an active (non-archived) project in this
@@ -1213,6 +1295,22 @@ async function persistDocumentModification(
     // 2. Field-level modifications, applied only when explicitly requested.
     //    Quotation payment terms persist in custom_fields (no column); the
     //    invoice form stores them in the payment_terms column.
+    const effectiveCharges = {
+      workmanship: Number(currentDoc.workmanship ?? 0) || 0,
+      transportation: Number(currentDoc.transportation ?? 0) || 0,
+      shipping: Number(currentDoc.shipping ?? 0) || 0,
+    }
+    // Single pending custom_fields document: sections contribute to it, one write at the end.
+    let pendingCustomFields: Record<string, unknown> | null = null
+
+    if (proposal.field === 'work_duration' && cfg.family === 'quotation') {
+      return {
+        success: false,
+        error: 'Work duration applies to invoices only; quotations do not carry a work duration.',
+        ...(warnings.length ? { warnings } : {}),
+      }
+    }
+
     if (proposal.field) {
       const field = proposal.field
       let dbField: string | null
@@ -1227,15 +1325,27 @@ async function persistDocumentModification(
         dbField =
           field === 'payment_terms' ? 'payment_terms'
             : field === 'due_date' ? cfg.dueDateField
-              : field
+              : field === 'title' ? cfg.titleField
+                : field
         currentValueInDb = currentDoc[dbField]
       }
 
-      if (
-        proposal.oldValue !== undefined &&
-        proposal.oldValue !== null &&
-        String(currentValueInDb) !== String(proposal.oldValue)
-      ) {
+      // A persisted baseline is required for every scalar field edit.
+      if (proposal.oldValue === undefined) {
+        return {
+          success: false,
+          error: `Proposal is missing the persisted baseline for ${field}; the stale-check cannot run.`,
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+
+      const isRichText = field === 'notes' || field === 'terms'
+      const currentNormalized = isRichText ? normalizeBoluRichText(String(currentValueInDb ?? '')) : currentValueInDb
+      const expectedNormalized = isRichText ? normalizeBoluRichText(String(proposal.oldValue ?? '')) : proposal.oldValue
+      const equal = isRichText
+        ? currentNormalized === expectedNormalized
+        : String(currentValueInDb ?? '') === String(proposal.oldValue ?? '')
+      if (!equal) {
         return {
           success: false,
           error: `Document has been modified by another process (current ${field}: "${currentValueInDb}"). Proposal is stale.`,
@@ -1243,21 +1353,142 @@ async function persistDocumentModification(
       }
 
       if (dbField) {
-        // notes/terms are rich text; normalize through the application subset (F3-07)
-        updates[dbField] = (field === 'notes' || field === 'terms')
-          ? normalizeBoluRichText(proposal.newValue)
-          : proposal.newValue
+        const isCharge = dbField === 'workmanship' || dbField === 'transportation' || dbField === 'shipping'
+        // Commercial charges: explicit finite, non-negative numbers only.
+        // Booleans, arrays, objects and blank strings are refused. (F-02)
+        if (isCharge) {
+          let parsed: number | null = null
+          const value = proposal.newValue
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            parsed = value
+          } else if (typeof value === 'string') {
+            const trimmed = value.trim()
+            if (trimmed !== '') {
+              const asNumber = Number(trimmed)
+              if (Number.isFinite(asNumber)) parsed = asNumber
+            }
+          }
+          if (parsed === null || parsed < 0) {
+            return { success: false, error: `${dbField} must be a finite non-negative number.` }
+          }
+          ;(effectiveCharges as Record<string, number>)[dbField] = parsed
+          updates[dbField] = parsed
+        } else {
+          // notes/terms are rich text; normalize through the application subset (F3-07)
+          updates[dbField] = (field === 'notes' || field === 'terms')
+            ? normalizeBoluRichText(proposal.newValue)
+            : proposal.newValue
+        }
       } else if (cfKey) {
         const cf = parseCustomFields(currentDoc.custom_fields)
-        const merged = { ...cf, [cfKey]: proposal.newValue }
-        updates.custom_fields = cfg.family === 'invoice' ? JSON.stringify(merged) : merged
+        pendingCustomFields = { ...cf, [cfKey]: proposal.newValue }
       }
+    }
+
+    // 2.1 Project reference — fail-closed tenant verification before any write.
+    if (proposal.field === 'project_id' && proposal.newValue) {
+      const projectId = String(proposal.newValue).trim()
+      const ok = await verifyProjectReference(tenantClient, projectId)
+      if (!ok) {
+        warnings.push(`Project "${projectId}" is not active or not available in this business entity; the project reference was discarded.`)
+        updates.project_id = null
+      }
+    }
+
+    // 2.2 Extra charges & calculation inputs — merge with the persisted
+    //     custom_fields document, never replace it wholesale.
+    const persistedCf = parseCustomFields(currentDoc.custom_fields)
+    const persistedExtraCharges: Array<Record<string, unknown>> = Array.isArray(persistedCf.extraCharges)
+      ? (persistedCf.extraCharges as Array<Record<string, unknown>>)
+      : []
+    const persistedInputs = (persistedCf.calculationInputs && typeof persistedCf.calculationInputs === 'object'
+      ? { ...(persistedCf.calculationInputs as Record<string, unknown>) }
+      : {} as Record<string, unknown>)
+
+    const extraChargesChanged = proposal.extraChargesChange !== undefined
+    const inputsChanged = proposal.calculationInputsChange !== undefined
+
+    if (extraChargesChanged) {
+      const baseline = proposal.extraChargesChange!.oldExtraCharges ?? []
+      if (!extraChargesEqual(normalizeExtraChargesList(persistedExtraCharges), normalizeExtraChargesList(baseline))) {
+        return {
+          success: false,
+          error: 'Extra charges changed after this proposal was prepared. Please review and try again.',
+        }
+      }
+    }
+
+    if (inputsChanged) {
+      const baseline = proposal.calculationInputsChange!.old ?? {}
+      const keys = Object.keys(proposal.calculationInputsChange!.new) as Array<keyof BoluCalculationInputValues>
+      for (const key of keys) {
+        if (!Object.prototype.hasOwnProperty.call(persistedInputs, key)) {
+          // Persisted document simply does not carry this key — treat the baseline as the default.
+          // This is accepted (not stale) only when the baseline already matched the default.
+          const defaultKey = DEFAULT_CALCULATION_INPUTS[key]
+          if (canonicalCalcValue(baseline[key]) !== canonicalCalcValue(defaultKey)) {
+            return {
+              success: false,
+              error: `${calcInputLabel(key)} changed after this proposal was prepared. Please review and try again.`,
+            }
+          }
+          continue
+        }
+        if (canonicalCalcValue(persistedInputs[key as string]) !== canonicalCalcValue((baseline as Record<string, unknown>)[key as string])) {
+          return {
+            success: false,
+            error: `${calcInputLabel(key)} changed after this proposal was prepared. Please review and try again.`,
+          }
+        }
+      }
+    }
+
+    const mergedExtraCharges = extraChargesChanged
+      ? mergeExtraChargesKeepUnknowns(persistedExtraCharges, proposal.extraChargesChange!.newExtraCharges ?? [])
+      : persistedExtraCharges
+    const mergedInputs = inputsChanged
+      ? { ...persistedInputs, ...(proposal.calculationInputsChange!.new as Record<string, unknown>) }
+      : persistedInputs
+
+    if (extraChargesChanged || inputsChanged) {
+      const base = pendingCustomFields ?? parseCustomFields(currentDoc.custom_fields)
+      const nextCf = { ...base }
+      if (extraChargesChanged) nextCf.extraCharges = mergedExtraCharges
+      if (inputsChanged) nextCf.calculationInputs = mergedInputs
+      pendingCustomFields = nextCf
+    }
+    if (pendingCustomFields) {
+      updates.custom_fields = cfg.family === 'invoice'
+        ? JSON.stringify(pendingCustomFields)
+        : pendingCustomFields
     }
 
     // 3. Line item modifications: merge persisted metadata, never rebuild
     //    from the reduced payload alone.
+    const chargeFieldChanged =
+      proposal.field === 'workmanship' ||
+      proposal.field === 'transportation' ||
+      proposal.field === 'shipping'
+    const needsRecalc = Boolean(proposal.itemsChange?.newItems) || chargeFieldChanged || extraChargesChanged || inputsChanged
     let currentItems: Array<Record<string, any>> = []
     let itemsToSave: Array<Record<string, any>> = []
+    let mergedItemObjects: Array<Record<string, any>> | null = null
+
+    // Only charges/inputs changed — read the persisted items so totals can be recomputed.
+    if (needsRecalc && !proposal.itemsChange?.newItems) {
+      const { data: persistedItems, error: itemsFetchError } = await (tenantClient.from(cfg.itemsTable) as any)
+        .select('*')
+        .eq(cfg.itemsKey, proposal.targetDocumentId)
+        .order('sort_order', { ascending: true })
+
+      if (itemsFetchError) {
+        const detail = itemsFetchError?.message ? `: ${itemsFetchError.message}` : ''
+        return { success: false, error: `Failed to read current ${cfg.family} items; no changes were made${detail}` }
+      }
+      currentItems = Array.isArray(persistedItems) ? persistedItems : []
+      mergedItemObjects = currentItems
+    }
+
     if (proposal.itemsChange?.newItems) {
       const { data: fetchedItems, error: itemsFetchError } = await (tenantClient.from(cfg.itemsTable) as any)
         .select('*')
@@ -1332,15 +1563,23 @@ async function persistDocumentModification(
         }
       }
 
-      const mergedItemObjects = sanitizedItems.map((item, idx) =>
+      mergedItemObjects = sanitizedItems.map((item, idx) =>
         mergeBoluItem(item, matches[idx].current),
       )
 
-      // Canonical recalculation with the document's PERSISTED inputs.
-      // Documents with saved calculationInputs use them verbatim (identical
-      // to the form). Documents without them fall back to the form's legacy
-      // inference (inferLegacyCalculationInputs), never to blind defaults.
-      let cf = parseCustomFields(currentDoc.custom_fields)
+      itemsToSave = sanitizedItems.map((item, idx) =>
+        serializeBoluItem(item, idx, matches[idx].current),
+      )
+    }
+
+    // 3.1 Canonical recalculation with the document's PERSISTED inputs.
+    //     Documents with saved calculationInputs use them verbatim (identical
+    //     to the form). Documents without them fall back to the form's legacy
+    //     inference (inferLegacyCalculationInputs), never to blind defaults.
+    //     When extra charges, calculation inputs or fixed commercial charges
+    //     changed, totals are recomputed the same way from persisted items.
+    if (needsRecalc && mergedItemObjects) {
+      let cf = pendingCustomFields ?? parseCustomFields(currentDoc.custom_fields)
       if (!cf.calculationInputs && !(cf as any).calculation_inputs) {
         const derived = inferLegacyCalculationInputs({
           invoice: currentDoc as any,
@@ -1349,9 +1588,10 @@ async function persistDocumentModification(
         })
         cf = { ...cf, calculationInputs: derived }
       }
+      const documentForCalc = { ...currentDoc, ...effectiveCharges }
       const calculation = computeDocument({
         items: mergedItemObjects,
-        document: currentDoc,
+        document: documentForCalc,
         cf,
         columns: Array.isArray(cf.columnConfig) ? (cf.columnConfig as any) : [],
       })
@@ -1362,10 +1602,6 @@ async function persistDocumentModification(
       updates.total = calculation.totalPayable
       updates.install_rate_total = calculation.installRateTotal
       updates.amount_in_words = numberToWords(calculation.totalPayable)
-
-      itemsToSave = sanitizedItems.map((item, idx) =>
-        serializeBoluItem(item, idx, matches[idx].current),
-      )
     }
 
     // 4. Atomic RPC update when entityId is present and items are modified
@@ -1418,10 +1654,13 @@ async function persistDocumentModification(
       documentId: proposal.targetDocumentId,
       documentNumber: String(currentDoc[cfg.numberColumn] ?? ''),
       opId: proposal.opId,
-      changedField: proposal.field ?? null,
-      oldValue: proposal.oldValue,
-      newValue: proposal.newValue,
+      changedField:
+        proposal.field
+        ?? (proposal.extraChargesChange ? 'extra_charges' : proposal.calculationInputsChange ? 'calculation_inputs' : null),
       itemsChanged: Boolean(proposal.itemsChange?.newItems),
+      // Carry scalar diffs only; rich-text arrays are summarized for the audit trail.
+      oldValue: typeof proposal.oldValue === 'object' && proposal.oldValue !== null ? '[structured text]' : proposal.oldValue as string | number | null,
+      newValue: typeof proposal.newValue === 'object' && proposal.newValue !== null ? '[structured text]' : proposal.newValue as string | number | null,
       actor,
     })
 
