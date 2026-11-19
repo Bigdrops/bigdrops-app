@@ -119,7 +119,9 @@ const MODIFY_FIELD_LABELS: Record<string, string> = {
   client_name: 'Customer',
   notes: 'Notes',
   payment_terms: 'Payment terms',
+  custom_payment_terms: 'Custom payment terms',
   due_date: 'Due date',
+  valid_until: 'Quotation validity',
   issue_date: 'Issue date',
   terms: 'Terms',
   po_number: 'PO number',
@@ -191,9 +193,10 @@ function ModifyDiffRow({ label, before, after, clearing = false }: { label: stri
 function ModifyDiffPanel({ proposal }: { proposal: BoluProposal & { operationType: 'modify-document' } }) {
   const scalarIsCharge = proposal.field !== undefined && MODIFY_CHARGE_FIELDS.has(proposal.field)
   const clearingToZero =
-    scalarIsCharge &&
-    typeof proposal.oldValue === 'number' && proposal.oldValue > 0 &&
-    typeof proposal.newValue === 'number' && proposal.newValue === 0
+    (scalarIsCharge &&
+      typeof proposal.oldValue === 'number' && proposal.oldValue > 0 &&
+      typeof proposal.newValue === 'number' && proposal.newValue === 0) ||
+    (proposal.field === 'valid_until' && proposal.newValue === null && proposal.oldValue !== null)
 
   const oldCharges = proposal.extraChargesChange?.oldExtraCharges ?? null
   const newCharges = proposal.extraChargesChange?.newExtraCharges ?? null
@@ -251,7 +254,11 @@ function ModifyDiffPanel({ proposal }: { proposal: BoluProposal & { operationTyp
       <div className="ac-advance-rows" aria-label="Document changes">
         {proposal.field ? (
           <ModifyDiffRow
-            label={MODIFY_FIELD_LABELS[proposal.field] ?? proposal.field}
+            label={
+              proposal.field === 'due_date' && proposal.documentFamily === 'quotation'
+                ? 'Quotation validity'
+                : MODIFY_FIELD_LABELS[proposal.field] ?? proposal.field
+            }
             before={formatModifyCell(proposal.field, proposal.oldValue)}
             after={formatModifyCell(proposal.field, proposal.newValue)}
             clearing={clearingToZero}
@@ -289,7 +296,9 @@ function ModifyDiffPanel({ proposal }: { proposal: BoluProposal & { operationTyp
       ) : null}
       {clearingToZero ? (
         <p className="ac-advance-clamp" role="status">
-          This clears the {MODIFY_FIELD_LABELS[proposal.field!]} to zero — the charge will no longer be applied on this document.
+          {proposal.field === 'valid_until'
+            ? 'This clears the quotation validity date — the quotation will have no expiration date.'
+            : `This clears the ${MODIFY_FIELD_LABELS[proposal.field!]} to zero — the charge will no longer be applied on this document.`}
         </p>
       ) : null}
     </section>
@@ -464,6 +473,117 @@ function ModifyGroupsPanel({ proposal }: { proposal: ModifyFieldProposal }) {
   )
 }
 
+/**
+ * ModifyLifecyclePanel — renders approved lifecycle state transitions (archive,
+ * restore, convert quotation to invoice, or status update) before Gate 2 confirmation.
+ */
+function ModifyLifecyclePanel({ proposal }: { proposal: ModifyFieldProposal }) {
+  const lc = proposal.lifecycleChange
+  if (!lc) return null
+
+  const isQuotation = proposal.documentFamily === 'quotation'
+  const actionNoun =
+    lc.action === 'convert_to_invoice'
+      ? 'Convert to Invoice'
+      : lc.action === 'archive'
+        ? `Archive ${isQuotation ? 'Quotation' : 'Invoice'}`
+        : lc.action === 'restore'
+          ? `Restore ${isQuotation ? 'Quotation' : 'Invoice'}`
+          : 'Status Transition'
+
+  const toLabel =
+    lc.action === 'convert_to_invoice'
+      ? 'Converted (generates draft invoice)'
+      : lc.toStatus ?? (lc.action === 'archive' ? 'archived' : 'active')
+
+  return (
+    <section className="ac-advance ac-lifecycle-diff" aria-label="Lifecycle action">
+      <div className="ac-advance-head">
+        <Sparkles size={12} aria-hidden="true" />
+        <span>{actionNoun}</span>
+      </div>
+      <p className="ac-advance-target">
+        On {isQuotation ? 'quotation' : 'invoice'} <code className="font-mono">{proposal.targetDocumentNumber || '—'}</code>
+      </p>
+      <div className="ac-advance-rows" aria-label="Status transition">
+        <span className="ac-advance-key">Document status</span>
+        <span className="ac-advance-val">
+          <span className="ac-advance-before">{lc.fromStatus}</span>
+          <ArrowRight className="size-3 text-[var(--ac-muted)] shrink-0" aria-hidden="true" />
+          <span className="font-bold text-[var(--ac-ink)]">{toLabel}</span>
+        </span>
+      </div>
+      {lc.reason ? (
+        <p className="text-[11px] text-[var(--ac-muted)] mt-1">
+          Reason: <span className="font-medium text-[var(--ac-ink)]">{lc.reason}</span>
+        </p>
+      ) : null}
+      {lc.action === 'archive' ? (
+        <p className="ac-advance-clamp" role="status">
+          Archiving hides this document from standard active lists. It can be restored later.
+        </p>
+      ) : null}
+    </section>
+  )
+}
+
+/**
+ * ModifyAttachmentsPanel — displays additions, removals, and active reference
+ * link attachments for the document before Gate 2 confirmation.
+ */
+function ModifyAttachmentsPanel({ proposal }: { proposal: ModifyFieldProposal }) {
+  const att = proposal.attachmentsChange
+  if (!att) return null
+
+  const oldUrls = new Set(att.oldAttachments.map((a) => a.url))
+  const newUrls = new Set(att.newAttachments.map((a) => a.url))
+
+  const added = att.newAttachments.filter((a) => !oldUrls.has(a.url))
+  const removed = att.oldAttachments.filter((a) => !newUrls.has(a.url))
+  const retained = att.newAttachments.filter((a) => oldUrls.has(a.url))
+
+  if (added.length === 0 && removed.length === 0 && retained.length === 0) return null
+
+  return (
+    <section className="ac-advance ac-attachments-diff" aria-label="Document attachments">
+      <p className="ac-advance-target">Reference Link Attachments</p>
+      <div className="ac-advance-rows" aria-label="Attachment changes">
+        {added.map((item, idx) => (
+          <div key={`added-${idx}`} className="ac-advance-val">
+            <span className="ac-advance-key">
+              {item.label}
+              <span className="ml-1.5 rounded-full border border-[var(--ac-line)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">
+                New
+              </span>
+            </span>
+            <span className="min-w-0 break-words font-mono text-[11px] text-[var(--ac-ink)] truncate">
+              {item.url}
+            </span>
+          </div>
+        ))}
+        {removed.map((item, idx) => (
+          <div key={`removed-${idx}`} className="ac-advance-val">
+            <span className="ac-advance-key">
+              {item.label}
+              <span className="ml-1.5 rounded-full border border-[var(--ac-accent)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--ac-accent)]">
+                Removed
+              </span>
+            </span>
+            <span className="min-w-0 break-words font-mono text-[11px] text-[var(--ac-muted)] line-through truncate">
+              {item.url}
+            </span>
+          </div>
+        ))}
+        {retained.length > 0 && added.length === 0 && removed.length === 0 ? (
+          <p className="text-[11px] text-[var(--ac-muted)]">
+            {retained.length} existing {retained.length === 1 ? 'attachment' : 'attachments'} unchanged.
+          </p>
+        ) : null}
+      </div>
+    </section>
+  )
+}
+
 function AdvanceRow({
   label,
   before,
@@ -529,12 +649,53 @@ export function proposalPlainText(proposal: BoluProposal): string {
   } else {
     lines.push(`${noun} modification for ${proposal.targetDocumentNumber || 'Document'}`)
     if (proposal.field) {
-      const label = MODIFY_FIELD_LABELS[proposal.field] ?? proposal.field
+      const label =
+        proposal.field === 'due_date' && proposal.documentFamily === 'quotation'
+          ? 'Quotation validity'
+          : MODIFY_FIELD_LABELS[proposal.field] ?? proposal.field
       const cleared =
-        MODIFY_CHARGE_FIELDS.has(proposal.field) &&
-        typeof proposal.oldValue === 'number' && proposal.oldValue > 0 &&
-        typeof proposal.newValue === 'number' && proposal.newValue === 0
+        (MODIFY_CHARGE_FIELDS.has(proposal.field) &&
+          typeof proposal.oldValue === 'number' && proposal.oldValue > 0 &&
+          typeof proposal.newValue === 'number' && proposal.newValue === 0) ||
+        (proposal.field === 'valid_until' && proposal.newValue === null && proposal.oldValue !== null)
       lines.push(`${label}: ${formatModifyCell(proposal.field, proposal.oldValue)} -> ${formatModifyCell(proposal.field, proposal.newValue)}${cleared ? ' (cleared)' : ''}`)
+    }
+    if (proposal.lifecycleChange) {
+      const lc = proposal.lifecycleChange
+      lines.push('', 'Lifecycle action:')
+      if (lc.action === 'convert_to_invoice') {
+        lines.push(`Convert quotation to invoice: status ${lc.fromStatus} -> ${lc.toStatus ?? 'converted'}`)
+      } else if (lc.action === 'archive') {
+        lines.push(`Archive document: status ${lc.fromStatus} -> ${lc.toStatus ?? 'archived'}`)
+      } else if (lc.action === 'restore') {
+        lines.push(`Restore document: status ${lc.fromStatus} -> ${lc.toStatus ?? 'active'}`)
+      } else {
+        lines.push(`Status transition: ${lc.fromStatus} -> ${lc.toStatus}`)
+      }
+      if (lc.reason) {
+        lines.push(`Reason: ${lc.reason}`)
+      }
+    }
+    if (proposal.attachmentsChange) {
+      const att = proposal.attachmentsChange
+      const oldUrls = new Set(att.oldAttachments.map((a) => a.url))
+      const newUrls = new Set(att.newAttachments.map((a) => a.url))
+      const attLines: string[] = []
+      for (const item of att.newAttachments) {
+        if (!oldUrls.has(item.url)) {
+          attLines.push(`+ Attachment: ${item.label} (${item.url}) [new]`)
+        } else {
+          attLines.push(`  Attachment: ${item.label} (${item.url})`)
+        }
+      }
+      for (const item of att.oldAttachments) {
+        if (!newUrls.has(item.url)) {
+          attLines.push(`- Attachment: ${item.label} [removed]`)
+        }
+      }
+      if (attLines.length > 0) {
+        lines.push('', 'Attachments:', ...attLines)
+      }
     }
     if (proposal.calculationInputsChange) {
       for (const key of Object.keys(proposal.calculationInputsChange.new)) {
@@ -1471,6 +1632,16 @@ export function ProposalCardView({
       {/* Before→after diff for modify proposals (field, calc inputs, named charges) */}
       {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
         <ModifyDiffPanel proposal={proposal} />
+      ) : null}
+
+      {/* Lifecycle transition panel (archive, restore, convert) */}
+      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
+        <ModifyLifecyclePanel proposal={proposal} />
+      ) : null}
+
+      {/* Attachments panel (reference links) */}
+      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
+        <ModifyAttachmentsPanel proposal={proposal} />
       ) : null}
 
       {/* Document detail rows and additional info chips */}

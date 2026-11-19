@@ -588,3 +588,56 @@ The Bolu conversational document pipeline had two integrity gaps verified across
 **Behaviour contract.** Presentation changes are merged into `custom_fields` at save, never rebuilt wholesale; unknown keys (`custom_*` columns, foreign siblings) survive verbatim. `hide_display`/`hide_full` semantics mirror the form's engine, so Gate 1 preview and Gate 2 save see the same totals (`hide_full` on the VAT/discount/install columns removes the amount from totals, as the form does). `showItemImages` flips presentation only; references are never altered. `signatoryId` is written to the document only from a value resolved against the tenant projection; absent, ambiguous or unavailable signatories never silently attach.
 
 **Blocked at the time of writing.** Item-image upload through the assistant (no tenant-scoped image-storage bucket/upload path exists; the incumbent Cloudinary unsigned preset cannot authorize uploads); PDF rendering verification (only executor/UI checks, no headless PDF raster in-repo); four-viewport visual inspection (paired browser offline); live disposable-tenant verification (no database access for this stage). All remain outstanding and no claim is made.
+
+
+## DEC-44 - Bolu Document Capability Parity: Stage 3D Implementation (2026-11-19)
+
+**Decision.** Stage 3D completed conversational document lifecycle management, quotation validity, reference link attachments, custom payment terms reachability, persistent modification idempotency, and operational intelligence:
+1. **Document Lifecycle & Transitions:**
+   - Supported lifecycle actions: `archive`, `restore`, `convert_to_invoice`, and `update_status`.
+   - Quotation transitions adhere to authorized statuses (`open`, `converted`, `archived`); legacy statuses (`draft`, `sent`, `accepted`, `rejected`) are explicitly rejected. "Accepting" a quotation in BOUXRE triggers `convert_to_invoice`.
+   - Invoices permit `archive` and `restore`; direct payment status modification (marking paid, unpaid, or partially paid) is strictly blocked because invoice payment state is derived from the payments ledger.
+   - Quotation conversion calls the canonical `convertQuotationToInvoice` workflow, preserving lineage, conversion chain ID, and unique index idempotency.
+   - Lifecycle operations require Gate 1 proposal preview and Gate 2 confirmation with concurrency checks against the persisted `status` and `archived_at` baseline.
+2. **Quotation Validity (`valid_until`) vs Invoice Due Date (`due_date`):**
+   - Independent semantics: Quotations use `valid_until` (offer expiration date); invoices use `due_date` (payment due date).
+   - `valid_until` is available only on quotations; attempting `valid_until` on invoices fails validation.
+   - Explicit clearing to `null` is supported on quotations.
+   - Gate 1 derives baseline from persisted `valid_until`; Gate 2 stale checks reject concurrent modifications. Preview surfaces and plain-text artifacts label it as "Quotation validity".
+3. **Reference Link Attachments:**
+   - Attached references stored in `custom_fields.attachments` as `{ label, url }`.
+   - Strict URL scheme validation enforces `http` or `https` and blocks dangerous schemes (`javascript:`, `data:`, `file:`) and private/local network addresses (`localhost`, `127.0.0.1`, RFC1918 private ranges).
+   - Label validation enforces non-empty strings up to 120 characters.
+   - Add and remove operations compute an order-significant fingerprint. Gate 2 checks reject stale modifications if the attachment set changed concurrently.
+   - Binary file uploads are reported as BLOCKED: BOUXRE does not possess a tenant-scoped document attachment storage bucket; no unauthenticated or foreign storage bucket may be introduced without separate authorization.
+4. **Payment Terms Reachability (`custom_payment_terms`):**
+   - Predefined payment terms (`Net 7`, `Net 14`, `Net 30`, `Due on Receipt`) on `payment_terms` are distinguished from bespoke custom terms strings on `custom_payment_terms`.
+   - Preserves invoice storage (`invoices.payment_terms` and `custom_fields.custom_payment_terms`) and quotation storage (`custom_fields.payment_terms` and `custom_fields.custom_payment_terms`).
+   - Length is bounded to 500 characters. Gate 1 baseline and Gate 2 stale checks prevent silent overwrites.
+5. **Operation Idempotency & Replay Safety:**
+   - Dual-layer protection: in-process `executedOperationIds` prevents immediate replay; persistent `custom_fields.last_operation_id` and `custom_fields.applied_operation_ids` prevent replay across process restarts, multi-instance environments, or retried network requests.
+   - Replayed modification proposals fail closed with a clear error and do not duplicate attachments or re-trigger conversions.
+6. **Operational Intelligence & Business Guidance (`bolu-intelligence.ts`):**
+   - Contextual diagnostics evaluate missing customer information, missing line items, quotation expiry proximity, and conversion readiness.
+   - Factual observations are strictly separated from optional suggestions.
+   - Never presents suggestions as accomplished actions and never mutates documents automatically.
+7. **Preview & Artifact Parity:**
+   - `ProposalCardView` integrates `ModifyLifecyclePanel` and `ModifyAttachmentsPanel` alongside `ModifyDiffPanel`.
+   - `proposalPlainText` serializes lifecycle transitions, attachment diffs, quotation validity, and custom payment terms deterministically without recalculating financials.
+
+**Alternatives.**
+- Permitting scalar invoice status updates to `'paid'` was rejected: violating the financial payments ledger boundary would corrupt accounts receivable integrity.
+- Creating a bespoke file storage bucket or using Cloudinary for document attachments was rejected: violates the constraint prohibiting unapproved cloud storage or migration deployments without separate authorization.
+- Relying solely on in-memory idempotency sets was rejected: multi-instance or serverless cold starts would allow replayed operations to duplicate attachments or corrupt metadata.
+
+**Verification Evidence.**
+- 23/23 tests passing in `src/tests/ai-assistant/bolu-stage-3d-capabilities.test.js`.
+- 111/111 regression tests passing across Stage 3A.1, 3A.2, 3B, and 3C test suites (134/134 total).
+- `bun run audit:load` passed with 0 new load violations.
+- `bun run typecheck` (`tsc --noEmit`) exited 0.
+
+**Limitations Recorded at Time of Delivery.**
+- Binary document file attachments and item-photo upload/replacement remain dependent on authorized tenant-scoped storage.
+- The pre-existing Gate 2 mock `.limit(1)` test failure (`bolu-commercial-and-gate-lifecycle.test.js`) remains unresolved.
+- Live database verification on the hosted/disposable project has not been performed for Stage 3D.
+- Actual browser-based four-viewport visual inspection remains outstanding (static JSX/SSR inspection only).

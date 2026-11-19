@@ -58,6 +58,10 @@ import {
 import {
   fingerprintPresentation,
 } from './bolu-presentation'
+import {
+  fingerprintAttachments,
+  applyAttachmentOperations,
+} from './bolu-intelligence'
 
 // Supplementary in-process guard against accidental double-clicks.
 // The database-level unique index on the `operation_id` column is the
@@ -65,6 +69,10 @@ import {
 // This Set only spans one serverless instance and is not a substitute
 // for the database enforcement.
 const executedOperationIds = new Set<string>()
+
+export function clearExecutedOperationIdsForTest(): void {
+  executedOperationIds.clear()
+}
 
 /**
  * Exact database constraint identities for the operation-id unique indexes
@@ -1333,17 +1341,36 @@ async function persistDocumentModification(
   try {
     // 1. Full preservation snapshot. Every field the composite RPC can write
     //    is selected; absent keys are preserved by explicit override only.
-    const { data: currentRow, error: fetchError } = await tenantClient
-      .from(cfg.table)
+    let fetchQuery = (tenantClient.from(cfg.table) as any)
       .select(cfg.select)
       .eq('id', proposal.targetDocumentId)
-      .is('archived_at', null)
-      .single()
+
+    if (proposal.lifecycleChange?.action !== 'restore') {
+      fetchQuery = fetchQuery.is('archived_at', null)
+    }
+
+    const { data: currentRow, error: fetchError } = await fetchQuery.single()
 
     if (fetchError || !currentRow) {
       return { success: false, error: `Target ${cfg.family} could not be found or has been archived.`, ...(warnings.length ? { warnings } : {}) }
     }
     const currentDoc = currentRow as Record<string, any>
+
+    const persistedCf = parseCustomFields(currentDoc.custom_fields)
+    const lastOpId = typeof persistedCf.last_operation_id === 'string' ? persistedCf.last_operation_id : null
+    const appliedOps = Array.isArray(persistedCf.applied_operation_ids) ? persistedCf.applied_operation_ids : []
+
+    if (
+      executedOperationIds.has(proposal.opId) ||
+      lastOpId === proposal.opId ||
+      appliedOps.includes(proposal.opId)
+    ) {
+      return {
+        success: false,
+        error: 'This modification has already been submitted and executed.',
+        ...(warnings.length ? { warnings } : {}),
+      }
+    }
 
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -1378,6 +1405,27 @@ async function persistDocumentModification(
         dbField = null
         cfKey = 'payment_terms'
         currentValueInDb = parseCustomFields(currentDoc.custom_fields)[cfKey]
+      } else if (field === 'custom_payment_terms') {
+        if (cfg.family === 'quotation') {
+          dbField = null
+          cfKey = 'custom_payment_terms'
+          const cf = parseCustomFields(currentDoc.custom_fields)
+          currentValueInDb = cf.custom_payment_terms ?? cf.payment_terms
+        } else {
+          dbField = 'payment_terms'
+          const cf = parseCustomFields(currentDoc.custom_fields)
+          currentValueInDb = cf.custom_payment_terms ?? (currentDoc.payment_terms || null)
+        }
+      } else if (field === 'valid_until') {
+        if (cfg.family === 'invoice') {
+          return {
+            success: false,
+            error: 'valid_until applies to quotations only; invoices carry a payment due date.',
+            ...(warnings.length ? { warnings } : {}),
+          }
+        }
+        dbField = 'valid_until'
+        currentValueInDb = currentDoc.valid_until
       } else {
         dbField =
           field === 'payment_terms' ? 'payment_terms'
@@ -1447,7 +1495,16 @@ async function persistDocumentModification(
         }
       } else if (cfKey) {
         const cf = parseCustomFields(currentDoc.custom_fields)
-        pendingCustomFields = { ...cf, [cfKey]: proposal.newValue }
+        if (field === 'custom_payment_terms' && cfg.family === 'quotation') {
+          pendingCustomFields = { ...cf, payment_terms: 'Custom', custom_payment_terms: proposal.newValue }
+        } else {
+          pendingCustomFields = { ...cf, [cfKey]: proposal.newValue }
+        }
+      }
+
+      if (field === 'custom_payment_terms' && cfg.family === 'invoice') {
+        const cf = parseCustomFields(currentDoc.custom_fields)
+        pendingCustomFields = { ...(pendingCustomFields ?? cf), custom_payment_terms: proposal.newValue }
       }
     }
 
@@ -1463,7 +1520,6 @@ async function persistDocumentModification(
 
     // 2.2 Extra charges & calculation inputs — merge with the persisted
     //     custom_fields document, never replace it wholesale.
-    const persistedCf = parseCustomFields(currentDoc.custom_fields)
     const persistedExtraCharges: Array<Record<string, unknown>> = Array.isArray(persistedCf.extraCharges)
       ? (persistedCf.extraCharges as Array<Record<string, unknown>>)
       : []
@@ -1640,6 +1696,99 @@ async function persistDocumentModification(
         if ((nextSubtree as Record<string, unknown>)[key] === null) delete merged[key]
       }
       pendingCustomFields = merged
+    }
+
+    // 2.5 Document attachments (Stage 3D)
+    if (proposal.attachmentsChange !== undefined) {
+      const persistedAttachments = Array.isArray(persistedCf.attachments) ? persistedCf.attachments : []
+      if (
+        fingerprintAttachments(persistedAttachments)
+        !== proposal.attachmentsChange!.fingerprint
+      ) {
+        return {
+          success: false,
+          error: 'The document attachments changed after this proposal was prepared. Please review and try again.',
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+      const appResult = applyAttachmentOperations(
+        persistedAttachments,
+        proposal.attachmentsChange!.ops,
+      )
+      if (appResult.errors.length > 0) {
+        return {
+          success: false,
+          error: appResult.errors.join(' '),
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+      const base = pendingCustomFields ?? persistedCf
+      pendingCustomFields = { ...base, attachments: appResult.attachments }
+    }
+
+    // 2.6 Lifecycle transition (Stage 3D)
+    if (proposal.lifecycleChange !== undefined) {
+      const lc = proposal.lifecycleChange
+      const isArchived = Boolean(currentDoc.archived_at)
+      const currentStatus = String(currentDoc.status || (cfg.family === 'quotation' ? 'open' : 'unpaid')).toLowerCase()
+
+      // Revalidate state at Gate 2
+      if (isArchived !== lc.isArchived || currentStatus !== lc.currentStatus.toLowerCase()) {
+        return {
+          success: false,
+          error: 'The document status or archive state changed after this proposal was prepared. Proposal is stale.',
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+
+      if (lc.action === 'archive') {
+        updates.archived_at = new Date().toISOString()
+        updates.status = 'archived'
+      } else if (lc.action === 'restore') {
+        updates.archived_at = null
+        if (currentDoc.status === 'archived') {
+          updates.status = cfg.family === 'quotation' ? 'open' : 'unpaid'
+        }
+      } else if (lc.action === 'update_status' && lc.targetStatus) {
+        if (cfg.family === 'quotation') {
+          updates.status = lc.targetStatus
+        } else {
+          return {
+            success: false,
+            error: 'Invoice payment status is derived from recorded payments and cannot be edited directly.',
+            ...(warnings.length ? { warnings } : {}),
+          }
+        }
+      } else if (lc.action === 'convert_to_invoice') {
+        if (cfg.family !== 'quotation') {
+          return { success: false, error: 'Conversion applies to quotations only.' }
+        }
+        const { convertQuotationToInvoice } = await import('@/pages/view-quotation-actions')
+        const { data: qItems } = await tenantClient
+          .from('quotation_items')
+          .select('*')
+          .eq('quotation_id', proposal.targetDocumentId)
+          .order('sort_order', { ascending: true })
+        const converted = await convertQuotationToInvoice(
+          {
+            id: proposal.targetDocumentId,
+            quotation: currentDoc,
+            items: qItems || [],
+          },
+          tenantClient,
+          entityId,
+        )
+        if (!converted) {
+          return { success: false, error: 'Failed to convert quotation to invoice.' }
+        }
+        executedOperationIds.add(proposal.opId)
+        return {
+          success: true,
+          documentId: converted.id,
+          documentNumber: converted.invoice_number,
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
     }
 
     // 3. Line item modifications: merge persisted metadata, never rebuild
@@ -1848,6 +1997,14 @@ async function persistDocumentModification(
       }
     }
 
+    // Durable replay safety: always persist operation_id on custom_fields
+    const nextApplied = [...appliedOps.filter((id) => id !== proposal.opId), proposal.opId].slice(-20)
+    pendingCustomFields = {
+      ...(pendingCustomFields ?? persistedCf),
+      last_operation_id: proposal.opId,
+      applied_operation_ids: nextApplied,
+    }
+
     // Serialize the assembled custom_fields document exactly once.
     if (pendingCustomFields) {
       updates.custom_fields = cfg.family === 'invoice'
@@ -1912,7 +2069,9 @@ async function persistDocumentModification(
           : proposal.calculationInputsChange ? 'calculation_inputs'
             : proposal.customFieldsChange ? 'custom_fields'
               : proposal.groupsChange ? 'groups'
-                : proposal.presentationChange ? 'presentation' : null),
+                : proposal.presentationChange ? 'presentation'
+                  : proposal.attachmentsChange ? 'attachments'
+                    : proposal.lifecycleChange ? 'lifecycle' : null),
       itemsChanged:
         Boolean(proposal.itemsChange?.newItems) || groupsChanged,
       // Name-only audit markers for block-only changes.
@@ -1920,13 +2079,17 @@ async function persistDocumentModification(
         ? (proposal.customFieldsChange ? '[document fields]'
           : proposal.groupsChange ? '[groups]'
             : proposal.presentationChange ? '[presentation]'
-              : '[structured text]')
+              : proposal.attachmentsChange ? '[attachments]'
+                : proposal.lifecycleChange ? `[lifecycle: ${proposal.lifecycleChange.action}]`
+                  : '[structured text]')
         : proposal.oldValue as string | number | null,
       newValue: typeof proposal.newValue === 'object' && proposal.newValue !== null
         ? (proposal.customFieldsChange ? '[document fields]'
           : proposal.groupsChange ? '[groups]'
             : proposal.presentationChange ? '[presentation]'
-              : '[structured text]')
+              : proposal.attachmentsChange ? '[attachments]'
+                : proposal.lifecycleChange ? `[lifecycle: ${proposal.lifecycleChange.action}]`
+                  : '[structured text]')
         : proposal.newValue as string | number | null,
       actor,
     })

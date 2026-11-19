@@ -24,11 +24,12 @@ export function factsAsPrompt(facts: Awaited<ReturnType<typeof readBoluContextFa
         `Number: ${escapePromptValue(record.number)}`,
         `Client: ${escapePromptValue(record.clientName)}`,
         `Date: ${escapePromptValue(record.date)}`,
+        record.validUntil ? `Valid until: ${escapePromptValue(record.validUntil)}` : null,
         `Status: ${escapePromptValue(record.status)}`,
         `Total: ${formatRecordAmount(record.total)}`,
         `Balance due: ${formatRecordAmount(record.balanceDue)}`,
         `Route: ${record.route}`,
-      ].join('\n'),
+      ].filter(Boolean).join('\n'),
     )
     .join('\n\n')
 }

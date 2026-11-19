@@ -12,6 +12,8 @@ export type BoluRecord = {
   title: string | null
   clientName: string | null
   date: string | null
+  validUntil?: string | null
+  paymentTerms?: string | null
   status: string | null
   total: number | null
   balanceDue: number | null
@@ -375,7 +377,7 @@ export async function readBoluContextFacts(
     if (!canRead('quotation', 'view')) throw new Error('You do not have permission to view quotations.')
     const { data, error } = await tenantClient
       .from('quotations')
-      .select('id, quotation_number, quotation_title, client_name, issue_date, total, status')
+      .select('id, quotation_number, quotation_title, client_name, issue_date, valid_until, total, status')
       .eq('id', context.record.id)
       .is('archived_at', null)
       .maybeSingle()
@@ -391,6 +393,7 @@ export async function readBoluContextFacts(
         title: data.quotation_title,
         clientName: data.client_name,
         date: data.issue_date,
+        validUntil: data.valid_until,
         status: data.status,
         total: data.total == null ? null : Number(data.total),
         balanceDue: null,
@@ -908,7 +911,7 @@ export async function readBoluQuotation(
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean)
   let query = tenantClient
     .from('quotations')
-    .select('id, quotation_number, quotation_title, client_name, issue_date, total, status')
+    .select('id, quotation_number, quotation_title, client_name, issue_date, valid_until, total, status')
     .is('archived_at', null)
 
   query = isUuid ? query.eq('id', clean) : query.ilike('quotation_number', `%${clean}%`)
@@ -924,6 +927,7 @@ export async function readBoluQuotation(
     title: data.quotation_title,
     clientName: data.client_name,
     date: data.issue_date,
+    validUntil: data.valid_until,
     status: data.status,
     total: data.total == null ? null : Number(data.total),
     balanceDue: null,

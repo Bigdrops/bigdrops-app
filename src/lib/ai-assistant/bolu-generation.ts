@@ -496,6 +496,8 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
                   customFieldsChange: validation.data.customFieldsChange,
                   groupsChange: validation.data.groupsChange,
                   presentationChange: validation.data.presentationChange,
+                  attachmentsChange: validation.data.attachmentsChange,
+                  lifecycleChange: validation.data.lifecycleChange,
                   resolvedSignatory,
                   resolvedBankAccount,
                   current: snapshot
@@ -506,8 +508,9 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
               // against the persisted snapshot must never reach Gate 1.
               const fieldErrors = parsedProposal.customFieldsChange?.errors ?? []
               const groupErrors = parsedProposal.groupsApplication?.errors ?? []
-              if (fieldErrors.length > 0 || groupErrors.length > 0) {
-                finalText = `${finalText}\n\nI could not prepare that change after checking the saved document:\n- ${[...fieldErrors, ...groupErrors].join('\n- ')}\n\nPlease check the details and try again.`
+              const attachmentErrors = parsedProposal.attachmentsChange?.errors ?? []
+              if (fieldErrors.length > 0 || groupErrors.length > 0 || attachmentErrors.length > 0) {
+                finalText = `${finalText}\n\nI could not prepare that change after checking the saved document:\n- ${[...fieldErrors, ...groupErrors, ...attachmentErrors].join('\n- ')}\n\nPlease check the details and try again.`
                 parsedProposal = null
               }
               }

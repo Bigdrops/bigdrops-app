@@ -456,18 +456,21 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
                 customFieldsChange: validation.data!.customFieldsChange,
                 groupsChange: validation.data!.groupsChange,
                 presentationChange: validation.data!.presentationChange,
+                attachmentsChange: validation.data!.attachmentsChange,
+                lifecycleChange: validation.data!.lifecycleChange,
                 resolvedSignatory,
                 resolvedBankAccount,
                 current: { document: snapshot.document, items: snapshot.items },
               })
               const fieldErrors = proposal.customFieldsChange?.errors ?? []
               const groupErrors = proposal.groupsApplication?.errors ?? []
-              if (fieldErrors.length > 0 || groupErrors.length > 0) {
+              const attachmentErrors = proposal.attachmentsChange?.errors ?? []
+              if (fieldErrors.length > 0 || groupErrors.length > 0 || attachmentErrors.length > 0) {
                 // A plan that fails against the persisted snapshot is not a proposal.
                 dispatch({
                   type: 'RESULT',
                   requestId,
-                  content: `I could not prepare that change after checking the saved ${targetFamily}:\n- ${[...fieldErrors, ...groupErrors].join('\n- ')}\n\nPlease check the details and try again.`,
+                  content: `I could not prepare that change after checking the saved ${targetFamily}:\n- ${[...fieldErrors, ...groupErrors, ...attachmentErrors].join('\n- ')}\n\nPlease check the details and try again.`,
                 })
                 return
               }

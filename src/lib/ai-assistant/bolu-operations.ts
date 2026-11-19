@@ -29,6 +29,16 @@ import {
   fingerprintPresentation,
   DEFAULT_COLUMN_ORDER,
 } from './bolu-presentation'
+import {
+  type BoluAttachmentItem,
+  type BoluAttachmentOp,
+  type BoluAttachmentsChange,
+  type BoluLifecycleChange,
+  fingerprintAttachments,
+  applyAttachmentOperations,
+  validateAttachmentLabel,
+  validateAttachmentUrl,
+} from './bolu-intelligence'
 import type { CommercialRichTextBlock } from '@/lib/commercialRichText'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BoluClientMatch, BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
@@ -176,7 +186,9 @@ export type BoluModifyFieldKey =
   | 'client_name'
   | 'notes'
   | 'payment_terms'
+  | 'custom_payment_terms'
   | 'due_date'
+  | 'valid_until'
   | 'issue_date'
   | 'terms'
   | 'po_number'
@@ -317,6 +329,10 @@ export interface BoluInvoiceModifyPayload {
   groupsChange?: BoluGroupOp[]
   /** Presentation controls (PDF output, headings, labels, columns, signatory). */
   presentationChange?: BoluPresentationChange
+  /** Document attachment reference-link changes (Stage 3D). */
+  attachmentsChange?: BoluAttachmentsChange
+  /** Dedicated document lifecycle action (Stage 3D). */
+  lifecycleChange?: BoluLifecycleChange
   /** Build-time resolved signatory identity (Gate 1 preview). Resolved again at Gate 2. */
   resolvedSignatory?: { id: string; name: string; role: string } | null
   /** Build-time resolved bank account (Gate 1 preview). Resolved again at Gate 2. */
@@ -433,6 +449,17 @@ export interface BoluDocumentModifyProposal extends BoluOperationContract {
     errors: string[]
     fingerprint: string
   }
+  /** Document attachment reference-link changes — snapshot-derived for preview; re-checked at Gate 2. */
+  attachmentsChange?: {
+    oldAttachments: BoluAttachmentItem[]
+    newAttachments: BoluAttachmentItem[]
+    ops: BoluAttachmentOp[]
+    rows: Array<{ label: string; url: string; action: 'added' | 'removed' }>
+    errors: string[]
+    fingerprint: string
+  }
+  /** Dedicated document lifecycle action. */
+  lifecycleChange?: BoluLifecycleChange
   /** Calculation-inputs patch. old carries every persisted key in play; new carries only requested keys. */
   calculationInputsChange?: {
     old: Partial<BoluCalculationInputValues>
@@ -1235,7 +1262,9 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
   const family =
     payload.documentFamily === 'quotation' || payload.documentFamily === 'invoice'
       ? payload.documentFamily
-      : options?.documentFamily
+      : typeof options === 'string'
+        ? options
+        : options?.documentFamily
 
   const documentFamily = family ?? 'invoice'
 
@@ -1243,7 +1272,9 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
     'client_name',
     'notes',
     'payment_terms',
+    'custom_payment_terms',
     'due_date',
+    'valid_until',
     'issue_date',
     'terms',
     'po_number',
@@ -1267,6 +1298,10 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
 
   if (field === 'work_duration' && documentFamily === 'quotation') {
     errors.push('work_duration applies to invoices only; quotations do not carry a work duration.')
+  }
+
+  if (field === 'valid_until' && documentFamily === 'invoice') {
+    errors.push('valid_until applies to quotations only; invoices carry a payment due date (due_date).')
   }
 
   // A modification to an existing document must state the value explicitly.
@@ -1351,6 +1386,32 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
     } else {
       newValue = str.value
     }
+    }
+  } else if (field === 'valid_until' || field === 'due_date') {
+    const candidate = payload.newValue
+    if (candidate === null || candidate === '') {
+      newValue = null // explicit clear
+    } else {
+      const str = validateModifyFieldString(candidate)
+      if (!str.ok) {
+        errors.push(`${field} must be a date string.`)
+      } else {
+        newValue = str.value ?? null
+      }
+    }
+  } else if (field === 'custom_payment_terms') {
+    const candidate = payload.newValue
+    if (candidate === null || candidate === '') {
+      newValue = null // explicit clear
+    } else {
+      const str = validateModifyFieldString(candidate)
+      if (!str.ok) {
+        errors.push('custom_payment_terms must be a string or null.')
+      } else if (str.value && str.value.length > 500) {
+        errors.push('custom_payment_terms cannot exceed 500 characters.')
+      } else {
+        newValue = str.value ?? null
+      }
     }
   } else if (field) {
     const str = validateModifyFieldString(payload.newValue)
@@ -1525,9 +1586,95 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
     }
   }
 
+  let validatedAttachmentsChange: BoluAttachmentsChange | undefined
+  if (payload.attachmentsChange !== undefined) {
+    if (!payload.attachmentsChange || typeof payload.attachmentsChange !== 'object') {
+      errors.push('attachmentsChange must be an object with an ops array.')
+    } else {
+      const rawOps = (payload.attachmentsChange as any).ops ?? (payload.attachmentsChange as any).operations
+      if (!Array.isArray(rawOps) || rawOps.length === 0) {
+        errors.push('attachmentsChange must carry at least one attachment operation in ops.')
+      } else {
+        const validatedOps: BoluAttachmentOp[] = []
+        for (const op of rawOps) {
+          if (!op || typeof op !== 'object') {
+            errors.push('Each attachment operation must be an object.')
+            continue
+          }
+          if (op.op === 'add') {
+            const labelCheck = validateAttachmentLabel(op.label)
+            if (!labelCheck.valid) {
+              errors.push(labelCheck.error!)
+            }
+            const urlCheck = validateAttachmentUrl(op.url)
+            if (!urlCheck.valid) {
+              errors.push(urlCheck.error!)
+            }
+            if (labelCheck.valid && urlCheck.valid) {
+              validatedOps.push({ op: 'add', label: labelCheck.value!, url: String(op.url).trim() })
+            }
+          } else if (op.op === 'remove') {
+            const match = op.match ?? { label: op.label, url: op.url }
+            if (!match || typeof match !== 'object' || (!match.label && !match.url)) {
+              errors.push('Remove attachment operation must specify match with label or url.')
+            } else {
+              validatedOps.push({
+                op: 'remove',
+                match: {
+                  label: match.label ? String(match.label).trim() : undefined,
+                  url: match.url ? String(match.url).trim() : undefined,
+                },
+              })
+            }
+          } else {
+            errors.push(`Unsupported attachment operation "${op.op}". Supported: add, remove.`)
+          }
+        }
+        if (validatedOps.length > 0 && errors.length === 0) {
+          validatedAttachmentsChange = {
+            ops: validatedOps,
+            fingerprint: typeof (payload.attachmentsChange as any).fingerprint === 'string'
+              ? (payload.attachmentsChange as any).fingerprint
+              : '',
+          }
+        }
+      }
+    }
+  }
+
+  let validatedLifecycleChange: BoluLifecycleChange | undefined
+  if (payload.lifecycleChange !== undefined) {
+    if (!payload.lifecycleChange || typeof payload.lifecycleChange !== 'object') {
+      errors.push('lifecycleChange must be an object.')
+    } else {
+      const lc = payload.lifecycleChange as any
+      const allowedActions = ['archive', 'restore', 'convert_to_invoice', 'update_status']
+      if (!allowedActions.includes(lc.action)) {
+        errors.push(`Unsupported lifecycle action "${lc.action}". Allowed: archive, restore, convert_to_invoice, update_status.`)
+      } else {
+        if (lc.action === 'convert_to_invoice' && documentFamily !== 'quotation') {
+          errors.push('convert_to_invoice applies to quotations only.')
+        } else if (lc.action === 'update_status' && documentFamily === 'invoice') {
+          errors.push('Invoice payment status is derived from recorded payments and cannot be changed directly via status updates.')
+        } else if (lc.action === 'update_status' && !lc.targetStatus) {
+          errors.push('update_status requires targetStatus.')
+        } else {
+          validatedLifecycleChange = {
+            action: lc.action,
+            targetStatus: lc.targetStatus ? String(lc.targetStatus).trim().toLowerCase() : undefined,
+            currentStatus: String(lc.currentStatus || (documentFamily === 'quotation' ? 'open' : 'unpaid')),
+            isArchived: Boolean(lc.isArchived),
+            explanation: String(lc.explanation || `Lifecycle operation: ${lc.action}`),
+          }
+        }
+      }
+    }
+  }
+
   if (!field && !validatedItems && !validatedExtraChargesChange && !validatedCalculationInputsChange
-    && !validatedCustomFieldsChange && !validatedGroupsChange && !validatedPresentationChange) {
-    errors.push('Modification must specify a field, items, extra charges, calculation inputs, document fields, groups, or presentation settings.')
+    && !validatedCustomFieldsChange && !validatedGroupsChange && !validatedPresentationChange
+    && !validatedAttachmentsChange && !validatedLifecycleChange) {
+    errors.push('Modification must specify a field, items, extra charges, calculation inputs, document fields, groups, presentation settings, attachments, or a lifecycle action.')
   }
 
   if (errors.length > 0) {
@@ -1550,6 +1697,8 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
       customFieldsChange: validatedCustomFieldsChange,
       groupsChange: validatedGroupsChange,
       presentationChange: validatedPresentationChange,
+      attachmentsChange: validatedAttachmentsChange,
+      lifecycleChange: validatedLifecycleChange,
     },
   }
 }
@@ -1887,6 +2036,11 @@ interface ModifySnapshotRow {
   transportation?: number | string | null
   shipping?: number | string | null
   custom_fields?: unknown
+  status?: string | null
+  archived_at?: string | null
+  valid_until?: string | null
+  due_date?: string | null
+  payment_terms?: string | null
 }
 
 function modifyChargesOf(row: ModifySnapshotRow | null | undefined) {
@@ -1965,6 +2119,8 @@ export function buildInvoiceModifyProposal(params: {
   customFieldsChange?: BoluCustomFieldsChange
   groupsChange?: BoluGroupOp[]
   presentationChange?: BoluPresentationChange
+  attachmentsChange?: BoluAttachmentsChange
+  lifecycleChange?: BoluLifecycleChange
   resolvedSignatory?: { id: string; name: string; role: string } | null
   resolvedBankAccount?: { id: string; label: string } | null
   current?: BoluModifyCurrentSnapshot
@@ -2023,10 +2179,18 @@ export function buildInvoiceModifyProposal(params: {
           ? ((persistedCf.payment_terms as string | null) ?? null)
           : ((rowObj?.payment_terms as string | null) ?? null)
         break
+      case 'custom_payment_terms':
+        resolvedOldValue = documentFamily === 'quotation'
+          ? (((persistedCf.custom_payment_terms ?? persistedCf.payment_terms) as string | null) ?? null)
+          : (((persistedCf.custom_payment_terms ?? (rowObj?.custom_payment_terms ?? (['Net 7', 'Net 14', 'Net 30', 'Due on Receipt'].includes(String(rowObj?.payment_terms || '')) ? null : rowObj?.payment_terms))) as string | null) ?? null)
+        break
       case 'due_date':
         resolvedOldValue = documentFamily === 'quotation'
           ? ((rowObj?.valid_until as string | null) ?? null)
           : ((rowObj?.due_date as string | null) ?? null)
+        break
+      case 'valid_until':
+        resolvedOldValue = (rowObj?.valid_until as string | null) ?? null
         break
       case 'issue_date':
         resolvedOldValue = (rowObj?.issue_date as string | null) ?? null
@@ -2152,6 +2316,36 @@ export function buildInvoiceModifyProposal(params: {
     }
   }
 
+  let attachmentsChange: BoluDocumentModifyProposal['attachmentsChange'] = undefined
+  if (params.attachmentsChange && current) {
+    const rawPersistedAttachments = Array.isArray(persistedCf.attachments) ? persistedCf.attachments : []
+    const applied = applyAttachmentOperations(rawPersistedAttachments, params.attachmentsChange.ops)
+    attachmentsChange = {
+      oldAttachments: rawPersistedAttachments.map((a: any) => ({ label: String(a?.label ?? ''), url: String(a?.url ?? '') })),
+      newAttachments: applied.attachments,
+      ops: params.attachmentsChange.ops,
+      rows: applied.rows,
+      errors: applied.errors,
+      fingerprint: fingerprintAttachments(rawPersistedAttachments),
+    }
+  }
+
+  let lifecycleChange: BoluLifecycleChange | undefined = undefined
+  if (params.lifecycleChange) {
+    const curStatus = String(row?.status || (documentFamily === 'quotation' ? 'open' : 'unpaid'))
+    const tgtStatus = params.lifecycleChange.targetStatus
+    lifecycleChange = {
+      action: params.lifecycleChange.action,
+      targetStatus: tgtStatus,
+      toStatus: tgtStatus,
+      currentStatus: curStatus,
+      fromStatus: curStatus,
+      isArchived: Boolean(row?.archived_at),
+      explanation: params.lifecycleChange.explanation || '',
+      reason: params.lifecycleChange.explanation || '',
+    }
+  }
+
   // 2. Authoritative calculation preview — app owns the math; never the model.
   const effectiveCharges = { ...currentCharges }
   if (params.field === 'workmanship' || params.field === 'transportation' || params.field === 'shipping') {
@@ -2238,6 +2432,8 @@ export function buildInvoiceModifyProposal(params: {
     groupsApplication,
     itemsFingerprint,
     presentationChange,
+    attachmentsChange,
+    lifecycleChange,
     calculationInputsChange,
     computedTotals,
     chargesSnapshot: { ...effectiveCharges },

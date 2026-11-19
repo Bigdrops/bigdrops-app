@@ -1820,15 +1820,26 @@ Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verifi
 - DECISION — F3-09: proactive recommendation guidance in `api/bolu-chat.ts` teaching Bolu *when and why* to suggest custom header rows, site/delivery chips (`additionalFields`), rich-text clauses, group breakdowns, and commercial settings — always grounded in verified context facts, always optional, always Gate-protected. Unverified facts never become recommendations.
 - DECISION — recommendation behavior must respect unresolved-identity abstention (ask one focused question instead of guessing) and must not restate financial results as model-computed values.
 
-### 37.6 Explicitly excluded from this blueprint (PROPOSED — separate authorization)
+### 37.6 Stage 3D — Conversational Document Lifecycle, Attachments & Operational Intelligence
+
+**Status: Implemented 2026-11-19** (see `stage-3d-lifecycle-attachments-intelligence.md` and DEC-44). Document lifecycle transitions (`archive`, `restore`, quotation `convert_to_invoice`, `update_status`), quotation validity (`valid_until`), reference link attachments (`custom_fields.attachments`), custom payment terms reachability (`custom_payment_terms`), persistent modification idempotency, and operational intelligence (`bolu-intelligence.ts`) are delivered. Limitations recorded at delivery: binary document attachments and item-photo upload/replacement remain dependent on authorized tenant-scoped storage; pre-existing Gate 2 mock .limit(1) test failure remains unresolved; live database verification on hosted/disposable project has not been performed; actual browser-based four-viewport visual inspection remains outstanding (static JSX/SSR verified).
+
+- DECISION — Document Lifecycle: supported lifecycle operations are `archive`, `restore`, `convert_to_invoice` (quotations only: converts open quotation into draft invoice), and `update_status`. Quotations permit `open`, `converted`, `archived`; legacy statuses (`draft`, `sent`, `accepted`, `rejected`) are rejected. Invoice status is derived from recorded payments in the ledger and cannot be updated directly via status modifications.
+- DECISION — Quotation Validity: `valid_until` is available only on quotations and independent of invoice `due_date`. Explicit clearing to `null` is supported. Gate 1 derives baseline from persisted `valid_until`; Gate 2 stale checks reject concurrent modifications.
+- DECISION — Reference Link Attachments: attachments are managed as `{ label, url }` reference links under `custom_fields.attachments`. URL validation enforces secure `http`/`https` and blocks dangerous schemes (`javascript:`, `data:`, `file:`) and localhost/private IP addresses. Direct binary file upload through chat is reported as blocked because no document attachment storage bucket exists in BOUXRE.
+- DECISION — Custom Payment Terms: bespoke terms on `custom_payment_terms` are reachable conversationally and preserved alongside predefined terms on `payment_terms` across invoice and quotation storage patterns.
+- DECISION — Operation Idempotency: dual-layer replay safety with in-process `executedOperationIds` and persistent `custom_fields.last_operation_id` and `applied_operation_ids` ensures modification operations cannot apply twice across restarts or retries.
+- DECISION — Operational Intelligence: `analyzeDocumentIntelligence` produces context-aware business observations grounded in actual document state, distinguishing factual observations from optional suggestions. Never modifies documents automatically.
+
+### 37.7 Explicitly excluded from this blueprint (PROPOSED — separate authorization)
 
 - Tenant `invoice_items` / `quotation_items` `item_id` foreign-key restoration (Finding F1) — separate migration review of schema, lifecycle, orphan rows and installer paths; separate authorization; production parity not established.
 - Broad CPS ↔ quotation ↔ invoice parity work; crosstab/search indexes; a server-side Gate 2 executor for advance-invoice-config; any production contact, migration, or deployment without separate authorization.
 - Repair of the pre-existing stale gate-lifecycle mock (add `.limit(1)` support) so the suite is green again — separate authorization.
 
-### 37.7 Dependency and verification expectations
+### 37.8 Dependency and verification expectations
 
-- DECISION — execution order: **3A.1 → 3A.2 → 3B → 3C**. 3A.2 builds on 3A.1's executor-guard patterns; 3B stands on the preserve-siblings contract established for Stage 0 modifications; 3C consumes 3A/B outputs plus signatory/bank-account projections.
+- DECISION — execution order: **3A.1 → 3A.2 → 3B → 3C → 3D**. 3A.2 builds on 3A.1's executor-guard patterns; 3B stands on the preserve-siblings contract established for Stage 0 modifications; 3C consumes 3A/B outputs plus signatory/bank-account projections.
 - DECISION — every phase ships targeted behavioral tests (create/modify/preserve/adversarial/replay), typecheck exit 0, `audit:load` no new ❌/🚨, no `bun run build`.
 - DECISION — live verification on the disposable project requires separate authorization; production remains untouched absent separate authorization.
 - DECISION — each phase is complete only when Gate 1 preview, Gate 2 confirmation, preservation invariants, stale-guard behavior and executor warnings/result contracts are verified in the report of that phase (`docs/reports/bolu-document-capability-parity/`).
