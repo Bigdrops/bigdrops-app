@@ -1306,7 +1306,8 @@ export function ProposalCardView({
         </div>
       ) : null}
 
-      {/* Authoritative Financial Totals: every amount that produces the total */}
+      {/* Authoritative Financial Totals: every amount that produces the total.
+          Non-financial modify proposals change no amounts — never imply a recompute. (F-11) */}
       {isAdvance ? null : total > 0 || subtotal > 0 ? (
         <div className="ac-card-money mt-3 pt-2 border-t border-[var(--ac-line)] text-xs space-y-1">
           <div className="flex justify-between text-[var(--ac-muted)]">
@@ -1336,9 +1337,13 @@ export function ProposalCardView({
             <strong className="text-[var(--ac-accent)]">{formatNaira(total)}</strong>
           </div>
         </div>
+      ) : proposal.operationType === 'modify-document' ? (
+        <p className="mt-3 rounded-lg bg-[var(--ac-muted-surface)] p-2 text-[11px] text-[var(--ac-muted)]">
+          No amounts change in this proposal.
+        </p>
       ) : (
         <p className="mt-3 rounded-lg bg-[var(--ac-muted-surface)] p-2 text-[11px] text-[var(--ac-muted)]">
-          BOURXE calculates the authoritative totals when this document is saved.
+          BOUXRE calculates the authoritative totals when this document is saved.
         </p>
       )}
 

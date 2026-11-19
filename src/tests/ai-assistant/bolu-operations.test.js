@@ -223,7 +223,7 @@ test('validateInvoiceModifyInput rejects computed fields or invalid document UUI
     newValue: 999999,
   })
   assert.equal(forbidden.valid, false)
-  assert.match(forbidden.errors[0], /directly is not allowed/i)
+  assert.match(forbidden.errors[0], /not a supported change/i)
 })
 
 test('validateInvoiceModifyInput accepts valid non-computed field changes', () => {
@@ -610,3 +610,4 @@ test('Bolu Runtime integrates end-to-end with deterministic mock provider and tw
   assert.equal(state3?.activeProposal, null)
   assert.match(state3?.messages.at(-1)?.content ?? '', /Successfully saved/i)
 })
+

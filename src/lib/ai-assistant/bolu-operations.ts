@@ -456,35 +456,44 @@ export function validateBoluExtraCharges(raw: unknown): {
 } {
   const errors: string[] = []
   if (!Array.isArray(raw)) {
-    return { valid: false, errors: ['"extra_charges" must be an array.'], data: [] }
+    return { valid: false, errors: ['The named extra charges must be a list.'], data: [] }
   }
   if (raw.length > 20) {
-    return { valid: false, errors: ['"extra_charges" must not exceed 20 entries.'], data: [] }
+    return { valid: false, errors: ['The named extra charges must not exceed 20 entries.'], data: [] }
   }
 
   const data: BoluExtraCharge[] = []
   for (let i = 0; i < raw.length; i++) {
     const charge = raw[i] as Record<string, unknown>
-    if (!charge || typeof charge !== 'object') {
-      errors.push(`extra_charges[${i}] is invalid.`)
+    if (!charge || typeof charge !== 'object' || Array.isArray(charge)) {
+      errors.push(`Named extra charge ${i + 1} is invalid.`)
       continue
     }
     const label = typeof charge.name === 'string' ? charge.name.trim()
       : typeof charge.label === 'string' ? charge.label.trim()
         : ''
     if (!label) {
-      errors.push(`extra_charges[${i}].name must be a non-empty string.`)
+      errors.push(`Named extra charge ${i + 1} must have a non-empty name.`)
     }
 
+    // Strict numeric handling: booleans, objects, blanks and NaN never become amounts.
     const rawAmount = charge.amount !== undefined ? charge.amount : charge.value
-    const value = Number(rawAmount)
-    if (!Number.isFinite(value) || value < 0) {
-      errors.push(`extra_charges[${i}].amount must be a finite non-negative number.`)
+    let value: number | null = null
+    if (typeof rawAmount === 'number' && Number.isFinite(rawAmount)) {
+      value = rawAmount
+    } else if (typeof rawAmount === 'string') {
+      const trimmed = rawAmount.trim()
+      if (trimmed !== '' && Number.isFinite(Number(trimmed))) {
+        value = Number(trimmed)
+      }
+    }
+    if (value === null || value < 0) {
+      errors.push(`Named extra charge ${i + 1} must have a finite non-negative amount.`)
     }
 
     const vatApplicable = charge.withTax !== undefined ? charge.withTax === true : charge.vatApplicable === true
 
-    if (label && Number.isFinite(value) && value >= 0) {
+    if (label && value !== null && value >= 0) {
       data.push({ label, value, vatApplicable })
     }
   }
@@ -604,7 +613,7 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
   const payload = raw as Record<string, unknown>
   const documentId = typeof payload.documentId === 'string' ? payload.documentId.trim() : ''
   if (!documentId || !UUID_PATTERN.test(documentId)) {
-    errors.push('A valid document UUID is required.')
+    errors.push('A valid document reference is required.')
   }
 
   const family =
@@ -634,7 +643,8 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
       ? (payload.field as BoluModifyFieldKey)
       : undefined
   if (typeof payload.field === 'string' && !field) {
-    errors.push(`Modifying field "${payload.field}" directly is not allowed.`)
+    // Do not echo the envelope key back to the user; it is model vocabulary.
+    errors.push('That is not a supported change for this document.')
   }
 
   const hasRichTextField = field === 'notes' || field === 'terms'
@@ -698,6 +708,18 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
       } else {
         errors.push(`${field} must be plain text or structured rich-text content.`)
       }
+    }
+  } else if (field === 'issue_date') {
+    // The issue date anchors reporting; the domain does not permit clearing it.
+    const str = validateModifyFieldString(payload.newValue)
+    if (payload.newValue === undefined) {
+      newValue = undefined // uniform missing-value error already recorded above
+    } else if (!str.ok) {
+      errors.push('Issue date must be a date string.')
+    } else if (!str.value) {
+      errors.push('The issue date is required. Set a new date instead of clearing it.')
+    } else {
+      newValue = str.value
     }
   } else if (field === 'client_name') {
     if (payload.newValue === undefined) {
@@ -765,14 +787,14 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
   const rawInputs = payload.calculation_inputs ?? payload.calculationInputs ?? payload.calculationInputsChange
   if (rawInputs !== undefined) {
     if (!rawInputs || typeof rawInputs !== 'object' || Array.isArray(rawInputs)) {
-      errors.push('calculationInputs must be an object.')
+      errors.push('The calculation settings must be given as a set of specific changes (for example, a VAT rate or a discount).')
     } else {
       const input = rawInputs as Record<string, unknown>
       const patch: BoluCalculationInputValues = {}
       const allowed = ['vatPercent', 'discountValue', 'discountType', 'discountTiming', 'whtValue', 'whtType'] as const
       for (const key of Object.keys(input)) {
         if (!(allowed as readonly string[]).includes(key)) {
-          errors.push(`Unknown calculation input "${key}". Supported: ${allowed.join(', ')}.`)
+          errors.push('That calculation setting is not supported. Supported settings: VAT rate, discount, discount type, discount timing, WHT and WHT type.')
         }
       }
       const numOrNull = (v: unknown): number | 'invalid' | undefined => {
@@ -783,7 +805,7 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
       const vatPercent = numOrNull(input.vatPercent)
       if (vatPercent !== undefined) {
         if (vatPercent === 'invalid' || vatPercent < 0 || vatPercent > 100) {
-          errors.push('vatPercent must be a number between 0 and 100.')
+          errors.push('VAT rate must be a number between 0 and 100.')
         } else {
           patch.vatPercent = vatPercent
         }
@@ -791,7 +813,7 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
       const discountValue = numOrNull(input.discountValue)
       if (discountValue !== undefined) {
         if (discountValue === 'invalid' || discountValue < 0) {
-          errors.push('discountValue must be a finite non-negative number.')
+          errors.push('Discount must be a finite non-negative number.')
         } else {
           patch.discountValue = discountValue
         }
@@ -801,7 +823,7 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
         if (discountType === 'fixed' || discountType === 'percent') {
           patch.discountType = discountType
         } else {
-          errors.push('discountType must be "fixed" or "percent".')
+          errors.push('Discount type must be a fixed amount or a percentage.')
         }
       }
       const discountTiming = input.discountTiming
@@ -809,13 +831,13 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
         if (discountTiming === 'before_tax' || discountTiming === 'after_tax') {
           patch.discountTiming = discountTiming
         } else {
-          errors.push('discountTiming must be "before_tax" or "after_tax".')
+          errors.push('Discount timing must be before tax or after tax.')
         }
       }
       const whtValue = numOrNull(input.whtValue)
       if (whtValue !== undefined) {
         if (whtValue === 'invalid' || whtValue < 0) {
-          errors.push('whtValue must be a finite non-negative number.')
+          errors.push('WHT must be a finite non-negative number.')
         } else {
           patch.whtValue = whtValue
         }
@@ -825,19 +847,19 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
         if (whtType === 'fixed' || whtType === 'percent') {
           patch.whtType = whtType
         } else {
-          errors.push('whtType must be "fixed" or "percent".')
+          errors.push('WHT type must be a fixed amount or a percentage.')
         }
       }
       // Percentage-bounded combos — percent discounts/WHT must stay in range
       const effectiveDiscountType = patch.discountType
       if (effectiveDiscountType === 'percent' && patch.discountValue !== undefined && patch.discountValue > 100) {
-        errors.push('discountValue must be between 0 and 100 for percentage discounts.')
+        errors.push('Discount must be between 0 and 100 for a percentage discount.')
       }
       if (patch.whtType === 'percent' && patch.whtValue !== undefined && patch.whtValue > 100) {
-        errors.push('whtValue must be between 0 and 100 for percentage WHT.')
+        errors.push('WHT must be between 0 and 100 for a percentage deduction.')
       }
       if (Object.keys(patch).length === 0) {
-        errors.push('calculationInputs must contain at least one supported key.')
+        errors.push('Provide at least one calculation setting to change.')
       } else {
         validatedCalculationInputsChange = patch
       }

@@ -998,7 +998,7 @@ test('7. RPC failure in items modification leaves the document untouched', async
 
   const result = await persistInvoiceModification(harness, proposal, canWrite, canRead, ENTITY_ID)
   assert.equal(result.success, false)
-  assert.match(result.error, /Transactional update failed/i)
+  assert.match(result.error, /could not be saved just now/i)
   assert.deepEqual(asJson(store), before)
 })
 

@@ -1107,6 +1107,24 @@ const INVOICE_MODIFY_CONFIG: FamilyModifyConfig = {
   dueDateField: 'due_date',
 }
 
+/** User-facing read-failure copy. The raw backend detail goes to the console log only. (F-06) */
+function modificationReadFailure(family: 'invoice' | 'quotation', phase: string, detail: unknown): string {
+  console.warn(`[bolu-modification] ${phase} failed for ${family}:`, detail)
+  return `I could not read the saved ${family} right now, so no changes were made. Please try again.`
+}
+
+/** User-facing failure copy for the modification flow. The raw backend detail
+ * goes to the console log; the user sees a concise, accurate message. (F-06) */
+function modificationPersistFailure(family: 'invoice' | 'quotation', phase: string, detail: unknown): string {
+  console.warn(`[bolu-modification] ${phase} failed for ${family}:`, detail)
+  return `The ${family} could not be saved just now. Please try again.`
+}
+
+function modificationItemsFailure(family: 'invoice' | 'quotation', detail: unknown): string {
+  console.warn(`[bolu-modification] items restore failed for ${family}:`, detail)
+  return `Updating the ${family} items did not complete, so the previous items were restored. Please try again.`
+}
+
 const QUOTATION_MODIFY_CONFIG: FamilyModifyConfig = {
   family: 'quotation',
   table: 'quotations',
@@ -1334,7 +1352,16 @@ async function persistDocumentModification(
       if (proposal.oldValue === undefined) {
         return {
           success: false,
-          error: `Proposal is missing the persisted baseline for ${field}; the stale-check cannot run.`,
+          error: `I could not verify the current ${field} for this change. Reopen the document and try again.`,
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+
+      // Issue dates anchor reporting and must not be cleared. (F-01)
+      if (field === 'issue_date' && (proposal.newValue === null || proposal.newValue === '')) {
+        return {
+          success: false,
+          error: 'The issue date is required. Set a new date instead of clearing it.',
           ...(warnings.length ? { warnings } : {}),
         }
       }
@@ -1482,8 +1509,7 @@ async function persistDocumentModification(
         .order('sort_order', { ascending: true })
 
       if (itemsFetchError) {
-        const detail = itemsFetchError?.message ? `: ${itemsFetchError.message}` : ''
-        return { success: false, error: `Failed to read current ${cfg.family} items; no changes were made${detail}` }
+        return { success: false, error: modificationReadFailure(cfg.family, 'reading the saved items', itemsFetchError), ...(warnings.length ? { warnings } : {}) }
       }
       currentItems = Array.isArray(persistedItems) ? persistedItems : []
       mergedItemObjects = currentItems
@@ -1496,8 +1522,7 @@ async function persistDocumentModification(
         .order('sort_order', { ascending: true })
 
       if (itemsFetchError) {
-        const detail = itemsFetchError?.message ? `: ${itemsFetchError.message}` : ''
-        return { success: false, error: `Failed to read current ${cfg.family} items; no changes were made${detail}` }
+        return { success: false, error: modificationReadFailure(cfg.family, 'reading the saved items', itemsFetchError), ...(warnings.length ? { warnings } : {}) }
       }
       currentItems = Array.isArray(fetchedItems) ? fetchedItems : []
 
@@ -1618,7 +1643,7 @@ async function persistDocumentModification(
         p_mode: 'update',
       })
       if (rpcError) {
-        return { success: false, error: `Transactional update failed: ${rpcError.message}`, ...(warnings.length ? { warnings } : {}) }
+        return { success: false, error: modificationPersistFailure(cfg.family, 'saving the updated document', rpcError), ...(warnings.length ? { warnings } : {}) }
       }
     } else {
       // Fallback or non-item update
@@ -1634,7 +1659,7 @@ async function persistDocumentModification(
           }
           return {
             success: false,
-            error: `Failed to update ${cfg.family} items: ${itemsError.message}. The previous items were restored.`,
+            error: modificationItemsFailure(cfg.family, itemsError),
             ...(warnings.length ? { warnings } : {}),
           }
         }
@@ -1645,7 +1670,7 @@ async function persistDocumentModification(
         .eq('id', proposal.targetDocumentId)
 
       if (updateError) {
-        return { success: false, error: `Failed to update ${cfg.family}: ${updateError.message}`, ...(warnings.length ? { warnings } : {}) }
+        return { success: false, error: modificationPersistFailure(cfg.family, 'saving the updated document', updateError), ...(warnings.length ? { warnings } : {}) }
       }
     }
 
@@ -1936,3 +1961,4 @@ export async function persistAdvanceInvoiceConfig(
     documentNumber,
   }
 }
+

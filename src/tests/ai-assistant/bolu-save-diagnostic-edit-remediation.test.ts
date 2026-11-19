@@ -80,7 +80,7 @@ describe('Quotation proposal validation and extra_charges handling', () => {
     })
 
     assert.strictEqual(result.valid, false)
-    assert.ok(result.errors.some((e) => e.includes('extra_charges')))
+    assert.ok(result.errors.some((e) => /named extra charges?/i.test(e)))
   })
 
   it('accepts extra charges in modification proposals as the desired full list', () => {

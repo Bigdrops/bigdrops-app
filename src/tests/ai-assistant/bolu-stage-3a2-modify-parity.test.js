@@ -15,7 +15,8 @@ import {
   validateInvoiceCreateInput,
   validateInvoiceModifyInput,
 } from '../../lib/ai-assistant/bolu-operations.ts'
-import { proposalPlainText } from '../../components/ai-assistant/chat/assistant-chat-parts.tsx'
+import { proposalPlainText, ProposalCardView } from '../../components/ai-assistant/chat/assistant-chat-parts.tsx'
+import { cleanAssistantProse } from '../../components/ai-assistant/chat/assistant-chat-thread.tsx'
 import {
   persistInvoiceModification,
   persistQuotationModification,
@@ -23,6 +24,8 @@ import {
   persistQuotationCreation,
 } from '../../lib/ai-assistant/bolu-document-service.ts'
 import { mock, test } from 'bun:test'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { computeDocument } from '../../lib/Calculations.ts'
 import { readBoluModifySnapshot } from '../../lib/ai-assistant/bolu-data.ts'
 
@@ -38,7 +41,7 @@ function clone(v) {
 }
 
 function createHarness(store, opts = {}) {
-  const { projectFails = false } = opts
+  const { projectFails = false, updateError = null, rpcError = null, itemsFetchError = null } = opts
   let documentSequence = 0
   let itemSequence = 0
 
@@ -114,6 +117,7 @@ function createHarness(store, opts = {}) {
           },
           update: (values) => ({
             eq: async (_col, value) => {
+              if (updateError) return { error: { message: updateError } }
               const idx = store.documents.findIndex((d) => String(d.id) === String(value))
               if (idx === -1) return { error: { message: 'document not found' } }
               store.documents[idx] = { ...store.documents[idx], ...values }
@@ -129,7 +133,9 @@ function createHarness(store, opts = {}) {
         return {
           select: () => ({
             eq: () => ({
-              order: async () => ({ data: clone(store.items), error: null }),
+              order: async () => (itemsFetchError
+                ? { data: null, error: { message: itemsFetchError } }
+                : { data: clone(store.items), error: null }),
             }),
           }),
           insert: async (rows) => {
@@ -142,6 +148,9 @@ function createHarness(store, opts = {}) {
       throw new Error(`unexpected table ${table}`)
     },
     rpc: async (name, params) => {
+      if (rpcError) {
+        return { data: null, error: { message: rpcError } }
+      }
       if (name === 'save_invoice_with_items_transaction') {
         return {
           data: [{
@@ -593,7 +602,7 @@ test('c6. unknown calculation input keys are rejected at the validator', async (
     calculationInputs: { vatPercent: 7.5, paymentTerms: 'Net 30' },
   })
   assert.equal(result.valid, false)
-  assert.ok(result.errors.some((e) => /Unknown calculation input/.test(e)))
+  assert.ok(result.errors.some((e) => /not supported/i.test(e) && !/paymentTerms/.test(e)))
 })
 
 /* -------- d) Stale integrity & fail-closed baselines -------- */
@@ -627,7 +636,7 @@ test('d1. a scalar proposal without the persisted baseline fails closed at the e
   })
   const result = await persistInvoiceModification(harness, proposal, () => true, () => true, null)
   assert.equal(result.success, false)
-  assert.match(result.error ?? '', /missing the persisted baseline/)
+  assert.match(result.error ?? '', /could not verify the current title/i)
   assert.equal(store.documents[0].invoice_title ?? null, created.invoice_title ?? null)
 })
 
@@ -896,6 +905,34 @@ test('h2. an explicit null clears an optional text field', () => {
   assert.equal(result.data?.newValue, null)
 })
 
+test('h2b. explicit nulls clear every field whose domain semantics permit clearing; an empty rich text is accepted where supported', () => {
+  for (const field of ['notes', 'terms', 'title', 'po_number', 'payment_terms', 'due_date', 'work_duration']) {
+    const result = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', field, newValue: null })
+    assert.equal(result.valid, true, `expected ${field} to accept explicit null as a clear`)
+    assert.equal(result.data?.newValue, null)
+  }
+  // Explicit empty string rich text behaves as an empty document field.
+  const emptyNotes = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', field: 'notes', newValue: '' })
+  assert.equal(emptyNotes.valid, true)
+  assert.equal(emptyNotes.data?.newValue, '')
+  // Quotation payment terms (custom_fields-backed) remain clearable.
+  const quotationTerms = validateInvoiceModifyInput({
+    documentId: INVOICE_ID,
+    documentFamily: 'quotation',
+    field: 'payment_terms',
+    newValue: null,
+  })
+  assert.equal(quotationTerms.valid, true)
+})
+
+test('h2c. explicit null does NOT clear an issue date; an empty issue date cannot be persisted', () => {
+  const result = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', field: 'issue_date', newValue: null })
+  assert.equal(result.valid, false)
+  assert.ok(result.errors.some((e) => /issue date/i.test(e) && /required/i.test(e)))
+  const empty = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', field: 'issue_date', newValue: '' })
+  assert.equal(empty.valid, false)
+})
+
 test('h3. charge fields reject booleans, objects, arrays, blanks, nulls and negatives; finite numbers and numeric strings >= 0 pass', () => {
   const bad = [true, false, { value: 10 }, [10], null, '', '   ', -5000, '-1', 'abc', '12,500']
   for (const newValue of bad) {
@@ -931,8 +968,10 @@ test('h4. the plain-text artifact marks a charge cleared to zero', () => {
   }
   const text = proposalPlainText(proposal)
   assert.match(text, /Workmanship: .* -> .*\(cleared\)/)
-  assert.match(text, /Discount: -/)
-  assert.match(text, /WHT: -/)
+  assert.match(text, /Discount: -₦10,000/)
+  assert.match(text, /WHT: -₦500/)
+  assert.match(text, /VAT: ₦7,500/)
+  assert.match(text, /Authoritative total: ₦107,500/)
 })
 
 /* -------- i) Generation wiring: the live turn builds from the persisted snapshot (F-09) -------- */
@@ -1141,4 +1180,329 @@ test('i3. a quotation work_duration modification is refused in the generation tu
   assert.equal(state.activeProposal, null)
   assert.equal(insertedRows.length, 1)
   assert.match(insertedRows[0].content, /work_duration applies to invoices only/i)
+})
+/* -------- k) Boundary tests: F-01 issue date guard, F-02 executor, F-05/F-06 language -------- */
+
+const handBuiltModifyProposal = (overrides = {}, family = 'invoice') => approve({
+  opId: `op-${Math.random().toString(36).slice(2)}`,
+  operationType: 'modify-document',
+  documentFamily: family,
+  schemaVersion: '1.0',
+  requiredPermission: { resource: family, action: 'edit' },
+  sideEffect: 'draft-mutation',
+  gate1Required: true,
+  gate2Required: true,
+  status: 'approved_pending_save',
+  createdAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  targetDocumentId: INVOICE_ID,
+  targetDocumentNumber: family === 'quotation' ? 'QTN-0001' : 'INV-0001',
+  ...overrides,
+})
+
+const leakFree = (message) => {
+  for (const leak of ['entity_', 'fkey', 'violates', 'foreign key', 'relation ', 'duplicate key', 'insert into', 'update "', 'p_invoice_payload', 'p_quotation_payload']) {
+    assert.equal((message ?? '').toLowerCase().includes(leak.toLowerCase()), false, `leaked backend fragment: ${leak}`)
+  }
+}
+
+test('k1. an explicit null issue date is refused at the executor without writing', async () => {
+  const store = seedStore({ family: 'invoice' })
+  const harness = createHarness(store)
+
+  await createInvoice(harness, store, {
+    client_name: 'Verdant Ltd',
+    items: [{ description: 'Pump overhaul', quantity: 1, unit_price: 100000 }],
+  })
+  const created = store.documents[0]
+
+  const proposal = handBuiltModifyProposal({
+    targetDocumentId: created.id,
+    targetDocumentNumber: created.invoice_number,
+    field: 'issue_date',
+    oldValue: created.issue_date,
+    newValue: null,
+  })
+  const result = await persistInvoiceModification(harness, proposal, () => true, () => true, null)
+  assert.equal(result.success, false)
+  assert.match(result.error ?? '', /issue date/i)
+  assert.equal(String(store.documents[0].issue_date), String(created.issue_date))
+})
+
+test('k2. the executor refuses invalid fixed-charge values without coercing them', async () => {
+  const store = seedStore({ family: 'invoice' })
+  const harness = createHarness(store)
+
+  await createInvoice(harness, store, {
+    client_name: 'Verdant Ltd',
+    items: [{ description: 'Pump overhaul', quantity: 1, unit_price: 100000 }],
+  })
+  const created = store.documents[0]
+
+  const badValues = [true, false, { v: 1 }, [10], '  ', -1, Number.NaN, Number.POSITIVE_INFINITY]
+  for (const newValue of badValues) {
+    const proposal = handBuiltModifyProposal({
+      targetDocumentId: created.id,
+      targetDocumentNumber: created.invoice_number,
+      field: 'workmanship',
+      oldValue: 0,
+      newValue,
+    })
+    const result = await persistInvoiceModification(harness, proposal, () => true, () => true, null)
+    assert.equal(result.success, false, `expected refusal for ${String(newValue)}`)
+    assert.equal(Number(store.documents[0].workmanship ?? 0), 0)
+  }
+})
+
+test('k3. named extra charges reject boolean amounts at the validator', () => {
+  const result = validateInvoiceCreateInput({
+    client_name: 'Verdant Ltd',
+    items: [{ description: 'Cable', quantity: 1, unit_price: 1000 }],
+    extra_charges: [{ name: 'Handling', amount: true, withTax: false }],
+  })
+  assert.equal(result.valid, false)
+  assert.ok(result.errors.some((e) => /finite non-negative amount/i.test(e)))
+})
+
+test('k4. calculation-input failures speak in business language', () => {
+  // Wrong shape
+  const notObject = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', calculationInputs: [] })
+  assert.equal(notObject.valid, false)
+  assert.equal(notObject.errors[0].includes('calculationInputs'), false)
+
+  // Out-of-domain values
+  const badVat = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', calculationInputs: { vatPercent: 120 } })
+  assert.ok(badVat.errors.some((e) => /VAT rate/i.test(e) && !/vatPercent/.test(e)))
+
+  // Empty patch
+  const emptyPatch = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', calculationInputs: {} })
+  assert.ok(emptyPatch.errors.some((e) => /at least one calculation setting/i.test(e)))
+
+  // Unknown field string never echoes envelope vocabulary
+  const bogus = validateInvoiceModifyInput({ documentId: INVOICE_ID, documentFamily: 'invoice', field: 'discountTiming', newValue: 'x' })
+  assert.ok(bogus.errors.some((e) => /not a supported change/i.test(e) && !/discountTiming/.test(e)))
+})
+
+test('k5. stale refusals name business labels, never payload keys', async () => {
+  const cases = [
+    [{ vatPercent: 10 }, { vatPercent: 12.5 }, /VAT rate changed/, 'vatPercent'],
+    [{ discountValue: 3500 }, { discountValue: 9999 }, /Discount changed/, 'discountValue'],
+    [{ discountType: 'fixed' }, { discountType: 'fixed' }, /Discount type changed/, 'discountType'],
+    [{ discountTiming: 'after_tax' }, { discountTiming: 'after_tax' }, /Discount timing changed/, 'discountTiming'],
+    [{ whtValue: 1500 }, { whtValue: 777 }, /WHT changed/, 'whtValue'],
+    [{ whtType: 'fixed' }, { whtType: 'fixed' }, /WHT type changed/, 'whtType'],
+  ]
+
+  for (const [patch, corrupt, pattern, rawKey] of cases) {
+    const store = seedStore({ family: 'invoice' })
+    const harness = createHarness(store)
+    await createInvoice(harness, store, {
+      client_name: 'Verdant Ltd',
+      items: [{ description: 'Pump overhaul', quantity: 1, unit_price: 100000 }],
+    })
+    const baseline = clone(store.documents[0])
+    const { proposal } = modifyProposal({ document: baseline, items: clone(store.items) }, 'invoice', {
+      calculationInputsChange: patch,
+    })
+    // Someone else edits the very key this proposal changes after the snapshot was taken.
+    const idx = store.documents.findIndex((d) => d.id === baseline.id)
+    const cf = parseCf(store.documents[idx])
+    store.documents[idx].custom_fields = JSON.stringify({
+      ...cf,
+      calculationInputs: { ...cf.calculationInputs, ...corrupt },
+    })
+    const rejected = await persistInvoiceModification(harness, proposal, () => true, () => true, null)
+    assert.equal(rejected.success, false, `expected stale refusal for patch ${JSON.stringify(patch)}`)
+    assert.match(rejected.error ?? '', pattern)
+    assert.equal((rejected.error ?? '').includes(rawKey), false, `leaked payload key ${rawKey}`)
+  }
+})
+
+test('f6a. a backend failure on the header write never leaks fragments to the user-facing message', async () => {
+  const store = seedStore({ family: 'invoice' })
+  const harness = createHarness(store, {
+    updateError: 'insert into "entity_ab12cd34".invoices (project_id) values ($1) violates foreign key constraint "invoices_project_id_fkey"',
+  })
+  await createInvoice(harness, store, {
+    client_name: 'Verdant Ltd',
+    items: [{ description: 'Pump overhaul', quantity: 1, unit_price: 100000 }],
+  })
+  const { proposal } = modifyProposal({ document: clone(store.documents[0]), items: store.items }, 'invoice', {
+    field: 'title',
+    newValue: 'Renamed',
+  })
+  const result = await persistInvoiceModification(harness, proposal, () => true, () => true, null)
+  assert.equal(result.success, false)
+  leakFree(result.error)
+  assert.match(result.error ?? '', /could not be saved just now/i)
+})
+
+test('f6b. an items-read failure on the recompute path reports no change and leaks nothing', async () => {
+  const store = seedStore({ family: 'invoice' })
+  const harness = createHarness(store, {
+    itemsFetchError: 'relation "entity_ab12cd34.invoice_items" does not exist',
+  })
+  await createInvoice(harness, store, {
+    client_name: 'Verdant Ltd',
+    items: [{ description: 'Pump overhaul', quantity: 1, unit_price: 100000 }],
+  })
+  const { proposal } = modifyProposal({ document: clone(store.documents[0]), items: store.items }, 'invoice', {
+    field: 'workmanship',
+    newValue: 15000,
+  })
+  const result = await persistInvoiceModification(harness, proposal, () => true, () => true, null)
+  assert.equal(result.success, false)
+  leakFree(result.error)
+  assert.match(result.error ?? '', /no changes were made/i)
+})
+
+test('f6c. an RPC failure on the combined items+charges path reports failure and leaks nothing', async () => {
+  const store = seedStore({ family: 'invoice' })
+  const harness = createHarness(store, {
+    rpcError: 'duplicate key value violates unique constraint "invoice_items_pkey"',
+  })
+  const created = await createInvoice(harness, store, {
+    client_name: 'Verdant Ltd',
+    items: [{ description: 'Pump overhaul', quantity: 1, unit_price: 100000 }],
+  })
+  const oldItems = clone(store.items).map((item) => ({
+    description: String(item.description ?? ''),
+    quantity: Number(item.quantity ?? 1),
+    unit_price: Number(item.unit_price ?? 0),
+    unit: typeof item.unit === 'string' ? item.unit : undefined,
+    row_type: 'standard',
+    group_id: null,
+    group_name: null,
+    item_id: null,
+    install_rate: null,
+    install_rate_taxable: false,
+    vat_rate: null,
+    discount_rate: null,
+  }))
+  const { proposal } = modifyProposal({ document: clone(store.documents[0]), items: store.items }, 'invoice', {
+    itemsChange: { oldItems, newItems: [{ ...oldItems[0], description: 'Pump overhaul - revised' }] },
+  })
+  const result = await persistInvoiceModification(harness, proposal, () => true, () => true, 'entity-x', null)
+  assert.equal(result.success, false)
+  leakFree(result.error)
+  assert.match(result.error ?? '', /could not be saved just now/i)
+})
+
+/* -------- l) F-11 non-financial proposal copy -------- */
+
+const notesOnlyProposal = {
+  opId: 'op-f11',
+  operationType: 'modify-document',
+  documentFamily: 'invoice',
+  schemaVersion: '1.0',
+  requiredPermission: { resource: 'invoice', action: 'edit' },
+  sideEffect: 'draft-mutation',
+  gate1Required: true,
+  gate2Required: true,
+  status: 'pending_approval',
+  createdAt: new Date().toISOString(),
+  expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  targetDocumentId: INVOICE_ID,
+  targetDocumentNumber: 'INV-0008',
+  field: 'notes',
+  oldValue: '<p>Deliver before noon.</p>',
+  newValue: '<p>Deliver before 11:00.</p>',
+}
+
+test('l1. a notes-only modify proposal never implies a financial recalculation', () => {
+  const html = renderToStaticMarkup(createElement(ProposalCardView, { proposal: notesOnlyProposal }))
+  assert.equal(html.includes('authoritative totals when this document is saved'), false)
+  assert.ok(html.includes('No amounts change in this proposal.'))
+})
+
+test('l2. a financial modify proposal still renders the authoritative totals block', () => {
+  const financial = {
+    ...notesOnlyProposal,
+    opId: 'op-f11b',
+    field: 'workmanship',
+    oldValue: 15000,
+    newValue: 25000,
+    computedTotals: { subtotal: 100000, vat: 7500, total: 107500, discount: 0, wht: 0, installRateTotal: 0, extraChargesTotal: 0 },
+    chargesSnapshot: { workmanship: 25000, transportation: 0, shipping: 0 },
+  }
+  const html = renderToStaticMarkup(createElement(ProposalCardView, { proposal: financial }))
+  assert.ok(html.includes('Subtotal'))
+  assert.ok(html.includes('Total due'))
+})
+test('i4. a quotation title edit maps to quotation_title from the persisted snapshot', async () => {
+  registerGenerationMocks()
+  const store = seedStore({ family: 'quotation' })
+  const harness = createHarness(store)
+
+  await createQuotation(harness, store, {
+    client_name: 'Verdant Ltd',
+    title: 'Site visit',
+    items: [{ description: 'Pump overhaul', quantity: 1, unit_price: 800000 }],
+  })
+  const created = store.documents[0]
+  created.id = MOD_UUID
+  store.items = store.items.map((item) => ({ ...item, quotation_id: MOD_UUID }))
+  insertedRows.length = 0
+
+  assistantText = modifyEnvelope('quotation', {
+    documentId: created.id,
+    field: 'title',
+    newValue: 'Site visit v2',
+  })
+
+  const { runBoluGeneration } = await import('../../lib/ai-assistant/bolu-generation.ts')
+  const state = makeGenerationState()
+
+  await runBoluGeneration({
+    targetConversationId: 'conv-generation-4',
+    tenantId: 'tenant-generation',
+    history: [{ id: 'h1', role: 'user', content: 'Rename the quotation to Site visit v2' }],
+    userText: 'Rename the quotation to Site visit v2',
+    facts: null,
+    tenantClient: harness,
+    canRead: () => true,
+    state,
+    refs: makeGenerationRefs(),
+  })
+
+  assert.equal(state.activeProposal?.documentFamily, 'quotation')
+  assert.equal(state.activeProposal?.field, 'title')
+  assert.equal(state.activeProposal?.oldValue, 'Site visit', 'persisted quotation_title must supply the baseline')
+  assert.equal(state.activeProposal?.newValue, 'Site visit v2')
+})
+
+test('i5. an unsupported modification envelope is refused without echoing internal payload keys', async () => {
+  registerGenerationMocks()
+  const store = seedStore({ family: 'invoice' })
+  const harness = createHarness(store)
+  insertedRows.length = 0
+
+  assistantText = modifyEnvelope('invoice', {
+    documentId: MOD_UUID,
+    field: 'discountTiming',
+    newValue: 'before_tax',
+  })
+
+  const { runBoluGeneration } = await import('../../lib/ai-assistant/bolu-generation.ts')
+  const state = makeGenerationState()
+
+  await runBoluGeneration({
+    targetConversationId: 'conv-generation-5',
+    tenantId: 'tenant-generation',
+    history: [{ id: 'h1', role: 'user', content: 'Set the discount timing to before tax' }],
+    userText: 'Set the discount timing to before tax',
+    facts: null,
+    tenantClient: harness,
+    canRead: () => true,
+    state,
+    refs: makeGenerationRefs(),
+  })
+
+  assert.equal(state.activeProposal, null)
+  assert.equal(insertedRows.length, 1)
+  // The chat thread strips the raw envelope before rendering; the text the
+  // user actually sees must not carry the model's envelope vocabulary.
+  const userVisible = cleanAssistantProse(insertedRows[0].content)
+  assert.match(userVisible, /not a supported change/i)
+  assert.equal(userVisible.includes('discountTiming'), false)
 })
