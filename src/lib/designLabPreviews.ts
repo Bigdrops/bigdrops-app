@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Network, PanelsTopLeft, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Network, PanelsTopLeft, Smartphone, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -74,5 +74,14 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/cold-launch',
     icon: Network,
     capabilities: ['Tenant tree', '5 themes', 'Light/Dark', 'Network states', 'Quick Tips'],
+  },
+  {
+    id: 'android-update',
+    name: 'Android Update Experience',
+    eyebrow: 'Android',
+    description: 'Proposed Android update dialog: countdown, download progress, install, and release notes.',
+    route: '/design-lab/android-update',
+    icon: Smartphone,
+    capabilities: ['4 states', 'Live countdown', 'Simulated transfer', 'Light/Dark', '6 viewports'],
   },
 ]

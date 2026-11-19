@@ -1,0 +1,449 @@
+.aup-root{
+  --aup-accent:38 92% 50%;
+  --aup-accent-strong:32 95% 44%;
+  --aup-accent-soft:38 92% 50% / .10;
+  --aup-accent-line:38 92% 50% / .26;
+  --aup-card:var(--bd-surface);
+  /* Opaque surface for alpha compositing: --bd-surface already carries an
+     alpha channel in dark mode, so hsl(var(--aup-card) / x) would be invalid. */
+  --aup-solid:0 0% 100%;
+  --aup-ink:var(--bd-text);
+  --aup-muted:var(--bd-text-muted);
+  --aup-line:var(--bd-border);
+  --aup-badge:222 47% 11%;
+  --aup-notes-bg:225 75% 48% / .06;
+  --aup-page:210 40% 98%;
+  position:relative;
+  display:flex;flex-direction:column;
+  height:100dvh;overflow:hidden;
+  background:hsl(var(--aup-page));
+  color:hsl(var(--aup-ink));
+}
+/* Bound the shared stage to the remaining height so the dialog never pushes
+   the page past the viewport; the scrim scrolls internally instead. */
+.aup-root .dlv-stage{flex:1;min-height:0;display:flex;flex-direction:column}
+.aup-root .dlv-surface{flex:1;min-height:0;display:flex;flex-direction:column}
+.aup-root[data-aup-appearance="dark"]{
+  --aup-accent:38 92% 60%;
+  --aup-accent-strong:38 92% 68%;
+  --aup-accent-soft:38 92% 50% / .16;
+  --aup-accent-line:38 92% 50% / .34;
+  --aup-badge:222 32% 20%;
+  --aup-solid:217 33% 17%;
+  --aup-page:217 33% 12%;
+  --aup-notes-bg:235 70% 60% / .12;
+}
+.aup-vh{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+/* ── Reviewer console ─────────────────────────────────────────────── */
+.aup-console{
+  position:relative;z-index:3;
+  display:flex;flex-direction:column;gap:8px;
+  padding:12px 16px 14px;
+  border-bottom:1px solid hsl(var(--aup-line));
+  background:hsl(var(--aup-solid) / .82);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  backdrop-filter:blur(18px) saturate(150%);
+}
+.aup-console-head{display:flex;align-items:center;gap:8px}
+.aup-console-title{
+  font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:hsl(var(--aup-muted));
+}
+.aup-chip{
+  border:1px solid hsl(var(--aup-accent-line));
+  background:hsl(var(--aup-accent-soft));
+  color:hsl(var(--aup-accent-strong));
+  border-radius:999px;padding:2px 8px;
+  font-size:10px;font-weight:800;letter-spacing:.04em;white-space:nowrap;
+}
+.aup-console-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.aup-ctl{
+  display:inline-flex;align-items:center;gap:5px;
+  min-height:30px;padding:0 10px;
+  border:1px solid hsl(var(--aup-line));
+  border-radius:10px;
+  background:hsl(var(--aup-solid) / .9);
+  color:hsl(var(--aup-ink));
+  font-size:11px;font-weight:700;line-height:1;white-space:nowrap;
+}
+.aup-ctl[aria-pressed="true"]{
+  border-color:hsl(var(--aup-accent-line));
+  background:hsl(var(--aup-accent-soft));
+  color:hsl(var(--aup-accent-strong));
+}
+.aup-ctl:focus-visible{outline:2px solid hsl(var(--aup-accent));outline-offset:2px}
+.aup-ctl-icon{width:12px;height:12px}
+.aup-ctl-dot{
+  width:9px;height:9px;border-radius:999px;
+  background:var(--swatch,#fff);
+  box-shadow:0 0 0 1px hsl(var(--aup-line));
+}
+.aup-ctl-reset{margin-left:auto}
+.aup-notice{
+  margin:0;font-size:11px;line-height:1.4;font-weight:600;
+  color:hsl(var(--aup-muted));
+}
+
+/* ── Stage: the simulated viewport, and its size container ────────── */
+.aup-stage{container:aup / inline-size}
+.aup-scrim{
+  display:flex;align-items:flex-start;justify-content:center;
+  flex:1;min-height:0;overflow-y:auto;
+  padding:20px 16px 28px;
+  background:
+    radial-gradient(70% 50% at 50% 0%,hsl(var(--aup-accent) / .10),transparent 70%),
+    hsl(var(--bd-surface-muted) / .55);
+}
+/* Auto margins centre the sheet vertically but collapse to zero when it is
+   taller than the scrim, so the top is never clipped. */
+.aup-sheet{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;margin:auto 0}
+
+/* ── The dialog ───────────────────────────────────────────────────── */
+.aup-card{
+  position:relative;
+  width:100%;max-width:26rem;
+  overflow:hidden;
+  border:1px solid hsl(var(--aup-line));
+  border-radius:26px;
+  background:hsl(var(--aup-card));
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / .6) inset,
+    0 24px 60px -18px hsl(222 47% 11% / .28),
+    0 4px 14px -6px hsl(222 47% 11% / .14);
+}
+.aup-root[data-aup-appearance="dark"] .aup-card{
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / .06) inset,
+    0 26px 64px -20px hsl(0 0% 0% / .7);
+}
+/* Warm brand wash in the top corner, as in the reference composition. The
+   crisp organic edge is the .aup-wave SVG; these gradients only carry the
+   soft bloom underneath it. */
+.aup-card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(52% 30% at 100% -4%,hsl(var(--aup-accent) / .30),transparent 70%);
+}
+.aup-wave{
+  position:absolute;top:0;left:0;right:0;
+  width:100%;height:auto;
+  aspect-ratio:400 / 120;
+  /* Cap the height so a wide card gets a thin sweep, not a solid amber mass. */
+  max-height:132px;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+/* Liquid slosh: each layer is wider than the viewport and oscillates on its
+   own clock. Transform-only animation keeps this on the compositor. */
+.aup-wave-body-layer,.aup-wave-crest-layer{
+  transform-box:fill-box;
+  transform-origin:100% 0%;
+  will-change:transform;
+}
+.aup-wave-body-layer{
+  animation:aup-slosh-body 4.4s cubic-bezier(.45,.05,.55,.95) infinite alternate;
+}
+.aup-wave-crest-layer{
+  animation:aup-slosh-crest 3.4s cubic-bezier(.37,0,.63,1) infinite alternate;
+}
+@keyframes aup-slosh-body{
+  0%  {transform:translateX(-4%) skewX(0deg)   scaleY(1)}
+  38% {transform:translateX(2%)  skewX(-3.5deg) scaleY(1.14)}
+  70% {transform:translateX(-1%) skewX(2deg)    scaleY(.92)}
+  100%{transform:translateX(3%)  skewX(-1.5deg) scaleY(1.06)}
+}
+@keyframes aup-slosh-crest{
+  0%  {transform:translateX(3%)  skewX(1.5deg)  scaleY(.94)}
+  42% {transform:translateX(-3%) skewX(-4.5deg) scaleY(1.18)}
+  75% {transform:translateX(2%)  skewX(2.5deg)  scaleY(.88)}
+  100%{transform:translateX(-2%) skewX(-1deg)   scaleY(1.08)}
+}
+.aup-card > *{position:relative;z-index:1}
+/* Higher specificity than the .aup-card > * rule so the wave stays out of the flow. */
+.aup-card > .aup-wave{position:absolute;z-index:0}
+/* The dismiss control must stay above the animated wave in every theme. */
+.aup-card > .aup-head{position:relative;z-index:2}
+
+.aup-head{display:flex;align-items:flex-start;gap:12px;padding:18px 18px 0}
+.aup-badge{
+  position:relative;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  width:clamp(48px,6vw,56px);height:clamp(48px,6vw,56px);
+  border-radius:16px;
+  background:hsl(var(--aup-solid));
+  box-shadow:
+    0 10px 20px -10px hsl(var(--aup-badge) / .55),
+    0 0 0 1px hsl(var(--aup-line)) inset;
+  overflow:hidden;
+}
+/* Authentic BOUXRE icon, framed cleanly with object-contain so the ribbon
+   stays crisp on both light and dark appearances. */
+.aup-badge-img{
+  width:100%;height:100%;
+  object-fit:contain;
+  display:block;
+}
+.aup-head-text{flex:1;min-width:0;padding-top:2px}
+.aup-title{
+  margin:0;
+  font-family:var(--bd-font-h1-family,inherit) !important;
+  font-size:1.375rem !important;
+  line-height:1.15 !important;
+  font-weight:800 !important;
+  letter-spacing:-.02em !important;
+  color:hsl(var(--aup-ink));
+}
+.aup-subtitle{
+  margin:3px 0 0;
+  font-size:.8125rem;line-height:1.35;font-weight:600;
+  color:hsl(var(--aup-muted));
+}
+.aup-close{
+  flex:0 0 auto;display:grid;place-items:center;
+  width:44px;height:44px;margin:-6px -6px 0 0;
+  border:0;border-radius:14px;background:transparent;
+  color:hsl(var(--aup-muted));
+}
+.aup-close:hover{background:hsl(var(--aup-line) / .5);color:hsl(var(--aup-ink))}
+.aup-close:focus-visible{outline:2px solid hsl(var(--aup-accent));outline-offset:2px}
+.aup-close-icon{width:18px;height:18px}
+
+.aup-body{display:block;padding:14px 18px 18px}
+.aup-status{display:flex;flex-direction:column;gap:14px;min-width:0}
+.aup-content{display:flex;flex-direction:column;gap:14px;min-width:0;margin-top:14px}
+
+/* Countdown pill */
+.aup-countdown{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;
+  border:1px solid hsl(var(--aup-accent-line));
+  border-radius:16px;
+  background:
+    linear-gradient(180deg,hsl(var(--aup-accent) / .16),hsl(var(--aup-accent) / .07));
+  box-shadow:0 1px 0 hsl(0 0% 100% / .5) inset;
+}
+.aup-countdown-expired{
+  border-color:hsl(var(--aup-accent-strong) / .45);
+  background:linear-gradient(180deg,hsl(var(--aup-accent) / .18),hsl(var(--aup-accent) / .08));
+}
+.aup-countdown-expired .aup-countdown-icon,
+.aup-countdown-expired .aup-countdown-value{
+  color:hsl(var(--aup-accent-strong));
+}
+/* Clock sits in its own tinted disc, as in the reference. */
+.aup-countdown-ring{
+  flex:0 0 auto;display:grid;place-items:center;
+  width:42px;height:42px;border-radius:999px;
+  background:hsl(var(--aup-solid) / .85);
+  box-shadow:0 1px 3px hsl(var(--aup-accent-strong) / .18);
+}
+.aup-countdown-icon{width:24px;height:24px;color:hsl(var(--aup-accent-strong))}
+/* Hairline rule between the clock and the readout. */
+.aup-countdown-divider{
+  flex:0 0 auto;width:1px;align-self:stretch;
+  margin:2px 2px 2px 0;
+  background:linear-gradient(180deg,transparent,hsl(var(--aup-accent-strong) / .38),transparent);
+}
+.aup-countdown-body{min-width:0}
+.aup-countdown-value{
+  margin:0;
+  font-family:var(--bd-font-mono-family,ui-monospace,monospace);
+  font-size:1.5rem;line-height:1.1;font-weight:800;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  color:hsl(var(--aup-ink));
+}
+.aup-countdown-seconds{color:hsl(var(--aup-accent-strong))}
+.aup-countdown-caption{
+  margin:2px 0 0;
+  font-size:.75rem;line-height:1.35;font-weight:600;
+  color:hsl(var(--aup-muted));
+}
+
+/* Transfer */
+.aup-transfer{display:flex;flex-direction:column;gap:8px;min-width:0}
+.aup-transfer-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.aup-transfer-title{
+  font-size:.9375rem;font-weight:700;letter-spacing:-.01em;color:hsl(var(--aup-ink));
+}
+.aup-transfer-percent{
+  font-family:var(--bd-font-mono-family,ui-monospace,monospace);
+  font-size:.9375rem;font-weight:800;font-variant-numeric:tabular-nums;
+  color:hsl(var(--aup-accent-strong));
+}
+.aup-bar{
+  position:relative;width:100%;height:12px;overflow:hidden;
+  border-radius:999px;
+  background:hsl(var(--aup-line) / .85);
+  box-shadow:0 1px 2px hsl(var(--aup-badge) / .10) inset;
+}
+.aup-bar-fill{
+  position:relative;
+  display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,hsl(var(--aup-accent-strong)),hsl(var(--aup-accent)) 62%,hsl(var(--aup-accent-strong)));
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / .45) inset,
+    0 0 12px hsl(var(--aup-accent) / .45);
+  transition:width .22s linear;
+}
+/* Glossy highlight along the top of the filled portion. */
+.aup-bar-fill::after{
+  content:"";position:absolute;left:6px;right:6px;top:2px;height:3px;
+  border-radius:999px;
+  background:linear-gradient(180deg,hsl(0 0% 100% / .55),transparent);
+}
+.aup-transfer-meta{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  font-family:var(--bd-font-mono-family,ui-monospace,monospace);
+  font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;
+  color:hsl(var(--aup-muted));
+}
+.aup-transfer-bytes,.aup-transfer-speed{display:inline-flex;align-items:center;gap:5px}
+.aup-transfer-ready{
+  display:flex;align-items:center;gap:6px;margin:0;
+  font-size:.8125rem;line-height:1.4;font-weight:600;color:hsl(var(--aup-ink));
+}
+.aup-meta-icon{width:14px;height:14px;flex:0 0 auto}
+.aup-asset-line{
+  display:flex;align-items:center;gap:6px;margin:0;
+  font-family:var(--bd-font-mono-family,ui-monospace,monospace);
+  font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;
+  color:hsl(var(--aup-muted));
+}
+
+/* Release notes */
+.aup-notes{
+  border:1px solid hsl(var(--aup-line));
+  border-radius:16px;
+  background:linear-gradient(180deg,hsl(var(--aup-notes-bg)),hsl(var(--aup-notes-bg) / .6));
+  overflow:hidden;
+}
+.aup-notes-toggle{
+  display:flex;align-items:center;gap:11px;width:100%;
+  min-height:56px;padding:10px 13px;
+  border:0;background:transparent;text-align:left;
+  color:hsl(var(--aup-ink));
+}
+.aup-notes-toggle:focus-visible{outline:2px solid hsl(var(--aup-accent));outline-offset:-2px}
+/* Icon tile, as in the reference notes row. */
+.aup-notes-tile{
+  flex:0 0 auto;display:grid;place-items:center;
+  width:38px;height:38px;border-radius:11px;
+  background:hsl(var(--aup-solid) / .9);
+  border:1px solid hsl(var(--aup-line));
+  box-shadow:0 1px 2px hsl(var(--aup-badge) / .08);
+}
+.aup-notes-icon{width:19px;height:19px;color:hsl(var(--aup-ink))}
+.aup-notes-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.aup-notes-title{
+  font-size:.875rem;font-weight:700;letter-spacing:-.01em;color:hsl(var(--aup-ink));
+}
+.aup-notes-summary{
+  font-size:.75rem;line-height:1.35;font-weight:600;color:hsl(var(--aup-muted));
+}
+.aup-notes-chevron{
+  width:18px;height:18px;flex:0 0 auto;color:hsl(var(--aup-muted));
+  transition:transform .18s ease;
+}
+.aup-notes-open .aup-notes-chevron{transform:rotate(180deg)}
+.aup-notes-panel{
+  border-top:1px solid hsl(var(--aup-line));
+  padding:12px 13px 14px;
+  background:hsl(var(--aup-solid) / .6);
+  /* Scroll the notes inside the dialog so the primary action stays on screen
+     at every viewport height. */
+  max-height:11rem;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+/* The production compact timeline answers to window media queries. Inside a
+   narrow dialog that would force its two-column grid, so the preview pins it
+   to one column. Scoped to the preview; the component itself is untouched. */
+.aup-notes-panel [aria-label="What's new"]{max-width:none}
+.aup-notes-panel [aria-label="What's new"] > article{
+  grid-template-columns:minmax(0,1fr);gap:.75rem;
+}
+.aup-notes-panel [aria-label="What's new"] > article > aside{
+  flex-direction:row;align-items:center;flex-wrap:wrap;gap:.5rem;
+}
+.aup-notes-panel [aria-label="What's new"] h3{font-size:.875rem}
+.aup-notes-panel [aria-label="What's new"] li{padding:.625rem 0}
+
+/* Actions */
+.aup-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
+.aup-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;min-height:50px;padding:0 16px;
+  border-radius:999px;
+  font-size:.9375rem;font-weight:700;letter-spacing:-.01em;
+  white-space:nowrap;
+  transition:transform .14s ease,filter .14s ease;
+}
+.aup-btn:active{transform:scale(.985)}
+.aup-btn:focus-visible{outline:2px solid hsl(var(--aup-accent));outline-offset:3px}
+.aup-btn-icon{width:17px;height:17px}
+.aup-btn-primary{
+  border:1px solid hsl(var(--bd-button-primary-bg));
+  background:hsl(var(--bd-button-primary-bg));
+  color:hsl(var(--bd-button-primary-text));
+  box-shadow:0 10px 22px -12px hsl(var(--bd-button-primary-bg) / .9);
+}
+.aup-btn-primary:hover{filter:brightness(1.06)}
+.aup-btn-primary:disabled{opacity:.72;cursor:default;filter:none}
+.aup-btn-secondary{
+  border:1px solid hsl(var(--aup-line));
+  background:hsl(var(--aup-card));
+  color:hsl(var(--aup-ink));
+}
+.aup-btn-secondary:hover{background:hsl(var(--aup-line) / .35)}
+
+.aup-footnote{
+  margin:0;text-align:center;
+  font-size:10.5px;line-height:1.4;font-weight:600;
+  color:hsl(var(--aup-muted));
+}
+
+/* ── Viewport tiers, driven by the simulated width ────────────────── */
+@container aup (min-width:600px){
+  .aup-scrim{padding:26px 24px 32px}
+  .aup-card{max-width:34rem;border-radius:28px}
+  .aup-head{padding:20px 22px 0}
+  .aup-body{padding:16px 22px 22px}
+  .aup-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .aup-transfer-meta{font-size:.8125rem}
+}
+@container aup (min-width:768px){
+  .aup-card{max-width:38rem}
+  .aup-title{font-size:1.5rem !important}
+  .aup-countdown{padding:14px 16px}
+  .aup-countdown-value{font-size:1.75rem}
+}
+/* Desktop: a wider, carefully proportioned dialog, still a dialog. The stage
+   is wide, so the card is centred at a comfortable measure rather than being
+   stretched into a dashboard or split into columns. */
+@container aup (min-width:1024px){
+  .aup-scrim{padding:40px 32px 48px}
+  .aup-card{max-width:31rem;border-radius:30px}
+  .aup-head{padding:22px 24px 0}
+  .aup-body{padding:18px 24px 24px}
+  .aup-title{font-size:1.625rem !important}
+  .aup-countdown{padding:15px 17px}
+  .aup-countdown-value{font-size:1.875rem}
+  .aup-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  /* Keep the dialog a dialog: the notes scroll inside it so the primary
+     action never drops below the fold. */
+  .aup-notes-panel{max-height:9.5rem;overflow-y:auto}
+  .aup-notes-panel [aria-label="What's new"] li{padding:.5rem 0}
+}
+@media (prefers-reduced-motion:reduce){
+  .aup-bar-fill,.aup-notes-chevron,.aup-btn{transition:none}
+  /* Freeze the liquid at its settled pose; no continuous oscillation. */
+  .aup-wave-body-layer,.aup-wave-crest-layer{
+    animation:none;
+    transform:translateX(0) skewX(0deg) scaleY(1);
+  }
+}
