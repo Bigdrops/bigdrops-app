@@ -68,31 +68,6 @@ export type DownloadPhase =
   | { kind: 'installing' }
   | { kind: 'idle' }
 
-export interface ByteSample {
-  bytes: number
-  atMs: number
-}
-
-/** Two samples closer than this cannot produce an honest speed readout. */
-export const SPEED_SAMPLE_MIN_MS = 300
-
-/**
- * Bytes-per-second from two cumulative byte counts. Returns null until a
- * valid pair exists: no first-frame guess, no non-advancing reading. Kept as
- * a pure export so it can be verified without mounting React.
- */
-export function sampleDownloadSpeed(
-  previous: ByteSample | null,
-  current: ByteSample,
-): number | null {
-  if (!previous) return null
-  const elapsedMs = current.atMs - previous.atMs
-  const deltaBytes = current.bytes - previous.bytes
-  if (!Number.isFinite(elapsedMs) || elapsedMs < SPEED_SAMPLE_MIN_MS) return null
-  if (!Number.isFinite(deltaBytes) || deltaBytes <= 0) return null
-  return deltaBytes / (elapsedMs / 1000)
-}
-
 /**
  * Result of one completed update check. Returned directly (not via React
  * state) so callers can act on the exact check they awaited without
@@ -387,9 +362,7 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
       if (downloadingUrlRef.current === null) return
       const current: ByteSample = { bytes: event.downloadedBytes, atMs: Date.now() }
       const measured = sampleDownloadSpeed(speedSampleRef.current, current)
-      // Advance the sample window only when the pair is honest (>= 300ms and
-      // bytes advanced). A rejected pair keeps the older sample so the next
-      // event can still form a valid measurement.
+      // Advance only on an honest pair; a rejected pair keeps the older sample.
       if (measured !== null) {
         speedSampleRef.current = current
         speedRef.current = measured
@@ -405,16 +378,12 @@ export function useAppUpdate(options: { enabled: boolean }): UseAppUpdateResult 
     })
   }, [])
 
-  /**
-   * Completion-event path: a robust alternative to the downloadApk() promise.
-   * Whichever arrives first transitions to 'downloaded'; the other is a no-op
-   * because the phase is already terminal.
-   */
+  /** Completion-event path: robust alternative to the downloadApk() promise.
+   * Whichever arrives first wins; the other is a no-op. */
   const registerCompletionListener = useCallback(async () => {
     if (completionHandleRef.current) return
     completionHandleRef.current = await onApkDownloadCompleted((event) => {
-      // A cancel clears the active URL; ignore a late completion from the
-      // cancelled transfer so the UI does not jump back to 'downloaded'.
+      // A cancel clears the active URL; ignore a late completion from it.
       if (downloadingUrlRef.current === null) return
       if (!event.uri || !event.fileName) return
       downloadedFileRef.current = { fileName: event.fileName, uri: event.uri }
