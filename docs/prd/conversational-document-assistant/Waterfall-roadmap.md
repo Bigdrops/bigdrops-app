@@ -1811,9 +1811,9 @@ Tags: **DECISION** = user-approved scope/requirement · **OBSERVATION** = verifi
 - DECISION — Direct preview-card item image management: adding, previewing, replacing and removing item `image_url` directly on the invoice and quotation item preview cards, reusing the existing secure tenant storage path (same authorization, same entity scoping as form saves); no round-trip through the document form required; removal clears the reference (object retention is governed by the existing storage lifecycle).
 - DECISION — Item image operations remain item-scoped (no document-level metadata keys), merge-preserving all other item columns, and pass through `custom_data`-adjacent metadata untouched.
 
-### 37.5 Stage 3C — PDF Presentation & Contextual Recommendations
+### 37.5 Stage 3C - PDF Presentation & Contextual Recommendations
 
-**Status: Blueprint agreed — not implemented.**
+**Status: Implemented 2026-11-19** (see `stage-3c-presentation-controls.md` and DEC-43). Presentation controls (PDF output toggles, column configuration, headings, charge labels, signatory, image visibility, quantity/unit merge) are delivered via the modify envelope. Contextual-recommendation capability remains out of scope as before. Live verification outstanding.
 
 - DECISION — verified `signatoryId` resolution against the tenant signatory projection (fail-closed discard with warning, identical semantics to `item_id`/`project_id`), never a silent UUID.
 - DECISION — `notesTitle` / `termsTitle` authoring (section headings), `chargeLabels` overrides (`workmanship` / `transportation` / `shipping`), and `pdfOutput` layout toggles: `showBankDetails`, `bankAccountId` (verified against the tenant bank-accounts projection), `showBalanceDue`, `showAmountInWords`, `compact`.

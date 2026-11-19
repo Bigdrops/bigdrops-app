@@ -43,6 +43,8 @@ import {
   readBoluContextFacts,
   readBoluInvoiceAdvanceConfig,
   readBoluModifySnapshot,
+  resolveBankAccountForPresentation,
+  resolveSignatoryForPresentation,
   resolveOperationFacts,
   searchBoluClients,
   type BoluClientMatch,
@@ -447,25 +449,59 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
               }
             }
             if (!options.tenantClient || snapshot) {
-              if (snapshot) targetNum = snapshot.documentNumber
-              parsedProposal = buildInvoiceModifyProposal({
-                targetDocumentId: validation.data.documentId,
-                targetDocumentNumber: targetNum,
-                documentFamily,
-                field: validation.data.field,
-                oldValue: validation.data.oldValue,
-                newValue: validation.data.newValue,
-                itemsChange: validation.data.items && validation.data.oldItems
-                  ? { oldItems: validation.data.oldItems, newItems: validation.data.items }
-                  : undefined,
-                extraChargesChange: validation.data.extraChargesChange,
-                calculationInputsChange: validation.data.calculationInputsChange,
-                customFieldsChange: validation.data.customFieldsChange,
-                groupsChange: validation.data.groupsChange,
-                current: snapshot
-                  ? { document: snapshot.document, items: snapshot.items }
-                  : undefined,
-              })
+              let resolvedSignatory: { id: string; name: string; role: string } | null | undefined
+              let resolvedBankAccount: { id: string; label: string } | null | undefined
+              const presentationPatch = validation.data.presentationChange
+              if (options.tenantClient && presentationPatch?.signatory) {
+                const resolution = await resolveSignatoryForPresentation(options.tenantClient, presentationPatch.signatory)
+                if (resolution.kind === 'resolved') {
+                  resolvedSignatory = { id: resolution.id, name: resolution.name, role: resolution.role }
+                } else if (resolution.kind === 'ambiguous') {
+                  finalText = `${finalText}\n\nI found several signatories matching "${resolution.query}":\n${resolution.matches.map((m) => `• ${m.name}${m.role ? `, ${m.role}` : ''}`).join('\n')}\nTell me which one you mean.`
+                } else if (resolution.kind === 'not_found') {
+                  finalText = `${finalText}\n\nI could not find a signatory named "${resolution.query}" in this business. Choose an existing signatory and try again.`
+                } else {
+                  finalText = `${finalText}\n\nI could not check the signatory list just now, so I did not prepare the change. Please try again shortly.`
+                }
+              }
+              if (options.tenantClient && presentationPatch?.pdfOutput?.bankAccountId) {
+                const resolution = await resolveBankAccountForPresentation(options.tenantClient, presentationPatch.pdfOutput.bankAccountId)
+                if (resolution.kind === 'resolved') {
+                  resolvedBankAccount = { id: resolution.id, label: resolution.label }
+                } else if (resolution.kind === 'not_found') {
+                  finalText = `${finalText}\n\nI could not find that bank account in this business. Choose an existing account and try again.`
+                } else {
+                  finalText = `${finalText}\n\nI could not check the bank accounts just now, so I did not prepare the change. Please try again shortly.`
+                }
+              }
+              const signatoryFailed = Boolean(presentationPatch?.signatory) && resolvedSignatory === undefined
+              const bankFailed = Boolean(presentationPatch?.pdfOutput?.bankAccountId) && resolvedBankAccount === undefined
+              if (signatoryFailed || bankFailed) {
+                // Referenced records could not be resolved; no proposal is built.
+                parsedProposal = null
+              } else {
+                if (snapshot) targetNum = snapshot.documentNumber
+                parsedProposal = buildInvoiceModifyProposal({
+                  targetDocumentId: validation.data.documentId,
+                  targetDocumentNumber: targetNum,
+                  documentFamily,
+                  field: validation.data.field,
+                  oldValue: validation.data.oldValue,
+                  newValue: validation.data.newValue,
+                  itemsChange: validation.data.items && validation.data.oldItems
+                    ? { oldItems: validation.data.oldItems, newItems: validation.data.items }
+                    : undefined,
+                  extraChargesChange: validation.data.extraChargesChange,
+                  calculationInputsChange: validation.data.calculationInputsChange,
+                  customFieldsChange: validation.data.customFieldsChange,
+                  groupsChange: validation.data.groupsChange,
+                  presentationChange: validation.data.presentationChange,
+                  resolvedSignatory,
+                  resolvedBankAccount,
+                  current: snapshot
+                    ? { document: snapshot.document, items: snapshot.items }
+                    : undefined,
+                })
               // A proposal whose document-fields or groups plan do not resolve
               // against the persisted snapshot must never reach Gate 1.
               const fieldErrors = parsedProposal.customFieldsChange?.errors ?? []
@@ -473,6 +509,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
               if (fieldErrors.length > 0 || groupErrors.length > 0) {
                 finalText = `${finalText}\n\nI could not prepare that change after checking the saved document:\n- ${[...fieldErrors, ...groupErrors].join('\n- ')}\n\nPlease check the details and try again.`
                 parsedProposal = null
+              }
               }
             }
           } else {

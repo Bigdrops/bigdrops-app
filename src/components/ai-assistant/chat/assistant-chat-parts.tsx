@@ -397,6 +397,27 @@ function ModifyFieldsPanel({ proposal }: { proposal: ModifyFieldProposal }) {
 }
 
 /**
+ * ModifyPresentationPanel — the presentation controls the user asked to
+ * change, rendered as before/after rows (PDF output toggles, headings,
+ * charge labels, quantity/unit merge, image visibility, columns, signatory).
+ */
+function ModifyPresentationPanel({ proposal }: { proposal: ModifyFieldProposal }) {
+  const change = proposal.presentationChange
+  if (!change || change.rows.length === 0) return null
+
+  return (
+    <section className="ac-advance ac-presentation-diff" aria-label="Presentation">
+      <p className="ac-advance-target">Presentation</p>
+      <div className="ac-advance-rows" aria-label="Presentation changes">
+        {change.rows.map((row, index) => (
+          <ModifyDiffRow key={`${row.key}-${index}`} label={row.label} before={row.before} after={row.after} clearing={Boolean(row.cleared)} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/**
  * ModifyGroupsPanel — the planned group structure after the change, with
  * group headings visually distinct from line items and the subtotal toggle
  * visible on each heading.
@@ -566,6 +587,13 @@ export function proposalPlainText(proposal: BoluProposal): string {
       }
       if (fieldLines.length > 0) {
         lines.push('', 'Document details:', ...fieldLines)
+      }
+    }
+    const presentation = proposal.presentationChange
+    if (presentation && presentation.rows.length > 0) {
+      lines.push('', 'Presentation:')
+      for (const row of presentation.rows) {
+        lines.push(`${row.label}: ${row.before} -> ${row.after}${row.cleared ? ' (cleared)' : ''}`)
       }
     }
     const groups = proposal.groupsApplication
@@ -1448,6 +1476,11 @@ export function ProposalCardView({
       {/* Document detail rows and additional info chips */}
       {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
         <ModifyFieldsPanel proposal={proposal} />
+      ) : null}
+
+      {/* Presentation controls (PDF output, headings, labels, columns, signatory) */}
+      {!isCreate && !isAdvance && proposal.operationType === 'modify-document' ? (
+        <ModifyPresentationPanel proposal={proposal} />
       ) : null}
 
       {/* Group headings and subtotals */}

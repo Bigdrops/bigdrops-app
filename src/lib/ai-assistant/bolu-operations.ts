@@ -24,6 +24,11 @@ import {
   fingerprintItems,
   normalizeFieldEntry,
 } from './bolu-document-ops'
+import {
+  applyPresentationPatch,
+  fingerprintPresentation,
+  DEFAULT_COLUMN_ORDER,
+} from './bolu-presentation'
 import type { CommercialRichTextBlock } from '@/lib/commercialRichText'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BoluClientMatch, BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
@@ -220,6 +225,57 @@ export interface BoluCustomFieldsChange {
   additionalFields?: BoluFieldEntryOp[]
 }
 
+/** Presentation controls — PDF output, headings, labels, quantity/unit merge, image visibility, columns, signatory. */
+export interface BoluPdfOutputPatch {
+  showBankDetails?: boolean
+  /** null = reset to the business-default bank account; absent = keep the persisted one. */
+  bankAccountId?: string | null
+  showFooter?: boolean
+  showTagline?: boolean
+  showBalanceDue?: boolean
+  showAmountInWords?: boolean
+  compact?: boolean
+  landscapeLayout?: boolean
+}
+
+export interface BoluChargeLabelsPatch {
+  workmanship?: string | null
+  transportation?: string | null
+  shipping?: string | null
+}
+
+export interface BoluColumnModeOp {
+  key: string
+  mode: 'show' | 'hide_display' | 'hide_full'
+}
+
+export interface BoluColumnLabelOp {
+  key: string
+  label: string
+}
+
+export interface BoluColumnsPatch {
+  setMode?: BoluColumnModeOp[]
+  setLabel?: BoluColumnLabelOp[]
+  /** Cassette of builtin column keys; unknown keys rejected, full builtin set required. */
+  order?: string[]
+  resetToDefaults?: boolean
+}
+
+export interface BoluPresentationChange {
+  pdfOutput?: BoluPdfOutputPatch
+  /** String = set; null/empty string = restore the default heading. */
+  notesTitle?: string | null
+  /** String = set; null/empty string = restore the default heading. */
+  termsTitle?: string | null
+  chargeLabels?: BoluChargeLabelsPatch
+  mergeQtyUnit?: boolean
+  showItemImages?: boolean
+  columns?: BoluColumnsPatch
+  /** Signatory id (uuid) or exact name; null = remove the signatory. */
+  signatory?: string | null
+}
+
 /** Calculation inputs are patched as a block; every field is optional, at least one required. */
 export interface BoluCalculationInputValues {
   vatPercent?: number
@@ -259,6 +315,12 @@ export interface BoluInvoiceModifyPayload {
   customFieldsChange?: BoluCustomFieldsChange
   /** Structured group operations (F3-05/F3-13); cannot be combined with itemsChange. */
   groupsChange?: BoluGroupOp[]
+  /** Presentation controls (PDF output, headings, labels, columns, signatory). */
+  presentationChange?: BoluPresentationChange
+  /** Build-time resolved signatory identity (Gate 1 preview). Resolved again at Gate 2. */
+  resolvedSignatory?: { id: string; name: string; role: string } | null
+  /** Build-time resolved bank account (Gate 1 preview). Resolved again at Gate 2. */
+  resolvedBankAccount?: { id: string; label: string } | null
 }
 
 export interface BoluOperationContract {
@@ -362,6 +424,15 @@ export interface BoluDocumentModifyProposal extends BoluOperationContract {
   }
   /** Fingerprint of the items+groupMeta snapshot, re-checked at Gate 2. */
   itemsFingerprint?: string
+  /** Presentation controls — snapshot-derived for the preview; re-checked at Gate 2. */
+  presentationChange?: {
+    old: Record<string, unknown>
+    new: Record<string, unknown>
+    rows: Array<{ key: string; label: string; before: string; after: string; cleared?: boolean }>
+    summary: string[]
+    errors: string[]
+    fingerprint: string
+  }
   /** Calculation-inputs patch. old carries every persisted key in play; new carries only requested keys. */
   calculationInputsChange?: {
     old: Partial<BoluCalculationInputValues>
@@ -736,6 +807,259 @@ export function validateBoluGroupOps(raw: unknown): { data?: BoluGroupOp[]; erro
   return { data, errors: [] }
 }
 
+/** Presentation controls — shape and type validation per family. */
+export function validateBoluPresentationChange(raw: unknown): { data?: BoluPresentationChange; errors: string[] } {
+  const errors: string[] = []
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { errors: ['The presentation change must be an object.'] }
+  }
+  const payload = raw as Record<string, unknown>
+  const ALLOWED = new Set(['pdfOutput', 'notesTitle', 'termsTitle', 'chargeLabels', 'mergeQtyUnit', 'showItemImages', 'columns', 'signatory'])
+  for (const key of Object.keys(payload)) {
+    if (!ALLOWED.has(key)) {
+      errors.push(`"${key}" is not a presentation setting I can change.`)
+    }
+  }
+
+  const data: BoluPresentationChange = {}
+
+  if (payload.pdfOutput !== undefined) {
+    if (!payload.pdfOutput || typeof payload.pdfOutput !== 'object' || Array.isArray(payload.pdfOutput)) {
+      errors.push('The PDF settings must be given as a set of on/off values.')
+    } else {
+      const rawOut = payload.pdfOutput as Record<string, unknown>
+      const allowedBooleans = ['showBankDetails', 'showFooter', 'showTagline', 'showBalanceDue', 'showAmountInWords', 'compact', 'landscapeLayout'] as const
+      const ALLOWED_PDF = new Set([...allowedBooleans, 'bankAccountId'])
+      for (const key of Object.keys(rawOut)) {
+        if (!ALLOWED_PDF.has(key)) errors.push(`"${key}" is not a PDF setting I can change.`)
+      }
+      const pdfOut: BoluPdfOutputPatch = {}
+      for (const key of allowedBooleans) {
+        const value = rawOut[key]
+        if (value !== undefined) {
+          if (typeof value !== 'boolean') {
+            errors.push(`${key} must be true or false.`)
+          } else {
+            (pdfOut as Record<string, unknown>)[key] = value
+          }
+        }
+      }
+      if (rawOut.bankAccountId !== undefined) {
+        if (rawOut.bankAccountId === null) {
+          pdfOut.bankAccountId = null
+        } else if (typeof rawOut.bankAccountId === 'string') {
+          const trimmed = rawOut.bankAccountId.trim()
+          if (!UUID_PATTERN.test(trimmed)) {
+            errors.push('The bank account must be a valid reference or null for the business default.')
+          } else {
+            pdfOut.bankAccountId = trimmed
+          }
+        } else {
+          errors.push('The bank account must be a valid reference or null for the business default.')
+        }
+      }
+      data.pdfOutput = pdfOut
+    }
+  }
+
+  if (payload.notesTitle !== undefined) {
+    if (payload.notesTitle === null) {
+      data.notesTitle = null // explicit reset → default heading
+    } else if (typeof payload.notesTitle !== 'string') {
+      errors.push('The Notes heading must be text (or null to restore the default).')
+    } else {
+      const trimmed = payload.notesTitle.trim()
+      if (!trimmed) {
+        data.notesTitle = null // explicit reset → default heading
+      } else if (trimmed.length > 80) {
+        errors.push('The Notes heading must be 80 characters or fewer.')
+      } else {
+        data.notesTitle = trimmed
+      }
+    }
+  }
+  if (payload.termsTitle !== undefined) {
+    if (payload.termsTitle === null) {
+      data.termsTitle = null
+    } else if (typeof payload.termsTitle !== 'string') {
+      errors.push('The Terms heading must be text (or null to restore the default).')
+    } else {
+      const trimmed = payload.termsTitle.trim()
+      if (!trimmed) {
+        data.termsTitle = null
+      } else if (trimmed.length > 80) {
+        errors.push('The Terms heading must be 80 characters or fewer.')
+      } else {
+        data.termsTitle = trimmed
+      }
+    }
+  }
+
+  if (payload.chargeLabels !== undefined) {
+    if (!payload.chargeLabels || typeof payload.chargeLabels !== 'object' || Array.isArray(payload.chargeLabels)) {
+      errors.push('The charge labels must be given as workmanship/transportation/shipping labels.')
+    } else {
+      const rawLabels = payload.chargeLabels as Record<string, unknown>
+      const KEYS = ['workmanship', 'transportation', 'shipping'] as const
+      for (const key of Object.keys(rawLabels)) {
+        if (!(KEYS as readonly string[]).includes(key)) {
+          errors.push(`"${key}" is not a charge label I can change (workmanship, transportation, shipping).`)
+        }
+      }
+      const labels: BoluChargeLabelsPatch = {}
+      for (const key of KEYS) {
+        const value = rawLabels[key]
+        if (value === undefined) continue
+        if (value === null) {
+          labels[key] = null
+          continue
+        }
+        if (typeof value !== 'string' || !value.trim()) {
+          errors.push(`The ${key} label must be text, or null to restore the default.`)
+          continue
+        }
+        if (value.trim().length > 60) {
+          errors.push(`The ${key} label must be 60 characters or fewer.`)
+          continue
+        }
+        labels[key] = value.trim()
+      }
+      data.chargeLabels = labels
+    }
+  }
+
+  if (payload.mergeQtyUnit !== undefined) {
+    if (typeof payload.mergeQtyUnit !== 'boolean') errors.push('mergeQtyUnit must be true or false.')
+    else data.mergeQtyUnit = payload.mergeQtyUnit
+  }
+  if (payload.showItemImages !== undefined) {
+    if (typeof payload.showItemImages !== 'boolean') errors.push('showItemImages must be true or false.')
+    else data.showItemImages = payload.showItemImages
+  }
+
+  const BUILTIN_KEYS = new Set(DEFAULT_COLUMN_ORDER as readonly string[])
+  const HIDDEN_PROHIBITED = new Set(['description', 'quantity', 'unit_price'])
+
+  if (payload.columns !== undefined) {
+    if (!payload.columns || typeof payload.columns !== 'object' || Array.isArray(payload.columns)) {
+      errors.push('The columns change must be given as setMode/setLabel/order/resetToDefaults.')
+    } else {
+      const rawCols = payload.columns as Record<string, unknown>
+      const ALLOWED_COLS = new Set(['setMode', 'setLabel', 'order', 'resetToDefaults'])
+      for (const key of Object.keys(rawCols)) {
+        if (!ALLOWED_COLS.has(key)) errors.push(`"${key}" is not a columns operation (setMode, setLabel, order, resetToDefaults).`)
+      }
+      if (rawCols.resetToDefaults === true && Object.keys(rawCols).length > 1) {
+        errors.push('resetToDefaults cannot be combined with other column operations; ask for it alone.')
+      }
+      if (rawCols.resetToDefaults !== undefined && typeof rawCols.resetToDefaults !== 'boolean') {
+        errors.push('resetToDefaults must be true or false.')
+      }
+      const cols: BoluColumnsPatch = {}
+      if (typeof rawCols.resetToDefaults === 'boolean' && rawCols.resetToDefaults) cols.resetToDefaults = true
+
+      if (rawCols.setMode !== undefined) {
+        if (!Array.isArray(rawCols.setMode)) {
+          errors.push('The column visibility changes must be a list.')
+        } else {
+          cols.setMode = []
+          for (let i = 0; i < rawCols.setMode.length; i++) {
+            const op = rawCols.setMode[i] as Record<string, unknown>
+            if (!op || typeof op !== 'object' || Array.isArray(op)) {
+              errors.push(`setMode[${i}] is invalid.`)
+              continue
+            }
+            const key = typeof op.key === 'string' ? op.key.trim() : ''
+            const mode = op.mode
+            if (!BUILTIN_KEYS.has(key)) {
+              errors.push(`setMode[${i}]: unknown column "${key}".`)
+              continue
+            }
+            if (mode !== 'show' && mode !== 'hide_display' && mode !== 'hide_full') {
+              errors.push(`setMode[${i}]: mode must be show, hide_display or hide_full.`)
+              continue
+            }
+            if (HIDDEN_PROHIBITED.has(key) && mode !== 'show') {
+              errors.push(`setMode[${i}]: the ${key} column cannot be hidden.`)
+              continue
+            }
+            cols.setMode.push({ key, mode })
+          }
+        }
+      }
+
+      if (rawCols.setLabel !== undefined) {
+        if (!Array.isArray(rawCols.setLabel)) {
+          errors.push('The column label changes must be a list.')
+        } else {
+          cols.setLabel = []
+          for (let i = 0; i < rawCols.setLabel.length; i++) {
+            const op = rawCols.setLabel[i] as Record<string, unknown>
+            if (!op || typeof op !== 'object' || Array.isArray(op)) {
+              errors.push(`setLabel[${i}] is invalid.`)
+              continue
+            }
+            const key = typeof op.key === 'string' ? op.key.trim() : ''
+            const label = typeof op.label === 'string' ? op.label.trim() : ''
+            if (!BUILTIN_KEYS.has(key)) {
+              errors.push(`setLabel[${i}]: unknown column "${key}".`)
+              continue
+            }
+            if (!label || label.length > 40) {
+              errors.push(`setLabel[${i}]: the label must be 1 to 40 characters.`)
+              continue
+            }
+            cols.setLabel.push({ key, label })
+          }
+        }
+      }
+
+      if (rawCols.order !== undefined) {
+        if (!Array.isArray(rawCols.order)) {
+          errors.push('The column order must be a list of column keys.')
+        } else {
+          const order: string[] = []
+          const seen = new Set<string>()
+          for (let i = 0; i < rawCols.order.length; i++) {
+            const key = typeof rawCols.order[i] === 'string' ? rawCols.order[i].trim() : ''
+            if (!BUILTIN_KEYS.has(key)) {
+              errors.push(`order[${i}]: unknown column "${String(rawCols.order[i])}".`)
+              continue
+            }
+            if (seen.has(key)) {
+              errors.push(`order[${i}]: the same column appears twice.`)
+              continue
+            }
+            seen.add(key)
+            order.push(key)
+          }
+          cols.order = order
+        }
+      }
+
+      if (Object.keys(cols).length === 0) {
+        errors.push('The columns change must name at least one operation.')
+      } else {
+        data.columns = cols
+      }
+    }
+  }
+
+  if (payload.signatory !== undefined) {
+    if (payload.signatory === null) {
+      data.signatory = null
+    } else if (typeof payload.signatory === 'string' && payload.signatory.trim()) {
+      data.signatory = payload.signatory.trim()
+    } else {
+      errors.push('The signatory must be a signatory name or id, or null to remove.')
+    }
+  }
+
+  if (errors.length > 0) return { errors }
+  if (Object.keys(data).length === 0) return { errors: ['The presentation change must name at least one setting to change.'] }
+  return { data, errors: [] }
+}
+
 /**
  * Validates and normalizes custom named extra charges.
  * Canonical shape: { name, amount, withTax }. The internal
@@ -1073,6 +1397,18 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
     }
   }
 
+  // Presentation controls — PDF output, headings, labels, columns, signatory.
+  let validatedPresentationChange: BoluPresentationChange | undefined
+  const rawPresentation = payload.presentationChange ?? payload.presentation
+  if (rawPresentation !== undefined) {
+    const validated = validateBoluPresentationChange(rawPresentation)
+    if (validated.errors.length > 0) {
+      errors.push(...validated.errors)
+    } else {
+      validatedPresentationChange = validated.data
+    }
+  }
+
   // One item-set concern per proposal: items cannot be combined with groups.
   if (validatedItems && validatedGroupsChange) {
     errors.push('Change items and groups in one request only within the same scope — I cannot apply both at once.')
@@ -1190,8 +1526,8 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
   }
 
   if (!field && !validatedItems && !validatedExtraChargesChange && !validatedCalculationInputsChange
-    && !validatedCustomFieldsChange && !validatedGroupsChange) {
-    errors.push('Modification must specify a field, items, extra charges, calculation inputs, document fields, or groups.')
+    && !validatedCustomFieldsChange && !validatedGroupsChange && !validatedPresentationChange) {
+    errors.push('Modification must specify a field, items, extra charges, calculation inputs, document fields, groups, or presentation settings.')
   }
 
   if (errors.length > 0) {
@@ -1213,6 +1549,7 @@ export function validateInvoiceModifyInput(raw: unknown, options?: { documentFam
       calculationInputsChange: validatedCalculationInputsChange,
       customFieldsChange: validatedCustomFieldsChange,
       groupsChange: validatedGroupsChange,
+      presentationChange: validatedPresentationChange,
     },
   }
 }
@@ -1627,6 +1964,9 @@ export function buildInvoiceModifyProposal(params: {
   calculationInputsChange?: Partial<BoluCalculationInputValues>
   customFieldsChange?: BoluCustomFieldsChange
   groupsChange?: BoluGroupOp[]
+  presentationChange?: BoluPresentationChange
+  resolvedSignatory?: { id: string; name: string; role: string } | null
+  resolvedBankAccount?: { id: string; label: string } | null
   current?: BoluModifyCurrentSnapshot
 }): BoluInvoiceModifyProposal {
   const documentFamily = params.documentFamily ?? 'invoice'
@@ -1784,6 +2124,34 @@ export function buildInvoiceModifyProposal(params: {
     calculationInputsChange = { old: old as Partial<BoluCalculationInputValues>, new: { ...params.calculationInputsChange } }
   }
 
+  // Presentation controls — snapshot-derived for the preview; the executor re-checks at Gate 2.
+  let presentationChange: BoluDocumentModifyProposal['presentationChange']
+  const persistedPresentation = {
+    pdfOutput: persistedCf.pdfOutput,
+    notesTitle: persistedCf.notesTitle,
+    termsTitle: persistedCf.termsTitle,
+    chargeLabels: persistedCf.chargeLabels,
+    mergeQtyUnit: persistedCf.mergeQtyUnit,
+    showItemImages: persistedCf.showItemImages,
+    columnConfig: persistedCf.columnConfig,
+    signatoryId: persistedCf.signatoryId,
+  } as Record<string, unknown>
+  if (params.presentationChange && current) {
+    const applied = applyPresentationPatch(
+      persistedPresentation,
+      params.presentationChange,
+      { signatory: params.resolvedSignatory, bankAccount: params.resolvedBankAccount },
+    )
+    presentationChange = {
+      old: persistedPresentation,
+      new: applied.subtree,
+      rows: applied.rows,
+      summary: applied.summary,
+      errors: applied.errors,
+      fingerprint: fingerprintPresentation(persistedPresentation),
+    }
+  }
+
   // 2. Authoritative calculation preview — app owns the math; never the model.
   const effectiveCharges = { ...currentCharges }
   if (params.field === 'workmanship' || params.field === 'transportation' || params.field === 'shipping') {
@@ -1810,6 +2178,7 @@ export function buildInvoiceModifyProposal(params: {
   const recalcRelevant =
     Boolean(params.itemsChange) ||
     Boolean(params.groupsChange) ||
+    Boolean(params.presentationChange) ||
     params.field === 'workmanship' ||
     params.field === 'transportation' ||
     params.field === 'shipping' ||
@@ -1868,6 +2237,7 @@ export function buildInvoiceModifyProposal(params: {
     groupsChange: params.groupsChange,
     groupsApplication,
     itemsFingerprint,
+    presentationChange,
     calculationInputsChange,
     computedTotals,
     chargesSnapshot: { ...effectiveCharges },

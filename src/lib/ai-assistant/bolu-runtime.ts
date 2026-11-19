@@ -7,7 +7,9 @@ import {
   readBoluInvoiceAdvanceConfig,
   readBoluModifySnapshot,
   readBoluQuotation,
+  resolveBankAccountForPresentation,
   resolveOperationFacts,
+  resolveSignatoryForPresentation,
   searchBoluClients,
   searchBoluInvoices,
   searchBoluQuotations,
@@ -382,6 +384,63 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
               }
               docNumber = snapshot.documentNumber
 
+              let resolvedSignatory: { id: string; name: string; role: string } | null | undefined
+              let resolvedBankAccount: { id: string; label: string } | null | undefined
+              const presentationPatch = validation.data!.presentationChange
+              if (presentationPatch?.signatory) {
+                const resolution = await resolveSignatoryForPresentation(
+                  dependencies.tenantClient,
+                  presentationPatch.signatory,
+                )
+                if (resolution.kind === 'resolved') {
+                  resolvedSignatory = { id: resolution.id, name: resolution.name, role: resolution.role }
+                } else if (resolution.kind === 'ambiguous') {
+                  dispatch({
+                    type: 'RESULT',
+                    requestId,
+                    content: `I found several signatories matching "${resolution.query}":\n${resolution.matches.map((m) => `• ${m.name}${m.role ? `, ${m.role}` : ''}`).join('\n')}\nTell me which one you mean.`,
+                  })
+                  return
+                } else if (resolution.kind === 'not_found') {
+                  dispatch({
+                    type: 'RESULT',
+                    requestId,
+                    content: `I could not find a signatory named "${resolution.query}" in this business. Choose an existing signatory and try again.`,
+                  })
+                  return
+                } else {
+                  dispatch({
+                    type: 'RESULT',
+                    requestId,
+                    content: `I could not check the signatory list just now, so I did not prepare the change. Please try again shortly.`,
+                  })
+                  return
+                }
+              }
+              if (presentationPatch?.pdfOutput?.bankAccountId) {
+                const resolution = await resolveBankAccountForPresentation(
+                  dependencies.tenantClient,
+                  presentationPatch.pdfOutput.bankAccountId,
+                )
+                if (resolution.kind === 'resolved') {
+                  resolvedBankAccount = { id: resolution.id, label: resolution.label }
+                } else if (resolution.kind === 'not_found') {
+                  dispatch({
+                    type: 'RESULT',
+                    requestId,
+                    content: `I could not find that bank account in this business. Choose an existing account and try again.`,
+                  })
+                  return
+                } else {
+                  dispatch({
+                    type: 'RESULT',
+                    requestId,
+                    content: `I could not check the bank accounts just now, so I did not prepare the change. Please try again shortly.`,
+                  })
+                  return
+                }
+              }
+
               const proposal = buildInvoiceModifyProposal({
                 targetDocumentId: validation.data!.documentId,
                 targetDocumentNumber: docNumber,
@@ -396,6 +455,9 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
                 calculationInputsChange: validation.data!.calculationInputsChange,
                 customFieldsChange: validation.data!.customFieldsChange,
                 groupsChange: validation.data!.groupsChange,
+                presentationChange: validation.data!.presentationChange,
+                resolvedSignatory,
+                resolvedBankAccount,
                 current: { document: snapshot.document, items: snapshot.items },
               })
               const fieldErrors = proposal.customFieldsChange?.errors ?? []
@@ -612,3 +674,4 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
     },
   }
 }
+

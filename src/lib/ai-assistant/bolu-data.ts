@@ -227,6 +227,103 @@ export async function readBoluModifySnapshot(
   }
 }
 
+/**
+ * Resolves a presentation-scope signatory reference against the tenant's
+ * signatory projection. UUID references are looked up by id; free-text
+ * references attempt an exact case-insensitive name match, then a unique
+ * case-insensitive substring match. Ambiguity, errors or absence fail closed.
+ */
+export type BoluSignatoryResolution =
+  | { kind: 'resolved'; id: string; name: string; role: string }
+  | { kind: 'ambiguous'; query: string; matches: Array<{ id: string; name: string; role: string }> }
+  | { kind: 'not_found'; query: string }
+  | { kind: 'error'; query: string; error: string }
+
+export async function resolveSignatoryForPresentation(
+  tenantClient: TenantClient,
+  requested: string,
+): Promise<BoluSignatoryResolution> {
+  assertTenantReady(tenantClient)
+  const candidate = requested.trim()
+  if (!candidate) return { kind: 'not_found', query: requested }
+
+  if (/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(candidate)) {
+    try {
+      const { data, error } = await (tenantClient.from('signatories') as any)
+        .select('id, name, role')
+        .eq('id', candidate)
+        .limit(1)
+        .maybeSingle()
+      if (error) return { kind: 'error', query: candidate, error: error.message }
+      const id = data?.id ? String(data.id) : null
+      if (!id) return { kind: 'not_found', query: candidate }
+      return {
+        kind: 'resolved',
+        id,
+        name: String(data.name ?? '').trim(),
+        role: String(data.role ?? '').trim(),
+      }
+    } catch (err) {
+      return { kind: 'error', query: candidate, error: err instanceof Error ? err.message : 'Lookup failed' }
+    }
+  }
+
+  const escaped = candidate.replace(/[%_\\]/g, (ch) => `\\${ch}`)
+  try {
+    const { data, error } = await (tenantClient.from('signatories') as any)
+      .select('id, name, role')
+      .ilike('name', `%${escaped}%`)
+      .limit(20)
+    if (error) return { kind: 'error', query: candidate, error: error.message }
+    const rows = Array.isArray(data) ? data : []
+    const exact = rows.filter((row: any) => String(row?.name ?? '').trim().toLowerCase() === candidate.toLowerCase())
+    const pool = exact.length > 0 ? exact : rows
+    const matches = pool.map((row: any) => ({
+      id: String(row?.id ?? ''),
+      name: String(row?.name ?? '').trim(),
+      role: String(row?.role ?? '').trim(),
+    }))
+    if (matches.length === 0) return { kind: 'not_found', query: candidate }
+    if (matches.length === 1) return { kind: 'resolved', ...matches[0] }
+    return { kind: 'ambiguous', query: candidate, matches }
+  } catch (err) {
+    return { kind: 'error', query: candidate, error: err instanceof Error ? err.message : 'Lookup failed' }
+  }
+}
+
+/**
+ * Resolves a presentation-scope bank account reference against the tenant's
+ * bank-accounts projection. Missing records fail closed.
+ */
+export type BoluBankAccountResolution =
+  | { kind: 'resolved'; id: string; label: string }
+  | { kind: 'not_found'; id: string }
+  | { kind: 'error'; id: string; error: string }
+
+export async function resolveBankAccountForPresentation(
+  tenantClient: TenantClient,
+  requestedId: string,
+): Promise<BoluBankAccountResolution> {
+  assertTenantReady(tenantClient)
+  const candidate = requestedId.trim()
+  if (!candidate) return { kind: 'not_found', id: requestedId }
+  try {
+    const { data, error } = await (tenantClient.from('bank_accounts') as any)
+      .select('id, bank_name, account_name, account_number, is_default')
+      .eq('id', candidate)
+      .limit(1)
+      .maybeSingle()
+    if (error) return { kind: 'error', id: candidate, error: error.message }
+    if (!data) return { kind: 'not_found', id: candidate }
+    const bankName = String(data.bank_name ?? '').trim()
+    const accountName = String(data.account_name ?? '').trim()
+    const label = [bankName, accountName].filter(Boolean).join(' · ') || candidate
+    return { kind: 'resolved', id: String(data.id), label }
+  } catch (err) {
+    return { kind: 'error', id: candidate, error: err instanceof Error ? err.message : 'Lookup failed' }
+  }
+}
+
 export async function readBoluInvoice(
   tenantClient: TenantClient,
   invoiceId: string,

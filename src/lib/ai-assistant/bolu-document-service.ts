@@ -55,6 +55,9 @@ import {
   fingerprintFieldFamily,
   fingerprintItems,
 } from './bolu-document-ops'
+import {
+  fingerprintPresentation,
+} from './bolu-presentation'
 
 // Supplementary in-process guard against accidental double-clicks.
 // The database-level unique index on the `operation_id` column is the
@@ -1240,6 +1243,35 @@ function mergeExtraChargesKeepUnknowns(
   })
 }
 
+/** F3-11: a signatory must exist in this tenant before it is attached at Gate 2;
+ * otherwise it is refused, never persisted from model claims. */
+async function signatoryExists(tenantClient: TenantClient, signatoryId: string): Promise<boolean> {
+  try {
+    const res = await (tenantClient.from('signatories') as any)
+      .select('id')
+      .eq('id', signatoryId)
+      .limit(1)
+      .maybeSingle()
+    return !res.error && Boolean(res.data)
+  } catch {
+    return false
+  }
+}
+
+/** Bank accounts must exist in this tenant before they seed the banking block. */
+async function bankAccountExists(tenantClient: TenantClient, bankAccountId: string): Promise<boolean> {
+  try {
+    const res = await (tenantClient.from('bank_accounts') as any)
+      .select('id')
+      .eq('id', bankAccountId)
+      .limit(1)
+      .maybeSingle()
+    return !res.error && Boolean(res.data)
+  } catch {
+    return false
+  }
+}
+
 /** F3-11: project_id must exist as an active (non-archived) project in this
  * tenant before persistence; otherwise it is discarded with a warning,
  * never passed through to risk a PostgreSQL FK failure. */
@@ -1548,6 +1580,68 @@ async function persistDocumentModification(
       pendingCustomFields = { ...base, header: mergedHeader, additionalFields: mergedAdditional }
     }
 
+    // 2.4 Presentation controls — verify the persisted subtree has not drifted,
+    //     revalidate referenced entities, then merge once.
+    if (proposal.presentationChange !== undefined) {
+      const persistedPresentation = {
+        pdfOutput: persistedCf.pdfOutput,
+        notesTitle: persistedCf.notesTitle,
+        termsTitle: persistedCf.termsTitle,
+        chargeLabels: persistedCf.chargeLabels,
+        mergeQtyUnit: persistedCf.mergeQtyUnit,
+        showItemImages: persistedCf.showItemImages,
+        columnConfig: persistedCf.columnConfig,
+        signatoryId: persistedCf.signatoryId,
+      } as Record<string, unknown>
+      if (
+        fingerprintPresentation(persistedPresentation)
+        !== proposal.presentationChange!.fingerprint
+      ) {
+        return {
+          success: false,
+          error: 'The document presentation settings changed after this proposal was prepared. Please review and try again.',
+          ...(warnings.length ? { warnings } : {}),
+        }
+      }
+
+      const nextSubtree = proposal.presentationChange!.new as Record<string, unknown>
+      const signatoryId = typeof nextSubtree.signatoryId === 'string' ? nextSubtree.signatoryId : null
+      if (signatoryId) {
+        if (!(await signatoryExists(tenantClient, signatoryId))) {
+          return {
+            success: false,
+            error: 'The selected signatory is no longer available in your business entity. Reopen the document and choose another signatory.',
+            ...(warnings.length ? { warnings } : {}),
+          }
+        }
+      }
+      const pdfOutputValue = (nextSubtree.pdfOutput ?? {}) as Record<string, unknown>
+      const bankAccountId = typeof pdfOutputValue.bankAccountId === 'string' ? pdfOutputValue.bankAccountId : null
+      if (bankAccountId) {
+        if (!(await bankAccountExists(tenantClient, bankAccountId))) {
+          return {
+            success: false,
+            error: 'The selected bank account is no longer available in your business entity. Reopen the document and choose another account.',
+            ...(warnings.length ? { warnings } : {}),
+          }
+        }
+      }
+
+      const base = pendingCustomFields ?? persistedCf
+      const merged = { ...base }
+      const subtreeKeys = [
+        'pdfOutput', 'notesTitle', 'termsTitle', 'chargeLabels',
+        'mergeQtyUnit', 'showItemImages', 'columnConfig', 'signatoryId',
+      ] as const
+      for (const key of subtreeKeys) delete merged[key]
+      Object.assign(merged, nextSubtree)
+      // Explicit resets map to key deletion (absent key = default at render).
+      for (const key of ['notesTitle', 'termsTitle', 'signatoryId'] as const) {
+        if ((nextSubtree as Record<string, unknown>)[key] === null) delete merged[key]
+      }
+      pendingCustomFields = merged
+    }
+
     // 3. Line item modifications: merge persisted metadata, never rebuild
     //    from the reduced payload alone.
     const chargeFieldChanged =
@@ -1555,8 +1649,9 @@ async function persistDocumentModification(
       proposal.field === 'transportation' ||
       proposal.field === 'shipping'
     const groupsChanged = Array.isArray(proposal.groupsChange) && proposal.groupsChange.length > 0
+    const presentationChanged = proposal.presentationChange !== undefined
     const needsRecalc =
-      Boolean(proposal.itemsChange?.newItems) || chargeFieldChanged || extraChargesChanged || inputsChanged || groupsChanged
+      Boolean(proposal.itemsChange?.newItems) || chargeFieldChanged || extraChargesChanged || inputsChanged || groupsChanged || presentationChanged
     const shouldReplaceItems = Boolean(proposal.itemsChange?.newItems) || groupsChanged
     let currentItems: Array<Record<string, any>> = []
     let itemsToSave: Array<Record<string, any>> = []
@@ -1816,15 +1911,22 @@ async function persistDocumentModification(
         ?? (proposal.extraChargesChange ? 'extra_charges'
           : proposal.calculationInputsChange ? 'calculation_inputs'
             : proposal.customFieldsChange ? 'custom_fields'
-              : proposal.groupsChange ? 'groups' : null),
+              : proposal.groupsChange ? 'groups'
+                : proposal.presentationChange ? 'presentation' : null),
       itemsChanged:
         Boolean(proposal.itemsChange?.newItems) || groupsChanged,
       // Name-only audit markers for block-only changes.
       oldValue: typeof proposal.oldValue === 'object' && proposal.oldValue !== null
-        ? (proposal.customFieldsChange ? '[document fields]' : proposal.groupsChange ? '[groups]' : '[structured text]')
+        ? (proposal.customFieldsChange ? '[document fields]'
+          : proposal.groupsChange ? '[groups]'
+            : proposal.presentationChange ? '[presentation]'
+              : '[structured text]')
         : proposal.oldValue as string | number | null,
       newValue: typeof proposal.newValue === 'object' && proposal.newValue !== null
-        ? (proposal.customFieldsChange ? '[document fields]' : proposal.groupsChange ? '[groups]' : '[structured text]')
+        ? (proposal.customFieldsChange ? '[document fields]'
+          : proposal.groupsChange ? '[groups]'
+            : proposal.presentationChange ? '[presentation]'
+              : '[structured text]')
         : proposal.newValue as string | number | null,
       actor,
     })
