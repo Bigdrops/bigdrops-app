@@ -17,9 +17,11 @@ Use the reports to drive the commits. Make as many commits as the work requires,
 
 Never ask the founder to choose groups, choose commit messages, or reconfirm an explicitly requested workflow.
 
+**Default One-Shot Push Rule:** Keep `git-workflow-master` non-tedious. Execute all eligible task commits and run `git push origin main` immediately by default without asking for confirmation. Skip push ONLY when the user explicitly instructs not to push yet (keeping `sync` + `append` + `verify` idempotent across accumulated local commits).
+
 ## Rules
 
-- Use Git CLI only.
+- Use Git CLI and Node CLI (`scripts/release/`) only.
 - Do not modify application code.
 - Do not run builds or tests.
 - Do not run secret scans.
@@ -44,7 +46,45 @@ Focus first on `docs/reports/`. Use report filenames and their contents to ident
 
 Read the relevant reports. Do not read unrelated documentation. If no reports exist, use the actual changes to determine sensible task groups.
 
-## 2. Let Reports Drive the Commits
+## 2. Update Changelog via `scripts/release/`
+
+`scripts/release/` is the sole automated changelog mutator. Never edit `CHANGELOG.md` or `changelog/ignored.txt` by hand or with improvised scripts.
+
+For completed tasks with reports under `docs/reports/`:
+
+1. **Extract User-Facing Proposals:**
+   - Use `scripts/release/reportProposals.mjs` (`proposalsFromReports`) to extract proposals from completed task reports.
+   - Curate to user-facing entries only: include `feat`, `fix`, `perf`, `revert`.
+   - Exclude internal-only refactors, read-only audits, tests, and chores (`docs`, `chore`, `ci`, `test`, `build`, `style`, `refactor`, `remove`, `deps`, `wip`, `merge`).
+   - If a report contains no user-facing changes, do not generate proposals.
+
+2. **Sync Deleted Unshipped Entries (Tombstones):**
+   - Run `node scripts/release/changelog.mjs sync`.
+   - If an unshipped entry was removed from HEAD, this tombstones its ID into `changelog/ignored.txt`.
+
+3. **Append Proposals:**
+   - Write extracted proposals to a temporary file, then run:
+     `node scripts/release/changelog.mjs append --proposals <proposals.json>`
+   - `append` is strictly idempotent: it never duplicates an existing ID, never rewords manually edited text, preserves bullet ordering and `reissueOf` links, and refuses tombstoned IDs.
+
+4. **Gated Archival (Online & Confirmed Only):**
+   - Run gated archival ONLY when online (`gh auth status` succeeds) AND a release is confirmed across all three states:
+     1. Published GitHub Release exists with its `consumed-ids.json` ledger asset and APK asset.
+     2. Verified APK SHA-256 matches build bytes.
+     3. Synchronized `app_release_policy` (`id = 1`) matches or is ahead.
+   - When confirmed, download the ledger asset and run:
+     `node scripts/release/releaseGate.mjs archive-gated --changelog CHANGELOG.md --tombstones changelog/ignored.txt --record <ledger-file> --version <version> --date <date>`
+   - If offline (`gh` not authenticated, network down) OR unconfirmed (release pending, asset unverified, or policy behind), safely **skip archival without error**. Unshipped and unconfirmed entries remain in `Unreleased` without marking entries consumed and without blocking the local commit/push.
+
+5. **Verify Changelog Integrity:**
+   - Run `node scripts/release/changelog.mjs verify`.
+   - Must output `changelog OK`.
+   - Fails fast locally if there are malformed IDs, untagged bullets, duplicate IDs, or tombstoned entries in `Unreleased`. If verify fails, stop and do not stage or push.
+
+6. **Stage Changelog Changes:**
+   - Stage `CHANGELOG.md` and `changelog/ignored.txt` (if modified) alongside the task's changes or with the authorized commit group.
+
+## 3. Let Reports Drive the Commits
 
 For each relevant report:
 
@@ -81,13 +121,13 @@ Keep the complete commit subject at or below 72 bytes.
 - Do not create empty commits.
 - Do not impose an arbitrary limit on the number of commits.
 
-## 3. Commit Every Eligible Task
+## 4. Commit Every Eligible Task
 
 Process all identifiable, authorized task groups.
 
 For each group:
 
-1. Stage only the files belonging to that task.
+1. Stage only the files belonging to that task (plus `CHANGELOG.md` and `changelog/ignored.txt` if modified).
 2. Inspect the staged diff.
 3. Commit using the report-derived message.
 4. Continue to the next group.
@@ -98,9 +138,11 @@ Preserve existing staged changes. Do not silently unstage another agent's work o
 
 Do not stop to ask routine questions. Resolve ordinary grouping and commit-message decisions from the reports and diffs.
 
-## 4. Push Exactly Once
+## 5. Push Exactly Once (Default One-Shot Push Rule)
 
 After all eligible task groups have been committed, perform one push.
+
+By default, execute `git push origin main` immediately without asking the user for confirmation. Skip push ONLY when the user explicitly instructs not to push yet (e.g. accumulating local commits offline).
 
 Before pushing, check the current branch, configured upstream or intended destination, and outgoing commits. Fetch the remote if needed to establish the remote state.
 
@@ -114,7 +156,7 @@ If the push is rejected or the remote history creates a genuine conflict, stop a
 
 If an unrelated or unsafe task group remains uncommitted, do not include it merely to make the push appear complete. Push the eligible commits when safe and report what remains.
 
-## 5. Final Output
+## 6. Final Output
 
 Keep the report short. Output one line per successful commit, followed by the push result.
 
