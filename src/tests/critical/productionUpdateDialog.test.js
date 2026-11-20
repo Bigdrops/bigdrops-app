@@ -149,10 +149,11 @@ test('web action is conditional and dismissal never cancels the download', () =>
 })
 
 test('production surfaces are responsive across all four viewport classes', () => {
-  assert.match(cssSource, /container:udl \/ inline-size/)
-  assert.match(cssSource, /@container udl \(min-width:600px\)/)
-  assert.match(cssSource, /@container udl \(min-width:768px\)/)
-  assert.match(cssSource, /@container udl \(min-width:1024px\)/)
+  // Tiers key off the viewport: the dialog is deliberately narrow, so a
+  // container query against it would never reach the wider tiers.
+  assert.match(cssSource, /@media \(min-width:600px\)/)
+  assert.match(cssSource, /@media \(min-width:768px\)/)
+  assert.match(cssSource, /@media \(min-width:1024px\)/)
   assert.match(cssSource, /\.udl-gate-page\{[\s\S]*?overflow-x:hidden/)
   assert.match(cssSource, /\.udl-btn\{[\s\S]*?min-height:50px/)
   assert.ok(!cssSource.includes('100vw'), 'no forced viewport-width overflow')

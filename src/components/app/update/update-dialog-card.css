@@ -35,6 +35,7 @@
   --udl-notes-bg:225 75% 48% / .06;
   position:relative;
   width:100%;max-width:26rem;
+  margin-inline:auto;
   overflow:hidden;
   border:1px solid hsl(var(--udl-line));
   border-radius:26px;
@@ -316,21 +317,24 @@
 }
 .udl-btn-secondary:hover{background:hsl(var(--udl-line) / .35)}
 
-/* ── Container tiers: phone → fold open → tablet → desktop ─────────── */
-@container udl (min-width:600px){
+/* ── Viewport tiers: phone → fold open → tablet → desktop ──────────────
+   These key off the viewport, not the dialog's own width: the dialog is
+   deliberately narrow, so a container query against it would never reach
+   the wider tiers and every device would get the phone composition. */
+@media (min-width:600px){
   .udl-card{max-width:34rem;border-radius:28px}
   .udl-card .udl-head{padding:20px 22px 0}
   .udl-card .udl-body{padding:16px 22px 22px}
   .udl-card .udl-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .udl-card .udl-transfer-meta{font-size:.8125rem}
 }
-@container udl (min-width:768px){
+@media (min-width:768px){
   .udl-card{max-width:38rem}
   .udl-card .udl-title{font-size:1.5rem}
   .udl-card .udl-countdown{padding:14px 16px}
   .udl-card .udl-countdown-value{font-size:1.75rem}
 }
-@container udl (min-width:1024px){
+@media (min-width:1024px){
   .udl-card{max-width:31rem;border-radius:30px}
   .udl-card .udl-head{padding:22px 24px 0}
   .udl-card .udl-body{padding:18px 24px 24px}
