@@ -43,13 +43,16 @@ function loadDismissedReleases(): string[] {
   }
 }
 
-/** Release-notice dismissal is separate from acknowledgement and scoped per account. */
+/** Release-notice dismissal is separate from acknowledgement and persists across sessions. */
 export function isReleaseNotificationDismissed(
   versionCode: number,
   platform: 'web' | 'android',
   userId: string | null,
 ): boolean {
-  return loadDismissedReleases().includes(getDismissalKey(versionCode, platform, userId))
+  const dismissed = loadDismissedReleases()
+  const key = getDismissalKey(versionCode, platform, userId)
+  const anonKey = getDismissalKey(versionCode, platform, null)
+  return dismissed.includes(key) || dismissed.includes(anonKey)
 }
 
 export function dismissReleaseNotification(
@@ -60,9 +63,11 @@ export function dismissReleaseNotification(
   const storage = getStorage()
   if (!storage) return false
   const key = getDismissalKey(versionCode, platform, userId)
+  const anonKey = getDismissalKey(versionCode, platform, null)
   try {
     const dismissed = loadDismissedReleases()
     if (!dismissed.includes(key)) dismissed.push(key)
+    if (!dismissed.includes(anonKey)) dismissed.push(anonKey)
     storage.setItem(DISMISSED_RELEASES_KEY, JSON.stringify(dismissed))
     return true
   } catch {
@@ -250,4 +255,143 @@ export function observeInstalledVersion(versionCode: number): InstalledVersionOb
     return { kind: 'upgrade-pending', transition: existing }
   }
   return { kind: 'unchanged', transition: existing }
+}
+
+export const MAX_WEB_NOTIFICATION_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+export const WEB_VERSION_TRANSITION_KEY = 'bigdrops.app_release_acknowledgements.web_transition'
+
+export interface WebVersionTransition {
+  lastSeenVersionCode: number
+  publicationMs: number | null
+  quietBaseline: boolean
+  notifiedVersionCode: number | null
+}
+
+export type WebReleaseObservation =
+  | { kind: 'quiet-baseline'; eligible: false; reason: string }
+  | { kind: 'fresh-release'; eligible: true; reason: string }
+  | { kind: 'new-version'; eligible: true; reason: string }
+  | { kind: 'unchanged'; eligible: boolean; reason: string }
+  | { kind: 'older-version'; eligible: false; reason: string }
+
+function loadWebTransition(): WebVersionTransition | null {
+  const storage = getStorage()
+  if (!storage) return null
+  try {
+    const raw = storage.getItem(WEB_VERSION_TRANSITION_KEY)
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    const record = parsed as Partial<WebVersionTransition>
+    if (!Number.isInteger(record.lastSeenVersionCode) || (record.lastSeenVersionCode ?? 0) <= 0) {
+      return null
+    }
+    return {
+      lastSeenVersionCode: record.lastSeenVersionCode!,
+      publicationMs:
+        typeof record.publicationMs === 'number' && Number.isFinite(record.publicationMs)
+          ? record.publicationMs
+          : null,
+      quietBaseline: Boolean(record.quietBaseline),
+      notifiedVersionCode: Number.isInteger(record.notifiedVersionCode)
+        ? record.notifiedVersionCode!
+        : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+function saveWebTransition(transition: WebVersionTransition): boolean {
+  const storage = getStorage()
+  if (!storage) return false
+  try {
+    storage.setItem(WEB_VERSION_TRANSITION_KEY, JSON.stringify(transition))
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Observe a release on the Web platform.
+ *
+ * Rules:
+ * 1. First encounter on a device with a release published > 7 days ago establishes
+ *    a quiet baseline without opening the banner (eligible: false).
+ * 2. First encounter with a fresh release (<= 7 days old) is eligible to notify (eligible: true).
+ * 3. When policy advances to a newer versionCode (> lastSeenVersionCode):
+ *    - If fresh (<= 7 days old): eligible to notify (eligible: true).
+ *    - If stale (> 7 days old): quiet baseline (eligible: false).
+ * 4. Same version: retains prior eligibility status (quiet baseline stays quiet).
+ */
+export function observeWebRelease({
+  versionCode,
+  publicationMs = null,
+  nowMs = Date.now(),
+}: {
+  versionCode: number
+  publicationMs?: number | null
+  nowMs?: number
+}): WebReleaseObservation {
+  if (!Number.isInteger(versionCode) || versionCode <= 0) {
+    return { kind: 'older-version', eligible: false, reason: 'invalid version code' }
+  }
+
+  const isStale =
+    publicationMs === null ||
+    !Number.isFinite(publicationMs) ||
+    nowMs - publicationMs > MAX_WEB_NOTIFICATION_AGE_MS
+  const existing = loadWebTransition()
+
+  if (!existing) {
+    if (isStale) {
+      saveWebTransition({
+        lastSeenVersionCode: versionCode,
+        publicationMs,
+        quietBaseline: true,
+        notifiedVersionCode: null,
+      })
+      return { kind: 'quiet-baseline', eligible: false, reason: 'first visit with stale release (> 7 days)' }
+    }
+
+    saveWebTransition({
+      lastSeenVersionCode: versionCode,
+      publicationMs,
+      quietBaseline: false,
+      notifiedVersionCode: versionCode,
+    })
+    return { kind: 'fresh-release', eligible: true, reason: 'first visit with fresh release (<= 7 days)' }
+  }
+
+  if (versionCode > existing.lastSeenVersionCode) {
+    if (isStale) {
+      saveWebTransition({
+        lastSeenVersionCode: versionCode,
+        publicationMs,
+        quietBaseline: true,
+        notifiedVersionCode: null,
+      })
+      return { kind: 'quiet-baseline', eligible: false, reason: 'newer version but already stale (> 7 days)' }
+    }
+
+    saveWebTransition({
+      lastSeenVersionCode: versionCode,
+      publicationMs,
+      quietBaseline: false,
+      notifiedVersionCode: versionCode,
+    })
+    return { kind: 'new-version', eligible: true, reason: 'newer release within 7-day window' }
+  }
+
+  if (versionCode < existing.lastSeenVersionCode) {
+    return { kind: 'older-version', eligible: false, reason: 'version is behind last seen' }
+  }
+
+  // Same version
+  if (existing.quietBaseline) {
+    return { kind: 'unchanged', eligible: false, reason: 'quiet baseline already established' }
+  }
+
+  return { kind: 'unchanged', eligible: true, reason: 'version unchanged, eligible for notice if unacknowledged' }
 }

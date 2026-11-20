@@ -13,6 +13,7 @@ import {
   isReleaseNotificationDismissed,
   markReleaseAcknowledgedLocally,
   observeInstalledVersion,
+  observeWebRelease,
   type InstalledVersionObservation,
 } from '@/lib/appUpdate/releaseAcknowledgementLocalStorage'
 import { getAppVersionInfo } from '@/lib/appUpdate/appVersion'
@@ -140,7 +141,21 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
         return
       }
       const policy = validateReleasePolicy(Array.isArray(data) ? data[0] : data)
-      setWebPolicy(policy)
+      setWebPolicy((prev) => {
+        if (!policy) return null
+        if (
+          prev &&
+          prev.versionCode === policy.versionCode &&
+          prev.versionName === policy.versionName &&
+          prev.releaseNotes === policy.releaseNotes &&
+          prev.effectiveAtMs === policy.effectiveAtMs &&
+          prev.mandatory === policy.mandatory &&
+          prev.webReleaseUrl === policy.webReleaseUrl
+        ) {
+          return prev
+        }
+        return policy
+      })
       // A resolved fetch with no valid policy is genuinely "no release",
       // not an unresolved discovery.
       if (!policy) {
@@ -171,6 +186,7 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
       let versionName: string | null
       let releaseNotes: string | null
       let effectiveAtMs: number | null
+      let publicationMs: number | null = null
       let mandatory: boolean
       let androidTransition: InstalledVersionObservation | null = null
 
@@ -213,6 +229,7 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
         versionName = policy.versionName
         releaseNotes = policy.releaseNotes
         effectiveAtMs = policy.effectiveAtMs
+        publicationMs = policy.effectiveAtMs ?? policy.updatedAtMs ?? null
         mandatory = policy.mandatory
       } else {
         const policy = webPolicy
@@ -221,6 +238,7 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
         versionName = policy.versionName
         releaseNotes = policy.releaseNotes
         effectiveAtMs = policy.effectiveAtMs
+        publicationMs = policy.effectiveAtMs ?? policy.updatedAtMs ?? null
         mandatory = policy.mandatory
       }
 
@@ -248,15 +266,34 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
         setCurrentBanner(null)
       }
 
-      const acknowledged = userId
-        ? await isReleaseAcknowledgedByUser(versionCode, platform)
-        : isReleaseAcknowledgedLocally(versionCode, platform)
+      // Check both local and remote acknowledgement so auth transitions
+      // never resurrect an acknowledged release
+      const localAck = isReleaseAcknowledgedLocally(versionCode, platform)
+      let userAck = false
+      if (userId) {
+        const res = await isReleaseAcknowledgedByUser(versionCode, platform)
+        userAck = Boolean(res && (typeof res === 'boolean' ? res : res.acknowledged))
+        if (userAck && !localAck) {
+          markReleaseAcknowledgedLocally(versionCode, platform)
+        }
+      }
       if (!active || evaluationId.current !== id) return
-      const isAcknowledged = Boolean(
-        acknowledged && (typeof acknowledged === 'boolean' ? acknowledged : acknowledged.acknowledged),
-      )
+      const isAcknowledged = Boolean(localAck || userAck)
+
       const key = `${versionCode}-${platform}-${userId ?? 'anonymous'}`
       const isDismissed = isReleaseNotificationDismissed(versionCode, platform, userId)
+
+      // On Web, evaluate publication age and seen-version baseline
+      let webEligible = true
+      if (platform === 'web') {
+        const observation = observeWebRelease({
+          versionCode,
+          publicationMs,
+          nowMs: Date.now(),
+        })
+        webEligible = observation.eligible
+      }
+
       const banner: ReleaseNotificationBannerContent = {
         key,
         versionLabel: versionName || `v${versionCode}`,
@@ -277,7 +314,7 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
       )
       setAcknowledged(isAcknowledged)
       setDismissed(isDismissed)
-      setBannerOpen(!isAcknowledged && !isDismissed)
+      setBannerOpen(webEligible && !isAcknowledged && !isDismissed && parsed.entries.length > 0)
     }
 
     void evaluate().catch(() => {
@@ -314,6 +351,7 @@ export function useReleaseNotifications(options: { enabled: boolean }): UseRelea
     try {
       if (userId) {
         await markReleaseAcknowledgedByUser(banner.versionCode, platform, userId)
+        markReleaseAcknowledgedLocally(banner.versionCode, platform)
       } else {
         const result = markReleaseAcknowledgedLocally(banner.versionCode, platform)
         if (!result.persisted) return

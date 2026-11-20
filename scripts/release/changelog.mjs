@@ -40,6 +40,21 @@ export const DEVELOPER_ONLY_TYPES = new Set([
 /** Commit types that do produce a user-facing changelog entry. */
 export const USER_FACING_TYPES = new Set(['feat', 'fix', 'perf', 'revert'])
 
+/**
+ * Exact historical generic maintenance/performance placeholders
+ * (covering BOURXE and BOUXRE spelling variants and generic boilerplate)
+ * that carry no meaningful user-facing changelog content.
+ */
+export const LEGACY_PLACEHOLDER_PATTERN =
+  /^\s*(?:(?:BOUXRE|BOURXE)\s+v?\d+(?:\.\d+)*\s*(?:\(build\s+\d+\))?[:\s—–-]*)?(?:maintenance\s+and\s+performance\s+update|performance\s+and\s+maintenance\s+update)\.?\s*$/i
+
+export function isLegacyPlaceholder(notes) {
+  if (typeof notes !== 'string') return false
+  const normalized = notes.trim().replace(/\s+/g, ' ')
+  if (!normalized) return false
+  return LEGACY_PLACEHOLDER_PATTERN.test(normalized)
+}
+
 // ---------------------------------------------------------------------------
 // Identity
 // ---------------------------------------------------------------------------

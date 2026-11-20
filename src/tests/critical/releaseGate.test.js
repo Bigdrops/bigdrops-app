@@ -1,5 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 
 import {
   stripIdComments,
@@ -18,6 +22,11 @@ import {
   verifyStorageRetentionInvariant,
   MAX_RETAINED_APKS,
   PREVIOUS_APK_MAX_AGE_MS,
+  isLegacyPreLedgerRelease,
+  isLegacyPlaceholder,
+  validateReleaseNotes,
+  loadLedger,
+  RECORD_SCHEMA,
 } from '../../../scripts/release/releaseGate.mjs'
 import { createEmptyChangelog, appendEntries, archiveEntries, parseChangelog, idForKey } from '../../../scripts/release/changelog.mjs'
 
@@ -687,3 +696,431 @@ test('verifyStorageRetentionInvariant enforces invariant rules', () => {
   assert.equal(missingLatest.ok, false)
   assert.match(missingLatest.mismatches.join('; '), /latest active APK .* is missing/)
 })
+
+test('isLegacyPreLedgerRelease identifies pre-ledger runs, legacy tags, and timestamps', () => {
+  // Historical runs 1-29 are legacy
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'test-release-run29' }), true)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'test-release-run1' }), true)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'test-release-run15' }), true)
+
+  // Run 30+ is ledger era (not legacy)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'test-release-run30' }), false)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'test-release-run31' }), false)
+
+  // Non-run historical tag formats
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'test-release-20260913-1900' }), true)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'v1.0.0-debug' }), true)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'checkpoint/pre-forms-standardization' }), true)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'debug-20260910-081049' }), true)
+
+  // Timestamp before 2026-11-19T00:00:00Z
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'custom-tag', publishedAt: '2026-11-18T17:16:16Z' }), true)
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'custom-tag', createdAt: '2026-11-02T10:00:00Z' }), true)
+
+  // Timestamp after 2026-11-19T00:00:00Z without legacy tag
+  assert.equal(isLegacyPreLedgerRelease({ tag: 'custom-tag', publishedAt: '2026-11-20T00:00:00Z' }), false)
+  assert.equal(isLegacyPreLedgerRelease({ tag: '' }), false)
+  assert.equal(isLegacyPreLedgerRelease({}), false)
+})
+
+test('isLegacyPlaceholder and validateReleaseNotes detect historical generic boilerplate', () => {
+  // Exact historical run 29 placeholder (both BOURXE and BOUXRE spellings)
+  assert.equal(isLegacyPlaceholder('BOURXE v1.0.29 (build 1029) maintenance and performance update.'), true)
+  assert.equal(isLegacyPlaceholder('BOUXRE v1.0.29 (build 1029) maintenance and performance update.'), true)
+  assert.equal(isLegacyPlaceholder('BOUXRE v1.0.30 (build 1030) maintenance and performance update'), true)
+  assert.equal(isLegacyPlaceholder('maintenance and performance update.'), true)
+  assert.equal(isLegacyPlaceholder('performance and maintenance update'), true)
+  assert.equal(isLegacyPlaceholder('   BOURXE v1.0.29 \n maintenance and performance update.  '), true)
+
+  // Legitimate bullets and release notes are not placeholders
+  assert.equal(isLegacyPlaceholder('- Performance: optimize image rendering'), false)
+  assert.equal(isLegacyPlaceholder('- Maintenance: clean up temporary storage'), false)
+  assert.equal(isLegacyPlaceholder('- Maintenance and performance update: faster reports'), false)
+  assert.equal(isLegacyPlaceholder('Fixed customer tax calculation bug'), false)
+
+  // validateReleaseNotes rejects placeholders and empty notes
+  assert.deepEqual(validateReleaseNotes(''), { ok: false, reason: 'release notes are empty' })
+  assert.deepEqual(validateReleaseNotes('BOURXE v1.0.29 (build 1029) maintenance and performance update.'), {
+    ok: false,
+    reason: 'release notes contain only generic placeholder',
+  })
+  assert.deepEqual(validateReleaseNotes('- Performance: optimize image rendering'), {
+    ok: true,
+    reason: null,
+  })
+})
+
+test('validateReleaseNotes rejects null, undefined, empty, and whitespace strings', () => {
+  assert.deepEqual(validateReleaseNotes(''), { ok: false, reason: 'release notes are empty' })
+  assert.deepEqual(validateReleaseNotes('   \n\t  '), { ok: false, reason: 'release notes are empty' })
+  assert.deepEqual(validateReleaseNotes(null), { ok: false, reason: 'release notes are empty' })
+  assert.deepEqual(validateReleaseNotes(undefined), { ok: false, reason: 'release notes are empty' })
+})
+
+test('validateReleaseNotes rejects historical generic placeholders across variants', () => {
+  const placeholders = [
+    'BOURXE v1.0.29 (build 1029) maintenance and performance update.',
+    'BOUXRE v1.0.29 (build 1029) maintenance and performance update.',
+    'BOUXRE v1.0.30 (build 1030) maintenance and performance update',
+    'BOURXE v1.0.30 (build 1030): maintenance and performance update',
+    'maintenance and performance update.',
+    'performance and maintenance update',
+    '  BOUXRE v1.0.29 \n maintenance and performance update.  ',
+  ]
+  for (const ph of placeholders) {
+    const res = validateReleaseNotes(ph)
+    assert.equal(res.ok, false, `Expected placeholder rejection for: ${ph}`)
+    assert.equal(res.reason, 'release notes contain only generic placeholder')
+  }
+})
+
+test('validateReleaseNotes accepts legitimate user-facing and maintenance/performance bullets', () => {
+  const legitimate = [
+    '- Fix: Resolve tax calculation rounding in receipt generation',
+    '- Feature: Offline sync retry with exponential backoff',
+    '- Maintenance: Clean up stale SQLite cache databases',
+    '- Performance: Optimize startup query roundtrips',
+    '- Maintenance and performance update: faster report generation and smaller memory footprint',
+    '### Fixes\n- Correct currency formatting on POS thermal printer output',
+  ]
+  for (const text of legitimate) {
+    const res = validateReleaseNotes(text)
+    assert.equal(res.ok, true, `Expected acceptance for legitimate notes: ${text}`)
+    assert.equal(res.reason, null)
+  }
+})
+
+test('CLI validate-notes --file enforces validation gate and exit codes', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'release-gate-test-'))
+  try {
+    const validFile = join(dir, 'valid.txt')
+    writeFileSync(validFile, '- Fix: POS invoice tax calculation\n- Perf: faster sync', 'utf8')
+    const validOut = execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', validFile], { encoding: 'utf8' })
+    const parsedValid = JSON.parse(validOut.trim())
+    assert.equal(parsedValid.ok, true)
+    assert.equal(parsedValid.reason, null)
+
+    const emptyFile = join(dir, 'empty.txt')
+    writeFileSync(emptyFile, '', 'utf8')
+    assert.throws(
+      () => execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', emptyFile], { encoding: 'utf8' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const parsed = JSON.parse(err.stdout.trim())
+        assert.equal(parsed.ok, false)
+        assert.equal(parsed.reason, 'release notes are empty')
+        return true
+      }
+    )
+
+    const whitespaceFile = join(dir, 'whitespace.txt')
+    writeFileSync(whitespaceFile, '   \n\t \n  ', 'utf8')
+    assert.throws(
+      () => execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', whitespaceFile], { encoding: 'utf8' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const parsed = JSON.parse(err.stdout.trim())
+        assert.equal(parsed.ok, false)
+        assert.equal(parsed.reason, 'release notes are empty')
+        return true
+      }
+    )
+
+    const placeholderFile = join(dir, 'placeholder.txt')
+    writeFileSync(placeholderFile, 'BOURXE v1.0.29 (build 1029) maintenance and performance update.', 'utf8')
+    assert.throws(
+      () => execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', placeholderFile], { encoding: 'utf8' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const parsed = JSON.parse(err.stdout.trim())
+        assert.equal(parsed.ok, false)
+        assert.equal(parsed.reason, 'release notes contain only generic placeholder')
+        return true
+      }
+    )
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('validateReleaseNotes validates consistency between notes and eligible IDs', () => {
+  assert.deepEqual(validateReleaseNotes('- Fix: user invoice bug', { ids: ['id-1'] }), { ok: true, reason: null })
+  assert.deepEqual(validateReleaseNotes('- Fix: user invoice bug', { ids: [] }), { ok: false, reason: 'consumed entry ids is empty' })
+  assert.deepEqual(validateReleaseNotes('- Fix: user invoice bug', { ids: 'not-an-array' }), { ok: false, reason: 'consumed entry ids is not an array' })
+  assert.deepEqual(validateReleaseNotes('', { ids: ['id-1'] }), { ok: false, reason: 'release notes are empty' })
+  assert.deepEqual(validateReleaseNotes('BOURXE v1.0.29 (build 1029) maintenance and performance update.', { ids: ['id-1'] }), {
+    ok: false,
+    reason: 'release notes contain only generic placeholder',
+  })
+})
+
+test('CLI validate-notes --file and --ids enforces fail-closed exit behavior', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'release-gate-test-'))
+  try {
+    const validNotes = join(dir, 'notes.txt')
+    writeFileSync(validNotes, '- Fix: invoice calculation bug\n- Perf: faster startup', 'utf8')
+    const validIds = join(dir, 'ids.json')
+    writeFileSync(validIds, JSON.stringify(['id-1', 'id-2']), 'utf8')
+
+    // Valid notes + valid IDs -> exit 0
+    const out = execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', validNotes, '--ids', validIds], { encoding: 'utf8' })
+    const parsed = JSON.parse(out.trim())
+    assert.equal(parsed.ok, true)
+    assert.equal(parsed.reason, null)
+
+    // Valid notes + empty IDs -> exit 1
+    const emptyIds = join(dir, 'empty-ids.json')
+    writeFileSync(emptyIds, JSON.stringify([]), 'utf8')
+    assert.throws(
+      () => execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', validNotes, '--ids', emptyIds], { encoding: 'utf8' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const res = JSON.parse(err.stdout.trim())
+        assert.equal(res.ok, false)
+        assert.equal(res.reason, 'consumed entry ids is empty')
+        return true
+      }
+    )
+
+    // Valid notes + malformed IDs -> exit 1
+    const malformedIds = join(dir, 'malformed-ids.json')
+    writeFileSync(malformedIds, '{not json', 'utf8')
+    assert.throws(
+      () => execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', validNotes, '--ids', malformedIds], { encoding: 'utf8' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const res = JSON.parse(err.stdout.trim())
+        assert.equal(res.ok, false)
+        assert.equal(res.reason, 'malformed ids json')
+        return true
+      }
+    )
+
+    // Missing notes file -> exit 1
+    assert.throws(
+      () => execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', join(dir, 'missing-notes.txt')], { encoding: 'utf8' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const res = JSON.parse(err.stdout.trim())
+        assert.equal(res.ok, false)
+        assert.match(res.reason, /notes file not found/)
+        return true
+      }
+    )
+
+    // Missing ids file -> exit 1
+    assert.throws(
+      () => execFileSync(process.execPath, ['scripts/release/releaseGate.mjs', 'validate-notes', '--file', validNotes, '--ids', join(dir, 'missing-ids.json')], { encoding: 'utf8' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const res = JSON.parse(err.stdout.trim())
+        assert.equal(res.ok, false)
+        assert.match(res.reason, /ids file not found/)
+        return true
+      }
+    )
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('loadLedger and validate-ledger enforce ledger integrity and fail closed on corruption', () => {
+  // Corrupt JSON text throws
+  assert.throws(() => loadLedger('{not json'), /Unexpected token|in JSON/)
+
+  // Missing ledger throws unless allowMissing is set
+  assert.throws(() => loadLedger('', { allowMissing: false }), /consumed ledger is missing/)
+  assert.deepEqual(loadLedger('', { allowMissing: true }), { schema: RECORD_SCHEMA, releases: [] })
+
+  // Corrupted record structure (missing sha or invalid versionCode)
+  assert.throws(() => loadLedger(JSON.stringify({ schema: 2, releases: [{ versionCode: 'bad' }] })), /invalid build sha|malformed consumed record/)
+
+  // Conflicting builds for the same versionCode
+  const recordA = record({ versionCode: 1030, sha: '1'.repeat(40), tag: 'test-release-run30' })
+  const recordB = record({ versionCode: 1030, sha: '2'.repeat(40), tag: 'test-release-run30-conflict' })
+  assert.throws(
+    () => loadLedger(JSON.stringify({ schema: 2, releases: [recordA, recordB] })),
+    /conflicting consumed records for version 1030/
+  )
+})
+
+test('Step 3d shell validation logic handles zero entries, malformed counts, and shell arithmetic safely', () => {
+  // Find a bash binary if available (Git bash or system bash)
+  const bashPaths = [
+    'C:\\Program Files\\Git\\bin\\bash.exe',
+    'C:\\Program Files\\Git\\usr\\bin\\bash.exe',
+    'bash',
+  ]
+  const bashExe = bashPaths.find((p) => {
+    try {
+      execFileSync(p, ['-c', 'echo ok'], { encoding: 'utf8', stdio: 'pipe' })
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  if (!bashExe) return // Skip executable shell test if bash is unavailable in this environment
+
+  const dir = mkdtempSync(join(tmpdir(), 'shell-gate-test-'))
+  try {
+    const testCases = [
+      {
+        name: 'zero entries',
+        idsContent: '[]',
+        notesContent: '- Some note',
+        expectedError: 'zero eligible changelog entries found (ENTRY_COUNT=0)',
+      },
+      {
+        name: 'malformed non-numeric ENTRY_COUNT',
+        idsContent: 'not-json',
+        notesContent: '- Some note',
+        expectedError: 'ENTRY_COUNT is non-numeric or malformed',
+      },
+      {
+        name: 'empty notes file',
+        idsContent: '["id-1"]',
+        notesContent: '   \n  ',
+        expectedError: 'generated release notes file is empty or whitespace-only',
+      },
+      {
+        name: 'placeholder notes file',
+        idsContent: '["id-1"]',
+        notesContent: 'BOURXE v1.0.29 (build 1029) maintenance and performance update.',
+        expectedError: 'notes contain generic placeholder content or failed validation against eligible IDs',
+      },
+    ]
+
+    for (const tc of testCases) {
+      const idsFile = join(dir, `ids-${tc.name.replace(/\\s+/g, '-')}.json`)
+      const notesFile = join(dir, `notes-${tc.name.replace(/\\s+/g, '-')}.txt`)
+      writeFileSync(idsFile, tc.idsContent, 'utf8')
+      writeFileSync(notesFile, tc.notesContent, 'utf8')
+
+      // Exact shell logic from Step 3d
+      const script = `
+set -euo pipefail
+IDS_FILE="${idsFile.replace(/\\\\/g, '/')}"
+NOTES_FILE="${notesFile.replace(/\\\\/g, '/')}"
+
+ENTRY_COUNT=$(bun -e "
+  try {
+    const data = JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8'));
+    if (!Array.isArray(data)) { process.stdout.write('INVALID'); process.exit(0); }
+    process.stdout.write(String(data.length));
+  } catch (err) {
+    process.stdout.write('INVALID');
+  }
+" "$IDS_FILE" 2>/dev/null || echo "INVALID")
+
+case "$ENTRY_COUNT" in
+  ''|*[!0-9]*)
+    echo "::error::Release notes validation failed: ENTRY_COUNT is non-numeric or malformed ('$ENTRY_COUNT')."
+    exit 1
+    ;;
+esac
+
+if [ "$ENTRY_COUNT" -eq 0 ]; then
+  echo "::error::Release notes validation failed: zero eligible changelog entries found (ENTRY_COUNT=0). Refusing to publish release without user-facing notes."
+  exit 1
+fi
+
+if [ ! -s "$NOTES_FILE" ] || [ -z "$(tr -d '[:space:]' < "$NOTES_FILE")" ]; then
+  echo "::error::Release notes validation failed: generated release notes file is empty or whitespace-only."
+  exit 1
+fi
+
+if ! bun scripts/release/releaseGate.mjs validate-notes --file "$NOTES_FILE" --ids "$IDS_FILE"; then
+  echo "::error::Release notes validation failed: notes contain generic placeholder content or failed validation against eligible IDs."
+  exit 1
+fi
+`
+      assert.throws(
+        () => execFileSync(bashExe, ['-c', script], { encoding: 'utf8', stdio: 'pipe' }),
+        (err) => {
+          assert.equal(err.status, 1, `Expected exit 1 for ${tc.name}`)
+          const output = `${err.stdout || ''}\n${err.stderr || ''}`
+          assert.ok(
+            output.includes(tc.expectedError),
+            `Expected '${tc.expectedError}' in output for ${tc.name}, got:\n${output}`
+          )
+          return true
+        }
+      )
+    }
+
+    // Valid notes + valid IDs -> should exit 0
+    const validIdsFile = join(dir, 'valid_ids.json')
+    const validNotesFile = join(dir, 'valid_notes.txt')
+    writeFileSync(validIdsFile, JSON.stringify(['id-100']), 'utf8')
+    writeFileSync(validNotesFile, '- Fix: POS receipt tax rounding issue\n- Perf: faster local cache loading', 'utf8')
+
+    const successScript = `
+set -euo pipefail
+IDS_FILE="${validIdsFile.replace(/\\\\/g, '/')}"
+NOTES_FILE="${validNotesFile.replace(/\\\\/g, '/')}"
+
+ENTRY_COUNT=$(bun -e "
+  try {
+    const data = JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8'));
+    if (!Array.isArray(data)) { process.stdout.write('INVALID'); process.exit(0); }
+    process.stdout.write(String(data.length));
+  } catch (err) {
+    process.stdout.write('INVALID');
+  }
+" "$IDS_FILE" 2>/dev/null || echo "INVALID")
+
+case "$ENTRY_COUNT" in
+  ''|*[!0-9]*)
+    echo "::error::Release notes validation failed: ENTRY_COUNT is non-numeric or malformed ('$ENTRY_COUNT')."
+    exit 1
+    ;;
+esac
+
+if [ "$ENTRY_COUNT" -eq 0 ]; then
+  echo "::error::Release notes validation failed: zero eligible changelog entries found (ENTRY_COUNT=0). Refusing to publish release without user-facing notes."
+  exit 1
+fi
+
+if [ ! -s "$NOTES_FILE" ] || [ -z "$(tr -d '[:space:]' < "$NOTES_FILE")" ]; then
+  echo "::error::Release notes validation failed: generated release notes file is empty or whitespace-only."
+  exit 1
+fi
+
+if ! bun scripts/release/releaseGate.mjs validate-notes --file "$NOTES_FILE" --ids "$IDS_FILE"; then
+  echo "::error::Release notes validation failed: notes contain generic placeholder content or failed validation against eligible IDs."
+  exit 1
+fi
+echo "GATE_PASSED"
+`
+    const successOut = execFileSync(bashExe, ['-c', successScript], { encoding: 'utf8', stdio: 'pipe' })
+    assert.ok(successOut.includes('GATE_PASSED'))
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('build-android-test-release.yml enforces fail-closed release-notes validation before JDK/build steps', () => {
+  const workflowPath = resolve(process.cwd(), '.github/workflows/build-android-test-release.yml')
+  const content = readFileSync(workflowPath, 'utf8')
+
+  const notesStepIdx = content.indexOf('id: notes')
+  const jdkStepIdx = content.indexOf('name: Set up JDK 21')
+  const assembleIdx = content.indexOf('assembleRelease')
+
+  assert.ok(notesStepIdx > 0, 'id: notes step must exist')
+  assert.ok(jdkStepIdx > 0, 'Set up JDK 21 step must exist')
+  assert.ok(assembleIdx > 0, 'assembleRelease step must exist')
+  assert.ok(notesStepIdx < jdkStepIdx, 'Release notes generation must strictly precede JDK setup')
+  assert.ok(jdkStepIdx < assembleIdx, 'JDK setup must precede assembleRelease')
+
+  const notesBlock = content.slice(notesStepIdx, jdkStepIdx)
+  assert.match(notesBlock, /\[ "\$ENTRY_COUNT" -eq 0 \]/, 'Must reject zero eligible entries')
+  assert.match(notesBlock, /ENTRY_COUNT is non-numeric or malformed/, 'Must validate ENTRY_COUNT format')
+  assert.match(notesBlock, /\[ ! -s "\$NOTES_FILE" \] \|\| \[ -z "\$\(tr -d '\[:space:\]' < "\$NOTES_FILE"\)" \]/, 'Must reject empty or whitespace notes')
+  assert.match(notesBlock, /bun scripts\/release\/releaseGate\.mjs validate-notes --file "\$NOTES_FILE" --ids "\$IDS_FILE"/, 'Must invoke validate-notes on exact NOTES_FILE with IDS_FILE')
+  assert.match(notesBlock, /::error::Release notes validation failed: zero eligible changelog entries found/, 'Must emit GitHub Actions error on zero entries')
+  assert.match(notesBlock, /::error::Release notes validation failed: generated release notes file is empty or whitespace-only/, 'Must emit GitHub Actions error on empty notes')
+  assert.match(notesBlock, /::error::Release notes validation failed: notes contain generic placeholder content/, 'Must emit GitHub Actions error on placeholder notes')
+})
+

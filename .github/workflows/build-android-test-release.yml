@@ -118,8 +118,11 @@ jobs:
       # ── 3b. Fetch the durable consumed-ID ledger ───────────────────────
       # The authoritative ledger is the `consumed-ids.json` asset on the most
       # recent GitHub Release, not a finite-retention Actions artifact. A
-      # missing ledger is valid ONLY when no release exists at all (first
-      # release). A release without its ledger, or a malformed/conflicting
+      # missing ledger is valid ONLY when:
+      #   1. No release exists at all (first release, first_release=true);
+      #   2. The prior release demonstrably predates ledger publication (legacy
+      #      bootstrap, legacy_ledger_bootstrap=true).
+      # A post-bootstrap release without its ledger, or a malformed/conflicting
       # ledger, is a hard stop.
       - name: Fetch consumed-ID ledger
         id: ledger
@@ -139,16 +142,55 @@ jobs:
             echo "No prior release found; treating ledger as empty (first release)."
             printf '{"schema":2,"releases":[]}\n' > "$LEDGER_FILE"
             echo "first_release=true" >> "$GITHUB_OUTPUT"
+            echo "legacy_ledger_bootstrap=false" >> "$GITHUB_OUTPUT"
           else
             echo "Prior release: $LATEST_TAG"
-            if ! gh release download "$LATEST_TAG" --pattern 'consumed-ids.json' \
-                --dir "$RUNNER_TEMP" --clobber >/dev/null 2>&1; then
-              echo "::error::Release $LATEST_TAG has no consumed-ids.json asset. Refusing to guess consumed state."
+            RELEASE_META=$(gh release view "$LATEST_TAG" --json tagName,createdAt,publishedAt,assets 2>/dev/null || true)
+            if [ -z "$RELEASE_META" ]; then
+              echo "::error::Could not query release metadata for $LATEST_TAG."
               exit 1
             fi
-            mv "$RUNNER_TEMP/consumed-ids.json" "$LEDGER_FILE"
-            bun scripts/release/releaseGate.mjs validate-ledger --ledger "$LEDGER_FILE"
-            echo "first_release=false" >> "$GITHUB_OUTPUT"
+            HAS_LEDGER=$(bun -e '
+              const meta = JSON.parse(process.argv[1]);
+              const names = (meta.assets || []).map(a => a.name);
+              process.stdout.write(names.includes("consumed-ids.json") ? "true" : "false");
+            ' "$RELEASE_META")
+
+            if [ "$HAS_LEDGER" = "true" ]; then
+              if ! gh release download "$LATEST_TAG" --pattern 'consumed-ids.json' \
+                  --dir "$RUNNER_TEMP" --clobber >/dev/null 2>&1; then
+                echo "::error::Release $LATEST_TAG lists consumed-ids.json but download failed."
+                exit 1
+              fi
+              mv "$RUNNER_TEMP/consumed-ids.json" "$LEDGER_FILE"
+              if ! bun scripts/release/releaseGate.mjs validate-ledger --ledger "$LEDGER_FILE"; then
+                echo "::error::Release $LATEST_TAG has a malformed or corrupted consumed-ids.json ledger."
+                exit 1
+              fi
+              echo "first_release=false" >> "$GITHUB_OUTPUT"
+              echo "legacy_ledger_bootstrap=false" >> "$GITHUB_OUTPUT"
+            else
+              IS_LEGACY=$(bun -e '
+                const { isLegacyPreLedgerRelease } = await import("./scripts/release/releaseGate.mjs");
+                const meta = JSON.parse(process.argv[1]);
+                const result = isLegacyPreLedgerRelease({
+                  tag: meta.tagName,
+                  publishedAt: meta.publishedAt,
+                  createdAt: meta.createdAt
+                });
+                process.stdout.write(result ? "true" : "false");
+              ' "$RELEASE_META")
+
+              if [ "$IS_LEGACY" = "true" ]; then
+                echo "Prior release $LATEST_TAG predates consumed-ID ledger publication. Initializing legacy migration baseline."
+                printf '{"schema":2,"releases":[]}\n' > "$LEDGER_FILE"
+                echo "first_release=false" >> "$GITHUB_OUTPUT"
+                echo "legacy_ledger_bootstrap=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "::error::Release $LATEST_TAG has no consumed-ids.json asset. Refusing to guess consumed state."
+                exit 1
+              fi
+            fi
           fi
           echo "ledger_file=$LEDGER_FILE" >> "$GITHUB_OUTPUT"
 
@@ -204,19 +246,61 @@ jobs:
           BUILD_SHA: ${{ steps.meta.outputs.build_sha }}
           LEDGER_FILE: ${{ steps.ledger.outputs.ledger_file }}
           FIRST_RELEASE: ${{ steps.ledger.outputs.first_release }}
+          LEGACY_BOOTSTRAP: ${{ steps.ledger.outputs.legacy_ledger_bootstrap }}
         run: |
           set -euo pipefail
           NOTES_FILE="$RUNNER_TEMP/release-notes.txt"
           IDS_FILE="$RUNNER_TEMP/release-ids.json"
 
           ALLOW_FLAG=""
-          if [ "$FIRST_RELEASE" = "true" ]; then ALLOW_FLAG="--allow-missing-ledger true"; fi
+          if [ "$FIRST_RELEASE" = "true" ] || [ "${LEGACY_BOOTSTRAP:-false}" = "true" ]; then ALLOW_FLAG="--allow-missing-ledger true"; fi
           bun scripts/release/releaseGate.mjs build-notes \
             --sha "$BUILD_SHA" --ledger "$LEDGER_FILE" \
             --before-version-code "$VERSION_CODE" $ALLOW_FLAG \
             --out "$NOTES_FILE" --ids-out "$IDS_FILE"
 
-          ENTRY_COUNT=$(bun -e "console.log(JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8')).length)" "$IDS_FILE")
+          if [ ! -f "$IDS_FILE" ]; then
+            echo "::error::Release notes validation failed: generated IDs file '$IDS_FILE' is missing."
+            exit 1
+          fi
+
+          ENTRY_COUNT=$(bun -e "
+            try {
+              const data = JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8'));
+              if (!Array.isArray(data)) { process.stdout.write('INVALID'); process.exit(0); }
+              process.stdout.write(String(data.length));
+            } catch (err) {
+              process.stdout.write('INVALID');
+            }
+          " "$IDS_FILE" 2>/dev/null || echo "INVALID")
+
+          case "$ENTRY_COUNT" in
+            ''|*[!0-9]*)
+              echo "::error::Release notes validation failed: ENTRY_COUNT is non-numeric or malformed ('$ENTRY_COUNT')."
+              exit 1
+              ;;
+          esac
+
+          if [ "$ENTRY_COUNT" -eq 0 ]; then
+            echo "::error::Release notes validation failed: zero eligible changelog entries found (ENTRY_COUNT=0). Refusing to publish release without user-facing notes."
+            exit 1
+          fi
+
+          if [ ! -f "$NOTES_FILE" ]; then
+            echo "::error::Release notes validation failed: generated release notes file '$NOTES_FILE' is missing."
+            exit 1
+          fi
+
+          if [ ! -s "$NOTES_FILE" ] || [ -z "$(tr -d '[:space:]' < "$NOTES_FILE")" ]; then
+            echo "::error::Release notes validation failed: generated release notes file is empty or whitespace-only."
+            exit 1
+          fi
+
+          if ! bun scripts/release/releaseGate.mjs validate-notes --file "$NOTES_FILE" --ids "$IDS_FILE"; then
+            echo "::error::Release notes validation failed: notes contain generic placeholder content or failed validation against eligible IDs."
+            exit 1
+          fi
+
           echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
           echo "ids_file=$IDS_FILE" >> "$GITHUB_OUTPUT"
           echo "entry_count=$ENTRY_COUNT" >> "$GITHUB_OUTPUT"

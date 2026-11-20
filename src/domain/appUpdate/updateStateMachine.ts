@@ -53,6 +53,8 @@ export interface ReleasePolicyInput {
   mandatory: boolean
   /** Server timestamp (ms) when the mandatory countdown starts. */
   effectiveAtMs: number | null
+  /** Server timestamp (ms) when the policy row was last updated. */
+  updatedAtMs?: number | null
   /** Required APK asset name prefix, e.g. "BIGDROPS-test-release-". */
   apkAssetPrefix: string
   /** Approved external release/download destination (https only). */
@@ -163,6 +165,17 @@ export function validateReleasePolicy(raw: unknown): ReleasePolicyInput | null {
     effectiveAtMs = parsed
   }
 
+  let updatedAtMs: number | null = null
+  if (row.updated_at !== null && row.updated_at !== undefined) {
+    const parsed = new Date(String(row.updated_at)).getTime()
+    if (Number.isFinite(parsed)) {
+      updatedAtMs = parsed
+      if (effectiveAtMs === null) {
+        effectiveAtMs = parsed
+      }
+    }
+  }
+
   let webReleaseUrl: string | null = null
   if (row.web_release_url !== null && row.web_release_url !== undefined) {
     const rawUrl = String(row.web_release_url).trim()
@@ -182,7 +195,7 @@ export function validateReleasePolicy(raw: unknown): ReleasePolicyInput | null {
       ? row.release_notes.trim()
       : null
 
-  return { versionCode, versionName, mandatory, effectiveAtMs, apkAssetPrefix, webReleaseUrl, releaseNotes }
+  return { versionCode, versionName, mandatory, effectiveAtMs, updatedAtMs, apkAssetPrefix, webReleaseUrl, releaseNotes }
 }
 
 // ── Version comparison ─────────────────────────────────────────────────

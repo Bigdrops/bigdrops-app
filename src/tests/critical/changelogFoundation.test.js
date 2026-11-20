@@ -18,6 +18,7 @@ import {
   parseTombstones,
   ID_PATTERN,
 } from '../../../scripts/release/changelog.mjs'
+import { parseReleaseNotes, isLegacyPlaceholder } from '../../domain/appUpdate/changelog.ts'
 
 const entry = (id, text) => `<!-- id: ${id} -->\n- ${text}`
 const doc = (...entries) => `# BOUXRE Changelog\n\n## Unreleased\n\n${entries.join('\n\n')}\n\n<!-- archive-boundary -->\n`
@@ -237,4 +238,33 @@ test('compute-notes excludes tombstoned-by-absence entries from a later release'
   const notes = computeNotes(head, snapshot)
   assert.equal(notes, '')
   assert.doesNotMatch(notes, /Deleted/)
+})
+
+test('parseReleaseNotes suppresses historical generic placeholders and keeps honest empty state', () => {
+  // Historical run 29 exact placeholder
+  const run29Notes = 'BOURXE v1.0.29 (build 1029) maintenance and performance update.'
+  assert.equal(isLegacyPlaceholder(run29Notes), true)
+  assert.deepEqual(parseReleaseNotes(run29Notes), { entries: [] })
+
+  // BOUXRE spelling variant
+  const bouxreNotes = 'BOUXRE v1.0.29 (build 1029) maintenance and performance update.'
+  assert.equal(isLegacyPlaceholder(bouxreNotes), true)
+  assert.deepEqual(parseReleaseNotes(bouxreNotes), { entries: [] })
+
+  // Generic phrase without version
+  assert.deepEqual(parseReleaseNotes('maintenance and performance update.'), { entries: [] })
+  assert.deepEqual(parseReleaseNotes('performance and maintenance update'), { entries: [] })
+
+  // Legitimate bullets are preserved without suppression
+  const legitNotes = '- Performance: optimize invoice rendering speed\n- Maintenance: clean up temporary storage'
+  const parsed = parseReleaseNotes(legitNotes)
+  assert.equal(parsed.entries.length, 2)
+  assert.deepEqual(parsed.entries[0], {
+    title: 'Performance',
+    detail: 'optimize invoice rendering speed',
+  })
+  assert.deepEqual(parsed.entries[1], {
+    title: 'Maintenance',
+    detail: 'clean up temporary storage',
+  })
 })

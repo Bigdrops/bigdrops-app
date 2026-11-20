@@ -40,6 +40,72 @@ const SHA_PATTERN = /^[0-9a-f]{7,40}$/i
 const HTML_COMMENT_LINE = /^\s*<!--[\s\S]*?-->\s*$/
 const blank = (value) => value === null || value === undefined || String(value).trim() === ''
 
+/**
+ * Epoch timestamp when Phase 2 durable consumed-ID ledger was introduced (2026-11-19T00:00:00Z).
+ * Releases before this epoch were built with legacy scripts without consumed-ids.json.
+ */
+export const LEDGER_EPOCH_MS = new Date('2026-11-19T00:00:00.000Z').getTime()
+
+/**
+ * Check whether a release tag and/or timestamp demonstrably predates the
+ * introduction of the Phase 2 consumed-ID ledger (runs 1-29, or published before 2026-11-19).
+ */
+export function isLegacyPreLedgerRelease({ tag, publishedAt = null, createdAt = null } = {}) {
+  const tagName = String(tag ?? '').trim()
+  if (!tagName) return false
+
+  // 1. Tag-based matching: historical run tags <= 29
+  const runMatch = /^test-release-run([0-9]+)$/i.exec(tagName)
+  if (runMatch) {
+    const runNum = Number(runMatch[1])
+    if (Number.isInteger(runNum) && runNum <= 29) return true
+  }
+
+  // 2. Tag-based matching: historical non-run tag formats
+  if (
+    /^test-release-2026/i.test(tagName) ||
+    /^v1\.0\.0-debug$/i.test(tagName) ||
+    /^checkpoint\//i.test(tagName) ||
+    /^debug-/i.test(tagName)
+  ) {
+    return true
+  }
+
+  // 3. Timestamp-based matching: created/published before Phase 2 epoch
+  const dateStr = publishedAt || createdAt
+  if (dateStr) {
+    const timeMs = new Date(dateStr).getTime()
+    if (Number.isFinite(timeMs) && timeMs < LEDGER_EPOCH_MS) return true
+  }
+
+  return false
+}
+
+/**
+ * Exact historical generic maintenance/performance placeholders
+ * (covering BOURXE and BOUXRE spelling variants and generic boilerplate)
+ * that carry no meaningful user-facing changelog content.
+ */
+export const LEGACY_PLACEHOLDER_PATTERN =
+  /^\s*(?:(?:BOUXRE|BOURXE)\s+v?\d+(?:\.\d+)*\s*(?:\(build\s+\d+\))?[:\s—–-]*)?(?:maintenance\s+and\s+performance\s+update|performance\s+and\s+maintenance\s+update)\.?\s*$/i
+
+export function isLegacyPlaceholder(notes) {
+  if (typeof notes !== 'string') return false
+  const normalized = notes.trim().replace(/\s+/g, ' ')
+  if (!normalized) return false
+  return LEGACY_PLACEHOLDER_PATTERN.test(normalized)
+}
+
+export function validateReleaseNotes(notes, { ids = null } = {}) {
+  if (!notes || blank(notes)) return { ok: false, reason: 'release notes are empty' }
+  if (isLegacyPlaceholder(notes)) return { ok: false, reason: 'release notes contain only generic placeholder' }
+  if (ids !== null) {
+    if (!Array.isArray(ids)) return { ok: false, reason: 'consumed entry ids is not an array' }
+    if (ids.length === 0) return { ok: false, reason: 'consumed entry ids is empty' }
+  }
+  return { ok: true, reason: null }
+}
+
 // ---------------------------------------------------------------------------
 // Comment stripping / notes
 // ---------------------------------------------------------------------------
@@ -956,6 +1022,44 @@ export function main(argv = process.argv.slice(2)) {
       const outPath = flag('out') || changelogPath
       write(abs(outPath), next)
       process.stdout.write(`archived ${ids.length}\n`)
+      return
+    }
+    case 'check-legacy-release': {
+      const tag = flag('tag')
+      const publishedAt = flag('published-at')
+      const createdAt = flag('created-at')
+      const isLegacy = isLegacyPreLedgerRelease({ tag, publishedAt, createdAt })
+      process.stdout.write(`${isLegacy}\n`)
+      if (!isLegacy) process.exitCode = 1
+      return
+    }
+    case 'validate-notes': {
+      const notesPath = flag('file')
+      if (notesPath && !existsSync(abs(notesPath))) {
+        process.stdout.write(`${JSON.stringify({ ok: false, reason: `notes file not found: ${notesPath}` })}\n`)
+        process.exitCode = 1
+        return
+      }
+      const notesText = notesPath ? read(abs(notesPath)) : (flag('notes') ?? '')
+      const idsPath = flag('ids') || flag('ids-file')
+      let ids = null
+      if (idsPath) {
+        if (!existsSync(abs(idsPath))) {
+          process.stdout.write(`${JSON.stringify({ ok: false, reason: `ids file not found: ${idsPath}` })}\n`)
+          process.exitCode = 1
+          return
+        }
+        try {
+          ids = JSON.parse(read(abs(idsPath)))
+        } catch {
+          process.stdout.write(`${JSON.stringify({ ok: false, reason: 'malformed ids json' })}\n`)
+          process.exitCode = 1
+          return
+        }
+      }
+      const result = validateReleaseNotes(notesText, { ids })
+      process.stdout.write(`${JSON.stringify(result)}\n`)
+      if (!result.ok) process.exitCode = 1
       return
     }
     default:

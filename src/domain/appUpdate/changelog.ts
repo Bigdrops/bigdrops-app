@@ -18,8 +18,23 @@ export interface Changelog {
   entries: ChangelogEntry[]
 }
 
-const BULLET_PATTERN = /^\s*[-*•]\s+/
-const DETAIL_SEPARATORS = ['—', ' - ']
+export const BULLET_PATTERN = /^\s*[-*•]\s+/
+export const DETAIL_SEPARATORS = ['—', ' - ']
+
+/**
+ * Exact historical generic maintenance/performance placeholders
+ * (covering BOURXE and BOUXRE spelling variants and generic boilerplate)
+ * that carry no meaningful user-facing changelog content.
+ */
+export const LEGACY_PLACEHOLDER_PATTERN =
+  /^\s*(?:(?:BOUXRE|BOURXE)\s+v?\d+(?:\.\d+)*\s*(?:\(build\s+\d+\))?[:\s—–-]*)?(?:maintenance\s+and\s+performance\s+update|performance\s+and\s+maintenance\s+update)\.?\s*$/i
+
+export function isLegacyPlaceholder(notes: string | null | undefined): boolean {
+  if (typeof notes !== 'string') return false
+  const normalized = notes.trim().replace(/\s+/g, ' ')
+  if (!normalized) return false
+  return LEGACY_PLACEHOLDER_PATTERN.test(normalized)
+}
 
 function splitEntry(rawLine: string): ChangelogEntry {
   const line = rawLine.trim()
@@ -47,6 +62,7 @@ function splitEntry(rawLine: string): ChangelogEntry {
 
 export function parseReleaseNotes(notes: string | null | undefined): Changelog {
   if (typeof notes !== 'string') return { entries: [] }
+  if (isLegacyPlaceholder(notes)) return { entries: [] }
 
   const lines = notes
     .split(/\r?\n/)
@@ -57,8 +73,11 @@ export function parseReleaseNotes(notes: string | null | undefined): Changelog {
 
   const bulletLines = lines.filter((line) => BULLET_PATTERN.test(line))
   const sourceLines = bulletLines.length > 0 ? bulletLines : [lines.join(' ')]
+  const validLines = sourceLines.filter((line) => !isLegacyPlaceholder(line.replace(BULLET_PATTERN, '')))
+
+  if (validLines.length === 0) return { entries: [] }
 
   return {
-    entries: sourceLines.map((line) => splitEntry(line.replace(BULLET_PATTERN, ''))),
+    entries: validLines.map((line) => splitEntry(line.replace(BULLET_PATTERN, ''))),
   }
 }
