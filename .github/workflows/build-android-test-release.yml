@@ -1,4 +1,4 @@
-name: Build Android Test-Release APK
+name: Build Android Release APK
 
 # Stable-signed BIGDROPS test-release APK for GitHub Releases distribution.
 # Uses the dedicated test-release keystore from GitHub Secrets (never committed).
@@ -15,10 +15,12 @@ on:
     tags:
       - "test-release-*"
 
-# Prevent concurrent builds on the same branch to avoid cache corruption
+# Serialize all release runs. Overlapping releases could publish the same
+# version/tag or race on the single app_release_policy row; never cancel a run
+# that is mid-publish.
 concurrency:
-  group: android-test-release-${{ github.ref }}
-  cancel-in-progress: true
+  group: android-release
+  cancel-in-progress: false
 
 jobs:
   build-test-release-apk:
@@ -85,6 +87,17 @@ jobs:
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
 
+          # Pin the exact commit whose tree is being built. Tags and GitHub
+          # Releases are publication artifacts; this SHA is the consumption
+          # boundary. checkout may use inputs.ref, so GITHUB_SHA alone is not
+          # sufficient proof of what was built.
+          BUILD_SHA=$(git rev-parse HEAD)
+          if [ -z "$BUILD_SHA" ] || ! printf '%s' "$BUILD_SHA" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::Could not resolve a full build commit SHA."
+            exit 1
+          fi
+          echo "build_sha=$BUILD_SHA" >> "$GITHUB_OUTPUT"
+
           echo "────────────── Build Metadata ──────────────"
           echo "Branch      : $BRANCH"
           echo "Commit SHA  : ${{ github.sha }}"
@@ -96,101 +109,117 @@ jobs:
           echo "Build Time  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "────────────────────────────────────────────"
 
-      # ── 3b. Generate release notes from commit history ───────────────────
-      # Single source of truth for release-note content. The same file feeds
-      # the GitHub Release body and app_release_policy.release_notes, so the
-      # two destinations can never disagree.
-      #
-      # Content is derived only from commits between the previous test-release
-      # tag and this build. Nothing is invented: when no user-facing commit is
-      # found, the note says so explicitly instead of claiming generic work.
+      # ── 3a. Set up Bun (needed by the ledger / notes gate steps) ───────
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # ── 3b. Fetch the durable consumed-ID ledger ───────────────────────
+      # The authoritative ledger is the `consumed-ids.json` asset on the most
+      # recent GitHub Release, not a finite-retention Actions artifact. A
+      # missing ledger is valid ONLY when no release exists at all (first
+      # release). A release without its ledger, or a malformed/conflicting
+      # ledger, is a hard stop.
+      - name: Fetch consumed-ID ledger
+        id: ledger
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          LEDGER_FILE="$RUNNER_TEMP/consumed-ids.json"
+          # On a tag-triggered retry, read the ledger from THIS release; on a
+          # new run, read the most recent release's ledger.
+          if [ "${{ steps.release_tag.outputs.is_tag_run }}" = "true" ]; then
+            LATEST_TAG="${{ steps.release_tag.outputs.tag_name }}"
+          else
+            LATEST_TAG=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
+          fi
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No prior release found; treating ledger as empty (first release)."
+            printf '{"schema":2,"releases":[]}\n' > "$LEDGER_FILE"
+            echo "first_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Prior release: $LATEST_TAG"
+            if ! gh release download "$LATEST_TAG" --pattern 'consumed-ids.json' \
+                --dir "$RUNNER_TEMP" --clobber >/dev/null 2>&1; then
+              echo "::error::Release $LATEST_TAG has no consumed-ids.json asset. Refusing to guess consumed state."
+              exit 1
+            fi
+            mv "$RUNNER_TEMP/consumed-ids.json" "$LEDGER_FILE"
+            bun scripts/release/releaseGate.mjs validate-ledger --ledger "$LEDGER_FILE"
+            echo "first_release=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "ledger_file=$LEDGER_FILE" >> "$GITHUB_OUTPUT"
+
+      # ── 3c. Reconcile a published-but-unsynchronized release ───────────
+      # If a confirmed release is ahead of policy, do not start a newer one.
+      # Fail closed and name the release to resume (re-dispatch with its tag).
+      - name: Reconcile prior release
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LEDGER_FILE: ${{ steps.ledger.outputs.ledger_file }}
+        run: |
+          set -euo pipefail
+          CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"
+          CURRENT_JSON="$RUNNER_TEMP/policy-current.json"
+          HTTP=$(curl -s -o "$CURRENT_JSON" -w "%{http_code}" \
+            "${CLEAN_SUPABASE_URL}/rest/v1/app_release_policy?id=eq.1" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY")
+          if [ "$HTTP" -lt 200 ] || [ "$HTTP" -ge 300 ]; then
+            echo "::error::Could not read app_release_policy (HTTP $HTTP)."
+            exit 1
+          fi
+          POLICY_CODE=$(bun -e 'const r=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const row=Array.isArray(r)?r[0]:r; process.stdout.write(row&&row.version_code!=null?String(row.version_code):"null")' "$CURRENT_JSON")
+          PLAN=$(bun scripts/release/releaseGate.mjs reconcile \
+            --ledger "$LEDGER_FILE" --policy-code "$POLICY_CODE")
+          echo "Reconciliation plan: $PLAN"
+          ACTION=$(bun -e 'process.stdout.write(JSON.parse(process.argv[1]).action)' "$PLAN")
+          if [ "$ACTION" = "conflict" ]; then
+            echo "::error::Ambiguous consumed ledger; refusing to start a new release."
+            exit 1
+          fi
+          if [ "$ACTION" = "resume" ]; then
+            RESUME_TAG=$(bun -e 'process.stdout.write(JSON.parse(process.argv[1]).release.tag)' "$PLAN")
+            CURRENT_TAG="${{ steps.release_tag.outputs.tag_name }}"
+            if [ "${{ steps.release_tag.outputs.is_tag_run }}" = "true" ] && [ "$CURRENT_TAG" = "$RESUME_TAG" ]; then
+              echo "Retry of confirmed release $RESUME_TAG; proceeding to reconcile policy."
+            else
+              echo "::error::Release $RESUME_TAG is published and verified but policy is behind. Re-dispatch this workflow with ref=$RESUME_TAG to reconcile it before starting a newer release."
+              exit 1
+            fi
+          fi
+
+      # ── 3d. Generate release notes from the exact build SHA ───────────
+      # CHANGELOG.md is read with `git show <BUILD_SHA>:CHANGELOG.md`, so the
+      # APK, notes, release metadata and ledger all derive from one commit.
+      # `--before-version-code` excludes the current version's own record so a
+      # retry recomputes the SAME notes rather than empty ones.
       - name: Generate release notes
         id: notes
         env:
-          RELEASE_TAG: ${{ steps.release_tag.outputs.tag_name }}
-          VERSION_NAME: ${{ steps.meta.outputs.version_name }}
           VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          BUILD_SHA: ${{ steps.meta.outputs.build_sha }}
+          LEDGER_FILE: ${{ steps.ledger.outputs.ledger_file }}
+          FIRST_RELEASE: ${{ steps.ledger.outputs.first_release }}
         run: |
           set -euo pipefail
           NOTES_FILE="$RUNNER_TEMP/release-notes.txt"
+          IDS_FILE="$RUNNER_TEMP/release-ids.json"
 
-          # Previous release tag, excluding the tag this run is publishing.
-          PREV_TAG=$(git tag --list 'test-release-*' --sort=-creatordate \
-            | grep -vx "$RELEASE_TAG" | head -1 || true)
+          ALLOW_FLAG=""
+          if [ "$FIRST_RELEASE" = "true" ]; then ALLOW_FLAG="--allow-missing-ledger true"; fi
+          bun scripts/release/releaseGate.mjs build-notes \
+            --sha "$BUILD_SHA" --ledger "$LEDGER_FILE" \
+            --before-version-code "$VERSION_CODE" $ALLOW_FLAG \
+            --out "$NOTES_FILE" --ids-out "$IDS_FILE"
 
-          # A tag that is not on this commit's history cannot bound a range:
-          # `git log prev..HEAD` would then list unrelated commits. Manual runs
-          # can build an older ref, so verify ancestry before trusting the tag.
-          if [ -n "$PREV_TAG" ] && git merge-base --is-ancestor "$PREV_TAG" HEAD 2>/dev/null; then
-            RANGE="${PREV_TAG}..HEAD"
-            LOG_ARGS="$RANGE"
-            echo "Collecting commits in $RANGE"
-          else
-            # First release, or no usable previous tag: bound the window
-            # instead of dumping the entire repository history.
-            RANGE="HEAD"
-            LOG_ARGS="-n 40 HEAD"
-            echo "No usable previous test-release tag; using the 40 most recent commits."
-          fi
-
-          # Strip leading emoji/decoration (twice: an emoji sequence can leave a
-          # variation selector behind), then keep only commit types that assert
-          # a user-facing change. docs/chore/ci/test/build/style/refactor/
-          # remove/deps/wip/merge are excluded by omission rather than by a
-          # denylist, so an unlisted type cannot slip through as a "change".
-          RAW=$(git log $LOG_ARGS --no-merges --pretty=format:'%s' || true)
-          STRIPPED=$(printf '%s\n' "$RAW" \
-            | sed -E 's/^[^[:alnum:]]+//' \
-            | sed -E 's/^[^[:alnum:]]+//')
-          KEPT=$(printf '%s\n' "$STRIPPED" \
-            | grep -iE '^(feat|fix|perf|revert)(\([^)]*\))?!?:' || true)
-
-          # Drop the conventional-commit type prefix, then reduce each subject to
-          # one bullet-safe line: separators the parser would split on become a
-          # plain colon, whitespace runs collapse, and a trailing period goes.
-          ENTRIES=$(printf '%s\n' "$KEPT" \
-            | sed -E 's/^(feat|fix|perf|revert)(\([^)]*\))?!?:[[:space:]]*//' \
-            | sed -E 's/[[:space:]]+/ /g; s/^[[:space:]]+//; s/[[:space:]]+$//' \
-            | sed -E 's/ — /: /g; s/ - /: /g' \
-            | sed -E 's/\.$//' \
-            | grep -v '^$' \
-            | awk '!seen[$0]++' || true)
-
-          TOTAL=$(printf '%s\n' "$ENTRIES" | grep -c . || true)
-          # Keep the note readable; the count line keeps it honest when capped.
-          MAX_ENTRIES=12
-
-          {
-            echo "BOUXRE v${VERSION_NAME} (build ${VERSION_CODE})"
-            echo ""
-            if [ -z "$ENTRIES" ]; then
-              # Honest empty state, emitted as a bullet so the parser yields
-              # exactly one clean entry. No fabricated changes, no generic
-              # "performance and maintenance" claim.
-              echo "- No user-facing changes were recorded for this build."
-            else
-              # sed reads the whole stream: `head` would close the pipe early
-              # and SIGPIPE would fail the step under pipefail.
-              printf '%s\n' "$ENTRIES" | sed -n "1,${MAX_ENTRIES}p" | sed 's/^/- /'
-              if [ "$TOTAL" -gt "$MAX_ENTRIES" ]; then
-                REMAINING=$((TOTAL - MAX_ENTRIES))
-                echo "- ...and ${REMAINING} more change(s) in this build."
-              fi
-            fi
-            echo ""
-            echo "App ID com.bigdrops.app. Signed with the stable test-release key. First install over an old random-debug APK may need one final uninstall; later test releases update in place."
-          } > "$NOTES_FILE"
-
-          # An annotation is a workflow command for the run log. Writing it into
-          # $NOTES_FILE would publish "::warning::..." verbatim as the GitHub
-          # Release body and as app_release_policy.release_notes.
-          if [ -z "$ENTRIES" ]; then
-            echo "::warning::No user-facing commits found in range $RANGE; release notes state that explicitly."
-          fi
-
+          ENTRY_COUNT=$(bun -e "console.log(JSON.parse(require('node:fs').readFileSync(process.argv[1],'utf8')).length)" "$IDS_FILE")
           echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
-          echo "previous_tag=${PREV_TAG:-none}" >> "$GITHUB_OUTPUT"
-          echo "entry_count=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "ids_file=$IDS_FILE" >> "$GITHUB_OUTPUT"
+          echo "entry_count=$ENTRY_COUNT" >> "$GITHUB_OUTPUT"
           echo "────────────── Release Notes ───────────────"
           cat "$NOTES_FILE"
           echo "────────────────────────────────────────────"
@@ -202,12 +231,6 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: gradle
-
-      # ── 4. Set up Bun ────────────────────────────────────────────────────
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
 
       # ── 5. Log tool versions ─────────────────────────────────────────────
       - name: Log tool versions
@@ -363,14 +386,26 @@ jobs:
           fi
           APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
 
-          NEW_NAME="BIGDROPS-test-release-${{ steps.meta.outputs.version_name }}-run${{ github.run_number }}-${{ steps.meta.outputs.short_sha }}.apk"
+          # Display-facing asset name uses the BOUXRE brand. The legacy
+          # test-release-run<N> tag and BIGDROPS package id are unchanged.
+          NEW_NAME="BOUXRE-release-${{ steps.meta.outputs.version_name }}-run${{ github.run_number }}-${{ steps.meta.outputs.short_sha }}.apk"
           NEW_PATH="$(dirname "$APK_PATH")/$NEW_NAME"
           mv "$APK_PATH" "$NEW_PATH"
+
+          # Compute the digest from the actual signed APK bytes. This is the
+          # single source of truth for APK identity across both download probes
+          # and the consumed-ID ledger; never derive it from a name or SHA.
+          APK_SHA256=$(sha256sum "$NEW_PATH" | awk '{print $1}')
+          if ! printf '%s' "$APK_SHA256" | grep -qE '^[0-9a-f]{64}$'; then
+            echo "::error::Could not compute SHA-256 of the built APK."
+            exit 1
+          fi
 
           echo "apk_path=$NEW_PATH" >> "$GITHUB_OUTPUT"
           echo "apk_name=$NEW_NAME" >> "$GITHUB_OUTPUT"
           echo "apk_size=$APK_SIZE" >> "$GITHUB_OUTPUT"
-          echo "✅ APK renamed: $NEW_NAME ($APK_SIZE)"
+          echo "apk_sha256=$APK_SHA256" >> "$GITHUB_OUTPUT"
+          echo "✅ APK renamed: $NEW_NAME ($APK_SIZE), sha256=$APK_SHA256"
 
       # ── 19. Generate Build Summary ───────────────────────────────────────
       - name: Generate Build Summary
@@ -404,107 +439,507 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
-      # ── 21. Create release tag (manual runs only) ───────────────────────
-      # Tag-triggered runs already have their tag. Manual runs generate
-      # test-release-run<N> to avoid requiring local git tag commands.
-      # The tag points to the exact commit that was built (github.sha).
-      - name: Create release tag
-        if: steps.release_tag.outputs.is_tag_run == 'false'
+      # ── 21. Reconcile release tag (publication artifact) ────────────────
+      # A tag never proves consumption. It only publishes the build commit.
+      # Never move or delete a tag. If it exists on the same verified build
+      # SHA, resume; if it points elsewhere, stop.
+      - name: Reconcile release tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.release_tag.outputs.tag_name }}"
-          # Idempotency: check if tag already exists.
-          if git ls-remote --tags origin "$TAG" | grep -q "$TAG"; then
-            echo "::error::Tag $TAG already exists. This should not happen — run_number is unique per workflow."
+          BUILD_SHA="${{ steps.meta.outputs.build_sha }}"
+          REMOTE_SHA=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}' | head -1 || true)
+          if [ -n "$REMOTE_SHA" ]; then
+            if [ "$REMOTE_SHA" != "$BUILD_SHA" ]; then
+              echo "::error::Tag $TAG points to $REMOTE_SHA, not build $BUILD_SHA. Refusing to move it."
+              exit 1
+            fi
+            echo "Tag $TAG already points to build $BUILD_SHA; resuming."
+          elif [ "${{ steps.release_tag.outputs.is_tag_run }}" == "true" ]; then
+            echo "::error::Tag-triggered run but tag $TAG is absent on origin."
             exit 1
+          else
+            git tag "$TAG" "$BUILD_SHA"
+            git push origin "$TAG"
+            echo "✅ Created tag $TAG → $BUILD_SHA"
           fi
-          git tag "$TAG" "$GITHUB_SHA"
-          git push origin "$TAG"
-          echo "✅ Created tag $TAG → $GITHUB_SHA"
 
-      # ── 22. Publish GitHub Release ──────────────────────────────────────
-      # Tag-triggered: releasing from the triggering tag (already exists).
-      # Manual: releasing from the generated tag (created in step 21).
-      - name: Publish GitHub Release
+      # ── 22. Reconcile / publish GitHub Release (publication artifact) ──
+      # An existing release is not assumed valid: its tag SHA, title, notes,
+      # APK asset and consumed-ids.json are verified against this build before
+      # any consumption. Any mismatch stops the run. Publication alone never
+      # marks entries consumed; that requires the policy gate.
+      - name: Reconcile or publish GitHub Release
+        id: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          BUILD_SHA: ${{ steps.meta.outputs.build_sha }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag_name }}
+          NOTES_FILE: ${{ steps.notes.outputs.notes_file }}
+          APK_NAME: ${{ steps.find-apk.outputs.apk_name }}
+          APK_SHA256: ${{ steps.find-apk.outputs.apk_sha256 }}
         run: |
-          TAG="${{ steps.release_tag.outputs.tag_name }}"
-          # Same file as app_release_policy.release_notes, published below.
-          gh release create "$TAG" "${{ steps.find-apk.outputs.apk_path }}" \
-            --title "BIGDROPS test release ${{ steps.meta.outputs.version_name }} ($TAG)" \
-            --notes-file "${{ steps.notes.outputs.notes_file }}"
+          set -euo pipefail
+          EXPECTED_TITLE="BIGDROPS test release $VERSION_NAME ($RELEASE_TAG)"
+          EXPECTED_NOTES_HASH=$(bun scripts/release/releaseGate.mjs hash-notes --file "$NOTES_FILE")
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG exists; verifying before resuming."
+            OBSERVED="$RUNNER_TEMP/observed-release.json"
+            TITLE=$(gh release view "$RELEASE_TAG" --json name -q .name 2>/dev/null || true)
+            BODY=$(gh release view "$RELEASE_TAG" --json body -q .body 2>/dev/null || true)
+            printf '%s' "$BODY" > "$RUNNER_TEMP/release-body.txt"
+            OBS_NOTES_HASH=$(bun scripts/release/releaseGate.mjs hash-notes --file "$RUNNER_TEMP/release-body.txt")
+            TAG_SHA=$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG" | awk '{print $1}' | head -1 || true)
+            ASSET_NAMES=$(gh release view "$RELEASE_TAG" --json assets -q '.assets[].name' 2>/dev/null || true)
+            LEDGER_OK=$(printf '%s\n' "$ASSET_NAMES" | grep -qx 'consumed-ids.json' && echo true || echo false)
+            APK_OK=$(printf '%s\n' "$ASSET_NAMES" | grep -qx "$APK_NAME" && echo true || echo false)
+            # Read the published ledger's identity for this release and verify
+            # it matches the build, version and tag before accepting a retry.
+            LEDGER_SHA=""; LEDGER_CODE=""; LEDGER_TAG=""
+            if [ "$LEDGER_OK" = "true" ]; then
+              gh release download "$RELEASE_TAG" --pattern 'consumed-ids.json' \
+                --dir "$RUNNER_TEMP" --clobber >/dev/null 2>&1 || true
+              LEDGER_SHA=$(bun -e 'try{const r=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const x=(r.releases||[]).find(v=>String(v.tag)===process.argv[2])||{}; process.stdout.write(String(x.buildSha||x.sha||""))}catch{process.stdout.write("")}' "$RUNNER_TEMP/consumed-ids.json" "$RELEASE_TAG")
+              LEDGER_CODE=$(bun -e 'try{const r=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const x=(r.releases||[]).find(v=>String(v.tag)===process.argv[2])||{}; process.stdout.write(String(x.versionCode||""))}catch{process.stdout.write("")}' "$RUNNER_TEMP/consumed-ids.json" "$RELEASE_TAG")
+              LEDGER_TAG=$(bun -e 'try{const r=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const x=(r.releases||[]).find(v=>String(v.tag)===process.argv[2])||{}; process.stdout.write(String(x.tag||""))}catch{process.stdout.write("")}' "$RUNNER_TEMP/consumed-ids.json" "$RELEASE_TAG")
+            fi
+            # Downloadability of the release APK is checked by the shared asset
+            # gate below; here we record existence and name identity.
+            # Digest of the published GitHub APK bytes, computed after download
+            # so a retry cannot accept an asset that differs from this build.
+            GH_DIGEST=""
+            if [ "$APK_OK" = "true" ]; then
+              gh release download "$RELEASE_TAG" --pattern "$APK_NAME" \
+                --dir "$RUNNER_TEMP" --clobber >/dev/null 2>&1 || true
+              if [ -f "$RUNNER_TEMP/$APK_NAME" ]; then
+                GH_DIGEST=$(sha256sum "$RUNNER_TEMP/$APK_NAME" | awk '{print $1}')
+              fi
+            fi
+            bun -e '
+              const fs=require("node:fs")
+              fs.writeFileSync(process.argv[1], JSON.stringify({
+                exists:true, tagSha:process.argv[2], title:process.argv[3],
+                notesHash:process.argv[4], assetName:process.argv[5],
+                ledgerPresent:process.argv[6]==="true", apkPresent:process.argv[7]==="true",
+                ledgerSha:process.argv[8], ledgerVersionCode:process.argv[9]?Number(process.argv[9]):null,
+                ledgerTag:process.argv[10], apkSha256:process.argv[11] || null,
+              }))
+            ' "$OBSERVED" "$TAG_SHA" "$TITLE" "$OBS_NOTES_HASH" "$APK_NAME" "$LEDGER_OK" "$APK_OK" "$LEDGER_SHA" "$LEDGER_CODE" "$LEDGER_TAG" "$GH_DIGEST"
+            EXPECTED="$RUNNER_TEMP/expected-release.json"
+            bun -e '
+              const fs=require("node:fs")
+              fs.writeFileSync(process.argv[1], JSON.stringify({
+                buildSha:process.argv[2], releaseTitle:process.argv[3],
+                notesHash:process.argv[4], apkAssetName:process.argv[5],
+                versionCode:Number(process.argv[6]), tag:process.argv[7],
+                apkSha256:process.argv[8],
+              }))
+            ' "$EXPECTED" "$BUILD_SHA" "$EXPECTED_TITLE" "$EXPECTED_NOTES_HASH" "$APK_NAME" "$VERSION_CODE" "$RELEASE_TAG" "$APK_SHA256"
+            if [ "$LEDGER_OK" != "true" ] || [ "$APK_OK" != "true" ]; then
+              echo "::error::Existing release is missing its APK or consumed-ids.json asset."
+              exit 1
+            fi
+            bun scripts/release/releaseGate.mjs verify-release --expected "$EXPECTED" --observed "$OBSERVED"
+            echo "Release $RELEASE_TAG verified; resuming."
+          else
+            gh release create "$RELEASE_TAG" "${{ steps.find-apk.outputs.apk_path }}" \
+              --title "$EXPECTED_TITLE" --notes-file "$NOTES_FILE"
+            echo "✅ Published release $RELEASE_TAG"
+          fi
+          echo "release_title=$EXPECTED_TITLE" >> "$GITHUB_OUTPUT"
+          echo "notes_hash=$EXPECTED_NOTES_HASH" >> "$GITHUB_OUTPUT"
 
-      # ── 23. Upload APK to Supabase Storage & Update Release Policy ──────
-      - name: Upload to Supabase Storage & Update Release Policy
+      # ── 23. Evaluate policy state before any consumption ───────────────
+      - name: Evaluate release policy state
+        id: policy_gate
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           VERSION_CODE: ${{ steps.meta.outputs.version_code }}
           VERSION_NAME: ${{ steps.meta.outputs.version_name }}
-          APK_PATH: ${{ steps.find-apk.outputs.apk_path }}
           NOTES_FILE: ${{ steps.notes.outputs.notes_file }}
+          IDS_FILE: ${{ steps.notes.outputs.ids_file }}
+          BUILD_SHA: ${{ steps.meta.outputs.build_sha }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag_name }}
+          LEDGER_FILE: ${{ steps.ledger.outputs.ledger_file }}
+          RELEASE_TITLE: ${{ steps.release.outputs.release_title }}
+          APK_NAME: ${{ steps.find-apk.outputs.apk_name }}
+          APK_SHA256: ${{ steps.find-apk.outputs.apk_sha256 }}
         run: |
+          set -euo pipefail
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-            echo "::error::Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. Cannot publish release binary to Supabase Storage or update app_release_policy."
+            echo "::error::Missing Supabase secrets. Cannot verify app_release_policy."
+            exit 1
+          fi
+          CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"
+          PUBLIC_APK_URL="${CLEAN_SUPABASE_URL}/storage/v1/object/public/app-releases/${APK_NAME}"
+          ISO_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Read-only GET of the single policy row.
+          CURRENT_JSON="$RUNNER_TEMP/policy-current.json"
+          HTTP=$(curl -s -o "$CURRENT_JSON" -w "%{http_code}" \
+            "${CLEAN_SUPABASE_URL}/rest/v1/app_release_policy?id=eq.1" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY")
+          if [ "$HTTP" -lt 200 ] || [ "$HTTP" -ge 300 ]; then
+            echo "::error::Could not read app_release_policy (HTTP $HTTP)."
+            cat "$CURRENT_JSON" || true
             exit 1
           fi
 
-          CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"
-          UPLOAD_URL="${CLEAN_SUPABASE_URL}/storage/v1/object/app-releases/bigdrops-latest.apk"
-          PUBLIC_APK_URL="${CLEAN_SUPABASE_URL}/storage/v1/object/public/app-releases/bigdrops-latest.apk?v=${VERSION_CODE}"
-          ISO_NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          # Proposed record: not yet verified; verification flags set below.
+          bun scripts/release/releaseGate.mjs record \
+            --sha "$BUILD_SHA" --version-code "$VERSION_CODE" \
+            --version-name "$VERSION_NAME" --tag "$RELEASE_TAG" \
+            --ids-file "$IDS_FILE" --notes-file "$NOTES_FILE" \
+            --web-release-url "$PUBLIC_APK_URL" \
+            --release-title "$RELEASE_TITLE" --release-notes-file "$NOTES_FILE" \
+            --apk-asset-name "$APK_NAME" --apk-sha256 "$APK_SHA256" \
+            --apk-asset-prefix "BOUXRE-release-" \
+            --asset-verified false --policy-verified false \
+            --published-at "$ISO_NOW" --out "$RUNNER_TEMP/proposed.json" >/dev/null
 
-          echo "Uploading $APK_PATH to Supabase Storage at $UPLOAD_URL..."
+          # shellcheck disable=SC2086
+          ACTION=$(bun scripts/release/releaseGate.mjs evaluate-policy \
+            --current "$CURRENT_JSON" --proposed "$RUNNER_TEMP/proposed.json" \
+            --ledger "$LEDGER_FILE")
+          echo "policy_action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "Policy decision: $ACTION"
+
+          # A lower proposed version is rejected. Equal version with different
+          # metadata is a conflict. Both stop before any upload or write.
+          if [ "$ACTION" = "reject" ] || [ "$ACTION" = "conflict" ]; then
+            echo "::error::Policy state check failed ($ACTION). Refusing to publish."
+            exit 1
+          fi
+
+          echo "public_apk_url=$PUBLIC_APK_URL" >> "$GITHUB_OUTPUT"
+          echo "iso_now=$ISO_NOW" >> "$GITHUB_OUTPUT"
+
+      # ── 23b. Upload APK to Supabase Storage ────────────────────────────
+      - name: Upload APK to Supabase Storage
+        if: steps.policy_gate.outputs.policy_action != 'noop'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          APK_NAME: ${{ steps.find-apk.outputs.apk_name }}
+          APK_PATH: ${{ steps.find-apk.outputs.apk_path }}
+        run: |
+          set -euo pipefail
+          CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"
+          UPLOAD_URL="${CLEAN_SUPABASE_URL}/storage/v1/object/app-releases/${APK_NAME}"
           UPLOAD_HTTP_CODE=$(curl -s -o /tmp/upload_response.json -w "%{http_code}" -X POST "$UPLOAD_URL" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/vnd.android.package-archive" \
             -H "x-upsert: true" \
             --data-binary "@$APK_PATH")
-
           if [ "$UPLOAD_HTTP_CODE" -ge 200 ] && [ "$UPLOAD_HTTP_CODE" -lt 300 ]; then
-            echo "✅ Successfully uploaded APK to Supabase Storage ($PUBLIC_APK_URL)"
+            echo "✅ Uploaded APK to Supabase Storage: $APK_NAME"
           else
             echo "::error::Supabase Storage upload failed with HTTP status $UPLOAD_HTTP_CODE"
             cat /tmp/upload_response.json 2>/dev/null || true
             exit 1
           fi
 
-          echo "Updating public.app_release_policy (id = 1) via PostgREST..."
+      # ── 23c. Verify downloadable asset (unauthenticated GET) ───────────
+      - name: Verify downloadable APK asset
+        env:
+          PUBLIC_APK_URL: ${{ steps.policy_gate.outputs.public_apk_url }}
+          APK_SHA256: ${{ steps.find-apk.outputs.apk_sha256 }}
+        run: |
+          set -euo pipefail
+          # No Authorization header: verify what an end user can actually fetch.
+          # -L follows redirects; --max-time bounds a hung endpoint.
+          BODY_FILE="$RUNNER_TEMP/apk-probe.bin"
+          META_FILE="$RUNNER_TEMP/apk-probe.meta"
+          curl -sL --max-time 60 -o "$BODY_FILE" \
+            -w '%{http_code}\n%{content_type}\n' "$PUBLIC_APK_URL" \
+            > "$META_FILE" 2>/dev/null || true
+          HTTP=$(sed -n '1p' "$META_FILE")
+          CT=$(sed -n '2p' "$META_FILE")
+          BYTES=$(wc -c < "$BODY_FILE" | tr -d ' ')
+          HOSTED_DIGEST=$(sha256sum "$BODY_FILE" 2>/dev/null | awk '{print $1}' || true)
+          echo "Asset probe: HTTP $HTTP, content-type $CT, $BYTES bytes, sha256=$HOSTED_DIGEST"
+          bun scripts/release/releaseGate.mjs verify-asset \
+            --http-code "$HTTP" --content-type "$CT" --bytes "$BYTES" \
+            --expected-sha256 "$APK_SHA256" --actual-sha256 "$HOSTED_DIGEST"
+
+          # On a retry, also verify the GitHub Release APK asset itself is
+          # downloadable and carries this build's short SHA in its name.
+          if [ "${{ steps.release_tag.outputs.is_tag_run }}" = "true" ]; then
+            RELEASE_TAG="${{ steps.release_tag.outputs.tag_name }}"
+            SHORT_SHA="${{ steps.meta.outputs.short_sha }}"
+            ASSET_URL=$(gh release view "$RELEASE_TAG" --json assets \
+              -q ".assets[] | select(.name | contains(\"$SHORT_SHA\")) | .url" 2>/dev/null | head -1 || true)
+            if [ -z "$ASSET_URL" ]; then
+              echo "::error::No GitHub release APK asset for build $SHORT_SHA."
+              exit 1
+            fi
+            GH_BODY="$RUNNER_TEMP/gh-apk-probe.bin"
+            GH_META="$RUNNER_TEMP/gh-apk-probe.meta"
+            curl -sL --max-time 60 -H 'Accept: application/octet-stream' \
+              -o "$GH_BODY" -w '%{http_code}\n%{content_type}\n' "$ASSET_URL" \
+              > "$GH_META" 2>/dev/null || true
+            GH_HTTP=$(sed -n '1p' "$GH_META")
+            GH_CT=$(sed -n '2p' "$GH_META")
+            GH_BYTES=$(wc -c < "$GH_BODY" | tr -d ' ')
+            GH_DIGEST=$(sha256sum "$GH_BODY" 2>/dev/null | awk '{print $1}' || true)
+            echo "GitHub asset probe: HTTP $GH_HTTP, content-type $GH_CT, $GH_BYTES bytes, sha256=$GH_DIGEST"
+            bun scripts/release/releaseGate.mjs verify-asset \
+              --http-code "$GH_HTTP" --content-type "$GH_CT" --bytes "$GH_BYTES" \
+              --expected-sha256 "$APK_SHA256" --actual-sha256 "$GH_DIGEST"
+          fi
+
+      # ── 23d. Conditional policy PATCH ───────────────────────────────────
+      - name: Update release policy
+        if: steps.policy_gate.outputs.policy_action == 'advance'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+          NOTES_FILE: ${{ steps.notes.outputs.notes_file }}
+          PUBLIC_APK_URL: ${{ steps.policy_gate.outputs.public_apk_url }}
+          ISO_NOW: ${{ steps.policy_gate.outputs.iso_now }}
+        run: |
+          set -euo pipefail
+          CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"
           if [ ! -f "$NOTES_FILE" ]; then
             echo "::error::Release notes file not found at $NOTES_FILE."
             exit 1
           fi
-          # jq builds the JSON so newlines and quotes in the notes are escaped
-          # correctly. String interpolation would corrupt multi-line notes.
           PATCH_PAYLOAD=$(jq -n \
             --argjson vc "$VERSION_CODE" \
             --arg vn "$VERSION_NAME" \
             --arg url "$PUBLIC_APK_URL" \
             --arg ts "$ISO_NOW" \
+            --arg prefix "BOUXRE-release-" \
             --rawfile notes "$NOTES_FILE" \
-            '{version_code: $vc, version_name: $vn, web_release_url: $url, effective_at: $ts, release_notes: $notes, updated_at: $ts}')
-
-          # Never send a malformed body to the live policy row.
+            '{version_code: $vc, version_name: $vn, apk_asset_prefix: $prefix, web_release_url: $url, effective_at: $ts, release_notes: $notes, updated_at: $ts}')
           if ! printf '%s' "$PATCH_PAYLOAD" | jq -e . >/dev/null 2>&1; then
-            echo "::error::Generated policy payload is not valid JSON. Aborting before the policy update."
+            echo "::error::Generated policy payload is not valid JSON."
             exit 1
           fi
-
+          # Conditional: id=eq.1 AND (version_code IS NULL OR < proposed).
+          # The IS NULL branch is the explicit first-release bootstrap; the
+          # lt branch prevents a race from moving policy backwards. Zero rows
+          # means someone advanced it first: fail and re-evaluate on rerun.
           PATCH_HTTP_CODE=$(curl -s -o /tmp/patch_response.json -w "%{http_code}" -X PATCH \
-            "${CLEAN_SUPABASE_URL}/rest/v1/app_release_policy?id=eq.1" \
+            "${CLEAN_SUPABASE_URL}/rest/v1/app_release_policy?id=eq.1&or=(version_code.is.null,version_code.lt.${VERSION_CODE})" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -H "Prefer: return=minimal" \
+            -H "Prefer: return=representation" \
             -d "$PATCH_PAYLOAD")
-
           if [ "$PATCH_HTTP_CODE" -ge 200 ] && [ "$PATCH_HTTP_CODE" -lt 300 ]; then
-            echo "✅ Successfully updated app_release_policy to versionCode $VERSION_CODE ($VERSION_NAME)"
+            ROWS=$(jq 'length' /tmp/patch_response.json 2>/dev/null || echo 0)
+            if [ "$ROWS" -eq 0 ]; then
+              echo "::error::Conditional policy update matched no row; policy moved concurrently."
+              exit 1
+            fi
+            RETURNED_CODE=$(jq -r '.[0].version_code // empty' /tmp/patch_response.json 2>/dev/null || true)
+            if [ "$RETURNED_CODE" != "$VERSION_CODE" ]; then
+              echo "::error::Policy PATCH returned unexpected version_code '$RETURNED_CODE'."
+              exit 1
+            fi
+            RETURNED_URL=$(jq -r '.[0].web_release_url // empty' /tmp/patch_response.json 2>/dev/null || true)
+            if [ "$RETURNED_URL" != "$PUBLIC_APK_URL" ]; then
+              echo "::error::Policy PATCH returned unexpected web_release_url '$RETURNED_URL'."
+              exit 1
+            fi
+            RETURNED_PREFIX=$(jq -r '.[0].apk_asset_prefix // empty' /tmp/patch_response.json 2>/dev/null || true)
+            if [ "$RETURNED_PREFIX" != "BOUXRE-release-" ]; then
+              echo "::error::Policy PATCH returned unexpected apk_asset_prefix '$RETURNED_PREFIX'."
+              exit 1
+            fi
+            echo "✅ Updated app_release_policy to $VERSION_CODE ($VERSION_NAME) with verified URL and asset prefix"
           else
-            echo "::error::Updating app_release_policy failed with HTTP status $PATCH_HTTP_CODE"
+            echo "::error::Policy update failed with HTTP $PATCH_HTTP_CODE"
             cat /tmp/patch_response.json 2>/dev/null || true
             exit 1
           fi
+
+      # ── 23e. Persist explicit consumed-ID record ───────────────────────
+      # Written only after asset verification and policy success/noop. The
+      # merged ledger becomes a GitHub Release asset: that is the durable,
+      # independently retrievable source of consumed-entry state. CI does not
+      # push commits; the Actions artifact below is only a convenience copy.
+      - name: Write consumed-ID record
+        env:
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+          BUILD_SHA: ${{ steps.meta.outputs.build_sha }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag_name }}
+          NOTES_FILE: ${{ steps.notes.outputs.notes_file }}
+          IDS_FILE: ${{ steps.notes.outputs.ids_file }}
+          PUBLIC_APK_URL: ${{ steps.policy_gate.outputs.public_apk_url }}
+          ISO_NOW: ${{ steps.policy_gate.outputs.iso_now }}
+          RELEASE_TITLE: ${{ steps.release.outputs.release_title }}
+          APK_NAME: ${{ steps.find-apk.outputs.apk_name }}
+          APK_SHA256: ${{ steps.find-apk.outputs.apk_sha256 }}
+          LEDGER_FILE: ${{ steps.ledger.outputs.ledger_file }}
+        run: |
+          set -euo pipefail
+          bun scripts/release/releaseGate.mjs record \
+            --sha "$BUILD_SHA" --version-code "$VERSION_CODE" \
+            --version-name "$VERSION_NAME" --tag "$RELEASE_TAG" \
+            --ids-file "$IDS_FILE" --notes-file "$NOTES_FILE" \
+            --web-release-url "$PUBLIC_APK_URL" \
+            --release-title "$RELEASE_TITLE" --release-notes-file "$NOTES_FILE" \
+            --apk-asset-name "$APK_NAME" --apk-sha256 "$APK_SHA256" \
+            --apk-asset-prefix "BOUXRE-release-" \
+            --asset-verified true --policy-verified true \
+            --published-at "$ISO_NOW" --out "$RUNNER_TEMP/consumed-next.json" >/dev/null
+
+          # Merge without deleting historical records; idempotent for the same
+          # build SHA + version. Fail closed on a conflicting ledger.
+          bun scripts/release/releaseGate.mjs merge-ledger \
+            --ledger "$LEDGER_FILE" --record "$RUNNER_TEMP/consumed-next.json" \
+            --out "$LEDGER_FILE"
+          mkdir -p changelog
+          cp "$LEDGER_FILE" changelog/consumed-ids.json
+
+          echo "Consumed-ID record written for $VERSION_NAME (build $VERSION_CODE)."
+
+      # ── 23e2. Publish ledger as durable GitHub Release asset ───────────
+      # Re-uploading an asset with the same name is not supported by GitHub;
+      # delete-then-upload would briefly leave the release without its ledger.
+      # We upload once on first publication. On a verified retry the existing
+      # asset is retained (it already matches this build), never overwritten.
+      - name: Publish consumed-ID ledger asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag_name }}
+          LEDGER_FILE: ${{ steps.ledger.outputs.ledger_file }}
+          FIRST_RELEASE: ${{ steps.ledger.outputs.first_release }}
+        run: |
+          set -euo pipefail
+          HAS_ASSET=$(gh release view "$RELEASE_TAG" --json assets -q '.assets[].name' 2>/dev/null \
+            | grep -qx 'consumed-ids.json' && echo true || echo false)
+          if [ "$HAS_ASSET" = "true" ]; then
+            echo "Existing consumed-ids.json asset retained (verified against this build)."
+          else
+            gh release upload "$RELEASE_TAG" "$LEDGER_FILE" --clobber
+            echo "✅ Published consumed-ids.json asset on release $RELEASE_TAG"
+          fi
+
+      # ── 23f. Gated archive ───────────────────────────────────────────────
+      # Only IDs backed by BOTH a verified downloadable asset and verified
+      # policy state are archived. Unshipped, mid-build and tombstoned
+      # entries stay in Unreleased. CI does not push this change.
+      - name: Archive verified entries
+        env:
+          VERSION_NAME: ${{ steps.meta.outputs.version_name }}
+        run: |
+          set -euo pipefail
+          bun scripts/release/releaseGate.mjs archive-gated \
+            --changelog CHANGELOG.md \
+            --tombstones changelog/ignored.txt \
+            --record changelog/consumed-ids.json \
+            --version "$VERSION_NAME" \
+            --date "$(date -u +%Y-%m-%d)" \
+            --out "$RUNNER_TEMP/CHANGELOG.archived.md"
+          cp "$RUNNER_TEMP/CHANGELOG.archived.md" CHANGELOG.md
+
+      # ── 23g. Convenience artifact (not the authoritative ledger) ───────
+      # The durable ledger is the consumed-ids.json release asset above. This
+      # 90-day artifact is only a convenience copy for the Git worker.
+      - name: Upload consumed-ID record artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: consumed-ids-${{ steps.meta.outputs.version_name }}
+          path: changelog/consumed-ids.json
+          if-no-files-found: error
+          retention-days: 90
+
+      # ── 23h. Enforce two-APK Supabase Storage retention ─────────────────
+      # The authoritative historical APK archive is GitHub Releases. Supabase
+      # Storage retains at most two APK objects: the active release APK and the
+      # immediately preceding release APK (expired after 14 days).
+      # Deletions run ONLY after unauthenticated GET + SHA-256 verification,
+      # policy PATCH read-back, and GitHub Release asset verification have all
+      # succeeded.
+      - name: Enforce two-APK Supabase Storage retention
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          APK_NAME: ${{ steps.find-apk.outputs.apk_name }}
+          LEDGER_FILE: ${{ steps.ledger.outputs.ledger_file }}
+        run: |
+          set -euo pipefail
+          CLEAN_SUPABASE_URL="${SUPABASE_URL%/}"
+          PRE_OBJECTS_FILE="$RUNNER_TEMP/storage_objects_pre.json"
+          PLAN_FILE="$RUNNER_TEMP/retention_plan.json"
+          POST_OBJECTS_FILE="$RUNNER_TEMP/storage_objects_post.json"
+
+          # 1. List current objects in app-releases bucket
+          HTTP_CODE=$(curl -s -o "$PRE_OBJECTS_FILE" -w "%{http_code}" \
+            -X POST "${CLEAN_SUPABASE_URL}/storage/v1/object/list/app-releases" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"prefix": "", "limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "asc"}}')
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Failed to list objects in app-releases storage bucket (HTTP $HTTP_CODE)."
+            cat "$PRE_OBJECTS_FILE" 2>/dev/null || true
+            exit 1
+          fi
+
+          # 2. Plan retention using releaseGate helper
+          bun scripts/release/releaseGate.mjs plan-storage-retention \
+            --objects "$PRE_OBJECTS_FILE" \
+            --ledger "$LEDGER_FILE" \
+            --version-code "$VERSION_CODE" \
+            --verified true \
+            --out "$PLAN_FILE"
+
+          DELETE_COUNT=$(jq '.deleteNames | length' "$PLAN_FILE")
+          KEEP_COUNT=$(jq '.keepNames | length' "$PLAN_FILE")
+          echo "Retention plan: keeping $KEEP_COUNT APK(s), deleting $DELETE_COUNT stale APK(s)."
+          cat "$PLAN_FILE"
+
+          # 3. Delete stale objects if any
+          if [ "$DELETE_COUNT" -gt 0 ]; then
+            DELETE_PAYLOAD=$(jq '{prefixes: .deleteNames}' "$PLAN_FILE")
+            DEL_HTTP_CODE=$(curl -s -o /tmp/storage_delete_res.json -w "%{http_code}" \
+              -X DELETE "${CLEAN_SUPABASE_URL}/storage/v1/object/app-releases" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$DELETE_PAYLOAD")
+
+            if [ "$DEL_HTTP_CODE" -lt 200 ] || [ "$DEL_HTTP_CODE" -ge 300 ]; then
+              echo "::error::Failed to delete stale objects from app-releases (HTTP $DEL_HTTP_CODE)."
+              cat /tmp/storage_delete_res.json 2>/dev/null || true
+              exit 1
+            fi
+            echo "Stale objects deleted successfully."
+          fi
+
+          # 4. List objects again to verify final retention invariant
+          POST_HTTP_CODE=$(curl -s -o "$POST_OBJECTS_FILE" -w "%{http_code}" \
+            -X POST "${CLEAN_SUPABASE_URL}/storage/v1/object/list/app-releases" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"prefix": "", "limit": 100, "offset": 0, "sortBy": {"column": "name", "order": "asc"}}')
+
+          if [ "$POST_HTTP_CODE" -lt 200 ] || [ "$POST_HTTP_CODE" -ge 300 ]; then
+            echo "::error::Failed to list post-retention objects (HTTP $POST_HTTP_CODE)."
+            exit 1
+          fi
+
+          EXPECTED_KEEP=$(jq -r '.keepNames | join(",")' "$PLAN_FILE")
+          bun scripts/release/releaseGate.mjs verify-storage-retention \
+            --objects "$POST_OBJECTS_FILE" \
+            --expected-keep "$EXPECTED_KEEP" \
+            --latest "$APK_NAME"
+
+          echo "✅ Two-APK Supabase Storage retention invariant verified successfully."
