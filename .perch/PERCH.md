@@ -1,12 +1,7 @@
-# Perch Project Manual
+# bigdrops-app - project-specific notes
 
-This file is your project's operating manual. Perch reads it on every turn
-and follows any instructions you put here over its defaults.
+(blank by default - add project-specific context here)
 
-Edit this file to add:
-- Project-specific style or tone preferences
-- File or folder paths Perch should focus on
-- Workflow rules ("always cite sources", "never modify X without approval")
-- Anything you'd tell a new teammate joining this project
+# Inherited from your global Perch profile
 
-Delete this header once you've added your own content.
+(reference: ~/Documents/Perch/PERCH.md)
