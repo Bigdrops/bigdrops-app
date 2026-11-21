@@ -38,7 +38,7 @@ Coding agents MUST read root AGENTS.md and only relevant subordinate instruction
 
 · Typecheck: risk-based. Meaningful code changes SHOULD run bun run typecheck after bun run audit:load; not needed for read-only, docs-only, or trivial changes.
 · Migrations: deploy automatically when satisfying the established process. Preserve conventions, authorization, environment, ordering, integrity, audit, verification, and failure handling. Agents MUST NOT self-authorize deployment, bypass controls, or mutate production data arbitrarily; if requirements are unmet, stop before the restricted step and report the blocker.
-· Skills: relevance-based by task, technology, risk, and version fit. Do not load all skills or force Modern Web Guidance on routine frontend work. Skills are advisory and subordinate to AGENTS.md, standards, repository evidence, and user requirements. Modern Web Guidance is only a conditional browser-platform reference.
+· Skills: relevance-based by task, technology, risk, and version fit, except the four first-class sources in AGENTS.md (the Modern Web Guidance skill plus the `bigdrops-free`, `kinetics`, and `water-melon` approved component libraries), all used on every task before building. Do not load every other skill. Skills are advisory and subordinate to AGENTS.md, standards, repository evidence, and user requirements.
 · Git: scope-based. Preserve pre-existing staged, unstaged, untracked, and conflicted work; no clean tree required. Compare state when warranted, verify attribution and boundaries, and never clean or discard unrelated work.
 · bun run build: prohibited on the constrained host; never assign it.
 

@@ -127,7 +127,7 @@ Business rules are primarily in `src/domain/` and `src/lib/`; preserve existing 
 - [`AGENTS.md`](AGENTS.md) — repository governance authority, safety, scope, and verification.
 - [`docs/standard/`](docs/standard/) — approved engineering standards.
 - [`supabase/database-workflow.md`](supabase/database-workflow.md) — migration workflow.
-- [`docs/PROJECTSKILLINDEX.md`](docs/PROJECTSKILLINDEX.md) — existing specialist skill discovery. Load skills only when relevant. Modern Web Guidance is a conditional browser-platform reference, not the primary development skill. The Claude `frontend-design` skill and identifiable mirrors or aliases are prohibited; use a relevant existing approved alternative.
+- [`docs/PROJECTSKILLINDEX.md`](docs/PROJECTSKILLINDEX.md) — existing specialist skill discovery. Load specialist skills by relevance; the four first-class sources are mandatory on every task. Modern Web Guidance, plus the `bigdrops-free`, `kinetics`, and `water-melon` approved component libraries in `docs/templates/`, are first-class and used on every task — see [`AGENTS.md`](AGENTS.md) "First-Class Guidance". The Claude `frontend-design` skill and identifiable mirrors or aliases are prohibited; use a relevant existing approved alternative.
 - [`docs/SUBAGENTS.md`](docs/SUBAGENTS.md) — repository subagent catalog; use only when applicable and authorized.
 
 PRDs, designs, roadmaps, prototypes, and historical reports can contain proposals. They are not automatically approved requirements or proof that a feature is implemented.

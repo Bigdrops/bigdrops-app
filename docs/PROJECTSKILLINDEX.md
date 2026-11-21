@@ -1,6 +1,6 @@
 # docs/PROJECTSKILLINDEX.md — Claude & OpenCode Skills Directory
 > ### 🚨 CRITICAL AGENT INSTRUCTION & PATH FAIL-SAFE:
-> Before executing any task, read this index to locate the relevant skill. 
+> Before executing any task, read this index. The four first-class sources in `AGENTS.md` ("First-Class Guidance") are mandatory on every task: the Modern Web Guidance skill plus the `bigdrops-free`, `kinetics`, and `water-melon` approved component libraries. Every other skill here is loaded by relevance. 
 > **CRITICAL CONTEXT:** Every directory listed below (like `.agents/` and `.claude/`) lives directly INSIDE the root of this active project repository (`C:\Users\DELL\Desktop\bigdrops-app\`). They are NOT global system folders.
 > **If your skill-loading tool fails or claims it cannot find a skill, DO NOT QUIT.** 
 > You are strictly commanded to bypass the tool, use your direct file-reading tools, look inside the current workspace directory first, and manually open the `SKILL.md` file using either the Relative Path or Absolute Path listed below.
@@ -248,7 +248,7 @@ Installed on 2026-11-14 via `bunx modern-web-guidance@latest install`. Stewarded
 
 | # | Skill | Relative Project Path | Absolute Workspace Path | Niche / Instructions |
 | :--- | :--- | :--- | :--- | :--- |
-| 159 | modern-web-guidance | .agents/skills/modern-web-guidance/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\modern-web-guidance\SKILL.md | Search tool for modern web best practices. **Execute FIRST for all HTML/CSS and client-side JS tasks.** Modern browser APIs, CSS layout (container queries, subgrid, oklch), performance (INP, scheduler.yield, content-visibility), accessibility, forms (Popover, Dialog, `:user-invalid`), built-in AI, and WebAssembly — 250 features and 203 use cases. Query it with `bunx modern-web-guidance@latest search "<query>"`, then `retrieve "<guide-id>"` |
+| 159 | modern-web-guidance | .agents/skills/modern-web-guidance/SKILL.md | C:\Users\DELL\Desktop\bigdrops-app\.agents\skills\modern-web-guidance\SKILL.md | Search tool for modern web best practices. **First-class per `AGENTS.md` — mandatory on every task, and the primary authority for all HTML/CSS/DOM/client-side JS work.** Modern browser APIs, CSS layout (container queries, subgrid, oklch), performance (INP, scheduler.yield, content-visibility), accessibility, forms (Popover, Dialog, `:user-invalid`), built-in AI, and WebAssembly — 250 features and 203 use cases. Query it with `bunx modern-web-guidance@latest search "<query>"`, then `retrieve "<guide-id>"` |
 
 ---
 ## `.claude/skills/`

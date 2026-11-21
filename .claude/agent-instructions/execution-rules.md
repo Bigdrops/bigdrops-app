@@ -13,7 +13,7 @@ Before you change code:
 1. Understand the task.
 2. Identify affected files.
 3. Check callers and shared usage before editing utilities.
-4. Load the matching skill if one exists (see `docs/PROJECTSKILLINDEX.md`).
+4. Clear the First-Class Guidance gate in `AGENTS.md`, then load the matching specialist skill if one exists (see `docs/PROJECTSKILLINDEX.md`).
 5. Plan the change.
 6. Make the smallest correct change.
 7. Verify.

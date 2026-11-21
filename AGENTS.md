@@ -33,6 +33,19 @@ If instructions conflict, preserve the higher-priority requirement and protected
 
 PDF renderers present prepared data; they must not calculate financial values. Use Supabase access patterns already present and protect tenant, authorization, audit, and document lifecycle boundaries. Consult the linked standards and domain instructions before changing these contracts.
 
+## First-Class Guidance (Mandatory Consultation Gate)
+
+| # | Source | Location | Apply to |
+| :--- | :--- | :--- | :--- |
+| 1 | `modern-web-guidance` (skill) | `.agents/skills/modern-web-guidance/SKILL.md` (corpus: `guides/`) | Browser-platform behaviour — HTML, CSS, DOM, forms and validation, overlays (dialog/popover/menu), client-side JS, accessibility, Core Web Vitals, security |
+| 2 | `bigdrops-free` (approved component library — ReUI v2.8.0 catalog) | `docs/templates/bigdrops-free.md` | Component inventory and composition — data grid, filters, stepper, and the primitives absent from base shadcn/ui |
+| 3 | `kinetics` (approved component library) | `docs/templates/kinetics.md` | Motion vocabulary — spring/glide easing, micro-interaction timing, hover and reveal choreography |
+| 4 | `water-melon` (approved component library — Watermelon Platform) | `docs/templates/water-melon.md` | Block and dashboard composition — surface hierarchy, elevation, border opacity, density idioms |
+
+UI work is blocked until the applicable ones are applied.
+
+Run the skill with `bunx modern-web-guidance@latest` — not `npx`, `npx.cmd`, or `pnpx`.
+
 ## Responsive UI Design Standard
 
 All new, redesigned, or otherwise affected user-facing interfaces must intentionally account for these four viewport classes during design and implementation:
@@ -58,9 +71,9 @@ Automatic deployment of approved database migrations is the default direction. P
 
 ## Skills
 
-Use `docs/PROJECTSKILLINDEX.md` to discover existing skills. Load only skills relevant to the task's technology, risk, and specialist needs. Prefer specialist guidance for its domain, and check version and project fit. Skills are advisory and subordinate to this file, approved standards, repository evidence, and explicit user requirements.
+Use `docs/PROJECTSKILLINDEX.md` to discover existing skills. Load specialist skills by relevance to the task's technology, risk, and needs — relevance gating applies only to those specialist skills, never to the four first-class sources above, which are mandatory on every task. Prefer specialist guidance for its domain, and check version and project fit. Skills are advisory and subordinate to this file, approved standards, repository evidence, and explicit user requirements.
 
-**Prohibited:** Do not load, invoke, follow, recommend as a default/fallback, install, import, restore, or access through an alias or mirrored copy the Claude `frontend-design` skill. Do not follow another skill's mandatory routing to that prohibited skill. This restriction applies to frontend implementation, UI design, styling, responsive layout, and design review. It does not prohibit unrelated Claude-compatible tools or other frontend/design/accessibility skills. Select an appropriate existing approved alternative by relevance. Do not universally load every skill. Modern Web Guidance is a conditional browser-platform reference, not the primary development skill or universal implementation authority.
+**Prohibited:** Do not load, invoke, follow, recommend as a default/fallback, install, import, restore, or access through an alias or mirrored copy the Claude `frontend-design` skill. Do not follow another skill's mandatory routing to that prohibited skill. This restriction applies to frontend implementation, UI design, styling, responsive layout, and design review. It does not prohibit unrelated Claude-compatible tools or other frontend/design/accessibility skills. Select an appropriate existing approved alternative by relevance. Do not universally load every other skill. `modern-web-guidance` and the three `docs/templates/` approved component libraries are the exception: all are used on every task, and Modern Web Guidance is the primary authority for web-platform behaviour rather than a conditional reference.
 
 ## Verification
 
@@ -78,6 +91,8 @@ Read only the relevant documents for the task:
 - [Verification Gate](.claude/agent-instructions/verification-gate.md) — existing verification sequence; apply the risk-based policy above where it conflicts.
 - [Reporting and Documentation](.claude/agent-instructions/documentation.md) — existing writing/report conventions; use report destinations based on user instructions and repository conventions, not as universal path requirements.
 - [Agent System](.claude/agent-instructions/agent-system.md) — standards, skills, and precedence; apply the authority stated above.
+- [Modern Web Guidance Skill](.agents/skills/modern-web-guidance/SKILL.md) — first-class guidance; read before any HTML/CSS/DOM/client-side JS work. Its audit and known gaps: [Modern Web Guidance audit](docs/reports/agent-skills/2026-11-21-modern-web-guidance-audit.md).
+- [Approved Component Libraries](docs/templates/) — `bigdrops-free.md`, `kinetics.md`, `water-melon.md`: first-class read-only build material for components, motion, and composition; each stub locates its local prototype.
 - [Standards](docs/standard/) · [Skill Index](docs/PROJECTSKILLINDEX.md) · [Subagent Directory](docs/SUBAGENTS.md) · [Database Workflow](supabase/database-workflow.md).
 
 Detailed files linked above are outside this concise entry point. If one conflicts with an approved decision here and cannot be corrected within the authorized scope, preserve the approved decision and report the unresolved conflict; do not silently edit out-of-scope files.
