@@ -162,7 +162,6 @@ jobs:
                 echo "::error::Release $LATEST_TAG lists consumed-ids.json but download failed."
                 exit 1
               fi
-              mv "$RUNNER_TEMP/consumed-ids.json" "$LEDGER_FILE"
               if ! bun scripts/release/releaseGate.mjs validate-ledger --ledger "$LEDGER_FILE"; then
                 echo "::error::Release $LATEST_TAG has a malformed or corrupted consumed-ids.json ledger."
                 exit 1

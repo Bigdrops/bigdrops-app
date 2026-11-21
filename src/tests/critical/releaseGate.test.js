@@ -946,7 +946,7 @@ test('CLI validate-notes --file and --ids enforces fail-closed exit behavior', (
 
 test('loadLedger and validate-ledger enforce ledger integrity and fail closed on corruption', () => {
   // Corrupt JSON text throws
-  assert.throws(() => loadLedger('{not json'), /Unexpected token|in JSON/)
+  assert.throws(() => loadLedger('{not json'), /Unexpected token|in JSON|JSON Parse error/)
 
   // Missing ledger throws unless allowMissing is set
   assert.throws(() => loadLedger('', { allowMissing: false }), /consumed ledger is missing/)
@@ -1143,4 +1143,131 @@ test('build-android-test-release.yml enforces fail-closed release-notes validati
   assert.match(notesBlock, /::error::Release notes validation failed: generated release notes file is empty or whitespace-only/, 'Must emit GitHub Actions error on empty notes')
   assert.match(notesBlock, /::error::Release notes validation failed: notes contain generic placeholder content/, 'Must emit GitHub Actions error on placeholder notes')
 })
+
+test('build-android-test-release.yml Step 3b ledger fetch handles download without redundant same-path mv and validates fail-closed branches', () => {
+  const workflowPath = resolve(process.cwd(), '.github/workflows/build-android-test-release.yml')
+  const content = readFileSync(workflowPath, 'utf8')
+
+  const ledgerStepIdx = content.indexOf('id: ledger')
+  const reconcileStepIdx = content.indexOf('name: Reconcile prior release')
+
+  assert.ok(ledgerStepIdx > 0, 'id: ledger step must exist')
+  assert.ok(reconcileStepIdx > 0, 'Reconcile prior release step must exist')
+  assert.ok(ledgerStepIdx < reconcileStepIdx, 'Fetch consumed-ID ledger must strictly precede reconciliation')
+
+  const ledgerBlock = content.slice(ledgerStepIdx, reconcileStepIdx)
+
+  // Verify LEDGER_FILE definition
+  assert.match(ledgerBlock, /LEDGER_FILE="\$RUNNER_TEMP\/consumed-ids\.json"/, 'LEDGER_FILE must be defined in $RUNNER_TEMP')
+
+  // Verify download command downloads to $RUNNER_TEMP
+  assert.match(
+    ledgerBlock,
+    /gh release download "\$LATEST_TAG" --pattern 'consumed-ids\.json'[\s\\]+--dir "\$RUNNER_TEMP" --clobber/,
+    'Must download consumed-ids.json directly to $RUNNER_TEMP'
+  )
+
+  // Verify NO redundant same-path mv command exists
+  assert.doesNotMatch(
+    ledgerBlock,
+    /mv "\$RUNNER_TEMP\/consumed-ids\.json" "\$LEDGER_FILE"/,
+    'Must not execute redundant same-path mv that fails under set -e'
+  )
+
+  // Verify ledger validation invocation
+  assert.match(
+    ledgerBlock,
+    /bun scripts\/release\/releaseGate\.mjs validate-ledger --ledger "\$LEDGER_FILE"/,
+    'Must validate ledger file directly using releaseGate.mjs validate-ledger'
+  )
+
+  // Verify error and fail-closed branches
+  assert.match(ledgerBlock, /::error::Release \$LATEST_TAG lists consumed-ids\.json but download failed\./, 'Must fail on download failure')
+  assert.match(ledgerBlock, /::error::Release \$LATEST_TAG has a malformed or corrupted consumed-ids\.json ledger\./, 'Must fail on malformed ledger')
+  assert.match(ledgerBlock, /::error::Release \$LATEST_TAG has no consumed-ids\.json asset\. Refusing to guess consumed state\./, 'Must fail closed on missing ledger for modern release')
+  assert.match(ledgerBlock, /isLegacyPreLedgerRelease/, 'Must check legacy release predicate')
+  assert.match(ledgerBlock, /legacy_ledger_bootstrap=true/, 'Must emit legacy_ledger_bootstrap for historical releases')
+  assert.match(ledgerBlock, /first_release=true/, 'Must handle first release')
+})
+
+test('Step 3b shell download simulation verifies direct file validation and reproduces same-path mv failure', () => {
+  const bashPaths = [
+    'C:\\Program Files\\Git\\bin\\bash.exe',
+    'C:\\Program Files\\Git\\usr\\bin\\bash.exe',
+    'bash',
+  ]
+  const bashExe = bashPaths.find((p) => {
+    try {
+      execFileSync(p, ['-c', 'echo ok'], { encoding: 'utf8', stdio: 'pipe' })
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  if (!bashExe) return
+
+  const dir = mkdtempSync(join(tmpdir(), 'step3b-shell-test-'))
+  try {
+    const validLedger = JSON.stringify({
+      schema: 2,
+      releases: [record()],
+    })
+
+    const runnerTemp = dir.replace(/\\/g, '/')
+    writeFileSync(join(dir, 'consumed-ids.json'), validLedger, 'utf8')
+
+    // 1. Reproduce: running mv on identical paths fails under GNU coreutils / set -euo pipefail
+    const failScript = `
+set -euo pipefail
+cd "${runnerTemp}"
+touch samefile.json
+mv samefile.json samefile.json
+`
+    assert.throws(
+      () => execFileSync(bashExe, ['-c', failScript], { encoding: 'utf8', stdio: 'pipe' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const combined = `${err.stdout || ''}\n${err.stderr || ''}`
+        assert.match(combined, /are the same file/i)
+        return true
+      }
+    )
+
+    // 2. Corrected behavior: directly validating $LEDGER_FILE after download succeeds with exit 0
+    const successScript = `
+set -euo pipefail
+RUNNER_TEMP="${runnerTemp}"
+LEDGER_FILE="$RUNNER_TEMP/consumed-ids.json"
+bun scripts/release/releaseGate.mjs validate-ledger --ledger "$LEDGER_FILE"
+echo "VALIDATION_PASSED"
+`
+    const out = execFileSync(bashExe, ['-c', successScript], { encoding: 'utf8', stdio: 'pipe' })
+    assert.ok(out.includes('VALIDATION_PASSED'))
+
+    // 3. Corrupt ledger fails validation
+    writeFileSync(join(dir, 'consumed-ids.json'), '{"schema": 2, "releases": [{ "bad": true }]}', 'utf8')
+    const corruptScript = `
+set -euo pipefail
+RUNNER_TEMP="${runnerTemp}"
+LEDGER_FILE="$RUNNER_TEMP/consumed-ids.json"
+if ! bun scripts/release/releaseGate.mjs validate-ledger --ledger "$LEDGER_FILE"; then
+  echo "MALFORMED_CAUGHT"
+  exit 1
+fi
+`
+    assert.throws(
+      () => execFileSync(bashExe, ['-c', corruptScript], { encoding: 'utf8', stdio: 'pipe' }),
+      (err) => {
+        assert.equal(err.status, 1)
+        const combined = `${err.stdout || ''}\n${err.stderr || ''}`
+        assert.match(combined, /MALFORMED_CAUGHT/)
+        return true
+      }
+    )
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
 
