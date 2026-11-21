@@ -88,6 +88,7 @@ const OnboardingV4Preview = lazy(() => import('@/pages/OnboardingV4Preview'))
 const OnboardingV5Preview = lazy(() => import('@/pages/OnboardingV5Preview'))
 const ColdLaunchThemeExperiment = lazy(() => import('@/pages/ColdLaunchThemeExperiment'))
 const AndroidUpdateExperiment = lazy(() => import('@/pages/AndroidUpdateExperiment'))
+const BoluInfraExperiment = lazy(() => import('@/pages/BoluInfraExperiment'))
 const AccountingOverview = lazy(() => import('@/pages/accounting/AccountingOverview'))
 const Accounts = lazy(() => import('@/pages/accounting/Accounts'))
 const Periods = lazy(() => import('@/pages/accounting/Periods'))
@@ -356,6 +357,7 @@ export default function AppShell({ session, profile, onProfileUpdate }: AppShell
           <Route path="/design-lab/onboarding-v5" element={withBoundary(<OnboardingV5Preview />)} />
           <Route path="/design-lab/cold-launch" element={withBoundary(<ColdLaunchThemeExperiment />)} />
           <Route path="/design-lab/android-update" element={withBoundary(<AndroidUpdateExperiment />)} />
+          <Route path="/design-lab/bolu-infra" element={withBoundary(<BoluInfraExperiment />)} />
           <Route path="/accounting" element={withBoundary(<AccountingOverview />)} />
           <Route path="/accounting/accounts" element={withBoundary(<Accounts />)} />
           <Route path="/accounting/periods" element={withBoundary(<Periods />)} />

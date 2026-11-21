@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Clapperboard, ClipboardList, FileText, LayoutDashboard, Network, PanelsTopLeft, Smartphone, Sparkles } from 'lucide-react'
+import { Clapperboard, ClipboardList, Cpu, FileText, LayoutDashboard, Network, PanelsTopLeft, Smartphone, Sparkles } from 'lucide-react'
 
 export interface DesignLabPreview {
   id: string
@@ -83,5 +83,14 @@ export const DESIGN_LAB_PREVIEWS: DesignLabPreview[] = [
     route: '/design-lab/android-update',
     icon: Smartphone,
     capabilities: ['4 states', 'Live countdown', 'Simulated transfer', 'Light/Dark', '6 viewports'],
+  },
+  {
+    id: 'bolu-infra',
+    name: 'Bolu AI Infrastructure',
+    eyebrow: 'Infrastructure',
+    description: 'Three mobile-first architectural designs for Bolu AI routing, models, and controls.',
+    route: '/design-lab/bolu-infra',
+    icon: Cpu,
+    capabilities: ['3 approaches', '5 themes', 'Light/Dark', '6 viewports', 'Mock data'],
   },
 ]
