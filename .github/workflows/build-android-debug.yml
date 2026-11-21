@@ -116,7 +116,18 @@ jobs:
 
       # ── 10. Build web assets ─────────────────────────────────────────────
       - name: Build production web assets
-        run: bun run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_GIT_REPO: https://github.com/${{ github.repository }}.git
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "::warning::VITE_API_URL secret is empty. The APK will fall back to default backend or relative API path."
+          else
+            echo "✅ VITE_API_URL is set; API calls will use an absolute origin."
+          fi
+          bun run build
 
       # ── 11. Verify Vite build output (new) ──────────────────────────────
       - name: Verify Vite build output
