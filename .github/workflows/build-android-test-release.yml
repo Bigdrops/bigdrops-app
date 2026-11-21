@@ -920,14 +920,21 @@ jobs:
           VERSION_NAME: ${{ steps.meta.outputs.version_name }}
         run: |
           set -euo pipefail
+          ARCHIVE_OUT="$RUNNER_TEMP/CHANGELOG.archived.md"
+          rm -f "$ARCHIVE_OUT"
           bun scripts/release/releaseGate.mjs archive-gated \
             --changelog CHANGELOG.md \
             --tombstones changelog/ignored.txt \
             --record changelog/consumed-ids.json \
             --version "$VERSION_NAME" \
             --date "$(date -u +%Y-%m-%d)" \
-            --out "$RUNNER_TEMP/CHANGELOG.archived.md"
-          cp "$RUNNER_TEMP/CHANGELOG.archived.md" CHANGELOG.md
+            --out "$ARCHIVE_OUT"
+          if [ -s "$ARCHIVE_OUT" ]; then
+            cp "$ARCHIVE_OUT" CHANGELOG.md
+            echo "✅ Applied archived changelog for $VERSION_NAME"
+          else
+            echo "ℹ️ Changelog archival skipped (gate not satisfied). Original CHANGELOG.md retained."
+          fi
 
       # ── 23g. Convenience artifact (not the authoritative ledger) ───────
       # The durable ledger is the consumed-ids.json release asset above. This

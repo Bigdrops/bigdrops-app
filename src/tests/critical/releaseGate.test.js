@@ -17,6 +17,7 @@ import {
   verifyAssetDownload,
   evaluatePolicyState,
   selectArchivableIds,
+  selectLedgerRecord,
   filterStaleApkObjects,
   planStorageRetention,
   verifyStorageRetentionInvariant,
@@ -26,6 +27,7 @@ import {
   isLegacyPlaceholder,
   validateReleaseNotes,
   loadLedger,
+  mergeLedger,
   RECORD_SCHEMA,
 } from '../../../scripts/release/releaseGate.mjs'
 import { createEmptyChangelog, appendEntries, archiveEntries, parseChangelog, idForKey } from '../../../scripts/release/changelog.mjs'
@@ -1265,6 +1267,405 @@ fi
         return true
       }
     )
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('selectLedgerRecord enforces exact versioning, ambiguity rejection, and verification gates', () => {
+  const recordA = {
+    versionCode: 1031,
+    versionName: '1.0.31',
+    assetVerified: true,
+    policyVerified: true,
+  }
+  const recordB = {
+    versionCode: 1034,
+    versionName: '1.0.34',
+    assetVerified: true,
+    policyVerified: true,
+  }
+  const recordCUnverified = {
+    versionCode: 1035,
+    versionName: '1.0.35',
+    assetVerified: false,
+    policyVerified: true,
+  }
+  const multiLedger = {
+    schema: 2,
+    releases: [recordA, recordB, recordCUnverified],
+  }
+
+  // 1. Exact version selection when multiple verified releases exist
+  assert.equal(selectLedgerRecord(multiLedger, '1.0.31'), recordA)
+  assert.equal(selectLedgerRecord(multiLedger, '1.0.34'), recordB)
+  assert.equal(selectLedgerRecord(multiLedger, 'v1.0.34'), recordB, 'Leading v normalized')
+
+  // 2. Explicit version not found (returns null, never silently falls back)
+  assert.equal(selectLedgerRecord(multiLedger, '1.0.99'), null)
+  assert.equal(selectLedgerRecord(multiLedger, '2.0.0'), null)
+
+  // 3. Ambiguous version matches (fails closed)
+  const ambiguousLedger = {
+    schema: 2,
+    releases: [
+      recordA,
+      { ...recordB, buildSha: '1'.repeat(40) },
+      { ...recordB, buildSha: '2'.repeat(40) },
+    ],
+  }
+  assert.throws(
+    () => selectLedgerRecord(ambiguousLedger, '1.0.34'),
+    (err) => {
+      assert.match(err.message, /ambiguous release selection/)
+      return true
+    }
+  )
+
+  // 4. Unverified matching record
+  assert.equal(selectLedgerRecord(multiLedger, '1.0.35'), null, 'Unverified matching record must not be selected')
+
+  // 5. No explicit version: newest verified record selected
+  assert.equal(selectLedgerRecord(multiLedger, null), recordB, 'Must select newest verified record (recordB, not unverified recordC or older recordA)')
+  assert.equal(selectLedgerRecord(multiLedger, ''), recordB)
+  assert.equal(selectLedgerRecord(multiLedger, '   '), recordB)
+
+  // Empty or unverified-only ledger returns null when no version passed
+  assert.equal(selectLedgerRecord({ schema: 2, releases: [recordCUnverified] }, null), null)
+  assert.equal(selectLedgerRecord({ schema: 2, releases: [] }, null), null)
+  assert.equal(selectLedgerRecord(null, null), null)
+
+  // 6. Legacy ledger compatibility (loaded via loadLedger)
+  const legacyLedger = loadLedger(JSON.stringify({
+    schema: 2,
+    sha: 'a'.repeat(40),
+    versionCode: 1028,
+    versionName: '1.0.28',
+    tag: 'test-release-run28',
+    ids: ['rel_11111111'],
+    notesHash: '0'.repeat(64),
+    assetVerified: true,
+    policyVerified: true,
+  }))
+  assert.equal(selectLedgerRecord(legacyLedger, '1.0.28')?.versionName, '1.0.28')
+  assert.equal(selectLedgerRecord(legacyLedger, null)?.versionName, '1.0.28')
+})
+
+test('release workflow non-blocking changelog archival and lifecycle behavior', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'release-archive-test-'))
+  const runnerTemp = join(dir, 'runner_temp')
+  mkdtempSync(runnerTemp)
+
+  const bashPaths = [
+    'C:\\Program Files\\Git\\bin\\bash.exe',
+    'C:\\Program Files\\Git\\usr\\bin\\bash.exe',
+    'bash',
+  ]
+  const bashExe = bashPaths.find((p) => {
+    try {
+      execFileSync(p, ['-c', 'echo ok'], { encoding: 'utf8', stdio: 'pipe' })
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  if (!bashExe) return
+
+  try {
+    const changelogPath = join(dir, 'CHANGELOG.md')
+    const tombstonesPath = join(dir, 'ignored.txt')
+    const ledgerPath = join(dir, 'consumed-ids.json')
+    writeFileSync(tombstonesPath, '', 'utf8')
+
+    const initialChangelog = `# BOUXRE Changelog\n\n## Unreleased\n\n<!-- id: rel_11111111 -->\n- Alpha feature\n\n<!-- id: rel_22222222 -->\n- Beta feature\n\n<!-- archive-boundary -->\n`
+    writeFileSync(changelogPath, initialChangelog, 'utf8')
+
+    // Initial ledger with prior release (1.0.31)
+    const ledgerData = {
+      schema: 2,
+      releases: [
+        {
+          schema: 2,
+          buildSha: 'a'.repeat(40),
+          versionCode: 1031,
+          versionName: '1.0.31',
+          tag: 'test-release-run31',
+          consumedEntryIds: ['rel_99999999'],
+          ids: ['rel_99999999'],
+          notesHash: '0'.repeat(64),
+          webReleaseUrl: 'https://example.com/31.apk',
+          assetVerified: true,
+          policyVerified: true,
+          publishedAt: '2026-11-20T00:00:00Z',
+          apkAssetName: 'BOUXRE-release-1.0.31.apk',
+          apkSha256: 'f'.repeat(64),
+          apkAssetPrefix: 'BOUXRE-release-',
+        },
+      ],
+    }
+    writeFileSync(ledgerPath, JSON.stringify(ledgerData, null, 2), 'utf8')
+
+    // 1. Gate not satisfied: archival skipped, changelog unchanged, workflow continues
+    const unverifiedLedger = {
+      schema: 2,
+      releases: [
+        ...ledgerData.releases,
+        {
+          schema: 2,
+          buildSha: 'b'.repeat(40),
+          versionCode: 1035,
+          versionName: '1.0.35',
+          tag: 'test-release-run35',
+          consumedEntryIds: ['rel_11111111'],
+          ids: ['rel_11111111'],
+          notesHash: '1'.repeat(64),
+          webReleaseUrl: 'https://example.com/35.apk',
+          assetVerified: false, // NOT VERIFIED
+          policyVerified: true,
+          publishedAt: '2026-11-21T00:00:00Z',
+          apkAssetName: 'BOUXRE-release-1.0.35.apk',
+          apkSha256: 'e'.repeat(64),
+          apkAssetPrefix: 'BOUXRE-release-',
+        },
+      ],
+    }
+    writeFileSync(ledgerPath, JSON.stringify(unverifiedLedger, null, 2), 'utf8')
+
+    const skipScript = `
+set -euo pipefail
+RUNNER_TEMP="${runnerTemp.replace(/\\/g, '/')}"
+CHANGELOG_FILE="${changelogPath.replace(/\\/g, '/')}"
+LEDGER_FILE="${ledgerPath.replace(/\\/g, '/')}"
+TOMBSTONES_FILE="${tombstonesPath.replace(/\\/g, '/')}"
+VERSION_NAME="1.0.35"
+
+ARCHIVE_OUT="$RUNNER_TEMP/CHANGELOG.archived.md"
+rm -f "$ARCHIVE_OUT"
+bun scripts/release/releaseGate.mjs archive-gated \\
+  --changelog "$CHANGELOG_FILE" \\
+  --tombstones "$TOMBSTONES_FILE" \\
+  --record "$LEDGER_FILE" \\
+  --version "$VERSION_NAME" \\
+  --date "2026-11-21" \\
+  --out "$ARCHIVE_OUT"
+if [ -s "$ARCHIVE_OUT" ]; then
+  cp "$ARCHIVE_OUT" "$CHANGELOG_FILE"
+  echo "APPLIED"
+else
+  echo "SKIPPED"
+fi
+`
+    const skipOut = execFileSync(bashExe, ['-c', skipScript], { encoding: 'utf8', stdio: 'pipe' })
+    assert.ok(skipOut.includes('SKIPPED'), 'Expected SKIPPED in output')
+    assert.equal(readFileSync(changelogPath, 'utf8'), initialChangelog, 'Changelog must remain unchanged')
+
+    // 2. Gate satisfied: archive output produced and applied correctly
+    const verifiedLedger = {
+      schema: 2,
+      releases: [
+        ...ledgerData.releases,
+        {
+          schema: 2,
+          buildSha: 'c'.repeat(40),
+          versionCode: 1035,
+          versionName: '1.0.35',
+          tag: 'test-release-run35',
+          consumedEntryIds: ['rel_11111111'],
+          ids: ['rel_11111111'],
+          notesHash: '2'.repeat(64),
+          webReleaseUrl: 'https://example.com/35.apk',
+          assetVerified: true,
+          policyVerified: true,
+          publishedAt: '2026-11-21T00:00:00Z',
+          apkAssetName: 'BOUXRE-release-1.0.35.apk',
+          apkSha256: 'd'.repeat(64),
+          apkAssetPrefix: 'BOUXRE-release-',
+        },
+      ],
+    }
+    writeFileSync(ledgerPath, JSON.stringify(verifiedLedger, null, 2), 'utf8')
+
+    const applyScript = `
+set -euo pipefail
+RUNNER_TEMP="${runnerTemp.replace(/\\/g, '/')}"
+CHANGELOG_FILE="${changelogPath.replace(/\\/g, '/')}"
+LEDGER_FILE="${ledgerPath.replace(/\\/g, '/')}"
+TOMBSTONES_FILE="${tombstonesPath.replace(/\\/g, '/')}"
+VERSION_NAME="1.0.35"
+
+ARCHIVE_OUT="$RUNNER_TEMP/CHANGELOG.archived.md"
+rm -f "$ARCHIVE_OUT"
+bun scripts/release/releaseGate.mjs archive-gated \\
+  --changelog "$CHANGELOG_FILE" \\
+  --tombstones "$TOMBSTONES_FILE" \\
+  --record "$LEDGER_FILE" \\
+  --version "$VERSION_NAME" \\
+  --date "2026-11-21" \\
+  --out "$ARCHIVE_OUT"
+if [ -s "$ARCHIVE_OUT" ]; then
+  cp "$ARCHIVE_OUT" "$CHANGELOG_FILE"
+  echo "APPLIED"
+else
+  echo "SKIPPED"
+fi
+`
+    const applyOut = execFileSync(bashExe, ['-c', applyScript], { encoding: 'utf8', stdio: 'pipe' })
+    assert.ok(applyOut.includes('APPLIED'), 'Expected APPLIED in output')
+    const updatedChangelog = readFileSync(changelogPath, 'utf8')
+    assert.ok(updatedChangelog.includes('## [1.0.35] - 2026-11-21'), 'Must include 1.0.35 archive header')
+    assert.ok(updatedChangelog.includes('<!-- id: rel_22222222 -->'), 'Beta must remain unreleased')
+
+    // 3. Actual archival error: workflow fails clearly (e.g. malformed ledger)
+    writeFileSync(ledgerPath, '{ malformed json ', 'utf8')
+    const errorScript = `
+set -euo pipefail
+RUNNER_TEMP="${runnerTemp.replace(/\\/g, '/')}"
+CHANGELOG_FILE="${changelogPath.replace(/\\/g, '/')}"
+LEDGER_FILE="${ledgerPath.replace(/\\/g, '/')}"
+TOMBSTONES_FILE="${tombstonesPath.replace(/\\/g, '/')}"
+VERSION_NAME="1.0.35"
+
+ARCHIVE_OUT="$RUNNER_TEMP/CHANGELOG.archived.md"
+rm -f "$ARCHIVE_OUT"
+bun scripts/release/releaseGate.mjs archive-gated \\
+  --changelog "$CHANGELOG_FILE" \\
+  --tombstones "$TOMBSTONES_FILE" \\
+  --record "$LEDGER_FILE" \\
+  --version "$VERSION_NAME" \\
+  --date "2026-11-21" \\
+  --out "$ARCHIVE_OUT"
+if [ -s "$ARCHIVE_OUT" ]; then
+  cp "$ARCHIVE_OUT" "$CHANGELOG_FILE"
+  echo "APPLIED"
+fi
+`
+    assert.throws(
+      () => execFileSync(bashExe, ['-c', errorScript], { encoding: 'utf8', stdio: 'pipe' }),
+      (err) => {
+        assert.equal(err.status, 1, 'Script must fail closed on malformed ledger')
+        return true
+      }
+    )
+
+    // 3b. Ambiguous release records: fails closed with exit 1
+    const ambiguousLedger = {
+      schema: 2,
+      releases: [
+        ...verifiedLedger.releases,
+        { ...verifiedLedger.releases[1], versionCode: 1036, buildSha: '3'.repeat(40) },
+      ],
+    }
+    writeFileSync(ledgerPath, JSON.stringify(ambiguousLedger, null, 2), 'utf8')
+    const ambiguousScript = `
+set -euo pipefail
+RUNNER_TEMP="${runnerTemp.replace(/\\/g, '/')}"
+CHANGELOG_FILE="${changelogPath.replace(/\\/g, '/')}"
+LEDGER_FILE="${ledgerPath.replace(/\\/g, '/')}"
+TOMBSTONES_FILE="${tombstonesPath.replace(/\\/g, '/')}"
+VERSION_NAME="1.0.35"
+
+ARCHIVE_OUT="$RUNNER_TEMP/CHANGELOG.archived.md"
+rm -f "$ARCHIVE_OUT"
+bun scripts/release/releaseGate.mjs archive-gated \\
+  --changelog "$CHANGELOG_FILE" \\
+  --tombstones "$TOMBSTONES_FILE" \\
+  --record "$LEDGER_FILE" \\
+  --version "$VERSION_NAME" \\
+  --date "2026-11-21" \\
+  --out "$ARCHIVE_OUT"
+if [ -s "$ARCHIVE_OUT" ]; then
+  cp "$ARCHIVE_OUT" "$CHANGELOG_FILE"
+  echo "APPLIED"
+fi
+`
+    assert.throws(
+      () => execFileSync(bashExe, ['-c', ambiguousScript], { encoding: 'utf8', stdio: 'pipe' }),
+      (err) => {
+        assert.equal(err.status, 1, 'Script must fail closed on ambiguous records')
+        const combined = `${err.stdout || ''}\n${err.stderr || ''}`
+        assert.match(combined, /ambiguous release selection/)
+        return true
+      }
+    )
+
+    // 4. Failed release: IDs remain unconsumed
+    writeFileSync(changelogPath, initialChangelog, 'utf8')
+    writeFileSync(ledgerPath, JSON.stringify(ledgerData, null, 2), 'utf8')
+
+    const initialConsumed = collectConsumedIds(JSON.stringify(ledgerData))
+    const notesRes1 = buildReleaseNotes(initialChangelog, initialConsumed)
+    assert.deepEqual(notesRes1.ids, ['rel_11111111', 'rel_22222222'])
+
+    const reloadedLedgerTextAfterFail = readFileSync(ledgerPath, 'utf8')
+    const reloadedLedgerAfterFail = loadLedger(reloadedLedgerTextAfterFail)
+    assert.equal(reloadedLedgerAfterFail.releases.length, 1)
+    const consumedAfterFail = collectConsumedIds(reloadedLedgerTextAfterFail)
+    assert.ok(!consumedAfterFail.includes('rel_11111111'))
+    assert.ok(!consumedAfterFail.includes('rel_22222222'))
+
+    // 5. Successful release: IDs are consumed and subsequently archived according to established process
+    const successRecord = createConsumedRecord({
+      sha: 'f'.repeat(40),
+      versionCode: 1035,
+      versionName: '1.0.35',
+      tag: 'test-release-run35',
+      ids: notesRes1.ids,
+      notesHash: notesRes1.notesHash,
+      webReleaseUrl: 'https://example.com/app.apk',
+      apkAssetName: 'BOUXRE-release-1.0.35.apk',
+      apkSha256: 'a'.repeat(64),
+      assetVerified: true,
+      policyVerified: true,
+    })
+    const mergedLedgerText = mergeLedger(readFileSync(ledgerPath, 'utf8'), successRecord)
+    writeFileSync(ledgerPath, mergedLedgerText, 'utf8')
+
+    const mergedLedger = loadLedger(mergedLedgerText)
+    const consumedAfterSuccess = collectConsumedIds(mergedLedgerText)
+    assert.ok(consumedAfterSuccess.includes('rel_11111111'))
+    assert.ok(consumedAfterSuccess.includes('rel_22222222'))
+
+    const postSuccessArchiveScript = `
+set -euo pipefail
+RUNNER_TEMP="${runnerTemp.replace(/\\/g, '/')}"
+CHANGELOG_FILE="${changelogPath.replace(/\\/g, '/')}"
+LEDGER_FILE="${ledgerPath.replace(/\\/g, '/')}"
+TOMBSTONES_FILE="${tombstonesPath.replace(/\\/g, '/')}"
+VERSION_NAME="1.0.35"
+
+ARCHIVE_OUT="$RUNNER_TEMP/CHANGELOG.archived.md"
+rm -f "$ARCHIVE_OUT"
+bun scripts/release/releaseGate.mjs archive-gated \\
+  --changelog "$CHANGELOG_FILE" \\
+  --tombstones "$TOMBSTONES_FILE" \\
+  --record "$LEDGER_FILE" \\
+  --version "$VERSION_NAME" \\
+  --date "2026-11-21" \\
+  --out "$ARCHIVE_OUT"
+if [ -s "$ARCHIVE_OUT" ]; then
+  cp "$ARCHIVE_OUT" "$CHANGELOG_FILE"
+  echo "APPLIED"
+fi
+`
+    const postSuccessOut = execFileSync(bashExe, ['-c', postSuccessArchiveScript], { encoding: 'utf8', stdio: 'pipe' })
+    assert.ok(postSuccessOut.includes('APPLIED'))
+    const archivedModel = parseChangelog(readFileSync(changelogPath, 'utf8'))
+    assert.equal(archivedModel.unreleased.length, 0)
+    assert.equal(archivedModel.archives[0].version, '1.0.35')
+
+    // 6. Rebuild after failure: eligible notes can be regenerated without duplicate consumption
+    const changelogWithNew = `# BOUXRE Changelog\n\n## Unreleased\n\n<!-- id: rel_33333333 -->\n- Gamma\n\n<!-- id: rel_44444444 -->\n- Delta\n\n<!-- archive-boundary -->\n`
+    writeFileSync(changelogPath, changelogWithNew, 'utf8')
+    writeFileSync(ledgerPath, JSON.stringify(ledgerData, null, 2), 'utf8')
+
+    const attempt1Notes = buildReleaseNotes(changelogWithNew, collectConsumedIds(JSON.stringify(ledgerData)))
+    assert.deepEqual(attempt1Notes.ids, ['rel_33333333', 'rel_44444444'])
+
+    const reloadedLedgerTextForRebuild = readFileSync(ledgerPath, 'utf8')
+    const attempt2Notes = buildReleaseNotes(changelogWithNew, collectConsumedIds(reloadedLedgerTextForRebuild))
+    assert.deepEqual(attempt2Notes.ids, ['rel_33333333', 'rel_44444444'])
+    assert.equal(attempt2Notes.notesHash, attempt1Notes.notesHash)
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

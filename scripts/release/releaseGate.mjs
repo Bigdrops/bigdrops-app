@@ -521,6 +521,35 @@ export function verifyExistingRelease({ expected = {}, observed = {} }) {
 // Archive gating
 // ---------------------------------------------------------------------------
 
+/**
+ * Select the appropriate verified release record for gated archival.
+ *
+ * Requirements:
+ * - Authoritative field to match a release version is `versionName`.
+ * - If `version` is specified, normalizes optional leading 'v' (e.g. 'v1.0.34' -> '1.0.34') to match repository conventions.
+ * - If multiple records match the requested version, fails closed with a clear ambiguity error.
+ * - If an explicit version is specified but no matching verified record exists, returns null (never silently selects a different release).
+ * - If no explicit version is specified, selects the newest verified record in array order (or null if none exist).
+ */
+export function selectLedgerRecord(ledger, version = null) {
+  const releases = Array.isArray(ledger?.releases) ? ledger.releases : []
+  const trimmed = version != null && String(version).trim() !== '' ? String(version).trim() : null
+
+  if (trimmed) {
+    const normalized = trimmed.replace(/^v/, '')
+    const matches = releases.filter((r) => r.versionName === normalized || r.versionName === trimmed)
+    if (matches.length > 1) {
+      throw new Error(`ambiguous release selection: multiple records match version '${trimmed}'`)
+    }
+    if (matches.length === 0) return null
+    const candidate = matches[0]
+    return (candidate.assetVerified === true && candidate.policyVerified === true) ? candidate : null
+  }
+
+  const verified = releases.filter((r) => r.assetVerified === true && r.policyVerified === true)
+  return verified.length > 0 ? verified[verified.length - 1] : null
+}
+
 /** Only IDs backed by BOTH verifications may be archived; tombstones excluded. */
 export function selectArchivableIds({ unreleasedIds = [], record, tombstones = [] }) {
   if (!record || record.assetVerified !== true || record.policyVerified !== true) return []
@@ -1036,13 +1065,15 @@ export function main(argv = process.argv.slice(2)) {
         .map((line) => line.trim())
         .filter((line) => line.length > 0 && !line.startsWith('#'))
       const ledger = loadLedger(read(abs(recordPath)), { allowMissing: false })
-      const record = ledger.releases.find((r) => r.assetVerified === true && r.policyVerified === true) ?? null
+      const version = flag('version')
+      const record = selectLedgerRecord(ledger, version)
       const ids = selectArchivableIds({ unreleasedIds, record, tombstones: tombstoneIds })
       if (ids.length === 0) {
         process.stdout.write('archived 0 (gate not satisfied)\n')
         return
       }
-      const next = archiveEntries(changelog, { version: flag('version'), date: flag('date'), ids })
+      const archiveVersion = (version ? String(version).trim().replace(/^v/, '') : null) || record?.versionName
+      const next = archiveEntries(changelog, { version: archiveVersion, date: flag('date'), ids })
       const outPath = flag('out') || changelogPath
       write(abs(outPath), next)
       process.stdout.write(`archived ${ids.length}\n`)
