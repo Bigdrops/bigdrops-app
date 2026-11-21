@@ -74,15 +74,42 @@ type ErrorCode =
   | 'duplicate_name'
   | 'operation_failed'
 
-function jsonResponse(data: unknown, status = 200, headers?: Record<string, string>) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...headers },
+export function getCorsHeaders(req?: Request): Record<string, string> {
+  const origin = req?.headers.get('origin') || 'https://bigdrops-app.vercel.app'
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-Bolu-Source',
+    'Access-Control-Expose-Headers': 'X-Bolu-Source, Content-Length, X-Bolu-Connection-Id, X-Bolu-Model, X-Bolu-Fallback',
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
+  }
+}
+
+export function withCors(response: Response, req?: Request): Response {
+  const headers = new Headers(response.headers)
+  const corsHeaders = getCorsHeaders(req)
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    headers.set(key, value)
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   })
 }
 
-function jsonError(message: string, status: number, code: ErrorCode) {
-  return jsonResponse({ error: message, code }, status)
+function jsonResponse(data: unknown, status = 200, headers?: Record<string, string>, req?: Request) {
+  const cors = getCorsHeaders(req)
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...cors, ...headers },
+  })
+}
+
+function jsonError(message: string, status: number, code: ErrorCode, req?: Request) {
+  return jsonResponse({ error: message, code }, status, undefined, req)
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -211,22 +238,41 @@ async function endpointGuard(baseUrl: string): Promise<Response | null> {
   return null
 }
 
+export async function OPTIONS(request: Request): Promise<Response> {
+  return new Response(null, {
+    status: 204,
+    headers: getCorsHeaders(request),
+  })
+}
+
 export async function GET(request: Request): Promise<Response> {
-  return handleRequest(request)
+  try {
+    const res = await handleRequest(request)
+    return withCors(res, request)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Internal Server Error'
+    return withCors(jsonResponse({ error: msg, code: 'operation_failed' }, 500), request)
+  }
 }
 
 export async function POST(request: Request): Promise<Response> {
-  return handleRequest(request)
+  try {
+    const res = await handleRequest(request)
+    return withCors(res, request)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Internal Server Error'
+    return withCors(jsonResponse({ error: msg, code: 'operation_failed' }, 500), request)
+  }
 }
 
 async function handleRequest(request: Request): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'POST') {
-    return jsonError('Method not allowed.', 405, 'invalid_request')
+    return jsonError('Method not allowed.', 405, 'invalid_request', request)
   }
 
   const auth = await verifyPlatformAdmin(request)
   if ('error' in auth) {
-    return jsonError(auth.error, auth.status, auth.code)
+    return jsonError(auth.error, auth.status, auth.code, request)
   }
   const { adminClient, user } = auth
 

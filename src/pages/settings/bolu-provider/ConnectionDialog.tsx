@@ -274,7 +274,17 @@ export function ConnectionDialog({
           isPaidTier,
         })
         feedback.success('Connection saved. The credential is encrypted at rest.')
-        onSaved(result.connection)
+        let saved = result.connection
+        if (isCustom) {
+          // Custom endpoints have no curated catalogue; cache the live list for Settings → Models.
+          try {
+            const d = await boluProviderApi.discover({ connectionId: result.connection.id })
+            if (d.ok && d.models.length > 0) saved = { ...result.connection, discoveredModels: d.models }
+          } catch {
+            // Best-effort; Settings → Models can retry with Sync.
+          }
+        }
+        onSaved(saved)
       }
       onOpenChange(false)
     } catch (err) {

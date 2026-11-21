@@ -12,6 +12,7 @@ import { Activity, ChevronDown, Loader2, Trophy } from 'lucide-react'
 import { supabase } from '@/supabase'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getEndpointUrl } from './api'
 
 type LeaderboardRow = {
   user_id: string
@@ -87,7 +88,7 @@ export function AiUsagePanel() {
         setError('Sign in to view AI usage.')
         return
       }
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/ai-usage?days=${WINDOW_DAYS}&limit=25`, {
+      const res = await fetch(`${getEndpointUrl('/api/ai-usage')}?days=${WINDOW_DAYS}&limit=25`, {
         credentials: 'include',
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
