@@ -5,6 +5,7 @@ import { useBoluInteractionPreferences } from '@/hooks/useBoluInteractionPrefere
 import { useBoluNarrationSupport } from '@/hooks/useBoluNarrationSupport'
 import { isHapticFeedbackSupported } from '@/lib/ai-assistant/bolu-haptics'
 import { BOLU_NARRATION_RATE_MAX, BOLU_NARRATION_RATE_MIN } from '@/lib/ai-assistant/bolu-preferences'
+import { cn } from '@/lib/utils'
 
 function PreferenceRow({
   id,
@@ -110,30 +111,46 @@ export function BoluInteractionPreferencesCard() {
           disabled={!narrationSupported}
         />
 
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-bd-border/70 px-3 py-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-bd-border/70 px-3 py-2.5">
           <div className="min-w-0">
-            <label htmlFor="bolu-narration-rate" className="text-xs font-semibold text-foreground">
+            <label id="bolu-speaking-speed-label" className="text-xs font-semibold text-foreground">
               Speaking speed
             </label>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
               Passed to the device voice. The available voice follows the device language.
             </p>
           </div>
-          <select
-            id="bolu-narration-rate"
-            className="h-8 shrink-0 rounded-lg border border-bd-border bg-background px-2 text-xs text-foreground"
-            value={String(preferences.narrationRate)}
-            disabled={!preferences.narrationEnabled || !narrationSupported}
-            onChange={(event) => update({ narrationRate: Number.parseFloat(event.target.value) })}
+          <div
+            role="group"
+            aria-labelledby="bolu-speaking-speed-label"
+            className="inline-flex w-full sm:w-auto items-center justify-between sm:justify-start rounded-lg border border-bd-border bg-muted p-0.5 min-w-0 gap-0.5"
           >
             {[0.8, 1, 1.2, 1.4]
               .filter((rate) => rate >= BOLU_NARRATION_RATE_MIN && rate <= BOLU_NARRATION_RATE_MAX)
-              .map((rate) => (
-                <option key={rate} value={rate}>
-                  {rate.toFixed(1)}×
-                </option>
-              ))}
-          </select>
+              .map((rate) => {
+                const isSelected = Math.abs(preferences.narrationRate - rate) < 0.05
+                const disabled = !preferences.narrationEnabled || !narrationSupported
+                return (
+                  <button
+                    key={rate}
+                    type="button"
+                    aria-pressed={isSelected}
+                    disabled={disabled}
+                    onClick={() => update({ narrationRate: rate })}
+                    className={cn(
+                      'h-7 min-w-0 flex-1 sm:flex-initial rounded-md px-2.5 text-xs font-medium transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                      'disabled:pointer-events-none disabled:opacity-50',
+                      isSelected
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {rate.toFixed(1)}×
+                  </button>
+                )
+              })}
+          </div>
         </div>
       </div>
     </section>
