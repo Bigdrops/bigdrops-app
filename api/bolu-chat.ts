@@ -36,6 +36,7 @@ import {
   recordAiRequestStart,
   recordAiSuccess,
 } from '../src/lib/ai-assistant/routing/bolu-account-pool.js'
+import { discoverEligibleAlternatives } from '../src/lib/ai-assistant/routing/bolu-alternative-discovery.js'
 import { resolveRoutingPolicy } from '../src/lib/ai-assistant/routing/bolu-policy-router.js'
 import { classifyProviderError } from '../src/lib/ai-assistant/routing/bolu-error-classifier.js'
 import {
@@ -474,135 +475,205 @@ export async function POST(request: Request): Promise<Response> {
   const adminClient = getAdminClient()
   if (adminClient) {
     try {
-      // If user explicitly picked a specific connection & model in the chat UI, route directly to it
-      if (explicitConnectionId) {
+      const excludedConnectionIds: string[] = []
+      const excludedProviders: Set<string> = new Set()
+      let lastDiagnostics: ProviderDiagnostics | null = null
+
+      // MANUAL MODE: User explicitly selected a specific connection and model in the UI
+      if (explicitConnectionId && explicitConnectionId !== 'auto') {
         const exactClaimed = await claimExactConnection(adminClient, explicitConnectionId, explicitModelId)
-        if (exactClaimed) {
-          const adapterConfig: AdapterConfig = {
-            providerId: exactClaimed.providerId,
-            protocol: exactClaimed.protocol === 'anthropic' ? 'anthropic' : 'openai',
-            authScheme: exactClaimed.protocol === 'anthropic' ? 'x-api-key' : 'bearer',
-            baseUrl: exactClaimed.baseUrl || undefined,
-            apiKey: exactClaimed.apiKey,
-            model: exactClaimed.selectedModel,
-            timeoutMs: exactClaimed.timeoutMs || 30000,
-          }
+        if (!exactClaimed) {
+          // Pinned connection is unavailable, disabled, quarantined, or in active cooldown.
+          // Discover eligible alternatives and return structured 409 unavailable response immediately.
+          const alternatives = await discoverEligibleAlternatives(adminClient, explicitConnectionId, explicitModelId, 4)
+          return Response.json(
+            {
+              error: 'The selected AI model is currently unavailable.',
+              code: 'MODEL_UNAVAILABLE',
+              failedConnectionId: explicitConnectionId,
+              failedModelId: explicitModelId,
+              reason: 'The selected AI connection is unavailable, cooling down, or quarantined.',
+              alternatives,
+            },
+            { status: 409, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
 
-          await recordAiRequestStart(adminClient, exactClaimed.connectionId, adapterConfig.model)
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
+        const adapterConfig: AdapterConfig = {
+          providerId: exactClaimed.providerId,
+          protocol: exactClaimed.protocol === 'anthropic' ? 'anthropic' : 'openai',
+          authScheme: exactClaimed.protocol === 'anthropic' ? 'x-api-key' : 'bearer',
+          baseUrl: exactClaimed.baseUrl || undefined,
+          apiKey: exactClaimed.apiKey,
+          model: exactClaimed.selectedModel,
+          timeoutMs: exactClaimed.timeoutMs || 30000,
+        }
 
-          try {
-            const result = await streamAdapterChat(adapterConfig, messages, {
+        await recordAiRequestStart(adminClient, exactClaimed.connectionId, adapterConfig.model)
+
+        // Attempt 1 on pinned connection
+        let controller = new AbortController()
+        let timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
+        let result = await streamAdapterChat(adapterConfig, messages, {
+          maxTokens: CHAT_MAX_TOKENS,
+          temperature: CHAT_TEMPERATURE,
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+
+        // If transient failure, perform 1 deliberate retry on the pinned connection
+        if ('diagnostics' in result) {
+          const classified = classifyProviderError(
+            {
+              status: result.diagnostics.status,
+              retryAfterHeader: result.diagnostics.retryAfterSeconds ? String(result.diagnostics.retryAfterSeconds) : null,
+              error: new Error(result.diagnostics.message),
+            },
+            { providerId: adapterConfig.providerId, targetModel: adapterConfig.model },
+          )
+
+          if (classified.retryable && TRANSIENT_FAILOVER_CATEGORIES.has(classified.category)) {
+            const backoffMs = Math.min(classified.retryAfterSeconds ? classified.retryAfterSeconds * 1000 : 500, 1500)
+            await new Promise((resolve) => setTimeout(resolve, backoffMs))
+
+            controller = new AbortController()
+            timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
+            result = await streamAdapterChat(adapterConfig, messages, {
               maxTokens: CHAT_MAX_TOKENS,
               temperature: CHAT_TEMPERATURE,
               signal: controller.signal,
             })
-
-            if ('diagnostics' in result) {
-              const classified = classifyProviderError(
-                {
-                  status: result.diagnostics.status,
-                  retryAfterHeader: result.diagnostics.retryAfterSeconds ? String(result.diagnostics.retryAfterSeconds) : null,
-                  error: new Error(result.diagnostics.message),
-                },
-                { providerId: adapterConfig.providerId, targetModel: adapterConfig.model },
-              )
-              await recordAiFailure(adminClient, {
-                connectionId: exactClaimed.connectionId,
-                modelId: adapterConfig.model,
-                failureCategory: classified.category,
-                failureScope: classified.scope,
-                httpStatus: classified.httpStatus,
-                cooldownSeconds: classified.retryAfterSeconds,
-                reasonSummary: classified.safeSummary,
-              })
-              // A failed attempt still consumes provider allowance.
-              void logBoluUsage({
-                adminClient,
-                userId: user.id,
-                userEmail: user.email ?? null,
-                tenantId: requestedTenantId,
-                conversationId: requestedConversationId,
-                providerId: adapterConfig.providerId,
-                modelId: adapterConfig.model,
-                connectionId: exactClaimed.connectionId,
-                isPaidTier: exactClaimed.isPaidTier,
-                usage: null,
-                outputText: '',
-                promptChars,
-                success: false,
-                latencyMs: result.diagnostics.latencyMs,
-              })
-              return diagnosticsToError(result.diagnostics)
-            }
-
-            const headers = new Headers(result.response.headers)
-            headers.set('X-Bolu-Source', 'connection')
-            headers.set('X-Bolu-Connection-Id', exactClaimed.connectionId)
-
-            const startedAt = Date.now()
-
-            const bodyStream = result.response.body
-              ? wrapStreamForFirstTokenBoundary(
-                  result.response.body,
-                  () => {
-                    recordAiSuccess(adminClient, exactClaimed.connectionId, adapterConfig.model).catch((err) => {
-                      console.error('[bolu-chat] recordAiSuccess error:', err)
-                    })
-                  },
-                  (usage, outputText, metrics) => {
-                    void logBoluUsage({
-                      adminClient,
-                      userId: user.id,
-                      userEmail: user.email ?? null,
-                      tenantId: requestedTenantId,
-                      conversationId: requestedConversationId,
-                      providerId: adapterConfig.providerId,
-                      modelId: adapterConfig.model,
-                      connectionId: exactClaimed.connectionId,
-                      isPaidTier: exactClaimed.isPaidTier,
-                      usage,
-                      outputText,
-                      promptChars,
-                      success: true,
-                      latencyMs: Date.now() - startedAt,
-                      ttftMs: metrics.ttftMs,
-                      generationMs: metrics.generationMs,
-                      tokensPerSecond: metrics.tokensPerSecond,
-                    })
-                  },
-                  result.requestStartedAt,
-                )
-              : null
-
-            return new Response(bodyStream, { status: 200, headers })
-          } finally {
             clearTimeout(timeoutId)
           }
         }
+
+        // If still failed after retry (or non-retryable error)
+        if ('diagnostics' in result) {
+          const classified = classifyProviderError(
+            {
+              status: result.diagnostics.status,
+              retryAfterHeader: result.diagnostics.retryAfterSeconds ? String(result.diagnostics.retryAfterSeconds) : null,
+              error: new Error(result.diagnostics.message),
+            },
+            { providerId: adapterConfig.providerId, targetModel: adapterConfig.model },
+          )
+
+          await recordAiFailure(adminClient, {
+            connectionId: exactClaimed.connectionId,
+            modelId: adapterConfig.model,
+            failureCategory: classified.category,
+            failureScope: classified.scope,
+            httpStatus: classified.httpStatus,
+            cooldownSeconds: classified.retryAfterSeconds,
+            reasonSummary: classified.safeSummary,
+          })
+
+          void logBoluUsage({
+            adminClient,
+            userId: user.id,
+            userEmail: user.email ?? null,
+            tenantId: requestedTenantId,
+            conversationId: requestedConversationId,
+            providerId: adapterConfig.providerId,
+            modelId: adapterConfig.model,
+            connectionId: exactClaimed.connectionId,
+            isPaidTier: exactClaimed.isPaidTier,
+            usage: null,
+            outputText: '',
+            promptChars,
+            success: false,
+            latencyMs: result.diagnostics.latencyMs,
+          })
+
+          // Non-retryable user input error (e.g. 400 Bad Request) returns standard diagnostic
+          if (classified.category === 'invalid_request') {
+            return diagnosticsToError(result.diagnostics)
+          }
+
+          // Discover 3-5 eligible alternatives for the frontend negotiation countdown
+          const alternatives = await discoverEligibleAlternatives(
+            adminClient,
+            exactClaimed.connectionId,
+            adapterConfig.model,
+            4,
+          )
+
+          return Response.json(
+            {
+              error: `The selected AI model "${adapterConfig.model}" is currently unavailable.`,
+              code: 'MODEL_UNAVAILABLE',
+              failedConnectionId: exactClaimed.connectionId,
+              failedModelId: adapterConfig.model,
+              reason: classified.safeSummary,
+              alternatives,
+            },
+            { status: 409, headers: { 'Content-Type': 'application/json' } },
+          )
+        }
+
+        // Successful stream on pinned manual connection
+        const headers = new Headers(result.response.headers)
+        headers.set('X-Bolu-Source', 'connection')
+        headers.set('X-Bolu-Connection-Id', exactClaimed.connectionId)
+        headers.set('X-Bolu-Model', adapterConfig.model)
+
+        const startedAt = Date.now()
+
+        const bodyStream = result.response.body
+          ? wrapStreamForFirstTokenBoundary(
+              result.response.body,
+              () => {
+                recordAiSuccess(adminClient, exactClaimed.connectionId, adapterConfig.model).catch((err) => {
+                  console.error('[bolu-chat] recordAiSuccess error:', err)
+                })
+              },
+              (usage, outputText, metrics) => {
+                void logBoluUsage({
+                  adminClient,
+                  userId: user.id,
+                  userEmail: user.email ?? null,
+                  tenantId: requestedTenantId,
+                  conversationId: requestedConversationId,
+                  providerId: adapterConfig.providerId,
+                  modelId: adapterConfig.model,
+                  connectionId: exactClaimed.connectionId,
+                  isPaidTier: exactClaimed.isPaidTier,
+                  usage,
+                  outputText,
+                  promptChars,
+                  success: true,
+                  latencyMs: Date.now() - startedAt,
+                  ttftMs: metrics.ttftMs,
+                  generationMs: metrics.generationMs,
+                  tokensPerSecond: metrics.tokensPerSecond,
+                })
+              },
+              result.requestStartedAt,
+            )
+          : null
+
+        return new Response(bodyStream, { status: 200, headers })
       }
 
       const policyDecision = resolveRoutingPolicy({
         userId: user.id,
         taskType: 'invoice-chat',
+        preferredModel: explicitModelId || undefined,
         allowPaid: true,
+        allowCustom: true,
       })
 
       if (!policyDecision.ok) {
         return jsonError(policyDecision.error || 'Routing policy denied request.', 403, 'policy_denied')
       }
 
-      const excludedConnectionIds: string[] = []
-      const excludedProviders: Set<string> = new Set()
-      let lastDiagnostics: ProviderDiagnostics | null = null
       const maxAttempts = Math.min(policyDecision.maxAttempts || 4, 4)
 
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const allowed = policyDecision.allowedProviders.filter((p) => !excludedProviders.has(p))
         if (allowed.length === 0) break
 
-        const claimed = await claimEligibleConnection(
+        let claimed = await claimEligibleConnection(
           adminClient,
           {
             allowedProviders: allowed,
@@ -612,7 +683,27 @@ export async function POST(request: Request): Promise<Response> {
           excludedConnectionIds,
         )
 
+        // If no connection matched targetModel on attempt 0 (e.g. pool connections serve other models),
+        // retry once without restricting to targetModel so healthy pool connections (OpenRouter, custom endpoints, etc.)
+        // serve using their own configured default model.
+        if (!claimed && attempt === 0 && policyDecision.targetModel) {
+          claimed = await claimEligibleConnection(
+            adminClient,
+            {
+              allowedProviders: allowed,
+              targetModel: '*',
+              allowPaid: policyDecision.allowPaid,
+            },
+            excludedConnectionIds,
+          )
+        }
+
         if (!claimed) break
+
+        const resolvedModel =
+          claimed.selectedModel && claimed.selectedModel !== '*'
+            ? claimed.selectedModel
+            : claimed.defaultModel
 
         const adapterConfig: AdapterConfig = {
           providerId: claimed.providerId,
@@ -620,14 +711,14 @@ export async function POST(request: Request): Promise<Response> {
           authScheme: claimed.protocol === 'anthropic' ? 'x-api-key' : 'bearer',
           baseUrl: claimed.baseUrl || undefined,
           apiKey: claimed.apiKey,
-          model: claimed.selectedModel || claimed.defaultModel,
+          model: resolvedModel || claimed.defaultModel,
           timeoutMs: claimed.timeoutMs || 30000,
         }
 
         await recordAiRequestStart(adminClient, claimed.connectionId, adapterConfig.model)
 
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
+        let controller = new AbortController()
+        let timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
 
         let result: Awaited<ReturnType<typeof streamAdapterChat>>
         try {
@@ -638,6 +729,37 @@ export async function POST(request: Request): Promise<Response> {
           })
         } finally {
           clearTimeout(timeoutId)
+        }
+
+        // Auto mode: retry transient failures on current connection once before switching to next candidate
+        if ('diagnostics' in result) {
+          const classified = classifyProviderError(
+            {
+              status: result.diagnostics.status,
+              retryAfterHeader: result.diagnostics.retryAfterSeconds
+                ? String(result.diagnostics.retryAfterSeconds)
+                : null,
+              error: new Error(result.diagnostics.message),
+            },
+            { providerId: adapterConfig.providerId, targetModel: adapterConfig.model },
+          )
+
+          if (classified.retryable && TRANSIENT_FAILOVER_CATEGORIES.has(classified.category)) {
+            const backoffMs = Math.min(classified.retryAfterSeconds ? classified.retryAfterSeconds * 1000 : 500, 1500)
+            await new Promise((resolve) => setTimeout(resolve, backoffMs))
+
+            controller = new AbortController()
+            timeoutId = setTimeout(() => controller.abort(), adapterConfig.timeoutMs)
+            try {
+              result = await streamAdapterChat(adapterConfig, messages, {
+                maxTokens: CHAT_MAX_TOKENS,
+                temperature: CHAT_TEMPERATURE,
+                signal: controller.signal,
+              })
+            } finally {
+              clearTimeout(timeoutId)
+            }
+          }
         }
 
         if ('diagnostics' in result) {
@@ -695,7 +817,10 @@ export async function POST(request: Request): Promise<Response> {
         const headers = new Headers(result.response.headers)
         headers.set('X-Bolu-Source', 'connection')
         headers.set('X-Bolu-Connection-Id', claimed.connectionId)
-        if (attempt > 0) headers.set('X-Bolu-Fallback', 'true')
+        headers.set('X-Bolu-Model', adapterConfig.model)
+        if (attempt > 0) {
+          headers.set('X-Bolu-Fallback', 'true')
+        }
 
         const startedAt = Date.now()
 

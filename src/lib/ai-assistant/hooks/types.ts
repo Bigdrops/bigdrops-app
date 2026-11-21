@@ -44,6 +44,12 @@ export interface UseBoluThreadOptions {
   connectionId?: string | null
   modelId?: string | null
   onEnsureConversation?: () => Promise<string | null>
+  onModelUnavailable?: (
+    alternatives: import('../routing/bolu-alternative-discovery').CandidateAlternative[],
+    failedConnectionId?: string,
+    failedModelId?: string,
+  ) => void
+  onResolvedModel?: (info: { connectionId: string | null; model: string | null; isFallback: boolean }) => void
 }
 
 export type BoluClarificationAnswer = { optionId?: string; text?: string }
@@ -59,6 +65,8 @@ export interface UseBoluThreadReturn {
   activeProposalMessageId: string | null
   error: string | null
   submitMessage: (text: string) => Promise<boolean>
+  /** Resubmits the latest user turn against an alternative connection/model without duplicate messages. */
+  resubmitPendingTurn: (overrideConnectionId?: string | null, overrideModelId?: string | null) => Promise<boolean>
   /** Replaces one user message in place and regenerates the answer from it. */
   editUserMessage: (messageId: string, text: string) => Promise<boolean>
   /** Re-runs one assistant response from its original request. */

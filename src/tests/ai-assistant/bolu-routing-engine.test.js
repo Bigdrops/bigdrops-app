@@ -205,11 +205,24 @@ test('classifyProviderError maps all required categories and scopes', () => {
   assert.equal(e402.requiresQuarantine, false)
   assert.equal(e402.retryable, true)
 
-  // HTTP 403: permission -> do NOT automatically disable whole account
+  // HTTP 403: permission -> do NOT automatically quarantine whole account (scoped to connection or model)
   const e403 = classifyProviderError({ status: 403 })
   assert.equal(e403.category, 'permission')
-  assert.equal(e403.scope, 'account')
+  assert.equal(e403.scope, 'connection')
   assert.equal(e403.requiresQuarantine, false)
+  assert.equal(e403.requiresCooldown, true)
+
+  const e403Model = classifyProviderError({ status: 403 }, { targetModel: 'deepseek-v3' })
+  assert.equal(e403Model.category, 'permission')
+  assert.equal(e403Model.scope, 'model')
+  assert.equal(e403Model.requiresQuarantine, false)
+  assert.match(e403Model.safeSummary, /deepseek-v3/)
+
+  // Explicit revoked key produces account quarantine
+  const e403Revoked = classifyProviderError({ status: 403, errorBody: { error: { message: 'API key has been revoked' } } })
+  assert.equal(e403Revoked.category, 'authentication')
+  assert.equal(e403Revoked.scope, 'account')
+  assert.equal(e403Revoked.requiresQuarantine, true)
 
   // HTTP 404: model_unavailable -> model scope cooldown
   const e404 = classifyProviderError({ status: 404 }, { targetModel: 'deepseek-r1' })

@@ -18,6 +18,8 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import { supabase } from '@/supabase'
 import type { TenantClient } from '@/lib/tenantClient'
 import { sendBoluProviderRequest } from './bolu-transport'
+import { ModelUnavailableError } from './bolu-transport-errors'
+import type { CandidateAlternative } from './routing/bolu-alternative-discovery'
 import { buildProviderMessages, factsAsPrompt } from './bolu-formatting'
 import type { BoluProposal } from './bolu-operations'
 import {
@@ -86,6 +88,12 @@ export interface BoluGenerationOptions {
   connectionId?: string | null
   modelId?: string | null
   tenantClient?: TenantClient
+  onModelUnavailable?: (
+    alternatives: CandidateAlternative[],
+    failedConnectionId?: string,
+    failedModelId?: string,
+  ) => void
+  onResolvedModel?: (info: { connectionId: string | null; model: string | null; isFallback: boolean }) => void
   /**
    * The draft this turn may be correcting. A correction updates this
    * operation instead of creating a second invoice or quotation.
@@ -230,6 +238,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
       tenantId,
       conversationId: targetConversationId,
       signal: controller.signal,
+      onResponseHeaders: options.onResolvedModel,
       onDelta: (delta: string) => {
         state.setClerkState('responding')
         const cleanDelta = delta.replace(/—/g, ' - ').replace(/–/g, '-')
@@ -331,6 +340,14 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     }
     return true
   } catch (err) {
+    if (err instanceof ModelUnavailableError) {
+      // Manual model unavailable: clean up the temporary assistant placeholder and trigger negotiation
+      state.setMessages((messages) => messages.filter((candidate) => candidate.id !== tempAssistantId))
+      state.setClerkState('idle')
+      options.onModelUnavailable?.(err.alternatives, err.failedConnectionId, err.failedModelId)
+      return false
+    }
+
     if (err instanceof Error && err.name === 'AbortError') {
       const partial = refs.streamingBuffer.current
       await persistReplacedStatus(partial, 'stopped')
@@ -341,12 +358,18 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
       return false
     }
 
+    const partial = refs.streamingBuffer.current.trim()
     const errorMsg = err instanceof Error ? err.message : 'Inference request failed.'
     state.setError(errorMsg)
-    const failedContent = `Bolu could not complete this request: ${errorMsg}`
-    await persistReplacedStatus(failedContent, 'failed')
+
+    // PRESERVE partial streamed text on non-abort errors; do not destroy already visible tokens
+    const finalContent = partial
+      ? `${partial}\n\n[Generation interrupted: ${errorMsg}]`
+      : `Bolu could not complete this request: ${errorMsg}`
+
+    await persistReplacedStatus(finalContent, 'failed')
     state.setMessages((prev) =>
-      prev.map((m) => (m.id === tempAssistantId ? { ...m, content: failedContent, status: 'failed' } : m)),
+      prev.map((m) => (m.id === tempAssistantId ? { ...m, content: finalContent, status: 'failed' } : m)),
     )
     state.setClerkState('idle')
     return false

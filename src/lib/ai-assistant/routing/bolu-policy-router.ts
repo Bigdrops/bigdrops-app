@@ -23,6 +23,7 @@ export type PolicyInput = {
   preferredProvider?: string | null
   preferredModel?: string | null
   allowPaid?: boolean
+  allowCustom?: boolean
 }
 
 export type PolicyDecision = {
@@ -61,20 +62,30 @@ export function resolveRoutingPolicy(input: PolicyInput): PolicyDecision {
   const allowPaid = Boolean(input.allowPaid)
 
   // 1. Determine allowed providers
-  let allowedProviders: string[] = [...DEFAULT_APPROVED_PROVIDERS]
+  let allowedProviders: string[] = input.allowCustom
+    ? [...DEFAULT_APPROVED_PROVIDERS, 'custom']
+    : [...DEFAULT_APPROVED_PROVIDERS]
 
   if (input.preferredProvider) {
     const pref = input.preferredProvider.trim().toLowerCase()
     if (pref === 'amd') {
       // Prioritize AMD but allow fallback to openrouter/deepseek if AMD is exhausted
-      allowedProviders = ['amd', 'openrouter', 'deepseek']
+      allowedProviders = input.allowCustom
+        ? ['amd', 'openrouter', 'deepseek', 'custom']
+        : ['amd', 'openrouter', 'deepseek']
+    } else if (pref === 'custom') {
+      allowedProviders = ['custom', ...DEFAULT_APPROVED_PROVIDERS]
     } else if (DEFAULT_APPROVED_PROVIDERS.includes(pref)) {
-      allowedProviders = [pref, ...DEFAULT_APPROVED_PROVIDERS.filter((p) => p !== pref)]
+      const rest = input.allowCustom
+        ? [...DEFAULT_APPROVED_PROVIDERS.filter((p) => p !== pref), 'custom']
+        : DEFAULT_APPROVED_PROVIDERS.filter((p) => p !== pref)
+      allowedProviders = [pref, ...rest]
     }
   }
 
-  // Filter to only verified approved providers in the catalog
+  // Filter to only verified approved providers in the catalog or custom
   allowedProviders = allowedProviders.filter((p) => {
+    if (p === 'custom') return true
     const entry = ROUTING_PROVIDER_CATALOGUE[p]
     return entry && entry.approvedForRouting
   })

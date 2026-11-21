@@ -203,16 +203,43 @@ export function classifyProviderError(
   }
 
   if (status === 403) {
-    // 403 Forbidden — Missing model permission or tier restriction. Do NOT disable whole account.
+    // 403 Forbidden — Distinguish explicit credential revocation from model tier or policy restrictions
+    const lowerMsg = messageDetail.toLowerCase()
+    const isAuthRevoked =
+      lowerMsg.includes('revoked') ||
+      lowerMsg.includes('invalid_api_key') ||
+      lowerMsg.includes('account_deactivated') ||
+      rawCode === 'invalid_api_key' ||
+      rawCode === 'account_deactivated'
+
+    if (isAuthRevoked) {
+      return {
+        category: 'authentication',
+        scope: 'account',
+        httpStatus: 403,
+        retryable: true,
+        requiresCooldown: false,
+        requiresQuarantine: true,
+        retryAfterSeconds: null,
+        safeSummary: 'Provider account access revoked or deactivated.',
+        rawCode,
+      }
+    }
+
+    // Model permission or tier restriction. Do NOT disable whole account.
+    // Setting scope to 'model' (or 'provider') prevents SQL from setting health_status = 'quarantined'.
+    const scope: FailureScope = options?.targetModel ? 'model' : 'provider'
     return {
       category: 'permission',
-      scope: 'account',
+      scope,
       httpStatus: 403,
       retryable: false,
-      requiresCooldown: false,
+      requiresCooldown: true,
       requiresQuarantine: false,
-      retryAfterSeconds: null,
-      safeSummary: 'Provider access forbidden. Verify account permissions or model access tier.',
+      retryAfterSeconds: retryAfter ?? DEFAULT_EXHAUSTION_COOLDOWN,
+      safeSummary: options?.targetModel
+        ? `Access forbidden for model "${options.targetModel}". Verify account tier or model permissions.`
+        : 'Provider access forbidden. Verify account permissions or model access tier.',
       rawCode,
     }
   }

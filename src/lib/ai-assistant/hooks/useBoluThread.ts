@@ -193,17 +193,21 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       userText: string
       facts: BoluFactResult | null
       replaceAssistantId?: string
+      connectionId?: string | null
+      modelId?: string | null
     }) =>
       runBoluGeneration({
         ...params,
-        connectionId: options.connectionId,
-        modelId: options.modelId,
+        connectionId: params.connectionId !== undefined ? params.connectionId : options.connectionId,
+        modelId: params.modelId !== undefined ? params.modelId : options.modelId,
         tenantClient: resolvedTenantClient,
         // A correction to the open draft updates that operation instead of
         // opening a second one.
         previousProposal: activeProposal,
         previousProposalMessageId: activeProposalMessageId,
         canRead,
+        onModelUnavailable: options.onModelUnavailable,
+        onResolvedModel: options.onResolvedModel,
         state: {
           setMessages,
           setStreamingContent,
@@ -219,7 +223,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
           abortController: abortControllerRef,
         },
       }),
-    [options.connectionId, options.modelId, resolvedTenantClient, canRead, activeProposal, activeProposalMessageId],
+    [options.connectionId, options.modelId, options.onModelUnavailable, options.onResolvedModel, resolvedTenantClient, canRead, activeProposal, activeProposalMessageId],
   )
 
   const submitMessage = useCallback(
@@ -335,6 +339,42 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       })
     },
     [conversationId, resolvedTenantId, isStreaming, messages, activeProposal, options.onEnsureConversation, defaultPageContext, resolveFacts, runGeneration],
+  )
+
+  /**
+   * Resubmits the latest user turn against an alternative model without duplicating user message rows.
+   */
+  const resubmitPendingTurn = useCallback(
+    async (overrideConnectionId?: string | null, overrideModelId?: string | null): Promise<boolean> => {
+      if (isStreaming) return false
+      const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')
+      if (!lastUserMessage) return false
+
+      const targetConversationId = conversationId
+      if (!targetConversationId || !resolvedTenantId) return false
+
+      const lastIndex = messages.findIndex((m) => m.id === lastUserMessage.id)
+      const history = messages
+        .slice(0, lastIndex)
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content }))
+
+      setClerkState('thinking')
+      clearError()
+
+      const verifiedFacts = await resolveFacts(lastUserMessage.content)
+
+      return runGeneration({
+        targetConversationId,
+        tenantId: resolvedTenantId,
+        history,
+        userText: lastUserMessage.content,
+        facts: verifiedFacts,
+        connectionId: overrideConnectionId,
+        modelId: overrideModelId,
+      })
+    },
+    [isStreaming, messages, conversationId, resolvedTenantId, resolveFacts, runGeneration, clearError],
   )
 
   const actionContext = useMemo<BoluThreadActionContext>(
@@ -545,7 +585,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
       // Attempt server-side Gate 2 save endpoint when VITE_API_URL is configured.
       // Advance Invoice configuration is not implemented by the server endpoint in
       // this stage; it persists through the authenticated tenant executor below.
-      const apiUrl = import.meta.env.VITE_API_URL
+      const apiUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '')
       if (apiUrl && !advanceProposal) {
         try {
           const token = sessionData?.session?.access_token
@@ -1053,6 +1093,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
     activeProposalMessageId,
     error,
     submitMessage,
+    resubmitPendingTurn,
     editUserMessage,
     regenerateResponse,
     stopStreaming,

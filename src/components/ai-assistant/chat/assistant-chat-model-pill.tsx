@@ -22,6 +22,7 @@ export interface ModelPillProps {
   connections?: PublicConnection[]
   selectedModel?: SelectedModelTarget | null
   activeProvider?: ActiveModelInfo | null
+  activeResolvedModel?: string | null
   onSelectModel?: (target: SelectedModelTarget) => void
   onManage: () => void
   onAddConnection?: () => void
@@ -51,6 +52,7 @@ export function ModelPill({
   connections = [],
   selectedModel,
   activeProvider,
+  activeResolvedModel,
   onSelectModel,
   onManage,
   onAddConnection,
@@ -232,20 +234,21 @@ export function ModelPill({
       .filter((group) => group.models.length > 0)
   }, [groups, query])
 
+  // Auto vs Manual state
+  const isAuto = !selectedModel || selectedModel.connectionId === 'auto'
+
   // Display labels for the pill trigger
   const isConfigured = Boolean(
     selectedModel?.connectionId || activeProvider?.isConfigured || connections.some((c) => c.isEnabled),
   )
 
-  const displayConnection =
-    selectedModel?.connectionName ||
-    activeProvider?.label ||
-    (connections.find((c) => c.isEnabled)?.name ?? 'Auto Route')
+  const displayConnection = isAuto
+    ? 'Auto'
+    : (selectedModel?.connectionName || activeProvider?.label || 'Custom')
 
-  const displayModel =
-    selectedModel?.modelName ||
-    activeProvider?.model ||
-    (connections.find((c) => c.isEnabled)?.model ?? 'Priority Pool')
+  const displayModel = isAuto
+    ? (activeResolvedModel || activeProvider?.model || 'Best in Pool')
+    : (selectedModel?.modelName || activeProvider?.model || 'Selected Model')
 
   const handleSelect = (conn: ConnectionGroup, model: GroupedModelOption) => {
     onSelectModel?.({
@@ -339,6 +342,43 @@ export function ModelPill({
             </div>
           </div>
 
+          {/* 1. AUTO SELECTION (FIRST OPTION & RECOMMENDED) */}
+          <div className="p-1.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40">
+            <button
+              type="button"
+              className={`w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs transition-colors ${
+                isAuto
+                  ? 'bg-amber-500/15 dark:bg-amber-500/20 text-amber-950 dark:text-amber-200 font-semibold border border-amber-500/30 dark:border-amber-500/40'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              onClick={() => {
+                onSelectModel?.({
+                  connectionId: 'auto',
+                  connectionName: 'Auto',
+                  modelId: 'auto',
+                  modelName: 'Auto (Best in Pool)',
+                })
+                setOpen(false)
+              }}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Sparkles className="size-3.5 text-amber-500 shrink-0" aria-hidden="true" />
+                <div className="min-w-0">
+                  <div className="font-semibold text-xs flex items-center gap-1.5">
+                    <span>Auto</span>
+                    <span className="text-[10px] font-normal px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/40 dark:border-amber-700/40">
+                      Recommended
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                    {activeResolvedModel ? `Active: ${activeResolvedModel}` : 'Auto-selects strongest eligible model'}
+                  </div>
+                </div>
+              </div>
+              {isAuto && <Check className="size-3.5 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />}
+            </button>
+          </div>
+
           {/* Grouped Model List */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1.5 space-y-2">
             {filteredGroups.length === 0 ? (
@@ -416,7 +456,7 @@ export function ModelPill({
           {/* Footer Action Bar */}
           <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
             <span className="truncate text-[10px] pr-2">
-              {selectedModel ? selectedModel.connectionName : 'Priority Pool'} · {displayModel}
+              {isAuto ? 'Auto Mode' : (selectedModel?.connectionName ?? 'Manual')} · {displayModel}
             </span>
             <button
               type="button"

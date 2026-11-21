@@ -119,13 +119,18 @@ export async function claimEligibleConnection(
       masterKey,
     )
 
+    const effectiveModel =
+      meta.selected_model && meta.selected_model !== '*'
+        ? meta.selected_model
+        : meta.default_model
+
     return {
       connectionId: meta.connection_id,
       providerId: meta.provider_id,
       protocol: meta.protocol,
       baseUrl: meta.base_url,
       defaultModel: meta.default_model,
-      selectedModel: meta.selected_model,
+      selectedModel: effectiveModel,
       isPaidTier: meta.is_paid_tier,
       timeoutMs: Number(secretRow.timeout_ms) || 30000,
       apiKey: decryptedKey,
@@ -159,13 +164,31 @@ export async function claimExactConnection(
 
   const { data: row, error } = await adminClient
     .from('app_ai_provider_connections')
-    .select('id, provider_id, protocol, base_url, model, timeout_ms, is_enabled, is_paid_tier, encrypted_key, key_nonce, key_tag, key_version')
+    .select(
+      'id, provider_id, protocol, base_url, model, timeout_ms, is_enabled, is_paid_tier, health_status, account_cooldown_until, encrypted_key, key_nonce, key_tag, key_version',
+    )
     .eq('id', connectionId)
     .eq('is_enabled', true)
     .maybeSingle()
 
   if (error || !row) {
     console.warn('[bolu-account-pool] Exact connection not found or disabled:', connectionId)
+    return null
+  }
+
+  // Reject quarantined connections
+  if (row.health_status === 'quarantined') {
+    console.warn('[bolu-account-pool] Exact connection is quarantined:', connectionId)
+    return null
+  }
+
+  // Reject active unexpired cooldowns; allow self-healing if cooldown has expired (<= now)
+  if (row.account_cooldown_until && new Date(row.account_cooldown_until).getTime() > Date.now()) {
+    console.warn(
+      '[bolu-account-pool] Exact connection is in active cooldown:',
+      connectionId,
+      row.account_cooldown_until,
+    )
     return null
   }
 

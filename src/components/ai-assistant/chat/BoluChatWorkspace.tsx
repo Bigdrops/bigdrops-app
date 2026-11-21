@@ -8,6 +8,8 @@ import { AssistantThread } from './assistant-chat-thread'
 import { AssistantRail } from './assistant-chat-rail'
 import { InvoicePanel } from './assistant-chat-panel'
 import { ModelPill, type ActiveModelInfo, type SelectedModelTarget } from './assistant-chat-model-pill'
+import { ModelNegotiationPrompt } from './assistant-model-negotiation'
+import type { CandidateAlternative } from '@/lib/ai-assistant/routing/bolu-alternative-discovery'
 import { boluProviderApi, type PublicConnection } from '@/pages/settings/bolu-provider/api'
 import { useBoluConversations } from '@/lib/ai-assistant/hooks/useBoluConversations'
 import { useBoluThread } from '@/lib/ai-assistant/hooks/useBoluThread'
@@ -87,18 +89,30 @@ export function BoluChatWorkspace({
   const [mobileRailOpen, setMobileRailOpen] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
 
-  // Live provider connection & model selection state
+  // Live provider connection & model selection state (Default is Auto mode: null or connectionId === 'auto')
   const [activeProvider, setActiveProvider] = useState<ActiveModelInfo | null>(null)
+  const [activeResolvedModel, setActiveResolvedModel] = useState<string | null>(null)
   const [connections, setConnections] = useState<PublicConnection[]>([])
   const [selectedModel, setSelectedModel] = useState<SelectedModelTarget | null>(() => {
     if (typeof window === 'undefined') return null
     try {
       const raw = localStorage.getItem('bolu_active_model_target')
-      return raw ? JSON.parse(raw) : null
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (!parsed || parsed.connectionId === 'auto') return null
+      return parsed
     } catch {
       return null
     }
   })
+
+  // Manual fallback negotiation state
+  const [negotiation, setNegotiation] = useState<{
+    failedModelName: string
+    alternatives: CandidateAlternative[]
+    secondsRemaining: number
+    isDismissed: boolean
+  } | null>(null)
 
   // Composer draft & auto-scroll state
   const [inputDraft, setInputDraft] = useState('')
@@ -134,20 +148,16 @@ export function BoluChatWorkspace({
             isConfigured: true,
           })
 
+          // Maintain Auto selection as default; only fall back to Auto if an explicitly pinned model was deleted
           setSelectedModel((prev) => {
-            if (prev && conns.some((c) => c.id === prev.connectionId && c.isEnabled)) {
+            if (!prev || prev.connectionId === 'auto') return null
+            if (conns.some((c) => c.id === prev.connectionId && c.isEnabled)) {
               return prev
             }
-            const fallbackTarget: SelectedModelTarget = {
-              connectionId: primaryConn.id,
-              connectionName: primaryConn.name || primaryConn.providerId,
-              modelId: primaryConn.model,
-              modelName: primaryConn.model,
-            }
             try {
-              localStorage.setItem('bolu_active_model_target', JSON.stringify(fallbackTarget))
+              localStorage.removeItem('bolu_active_model_target')
             } catch {}
-            return fallbackTarget
+            return null
           })
         } else if (status.runtime?.provider && status.runtime.provider !== 'unconfigured') {
           setActiveProvider({
@@ -182,12 +192,49 @@ export function BoluChatWorkspace({
     }
   }, [])
 
-  const handleSelectModel = (target: SelectedModelTarget) => {
-    setSelectedModel(target)
-    try {
-      localStorage.setItem('bolu_active_model_target', JSON.stringify(target))
-    } catch {}
-  }
+  const handleSelectModel = useCallback((target: SelectedModelTarget) => {
+    if (target.connectionId === 'auto') {
+      setSelectedModel(null)
+      try {
+        localStorage.removeItem('bolu_active_model_target')
+      } catch {}
+    } else {
+      setSelectedModel(target)
+      try {
+        localStorage.setItem('bolu_active_model_target', JSON.stringify(target))
+      } catch {}
+    }
+  }, [])
+
+  const handleModelUnavailable = useCallback(
+    (alternatives: CandidateAlternative[], failedConnId?: string, failedMdlId?: string) => {
+      if (!alternatives || alternatives.length === 0) {
+        feedback.error('The selected model is unavailable, and no alternatives were found in the active pool.')
+        return
+      }
+      const failedConn = connections.find((c) => c.id === failedConnId)
+      const failedName = failedConn?.name || selectedModel?.modelName || 'Selected Model'
+      setNegotiation({
+        failedModelName: failedName,
+        alternatives,
+        secondsRemaining: 10,
+        isDismissed: false,
+      })
+    },
+    [connections, selectedModel],
+  )
+
+  const handleResolvedModel = useCallback(
+    (info: { connectionId: string | null; model: string | null; isFallback: boolean }) => {
+      if (info.model) {
+        setActiveResolvedModel(info.model)
+        if (info.isFallback) {
+          feedback.info(`Bolu automatically routed to ${info.model}`)
+        }
+      }
+    },
+    [],
+  )
 
   // Window resize listener
   useEffect(() => {
@@ -221,6 +268,7 @@ export function BoluChatWorkspace({
     streamingContent,
     activeProposal,
     submitMessage,
+    resubmitPendingTurn,
     editUserMessage,
     regenerateResponse,
     stopStreaming,
@@ -243,8 +291,10 @@ export function BoluChatWorkspace({
     canRead,
     canWrite,
     pageContext,
-    connectionId: selectedModel?.connectionId ?? null,
-    modelId: selectedModel?.modelId ?? null,
+    connectionId: selectedModel?.connectionId === 'auto' ? null : (selectedModel?.connectionId ?? null),
+    modelId: selectedModel?.modelId === 'auto' ? null : (selectedModel?.modelId ?? null),
+    onModelUnavailable: handleModelUnavailable,
+    onResolvedModel: handleResolvedModel,
     onEnsureConversation: async () => {
       const initialTitle = inputDraft.trim() ? deriveConversationTitle(inputDraft.trim()) : 'New Conversation'
       return await createConversation({
@@ -253,6 +303,60 @@ export function BoluChatWorkspace({
       })
     },
   })
+
+  // 10-second Manual fallback countdown timer
+  useEffect(() => {
+    if (!negotiation) return
+
+    if (negotiation.secondsRemaining <= 0) {
+      // Countdown expired: automatically select strongest alternative (first in list)
+      const strongest = negotiation.alternatives[0]
+      if (strongest) {
+        const newTarget: SelectedModelTarget = {
+          connectionId: strongest.connectionId,
+          connectionName: strongest.connectionName,
+          modelId: strongest.modelId,
+          modelName: strongest.modelName,
+        }
+        handleSelectModel(newTarget)
+        feedback.info(`Switched to ${strongest.modelName} (Manual fallback)`)
+        void resubmitPendingTurn(strongest.connectionId, strongest.modelId)
+      }
+      setNegotiation(null)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setNegotiation((prev) => (prev ? { ...prev, secondsRemaining: prev.secondsRemaining - 1 } : null))
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [negotiation, handleSelectModel, resubmitPendingTurn])
+
+  // Clear negotiation prompt if conversation changes
+  useEffect(() => {
+    setNegotiation(null)
+  }, [activeConversationId])
+
+  const handleSelectAlternative = useCallback(
+    (alt: CandidateAlternative) => {
+      const newTarget: SelectedModelTarget = {
+        connectionId: alt.connectionId,
+        connectionName: alt.connectionName,
+        modelId: alt.modelId,
+        modelName: alt.modelName,
+      }
+      handleSelectModel(newTarget)
+      setNegotiation(null)
+      feedback.info(`Switched to ${alt.modelName}`)
+      void resubmitPendingTurn(alt.connectionId, alt.modelId)
+    },
+    [handleSelectModel, resubmitPendingTurn],
+  )
+
+  const handleDismissNegotiation = useCallback(() => {
+    setNegotiation((prev) => (prev ? { ...prev, isDismissed: true } : null))
+  }, [])
 
   const { preferences } = useBoluInteractionPreferences()
   const narration = useBoluNarration({ rate: preferences.narrationRate })
@@ -378,11 +482,23 @@ export function BoluChatWorkspace({
       connections={connections}
       selectedModel={selectedModel}
       activeProvider={activeProvider}
+      activeResolvedModel={activeResolvedModel}
       onSelectModel={handleSelectModel}
       onManage={handleNavigateToSettings}
       direction="down"
     />
   )
+
+  // Manual fallback negotiation prompt (visible above composer during active countdown)
+  const negotiationNode = negotiation && !negotiation.isDismissed ? (
+    <ModelNegotiationPrompt
+      failedModelName={negotiation.failedModelName}
+      alternatives={negotiation.alternatives}
+      secondsRemaining={negotiation.secondsRemaining}
+      onSelectAlternative={handleSelectAlternative}
+      onDismiss={handleDismissNegotiation}
+    />
+  ) : null
 
   // Header Component (Bolu identity on left, Model Picker & actions on right in ONE shared row)
   const headerNode = (
@@ -514,6 +630,7 @@ export function BoluChatWorkspace({
             <div className="flex flex-col flex-1 h-full min-w-0 overflow-hidden relative">
               {headerNode}
               {threadNode}
+              {negotiationNode}
               {composerNode}
 
               {/* Mobile Rail Drawer */}
@@ -556,6 +673,7 @@ export function BoluChatWorkspace({
               <div className="flex flex-col flex-1 h-full min-w-0">
                 {headerNode}
                 {threadNode}
+                {negotiationNode}
                 {composerNode}
               </div>
 
@@ -590,6 +708,7 @@ export function BoluChatWorkspace({
               <div className="flex flex-col flex-1 h-full min-w-0 border-r border-[var(--ac-line)]">
                 {headerNode}
                 {threadNode}
+                {negotiationNode}
                 {composerNode}
               </div>
               {panelOpen ? (
@@ -607,6 +726,7 @@ export function BoluChatWorkspace({
               <div className="flex flex-col flex-1 h-full min-w-0">
                 {headerNode}
                 {threadNode}
+                {negotiationNode}
                 {composerNode}
               </div>
               {panelOpen ? (
