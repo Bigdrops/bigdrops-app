@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
-import { X } from 'lucide-react'
 import { BxLogo } from '@/components/layout/bx-logo'
 import { SkeletonCard } from '@/components/loading/AppLoadingStates'
 import { useLoadingTip } from '@/hooks/useLoadingTip'
 import {
   getPhotoHeroVars,
+  isPhotoHeroFamilyId,
   type PhotoHeroAppearance,
+  type PhotoHeroFamilyId,
 } from '@/components/onboarding/photo-hero-v2-theme'
 
 type PageLoaderProps = {
   children?: ReactNode
   variant?: 'default' | 'startup'
   tipPathname?: string
+  family?: PhotoHeroFamilyId
 }
 
 function resolveStartupAppearance(): PhotoHeroAppearance {
@@ -28,16 +30,46 @@ function resolveStartupAppearance(): PhotoHeroAppearance {
   return 'dark'
 }
 
+function resolveStartupFamily(): PhotoHeroFamilyId {
+  if (typeof document !== 'undefined') {
+    const themeAttr = document.documentElement.getAttribute('data-theme')
+    if (isPhotoHeroFamilyId(themeAttr)) return themeAttr
+    if (themeAttr === 'amber-minimal' || themeAttr === 'warm-cocoa') return 'amber-terracotta'
+    if (themeAttr === 'cleanslate' || themeAttr === 'modern-minimal') return 'slate-navy'
+  }
+
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('bigdrops_active_theme')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        const id = parsed?.themePresetId || parsed?.theme
+        if (isPhotoHeroFamilyId(id)) return id
+        if (id === 'amber-minimal' || id === 'warm-cocoa') return 'amber-terracotta'
+        if (id === 'cleanslate' || id === 'modern-minimal') return 'slate-navy'
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return 'slate-navy'
+}
+
 function StartupPageLoader({
   children,
   tipPathname,
+  family: propFamily,
 }: {
   children?: ReactNode
   tipPathname: string
+  family?: PhotoHeroFamilyId
 }) {
   const [appearance, setAppearance] = useState<PhotoHeroAppearance>(() => resolveStartupAppearance())
-  const vars = useMemo(() => getPhotoHeroVars('slate-navy', appearance), [appearance])
-  const { tip, dismissTip } = useLoadingTip({ pathname: tipPathname, active: true })
+  const [family, setFamily] = useState<PhotoHeroFamilyId>(() => propFamily ?? resolveStartupFamily())
+  // Fallback: getPhotoHeroVars('slate-navy', appearance) when no ambient theme is resolved
+  const vars = useMemo(() => getPhotoHeroVars(family, appearance), [family, appearance])
+  const { tip } = useLoadingTip({ pathname: tipPathname, active: true })
   const tipMessage = tip?.message?.trim() || 'Loading guidance...'
 
   useEffect(() => {
@@ -48,6 +80,25 @@ function StartupPageLoader({
     media.addEventListener('change', onChange)
     return () => media.removeEventListener('change', onChange)
   }, [])
+
+  useEffect(() => {
+    if (propFamily) {
+      setFamily(propFamily)
+      return
+    }
+    setFamily(resolveStartupFamily())
+
+    if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'data-theme') {
+          setFamily(resolveStartupFamily())
+        }
+      }
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [propFamily])
 
   return (
     <div
@@ -161,23 +212,6 @@ function StartupPageLoader({
           box-shadow:0 18px 44px var(--loader-shadow);
           text-align:center;
         }
-        .bd-startup-tip-dismiss{
-          position:absolute;
-          top:6px;
-          right:6px;
-          width:28px;
-          height:28px;
-          border:none;
-          border-radius:50%;
-          background:var(--surface-muted,rgba(128,128,128,.18));
-          color:var(--loader-ink-2);
-          display:grid;
-          place-items:center;
-          cursor:pointer;
-          transition:background .2s ease,color .2s ease;
-        }
-        .bd-startup-tip-dismiss:hover{background:var(--surface,rgba(128,128,128,.28));color:var(--loader-ink)}
-        .bd-startup-tip-dismiss:focus-visible{outline:2px solid var(--loader-accent);outline-offset:2px}
         .bd-startup-tip-label{
           color:var(--loader-ink-2);
           font-size:9px;
@@ -224,14 +258,6 @@ function StartupPageLoader({
       </div>
       {tipMessage ? (
         <div className="bd-startup-tip" role="status" aria-live="polite">
-          <button
-            type="button"
-            className="bd-startup-tip-dismiss"
-            aria-label="Dismiss tip"
-            onClick={dismissTip}
-          >
-            <X size={15} strokeWidth={1.9} aria-hidden="true" />
-          </button>
           <span className="bd-startup-tip-label">Quick tip</span>
           <p key={tip?.id ?? 'tip'} className="bd-startup-tip-text">
             {tipMessage}
@@ -247,9 +273,14 @@ export default function PageLoader({
   children,
   variant = 'default',
   tipPathname = '/',
+  family,
 }: PageLoaderProps = {}) {
   if (variant === 'startup') {
-    return <StartupPageLoader tipPathname={tipPathname}>{children}</StartupPageLoader>
+    return (
+      <StartupPageLoader tipPathname={tipPathname} family={family}>
+        {children}
+      </StartupPageLoader>
+    )
   }
 
   return (
