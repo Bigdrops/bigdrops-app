@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+<!-- id: rel_9c89e495 -->
+- Bolu AI: automatically selects the best available AI model and recommends alternatives if a chosen model is unavailable
+
+<!-- id: rel_fdcf7243 -->
+- Bolu AI: improved connection stability and automatic recovery during temporary service interruptions
+
+<!-- id: rel_2054c023 -->
+- App startup: loading screen now matches your chosen color theme immediately for a smoother launch experience
+
+<!-- id: rel_687a11ba -->
+- Bolu preferences: convenient one-tap buttons to adjust voice reading speed on any screen
+
+<!-- archive-boundary -->
+
+## [1.0.31] - 2026-11-20
+
 <!-- id: rel_03837681 -->
 - stage 3d lifecycle, attachments and intelligence
 
@@ -31,5 +47,3 @@
 
 <!-- id: rel_5edadeaa -->
 - conversational advance invoice + warnings
-
-<!-- archive-boundary -->
