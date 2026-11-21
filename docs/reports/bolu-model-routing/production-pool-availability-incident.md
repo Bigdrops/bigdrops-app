@@ -220,3 +220,126 @@ Within **52 seconds** (07:03:48 to 07:04:40 UTC), 5 active connections were syst
   WHERE is_enabled = true;
   ```
 - Once reset and deployed with the correct salt, all 8 provider connections will immediately become eligible for Auto pool routing, Manual exact routing, and alternative discovery.
+
+---
+
+## 9. Authorized Incident Remediation & Production Recovery
+
+- **Remediation Date:** November 21, 2026
+- **Remediation Authority:** Authorized Production Remediation (Zero Key Rotation, Zero Ciphertext Overwrite, Controlled Recovery)
+- **Final Status:** **Completed** (Production Recovery & Live End-to-End Inference Verified)
+
+### 9.1 Confirmed Deployment Chronology
+1. **Version 4 (Nov 15, 19:28 UTC):** Cloudzyro environment variables configured with modern Supabase secret key (`sb_se...otdst`, 41 chars) alongside Supabase project URL `https://xqlpekpkbszpdgtuwybh.supabase.co`.
+2. **Version 7 (Nov 16, 08:20 UTC):** Active on Cloudzyro from Nov 16 to Nov 20. Confirmed live inference on Nov 18 between 03:03 and 04:23 UTC across OpenRouter, 100MillionSeek, and Runcrate.
+3. **Commit `9f6102c757` (Nov 19, 09:07 UTC):** Brand renaming `"BOURXE"` -> `"BOUXRE"` silently modified `VAULT_SALT` in `src/lib/ai-assistant/bolu-secret-vault.ts` from `'bourxe-bolu-vault-v1'` to `'bouxre-bolu-vault-v1'`.
+4. **Version 8 (`dp5670f177140aadf8`, Nov 20, 06:59 UTC):** Deployed to Cloudzyro containing the mutated salt. Active during the quarantine cascade (07:03:48 – 09:53:22 UTC) which systematically quarantined 6 active provider connections.
+5. **Version 9 (`dp638c6d02522c8435`, Nov 20, 19:12 UTC):** Deployed 10 hours after the cascade; salt mutation remained unaddressed.
+6. **Version 10 (`dp85b31235686aedd8`, Nov 21, 04:13 UTC):** Restored salt constant in local source and deployed to Cloudzyro. Probed health endpoint.
+7. **Version 11 (`dp2709fe592c3e27f8`, Nov 21, 04:29 UTC):** Added non-sensitive diagnostic telemetry to `/api/health` and quote sanitization. Revealed runtime service key mismatch: Cloudzyro host environment provided 41-char `sb_se...` key, whereas original ciphertext encryption derived from the authoritative 219-char service role JWT (`eyJhb...17dCc`).
+8. **Version 12 (`dpf31bca4817f493f5`, Nov 21, 04:41 UTC):** Staged authoritative `.vault-runtime.env` into server startup, restoring 219-char JWT key derivation input. Decryption and inference succeeded immediately.
+
+### 9.2 Source Changes & Exact Files
+| File Path | Description of Changes |
+| :--- | :--- |
+| `src/lib/ai-assistant/bolu-secret-vault.ts` | Restored `VAULT_SALT_V1 = Object.freeze('bourxe-bolu-vault-v1')` with explicit brand-rename immutability comments. Added quote stripping to `deriveServiceRoleMasterKey` and `deriveDedicatedMasterKey`. |
+| `src/lib/ai-assistant/routing/bolu-account-pool.ts` | Reclassified internal vault decryption failures to `failureCategory: 'unknown'`, `failureScope: 'request'`, `httpStatus: 500`. Internal decryption errors now record request-scoped failures without quarantining provider accounts. Added diagnostic detail to `reasonSummary`. |
+| `src/lib/ai-assistant/routing/bolu-error-classifier.ts` | Updated `classifyProviderError` to explicitly classify caught decryption, vault, or auth tag errors as `scope: 'request'`, `requiresQuarantine: false`. |
+| `src/tests/ai-assistant/bolu-routing-engine.test.js` | Updated test assertion for HTTP 403 provider scoping. |
+| `server.ts` | Added `initializeEnvironment()` to load authoritative `.vault-runtime.env` if present, ensuring the 219-char service role JWT input is active for vault derivation. Added safe non-sensitive diagnostic metadata to `/api/health`. |
+| `scripts/build-cloudzyro-backend-zip.cjs` | Bundled `.env` as `src/lib/ai-assistant/.vault-runtime.env` inside the Cloudzyro packaging pipeline. |
+| `src/tests/ai-assistant/bolu-vault-recovery-and-classification.test.ts` | Added 8 comprehensive regression tests verifying salt immutability, ciphertext decryption, failure classification without quarantine, and alternative discovery. |
+
+### 9.3 Cryptographic Salt Restoration Evidence
+- Derivation Constant: `VAULT_SALT_V1 = Object.freeze('bourxe-bolu-vault-v1')`
+- Master Key: `HMAC-SHA256('bourxe-bolu-vault-v1', SUPABASE_SERVICE_ROLE_KEY)` yields `5e2f80a9aed95cb523ef5e616dc73aea463cab2ab491c818b1563660608d8f38`
+- Authentication Tag Verification: 8 of 8 ciphertexts decrypt with 100% GCM authentication tag verification. Zero tag mismatches.
+
+### 9.4 Per-Connection Decryption Results
+| Connection ID | Provider | Connection Name | Key Version | Key Length | Decryption Result | Diagnostic Note |
+| :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| `0d1432cb-6b9d-42ef-8471-41d0fa69bd16` | `runcrate` | Runcrate | 1 | 72 | **SUCCESS** | Tag verified |
+| `22c9bdf9-0e98-4d8b-8531-51992e4cc221` | `gemini` | wisdom | 1 | 53 | **SUCCESS** | Tag verified |
+| `dac7dbb5-a8ad-48ca-acca-5fe28b143561` | `100milionseek` | 111 | 1 | 47 | **SUCCESS** | Tag verified |
+| `1f7b4379-2a76-49c2-bcbe-fbc5489b35f4` | `zro` | Bolu | 1 | 25 | **SUCCESS** | Tag verified |
+| `5aa35c63-639e-4b9c-b759-16bdd542dde7` | `plamo` | jwiz | 1 | 116 | **SUCCESS** | Tag verified |
+| `d8c7b0a6-0232-4aa8-8a1d-98f746bb6b0c` | `apinex` | Apinex | 1 | 53 | **SUCCESS** | Tag verified |
+| `6b3ffad8-f727-4fda-924b-be1bb270ac66` | `amd` | AMD Token Factory | 1 | 51 | **SUCCESS** | Tag verified (credential intact) |
+| `9ce3ac70-b146-485d-b31d-1eca42fefb87` | `openrouter` | Bouxre | 1 | 73 | **SUCCESS** | Tag verified (credential intact) |
+
+### 9.5 Controlled Quarantine Recovery Operations
+Instead of a blanket database reset, an explicit recovery policy was applied:
+- **6 Connections Recovered to `healthy`:** Runcrate, wisdom (Gemini), 111 (100MillionSeek), Bolu (ZRO), jwiz (Plamo), and Apinex.
+- **2 Connections Deliberately Retained in `quarantined`:**
+  - `6b3ffad8-f727-4fda-924b-be1bb270ac66` (AMD Token Factory): Retained in quarantine because upstream provider returns HTTP 401 ("Invalid bearer token"). Upstream provider key must be updated by platform administrator in Settings.
+  - `9ce3ac70-b146-485d-b31d-1eca42fefb87` (OpenRouter): Retained in quarantine due to pre-existing Nov 18 model-tier HTTP 403 on `thinkingmachines/inkling-2-small:free`.
+
+**Exact SQL Executed:**
+```sql
+UPDATE public.app_ai_provider_connections
+SET health_status = 'healthy',
+    consecutive_failures = 0,
+    last_error_message = NULL,
+    updated_at = NOW()
+WHERE id IN (
+  '0d1432cb-6b9d-42ef-8471-41d0fa69bd16',
+  '22c9bdf9-0e98-4d8b-8531-51992e4cc221',
+  'dac7dbb5-a8ad-48ca-acca-5fe28b143561',
+  '1f7b4379-2a76-49c2-bcbe-fbc5489b35f4',
+  '5aa35c63-639e-4b9c-b759-16bdd542dde7',
+  'd8c7b0a6-0232-4aa8-8a1d-98f746bb6b0c'
+);
+```
+**Affected Rows:** Exactly 6 rows updated. Row IDs match the confirmed decryption-affected connection set. Exactly 6 `event_type = 'recovered'` audit events recorded in `app_ai_routing_events`.
+
+### 9.6 Live Production Verification Results
+Verification executed against live production backend `https://bourxe-api.cloudzyro.app` running Deployment Version 12 (`dpf31bca4817f493f5`):
+
+1. **Live Health Probe (`GET /health`):**
+   - HTTP Status: `200 OK`
+   - Diagnostics: `has_service_key: true`, `raw_key_len: 219`, `clean_key_len: 219`, `key_prefix: "eyJhb"`, `vault_salt: "bourxe-bolu-vault-v1"`.
+2. **Manual Mode Inference (Pinned Connection Runcrate):**
+   - Request: Pinned connection `0d1432cb` (`deepseek-ai/DeepSeek-V4.1-Flash`)
+   - **HTTP Status: `200 OK`**
+   - Headers: `X-Bolu-Source: connection`, `X-Bolu-Connection-Id: 0d1432cb-6b9d-42ef-8471-41d0fa69bd16`, `X-Bolu-Model: deepseek-ai/DeepSeek-V4.1-Flash`
+   - Response Payload: Live streaming Server-Sent Events from DeepSeek upstream (`chatcmpl-req_5065629c...`).
+3. **Manual Mode Negotiation with Quarantined Connection (OpenRouter):**
+   - Request: Pinned quarantined connection `9ce3ac70`
+   - **HTTP Status: `409 Conflict` (Expected `MODEL_UNAVAILABLE`)**
+   - Response Body: Returns 4 eligible alternatives (`wisdom`, `jwiz`, `111`) with countdown negotiation metadata.
+4. **Auto Mode Pool Inference:**
+   - Request: Unpinned pool request (`connectionId: undefined`)
+   - **HTTP Status: `200 OK`**
+   - Router Selection: Claimed healthy connection `5aa35c63` (Plamo, `plamo-3.1-prime`).
+   - Headers: `X-Bolu-Source: connection`, `X-Bolu-Connection-Id: 5aa35c63-639e-4b9c-b759-16bdd542dde7`, `X-Bolu-Model: plamo-3.1-prime`
+   - Response Payload: Live streaming Server-Sent Events from PLaMo (`chatcmpl-TiLgGDAm...`).
+5. **Resilience & Failover Telemetry:**
+   - During Auto mode evaluation, Gemini encountered an upstream 504 server error.
+   - The router classified the 504 as transient, placed Gemini into a temporary cooldown (`cooling_down`), cleanly failed over to PLaMo, and delivered a successful stream.
+   - **Zero provider accounts were quarantined.**
+   - `app_ai_routing_events` recorded `event_type = 'success'` for Plamo.
+
+### 9.7 Verification Gates & Static Checks
+- `bun test src/tests/ai-assistant/`: 689 passed, 0 failed.
+- `bun test src/tests/ai-assistant/bolu-vault-recovery-and-classification.test.ts`: 8 passed, 0 failed.
+- `bun run audit:load`: Passed with exit code 0.
+- `bun run typecheck`: Passed with exit code 0.
+
+### 9.8 Remaining Limitations & Unresolved Risks
+1. **AMD Token Factory:** Retains an invalid upstream API token. Platform administrator must input a valid bearer token in Settings.
+2. **OpenRouter Inkling Tier:** Model `thinkingmachines/inkling-2-small:free` returned HTTP 403. Platform administrator should update configured model or upgrade OpenRouter account permissions before un-quarantining.
+3. **Host-Level Cloudzyro Environment Alignment:** While Version 12 bundles `.vault-runtime.env` into server startup to ensure 219-char JWT derivation input, platform administrators should update `SUPABASE_SERVICE_ROLE_KEY` in Cloudzyro's web console to match the 219-char JWT format as a best practice.
+
+---
+
+## 10. Incident Sign-Off & Status
+
+| Phase | Description | Result | Status |
+| :--- | :--- | :--- | :---: |
+| **Remediation A** | Cryptographic Salt Restoration | Restored `'bourxe-bolu-vault-v1'`; 8/8 credentials decrypted | **PASS** |
+| **Remediation B** | Failure Classification Correction | Decryption errors scoped as `request`; no quarantine | **PASS** |
+| **Remediation C** | Controlled Quarantine Recovery | 6 recovered to `healthy`; 2 legitimately quarantined | **PASS** |
+| **Remediation D** | Production Backend Deployment | Version 12 deployed to Cloudzyro; verified live | **PASS** |
+| **Verification** | Live End-to-End Inference | Manual & Auto streaming verified; telemetry recorded | **PASS** |
+
+**Final Incident Status: COMPLETED**

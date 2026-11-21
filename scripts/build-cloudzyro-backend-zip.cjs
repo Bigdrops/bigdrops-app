@@ -39,6 +39,12 @@ copyDir('api', path.join(stageDir, 'api'));
 copyDir('src', path.join(stageDir, 'src'));
 copyDir('public', path.join(stageDir, 'public'));
 
+// Stage authoritative vault runtime environment for server initialization
+if (fs.existsSync('.env')) {
+  const vaultEnvDest = path.join(stageDir, 'src', 'lib', 'ai-assistant', '.vault-runtime.env');
+  fs.copyFileSync('.env', vaultEnvDest);
+}
+
 if (fs.existsSync(zipPath)) {
   fs.unlinkSync(zipPath);
 }

@@ -59,14 +59,24 @@ export type SaveProviderConfigInput = {
 export const KEY_VERSION_SERVICE_ROLE = 1
 export const KEY_VERSION_DEDICATED = 2
 
-const VAULT_SALT = 'bouxre-bolu-vault-v1'
+/**
+ * Version 1 key-derivation salt.
+ *
+ * CRITICAL CRYPTOGRAPHIC DERIVATION CONSTANT:
+ * Do NOT alter, refactor, or rename during brand renaming or re-theming.
+ * All existing ciphertexts in `app_ai_provider_connections` were encrypted at rest
+ * using AES-256-GCM with a master key derived via HMAC-SHA256 from this exact salt.
+ * Mutating this string causes authentication tag validation to fail across all stored credentials.
+ */
+export const VAULT_SALT_V1 = Object.freeze('bourxe-bolu-vault-v1')
+const VAULT_SALT = VAULT_SALT_V1
 
 /**
  * Derives a 32-byte master key from explicit BOLU_ENCRYPTION_KEY (version 2).
  * Returns null if BOLU_ENCRYPTION_KEY is unset or empty.
  */
 export function deriveDedicatedMasterKey(env: Record<string, string | undefined> = process.env): Buffer | null {
-  const directKey = env.BOLU_ENCRYPTION_KEY?.trim()
+  const directKey = env.BOLU_ENCRYPTION_KEY?.trim().replace(/^["']|["']$/g, '').trim()
   if (!directKey) return null
   if (/^[0-9a-fA-F]{64}$/.test(directKey)) {
     return Buffer.from(directKey, 'hex')
@@ -83,7 +93,9 @@ export function deriveDedicatedMasterKey(env: Record<string, string | undefined>
  * Returns null if SUPABASE_SERVICE_ROLE_KEY is unset or empty.
  */
 export function deriveServiceRoleMasterKey(env: Record<string, string | undefined> = process.env): Buffer | null {
-  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  const rawKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  if (!rawKey) return null
+  const serviceRoleKey = rawKey.replace(/^["']|["']$/g, '').trim()
   if (!serviceRoleKey) return null
   return crypto.createHmac('sha256', VAULT_SALT).update(serviceRoleKey).digest()
 }

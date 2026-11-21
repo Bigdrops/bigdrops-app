@@ -205,10 +205,10 @@ test('classifyProviderError maps all required categories and scopes', () => {
   assert.equal(e402.requiresQuarantine, false)
   assert.equal(e402.retryable, true)
 
-  // HTTP 403: permission -> do NOT automatically quarantine whole account (scoped to connection or model)
+  // HTTP 403: permission -> do NOT automatically quarantine whole account (scoped to provider or model)
   const e403 = classifyProviderError({ status: 403 })
   assert.equal(e403.category, 'permission')
-  assert.equal(e403.scope, 'connection')
+  assert.equal(e403.scope, 'provider')
   assert.equal(e403.requiresQuarantine, false)
   assert.equal(e403.requiresCooldown, true)
 

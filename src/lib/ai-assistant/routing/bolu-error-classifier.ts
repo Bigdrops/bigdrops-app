@@ -108,6 +108,24 @@ export function classifyProviderError(
 
       const msg = err.message.toLowerCase()
       if (
+        msg.includes('decrypt') ||
+        msg.includes('vault') ||
+        msg.includes('unable to authenticate data') ||
+        msg.includes('unsupported state')
+      ) {
+        return {
+          category: 'unknown',
+          scope: 'request',
+          httpStatus: status || 500,
+          retryable: false,
+          requiresCooldown: false,
+          requiresQuarantine: false,
+          retryAfterSeconds: null,
+          safeSummary: 'Server failed to decrypt connection credential.',
+        }
+      }
+
+      if (
         msg.includes('econnrefused') ||
         msg.includes('enotfound') ||
         msg.includes('fetch failed') ||

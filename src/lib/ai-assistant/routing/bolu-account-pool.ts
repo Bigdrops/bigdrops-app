@@ -137,14 +137,16 @@ export async function claimEligibleConnection(
     }
   } catch (err) {
     console.error('[bolu-account-pool] Secret decryption failed for connection:', meta.connection_id, err)
-    // Quarantine the damaged connection
+    // Server-side vault decryption failure is an internal infrastructure issue,
+    // not an upstream provider authentication rejection. Scope as 'request' so that
+    // record_ai_connection_failure does NOT trigger provider-account quarantine.
     await recordAiFailure(adminClient, {
       connectionId: meta.connection_id,
       modelId: meta.selected_model,
-      failureCategory: 'authentication',
-      failureScope: 'account',
+      failureCategory: 'unknown',
+      failureScope: 'request',
       httpStatus: 500,
-      reasonSummary: 'Server failed to decrypt connection credential.',
+      reasonSummary: `Server failed to decrypt connection credential: ${err instanceof Error ? err.message : String(err)}`,
     })
     return null
   }
