@@ -790,6 +790,26 @@ test('validateReleaseNotes accepts legitimate user-facing and maintenance/perfor
   }
 })
 
+test('validateReleaseNotes rejects internal engineering tasks, stage markers, commit syntax and code paths', () => {
+  const internalEntries = [
+    '- stage 3d lifecycle, attachments and intelligence',
+    '- stage 3c pdf presentation and signatory controls',
+    '- stage 3b custom fields, groups and item images',
+    '- Android update experience prototype',
+    '- stage 3a2 modify remediation',
+    '- stage 3a2 existing-doc field and charges',
+    '- stage 3a1 core contract, stage 3 blueprint',
+    '- feat(assistant): stage 3d lifecycle',
+    '- fix(invoice): correct calculation in src/lib/Calculations.ts',
+    '- Update capacitor.config.ts settings',
+  ]
+  for (const note of internalEntries) {
+    const res = validateReleaseNotes(note)
+    assert.equal(res.ok, false, `Expected rejection for internal note: ${note}`)
+    assert.match(res.reason, /release notes entry rejected:/)
+  }
+})
+
 test('CLI validate-notes --file enforces validation gate and exit codes', () => {
   const dir = mkdtempSync(join(tmpdir(), 'release-gate-test-'))
   try {

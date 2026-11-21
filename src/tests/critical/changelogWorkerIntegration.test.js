@@ -51,6 +51,26 @@ test('developer-only bullets are excluded from worker proposals', () => {
   assert.deepEqual(proposals.map((p) => p.text), ['User-facing feature.', 'User-facing fix.'])
 })
 
+test('proposalsFromReport ignores markdown headings and rejects internal engineering jargon', () => {
+  const text = `
+# Implementation Report
+
+## Changelog entries
+### Technical Subheading
+- **feat**: stage 3d lifecycle, attachments and intelligence
+- **fix**: Fixed bug in src/hooks/useAppUpdate.ts
+- **feat**: Android update experience prototype
+- **feat**: Allow invoice export to PDF in landscape
+- stage 3b custom fields, groups and item images
+- **fix**: Correct customer balance calculation on payment
+`
+  const proposals = proposalsFromReport(REPORT, text)
+  assert.deepEqual(proposals.map((p) => p.text), [
+    'Allow invoice export to PDF in landscape',
+    'Correct customer balance calculation on payment',
+  ])
+})
+
 test('worker proposals append once and reprocessing adds nothing', () => {
   const text = `
 ## Changelog entries

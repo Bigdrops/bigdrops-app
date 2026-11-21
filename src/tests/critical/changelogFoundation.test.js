@@ -16,6 +16,7 @@ import {
   restoreVersion,
   computeNotes,
   parseTombstones,
+  evaluateChangelogEntryQuality,
   ID_PATTERN,
 } from '../../../scripts/release/changelog.mjs'
 import { parseReleaseNotes, isLegacyPlaceholder } from '../../domain/appUpdate/changelog.ts'
@@ -111,6 +112,65 @@ test('curateProposals excludes developer-only work and keeps user-facing work', 
   assert.deepEqual(kept.map((p) => p.text), [
     'New export flow', 'Fix crash on save', 'Curated prose without type',
   ])
+})
+
+test('evaluateChangelogEntryQuality accepts polished user-facing bullets and rejects engineering artifacts', () => {
+  // Legitimate user-facing notes
+  assert.deepEqual(evaluateChangelogEntryQuality('Added export to PDF in landscape mode'), { ok: true, reason: null })
+  assert.deepEqual(evaluateChangelogEntryQuality('- Faster dashboard summary loading'), { ok: true, reason: null })
+  assert.deepEqual(evaluateChangelogEntryQuality('Fix calculation precision for discounts'), { ok: true, reason: null })
+
+  // Rejects internal stage / phase / milestone markers
+  assert.equal(evaluateChangelogEntryQuality('stage 3d lifecycle, attachments and intelligence').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('stage 3c pdf presentation and signatory controls').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('phase 2.2 release gate closure').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('sprint 14 bug resolution').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('step 3a verification gate').ok, false)
+
+  // Rejects raw conventional commit prefixes
+  assert.equal(evaluateChangelogEntryQuality('feat(assistant): stage 3d lifecycle').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('fix(invoice): correct tax calculation').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('chore(ci): update release workflow').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('refactor: rewrite parser internals').ok, false)
+
+  // Rejects commit SHAs
+  assert.equal(evaluateChangelogEntryQuality('8a828de020 Fix calculation issue').ok, false)
+
+  // Rejects source code files and paths
+  assert.equal(evaluateChangelogEntryQuality('Fix bug in src/hooks/useAppUpdate.ts').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('Update schema.sql migration').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('Change capacitor.config.ts settings').ok, false)
+
+  // Rejects internal engineering jargon
+  assert.equal(evaluateChangelogEntryQuality('Android update experience prototype').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('stage 3a2 modify remediation').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('stage 3a1 core contract, stage 3 blueprint').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('wip: temporary workaround').ok, false)
+
+  // Rejects legacy generic placeholder
+  assert.equal(evaluateChangelogEntryQuality('BOURXE v1.0.29 (build 1029) maintenance and performance update.').ok, false)
+
+  // Rejects empty / single-word entries
+  assert.equal(evaluateChangelogEntryQuality('').ok, false)
+  assert.equal(evaluateChangelogEntryQuality('Update').ok, false)
+})
+
+test('curateProposals and appendEntries filter and refuse internal engineering descriptions', () => {
+  const proposals = [
+    { key: 'p#1', text: 'stage 3d lifecycle, attachments and intelligence', type: 'feat' },
+    { key: 'p#2', text: 'Android update experience prototype', type: 'feat' },
+    { key: 'p#3', text: 'Fix bug in src/hooks/useAppUpdate.ts', type: 'fix' },
+    { key: 'p#4', text: 'Export invoices as signed PDF documents', type: 'feat' },
+  ]
+  const curated = curateProposals(proposals)
+  assert.deepEqual(curated.map((p) => p.text), ['Export invoices as signed PDF documents'])
+
+  const appended = appendEntries(createEmptyChangelog(), proposals)
+  assert.equal(appended.added.length, 1)
+  assert.equal(appended.refused.length, 3)
+  assert.ok(appended.refused.some((r) => r.text.includes('stage 3d') && r.reason.includes('stage or phase')))
+  assert.ok(appended.refused.some((r) => r.text.includes('prototype') && r.reason.includes('engineering jargon')))
+  assert.ok(appended.refused.some((r) => r.text.includes('useAppUpdate.ts') && r.reason.includes('source code')))
 })
 
 test('reprocessing the same report produces no duplicate entries', () => {

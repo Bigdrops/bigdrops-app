@@ -10,7 +10,7 @@
  * stable IDs. No text hashing or fuzzy matching is used for identity.
  */
 
-import { curateProposals } from './changelog.mjs'
+import { curateProposals, evaluateChangelogEntryQuality } from './changelog.mjs'
 
 /** Extract user-facing bullets from a report's changelog section, if present. */
 export function proposalsFromReport(reportPath, reportText) {
@@ -33,23 +33,36 @@ export function proposalsFromReport(reportPath, reportText) {
       inSection = false
     }
 
+    // Never parse markdown headings as changelog entry bullets
+    if (/^#+\s+/.test(line)) {
+      continue
+    }
+
     const typeMatch = line.match(/^[-*•]\s+\*\*(feat|fix|perf|revert)\*\*\s*:\s*(.+)$/i)
       || line.match(/^[-*•]\s+\[(feat|fix|perf|revert)\]\s*:\s*(.+)$/i)
     if (typeMatch) {
-      n += 1
-      proposals.push({
-        key: `${reportPath}#${n}`,
-        type: typeMatch[1].toLowerCase(),
-        text: typeMatch[2].trim(),
-      })
+      const text = typeMatch[2].trim()
+      const quality = evaluateChangelogEntryQuality(text)
+      if (quality.ok) {
+        n += 1
+        proposals.push({
+          key: `${reportPath}#${n}`,
+          type: typeMatch[1].toLowerCase(),
+          text,
+        })
+      }
       continue
     }
 
     if (inSection) {
       const bullet = line.match(/^[-*•]\s+(.+)$/)
       if (bullet) {
-        n += 1
-        proposals.push({ key: `${reportPath}#${n}`, text: bullet[1].trim() })
+        const text = bullet[1].trim()
+        const quality = evaluateChangelogEntryQuality(text)
+        if (quality.ok) {
+          n += 1
+          proposals.push({ key: `${reportPath}#${n}`, text })
+        }
       }
     } else {
       const standaloneType = line.match(/^\*\*(feat|fix|perf|revert|docs|chore|ci|test|build|style|refactor|remove|deps|wip|merge)\*\*\s*:/i)

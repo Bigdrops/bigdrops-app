@@ -28,6 +28,7 @@ import {
   archiveEntries,
   loadChangelogAtSha,
   createReissueId,
+  evaluateChangelogEntryQuality,
   ID_PATTERN,
 } from './changelog.mjs'
 
@@ -103,6 +104,29 @@ export function validateReleaseNotes(notes, { ids = null } = {}) {
     if (!Array.isArray(ids)) return { ok: false, reason: 'consumed entry ids is not an array' }
     if (ids.length === 0) return { ok: false, reason: 'consumed entry ids is empty' }
   }
+
+  const rawLines = String(notes)
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+  const bulletLines = rawLines.filter((l) => /^\s*[-*•]\s+/.test(l))
+  const candidateLines = bulletLines.length > 0
+    ? bulletLines
+    : rawLines.filter((l) => !/^#+\s+/.test(l))
+
+  if (candidateLines.length === 0) {
+    return { ok: false, reason: 'release notes contain no entry content' }
+  }
+
+  for (const rawLine of candidateLines) {
+    const cleanLine = rawLine.replace(/^\s*[-*•]\s+/, '').trim()
+    const quality = evaluateChangelogEntryQuality(cleanLine)
+    if (!quality.ok) {
+      return { ok: false, reason: `release notes entry rejected: "${cleanLine}" (${quality.reason})` }
+    }
+  }
+
   return { ok: true, reason: null }
 }
 

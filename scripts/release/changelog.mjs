@@ -56,6 +56,83 @@ export function isLegacyPlaceholder(notes) {
 }
 
 // ---------------------------------------------------------------------------
+// Entry Quality Evaluation
+// ---------------------------------------------------------------------------
+
+/**
+ * Patterns that indicate internal engineering stages, phases, sprints, or steps
+ * (e.g., "stage 3d ...", "phase 2.2 ...", "sprint 12 ...", "step 3a ...").
+ */
+export const INTERNAL_STAGE_PATTERN =
+  /^(?:stage|phase|sprint|milestone|step)\s+\d+[a-z0-9._-]*\b/i
+
+/**
+ * Conventional commit prefixes that belong in git commit history, not user release notes.
+ * Catches scoped types like feat(scope):, fix(scope):, and all developer-only types like chore:, docs:, refactor:, ci:, test:, etc.
+ */
+export const CONVENTIONAL_COMMIT_PREFIX_PATTERN =
+  /^(?:(?:feat|fix|perf|revert)\s*\([^)]+\)\s*!?\s*:|feat\s*!?\s*:|(?:chore|docs|refactor|ci|test|build|style|deps|wip)(?:\([^)]*\))?\s*!?\s*:)/i
+
+/**
+ * Git commit SHAs (7 to 40 hex digits) appearing as standalone tokens or prefixes.
+ */
+export const COMMIT_SHA_PATTERN = /^[0-9a-f]{7,40}\b/i
+
+/**
+ * Source code or configuration file paths and names.
+ */
+export const CODE_OR_FILE_PATTERN =
+  /\b[a-zA-Z0-9_\-\/]+\.(?:tsx?|jsx?|mjs|cjs|java|kt|py|sql|gradle|ya?ml|json|css|scss|md)\b/i
+
+/**
+ * Internal engineering process and implementation jargon.
+ */
+export const INTERNAL_JARGON_PATTERN =
+  /\b(wip|prototype|remediation|blueprint|backfill|scaffolding|mockup|hotfix|stub)\b/i
+
+/**
+ * Evaluate whether a single changelog entry text meets user-facing quality standards.
+ * Fails closed on engineering task descriptions, stage names, raw commit prefixes,
+ * file names, internal jargon, or uninformative brevity.
+ */
+export function evaluateChangelogEntryQuality(text) {
+  if (typeof text !== 'string') {
+    return { ok: false, reason: 'entry text must be a string' }
+  }
+  const clean = text.replace(/^\s*[-*•]\s+/, '').trim()
+  if (!clean) {
+    return { ok: false, reason: 'entry text is empty' }
+  }
+  if (isLegacyPlaceholder(clean)) {
+    return { ok: false, reason: 'entry contains generic legacy placeholder' }
+  }
+  if (/^#+\s+/.test(clean)) {
+    return { ok: false, reason: 'entry contains markdown heading syntax' }
+  }
+  if (INTERNAL_STAGE_PATTERN.test(clean)) {
+    return { ok: false, reason: 'entry contains internal stage or phase marker' }
+  }
+  if (CONVENTIONAL_COMMIT_PREFIX_PATTERN.test(clean)) {
+    return { ok: false, reason: 'entry contains raw commit prefix' }
+  }
+  if (COMMIT_SHA_PATTERN.test(clean)) {
+    return { ok: false, reason: 'entry contains commit SHA' }
+  }
+  if (CODE_OR_FILE_PATTERN.test(clean)) {
+    return { ok: false, reason: 'entry contains source code file name or path' }
+  }
+  const jargonMatch = clean.match(INTERNAL_JARGON_PATTERN)
+  if (jargonMatch) {
+    return { ok: false, reason: `entry contains internal engineering jargon (${jargonMatch[1].toLowerCase()})` }
+  }
+  const words = clean.split(/\s+/).filter(Boolean)
+  if (words.length < 2 || clean.length < 5) {
+    return { ok: false, reason: 'entry is too short or lacks sufficient detail' }
+  }
+  return { ok: true, reason: null }
+}
+
+// ---------------------------------------------------------------------------
 // Identity
 // ---------------------------------------------------------------------------
 
@@ -353,6 +430,8 @@ export function curateProposals(proposals) {
     const type = typeof p.type === 'string' ? p.type.trim().toLowerCase() : null
     if (type && DEVELOPER_ONLY_TYPES.has(type)) return false
     if (type && !USER_FACING_TYPES.has(type) && !DEVELOPER_ONLY_TYPES.has(type)) return false
+    const quality = evaluateChangelogEntryQuality(p.text)
+    if (!quality.ok) return false
     return true
   })
 }
@@ -399,7 +478,22 @@ export function appendEntries(text, proposals, tombstonesText = '') {
   const added = []
   const refused = []
 
-  for (const proposal of curateProposals(proposals)) {
+  for (const proposal of proposals) {
+    if (!proposal || typeof proposal.text !== 'string' || proposal.text.trim().length === 0) {
+      continue
+    }
+    const type = typeof proposal.type === 'string' ? proposal.type.trim().toLowerCase() : null
+    if (type && DEVELOPER_ONLY_TYPES.has(type)) {
+      continue
+    }
+    if (type && !USER_FACING_TYPES.has(type) && !DEVELOPER_ONLY_TYPES.has(type)) {
+      continue
+    }
+    const quality = evaluateChangelogEntryQuality(proposal.text)
+    if (!quality.ok) {
+      refused.push({ text: proposal.text, reason: quality.reason })
+      continue
+    }
     let id
     try {
       id = proposal.id || (proposal.key ? idForKey(proposal.key) : newId())
