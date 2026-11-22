@@ -6,8 +6,10 @@
       "args": [
         "-y",
         "@playwright/mcp@0.0.75",
-        "--config",
-        "C:\\Users\\DELL\\.perch\\playwright-mcp-browser.json"
+        "--browser",
+        "msedge",
+        "--headless",
+        "--isolated"
       ]
     }
   }
