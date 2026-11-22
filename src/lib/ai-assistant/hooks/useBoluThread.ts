@@ -227,7 +227,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
   )
 
   const submitMessage = useCallback(
-    async (text: string): Promise<boolean> => {
+    async (text: string, optionsOverride?: { onAccepted?: () => void }): Promise<boolean> => {
       const clean = text.trim()
       if (!clean || isStreaming) return false
 
@@ -298,6 +298,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
         if (userError) throw new Error(userError.message)
         const userMsg = mapRowToMessage(userRow as RawMessageRow)
         setMessages((prev) => [...prev, userMsg])
+        optionsOverride?.onAccepted?.()
 
         // First message in thread: update title if currently generic
         if (messages.length === 0) {

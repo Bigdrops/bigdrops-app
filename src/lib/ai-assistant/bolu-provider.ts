@@ -20,39 +20,118 @@ export type BoluProviderConfig = {
   isConfigured: boolean
 }
 
-const MAX_MESSAGES = 24
-const MAX_MESSAGE_LENGTH = 4000
-const MAX_TOTAL_LENGTH = 12000
-const MAX_FACTS_LENGTH = 8000
+export const MAX_MESSAGES = 24
+export const MAX_MESSAGE_LENGTH = 32000
+export const MAX_TOTAL_LENGTH = 64000
+export const MAX_FACTS_LENGTH = 32000
 
-export function validateBoluProviderRequest(input: BoluProviderRequest): {
-  ok: boolean
-  messages: BoluProviderMessage[]
-  contextFacts: string
-} {
-  if (!input.userId || !Array.isArray(input.messages) || input.messages.length === 0 || input.messages.length > MAX_MESSAGES) {
-    return { ok: false, messages: [], contextFacts: '' }
+export type BoluValidationErrorReason =
+  | 'invalid_user'
+  | 'invalid_messages_shape'
+  | 'message_count_exceeded'
+  | 'message_empty'
+  | 'message_invalid_role'
+  | 'message_too_long'
+  | 'aggregate_too_long'
+  | 'context_facts_too_long'
+
+export type BoluValidationResult =
+  | {
+      ok: true
+      messages: BoluProviderMessage[]
+      contextFacts: string
+    }
+  | {
+      ok: false
+      messages: []
+      contextFacts: ''
+      error: string
+      code: BoluValidationErrorReason
+    }
+
+export function validateBoluProviderRequest(input: BoluProviderRequest): BoluValidationResult {
+  if (!input.userId) {
+    return {
+      ok: false,
+      messages: [],
+      contextFacts: '',
+      error: 'Authentication required. User ID is missing.',
+      code: 'invalid_user',
+    }
+  }
+  if (!Array.isArray(input.messages) || input.messages.length === 0) {
+    return {
+      ok: false,
+      messages: [],
+      contextFacts: '',
+      error: 'Messages payload must be a non-empty array.',
+      code: 'invalid_messages_shape',
+    }
+  }
+  if (input.messages.length > MAX_MESSAGES) {
+    return {
+      ok: false,
+      messages: [],
+      contextFacts: '',
+      error: `Message count exceeds the limit of ${MAX_MESSAGES} messages.`,
+      code: 'message_count_exceeded',
+    }
   }
 
   const messages: BoluProviderMessage[] = []
   let totalLength = 0
-  for (const message of input.messages) {
-    if (
-      !message ||
-      (message.role !== 'user' && message.role !== 'assistant') ||
-      typeof message.content !== 'string' ||
-      !message.content.trim() ||
-      message.content.length > MAX_MESSAGE_LENGTH
-    ) {
-      return { ok: false, messages: [], contextFacts: '' }
+  for (let i = 0; i < input.messages.length; i++) {
+    const message = input.messages[i]
+    if (!message || typeof message.content !== 'string' || !message.content.trim()) {
+      return {
+        ok: false,
+        messages: [],
+        contextFacts: '',
+        error: `Message ${i + 1} content cannot be empty.`,
+        code: 'message_empty',
+      }
+    }
+    if (message.role !== 'user' && message.role !== 'assistant') {
+      return {
+        ok: false,
+        messages: [],
+        contextFacts: '',
+        error: `Message ${i + 1} role is invalid. Role must be user or assistant.`,
+        code: 'message_invalid_role',
+      }
+    }
+    if (message.content.length > MAX_MESSAGE_LENGTH) {
+      return {
+        ok: false,
+        messages: [],
+        contextFacts: '',
+        error: `Message ${i + 1} exceeds the limit of ${MAX_MESSAGE_LENGTH.toLocaleString('en-US')} characters.`,
+        code: 'message_too_long',
+      }
     }
     totalLength += message.content.length
-    if (totalLength > MAX_TOTAL_LENGTH) return { ok: false, messages: [], contextFacts: '' }
+    if (totalLength > MAX_TOTAL_LENGTH) {
+      return {
+        ok: false,
+        messages: [],
+        contextFacts: '',
+        error: `Conversation history exceeds the aggregate limit of ${MAX_TOTAL_LENGTH.toLocaleString('en-US')} characters.`,
+        code: 'aggregate_too_long',
+      }
+    }
     messages.push({ role: message.role, content: message.content.trim() })
   }
 
   const contextFacts = input.contextFacts?.trim() ?? ''
-  if (contextFacts.length > MAX_FACTS_LENGTH) return { ok: false, messages: [], contextFacts: '' }
+  if (contextFacts.length > MAX_FACTS_LENGTH) {
+    return {
+      ok: false,
+      messages: [],
+      contextFacts: '',
+      error: `Context facts exceed the limit of ${MAX_FACTS_LENGTH.toLocaleString('en-US')} characters.`,
+      code: 'context_facts_too_long',
+    }
+  }
   return { ok: true, messages, contextFacts }
 }
 

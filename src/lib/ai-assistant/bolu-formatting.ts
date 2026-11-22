@@ -34,11 +34,36 @@ export function factsAsPrompt(facts: Awaited<ReturnType<typeof readBoluContextFa
     .join('\n\n')
 }
 
-export function buildProviderMessages(transcript: BoluMessage[]) {
-  return transcript
-    .filter((item) => item.role === 'user' || item.role === 'assistant')
-    .slice(-12)
-    .map(({ role, content }) => ({ role, content }))
+/**
+ * Assembles bounded provider messages from the conversation transcript.
+ * Deterministically preserves the latest turn in full, then includes prior
+ * turns backwards until the aggregate character budget or 12-turn window is reached.
+ */
+export function buildProviderMessages(
+  transcript: BoluMessage[],
+  maxAggregateChars = 64000,
+): { role: 'user' | 'assistant'; content: string }[] {
+  const filtered = transcript.filter((item) => item.role === 'user' || item.role === 'assistant')
+  if (filtered.length === 0) return []
+
+  const latestTurn = filtered[filtered.length - 1]
+  const result: { role: 'user' | 'assistant'; content: string }[] = [
+    { role: latestTurn.role, content: latestTurn.content },
+  ]
+  let currentTotal = latestTurn.content.length
+
+  const priorTurns = filtered.slice(0, -1).slice(-11)
+  for (let i = priorTurns.length - 1; i >= 0; i--) {
+    const turn = priorTurns[i]
+    if (currentTotal + turn.content.length <= maxAggregateChars) {
+      result.unshift({ role: turn.role, content: turn.content })
+      currentTotal += turn.content.length
+    } else {
+      break
+    }
+  }
+
+  return result
 }
 
 export function formatFactAnswer(facts: Awaited<ReturnType<typeof readBoluContextFacts>>, userText: string): string {

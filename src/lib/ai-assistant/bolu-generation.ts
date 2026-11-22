@@ -218,14 +218,50 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
   const controller = new AbortController()
   refs.abortController.current = controller
 
-  /** A regenerated row already exists, so an interrupted turn must persist. */
-  const persistReplacedStatus = async (content: string, status: 'completed' | 'stopped' | 'failed') => {
-    if (!replaceAssistantId) return
-    const { error: updateError } = await (supabase.from('bolu_messages') as any)
-      .update({ content, status, updated_at: new Date().toISOString() })
-      .eq('id', replaceAssistantId)
-    if (updateError) {
-      console.warn('[useBoluThread] Could not persist regenerated message:', updateError.message)
+  /** Persists interrupted or failed assistant status to PostgreSQL so it survives refresh and is retryable. */
+  const persistAssistantTurnStatus = async (
+    content: string,
+    status: 'completed' | 'stopped' | 'failed',
+    errorReason?: string,
+  ) => {
+    if (replaceAssistantId) {
+      try {
+        const { error: updateError } = await (supabase.from('bolu_messages') as any)
+          .update({
+            content,
+            status,
+            metadata: errorReason ? { error: errorReason } : {},
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', replaceAssistantId)
+        if (updateError) {
+          console.warn('[useBoluThread] Could not persist regenerated message status:', updateError.message)
+        }
+      } catch (err) {
+        console.warn('[useBoluThread] Replaced message update failed:', err)
+      }
+    } else {
+      try {
+        const { data: savedRow, error: insertError } = await (supabase.from('bolu_messages') as any)
+          .insert({
+            conversation_id: targetConversationId,
+            tenant_id: tenantId,
+            role: 'assistant',
+            content,
+            status,
+            metadata: errorReason ? { error: errorReason } : {},
+          })
+          .select(MESSAGE_COLUMNS)
+          .single()
+        if (!insertError && savedRow?.id) {
+          const persistedMsg = mapRowToMessage(savedRow as RawMessageRow)
+          state.setMessages((prev) =>
+            prev.map((m) => (m.id === tempAssistantId ? persistedMsg : m)),
+          )
+        }
+      } catch (insertErr) {
+        console.warn('[useBoluThread] Failed/stopped message row insertion skipped:', insertErr)
+      }
     }
   }
 
@@ -277,7 +313,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     const parsedProposal = interpretation.proposal
     const mergedFromMessageId = interpretation.mergedFromMessageId
 
-    let finalMsg: ProductionBoluMessage
+    let finalMsg: ProductionBoluMessage | null = null
 
     if (replaceAssistantId) {
       const { data: savedRow, error: saveError } = await (supabase.from('bolu_messages') as any)
@@ -290,11 +326,14 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
         })
         .eq('id', replaceAssistantId)
         .select(MESSAGE_COLUMNS)
-        .single()
+        .maybeSingle()
 
-      if (saveError) throw new Error(saveError.message)
-      finalMsg = mapRowToMessage(savedRow as RawMessageRow)
-    } else {
+      if (!saveError && savedRow) {
+        finalMsg = mapRowToMessage(savedRow as RawMessageRow)
+      }
+    }
+
+    if (!finalMsg) {
       const { data: savedRow, error: saveError } = await (supabase.from('bolu_messages') as any)
         .insert({
           conversation_id: targetConversationId, tenant_id: tenantId,
@@ -350,7 +389,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
 
     if (err instanceof Error && err.name === 'AbortError') {
       const partial = refs.streamingBuffer.current
-      await persistReplacedStatus(partial, 'stopped')
+      await persistAssistantTurnStatus(partial, 'stopped')
       state.setMessages((prev) =>
         prev.map((m) => (m.id === tempAssistantId ? { ...m, content: partial, status: 'stopped' } : m)),
       )
@@ -367,7 +406,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
       ? `${partial}\n\n[Generation interrupted: ${errorMsg}]`
       : `Bolu could not complete this request: ${errorMsg}`
 
-    await persistReplacedStatus(finalContent, 'failed')
+    await persistAssistantTurnStatus(finalContent, 'failed', errorMsg)
     state.setMessages((prev) =>
       prev.map((m) => (m.id === tempAssistantId ? { ...m, content: finalContent, status: 'failed' } : m)),
     )

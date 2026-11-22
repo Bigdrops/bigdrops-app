@@ -11,13 +11,19 @@ import {
 test('provider request requires authenticated user and bounded messages', () => {
   assert.equal(validateBoluProviderRequest({ userId: '', messages: [] }).ok, false)
   assert.equal(validateBoluProviderRequest({ userId: 'user-1', messages: [] }).ok, false)
-  assert.equal(
-    validateBoluProviderRequest({
-      userId: 'user-1',
-      messages: [{ role: 'user', content: 'x'.repeat(5000) }],
-    }).ok,
-    false,
-  )
+  const overLimit = validateBoluProviderRequest({
+    userId: 'user-1',
+    messages: [{ role: 'user', content: 'x'.repeat(33000) }],
+  })
+  assert.equal(overLimit.ok, false)
+  assert.equal(overLimit.code, 'message_too_long')
+
+  // A 5,000-character procurement specification passes validation
+  const specPass = validateBoluProviderRequest({
+    userId: 'user-1',
+    messages: [{ role: 'user', content: 'x'.repeat(5000) }],
+  })
+  assert.equal(specPass.ok, true)
 })
 
 test('provider request allows only bounded user and assistant messages', () => {

@@ -414,10 +414,10 @@ export function BoluChatWorkspace({
       }
       return
     }
-    const success = await submitMessage(clean)
-    if (success) {
-      setInputDraft('')
-    } else if (error) {
+    const success = await submitMessage(clean, {
+      onAccepted: () => setInputDraft(''),
+    })
+    if (!success && error) {
       feedback.error('Message send failed', { description: error })
     }
   }

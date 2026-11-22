@@ -62,6 +62,18 @@ const LIST_MARKER = /^\s*(?:\d{1,3}[.)]|[-•*·])\s+/
 const WHATSAPP_STAMP = /^\s*\[?\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?,?\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:[APap][Mm])?\]?\s*(?:-\s*)?(?:[^:]{1,40}:)?\s*/
 
 /**
+ * Matches citation and search span artifacts emitted by LLM search grounding or external pastes
+ * (e.g. `[span_0](start_span)`, `[span_1](end_span)`, `[span0](start_span)`).
+ * Preserves legitimate Markdown links `[Label](url)` and technical bracket notation `[PN16]`.
+ */
+export const CITATION_SPAN_ARTIFACT = /\[span_?\w+\]\((?:start_span|end_span)\)/gi
+
+export function stripCitationSpanArtifacts(text: string): string {
+  if (!text) return ''
+  return text.replace(CITATION_SPAN_ARTIFACT, '').replace(/[ \t]{2,}/g, ' ')
+}
+
+/**
  * Parses a supplied amount.
  *
  * Accepts `32000`, `32,000`, `₦32,000`, `32,000.50`, `15k`, `15 K`, `2.5m`.
@@ -87,7 +99,7 @@ export function parseCommercialAmount(raw: string | null | undefined): number | 
  * the user did not write are never appended here.
  */
 export function standardizeDescription(raw: string): string {
-  const cleaned = String(raw ?? '')
+  const cleaned = stripCitationSpanArtifacts(String(raw ?? ''))
     .replace(/\s+/g, ' ')
     .replace(/\bmm\s*(?:2|\^2)\b/gi, 'mm²')
     .replace(/\bmm2\b/gi, 'mm²')
@@ -115,6 +127,7 @@ export function isCableShorthand(raw: string): boolean {
 function parseLine(rawLine: string): CommercialListEntry | null {
   let line = rawLine.replace(/\r/g, '').trim()
   if (!line) return null
+  line = stripCitationSpanArtifacts(line).trim()
   line = line.replace(WHATSAPP_STAMP, '').trim()
   line = line.replace(LIST_MARKER, '').trim()
   if (!line || /^(?:invoice|quotation|write|make|create|draft)\b/i.test(line)) return null

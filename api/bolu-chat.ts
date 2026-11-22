@@ -397,7 +397,10 @@ export async function POST(request: Request): Promise<Response> {
     messages: Array.isArray(payload.messages) ? (payload.messages as BoluProviderMessage[]) : [],
     contextFacts: typeof payload.contextFacts === 'string' ? payload.contextFacts : '',
   })
-  if (!validation.ok) return jsonError('The message is invalid or too long.', 400)
+  if (!validation.ok) {
+    const failure = validation as { ok: false; error: string; code: string }
+    return jsonError(failure.error, 400, failure.code)
+  }
 
   // System prompt respects approved BOUXRE product direction:
   // - Application owns tenant scope, permissions, validation, calculations, numbering, persistence

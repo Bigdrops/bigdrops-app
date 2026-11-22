@@ -64,7 +64,7 @@ export interface UseBoluThreadReturn {
   activeProposal: BoluProposal | null
   activeProposalMessageId: string | null
   error: string | null
-  submitMessage: (text: string) => Promise<boolean>
+  submitMessage: (text: string, options?: { onAccepted?: () => void }) => Promise<boolean>
   /** Resubmits the latest user turn against an alternative connection/model without duplicate messages. */
   resubmitPendingTurn: (overrideConnectionId?: string | null, overrideModelId?: string | null) => Promise<boolean>
   /** Replaces one user message in place and regenerates the answer from it. */
