@@ -80,8 +80,8 @@ export function BoluInteractionPreferencesCard() {
           title="Haptic feedback"
           description={
             hapticsSupported
-              ? 'One short pulse when Bolu starts replying.'
-              : 'This browser cannot vibrate. The setting is saved for the Android app.'
+              ? 'One short buzz when Bolu starts replying.'
+              : 'Haptics are not available on this device. The setting is saved for the Android app.'
           }
           checked={preferences.hapticsEnabled}
           onCheckedChange={(checked) => update({ hapticsEnabled: checked })}
@@ -90,7 +90,7 @@ export function BoluInteractionPreferencesCard() {
         <PreferenceRow
           id="bolu-completion-haptics-enabled"
           title="Completion pulse"
-          description="A brief double tap when a response finishes. Requires haptic feedback."
+          description="A brief, subtle tap when a response finishes. Requires haptic feedback."
           checked={preferences.completionHapticsEnabled}
           onCheckedChange={(checked) => update({ completionHapticsEnabled: checked })}
           disabled={!preferences.hapticsEnabled}

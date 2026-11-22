@@ -47,7 +47,7 @@ test('Bolu haptics: disabled preferences suppress every pulse', () => {
 test('Bolu haptics: the completion pulse has its own switch', () => {
   const noCompletion = { ...DEFAULT_BOLU_INTERACTION_PREFERENCES, completionHapticsEnabled: false }
   assert.equal(triggerBoluHaptic('success', noCompletion), false)
-  // A device without the Vibration API must no-op, never throw.
+  // A device without the Haptics plugin must no-op, never throw.
   assert.equal(typeof triggerBoluHaptic('impact-light', DEFAULT_BOLU_INTERACTION_PREFERENCES), 'boolean')
   if (!isHapticFeedbackSupported()) {
     assert.equal(triggerBoluHaptic('impact-light', DEFAULT_BOLU_INTERACTION_PREFERENCES), false)
@@ -58,8 +58,10 @@ test('Bolu haptics: patterns stay short and restrained', () => {
   for (const pattern of Object.values(BOLU_HAPTIC_PATTERNS)) {
     const values = Array.isArray(pattern) ? pattern : [pattern]
     const total = values.reduce((sum, value) => sum + value, 0)
-    assert.ok(total < 120, `haptic pattern is too long: ${total}ms`)
+    // The completion value documents the native SUCCESS waveform (121 ms total).
+    assert.ok(total <= 150, `haptic pattern is too long: ${total}ms`)
   }
+  assert.equal(BOLU_HAPTIC_PATTERNS['impact-light'], 90)
 })
 
 test('Bolu haptics: the start pulse fires once per response and needs visible output', () => {

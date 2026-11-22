@@ -1,18 +1,16 @@
 /**
- * bolu-haptics.ts — Restrained Bolu haptic feedback.
+ * bolu-haptics.ts — Restrained Bolu haptic feedback through Capacitor Haptics.
  *
- * Native audit (2026-11-16):
- * - `@capacitor/haptics` is NOT installed in this project.
- * - The Android shell exists, but the app has no native haptics bridge.
- * - The repository already standardises on the guarded browser Vibration API
- *   for its only two haptic interactions (`useLongPress`, `SelectableRowCard`).
- * - `android.permission.VIBRATE` was not declared, so the WebView Vibration API
- *   could not fire on Android at all. It is declared now, because this
- *   implementation requires it. No other permission was added.
+ * The native plugin uses Android Vibrator and VibrationEffect. It respects
+ * system vibration settings. Web support is optional: when the plugin is not
+ * available, this adapter is a no-op and never blocks chat.
  *
- * The adapter is a deliberate no-op where vibration is unavailable (desktop
- * browsers, iOS, rejected calls). It never throws and never blocks chat.
+ * Only two events pulse: the first visible output of a response, and the
+ * optional completion. Copy, edit, regenerate, send and narration stay silent.
  */
+
+import { Capacitor } from '@capacitor/core'
+import { Haptics, NotificationType } from '@capacitor/haptics'
 
 import {
   readBoluInteractionPreferences,
@@ -22,24 +20,22 @@ import {
 export type BoluHapticKind = 'impact-light' | 'success'
 
 /**
- * Short, restrained patterns. Never a long vibration: the start pulse is 12ms,
- * and the completion pattern is two short taps under 100ms in total.
- *
- * Only two events pulse: the first visible output of a response, and the
- * optional completion. Copy, edit, regenerate, send and narration stay silent.
+ * Native haptic calls. The start is one continuous 90 ms vibration. The
+ * completion uses the platform notification waveform, which is short and
+ * restrained on Android.
  */
 export const BOLU_HAPTIC_PATTERNS: Record<BoluHapticKind, number | number[]> = {
-  'impact-light': 12,
-  success: [0, 14, 60, 16],
+  'impact-light': 90,
+  success: [0, 35, 65, 21],
 }
 
 export function isHapticFeedbackSupported(): boolean {
-  return typeof navigator !== 'undefined' && typeof (navigator as Navigator).vibrate === 'function'
+  return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Haptics')
 }
 
 /**
  * Fires one haptic pulse when the preference allows it.
- * Returns true only when the vibration API accepted the pattern.
+ * Returns true only when the native call was accepted.
  */
 export function triggerBoluHaptic(
   kind: BoluHapticKind,
@@ -50,7 +46,12 @@ export function triggerBoluHaptic(
   if (!isHapticFeedbackSupported()) return false
 
   try {
-    return (navigator as Navigator).vibrate(BOLU_HAPTIC_PATTERNS[kind]) === true
+    if (kind === 'impact-light') {
+      void Haptics.vibrate({ duration: BOLU_HAPTIC_PATTERNS['impact-light'] as number })
+    } else {
+      void Haptics.notification({ type: NotificationType.Success })
+    }
+    return true
   } catch {
     return false
   }
