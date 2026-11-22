@@ -115,6 +115,47 @@
   background: var(--ac-accent-soft);
 }
 
+.ac-suggestions-tray {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+.ac-suggestions-tray::-webkit-scrollbar {
+  display: none;
+}
+
+.ac-suggest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--ac-line);
+  background: var(--ac-muted-surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ac-ink);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 280px;
+}
+.ac-suggest-chip:hover:not(:disabled) {
+  border-color: var(--ac-accent);
+  background: var(--ac-accent-soft);
+}
+.ac-suggest-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 .ac-row--user {
   display: flex;
   justify-content: flex-end;
@@ -540,14 +581,22 @@
   flex-direction: column;
   text-align: left;
   line-height: 1.1;
+  min-width: 0;
+  overflow: hidden;
 }
 .ac-model-provider {
   font-weight: 700;
   font-size: 0.6875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ac-model-name {
   font-size: 0.625rem;
   color: var(--ac-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ac-menu {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { PanelRight, Settings2, X, History, MoreVertical, Download, SlidersHorizontal, Sparkles, Smartphone, BookOpen, Tablet, Monitor } from 'lucide-react'
+import { PanelRight, Settings2, X, History, MoreVertical, Download, Copy, SlidersHorizontal, Sparkles, Smartphone, BookOpen, Tablet, Monitor } from 'lucide-react'
 import type { ViewportId } from './types'
 
 export function AssistantHeader({
@@ -9,6 +9,7 @@ export function AssistantHeader({
   onOpenContext,
   onOpenRail,
   onClose,
+  onCopyConversation,
   onExportMarkdown,
   onExportJson,
   contextOpen,
@@ -22,6 +23,7 @@ export function AssistantHeader({
   onOpenContext: () => void
   onOpenRail?: () => void
   onClose?: () => void
+  onCopyConversation?: () => void
   onExportMarkdown?: () => void
   onExportJson?: () => void
   contextOpen: boolean
@@ -96,13 +98,13 @@ export function AssistantHeader({
           </button>
         ) : null}
 
-        {(onExportMarkdown || onExportJson) ? (
+        {(onCopyConversation || onExportMarkdown || onExportJson) ? (
           <div className="relative" ref={menuRef}>
             <button
               type="button"
               className="p-2 rounded-lg text-[var(--ac-muted)] hover:text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
-              aria-label="Chat export actions"
-              title="Export conversation"
+              aria-label="Conversation actions"
+              title="Conversation options"
               aria-expanded={menuOpen}
               aria-haspopup="true"
               onClick={() => setMenuOpen((prev) => !prev)}
@@ -114,6 +116,20 @@ export function AssistantHeader({
                 className="absolute right-0 top-full mt-1.5 w-48 rounded-xl border border-[var(--ac-line)] bg-[var(--ac-surface)] py-1 shadow-lg z-50 text-xs"
                 role="menu"
               >
+                {onCopyConversation ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onCopyConversation()
+                    }}
+                  >
+                    <Copy className="size-3.5 text-[var(--ac-muted)]" />
+                    <span>Copy conversation</span>
+                  </button>
+                ) : null}
                 {onExportMarkdown ? (
                   <button
                     type="button"
@@ -201,9 +217,23 @@ export function AssistantHeader({
               className="absolute right-0 top-full mt-1.5 w-52 rounded-xl border border-[var(--ac-line)] bg-[var(--ac-surface)] py-1 shadow-2xl z-50 text-xs divide-y divide-[var(--ac-line)]"
               role="menu"
             >
-              {/* Exports */}
-              {(onExportMarkdown || onExportJson) ? (
+              {/* Conversation Actions */}
+              {(onCopyConversation || onExportMarkdown || onExportJson) ? (
                 <div className="py-1">
+                  {onCopyConversation ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--ac-ink)] hover:bg-[var(--ac-muted-surface)] transition"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onCopyConversation()
+                      }}
+                    >
+                      <Copy className="size-3.5 text-[var(--ac-muted)]" />
+                      <span>Copy conversation</span>
+                    </button>
+                  ) : null}
                   {onExportMarkdown ? (
                     <button
                       type="button"

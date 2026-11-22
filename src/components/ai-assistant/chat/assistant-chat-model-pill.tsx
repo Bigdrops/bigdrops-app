@@ -45,6 +45,103 @@ interface ConnectionGroup {
 }
 
 /**
+ * Normalizes a model identifier for compact, readable display in the header pill.
+ * Removes redundant URL/namespace prefixes (e.g. `models/` from Google API, or `google/`/`anthropic/`
+ * when already identified by provider context), while strictly preserving distinct model identities
+ * (e.g. `gemini-2.5-flash` vs `gemini-2.5-pro`) and never altering the underlying technical identifier.
+ */
+export function normalizeModelDisplayName(modelId: string, modelLabel?: string, providerName?: string): string {
+  if (!modelId) return ''
+  const trimmedId = modelId.trim()
+  const trimmedLabel = modelLabel?.trim()
+
+  // If a distinct curated human-friendly label exists (e.g. "DeepSeek Chat", "Llama 3.3 70B Instruct"), use it
+  if (trimmedLabel && trimmedLabel !== trimmedId && !trimmedLabel.includes('/')) {
+    return trimmedLabel
+  }
+
+  let result = trimmedLabel || trimmedId
+
+  // Strip Google API path prefix `models/` (e.g. `models/gemini-2.5-flash` -> `gemini-2.5-flash`)
+  if (result.startsWith('models/')) {
+    result = result.slice(7)
+  }
+
+  // Strip redundant vendor namespace prefix when provider is known or clearly redundant
+  // e.g. "google/gemini-2.5-flash" -> "gemini-2.5-flash"
+  // e.g. "anthropic/claude-3-5-sonnet" -> "claude-3-5-sonnet"
+  // e.g. "deepseek/deepseek-chat" -> "deepseek-chat"
+  const prefixMatch = result.match(/^([a-z0-9_-]+)\/(.+)$/i)
+  if (prefixMatch) {
+    const [, namespace, modelPart] = prefixMatch
+    const provLower = (providerName || '').toLowerCase()
+    const nsLower = namespace.toLowerCase()
+
+    if (
+      provLower.includes(nsLower) ||
+      nsLower === 'google' ||
+      nsLower === 'anthropic' ||
+      nsLower === 'openai' ||
+      nsLower === 'deepseek' ||
+      nsLower === 'meta-llama'
+    ) {
+      result = modelPart
+    }
+  }
+
+  return result
+}
+
+export interface ModelPillDisplayState {
+  providerLabel: string
+  modelLabel: string
+  title: string
+}
+
+/**
+ * Derives display labels for the ModelPill trigger.
+ * In Auto mode:
+ * - Shows "Auto" and "Automatic routing" when activeResolvedModel is unknown.
+ * - Shows "Auto" and normalized model label only when activeResolvedModel is known.
+ * - Never infers the resolved model from primary configured connection.
+ */
+export function resolveModelPillDisplay(params: {
+  isAuto: boolean
+  activeResolvedModel?: string | null
+  selectedModel?: SelectedModelTarget | null
+  activeProvider?: ActiveModelInfo | null
+}): ModelPillDisplayState {
+  const { isAuto, activeResolvedModel, selectedModel, activeProvider } = params
+
+  if (isAuto) {
+    const providerLabel = 'Auto'
+    if (activeResolvedModel && activeResolvedModel.trim()) {
+      const modelLabel = normalizeModelDisplayName(activeResolvedModel.trim(), undefined, providerLabel)
+      return {
+        providerLabel,
+        modelLabel,
+        title: `Auto · ${modelLabel}`,
+      }
+    }
+    return {
+      providerLabel,
+      modelLabel: 'Automatic routing',
+      title: 'Auto · Automatic routing',
+    }
+  }
+
+  const providerLabel = selectedModel?.connectionName || activeProvider?.label || 'Custom'
+  const rawModelName = selectedModel?.modelName || activeProvider?.model || 'Selected Model'
+  const modelLabel = normalizeModelDisplayName(rawModelName, selectedModel?.modelName, providerLabel)
+
+  return {
+    providerLabel,
+    modelLabel,
+    title: rawModelName,
+  }
+}
+
+/**
  * OpenCode-style Grouped Model Picker
  * Matches Image 6: Gold group headers, search bar, + and tune action buttons, Free badges, and direct selection.
  */
@@ -242,13 +339,12 @@ export function ModelPill({
     selectedModel?.connectionId || activeProvider?.isConfigured || connections.some((c) => c.isEnabled),
   )
 
-  const displayConnection = isAuto
-    ? 'Auto'
-    : (selectedModel?.connectionName || activeProvider?.label || 'Custom')
-
-  const displayModel = isAuto
-    ? (activeResolvedModel || activeProvider?.model || 'Best in Pool')
-    : (selectedModel?.modelName || activeProvider?.model || 'Selected Model')
+  const { providerLabel, modelLabel, title: pillTitle } = resolveModelPillDisplay({
+    isAuto,
+    activeResolvedModel,
+    selectedModel,
+    activeProvider,
+  })
 
   const handleSelect = (conn: ConnectionGroup, model: GroupedModelOption) => {
     onSelectModel?.({
@@ -262,10 +358,10 @@ export function ModelPill({
 
   return (
     <div className="ac-model relative" ref={rootRef}>
-      {/* Pill Trigger */}
+      {/* Pill Trigger: Adaptive width up to 190px on narrow mobile, 220px on fold, 280px on desktop */}
       <button
         type="button"
-        className="ac-model-trigger max-w-[130px] xs:max-w-[170px] sm:max-w-[240px] min-w-0 shrink"
+        className="ac-model-trigger max-w-[190px] xs:max-w-[220px] sm:max-w-[280px] min-w-0 shrink"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => {
@@ -274,12 +370,12 @@ export function ModelPill({
         }}
       >
         <span className="ac-model-dot shrink-0" data-ready={isConfigured} aria-hidden="true" />
-        <span className="ac-model-text min-w-0 overflow-hidden">
-          <span className="ac-model-provider truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[150px] font-semibold">
-            {displayConnection}
+        <span className="ac-model-text min-w-0 w-full overflow-hidden">
+          <span className="ac-model-provider truncate w-full font-semibold">
+            {providerLabel}
           </span>
-          <span className="ac-model-name truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[150px] text-[10px] opacity-80">
-            {displayModel}
+          <span className="ac-model-name truncate w-full text-[10px] opacity-80" title={pillTitle}>
+            {modelLabel}
           </span>
         </span>
         <ChevronDown className="size-3.5 shrink-0 text-[var(--ac-muted)]" aria-hidden="true" />
@@ -456,7 +552,7 @@ export function ModelPill({
           {/* Footer Action Bar */}
           <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
             <span className="truncate text-[10px] pr-2">
-              {isAuto ? 'Auto Mode' : (selectedModel?.connectionName ?? 'Manual')} · {displayModel}
+              {isAuto ? 'Auto Mode' : (selectedModel?.connectionName ?? 'Manual')} · {modelLabel}
             </span>
             <button
               type="button"
