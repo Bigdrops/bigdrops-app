@@ -14,6 +14,24 @@
 <!-- id: rel_687a11ba -->
 - Bolu preferences: convenient one-tap buttons to adjust voice reading speed on any screen
 
+<!-- id: rel_c0c2f9e2 -->
+- Bolu AI: copy a whole conversation as clean text, with an automatic Markdown file export when it is too large for the clipboard
+
+<!-- id: rel_8e663799 -->
+- Bolu AI: model names are shown without vendor prefixes and are no longer cut off in the header, and the active model is shown only once it is known
+
+<!-- id: rel_0099eed7 -->
+- Bolu AI: each reply shows when it finished and how long it took, and a stopped or interrupted reply is clearly labeled, keeps its partial answer and can be retried in place
+
+<!-- id: rel_15c2dd96 -->
+- Bolu AI: ordinary questions are answered as questions instead of being treated as invoice or quotation work, and a failed business lookup now returns a short plain-language explanation
+
+<!-- id: rel_e0b34506 -->
+- Bolu AI: empty conversations offer rotating starter questions, and active conversations offer relevant follow-up suggestions
+
+<!-- id: rel_ebf00148 -->
+- Bolu AI: when it suggests clearer wording for an invoice or quotation line, it shows the original wording, the suggested wording and the reason, and changes the line only if you accept that suggestion
+
 <!-- archive-boundary -->
 
 ## [1.0.31] - 2026-11-20

@@ -57,6 +57,7 @@ For completed tasks with reports under `docs/reports/`:
    - Curate to user-facing entries only: include `feat`, `fix`, `perf`, `revert`.
    - Exclude internal-only refactors, read-only audits, tests, and chores (`docs`, `chore`, `ci`, `test`, `build`, `style`, `refactor`, `remove`, `deps`, `wip`, `merge`).
    - If a report contains no user-facing changes, do not generate proposals.
+   - **Report requirement:** every completed implementation report must end with a `## Changelog entries` section. List each eligible user-visible outcome as `- **feat**: ...` or `- **fix**: ...`, or state explicitly that no user-facing announcement is warranted. Documentation, internal refactors, tests and chores are not shipped features. Proposals remain subject to curation and quality checks; adding the section does not authorize publication.
 
 2. **Sync Deleted Unshipped Entries (Tombstones):**
    - Run `node scripts/release/changelog.mjs sync`.

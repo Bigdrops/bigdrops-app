@@ -219,3 +219,11 @@ Result: **Exit Code 0 (0 errors, Passed)**
 | `src/components/ai-assistant/chat/BoluChatWorkspace.tsx` | Wired `handleCopyConversation` with clipboard write and automatic Markdown export fallback. |
 | `src/components/ai-assistant/chat/assistant-chat-thread.tsx` | Implemented `formatResponseTiming()`; added amber stopped badge and interrupted prose with in-place retry. |
 | `src/tests/ai-assistant/bolu-wave2-android-ux.test.ts` | Authoritative test suite covering all Wave 2 additions (18 unit tests). |
+
+---
+
+## Changelog entries
+
+- **feat**: Bolu AI: copy a whole conversation as clean text, with an automatic Markdown file export when it is too large for the clipboard
+- **feat**: Bolu AI: model names are shown without vendor prefixes and are no longer cut off in the header, and the active model is shown only once it is known
+- **feat**: Bolu AI: each reply shows when it finished and how long it took, and a stopped or interrupted reply is clearly labeled, keeps its partial answer and can be retried in place

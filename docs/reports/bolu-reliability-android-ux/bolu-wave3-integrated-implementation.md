@@ -419,3 +419,10 @@ All pre-existing untracked and modified work was strictly preserved without stas
 **Completed**
 
 All authorized Wave 2 corrections (SSE termination ordering, pure stream parsing, Auto model label resolution) and approved Wave 3 requirements (intent-gated system prompt, product knowledge, commercial evidence filtering, structured fact failures, facts sanitization) have been fully implemented, integrated, and verified with 152 passing tests, a clean performance audit, and zero TypeScript compilation errors.
+
+---
+
+## Changelog entries
+
+- **fix**: Bolu AI: ordinary questions are answered as questions instead of being treated as invoice or quotation work, and a failed business lookup now returns a short plain-language explanation
+- **feat**: Bolu AI: empty conversations offer rotating starter questions, and active conversations offer relevant follow-up suggestions
