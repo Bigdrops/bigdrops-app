@@ -137,7 +137,7 @@ test('Contextual Follow-ups: active streaming suppresses suggestion generation t
   assert.deepEqual(followUps, [], 'Must return empty array during active streaming')
 })
 
-test('Example A — Unfamiliar RFQ: generates relevant material and market clarification follow-ups', () => {
+test('Example A — Unfamiliar RFQ: generates relevant material and market clarification follow-ups without visual claims', () => {
   const messages = [
     createMessage(
       'user',
@@ -152,13 +152,16 @@ test('Example A — Unfamiliar RFQ: generates relevant material and market clari
   const followUps = generateContextualFollowUps({ messages })
   assert.ok(followUps.length >= 2 && followUps.length <= 4)
 
-  assert.ok(followUps.includes('Show me what this material might look like.'))
+  assert.ok(followUps.includes('Describe its physical appearance and distinguishing features.'))
   assert.ok(followUps.includes('Find its common market names in Nigeria.'))
   assert.ok(followUps.includes('What questions should I ask to confirm the specification?'))
   assert.ok(followUps.includes('How is this material normally sold and priced?'))
+
+  // Commercial safety: zero image hallucinations
+  assert.ok(!followUps.some((s) => s.toLowerCase().includes('image') || s.toLowerCase().includes('look like')))
 })
 
-test('Example B — Product Identification: generates technical identification follow-ups for unfamiliar components', () => {
+test('Example B — Product Identification: generates technical identification follow-ups for unfamiliar components without image claims', () => {
   const messages = [
     createMessage('user', 'Help me identify this component: 2-inch bronze gate valve with non-rising stem class 150'),
     createMessage(
@@ -170,16 +173,19 @@ test('Example B — Product Identification: generates technical identification f
   const followUps = generateContextualFollowUps({ messages })
   assert.ok(followUps.length >= 2 && followUps.length <= 4)
 
-  assert.ok(followUps.includes('Show me reference images of this component.'))
+  assert.ok(followUps.includes('Describe how to physically inspect and identify this component.'))
   assert.ok(followUps.includes('What alternative names do suppliers use?'))
   assert.ok(followUps.includes('What specifications should I confirm before buying?'))
   assert.ok(followUps.includes('How can I distinguish it from similar products?'))
+
+  // Commercial safety: zero image hallucinations
+  assert.ok(!followUps.some((s) => s.toLowerCase().includes('image')))
 })
 
 test('Example C — Quotation Preparation: generates document review follow-ups for pending quotation proposal', () => {
-  const mockProposal: BoluProposal = {
-    operation_id: 'op-quote-123',
-    documentType: 'quotation',
+  const mockProposal = {
+    opId: 'op-quote-123',
+    documentFamily: 'quotation',
     operation: 'create',
     status: 'pending_approval',
     client: { status: 'resolved', client: { id: 'c-1', name: 'Dangote Industries' } },
@@ -193,7 +199,7 @@ test('Example C — Quotation Preparation: generates document review follow-ups 
         row_type: 'item',
       },
     ],
-  }
+  } as unknown as BoluProposal
 
   const messages = [
     createMessage('user', 'Prepare a quotation for Dangote Industries for 100m of 25mm 4-core cable at 4500/m'),
@@ -233,11 +239,11 @@ test('Example D — Product Description Correction: generates follow-ups when Bo
   assert.ok(followUps.includes('Does this change the identity of the product?'))
 })
 
-test('Example E — Clarification Pending: offers options when Bolu asks a question in proposal or prose', () => {
+test('Example E — Clarification Pending: offers options without instructing to assume commercial terms', () => {
   // Case E1: Clarification in proposal
-  const mockClarificationProposal: BoluProposal = {
-    operation_id: 'op-clarify-456',
-    documentType: 'invoice',
+  const mockClarificationProposal = {
+    opId: 'op-clarify-456',
+    documentFamily: 'invoice',
     operation: 'create',
     status: 'pending_approval',
     clarification: {
@@ -255,7 +261,7 @@ test('Example E — Clarification Pending: offers options when Bolu asks a quest
       ],
     },
     items: [],
-  }
+  } as unknown as BoluProposal
 
   const messages = [
     createMessage('user', 'Create an invoice for 5 pieces of nylon 50mm'),
@@ -270,13 +276,29 @@ test('Example E — Clarification Pending: offers options when Bolu asks a quest
   })
 
   assert.ok(followUps.length >= 2)
-  assert.ok(followUps.some((s) => s.includes('Pre-cut Block') || s.includes('Standard Sheet') || s.includes('Why is this specification needed?')))
+  assert.ok(followUps.some((s) => s.includes('Pre-cut Block') || s.includes('Standard Sheet') || s.includes('What details should I confirm with the client?')))
+
+  // Commercial clerk integrity: never instruct to assume commercial terms or specs
+  assert.ok(!followUps.some((s) => s.toLowerCase().includes('assume standard')))
+
+  // Case E2: Clarification in prose
+  const proseMessages = [
+    createMessage('user', 'Draft an invoice for the electrical supplies'),
+    createMessage('assistant', 'Could you clarify which customer this invoice is for and what payment terms apply?'),
+  ]
+
+  const proseFollowUps = generateContextualFollowUps({ messages: proseMessages })
+  assert.ok(proseFollowUps.length >= 2)
+  assert.ok(proseFollowUps.includes('What details should I confirm with the client?'))
+  assert.ok(proseFollowUps.includes('Explain the available options and their differences.'))
+  assert.ok(proseFollowUps.includes('What are the commercial risks if terms are not specified?'))
+  assert.ok(!proseFollowUps.some((s) => s.toLowerCase().includes('assume standard')))
 })
 
 test('Invoice Preparation: generates tax, line item and payment terms review follow-ups', () => {
-  const mockInvoiceProposal: BoluProposal = {
-    operation_id: 'op-inv-789',
-    documentType: 'invoice',
+  const mockInvoiceProposal = {
+    opId: 'op-inv-789',
+    documentFamily: 'invoice',
     operation: 'create',
     status: 'pending_approval',
     items: [
@@ -288,7 +310,7 @@ test('Invoice Preparation: generates tax, line item and payment terms review fol
         row_type: 'item',
       },
     ],
-  }
+  } as unknown as BoluProposal
 
   const messages = [
     createMessage('user', 'Draft an invoice for facility maintenance service ₦250,000 for Apex Towers'),
@@ -309,13 +331,13 @@ test('Invoice Preparation: generates tax, line item and payment terms review fol
 })
 
 test('User Corrections: generates verification follow-ups after user corrects an item', () => {
-  const mockProposal: BoluProposal = {
-    operation_id: 'op-corr-001',
-    documentType: 'invoice',
+  const mockProposal = {
+    opId: 'op-corr-001',
+    documentFamily: 'invoice',
     operation: 'update',
     status: 'pending_approval',
     items: [],
-  }
+  } as unknown as BoluProposal
 
   const messages = [
     createMessage('user', 'Change the quantity of item 1 from 10 to 15'),
@@ -336,13 +358,13 @@ test('User Corrections: generates verification follow-ups after user corrects an
 
 test('Completed Tasks: prunes completed actions and never suggests creating the same document again', () => {
   // Test saved invoice
-  const savedInvoiceProposal: BoluProposal = {
-    operation_id: 'op-saved-inv',
-    documentType: 'invoice',
+  const savedInvoiceProposal = {
+    opId: 'op-saved-inv',
+    documentFamily: 'invoice',
     operation: 'create',
-    status: 'saved',
+    status: 'persisted',
     items: [],
-  }
+  } as unknown as BoluProposal
 
   const messages = [
     createMessage('user', 'Confirm and save'),
@@ -389,4 +411,258 @@ test('Deduplication: suppresses suggestions that repeat what the user already as
   const followUps = generateContextualFollowUps({ messages })
   // The suggestion "Find its common market names in Nigeria." must be suppressed because the user just asked it!
   assert.ok(!followUps.includes('Find its common market names in Nigeria.'))
+})
+
+// ── PART 3: Multi-Turn Progression, Topic Shifts, and Integrity Guardrails ──
+
+test('Mandatory Progression: 6-turn RFQ dialogue evolves from initial identification to specification to market sourcing', () => {
+  // --- Turn 1 & 2: Initial discovery / dimension conflict ---
+  const turn1User = createMessage(
+    'user',
+    'I have received an RFQ containing Nylon Extruded Sheet 50mm, Length 190mm, Width 90mm, Height 50mm. I do not recognise this item and cannot picture what is being requested.',
+  )
+  const turn2Bolu = createMessage(
+    'assistant',
+    'Nylon extruded material is an engineering thermoplastic. However, dimensions of 190mm length, 90mm width, and 50mm height appear more consistent with a pre-cut block than a conventional sheet. I recommend confirming whether the customer requires a cut block or standard plate.',
+  )
+
+  const turn2Suggestions = generateContextualFollowUps({
+    messages: [turn1User, turn2Bolu],
+  })
+
+  // Stage 1: Initial Discovery / Physical Features / Clarification
+  assert.ok(turn2Suggestions.includes('Describe its physical appearance and distinguishing features.'))
+  assert.ok(turn2Suggestions.includes('Find its common market names in Nigeria.'))
+  assert.ok(turn2Suggestions.includes('What questions should I ask to confirm the specification?'))
+  assert.ok(turn2Suggestions.includes('How is this material normally sold and priced?'))
+  assert.ok(!turn2Suggestions.some((s) => s.toLowerCase().includes('image') || s.toLowerCase().includes('look like')))
+
+  // --- Turn 3 & 4: User correction (it is a block for machining a bushing) & Bolu acknowledgment ---
+  const turn3User = createMessage(
+    'user',
+    "It's not a sheet. The client confirmed it's a pre-cut engineering nylon block for machining a prototype bushing.",
+  )
+  const turn4Bolu = createMessage(
+    'assistant',
+    'Understood. For a machining block of 190x90x50mm in engineering nylon (PA6), it will typically be cut from stock slab or plate. We should also verify whether they need natural (white) or black (MoS2-filled) nylon, as the black grade offers improved self-lubrication for bushings.',
+  )
+
+  const turn4Suggestions = generateContextualFollowUps({
+    messages: [turn1User, turn2Bolu, turn3User, turn4Bolu],
+  })
+
+  // Stage 2: Specification Refinement & Clarification Acknowledged
+  // The sheet vs block ambiguity is resolved and MUST NOT be repeated!
+  assert.ok(!turn4Suggestions.includes('What questions should I ask to confirm the specification?'))
+  assert.ok(!turn4Suggestions.includes('Describe its physical appearance and distinguishing features.'))
+  assert.ok(!turn4Suggestions.includes('Find its common market names in Nigeria.'))
+
+  // It must present the new technical uncertainties raised in Turn 4:
+  assert.ok(turn4Suggestions.includes('Explain the difference between natural and black nylon.'))
+  assert.ok(turn4Suggestions.includes('What material grade should I confirm before pricing?'))
+  assert.ok(turn4Suggestions.includes('How is this type of block normally supplied?'))
+  assert.ok(turn4Suggestions.includes('What details should I obtain before requesting supplier prices?'))
+
+  // --- Turn 5 & 6: User asks how it is sold in Nigeria and if locally available ---
+  const turn5User = createMessage(
+    'user',
+    'How is this material normally sold in Nigeria and is it locally available?',
+  )
+  const turn6Bolu = createMessage(
+    'assistant',
+    'In Nigeria, engineering plastics like Nylon 6 are stocked by industrial polymer stockists in major commercial markets such as Ladipo and Odunade in Lagos. They are typically sold either by weight (per kilogram) or as full standard slabs/rods, with cutting charges added for specific pre-cut block dimensions.',
+  )
+
+  const turn6Suggestions = generateContextualFollowUps({
+    messages: [turn1User, turn2Bolu, turn3User, turn4Bolu, turn5User, turn6Bolu],
+  })
+
+  // Stage 3: Market Sourcing & Commercial Enquiry Preparation
+  // Must advance towards quotation and procurement, NOT repeat Stage 1 or Stage 2!
+  assert.ok(!turn6Suggestions.includes('Explain the difference between natural and black nylon.'))
+  assert.ok(!turn6Suggestions.includes('Find its common market names in Nigeria.'))
+  assert.ok(turn6Suggestions.includes('Help me prepare a supplier enquiry for this material.'))
+  assert.ok(turn6Suggestions.includes('What details should I include when requesting supplier prices?'))
+  assert.ok(turn6Suggestions.includes('How should I compare prices quoted by weight and by cut size?'))
+  assert.ok(turn6Suggestions.includes('Help me prepare a quotation for this item.'))
+})
+
+test('Topic Shift: moving from an earlier RFQ discussion to Freight immediately clears RFQ follow-ups', () => {
+  const messages = [
+    // Previous RFQ turns
+    createMessage('user', 'I received an RFQ for nylon sheet 190x90x50mm'),
+    createMessage('assistant', 'Nylon block dimensions clarified and sourcing discussed.'),
+    // Topic Shift to Freight
+    createMessage('user', 'What are our standard freight costs from Lagos to Abuja?'),
+    createMessage(
+      'assistant',
+      'Freight costs from Lagos to Abuja vary by vehicle capacity: a 5-ton truck typically ranges from ₦350,000 to ₦450,000, while dedicated haulage or courier parcel rates depend on gross weight.',
+    ),
+  ]
+
+  const followUps = generateContextualFollowUps({ messages })
+
+  // Must NOT contain RFQ follow-ups!
+  assert.ok(!followUps.some((s) => s.toLowerCase().includes('nylon')))
+  assert.ok(!followUps.some((s) => s.toLowerCase().includes('supplier enquiry for this material')))
+
+  // Must present logistics / freight actions:
+  assert.ok(followUps.includes('Calculate freight per unit for this shipment.'))
+  assert.ok(followUps.includes('Check if freight should be billed separately on the invoice.'))
+  assert.ok(followUps.includes('Help me prepare a delivery waybill.'))
+})
+
+test('Topic Shift: moving from an earlier RFQ discussion to Operating Expense yields expense follow-ups', () => {
+  const messages = [
+    createMessage('user', 'I received an RFQ for nylon sheet'),
+    createMessage('assistant', 'Nylon discussed.'),
+    // Topic Shift to Generator Diesel
+    createMessage('user', 'I need to record our monthly generator diesel expense of ₦180,000'),
+    createMessage(
+      'assistant',
+      'I can help record this ₦180,000 generator diesel expense under facility operating costs.',
+    ),
+  ]
+
+  const followUps = generateContextualFollowUps({ messages })
+
+  assert.ok(!followUps.some((s) => s.toLowerCase().includes('nylon')))
+  assert.ok(followUps.includes('Record this as an operating expense.'))
+  assert.ok(followUps.includes('Check which account or project should be charged.'))
+  assert.ok(followUps.includes('Review monthly expense totals.'))
+})
+
+test('Topic Shift: moving to customer receivables yields account statement and balance follow-ups', () => {
+  const messages = [
+    createMessage('user', 'What is the outstanding balance for Dangote Industries?'),
+    createMessage(
+      'assistant',
+      'Dangote Industries currently has an outstanding balance of ₦1,250,000 across two overdue invoices.',
+    ),
+  ]
+
+  const followUps = generateContextualFollowUps({ messages })
+
+  assert.ok(followUps.includes("Check the customer's outstanding balance."))
+  assert.ok(followUps.includes('Generate a customer statement of account.'))
+  assert.ok(followUps.includes('Review overdue invoice payment dates.'))
+})
+
+test('User Correction: correcting a specification or quantity triggers immediate verification suggestions', () => {
+  const mockProposal = {
+    opId: 'op-corr-999',
+    documentFamily: 'quotation',
+    operation: 'update',
+    status: 'pending_approval',
+    items: [],
+  } as unknown as BoluProposal
+
+  const messages = [
+    createMessage('user', 'Change the quantity of item 1 from 10 to 25 and update unit price to ₦5,200'),
+    createMessage(
+      'assistant',
+      'I have updated item 1 to 25 units at ₦5,200 each. The subtotal is now recalculated.',
+      { proposal: mockProposal },
+    ),
+  ]
+
+  const followUps = generateContextualFollowUps({
+    messages,
+    activeProposal: mockProposal,
+  })
+
+  assert.ok(followUps.includes('Verify the updated subtotal and tax calculation.'))
+  assert.ok(followUps.includes('Check if any other line items need updating.'))
+  assert.ok(followUps.includes('Review the revised document preview.'))
+})
+
+test('Commercial Integrity: suggestions never instruct Bolu or user to assume commercial terms or specs', () => {
+  const testScenarios = [
+    // Scenario 1: Prose question from assistant
+    [
+      createMessage('user', 'I need an invoice'),
+      createMessage('assistant', 'Could you clarify the payment terms and customer details?'),
+    ],
+    // Scenario 2: RFQ initial inquiry
+    [
+      createMessage('user', 'I received an RFQ for unknown parts'),
+      createMessage('assistant', 'The parts appear to be industrial valves.'),
+    ],
+    // Scenario 3: Tax query
+    [
+      createMessage('user', 'What tax applies to this equipment installation?'),
+      createMessage('assistant', 'Installation services are subject to 5% WHT and 7.5% VAT.'),
+    ],
+  ]
+
+  for (const msgs of testScenarios) {
+    const suggestions = generateContextualFollowUps({ messages: msgs })
+    for (const s of suggestions) {
+      assert.ok(
+        !s.toLowerCase().includes('assume standard'),
+        `Found prohibited assumption prompt: "${s}"`,
+      )
+      assert.ok(
+        !s.toLowerCase().includes('assume commercial'),
+        `Found prohibited commercial assumption prompt: "${s}"`,
+      )
+    }
+  }
+})
+
+test('Visual Safety: zero branches ever produce suggestions promising images or visual previews', () => {
+  const testScenarios = [
+    [
+      createMessage('user', 'I received an RFQ for nylon sheet 50mm'),
+      createMessage('assistant', 'Nylon extruded sheet is an engineering plastic...'),
+    ],
+    [
+      createMessage('user', 'Identify this bronze valve'),
+      createMessage('assistant', 'This is a bronze gate valve...'),
+    ],
+    [
+      createMessage('user', 'What is this component?'),
+      createMessage('assistant', 'It is an armoured copper cable...'),
+    ],
+  ]
+
+  for (const msgs of testScenarios) {
+    const suggestions = generateContextualFollowUps({ messages: msgs })
+    for (const s of suggestions) {
+      assert.ok(
+        !s.toLowerCase().includes('image'),
+        `Found prohibited image prompt: "${s}"`,
+      )
+      assert.ok(
+        !s.toLowerCase().includes('look like'),
+        `Found prohibited visual preview prompt: "${s}"`,
+      )
+    }
+  }
+})
+
+test('UI Architecture: empty thread suppresses bottom suggestions tray to avoid duplicate starters', () => {
+  // Empty thread simulation
+  const emptyMessages: ProductionBoluMessage[] = []
+  const isStarterEmpty = emptyMessages.length === 0
+  const starterSuggestions = isStarterEmpty
+    ? getConversationStarters({ conversationId: 'thread-empty-001' })
+    : generateContextualFollowUps({ messages: emptyMessages })
+
+  // When isStarter is true, bottom tray must be suppressed:
+  const shouldRenderBottomTrayEmpty = !isStarterEmpty && starterSuggestions && starterSuggestions.length > 0
+  assert.equal(shouldRenderBottomTrayEmpty, false, 'Bottom suggestions tray must NOT render on empty threads')
+
+  // Active thread simulation
+  const activeMessages = [
+    createMessage('user', 'I received an RFQ for nylon sheet 50mm'),
+    createMessage('assistant', 'Nylon extruded material explained.'),
+  ]
+  const isStarterActive = activeMessages.length === 0
+  const activeFollowUps = isStarterActive
+    ? getConversationStarters({ conversationId: 'thread-active-002' })
+    : generateContextualFollowUps({ messages: activeMessages })
+
+  const shouldRenderBottomTrayActive = !isStarterActive && activeFollowUps && activeFollowUps.length > 0
+  assert.equal(shouldRenderBottomTrayActive, true, 'Bottom suggestions tray MUST render on active threads with follow-ups')
 })

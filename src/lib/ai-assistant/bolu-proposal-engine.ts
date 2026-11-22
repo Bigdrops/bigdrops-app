@@ -23,10 +23,7 @@ import {
   type BoluProposal,
   type BoluClientResolution,
 } from './bolu-operations'
-import {
-  standardizeCommercialItems,
-  buildCommercialSuggestions,
-} from './bolu-commercial-language'
+import { buildCommercialSuggestions } from './bolu-commercial-language'
 import type { TenantClient } from '@/lib/tenantClient'
 import {
   readBoluClient,
@@ -235,11 +232,10 @@ export async function interpretBoluProposal(
   if (opType === 'create-document' && documentFamily) {
     const validation = validateInvoiceCreateInput(rawOp.payload)
     if (validation.valid && validation.data) {
-      // Presentation-only standardization (unit notation, casing, cable shorthand)
-      const suppliedPayload = {
-        ...validation.data,
-        items: standardizeCommercialItems(validation.data.items),
-      }
+      // Gate 1 sees the supplied wording. Any improvement is offered as a
+      // recommendation and applied only after the user accepts that exact
+      // wording and approves the proposal.
+      const suppliedPayload = validation.data
       const { client, resolution } = await resolveProposalClient({
         tenantClient: input.tenantClient,
         clientName: suppliedPayload.client_name,
@@ -266,6 +262,9 @@ export async function interpretBoluProposal(
 
       if (correctsExistingDraft) mergedFromMessageId = input.previousProposalMessageId ?? null
 
+      // The builder attaches wording recommendations as `pending`. A
+      // regenerated proposal therefore starts from supplied wording again: no
+      // decision is assumed from an earlier turn.
       proposal.suggestions = buildCommercialSuggestions({
         items: proposal.payload.items,
         payment_terms: proposal.payload.payment_terms,

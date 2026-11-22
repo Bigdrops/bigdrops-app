@@ -38,7 +38,7 @@ Three recommendations carry most of the value and most of the risk:
 
 The recommended product-category strategy is **Option A (category-independent foundation) with thin, data-driven attribute profiles**, not Option B (an electrical and mechanical vertical). The reasons are in Section 12.
 
-Nothing here is implemented. Section 16 lists what must be decided before any of it is built.
+Nothing here is implemented except the D-2 approval flow recorded in Section 2.3 (marked IMPLEMENTED, Phase 2). Section 16 lists what must be decided before any of the rest is built.
 
 ---
 
@@ -46,7 +46,7 @@ Nothing here is implemented. Section 16 lists what must be decided before any of
 
 ### 2.1 The observable problem
 
-The current system has one normalisation rule with real product consequence (cable shorthand) and one general instruction ("standardize shorthand"). Between them sits everything a Nigerian SME actually types: `2 inch elbo`, `change over switch`, `big water pump`, `armoured cable 50m`, `4 core 16mm cable`, `1.5mm green cable`.
+The shipped implementation has one normalisation rule that changed product identity (the cable shorthand, since corrected to preserve the supplied words) and one general instruction ("standardize shorthand"). Between them sits everything a Nigerian SME actually types: `2 inch elbo`, `change over switch`, `big water pump`, `armoured cable 50m`, `4 core 16mm cable`, `1.5mm green cable`.
 
 The current rules handle the first four characters of that problem and then hand the rest to a language model whose only guard is "never invent a specification". That guard is necessary and insufficient. It stops fabrication. It does not produce judgement: it does not notice that `armoured cable 50m` identifies nothing buyable, and it does not notice that `4 core 16mm cable` is already sufficient.
 
@@ -56,17 +56,17 @@ The current rules handle the first four characters of that problem and then hand
 
 **OBSERVATION.** The document instruction block is 17,925 characters and is supplied only on document turns; the always-on conversational core is 2,437 characters (`bolu-prompt.ts`, measured in the corrections report). Adding another instruction paragraph buys compliance on the easy cases and adds cost, latency and contradiction risk to every turn.
 
-**OBSERVATION.** Description normalisation already runs deterministically after validation: `standardizeCommercialItems` is applied in `bolu-proposal-engine.ts` (interpretation path), and `buildCommercialSuggestions` produces optional suggestions from the built payload. The deterministic layer exists; it is just very narrow (whitespace, `mm²`, capitalisation, one cable expansion).
+**OBSERVATION (updated after Phase 2).** Description normalisation runs deterministically when a proposal is built: `buildInvoiceCreateProposal` and `buildInvoiceModifyProposal` attach `commercialRecommendations` from `bolu-commercial-language.ts`, and `buildCommercialSuggestions` produces optional prose. The deterministic layer exists and is narrow (whitespace, `mm²`, capitalisation, spelling and compound words). It no longer writes the payload and it adds no product class, core count or other attribute.
 
 The gap is therefore architectural placement, not prompt wording. Adequacy and disclosure belong in code and structured data. Interpretation and phrasing belong in the model. Section 13 sets that boundary.
 
 ### 2.3 The transparency gap (most important finding)
 
-**OBSERVATION.** `standardizeCommercialItems` rewrites a description inside the proposal payload. For example `1.5mm green` becomes `1.5mm² Single-Core Cable - Green` before the proposal is shown. The proposal preview shows the resulting document. It does not show the original wording, the recommendation, or the fact that a change was made. `buildCommercialSuggestions` may mention the cable case in prose, but a suggestion is optional text, not a change record, and it is not shown as "this is what changed".
+**IMPLEMENTED (Phase 2, decision D-2 = A).** The proposal no longer carries a rewritten description into Gate 1. `standardizeCommercialItems` is not applied to the payload. Each line whose wording would change is offered as a `BoluCommercialRecommendation` (`original`, `recommendation`, `reason`, `decision`, `applied`, `invalidated`), and the payload keeps the supplied wording until the user accepts that exact recommendation and approves Gate 1. `approveBoluProposal` applies only an accepted recommendation whose `original` is still the line's wording and whose accepted text is still exactly the derived recommendation; pending and kept recommendations leave the supplied wording untouched. `1.5mm green` produces no recommendation at all, because a colour alone does not establish a conductor measurement.
 
-**OBSERVATION.** `BoluProposal.suggestions` is a `string[]` attached to the proposal. It carries no identity, no per-item link, no applied/pending state and no approval. The gates (`pending_approval`, `approved_pending_save`, `rejected`) govern the proposal as a whole, not a recommendation.
+**OBSERVATION.** `BoluProposal.suggestions` remains a `string[]` of optional prose. It is not a change record and grants no permission. The recommendation record is the separate, per-line structure above; each entry is decided independently and only the exact approved wording can reach the draft.
 
-**Consequence.** A material wording change can reach Gate 1 without an explicit statement that anything was changed. That is exactly the class of silent change the governing principle forbids, even where the mapping is safe. This PRD treats it as the first thing to fix, and it is fixable without touching calculations, gates or persistence.
+**Status.** The transparency gap this section described is closed for invoices and quotations. Gate 2 remains a separate, mandatory confirmation, and calculations are untouched: a wording change never alters a quantity, unit price, unit or computed total.
 
 ### 2.4 What is not the problem
 
@@ -147,7 +147,7 @@ The gap is therefore architectural placement, not prompt wording. Adequacy and d
 
 **OBSERVATION (current behaviour mapped):**
 - READY is effectively "whatever the model does not choose to question". There is no explicit state.
-- NEEDS_NORMALISATION is applied deterministically for cable shorthand and presentation-level cleanup only.
+- NEEDS_NORMALISATION is applied deterministically for presentation-level cleanup only: whitespace, casing, spelling, compound words, and unit notation where the supplied words name the conductor. It never adds a product class or core count.
 - INADEQUATE has no state. The prompt tells the model to ask one question when readings materially differ, and validation only requires a non-empty description, `quantity > 0` and `unit_price >= 0` (`validateInvoiceItems`, `bolu-operations.ts`). `armoured cable 50m` passes validation today.
 
 ### 5.2 Is a fourth state required?
@@ -167,7 +167,7 @@ Reasoning:
 |---|---|---|---|
 | E1 verified tenant record | `item_catalog` row or `item_aliases` row matched exactly | Yes, as a recommendation | Yes, only to the extent the record's fields support it |
 | E2 tenant precedent | same or near-identical description already used in the tenant's invoices/quotations | Yes, as a recommendation | No; it is precedent, not proof |
-| E3 deterministic language rule | spelling, unit, casing, approved shorthand expansion | Yes, language and wording only | No |
+| E3 deterministic language rule | spelling, unit, casing | Yes, language and wording only | No |
 | E4 model general knowledge | the model "knows" what an item usually is | Recommend only, labelled unverified | Never |
 | E5 external reference | none available in this product | n/a | n/a |
 
@@ -196,7 +196,7 @@ This keeps the cheap cases free of provider cost and makes the difficult cases r
 - Consistent capitalisation of product names and units.
 - Unit notation (`mm2`, `mm^2` -> `mm²`; `pcs`, `pkgs`, `kg`).
 - Structural cleanup of a run-on line into a product phrase.
-- Approved shorthand expansions with a documented rule and test (today: one, cable size plus colour).
+- Documented, tested language rules only (today: spelling, compound words, casing, and unit notation where the conductor is named). No rule may add a product class, core count or other attribute. The earlier cable shorthand that appended `Single-Core Cable` has been removed.
 
 ### 6.2 What must never be normalised by rule alone
 
@@ -205,7 +205,7 @@ This keeps the cheap cases free of provider cost and makes the difficult cases r
 - Ambiguous abbreviations (`PVC`, `GI`, `SS`, `HP`) where two expansions are possible in the tenant's trade.
 - Anything where normalisation would choose between two buyable products.
 
-**REFERENCE (illustrative, not approved mappings):** `Change over switch` -> `Changeover Switch`; `2 inch elbow` -> `2-Inch Elbow`; `1.5mm green` -> `1.5mm² Single-Core Cable - Green`; `water pump` -> `Water Pump`. These illustrate the *shape* of a normalisation. They are not a mapping table and must not be shipped as one.
+**REFERENCE (illustrative, not approved mappings):** `Change over switch` -> `Changeover Switch`; `2 inch elbow` -> `2-Inch Elbow`; `1.5mm green cable` -> `1.5mm² green cable`; `water pump` -> `Water Pump`. These illustrate the *shape* of a normalisation. They are not a mapping table and must not be shipped as one. A colour without a conductor word is not a mapping: `1.5mm green` stays `1.5mm green`.
 
 ### 6.3 Where mappings live
 
@@ -262,7 +262,7 @@ This keeps the cheap cases free of provider cost and makes the difficult cases r
 | Type | Example trigger | Presentation | Applied? |
 |---|---|---|---|
 | Language correction | `2 inch elbo` | "Spelling corrected: elbow" | Only through the disclosed path |
-| Description normalisation | `1.5mm green` | supplied -> recommended | Only after approval or as a stated auto-correction |
+| Description normalisation | `1.5mm green cable` | supplied -> recommended | Only after approval or as a stated auto-correction |
 | Missing information | `armoured cable 50m` | "Which cable size and core count?" | No; blocks only that item |
 | Likely terminology mistake | `change over switch` | "Usually written Changeover Switch" | No |
 | Internal conflict | two lines describing the same item differently | "Do these two lines refer to the same item?" | No |
@@ -309,7 +309,7 @@ Respect it silently and permanently for that document. Do not re-raise the same 
 
 - `supplied` - exactly what the boss wrote, preserved verbatim.
 - `recommended` - the professional description, or null.
-- `reason` - short, business-language reason ("standard spelling", "cable size and colour supplied in shorthand", "catalogue match").
+- `reason` - short, business-language reason ("standard spelling", "unit notation tidied", "catalogue match").
 - `evidence` - E1..E4.
 - `applied` - what the proposal actually contains.
 - `approval` - `gate1_review` | `explicit_user_approval` | `not_required_language_only`.
@@ -551,7 +551,7 @@ Every row states the judgement, what may be corrected, what must not be assumed,
 | A-01 | `2 inch elbo` | Misspelling of elbow; diameter supplied | `2-Inch Elbow`, disclosed as spelling | A material, thread or pressure class | No | "Spelling corrected: elbow" | Gate 1 |
 | A-02 | `change over switch` | Informal compound | `Changeover Switch` | Rating, poles, brand | No | Recommend professional wording | Gate 1 |
 | A-03 | `armoured cable 50m` | Length only; no conductor size, core count or construction | Nothing beyond casing | Size, cores, armour type, voltage | Yes, one grouped question | "Which cable size and core count?" Flag line | Gate 1 for the rest |
-| A-04 | `1.5mm green cable` | Cable class, size and colour supplied in shorthand | `1.5mm² Single-Core Cable - Green` | Core count beyond single-core shorthand, brand, voltage | Only if core count would materially differ; otherwise no | Supplied -> recommended, with reason | Gate 1 |
+| A-04 | `1.5mm green cable` | Cable class, size and colour supplied in shorthand | `1.5mm² green cable` | Core count, construction, brand, voltage | Only if core count would materially differ; otherwise no | Supplied -> recommended, with reason | Gate 1 |
 | A-05 | `big water pump` | Pump, no usable specification | Nothing | Power, head, flow, outlet size, brand | Yes, focused | "What size or capacity is the pump?" Do not price it | Gate 1 for the rest |
 | A-06 | `4 core 16mm cable` | Size and core count supplied | Presentation only (`16mm²`) | Construction, voltage, brand | No | Nothing material changed | Gate 1 |
 | A-07 | `10 pieces of 2 inch elbow` | Quantity 10, unit pieces, diameter | Wording only | Material, thread | No | Quantity and unit preserved explicitly | Gate 1 |
@@ -567,7 +567,7 @@ Every row states the judgement, what may be corrected, what must not be assumed,
 |---|---|---|
 | N-01 | Hallucinated specification: `armoured cable 50m` proposed as `4 Core 16mm² Armoured Cable` | Fail. No unsupplied attribute in payload |
 | N-02 | Silent substitution: catalogue suggests `X` when boss wrote `Y` and payload contains `X` | Fail. Catalogue may only recommend |
-| N-03 | Undisclosed normalisation: payload contains `1.5mm² Single-Core Cable - Green` with no supplied/recommended record | Fail |
+| N-03 | Undisclosed normalisation: payload contains `1.5mm² green cable` where the boss wrote `1.5mm green cable`, with no supplied/recommended record | Fail |
 | N-04 | Excessive description: turning `Salt` into `Salt - 50kg Industrial Grade, Food Safe` | Fail. Unsupplied attributes and unnecessary length |
 | N-05 | Unnecessary questioning: asking for a package size for `Salt`, or a make where the boss asked for none | Fail |
 | N-06 | Blocking: whole document withheld because one item is inadequate | Fail |
@@ -647,7 +647,7 @@ Extend profiles where the general test repeats the same question. Revisit Option
 |---|---|---|
 | P-1 governing principle | User brief §2 | DECISION |
 | P-2 boss authority | User brief §2; existing gates | DECISION |
-| P-3 disclose every material change | Transparency gap, Section 2.3; `standardizeCommercialItems` call site `bolu-proposal-engine.ts:241` | PROPOSAL |
+| P-3 disclose every material change | Section 2.3; `commercialRecommendations` in `bolu-operations.ts`, applied by `approveBoluProposal` | IMPLEMENTED (Phase 2) |
 | P-4 commercial not technical | User brief §2 | DECISION |
 | P-7 preserve supplied facts | `bolu-prompt.ts` document contract; `validateInvoiceItems` | OBSERVATION |
 | P-9 one owner per rule | Corrections report §2.1 | OBSERVATION |
@@ -655,7 +655,7 @@ Extend profiles where the general test repeats the same question. Revisit Option
 | No fourth state; evidence dimension instead | Design analysis, Section 5.2 | PROPOSAL |
 | Reason codes | Design analysis | PROPOSAL |
 | Language vs normalisation vs identity separation | User brief §5.1-5.4; current single-rule normalisation | PROPOSAL |
-| Cable shorthand as the only approved expansion | `standardizeDescription` in `bolu-commercial-language.ts` | OBSERVATION |
+| Cable shorthand once appended a product class (`Single-Core Cable`); corrected to preserve the supplied words | `standardizeDescription` in `bolu-commercial-language.ts` | CORRECTED SINCE PREVIOUS AUDIT |
 | Never normalise brand/model | User brief §5.2; current prompt "no brand/model" | DECISION |
 | Tenant evidence outranks model | Existing "never invent a specification"; item library exists | PROPOSAL |
 | Reuse item library normalisation/aliases | `itemLibraryRepository.ts`, `suggestionRanking.ts`; `searchBoluCatalog` name-only ILIKE | OBSERVATION + PROPOSAL |
@@ -702,7 +702,7 @@ No decision above is taken. Each is a question for the boss.
 - One instruction owner (`bolu-prompt.ts`), always-on core, document contract scoped to document turns.
 - Invoices and quotations only; proposal payload contract; create, modify, advance-invoice configuration.
 - Deterministic parse of pasted lists, WhatsApp stamps, `15k` amounts, citation artifacts, positional amount pairing with mismatch reporting.
-- Deterministic normalisation: whitespace, `mm²`, capitalisation, one cable shorthand expansion; applied after validation.
+- Deterministic normalisation: whitespace, `mm²`, capitalisation, spelling and compound words; applied after validation. No product class, core count or other attribute is added.
 - Optional prose suggestions: shorthand, unpriced item, missing unit, missing payment terms, missing title.
 - Commercial evidence injected only on authoring turns.
 - Clients, invoices, quotations, receivables, suppliers, signatories, bank accounts, and name-only catalogue lookup (quoted phrases only).

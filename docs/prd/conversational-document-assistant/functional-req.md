@@ -1322,13 +1322,15 @@ Invoices and quotations must read commercial shorthand, standardize it, and sugg
 
 - Deterministic parsing handles pasted WhatsApp-style lists, timestamps, list markers, `15k` amounts, description lines that carry a quantity, and a separate price list.
 - A separate price list is matched to the descriptions in order only when the counts agree. A different count is reported as a mismatch and no price is attached.
-- Standardization normalizes unit notation and casing and expands the approved cable shorthand (`1.5mm green` becomes `1.5mm² Single-Core Cable – Green`). Size and colour are preserved exactly.
-- No brand, manufacturer, grade, packaging, voltage, model, material, extra core count or dimension is added.
+- Standardization corrects presentation only: whitespace, casing, common spelling (`elbo` becomes `elbow`) and compound words (`change over switch` becomes `Changeover Switch`). Unit notation is corrected only where the supplied words establish the measurement: `1.5mm cable` can be offered as `1.5mm² cable` and `1.5mm green cable` as `1.5mm² green cable`. `1.5mm green` produces no recommendation, because a colour alone does not establish a cross-section. Supplied size, colour and core count are preserved, and the original wording is retained alongside any presentation-only variant.
+- No brand, manufacturer, grade, packaging, voltage, model, material, product class, extra core count or dimension is added. `Single-Core` and `Cable` are never inferred from a size and colour.
 - A sufficient description stays as it is: `Salt` remains `Salt`.
 - Suggestions (unpriced item, missing unit, absent payment terms, unset title) are displayed for the user and are never applied silently.
 - Ordinary goods stay ordinary line items. A custom charge is only used for a named charge the user supplies as a charge.
 - A supplied transaction date becomes the document date instead of today's date.
 - Parsed evidence is supplied to the model as the user's own ordered words, not as instructions.
+
+**Decision D-2 (= A), implemented in Phase 2.** Bolu shows the original description, the exact recommended wording and a short reason before any change is applied, and applies only the exact recommendation the boss approved. Each proposal line is a `BoluCommercialRecommendation` with its own decision (`pending`, `accepted`, `kept`); the payload keeps the supplied wording while a recommendation is pending, accepting alone changes nothing, and `approveBoluProposal` applies an accepted recommendation only when the line still carries the original wording it was shown with. A line changed after the recommendation invalidates it. No rejection is remembered across proposals (D-11 = B), so a later turn may recommend the same improvement again, but a rejection is never applied in the current proposal.
 
 **Acceptance criteria**
 
@@ -1337,7 +1339,7 @@ Invoices and quotations must read commercial shorthand, standardize it, and sugg
 - A count mismatch produces a focused question rather than a guessed pairing.
 - The same capability serves invoice and quotation proposals.
 
-**Limitation:** the model still composes the payload. Deterministic standardization and evidence are applied after validation; whether a given provider follows the prompt was not verified against a live provider.
+**Limitation:** the model still composes the payload. Deterministic parsing and recommendations are derived after validation, and no wording change reaches the draft without the boss's decision and Gate 1 approval; whether a given provider follows the prompt was not verified against a live provider, and the recommendation card was not inspected in a running browser.
 
 ## FR-70 - Gate 2 Save Authorization (Implemented - 2026-11-18, hosted verification pending)
 

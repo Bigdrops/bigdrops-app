@@ -39,6 +39,12 @@ import {
   validateAttachmentLabel,
   validateAttachmentUrl,
 } from './bolu-intelligence'
+import {
+  applyApprovedCommercialRecommendations,
+  buildCommercialRecommendations,
+  decideCommercialRecommendation,
+  type BoluCommercialRecommendation,
+} from './bolu-commercial-language'
 import type { CommercialRichTextBlock } from '@/lib/commercialRichText'
 import type { TenantClient } from '@/lib/tenantClient'
 import type { BoluClientMatch, BoluReadAuthorization, BoluWriteAuthorization } from './bolu-data'
@@ -392,6 +398,12 @@ export interface BoluDocumentCreateProposal extends BoluOperationContract {
    * describing the change in chat; nothing here is applied automatically.
    */
   suggestions?: string[]
+  /**
+   * Wording improvements offered before Gate 1. The payload keeps the supplied
+   * wording; only an accepted recommendation for the exact original can change
+   * a line, and only when Gate 1 is approved.
+   */
+  commercialRecommendations?: BoluCommercialRecommendation[]
 }
 
 export type BoluInvoiceCreateProposal = BoluDocumentCreateProposal
@@ -482,6 +494,12 @@ export interface BoluDocumentModifyProposal extends BoluOperationContract {
   }
   persistedId?: string
   errorMessage?: string
+  /**
+   * Wording improvements for `itemsChange.newItems`. Detection only: the
+   * preview keeps the supplied wording until Gate 1 approves an exact
+   * recommendation.
+   */
+  commercialRecommendations?: BoluCommercialRecommendation[]
 }
 
 export type BoluInvoiceModifyProposal = BoluDocumentModifyProposal
@@ -1798,6 +1816,9 @@ export function buildInvoiceCreateProposal(
     expiresAt,
     candidateNumber,
     payload,
+    // Detection only: the payload keeps the supplied wording until Gate 1
+    // approval applies an accepted recommendation.
+    commercialRecommendations: buildCommercialRecommendations(payload.items),
     computedTotals: {
       subtotal: totals.subtotal,
       vat: totals.vat,
@@ -1895,6 +1916,68 @@ export function mergeDocumentCreateProposal(
     status: 'pending_approval',
     suggestions: undefined,
   }
+}
+
+/**
+ * Records the user's decision on one wording recommendation.
+ *
+ * The decision is bound to the recommendation id inside this proposal. An
+ * already-applied recommendation is immutable, and an unknown id changes
+ * nothing. Documents that carry no recommendations are returned unchanged.
+ */
+export function decideBoluCommercialRecommendation<T extends BoluProposal>(
+  proposal: T,
+  recommendationId: string,
+  decision: 'accepted' | 'kept',
+): T {
+  if (proposal.status !== 'pending_approval') return proposal
+  if (proposal.operationType !== 'create-document' && proposal.operationType !== 'modify-document') return proposal
+  const recommendations = (proposal as any).commercialRecommendations as BoluCommercialRecommendation[] | undefined
+  if (!recommendations || recommendations.length === 0) return proposal
+  const next = decideCommercialRecommendation(recommendations, recommendationId, decision)
+  if (!next) return proposal
+  return { ...proposal, commercialRecommendations: next }
+}
+
+/**
+ * Gate 1 approval, including the exact approved wording.
+ *
+ * Only an accepted recommendation whose original wording is still on the line
+ * is applied. Pending recommendations are not approval and leave the supplied
+ * wording untouched; kept recommendations are never applied. Quantities, unit
+ * prices, units, totals and unrelated fields are not touched here.
+ */
+export function approveBoluProposal<T extends BoluProposal>(proposal: T): T {
+  if (proposal.status !== 'pending_approval') return proposal
+
+  if (proposal.operationType === 'create-document') {
+    const createProp = proposal as unknown as BoluDocumentCreateProposal
+    const recommendations = createProp.commercialRecommendations ?? []
+    const result = applyApprovedCommercialRecommendations(createProp.payload.items, recommendations)
+    return {
+      ...createProp,
+      status: 'approved_pending_save',
+      payload: { ...createProp.payload, items: result.items },
+      commercialRecommendations: result.recommendations,
+    } as unknown as T
+  }
+
+  if (proposal.operationType === 'modify-document' && (proposal as any).itemsChange) {
+    const modifyProp = proposal as unknown as BoluDocumentModifyProposal
+    const recommendations = modifyProp.commercialRecommendations ?? []
+    const result = applyApprovedCommercialRecommendations(
+      modifyProp.itemsChange!.newItems,
+      recommendations,
+    )
+    return {
+      ...modifyProp,
+      status: 'approved_pending_save',
+      itemsChange: { ...modifyProp.itemsChange!, newItems: result.items },
+      commercialRecommendations: result.recommendations,
+    } as unknown as T
+  }
+
+  return { ...proposal, status: 'approved_pending_save' }
 }
 
 /**
@@ -2426,6 +2509,8 @@ export function buildInvoiceModifyProposal(params: {
     oldValue: resolvedOldValue,
     newValue: resolvedNewValue,
     itemsChange: params.itemsChange,
+    // Detection only: the proposed lines keep their supplied wording.
+    commercialRecommendations: buildCommercialRecommendations(params.itemsChange?.newItems ?? []),
     extraChargesChange,
     customFieldsChange,
     groupsChange: params.groupsChange,

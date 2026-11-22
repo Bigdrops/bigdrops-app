@@ -277,6 +277,7 @@ export function BoluChatWorkspace({
     confirmGate2Save,
     cancelGate2Save,
     returnGate1ToReview,
+    decideGate1Recommendation,
     searchProposalClients,
     selectProposalClient,
     createProposalClient,
@@ -588,6 +589,9 @@ export function BoluChatWorkspace({
       onConfirmGate2={(opId) => void confirmGate2Save(opId)}
       onCancelGate2={(opId) => void cancelGate2Save(opId)}
       onReturnToReview={(opId) => void returnGate1ToReview(opId)}
+      onDecideRecommendation={(opId, recommendationId, decision) =>
+        void decideGate1Recommendation(opId, recommendationId, decision)
+      }
       onSearchClients={(_opId, term) => searchProposalClients(term)}
       onSelectClient={(opId, client) => selectProposalClient(client, opId)}
       onCreateClient={(opId, input) => createProposalClient(input, opId)}
@@ -621,12 +625,14 @@ export function BoluChatWorkspace({
     />
   )
 
-  // Suggestions Tray placed directly below the conversation composer
-  const suggestionsNode = suggestions && suggestions.length > 0 && !editingMessageId ? (
+  // Suggestions Tray placed directly below the conversation composer.
+  // Empty threads show starters exclusively in the central welcome card (AssistantThread).
+  // Active threads show contextual follow-ups here when meaningful next steps exist.
+  const suggestionsNode = !isStarter && suggestions && suggestions.length > 0 && !editingMessageId ? (
     <div
       className="ac-suggestions-bar border-t border-[var(--ac-line)] bg-[var(--ac-muted-surface)] px-3 py-1.5 sm:px-4"
       role="region"
-      aria-label={isStarter ? 'Conversation starters' : 'Contextual follow-up suggestions'}
+      aria-label="Contextual follow-up suggestions"
     >
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
         {suggestions.map((sug, idx) => (

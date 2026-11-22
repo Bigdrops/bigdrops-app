@@ -13,6 +13,8 @@ import { EntityContext } from '@/lib/tenant/entityContext'
 import { createTenantClient, type TenantClient } from '@/lib/tenantClient'
 import { isGenericTitle, deriveConversationTitle } from '../bolu-titles'
 import {
+  approveBoluProposal,
+  decideBoluCommercialRecommendation,
   isProposalStale,
   withClarificationAnswer,
   withClientResolution,
@@ -437,7 +439,13 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
         return false
       }
 
-      const updatedProposal: BoluProposal = { ...effectiveProposal, status: 'approved_pending_save' }
+      if (effectiveProposal.status !== 'pending_approval') {
+        feedback.info('This proposal is no longer awaiting review.')
+        return false
+      }
+
+      // Gate 1 approval applies only the exact wording the user accepted.
+      const updatedProposal: BoluProposal = approveBoluProposal(effectiveProposal)
 
       try {
         if (effectiveMsgId) {
@@ -519,6 +527,61 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
         const msg = err instanceof Error ? err.message : 'Failed to reject proposal.'
         setError(msg)
         feedback.error('Rejection failed', { description: msg })
+        return false
+      }
+    },
+    [activeProposal, activeProposalMessageId, messages],
+  )
+
+  /**
+   * Records one wording decision on the pending proposal.
+   *
+   * It changes the recommendation record only: the draft keeps the supplied
+   * wording until Gate 1 is approved, and a decision never authorizes a save.
+   */
+  const decideGate1Recommendation = useCallback(
+    async (
+      opId: string | undefined,
+      recommendationId: string,
+      decision: 'accepted' | 'kept',
+    ): Promise<boolean> => {
+      const targetMsg = messages.find((m) => m.proposal && (!opId || m.proposal.opId === opId))
+      const effectiveProposal = targetMsg?.proposal ?? activeProposal
+      const effectiveMsgId = targetMsg?.id ?? activeProposalMessageId
+
+      if (!effectiveProposal) {
+        feedback.error('Proposal not found')
+        return false
+      }
+
+      const updatedProposal = decideBoluCommercialRecommendation(
+        effectiveProposal,
+        recommendationId,
+        decision,
+      )
+      if (updatedProposal === effectiveProposal) return false
+
+      try {
+        if (effectiveMsgId) {
+          const { error: updateErr } = await (supabase.from('bolu_messages') as any)
+            .update({ proposal_payload: updatedProposal, updated_at: new Date().toISOString() })
+            .eq('id', effectiveMsgId)
+          if (updateErr) throw new Error(updateErr.message)
+        }
+        setActiveProposal(updatedProposal)
+        if (effectiveMsgId) setActiveProposalMessageId(effectiveMsgId)
+        setMessages((prev) =>
+          prev.map((m) =>
+            (effectiveMsgId ? m.id === effectiveMsgId : m.proposal?.opId === effectiveProposal.opId)
+              ? { ...m, proposal: updatedProposal }
+              : m,
+          ),
+        )
+        return true
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to record the wording decision.'
+        setError(msg)
+        feedback.error('Could not record that decision', { description: msg })
         return false
       }
     },
@@ -1100,6 +1163,7 @@ export function useBoluThread(options: UseBoluThreadOptions): UseBoluThreadRetur
     stopStreaming,
     approveGate1,
     rejectGate1,
+    decideGate1Recommendation,
     confirmGate2Save,
     cancelGate2Save,
     returnGate1ToReview,

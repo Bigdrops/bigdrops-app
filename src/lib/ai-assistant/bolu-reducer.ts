@@ -5,7 +5,7 @@
 import { getBoluSuggestions, getBoluWelcome, type BoluPageContext } from './bolu-context'
 import { getAvailableBoluCapabilities } from './bolu-capabilities'
 import { readBoluContextFacts, type BoluRecord } from './bolu-data'
-import type { BoluProposal } from './bolu-operations'
+import { approveBoluProposal, type BoluProposal } from './bolu-operations'
 import type { BoluOperationExecutionResult } from './bolu-document-service'
 
 export type BoluMessage = {
@@ -186,10 +186,9 @@ export function boluConversationReducer(state: BoluRuntimeState, action: BoluRun
       }
     case 'GATE1_APPROVE': {
       if (!state.activeProposal) return state
-      const approved: BoluProposal = {
-        ...state.activeProposal,
-        status: 'approved_pending_save',
-      }
+      // Applies only the exact wording the user accepted; pending and kept
+      // recommendations leave the supplied line untouched.
+      const approved: BoluProposal = approveBoluProposal(state.activeProposal)
       return {
         ...state,
         activeProposal: approved,

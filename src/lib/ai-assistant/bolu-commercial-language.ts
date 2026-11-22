@@ -15,8 +15,9 @@
  *
  * Hard rule: it never invents a specification. No brand, manufacturer, grade,
  * packaging, core count, product class, voltage, model, material or dimension
- * is added here. `1.5mm green` becomes `1.5mm² green` at most: every supplied
- * word survives and nothing about the product is guessed.
+ * is added here. `1.5mm green` is left exactly as supplied; `1.5mm green cable`
+ * becomes `1.5mm² green cable` at most. Every supplied word survives and
+ * nothing about the product is guessed.
  *
  * Scope: invoices and quotations. Nothing in this module writes to the
  * database or mutates inventory.
@@ -56,16 +57,6 @@ const CABLE_SHORTHAND = new RegExp(
   'i',
 )
 
-/**
- * A measured size followed by a cable colour, anywhere in the text. This is
- * the only measurement context in which a bare `mm` is read as a conductor
- * cross-section.
- */
-const MEASURED_CONDUCTOR = new RegExp(
-  `(?:^|\\s)\\d+(?:\\.\\d+)?\\s*mm\\s*(?:²|2|\\^2)?\\s*[-–,]?\\s*(?:${COLOUR_WORDS})\\b`,
-  'i',
-)
-
 /** A word that names the conductor itself. */
 const CONDUCTOR_WORD = /\b(?:cables?|wires?|conductors?)\b/i
 
@@ -81,13 +72,15 @@ const SAFE_WORD_CORRECTIONS: Array<[RegExp, string]> = [
 ]
 
 /**
- * True only when the supplied words themselves place the measurement on a
- * conductor: a cable or wire word, or a measured size carrying a cable colour.
- * Without that signal `mm` is ambiguous (a pipe wall, a rod, a sheet), so the
- * unit is left exactly as the user wrote it.
+ * True only when the supplied words name the conductor: `1.5mm cable`,
+ * `1.5mm wire`, `1.5mm green cable`.
+ *
+ * A colour alone is not evidence. `1.5mm green` could be a colour on a pipe or
+ * a rod, so a bare `mm` next to a colour is left exactly as supplied. Where
+ * the unit is ambiguous, keeping the user's words is the safe answer.
  */
 function establishesConductorMeasurement(text: string): boolean {
-  return CONDUCTOR_WORD.test(text) || MEASURED_CONDUCTOR.test(text)
+  return CONDUCTOR_WORD.test(text)
 }
 
 /** A bare trailing integer after a measured description is a quantity. */
@@ -311,10 +304,18 @@ export function formatCommercialEvidence(parsed: CommercialListParse): string {
   })
   if (ordered.length === 0 && parsed.amounts.length === 0) return ''
 
+  const hasPresentationChange = ordered.some(
+    (entry) => entry.description && entry.description !== entry.rawDescription,
+  )
+
   const lines: string[] = [
     "PARSED COMMERCIAL EVIDENCE (deterministic parse of the user's own words, in order).",
-    "Wording marked \"presentation-only wording\" is capitalisation, unit notation or a spelling correction applied to the user's line. It is not a catalogue name, a verified specification or an approved change.",
   ]
+  if (hasPresentationChange) {
+    lines.push(
+      "Wording marked \"presentation-only wording\" is capitalisation, unit notation or a spelling correction applied to the user's line. It is not a catalogue name, a verified specification or an approved change.",
+    )
+  }
 
   ordered.forEach((entry, index) => {
     const amount = entry.amount == null ? 'not supplied' : String(entry.amount)
@@ -341,10 +342,12 @@ export function formatCommercialEvidence(parsed: CommercialListParse): string {
 }
 
 /**
- * Standardizes the model's line items deterministically.
+ * Standardizes a list of line items deterministically.
  *
- * Applied after validation so a shorthand description cannot reach the preview
- * unresolved. Only the supplied description is rewritten; no value is added.
+ * This is the pure normalisation helper. It is not applied to a proposal
+ * payload: applying it there would change the draft before the user has seen
+ * the recommendation. Production derives recommendations with
+ * `buildCommercialRecommendations` and applies only what the user approved.
  */
 export function standardizeCommercialItems<
   T extends { description: string; quantity: number; unit_price: number },
@@ -353,6 +356,143 @@ export function standardizeCommercialItems<
     const description = standardizeDescription(item.description)
     return description && description !== item.description ? { ...item, description } : item
   })
+}
+
+/** What the user decided about one recommended wording change. */
+export type BoluCommercialDecision = 'pending' | 'accepted' | 'kept'
+
+/**
+ * One wording recommendation attached to a proposal.
+ *
+ * `original` is the exact wording the proposal carries. `recommendation` is the
+ * exact replacement offered to the user. Both are shown before anything is
+ * applied, and the applied text is always `recommendation` — never a fresh
+ * rewrite of it.
+ */
+export interface BoluCommercialRecommendation {
+  /** Stable within one proposal: one recommendation per line. */
+  id: string
+  /** Zero-based index in the proposal's item list. */
+  itemIndex: number
+  /** The wording the proposal carried when the recommendation was made. */
+  original: string
+  /** The exact replacement offered to the user. */
+  recommendation: string
+  /** Short, factual explanation of why the change is recommended. */
+  reason: string
+  decision: BoluCommercialDecision
+  /** True only once Gate 1 approved this exact recommendation. */
+  applied?: boolean
+  /** True when the line changed after the recommendation was made. */
+  invalidated?: boolean
+}
+
+function recommendationReason(original: string, recommendation: string): string {
+  if (/²/.test(recommendation) && !/²/.test(original)) {
+    return 'Writes the cross-section the supplied words already establish, in the standard unit notation.'
+  }
+  const words = (value: string) => value.toLowerCase().replace(/[^a-z0-9²]+/g, ' ').trim()
+  if (words(original) === words(recommendation)) {
+    return 'Corrects capitalisation or spacing without changing the supplied words.'
+  }
+  return 'Corrects a spelling or compound-word error in the supplied wording.'
+}
+
+/**
+ * Detects presentation-only improvements without changing anything.
+ *
+ * Each entry keeps the supplied wording as `original` and the exact proposed
+ * replacement as `recommendation`. Every recommendation starts `pending`: the
+ * proposal draft still carries `original` until the user accepts that exact
+ * replacement.
+ */
+export function buildCommercialRecommendations(
+  items: Array<{ description: string }>,
+): BoluCommercialRecommendation[] {
+  const recommendations: BoluCommercialRecommendation[] = []
+  ;(items ?? []).forEach((item, index) => {
+    const original = String(item?.description ?? '')
+    const recommendation = standardizeDescription(original)
+    if (!recommendation || recommendation === original) return
+    recommendations.push({
+      id: `line-${index + 1}`,
+      itemIndex: index,
+      original,
+      recommendation,
+      reason: recommendationReason(original, recommendation),
+      decision: 'pending',
+    })
+  })
+  return recommendations
+}
+
+/**
+ * Records the user's decision on one recommendation.
+ *
+ * Returns null when the id is unknown, so a stale or foreign decision cannot
+ * touch another line. A recommendation already applied by Gate 1 is immutable.
+ */
+export function decideCommercialRecommendation(
+  recommendations: BoluCommercialRecommendation[],
+  recommendationId: string,
+  decision: 'accepted' | 'kept',
+): BoluCommercialRecommendation[] | null {
+  let found = false
+  const next = (recommendations ?? []).map((entry) => {
+    if (entry.id !== recommendationId) return entry
+    if (entry.applied || entry.invalidated) return entry
+    found = true
+    return { ...entry, decision }
+  })
+  return found ? next : null
+}
+
+/**
+ * Applies accepted recommendations to a line list.
+ *
+ * A line changes only when the user accepted that recommendation, the accepted
+ * text is still exactly the recommendation derived from the original, and the
+ * line still carries that original. A pending recommendation is never applied:
+ * silence is not approval. A line that changed since the recommendation was
+ * made invalidates it and keeps whatever wording it now has.
+ */
+export function applyApprovedCommercialRecommendations<T extends { description: string }>(
+  items: T[],
+  recommendations: BoluCommercialRecommendation[],
+): { items: T[]; recommendations: BoluCommercialRecommendation[]; applied: string[] } {
+  const list = recommendations ?? []
+  const applied: string[] = []
+
+  const nextItems = (items ?? []).map((item, index) => {
+    const entry = list.find((candidate) => candidate.itemIndex === index)
+    if (!entry) return item
+    const current = String(item?.description ?? '')
+    if (
+      entry.decision !== 'accepted' ||
+      current !== entry.original ||
+      entry.recommendation !== standardizeDescription(entry.original)
+    ) {
+      return item
+    }
+    applied.push(entry.id)
+    return { ...item, description: entry.recommendation }
+  })
+
+  const nextRecommendations = list.map((entry) => {
+    const current = String(items?.[entry.itemIndex]?.description ?? '')
+    if (current !== entry.original) {
+      return { ...entry, applied: false, invalidated: true }
+    }
+    if (entry.decision === 'accepted') {
+      return applied.includes(entry.id)
+        ? { ...entry, applied: true }
+        : { ...entry, applied: false, invalidated: true }
+    }
+    // Pending and kept recommendations never change the draft.
+    return { ...entry, applied: false }
+  })
+
+  return { items: nextItems, recommendations: nextRecommendations, applied }
 }
 
 export interface CommercialSuggestionInput {
@@ -378,7 +518,7 @@ export function buildCommercialSuggestions(input: CommercialSuggestionInput): st
     // Only worth saying when the wording would actually change.
     if (suggested && suggested !== shorthand[0].description) {
       suggestions.push(
-        `"${shorthand[0].description}" can be written as "${suggested}" so the measurement reads as a cross-section.`,
+        `"${shorthand[0].description}" can be written as "${suggested}" so the unit notation is consistent.`,
       )
     }
   }

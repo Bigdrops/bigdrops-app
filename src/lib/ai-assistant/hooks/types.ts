@@ -74,6 +74,12 @@ export interface UseBoluThreadReturn {
   stopStreaming: () => void
   approveGate1: (opId?: string) => Promise<boolean>
   rejectGate1: (opId?: string) => Promise<boolean>
+  /** Records accept/keep for one wording recommendation. Never approves Gate 1. */
+  decideGate1Recommendation: (
+    opId: string | undefined,
+    recommendationId: string,
+    decision: 'accepted' | 'kept',
+  ) => Promise<boolean>
   confirmGate2Save: (opId?: string) => Promise<BoluOperationExecutionResult>
   cancelGate2Save: (opId?: string) => void
   /** Reopens Gate 1 review; the earlier approval no longer authorizes a save. */

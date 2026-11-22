@@ -134,11 +134,20 @@ test('Legitimate multi-line evidence still pairs supplied amounts', () => {
     parseCommercialList(['1.5mm green 1', '2.5mm red 1', '32,000', '53,000'].join('\n')),
   )
   assert.match(evidence, /supplied: "1\.5mm green"/)
-  assert.match(evidence, /presentation-only wording: "1\.5mm² green"/)
+  assert.match(evidence, /supplied: "2\.5mm red"/)
+  // A colour alone is not a measurement context, so nothing is rewritten.
+  assert.doesNotMatch(evidence, / \| presentation-only wording:/)
   assert.doesNotMatch(evidence, /single[- ]?core/i)
   assert.doesNotMatch(evidence, /standard description/)
   assert.match(evidence, /32000/)
   assert.match(evidence, /supplied amounts were matched/)
+})
+
+test('Evidence keeps supplied wording and marks a presentation-only change', () => {
+  const evidence = formatCommercialEvidence(parseCommercialList('1.5mm green cable 1'))
+  assert.match(evidence, /supplied: "1\.5mm green cable"/)
+  assert.match(evidence, /presentation-only wording: "1\.5mm² green cable"/)
+  assert.doesNotMatch(evidence, /single[- ]?core/i)
 })
 
 // ============================================================================

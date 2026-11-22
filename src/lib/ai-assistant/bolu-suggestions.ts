@@ -235,11 +235,19 @@ function isSimilarToRecentUserMessage(suggestion: string, recentUserTexts: strin
 /**
  * Intelligent context-aware follow-up suggestion generator.
  * Analyzes:
- * - Conversation domain and user goal (RFQ, product identification, description refinement, quotation, invoice).
- * - Last assistant message (prose explanations, warnings, questions asked).
- * - Active proposal lifecycle (pending approval, approved, saved, rejected).
- * - Clarification state (pending questions from Bolu).
- * - Completed actions (prunes tasks already done).
+ * - Active document operations (proposals in pending_approval, approved_pending_save, persisted).
+ * - Recent conversation focus (sliding window of latest 3-4 turns).
+ * - Progression stages in RFQ / material discussions (Discovery -> Spec Refinement -> Market Sourcing).
+ * - Topic shifts (detects transitions to freight, operating expenses, customer receivables).
+ * - User corrections (triggers calculation verification and review).
+ * - Clarification states (guides client confirmation without assuming commercial terms).
+ * - Completed operations (prunes already-persisted actions).
+ * - Concluded dialogues (suppresses suggestions on casual closing).
+ *
+ * Safety & Integrity:
+ * - Strictly text-based; never hallucinates image search, generation, or preview capabilities.
+ * - Commercial integrity: Never advises assuming commercial terms or specifications.
+ * - Pure synchronous pure function: zero async race conditions or token thrashing.
  *
  * Returns 2–4 targeted suggestions, or [] if no meaningful next step exists.
  */
@@ -264,99 +272,270 @@ export function generateContextualFollowUps(input: ContextualSuggestionInput): s
   const lastAssistantContent = (lastAssistant.content || '').toLowerCase()
   const lastUserContent = (lastUser?.content || '').toLowerCase()
   const fullConversationHistory = messages.map((m) => m.content.toLowerCase()).join(' ')
+  const recentMessages = messages.slice(-4)
+  const recentHistory = recentMessages.map((m) => m.content.toLowerCase()).join(' ')
   const recentUserTexts = userMessages.slice(-3).map((m) => m.content)
 
-  // ── Detection: Completed Document Operations ──
-  const isProposalSaved = activeProposal?.status === 'saved' ||
+  // ── Priority 1: Casual conversation or concluded task ──
+  const isCasualOrConcluded =
+    lastUserContent === 'thank you' ||
+    lastUserContent === 'thanks' ||
+    lastUserContent === 'ok' ||
+    lastUserContent === 'okay' ||
+    lastUserContent === 'all good' ||
+    lastUserContent === 'that is all' ||
+    lastUserContent === "that's all" ||
+    lastUserContent === 'no, that is all' ||
+    lastUserContent === "no, that's all"
+
+  if (isCasualOrConcluded) {
+    // No meaningful next action: display none!
+    return []
+  }
+
+  // ── Priority 2: Completed Document Operations ──
+  const isProposalSaved =
+    activeProposal?.status === 'persisted' ||
     lastAssistantContent.includes('saved successfully') ||
     lastAssistantContent.includes('created successfully') ||
-    lastAssistantContent.includes('invoice #') && lastAssistantContent.includes('saved') ||
-    lastAssistantContent.includes('quotation #') && lastAssistantContent.includes('saved')
+    (lastAssistantContent.includes('invoice #') && lastAssistantContent.includes('saved')) ||
+    (lastAssistantContent.includes('quotation #') && lastAssistantContent.includes('saved'))
 
   if (isProposalSaved) {
     // If an invoice or quotation was just saved, offer natural post-completion steps
-    const isInvoice = activeProposal?.documentType === 'invoice' || lastAssistantContent.includes('invoice')
+    const isInvoice = activeProposal?.documentFamily === 'invoice' || lastAssistantContent.includes('invoice')
     if (isInvoice) {
       return [
         "Check the customer's outstanding balance.",
         'Explain payment tracking for this invoice.',
         'Show me the invoice summary.',
-      ]
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
     }
     // Quotation post-save
     return [
       'Draft an invoice from this quotation.',
       'Check customer contact details.',
       'Review quotation validity and payment terms.',
-    ]
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
   }
 
-  // ── Detection: Clarification Pending from Bolu ──
+  // ── Priority 3: Clarification Pending from Bolu ──
+  const clarification = activeProposal && 'clarification' in activeProposal ? activeProposal.clarification : undefined
   const hasPendingProposalClarification = Boolean(
     activeProposal?.status === 'pending_approval' &&
-    activeProposal?.clarification?.questions &&
-    activeProposal.clarification.questions.length > 0,
+    clarification?.questions &&
+    clarification.questions.length > 0,
   )
 
-  const assistantAskedQuestion =
-    lastAssistant.content.includes('?') &&
-    (lastAssistantContent.includes('could you clarify') ||
-     lastAssistantContent.includes('please confirm') ||
-     lastAssistantContent.includes('would you like') ||
-     lastAssistantContent.includes('do you want') ||
-     lastAssistantContent.includes('is this') ||
-     lastAssistantContent.includes('which customer') ||
-     lastAssistantContent.includes('please provide'))
-
-  if (hasPendingProposalClarification) {
-    const q = activeProposal!.clarification!.questions[0]
+  if (hasPendingProposalClarification && clarification) {
+    const q = clarification.questions[0]
     const suggestions: string[] = []
     if (q.options && q.options.length > 0) {
       q.options.slice(0, 3).forEach((opt) => {
         suggestions.push(`Use ${opt.label}`)
       })
     }
-    suggestions.push('Why is this specification needed?')
-    suggestions.push('Assume standard commercial specification.')
-    return suggestions.slice(0, 4)
+    suggestions.push('What details should I confirm with the client?')
+    suggestions.push('Explain the specification options and their differences.')
+    return suggestions.filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 4)
   }
 
-  // ── Detection: Example A — Unfamiliar RFQ / Inconsistent Specs ──
-  // User uploaded or asked about an RFQ with unfamiliar items or dimensions
-  const isRfqContext =
-    fullConversationHistory.includes('rfq') ||
-    fullConversationHistory.includes('request for quote') ||
-    (fullConversationHistory.includes('extruded sheet') || fullConversationHistory.includes('nylon')) ||
-    (lastUserContent.includes('don\'t recognise') || lastUserContent.includes('unfamiliar item'))
+  // ── Priority 4: User Corrections with Active Proposal ──
+  const isUserCorrection =
+    lastUserContent.includes('change') ||
+    lastUserContent.includes('update') ||
+    lastUserContent.includes('correct') ||
+    lastUserContent.includes('remove') ||
+    lastUserContent.includes('instead of') ||
+    lastUserContent.includes("it's not") ||
+    lastUserContent.includes('it is not')
 
-  if (isRfqContext && (lastUserContent.includes('rfq') || lastAssistantContent.includes('rfq') || lastAssistantContent.includes('nylon') || lastAssistantContent.includes('dimension') || lastAssistantContent.includes('sheet'))) {
-    const suggestions = [
-      'Show me what this material might look like.',
+  if (isUserCorrection && activeProposal) {
+    return [
+      'Verify the updated subtotal and tax calculation.',
+      'Check if any other line items need updating.',
+      'Review the revised document preview.',
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
+  }
+
+  // ── Priority 5: Active Proposal in Review / Save Mode ──
+  if (activeProposal?.documentFamily === 'quotation') {
+    if (activeProposal.status === 'pending_approval') {
+      const suggestions = [
+        'Check whether the descriptions are sufficiently clear.',
+        'Review the quantities and units.',
+        'Identify information that still needs confirmation.',
+        'Help me review the quotation before saving it.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts))
+      return suggestions.slice(0, 4)
+    }
+
+    if (activeProposal.status === 'approved_pending_save') {
+      return [
+        'Confirm and save this quotation.',
+        'Make one final check on pricing before saving.',
+        'Return to review to modify line items.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
+    }
+  }
+
+  if (activeProposal?.documentFamily === 'invoice') {
+    if (activeProposal.status === 'pending_approval') {
+      const suggestions = [
+        'Check whether customer tax details or TIN are needed.',
+        'Review the line items and calculation before saving.',
+        'Confirm payment terms and due date.',
+        'Help me review the invoice before saving it.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts))
+      return suggestions.slice(0, 4)
+    }
+
+    if (activeProposal.status === 'approved_pending_save') {
+      return [
+        'Confirm and save this invoice.',
+        'Check invoice due date before saving.',
+        'Return to review to change line items.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
+    }
+  }
+
+  // ── Priority 6: Topic Shift away from earlier material/RFQ topics ──
+  // If no active proposal binds the conversation to earlier topics, check if the recent turns
+  // have shifted to an entirely different business domain (Freight, Operating Expenses, Receivables).
+  if (!activeProposal) {
+    const isFreightTopic =
+      recentHistory.includes('freight') ||
+      recentHistory.includes('haulage') ||
+      recentHistory.includes('waybill') ||
+      recentHistory.includes('lagos to abuja') ||
+      (recentHistory.includes('shipping') && !recentHistory.includes('nylon')) ||
+      (recentHistory.includes('transport') && !recentHistory.includes('nylon')) ||
+      recentHistory.includes('delivery cost')
+
+    if (isFreightTopic) {
+      return [
+        'Calculate freight per unit for this shipment.',
+        'Check if freight should be billed separately on the invoice.',
+        'Help me prepare a delivery waybill.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
+    }
+
+    const isExpenseTopic =
+      recentHistory.includes('diesel') ||
+      recentHistory.includes('generator') ||
+      recentHistory.includes('utility') ||
+      recentHistory.includes('electricity') ||
+      recentHistory.includes('office expense') ||
+      recentHistory.includes('operating expense')
+
+    if (isExpenseTopic) {
+      return [
+        'Record this as an operating expense.',
+        'Check which account or project should be charged.',
+        'Review monthly expense totals.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
+    }
+
+    const isCustomerBalanceTopic =
+      recentHistory.includes('outstanding balance') ||
+      recentHistory.includes('statement of account') ||
+      recentHistory.includes('how much does') ||
+      recentHistory.includes('receivable') ||
+      recentHistory.includes('debtor')
+
+    if (isCustomerBalanceTopic) {
+      return [
+        "Check the customer's outstanding balance.",
+        'Generate a customer statement of account.',
+        'Review overdue invoice payment dates.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
+    }
+  }
+
+  // ── Priority 7: Material / RFQ Consultation Progression ──
+  const isMaterialOrRfqFocus =
+    recentHistory.includes('nylon') ||
+    recentHistory.includes('rfq') ||
+    recentHistory.includes('extruded') ||
+    recentHistory.includes('engineering plastic') ||
+    recentHistory.includes('machining') ||
+    recentHistory.includes('bushing') ||
+    (fullConversationHistory.includes('rfq') &&
+      (lastAssistantContent.includes('material') ||
+       lastAssistantContent.includes('dimension') ||
+       lastAssistantContent.includes('supplier') ||
+       lastAssistantContent.includes('stockist') ||
+       lastAssistantContent.includes('cut') ||
+       lastAssistantContent.includes('pricing') ||
+       lastUserContent.includes('material') ||
+       lastUserContent.includes('locally available')))
+
+  if (isMaterialOrRfqFocus && !activeProposal) {
+    // Stage 3: Market Sourcing, Availability, and Supplier Enquiry
+    const isSourcingStage =
+      recentHistory.includes('sold in nigeria') ||
+      recentHistory.includes('locally available') ||
+      recentHistory.includes('local availability') ||
+      recentHistory.includes('ladipo') ||
+      recentHistory.includes('odunade') ||
+      recentHistory.includes('stockist') ||
+      recentHistory.includes('sold by weight') ||
+      recentHistory.includes('per kg') ||
+      recentHistory.includes('selling format') ||
+      lastUserContent.includes('available') ||
+      lastAssistantContent.includes('stockist') ||
+      lastAssistantContent.includes('ladipo')
+
+    if (isSourcingStage) {
+      return [
+        'Help me prepare a supplier enquiry for this material.',
+        'What details should I include when requesting supplier prices?',
+        'How should I compare prices quoted by weight and by cut size?',
+        'Help me prepare a quotation for this item.',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 4)
+    }
+
+    // Stage 2: Specification Refinement & Clarification Acknowledged
+    const isSpecClarifiedStage =
+      (recentHistory.includes('block') || recentHistory.includes('machining') || recentHistory.includes('bushing')) &&
+      (recentHistory.includes('natural') || recentHistory.includes('black') || recentHistory.includes('mos2') ||
+       recentHistory.includes('grade') || recentHistory.includes('pa6') || recentHistory.includes('cut from') ||
+       lastUserContent.includes('not a sheet') || lastUserContent.includes('confirmed it') ||
+       lastAssistantContent.includes('machining block'))
+
+    if (isSpecClarifiedStage) {
+      return [
+        'Explain the difference between natural and black nylon.',
+        'What material grade should I confirm before pricing?',
+        'How is this type of block normally supplied?',
+        'What details should I obtain before requesting supplier prices?',
+      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 4)
+    }
+
+    // Stage 1: Initial Discovery / Unfamiliar RFQ / Dimension Inconsistency
+    return [
+      'Describe its physical appearance and distinguishing features.',
       'Find its common market names in Nigeria.',
       'What questions should I ask to confirm the specification?',
       'How is this material normally sold and priced?',
-    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts))
-    return suggestions.slice(0, 4)
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 4)
   }
 
-  // ── Detection: Example B — Product Identification ──
-  // Bolu identifies an unfamiliar industrial/commercial component
+  // ── Priority 8: General Product Identification (Other Industrial Components) ──
   const isProductIdentification =
-    (fullConversationHistory.includes('identify') || fullConversationHistory.includes('unfamiliar') || fullConversationHistory.includes('what is') || fullConversationHistory.includes('component') || fullConversationHistory.includes('specification')) &&
-    (lastAssistantContent.includes('component') || lastAssistantContent.includes('material') || lastAssistantContent.includes('manufactured') || lastAssistantContent.includes('used for') || lastAssistantContent.includes('grade'))
+    (recentHistory.includes('identify') || recentHistory.includes('what is') || recentHistory.includes('component') || recentHistory.includes('valve') || recentHistory.includes('specification')) &&
+    (lastAssistantContent.includes('component') || lastAssistantContent.includes('material') || lastAssistantContent.includes('manufactured') || lastAssistantContent.includes('used for') || lastAssistantContent.includes('valve'))
 
   if (isProductIdentification && !activeProposal) {
-    const suggestions = [
-      'Show me reference images of this component.',
+    return [
+      'Describe how to physically inspect and identify this component.',
       'What alternative names do suppliers use?',
       'What specifications should I confirm before buying?',
       'How can I distinguish it from similar products?',
-    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts))
-    return suggestions.slice(0, 4)
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 4)
   }
 
-  // ── Detection: Example D — Product Description Correction ──
-  // Bolu identified an issue with a description or user asked to improve descriptions
+  // ── Priority 9: Product Description Correction ──
   const isDescriptionCorrection =
     lastAssistantContent.includes('description') &&
     (lastAssistantContent.includes('ambiguous') ||
@@ -368,128 +547,69 @@ export function generateContextualFollowUps(input: ContextualSuggestionInput): s
      lastUserContent.includes('description'))
 
   if (isDescriptionCorrection) {
-    const suggestions = [
+    return [
       'Suggest a more accurate description.',
       'Explain why the original description was problematic.',
       'Does this change the identity of the product?',
       'Check whether other items have similar description issues.',
-    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts))
-    return suggestions.slice(0, 4)
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 4)
   }
 
-  // ── Detection: User Corrections & Edits ──
-  const isUserCorrection =
-    lastUserContent.includes('change') ||
-    lastUserContent.includes('update') ||
-    lastUserContent.includes('correct') ||
-    lastUserContent.includes('remove') ||
-    lastUserContent.includes('instead of')
+  // ── Priority 10: Assistant Asked a Question in Prose ──
+  const assistantAskedQuestion =
+    lastAssistant.content.includes('?') &&
+    (lastAssistantContent.includes('could you clarify') ||
+     lastAssistantContent.includes('please confirm') ||
+     lastAssistantContent.includes('would you like') ||
+     lastAssistantContent.includes('do you want') ||
+     lastAssistantContent.includes('is this') ||
+     lastAssistantContent.includes('which customer') ||
+     lastAssistantContent.includes('please provide'))
 
-  if (isUserCorrection && activeProposal) {
+  if (assistantAskedQuestion && !activeProposal) {
     return [
-      'Verify the updated subtotal and tax calculation.',
-      'Check if any other line items need updating.',
-      'Review the revised document preview.',
-    ]
+      'What details should I confirm with the client?',
+      'Explain the available options and their differences.',
+      'What are the commercial risks if terms are not specified?',
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
   }
 
-  // ── Detection: Example C — Quotation Preparation ──
-  // User supplied customer details / item descriptions, or quotation proposal is active
-  const isQuotationMode =
-    activeProposal?.documentType === 'quotation' ||
-    fullConversationHistory.includes('quotation') ||
-    fullConversationHistory.includes('quote')
-
-  if (isQuotationMode) {
-    if (activeProposal?.status === 'pending_approval') {
-      const suggestions = [
-        'Check whether the descriptions are sufficiently clear.',
-        'Review the quantities and units.',
-        'Identify information that still needs confirmation.',
-        'Help me review the quotation before saving it.',
-      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts))
-      return suggestions.slice(0, 4)
-    }
-
-    if (activeProposal?.status === 'approved_pending_save') {
-      return [
-        'Confirm and save this quotation.',
-        'Make one final check on pricing before saving.',
-        'Return to review to modify line items.',
-      ]
-    }
-  }
-
-  // ── Detection: Invoice Preparation ──
-  const isInvoiceMode =
-    activeProposal?.documentType === 'invoice' ||
-    fullConversationHistory.includes('invoice') ||
-    fullConversationHistory.includes('bill')
-
-  if (isInvoiceMode) {
-    if (activeProposal?.status === 'pending_approval') {
-      const suggestions = [
-        'Check whether customer tax details or TIN are needed.',
-        'Review the line items and calculation before saving.',
-        'Confirm payment terms and due date.',
-        'Help me review the invoice before saving it.',
-      ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts))
-      return suggestions.slice(0, 4)
-    }
-
-    if (activeProposal?.status === 'approved_pending_save') {
-      return [
-        'Confirm and save this invoice.',
-        'Check invoice due date before saving.',
-        'Return to review to change line items.',
-      ]
-    }
-  }
-
-  // ── Detection: Example E — Assistant Asked a Question in Prose ──
-  if (assistantAskedQuestion) {
-    return [
-      'Why is this information needed?',
-      'Assume standard commercial terms.',
-      'Help me understand the options first.',
-    ]
-  }
-
-  // ── Detection: General Business Enquiry or Tax Discussion ──
-  if (fullConversationHistory.includes('vat') || fullConversationHistory.includes('withholding') || fullConversationHistory.includes('tax')) {
+  // ── Priority 11: General Tax Discussion (VAT / WHT) ──
+  if (recentHistory.includes('vat') || recentHistory.includes('withholding') || recentHistory.includes('tax')) {
     return [
       'Explain the statutory withholding rate for this service.',
       'Check if VAT applies to these items.',
       'Draft a quotation with standard tax rates.',
-    ]
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
   }
 
-  // ── Detection: Materials List Organization ──
-  if (lastUserContent.includes('materials') || lastUserContent.includes('list') || lastAssistantContent.includes('line items')) {
+  // ── Priority 12: Materials List Organization ──
+  if (recentHistory.includes('materials') || lastUserContent.includes('list') || lastAssistantContent.includes('line items')) {
     return [
       'Pair unit prices with each line item.',
       'Group related items by commercial category.',
       'Check if any material specifications are incomplete.',
-    ]
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
   }
 
-  // ── Detection: Casual conversation or concluded task ──
-  const isCasualOrConcluded =
-    lastUserContent === 'thank you' ||
-    lastUserContent === 'thanks' ||
-    lastUserContent === 'ok' ||
-    lastUserContent === 'okay' ||
-    lastUserContent === 'all good' ||
-    lastUserContent === 'that is all' ||
-    lastUserContent === "that's all"
-
-  if (isCasualOrConcluded) {
-    // No meaningful next action: display none!
-    return []
+  // ── Priority 13: General Quotation or Invoice Discussion (Without Active Proposal) ──
+  if (recentHistory.includes('quotation') || recentHistory.includes('quote')) {
+    return [
+      'Help me prepare a quotation for a customer.',
+      'Review the pricing structure for this quote.',
+      'Check what payment terms should be proposed.',
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
   }
 
-  // Default fallback when in an active conversation with general questions:
-  // Provide 2 useful, non-intrusive actions related to Bolu's core abilities
+  if (recentHistory.includes('invoice') || recentHistory.includes('bill')) {
+    return [
+      'Help me prepare an invoice for this transaction.',
+      'Check customer tax details and payment terms.',
+      'Review the line items before drafting.',
+    ].filter((s) => !isSimilarToRecentUserMessage(s, recentUserTexts)).slice(0, 3)
+  }
+
+  // ── Default Fallback: General Business Enquiry ──
   return [
     'Help me prepare a document from this discussion.',
     'Check if any key commercial details are missing.',

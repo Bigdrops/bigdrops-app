@@ -86,6 +86,7 @@ export function AssistantThread({
   onCreateClient,
   onAnswerClarification,
   onReturnToReview,
+  onDecideRecommendation,
   onEditMessage,
   onRegenerateMessage,
   narration,
@@ -118,6 +119,12 @@ export function AssistantThread({
   ) => void | Promise<unknown>
   /** Reopens Gate 1 review; the earlier approval no longer authorizes a save. */
   onReturnToReview?: (opId: string) => void | Promise<unknown>
+  /** Accept or keep one wording recommendation. Never approves Gate 1. */
+  onDecideRecommendation?: (
+    opId: string,
+    recommendationId: string,
+    decision: 'accepted' | 'kept',
+  ) => void
   onEditMessage?: (message: ProductionBoluMessage) => void
   onRegenerateMessage?: (message: ProductionBoluMessage) => void
   narration: ThreadNarrationControls
@@ -383,6 +390,16 @@ export function AssistantThread({
                       onReturnToReview={
                         onReturnToReview
                           ? () => onReturnToReview(message.proposal!.opId)
+                          : undefined
+                      }
+                      onDecideRecommendation={
+                        onDecideRecommendation
+                          ? (recommendationId, decision) =>
+                              onDecideRecommendation(
+                                message.proposal!.opId,
+                                recommendationId,
+                                decision,
+                              )
                           : undefined
                       }
                     />

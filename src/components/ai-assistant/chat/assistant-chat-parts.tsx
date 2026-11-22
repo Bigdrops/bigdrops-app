@@ -7,6 +7,7 @@ import type {
   BoluClientResolution,
   BoluProposal,
 } from '@/lib/ai-assistant/bolu-operations'
+import type { BoluCommercialRecommendation } from '@/lib/ai-assistant/bolu-commercial-language'
 import type {
   BoluClientCreateInput,
   BoluClientCreationOutcome,
@@ -1393,6 +1394,81 @@ export function ProposalClarificationCard({
 const AUTHORITATIVE_DOCUMENT_NUMBER = /^[A-Z0-9]{2,6}-\d{3,}$/
 
 /**
+ * ProposalRecommendations — original wording, the exact recommendation and the
+ * user's decision, one line at a time. Nothing here changes the draft: an
+ * accepted wording is applied only when Gate 1 is approved.
+ */
+function ProposalRecommendations({
+  recommendations,
+  pending,
+  onDecide,
+}: {
+  recommendations: BoluCommercialRecommendation[]
+  pending: boolean
+  onDecide?: (recommendationId: string, decision: 'accepted' | 'kept') => void
+}) {
+  if (recommendations.length === 0) return null
+
+  return (
+    <div className="mt-2 rounded-lg border border-[var(--ac-line)] bg-[var(--ac-muted-surface)] p-2 space-y-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ac-muted)]">
+        Wording recommendations
+      </p>
+      <ul className="space-y-2">
+        {recommendations.map((rec) => {
+          const canDecide = pending && Boolean(onDecide) && !rec.applied && !rec.invalidated
+          const outcome = rec.invalidated
+            ? 'Not applied — the line changed after this was recommended.'
+            : rec.applied
+              ? 'Applied to the approved draft.'
+              : rec.decision === 'accepted'
+                ? 'Accepted — applied when you approve this proposal.'
+                : rec.decision === 'kept'
+                  ? 'Original wording kept.'
+                  : 'Pending — the supplied wording stays as written until you choose.'
+          return (
+            <li key={rec.id} className="space-y-0.5 text-[11px] text-[var(--ac-ink)]">
+              <p>
+                <span className="font-semibold">Original:</span> {rec.original}
+              </p>
+              <p>
+                <span className="font-semibold">Recommendation:</span> {rec.recommendation}
+              </p>
+              <p className="text-[var(--ac-muted)]">
+                <span className="font-semibold">Reason:</span> {rec.reason}
+              </p>
+              {canDecide ? (
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <button
+                    type="button"
+                    aria-pressed={rec.decision === 'accepted'}
+                    className="rounded-md border border-[var(--ac-line)] bg-[var(--ac-surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--ac-ink)] hover:border-[var(--ac-accent)]"
+                    onClick={() => onDecide?.(rec.id, 'accepted')}
+                  >
+                    Accept wording
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={rec.decision === 'kept'}
+                    className="rounded-md border border-[var(--ac-line)] bg-[var(--ac-surface)] px-2 py-0.5 text-[10px] font-semibold text-[var(--ac-muted)] hover:text-[var(--ac-ink)]"
+                    onClick={() => onDecide?.(rec.id, 'kept')}
+                  >
+                    Keep original
+                  </button>
+                  <span className="text-[10px] text-[var(--ac-muted)]">{outcome}</span>
+                </div>
+              ) : (
+                <p className="text-[10px] text-[var(--ac-muted)]">{outcome}</p>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+/**
  * ProposalCardView — Two-Gate Operation Decision Surface (DEC-05)
  *
  * Consumes authoritative `BoluProposal` payloads from `bolu-operations.ts`.
@@ -1410,6 +1486,7 @@ export function ProposalCardView({
   onCreateClient,
   onAnswerClarification,
   onReturnToReview,
+  onDecideRecommendation,
   compact = false,
 }: {
   proposal: BoluProposal
@@ -1426,6 +1503,8 @@ export function ProposalCardView({
   ) => void | Promise<unknown>
   /** Reopens Gate 1 review; the earlier approval no longer authorizes a save. */
   onReturnToReview?: () => void | Promise<unknown>
+  /** Accept or keep one wording recommendation. Never approves Gate 1. */
+  onDecideRecommendation?: (recommendationId: string, decision: 'accepted' | 'kept') => void
   compact?: boolean
 }) {
   const titleId = useId()
@@ -1517,6 +1596,9 @@ export function ProposalCardView({
         typeof proposal.calculationInputsChange?.new.vatPercent === 'number'
       ? proposal.calculationInputsChange.new.vatPercent
       : 7.5
+
+  const recommendations =
+    'commercialRecommendations' in proposal ? proposal.commercialRecommendations ?? [] : []
 
   const [submittingGate1, setSubmittingGate1] = useState(false)
 
@@ -1790,6 +1872,13 @@ export function ProposalCardView({
           </ul>
         </div>
       ) : null}
+
+      {/* Original wording, exact recommendation and the boss's decision. */}
+      <ProposalRecommendations
+        recommendations={recommendations}
+        pending={isPendingGate1}
+        onDecide={onDecideRecommendation}
+      />
 
       {/* Reusable contextual clarification for the pending operation */}
       {isCreate && isPendingGate1 && proposal.clarification && onAnswerClarification ? (

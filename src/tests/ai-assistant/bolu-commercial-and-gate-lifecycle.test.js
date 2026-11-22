@@ -118,12 +118,17 @@ test('Amount shorthand is parsed without changing the supplied value', () => {
   assert.equal(parseCommercialAmount('Salt'), null)
 })
 
-test('Cable shorthand keeps only the supplied size and colour', () => {
-  // Presentation only: the unit becomes explicit, nothing about the product.
-  assert.equal(standardizeDescription('1.5mm green'), '1.5mm² green')
-  assert.equal(standardizeDescription('2.5mm black'), '2.5mm² black')
-  assert.equal(standardizeDescription('1.5mm2 red'), '1.5mm² red')
+test('A unit is only made explicit when the words name the conductor', () => {
+  // Explicit conductor context: the supplied size becomes a cross-section.
+  assert.equal(standardizeDescription('1.5mm cable'), '1.5mm² cable')
+  assert.equal(standardizeDescription('1.5mm wire'), '1.5mm² wire')
   assert.equal(standardizeDescription('1.5mm green cable'), '1.5mm² green cable')
+  // A colour alone does not establish a conductor, so the wording is untouched.
+  assert.equal(standardizeDescription('1.5mm green'), '1.5mm green')
+  assert.equal(standardizeDescription('2.5mm black'), '2.5mm black')
+  // An explicitly supplied squared unit is preserved.
+  assert.equal(standardizeDescription('1.5mm2 red'), '1.5mm² red')
+  assert.equal(standardizeDescription('1.5mm² red'), '1.5mm² red')
   assert.equal(isCableShorthand('2.5mm red'), true)
   assert.equal(isCableShorthand('Salt'), false)
 })
@@ -145,6 +150,7 @@ test('Standardization never invents a product family, class or specification', (
 
   // The previous defect: `1.5mm green` gained "Single-Core Cable".
   const cable = standardizeDescription('1.5mm green')
+  assert.equal(cable, '1.5mm green', 'colour alone never makes the unit explicit')
   assert.doesNotMatch(cable, /single[- ]?core/i)
   assert.doesNotMatch(cable, /cable/i)
 
@@ -175,10 +181,10 @@ test('WhatsApp-style input becomes six ordered entries with prices paired positi
 
   const descriptions = parsed.descriptions.map((entry) => entry.description)
   assert.deepEqual(descriptions, [
-    '1.5mm² green',
-    '2.5mm² red',
-    '2.5mm² black',
-    '1.5mm² black',
+    '1.5mm green',
+    '2.5mm red',
+    '2.5mm black',
+    '1.5mm black',
     'Salt',
     'Charcoal',
   ])
@@ -203,7 +209,7 @@ test('WhatsApp timestamps and list markers are stripped before parsing', () => {
     ['[14/11, 12:13] Mujay:', '1. 1.5mm green 1', '2. 2.5mm red 1', '32,000', '53,000'].join('\n'),
   )
   assert.equal(parsed.descriptions.length, 2)
-  assert.equal(parsed.descriptions[0].description, '1.5mm² green')
+  assert.equal(parsed.descriptions[0].description, '1.5mm green')
   assert.deepEqual(parsed.descriptions.map((entry) => entry.amount), [32000, 53000])
 })
 
@@ -221,21 +227,21 @@ test('A description/price count mismatch is reported, never guessed', () => {
   assert.deepEqual(parsed.unpairedAmounts, [32000, 53000])
 })
 
-test('Model output is standardized deterministically before preview', () => {
-  const [item] = standardizeCommercialItems([{ description: '1.5mm green', quantity: 1, unit_price: 32000 }])
-  assert.equal(item.description, '1.5mm² green')
-  assert.doesNotMatch(item.description, /single[- ]?core|cable/i)
+test('The standardisation helper produces the wording a recommendation would offer', () => {
+  const [item] = standardizeCommercialItems([{ description: '1.5mm green cable', quantity: 1, unit_price: 32000 }])
+  assert.equal(item.description, '1.5mm² green cable')
+  assert.doesNotMatch(item.description, /single[- ]?core/i)
   assert.equal(item.quantity, 1)
   assert.equal(item.unit_price, 32000)
 })
 
 test('Suggestions are grounded and optional, and never block the proposal', () => {
   const suggestions = buildCommercialSuggestions({
-    items: [{ description: '1.5mm green', quantity: 1, unit_price: 0 }],
+    items: [{ description: '1.5mm2 blue', quantity: 1, unit_price: 0 }],
     payment_terms: null,
     title: null,
   })
-  assert.ok(suggestions.some((entry) => /1\.5mm² green/.test(entry)))
+  assert.ok(suggestions.some((entry) => /1\.5mm² blue/.test(entry)))
   assert.ok(!suggestions.some((entry) => /single[- ]?core/i.test(entry)))
   assert.ok(suggestions.some((entry) => /No amount was supplied/.test(entry)))
   assert.ok(suggestions.some((entry) => /Payment terms/.test(entry)))
