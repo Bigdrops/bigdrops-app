@@ -203,6 +203,7 @@ const OPEN_WITH_CONTENT_TYPES: Record<string, string> = {
   pdf: 'application/pdf',
   csv: 'text/csv',
   json: 'application/json',
+  md: 'text/markdown',
   txt: 'text/plain',
 }
 

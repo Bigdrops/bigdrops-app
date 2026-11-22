@@ -3,31 +3,18 @@
  *
  * Provides client-side export capabilities for active Bolu chat transcripts
  * into Markdown (.md) and JSON (.json) formats.
+ *
+ * Web uses the browser download path. Native Android uses the canonical
+ * user-file persistence path (Documents/BigDrops/chat-exports) through the
+ * MediaStore bridge, then offers an Open-with chooser. A synthetic
+ * <a download> click on a Blob URL does not work in the Android WebView.
  */
+
+import { downloadTextFile } from '@/lib/native/fileDownload'
 
 import type { ProductionBoluMessage } from './hooks/types'
 
-function triggerDownload(blob: Blob, fileName: string): void {
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = fileName
-  anchor.style.display = 'none'
-  document.body.appendChild(anchor)
-  anchor.click()
-  setTimeout(() => {
-    if (typeof document !== 'undefined' && document?.body && anchor.parentNode) {
-      try {
-        document.body.removeChild(anchor)
-      } catch {}
-    }
-    if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
-      try {
-        URL.revokeObjectURL(url)
-      } catch {}
-    }
-  }, 100)
-}
+const EXPORT_SUBDIRECTORY = 'chat-exports'
 
 function sanitizeFileName(title?: string): string {
   const base = (title || 'bolu-conversation')
@@ -39,7 +26,10 @@ function sanitizeFileName(title?: string): string {
   return `${base}-${dateStr}`
 }
 
-export function exportChatAsMarkdown(messages: ProductionBoluMessage[], title?: string): void {
+export async function exportChatAsMarkdown(
+  messages: ProductionBoluMessage[],
+  title?: string,
+): Promise<void> {
   const lines: string[] = []
   lines.push(`# ${title || 'Bolu Conversation'}`)
   lines.push(`*Exported on ${new Date().toLocaleString('en-NG')}*`)
@@ -80,13 +70,17 @@ export function exportChatAsMarkdown(messages: ProductionBoluMessage[], title?: 
     lines.push('')
   }
 
-  const content = lines.join('\n')
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
-  const fileName = `${sanitizeFileName(title)}.md`
-  triggerDownload(blob, fileName)
+  await downloadTextFile({
+    fileName: `${sanitizeFileName(title)}.md`,
+    text: lines.join('\n'),
+    subdirectory: EXPORT_SUBDIRECTORY,
+  })
 }
 
-export function exportChatAsJson(messages: ProductionBoluMessage[], title?: string): void {
+export async function exportChatAsJson(
+  messages: ProductionBoluMessage[],
+  title?: string,
+): Promise<void> {
   const payload = {
     title: title || 'Bolu Conversation',
     exportedAt: new Date().toISOString(),
@@ -102,8 +96,9 @@ export function exportChatAsJson(messages: ProductionBoluMessage[], title?: stri
     })),
   }
 
-  const content = JSON.stringify(payload, null, 2)
-  const blob = new Blob([content], { type: 'application/json;charset=utf-8' })
-  const fileName = `${sanitizeFileName(title)}.json`
-  triggerDownload(blob, fileName)
+  await downloadTextFile({
+    fileName: `${sanitizeFileName(title)}.json`,
+    text: JSON.stringify(payload, null, 2),
+    subdirectory: EXPORT_SUBDIRECTORY,
+  })
 }

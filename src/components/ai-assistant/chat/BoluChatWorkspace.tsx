@@ -509,8 +509,16 @@ export function BoluChatWorkspace({
       onOpenContext={() => setPanelOpen((v) => !v)}
       onOpenRail={() => setMobileRailOpen((v) => !v)}
       onClose={handleClose}
-      onExportMarkdown={() => exportChatAsMarkdown(messages, conversationTitle)}
-      onExportJson={() => exportChatAsJson(messages, conversationTitle)}
+      onExportMarkdown={() => {
+        void exportChatAsMarkdown(messages, conversationTitle)
+          .then(() => feedback.success('Markdown transcript saved'))
+          .catch(() => feedback.error('Could not export the Markdown transcript'))
+      }}
+      onExportJson={() => {
+        void exportChatAsJson(messages, conversationTitle)
+          .then(() => feedback.success('JSON transcript saved'))
+          .catch(() => feedback.error('Could not export the JSON transcript'))
+      }}
       contextOpen={panelOpen}
       showContext={true}
       showRailToggle={viewport === 'fold-closed' || viewport === 'fold-open'}

@@ -6,9 +6,7 @@ import path from 'node:path'
 import type { ProductionBoluMessage } from '@/lib/ai-assistant/hooks/types'
 import { exportChatAsMarkdown, exportChatAsJson } from '@/lib/ai-assistant/bolu-export'
 
-test('Bolu Operational Remediation: Chat Export Utility functions exist and produce clean payloads', () => {
-  assert.equal(typeof exportChatAsMarkdown, 'function')
-  assert.equal(typeof exportChatAsJson, 'function')
+test('Bolu Operational Remediation: Chat Export Utility functions exist and produce clean payloads', async () => {
 
   const sampleMessages: ProductionBoluMessage[] = [
     {
@@ -61,45 +59,41 @@ test('Bolu Operational Remediation: Chat Export Utility functions exist and prod
     },
   ]
 
-  // Mock document and URL for download simulation in Node/Bun environment
+  // The web branch of downloadTextFile uses a Blob URL and a synthetic anchor.
+  // Capture both so the test verifies file names and content without a WebView.
   const mockAnchor = { href: '', download: '', style: {}, click: () => {} }
-  let createdBlob: Blob | null = null
-  let createdFileName = ''
-
-  const origDocument = globalThis.document
-  const origUrl = globalThis.URL
+  const capturedBlobs: Blob[] = []
+  const originalDocument = globalThis.document
+  const originalUrl = globalThis.URL
+  const originalWindow = globalThis.window
 
   try {
+    ;(globalThis as any).window = { setTimeout: (fn: () => void) => fn() }
     ;(globalThis as any).document = {
-      createElement: (tag: string) => {
-        if (tag === 'a') return mockAnchor
-        return {}
-      },
-      body: {
-        appendChild: () => {},
-        removeChild: () => {},
-      },
+      createElement: (tag: string) => (tag === 'a' ? mockAnchor : {}),
+      body: { appendChild: () => {}, removeChild: () => {} },
     }
     ;(globalThis as any).URL = {
       createObjectURL: (blob: Blob) => {
-        createdBlob = blob
+        capturedBlobs.push(blob)
         return 'blob:mock-url'
       },
       revokeObjectURL: () => {},
     }
 
-    // Test Markdown Export
-    exportChatAsMarkdown(sampleMessages, 'Solwood Invoice Conversation')
+    await exportChatAsMarkdown(sampleMessages, 'Solwood Invoice Conversation')
     assert.equal(mockAnchor.download.endsWith('.md'), true)
     assert.equal(mockAnchor.download.includes('solwood-invoice-conversation'), true)
+    assert.equal((await capturedBlobs[0].text()).includes('# Solwood Invoice Conversation'), true)
 
-    // Test JSON Export
-    exportChatAsJson(sampleMessages, 'Solwood Invoice Conversation')
+    await exportChatAsJson(sampleMessages, 'Solwood Invoice Conversation')
     assert.equal(mockAnchor.download.endsWith('.json'), true)
     assert.equal(mockAnchor.download.includes('solwood-invoice-conversation'), true)
+    assert.equal(JSON.parse(await capturedBlobs[1].text()).messageCount, 2)
   } finally {
-    globalThis.document = origDocument
-    globalThis.URL = origUrl
+    globalThis.document = originalDocument
+    globalThis.URL = originalUrl
+    globalThis.window = originalWindow
   }
 })
 
