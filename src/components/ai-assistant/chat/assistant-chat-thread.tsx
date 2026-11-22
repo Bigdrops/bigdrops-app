@@ -8,6 +8,7 @@ import { IconAction } from './assistant-chat-icon-action'
 import { MessageWarnings, readMessageWarnings } from './assistant-chat-warnings'
 import { AssistantAttachments, readMessageAttachments } from './assistant-chat-attachments'
 import { BoluOrbIdentity, BoluOrbInline } from './bolu-thinking-orb'
+import { getConversationStarters } from '@/lib/ai-assistant/bolu-suggestions'
 import type { ClerkState, ProductionBoluMessage, ThreadNarrationControls } from './types'
 import type {
   BoluClientCreateInput,
@@ -15,6 +16,28 @@ import type {
   BoluClientMatch,
   BoluClientSearchResult,
 } from '@/lib/ai-assistant/bolu-data'
+
+/**
+ * Formats completion timestamp and generation duration for subordinate display beneath completed turns.
+ * Returns null if metadata or required duration/completion timestamps are missing.
+ * e.g., "20:48 · 2.4s"
+ */
+export function formatResponseTiming(metadata?: Record<string, unknown> | null): string | null {
+  if (!metadata) return null
+  const durationMs = typeof metadata.durationMs === 'number' ? metadata.durationMs : null
+  const completedAt = typeof metadata.completedAt === 'string' ? metadata.completedAt : null
+  if (durationMs == null || !completedAt) return null
+
+  try {
+    const date = new Date(completedAt)
+    if (isNaN(date.getTime())) return null
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+    const durationSec = (durationMs / 1000).toFixed(1)
+    return `${timeStr} · ${durationSec}s`
+  } catch {
+    return null
+  }
+}
 
 /**
  * Strips raw bolu_operation JSON blocks and removes em-dashes from user-facing assistant prose.
@@ -108,12 +131,7 @@ export function AssistantThread({
     onScroll(event)
   }
 
-  const defaultSuggestions = suggestions.length > 0 ? suggestions : [
-    'Show outstanding invoices',
-    'Create an invoice for a customer',
-    'Draft a new quotation',
-    'Check recent client balances',
-  ]
+  const defaultSuggestions = suggestions.length > 0 ? suggestions : getConversationStarters()
 
   return (
     <div className="ac-stream">
@@ -181,9 +199,26 @@ export function AssistantThread({
 
           const prose = cleanAssistantProse(message.content)
           const attachments = readMessageAttachments(message.metadata)
-          // Copy is offered for a finished response only, never mid-stream.
-          const canCopy =
-            (message.status === 'completed' || message.status === 'stopped') && prose.trim().length > 0
+
+          const isFailed = message.status === 'failed'
+          const isStopped = message.status === 'stopped'
+          const isCompleted = message.status === 'completed'
+          const isStreamingStatus = message.status === 'streaming'
+
+          // Interrupted turn: partial tokens exist on a failed turn
+          const isInterrupted = isFailed && Boolean(
+            message.metadata?.isInterrupted ||
+            (prose && !message.content.startsWith('Bolu could not complete this request'))
+          )
+
+          const timingLabel = isCompleted ? formatResponseTiming(message.metadata) : null
+          const canCopy = (isCompleted || isStopped || isInterrupted) && prose.trim().length > 0
+          const errorReason = typeof message.metadata?.error === 'string'
+            ? message.metadata.error
+            : (message.content.startsWith('Bolu could not complete this request:')
+                ? message.content.replace(/^Bolu could not complete this request:\s*/, '')
+                : 'Inference request disconnected before completion.')
+
           const isThisSpeaking = narration.messageId === message.id && narration.status === 'speaking'
           const isThisPaused = narration.messageId === message.id && narration.status === 'paused'
           const narrationBlocked = !narration.supported || !narration.enabled
@@ -221,8 +256,8 @@ export function AssistantThread({
                   </div>
                 ) : null}
 
-                {/* Failed Message Error Card */}
-                {message.status === 'failed' ? (
+                {/* 1. Complete Failure without Usable Content */}
+                {isFailed && !isInterrupted ? (
                   <div className="p-3 my-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-600 dark:text-rose-400 flex items-start justify-between gap-2.5">
                     <div className="flex items-start gap-2.5 min-w-0 flex-1">
                       <AlertCircle className="size-4 shrink-0 text-rose-500 mt-0.5" aria-hidden="true" />
@@ -246,14 +281,49 @@ export function AssistantThread({
                   </div>
                 ) : null}
 
-                {/* Assistant Prose — one Markdown renderer for streamed and persisted messages */}
-                {message.status !== 'failed' && prose ? (
+                {/* 2. Assistant Prose (for completed, stopped, interrupted, and actively streaming) */}
+                {(!isFailed || isInterrupted) && prose ? (
                   <div className="ac-text">
                     <AssistantMarkdown
                       text={prose}
-                      streaming={message.status === 'streaming'}
-                      caret={isStreaming && latest && message.status === 'streaming'}
+                      streaming={isStreamingStatus}
+                      caret={isStreaming && latest && isStreamingStatus}
                     />
+                  </div>
+                ) : null}
+
+                {/* 3. Stopped Indicator: Visibly identifies user stopped generation */}
+                {isStopped ? (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 font-medium my-1.5 select-none" aria-label="Generation stopped by user">
+                    <Square className="size-2.5 shrink-0 fill-current" aria-hidden="true" />
+                    <span>Generation stopped by user</span>
+                  </div>
+                ) : null}
+
+                {/* 4. Interrupted Partial Output Warning Card with In-Place Retry */}
+                {isInterrupted ? (
+                  <div className="p-2.5 my-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs text-rose-600 dark:text-rose-400 flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <AlertCircle className="size-4 shrink-0 text-rose-500" aria-hidden="true" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-rose-700 dark:text-rose-300 text-[11px]">Generation Interrupted</p>
+                        <p className="text-[10px] text-rose-600/90 dark:text-rose-400/90 truncate">
+                          {errorReason}
+                        </p>
+                      </div>
+                    </div>
+                    {onRegenerateMessage ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-medium text-[11px] transition shrink-0 active:scale-95 disabled:opacity-50"
+                        onClick={() => onRegenerateMessage(message)}
+                        disabled={busy}
+                        aria-label="Retry interrupted request"
+                      >
+                        <RefreshCw className="size-3" aria-hidden="true" />
+                        <span>Retry</span>
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -328,10 +398,26 @@ export function AssistantThread({
                 {/* Typed attachments only — no derived or invented files */}
                 <AssistantAttachments attachments={attachments} />
 
-                {/* Response action row: Regenerate, Copy, Read aloud — icon-only. */}
+                {/* Response action row: Timestamp, Regenerate, Copy, Read aloud */}
                 {canCopy ? (
-                  <div className="ac-actions">
-                    {onRegenerateMessage ? (
+                  <div className="ac-actions flex items-center gap-1.5 mt-2">
+                    {timingLabel ? (
+                      <span
+                        className="text-[10px] text-[var(--ac-muted)] tracking-tight select-none mr-1 font-medium tabular-nums"
+                        title={
+                          message.metadata?.isServerTelemetry
+                            ? (message.metadata?.ttftMs != null
+                                ? `Server telemetry: ${message.metadata.durationMs}ms (TTFT ${message.metadata.ttftMs}ms)`
+                                : `Server telemetry: ${message.metadata.durationMs}ms`)
+                            : (message.metadata?.durationMs != null
+                                ? `Client round-trip: ${message.metadata.durationMs}ms (fallback)`
+                                : undefined)
+                        }
+                      >
+                        {timingLabel}
+                      </span>
+                    ) : null}
+                    {onRegenerateMessage && (isCompleted || isStopped) ? (
                       <IconAction
                         icon={RefreshCw}
                         label="Regenerate response"

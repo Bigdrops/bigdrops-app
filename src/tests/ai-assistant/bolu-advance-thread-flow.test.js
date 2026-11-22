@@ -623,7 +623,11 @@ await test('s2. server-side Gate 2 endpoint is bypassed client-side for advance-
 })
 
 await test('s3. advance envelope is advertised and wired in runtime, server prompt and executor', () => {
-  const apiPrompt = readSource('api/bolu-chat.ts')
+  // The proposal contract moved to the single-owner prompt module; the route
+  // must import it rather than duplicating instruction text.
+  const apiPrompt = readSource('src/lib/ai-assistant/bolu-prompt.ts')
+  const apiRoute = readSource('api/bolu-chat.ts')
+  assert.match(apiRoute, /buildBoluSystemPrompt/)
   const runtime = readSource('src/lib/ai-assistant/bolu-runtime.ts')
   const generation = readSource('src/lib/ai-assistant/bolu-generation.ts')
   assert.match(apiPrompt, /advance-invoice-config/)

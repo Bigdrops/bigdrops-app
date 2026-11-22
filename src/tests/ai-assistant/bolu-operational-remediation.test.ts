@@ -258,13 +258,20 @@ test('Bolu Chat UX Polish: assistant-chat-composer.tsx locks input during active
   )
 })
 
-test('Bolu Chat UX Polish: api/bolu-chat.ts explicitly forbids em-dashes in system instructions', () => {
-  const filePath = path.resolve('api/bolu-chat.ts')
-  const content = fs.readFileSync(filePath, 'utf-8')
+test('Bolu Chat UX Polish: the authoritative prompt module forbids em-dashes and is used by the chat route', () => {
+  // Instructions moved to the single-owner prompt module; the route must use it.
+  const promptPath = path.resolve('src/lib/ai-assistant/bolu-prompt.ts')
+  const promptContent = fs.readFileSync(promptPath, 'utf-8')
+  const routeContent = fs.readFileSync(path.resolve('api/bolu-chat.ts'), 'utf-8')
 
   assert.equal(
-    content.includes('NEVER use em-dashes ("—") or en-dashes ("–")'),
+    promptContent.includes('NEVER use em-dashes ("—") or en-dashes ("–")'),
     true,
-    'api/bolu-chat.ts must forbid em-dashes in SYSTEM_PREFIX and operational instructions',
+    'bolu-prompt.ts must forbid em-dashes in the always-on and document instructions',
+  )
+  assert.equal(
+    routeContent.includes('buildBoluSystemPrompt'),
+    true,
+    'api/bolu-chat.ts must assemble instructions through buildBoluSystemPrompt',
   )
 })

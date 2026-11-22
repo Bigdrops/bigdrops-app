@@ -193,32 +193,14 @@ export function createBoluRuntime(dependencies: BoluRuntimeDependencies) {
 
         dispatch({ type: 'STATUS', status: 'sending' })
 
-        const factsPrompt = verifiedFacts ? factsAsPrompt(verifiedFacts) : 'No specific record queried yet.'
+        // One authoritative instruction source: the server prompt supplies all
+        // instructions. The client sends verified facts only, so a second, stale
+        // instruction block cannot drift from the server contract.
+        const factsPrompt = verifiedFacts ? factsAsPrompt(verifiedFacts) : ''
 
         const response = await dependencies.providerSend({
           messages: providerMessages,
-          contextFacts: [
-            'You are Bolu, a BOUXRE conversational business operations assistant.',
-            'You support reading authorized business records, preparing structured document proposals, and guiding document persistence.',
-            'Two approval gates are in effect:',
-            '  1. User must explicitly approve proposed changes before application applies them.',
-            '  2. User must explicitly confirm before documents are saved or filed.',
-            'Never claim changes were saved without Gate 2 confirmation.',
-            'Financial calculations remain authoritative and must not be independently calculated or altered by the model.',
-            'When proposing a document creation or modification, output a structured JSON code block:',
-            '```json',
-            '{',
-            '  "bolu_operation": {',
-            '    "operationType": "create-document" | "modify-document" | "advance-invoice-config",',
-            '    "documentFamily": "invoice" | "quotation",',
-            '    "payload": { ... }',
-            '  }',
-            '}',
-            '```',
-            'Advance Invoice configuration lives on the parent invoice only; it never creates a separate advance record. For it use "operationType": "advance-invoice-config" with payload { "targetDocumentId": "<parent invoice UUID>", "intent": "configure" | "update" | "remove", "newValues": { ... } }. Only these fields may be changed: "suffix" (string), "mode" ("percentage" | "percent" | "fixed"), "value" (number; 0-100 for percentage modes), "primary_label" (string), "secondary_label" (string). For "update" include only the fields to change; for "remove" do not include "newValues". Never output "oldValues": the application fills them from the persisted configuration. Target the parent invoice only via its verified UUID from the application facts. Configure/update/remove require Gate 1 review and Gate 2 confirmation.',
-            'Authorized application facts:',
-            factsPrompt,
-          ].join('\n'),
+          contextFacts: factsPrompt,
           signal: abortController.signal,
           onDelta: (delta) => dispatch({ type: 'DELTA', requestId, delta }),
         })

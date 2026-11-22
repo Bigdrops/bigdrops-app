@@ -20,12 +20,9 @@ import type { TenantClient } from '@/lib/tenantClient'
 import { sendBoluProviderRequest } from './bolu-transport'
 import { ModelUnavailableError } from './bolu-transport-errors'
 import type { CandidateAlternative } from './routing/bolu-alternative-discovery'
-import { buildProviderMessages, factsAsPrompt } from './bolu-formatting'
+import { buildProviderMessages, classifyBoluFactFailure, formatBoluFactFailure } from './bolu-formatting'
 import type { BoluProposal } from './bolu-operations'
-import {
-  formatCommercialEvidence,
-  parseCommercialList,
-} from './bolu-commercial-language'
+import { buildBoluContextFacts } from './bolu-prompt'
 import {
   readBoluContextFacts,
   resolveOperationFacts,
@@ -131,10 +128,7 @@ export async function resolveBoluFacts(input: {
     return await readBoluContextFacts(input.tenantClient, capability, factsContext, input.canRead)
   } catch (err) {
     console.warn('[useBoluThread] Intent lookup failed:', err)
-    return {
-      kind: 'message',
-      text: '[SYSTEM ERROR: The database lookup failed. Inform the user you encountered a technical issue querying their records.]',
-    }
+    return { kind: 'failure', code: classifyBoluFactFailure(err) }
   }
 }
 
@@ -204,17 +198,14 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     { id: 'current-user-turn', role: 'user' as const, content: options.userText },
   ])
 
-  // The user may have supplied the commercial details across several turns
-  // (pasted price lists, then names). Parsing the recent user turns keeps that
-  // evidence grounded in the user's own words.
-  const recentUserText = [
-    ...options.history.filter((turn) => turn.role === 'user').slice(-3).map((turn) => turn.content),
-    options.userText,
-  ].join('\n')
-  const commercialEvidence = formatCommercialEvidence(parseCommercialList(recentUserText))
-  const factsPrompt = [facts ? factsAsPrompt(facts) : '', commercialEvidence]
-    .filter(Boolean)
-    .join('\n\n')
+  // Verified records, plus commercial evidence only when this turn is genuinely
+  // document authoring. Ordinary questions never receive a parsed line item.
+  const factsPrompt = buildBoluContextFacts({
+    facts,
+    userText: options.userText,
+    history: options.history,
+    hasActiveDraft: Boolean(options.previousProposal),
+  })
   const controller = new AbortController()
   refs.abortController.current = controller
 
@@ -223,14 +214,20 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     content: string,
     status: 'completed' | 'stopped' | 'failed',
     errorReason?: string,
+    extraMetadata?: Record<string, unknown>,
   ) => {
+    const metadata = {
+      ...(errorReason ? { error: errorReason } : {}),
+      ...(extraMetadata ?? {}),
+    }
+
     if (replaceAssistantId) {
       try {
         const { error: updateError } = await (supabase.from('bolu_messages') as any)
           .update({
             content,
             status,
-            metadata: errorReason ? { error: errorReason } : {},
+            metadata,
             updated_at: new Date().toISOString(),
           })
           .eq('id', replaceAssistantId)
@@ -249,7 +246,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
             role: 'assistant',
             content,
             status,
-            metadata: errorReason ? { error: errorReason } : {},
+            metadata,
           })
           .select(MESSAGE_COLUMNS)
           .single()
@@ -266,41 +263,54 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
   }
 
   try {
-    const response = await sendBoluProviderRequest({
-      messages: priorMessages,
-      contextFacts: factsPrompt,
-      connectionId: options.connectionId,
-      modelId: options.modelId,
-      tenantId,
-      conversationId: targetConversationId,
-      signal: controller.signal,
-      onResponseHeaders: options.onResolvedModel,
-      onDelta: (delta: string) => {
-        state.setClerkState('responding')
-        const cleanDelta = delta.replace(/—/g, ' - ').replace(/–/g, '-')
-        refs.streamingBuffer.current += cleanDelta
+    // A failed lookup is reported in one short sentence instead of being sent
+    // to the model, which would improvise an explanation around it.
+    const failureText = facts?.kind === 'failure' ? formatBoluFactFailure(facts.code) : null
 
-        if (!refs.flushTimer.current) {
-          refs.flushTimer.current = setTimeout(() => {
-            refs.flushTimer.current = null
-            const current = refs.streamingBuffer.current
-            state.setStreamingContent(current)
-            state.setMessages((prev) =>
-              prev.map((m) => (m.id === tempAssistantId ? { ...m, content: current } : m)),
-            )
-          }, 35)
-        }
-      },
-    })
+    let finalText: string
+    let response: Awaited<ReturnType<typeof sendBoluProviderRequest>> | null = null
 
-    if (refs.flushTimer.current) {
-      clearTimeout(refs.flushTimer.current)
-      refs.flushTimer.current = null
+    if (failureText) {
+      finalText = failureText
+      state.setStreamingContent('')
+      state.setIsStreaming(false)
+    } else {
+      response = await sendBoluProviderRequest({
+        messages: priorMessages,
+        contextFacts: factsPrompt,
+        connectionId: options.connectionId,
+        modelId: options.modelId,
+        tenantId,
+        conversationId: targetConversationId,
+        signal: controller.signal,
+        onResponseHeaders: options.onResolvedModel,
+        onDelta: (delta: string) => {
+          state.setClerkState('responding')
+          const cleanDelta = delta.replace(/—/g, ' - ').replace(/–/g, '-')
+          refs.streamingBuffer.current += cleanDelta
+
+          if (!refs.flushTimer.current) {
+            refs.flushTimer.current = setTimeout(() => {
+              refs.flushTimer.current = null
+              const current = refs.streamingBuffer.current
+              state.setStreamingContent(current)
+              state.setMessages((prev) =>
+                prev.map((m) => (m.id === tempAssistantId ? { ...m, content: current } : m)),
+              )
+            }, 35)
+          }
+        },
+      })
+
+      if (refs.flushTimer.current) {
+        clearTimeout(refs.flushTimer.current)
+        refs.flushTimer.current = null
+      }
+
+      finalText = response.text.replace(/—/g, ' - ').replace(/–/g, '-')
+      state.setStreamingContent('')
+      state.setIsStreaming(false)
     }
-
-    let finalText = response.text.replace(/—/g, ' - ').replace(/–/g, '-')
-    state.setStreamingContent('')
-    state.setIsStreaming(false)
 
     const interpretation = await interpretBoluProposal({
       rawText: finalText,
@@ -313,6 +323,18 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     const parsedProposal = interpretation.proposal
     const mergedFromMessageId = interpretation.mergedFromMessageId
 
+    const timingMetadata = response?.metrics ? {
+      completedAt: response.metrics.completedAt,
+      durationMs: response.metrics.durationMs,
+      ...(response.metrics.ttftMs != null ? { ttftMs: response.metrics.ttftMs } : {}),
+      isServerTelemetry: response.metrics.isServerTelemetry,
+      source: response.metrics.source,
+    } : {}
+    const finalMetadata = {
+      ...(mergedFromMessageId ? { mergedFromMessageId } : {}),
+      ...timingMetadata,
+    }
+
     let finalMsg: ProductionBoluMessage | null = null
 
     if (replaceAssistantId) {
@@ -322,6 +344,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
           status: 'completed',
           proposal_payload: parsedProposal,
           records_payload: facts,
+          metadata: finalMetadata,
           updated_at: new Date().toISOString(),
         })
         .eq('id', replaceAssistantId)
@@ -339,6 +362,7 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
           conversation_id: targetConversationId, tenant_id: tenantId,
           role: 'assistant', content: finalText, status: 'completed',
           proposal_payload: parsedProposal, records_payload: facts,
+          metadata: finalMetadata,
         })
         .select(MESSAGE_COLUMNS).single()
 
@@ -401,14 +425,23 @@ export async function runBoluGeneration(options: BoluGenerationOptions): Promise
     const errorMsg = err instanceof Error ? err.message : 'Inference request failed.'
     state.setError(errorMsg)
 
-    // PRESERVE partial streamed text on non-abort errors; do not destroy already visible tokens
-    const finalContent = partial
-      ? `${partial}\n\n[Generation interrupted: ${errorMsg}]`
-      : `Bolu could not complete this request: ${errorMsg}`
+    // PRESERVE partial streamed text on non-abort errors as readable assistant prose.
+    // Keep error details in metadata rather than corrupting the assistant text with brackets.
+    const hasPartial = Boolean(partial)
+    const finalContent = hasPartial ? partial : `Bolu could not complete this request: ${errorMsg}`
 
-    await persistAssistantTurnStatus(finalContent, 'failed', errorMsg)
+    await persistAssistantTurnStatus(finalContent, 'failed', errorMsg, { isInterrupted: hasPartial })
     state.setMessages((prev) =>
-      prev.map((m) => (m.id === tempAssistantId ? { ...m, content: finalContent, status: 'failed' } : m)),
+      prev.map((m) =>
+        m.id === tempAssistantId
+          ? {
+              ...m,
+              content: finalContent,
+              status: 'failed',
+              metadata: { ...(m.metadata ?? {}), error: errorMsg, isInterrupted: hasPartial },
+            }
+          : m,
+      ),
     )
     state.setClerkState('idle')
     return false

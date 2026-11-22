@@ -65,6 +65,118 @@ export function extractSseText(line: string): string | null {
   }
 }
 
+export interface SseServerMetrics {
+  completedAt: string
+  durationMs: number
+  ttftMs?: number | null
+}
+
+/** One `data:` line of an SSE stream. Returns metrics if present and valid, null otherwise. */
+export function extractSseMetrics(line: string): SseServerMetrics | null {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('data:')) return null
+  const payload = trimmed.slice(5).trim()
+  if (!payload || payload === '[DONE]') return null
+  try {
+    const parsed: unknown = JSON.parse(payload)
+    if (!parsed || typeof parsed !== 'object') return null
+    const metrics = (parsed as { metrics?: unknown }).metrics
+    if (!metrics || typeof metrics !== 'object') return null
+    const m = metrics as { durationMs?: unknown; completedAt?: unknown; ttftMs?: unknown }
+    if (typeof m.durationMs !== 'number' || isNaN(m.durationMs) || m.durationMs < 0) return null
+    return {
+      completedAt: typeof m.completedAt === 'string' && m.completedAt ? m.completedAt : new Date().toISOString(),
+      durationMs: m.durationMs,
+      ttftMs: typeof m.ttftMs === 'number' && !isNaN(m.ttftMs) ? m.ttftMs : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+export interface SseParserState {
+  buffer: string
+  text: string
+  serverMetrics: SseServerMetrics | null
+  isDone: boolean
+}
+
+export function createSseParserState(): SseParserState {
+  return {
+    buffer: '',
+    text: '',
+    serverMetrics: null,
+    isDone: false,
+  }
+}
+
+/**
+ * Feeds a raw text chunk into the SSE parser state, splitting on newlines and
+ * holding any incomplete trailing fragment in `state.buffer`.
+ * Correctly processes metrics, content deltas, and [DONE] markers across arbitrary chunk boundaries.
+ */
+export function feedSseChunk(
+  state: SseParserState,
+  chunk: string,
+  onDelta?: (delta: string) => void,
+): void {
+  state.buffer += chunk
+  const lines = state.buffer.split('\n')
+  state.buffer = lines.pop() ?? ''
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+
+    if (trimmed === 'data: [DONE]' || trimmed === '[DONE]') {
+      state.isDone = true
+      continue
+    }
+
+    const metrics = extractSseMetrics(line)
+    if (metrics) {
+      state.serverMetrics = metrics
+      continue
+    }
+
+    const delta = extractSseText(line)
+    if (delta) {
+      state.text += delta
+      onDelta?.(delta)
+    }
+  }
+}
+
+/**
+ * Flushes any remaining content in `state.buffer` when the stream closes.
+ */
+export function flushSseBuffer(
+  state: SseParserState,
+  onDelta?: (delta: string) => void,
+): void {
+  if (!state.buffer) return
+  const line = state.buffer
+  state.buffer = ''
+
+  const trimmed = line.trim()
+  if (!trimmed || trimmed === 'data: [DONE]' || trimmed === '[DONE]') {
+    state.isDone = true
+    return
+  }
+
+  const metrics = extractSseMetrics(line)
+  if (metrics) {
+    state.serverMetrics = metrics
+    return
+  }
+
+  const delta = extractSseText(line)
+  if (delta) {
+    state.text += delta
+    onDelta?.(delta)
+  }
+}
+
 /** Only the last four characters are ever shown. */
 export function maskKey(key: string): string {
   const trimmed = key.trim()

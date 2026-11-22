@@ -135,6 +135,17 @@
   border-color: var(--ac-accent);
 }
 
+.dark .ac-suggest-chip {
+  background: var(--ac-raised);
+  border-color: var(--ac-rim);
+  box-shadow: var(--ac-specular);
+}
+.dark .ac-suggest-chip:hover:not(:disabled) {
+  background: var(--ac-accent-soft);
+  border-color: var(--ac-accent);
+}
+
+
 .dark .ac-clerk-action {
   background: var(--ac-raised);
   box-shadow:

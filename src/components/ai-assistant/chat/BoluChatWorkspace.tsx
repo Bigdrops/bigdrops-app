@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState, useContext, type FormEvent, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, useContext, useMemo, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X } from 'lucide-react'
+import { X, Sparkles } from 'lucide-react'
 
 import { AssistantHeader } from './assistant-chat-chrome'
 import { AssistantComposer } from './assistant-chat-composer'
@@ -17,8 +17,8 @@ import { useBoluNarration } from '@/lib/ai-assistant/hooks/useBoluNarration'
 import { useBoluInteractionPreferences } from '@/hooks/useBoluInteractionPreferences'
 import { useBoluChatInteractions } from '@/hooks/useBoluChatInteractions'
 import { useBoluResponseHaptics } from '@/hooks/useBoluResponseHaptics'
-import { exportChatAsMarkdown, exportChatAsJson } from '@/lib/ai-assistant/bolu-export'
-import { getBoluSuggestions } from '@/lib/ai-assistant/bolu-context'
+import { exportChatAsMarkdown, exportChatAsJson, copyConversationToClipboard } from '@/lib/ai-assistant/bolu-export'
+import { getConversationStarters, generateContextualFollowUps } from '@/lib/ai-assistant/bolu-suggestions'
 import { feedback } from '@/lib/feedback'
 import { EntityContext } from '@/lib/tenant/entityContext'
 import { useAuthorization } from '@/lib/tenant/contexts'
@@ -400,8 +400,22 @@ export function BoluChatWorkspace({
   const activeConversation = conversations.find((c) => c.id === activeConversationId)
   const conversationTitle = activeConversation?.title || 'New Conversation'
 
-  // Suggestions derived from context
-  const suggestions = pageContext ? getBoluSuggestions(pageContext).map((s) => s.prompt) : []
+  // Dynamic Suggestions: starters for empty conversations, contextual follow-ups for active
+  const isStarter = messages.length === 0
+  const suggestions = useMemo(() => {
+    if (isStarter) {
+      return getConversationStarters({
+        conversationId: activeConversationId,
+        module: pageContext?.origin.module,
+      })
+    }
+    return generateContextualFollowUps({
+      messages,
+      activeProposal,
+      pageContext,
+      isStreaming,
+    })
+  }, [isStarter, activeConversationId, pageContext, messages, activeProposal, isStreaming])
 
   const handleSend = async (text: string) => {
     const clean = text.trim()
@@ -500,6 +514,26 @@ export function BoluChatWorkspace({
     />
   ) : null
 
+  const handleCopyConversation = async () => {
+    if (!messages.length) {
+      feedback.info('No messages to copy')
+      return
+    }
+    try {
+      const res = await copyConversationToClipboard(messages, conversationTitle)
+      if (res.success) {
+        feedback.success('Conversation copied to clipboard')
+      } else if (res.fallbackToExport) {
+        feedback.info(`${res.error ?? 'Clipboard copy failed.'} Downloading transcript file...`)
+        await exportChatAsMarkdown(messages, conversationTitle)
+      } else {
+        feedback.error(res.error ?? 'Could not copy conversation')
+      }
+    } catch (err: any) {
+      feedback.error('Could not copy conversation', { description: err?.message })
+    }
+  }
+
   // Header Component (Bolu identity on left, Model Picker & actions on right in ONE shared row)
   const headerNode = (
     <AssistantHeader
@@ -509,6 +543,7 @@ export function BoluChatWorkspace({
       onOpenContext={() => setPanelOpen((v) => !v)}
       onOpenRail={() => setMobileRailOpen((v) => !v)}
       onClose={handleClose}
+      onCopyConversation={handleCopyConversation}
       onExportMarkdown={() => {
         void exportChatAsMarkdown(messages, conversationTitle)
           .then(() => feedback.success('Markdown transcript saved'))
@@ -562,7 +597,7 @@ export function BoluChatWorkspace({
       onEditMessage={handleBeginEdit}
       onRegenerateMessage={handleRegenerate}
       narration={narrationControls}
-      suggestions={suggestions}
+      suggestions={isStarter ? suggestions : []}
     />
   )
 
@@ -585,6 +620,31 @@ export function BoluChatWorkspace({
       onStop={stopStreaming}
     />
   )
+
+  // Suggestions Tray placed directly below the conversation composer
+  const suggestionsNode = suggestions && suggestions.length > 0 && !editingMessageId ? (
+    <div
+      className="ac-suggestions-bar border-t border-[var(--ac-line)] bg-[var(--ac-muted-surface)] px-3 py-1.5 sm:px-4"
+      role="region"
+      aria-label={isStarter ? 'Conversation starters' : 'Contextual follow-up suggestions'}
+    >
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        {suggestions.map((sug, idx) => (
+          <button
+            key={idx}
+            type="button"
+            className="ac-suggest-chip shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--ac-line)] bg-[var(--ac-surface)] text-xs font-medium text-[var(--ac-ink)] hover:border-[var(--ac-accent)] hover:bg-[var(--ac-accent-soft)] transition active:scale-95 max-w-[280px] sm:max-w-[340px] truncate"
+            onClick={() => void handleSend(sug)}
+            disabled={isStreaming}
+            title={sug}
+          >
+            <Sparkles className="size-3 text-[var(--ac-accent)] shrink-0" aria-hidden="true" />
+            <span className="truncate">{sug}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : null
 
   // Document Panel Component
   const panelNode = (
@@ -640,6 +700,7 @@ export function BoluChatWorkspace({
               {threadNode}
               {negotiationNode}
               {composerNode}
+              {suggestionsNode}
 
               {/* Mobile Rail Drawer */}
               {mobileRailOpen ? (
@@ -683,6 +744,7 @@ export function BoluChatWorkspace({
                 {threadNode}
                 {negotiationNode}
                 {composerNode}
+                {suggestionsNode}
               </div>
 
               {/* Collapsible Document Panel */}
@@ -718,6 +780,7 @@ export function BoluChatWorkspace({
                 {threadNode}
                 {negotiationNode}
                 {composerNode}
+                {suggestionsNode}
               </div>
               {panelOpen ? (
                 <aside className="w-[340px] shrink-0 h-full border-l border-[var(--ac-line)] bg-[var(--ac-surface)] flex flex-col">
@@ -736,6 +799,7 @@ export function BoluChatWorkspace({
                 {threadNode}
                 {negotiationNode}
                 {composerNode}
+                {suggestionsNode}
               </div>
               {panelOpen ? (
                 <aside className="w-[340px] xl:w-[380px] h-full shrink-0 bg-[var(--ac-surface)]">

@@ -20,9 +20,17 @@ export type BoluRecord = {
   route: string
 }
 
+/**
+ * A resolved lookup either returns records, a short informational message, or
+ * an explicit failure. A failure is not an empty result: retrieval did not
+ * happen, so the user must not be told that no records exist.
+ */
+export type BoluFactFailureCode = 'lookup_failed' | 'not_authorized' | 'tenant_unavailable'
+
 export type BoluFactResult =
   | { kind: 'records'; records: BoluRecord[]; hasMore: boolean }
   | { kind: 'message'; text: string }
+  | { kind: 'failure'; code: BoluFactFailureCode }
 
 export type BoluReadAuthorization = (resource: 'invoice' | 'quotation', action: 'view') => boolean
 
@@ -1016,9 +1024,7 @@ export async function resolveOperationFacts(input: {
           .slice(0, 5)
           .map((m) => `• ID: "${m.id}", Name: "${m.name}"${m.phone ? ` (${m.phone})` : ''}`)
           .join('\n')
-        factsList.push(
-          `Multiple client candidates match "${writeContext.clientHint}":\n${matchesSummary}\nNote: Select the best match or clarify with user.`,
-        )
+        factsList.push(`Multiple client candidates match "${writeContext.clientHint}":\n${matchesSummary}`)
       } else if (clientResult.status === 'not_found') {
         factsList.push(`Client search: No existing client record matches "${writeContext.clientHint}".`)
       }
@@ -1034,7 +1040,7 @@ export async function resolveOperationFacts(input: {
       factsList.push(
         `Supplier records matching "${writeContext.supplierHint}":\n${suppliers
           .map((s) => `• ID: "${s.id}", Name: "${s.name}"${s.phone ? ` (${s.phone})` : ''}`)
-          .join('\n')}\nNote: a supplier is never attached to an invoice or quotation client field.`,
+          .join('\n')}`,
       )
     }
   }
@@ -1081,7 +1087,7 @@ export async function resolveOperationFacts(input: {
         .map((item) => `• ID: "${item.id}", Name: "${item.name}", Standard price: ${item.standardPrice}`)
         .join('\n')
       factsList.push(
-        `Catalog suggestions for "${term}" (linking is optional, no stock is reserved):\n${summary}\nNote: confirm the intended item with the user before linking it.`,
+        `Catalog suggestions for "${term}" (linking is optional, no stock is reserved):\n${summary}`,
       )
     }
   }

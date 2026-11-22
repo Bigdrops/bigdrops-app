@@ -1,8 +1,16 @@
 import type { BoluProviderMessage } from './bolu-provider'
-import { extractSseText } from './protocol'
+import { createSseParserState, feedSseChunk, flushSseBuffer } from './protocol'
 import { supabase } from '@/supabase'
 import type { CandidateAlternative } from './routing/bolu-alternative-discovery'
 import { ModelUnavailableError } from './bolu-transport-errors'
+
+export interface BoluTimingMetrics {
+  completedAt: string
+  durationMs: number
+  ttftMs?: number | null
+  isServerTelemetry: boolean
+  source: 'server' | 'client_fallback'
+}
 
 export { ModelUnavailableError }
 
@@ -16,7 +24,14 @@ export async function sendBoluProviderRequest(params: {
   signal?: AbortSignal
   onDelta?: (delta: string) => void
   onResponseHeaders?: (headers: { connectionId: string | null; model: string | null; isFallback: boolean }) => void
-}): Promise<{ text: string; resolvedConnectionId: string | null; resolvedModel: string | null; isFallback: boolean }> {
+}): Promise<{
+  text: string
+  resolvedConnectionId: string | null
+  resolvedModel: string | null
+  isFallback: boolean
+  metrics?: BoluTimingMetrics
+}> {
+  const startMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
   const { data, error } = await supabase.auth.getSession()
   const accessToken = data.session?.access_token
   if (error || !accessToken) throw new Error('Sign in to use Bolu.')
@@ -75,45 +90,44 @@ export async function sendBoluProviderRequest(params: {
   const reader = response.body?.getReader()
   if (!reader) throw new Error('Bolu returned no response stream.')
   const decoder = new TextDecoder()
-  let buffer = ''
-  let text = ''
-  let isDone = false
+  const parserState = createSseParserState()
+
   try {
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (trimmed === 'data: [DONE]' || trimmed === '[DONE]') {
-          isDone = true
-          break
-        }
-        const delta = extractSseText(line)
-        if (delta) {
-          text += delta
-          params.onDelta?.(delta)
-        }
-      }
-      if (isDone) break
-    }
-    if (buffer && !isDone) {
-      const trimmed = buffer.trim()
-      if (trimmed !== 'data: [DONE]' && trimmed !== '[DONE]') {
-        const delta = extractSseText(buffer)
-        if (delta) {
-          text += delta
-          params.onDelta?.(delta)
-        }
+      const chunk = decoder.decode(value, { stream: true })
+      feedSseChunk(parserState, chunk, params.onDelta)
+      if (parserState.isDone) {
+        break
       }
     }
+    flushSseBuffer(parserState, params.onDelta)
   } finally {
     try {
       reader.releaseLock()
     } catch {}
   }
+  const text = parserState.text
   if (!text.trim()) throw new Error('Bolu returned an empty response.')
-  return { text, resolvedConnectionId, resolvedModel, isFallback }
+
+  const endMs = typeof performance !== 'undefined' ? performance.now() : Date.now()
+  const fallbackDurationMs = Math.max(1, Math.round(endMs - startMs))
+  const metrics: BoluTimingMetrics = parserState.serverMetrics
+    ? {
+        completedAt: parserState.serverMetrics.completedAt,
+        durationMs: parserState.serverMetrics.durationMs,
+        ttftMs: parserState.serverMetrics.ttftMs ?? null,
+        isServerTelemetry: true,
+        source: 'server',
+      }
+    : {
+        completedAt: new Date().toISOString(),
+        durationMs: fallbackDurationMs,
+        ttftMs: null,
+        isServerTelemetry: false,
+        source: 'client_fallback',
+      }
+
+  return { text, resolvedConnectionId, resolvedModel, isFallback, metrics }
 }

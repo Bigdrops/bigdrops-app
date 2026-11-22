@@ -6,16 +6,17 @@
  *
  * - It parses what the user actually wrote (pasted WhatsApp-style lists, list
  *   markers, `15k` amounts, description lines, separate price lines).
- * - It standardizes what is safely implied by the supplied words (unit
- *   notation, capitalisation, `1.5mm green` -> `1.5mm² Single-Core Cable –
- *   Green`).
+ * - It standardizes presentation only: unit notation where the supplied text
+ *   already establishes the measurement, capitalisation, whitespace, a small
+ *   set of spelling corrections (`elbo` -> `elbow`) and compound words
+ *   (`change over switch` -> `Changeover Switch`).
  * - It suggests improvements without ever applying a change the user did not
  *   supply.
  *
  * Hard rule: it never invents a specification. No brand, manufacturer, grade,
- * packaging, core count beyond the approved single-core shorthand, voltage,
- * model, material or dimension is added here. Every value it emits is either
- * present in the input or a documented interpretation of that input.
+ * packaging, core count, product class, voltage, model, material or dimension
+ * is added here. `1.5mm green` becomes `1.5mm² green` at most: every supplied
+ * word survives and nothing about the product is guessed.
  *
  * Scope: invoices and quotations. Nothing in this module writes to the
  * database or mutates inventory.
@@ -49,11 +50,45 @@ export interface CommercialListParse {
 const COLOUR_WORDS =
   'green|red|black|blue|yellow|brown|white|grey|gray|orange|purple|pink'
 
-/** `1.5mm green`, `2.5 mm black`, `1.5mm2 red` */
+/** `1.5mm green`, `2.5 mm black`, `1.5mm2 red`: a measured size with a cable colour. */
 const CABLE_SHORTHAND = new RegExp(
   `^(\\d+(?:\\.\\d+)?)\\s*mm\\s*(?:²|2|\\^2)?\\s*[-–,]?\\s*(${COLOUR_WORDS})$`,
   'i',
 )
+
+/**
+ * A measured size followed by a cable colour, anywhere in the text. This is
+ * the only measurement context in which a bare `mm` is read as a conductor
+ * cross-section.
+ */
+const MEASURED_CONDUCTOR = new RegExp(
+  `(?:^|\\s)\\d+(?:\\.\\d+)?\\s*mm\\s*(?:²|2|\\^2)?\\s*[-–,]?\\s*(?:${COLOUR_WORDS})\\b`,
+  'i',
+)
+
+/** A word that names the conductor itself. */
+const CONDUCTOR_WORD = /\b(?:cables?|wires?|conductors?)\b/i
+
+/**
+ * Spelling and compound-word corrections that change no product attribute.
+ * Ordered: longer forms first so a shorter rule cannot pre-empt them.
+ */
+const SAFE_WORD_CORRECTIONS: Array<[RegExp, string]> = [
+  [/\belbos\b/gi, 'elbows'],
+  [/\belbo\b/gi, 'elbow'],
+  [/\bchange\s*over\s+switches\b/gi, 'Changeover Switches'],
+  [/\bchange\s*over\s+switch\b/gi, 'Changeover Switch'],
+]
+
+/**
+ * True only when the supplied words themselves place the measurement on a
+ * conductor: a cable or wire word, or a measured size carrying a cable colour.
+ * Without that signal `mm` is ambiguous (a pipe wall, a rod, a sheet), so the
+ * unit is left exactly as the user wrote it.
+ */
+function establishesConductorMeasurement(text: string): boolean {
+  return CONDUCTOR_WORD.test(text) || MEASURED_CONDUCTOR.test(text)
+}
 
 /** A bare trailing integer after a measured description is a quantity. */
 const MEASURED_DESCRIPTION = /\b\d+(?:\.\d+)?\s*(?:mm|cm|m|kg|g|ml|l|pcs|bags?|rolls?|packs?)\b/i
@@ -95,30 +130,37 @@ export function parseCommercialAmount(raw: string | null | undefined): number | 
 /**
  * Standardizes a supplied description without adding a specification.
  *
- * Only presentation is normalized: whitespace, unit notation, casing. Words
- * the user did not write are never appended here.
+ * Only presentation is normalized: whitespace, unit notation the text already
+ * establishes, casing, and a safe spelling/compound-word correction. No word
+ * the user did not write is appended and no product attribute is inferred.
  */
 export function standardizeDescription(raw: string): string {
-  const cleaned = stripCitationSpanArtifacts(String(raw ?? ''))
+  let cleaned = stripCitationSpanArtifacts(String(raw ?? ''))
     .replace(/\s+/g, ' ')
-    .replace(/\bmm\s*(?:2|\^2)\b/gi, 'mm²')
-    .replace(/\bmm2\b/gi, 'mm²')
     .trim()
   if (!cleaned) return ''
 
-  // Cable shorthand is the one approved expansion: size + colour on a measured
-  // conductor is sufficient to name the product class without inventing specs.
-  const cable = cleaned.match(CABLE_SHORTHAND)
-  if (cable) {
-    const size = cable[1]
-    const colour = cable[2].toLowerCase().replace(/^gray$/, 'grey')
-    return `${size}mm² Single-Core Cable – ${colour.charAt(0).toUpperCase()}${colour.slice(1)}`
+  cleaned = SAFE_WORD_CORRECTIONS.reduce(
+    (value, [pattern, replacement]) => value.replace(pattern, replacement),
+    cleaned,
+  )
+    // An explicit squared form is already unambiguous and is only tidied.
+    // The `2` must be attached to the measurement, so `1.5mm 2 core` is not
+    // mistaken for a cross-section.
+    .replace(/(\d)\s*mm\s*\^\s*2\b/gi, '$1mm²')
+    .replace(/(\d)mm2\b/gi, '$1mm²')
+
+  // A bare `mm` is a cross-section only where the supplied words establish a
+  // conductor. `1.5mm 2 core` and any non-conductor measurement keep the
+  // supplied unit, and `mm` is never reinterpreted as a core count or a size.
+  if (establishesConductorMeasurement(cleaned)) {
+    cleaned = cleaned.replace(/(\d)\s*mm(?!\s*(?:²|\^\s*2\b|2\b))/gi, '$1mm²')
   }
 
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
 }
 
-/** True when the supplied text is cable shorthand that can be standardized. */
+/** True when the supplied text is a measured size with a cable colour. */
 export function isCableShorthand(raw: string): boolean {
   return CABLE_SHORTHAND.test(String(raw ?? '').trim())
 }
@@ -231,22 +273,59 @@ export function parseCommercialList(text: string): CommercialListParse {
 }
 
 /**
+ * True when the text carries commercial signal rather than ordinary prose:
+ * a pasted list of lines, a price, or a measured/quantified item.
+ *
+ * This is a supporting signal only. Whether evidence belongs in a prompt is
+ * decided per turn in `bolu-prompt.ts`; conversational text must never become
+ * a line item on its own.
+ */
+export function hasCommercialListSignal(text: string): boolean {
+  const parsed = parseCommercialList(text)
+  if (parsed.amounts.length > 0) return true
+  if (parsed.descriptions.length >= 2) return true
+  return parsed.descriptions.some(
+    (entry) => entry.amount != null || entry.quantity !== 1 || /\d/.test(entry.rawDescription),
+  )
+}
+
+/** A request sentence that mentions a document but supplies no item detail. */
+const CONVERSATIONAL_REQUEST =
+  /^(?:please\s+)?(?:can|could|would|will)\s+you\b|\b(?:create|make|draft|prepare)\s+(?:an?\s+)?(?:invoice|quotation|quote)\b/i
+
+/**
  * Renders parsed evidence for the provider prompt.
  *
  * This is evidence, not an instruction to the model to accept it blindly: the
  * model still has to produce the document, and the user still has to approve.
+ * Request sentences and plain conversation are dropped; genuine list entries,
+ * including incomplete ones without a price, are preserved.
  */
 export function formatCommercialEvidence(parsed: CommercialListParse): string {
   if (parsed.status === 'empty' && parsed.entries.length === 0) return ''
+
+  const ordered = parsed.descriptions.filter((entry) => {
+    if (CONVERSATIONAL_REQUEST.test(entry.rawDescription.trim())) return false
+    if (parsed.descriptions.length >= 2) return true
+    return entry.amount != null || entry.quantity !== 1 || /\d/.test(entry.rawDescription)
+  })
+  if (ordered.length === 0 && parsed.amounts.length === 0) return ''
+
   const lines: string[] = [
-    'PARSED COMMERCIAL EVIDENCE (deterministic parse of the user\'s own words, in order):',
+    "PARSED COMMERCIAL EVIDENCE (deterministic parse of the user's own words, in order).",
+    "Wording marked \"presentation-only wording\" is capitalisation, unit notation or a spelling correction applied to the user's line. It is not a catalogue name, a verified specification or an approved change.",
   ]
 
-  const ordered = parsed.descriptions
   ordered.forEach((entry, index) => {
     const amount = entry.amount == null ? 'not supplied' : String(entry.amount)
+    // The supplied words stay verbatim. A normalised variant is only shown
+    // when it actually differs, and it is labelled as presentation only.
+    const presentation =
+      entry.description && entry.description !== entry.rawDescription
+        ? ` | presentation-only wording: "${entry.description}"`
+        : ''
     lines.push(
-      `${index + 1}. supplied: "${entry.rawDescription}" | quantity: ${entry.quantity} | amount: ${amount} | standard description: "${entry.description}"`,
+      `${index + 1}. supplied: "${entry.rawDescription}" | quantity: ${entry.quantity} | amount: ${amount}${presentation}`,
     )
   })
 
@@ -295,9 +374,13 @@ export function buildCommercialSuggestions(input: CommercialSuggestionInput): st
 
   const shorthand = items.filter((item) => isCableShorthand(item.description))
   if (shorthand.length > 0) {
-    suggestions.push(
-      `${shorthand[0].description} can be written as ${standardizeDescription(shorthand[0].description)}.`,
-    )
+    const suggested = standardizeDescription(shorthand[0].description)
+    // Only worth saying when the wording would actually change.
+    if (suggested && suggested !== shorthand[0].description) {
+      suggestions.push(
+        `"${shorthand[0].description}" can be written as "${suggested}" so the measurement reads as a cross-section.`,
+      )
+    }
   }
 
   const unpriced = items.filter((item) => !item.unit_price)

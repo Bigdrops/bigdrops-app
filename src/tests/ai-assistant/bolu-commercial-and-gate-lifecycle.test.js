@@ -118,21 +118,54 @@ test('Amount shorthand is parsed without changing the supplied value', () => {
   assert.equal(parseCommercialAmount('Salt'), null)
 })
 
-test('Cable shorthand standardizes to the approved commercial description', () => {
-  assert.equal(standardizeDescription('1.5mm green'), '1.5mm² Single-Core Cable – Green')
-  assert.equal(standardizeDescription('2.5mm black'), '2.5mm² Single-Core Cable – Black')
-  assert.equal(standardizeDescription('1.5mm2 red'), '1.5mm² Single-Core Cable – Red')
+test('Cable shorthand keeps only the supplied size and colour', () => {
+  // Presentation only: the unit becomes explicit, nothing about the product.
+  assert.equal(standardizeDescription('1.5mm green'), '1.5mm² green')
+  assert.equal(standardizeDescription('2.5mm black'), '2.5mm² black')
+  assert.equal(standardizeDescription('1.5mm2 red'), '1.5mm² red')
+  assert.equal(standardizeDescription('1.5mm green cable'), '1.5mm² green cable')
   assert.equal(isCableShorthand('2.5mm red'), true)
   assert.equal(isCableShorthand('Salt'), false)
 })
 
-test('Standardization never invents a specification', () => {
+test('Safe language normalization still corrects spelling and compound words', () => {
+  assert.equal(standardizeDescription('2 inch elbo'), '2 inch elbow')
+  assert.equal(standardizeDescription('3 elbos'), '3 elbows')
+  assert.equal(standardizeDescription('change over switch 40A'), 'Changeover Switch 40A')
+  assert.equal(standardizeDescription('change over switches'), 'Changeover Switches')
+  assert.equal(standardizeDescription('salt'), 'Salt')
+  assert.equal(standardizeDescription('cement 50kg'), 'Cement 50kg')
+  assert.equal(standardizeDescription('  copper   pipe  '), 'Copper pipe')
+  assert.equal(standardizeDescription('1.5 mm² 4 core cable'), '1.5 mm² 4 core cable')
+})
+
+test('Standardization never invents a product family, class or specification', () => {
   assert.equal(standardizeDescription('Salt'), 'Salt')
   assert.equal(standardizeDescription('charcoal'), 'Charcoal')
-  assert.equal(standardizeDescription('cement 50kg'), 'Cement 50kg')
-  const expanded = standardizeDescription('1.5mm green')
-  // Size and colour only: no brand, voltage, grade, model or packaging.
-  assert.doesNotMatch(expanded, /brand|voltage|grade|model|pack|mm²\s*\d/i)
+
+  // The previous defect: `1.5mm green` gained "Single-Core Cable".
+  const cable = standardizeDescription('1.5mm green')
+  assert.doesNotMatch(cable, /single[- ]?core/i)
+  assert.doesNotMatch(cable, /cable/i)
+
+  for (const supplied of ['1.5mm green', '1.5mm green cable', 'armoured cable 50m']) {
+    const description = standardizeDescription(supplied)
+    assert.doesNotMatch(description, /brand|voltage|grade|model|packaging/i)
+    // No core count is ever added to a description that did not carry one.
+    assert.doesNotMatch(description, /\b\d+\s*(?:core|cores)\b/i)
+  }
+
+  // A supplied core count and size are preserved as written.
+  assert.equal(standardizeDescription('1.5mm² 4 core cable'), '1.5mm² 4 core cable')
+
+  // `armoured cable 50m` gains no conductor size, core count or rating.
+  assert.equal(standardizeDescription('armoured cable 50m'), 'Armoured cable 50m')
+
+  // An ambiguous `mm` is not reinterpreted as a cross-section.
+  assert.equal(standardizeDescription('1.5mm'), '1.5mm')
+  assert.equal(standardizeDescription('50mm bolt'), '50mm bolt')
+  assert.equal(standardizeDescription('1.5mm pipe'), '1.5mm pipe')
+  assert.equal(standardizeDescription('1.5mm 2 core'), '1.5mm 2 core')
 })
 
 test('WhatsApp-style input becomes six ordered entries with prices paired positionally', () => {
@@ -142,13 +175,18 @@ test('WhatsApp-style input becomes six ordered entries with prices paired positi
 
   const descriptions = parsed.descriptions.map((entry) => entry.description)
   assert.deepEqual(descriptions, [
-    '1.5mm² Single-Core Cable – Green',
-    '2.5mm² Single-Core Cable – Red',
-    '2.5mm² Single-Core Cable – Black',
-    '1.5mm² Single-Core Cable – Black',
+    '1.5mm² green',
+    '2.5mm² red',
+    '2.5mm² black',
+    '1.5mm² black',
     'Salt',
     'Charcoal',
   ])
+  // The supplied wording is preserved alongside the presentation tidy-up.
+  assert.deepEqual(
+    parsed.descriptions.map((entry) => entry.rawDescription),
+    ['1.5mm green', '2.5mm red', '2.5mm black', '1.5mm black', 'Salt', 'Charcoal'],
+  )
 
   assert.deepEqual(
     parsed.descriptions.map((entry) => entry.amount),
@@ -165,7 +203,7 @@ test('WhatsApp timestamps and list markers are stripped before parsing', () => {
     ['[14/11, 12:13] Mujay:', '1. 1.5mm green 1', '2. 2.5mm red 1', '32,000', '53,000'].join('\n'),
   )
   assert.equal(parsed.descriptions.length, 2)
-  assert.equal(parsed.descriptions[0].description, '1.5mm² Single-Core Cable – Green')
+  assert.equal(parsed.descriptions[0].description, '1.5mm² green')
   assert.deepEqual(parsed.descriptions.map((entry) => entry.amount), [32000, 53000])
 })
 
@@ -185,7 +223,8 @@ test('A description/price count mismatch is reported, never guessed', () => {
 
 test('Model output is standardized deterministically before preview', () => {
   const [item] = standardizeCommercialItems([{ description: '1.5mm green', quantity: 1, unit_price: 32000 }])
-  assert.equal(item.description, '1.5mm² Single-Core Cable – Green')
+  assert.equal(item.description, '1.5mm² green')
+  assert.doesNotMatch(item.description, /single[- ]?core|cable/i)
   assert.equal(item.quantity, 1)
   assert.equal(item.unit_price, 32000)
 })
@@ -196,7 +235,8 @@ test('Suggestions are grounded and optional, and never block the proposal', () =
     payment_terms: null,
     title: null,
   })
-  assert.ok(suggestions.some((entry) => /Single-Core Cable/.test(entry)))
+  assert.ok(suggestions.some((entry) => /1\.5mm² green/.test(entry)))
+  assert.ok(!suggestions.some((entry) => /single[- ]?core/i.test(entry)))
   assert.ok(suggestions.some((entry) => /No amount was supplied/.test(entry)))
   assert.ok(suggestions.some((entry) => /Payment terms/.test(entry)))
   // A suggestion is prose for the user, not a change to the document.
@@ -228,13 +268,13 @@ test('The approved reference input produces a 192,000 subtotal with no invented 
 test('A correction updates the same operation and invalidates the previous approval', () => {
   const previous = approvedProposal({
     title: 'Roofing works',
-    items: [{ description: '1.5mm² Single-Core Cable – Green', quantity: 1, unit_price: 32000 }],
+    items: [{ description: '1.5mm² green', quantity: 1, unit_price: 32000 }],
   })
 
   const merged = mergeDocumentCreateProposal(previous, {
     client_name: 'Tunde',
     items: [
-      { description: '1.5mm² Single-Core Cable – Green', quantity: 1, unit_price: 32000 },
+      { description: '1.5mm² green', quantity: 1, unit_price: 32000 },
       { description: 'Salt', quantity: 1, unit_price: 15000 },
       { description: 'Charcoal', quantity: 1, unit_price: 7000 },
     ],

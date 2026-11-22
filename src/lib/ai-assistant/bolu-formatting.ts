@@ -14,24 +14,58 @@ export function formatRecordAmount(value: number | null): string {
   return `₦${value.toLocaleString('en-NG', { maximumFractionDigits: 2 })}`
 }
 
+/**
+ * Maps a lookup exception to the smallest failure category the data layer can
+ * actually establish. Everything else stays an unclassified lookup failure.
+ */
+export function classifyBoluFactFailure(err: unknown): 'lookup_failed' | 'not_authorized' | 'tenant_unavailable' {
+  const message = err instanceof Error ? err.message : String(err ?? '')
+  if (/permission|not authori[sz]ed/i.test(message)) return 'not_authorized'
+  if (/not ready|tenant|business entity/i.test(message)) return 'tenant_unavailable'
+  return 'lookup_failed'
+}
+
+/** Short, honest user-facing wording for a failed lookup. */
+export function formatBoluFactFailure(code: 'lookup_failed' | 'not_authorized' | 'tenant_unavailable'): string {
+  switch (code) {
+    case 'not_authorized':
+      return 'You do not have access to those records.'
+    case 'tenant_unavailable':
+      return 'Your business records are not available right now. Try again in a moment.'
+    default:
+      return 'I could not retrieve that just now. Try again in a moment.'
+  }
+}
+
+/**
+ * Records supplied to the model per turn. A large result set is summarised
+ * rather than dumped, so the answer stays about the question that was asked.
+ */
+export const MAX_PROMPT_RECORDS = 10
+
 export function factsAsPrompt(facts: Awaited<ReturnType<typeof readBoluContextFacts>>): string {
   if (facts.kind === 'message') return facts.text
+  if (facts.kind === 'failure') return 'The requested records could not be retrieved.'
   if (facts.records.length === 0) return 'No matching records were found in the authorized business data.'
-  return facts.records
-    .map((record) =>
-      [
-        `Type: ${record.kind}`,
-        `Number: ${escapePromptValue(record.number)}`,
-        `Client: ${escapePromptValue(record.clientName)}`,
-        `Date: ${escapePromptValue(record.date)}`,
-        record.validUntil ? `Valid until: ${escapePromptValue(record.validUntil)}` : null,
-        `Status: ${escapePromptValue(record.status)}`,
-        `Total: ${formatRecordAmount(record.total)}`,
-        `Balance due: ${formatRecordAmount(record.balanceDue)}`,
-        `Route: ${record.route}`,
-      ].filter(Boolean).join('\n'),
-    )
-    .join('\n\n')
+
+  const shown = facts.records.slice(0, MAX_PROMPT_RECORDS)
+  const blocks = shown.map((record) =>
+    [
+      `Type: ${record.kind}`,
+      `Number: ${escapePromptValue(record.number)}`,
+      `Client: ${escapePromptValue(record.clientName)}`,
+      `Date: ${escapePromptValue(record.date)}`,
+      record.validUntil ? `Valid until: ${escapePromptValue(record.validUntil)}` : null,
+      `Status: ${escapePromptValue(record.status)}`,
+      `Total: ${formatRecordAmount(record.total)}`,
+      `Balance due: ${formatRecordAmount(record.balanceDue)}`,
+    ].filter(Boolean).join('\n'),
+  )
+
+  if (facts.hasMore || facts.records.length > shown.length) {
+    blocks.push('More matching records exist than are shown here.')
+  }
+  return blocks.join('\n\n')
 }
 
 /**
@@ -68,6 +102,7 @@ export function buildProviderMessages(
 
 export function formatFactAnswer(facts: Awaited<ReturnType<typeof readBoluContextFacts>>, userText: string): string {
   if (facts.kind === 'message') return facts.text
+  if (facts.kind === 'failure') return formatBoluFactFailure(facts.code)
   if (!facts.records.length) return 'I could not find matching records in the information available to you.'
 
   const overdueOnly = /\b(overdue|past due)\b/i.test(userText)
@@ -86,7 +121,7 @@ export function formatFactAnswer(facts: Awaited<ReturnType<typeof readBoluContex
       ]
         .filter(Boolean)
         .join(' · ')
-      return `• ${label}${detail ? ` — ${detail}` : ''} (${record.route})`
+      return `• ${label}${detail ? ` — ${detail}` : ''}`
     })
     .join('\n')
 }

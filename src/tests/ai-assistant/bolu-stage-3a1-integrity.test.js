@@ -466,6 +466,7 @@ function proseLiteralsOf(source) {
 test('e1. assistant copy never leaks internal module or mechanism identifiers', () => {
   for (const rel of [
     'api/bolu-chat.ts',
+    'src/lib/ai-assistant/bolu-prompt.ts',
     'src/lib/ai-assistant/bolu-generation.ts',
     'src/lib/ai-assistant/bolu-runtime.ts',
     'src/lib/ai-assistant/bolu-reducer.ts',
