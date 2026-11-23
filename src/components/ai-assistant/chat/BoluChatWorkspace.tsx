@@ -396,14 +396,11 @@ export function BoluChatWorkspace({
     }
   }, [messages, streamingContent, pinned])
 
-  if (!open) return null
-
-  const activeConversation = conversations.find((c) => c.id === activeConversationId)
-  const conversationTitle = activeConversation?.title || 'New Conversation'
-
-  // Dynamic Suggestions: starters for empty conversations, contextual follow-ups for active
+  // Dynamic Suggestions: starters for empty conversations, contextual follow-ups for active.
+  // Declared at top level before early returns to preserve strict React hook ordering across open/closed states.
   const isStarter = messages.length === 0
   const suggestions = useMemo(() => {
+    if (!open) return []
     if (isStarter) {
       return getConversationStarters({
         conversationId: activeConversationId,
@@ -416,7 +413,12 @@ export function BoluChatWorkspace({
       pageContext,
       isStreaming,
     })
-  }, [isStarter, activeConversationId, pageContext, messages, activeProposal, isStreaming])
+  }, [open, isStarter, activeConversationId, pageContext, messages, activeProposal, isStreaming])
+
+  if (!open) return null
+
+  const activeConversation = conversations.find((c) => c.id === activeConversationId)
+  const conversationTitle = activeConversation?.title || 'New Conversation'
 
   const handleSend = async (text: string) => {
     const clean = text.trim()
